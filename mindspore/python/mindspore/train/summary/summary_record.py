@@ -74,35 +74,6 @@ def _get_summary_tensor_data():
         return data
 
 
-def _sync_summary_data(step):
-    """
-    In the GE process, the summary receiving process is asynchronous.
-    When the record function is called, some data may not be received and
-    needs to be synchronized.
-    """
-    if context.get_context('device_target') != "Ascend":
-        return
-
-    step_end_flag = Tensor([1], dtype=mstype.float32)
-    image_step_end_flag = Tensor([[[[1]]]], dtype=mstype.float32)
-    name = "_step_end_flag_" + str(step)
-    tags = ("[:Tensor]", "[:Scalar]", "[:Image]", "[:Histogram]")
-    _run_op(_get_cache_prim(debug_ops.TensorSummary)(), "TensorSummary", (name, step_end_flag))
-    _run_op(_get_cache_prim(debug_ops.ScalarSummary)(), "ScalarSummary", (name, step_end_flag))
-    _run_op(_get_cache_prim(debug_ops.HistogramSummary)(), "HistogramSummary", (name, step_end_flag))
-    _run_op(_get_cache_prim(debug_ops.ImageSummary)(), "ImageSummary", (name, image_step_end_flag))
-    global SUMMARY_TENSOR_CACHE
-    for tag in tags:
-        item_name = name + tag
-        while item_name not in SUMMARY_TENSOR_CACHE:
-            time.sleep(0.004)
-
-    with _summary_lock:
-        for tag in tags:
-            item_name = name + tag
-            SUMMARY_TENSOR_CACHE.pop(item_name, None)
-
-
 def _record_summary_tensor_data():
     """Record summary tensor data."""
     summary_list = list()
@@ -240,6 +211,7 @@ class SummaryRecord:
         self._num_process = num_process
         self.raise_exception = raise_exception
         self._export_options = export_options
+        self._op_finished_init = False
 
         try:
             self._initialize()
@@ -309,25 +281,25 @@ class SummaryRecord:
                 LossLandscape]): The value to store.
 
                 - The data type of value should be 'GraphProto' (see `mindspore/ccsrc/anf_ir.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/anf_ir.proto>`_) object
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/anf_ir.proto>`_) object
                   when the plugin is 'graph'.
                 - The data type of value should be 'Tensor' object when the plugin is 'scalar', 'image', 'tensor'
                   or 'histogram'.
                 - The data type of value should be a 'TrainLineage' object when the plugin is 'train_lineage',
                   see `mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'EvaluationLineage' object when the plugin is 'eval_lineage',
                   see `mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'DatasetGraph' object when the plugin is 'dataset_graph',
                   see `mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'UserDefinedInfo' object when the plugin is 'custom_lineage_data',
                   see `mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'LossLandscape' object when the plugin is 'LANDSCAPE',
                   see `mindspore/ccsrc/summary.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/summary.proto>`_.
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/summary.proto>`_.
 
         Raises:
             ValueError: `plugin` is not in the optional value.
@@ -373,6 +345,39 @@ class SummaryRecord:
                              f', expect value is one of [tensor, scalar, image, histogram, train_lineage, '
                              f'eval_lineage, dataset_graph, custom_lineage_data, graph, landscape]')
 
+    def _sync_summary_data(self, step):
+        """
+        In the GE process, the summary receiving process is asynchronous.
+        When the record function is called, some data may not be received and
+        needs to be synchronized.
+        """
+        if context.get_context('device_target') != "Ascend":
+            return
+        if self._op_finished_init is False:
+            _ = Cell()
+            self._op_finished_init = True
+
+        step_end_flag = Tensor([1], dtype=mstype.float32)
+        image_step_end_flag = Tensor([[[[1]]]], dtype=mstype.float32)
+        _ = Cell()
+        name = "_step_end_flag_" + str(step)
+        tags = ("[:Tensor]", "[:Scalar]", "[:Image]", "[:Histogram]")
+        _run_op(_get_cache_prim(debug_ops.TensorSummary)(), "TensorSummary", (name, step_end_flag))
+        _run_op(_get_cache_prim(debug_ops.ScalarSummary)(), "ScalarSummary", (name, step_end_flag))
+        _run_op(_get_cache_prim(debug_ops.HistogramSummary)(), "HistogramSummary", (name, step_end_flag))
+        _run_op(_get_cache_prim(debug_ops.ImageSummary)(), "ImageSummary", (name, image_step_end_flag))
+        global SUMMARY_TENSOR_CACHE
+        for tag in tags:
+            item_name = name + tag
+            while item_name not in SUMMARY_TENSOR_CACHE:
+                time.sleep(0.004)
+
+        with _summary_lock:
+            for tag in tags:
+                item_name = name + tag
+                SUMMARY_TENSOR_CACHE.pop(item_name, None)
+
+
     def record(self, step, train_network=None, plugin_filter=None):
         r"""
         Record the summary.
@@ -389,7 +394,7 @@ class SummaryRecord:
 
         Raises:
             TypeError: `step` is not int, or `train_network` is not `mindspore.nn.Cell
-                <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ .
+                <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ .
 
         Examples:
             >>> import mindspore as ms
@@ -478,7 +483,7 @@ class SummaryRecord:
 
     def _add_summary_tensor_data(self, step_index=-1):
         """Add summary tensor data."""
-        _sync_summary_data(step_index)
+        self._sync_summary_data(step_index)
         _record_summary_tensor_data()
         summary_data = _get_summary_tensor_data()
         if not summary_data:

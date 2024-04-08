@@ -49,7 +49,7 @@ class ConditionGatherActor : public KernelActor {
  private:
   friend class InlineControlFlowScheduler;
   // Output num of each branch.
-  size_t branch_output_num_;
+  size_t branch_output_num_{0};
   // The order of each branch name.
   std::vector<std::string> branch_names_;
   // The current execute branch between switch and gather actor.

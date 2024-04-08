@@ -681,11 +681,11 @@ Tensor::Tensor(const Tensor &tensor)
       device_sync_(tensor.device_sync_),
       need_release_device_mem_(tensor.need_release_device_mem_),
       cache_enable_(tensor.cache_enable_),
+      need_pipeline_sync_(tensor.need_pipeline_sync_),
       base_shape_ptr_(tensor.base_shape_ptr_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       device_event_(tensor.device_event_),
-      lazy_callback_(tensor.lazy_callback_),
       contiguous_callback_(tensor.contiguous_callback_),
       pin_mem_register_(tensor.pin_mem_register_),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
@@ -708,11 +708,11 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       device_sync_(tensor.device_sync_),
       need_release_device_mem_(tensor.need_release_device_mem_),
       cache_enable_(tensor.cache_enable_),
+      need_pipeline_sync_(tensor.need_pipeline_sync_),
       base_shape_ptr_(tensor.base_shape_ptr_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       device_event_(tensor.device_event_),
-      lazy_callback_(tensor.lazy_callback_),
       contiguous_callback_(tensor.contiguous_callback_),
       pin_mem_register_(tensor.pin_mem_register_),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
@@ -737,11 +737,11 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   device_sync_ = tensor.device_sync_;
   need_release_device_mem_ = tensor.need_release_device_mem_;
   cache_enable_ = tensor.cache_enable_;
+  need_pipeline_sync_ = tensor.need_pipeline_sync_;
   base_shape_ptr_ = tensor.base_shape_ptr_;
   cache_tensor_ptr_ = tensor.cache_tensor_ptr_;
   hashmap_tensor_ptr_ = tensor.hashmap_tensor_ptr_;
   device_event_ = tensor.device_event_;
-  lazy_callback_ = tensor.lazy_callback_;
   pin_mem_register_ = tensor.pin_mem_register_;
   contiguous_callback_ = tensor.contiguous_callback_;
   user_data_ = tensor.user_data_;
@@ -888,7 +888,7 @@ bool Tensor::ValueEqual(const Tensor &tensor) const {
 }
 
 void Tensor::ExecuteLazyTask() const {
-  if (lazy_callback_ != nullptr) {
+  if (lazy_callback_ != nullptr && need_pipeline_sync_) {
     lazy_callback_();
   }
 
@@ -966,13 +966,13 @@ void Tensor::set_device_address(const DeviceSyncPtr &device_sync, bool need_upda
 // Assign value to this tensor.
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
-    lazy_callback_ = tensor.lazy_callback_;
     ExecuteLazyTask();
     contiguous_callback_ = tensor.contiguous_callback_;
     MetaTensor::operator=(tensor);
     address_future_ = nullptr;
     device_sync_ = tensor.device_address();
     need_release_device_mem_ = tensor.need_release_device_mem_;
+    need_pipeline_sync_ = tensor.need_pipeline_sync_;
     is_forward_output_ = tensor.is_forward_output_;
     MS_EXCEPTION_IF_NULL(data_);
     if (data_->is_sub_data()) {
@@ -998,11 +998,6 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
 }
 
 abstract::AbstractBasePtr Tensor::ToAbstract() {
-  auto abs = abstract_.lock();
-  if (abs != nullptr) {
-    MS_LOG(DEBUG) << "Get cached abstract " << abs->ToString() << " real tensor shape is " << shape_;
-    return abs;
-  }
   auto tens = shared_from_base<Tensor>();
   auto dtype = tens->Dtype();
   if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {
@@ -1027,6 +1022,15 @@ abstract::AbstractBasePtr Tensor::ToAbstract() {
     abs_tensor->set_is_adapter(true);
   }
   return abs_tensor;
+}
+
+abstract::AbstractBasePtr Tensor::GetAbstractCache() {
+  auto abs = abstract_.lock();
+  if (abs != nullptr) {
+    MS_LOG(DEBUG) << "Get cached abstract " << abs->ToString() << " real tensor shape is " << shape_;
+    return abs;
+  }
+  return ToAbstract();
 }
 
 std::string Tensor::GetShapeAndDataTypeInfo() const {

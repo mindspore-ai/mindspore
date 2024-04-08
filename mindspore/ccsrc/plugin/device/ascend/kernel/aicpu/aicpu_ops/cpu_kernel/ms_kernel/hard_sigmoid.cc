@@ -29,34 +29,35 @@ const int64_t kParallelDataNums = 16 * 1024;
 const float alpha = 0.16666666;
 const float beta = 0.5;
 
-#define HARD_SIGMOID_COMPUTE_CASE(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                             \
-    uint32_t result = HardSigmoidCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                         \
-      KERNEL_LOG_ERROR("HardSigmoid kernel compute failed."); \
-      return result;                                          \
-    }                                                         \
-    break;                                                    \
+#define HARD_SIGMOID_COMPUTE_CASE(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                                       \
+    uint32_t result = HardSigmoidCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                   \
+      CUST_KERNEL_LOG_ERROR(ctx, "HardSigmoid kernel compute failed."); \
+      return result;                                                    \
+    }                                                                   \
+    break;                                                              \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t HardSigmoidCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kHardSigmoid);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kHardSigmoid);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     HARD_SIGMOID_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     HARD_SIGMOID_COMPUTE_CASE(DT_FLOAT, float, ctx)
     HARD_SIGMOID_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("HardSigmoid kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "HardSigmoid kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t HardSigmoidCpuKernel::HardSigmoidCompute(const CpuKernelContext &ctx) {
+uint32_t HardSigmoidCpuKernel::HardSigmoidCompute(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   int64_t data_num = ctx.Input(0)->NumElements();
@@ -80,8 +81,8 @@ uint32_t HardSigmoidCpuKernel::HardSigmoidCompute(const CpuKernelContext &ctx) {
         *(output_y + i) = std::min(std::max(*(input_x + i) + three, zero), six) / six;
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, perUnitSize, shard_hard_sigmoid),
-                        "HardSigmoid Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, perUnitSize, shard_hard_sigmoid),
+                             "HardSigmoid Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

@@ -98,7 +98,10 @@ Status DvppResizedCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
   // Dvpp Limit
   RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppResizedCropOp, "input"));
   RETURN_IF_NOT_OK(CheckDvppLimit(output_h, output_w, h_lb, w_lb, h_ub, w_ub, kDvppResizedCropOp, "output"));
-  if (output_w > 4096 && (height_ >= 16 || width_ >= 128)) {
+  const auto kOutputWidthMax = 4096;
+  const auto kCropHeightMax = 16;
+  const auto kCropWidthMax = 128;
+  if (output_w > kOutputWidthMax && (height_ >= kCropHeightMax || width_ >= kCropWidthMax)) {
     std::string error =
       "DvppResizedCrop: when output width > 4096, crop area should smaller than [16, 128], but got [" +
       std::to_string(height_) + ", " + std::to_string(width_) + "].";

@@ -72,7 +72,23 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
   FuncGraphPtr func_graph = parser->ParseFuncGraph();
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Parse python code failed, errcode = " << parser->errcode();
+    py::object node = ast->GetAstNode();
+    const auto &location = parser->GetLocation(node);
+    py::str desc = python_adapter::CallPyModFn(ast->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast->function(),
+                                               location->file_name(), location->line());
+    MS_LOG(ERROR) << "\nlocation:" << desc.cast<std::string>();
     return nullptr;
+  }
+
+  // Handle no_inline function
+  auto no_inline_value = py::getattr(obj, FUNC_GRAPH_FLAG_NO_INLINE, py::none());
+  if (no_inline_value != py::none()) {
+    func_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, py::cast<bool>(no_inline_value));
+  }
+  // Handle cell_reusing function
+  auto cell_reuse_value = py::getattr(obj, FUNC_GRAPH_FLAG_CELL_REUSE, py::none());
+  if (cell_reuse_value != py::none()) {
+    func_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, py::cast<bool>(cell_reuse_value));
   }
 
   MS_LOG(DEBUG) << "Finish Parsing " << py::str(obj);
@@ -157,6 +173,7 @@ void Parser::InitParserEnvironment(const py::object &obj) {
 void Parser::CleanParserResource() {
   Parser::top_func_graph_ = FuncGraphWeakPtr();
   ScopeManager::GetInstance().ClearScope();
+  parse::CleanParameterNameCache();
 }
 
 void Parser::CheckFuncReturn(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fn) {
@@ -956,6 +973,60 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
   }
 }
 
+// If self.attr.func is inplace operation, then
+//   self.attr.func(inputs)
+//   -->
+//   self.attr = self.attr.func(inputs)
+//   setattr(self, "attr", self.attr.func(inputs))
+bool Parser::HandleSetAttrClassMemberForInplace(const FunctionBlockPtr &block, const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  auto call_node = cnode->input(0);
+  if (!IsPrimitiveCNode(call_node, prim::kPrimGetAttr)) {
+    return false;
+  }
+  constexpr int recursive_level = 2;
+  // call_cnode: self.attr.func
+  auto call_cnode = call_node->cast<CNodePtr>();
+  MS_LOG(DEBUG) << "call cnode: " << call_cnode->DebugString(recursive_level);
+  const auto &call_cnode_inputs = call_cnode->inputs();
+  constexpr size_t attr_node_index = 1;
+  constexpr size_t func_str_index = 2;
+  auto func_str_node = call_cnode_inputs[func_str_index];
+  if (!IsValueNode<StringImm>(func_str_node)) {
+    return false;
+  }
+  const auto &func_str = GetValue<std::string>(GetValueNode(func_str_node));
+  std::vector<std::string> inplace_ops{"extend", "pop", "insert", "reverse"};
+  MS_LOG(DEBUG) << "func str: " << func_str;
+  if (std::all_of(inplace_ops.begin(), inplace_ops.end(),
+                  [&func_str](const std::string &ops) { return func_str != ops; })) {
+    return false;
+  }
+  auto attr_node = call_cnode_inputs[attr_node_index];
+  if (!attr_node->isa<CNode>()) {
+    return false;
+  }
+  // attr_cnode: self.attr
+  auto attr_cnode = attr_node->cast<CNodePtr>();
+  MS_LOG(DEBUG) << "attr cnode: " << attr_cnode->DebugString(recursive_level);
+  const auto &attr_cnode_inputs = attr_cnode->inputs();
+  constexpr size_t target_index = 1;
+  constexpr size_t attr_index = 2;
+  auto target_node = attr_cnode_inputs[target_index];
+  MS_LOG(DEBUG) << "target node: " << target_node->DebugString();
+  auto target_attr_node = attr_cnode_inputs[attr_index];
+  auto symbol_val = GetValueNode<SymbolPtr>(target_attr_node);
+  if (symbol_val == nullptr) {
+    return false;
+  }
+  const auto &target_symbol_str = symbol_val->symbol();
+  MakeSetAttrNode(block, target_node, cnode, "self", target_symbol_str);
+  return true;
+}
+
 // Process the expr statement and expand it
 FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Expr";
@@ -1018,8 +1089,10 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
       if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberRecursive(target_node)) {
         // self.x = [xx, xx]
         // self.x.append()
-        MS_LOG(DEBUG) << "The variables whose type is not parameter do not support assign operation.";
-        block->AddIsolatedNode(call_node);
+        const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
+        if (!allow_fallback_runtime || !HandleSetAttrClassMemberForInplace(block, call_node)) {
+          block->AddIsolatedNode(call_node);
+        }
       } else {
         WriteAssignVars(block, target_node, call_node);
       }
@@ -1878,12 +1951,11 @@ AnfNodePtr Parser::ParseMsTensor(const FunctionBlockPtr &block, const py::object
         AnfNodePtr interpret_node = MakeInterpretNode(block, value_node, script_text);
         interpret_node->set_interpret(true);
         interpret_node->set_interpret_internal_type(true);
-        if (module_str.find("module 'mindtorch") != std::string::npos ||
-            module_str.find("module 'msadapter") != std::string::npos) {
-          const py::tuple &info = ast()->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, "Tensor");
-          constexpr size_t value_index = 2;
-          interpret_node->set_user_data<py::object>(kClassTensorObject,
-                                                    std::make_shared<py::object>(info[value_index]));
+        if ((module_str.find("module 'mindtorch") != std::string::npos ||
+             module_str.find("module 'msadapter") != std::string::npos) &&
+            py::hasattr(module_obj, "Tensor")) {
+          py::object tensor_obj = py::getattr(module_obj, "Tensor");
+          interpret_node->set_user_data<py::object>(kClassTensorObject, std::make_shared<py::object>(tensor_obj));
         }
         return interpret_node;
       }
@@ -4274,7 +4346,6 @@ FunctionBlockPtr Parser::ParseAnnAssign(const FunctionBlockPtr &block, const py:
   py::object value_object = python_adapter::GetPyObjAttr(node, "value");
   py::object target_object = python_adapter::GetPyObjAttr(node, "target");
   AnfNodePtr value_node = ParseExprNode(block, value_object);
-
   // b: int = list_x.pop(a)
   // -->  list_x, b = list_x.pop(a) need renew the list_x.
   if (IsPopOperation(value_node)) {

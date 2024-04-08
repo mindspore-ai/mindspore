@@ -36,6 +36,7 @@ class NetworkPt(torch.nn.Module):
 class RMSpropFactory():
     def __init__(self, group=True, lr_dynamic=False, if_change=False, dtype=np.float32):
         super().__init__()
+        np.random.seed(1024)
         self.lin_weight_np = np.random.randn(3, 2).astype(dtype)
         self.lin_bias_np = np.random.randn(3,).astype(dtype)
 

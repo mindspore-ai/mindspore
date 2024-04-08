@@ -26,6 +26,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather_grad.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherd.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -51,11 +52,11 @@ class GatherDGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHel
                     const std::vector<KernelTensor *> &outputs);
   void CalculateDim(int64_t dim_value);
 
-  ShapeVector index_shapes_;
-  ShapeVector grad_shapes_;
-  ShapeVector output_shapes_;
-
-  size_t dims_[kHelperDimsNum] = {};
+  ShapeHelper output_shape_helper_;
+  ShapeHelper index_shape_helper_;
+  size_t dim_{0};
+  size_t index_num_{0};
+  size_t rank_{0};
   void *cuda_stream_{nullptr};
 };
 }  // namespace kernel

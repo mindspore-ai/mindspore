@@ -29,7 +29,7 @@ class SegmentSumCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t SegmentSumCompute(const CpuKernelContext &ctx);
+  static uint32_t SegmentSumCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

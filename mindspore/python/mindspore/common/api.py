@@ -64,9 +64,10 @@ _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
 
 
 def _ms_adapter_tensor_as_parameter_output(data):
-    """Check whether the data is an output from a parameter which is a ms_adapter tensor."""
-    # pylint: disable=unidiomatic-typecheck
-    return ms_adapter_registry.is_registered and type(data) == ms_adapter_registry.tensor \
+    """Check whether the data is an output from a parameter which is a ms_adapter tensor.
+       Pylint: disable=unidiomatic-typecheck.
+    """
+    return ms_adapter_registry.is_registered and isinstance(data, ms_adapter_registry.tensor) \
            and hasattr(data, "__ms_parameter_output__") and getattr(data, "__ms_parameter_output__")
 
 
@@ -545,6 +546,7 @@ class _MindsporeFunctionExecutor:
             for i, elem in enumerate(compile_args):
                 if isinstance(elem, PythonTensor):
                     Validator.check_dynamic_shape(compile_args[i], args_list[i], i)
+            Validator.check_symbolic_shape(compile_args, args_list)
 
         # Case: If dynamic shape tensors have been assigned to `input_signature`, they are preferred as compile args.
         if self.input_signature is not None:
@@ -556,6 +558,7 @@ class _MindsporeFunctionExecutor:
                 if isinstance(elem, PythonTensor) and is_shape_unknown(elem.shape):
                     Validator.check_dynamic_shape(self.input_signature[i], args_list[i], i)
                     dyn_shape = True
+            Validator.check_symbolic_shape(self.input_signature, args_list)
             if dyn_shape:
                 # Checkout whether the `sens` has been added to args_list.
                 if len(self.input_signature) == len(args_list) - 1:
@@ -621,6 +624,10 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
     Args:
         fn (Function): The Python function that will be run as a graph. Default: ``None`` .
         mode (str): The type of jit used, the value of mode should be ``PIJit`` or ``PSJit``. Default: ``PSJit`` .
+
+            - `PSJit <https://www.mindspore.cn/docs/en/r2.3.q1/note/static_graph_syntax_support.html>`_ : MindSpore GRAPH_MODE.
+            - `PIJit <https://www.mindspore.cn/docs/en/r2.3.q1/design/dynamic_graph_and_static_graph.html>`_ : MindSpore PYNATIVE_MODE.
+
         input_signature (Tensor): The Tensor which describes the input arguments. The shape and dtype of the Tensor
             will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
             And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
@@ -785,7 +792,7 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
     Note:
         - `ms_function` will be deprecated and removed in a future version. Please use :func:`mindspore.jit` instead.
         - If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
-        will not accept `**kwargs`.
+          will not accept `**kwargs`.
 
     Args:
         fn (Function): The Python function that will be run as a graph. Default: ``None`` .

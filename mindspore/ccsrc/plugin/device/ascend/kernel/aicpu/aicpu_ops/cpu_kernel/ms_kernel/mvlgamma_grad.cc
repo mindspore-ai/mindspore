@@ -23,14 +23,14 @@
 namespace {
 const char *kMvlgammaGrad = "MvlgammaGrad";
 
-#define MVLGAMMAGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                              \
-    uint32_t result = MvlgammaGradCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                          \
-      KERNEL_LOG_ERROR("MvlgammaGrad kernel compute failed."); \
-      return result;                                           \
-    }                                                          \
-    break;                                                     \
+#define MVLGAMMAGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                        \
+    uint32_t result = MvlgammaGradCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                    \
+      CUST_KERNEL_LOG_ERROR(ctx, "MvlgammaGrad kernel compute failed."); \
+      return result;                                                     \
+    }                                                                    \
+    break;                                                               \
   }
 
 constexpr double HALF = 0.5;
@@ -40,14 +40,14 @@ constexpr double QUARTER = 0.25;
 namespace aicpu {
 uint32_t MvlgammaGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(MvlgammaGradCheck(ctx), "MvlgammaGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MvlgammaGradCheck(ctx), "MvlgammaGrad check params failed.");
 
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     MVLGAMMAGRAD_COMPUTE_CASE(DT_FLOAT, float, ctx)
     MVLGAMMAGRAD_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("MvlgammaGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MvlgammaGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -56,33 +56,35 @@ uint32_t MvlgammaGradCpuKernel::Compute(CpuKernelContext &ctx) {
 
 uint32_t MvlgammaGradCpuKernel::MvlgammaGradCheck(CpuKernelContext &ctx) {
   // check input, output and attr not null
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
-  KERNEL_CHECK_NULLPTR(ctx.GetAttr("p"), KERNEL_STATUS_PARAM_INVALID, "Get attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.GetAttr("p"), KERNEL_STATUS_PARAM_INVALID, "Get attr failed.")
   NormalCheck(ctx, 2, 1, {"p"});
 
   // check input and output datatype as the same
   DataType input0_type = ctx.Input(0)->GetDataType();
   DataType input1_type = ctx.Input(1)->GetDataType();
   DataType output_type = ctx.Output(0)->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%d] need be same with "
-                     "input1 [%d].",
-                     input0_type, input1_type)
-  KERNEL_CHECK_FALSE((input0_type == output_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%d] need be same with "
-                     "output [%d].",
-                     input0_type, output_type)
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%d] need be same with "
+                          "input1 [%d].",
+                          input0_type, input1_type)
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == output_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%d] need be same with "
+                          "output [%d].",
+                          input0_type, output_type)
 
   auto attr_value = ctx.GetAttr("p")->GetInt();
-  KERNEL_CHECK_FALSE((attr_value >= 1), KERNEL_STATUS_PARAM_INVALID, "p has to be greater than or equal to 1[%lld]",
-                     attr_value)  // 已经用GetAttr获取
+  CUST_KERNEL_CHECK_FALSE(ctx, (attr_value >= 1), KERNEL_STATUS_PARAM_INVALID,
+                          "p has to be greater than or equal to 1[%lld]",
+                          attr_value)  // 已经用GetAttr获取
 
-  KERNEL_LOG_INFO(
-    "MvlgammaGradCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(), ctx.Output(0)->GetDataSize());
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "MvlgammaGradCpuKernel[%s], input0: size[%llu];"
+                       "input1: size[%llu], output: size[%llu].",
+                       ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(),
+                       ctx.Output(0)->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
@@ -119,10 +121,10 @@ uint32_t MvlgammaGradCpuKernel::MvlgammaGradCompute(CpuKernelContext &ctx) {
   };
 
   if (max_core_num == 0) {
-    KERNEL_LOG_ERROR("max_core_num could not be 0,");
+    CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0,");
   }
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_mvlgammagrad),
-                      "MvlgammaGrad Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_mvlgammagrad),
+                           "MvlgammaGrad Compute failed.");
   return KERNEL_STATUS_OK;
 }
 

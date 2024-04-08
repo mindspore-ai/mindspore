@@ -532,7 +532,11 @@ TensorLayout TensorLayout::SqueezeShape() const {
   TensorLayout out;
   Map out_map;
   Arrangement out_shape;
-  if (tensor_shape_.size() == 1) {
+  auto is_dynamic_func = [](const Shape &shape) -> bool {
+    return std::find(shape.begin(), shape.end(), -1) != shape.end();
+  };
+  // tensor_shape's size doesn't make sense in dynamic shape scene.
+  if (!is_dynamic_func(tensor_shape_.array()) && tensor_shape_.size() == 1) {
     (void)out_map.Init({MAP_NONE});
     (void)out_shape.Init({1});
     (void)out.Init(device_arrangement_, out_map, out_shape);

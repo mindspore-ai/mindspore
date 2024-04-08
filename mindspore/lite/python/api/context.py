@@ -20,6 +20,7 @@ import os
 
 from mindspore_lite._checkparam import check_isinstance, check_list_of_element
 from mindspore_lite.lib import _c_lite_wrapper
+from mindspore_lite._check_ascend import AscendEnvChecker
 
 __all__ = ['Context']
 
@@ -267,6 +268,9 @@ class Context:
         need_cpu_backup = False
         for ele in target:
             if ele.lower() == "ascend":
+                ascend_checker = AscendEnvChecker()
+                ascend_checker.check_env()
+
                 self._context.append_device_info(self.ascend)
                 need_cpu_backup = True
             elif ele.lower() == "gpu":
@@ -280,12 +284,30 @@ class Context:
 
     @property
     def group_info_file(self):
-        """Get communication group info file for distributed inference."""
+        """Get or set communication group info file for distributed inference.
+
+        In the pipeline parallel scenario, different stage device nodes are in different communication groups. When
+        exporting the model, set the `group_ckpt_save_file` parameter in interface
+        [mindspore.set_auto_parallel_context](https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore/mindspore.set_auto_parallel_context.html)
+        to export the group file information. In addition, in non pipeline parallel scenarios, if there
+        are communication operators involving local communication groups, the group file information also needs to be
+        exported through the 'group_ckpt_save_file' parameter.
+
+        Examples:
+            >>> # export communication group information file when export mindir
+            >>> import mindspore
+            >>> mindspore.set_auto_parallel_context(group_ckpt_save_file=f"{export_dir}/group_config_{rank_id}.pb")
+            >>>
+            >>> # use communication group information file when load mindir
+            >>> import mindspore_lite as mslite
+            >>> context = mslite.Context()
+            >>> context.group_info_file = f"{export_dir}/group_config_{rank_id}.pb"
+        """
         return self._context.group_info_file
 
     @group_info_file.setter
     def group_info_file(self, group_info_file):
-        """Set communication group info file for distributed inference."""
+        """Set communication group information for distributed inference."""
         check_isinstance("group_info_file", group_info_file, str)
         self._context.group_info_file = group_info_file
 

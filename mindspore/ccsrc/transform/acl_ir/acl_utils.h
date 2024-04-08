@@ -319,7 +319,7 @@ class AclRunner {
  private:
   void InitAttr() {
     if (acl_param_.attr == nullptr) {
-      acl_param_.attr = CALL_ASCEND_API2(aclopCreateAttr);
+      acl_param_.attr = CALL_ASCEND_API(aclopCreateAttr);
     }
   }
 

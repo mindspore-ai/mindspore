@@ -25,7 +25,7 @@ mindspore.amp.auto_mixed_precision
     [:class:`mindspore.nn.BatchNorm1d`, :class:`mindspore.nn.BatchNorm2d`, :class:`mindspore.nn.BatchNorm3d`,
     :class:`mindspore.nn.LayerNorm`]
 
-    关于自动混合精度的详细介绍，请参考 `自动混合精度 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/mixed_precision.html>`_ 。
+    关于自动混合精度的详细介绍，请参考 `自动混合精度 <https://www.mindspore.cn/tutorials/zh-CN/r2.3.q1/advanced/mixed_precision.html>`_ 。
 
     .. note::
         - 重复调用混合精度接口，如 `custom_mixed_precision` 和 `auto_mixed_precision` ，可能导致网络层数增大，性能降低。

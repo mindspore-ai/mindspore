@@ -103,6 +103,7 @@ void InplaceUpdate::set_indices(const std::vector<int64_t> indices) {
 
 std::vector<int64_t> InplaceAdd::get_indices() const {
   auto value_ptr = GetAttr(kIndices);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   if (value_ptr->isa<mindspore::api::ValueSequence>()) {
     return GetValue<std::vector<int64_t>>(value_ptr);
   } else {
@@ -112,6 +113,7 @@ std::vector<int64_t> InplaceAdd::get_indices() const {
 
 std::vector<int64_t> InplaceSub::get_indices() const {
   auto value_ptr = GetAttr(kIndices);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   if (value_ptr->isa<mindspore::api::ValueSequence>()) {
     return GetValue<std::vector<int64_t>>(value_ptr);
   } else {

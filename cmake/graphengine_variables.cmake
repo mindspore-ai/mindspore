@@ -33,11 +33,8 @@ elseif(ENABLE_D OR ENABLE_ACL OR MSLITE_ENABLE_ACL)
     include_directories(${ASCEND_PATH}/ascend-toolkit/latest/opp/built-in/)
     include_directories(${ASCEND_PATH}/ascend-toolkit/latest/opp/built-in/op_impl/aicpu/aicpu_kernel/inc/)
 
+    # slog used
     include_directories(${GRAPHENGINE_PATH}/third_party/fwkacllib/inc)
-    include_directories(${GRAPHENGINE_PATH}/third_party/fwkacllib/)
+    # hcom ranktable used
     include_directories(${GRAPHENGINE_PATH}/metadef/inc)
-    include_directories(${GRAPHENGINE_PATH}/metadef/inc/external)
-    include_directories(${GRAPHENGINE_PATH}/inc/)
-    include_directories(${GRAPHENGINE_PATH}/inc/framework)
-    include_directories(${GRAPHENGINE_PATH}/base/)
 endif()

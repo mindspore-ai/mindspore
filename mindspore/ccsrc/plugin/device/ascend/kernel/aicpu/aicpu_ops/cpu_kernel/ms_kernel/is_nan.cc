@@ -33,41 +33,41 @@ constexpr int64_t kParallelDataNumsFloat16 = 32 * 1024;
 constexpr int64_t kParallelDataNumsFloat = 256 * 1024;
 constexpr int64_t kParallelDataNumsDouble = 256 * 1024;
 
-#define ISNAN_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                       \
-    uint32_t result = IsNanCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("IsNan kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define ISNAN_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                 \
+    uint32_t result = IsNanCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "IsNan kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t IsNanCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", KIsNan)
-  KERNEL_HANDLE_ERROR(IsNanCheck(ctx), "[%s] check params failed.", KIsNan);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", KIsNan)
+  CUST_KERNEL_HANDLE_ERROR(ctx, IsNanCheck(ctx), "[%s] check params failed.", KIsNan);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     ISNAN_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     ISNAN_COMPUTE_CASE(DT_FLOAT, float, ctx)
     ISNAN_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("IsNan kernel data type [%s] not supports.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "IsNan kernel data type [%s] not supports.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t IsNanCpuKernel::IsNanCheck(const CpuKernelContext &ctx) const {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
+uint32_t IsNanCpuKernel::IsNanCheck(CpuKernelContext &ctx) const {
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t IsNanCpuKernel::IsNanCompute(const CpuKernelContext &ctx) const {
+uint32_t IsNanCpuKernel::IsNanCompute(CpuKernelContext &ctx) const {
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output = reinterpret_cast<bool *>(ctx.Output(0)->GetData());
 
@@ -93,8 +93,8 @@ uint32_t IsNanCpuKernel::IsNanCompute(const CpuKernelContext &ctx) const {
         *(output + index) = Eigen::numext::isnan(*(input + index));
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_isinf),
-                        "IsInf Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_isinf),
+                             "IsInf Compute failed.");
   }
 
   return KERNEL_STATUS_OK;

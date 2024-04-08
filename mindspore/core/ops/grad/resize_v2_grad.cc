@@ -57,8 +57,8 @@ abstract::ShapePtr ResizeV2GradInferShape(const PrimitivePtr &primitive,
   auto mode_ptr = primitive->GetAttr("mode");
   std::string mode_str = GetValue<std::string>(mode_ptr);
 
+  MS_EXCEPTION_IF_NULL(sizes_input);
   if (!sizes_input->isa<ValueAny>() && !sizes_input->isa<None>()) {
-    MS_EXCEPTION_IF_NULL(sizes_input);
     auto sizes = CheckAndConvertUtils::CheckTensorIntValue("original_size", sizes_input, prim_name,
                                                            input_args[kInputIndex3]->GetType());
     const size_t kSizesSize = 4;

@@ -41,6 +41,12 @@ AffineOperation::~AffineOperation() = default;
 std::string AffineOperation::Name() const { return kAffineOperation; }
 
 Status AffineOperation::ValidateParams() {
+  // Degrees
+  if (degrees_ < -180 || degrees_ > 180) {
+    std::string err_msg = "Affine: rotation angle in degrees between -180 and 180, but got " + std::to_string(degrees_);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
   // Translate
   constexpr size_t kExpectedTranslationSize = 2;
   if (translation_.size() != kExpectedTranslationSize) {
@@ -53,18 +59,27 @@ Status AffineOperation::ValidateParams() {
 
   // Scale
   RETURN_IF_NOT_OK(ValidateScalar("Affine", "scale", scale_, {0}, true));
+
   // Shear
   constexpr size_t kExpectedShearSize = 2;
   if (shear_.size() != kExpectedShearSize) {
     std::string err_msg = "Affine: shear_ranges expecting size 2, got: shear.size() = " + std::to_string(shear_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
+  for (const auto &s : shear_) {
+    if (s < -180 || s > 180) {
+      std::string err_msg = "Affine: shear angle value between -180 and 180, but got " + std::to_string(s);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+
   // Fill Value
   RETURN_IF_NOT_OK(ValidateVectorFillvalue("Affine", fill_value_));
+
   // interpolation
   if (interpolation_ != InterpolationMode::kLinear && interpolation_ != InterpolationMode::kNearestNeighbour &&
       interpolation_ != InterpolationMode::kCubic && interpolation_ != InterpolationMode::kArea) {
-    std::string err_msg = "Affine: Invalid InterpolationMode, check input value of enum.";
+    std::string err_msg = "Affine: Invalid InterpolationMode, only support Linear, Nearest, Cubic and Area.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // device target

@@ -38,7 +38,7 @@ ShapeVector CalcuateDiagonalShape(size_t dim1, size_t dim2, size_t x_rank, const
 BaseShapePtr DiagonalFuncImpl::InferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape = input_args[0]->GetShape()->GetShapeVector();
-  constexpr size_t kDimNum = 2;
+  constexpr auto kDimNum = 2;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 4;
@@ -48,11 +48,10 @@ BaseShapePtr DiagonalFuncImpl::InferShape(const PrimitivePtr &primitive,
   if (IsDynamicRank(input_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
-  auto x_rank = input_shape.size();
+  auto x_rank = SizeToLong(input_shape.size());
   auto offset_opt = GetScalarValue<int64_t>(input_args[1]->GetValue());
   auto dim1_opt = GetScalarValue<int64_t>(input_args[2]->GetValue());
   auto dim2_opt = GetScalarValue<int64_t>(input_args[3]->GetValue());
-
   if (!dim1_opt.has_value() || !dim2_opt.has_value()) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
@@ -63,13 +62,13 @@ BaseShapePtr DiagonalFuncImpl::InferShape(const PrimitivePtr &primitive,
   if (x_rank < kDimNum) {
     MS_EXCEPTION(ValueError) << "For 'Diagonal', input must be at least 2-dimensional, but got : " << x_rank << ".";
   }
-  auto tmp_dim1 = (dim1 < 0) ? dim1 + x_rank : dim1;
-  auto tmp_dim2 = (dim2 < 0) ? dim2 + x_rank : dim2;
+  auto tmp_dim1 = LongToSize((dim1 < 0) ? dim1 + x_rank : dim1);
+  auto tmp_dim2 = LongToSize((dim2 < 0) ? dim2 + x_rank : dim2);
   if (tmp_dim1 == tmp_dim2) {
     MS_EXCEPTION(ValueError) << "For 'Diagonal', dim1 and dim2 cannot be identical, but got : dim1 =" << dim1
                              << " and dim2 = " << dim2 << ".";
   }
-  auto out_shape = CalcuateDiagonalShape(tmp_dim1, tmp_dim2, x_rank, input_shape);
+  auto out_shape = CalcuateDiagonalShape(tmp_dim1, tmp_dim2, input_shape.size(), input_shape);
   int64_t dsize = dyn_shape;
   if (offset_opt.has_value()) {
     auto offset = offset_opt.value();

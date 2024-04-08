@@ -44,3 +44,22 @@ def test_ops_nanmean(mode):
     output = net(x)
     expect_output = [[float("nan"), 128.1, -64.45]]
     assert np.allclose(output.asnumpy(), expect_output, equal_nan=True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_nanmean_int_error(mode):
+    """
+    Feature: ops.nanmean
+    Description: Whether typeerror can be caught if the input is int
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    x = ms.Tensor([1, 2, 3], ms.int32)
+    net = Net()
+    with pytest.raises(TypeError):
+        net(x)

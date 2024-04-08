@@ -25,12 +25,13 @@ using mindspore::DebugInfoPtr;
 using mindspore::TraceInfoPtr;
 using mindspore::trace::TraceLabelType;
 
-static const TraceLabelType global_trace_type =
-  (mindspore::common::GetCompileConfig("TRACE_LABEL_WITH_UNIQUE_ID") == "1") ? TraceLabelType::kWithUniqueId
-                                                                             : TraceLabelType::kShortSymbol;
+bool *WithUniqueIdPtr() {
+  static bool with_unique_id = mindspore::common::GetCompileConfig("TRACE_LABEL_WITH_UNIQUE_ID") == "1";
+  return &with_unique_id;
+}
 
 TraceLabelType GetCurrentTraceLabelType() {
-  if (mindspore::common::GetCompileConfig("TRACE_LABEL_WITH_UNIQUE_ID") == "1") {
+  if (*WithUniqueIdPtr()) {
     return TraceLabelType::kWithUniqueId;
   }
   return TraceLabelType::kShortSymbol;
@@ -136,7 +137,14 @@ std::string LabelString(const DebugInfoPtr &debug_info, TraceLabelType trace_lab
 
 namespace mindspore {
 namespace trace {
-TraceLabelType GetGlobalTraceLabelType() { return global_trace_type; }
+void SetWithUniqueId(bool enabled) { *WithUniqueIdPtr() = enabled; }
+
+TraceLabelType GetGlobalTraceLabelType() {
+  static const TraceLabelType global_trace_type =
+    (mindspore::common::GetCompileConfig("TRACE_LABEL_WITH_UNIQUE_ID") == "1") ? TraceLabelType::kWithUniqueId
+                                                                               : TraceLabelType::kShortSymbol;
+  return global_trace_type;
+}
 
 std::string Label(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
   if ((GetGlobalTraceLabelType() == TraceLabelType::kWithUniqueId) ||

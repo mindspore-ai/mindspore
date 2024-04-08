@@ -99,4 +99,4 @@ def test_dynamic_stridedslice_handle_begin_end():
     validator = ParallelValidator(net, phase)
 
     # check inputs
-    assert validator.check_node_inputs_has('Gather-0', ['StridedSlice-0'], graph_id=1)
+    assert validator.check_node_inputs_has('Gather-0', ['Concat-0'], graph_id=1)

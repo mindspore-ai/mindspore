@@ -37,7 +37,8 @@ namespace aicpu {
 // 实现自定义算子类的Compute函数
 uint32_t BlackmanWindowCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "BlackmanWindow check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "BlackmanWindow check input and output number failed.");
   // input
   Tensor *input = ctx.Input(0);
 
@@ -46,14 +47,14 @@ uint32_t BlackmanWindowCpuKernel::Compute(CpuKernelContext &ctx) {
 
   // output
   Tensor *output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_PARAM_INVALID, "Get output failed.")
 
   auto outputShape = output->GetTensorShape();  // 获取输出的shape信息
   DataType outputType = output->GetDataType();  // 获取输出的DataType信息
 
   // attr
   AttrValue *periodic = ctx.GetAttr("periodic");
-  KERNEL_CHECK_NULLPTR(periodic, KERNEL_STATUS_PARAM_INVALID, "Get periodic failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, periodic, KERNEL_STATUS_PARAM_INVALID, "Get periodic failed.")
 
   uint32_t result;
   switch (inputType) {
@@ -69,7 +70,7 @@ uint32_t BlackmanWindowCpuKernel::Compute(CpuKernelContext &ctx) {
           result = BlackmanWindowCompute2<int32_t, Eigen::half>(ctx);
           return result;
         default:
-          KERNEL_LOG_ERROR("BlackmanWinow kernel output type not support.");
+          CUST_KERNEL_LOG_ERROR(ctx, "BlackmanWinow kernel output type not support.");
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -87,19 +88,19 @@ uint32_t BlackmanWindowCpuKernel::Compute(CpuKernelContext &ctx) {
           return result;
           break;
         default:
-          KERNEL_LOG_ERROR("BlackmanWinow kernel output type not support.");
+          CUST_KERNEL_LOG_ERROR(ctx, "BlackmanWinow kernel output type not support.");
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     default:
-      KERNEL_LOG_ERROR("BlackmanWinow kernel input type not support.");
+      CUST_KERNEL_LOG_ERROR(ctx, "BlackmanWinow kernel input type not support.");
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T, typename T2>
-uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute(const CpuKernelContext &ctx) {
+uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute(CpuKernelContext &ctx) {
   // 输入数据
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto window_length = *input;
@@ -144,7 +145,7 @@ uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute(const CpuKernelContext &
 }
 
 template <typename T, typename T2>
-uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute2(const CpuKernelContext &ctx) {
+uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute2(CpuKernelContext &ctx) {
   // 输入数据
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto window_length = *input;

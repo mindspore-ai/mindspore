@@ -26,19 +26,19 @@ namespace aicpu {
 uint32_t EnvironCreateKernel::Compute(CpuKernelContext &ctx) {
   // Parse Kernel
   auto ret = ParseKernelParam(ctx);
-  KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Parse EnvironCreate failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Parse EnvironCreate failed.");
   // Generate an unique handle.
-  int64_t env_handle = EnvironMgr::GetInstance().Create();
-  KERNEL_LOG_DEBUG("Create env handle:%d", env_handle);
+  int64_t env_handle = EnvironMgr::GetInstance().Create(ctx);
+  CUST_KERNEL_LOG_DEBUG(ctx, "Create env handle:%d", env_handle);
   auto output_data = reinterpret_cast<int64_t *>(ctx.Output(kFirstOutputIndex)->GetData());
   output_data[0] = env_handle;
   return KERNEL_STATUS_OK;
 }
 
-uint32_t EnvironCreateKernel::ParseKernelParam(const CpuKernelContext &ctx) const {
-  KERNEL_LOG_DEBUG("Enter ParseKernelParam.");
-  if (!EnvironMgr::GetInstance().IsScalarTensor(ctx.Output(kFirstInputIndex))) {
-    KERNEL_LOG_ERROR("The output is not scalar tensor.");
+uint32_t EnvironCreateKernel::ParseKernelParam(CpuKernelContext &ctx) const {
+  CUST_KERNEL_LOG_DEBUG(ctx, "Enter ParseKernelParam.");
+  if (!EnvironMgr::GetInstance().IsScalarTensor(ctx, ctx.Output(kFirstInputIndex))) {
+    CUST_KERNEL_LOG_ERROR(ctx, "The output is not scalar tensor.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

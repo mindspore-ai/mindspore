@@ -199,7 +199,7 @@ def _get_slice_index(dev_mat, tensor_map, opt_shard_group):
     return tensor_slice_index
 
 
-def _load_tensor(tensor, dev_mat, tensor_map, full_shape, rank_id=-1):
+def _load_tensor(tensor, dev_mat, tensor_map, full_shape=None, rank_id=-1):
     """
     Get the tensor slice of the local device by the device matrix and the tensor map
 
@@ -229,7 +229,8 @@ def _load_tensor(tensor, dev_mat, tensor_map, full_shape, rank_id=-1):
         cpu_cast = Cast().set_device("CPU")
         tensor = cpu_cast(tensor, mstype.float32)
     np_tensor = tensor.asnumpy()
-    np_tensor = np_tensor.reshape(full_shape)
+    if full_shape:
+        np_tensor = np_tensor.reshape(full_shape)
     np_tensor_list = _chunk_tensor_by_strategy(np_tensor, tensor_strategy)
     np_tensor_slice = np_tensor_list[int(tensor_slice_index)]
     return np_tensor_slice
@@ -271,7 +272,7 @@ def _load_tensor_by_layout(tensor, layout, rank_id):
         # get a totally shard tensor slice for parallel optimizer
         rank = get_rank(group)
         size = get_group_size(group)
-        if tensor_slice.shape != slice_shape and slice_shape:
+        if tensor_slice.shape != tuple(slice_shape) and slice_shape:
             slice_shape_extend = copy.deepcopy(slice_shape)
             slice_shape_extend[0] = slice_shape[0] * size
             tensor_slice = tensor_slice.reshape(slice_shape_extend)

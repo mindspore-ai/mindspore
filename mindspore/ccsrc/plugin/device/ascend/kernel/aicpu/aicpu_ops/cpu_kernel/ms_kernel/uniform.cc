@@ -35,9 +35,9 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 namespace aicpu {
 uint32_t UniformCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *inputTensor = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(inputTensor, KERNEL_STATUS_PARAM_INVALID, "Get input failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, inputTensor, KERNEL_STATUS_PARAM_INVALID, "Get input failed")
   Tensor *outputTensor = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(outputTensor, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, outputTensor, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
 
   auto inputDataType = inputTensor->GetDataType();
   uint32_t status = KERNEL_STATUS_OK;
@@ -54,14 +54,14 @@ uint32_t UniformCpuKernel::Compute(CpuKernelContext &ctx) {
       status = DoCompute<double>(ctx, inputTensor, outputTensor);
       break;
     default:
-      KERNEL_LOG_ERROR("Uniform kernel data type [%u] not support.", inputDataType);
+      CUST_KERNEL_LOG_ERROR(ctx, "Uniform kernel data type [%u] not support.", inputDataType);
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return status;
 }
 
 template <typename T>
-uint32_t UniformCpuKernel::DoCompute(const CpuKernelContext &ctx, Tensor *input, Tensor *output) {
+uint32_t UniformCpuKernel::DoCompute(CpuKernelContext &ctx, Tensor *input, Tensor *output) {
   T *inputData = reinterpret_cast<T *>(input->GetData());
   T *outputData = reinterpret_cast<T *>(output->GetData());
 
@@ -72,8 +72,8 @@ uint32_t UniformCpuKernel::DoCompute(const CpuKernelContext &ctx, Tensor *input,
   AttrValue *offset_ptr = ctx.GetAttr("offset");
   float from = (from_ptr == nullptr) ? 0.0 : from_ptr->GetFloat();
   float to = (to_ptr == nullptr) ? 1.0 : to_ptr->GetFloat();
-  KERNEL_CHECK_FALSE((from <= to), KERNEL_STATUS_PARAM_INVALID,
-                     "the value of from[%f] must less or equal to the value of to[%f]", from, to);
+  CUST_KERNEL_CHECK_FALSE(ctx, (from <= to), KERNEL_STATUS_PARAM_INVALID,
+                          "the value of from[%f] must less or equal to the value of to[%f]", from, to);
   uint64_t seed = (seed_ptr == nullptr) ? static_cast<uint64_t>(0) : static_cast<uint64_t>(seed_ptr->GetInt());
   uint64_t offset = (offset_ptr == nullptr) ? static_cast<uint64_t>(0) : static_cast<uint64_t>(offset_ptr->GetInt());
 
@@ -98,8 +98,7 @@ uint32_t UniformCpuKernel::DoCompute(const CpuKernelContext &ctx, Tensor *input,
 }
 
 template <typename T>
-uint32_t UniformCpuKernel::ParaCompute(const CpuKernelContext &ctx, int64_t input_size, T *outputData, float from,
-                                       float to) {
+uint32_t UniformCpuKernel::ParaCompute(CpuKernelContext &ctx, int64_t input_size, T *outputData, float from, float to) {
   if (input_size >= kParallelDataNum) {
     uint32_t min_core_num = 1;
     int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
@@ -114,11 +113,12 @@ uint32_t UniformCpuKernel::ParaCompute(const CpuKernelContext &ctx, int64_t inpu
 
     auto sharder_uniform = [&](int64_t start, int64_t end) { UniformCompute<T>(from, to, start, end, outputData); };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, input_size, input_size / max_core_num, sharder_uniform),
-                        "Uniform Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, input_size, input_size / max_core_num, sharder_uniform),
+                             "Uniform Compute failed.");
   } else {
     UniformCompute<T>(from, to, 0, input_size, outputData);
   }

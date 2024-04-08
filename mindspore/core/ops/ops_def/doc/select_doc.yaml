@@ -33,18 +33,11 @@ select:
         Examples:
             >>> import mindspore
             >>> from mindspore import Tensor, ops
-            >>> # 1) Both inputs are Tensor
+            >>> # Both inputs are Tensor
             >>> select = ops.Select()
             >>> cond = Tensor([True, False])
             >>> x = Tensor([2,3], mindspore.float32)
             >>> y = Tensor([1,2], mindspore.float32)
-            >>> output = select(cond, x, y)
-            >>> print(output)
-            [2. 2.]
-            >>> # 2) y is a float
-            >>> cond = Tensor([True, False])
-            >>> x = Tensor([2,3], mindspore.float32)
-            >>> y = 2.0
             >>> output = select(cond, x, y)
             >>> print(output)
             [2. 2.]

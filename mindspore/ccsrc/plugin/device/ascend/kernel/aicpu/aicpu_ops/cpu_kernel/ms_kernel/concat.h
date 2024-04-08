@@ -48,20 +48,19 @@ class ConcatCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CheckAndInitParams(const CpuKernelContext &ctx);
+  uint32_t CheckAndInitParams(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t PrepareInput(const CpuKernelContext &ctx,
-                        std::vector<std::shared_ptr<typename TTypes<T>::ConstMatrix>> &inputs);
+  uint32_t PrepareInput(CpuKernelContext &ctx, std::vector<std::shared_ptr<typename TTypes<T>::ConstMatrix>> &inputs);
 
   template <typename T>
-  uint32_t PrepareOutput(const CpuKernelContext &ctx, std::shared_ptr<typename TTypes<T>::Matrix> &output);
+  uint32_t PrepareOutput(CpuKernelContext &ctx, std::shared_ptr<typename TTypes<T>::Matrix> &output);
 
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t ConcatCompute(const CpuKernelContext &ctx,
+  uint32_t ConcatCompute(CpuKernelContext &ctx,
                          const std::vector<std::shared_ptr<typename TTypes<T>::ConstMatrix>> &inputs,
                          std::shared_ptr<typename TTypes<T>::Matrix> &output);
 

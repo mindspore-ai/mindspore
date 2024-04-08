@@ -29,7 +29,7 @@ class HammingWindowCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t HammingWindowCompute(const CpuKernelContext &ctx);
+  uint32_t HammingWindowCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

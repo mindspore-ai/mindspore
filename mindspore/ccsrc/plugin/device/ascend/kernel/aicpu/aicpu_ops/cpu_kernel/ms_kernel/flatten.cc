@@ -38,14 +38,14 @@ uint32_t FlattenCpuKernel::Compute(CpuKernelContext &ctx) {
   auto input_size = input->GetDataSize();
   auto output = ctx.Output(0);
   auto output_size = output->GetDataSize();
-  KERNEL_CHECK_FALSE(input_size == output_size, KERNEL_STATUS_INNER_ERROR,
-                     "Input size [%zu] differs from output size [%zu].", input_size, output_size);
+  CUST_KERNEL_CHECK_FALSE(ctx, input_size == output_size, KERNEL_STATUS_INNER_ERROR,
+                          "Input size [%zu] differs from output size [%zu].", input_size, output_size);
   auto input_data = input->GetData();
   auto output_data = output->GetData();
   auto ret = memcpy_s(output_data, output_size, input_data, input_size);
-  KERNEL_CHECK_FALSE(ret == EOK, KERNEL_STATUS_INNER_ERROR,
-                     "memcpy_s failed, output_addr [%p], output_size [%zu], input_addr[%p].", output_data, output_size,
-                     input_data);
+  CUST_KERNEL_CHECK_FALSE(ctx, ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                          "memcpy_s failed, output_addr [%p], output_size [%zu], input_addr[%p].", output_data,
+                          output_size, input_data);
 
   return KERNEL_STATUS_OK;
 }

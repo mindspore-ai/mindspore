@@ -161,6 +161,12 @@ ATTR_MAP(Pdist) = {
 OUTPUT_MAP(Pdist) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Pdist, prim::kPrimPdist->name(), ADPT_DESC(Pdist))
 
+// PdistGrad
+CUST_INPUT_MAP(PdistGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(pdist)}};
+CUST_ATTR_MAP(PdistGrad) = {{"p", ATTR_DESC(p, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(PdistGrad) = {{0, OUTPUT_DESC(x_grad)}};
+REG_ADPT_DESC(PdistGrad, prim::kPrimPdistGrad->name(), CUST_ADPT_DESC(PdistGrad));
+
 // SoftMarginLossGrad
 INPUT_MAP(SoftMarginLossGrad) = {{1, INPUT_DESC(predict)}, {2, INPUT_DESC(label)}, {3, INPUT_DESC(dout)}};
 ATTR_MAP(SoftMarginLossGrad) = {
@@ -337,7 +343,7 @@ REG_ADPT_DESC(RaggedRange, prim::kPrimRaggedRange->name(), ADPT_DESC(RaggedRange
 
 // Imag
 INPUT_MAP(Imag) = {{1, INPUT_DESC(input)}};
-ATTR_MAP(Imag) = EMPTY_ATTR_MAP;
+ATTR_MAP(Imag) = {{"Tout", ATTR_DESC(Tout, AnyTraits<GEType>())}};
 OUTPUT_MAP(Imag) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(Imag, prim::kPrimImag->name(), ADPT_DESC(Imag));
 
@@ -530,7 +536,6 @@ ATTR_MAP(Zeta) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Zeta) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(Zeta, prim::kPrimZeta->name(), ADPT_DESC(Zeta));
 
-
 // SilentCheck
 INPUT_MAP(SilentCheck) = {{1, INPUT_DESC(val)},     {2, INPUT_DESC(input_grad)}, {3, INPUT_DESC(pre_val)},
                           {4, INPUT_DESC(min_val)}, {5, INPUT_DESC(max_val)},    {6, INPUT_DESC(val_counter)}};
@@ -545,4 +550,16 @@ ATTR_MAP(SilentCheck) = {{"c_min_steps", ATTR_DESC(c_min_steps, AnyTraits<int64_
                          {"c_thresh_l2", ATTR_DESC(c_thresh_l2, AnyTraits<float>())},
                          {"c_coeff_l2", ATTR_DESC(c_coeff_l2, AnyTraits<float>())}};
 REG_ADPT_DESC(SilentCheck, prim::kPrimSilentCheck->name(), ADPT_DESC(SilentCheck))
+
+// Cross
+INPUT_MAP(Cross) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Cross) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Cross) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Cross, prim::kPrimCross->name(), ADPT_DESC(Cross))
+
+// Logit
+CUST_INPUT_MAP(Logit) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Logit) = {{"eps", ATTR_DESC(eps, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(Logit) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Logit, prim::kPrimLogit->name(), CUST_ADPT_DESC(Logit))
 }  // namespace mindspore::transform

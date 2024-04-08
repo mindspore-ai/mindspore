@@ -29,10 +29,10 @@ class ReduceMeanCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t ReduceMeanCompute(const CpuKernelContext &ctx);
+  static uint32_t ReduceMeanCompute(CpuKernelContext &ctx);
 
   template <typename T1, typename T2>
-  static uint32_t ReduceMeanCompute_Complex(const CpuKernelContext &ctx);
+  static uint32_t ReduceMeanCompute_Complex(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

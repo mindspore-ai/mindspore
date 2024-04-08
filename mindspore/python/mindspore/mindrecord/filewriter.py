@@ -32,7 +32,8 @@ from .shardindexgenerator import ShardIndexGenerator
 from .shardutils import MIN_SHARD_COUNT, MAX_SHARD_COUNT, VALID_ATTRIBUTES, VALID_ARRAY_ATTRIBUTES, \
     check_filename, VALUE_TYPE_MAP, SUCCESS
 from .common.exceptions import ParamValueError, ParamTypeError, MRMInvalidSchemaError, MRMDefineIndexError
-from .config import _get_enc_key, _get_enc_mode, _get_dec_mode, _get_hash_mode, encrypt, decrypt, append_hash_to_file, verify_file_hash
+from .config import _get_enc_key, _get_enc_mode, _get_dec_mode, _get_hash_mode, encrypt, decrypt, append_hash_to_file, \
+    verify_file_hash
 
 __all__ = ['FileWriter']
 

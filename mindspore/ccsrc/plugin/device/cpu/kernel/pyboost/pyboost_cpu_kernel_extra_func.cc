@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/pyboost/pyboost_cpu_kernel_extra_func.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
 #include "kernel/pyboost/pyboost_utils.h"
 
 namespace mindspore {
@@ -32,6 +33,28 @@ void PyboostCPUKernelExtraFunc::SetThreadPool(const kernel::KernelModPtr &kernel
 
 bool PyboostCPUKernelExtraFunc::IsKernelModRegistered(const std::string &op_name) {
   return kernel::Factory<kernel::NativeCpuKernelMod>::Instance().IsRegistered(op_name);
+}
+
+bool PyboostCPUKernelExtraFunc::IsEnableProfiler() {
+  const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+  return profiler_inst->GetEnableFlag() && profiler_inst->GetOpTimeFlag();
+}
+
+void PyboostCPUKernelExtraFunc::LaunchKernelWithProfiler(const std::string &op_name,
+                                                         const device::DeviceContext *device_context,
+                                                         const std::vector<BaseShapePtr> &base_shape,
+                                                         const std::function<void()> &func) {
+  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+
+  uint32_t pid = IntToUint(getpid());
+  // cpu support multi-thread with mindrt for profiling.
+  profiler_inst->OpDataProducerBeginParallel(op_name, pid);
+  // launch kernel.
+  func();
+  profiler_inst->OpDataProducerEndParallel(op_name);
+  profiler_inst->RecordFrameWorkInfo(op_name, base_shape);
 }
 
 REG_PYBOOST_KERNEL_EXTRA_FUN(CPU, PyboostCPUKernelExtraFunc);

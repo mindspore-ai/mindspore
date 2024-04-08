@@ -179,6 +179,12 @@ PYBIND_REGISTER(ToDevice, 1, ([](const py::module *m) {
                            }
                            return py::make_tuple(types, shapes);
                          })
+                    .def("GetMbufQueueSize",
+                         [](ToDevice &self) {
+                           size_t queue_size = 0;
+                           THROW_IF_ERROR(self.GetMbufQueueSize(&queue_size));
+                           return queue_size;
+                         })
                     .def("GetSendInfo",
                          [](ToDevice &self) {
                            std::vector<std::vector<double>> send_info;

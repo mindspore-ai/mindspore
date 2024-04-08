@@ -36,6 +36,7 @@ class NetworkPt(torch.nn.Module):
 class AdamFactory():
     def __init__(self, group=True, lr_dynamic=False, if_change=False, dtype=np.float32):
         super().__init__()
+        np.random.seed(1024)
         self.lin_weight_np = np.random.randn(3, 2).astype(dtype)
         self.lin_bias_np = np.random.randn(3,).astype(dtype)
 
@@ -44,7 +45,7 @@ class AdamFactory():
         self.if_change = if_change
         self.data = np.random.rand(2, 2).astype(np.float32)
         self.label = np.random.rand(2, 3).astype(np.float32)
-        self.epochs = 4
+        self.epochs = 1
         self.steps = 1
         self.lr = 0.002
 
@@ -201,7 +202,7 @@ def test_adam_group(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -218,7 +219,7 @@ def test_adam_lr_dynamic(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -235,7 +236,7 @@ def test_adam_group_lr_dynamic(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

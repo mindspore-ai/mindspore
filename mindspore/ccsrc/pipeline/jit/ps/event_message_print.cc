@@ -15,6 +15,7 @@
  */
 
 #include "pipeline/jit/ps/event_message_print.h"
+#include <iostream>
 #include "utils/log_adapter.h"
 #include "pipeline/jit/ps/pipeline.h"
 
@@ -25,6 +26,7 @@ void EventMessage::PrintCompileStartMsg(const std::string &phase, const std::str
     return;
   }
   PrintEventMessage("Start compiling " + obj_desc + " and it will take a while. Please wait...");
+  PrintCompileStatusMessage("Start compiling " + obj_desc + ".");
 }
 
 void EventMessage::PrintCompileEndMsg(const std::string &phase, const std::string &obj_desc) {
@@ -32,8 +34,17 @@ void EventMessage::PrintCompileEndMsg(const std::string &phase, const std::strin
     return;
   }
   PrintEventMessage("End compiling " + obj_desc + ".");
+  PrintCompileStatusMessage("End compiling " + obj_desc + ".");
 }
 
 void EventMessage::PrintEventMessage(const std::string &message) { MS_LOG(INFO) << message; }
+
+void EventMessage::PrintCompileStatusMessage(const std::string &message) {
+  static const auto need_display_progress = (common::GetEnv("MS_JIT_DISPLAY_PROGRESS") == "1");
+  if (need_display_progress) {
+    auto sys_time = GetTimeString();
+    std::cout << sys_time << ": " << message << std::endl;
+  }
+}
 }  // namespace pipeline
 }  // namespace mindspore

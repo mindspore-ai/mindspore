@@ -92,14 +92,14 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
 
   aclError aclRet = CALL_ASCEND_API(aclprofInit, profile_data_path_.c_str(), profile_data_path_.length());
   if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofInit function.";
+    MS_LOG(EXCEPTION) << "Failed to call aclprofInit function. error_code : " << static_cast<int>(aclRet);
   }
 
   if (options["hbm_ddr"] == "on") {
     const char *hbmFreq = "100";
     aclError hbmRet = aclprofSetConfig(ACL_PROF_SYS_HARDWARE_MEM_FREQ, hbmFreq, strlen(hbmFreq));
     if (hbmRet != ACL_SUCCESS) {
-      MS_LOG(EXCEPTION) << "Failed to set hbm profiling config.";
+      MS_LOG(EXCEPTION) << "Failed to set hbm profiling config. error_code : " << static_cast<int>(hbmRet);
     }
   }
 
@@ -107,7 +107,7 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
     const char *pcieFreq = "50";
     aclError pcieRet = aclprofSetConfig(ACL_PROF_SYS_INTERCONNECTION_FREQ, pcieFreq, strlen(pcieFreq));
     if (pcieRet != ACL_SUCCESS) {
-      MS_LOG(EXCEPTION) << "Failed to set pcie profiling config.";
+      MS_LOG(EXCEPTION) << "Failed to set pcie profiling config. error_code : " << static_cast<int>(pcieRet);
     }
   }
 
@@ -176,7 +176,7 @@ void AscendProfiler::Start() {
   MS_LOG(INFO) << "Begin to profiling.";
   aclError aclRet = CALL_ASCEND_API(aclprofStart, acl_config_);
   if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofStart function.";
+    MS_LOG(EXCEPTION) << "Failed to call aclprofStart function. error_code : " << static_cast<int>(aclRet);
   }
 
   MemoryProfiling::GetInstance().StartMemoryProfiling();
@@ -211,7 +211,7 @@ void AscendProfiler::Stop() {
   ProfilingDataDumper::GetInstance()->Stop();
   aclError aclRet = CALL_ASCEND_API(aclprofStop, acl_config_);
   if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofStop function.";
+    MS_LOG(EXCEPTION) << "Failed to call aclprofStop function. error_code : " << static_cast<int>(aclRet);
   }
 
   MemoryProfiling::GetInstance().StopMemoryProfiling();
@@ -227,7 +227,7 @@ struct aclprofStepInfoInner {
 
 void AscendProfiler::StepStart(uint64_t step_id, void *stream) {
   acl_stream_ = static_cast<aclrtStream>(stream);
-  acl_prof_step_info_ = CALL_ASCEND_API2(aclprofCreateStepInfo);
+  acl_prof_step_info_ = CALL_ASCEND_API(aclprofCreateStepInfo);
   aclprofStepInfoInner *ptr_info = reinterpret_cast<aclprofStepInfoInner *>(acl_prof_step_info_);
   ptr_info->indexId = step_id;
   auto ret =
@@ -253,12 +253,12 @@ void AscendProfiler::StepStop() {
 void AscendProfiler::Finalize() {
   aclError aclRet = CALL_ASCEND_API(aclprofDestroyConfig, acl_config_);
   if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofDestoryConfig function.";
+    MS_LOG(EXCEPTION) << "Failed to call aclprofDestoryConfig function. error_code : " << static_cast<int>(aclRet);
   }
   MS_LOG(INFO) << "Begin to finalize profiling";
-  aclRet = CALL_ASCEND_API2(aclprofFinalize);
+  aclRet = CALL_ASCEND_API(aclprofFinalize);
   if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
+    MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function. error_code : " << static_cast<int>(aclRet);
   }
 }
 }  // namespace ascend

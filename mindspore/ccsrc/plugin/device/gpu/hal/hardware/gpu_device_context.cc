@@ -498,10 +498,6 @@ void RunOpHardwareOptimize(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  if (kernel_graph->has_attr(kAttrPackFunction)) {
-    kernel_graph->SetKernelObjectTypesForUnrealNodes();
-    pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
-  }
   pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
@@ -1012,7 +1008,16 @@ bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_ty
   if (!ret) {
     MS_LOG(EXCEPTION) << "Exec task failed, task_type:" << task_type;
   }
-  return ret;
+
+  // Sync running.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
+      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncAllStreams()) {
+    return false;
+  }
+
+  return true;
 }
 
 bool GPUDeviceResManager::LoadCollectiveCommLib() {

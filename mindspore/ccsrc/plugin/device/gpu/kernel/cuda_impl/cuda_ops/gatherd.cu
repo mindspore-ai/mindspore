@@ -23,40 +23,45 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename T, typename S>
-__global__ void GatherDKernel(const T *input, const S *index, T *output, size_t dim_before_axis_index,
-                              size_t dim_at_axis_index, size_t dim_after_axis_index, size_t dim_at_axis_input,
-                              size_t dim_after_axis_input, size_t num) {
+__global__ void GatherDKernel(const T *input, const S *index, T *output, const ShapeHelper input_shape,
+                              const ShapeHelper index_shape, size_t dim, size_t num, size_t rank) {
   for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < num; id += blockDim.x * gridDim.x) {
     S j = index[id];
     if (j < 0) {
-      j += static_cast<S>(dim_at_axis_input);
+      j += static_cast<S>(input_shape.shape[dim]);
     }
     CUDA_KERNEL_ASSERT(j >= 0);
     size_t j_read = static_cast<size_t>(j);
-    CUDA_KERNEL_ASSERT(j_read < dim_at_axis_input);
-    size_t offset = id % dim_after_axis_index + j_read * dim_after_axis_input +
-                    ((id / (dim_after_axis_index * dim_at_axis_index)) % dim_before_axis_index) *
-                      (dim_at_axis_input * dim_after_axis_input);
+    CUDA_KERNEL_ASSERT(j_read < input_shape.shape[dim]);
+    size_t offset = 0;
+    size_t moved_id = id;
+    size_t moved_offset = 1;
+    for (size_t i = rank; i > 0; i--) {
+      auto real_i = i - 1;
+      auto cur_idx = moved_id % index_shape.shape[real_i];
+      moved_id = moved_id / index_shape.shape[real_i];
+      auto cur_input_idx = real_i == dim ? j_read : cur_idx;
+      offset += cur_input_idx * moved_offset;
+      moved_offset *= input_shape.shape[real_i];
+    }
     output[id] = input[offset];
   }
   return;
 }
 
 template <typename T, typename S>
-cudaError_t GatherD(const T *input, const S *index, T *output, size_t dim_before_axis_index, size_t dim_at_axis_index,
-                    size_t dim_after_axis_index, size_t dim_at_axis_input, size_t dim_after_axis_input, size_t num,
-                    cudaStream_t stream, uint32_t device_id) {
-  GatherDKernel<<<CUDA_BLOCKS(device_id, num), CUDA_THREADS(device_id), 0, stream>>>(
-    input, index, output, dim_before_axis_index, dim_at_axis_index, dim_after_axis_index, dim_at_axis_input,
-    dim_after_axis_input, num);
+cudaError_t GatherD(const T *input, const S *index, T *output, size_t dim, size_t num, size_t rank,
+                    const ShapeHelper &input_shape, const ShapeHelper &index_shape, cudaStream_t stream,
+                    uint32_t device_id) {
+  GatherDKernel<<<CUDA_BLOCKS(device_id, num), CUDA_THREADS(device_id), 0, stream>>>(input, index, output, input_shape,
+                                                                                     index_shape, dim, num, rank);
   return GetCudaStatus();
 }
 
-#define SPECIALIZE_KERNEL(T, S)                                                                        \
-  template CUDA_LIB_EXPORT cudaError_t GatherD<T, S>(                                                  \
-    const T *input, const S *index, T *output, size_t dim_before_axis_index, size_t dim_at_axis_index, \
-    size_t dim_after_axis_index, size_t dim_at_axis_input, size_t dim_after_axis_input, size_t num,    \
-    cudaStream_t stream, uint32_t device_id);
+#define SPECIALIZE_KERNEL(T, S)                                                                                     \
+  template CUDA_LIB_EXPORT cudaError_t GatherD<T, S>(                                                               \
+    const T *input, const S *index, T *output, size_t dim, size_t num, size_t rank, const ShapeHelper &input_shape, \
+    const ShapeHelper &index_shape, cudaStream_t stream, uint32_t device_id);
 
 SPECIALIZE_KERNEL(float, int64_t)
 SPECIALIZE_KERNEL(Complex<double>, int)

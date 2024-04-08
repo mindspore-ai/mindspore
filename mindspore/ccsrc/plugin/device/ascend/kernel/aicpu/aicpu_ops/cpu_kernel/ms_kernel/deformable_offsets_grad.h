@@ -56,22 +56,22 @@ class DeformableOffsetsGradKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ParseKernelParam(const CpuKernelContext &ctx);
-  uint32_t CheckInOutNum(size_t inputs_num, size_t outputs_num) const;
+  uint32_t ParseKernelParam(CpuKernelContext &ctx);
+  uint32_t CheckInOutNum(CpuKernelContext &ctx, size_t inputs_num, size_t outputs_num) const;
 
-  uint32_t SetDims(const CpuKernelContext &ctx);
+  uint32_t SetDims(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoComputeNHWC(const CpuKernelContext &ctx, size_t num_kernels, const DeformableOffsetGradDims &dims,
+  uint32_t DoComputeNHWC(CpuKernelContext &ctx, size_t num_kernels, const DeformableOffsetGradDims &dims,
                          const T *input_x, const T *input_offset, const T *input_grad, T *output_grad_x,
                          T *output_grad_offset) const;
   template <typename T>
-  uint32_t DoComputeNCHW(const CpuKernelContext &ctx, size_t num_kernels, const DeformableOffsetGradDims &dims,
+  uint32_t DoComputeNCHW(CpuKernelContext &ctx, size_t num_kernels, const DeformableOffsetGradDims &dims,
                          const T *input_x, const T *input_offset, const T *input_grad, T *output_grad_x,
                          T *output_grad_offset) const;
 
   template <typename T>
-  uint32_t DeformableOffsetsGradTask(const CpuKernelContext &ctx);
+  uint32_t DeformableOffsetsGradTask(CpuKernelContext &ctx);
   std::string data_format_ = "ND";
   DeformableOffsetGradDims dims_;
 

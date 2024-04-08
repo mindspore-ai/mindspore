@@ -82,42 +82,42 @@ bool SolveTriangularGradCpuKernelMod::Init(const std::vector<KernelTensor *> &in
 }
 
 template <typename Derived_a, typename Derived_b, typename T>
-void SolveTriangularGradCpuKernelMod::solve(const MatrixBase<Derived_a> &a, const MatrixBase<Derived_b> &b,
-                                            T *output_addr, bool lower) {
-  Map<Matrix<T, RowMajor>> output(output_addr, m_, n_);
+void SolveTriangularGradCpuKernelMod::solve(const MatrixBase<Derived_a> &a, const MatrixBase<Derived_b> &b, T *x_addr,
+                                            bool lower_triangular) {
+  Map<Matrix<T, RowMajor>> x(x_addr, m_, n_);
   if (unit_diagonal_) {
-    if (lower) {
-      output.noalias() = a.template triangularView<UnitLower>().solve(b);
+    if (lower_triangular) {
+      x.noalias() = a.template triangularView<UnitLower>().solve(b);
     } else {
-      output.noalias() = a.template triangularView<UnitUpper>().solve(b);
+      x.noalias() = a.template triangularView<UnitUpper>().solve(b);
     }
   } else {
-    if (lower) {
-      output.noalias() = a.template triangularView<Lower>().solve(b);
+    if (lower_triangular) {
+      x.noalias() = a.template triangularView<Lower>().solve(b);
     } else {
-      output.noalias() = a.template triangularView<Upper>().solve(b);
+      x.noalias() = a.template triangularView<Upper>().solve(b);
     }
   }
 }
 
 template <typename T>
-void mat_tri_view(T *mat_addr, size_t m, bool lower, bool unit_diagonal) {
+void mat_tri_view(T *matrix_addr, size_t row_size, bool lower, bool unit_diagonal) {
   T zero = static_cast<T>(0);
   if (unit_diagonal) {
-    for (size_t i = 0; i < m; i++) {
-      mat_addr[i * m + i] = zero;
+    for (size_t i = 0; i < row_size; i++) {
+      matrix_addr[i * row_size + i] = zero;
     }
   }
   if (lower) {
-    for (size_t i = 0; i < m; i++) {
-      for (size_t j = i + 1; j < m; j++) {
-        mat_addr[i * m + j] = zero;
+    for (size_t i = 0; i < row_size; i++) {
+      for (size_t j = i + 1; j < row_size; j++) {
+        matrix_addr[i * row_size + j] = zero;
       }
     }
   } else {
-    for (size_t i = 0; i < m; i++) {
+    for (size_t i = 0; i < row_size; i++) {
       for (size_t j = 0; j < i; j++) {
-        mat_addr[i * m + j] = zero;
+        matrix_addr[i * row_size + j] = zero;
       }
     }
   }

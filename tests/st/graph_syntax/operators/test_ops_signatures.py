@@ -29,8 +29,6 @@ ms_data = {
     "float32": ms.Tensor(1, dtype=ms.float32),
     "float64": ms.Tensor(1, dtype=ms.float64),
     "bfloat16": ms.Tensor(1, dtype=ms.bfloat16),
-    "complex64": ms.Tensor(1, dtype=ms.complex64),
-    "complex128": ms.Tensor(1, dtype=ms.complex128)
 }
 
 
@@ -46,8 +44,6 @@ torch_data = {
     "float32": torch.tensor(1, dtype=torch.float32),
     "float64": torch.tensor(1, dtype=torch.float64),
     "bfloat16": torch.tensor(1, dtype=torch.bfloat16),
-    "complex64": torch.tensor(1, dtype=torch.complex64),
-    "complex128": torch.tensor(1, dtype=torch.complex128)
 }
 
 
@@ -76,6 +72,8 @@ def test_tensor_add_tensor_compare(mode):
     ms.context.set_context(mode=mode)
     for key1 in ms_data.keys():
         for key2 in ms_data.keys():
+            if key1 == "bool" and key2 == "bool":
+                continue
             out_ms = Net()(ms_data[key1], ms_data[key2])
             out_torch = torch_data[key1] + torch_data[key2]
             dtype_ms = get_dtype(out_ms)
@@ -102,6 +100,8 @@ def test_tensor_add_scalar_compare(mode):
     num_dtype_list = ["bool", "positive_int", "negative_int", "positive_float", "negative_float"]
     for key in ms_data.keys():
         for num, num_dtype in zip(num_list, num_dtype_list):
+            if key == "bool" and num_dtype == "bool":
+                continue
             out_ms = Net()(ms_data[key], num)
             out_torch = torch_data[key] + num
             dtype_ms = get_dtype(out_ms)

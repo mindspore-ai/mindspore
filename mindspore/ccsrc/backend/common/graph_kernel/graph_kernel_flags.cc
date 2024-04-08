@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,8 +213,9 @@ std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelConfig() {
   auto jit_level_iter = jit_config.find(kAttrJitLevel);
   auto jit_level = (jit_level_iter != jit_config.end() ? jit_level_iter->second : "");
   bool enable_gk = context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
-  if (!enable_gk && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
-    enable_gk = (jit_level == kAttrJitLevelO2);
+  auto device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (!enable_gk && device_target == kAscendDevice) {
+    enable_gk = (jit_level == kAttrJitLevelO1);
   }
   // use environ flags in priority
   auto flags_env = std::getenv("MS_DEV_GRAPH_KERNEL_FLAGS");

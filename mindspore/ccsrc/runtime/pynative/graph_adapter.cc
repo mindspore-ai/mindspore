@@ -29,6 +29,7 @@
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
 #include "runtime/device/device_address_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 
 namespace mindspore::pynative {
 namespace {
@@ -321,6 +322,8 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
     MS_EXCEPTION_IF_NULL(tensor);
 
     auto device_address = HandleAddressForHeterogeneous(tensor, value_node, device_context);
+    device_address = std::dynamic_pointer_cast<device::DeviceAddress>(
+      kernel::pyboost::PyBoostUtils::ContiguousByDeviceAddress(device_address));
     tensor->set_device_address(device_address);
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     MS_EXCEPTION_IF_NULL(front_node);
@@ -424,11 +427,6 @@ bool GraphAdapter::IsPynativeGeGraphSink(const FuncGraphPtr &func_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->backend_policy() != "ge" || !context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
-    return false;
-  }
-
-  auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
-  if (enable_ge != "1") {
     return false;
   }
 

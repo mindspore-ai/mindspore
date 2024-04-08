@@ -30,7 +30,7 @@ class MultinomialCpuKernel : public CpuKernel {
  private:
   // use map for 2 template parameter functions
   void SetMap();
-  std::map<int, std::map<int, std::function<void(Tensor *, Tensor *, Tensor *, const CpuKernelContext &)>>> calls_;
+  std::map<int, std::map<int, std::function<void(Tensor *, Tensor *, Tensor *, CpuKernelContext &)>>> calls_;
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_MULTINOMIAL_H_

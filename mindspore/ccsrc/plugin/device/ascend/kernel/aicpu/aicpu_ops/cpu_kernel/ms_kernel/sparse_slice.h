@@ -34,7 +34,8 @@ class SparseSliceCpuKernel : public CpuKernel {
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
-  uint32_t SparseSliceParamCheck(Tensor *indices, Tensor *values, Tensor *shape, Tensor *start, Tensor *size);
+  uint32_t SparseSliceParamCheck(CpuKernelContext &ctx, Tensor *indices, Tensor *values, Tensor *shape, Tensor *start,
+                                 Tensor *size);
 };
 }  // namespace aicpu
 #endif

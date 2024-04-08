@@ -21,8 +21,9 @@
 namespace aicpu {
 namespace {
 const char *kFusedSparseFtrl = "FusedSparseFtrl";
+const double DefaultLrPower = -0.5;
 
-void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t end) {
+void ComputeFtrl(CpuKernelContext &ctx, MultiThreadComputeParams *input_params, size_t start, size_t end) {
   auto var = input_params->var_;
   auto accum = input_params->accum_;
   auto linear = input_params->linear_;
@@ -36,7 +37,7 @@ void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t en
   for (size_t i = start; i < end; ++i) {
     int index = unique_sparse_grad.indices_[i];
     if (index < 0 || static_cast<size_t>(index) >= var_first_dim_size) {
-      AICPU_LOGE("Index %d in indices is out of range after unique process", index);
+      CUST_AICPU_LOGE(ctx, "Index %d in indices is out of range after unique process", index);
     }
     size_t start_index = var_outer_dim_size * index;
     size_t end_index = start_index + var_outer_dim_size;
@@ -44,7 +45,7 @@ void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t en
       auto summed_grad = unique_sparse_grad.value_[k];
       auto accum_new = accum[j] + summed_grad * summed_grad;
       float y;
-      if (lr_power == -0.5) {
+      if (lr_power == DefaultLrPower) {
         y = std::sqrt(accum_new);
         linear[j] += summed_grad - (y - std::sqrt(accum[j])) / lr * var[j];
       } else {
@@ -82,15 +83,15 @@ uint32_t FusedSparseFtrlKernel::Compute(CpuKernelContext &ctx) {
   new_indices = (int *)malloc(indices_size_ * sizeof(int));
   tmp_grad = (float *)malloc(indices_size_ * var_outer_dim_size_ * sizeof(float));
   tmp_indices = (int *)malloc(indices_size_ * sizeof(int));
-  if (new_grad == NULL || new_indices == NULL || tmp_grad == NULL || tmp_indices == NULL) {
+  if (new_grad == nullptr || new_indices == nullptr || tmp_grad == nullptr || tmp_indices == nullptr) {
     free(new_grad);
     free(new_indices);
     free(tmp_grad);
     free(tmp_indices);
-    new_grad = NULL;
-    new_indices = NULL;
-    tmp_grad = NULL;
-    tmp_indices = NULL;
+    new_grad = nullptr;
+    new_indices = nullptr;
+    tmp_grad = nullptr;
+    tmp_indices = nullptr;
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -130,41 +131,41 @@ uint32_t FusedSparseFtrlKernel::Compute(CpuKernelContext &ctx) {
   free(new_indices);
   free(tmp_grad);
   free(tmp_indices);
-  new_grad = NULL;
-  new_indices = NULL;
-  tmp_grad = NULL;
-  tmp_indices = NULL;
+  new_grad = nullptr;
+  new_indices = nullptr;
+  tmp_grad = nullptr;
+  tmp_indices = nullptr;
   return KERNEL_STATUS_OK;
 }
 
 uint32_t FusedSparseFtrlKernel::ParseKernelParam(CpuKernelContext &ctx) {
   // InitKernel
   auto lr = ctx.GetAttr("lr");
-  KERNEL_CHECK_NULLPTR(lr, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'lr'.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, lr, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'lr'.")
   auto l1 = ctx.GetAttr("l1");
-  KERNEL_CHECK_NULLPTR(l1, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'l1'.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, l1, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'l1'.")
   auto l2 = ctx.GetAttr("l2");
-  KERNEL_CHECK_NULLPTR(l2, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'l2'.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, l2, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'l2'.")
   auto lr_power = ctx.GetAttr("lr_power");
-  KERNEL_CHECK_NULLPTR(lr_power, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'lr_power'.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, lr_power, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'lr_power'.")
   lr_ = lr->GetFloat();
   l1_ = l1->GetFloat();
   l2_ = l2->GetFloat();
   lr_power_ = lr_power->GetFloat();
   if (lr_ <= 0) {
-    AICPU_LOGE("lr should be a positive scalar");
+    CUST_AICPU_LOGE(ctx, "lr should be a positive scalar");
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (l1_ < 0) {
-    AICPU_LOGE("l1 should be a non-negative scalar");
+    CUST_AICPU_LOGE(ctx, "l1 should be a non-negative scalar");
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (l2_ < 0) {
-    AICPU_LOGE("l2 should be a non-negative scalar");
+    CUST_AICPU_LOGE(ctx, "l2 should be a non-negative scalar");
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (lr_power_ > 0) {
-    AICPU_LOGE("lr_power should be a non-positive scalar");
+    CUST_AICPU_LOGE(ctx, "lr_power should be a non-positive scalar");
     return KERNEL_STATUS_INNER_ERROR;
   }
   auto var_shape = ctx.Input(0)->GetTensorShape()->GetDimSizes();
@@ -172,7 +173,7 @@ uint32_t FusedSparseFtrlKernel::ParseKernelParam(CpuKernelContext &ctx) {
   auto indices_shape = ctx.Input(4)->GetTensorShape()->GetDimSizes();
 
   if (var_shape.empty()) {
-    AICPU_LOGE("var must be at least 1D");
+    CUST_AICPU_LOGE(ctx, "var must be at least 1D");
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (grad_shape.empty()) {
@@ -181,18 +182,18 @@ uint32_t FusedSparseFtrlKernel::ParseKernelParam(CpuKernelContext &ctx) {
   var_first_dim_size_ = var_shape[0];
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
-      AICPU_LOGE("The shape of var and grad must equal in dimension %d", i);
+      CUST_AICPU_LOGE(ctx, "The shape of var and grad must equal in dimension %d", i);
       return KERNEL_STATUS_INNER_ERROR;
     }
     var_outer_dim_size_ *= var_shape[i];
   }
   if (indices_shape.size() != 1) {
-    AICPU_LOGE("indices must be 1D");
+    CUST_AICPU_LOGE(ctx, "indices must be 1D");
     return KERNEL_STATUS_INNER_ERROR;
   }
   indices_size_ = indices_shape[0];
   if (grad_shape[0] != static_cast<int64_t>(indices_size_)) {
-    AICPU_LOGE("The first dimension of grad shape must be equal to indices");
+    CUST_AICPU_LOGE(ctx, "The first dimension of grad shape must be equal to indices");
     return KERNEL_STATUS_INNER_ERROR;
   }
 

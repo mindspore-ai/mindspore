@@ -183,9 +183,7 @@ def _tensor_div_list(x, y):
 
 @div.register_default()
 def default_div(x, y):
-    """
-    Default function for div.
-   """
+    """Default function for div."""
     if y != 0:
         return x / y
     raise ValueError("division by zero")

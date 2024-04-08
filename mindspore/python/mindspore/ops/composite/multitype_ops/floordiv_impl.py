@@ -82,9 +82,7 @@ def _tensor_floordiv_list(x, y):
 
 @floordiv.register_default()
 def default_floordiv(x, y):
-    """
-    Default function for floordiv.
-   """
+    """Default function for floordiv."""
     if y == 0:
         raise ValueError("division by zero")
     return x // y

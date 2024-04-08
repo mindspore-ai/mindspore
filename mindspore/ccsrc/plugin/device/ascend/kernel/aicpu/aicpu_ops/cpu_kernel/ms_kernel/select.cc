@@ -27,22 +27,23 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 3;
 const char *kSelect = "Select";
 
-#define SELECT_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                        \
-    uint32_t result = SelectCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                    \
-      KERNEL_LOG_ERROR("Select kernel compute failed."); \
-      return result;                                     \
-    }                                                    \
-    break;                                               \
+#define SELECT_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                  \
+    uint32_t result = SelectCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                              \
+      CUST_KERNEL_LOG_ERROR(ctx, "Select kernel compute failed."); \
+      return result;                                               \
+    }                                                              \
+    break;                                                         \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t SelectCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Select check input and output number failed.");
-  KERNEL_HANDLE_ERROR(SelectParamCheck(ctx), "Select check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Select check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, SelectParamCheck(ctx), "Select check params failed.");
   auto data_type = ctx.Input(1)->GetDataType();
   switch (data_type) {
     SELECT_COMPUTE_CASE(DT_INT8, int8_t, ctx)
@@ -60,14 +61,14 @@ uint32_t SelectCpuKernel::Compute(CpuKernelContext &ctx) {
     SELECT_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx);
     SELECT_COMPUTE_CASE(DT_COMPLEX64, std::complex<double>, ctx);
     default:
-      KERNEL_LOG_ERROR("Select kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Select kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SelectCpuKernel::SelectParamCheck(const CpuKernelContext &ctx) {
+uint32_t SelectCpuKernel::SelectParamCheck(CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
@@ -81,31 +82,31 @@ uint32_t SelectCpuKernel::SelectParamCheck(const CpuKernelContext &ctx) {
   auto input_shape_b = ctx.Input(2)->GetTensorShape()->GetDimSizes();
 
   if (input0_type != DT_BOOL) {
-    KERNEL_LOG_ERROR("[%s] Data type of mask requires bool, but got data type [%s].", ctx.GetOpType().c_str(),
-                     DTypeStr(input0_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of mask requires bool, but got data type [%s].", ctx.GetOpType().c_str(),
+                          DTypeStr(input0_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
-  KERNEL_CHECK_FALSE((input1_type == input2_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input1 [%s] need be same with "
-                     "input2 [%s].",
-                     DTypeStr(input1_type).c_str(), DTypeStr(input2_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_type == input2_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input1 [%s] need be same with "
+                          "input2 [%s].",
+                          DTypeStr(input1_type).c_str(), DTypeStr(input2_type).c_str())
 
   if (input_shape_a != input_shape_b) {
-    KERNEL_LOG_ERROR("The shape of X1 must equal X2.");
+    CUST_KERNEL_LOG_ERROR(ctx, "The shape of X1 must equal X2.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_LOG_DEBUG(
-    "SelectCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], input2: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), input_2->GetDataSize(),
-    output->GetDataSize());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "SelectCpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], input2: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), input_2->GetDataSize(),
+                        output->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SelectCpuKernel::SelectCompute(const CpuKernelContext &ctx) {
+uint32_t SelectCpuKernel::SelectCompute(CpuKernelContext &ctx) {
   bool *condition = static_cast<bool *>(ctx.Input(0)->GetData());
   T *x1 = static_cast<T *>(ctx.Input(1)->GetData());
   T *x2 = static_cast<T *>(ctx.Input(2)->GetData());
@@ -127,7 +128,8 @@ uint32_t SelectCpuKernel::SelectCompute(const CpuKernelContext &ctx) {
     }
   } else {
     auto ret = GetBroadcastShape(input_shape_a, input_shape_mask, output_shape);
-    KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Shape of x and mask can't be broadcast.");
+    CUST_KERNEL_CHECK_FALSE(ctx, ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
+                            "Shape of x and mask can't be broadcast.");
     tensor_size =
       std::accumulate(output_shape.begin(), output_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     BroadcastIterator iter(input_shape_a, input_shape_mask, output_shape);

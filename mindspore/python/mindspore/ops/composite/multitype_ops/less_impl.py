@@ -108,7 +108,5 @@ def _less_list(x, y):
 
 @less.register_default()
 def default_less(x, y):
-    """
-    Default function for less.
-   """
+    """Default function for less."""
     return x < y

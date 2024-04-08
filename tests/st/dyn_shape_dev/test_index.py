@@ -16,7 +16,8 @@
 '''test tensor index'''
 
 import mindspore as ms
-from mindspore import Tensor, ops, context
+from mindspore import Tensor, ops, context, nn
+from mindspore.ops.composite import GradOperation
 import numpy as np
 import sys
 import pytest
@@ -415,6 +416,36 @@ def test_tensor_index_st():
     global DYNAMIC_LEVEL
     DYNAMIC_LEVEL = 100
     _run_and_compare(_run_st, input_data)
+
+
+class NetWorkFancyIndex(nn.Cell):
+    def __init__(self, index):
+        super(NetWorkFancyIndex, self).__init__()
+        self.index = index
+
+    def construct(self, tensor):
+        return tensor[self.index]
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_tensor_fancy_index_integer_list_negative(mode):
+    """
+    Feature: Test fancy index
+    Description: Test fancy index with negative index
+    Expectation: Success
+    """
+    context.set_context(mode=mode)
+    index = [-3, 0, 2, -1, -1]
+    net = NetWorkFancyIndex(index)
+    input_np = np.array([1, 2, 3])
+    input_me = Tensor(input_np, dtype=ms.float32)
+    out_ms = net(input_me)
+    assert np.allclose(out_ms.asnumpy(), [1, 1, 3, 3, 3])
+    out_grad = Tensor([1, 2, 3, 4, 5], dtype=ms.float32)
+    grad_ms = GradOperation(sens_param=True)(net)(input_me, out_grad)
+    assert np.allclose(grad_ms.asnumpy(), [3, 0, 12])
 
 
 # usage: python test_index.py RUN_MODE IR_LEVEL

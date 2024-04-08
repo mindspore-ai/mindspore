@@ -30,21 +30,21 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define RELU_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                      \
-    uint32_t result = ReluCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                  \
-      KERNEL_LOG_ERROR("Relu kernel compute failed."); \
-      return result;                                   \
-    }                                                  \
-    break;                                             \
+#define RELU_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                \
+    uint32_t result = ReluCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                            \
+      CUST_KERNEL_LOG_ERROR(ctx, "Relu kernel compute failed."); \
+      return result;                                             \
+    }                                                            \
+    break;                                                       \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t ReluCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Relu check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Relu check input and output number failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     RELU_COMPUTE_CASE(DT_INT8, int8_t, ctx)
@@ -57,7 +57,7 @@ uint32_t ReluCpuKernel::Compute(CpuKernelContext &ctx) {
     RELU_COMPUTE_CASE(DT_FLOAT, float, ctx)
     RELU_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("Relu kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Relu kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -74,7 +74,7 @@ void ReluCpuKernel::DoCompute(int64_t start, int64_t end, const T *input1, T *ou
 }
 
 template <typename T>
-uint32_t ReluCpuKernel::ReluCompute(const CpuKernelContext &ctx) {
+uint32_t ReluCpuKernel::ReluCompute(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   int64_t data_num = ctx.Output(0)->NumElements();
@@ -92,10 +92,10 @@ uint32_t ReluCpuKernel::ReluCompute(const CpuKernelContext &ctx) {
 
     auto sharder_relu = [&](int64_t start, int64_t end) { DoCompute<T>(start, end, in0, out); };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_relu),
-                        "Relu Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_relu),
+                             "Relu Compute failed.");
   } else {
     DoCompute<T>(0, data_num, in0, out);
   }

@@ -3,7 +3,6 @@ floor_div:
     Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
 
     Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
@@ -29,7 +28,7 @@ floor_div:
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `input` nor `other` is a Tensor, number.Number or bool.
+        TypeError: If `input` and `other` are not the following: Tensor, number.Number or bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

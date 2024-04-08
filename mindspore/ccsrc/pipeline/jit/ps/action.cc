@@ -50,10 +50,10 @@
 #include "pipeline/jit/ps/static_analysis/program_specialize.h"
 #include "pipeline/jit/ps/resource.h"
 #include "pipeline/jit/ps/remove_value_node_dup.h"
+#include "pipeline/jit/ps/event_message_print.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/ad/grad.h"
-#include "frontend/expander/pack/packfunc.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "utils/phase.h"
@@ -144,68 +144,12 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
   func_graph->set_parameters(new_paras);
 }
 
-// Dynamic shape node or PyExecute node exist in graph.
-bool IsDynamicGraph(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
-  AnfNodePtr dynamic_node = nullptr;
-  AnfNodePtr pyexecute_node = nullptr;
-  for (const auto &node : node_list) {
-    if (node->abstract() == nullptr) {
-      MS_LOG(INFO) << "Null abstract of node: " << node->DebugString();
-      continue;
-    }
-    if (node->abstract() != nullptr) {
-      auto shape = node->abstract()->GetShape();
-      // Dynamic shape tensor.
-      if (shape->isa<abstract::TensorShape>() && IsDynamic(shape->GetShapeVector())) {
-        dynamic_node = node;
-        break;
-      }
-      // Dynamic len sequence.
-      if (node->abstract()->isa<abstract::AbstractSequence>() &&
-          node->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
-        dynamic_node = node;
-        break;
-      }
-      // PyExecute node exist
-      if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
-        pyexecute_node = node;
-      }
-    }
-  }
-  if (dynamic_node != nullptr) {
-    MS_LOG(INFO) << "Func graph:" << func_graph->ToString()
-                 << " is dynamic shape graph, because find dynamic shape node:" << dynamic_node->DebugString()
-                 << ", abstract: " << dynamic_node->abstract()->ToString();
-    return true;
-  }
-  if (pyexecute_node != nullptr) {
-    MS_LOG(INFO) << "Func graph:" << func_graph->ToString() << " has pyexecute node:" << pyexecute_node->DebugString();
-    return true;
-  }
-  return false;
-}
-
 // Exist ScalarAdd ScalarSub etc OPS which will backoff to CPU
 bool IsNeedBackoffGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
-  return std::any_of(node_list.begin(), node_list.end(), [](const AnfNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (!node->isa<CNode>()) {
-      MS_LOG(DEBUG) << "Node is not a cnode.";
-      return false;
-    }
-    auto abs = node->abstract();
-    if (abs == nullptr) {
-      MS_LOG(DEBUG) << "Node " << node->fullname_with_scope()
-                    << " has no abstract, Debug String: " << node->DebugString();
-      return false;
-    }
-    return abs->isa<abstract::AbstractScalar>() && abs->BuildValue()->ContainsValueAny() &&
-           !IsPrimitiveCNode(node, prim::kPrimDepend);
-  });
+  return std::any_of(node_list.begin(), node_list.end(),
+                     [](const AnfNodePtr &node) { return common::AnfAlgo::IsNodeMutableScalar(node); });
 }
 
 // Disable mindRT in the heterogeneous scenario + dynamic_shape scenario.
@@ -372,23 +316,20 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
   MS_EXCEPTION_IF_NULL(resource);
   MS_LOG(DEBUG) << "Renormalize start";
   auto engine = resource->engine();
-#ifdef ENABLE_PROFILE
-  double t1 = GetTime();
-#endif
-  abstract::AnalysisResult result = AbstractAnalyze(engine, func_graph, args_abs, resource->is_load(), true);
-#ifdef ENABLE_PROFILE
-  double t2 = GetTime();
-#endif
-  auto res = ProgramSpecialize(engine, func_graph, result.context);
-  resource->set_func_graph(res);
-#ifdef ENABLE_PROFILE
-  double t3 = GetTime();
-  MsProfile::StatTime("renormalize.infer", t2 - t1);
-  MsProfile::StatTime("renormalize.specialize", t3 - t2);
-#endif
+
+  abstract::AnalysisResult result;
+  {
+    MsProfileStatGuard stat_guard("renormalize.infer");
+    result = AbstractAnalyze(engine, func_graph, args_abs, resource->is_load(), true);
+  }
+  FuncGraphPtr res;
+  {
+    MsProfileStatGuard stat_guard("renormalize.specialize");
+    res = ProgramSpecialize(engine, func_graph, result.context);
+    resource->set_func_graph(res);
+  }
 
   MS_LOG(DEBUG) << "Renormalize end";
-
   return res;
 }
 
@@ -397,24 +338,22 @@ FuncGraphPtr Renormalize(const ValuePtr &func, const abstract::AbstractBasePtrLi
   if (!func_abs->isa<abstract::AbstractFunction>()) {
     MS_LOG(EXCEPTION) << "The value: " << func->ToString() << " is not a callable object.";
   }
-  auto infer_graph = ConstructGraphForEval(func, args_abs);
-  auto manager = Manage(infer_graph, true);
+  auto func_graph = ConstructGraphForEval(func, args_abs);
+  auto manager = Manage(func_graph, true);
   auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
-#ifdef ENABLE_PROFILE
-  double t1 = GetTime();
-#endif
-  auto res = AbstractAnalyze(engine, infer_graph, args_abs, false);
-#ifdef ENABLE_PROFILE
-  double t2 = GetTime();
-#endif
 
-  auto spec_graph = ProgramSpecialize(engine, infer_graph, res.context);
-#ifdef ENABLE_PROFILE
-  double t3 = GetTime();
-  MsProfile::StatTime("renormalize.infer", t2 - t1);
-  MsProfile::StatTime("renormalize.specialize", t3 - t2);
-#endif
-  return spec_graph;
+  abstract::AnalysisResult result;
+  {
+    MsProfileStatGuard stat_guard("renormalize.infer");
+    result = AbstractAnalyze(engine, func_graph, args_abs, false);
+  }
+  FuncGraphPtr res;
+  {
+    MsProfileStatGuard stat_guard("renormalize.specialize");
+    res = ProgramSpecialize(engine, func_graph, result.context);
+  }
+
+  return res;
 }
 
 void SetMindIRLoadFlag(const ResourcePtr &resource) {
@@ -550,15 +489,50 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
 }
 
 namespace {
+// Get all the trainable parameters of the reusable cell.
+void GenerateTopGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *params,
+                            const FuncGraphPtr &top_func_graph) {
+  MS_LOG(DEBUG) << "enter GenerateTopGraphParams: " << fg->ToString();
+  auto obj_value = fg->python_obj();
+  MS_EXCEPTION_IF_NULL(obj_value);
+  auto wrapper = dyn_cast_ptr<parse::PyObjectWrapper>(obj_value);
+  MS_EXCEPTION_IF_NULL(wrapper);
+  auto obj = wrapper->obj();
+  auto trainable_parameters = py::getattr(obj, "parameters_and_names", py::none())();
+  for (auto tr : trainable_parameters) {
+    auto item = py::cast<py::tuple>(tr);
+    auto value = item[1];
+    auto par_name = item[0].cast<std::string>();
+    auto parameter_name = py::getattr(value, "name", py::str(par_name)).cast<std::string>();
+    auto exist_fv = top_func_graph->GetParameterByName(parameter_name);
+    if (exist_fv) {
+      params->push_back(exist_fv);
+      MS_LOG(DEBUG) << "exist: " << parameter_name;
+    } else {
+      auto fv = top_func_graph->AddFvParameter(parameter_name, parse::GetParameterValue(value));
+      MS_LOG(DEBUG) << "New: " << parameter_name;
+      params->push_back(fv);
+    }
+  }
+  MS_LOG(DEBUG) << "finish GenerateTopGraphParams: " << fg->ToString();
+}
+
+void UpdateCellFuncGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &reusing_graph,
+                         const FuncGraphPtr &top_func_graph) {
+  std::vector<AnfNodePtr> new_node_inputs;
+  new_node_inputs.push_back(NewValueNode(reusing_graph));
+  std::vector<AnfNodePtr> fvs;
+  GenerateTopGraphParams(func_graph, &fvs, top_func_graph);
+  (void)new_node_inputs.insert(new_node_inputs.end(), fvs.rbegin(), fvs.rend());
+  auto params = func_graph->parameters();
+  (void)new_node_inputs.insert(new_node_inputs.end(), params.begin(), params.end());
+  AnfNodePtr out = func_graph->NewCNodeInOrder(new_node_inputs);
+  out->set_abstract(func_graph->output()->abstract());
+  func_graph->set_output(out);
+}
 
 void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &top_func_graph) {
-  auto reusing_node = func_graph->output()->cast<CNodePtr>()->input(0);
-  FuncGraphPtr fg;
-  if (IsValueNode<FuncGraph>(reusing_node)) {
-    fg = GetValueNode<FuncGraphPtr>(reusing_node);
-  } else {
-    fg = GetValueNode<FuncGraphPtr>(reusing_node->cast<CNodePtr>()->input(1));
-  }
+  FuncGraphPtr fg = func_graph;
   FuncGraphVector func_graphs = {fg};
   Cloner cloner(func_graphs, false, false, true, std::make_shared<TraceCopy>(), std::make_shared<TraceGraphReusing>());
   cloner.Run();
@@ -569,18 +543,15 @@ void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &
   auto reusing_graph = cloned_fg_iter->second;
   auto &cloned_nodes = cloner.cloned_nodes();
   auto manager = fg->manager();
-  const int pre_reusing_cell_name_len = 3;
-  for (auto &node : reusing_graph->parameters()) {
-    Parameter *param = dynamic_cast<Parameter *>(node.get());
-    MS_LOG(DEBUG) << param->ToString() << " name: " << param->name() << " debug name: " << param->debug_info()->name();
-    if (param->name().find("CR_") == std::string::npos) {
-      continue;
-    }
-    auto fv = top_func_graph->GetParameterByName(param->name().substr(pre_reusing_cell_name_len));
-    if (fv == nullptr) {
-      MS_LOG(WARNING) << reusing_graph->ToString() << " has not free variable: " << param->ToString();
-      continue;
-    }
+  std::vector<AnfNodePtr> fv_params;
+  GenerateTopGraphParams(fg, &fv_params, top_func_graph);
+  for (auto &fv : fv_params) {
+    auto param = reusing_graph->InsertFrontParameter();
+    const auto &top_param = fv->cast<ParameterPtr>();
+    std::string name = "CR_" + top_param->name();
+    param->debug_info()->set_name(name);
+    param->set_name(name);
+    param->set_abstract(top_param->abstract());
     auto &node_users = manager->node_users()[fv];
     for (auto &n : node_users) {
       auto iter = cloned_nodes.find(n.first);
@@ -589,18 +560,27 @@ void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &
       }
       auto repl_n = iter->second->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(repl_n);
-      repl_n->set_input(IntToSize(n.second), node);
+      repl_n->set_input(IntToSize(n.second), param);
     }
   }
-  reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
-  reusing_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
-  auto cnodes_index = func_graph->func_graph_cnodes_index();
-  auto tr = manager->Transact();
+
+  if (func_graph->has_attr(FUNC_GRAPH_FLAG_NO_INLINE)) {
+    reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, func_graph->has_flag(FUNC_GRAPH_FLAG_NO_INLINE));
+  } else {
+    reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+    reusing_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
+  }
+
+  // Update call nodes
+  auto cnodes_index = fg->func_graph_cnodes_index();
   for (auto &cnode_index : cnodes_index) {
     MS_EXCEPTION_IF_NULL(cnode_index.first);
-    tr.SetEdge(cnode_index.first->first, cnode_index.first->second, NewValueNode(reusing_graph));
+    auto old_cnode = cnode_index.first->first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(old_cnode);
+    auto cell_func_graph = old_cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(cell_func_graph);
+    UpdateCellFuncGraph(cell_func_graph, reusing_graph, top_func_graph);
   }
-  tr.Commit();
 }
 
 void SetCalledSubGraphMixedPrecisionFlag(const FuncGraphPtr &func_graph) {
@@ -859,6 +839,7 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
 }  // namespace
 
 bool AbstractSpecializeAction(const ResourcePtr &resource) {
+  EventMessage::PrintCompileStatusMessage("Start performing static analysis and type inference.");
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->func_graph() == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "AbstractSpecialize error";
@@ -942,17 +923,6 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
   return true;
 }
 
-bool PackExpandAction(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  if (resource->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "PackExpandAction error, manager is null.";
-  }
-  if (resource->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "PackExpandAction error, graph is null.";
-  }
-  return PackExpandPass(resource);
-}
-
 bool OptInlineAction(const ResourcePtr &resource) {
   if (parallel::ParallelContext::GetInstance()->parallel_mode() == "semi_auto_parallel" ||
       parallel::ParallelContext::GetInstance()->parallel_mode() == "auto_parallel") {
@@ -962,6 +932,7 @@ bool OptInlineAction(const ResourcePtr &resource) {
 }
 
 bool VmOptimizeAction(const ResourcePtr &resource) {
+  EventMessage::PrintCompileStatusMessage("Start performing graph optimization.");
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_ps_mode()) {
     (void)kVmPasses.emplace_back(PassItem("server_communication_op_fusion", [](const ResourcePtr &res) -> bool {
@@ -1038,111 +1009,6 @@ bool EliminateSpecialOpNode(const ResourcePtr &resource) {
   return EliminateSpecialOpOptPass(resource);
 }
 
-bool SupportInlinePartial(const AnfNodePtr &input0) {
-  // inline partial
-  if (IsPrimitiveCNode(input0, prim::kPrimTupleGetItem)) {
-    auto tuple_get_node = input0->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_get_node);
-    auto get_from_node = tuple_get_node->input(kFirstInput);
-    auto idx = common::AnfAlgo::GetTupleGetItemOutIndex(tuple_get_node);
-    MS_EXCEPTION_IF_NULL(get_from_node);
-    // tuple get item from a call subgraph output
-    if (get_from_node->isa<CNode>() && IsValueNode<FuncGraph>(get_from_node->cast<CNodePtr>()->input(0))) {
-      auto call_graph = GetValueNode<FuncGraphPtr>(get_from_node->cast<CNodePtr>()->input(0));
-      MS_EXCEPTION_IF_NULL(call_graph);
-      auto graph_out = call_graph->output();
-      MS_EXCEPTION_IF_NULL(graph_out);
-      size_t tuple_input_num = common::AnfAlgo::GetInputTensorNum(graph_out);
-      // the partial must be the last output
-      if (graph_out->isa<CNode>() && tuple_input_num == idx + 1) {
-        int partial_cnt = 0;
-        for (size_t i = 0; i < tuple_input_num; i++) {
-          auto input = graph_out->cast<CNodePtr>()->input(i + 1);
-          if (IsPrimitiveCNode(input, prim::kPrimPartial)) {
-            partial_cnt++;
-          }
-        }
-        auto partial = graph_out->cast<CNodePtr>()->input(idx + 1);
-        MS_EXCEPTION_IF_NULL(partial);
-        // we only support one partial func at the last return value now
-        if (partial_cnt != 1 || !IsPrimitiveCNode(partial, prim::kPrimPartial)) {
-          if (partial_cnt != 0) {
-            MS_LOG(INFO) << "Partial func cnt: " << partial_cnt
-                         << ", last return value: " << partial->fullname_with_scope();
-          }
-          return false;
-        }
-        auto partial_inputs = partial->cast<CNodePtr>()->inputs();
-        // the input of partial can't be FuncGraph/Partial
-        bool has_illegal_input =
-          std::any_of(partial_inputs.begin() + kSecondInput, partial_inputs.end(), [](const AnfNodePtr &partial_input) {
-            return IsValueNode<FuncGraph>(partial_input) || IsPrimitiveCNode(partial_input, prim::kPrimPartial);
-          });
-        return !has_illegal_input;
-      }
-    }
-  }
-  return false;
-}
-
-bool HasAbstractFunction(const AbstractBasePtr &abs) {
-  if (abs->isa<abstract::AbstractSequence>() && !abs->isa<abstract::AbstractSparseTensor>()) {
-    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    if (abs_seq->dynamic_len()) {
-      return HasAbstractFunction(abs_seq->dynamic_len_element_abs());
-    }
-    return std::any_of(abs_seq->elements().cbegin(), abs_seq->elements().cend(), HasAbstractFunction);
-  }
-  // if abs it not AbstractSequence.
-  return abs->isa<abstract::AbstractFunction>();
-}
-
-bool IsCellReuse(const AnfNodePtr &input) {
-  if (IsValueNode<FuncGraph>(input)) {
-    auto fg = GetValueNode<FuncGraphPtr>(input);
-    MS_EXCEPTION_IF_NULL(fg);
-    auto debug_str = fg->ToString();
-    if (fg->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool AcceptableReturnValue(const CNodePtr &cnode, const AnfNodePtr &input0) {
-  if (IsCellReuse(input0)) {
-    return true;
-  }
-  auto func_graphs = abstract::GetFuncGraphsFromCallNode(cnode);
-  auto graph_has_function_output = [](const FuncGraphPtr &fg) { return HasAbstractFunction(fg->output()->abstract()); };
-  if (std::all_of(func_graphs.cbegin(), func_graphs.cend(), std::not_fn(graph_has_function_output))) {
-    return true;
-  }
-  return false;
-}
-
-bool HasIncorporateCallNode(const CNodePtr &cnode) {
-  if (!IsValueNode<Primitive>(cnode->input(0))) {  // If cnode is a call node.
-    auto input0 = cnode->input(0);
-    if (IsPrimitiveCNode(input0, prim::kPrimSwitch) || IsPrimitiveCNode(input0, prim::kPrimSwitchLayer) ||
-        IsValueNode<FuncGraph>(input0)) {
-      if (IsCellReuse(input0) && IsEnableRefMode()) {
-        MS_LOG(INFO) << "Use cell reuse when enable ge mode: " << cnode->DebugString();
-        return true;
-      }
-      if (AcceptableReturnValue(cnode, input0)) {
-        return false;
-      }
-    }
-    if (SupportInlinePartial(input0)) {
-      return false;
-    }
-    MS_LOG(INFO) << "Call has indirect call: " << cnode->DebugString();
-    return true;
-  }
-  return false;
-}
-
 bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
   for (const auto &node : all_nodes) {
     if (node == nullptr || !node->isa<CNode>()) {
@@ -1181,7 +1047,7 @@ bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
       }
       continue;
     }
-    if (HasIncorporateCallNode(cnode)) {
+    if (common::AnfAlgo::HasIncorporateCallNode(cnode)) {
       return true;
     }
   }
@@ -1328,7 +1194,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
   }
 
   // GRAPH | Dynamic Shape : KernelByKernel path in MindRT.
-  if (IsDynamicGraph(func_graph) && (context_ptr->backend_policy() != "ge")) {
+  if (common::AnfAlgo::IsDynamicGraph(func_graph) && (context_ptr->backend_policy() != "ge")) {
     if (kbk_reason != nullptr) {
       *kbk_reason =
         "Run graph mode with kernel by kernel because graph exist dynamic shape. Call "
@@ -1340,7 +1206,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
   }
 
   // GRAPH | Dynamic Scalar : Dynamic scalar ops in graph.
-  if (IsNeedBackoffGraph(func_graph) && !IsDynamicGraph(func_graph)) {
+  if (IsNeedBackoffGraph(func_graph) && !common::AnfAlgo::IsDynamicGraph(func_graph)) {
     if (kbk_reason != nullptr) {
       *kbk_reason = "Run graph mode with kernel by kernel because graph exist dynamic scalar ops.";
       MS_LOG(INFO) << *kbk_reason;
@@ -1421,7 +1287,8 @@ void SetRunMode(const ResourcePtr &resource) {
          "because 'MS_HCCL_CM_INIT' means running in sink mode, but 'GRAPH_OP_RUN' means running kernel by kernel. "
          "Please unset either of them and rerun the task.";
   }
-  if (!is_task_sink && mode == kGraphMode && enable_hccl && (!common::UseHostCollective() || using_cm)) {
+  if ((!is_task_sink || common::AnfAlgo::IsDynamicGraph(resource->func_graph())) && mode == kGraphMode && enable_hccl &&
+      (!common::UseHostCollective() || using_cm) && common::GetEnv(kSimulationLevel).empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Current execution mode is 'kernelbykernel', reason: " << kbk_reason
                                << ", but you're launching job using 'ranktable', which "
                                   "does not support 'kernelbykernel' mode.\n Please refer to link: "
@@ -1431,6 +1298,7 @@ void SetRunMode(const ResourcePtr &resource) {
 }
 
 bool TaskEmitAction(const ResourcePtr &resource) {
+  EventMessage::PrintCompileStatusMessage("Start generating kernels.");
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   if (func_graph == nullptr) {
@@ -1684,16 +1552,16 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
 
 static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   std::vector<ActionItem> actions;
+  // Resolve the python func
+  static const bool enable_resolve_action =
+    (common::GetCompileConfig("GREED_PARSE") != "1") && (common::GetEnv("MS_DEV_BOOST_INFER") != "1");
 
   if (!trace_flag) {
     // Parse the python ast to ANF graph
     (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
 
     // Resolve the python func
-    static auto boost_parse = common::GetCompileConfig("GREED_PARSE");
-
-    static const auto boost_infer = (common::GetEnv("MS_DEV_BOOST_INFER") == "1");
-    if (boost_parse != "1" && (!boost_infer)) {
+    if (enable_resolve_action) {
       (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
     }
 
@@ -1713,17 +1581,21 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
     if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs)) {
       (void)actions.emplace_back(std::make_pair(kCombineLikeGraphs, CombineLikeGraphs));
     }
+
     // Make the reusable cell to be the reusable function graph
-    (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
+    if (enable_resolve_action) {
+      (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
+    }
+
     (void)actions.emplace_back(std::make_pair(kMetaUnpackPrepare, MetaUnpackPrepareAction));
     // Pre-Lift the func graphs.
     (void)actions.emplace_back(std::make_pair(kPreCConv, PreCConvAction));
   }
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair(kAbstractSpecialize, AbstractSpecializeAction));
-  // PackFunc Expand.
-  if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on") {
-    (void)actions.emplace_back(std::make_pair(kPackExpand, PackExpandAction));
+
+  if (!enable_resolve_action) {
+    (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
   }
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
@@ -1767,7 +1639,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag)
     (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
 
 #if defined(__linux__) && defined(WITH_BACKEND)
-    (void)actions.emplace_back(std::make_pair(kDistribtuedSplit, DistributedSplitAction));
+    (void)actions.emplace_back(std::make_pair(kDistributedSplit, DistributedSplitAction));
     if (ps::PSContext::instance()->is_worker()) {
       if (distributed::cluster::ClusterContext::instance()->initialized()) {
         MS_LOG(INFO) << "This worker is initialized. No need to add worker action.";

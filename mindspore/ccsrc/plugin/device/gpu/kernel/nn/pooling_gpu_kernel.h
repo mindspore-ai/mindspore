@@ -445,7 +445,6 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
   void AvgPool3DPadListCheck(const std::vector<KernelTensor *> &inputs) {
     mindspore::PadMode pad_mode =
       static_cast<mindspore::PadMode>(ops::PadModeStringToInt(GetValue<std::string>(primitive_->GetAttr("pad_mode"))));
-
     if (pad_mode == mindspore::PadMode::SAME || pad_mode == mindspore::PadMode::VALID) {
       return;
     }

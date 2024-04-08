@@ -79,21 +79,20 @@ int GatherDPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nv
     axis_ += dims;
   }
 
-  auto num = dim_before_axis_index_ * dim_at_axis_index_ * dim_after_axis_index_;
   if (inputDesc->type == nvinfer1::DataType::kINT32) {
     auto input = static_cast<const int *>(inputs[0]);
     auto index = static_cast<const int *>(inputs[1]);
     auto output = static_cast<int *>(outputs[0]);
     Reshape(inputDesc, outputDesc);
-    GatherD<int, int>(input, index, output, dim_before_axis_index_, dim_at_axis_index_, dim_after_axis_index_,
-                      dim_at_axis_input_, dim_after_axis_input_, num, stream, device_id_);
+    GatherD<int, int>(input, index, output, static_cast<size_t>(axis_), num_, input_dims.nbDims, input_shape_helper_,
+                      index_shape_helper_, stream, device_id_);
   } else if (inputDesc->type == nvinfer1::DataType::kFLOAT) {
     auto input = static_cast<const float *>(inputs[0]);
     auto index = static_cast<const int *>(inputs[1]);
     auto output = static_cast<float *>(outputs[0]);
     Reshape(inputDesc, outputDesc);
-    GatherD<float, int>(input, index, output, dim_before_axis_index_, dim_at_axis_index_, dim_after_axis_index_,
-                        dim_at_axis_input_, dim_after_axis_input_, num, stream, device_id_);
+    GatherD<float, int>(input, index, output, static_cast<size_t>(axis_), num_, input_dims.nbDims, input_shape_helper_,
+                        index_shape_helper_, stream, device_id_);
   } else {
     MS_LOG(ERROR) << "unsupported data type gatherd" << layer_name_;
   }
@@ -119,21 +118,16 @@ nvinfer1::DimsExprs GatherDPlugin::getOutputDimensions(int outputIndex, const nv
 void GatherDPlugin::Reshape(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc) {
   nvinfer1::Dims input_dims = inputDesc[0].dims;
   nvinfer1::Dims output_dims = outputDesc[0].dims;
-  dim_before_axis_index_ = 1;
-  for (size_t i = 0; i < IntToSize(axis_); i++) {
-    dim_before_axis_index_ *= output_dims.d[i];
-  }
-  dim_at_axis_input_ = input_dims.d[IntToSize(axis_)];
-  dim_at_axis_index_ = output_dims.d[IntToSize(axis_)];
 
-  dim_after_axis_index_ = 1;
-  for (size_t i = IntToSize(axis_) + 1; i < IntToSize(output_dims.nbDims); i++) {
-    dim_after_axis_index_ *= output_dims.d[i];
+  if (input_dims.nbDims > static_cast<int64_t>(kMaxShapeRank)) {
+    MS_LOG(EXCEPTION) << "The rank of input should be less than " << kMaxShapeRank << ", but got " << input_dims.nbDims
+                      << ".";
   }
-
-  dim_after_axis_input_ = 1;
-  for (size_t i = IntToSize(axis_) + 1; i < IntToSize(input_dims.nbDims); i++) {
-    dim_after_axis_input_ *= input_dims.d[i];
+  num_ = 1;
+  for (size_t i = 0; i < static_cast<size_t>(input_dims.nbDims); i++) {
+    input_shape_helper_.shape[i] = static_cast<size_t>(input_dims.d[i]);
+    index_shape_helper_.shape[i] = static_cast<size_t>(output_dims.d[i]);
+    num_ *= static_cast<size_t>(output_dims.d[i]);
   }
 
   return;

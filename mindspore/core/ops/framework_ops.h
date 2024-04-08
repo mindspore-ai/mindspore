@@ -179,9 +179,6 @@ GVAR_DEF(PrimitivePtr, kPrimCallInline, std::make_shared<Primitive>("CallInline"
 GVAR_DEF(PrimitivePtr, kPrimPartialInline, std::make_shared<Primitive>("PartialInline"));
 GVAR_DEF(PrimitivePtr, kPrimConditionSwitch, std::make_shared<Primitive>("ConditionSwitch"));
 GVAR_DEF(PrimitivePtr, kPrimConditionGather, std::make_shared<Primitive>("ConditionGather"));
-
-// Pack
-GVAR_DEF(PrimitivePtr, kPrimPackFunc, std::make_shared<Primitive>(kPackFuncOpName));
 }  // namespace prim
 }  // namespace mindspore
 

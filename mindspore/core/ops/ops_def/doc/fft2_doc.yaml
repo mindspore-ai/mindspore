@@ -47,7 +47,7 @@ fft2:
           >>> import mindspore
           >>> from mindspore import Tensor, ops
           >>> input = ops.ones((4, 4))
-          >>> ops.fft2(x, s=(4, 4), dim=(0, 1), norm="backward")
+          >>> ops.fft2(input, s=(4, 4), dim=(0, 1), norm="backward")
           Tensor(shape=[4, 4], dtype=Complex64, value=
           [[16+0j, 0+0j, 0+0j, 0+0j],
            [0+0j, 0+0j, 0+0j, 0+0j],

@@ -31,7 +31,7 @@ class SelfAdjointEigCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t SelfAdjointEigCompute(const CpuKernelContext &ctx);
+  uint32_t SelfAdjointEigCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_H_

@@ -32,7 +32,7 @@ class SparseSparseMinimumCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  static uint32_t SparseSparseMinimumCompute(const CpuKernelContext &ctx);
+  static uint32_t SparseSparseMinimumCompute(CpuKernelContext &ctx);
 
   static int cmp(const TTypes<int64_t>::ConstMatrix &x_idx, const int64_t x_row, const int dims,
                  const TTypes<int64_t>::ConstMatrix &y_idx, const int64_t y_row);

@@ -81,7 +81,7 @@ abstract::ShapePtr OrmqrInferShape(const PrimitivePtr &primitive, const std::vec
   if (x_shape.size() > kInputNoBatch) {
     for (size_t i = 0; i < x_rank - kRowIndex; i++) {
       if (x_shape[i] != tau_shape[i]) {
-        MS_EXCEPTION(ValueError) << "For Ormqr, tau.shape[:-2] must be equal to x.shape[:-2], but x.shape[" << i
+        MS_EXCEPTION(ValueError) << "For Ormqr, tau.shape[:-1] must be equal to x.shape[:-2], but x.shape[" << i
                                  << "] is " << x_shape[i] << ", and tau.shape[" << i << "] is " << tau_shape[i] << ".";
       }
       if (x_shape[i] != other_shape[i]) {

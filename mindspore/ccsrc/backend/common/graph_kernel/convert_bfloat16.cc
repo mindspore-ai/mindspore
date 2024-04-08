@@ -148,10 +148,19 @@ AnfNodePtr ConvertBFloat16::CastTensor(const ValueNodePtr &value_node) {
   for (size_t i = 0; i < tensor->DataSize(); ++i) {
     dst_data[i] = static_cast<float>(src_data[i]);
   }
+  // create new value node
   auto new_value_node = NewValueNode(new_tensor);
   new_value_node->set_abstract(new_tensor->ToAbstract());
-  new_value_node->set_kernel_info(value_node->kernel_info_ptr());
-  UpdateBuildInfoOutputDataType(new_value_node, kNumberTypeBFloat16, kNumberTypeFloat32);
+  if (value_node->kernel_info() != nullptr) {
+    auto build_info = AnfAlgo::GetSelectKernelBuildInfo(value_node);
+    if (build_info != nullptr) {
+      // set build info for new value node
+      new_value_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+      auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(build_info);
+      builder->SetOutputsDeviceType(std::vector<TypeId>{kNumberTypeFloat32});
+      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), new_value_node.get());
+    }
+  }
   return new_value_node;
 }
 

@@ -340,6 +340,17 @@ if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux")
     endif()
 endif()
 
+if(ENABLE_D)
+    if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+        set(_MS_INTERNAL_KERNEL_HOME $ENV{MS_INTERNAL_KERNEL_HOME})
+        install(
+            DIRECTORY ${_MS_INTERNAL_KERNEL_HOME}
+            DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+            COMPONENT mindspore
+        )
+    endif()
+endif()
+
 if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/dataset)
     install(
         DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/dataset

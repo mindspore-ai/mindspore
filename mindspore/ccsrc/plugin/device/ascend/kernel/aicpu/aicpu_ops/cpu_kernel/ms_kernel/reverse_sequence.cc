@@ -27,11 +27,11 @@ const int64_t kEven = 2;
 
 namespace aicpu {
 template <typename Tlen>
-static uint32_t CheckSequence(size_t seq_dim, const Tlen *seq, std::vector<int64_t> &shape,
+static uint32_t CheckSequence(CpuKernelContext &ctx, size_t seq_dim, const Tlen *seq, std::vector<int64_t> &shape,
                               std::vector<int64_t> &seq_lengths_shape) {
   for (int64_t d = 0; d < static_cast<int64_t>(seq_lengths_shape[0]); d++) {
     if (seq[d] < 0 || seq[d] > shape[seq_dim]) {
-      KERNEL_LOG_ERROR("Invalid seq_lengths[%d]: %lu", d, seq[d]);
+      CUST_KERNEL_LOG_ERROR(ctx, "Invalid seq_lengths[%d]: %lu", d, seq[d]);
       return static_cast<uint32_t>(KERNEL_STATUS_INNER_ERROR);
     }
   }
@@ -41,14 +41,14 @@ static uint32_t CheckSequence(size_t seq_dim, const Tlen *seq, std::vector<int64
 template <typename T, typename Tlen>
 uint32_t CalReverseSequence(size_t seq_dim, size_t batch_dim, const std::vector<void *> &ioAddrs,
                             std::vector<int64_t> &shape, std::vector<int64_t> &seq_lengths_shape,
-                            const CpuKernelContext &ctx) {
+                            CpuKernelContext &ctx) {
   // inputs
   T *input = reinterpret_cast<T *>(ioAddrs[0]);
   Tlen *seq = reinterpret_cast<Tlen *>(ioAddrs[1]);
   // outputs
   T *output = reinterpret_cast<T *>(ioAddrs[kOutputIndex]);
 
-  if (CheckSequence(seq_dim, seq, shape, seq_lengths_shape) != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
+  if (CheckSequence(ctx, seq_dim, seq, shape, seq_lengths_shape) != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
     return static_cast<uint32_t>(KERNEL_STATUS_INNER_ERROR);
   }
 
@@ -68,12 +68,12 @@ uint32_t CalReverseSequence(size_t seq_dim, size_t batch_dim, const std::vector<
   for (size_t i = 0; i < shape_size; ++i) {
     total_size *= shape[i];
   }
-  KERNEL_CHECK_FALSE((shape[seq_dim] != 0), static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
-                     "The shape[%zu] of input[0] cannot be 0.", seq_dim);
-  KERNEL_CHECK_FALSE((batch_size != 0), static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
-                     "The value of batch_size cannot be 0.");
-  KERNEL_CHECK_FALSE((shape[batch_dim] != 0), static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
-                     "The shape[%zu] of input[0] cannot be 0.", batch_dim);
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape[seq_dim] != 0), static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                          "The shape[%zu] of input[0] cannot be 0.", seq_dim);
+  CUST_KERNEL_CHECK_FALSE(ctx, (batch_size != 0), static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                          "The value of batch_size cannot be 0.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape[batch_dim] != 0), static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                          "The shape[%zu] of input[0] cannot be 0.", batch_dim);
   int64_t n = total_size / (run_len * shape[seq_dim]);
   const int64_t kMaxCoreNum = std::max(static_cast<uint32_t>(1), aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
 
@@ -97,25 +97,25 @@ uint32_t CalReverseSequence(size_t seq_dim, size_t batch_dim, const std::vector<
   };
   uint32_t ret = CpuKernelUtils::ParallelFor(ctx, n, n / kMaxCoreNum, shard);
   if (ret != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
-    KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor failed");
+    CUST_KERNEL_LOG_ERROR(ctx, "CpuKernelUtils::ParallelFor failed");
     return static_cast<uint32_t>(KERNEL_STATUS_INNER_ERROR);
   }
 
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
 
-KernelStatus ReverseSequenceMsCpuKernel::GetInputAndCheck(const CpuKernelContext &ctx) {
+KernelStatus ReverseSequenceMsCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   AttrValue *seq_dim = ctx.GetAttr("seq_dim");
-  KERNEL_CHECK_NULLPTR(seq_dim, KERNEL_STATUS_PARAM_INVALID, "Get attr:[seq_dim] failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, seq_dim, KERNEL_STATUS_PARAM_INVALID, "Get attr:[seq_dim] failed.");
   seq_dim_ = static_cast<size_t>(seq_dim->GetInt());
 
   AttrValue *batch_dim = ctx.GetAttr("batch_dim");
-  KERNEL_CHECK_NULLPTR(batch_dim, KERNEL_STATUS_PARAM_INVALID, "Get attr:[batch_dim] failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, batch_dim, KERNEL_STATUS_PARAM_INVALID, "Get attr:[batch_dim] failed.");
   batch_dim_ = static_cast<size_t>(batch_dim->GetInt());
 
   // input_0: x
   Tensor *x_tensor = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(x_tensor, KERNEL_STATUS_PARAM_INVALID, "Get input:[0] failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x_tensor, KERNEL_STATUS_PARAM_INVALID, "Get input:[0] failed")
   x_dtype_ = static_cast<DataType>(x_tensor->GetDataType());
   std::shared_ptr<TensorShape> x_shape = x_tensor->GetTensorShape();
 
@@ -125,7 +125,7 @@ KernelStatus ReverseSequenceMsCpuKernel::GetInputAndCheck(const CpuKernelContext
 
   // input_1: seq_lengths
   Tensor *seq_lengths_tensor = ctx.Input(1);
-  KERNEL_CHECK_NULLPTR(seq_lengths_tensor, KERNEL_STATUS_PARAM_INVALID, "Get input:[1] failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, seq_lengths_tensor, KERNEL_STATUS_PARAM_INVALID, "Get input:[1] failed")
   seq_lengths_dtype_ = static_cast<DataType>(seq_lengths_tensor->GetDataType());
   std::shared_ptr<TensorShape> seq_lengths_shape = seq_lengths_tensor->GetTensorShape();
   for (auto i = 0; i < seq_lengths_shape->GetDims(); i++) {
@@ -133,34 +133,34 @@ KernelStatus ReverseSequenceMsCpuKernel::GetInputAndCheck(const CpuKernelContext
   }
 
   if (seq_lengths_dtype_ != DT_INT32 && seq_lengths_dtype_ != DT_INT64) {
-    KERNEL_LOG_ERROR("Invalid type of seq_lengths: [%s]", DTypeStr(seq_lengths_dtype_).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "Invalid type of seq_lengths: [%s]", DTypeStr(seq_lengths_dtype_).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (seq_lengths_shape_.size() != 1) {
-    KERNEL_LOG_ERROR("Invalid seq_lengths shape size: [%d]", seq_lengths_shape_.size());
+    CUST_KERNEL_LOG_ERROR(ctx, "Invalid seq_lengths shape size: [%d]", seq_lengths_shape_.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (batch_dim_ == seq_dim_ || seq_dim_ >= x_shape_.size() || batch_dim_ >= x_shape_.size()) {
-    KERNEL_LOG_ERROR("Invalid batch_dim_: [%zu], seq_dim_: [%zu], x dims:[ %zu]", batch_dim_, seq_dim_,
-                     x_shape_.size());
+    CUST_KERNEL_LOG_ERROR(ctx, "Invalid batch_dim_: [%zu], seq_dim_: [%zu], x dims:[ %zu]", batch_dim_, seq_dim_,
+                          x_shape_.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (seq_lengths_shape_[0] != x_shape->GetDimSize(static_cast<int32_t>(batch_dim_))) {
-    KERNEL_LOG_ERROR("seq_lengths_shape_[0] != x_shape.dim(%zu) size: [%lld]", batch_dim_,
-                     x_shape->GetDimSize(static_cast<int32_t>(batch_dim_)));
+    CUST_KERNEL_LOG_ERROR(ctx, "seq_lengths_shape_[0] != x_shape.dim(%zu) size: [%lld]", batch_dim_,
+                          x_shape->GetDimSize(static_cast<int32_t>(batch_dim_)));
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   Tensor *output_tensor = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output_tensor, KERNEL_STATUS_PARAM_INVALID, "Get output:[0] failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_tensor, KERNEL_STATUS_PARAM_INVALID, "Get output:[0] failed")
   ioAddrs_.push_back(reinterpret_cast<void *>(x_tensor->GetData()));
   ioAddrs_.push_back(reinterpret_cast<void *>(seq_lengths_tensor->GetData()));
   ioAddrs_.push_back(reinterpret_cast<void *>(output_tensor->GetData()));
 
-  KERNEL_LOG_INFO("Parse done, seq_dim: [%zu], batch_dim: %zu, x_dtype: [%d]", seq_dim_, batch_dim_,
-                  static_cast<int32_t>(x_dtype_));
+  CUST_KERNEL_LOG_INFO(ctx, "Parse done, seq_dim: [%zu], batch_dim: %zu, x_dtype: [%d]", seq_dim_, batch_dim_,
+                       static_cast<int32_t>(x_dtype_));
 
   return KERNEL_STATUS_OK;
 }

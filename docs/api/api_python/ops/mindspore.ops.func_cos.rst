@@ -16,7 +16,7 @@ mindspore.ops.cos
 
     返回：
         Tensor，shape与 `input` 相同。
-        当输入类型为bool, int8, uint8, int16, int32, int64时，返回值类型为float32。
+        当输入类型为bool、int8、uint8、int16、int32、int64时，返回值类型为float32。
         否则，返回值类型与输入类型相同。
 
     异常：

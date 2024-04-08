@@ -34,7 +34,8 @@ const char *CholeskySolve = "CholeskySolve";
 
 namespace aicpu {
 uint32_t CholeskySolveCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "CholeskySolve check input and output failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "CholeskySolve check input and output failed.");
 
   Tensor *input_x1 = ctx.Input(0);
   AttrValue *upper = ctx.GetAttr("upper");
@@ -47,7 +48,7 @@ uint32_t CholeskySolveCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return ComputeKernel<double>(ctx, upperinfo);
     default:
-      KERNEL_LOG_ERROR("CholeskySolve kernel data type [%s] not support.", DTypeStr(data_type_x1).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "CholeskySolve kernel data type [%s] not support.", DTypeStr(data_type_x1).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -55,7 +56,7 @@ uint32_t CholeskySolveCpuKernel::Compute(CpuKernelContext &ctx) {
 REGISTER_MS_CPU_KERNEL(CholeskySolve, CholeskySolveCpuKernel);
 
 template <typename T>
-uint32_t CholeskySolveCpuKernel::ComputeKernel(const CpuKernelContext &ctx, const bool &upper) {
+uint32_t CholeskySolveCpuKernel::ComputeKernel(CpuKernelContext &ctx, const bool &upper) {
   auto rhsptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto lhsptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto outptr = reinterpret_cast<T *>(ctx.Output(0)->GetData());

@@ -1,9 +1,9 @@
 mindspore.ops
 =============================
 
-动态shape的支持情况详见 `ops接口动态shape支持情况 <https://mindspore.cn/docs/zh-CN/master/note/dynamic_shape_func.html>`_ 。
+动态shape的支持情况详见 `ops接口动态shape支持情况 <https://mindspore.cn/docs/zh-CN/r2.3.q1/note/dynamic_shape_func.html>`_ 。
 
-MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.ops API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/func_api_updates_cn.md>`_ 。
+MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.ops API接口变更 <https://gitee.com/mindspore/docs/blob/r2.3.q1/resource/api_updates/func_api_updates_cn.md>`_ 。
 
 神经网络层函数
 ----------------
@@ -444,25 +444,6 @@ Reduction函数
     mindspore.ops.hamming_window
     mindspore.ops.hann_window
     mindspore.ops.kaiser_window
-
-快速傅里叶变换函数
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.fft
-    mindspore.ops.fft2
-    mindspore.ops.fftn
-    mindspore.ops.fftshift
-    mindspore.ops.rfft
-    mindspore.ops.ifft
-    mindspore.ops.ifft2
-    mindspore.ops.ifftn
-    mindspore.ops.ifftshift
-    mindspore.ops.irfft
 
 Tensor操作函数
 ----------------

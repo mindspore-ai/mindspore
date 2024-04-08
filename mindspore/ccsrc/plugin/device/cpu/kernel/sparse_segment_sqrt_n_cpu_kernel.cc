@@ -114,7 +114,6 @@ void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::Kern
   auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->device_ptr());
   auto segment_ids_addr = static_cast<T3 *>(inputs[kIndex2]->device_ptr());
   auto y_addr = static_cast<T1 *>(outputs[kIndex0]->device_ptr());
-
   if (memset_s(y_addr, y_num_ * sizeof(T1), 0, y_num_ * sizeof(T1)) != EOK) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', failed to memset_s y_addr.";
   }

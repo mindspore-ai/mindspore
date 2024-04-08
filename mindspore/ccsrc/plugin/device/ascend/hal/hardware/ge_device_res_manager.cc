@@ -23,6 +23,7 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #include "plugin/device/ascend/hal/device/ascend_event.h"
+#include "plugin/device/ascend/hal/device/ascend_pin_mem_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 #include "include/transform/graph_ir/utils.h"
 #include "graph/types.h"
@@ -56,6 +57,10 @@ void GeDeviceResManager::Initialize() {
   }
   mem_manager_ = runtime_instance_->GetMemoryManager();
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
+    swap_manager_ = std::make_shared<SwapManager>(kDefaultStreamIndex, &AscendMemoryPool::GetInstance(),
+                                                  &AscendPinMemPool::GetInstance());
+  }
 }
 
 void GeDeviceResManager::SetCPUMemManager() {
@@ -100,8 +105,15 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   }
   auto size =
     address->type_id() == kObjectTypeString ? address->GetSize() + sizeof(ge::StringHead) : address->GetSize();
-  void *device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle(),
-                                                        address->stream_id());
+  void *device_ptr = nullptr;
+
+  if (swap_manager_ != nullptr) {
+    device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize(), address->stream_id());
+  } else {
+    device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle(),
+                                                    address->stream_id());
+  }
+
   if (!device_ptr) {
     return false;
   }
@@ -215,6 +227,7 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
     options["ge.exec.formatMode"] = "0";
     auto format_mode = common::GetEnv("MS_FORMAT_MODE");
     if (format_mode == "1" || (format_mode.empty() && ms_context->ascend_soc_version() != "ascend910")) {
+      MS_LOG(INFO) << "Set GE option ge.exec.formatMode to 1.";
       options["ge.exec.formatMode"] = "1";
     }
 
@@ -226,9 +239,6 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
 
   transform::GraphRunnerOptions options;
   options.sess_ptr = sess;
-  if (ms_context->EnableAoeOnline()) {
-    transform::DfGraphManager::GetInstance().AoeGeGraph();
-  }
   auto graph_runner = transform::NewGraphRunner(options);
   transform::SetGraphRunner(graph_runner);
 }

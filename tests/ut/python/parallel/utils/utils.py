@@ -54,6 +54,7 @@ class ParallelValidator:
         >>> assert validator.check_graph_structure(sub_graph, graph_id=1)
 
     """
+
     def __init__(self, net, phase):
         self._parameter_layout_dict = net.parameter_layout_dict
         self._graph_info_dict = _cell_graph_executor._graph_executor.get_parallel_graph_info(phase)

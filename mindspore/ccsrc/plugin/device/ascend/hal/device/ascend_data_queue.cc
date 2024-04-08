@@ -331,7 +331,7 @@ void AscendTdtQueue::ParseType(aclDataType acl_data_type, std::string *data_type
 }
 
 bool AscendTdtQueue::Translate(const std::vector<DataQueueItem> &data, acltdtDataset **output_acl_dataset) const {
-  auto acl_dataset = CALL_ASCEND_API2(acltdtCreateDataset);
+  auto acl_dataset = CALL_ASCEND_API(acltdtCreateDataset);
   if (acl_dataset == nullptr) {
     MS_LOG(ERROR) << "Create tdt dataset failed.";
     return false;
@@ -409,7 +409,8 @@ bool AscendTdtQueue::AssembleTensor2AclDataset(const std::vector<DataQueueItem> 
 void AscendTdtQueue::DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item) const {
   if (include_data_item) {
     for (size_t i = 0; i < CALL_ASCEND_API(acltdtGetDatasetSize, acl_dataset); i++) {
-      if (CALL_ASCEND_API(acltdtDestroyDataItem, CALL_ASCEND_API(acltdtGetDataItem, acl_dataset, i)) != ACL_SUCCESS) {
+      auto data_item = CALL_ASCEND_API(acltdtGetDataItem, acl_dataset, i);
+      if (CALL_ASCEND_API(acltdtDestroyDataItem, data_item) != ACL_SUCCESS) {
         MS_LOG(EXCEPTION) << "Destroy data item failed when send data.";
       }
     }

@@ -67,6 +67,9 @@ enum FFNInputIndex : size_t {
   kInputAntiquantOffset2,
 };
 
+constexpr auto kMoeScaleDim1 = 1;
+constexpr auto kMoeScaleDim2 = 2;
+
 auto GetStrategy = [](const Dimensions &strategy, int64_t org_dim) {
   auto dim = org_dim;
   if (dim < 0) {
@@ -281,9 +284,9 @@ Status FFNInfo::InferTensorMap() {
       inputs_tensor_map_.emplace_back(bias2_tensor_map);
     }
     if (inputs_shape_.size() > input_scale) {
-      if (inputs_shape_[input_scale].size() == 1) {
+      if (inputs_shape_[input_scale].size() == kMoeScaleDim1) {
         inputs_tensor_map_.emplace_back(input_scale_tensor_map);
-      } else if (inputs_shape_[input_scale].size() == 2) {
+      } else if (inputs_shape_[input_scale].size() == kMoeScaleDim2) {
         inputs_tensor_map_.emplace_back(sm_input_scale_tensor_map);
       } else {
         MS_LOG(ERROR) << "MOE scale shape dims should be 1 or 2, but get " << inputs_shape_[input_scale].size();

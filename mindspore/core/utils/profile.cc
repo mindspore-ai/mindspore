@@ -34,7 +34,6 @@ constexpr size_t TIME_INFO_PREFIX_NUM_LEN = 4;
 constexpr char kProcessStatusFileName[] = "/proc/self/status";
 constexpr auto kLineMaxSize = 1024;
 constexpr auto kInvalid = -1;
-static const bool kRecordMemoryFlag = common::GetCompileConfig("RECORD_MEMORY") == "1";
 const auto kVmRSS = "VmRSS";
 
 void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent = 0,
@@ -48,7 +47,7 @@ void PrintTimeInfoMap(std::ostringstream &oss, const TimeInfoMap &dict, int inde
     if (iter.second == nullptr) {
       continue;
     }
-    // indent by multiples of 4 spaces.
+    // Indent by multiples of 4 spaces.
     if (iter.first.size() < TIME_INFO_PREFIX_NUM_LEN) {
       MS_LOG(INTERNAL_EXCEPTION) << "In TimeInfoMap, the " << count << "th string key is " << iter.first
                                  << ", but the length is less than " << TIME_INFO_PREFIX_NUM_LEN;
@@ -84,7 +83,7 @@ void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent
     need_free = true;
   }
 
-  // indent by multiples of 4 spaces.
+  // Indent by multiples of 4 spaces.
   if (indent == 0) {
     oss << "\nTotalTime = " << time_info.time_;
     if (time_info.dict_ != nullptr) {
@@ -97,7 +96,7 @@ void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent
     PrintTimeInfoMap(oss, *time_info.dict_, indent, sums, prefix);
   }
 
-  // print time percentage info
+  // Print time percentage info
   if (need_free) {
     double total = 0.0;
     for (auto iter = sums->begin(); iter != sums->end(); ++iter) {
@@ -123,7 +122,7 @@ void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent
 }
 }  // namespace
 
-double GetTime(void) {
+double GetTime() {
   auto now = std::chrono::steady_clock::now();
   std::chrono::duration<double> d = now.time_since_epoch();
   return d.count();
@@ -155,7 +154,7 @@ ProfileBase::~ProfileBase() {
   ctx_ptr_ = nullptr;
 }
 
-void Profile::Print(void) {
+void Profile::Print() {
   if (ctx_ptr_ == nullptr || ctx_ptr_->time_info_ == nullptr) {
     return;
   }
@@ -189,7 +188,7 @@ ProfContext *Profile::Lap(int count) {
   return ctx_ptr_;
 }
 
-void Profile::Pop(void) noexcept {
+void Profile::Pop() noexcept {
   if (ctx_ptr_ == nullptr) {
     return;
   }
@@ -207,7 +206,7 @@ ProfContext::ProfContext(const std::string &name, ProfileBase *const prof)
 }
 
 ProfContext::~ProfContext() {
-  // top level context
+  // Top level context
   if (parent_ == nullptr || IsTopContext()) {
     if (time_info_ != nullptr) {
       delete time_info_;
@@ -263,7 +262,7 @@ void ProfContext::Insert(const std::string &name, const TimeInfo *time) noexcept
   std::string sorted_name(ss.str() + name);
   time_info_->actionNum_++;
   auto iter = time_info_->dict_->find(sorted_name);
-  // if contains item with same name, delete it
+  // If contains item with same name, delete it
   if (iter != time_info_->dict_->end()) {
     delete iter->second;
     iter->second = nullptr;
@@ -276,6 +275,8 @@ bool ProfContext::IsTopContext() const noexcept { return (prof_ != nullptr) && (
 
 ProfTransaction::ProfTransaction(const ProfileBase *prof) { ctx_ = (prof != nullptr ? prof->ctx_ptr_ : nullptr); }
 
+ProfTransaction::ProfTransaction(ProfContext *const ctx) : ctx_(ctx) {}
+
 ProfTransaction::~ProfTransaction() {
   if (ctx_ != nullptr && !ctx_->IsTopContext()) {
     delete ctx_;
@@ -286,6 +287,16 @@ ProfTransaction::~ProfTransaction() {
 DumpTime &DumpTime::GetInstance() {
   static DumpTime instance;
   return instance;
+}
+
+DumpTime::~DumpTime() {
+  try {
+    Save();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Cannot save file by profile::DumpTime::save";
+  } catch (...) {
+    MS_LOG(ERROR) << "Uncaught exception";
+  }
 }
 
 void DumpTime::Record(const std::string &step_name, const double time, const bool is_start) {
@@ -341,13 +352,44 @@ static void PrintTimeStat(std::ostringstream &oss, const TimeInfoGroup &group, c
   }
 }
 
+MsProfile::~MsProfile() { Clear(); }
+
+void MsProfile::Reset() { GetSingleton().Clear(); }
+
+ProfileBase *MsProfile::GetProfile() {
+  MsProfile &ms_prof = GetSingleton();
+  if (ms_prof.profile_ == nullptr) {
+    if (EnabledProfile()) {
+      ms_prof.profile_ = new Profile();
+    } else {
+      ms_prof.profile_ = new ProfileBase();
+    }
+  }
+  return ms_prof.profile_;
+}
+
+MsProfile &MsProfile::GetSingleton() {
+  static MsProfile profile;
+  return profile;
+}
+
+void MsProfile::Clear() {
+  time_stat_.clear();
+  if (profile_ != nullptr) {
+    delete profile_;
+    profile_ = nullptr;
+  }
+}
+
+void MsProfile::StatTime(const std::string &id, double time) { GetSingleton().time_stat_[id] += time; }
+
 void MsProfile::Print() {
   GetProfile()->Print();
   std::vector<std::string> items = {"substitution.",          "renormalize.", "replace.", "match.",
                                     "func_graph_cloner_run.", "meta_graph.",  "manager.", "pynative"};
   std::vector<TimeInfoGroup> groups(items.size() + 1);
   const auto &stat = GetSingleton().time_stat_;
-  // group all time infos
+  // Group all time infos
   for (auto iter = stat.cbegin(); iter != stat.cend(); ++iter) {
     auto matched_idx = items.size();
     for (size_t i = 0; i < items.size(); ++i) {
@@ -414,7 +456,8 @@ int64_t ProcessStatus::GetMemoryCost(const std::string &key) const {
 }
 
 void ProcessStatus::RecordStart(const std::string &step_name) {
-  if (!kRecordMemoryFlag) {
+  static const bool record_memory_flag = common::GetCompileConfig("RECORD_MEMORY") == "1";
+  if (!record_memory_flag) {
     return;
   }
   MemoryInfo memory_info;
@@ -425,7 +468,8 @@ void ProcessStatus::RecordStart(const std::string &step_name) {
 }
 
 void ProcessStatus::RecordEnd() {
-  if (!kRecordMemoryFlag) {
+  static const bool record_memory_flag = common::GetCompileConfig("RECORD_MEMORY") == "1";
+  if (!record_memory_flag) {
     return;
   }
   if (stack_.empty()) {
@@ -438,7 +482,8 @@ void ProcessStatus::RecordEnd() {
 }
 
 void ProcessStatus::Print() {
-  if (!kRecordMemoryFlag) {
+  static const bool record_memory_flag = common::GetCompileConfig("RECORD_MEMORY") == "1";
+  if (!record_memory_flag) {
     return;
   }
   std::ostringstream oss;

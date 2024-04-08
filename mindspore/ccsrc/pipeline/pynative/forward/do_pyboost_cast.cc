@@ -30,10 +30,10 @@ ValuePtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_inf
     MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
     return dst_value;
   }
-  if (v->isa<tensor::Tensor>()) {
-    return DoAutoCast(op_run_info, dst_type, index, v->cast<tensor::TensorPtr>());
+  if (!v->isa<tensor::Tensor>()) {
+    return v;
   }
-  return v;
+  return DoAutoCast(op_run_info, dst_type, index, v->cast<tensor::TensorPtr>());
 }
 
 tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info,
@@ -82,17 +82,6 @@ tensor::TensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const Frontend
                                                                   const tensor::TensorPtr &t, size_t index) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(t);
-  const auto &signature = op_run_info->signatures;
-  if (index >= signature.size()) {
-    return t;
-  }
-  if (t->is_parameter()) {
-    // If parameter write(not kRWRead), no need cast
-    if (signature[index].rw != SignatureEnumRW::kRWRead) {
-      return t;
-    }
-  }
-
   if (op_run_info->mix_type != kNotSet) {
     auto dst_dtype = kFloat16;
     if (op_run_info->mix_type == kFP32) {

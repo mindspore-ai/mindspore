@@ -45,7 +45,8 @@ const char *kBroadcastTo = "BroadcastTo";
 namespace aicpu {
 
 uint32_t BroadcastToCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "BroadcastTo check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "BroadcastTo check input and output number failed.");
 
   DataType input_data_type = ctx.Input(0)->GetDataType();
   std::string input1_data_type = "DT_INT32";
@@ -68,32 +69,32 @@ uint32_t BroadcastToCpuKernel::Compute(CpuKernelContext &ctx) {
     BROADCAST_TO_COMPUTE_CASE(DT_UINT64, uint64_t, input1_data_type, ctx)
     BROADCAST_TO_COMPUTE_CASE(DT_BOOL, bool, input1_data_type, ctx)
     default:
-      KERNEL_LOG_ERROR("BroadcastTo kernel data type [%s] not support.", DTypeStr(input_data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "BroadcastTo kernel data type [%s] not support.", DTypeStr(input_data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t BroadcastToCpuKernel::BroadcastToParamCheck(const CpuKernelContext &ctx) {
+uint32_t BroadcastToCpuKernel::BroadcastToParamCheck(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *shape = ctx.Input(1);
   Tensor *output = ctx.Output(0);
 
   // check shape
   auto inputShape = shape->GetTensorShape();
-  KERNEL_CHECK_FALSE(inputShape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID, "Input shape must be 1D.")
+  CUST_KERNEL_CHECK_FALSE(ctx, inputShape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID, "Input shape must be 1D.")
   DataType shape_type = shape->GetDataType();
-  KERNEL_CHECK_FALSE((shape_type == DT_INT32 || shape_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of probs need be DT_INT32 or DT_INT64.")
-  KERNEL_LOG_DEBUG(
-    "BroadcastToCpuKernel[%s], input: size[%llu];"
-    "shape: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input->GetDataSize(), shape->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_type == DT_INT32 || shape_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of probs need be DT_INT32 or DT_INT64.")
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "BroadcastToCpuKernel[%s], input: size[%llu];"
+                        "shape: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input->GetDataSize(), shape->GetDataSize(), output->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 
 template <typename T1, typename T2>
-uint32_t BroadcastToCpuKernel::BcastCompute(const CpuKernelContext &ctx) {
+uint32_t BroadcastToCpuKernel::BcastCompute(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *output = ctx.Output(0);
 
@@ -113,10 +114,10 @@ uint32_t BroadcastToCpuKernel::BcastCompute(const CpuKernelContext &ctx) {
   auto output_shape = output->GetTensorShape();
   output_shape->SetDimSizes(dims);
   auto out_shape = output->GetTensorShape()->GetDimSizes();
-  Bcast bcast(input_shape, out_shape);
+  Bcast bcast(ctx, input_shape, out_shape);
 
   if (!bcast.IsValid()) {
-    KERNEL_LOG_ERROR("[%s] broadcast failed!", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed!", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   for (int i = 0; i < length; i++) {

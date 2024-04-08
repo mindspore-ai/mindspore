@@ -28,6 +28,7 @@
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/ps/resource.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace parallel {
@@ -343,6 +344,10 @@ std::vector<StrategyPtr> ScatterNdOpsInfo::GenerateOpStrategies(int64_t stage_id
   Shape input_split(inputs_shape_[0].size(), 1);
   Shapes splittable_input = {input_split};
   Shapes tmp_inputs_shape = {inputs_shape_[0]};
+  if (inputs_shape_.size() > 1) {
+    auto indices_shape = inputs_shape_[1];
+    gather_dims_size_ = LongToSize(indices_shape.back());
+  }
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {

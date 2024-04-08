@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ ATTR_MAP(Add) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Add) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Add, prim::kPrimAdd->name(),
               std::make_shared<OpAdapterDesc>(
-                std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}})),
-                std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}}))))
+                std::make_shared<OpAdapter<Add>>("Add", ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}})),
+                std::make_shared<OpAdapter<Add>>("Add", ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}}))))
 
 // AddV2
 INPUT_MAP(AddV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};

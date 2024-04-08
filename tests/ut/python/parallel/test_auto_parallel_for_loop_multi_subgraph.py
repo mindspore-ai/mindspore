@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -128,7 +127,6 @@ class TrainStepWarp(nn.Cell):
         return loss_w, loss_d
 
 
-@pytest.mark.skip(reason="random fail")
 def test_double_subgraphs():
     """
     Feature: test auto parallel

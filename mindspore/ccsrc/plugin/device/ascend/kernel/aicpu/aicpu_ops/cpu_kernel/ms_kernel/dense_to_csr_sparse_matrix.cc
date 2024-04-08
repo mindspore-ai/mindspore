@@ -29,7 +29,7 @@ const char *DenseToCSRSparseMatrix = "DenseToCSRSparseMatrix";
 
 namespace aicpu {
 uint32_t DenseToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "DenseToCSRSparseMatrix normal check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "DenseToCSRSparseMatrix normal check failed.");
   DataType value_type = ctx.Input(0)->GetDataType();
   DataType indice_type = ctx.Input(1)->GetDataType();
   uint32_t status;
@@ -49,7 +49,8 @@ uint32_t DenseToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) {
           status = ComputeKernel<int32_t, std::complex<double>>(ctx);
           break;
         default:
-          KERNEL_LOG_ERROR("DenseToCSRSparseMatrix value type [%s] not support.", DTypeStr(value_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "DenseToCSRSparseMatrix value type [%s] not support.",
+                                DTypeStr(value_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -68,22 +69,24 @@ uint32_t DenseToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) {
           status = ComputeKernel<int64_t, std::complex<double>>(ctx);
           break;
         default:
-          KERNEL_LOG_ERROR("DenseToCSRSparseMatrix value type [%s] not support.", DTypeStr(value_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "DenseToCSRSparseMatrix value type [%s] not support.",
+                                DTypeStr(value_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     default:
-      KERNEL_LOG_ERROR("DenseToCSRSparseMatrix indices type [%s] not support.", DTypeStr(indice_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "DenseToCSRSparseMatrix indices type [%s] not support.",
+                            DTypeStr(indice_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_HANDLE_ERROR(status, "DenseToCSRSparseMatrix kernel compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, status, "DenseToCSRSparseMatrix kernel compute failed.");
   return KERNEL_STATUS_OK;
 }
 
 REGISTER_MS_CPU_KERNEL(DenseToCSRSparseMatrix, DenseToCSRSparseMatrixCpuKernel);
 
 template <typename indiceT, typename valueT>
-uint32_t DenseToCSRSparseMatrixCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
+uint32_t DenseToCSRSparseMatrixCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
   auto dense_input_ptr = reinterpret_cast<valueT *>(ctx.Input(0)->GetData());
   auto indices_ptr = reinterpret_cast<indiceT *>(ctx.Input(1)->GetData());
   auto y_dense_shape_ptr = reinterpret_cast<indiceT *>(ctx.Output(0)->GetData());

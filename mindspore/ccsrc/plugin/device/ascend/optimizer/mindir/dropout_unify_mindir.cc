@@ -231,6 +231,11 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
   dropout_gen_mask->set_abstract(gen_mask_abstract);
   dropout_gen_mask->set_scope(dropout->scope());
   common::AnfAlgo::CopyNodeAttrs(dropout, dropout_gen_mask);
+  auto dropout_gen_mask_primitive = common::AnfAlgo::GetCNodePrimitive(dropout_gen_mask);
+  auto seed0 = dropout->input(kIndex3)->cast<ValueNodePtr>()->value();
+  auto seed1 = dropout->input(kIndex4)->cast<ValueNodePtr>()->value();
+  dropout_gen_mask_primitive->set_attr(kAttrSeed0, seed0);
+  dropout_gen_mask_primitive->set_attr(kAttrSeed1, seed1);
   if (dropout->HasPrimalAttr(kAttrMicro)) {
     dropout_gen_mask->AddPrimalAttr(kAttrMicro, dropout->GetPrimalAttr(kAttrMicro));
   }
@@ -254,7 +259,6 @@ CNodePtr CreateDropoutDoMaskCNode(const FuncGraphPtr &func_graph, const CNodePtr
   MS_EXCEPTION_IF_NULL(dropout_do_mask);
   dropout_do_mask->set_abstract(abstract);
   dropout_do_mask->set_scope(dropout->scope());
-  common::AnfAlgo::CopyNodeAttr(kAttrKeepProb, dropout, dropout_do_mask);
 
   std::vector<std::string> need_primal_attr = {kAttrMicro, kPrimalAttrUniqueId, kPrimalAttrForwardUniqueId};
   for (auto &primal_attr : need_primal_attr) {

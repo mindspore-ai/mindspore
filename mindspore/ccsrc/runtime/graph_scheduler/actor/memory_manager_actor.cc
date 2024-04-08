@@ -202,9 +202,9 @@ void MemoryManagerActor::AllocateSomasMemory(SomasInfo *const somas_info, const 
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
     auto device_ptr = device_context->device_res_manager_->AllocateMemory(somas_info->whole_block_size_);
     if (device_ptr == nullptr) {
-      MS_LOG(WARNING) << from_aid.Name()
-                      << " allocate somas whole block memory failed, alloc size: " << somas_info->whole_block_size_
-                      << ". Try to allocate the merged blocks memory.";
+      MS_LOG(INFO) << from_aid.Name()
+                   << " allocate somas whole block memory failed, alloc size: " << somas_info->whole_block_size_
+                   << ". Try to allocate the merged blocks memory.";
     } else {
       somas_info->base_address_ = device_ptr;
       return;
@@ -236,7 +236,7 @@ void MemoryManagerActor::AllocateSomasMemory(SomasInfo *const somas_info, const 
     SetOpContextMemoryAllocFail(from_aid.Name(), device_context, somas_info->whole_block_size_, op_context);
     return;
   }
-  MS_LOG(WARNING) << from_aid.Name() << " allocate somas merged blocks memory succeeded and continue running.";
+  MS_LOG(INFO) << from_aid.Name() << " allocate somas merged blocks memory succeeded and continue running.";
 
   // Call back to the from actor to process after memory allocation finished.
   OnMemoryAllocFinish(from_aid, op_context);
@@ -287,6 +287,8 @@ void MemoryManagerActor::FreeSomasMemory(SomasInfo *const somas_info, const Devi
   std::vector<void *> keep_addrs;
   for (auto &output_address : somas_info->graph_output_device_addresses_) {
     MS_EXCEPTION_IF_NULL(output_address);
+    MS_LOG(DEBUG) << "Keep address:" << output_address << " ptr:" << output_address->GetPtr()
+                  << " size:" << output_address->GetSize() << " for actor:" << from_aid;
     (void)keep_addrs.emplace_back(output_address->GetMutablePtr());
   }
 

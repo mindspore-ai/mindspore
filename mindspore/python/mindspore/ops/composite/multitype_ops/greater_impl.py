@@ -106,7 +106,5 @@ def _greater_than_list(x, y):
 
 @greater.register_default()
 def default_greater(x, y):
-    """
-    Default function for greater.
-   """
+    """Default function for greater."""
     return x > y

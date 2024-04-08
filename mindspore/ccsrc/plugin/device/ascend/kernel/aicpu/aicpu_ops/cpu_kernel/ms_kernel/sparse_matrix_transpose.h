@@ -27,11 +27,11 @@ class SparseMatrixTransposeCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t SparseMatrixTransposeParamCheck(const CpuKernelContext &ctx);
+  uint32_t SparseMatrixTransposeParamCheck(CpuKernelContext &ctx);
   template <typename indiceT, typename valueT>
-  uint32_t SparseMatrixTransposeCompute(const CpuKernelContext &ctx);
+  uint32_t SparseMatrixTransposeCompute(CpuKernelContext &ctx);
   template <typename indiceT, typename valueT>
-  uint32_t SparseMatrixTransposeComputecomplex(const CpuKernelContext &ctx);
+  uint32_t SparseMatrixTransposeComputecomplex(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

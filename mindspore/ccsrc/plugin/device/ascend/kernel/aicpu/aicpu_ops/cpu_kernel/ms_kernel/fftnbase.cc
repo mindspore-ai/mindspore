@@ -39,7 +39,7 @@ using complex128 = std::complex<double>;
   case (DTYPE): {                                                     \
     uint32_t result = FFTNBaseCompute<INTYPE, MIDTYPE, OUTTYPE>(CTX); \
     if (result != KERNEL_STATUS_OK) {                                 \
-      KERNEL_LOG_ERROR("FFTNBase kernel compute failed.");            \
+      CUST_KERNEL_LOG_ERROR(ctx, "FFTNBase kernel compute failed.");  \
       return result;                                                  \
     }                                                                 \
     break;                                                            \
@@ -50,7 +50,8 @@ using complex128 = std::complex<double>;
 namespace aicpu {
 uint32_t FFTNBaseCpuKernel::Compute(CpuKernelContext &ctx) {
   op_name_ = GetOpName(ctx.GetOpType());
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", op_name_.c_str());
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           op_name_.c_str());
   auto x_type = ctx.Input(kIndex0)->GetDataType();
   switch (x_type) {
     FFTNBASE_COMPUTE_CASE(DT_INT16, int16_t, float, complex64, ctx)
@@ -62,7 +63,7 @@ uint32_t FFTNBaseCpuKernel::Compute(CpuKernelContext &ctx) {
     FFTNBASE_COMPUTE_CASE(DT_COMPLEX64, complex64, complex64, complex64, ctx)
     FFTNBASE_COMPUTE_CASE(DT_COMPLEX128, complex128, complex128, complex128, ctx)
     default:
-      KERNEL_LOG_ERROR("FFTNBase kernel data type [%s] not support.", DTypeStr(x_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "FFTNBase kernel data type [%s] not support.", DTypeStr(x_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -197,7 +198,7 @@ uint32_t FFTNBaseCpuKernel::FFTNBaseCompute(CpuKernelContext &ctx) {
   // step3：Allocate temporary memory of the required type and size and copy the input into this space.
   T_mid *calculate_input = static_cast<T_mid *>(malloc(sizeof(T_mid) * calculate_element));
   auto ret = memset_s(calculate_input, sizeof(T_mid) * calculate_element, 0, sizeof(T_mid) * calculate_element);
-  KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_PARAM_INVALID, "memset_s failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "memset_s failed.");
   ShapeCopy<T_in, T_mid>(input_ptr, calculate_input, tensor_shape, calculate_shape);
 
   // step4：Run FFTN according to parameters

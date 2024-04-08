@@ -38,26 +38,27 @@ constexpr int64_t kParallelDataNumsMid = 7 * 1024;
     break;                                                                 \
   }
 
-#define SWITCH_PARALLEL(SHARD, end_num)                                                           \
-  if (end_num >= kParallelDataNumsMid) {                                                          \
-    uint32_t min_core_num = 1;                                                                    \
-    int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);     \
-    if (end_num < kParallelDataNums) {                                                            \
-      max_core_num = std::min(max_core_num, 4L);                                                  \
-    }                                                                                             \
-    if (max_core_num > end_num) {                                                                 \
-      max_core_num = end_num;                                                                     \
-    }                                                                                             \
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, end_num, end_num / max_core_num, SHARD), \
-                        "HammingWindow #SHARD Compute failed.");                                  \
-  } else {                                                                                        \
-    SHARD(0, end_num);                                                                            \
+#define SWITCH_PARALLEL(SHARD, end_num)                                                                     \
+  if (end_num >= kParallelDataNumsMid) {                                                                    \
+    uint32_t min_core_num = 1;                                                                              \
+    int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);               \
+    if (end_num < kParallelDataNums) {                                                                      \
+      max_core_num = std::min(max_core_num, 4L);                                                            \
+    }                                                                                                       \
+    if (max_core_num > end_num) {                                                                           \
+      max_core_num = end_num;                                                                               \
+    }                                                                                                       \
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, end_num, end_num / max_core_num, SHARD), \
+                             "HammingWindow #SHARD Compute failed.");                                       \
+  } else {                                                                                                  \
+    SHARD(0, end_num);                                                                                      \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t HammingWindowCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "HammingWindow check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "HammingWindow check input and output number failed.");
   int64_t dtype = 0;
   AttrValue *dtype_attr = ctx.GetAttr("dtype");
   if (dtype_attr != nullptr) {
@@ -73,16 +74,16 @@ uint32_t HammingWindowCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return HammingWindowCompute<double>(ctx);
     default:
-      KERNEL_LOG_ERROR(
-        "Attribute dtype only supports floating point types, "
-        "but got:[%s].",
-        DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "Attribute dtype only supports floating point types, "
+                            "but got:[%s].",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename T>
-uint32_t HammingWindowCpuKernel::HammingWindowCompute(const CpuKernelContext &ctx) {
+uint32_t HammingWindowCpuKernel::HammingWindowCompute(CpuKernelContext &ctx) {
   DataType input_type = ctx.Input(0)->GetDataType();
   int64_t length;
   switch (input_type) {
@@ -95,11 +96,11 @@ uint32_t HammingWindowCpuKernel::HammingWindowCompute(const CpuKernelContext &ct
     WINDOW_LENGTH_CASE(DT_UINT32, uint32_t, length, ctx)
     WINDOW_LENGTH_CASE(DT_UINT64, uint64_t, length, ctx)
     default:
-      KERNEL_LOG_ERROR("HammingWindow input data type [%s] not support.", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "HammingWindow input data type [%s] not support.", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_CHECK_FALSE((length >= 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Input window length cannot be negative, bug got [%d].", length);
+  CUST_KERNEL_CHECK_FALSE(ctx, (length >= 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Input window length cannot be negative, bug got [%d].", length);
 
   Tensor *y_tensor = ctx.Output(0);
   auto y_shape = y_tensor->GetTensorShape();

@@ -14,9 +14,9 @@
 # ============================================================================
 """Fast Fourier Transform operations, the function docs are adapted from Numpy API."""
 from __future__ import absolute_import
+__all__ = ['fftshift', 'ifftshift', 'fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn']
 from mindspore import ops
 
-__all__ = ['fftshift', 'ifftshift', 'fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
 def fftshift(x, axes=None):
     """

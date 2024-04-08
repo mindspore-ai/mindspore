@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2020-2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2024. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,36 +40,37 @@ constexpr int64_t kNum2 = 2;
 constexpr int64_t kNum3 = 3;
 constexpr int64_t kNum4 = 4;
 constexpr int64_t kNum5 = 5;
+constexpr auto kStep2 = 2;
 
 const std::vector<std::string> mode_list = {"constant", "reflect", "edge", "circular"};
 using float16 = Eigen::half;
 
-#define PAD_V3_COMPUTE_CASE(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                       \
-    uint32_t result = DoCompute<TYPE>(CTX);             \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("PadV3 kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define PAD_V3_COMPUTE_CASE(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                                 \
+    uint32_t result = DoCompute<TYPE>(CTX);                       \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "PadV3 kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t PadV3CpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input x failed")
-  KERNEL_CHECK_NULLPTR(ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input paddings failed")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output y failed")
-  KERNEL_HANDLE_ERROR(CheckAndInitParams(ctx), "PadV3 check and init params failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input x failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input paddings failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output y failed")
+  CUST_KERNEL_HANDLE_ERROR(ctx, CheckAndInitParams(ctx), "PadV3 check and init params failed.");
   auto paddings_type = ctx.Input(1)->GetDataType();
   if (paddings_type == DT_INT32) {
-    KERNEL_CHECK_FALSE((GetPaddingsAndSetOuputShape<int32_t>(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
-                       "Get paddings and set output shape failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (GetPaddingsAndSetOutputShape<int32_t>(ctx) == KERNEL_STATUS_OK),
+                            KERNEL_STATUS_PARAM_INVALID, "Get paddings and set output shape failed.");
   } else if (paddings_type == DT_INT64) {
-    KERNEL_CHECK_FALSE((GetPaddingsAndSetOuputShape<int64_t>(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
-                       "Get paddings and set output shape failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (GetPaddingsAndSetOutputShape<int64_t>(ctx) == KERNEL_STATUS_OK),
+                            KERNEL_STATUS_PARAM_INVALID, "Get paddings and set output shape failed.");
   } else {
-    KERNEL_LOG_ERROR("PadV3 paddings data type [%s] not support.", DTypeStr(paddings_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "PadV3 paddings data type [%s] not support.", DTypeStr(paddings_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto data_type_ = ctx.Input(0)->GetDataType();
@@ -89,7 +90,7 @@ uint32_t PadV3CpuKernel::Compute(CpuKernelContext &ctx) {
     PAD_V3_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     PAD_V3_COMPUTE_CASE(DT_BOOL, bool, ctx)
     default:
-      KERNEL_LOG_ERROR("PadV3 kernel data type [%s] not support.", DTypeStr(data_type_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "PadV3 kernel data type [%s] not support.", DTypeStr(data_type_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -401,7 +402,7 @@ int64_t PadV3CpuKernel::CircularIndexCaculate(int64_t pad_value, int64_t pad_end
 }
 
 template <typename T>
-void PadV3CpuKernel::CircularModeCompute(const CpuKernelContext &ctx, int64_t p) {
+void PadV3CpuKernel::CircularModeCompute(CpuKernelContext &ctx, int64_t p) {
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   if (paddings_num == kPadding1D) {
@@ -501,18 +502,14 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
     if (ctx.Input(kNum2) != nullptr) {
       constant_values = *(reinterpret_cast<T *>(ctx.Input(kNum2)->GetData()));
     } else {
-      KERNEL_LOG_DEBUG("Get attr [constant_values] failed, use default value [0]");
-    }
-    for (int64_t i = 0; i < input_dims / kNum2; ++i) {
-      int64_t u = paddings[i * kNum2];
-      int64_t v = paddings[i * kNum2 + 1];
-      paddings[i * kNum2] = paddings[kNum2 * (input_dims - i - 1)];
-      paddings[i * kNum2 + 1] = paddings[kNum2 * (input_dims - i - 1) + 1];
-      paddings[kNum2 * (input_dims - i - 1)] = u;
-      paddings[kNum2 * (input_dims - i - 1) + 1] = v;
+      CUST_KERNEL_LOG_DEBUG(ctx, "Get attr [constant_values] failed, use default value [0]");
     }
     ConstantModeCompute<T>(ctx, constant_values);
   } else if (mode == "reflect") {
+    std::reverse(paddings.begin(), paddings.end());
+    for (size_t i = 1; i < paddings.size(); i += kStep2) {
+      std::swap(paddings[i - 1], paddings[i]);
+    }
     auto shard_padv3_reflcet = [&](int64_t start, int64_t end) {
       for (int p = start; p < end; p++) {
         ReflectModeCompute<T>(ctx, p);
@@ -524,12 +521,16 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
       const int64_t max_core_num =
         std::max(static_cast<int64_t>(kMinCoreNum), static_cast<int64_t>(aicpu::CpuKernelUtils::GetCPUNum(ctx)));
       const int64_t per_unit_size = data_num / std::min(data_num, max_core_num);
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, per_unit_size, shard_padv3_reflcet),
-                          "PadV3 Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, per_unit_size, shard_padv3_reflcet),
+                               "PadV3 Compute failed.");
     } else {
       shard_padv3_reflcet(0, data_num);
     }
   } else if (mode == "edge") {
+    std::reverse(paddings.begin(), paddings.end());
+    for (size_t i = 1; i < paddings.size(); i += kStep2) {
+      std::swap(paddings[i - 1], paddings[i]);
+    }
     auto shard_padv3_edge = [&](int64_t start, int64_t end) {
       for (int p = start; p < end; p++) {
         EdgeModeCompute<T>(ctx, p);
@@ -541,12 +542,16 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
       const int64_t max_core_num =
         std::max(static_cast<int64_t>(kMinCoreNum), static_cast<int64_t>(aicpu::CpuKernelUtils::GetCPUNum(ctx)));
       const int64_t per_unit_size = data_num / std::min(data_num, max_core_num);
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, per_unit_size, shard_padv3_edge),
-                          "PadV3 Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, per_unit_size, shard_padv3_edge),
+                               "PadV3 Compute failed.");
     } else {
       shard_padv3_edge(0, data_num);
     }
   } else if (mode == "circular") {
+    std::reverse(paddings.begin(), paddings.end());
+    for (size_t i = 1; i < paddings.size(); i += kStep2) {
+      std::swap(paddings[i - 1], paddings[i]);
+    }
     auto shard_padv3_reflcet = [&](int64_t start, int64_t end) {
       for (int p = start; p < end; p++) {
         CircularModeCompute<T>(ctx, p);
@@ -558,8 +563,8 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
       const int64_t max_core_num =
         std::max(static_cast<int64_t>(kMinCoreNum), static_cast<int64_t>(aicpu::CpuKernelUtils::GetCPUNum(ctx)));
       const int64_t per_unit_size = data_num / std::min(data_num, max_core_num);
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, per_unit_size, shard_padv3_reflcet),
-                          "PadV3 Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, per_unit_size, shard_padv3_reflcet),
+                               "PadV3 Compute failed.");
     } else {
       shard_padv3_reflcet(0, data_num);
     }
@@ -570,15 +575,15 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
 uint32_t PadV3CpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
   if (ctx.GetAttr("mode") == nullptr) {
     mode = "constant";
-    KERNEL_LOG_DEBUG("Get attr [mode] failed, use default value [constant]");
+    CUST_KERNEL_LOG_DEBUG(ctx, "Get attr [mode] failed, use default value [constant]");
   } else {
     mode = ctx.GetAttr("mode")->GetString();
     const bool is_mode_available = std::find(mode_list.begin(), mode_list.end(), mode) != mode_list.end();
-    if (is_mode_available == false) {
-      KERNEL_LOG_ERROR(
-        "Attr [mode] must be included in [constant, reflect, edge], but got "
-        "[%s]",
-        mode.c_str());
+    if (!is_mode_available) {
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "Attr [mode] must be included in [constant, reflect, edge], but got "
+                            "[%s]",
+                            mode.c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -586,29 +591,38 @@ uint32_t PadV3CpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
     paddings_contiguous = ctx.GetAttr("paddings_contiguous")->GetBool();
   } else {
     paddings_contiguous = true;
-    KERNEL_LOG_DEBUG("Get attr [paddings_contiguous] failed, use default value [true]");
+    CUST_KERNEL_LOG_DEBUG(ctx, "Get attr [paddings_contiguous] failed, use default value [true]");
   }
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("Tensor y dtype[%s] must be same with x dtype[%s]", DTypeStr(ctx.Output(0)->GetDataType()).c_str(),
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "Tensor y dtype[%s] must be same with x dtype[%s]",
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   input_dims = ctx.Input(0)->GetTensorShape()->GetDims();
-  const std::vector<int64_t> paddings_shape = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   paddings_num = ctx.Input(1)->NumElements();
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t PadV3CpuKernel::GetPaddingsAndSetOuputShape(CpuKernelContext &ctx) {
+uint32_t PadV3CpuKernel::GetPaddingsAndSetOutputShape(CpuKernelContext &ctx) {
   auto paddings_ptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   paddings = std::vector<int64_t>(input_dims * kNum2, 0);
   for (int64_t i = 0; i < paddings_num; ++i) {
     paddings[i] = static_cast<int64_t>(paddings_ptr[i]);
   }
-  if (paddings_contiguous == false) {
+  // find redundancy index in paddings.
+  const int64_t remaining_paddings_num = 2;
+  auto redundancy_paddings_num = paddings_num - remaining_paddings_num;
+  for (int64_t i = remaining_paddings_num; i <= paddings_num - remaining_paddings_num; i += kStep2) {
+    if (std::any_of(paddings.begin(), paddings.begin() + i, [](const int64_t &val) { return val != 0; })) {
+      redundancy_paddings_num = i - remaining_paddings_num;
+      break;
+    }
+  }
+  if (!paddings_contiguous) {
     std::vector<int64_t> tmp = paddings;
-    for (int64_t i = 0; i < paddings_num; ++i) {
+    for (int64_t i = redundancy_paddings_num; i < paddings_num; ++i) {
       if (i % kNum2 == 0) {
         paddings[i] = tmp[i / kNum2];
       } else {
@@ -619,6 +633,7 @@ uint32_t PadV3CpuKernel::GetPaddingsAndSetOuputShape(CpuKernelContext &ctx) {
   input_shape = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   output_shape = ctx.Output(0)->GetTensorShape()->GetDimSizes();
   parallelSliceNum = 1;
+  paddings_num -= redundancy_paddings_num;
   for (int64_t i = 0; i < input_dims - paddings_num / kNum2; ++i) {
     parallelSliceNum *= input_shape[i];
   }

@@ -277,9 +277,7 @@ NodePtr StaticBinopGradCommon(BpropBuilder *ib, const NodePtr &dx, const ShapeAr
     if (!bc_axis[index].empty()) {
       reduce_dx = ib->ReduceSum(reduce_dx, bc_axis[index], ib->GetRank(reduce_dx) == shape[index].size());
     }
-    if (ib->GetRank(reduce_dx) != shape[index].size()) {
-      reduce_dx = ib->Reshape(reduce_dx, shape[index]);
-    }
+    reduce_dx = ib->Reshape(reduce_dx, shape[index]);
   } else {
     *is_dynamic_shape = true;
   }

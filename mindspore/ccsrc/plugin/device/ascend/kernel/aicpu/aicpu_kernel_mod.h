@@ -88,7 +88,7 @@ class AicpuOpKernelMod : public KernelMod {
   std::vector<int64_t> input_list_;
   std::vector<int64_t> output_list_;
   aclrtEvent rt_event_ = nullptr;
-  bool is_blocking_;  // is op has asyncflag
+  bool is_blocking_{false};  // is op has asyncflag
   bool need_skip_execute_ = false;
   bool is_output_all_empty_tensor_{false};
   bool is_dynamic_shape_{false};

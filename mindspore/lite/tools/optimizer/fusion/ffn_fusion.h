@@ -25,6 +25,12 @@
 
 namespace mindspore {
 namespace opt {
+enum PatternType {
+  kDynamicDims,
+  kConstFold,
+  kMaxPatternNum,
+};
+
 class FFNFusion : public MultiplePatternProcessPass {
  public:
   explicit FFNFusion(const std::string &name = "FFNFusion", bool multigraph = true)
@@ -44,20 +50,23 @@ class FFNFusion : public MultiplePatternProcessPass {
   const VectorRef DefineFFNPatternForConstFolding() const;
   const VectorRef DefineFFNPatternForDynamicDims() const;
 
-  CNodePtr CreateFFNFusionNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
+  CNodePtr CreateFFNFusionNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv,
+                               int index) const;
 
-  mutable VarPtr input_{nullptr};
+  mutable VarPtr input_[kMaxPatternNum] = {nullptr};
+
   mutable VarPtr gather_y_{nullptr};
   mutable VarPtr add2_y_{nullptr};
   mutable VarPtr div1_y_{nullptr};
   mutable VarPtr mul1_y_{nullptr};
   mutable VarPtr mul2_y_{nullptr};
-  mutable VarPtr div2_y_{nullptr};
-  mutable VarPtr add3_y_{nullptr};
-  mutable VarPtr mul4_y_{nullptr};
-  mutable VarPtr matmul1_b_{nullptr};
-  mutable VarPtr add1_x_{nullptr};
-  mutable VarPtr matmul2_b_{nullptr};
+
+  mutable VarPtr div2_y_[kMaxPatternNum] = {nullptr};
+  mutable VarPtr add3_y_[kMaxPatternNum] = {nullptr};
+  mutable VarPtr mul4_y_[kMaxPatternNum] = {nullptr};
+  mutable VarPtr matmul1_b_[kMaxPatternNum] = {nullptr};
+  mutable VarPtr add1_x_[kMaxPatternNum] = {nullptr};
+  mutable VarPtr matmul2_b_[kMaxPatternNum] = {nullptr};
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -99,7 +99,7 @@ PrimitiveCPtr OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const on
     auto node_iter = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
                                   [input_name](const onnx::TensorProto &proto) { return proto.name() == input_name; });
     if (node_iter == onnx_graph.initializer().end()) {
-      MS_LOG(INFO) << "not find node: " << input_name;
+      MS_LOG(INFO) << "cannot find node: " << input_name;
       return prim->GetPrim();
     }
     float value = 0.0;

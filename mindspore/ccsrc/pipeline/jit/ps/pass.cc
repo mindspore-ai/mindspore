@@ -87,7 +87,6 @@
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
-#include "frontend/optimizer/irpass/pack_expand.h"
 #include "frontend/optimizer/irpass/symbol_engine_optimizer.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/util.h"
@@ -1008,22 +1007,6 @@ bool GradPartialTransformPass(const ResourcePtr &resource) {
   auto grad_partial_transform =
     opt::Optimizer::MakeOptimizer("grad_partial_transform", resource, grad_partial_transform_map);
   (void)grad_partial_transform->step(func_graph, false);
-  return true;
-}
-
-bool PackExpandPass(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto opt = opt::Optimizer::MakeEmptyOptimizer(resource);
-  opt::OptPass pack_expand = opt::OptPass(mindspore::opt::irpass::PackExpand());
-  if (pack_expand(func_graph, opt)) {
-    opt::irpass::OptimizeIRPassLib irpass;
-    opt::OptPassConfig after_resolve_pass = opt::OptPassConfig({irpass.replace_old_param_});
-    OptPassGroupMap map({{"after_resolve", after_resolve_pass}});
-    auto after_resolve = opt::Optimizer::MakeOptimizer("after_resolve", resource, map);
-    (void)after_resolve->step(func_graph, false);
-  }
   return true;
 }
 

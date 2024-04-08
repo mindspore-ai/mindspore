@@ -29,9 +29,9 @@ layer_norm:
         - **output_x** (Tensor) - The normalized input, has the same type and shape as the `input_x`.
         - **mean** (Tensor) - The first `begin_norm_axis` dimensions of `mean` shape is the same as `input_x`,
           and the remaining dimensions are 1. Suppose the shape of the `input_x` is :math:`(x_1, x_2, \ldots, x_R)`,
-          the shape of the `mean` is :math:`(x_1, \ldots, x_{begin\_params\_axis}, 1, \ldots, 1)`
-          (when `begin_params_axis=0`, the shape of `mean` is :math:`(1, \ldots, 1)` ).
-        - **variance** (Tensor) - Shape is the same as `mean` .
+          the shape of the `mean` is :math:`(x_1, \ldots, x_{begin\_norm\_axis}, 1, \ldots, 1)`
+          (when `begin_norm_axis=0`, the shape of `mean` is :math:`(1, \ldots, 1)` ).
+        - **rstd** (Tensor) - The reciprocal of the input standard deviation. Shape is the same as `mean` .
 
     Raises:
         TypeError: If `begin_norm_axis` or `begin_params_axis` is not an int.
@@ -49,13 +49,7 @@ layer_norm:
         >>> gamma = Tensor(np.ones([3]), mindspore.float32)
         >>> beta = Tensor(np.ones([3]), mindspore.float32)
         >>> layer_norm = ops.LayerNorm()
-        >>> output, mean, variance = layer_norm(input_x, gamma, beta)
+        >>> output, _, _ = layer_norm(input_x, gamma, beta)
         >>> print(output)
         [[-0.2247448  1.         2.2247448]
          [-0.2247448  1.         2.2247448]]
-        >>> print(mean)
-        [[2.]
-         [2.]]
-        >>> print(variance)
-        [[0.6666667]
-         [0.6666667]]

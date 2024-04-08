@@ -544,47 +544,6 @@ Array操作
     mindspore.numpy.unwrap
     mindspore.numpy.var
 
-快速傅里叶变换 (FFTs)
------------------------------------------
-
-快速傅里叶变换子模块包含了各类快速傅里叶变换。
-
-例如：1至N维的快速傅里叶变换及其逆变换、余弦变换以及快速汉克尔变换等等。
-
-- 一维快速傅里叶变换
-
-  以下代码实现了对输入 `x` 进行一维快速傅里叶变换：
-
-  .. code-block:: python
-
-      import mindspore.numpy as np
-
-      x = np.array([1.6243454, -0.6117564, -0.5281718, -1.0729686])
-      output = np.fft.fft(x)
-      print(output)
-
-  运行结果如下：
-
-  .. code-block::
-
-      [-0.5885514+0j 2.1525172-0.4612122j 2.7808984+0j 2.1525172+0.4612122j]
-
-.. msplatformautosummary::
-    :toctree: numpy
-    :nosignatures:
-    :template: classtemplate_inherited.rst
-
-    mindspore.numpy.fft.fft
-    mindspore.numpy.fft.fft2
-    mindspore.numpy.fft.fftn
-    mindspore.numpy.fft.fftshift
-    mindspore.numpy.fft.rfft
-    mindspore.numpy.fft.ifft
-    mindspore.numpy.fft.ifft2
-    mindspore.numpy.fft.ifftn
-    mindspore.numpy.fft.ifftshift
-    mindspore.numpy.fft.irfft
-
 MindSpore Numpy与MindSpore特性结合
 -----------------------------------------
 
@@ -699,7 +658,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
         ...
        Tensor(shape=[4], dtype=Float32, value= [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00,  2.00000000e+00]))
 
-  更多细节可参考 `API GradOperation <https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.GradOperation.html>`_ 。
+  更多细节可参考 `API GradOperation <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/ops/mindspore.ops.GradOperation.html>`_ 。
 
 - mindspore.set_context使用示例
 
@@ -725,7 +684,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
       set_context(device_target="Ascend")
       ...
 
-  更多细节可参考 `API mindspore.set_context <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ 。
+  更多细节可参考 `API mindspore.set_context <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ 。
 
 - mindspore.numpy使用示例
 

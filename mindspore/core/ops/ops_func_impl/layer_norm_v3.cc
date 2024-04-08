@@ -123,6 +123,13 @@ BaseShapePtr LayerNormV3FuncImpl::InferShape(const PrimitivePtr &primitive,
   }
   int64_t bpa_value = bpa_opt.value();
   int64_t begin_params_axis = CheckAxisV3(op_name, "begin_params_axis", bpa_value, -1, SizeToLong(x_rank), "input_x");
+  MS_CHECK_VALUE(
+    bna_value == bpa_value,
+    CheckAndConvertUtils::FormatCommMsg(
+      "For '", op_name,
+      "', begin_norm_axis must be equal to begin_params_axis for layer normalization of input_x[begin_norm_axis:]."
+      "But got begin_norm_axis:",
+      bna_value, ", begin_params_axis:", bpa_value, "."));
 
   size_t begin_params_axis_u = LongToSize(begin_params_axis);
   MS_CHECK_VALUE((begin_params_axis_u <= x_rank) && (gamma_shape.size() + begin_params_axis_u >= x_rank) &&

@@ -19,8 +19,13 @@ from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum, StringToEnum
 from mindspore._c_expression import FormatEnum as Format
 from mindspore._c_expression import ReductionEnum as Reduction
 
-arg_invalid_info = lambda op_name, arg_name, arg_val: \
-    f"For '{op_name}', the value of '{arg_name}' is invalid: '{arg_val}'."
+
+def arg_invalid_info(op_name, arg_name, arg_val):
+    """
+    generate invalid msg.
+    """
+    return f"For '{op_name}', the value of '{arg_name}' is invalid: '{arg_val}'."
+
 
 def to_kernel_size(op_name, arg_name, kernel_size):
     """

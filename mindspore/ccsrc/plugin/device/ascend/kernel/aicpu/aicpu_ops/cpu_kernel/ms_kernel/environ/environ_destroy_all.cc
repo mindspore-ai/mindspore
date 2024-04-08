@@ -24,18 +24,18 @@ const char *kEnvironDestroyAll = "EnvironDestroyAll";
 }  // namespace
 namespace aicpu {
 uint32_t EnvironDestroyAllKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_LOG_DEBUG("Destroy all env handle");
+  CUST_KERNEL_LOG_DEBUG(ctx, "Destroy all env handle");
   // Parse Kernel
   auto ret = ParseKernelParam(ctx);
-  KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Parse EnvironDestroyAll failed.");
-  EnvironMgr::GetInstance().Clear();
+  CUST_KERNEL_CHECK_FALSE(ctx, ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Parse EnvironDestroyAll failed.");
+  EnvironMgr::GetInstance().Clear(ctx);
   return KERNEL_STATUS_OK;
 }
 
-uint32_t EnvironDestroyAllKernel::ParseKernelParam(const CpuKernelContext &ctx) const {
-  KERNEL_LOG_DEBUG("Enter ParseKernelParam.");
-  if (!EnvironMgr::GetInstance().IsScalarTensor(ctx.Output(kFirstInputIndex))) {
-    KERNEL_LOG_ERROR("The output is not scalar tensor.");
+uint32_t EnvironDestroyAllKernel::ParseKernelParam(CpuKernelContext &ctx) const {
+  CUST_KERNEL_LOG_DEBUG(ctx, "Enter ParseKernelParam.");
+  if (!EnvironMgr::GetInstance().IsScalarTensor(ctx, ctx.Output(kFirstInputIndex))) {
+    CUST_KERNEL_LOG_ERROR(ctx, "The output is not scalar tensor.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

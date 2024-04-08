@@ -24,7 +24,7 @@
 
 namespace mindspore {
 static inline bool IsAscend910Soc() {
-  const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     return false;
   }
@@ -36,7 +36,7 @@ static inline bool IsAscend910Soc() {
 }
 
 static inline bool IsAscendNo910Soc() {
-  const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     return false;
   }

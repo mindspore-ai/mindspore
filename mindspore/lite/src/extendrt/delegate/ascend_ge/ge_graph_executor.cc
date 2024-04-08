@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #endif
 #include "src/extendrt/utils/tensor_utils.h"
-#include "framework/common/ge_inner_error_codes.h"
+#include "external/ge_common/ge_api_error_codes.h"
 #include "src/extendrt/delegate/ascend_ge/aoe_api_tune_process.h"
 #include "extendrt/delegate/ascend_ge/ge_utils.h"
 #include "extendrt/delegate/ascend_ge/ge_dynamic_utils.h"
@@ -53,8 +53,6 @@
 #include "op_proto/inc/array_ops.h"
 #include "op_proto/inc/elewise_calculation_ops.h"
 #include "mindspore/lite/tools/optimizer/graph/attr_to_args_pass.h"
-#include "inc/ops/array_ops.h"
-#include "inc/ops/elewise_calculation_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include <nlohmann/json.hpp>
 
@@ -953,12 +951,8 @@ bool GeGraphExecutor::InitRefDataDeviceTensor() {
   for (size_t i = 0; i < ref_data_infos_.size(); i++) {
     auto &item = ref_data_infos_[i];
     auto tensor = item.host_data;
+    item.size = tensor->Size();
     item.host_data = nullptr;  // release host memory
-    if (auto ref_it = session_ref_data_map.find(item.name); ref_it != session_ref_data_map.end()) {
-      item.ge_tensor = ref_it->second.ge_tensor;
-      MS_LOG(INFO) << "Find ref data tensor : " << item.name;
-      continue;
-    }
     ShapeVector ref_data_shape = tensor->shape_c();
     SetRefShape(&ref_data_shape, true, item.name);
     auto desc = transform::TransformUtil::GetGeTensorDesc(ref_data_shape, tensor->data_type(), kOpFormat_NCHW);
@@ -972,10 +966,25 @@ bool GeGraphExecutor::InitRefDataDeviceTensor() {
       MS_LOG(ERROR) << "Failed to call ge::Tensor::SetTensorDesc, ret " << ret;
       return false;
     }
-    item.size = tensor->Size();
-    item.offset = ref_data_total_size;
-    ref_data_total_size += ALIGN_UP_REF_DATA(tensor->Size());
-    new_param_tensor_map[item.name] = tensor;
+    if (auto ref_it = session_ref_data_map.find(item.name); ref_it != session_ref_data_map.end()) {
+      auto &org_item = ref_it->second;
+      MS_LOG(INFO) << "Find RefData " << item.name << ", shape " << org_item.shape << ", size " << org_item.size;
+      if (org_item.size != item.size) {
+        MS_LOG(ERROR) << "RefData " << item.name << " data size != the size in pre graph, current shape " << item.shape
+                      << ", size " << item.size << ", pre shape " << org_item.shape << ", pre size " << org_item.size;
+        return false;
+      }
+      auto dst_addr = ref_it->second.ge_tensor.GetData();
+      ret = item.ge_tensor.SetData(dst_addr, item.size, [](uint8_t *) -> void {});
+      if (ret != ge::GRAPH_SUCCESS) {
+        MS_LOG(ERROR) << "Failed to call ge::Tensor SetData(uint8_t*, size, DeleteFunc), data size " << item.size;
+        return false;
+      }
+    } else {
+      item.offset = ref_data_total_size;
+      ref_data_total_size += ALIGN_UP_REF_DATA(tensor->Size());
+      new_param_tensor_map[item.name] = tensor;
+    }
   }
   if (ref_data_total_size != 0) {
     auto device_memory = memory_manager_->MallocDeviceMemory("RefData input", ref_data_total_size);

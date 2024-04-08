@@ -1621,6 +1621,36 @@ def test_list_inplace_mixed():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_attribute_get_twice():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    class InnerNet():
+        def __init__(self):
+            self.x = [Tensor([1]), Tensor([2]), Tensor([3])]
+
+    class Net(nn.Cell):
+        "Fallback network."
+        def __init__(self):
+            super(Net, self).__init__()
+            obj = InnerNet()
+            self.x = obj.x
+
+        def construct(self, y):
+            self.x.extend((y,))
+            return ops.addn(self.x)
+
+    y = Tensor([5])
+    net = Net()
+    output = net(y)
+    assert output == 11
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

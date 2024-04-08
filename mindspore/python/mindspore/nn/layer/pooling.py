@@ -105,7 +105,8 @@ class LPPool1d(Cell):
         kernel_size (int): The size of kernel window.
         stride (int): The distance of kernel moving, an int number that represents the width of movement is stride,
             if the value is None, the default value `kernel_size` is used. Default: ``None`` .
-        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
+        ceil_mode (bool): If ``True``, use ceil to calculate output shape.
+            If ``False``, use ceil to calculate output shape. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`.
@@ -119,7 +120,7 @@ class LPPool1d(Cell):
 
 
     Raises:
-        TypeError: If `x` is not an Tensor.
+        TypeError: If `x` is not a Tensor.
         TypeError: If `kernel_size` or `stride` is not an int.
         TypeError: If `ceil_mode` is not a bool.
         TypeError: If `norm_type` is neither float nor int.
@@ -179,7 +180,7 @@ class LPPool2d(Cell):
             or a tuple of two int numbers that represent height and width respectively.
         stride(Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
-            represent height and width of movement respectively, if the value is None,
+            represent height and width of movement respectively, if the value is ``None``,
             the default value `kernel_size` is used. Default: ``None`` .
         ceil_mode(bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
 
@@ -197,7 +198,7 @@ class LPPool2d(Cell):
             W_{out} = \left\lfloor\frac{W_{in} - \text{kernel_size}[1]}{\text{stride}[1]} + 1\right\rfloor
 
     Raises:
-        TypeError: If `x` is not an Tensor.
+        TypeError: If `x` is not a Tensor.
         TypeError: If `kernel_size` or `stride` is neither int nor tuple.
         TypeError: If `ceil_mode` is not a bool.
         TypeError: If `norm_type` is neither float nor int.
@@ -324,7 +325,8 @@ class MaxPool3d(_PoolNd):
             three integers. Default: ``1`` .
         return_indices (bool): If ``True`` , output is a Tuple of 2 Tensors, representing the maxpool result and where
             the max values are generated. Otherwise, only the maxpool result is returned. Default: ``False`` .
-        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
+        ceil_mode (bool): If ``True``, use ceil to calculate output shape.
+            If ``False``, use ceil to calculate output shape. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` or
@@ -620,7 +622,7 @@ class MaxPool1d(_PoolNd):
               at the begin and end is determined by the `padding` parameter.
               If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int])): Padding value for the pooling. Default value is 0.
+        padding (Union(int, tuple[int], list[int])): Padding value for the pooling. Default value is ``0``.
             padding can only be an integer or a tuple/list containing a single integer, in which case padding times or
             padding[0] times are padded on both sides of the input.
         dilation (Union(int, tuple[int])): The spacing between the elements of the kernel in convolution,
@@ -1977,7 +1979,7 @@ class MaxUnpool2d(Cell):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
-            If stride is None, then stride equal to kernel_size. Default: ``None`` .
+            If stride is ``None``, then stride equal to kernel_size. Default: ``None`` .
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of height and width are the same, equal to padding. If `padding` is a tuple of two
             integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
@@ -2070,7 +2072,7 @@ class MaxUnpool3d(Cell):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
             represent depth, height and width of movement respectively.
-            If stride is None, then stride equal to kernel_size. Default: ``None`` .
+            If stride is ``None``, then stride equal to kernel_size. Default: ``None`` .
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of depth, height and width are the same, equal to padding. If `padding` is a tuple of three
             integers, the padding of depth, height and width equal to padding[0], padding[1] and padding[2]

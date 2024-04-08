@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <map>
 #include <vector>
 #include <string>
 #include <memory>
@@ -30,6 +31,19 @@
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore::parallel {
+int64_t GetPrimeFactor(int64_t value) {
+  static const std::vector<int64_t> prime_table = {3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47};
+  for (const auto &prime : prime_table) {
+    if (prime > value) {
+      return -1;
+    }
+    if (value % prime == 0) {
+      return prime;
+    }
+  }
+  return -1;
+}
+
 CNodePtr CreateShape(const AnfNodePtr &pre_cnode, const FuncGraphPtr &func_graph, const std::string &inst_name) {
   auto prim = std::make_shared<Primitive>(SHAPE_OP);
   prim->set_instance_name(inst_name);
@@ -40,14 +54,7 @@ CNodePtr CreateShape(const AnfNodePtr &pre_cnode, const FuncGraphPtr &func_graph
   return shape_cnode;
 }
 
-bool IsTargetOp(const CNodePtr &cnode, const std::string &target) {
-  RETURN_IF_FALSE(cnode != nullptr);
-  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-  RETURN_IF_FALSE(value_node != nullptr);
-  auto prim = value_node->value()->cast<PrimitivePtr>();
-  RETURN_IF_FALSE(prim != nullptr);
-  return prim->name() == target;
-}
+inline bool IsTargetOp(const CNodePtr &cnode, const std::string &target) { return GetPrimName(cnode) == target; }
 
 bool IsTupleGetItem(const CNodePtr &cnode) { return IsTargetOp(cnode, TUPLE_GETITEM_OP); }
 
@@ -85,7 +92,7 @@ std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const std::vector<AnfNodePtr>
     }
 
     auto cnode = node->cast<CNodePtr>();
-    if ((cnode->size() < 2) || !IsValueNode<Primitive>(cnode->input(0))) {
+    if ((cnode->size() < SIZE_TWO) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
     }
     auto expect_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -136,7 +143,6 @@ std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operat
 
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
   int64_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
-
   if (grad_accumulation_step > 1 || split_stage_num > 1) {
     auto parameters = root->parameters();
     grad_accu = GetAccuGrad(parameters, weight_name);
@@ -183,14 +189,37 @@ CNodePtr CreateMakeTuple(const std::vector<AnfNodePtr> &tuple_inputs, const Func
   return make_tuple;
 }
 
-CNodePtr CreateDiv(const AnfNodePtr &input_node, const int64_t divisor, const FuncGraphPtr &func_graph,
-                   bool to_long = false) {
+CNodePtr CreateSplit(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph,
+                     const std::string &inst_name) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == SIZE_THREE, "inputs is empty.");
+  auto prim = std::make_shared<Primitive>(SPLIT);
+  if (!inst_name.empty()) {
+    prim->set_instance_name(inst_name);
+  }
+  std::vector<AnfNodePtr> split_inputs(SIZE_FOUR);
+  split_inputs[INDEX_ZERO] = NewValueNode(prim);
+  split_inputs[INDEX_ONE] = inputs[INDEX_ZERO];   // split_input
+  split_inputs[INDEX_TWO] = inputs[INDEX_ONE];    // split_axis
+  split_inputs[INDEX_THREE] = inputs[INDEX_TWO];  // split_size
+  auto split = func_graph->NewCNode(split_inputs);
+  return split;
+}
+
+AnfNodePtr CreateDiv(const AnfNodePtr &input_node, int64_t divisor, const FuncGraphPtr &func_graph, bool to_long,
+                     const std::string &inst_name) {
   MS_EXCEPTION_IF_NULL(input_node);
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_ZERO("div_divisor", divisor);
-  auto prim = NewValueNode(prim::kPrimScalarDiv);
+  if (divisor == 1) {
+    return input_node;
+  }
+  auto prim = std::make_shared<Primitive>(SCALAR_DIV);
+  if (!inst_name.empty()) {
+    prim->set_instance_name(inst_name);
+  }
   std::vector<AnfNodePtr> inputs(SIZE_THREE);
-  inputs[INDEX_ZERO] = prim;
+  inputs[INDEX_ZERO] = NewValueNode(prim);
   inputs[INDEX_ONE] = input_node;
   inputs[INDEX_TWO] = CreatInt64Imm(divisor);
   auto div = func_graph->NewCNode(inputs);
@@ -204,13 +233,52 @@ CNodePtr CreateDiv(const AnfNodePtr &input_node, const int64_t divisor, const Fu
   return div;
 }
 
-bool HasDynamicDim(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
-                   const TensorRedistributionPtr &tensor_redistribution) {
-  TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
-  bool is_same_rank = shape_vec.size() == to_layout.tensor_shape().array().size();
+CNodePtr CreateMul(const AnfNodePtr &input_node, const int64_t factor, const FuncGraphPtr &func_graph,
+                   bool to_long = false, const std::string &inst_name = "") {
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_ZERO("mul_factor", factor);
+  auto prim = std::make_shared<Primitive>(SCALAR_MUL);
+  if (!inst_name.empty()) {
+    prim->set_instance_name(inst_name);
+  }
+  std::vector<AnfNodePtr> inputs(SIZE_THREE);
+  inputs[INDEX_ZERO] = NewValueNode(prim);
+  inputs[INDEX_ONE] = input_node;
+  inputs[INDEX_TWO] = CreatInt64Imm(factor);
+  auto mul = func_graph->NewCNode(inputs);
+  if (to_long) {
+    auto cast_prim = NewValueNode(prim::kPrimScalarCast);
+    auto type_val = MakeValue(static_cast<int64_t>(kInt64->type_id()));
+    auto type_id = NewValueNode(type_val);
+    auto cast = func_graph->NewCNode({cast_prim, mul, type_id});
+    return cast;
+  }
+  return mul;
+}
+
+bool MatchWithPrime(const AssembledDynamicDimsMapping &dyn_dims_mapping, int64_t prime) {
+  for (const auto &iter : dyn_dims_mapping) {
+    int64_t prime_base = GetPrimeFactor(iter.first);
+    if (prime_base == prime) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool IsSameRank(const Shape &shape_vec, const TensorRedistributionPtr &tensor_redistribution) {
+  TensorLayout from_layout = tensor_redistribution->layout_transfer().from_in();
+  return shape_vec.size() == from_layout.tensor_shape().array().size();
+}
+
+bool HasAssebledDynamicDim(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
+                           const TensorRedistributionPtr &tensor_redistribution) {
+  TensorLayout from_layout = tensor_redistribution->layout_transfer().from_in();
+  bool is_same_rank = IsSameRank(shape_vec, tensor_redistribution);
   if (!is_same_rank) {
     MS_LOG(WARNING) << "vector size is not equal, got size " + std::to_string(shape_vec.size()) + " and size " +
-                         std::to_string(to_layout.tensor_shape().array().size());
+                         std::to_string(from_layout.tensor_shape().array().size());
   }
   for (size_t i = 0; i < shape_vec.size(); ++i) {
     int64_t dim = shape_vec[i];
@@ -218,126 +286,146 @@ bool HasDynamicDim(const Shape &shape_vec, const AssembledDynamicDimsMapping &dy
     if (iter != dyn_dims_mapping.end()) {
       return true;
     }
-    if (is_same_rank) {
-      int64_t full_dim = to_layout.tensor_shape().GetDimByIdx(i);
-      auto ret = dyn_dims_mapping.find(full_dim);
-      if (ret != dyn_dims_mapping.end()) {
-        return true;
-      }
+    int64_t prime_of_dim = GetPrimeFactor(dim);
+    if (prime_of_dim != -1 && MatchWithPrime(dyn_dims_mapping, prime_of_dim)) {
+      return true;
     }
   }
   return false;
 }
 
-int64_t GetPrimeFactor(int64_t value) {
-  static const std::vector<int64_t> prime_table = {3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47};
-  for (const auto &prime : prime_table) {
-    if (prime > value) {
-      return -1;
-    }
-    if (value % prime == 0) {
-      return prime;
-    }
-  }
-  return -1;
-}
-
 void MatchingAccordingToPrime(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
                               const TensorRedistributionPtr &tensor_redistribution, const FuncGraphPtr &func_graph,
                               std::vector<AnfNodePtr> *shape_input) {
+  MS_LOG(INFO) << "Match with prime";
   MS_EXCEPTION_IF_NULL(shape_input);
   TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
+  TensorLayout from_layout = tensor_redistribution->layout_transfer().from_in();
+  // If the shape not changed, it means not reshape.
+  // So the dynamic dim can be matched according to index.
+  MS_LOG(INFO) << "shape_vec=" << shape_vec;
   for (size_t i = 0; i < shape_vec.size(); ++i) {
     int64_t dim = shape_vec[i];
-    auto iter = dyn_dims_mapping.find(dim);
-    if (iter != dyn_dims_mapping.end()) {
-      auto tuple_getitem_input = dyn_dims_mapping.at(dim);
-      (void)shape_input->emplace_back(tuple_getitem_input);
-      continue;
-    }
-    int64_t prime = GetPrimeFactor(dim);
-    if (prime != -1) {
-      int64_t fake_dim = -1;
-      AnfNodePtr tuple_getitem_input = nullptr;
-      for (const auto &mapping_iter : dyn_dims_mapping) {
-        int64_t prime_factor = GetPrimeFactor(mapping_iter.first);
-        if (prime == prime_factor) {
-          fake_dim = mapping_iter.first;
-          tuple_getitem_input = mapping_iter.second;
+    int64_t dim_prime = GetPrimeFactor(dim);
+    bool found = false;
+    if (dim != -1 && dim_prime != -1) {
+      for (const auto &iter : dyn_dims_mapping) {
+        int64_t dim_value_in_graph = iter.first;
+        AnfNodePtr tuple_getitem = iter.second.second;
+        int64_t dyn_prime = GetPrimeFactor(dim_value_in_graph);
+        if (dyn_prime != dim_prime) {
+          continue;
+        }
+        if (dim_value_in_graph > dim) {
+          int64_t divisor = dim_value_in_graph / dim;
+          AnfNodePtr div_op = CreateDiv(tuple_getitem, divisor, func_graph, true, "assemble_dynamic_shape_op");
+          (void)shape_input->emplace_back(div_op);
+          MS_LOG(INFO) << "shape[" << i << "] match " << dim;
+          found = true;
+          break;
+        } else if (dim_value_in_graph < dim) {
+          int64_t divisor = dim / dim_value_in_graph;
+          AnfNodePtr mul_op = CreateMul(tuple_getitem, divisor, func_graph, true, "assemble_dynamic_shape_op");
+          (void)shape_input->emplace_back(mul_op);
+          MS_LOG(INFO) << "shape[" << i << "] match " << dim;
+          found = true;
+          break;
+        } else {
+          (void)shape_input->emplace_back(tuple_getitem);
+          MS_LOG(INFO) << "shape[" << i << "] match " << dim_value_in_graph;
+          found = true;
           break;
         }
       }
-      if (fake_dim > 0) {
-        int64_t divisor = fake_dim / dim;
-        auto div_op = CreateDiv(tuple_getitem_input, divisor, func_graph, true);
-        (void)shape_input->emplace_back(div_op);
-        continue;
-      }
     }
-    MS_LOG(ERROR) << "Cannot find " << dim << " in shape param.";
-    AnfNodePtr val = CreatInt64Imm(dim);
-    (void)shape_input->emplace_back(val);
+    if (!found) {
+      MS_LOG(INFO) << "Cannot find " << dim << " in shape param.";
+      AnfNodePtr val = CreatInt64Imm(dim);
+      (void)shape_input->emplace_back(val);
+    }
   }
 }
 
-void MatchingAccordingToFullShape(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
-                                  const TensorRedistributionPtr &tensor_redistribution, const FuncGraphPtr &func_graph,
-                                  std::vector<AnfNodePtr> *shape_input) {
+void MatchingAccordingToIndex(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
+                              const TensorRedistributionPtr &tensor_redistribution, const FuncGraphPtr &func_graph,
+                              std::vector<AnfNodePtr> *shape_input) {
+  MS_LOG(INFO) << "Match with index";
   MS_EXCEPTION_IF_NULL(shape_input);
   TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
-  bool is_same_rank = to_layout.tensor_shape().array().size() == shape_vec.size();
+  TensorLayout from_layout = tensor_redistribution->layout_transfer().from_in();
+  // If the shape not changed, it means not reshape.
+  // So the dynamic dim can be matched according to index.
+  // {index, {prime_dim, AnfNode}}
+  std::map<size_t, std::pair<int64_t, AnfNodePtr>> mapping_table;
+  for (const auto &iter : dyn_dims_mapping) {
+    mapping_table.insert({iter.second.first, {iter.first, iter.second.second}});
+  }
   for (size_t i = 0; i < shape_vec.size(); ++i) {
     int64_t dim = shape_vec[i];
-    auto iter = dyn_dims_mapping.find(dim);
-    if (iter != dyn_dims_mapping.end()) {
-      auto tuple_getitem_input = dyn_dims_mapping.at(dim);
-      (void)shape_input->emplace_back(tuple_getitem_input);
-      continue;
-    }
-    if (is_same_rank) {
-      int64_t full_dim = to_layout.tensor_shape().GetDimByIdx(i);
-      auto ret = dyn_dims_mapping.find(full_dim);
-      if (ret != dyn_dims_mapping.end()) {
-        const auto &tuple_getitem_input = dyn_dims_mapping.at(full_dim);
-        int64_t divisor = full_dim / dim;
-        auto div_op = CreateDiv(tuple_getitem_input, divisor, func_graph, true);
+    if (dim != -1 && mapping_table.find(i) != mapping_table.end()) {
+      std::pair<int64_t, AnfNodePtr> tuple_getitem_input_pair = mapping_table[i];
+      int64_t dim_value_in_graph = tuple_getitem_input_pair.first;
+      int64_t dim_prime = GetPrimeFactor(dim);
+      int64_t tuple_getitem_prime = GetPrimeFactor(tuple_getitem_input_pair.first);
+      if (dim_prime != tuple_getitem_prime) {
+        MS_LOG(EXCEPTION) << "Prime in dim and dynamic input are not matched, " << dim_prime << " for " << dim
+                          << " and " << tuple_getitem_prime << " for " << tuple_getitem_input_pair.first;
+      }
+      // After matching with prime, fetch the real dim value in graph and
+      //  calculate whether it needs mul/div.
+      if (dim_value_in_graph > dim) {
+        int64_t divisor = dim_value_in_graph / dim;
+        AnfNodePtr div_op =
+          CreateDiv(tuple_getitem_input_pair.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
         (void)shape_input->emplace_back(div_op);
         continue;
       }
+      if (dim_value_in_graph < dim) {
+        int64_t divisor = dim / dim_value_in_graph;
+        AnfNodePtr mul_op =
+          CreateMul(tuple_getitem_input_pair.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
+        (void)shape_input->emplace_back(mul_op);
+        continue;
+      }
+      (void)shape_input->emplace_back(tuple_getitem_input_pair.second);
+      continue;
     }
-    MS_LOG(ERROR) << "Cannot find " << dim << " in shape param.";
+    MS_LOG(INFO) << "Cannot find " << dim << " in shape param.";
     AnfNodePtr val = CreatInt64Imm(dim);
     (void)shape_input->emplace_back(val);
   }
 }
 
-/**
- * Convert Shape's SHAPE input and StridedSliceD's END input to dynamic.
- */
 AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redistribution, const Param &param,
-                                      const FuncGraphPtr &func_graph) {
+                                      const FuncGraphPtr &func_graph, bool is_reshape) {
   MS_EXCEPTION_IF_NULL(tensor_redistribution);
   AssembledDynamicDimsMapping dyn_dims_mapping = tensor_redistribution->GetDynamicDimsMapping();
   if (dyn_dims_mapping.empty()) {
     MS_LOG(ERROR) << "Doesn't have dynamic dims mapping.";
     return nullptr;
   }
-  Shape shape_vec = GetValue<Shape>(param.first.second);
+  std::vector<int64_t> shape_vec = GetValue<std::vector<int64_t>>(param.first.second);
   if (shape_vec.empty()) {
     MS_LOG(ERROR) << "Cannot get shape from param.";
     return nullptr;
   }
 
   std::vector<AnfNodePtr> shape_input;
-  if (!HasDynamicDim(shape_vec, dyn_dims_mapping, tensor_redistribution)) {
+  if (!HasAssebledDynamicDim(shape_vec, dyn_dims_mapping, tensor_redistribution)) {
+    // If the shape_vec is (-1, dim_1) and dim_1 is not a generated fake value by tensor redistribution,
+    // so it doesn't have to match.
     AnfNodePtr val = NewValueNode(param.first.second);
     MS_EXCEPTION_IF_NULL(val);
     val->set_abstract(param.first.second->ToAbstract());
     return val;
   }
 
-  MatchingAccordingToPrime(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
-
+  bool is_same_rank = IsSameRank(shape_vec, tensor_redistribution);
+  if (is_same_rank) {
+    MatchingAccordingToIndex(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
+  } else {
+    MatchingAccordingToPrime(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
+  }
   if (shape_input.size() != shape_vec.size()) {
     MS_LOG(ERROR) << "shape size is not equal.";
     return nullptr;
@@ -353,14 +441,16 @@ Status ConvertStridedSliceInputs(const OperatorParams &params,
     if (param.first.first == BEGIN_MASK || param.first.first == END_MASK || param.first.first == ELLIPSIS_MASK ||
         param.first.first == NEW_AXIS_MASK || param.first.first == SHRINK_AXIS_MASK) {
       int64_t value = GetValue<int64_t>(param.first.second);
+      MS_LOG(INFO) << "STRIDEDSLICE: param=" << param.first.first << ", param.second=" << value;
       AnfNodePtr val = NewValueNode(value);
       val->set_abstract(param.first.second->ToAbstract());
       (void)new_node_input->emplace_back(val);
       continue;
     }
     Shape shape_vec = GetValue<Shape>(param.first.second);
+    MS_LOG(INFO) << "STRIDEDSLICE: param=" << param.first.first << ", " << shape_vec;
     if (param.first.first == END) {
-      auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph);
+      auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph, false);
       MS_ERROR_IF_NULL_W_RET_VAL(dynamic_input, FAILED);
       new_node_input->emplace_back(dynamic_input);
       continue;
@@ -373,6 +463,24 @@ Status ConvertStridedSliceInputs(const OperatorParams &params,
   return SUCCESS;
 }
 
+bool WhetherMatchingIsNeededForReshape(const Shape &shape_vec, const TensorRedistributionPtr &tensor_redistribution) {
+  size_t user_specific_dynamic_dim_cnt = std::count(shape_vec.begin(), shape_vec.end(), -1);
+  TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
+  Shape to_shape_in_layout = to_layout.slice_shape().array();
+  MS_LOG(INFO) << "shape_vec=" << shape_vec << ", to_shape_in_layout=" << to_shape_in_layout;
+  if (user_specific_dynamic_dim_cnt == 1 && shape_vec.size() == to_shape_in_layout.size()) {
+    size_t dyn_index = static_cast<size_t>(std::find(shape_vec.begin(), shape_vec.end(), -1) - shape_vec.begin());
+    for (size_t i = 0; i < shape_vec.size(); ++i) {
+      if (i != dyn_index && shape_vec[i] != to_shape_in_layout[i]) {
+        return true;
+      }
+    }
+    MS_LOG(INFO) << "No need to matching for shape: " << shape_vec << ", to_shape_in_layout: " << to_shape_in_layout;
+    return false;
+  }
+  return true;
+}
+
 Status ConvertReshapeInputs(const OperatorParams &params,
                             const TensorRedistributionPtr &tensor_redistribution_from_cnode,
                             const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *new_node_input) {
@@ -381,16 +489,72 @@ Status ConvertReshapeInputs(const OperatorParams &params,
       continue;
     }
     Shape shape_vec = GetValue<Shape>(param.first.second);
-    auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph);
+    MS_LOG(INFO) << "shape param = " << shape_vec;
+    size_t dynamic_axis_cnt = std::count(shape_vec.begin(), shape_vec.end(), -1);
+    if (shape_vec.size() > 1 && dynamic_axis_cnt >= SIZE_TWO) {
+      MS_LOG(EXCEPTION) << "The shape of Reshape op has more than one -1, cannot be supported for now.";
+    }
+    if (!WhetherMatchingIsNeededForReshape(shape_vec, tensor_redistribution_from_cnode)) {
+      MS_LOG(INFO) << "No need to matching for " << shape_vec;
+      AnfNodePtr val = NewValueNode(param.first.second);
+      val->set_abstract(param.first.second->ToAbstract());
+      (void)new_node_input->emplace_back(val);
+      return SUCCESS;
+    }
+    auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph, true);
     MS_ERROR_IF_NULL_W_RET_VAL(dynamic_input, FAILED);
     (void)new_node_input->emplace_back(dynamic_input);
   }
   return SUCCESS;
 }
 
+Status ConvertSplitInputs(const OperatorParams &params, const FuncGraphPtr &func_graph,
+                          std::vector<AnfNodePtr> *new_node_input) {
+  MS_EXCEPTION_IF_CHECK_FAIL(new_node_input->size() == 1,
+                             "new_node_input must and only contain the input of split for split.");
+  auto split_target = new_node_input[0];
+  std::vector<AnfNodePtr> split_inputs = {split_target};
+  ValuePtr output_index;
+  for (auto &param : params) {
+    if (param.first.first == SPLIT_OUTPUT_INDEX) {
+      output_index = param.first.second;
+      continue;
+    }
+    AnfNodePtr val = NewValueNode(param.first.second);
+    MS_EXCEPTION_IF_NULL(val);
+    val->set_abstract(param.first.second->ToAbstract());
+    (void)split_inputs.emplace_back(val);
+  }
+  constexpr char tag[] = "redistribution_allsplit";
+  auto split_op = CreateSplit(split_inputs, func_graph, tag);
+  auto split_output_index = NewValueNode(output_index);
+  auto tuple_get_item_prim = std::make_shared<Primitive>(TUPLE_GETITEM_OP);
+  auto prim_value_node = NewValueNode(tuple_get_item_prim);
+  tuple_get_item_prim->set_instance_name(tag);
+  new_node_input->resize(SIZE_THREE);
+  (*new_node_input)[INDEX_ZERO] = prim_value_node;
+  (*new_node_input)[INDEX_ONE] = split_op;
+  (*new_node_input)[INDEX_TWO] = split_output_index;
+  return SUCCESS;
+}
+
+bool IsToBeInsertedSplitOp(const Operator &op) {
+  // if split op has attr SPLIT_INSERT_LATER, then skip it in OptimizeTensorRedistributionOperatorList stage,
+  // and insert it in CreateInputs
+  if (op.first != SPLIT) {
+    return false;
+  }
+  OperatorAttrs op_attrs = op.second.first;
+  auto is_skip_func = [](const Attr &attr) -> bool {
+    return attr.first == SPLIT_INSERT_LATER && GetValue<bool>(attr.second);
+  };
+  return std::any_of(op_attrs.begin(), op_attrs.end(), is_skip_func);
+}
+
 Status ConvertParamsToInputs(const Operator &op, const TensorRedistributionPtr &tensor_redistribution_from_cnode,
                              const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *new_node_input) {
   MS_ERROR_IF_NULL_W_RET_VAL(tensor_redistribution_from_cnode, FAILED);
+  MS_EXCEPTION_IF_NULL(func_graph);
   OperatorArgs arg_forward = op.second;
   OperatorParams params = arg_forward.second;
 
@@ -402,8 +566,12 @@ Status ConvertParamsToInputs(const Operator &op, const TensorRedistributionPtr &
     if (ConvertStridedSliceInputs(params, tensor_redistribution_from_cnode, func_graph, new_node_input) != SUCCESS) {
       return FAILED;
     }
+  } else if (IsToBeInsertedSplitOp(op)) {
+    if (ConvertSplitInputs(params, func_graph, new_node_input) != SUCCESS) {
+      return FAILED;
+    }
   } else {
-    MS_LOG(WARNING) << op.first << " is not supported.";
+    MS_LOG(DEBUG) << op.first << " is not supported.";
     return FAILED;
   }
   return SUCCESS;
@@ -416,21 +584,30 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &pre_no
   OperatorParams params = arg_forward.second;
 
   std::vector<AnfNodePtr> new_node_input = {pre_node};
+  MS_LOG(INFO) << "CreateInput param.empty=" << params.empty() << ", pre_node=" << pre_node->fullname_with_scope()
+               << ", op=" << op.first;
   bool is_done = false;
   if (cur_cnode != nullptr) {
-    FuncGraphPtr func_graph = cur_cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(func_graph);
     TensorRedistributionPtr tensor_redistribution = GetTensorRedistributionFromCNode(cur_cnode);
     // 1. Only deal with Reshape in user scripts.
     // 2. Deal with non-user Reshape. If only have StrideSliceD, Concat and Split cannot reach.
     if (tensor_redistribution != nullptr && tensor_redistribution->IsAssembledStaticShape()) {
       MS_LOG(DEBUG) << cur_cnode->fullname_with_scope() << " distribute_operator is not nullptr";
-      if (ConvertParamsToInputs(op, tensor_redistribution, func_graph, &new_node_input) == SUCCESS) {
+      if (ConvertParamsToInputs(op, tensor_redistribution, cur_cnode->func_graph(), &new_node_input) == SUCCESS) {
         is_done = true;
       } else {
-        MS_LOG(WARNING) << "Convert params to inputs failed.";
+        MS_LOG(DEBUG) << "Convert params to inputs failed.";
       }
+    } else {
+      MS_LOG(INFO) << "cur_cnode=" << cur_cnode->fullname_with_scope() << " is not dynamic node.";
     }
+  }
+
+  if (IsToBeInsertedSplitOp(op) && !is_done && cur_cnode != nullptr) {
+    // it means Split on static shape scene.
+    auto ret = ConvertSplitInputs(params, cur_cnode->func_graph(), &new_node_input);
+    MS_EXCEPTION_IF_CHECK_FAIL(ret == SUCCESS, "Insert split op failed.");
+    is_done = true;
   }
 
   if (!is_done && !params.empty()) {
@@ -443,8 +620,9 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &pre_no
     }
   }
 
-  new_node_input = ConvertToRealInputs(op.first, instance_name, new_node_input, arg_forward.first);
-
+  if (!IsToBeInsertedSplitOp(op)) {
+    new_node_input = ConvertToRealInputs(op.first, instance_name, new_node_input, arg_forward.first);
+  }
   // if the op have 'group' attr, set the rank list name for the op
   SetCommunicationOpGroupLabel(new_node_input);
   return new_node_input;
@@ -453,6 +631,7 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &pre_no
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
                                        const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
   OperatorArgs arg_replace_op = replace_op.second;
   OperatorParams params = arg_replace_op.second;
   if (node->size() < SIZE_TWO) {
@@ -467,22 +646,21 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
   if (replace_op.first == EMBEDDING_LOOKUP) {
     replace_input = {node->input(1), node->input(2)};
   }
-  if (!params.empty() && (replace_op.first == STRIDEDSLICE || replace_op.first == RESHAPE) && IsDynamicOp(node)) {
+  if (!params.empty() && replace_op.first != SYNC_BATCH_NORM) {
+    Param param_first = *(params.begin());
+    int64_t first_position = param_first.second;
+    if (first_position == 1) {
+      replace_input.pop_back();
+    }
+  }
+  bool is_done = false;
+  bool to_be_converted = replace_op.first == SPLIT || replace_op.first == STRIDEDSLICE || replace_op.first == RESHAPE;
+  if (!params.empty() && to_be_converted && IsDynamicOp(node)) {
     TensorRedistributionPtr tensor_redistribution = GetTensorRedistributionFromCNode(node);
-    Param param_first = *(params.begin());
-    int64_t first_position = param_first.second;
-    if (first_position == 1) {
-      replace_input.pop_back();
-    }
-    if (ConvertParamsToInputs(replace_op, tensor_redistribution, node->func_graph(), &replace_input) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "ConvertStridedSliceInputs failed.";
-    }
-  } else if (!params.empty()) {
-    Param param_first = *(params.begin());
-    int64_t first_position = param_first.second;
-    if (first_position == 1) {
-      replace_input.pop_back();
-    }
+    auto ret = ConvertParamsToInputs(replace_op, tensor_redistribution, node->func_graph(), &replace_input);
+    MS_EXCEPTION_IF_CHECK_FAIL(ret == SUCCESS, "ConvertStridedSliceInputs failed.");
+    is_done = true;
+  } else if (!params.empty() && !IsToBeInsertedSplitOp(replace_op)) {
     for (auto &param : params) {
       AnfNodePtr val = NewValueNode(param.first.second);
       if (val == nullptr) {
@@ -497,7 +675,13 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
     }
   }
 
-  replace_input = ConvertToRealInputs(replace_op.first, instance_name, replace_input, arg_replace_op.first);
+  if (!IsToBeInsertedSplitOp(replace_op)) {
+    replace_input = ConvertToRealInputs(replace_op.first, instance_name, replace_input, arg_replace_op.first);
+  } else if (IsToBeInsertedSplitOp(replace_op) && !is_done) {
+    // it means Split on static shape scene.
+    auto ret = ConvertSplitInputs(params, node->func_graph(), &replace_input);
+    MS_EXCEPTION_IF_CHECK_FAIL(ret == SUCCESS, "Insert split op failed.");
+  }
   SetCommunicationOpGroupLabel(replace_input);
   return replace_input;
 }
@@ -693,23 +877,39 @@ Status UpdatePartialShape(const CNodePtr &cnode) {
   return Status::SUCCESS;
 }
 
+CNodePtr FindPreviousCareNode(const CNodePtr &current, int32_t depth = 0) {
+  if (depth == MAX_RECURSIVE_DEPTH) {
+    return nullptr;
+  }
+  auto prev = current->input(1);
+  // If prev is parameter maybe problem here.
+  auto cnode = prev->cast<CNodePtr>();
+  MS_EXCEPTION_IF_CHECK_FAIL(cnode != nullptr, "Input of node is parameter is not supported.");
+  if (!IsParallelCareNode(cnode) && (IsTargetOp(cnode, "Cast") || IsTupleGetItem(cnode))) {
+    return FindPreviousCareNode(cnode, depth + 1);
+  }
+  return cnode;
+}
+
 TensorInfo GetDistributeOperatorFromCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   CNodePtr target_cnode = cnode;
-  if (IsTupleGetItem(cnode)) {
+  if (!IsParallelCareNode(cnode)) {
     // keep search the previous node.
-    auto prev_node = FindPreviousNodeAndSkipTupleGetItem(cnode);
-    target_cnode = prev_node.first;
+    target_cnode = FindPreviousCareNode(cnode);
   }
+  MS_EXCEPTION_IF_NULL(target_cnode);
   if (!target_cnode->has_user_data<OperatorInfo>()) {
-    MS_LOG(EXCEPTION) << target_cnode->fullname_with_scope() << " has no operator info.";
+    MS_LOG(EXCEPTION) << "Found " << cnode->fullname_with_scope() << " previous node is "
+                      << target_cnode->fullname_with_scope() << " and it has no operator info.";
   }
 
   OperatorInfoPtr distribute_operator = GetDistributeOperator(target_cnode);
   MS_EXCEPTION_IF_NULL(distribute_operator);
   std::vector<TensorInfo> root_tensor_info = distribute_operator->outputs_tensor_info();
   if (root_tensor_info.size() != 1) {
-    MS_LOG(EXCEPTION) << "Outputs number cannot be larger than 1.";
+    MS_LOG(INFO) << "Outputs number cannot be larger than 1, but " << target_cnode->fullname_with_scope() << " has "
+                 << root_tensor_info.size() << " outputs.";
   }
   return root_tensor_info[0];
 }
@@ -734,7 +934,12 @@ Status UpdateShapeNode(const CNodePtr &cnode, const FuncGraphPtr &func_graph) {
     if (shape_user == nullptr) {
       continue;
     }
-    MS_EXCEPTION_IF_CHECK_FAIL(IsTupleGetItem(shape_user), "Only support TupleGetItem here.");
+    if (IsReshapeOp(shape_user)) {
+      MS_LOG(WARNING) << "Won't supply shape for Reshape.";
+      continue;
+    }
+    MS_EXCEPTION_IF_CHECK_FAIL(IsTupleGetItem(shape_user),
+                               "Only support TupleGetItem here, but got " + GetPrimName(shape_user));
     int64_t index = GetTupleGetItemIndex(shape_user);
     if (LongToSize(index) >= tensor_map.GetDimSize()) {
       MS_LOG(ERROR) << "Index cannot be larger than tensor_map size.";
@@ -757,7 +962,7 @@ Status UpdateShapeNode(const CNodePtr &cnode, const FuncGraphPtr &func_graph) {
                  next_node.second,               // shape_user_user[input_index] = scalar_mul_op
                  shape_user,                     // insert scalar_mul_op between previous and current
                  shape_user_user->func_graph(),  // current func_graph
-                 "instance_name", "", nullptr);
+                 "update_partial_shape", "", nullptr);
     }
   }
   return Status::SUCCESS;

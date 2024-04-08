@@ -29,11 +29,11 @@ class MatMulCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t AddCompute(const CpuKernelContext &ctx, const Bcast &bcast);
+  uint32_t AddCompute(CpuKernelContext &ctx, const Bcast &bcast);
   template <typename T>
-  uint32_t BiasCompute(const CpuKernelContext &ctx);
+  uint32_t BiasCompute(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t MatMulCompute(const CpuKernelContext &ctx);
+  uint32_t MatMulCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

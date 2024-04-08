@@ -50,6 +50,10 @@ STRICT = 0
 COMPATIBLE = 1
 LAX = 2
 
+# Enumerate for the property 'debug_level'.
+RELEASE = 0
+DEBUG = 1
+
 
 def _make_directory(path):
     """Make directory."""
@@ -213,6 +217,14 @@ class _Context:
             raise ValueError(f"For 'context.set_jit_syntax_level', the argument 'level' should be context.STRICT "
                              f"or context.LAX, but got {level}.")
         self.set_param(ms_ctx_param.jit_syntax_level, level)
+
+    def set_debug_level(self, level):
+        """"Set the debug level for graph compiling"""
+        if level != RELEASE and level != DEBUG:
+            raise ValueError(f"For 'context.set_debug_level', the argument 'level' should be context.RELEASE "
+                             f"or context.DEBUG, but got {level}.")
+        self.set_param(ms_ctx_param.debug_level, level)
+
 
     def set_memory_optimize_level(self, memory_optimize_level):
         """
@@ -572,6 +584,7 @@ class _Context:
         'deterministic': set_deterministic,
         'ascend_config': set_ascend_config,
         'jit_syntax_level': set_jit_syntax_level,
+        'debug_level': set_debug_level,
         'gpu_config': set_gpu_config,
         'aoe_config': set_aoe_config,
     }
@@ -693,7 +706,9 @@ class _Context:
                             "enable_concat_eliminate_opt": (ms_ctx_param.enable_concat_eliminate_opt, bool),
                             "interleaved_layernorm_comm": (ms_ctx_param.interleaved_layernorm_comm, bool),
                             "compute_communicate_fusion_level":
-                                (ms_ctx_param.compute_communicate_fusion_level, int)}
+                                (ms_ctx_param.compute_communicate_fusion_level, int),
+                            "enable_flash_attention_load_balance":
+                                (ms_ctx_param.enable_flash_attention_load_balance, bool)}
             with open(speedup_config_real_path, 'r') as f:
                 speedup_config = json.load(f)
                 for key, value in speedup_config.items():
@@ -767,12 +782,14 @@ def set_auto_parallel_context(**kwargs):
     parallel_mode                parameter_broadcast
     all_reduce_fusion_config     strategy_ckpt_load_file
     enable_parallel_optimizer    strategy_ckpt_save_file
-    parallel_optimizer_config    dataset_strategy
-    enable_alltoall              pipeline_stages
+    parallel_optimizer_config    full_batch
+    enable_alltoall              dataset_strategy
+               \                 pipeline_stages
                \                 pipeline_result_broadcast
                \                 auto_parallel_search_mode
                \                 comm_fusion
                \                 strategy_ckpt_config
+               \                 group_ckpt_save_file
     ===========================  ===========================
 
     Args:
@@ -782,6 +799,8 @@ def set_auto_parallel_context(**kwargs):
                      "stand_alone" do not support gradients_mean. Default: ``False`` .
         gradient_fp32_sync (bool): Run allreduce of gradients in fp32. "stand_alone", "data_parallel"
                      and "hybrid_parallel" do not support gradient_fp32_sync. Default: ``True`` .
+        loss_repeated_mean (bool) - Indicates whether the mean operator is executed backwards when the
+                     calculation is repeated. Default: ``True`` .
         parallel_mode (str): There are five kinds of parallel modes, ``"stand_alone"`` , ``"data_parallel"`` ,
                      ``"hybrid_parallel"`` , ``"semi_auto_parallel"`` and ``"auto_parallel"`` . Note the pynative mode
                      only supports the ``"stand_alone"`` and ``"data_parallel"`` mode. Default: ``"stand_alone"`` .
@@ -796,15 +815,16 @@ def set_auto_parallel_context(**kwargs):
 
                      - auto_parallel: Achieving parallelism automatically.
         search_mode (str): There are three kinds of shard strategy search modes: ``"recursive_programming"`` ,
-                     ``"dynamic_programming"`` and ``"sharding_propagation"`` . Default: ``"recursive_programming"`` .
+                     ``"sharding_propagation"`` and ``"dynamic_programming"`` (Not recommended).
+                     Default: ``"recursive_programming"`` .
 
                      - recursive_programming: Recursive programming search mode. In order to obtain optimal performance,
                        it is recommended that users set the batch size to be greater than or equal to the product of
                        the number of devices and the number of multi-copy parallelism.
 
-                     - dynamic_programming: Dynamic programming search mode.
-
                      - sharding_propagation: Propagate shardings from configured ops to non-configured ops.
+
+                     - dynamic_programming: Dynamic programming search mode.
         auto_parallel_search_mode (str): This is the old version of 'search_mode'. Here, remaining this attribute is
                      for forward compatibility, and this attribute will be deleted in a future MindSpore version.
         parameter_broadcast (bool): Whether to broadcast parameters before training. Before training, in order to have
@@ -908,6 +928,7 @@ def set_auto_parallel_context(**kwargs):
 
                         - only_trainable_params (bool): Only save/load the strategy information for trainable parameter.
                           Default: ``True`` .
+        group_ckpt_save_file (str): The path to save parallel group checkpoint.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -919,8 +940,8 @@ def set_auto_parallel_context(**kwargs):
         >>> ms.set_auto_parallel_context(gradients_mean=True)
         >>> ms.set_auto_parallel_context(gradient_fp32_sync=False)
         >>> ms.set_auto_parallel_context(parallel_mode="auto_parallel")
-        >>> ms.set_auto_parallel_context(search_mode="dynamic_programming")
-        >>> ms.set_auto_parallel_context(auto_parallel_search_mode="dynamic_programming")
+        >>> ms.set_auto_parallel_context(search_mode="recursive_programming")
+        >>> ms.set_auto_parallel_context(auto_parallel_search_mode="recursive_programming")
         >>> ms.set_auto_parallel_context(parameter_broadcast=False)
         >>> ms.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
         >>> ms.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
@@ -1079,7 +1100,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
-                 op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int,
+                 op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int, debug_level=int,
                  jit_enable_inplace_ops=bool, gpu_config=dict)
 def set_context(**kwargs):
     """
@@ -1129,6 +1150,8 @@ def set_context(**kwargs):
     |                         |  reserve_class_name_in_scope |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  pynative_synchronize        |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  debug_level                 |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
     | Executive Control       |   mode                       |   CPU/GPU/Ascend           |
     |                         +------------------------------+----------------------------+
@@ -1266,7 +1289,7 @@ def set_context(**kwargs):
             If enable_graph_kernel is set to ``True`` , acceleration can be enabled.
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
-            <https://www.mindspore.cn/tutorials/experts/en/master/optimize/graph_fusion_engine.html>`_.
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/optimize/graph_fusion_engine.html>`_.
         graph_kernel_flags (str):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
@@ -1339,10 +1362,12 @@ def set_context(**kwargs):
             of the interfaces would be compiled by MindSpore to the interfaces definition .py file that should be
             guaranteed to be writable. Then compile the .py file to the .pyc or .so file, and could run in Graph mode.
         memory_optimize_level (str): The memory optimize level.
-            Default: ``O0``. The value must be in ['O0', 'O1'].
+            On Ascend hardware platform, default: ``O1``, on other hardware platforms, default: ``O0``.
+            The value must be in ['O0', 'O1'].
 
-            - O0: priority performance option, disable SOMAS (Safe Optimized Memory Allocation Solver).
-            - O1: priority memory option, enable SOMAS.
+            - O0: priority performance option, disable SOMAS (Safe Optimized Memory Allocation Solver)
+              and some other memory optimizations.
+            - O1: priority memory option, enable SOMAS and some other memory optimizations.
         memory_offload (str): Whether to enable the memory offload function. When it is enabled, the idle data will be
             temporarily copied to the host side in the case of insufficient device memory. The value must be in the
             range of ['ON', 'OFF'], and the default value is ``'OFF'`` .
@@ -1406,7 +1431,7 @@ def set_context(**kwargs):
 
             - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file, configuration
               can refer to `parallel_speed_up.json
-              <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
+              <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/config/parallel_speed_up.json>`_ .
               If its value is None or '', it does not take effect. Default None.
 
               - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if True.
@@ -1416,16 +1441,23 @@ def set_context(**kwargs):
               - enable_task_opt (bool): Enable the optimization of the number of tasks for each communication if True.
                 Default: False.
               - enable_grad_comm_opt (bool): Enable overlap between dx ops and data parallel communication ops if True.
+                Currently, do not support
+                `LazyInline <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore/mindspore.lazy_inline.html>`
                 Default: False.
               - enable_opt_shard_comm_opt (bool): Enable overlap between forward ops
-                and optimizer parallel allgather communication if True. Default: False.
+                and optimizer parallel allgather communication if True. Currently, do not support
+                `LazyInline <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore/mindspore.lazy_inline.html>`
+                Default: False.
               - compute_communicate_fusion_level (int): Enable the fusion between compute and communicate.
                 Default: ``0``.
-                - 0: Disable fusion.
-                - 1: Apply fusion to forward nodes.
-                - 2: Apply fusion to backward nodes.
-                - 3: Apply fusion to all nodes.
 
+                - 0: Disable fusion.
+
+                - 1: Apply fusion to forward nodes.
+
+                - 2: Apply fusion to backward nodes.
+
+                - 3: Apply fusion to all nodes.
             - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
               used when run the static graph, the default value is 0. When the number of operations in the static graph
               is less than the max threshold, this graph will be executed in dynamic shape process. In large model
@@ -1440,6 +1472,12 @@ def set_context(**kwargs):
             - ``LAX`` : Compatible with all Python syntax as much as possible. However, execution performance may be
               affected and not optimal. Cannot be used for MindIR load and export due to some syntax that may not be
               able to be exported.
+
+        debug_level (int): Set config for debugging. Default value: ``RELEASE``.
+
+            - ``RELEASE``: Used for normally running, and some debug information will be discard to get a better
+              compiling performance.
+            - ``DEBUG``: Used for debugging when errors occur, more information will be record in compiling process.
 
         gpu_config (dict): Set the parameters specific to gpu hardware platform. It is not set by default.
             Currently, only setting `conv_fprop_algo` and `conv_dgrad_algo` and `conv_wgrad_algo` and `conv_allow_tf32`
@@ -1549,6 +1587,7 @@ def set_context(**kwargs):
         ...                "ge_options": {"global": {"ge.opSelectImplmode": "high_precision"},
         ...                               "session": {"ge.exec.atomicCleanPolicy": "0"}}})
         >>> ms.set_context(jit_syntax_level=ms.STRICT)
+        >>> ms.set_context(debug_level=ms.DEBUG)
         >>> ms.set_context(gpu_config={"conv_fprop_algo": "performance", "conv_allow_tf32": True,
         ...                "matmul_allow_tf32": True})
     """
@@ -1579,6 +1618,9 @@ def set_context(**kwargs):
         if key == 'jit_syntax_level' and value not in (STRICT, COMPATIBLE, LAX):
             raise ValueError(f"For 'jit_syntax_level', the value should be context.STRICT"
                              f" or context.LAX, but got {value}.")
+        if key == 'debug_level' and value not in (RELEASE, DEBUG):
+            raise ValueError(f"For 'debug_level', the value should be context.DEBUG"
+                             f" or context.RELEASE, but got {value}.")
         if not _check_target_specific_cfgs(device, key):
             continue
         if hasattr(ctx, key):

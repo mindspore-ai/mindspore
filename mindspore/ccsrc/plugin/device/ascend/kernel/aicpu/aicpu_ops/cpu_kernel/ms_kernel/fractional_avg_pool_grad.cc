@@ -31,8 +31,8 @@ const int64_t kParallelDataNum = 32 * 1024;
 
 namespace aicpu {
 uint32_t FractionalAvgPoolGradCpuKernel::FractionalAvgPoolGradParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, k_InputNum, k_OutputNum),
-                      "FractionalAvgPoolGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, k_InputNum, k_OutputNum),
+                           "FractionalAvgPoolGrad check input and output number failed.");
   Tensor *orig_input_tensor_shape = ctx.Input(0);
   Tensor *out_backprop = ctx.Input(1);
   Tensor *output = ctx.Output(0);
@@ -40,14 +40,14 @@ uint32_t FractionalAvgPoolGradCpuKernel::FractionalAvgPoolGradParamCheck(CpuKern
   int32_t orig_input_dims = orig_input_shape->GetDims();
   int32_t orig_input_shape_nums = orig_input_tensor_shape->NumElements();
   if (out_backprop->GetDataType() != output->GetDataType()) {
-    KERNEL_LOG_ERROR(
-      "The data type of the output [%s] need be the same as the out_backprop "
-      "[%s]",
-      DTypeStr(output->GetDataType()).c_str(), DTypeStr(out_backprop->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data type of the output [%s] need be the same as the out_backprop "
+                          "[%s]",
+                          DTypeStr(output->GetDataType()).c_str(), DTypeStr(out_backprop->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_CHECK_FALSE((orig_input_dims == 1 && orig_input_shape_nums == 4), KERNEL_STATUS_PARAM_INVALID,
-                     "original input tensor shape must be 1-dimensional and 4 elements.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (orig_input_dims == 1 && orig_input_shape_nums == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "original input tensor shape must be 1-dimensional and 4 elements.");
   return KERNEL_STATUS_OK;
 }
 
@@ -70,14 +70,14 @@ uint32_t FractionalAvgPoolGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
   const int64_t out_rows = out_backprop_shape->GetDimSize(1);
   const int64_t out_cols = out_backprop_shape->GetDimSize(2);
   const int64_t out_depth = out_backprop_shape->GetDimSize(3);
-  KERNEL_CHECK_FALSE((row_seq_nums > out_rows), KERNEL_STATUS_PARAM_INVALID,
-                     "Given out_backprop shape [%ld,%ld,%ld,%ld], row_seq_tensor must"
-                     " have at least [%ld] elements, but got[%ld].",
-                     out_batch, out_rows, out_cols, out_depth, out_rows + 1, row_seq_nums);
-  KERNEL_CHECK_FALSE((col_seq_nums > out_cols), KERNEL_STATUS_PARAM_INVALID,
-                     "Given out_backprop shape [%ld,%ld,%ld,%ld], col_seq_tensor must"
-                     " have at least [%ld] elements, but got[%ld].",
-                     out_batch, out_rows, out_cols, out_depth, out_cols + 1, col_seq_nums);
+  CUST_KERNEL_CHECK_FALSE(ctx, (row_seq_nums > out_rows), KERNEL_STATUS_PARAM_INVALID,
+                          "Given out_backprop shape [%ld,%ld,%ld,%ld], row_seq_tensor must"
+                          " have at least [%ld] elements, but got[%ld].",
+                          out_batch, out_rows, out_cols, out_depth, out_rows + 1, row_seq_nums);
+  CUST_KERNEL_CHECK_FALSE(ctx, (col_seq_nums > out_cols), KERNEL_STATUS_PARAM_INVALID,
+                          "Given out_backprop shape [%ld,%ld,%ld,%ld], col_seq_tensor must"
+                          " have at least [%ld] elements, but got[%ld].",
+                          out_batch, out_rows, out_cols, out_depth, out_cols + 1, col_seq_nums);
   auto row_seq_data = static_cast<int64_t *>(row_pooling_sequence->GetData());
   auto col_seq_data = static_cast<int64_t *>(col_pooling_sequence->GetData());
   auto orig_input_tensor_shape_data = static_cast<int64_t *>(orig_input_tensor_shape->GetData());
@@ -88,8 +88,8 @@ uint32_t FractionalAvgPoolGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
   int32_t input_nums = orig_input_tensor_shape->NumElements();
   std::vector<int64_t> out_put_dims;
   for (int i = 0; i < input_nums; i++) {
-    KERNEL_CHECK_FALSE((*(orig_input_tensor_shape_data + i) > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "Each dimension of input must be > 0.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (*(orig_input_tensor_shape_data + i) > 0), KERNEL_STATUS_PARAM_INVALID,
+                            "Each dimension of input must be > 0.");
     out_put_dims.push_back(orig_input_tensor_shape_data[i]);
   }
   int64_t output_nums = in_batch * in_rows * in_cols * in_depth;
@@ -172,8 +172,8 @@ uint32_t FractionalAvgPoolGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
           }
         }
       };
-      KERNEL_HANDLE_ERROR(
-        CpuKernelUtils::ParallelFor(ctx, row_len, row_len / max_core_num, sharder_fractionalavgpoolgrad_index),
+      CUST_KERNEL_HANDLE_ERROR(
+        ctx, CpuKernelUtils::ParallelFor(ctx, row_len, row_len / max_core_num, sharder_fractionalavgpoolgrad_index),
         "FractionalAvgPoolGrad Index Compute failed.");
     }
   }
@@ -186,7 +186,7 @@ uint32_t FractionalAvgPoolGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
 }
 
 uint32_t FractionalAvgPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(FractionalAvgPoolGradParamCheck(ctx), "Check FractionalAvgPoolGrad params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, FractionalAvgPoolGradParamCheck(ctx), "Check FractionalAvgPoolGrad params failed.");
   Tensor *out_backprop = ctx.Input(1);
   auto data_type = out_backprop->GetDataType();
   switch (data_type) {
@@ -199,7 +199,8 @@ uint32_t FractionalAvgPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_INT64:
       return DoCompute<int64_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("FractionalAvgPoolGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "FractionalAvgPoolGrad kernel data type [%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

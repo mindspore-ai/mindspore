@@ -7,11 +7,13 @@ mindspore/mindspore/core/mindrt/src/thread/actor_threadpool.cc:mindspore::ActorW
 mindspore/mindspore/lite/src/common/ops/primitive_c.cc:mindspore::lite::PrimitiveC::Create
 mindspore/mindspore/lite/src/extendrt/convert/runtime_convert.cc:RuntimeConvert
 mindspore/mindspore/lite/tools/converter/parser/onnx/onnx_inputs_adjust.cc:mindspore::lite::OnnxInputAdjust::Adjust
+mindspore/mindspore/lite/tools/converter/adapter/acl/mapper/matmul_fusion_mapper.cc:mindspore::lite::MatMulFusionMapper::Mapper
 mindspore/mindspore/lite/tools/optimizer/fusion/flash_attention_fusion.cc:mindspore::opt::FlashAttentionFusion::Process
 mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/source/csv_op.cc:mindspore::dataset::CsvOp::CsvParser::InitCsvParser
 mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/data_queue_op.cc:mindspore::dataset::DataQueueOp::SendDataToAscend
 mindspore/mindspore/lite/tools/converter/graphdef_transform.cc:mindspore::lite::GraphDefTransform::Transform
 mindspore/mindspore/lite/providers/nnie_proposal/src/proposal.cc:mindspore::proposal::Rpn
+mindspore/mindspore/lite/tools/converter/config_parser/config_file_parser.cc:mindspore::lite::ConfigFileParser::SetParamByConfigfile
 mindspore/mindspore/core/abstract/ops/primitive_infer_map.cc:mindspore::abstract::GetPrimitiveInferMap
 mindspore/mindspore/core/ir/tensor.cc:mindspore::tensor::MakeTensorData
 mindspore/mindspore/core/ir/dtype_extends.cc:mindspore::UnitSizeInBytes
@@ -278,6 +280,7 @@ mindspore/mindspore/ccsrc/frontend/parallel/auto_parallel/rec_core/rec_partition
 mindspore/mindspore/ccsrc/frontend/parallel/auto_parallel/rec_core/rec_partition.cc:mindspore::parallel::PartitionNode
 mindspore/mindspore/ccsrc/frontend/parallel/ops_info/reshape_info.cc:mindspore::parallel::ReshapeInfo::ComputeReplaceOp
 mindspore/mindspore/ccsrc/frontend/parallel/tensor_layout/layout_transfer.cc:mindspore::parallel::IntroduceConstraints
+mindspore/mindspore/ccsrc/frontend/parallel/graph_util/graph_utils.cc:mindspore::parallel::ReplaceOpInput
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp16/instance_norm_fp16.c:InstanceNormNC8HW8Fp16
 mindspore/mindspore/lite/src/litert/kernel/cpu/fp32/matmul_fp32_base.cc:mindspore::kernel::MatmulFp32BaseCPUKernel::init_global_variable
 mindspore/mindspore/lite/src/train/train_loop.cc:mindspore::lite::TrainLoop::Train
@@ -443,3 +446,4 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/nn_pooling_ops_proto.cc:ge::IMPLEMT_COMMON_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/nn_norm_ops_proto.cc:ge::CUST_IMPLEMT_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/cast.cc:aicpu::CastKernel::Compute
+mindspore/mindspore/ccsrc/frontend/parallel/step_parallel.cc:mindspore::parallel::StepParallel

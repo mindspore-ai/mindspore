@@ -34,7 +34,7 @@ const char *SPARSEMATRIXTRANSPOSE = "SparseMatrixTranspose";
 }  // namespace aicpu
 namespace aicpu {
 uint32_t SparseMatrixTransposeCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "SparseMatrixTranspose normal check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "SparseMatrixTranspose normal check failed.");
   DataType indice_type = ctx.Input(0)->GetDataType();
   DataType value_type = ctx.Input(4)->GetDataType();
   uint32_t status;
@@ -81,7 +81,7 @@ uint32_t SparseMatrixTransposeCpuKernel::Compute(CpuKernelContext &ctx) {
           status = SparseMatrixTransposeComputecomplex<int32_t, std::complex<double_t>>(ctx);
           break;
         default:
-          KERNEL_LOG_ERROR("data type of x_value is not required");
+          CUST_KERNEL_LOG_ERROR(ctx, "data type of x_value is not required");
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -127,17 +127,17 @@ uint32_t SparseMatrixTransposeCpuKernel::Compute(CpuKernelContext &ctx) {
           status = SparseMatrixTransposeComputecomplex<int64_t, std::complex<double_t>>(ctx);
           break;
         default:
-          KERNEL_LOG_ERROR("data type of x_value is not required");
+          CUST_KERNEL_LOG_ERROR(ctx, "data type of x_value is not required");
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     default:
-      KERNEL_LOG_ERROR("data type of dense shape is not int32 or int64");
+      CUST_KERNEL_LOG_ERROR(ctx, "data type of dense shape is not int32 or int64");
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (status != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("error in do the actual compute!");
+    CUST_KERNEL_LOG_ERROR(ctx, "error in do the actual compute!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -145,29 +145,19 @@ uint32_t SparseMatrixTransposeCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename indiceT, typename valueT>
-uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(const CpuKernelContext &ctx) {
+uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(CpuKernelContext &ctx) {
+  NormalCheck(ctx, kInputNum, kOutputNum);
   indiceT *x_dense_shape = static_cast<indiceT *>(ctx.Input(0)->GetData());
   indiceT *x_batch_pointers = static_cast<indiceT *>(ctx.Input(1)->GetData());
   indiceT *x_row_pointers = static_cast<indiceT *>(ctx.Input(2)->GetData());
   indiceT *x_col_indices = static_cast<indiceT *>(ctx.Input(3)->GetData());
   valueT *x_values = static_cast<valueT *>(ctx.Input(4)->GetData());
-  KERNEL_CHECK_NULLPTR(x_dense_shape, KERNEL_STATUS_PARAM_INVALID, "Get x_dense_shape failed.");
-  KERNEL_CHECK_NULLPTR(x_batch_pointers, KERNEL_STATUS_PARAM_INVALID, "Get x_batch_pointers failed.");
-  KERNEL_CHECK_NULLPTR(x_row_pointers, KERNEL_STATUS_PARAM_INVALID, "Get x_row_pointers failed.");
-  KERNEL_CHECK_NULLPTR(x_col_indices, KERNEL_STATUS_PARAM_INVALID, "Get x_col_indices failed.");
-  KERNEL_CHECK_NULLPTR(x_values, KERNEL_STATUS_PARAM_INVALID, "Get x_values failed.");
 
-  bool conjugate = (ctx.GetAttr("conjugate") == nullptr) ? false : ctx.GetAttr("conjugate")->GetBool();
   indiceT *y_dense_shape = static_cast<indiceT *>(ctx.Output(0)->GetData());
   indiceT *y_batch_pointers = static_cast<indiceT *>(ctx.Output(1)->GetData());
   indiceT *y_row_pointers = static_cast<indiceT *>(ctx.Output(2)->GetData());
   indiceT *y_col_indices = static_cast<indiceT *>(ctx.Output(3)->GetData());
   valueT *y_values = static_cast<valueT *>(ctx.Output(4)->GetData());
-  KERNEL_CHECK_NULLPTR(y_dense_shape, KERNEL_STATUS_PARAM_INVALID, "Get y_dense_shape failed.");
-  KERNEL_CHECK_NULLPTR(y_batch_pointers, KERNEL_STATUS_PARAM_INVALID, "Get y_batch_pointers failed.");
-  KERNEL_CHECK_NULLPTR(y_row_pointers, KERNEL_STATUS_PARAM_INVALID, "Get y_row_pointers failed.");
-  KERNEL_CHECK_NULLPTR(y_col_indices, KERNEL_STATUS_PARAM_INVALID, "Get y_col_indices failed.");
-  KERNEL_CHECK_NULLPTR(y_values, KERNEL_STATUS_PARAM_INVALID, "Get y_values failed.");
 
   auto rank = ctx.Input(0)->NumElements();
   if (rank == krankwithbatch) {
@@ -212,7 +202,6 @@ uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(const CpuK
     for (int k = 0; k < num_cols + 1; ++k) {
       y_row_pointers[(num_cols + 1) * j + k] = y_part_row_pointers[k];
     }
-
     for (int k = 0; k < n; ++k) {
       part_values[k] = x_values[x_batch_pointers[j] + k];
       part_col_indices[k] = x_col_indices[x_batch_pointers[j] + k];
@@ -234,9 +223,6 @@ uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(const CpuK
       y_col_indices[x_batch_pointers[j] + k] = y_part_col_indices[k];
     }
   }
-
-  if (conjugate == false) {
-  }
   auto output = ctx.Output(2);
   auto output_shape = output->GetTensorShape();
   if (rank == ktwo) {
@@ -249,7 +235,7 @@ uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(const CpuK
 }
 
 template <typename indiceT, typename valueT>
-uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeComputecomplex(const CpuKernelContext &ctx) {
+uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeComputecomplex(CpuKernelContext &ctx) {
   indiceT *x_dense_shape = static_cast<indiceT *>(ctx.Input(0)->GetData());
   indiceT *x_batch_pointers = static_cast<indiceT *>(ctx.Input(1)->GetData());
   indiceT *x_row_pointers = static_cast<indiceT *>(ctx.Input(2)->GetData());

@@ -81,6 +81,7 @@ mindspore
     mindspore.export
     mindspore.load
     mindspore.load_checkpoint
+    mindspore.load_checkpoint_async
     mindspore.load_distributed_checkpoint
     mindspore.load_mindir
     mindspore.load_param_into_net
@@ -127,8 +128,9 @@ mindspore
     :toctree: mindspore
 
     mindspore.Layout
-    mindspore.shard
     mindspore.parameter_broadcast
+    mindspore.shard
+    mindspore.sync_pipeline_shared_parameters
 
 即时编译
 --------
@@ -156,6 +158,7 @@ mindspore
     :toctree: mindspore
 
     mindspore.DatasetHelper
+    mindspore.Symbol
     mindspore.connect_network_with_dataset
     mindspore.data_sink
 

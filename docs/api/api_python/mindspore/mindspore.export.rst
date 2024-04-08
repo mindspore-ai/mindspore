@@ -10,6 +10,7 @@ mindspore.export
         - 当 `file_name` 没有后缀时，系统会根据 `file_format` 自动添加后缀。
         - 现已支持将 :func:`mindspore.jit` 修饰的函数导出成MINDIR格式文件。
         - 当导出 :func:`mindspore.jit` 修饰的函数时，函数内不能包含有类属性参与的计算。
+        - AIR格式已弃用，将被删除。请使用其他格式或者MindSpore Lite进行离线推理。
 
     参数：
         - **net** (Union[Cell, function]) - MindSpore网络结构。
@@ -44,4 +45,4 @@ mindspore.export
 
     教程样例：
         - `保存与加载 - 保存和加载MindIR
-          <https://mindspore.cn/tutorials/zh-CN/master/beginner/save_load.html#保存和加载mindir>`_
+          <https://mindspore.cn/tutorials/zh-CN/r2.3.q1/beginner/save_load.html#保存和加载mindir>`_

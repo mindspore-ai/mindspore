@@ -85,7 +85,7 @@ class TimeDistributed(Cell):
           where :math:`*` means any number of additional dimensions.
 
     Outputs:
-        Tensor of shape :math:`(N, T, *)`
+        Tensor of shape :math:`(N, T, *)`.
 
     Raises:
         TypeError: If layer is not a Cell or Primitive.

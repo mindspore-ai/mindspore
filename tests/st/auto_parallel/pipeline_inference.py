@@ -263,3 +263,25 @@ def test_pipeline_inference_shared_params():
     expect = [np.ones(shape, np.float32) * pow(8, 5), np.ones(shape, np.float32) * pow(8, 4) * 2]
     assert np.allclose(ret[0].asnumpy(), expect[0])
     assert np.allclose(ret[1].asnumpy(), expect[1])
+
+
+def test_pipeline_inference_data_parallel():
+    """
+    Feature: Pipeline parallel inference
+    Description: Micro batch split
+    Expectation: success
+    """
+    D.init()
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", full_batch=False,
+                                      pipeline_stages=pipeline_stages, pipeline_result_broadcast=True)
+    net = PipelineCellInferenceSingleOutput(Net(), micro_batch_num=2)
+    net.set_train(False)
+
+    shape = (8, 8)
+    x = Tensor(np.ones(shape), mindspore.float32)
+    ret = net(x)
+
+    print(ret)
+    expect = [np.ones(shape, np.float32) * pow(8, 5), np.ones(shape, np.float32) * pow(8, 5)]
+    is_last_stage = get_stage_id() == pipeline_stages - 1
+    assert np.allclose(ret.asnumpy(), expect[is_last_stage])

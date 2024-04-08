@@ -39,7 +39,8 @@ const char *const kRandperm = "Randperm";
 namespace aicpu {
 uint32_t RandpermCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "randperm check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "randperm check input and output number failed.");
   auto output_type = ctx.Output(0)->GetDataType();
   uint32_t ret;
   switch (output_type) {
@@ -52,30 +53,30 @@ uint32_t RandpermCpuKernel::Compute(CpuKernelContext &ctx) {
     RANDPERM_COMPUTE_CASE(DT_UINT32, uint32_t)
     RANDPERM_COMPUTE_CASE(DT_UINT64, uint64_t)
     default:
-      KERNEL_LOG_ERROR("Output data type [%s] not support.", DTypeStr(output_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Output data type [%s] not support.", DTypeStr(output_type).c_str());
       ret = KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;
 }
 
 template <typename T>
-uint32_t RandpermCpuKernel::RandpermCompute(const CpuKernelContext &ctx) {
+uint32_t RandpermCpuKernel::RandpermCompute(CpuKernelContext &ctx) {
   auto input_n = ctx.Input(0);
   auto n_dtype = input_n->GetDataType();
   auto n_data = input_n->GetData();
-  KERNEL_CHECK_FALSE((n_dtype == DT_INT32 || n_dtype == DT_INT64), KERNEL_STATUS_INNER_ERROR,
-                     "Only support int32_t and int64_t for input 'n'.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (n_dtype == DT_INT32 || n_dtype == DT_INT64), KERNEL_STATUS_INNER_ERROR,
+                          "Only support int32_t and int64_t for input 'n'.");
   auto n = n_dtype == DT_INT32 ? *static_cast<int32_t *>(n_data) : *static_cast<int64_t *>(n_data);
 
   auto max_length_attr = ctx.GetAttr("max_length");
-  KERNEL_CHECK_NULLPTR(max_length_attr, KERNEL_STATUS_INNER_ERROR, "Get Attr [max_length] failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, max_length_attr, KERNEL_STATUS_INNER_ERROR, "Get Attr [max_length] failed.");
   auto max_length = max_length_attr->GetInt();
   auto pad_attr = ctx.GetAttr("pad");
-  KERNEL_CHECK_NULLPTR(pad_attr, KERNEL_STATUS_INNER_ERROR, "Get Attr [pad] failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, pad_attr, KERNEL_STATUS_INNER_ERROR, "Get Attr [pad] failed.");
   auto pad = pad_attr->GetInt();
 
-  KERNEL_CHECK_FALSE(n <= max_length, KERNEL_STATUS_INNER_ERROR, "'n'[%d] is greater than 'max_length'[%d].", n,
-                     max_length);
+  CUST_KERNEL_CHECK_FALSE(ctx, n <= max_length, KERNEL_STATUS_INNER_ERROR, "'n'[%d] is greater than 'max_length'[%d].",
+                          n, max_length);
 
   auto output_data = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   std::iota(output_data, output_data + n, 0);

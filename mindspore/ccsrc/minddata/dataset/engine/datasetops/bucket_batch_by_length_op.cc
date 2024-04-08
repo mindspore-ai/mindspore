@@ -181,40 +181,40 @@ Status BucketBatchByLengthOp::ComputeColMap() {
 Status BucketBatchByLengthOp::GetNextRowPullMode(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   row->clear();
-  if (eoe_received_) {
-    if (!drop_remainder_) {
-      for (int i = 0; i < bucket_boundaries_.size(); i++) {
-        if (!buckets_[i]->empty()) {
-          RETURN_IF_NOT_OK(PadAndBatchBucket(i, row));
-          return Status::OK();
-        }
-      }
-    }
-    eoe_received_ = false;
-  }
 
-  TensorRow new_row;
-  RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
-  while (!new_row.eoe() && !new_row.eof()) {
-    int32_t element_length = 0;
-    RETURN_IF_NOT_OK(ObtainElementLength(&element_length, new_row));
-
-    int bucket_index = bucket_boundaries_.size() - 1;
-    while (element_length < bucket_boundaries_[bucket_index]) {
-      bucket_index--;
-    }
-
-    buckets_[bucket_index]->push_back(new_row);
-
-    if (buckets_[bucket_index]->size() == bucket_batch_sizes_[bucket_index]) {
-      RETURN_IF_NOT_OK(PadAndBatchBucket(bucket_index, row));
-      return Status::OK();
-    }
-
+  if (!eoe_received_) {
+    TensorRow new_row;
     RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
+    while (!new_row.eoe() && !new_row.eof()) {
+      int32_t element_length = 0;
+      RETURN_IF_NOT_OK(ObtainElementLength(&element_length, new_row));
+
+      int bucket_index = bucket_boundaries_.size() - 1;
+      while (element_length < bucket_boundaries_[bucket_index]) {
+        bucket_index--;
+      }
+
+      buckets_[bucket_index]->push_back(new_row);
+
+      if (buckets_[bucket_index]->size() == bucket_batch_sizes_[bucket_index]) {
+        RETURN_IF_NOT_OK(PadAndBatchBucket(bucket_index, row));
+        return Status::OK();
+      }
+
+      RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
+    }
   }
 
   eoe_received_ = true;
+  if (!drop_remainder_) {
+    for (int i = 0; i < bucket_boundaries_.size(); i++) {
+      if (!buckets_[i]->empty()) {
+        RETURN_IF_NOT_OK(PadAndBatchBucket(i, row));
+        return Status::OK();
+      }
+    }
+  }
+  eoe_received_ = false;
 
   auto curr_epoch = op_current_epochs_;
   UpdateRepeatAndEpochCounter();

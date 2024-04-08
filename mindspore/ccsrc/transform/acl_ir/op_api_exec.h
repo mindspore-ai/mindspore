@@ -290,38 +290,38 @@ class ApiCachePool {
   (aclnn_api, aclnn_api + "GetWorkspaceSize", hash_id, __VA_ARGS__)
 
 // Async run op.
-#define RUN_OP_API_ASYNC(aclnn_api, workspace_addr, workspace_size, executor, acl_stream, release_func)        \
-  do {                                                                                                         \
-    static const auto op_api_func = transform::GetOpApiFunc(aclnn_api.c_str());                                \
-    if (op_api_func == nullptr) {                                                                              \
-      MS_LOG(EXCEPTION) << aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!";       \
-    }                                                                                                          \
-    auto run_api_func = reinterpret_cast<transform::RunApiFunc>(op_api_func);                                  \
-    auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                         \
-    if (api_ret != 0) {                                                                                        \
-      MS_LOG(EXCEPTION) << "Call " << aclnn_api << " failed, detail:" << CALL_ASCEND_API2(aclGetRecentErrMsg); \
-    }                                                                                                          \
-    if (release_func != nullptr) {                                                                             \
-      release_func();                                                                                          \
-    }                                                                                                          \
+#define RUN_OP_API_ASYNC(aclnn_api, workspace_addr, workspace_size, executor, acl_stream, release_func)       \
+  do {                                                                                                        \
+    static const auto op_api_func = transform::GetOpApiFunc(aclnn_api.c_str());                               \
+    if (op_api_func == nullptr) {                                                                             \
+      MS_LOG(EXCEPTION) << aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!";      \
+    }                                                                                                         \
+    auto run_api_func = reinterpret_cast<transform::RunApiFunc>(op_api_func);                                 \
+    auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                        \
+    if (api_ret != 0) {                                                                                       \
+      MS_LOG(EXCEPTION) << "Call " << aclnn_api << " failed, detail:" << CALL_ASCEND_API(aclGetRecentErrMsg); \
+    }                                                                                                         \
+    if (release_func != nullptr) {                                                                            \
+      release_func();                                                                                         \
+    }                                                                                                         \
   } while (false)
 
 // Sync run op.
-#define RUN_OP_API_SYNC(aclnn_api, workspace_addr, workspace_size, executor, acl_stream)                              \
-  do {                                                                                                                \
-    static const auto op_api_func = transform::GetOpApiFunc(aclnn_api.c_str());                                       \
-    if (op_api_func == nullptr) {                                                                                     \
-      MS_LOG(EXCEPTION) << aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!";              \
-    }                                                                                                                 \
-    auto run_api_func = reinterpret_cast<transform::RunApiFunc>(op_api_func);                                         \
-    auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                                \
-    if (api_ret != 0) {                                                                                               \
-      MS_LOG(EXCEPTION) << "Call " << aclnn_api << " failed, detail:" << CALL_ASCEND_API2(aclGetRecentErrMsg);        \
-    }                                                                                                                 \
-    auto ret = CALL_ASCEND_API(aclrtSynchronizeStream, acl_stream);                                                   \
-    if (ret != 0) {                                                                                                   \
-      MS_LOG(EXCEPTION) << "Sync stream " << aclnn_api << " failed, detail:" << CALL_ASCEND_API2(aclGetRecentErrMsg); \
-    }                                                                                                                 \
+#define RUN_OP_API_SYNC(aclnn_api, workspace_addr, workspace_size, executor, acl_stream)                             \
+  do {                                                                                                               \
+    static const auto op_api_func = transform::GetOpApiFunc(aclnn_api.c_str());                                      \
+    if (op_api_func == nullptr) {                                                                                    \
+      MS_LOG(EXCEPTION) << aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!";             \
+    }                                                                                                                \
+    auto run_api_func = reinterpret_cast<transform::RunApiFunc>(op_api_func);                                        \
+    auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                               \
+    if (api_ret != 0) {                                                                                              \
+      MS_LOG(EXCEPTION) << "Call " << aclnn_api << " failed, detail:" << CALL_ASCEND_API(aclGetRecentErrMsg);        \
+    }                                                                                                                \
+    auto ret = CALL_ASCEND_API(aclrtSynchronizeStream, acl_stream);                                                  \
+    if (ret != 0) {                                                                                                  \
+      MS_LOG(EXCEPTION) << "Sync stream " << aclnn_api << " failed, detail:" << CALL_ASCEND_API(aclGetRecentErrMsg); \
+    }                                                                                                                \
   } while (false)
 }  // namespace transform
 }  // namespace mindspore

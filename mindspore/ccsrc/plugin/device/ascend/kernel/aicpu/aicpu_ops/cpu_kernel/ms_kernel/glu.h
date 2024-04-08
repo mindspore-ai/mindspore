@@ -53,7 +53,7 @@ class GluCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t SplitWithDimZero(const CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr);
+  uint32_t SplitWithDimZero(CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr);
 
   /**
    * @brief split data
@@ -62,7 +62,7 @@ class GluCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t SplitCompute(const CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr);
+  uint32_t SplitCompute(CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr);
 
   template <typename T>
   uint32_t DoCompute(CpuKernelContext &ctx);

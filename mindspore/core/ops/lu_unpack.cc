@@ -120,8 +120,8 @@ abstract::TupleShapePtr LuUnpackInferShape(const PrimitivePtr &primitive,
 }
 
 TuplePtr LuUnpackInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
   int64_t input_size = static_cast<int64_t>(input_args.size());
   (void)CheckAndConvertUtils::CheckInteger("input number", input_size, kEqual, SizeToLong(kLuUnpackInputsNum),
                                            prim_name);

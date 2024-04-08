@@ -14,9 +14,10 @@
 # ============================================================================
 import mindspore.nn as nn
 import mindspore.ops as ops
-from mindspore.rewrite import SymbolTree
+from mindspore.rewrite import SymbolTree, Node, ScopedValue
 from mindspore import Tensor
 import numpy as np
+from .test_import.net_with_unused_import import NetWithUnusedImport
 
 
 def external_func(x):
@@ -365,6 +366,25 @@ def test_annotation():
     stree = SymbolTree.create(net)
     codes = stree.get_code()
     assert codes.count("def get_subnet(self, subnet):") == 1
+    new_net = stree.get_network()
+    y = new_net(Tensor(1.0))
+    assert np.allclose(y0.asnumpy(), y.asnumpy())
+
+
+def test_net_with_unused_import():
+    """
+    Feature: Python api get_code of Node of Rewrite.
+    Description: Test rewrite generate codes when import is not used by origin network but used by inserted node.
+    Expectation: Success.
+    """
+    net = NetWithUnusedImport()
+    y0 = net(Tensor(1.0))
+    stree = SymbolTree.create(net)
+    relu_node = stree.get_node("relu")
+    relu_target = relu_node.get_targets()[0]
+    dst_type = ScopedValue.create_naming_value("float32", "ms")
+    new_node = Node.create_call_cell(ops.Cast(), [relu_target], [relu_target, dst_type], name="cast_node")
+    stree.insert(stree.after(relu_node), new_node)
     new_net = stree.get_network()
     y = new_net(Tensor(1.0))
     assert np.allclose(y0.asnumpy(), y.asnumpy())

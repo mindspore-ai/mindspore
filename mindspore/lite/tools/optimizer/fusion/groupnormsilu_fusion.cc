@@ -28,6 +28,7 @@ namespace mindspore::opt {
 namespace {
 constexpr auto kNameGroupNormSiluPatternForSD15 = "GroupNormSiluPatternForSD15";
 constexpr auto kNameGroupNormSiluPatternForSDWithCast = "GroupNormSiluPatternForSDWithCast";
+constexpr auto kNameGroupNormSiluPatternForSDWithoutSilu = "GroupNormSiluPatternForSDWithoutSilu";
 constexpr size_t kNumIndex1 = 1;
 constexpr size_t kNumIndex2 = 2;
 constexpr float kNumEps = 0.00001;
@@ -77,6 +78,7 @@ std::unordered_map<std::string, VectorRef> GroupNormSiluFusion::DefinePatterns()
   std::unordered_map<std::string, VectorRef> patterns;
   patterns[kNameGroupNormSiluPatternForSD15] = DefineGroupNormSiluPatternForSD15();
   patterns[kNameGroupNormSiluPatternForSDWithCast] = DefineGroupNormSiluPatternForSDWithCast();
+  patterns[kNameGroupNormSiluPatternForSDWithoutSilu] = DefineGroupNormSiluPatternForSDWithoutSilu();
   return patterns;
 }
 
@@ -198,10 +200,55 @@ const VectorRef GroupNormSiluFusion::DefineGroupNormSiluPatternForSDWithCast() c
   return mul_2;
 }
 
-CNodePtr GroupNormSiluFusion::ReshapeCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
-  // reshape [x, 1, 1] to [x]
+const VectorRef GroupNormSiluFusion::DefineGroupNormSiluPatternForSDWithoutSilu() const {
+  // reshape
+  auto reshape_1_input_1 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(reshape_1_input_1 != nullptr, {});
+  auto reshape_1_input_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(reshape_1_input_2 != nullptr, {});
+  auto is_reshape_1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_reshape_1 != nullptr, {});
+  auto reshape_1 = VectorRef({is_reshape_1, reshape_1_input_1, reshape_1_input_2});
+
+  // instanceNormalization
+  auto instance_norm_input_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(instance_norm_input_2 != nullptr, {});
+  auto instance_norm_input_3 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(instance_norm_input_3 != nullptr, {});
+  auto is_instance_norm = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimInstanceNorm>);
+  MS_CHECK_TRUE_RET(is_instance_norm != nullptr, {});
+  auto instance_norm = VectorRef({is_instance_norm, reshape_1, instance_norm_input_2, instance_norm_input_3});
+
+  // reshape
+  auto reshape_2_input_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(reshape_2_input_2 != nullptr, {});
+  auto is_reshape_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_reshape_2 != nullptr, {});
+  auto reshape_2 = VectorRef({is_reshape_2, instance_norm, reshape_2_input_2});
+
+  // mul
+  auto mul_1_input_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(mul_1_input_2 != nullptr, {});
+  auto is_mul_1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul_1 != nullptr, {});
+  auto mul_1 = VectorRef({is_mul_1, reshape_2, mul_1_input_2});
+
+  // add
+  auto add_input_2 = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(add_input_2 != nullptr, {});
+  auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
+  MS_CHECK_TRUE_RET(is_add != nullptr, {});
+  auto add = VectorRef({is_add, mul_1, add_input_2});
+
+  return add;
+}
+
+CNodePtr GroupNormSiluFusion::ReshapeCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                           const string &node_name) const {
+  // reshape [x, 1, 1] to [x], node_name is unique and used to avoid repeat name
   std::vector<int32_t> shape_1d = {0};
-  auto shape_param_node = BuildIntVecParameterNode(func_graph, shape_1d, node->fullname_with_scope() + "_shape_param");
+  auto shape_param_node =
+    BuildIntVecParameterNode(func_graph, shape_1d, node_name + node->fullname_with_scope() + "_shape_param");
   MS_CHECK_TRUE_MSG(shape_param_node != nullptr, nullptr, "create shape_param_node return nullptr");
 
   std::vector<AnfNodePtr> op_inputs;
@@ -220,24 +267,25 @@ CNodePtr GroupNormSiluFusion::ReshapeCNode(const FuncGraphPtr &func_graph, const
   auto reshape_node = func_graph->NewCNode(reshape_prim_c, op_inputs);
   MS_CHECK_TRUE_MSG(reshape_node != nullptr, nullptr, "create node return nullptr");
 
-  reshape_node->set_fullname_with_scope(node->fullname_with_scope() + "_GNS_reshape");
+  reshape_node->set_fullname_with_scope(node_name + node->fullname_with_scope() + "_GNS_reshape");
   if (node->abstract() != nullptr) {
     reshape_node->set_abstract(node->abstract()->Clone());
   }
-  auto manager = Manage(func_graph);
-  (void)manager->Replace(node, reshape_node);
   MS_LOG(INFO) << "GroupNormSiluFusion create reshape node end.";
   return reshape_node;
 }
 
 CNodePtr GroupNormSiluFusion::CreateGroupNormSiluNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                      const AnfNodePtr &conv, const AnfNodePtr &gamma_3D,
-                                                      const AnfNodePtr &beta_3D, int64_t num_groups) const {
+                                                      const AnfNodePtr &conv, const CNodePtr &mul, const CNodePtr &add,
+                                                      int64_t num_groups, bool activate_silu) const {
   MS_LOG(INFO) << "create GroupNormSilu node";
-
-  auto gamma_1D = ReshapeCNode(func_graph, gamma_3D);
+  auto gamma_3D = mul->input(kNumIndex2);
+  MS_CHECK_TRUE_RET(gamma_3D != nullptr, nullptr);
+  auto beta_3D = add->input(kNumIndex2);
+  MS_CHECK_TRUE_RET(beta_3D != nullptr, nullptr);
+  auto gamma_1D = ReshapeCNode(func_graph, gamma_3D, mul->fullname_with_scope());
   MS_CHECK_TRUE_RET(gamma_1D != nullptr, nullptr);
-  auto beta_1D = ReshapeCNode(func_graph, beta_3D);
+  auto beta_1D = ReshapeCNode(func_graph, beta_3D, add->fullname_with_scope());
   MS_CHECK_TRUE_RET(beta_1D != nullptr, nullptr);
 
   auto groupnorm_silu_prim = std::make_shared<ops::GroupNormSilu>();
@@ -247,6 +295,7 @@ CNodePtr GroupNormSiluFusion::CreateGroupNormSiluNode(const FuncGraphPtr &func_g
   }
   groupnorm_silu_prim->AddAttr("num_groups", api::MakeValue(num_groups));
   groupnorm_silu_prim->AddAttr("eps", api::MakeValue(kNumEps));
+  groupnorm_silu_prim->AddAttr("activate_silu", api::MakeValue(activate_silu));
 
   auto GNS_prim_c = groupnorm_silu_prim->GetPrim();
   if (GNS_prim_c == nullptr) {
@@ -292,13 +341,7 @@ CNodePtr GroupNormSiluFusion::CreateGroupNormSiluNodeForSD15(const std::string &
   auto conv = reshape_1->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(conv != nullptr, nullptr);
 
-  auto gamma_3D = mul_1->input(kNumIndex2);
-  MS_CHECK_TRUE_RET(gamma_3D != nullptr, nullptr);
-
-  auto beta_3D = add->input(kNumIndex2);
-  MS_CHECK_TRUE_RET(beta_3D != nullptr, nullptr);
-
-  // get instancenorm input2 scale shape
+  // get instanceNorm input2 scale shape
   auto num_groups = GetInstanceNormGroups(instance_normalization);
   if (num_groups == -1) {
     MS_LOG(ERROR) << "get num_groups failed";
@@ -306,12 +349,8 @@ CNodePtr GroupNormSiluFusion::CreateGroupNormSiluNodeForSD15(const std::string &
   }
   auto conv_output_shape = GetTensorShape(reshape_1, kNumIndex1);
   MS_LOG(INFO) << "num_groups: " << num_groups << ", conv_output_shape: " << conv_output_shape;
-  if (std::find(conv_output_shape.begin(), conv_output_shape.end(), -1) != conv_output_shape.end()) {
-    MS_LOG(WARNING) << "GroupNormSilu is not support dynamic shape in CANN";
-    return nullptr;
-  }
 
-  auto groupnorm_silu_cnode = CreateGroupNormSiluNode(func_graph, node, conv, gamma_3D, beta_3D, num_groups);
+  auto groupnorm_silu_cnode = CreateGroupNormSiluNode(func_graph, node, conv, mul_1, add, num_groups, true);
   if (groupnorm_silu_cnode == nullptr) {
     MS_LOG(WARNING) << "create groupnorm_silu_cnode failed";
     return nullptr;
@@ -355,13 +394,7 @@ CNodePtr GroupNormSiluFusion::CreateGroupNormSiluNodeForSDWithCast(const std::st
   auto conv = cast_1->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(conv != nullptr, nullptr);
 
-  auto gamma_3D = mul_1->input(kNumIndex2);
-  MS_CHECK_TRUE_RET(gamma_3D != nullptr, nullptr);
-
-  auto beta_3D = add->input(kNumIndex2);
-  MS_CHECK_TRUE_RET(beta_3D != nullptr, nullptr);
-
-  // get instancenorm input2 scale shape
+  // get instanceNorm input2 scale shape
   auto num_groups = GetInstanceNormGroups(instance_normalization);
   if (num_groups == -1) {
     MS_LOG(ERROR) << "get num_groups failed";
@@ -369,12 +402,52 @@ CNodePtr GroupNormSiluFusion::CreateGroupNormSiluNodeForSDWithCast(const std::st
   }
   auto conv_output_shape = GetTensorShape(reshape_1, kNumIndex1);
   MS_LOG(INFO) << "num_groups: " << num_groups << ", conv_output_shape: " << conv_output_shape;
-  if (std::find(conv_output_shape.begin(), conv_output_shape.end(), -1) != conv_output_shape.end()) {
-    MS_LOG(WARNING) << "GroupNormSilu is not support dynamic shape in CANN";
+
+  auto groupnorm_silu_cnode = CreateGroupNormSiluNode(func_graph, node, conv, mul_1, add, num_groups, true);
+  if (groupnorm_silu_cnode == nullptr) {
+    MS_LOG(WARNING) << "create groupnorm_silu_cnode failed";
     return nullptr;
   }
 
-  auto groupnorm_silu_cnode = CreateGroupNormSiluNode(func_graph, node, conv, gamma_3D, beta_3D, num_groups);
+  auto manager = Manage(func_graph);
+  (void)manager->Replace(cnode, groupnorm_silu_cnode);
+  MS_LOG(INFO) << "create GroupNormSilu with cast success.";
+  return groupnorm_silu_cnode;
+}
+
+CNodePtr GroupNormSiluFusion::CreateGroupNormSiluNodeForSDWithoutSilu(const std::string &pattern_name,
+                                                                      const FuncGraphPtr &func_graph,
+                                                                      const AnfNodePtr &node,
+                                                                      const EquivPtr &equiv) const {
+  MS_LOG(INFO) << "GroupNormSilu without silu";
+  MS_CHECK_TRUE_RET(node != nullptr, nullptr);
+  auto cnode = node->cast<CNodePtr>();  // add
+
+  auto mul = cnode->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(mul != nullptr, nullptr);
+
+  auto reshape_2 = mul->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(reshape_2 != nullptr, nullptr);
+
+  auto instance_normalization = reshape_2->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(instance_normalization != nullptr, nullptr);
+
+  auto reshape_1 = instance_normalization->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(reshape_1 != nullptr, nullptr);
+
+  auto conv = reshape_1->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(conv != nullptr, nullptr);
+
+  // get instanceNorm input2 scale shape
+  auto num_groups = GetInstanceNormGroups(instance_normalization);
+  if (num_groups == -1) {
+    MS_LOG(ERROR) << "get num_groups failed";
+    return nullptr;
+  }
+  auto conv_output_shape = GetTensorShape(reshape_1, kNumIndex1);
+  MS_LOG(INFO) << "num_groups: " << num_groups << ", conv_output_shape: " << conv_output_shape;
+
+  auto groupnorm_silu_cnode = CreateGroupNormSiluNode(func_graph, node, conv, mul, cnode, num_groups, false);
   if (groupnorm_silu_cnode == nullptr) {
     MS_LOG(WARNING) << "create groupnorm_silu_cnode failed";
     return nullptr;
@@ -413,6 +486,9 @@ AnfNodePtr GroupNormSiluFusion::Process(const std::string &patten_name, const Fu
   } else if (patten_name == kNameGroupNormSiluPatternForSDWithCast) {
     MS_LOG(INFO) << "start create GroupNormSilu node for SD15 with cast.";
     groupnormsilu_node = CreateGroupNormSiluNodeForSDWithCast(patten_name, func_graph, node, equiv);
+  } else if (patten_name == kNameGroupNormSiluPatternForSDWithoutSilu) {
+    MS_LOG(INFO) << "start create GroupNormSilu node for SD15 without silu.";
+    groupnormsilu_node = CreateGroupNormSiluNodeForSDWithoutSilu(patten_name, func_graph, node, equiv);
   } else {
     MS_LOG(ERROR) << " not pattern.";
   }

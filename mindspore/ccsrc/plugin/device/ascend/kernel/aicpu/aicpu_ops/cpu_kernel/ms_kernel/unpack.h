@@ -36,10 +36,10 @@ class UnpackCpuKernel : public CpuKernel {
   uint32_t CheckAndInitParams(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t UnpackWithOneOutput(T *input_data_ptr, std::vector<T *> output_data_vec);
+  uint32_t UnpackWithOneOutput(CpuKernelContext &ctx, T *input_data_ptr, std::vector<T *> output_data_vec);
 
   template <typename T>
-  uint32_t UnpackWithDimZero(T *input_data_ptr, std::vector<T *> output_data_vec);
+  uint32_t UnpackWithDimZero(CpuKernelContext &ctx, T *input_data_ptr, std::vector<T *> output_data_vec);
 
   template <typename T>
   uint32_t UnpackCompute(T *input_data_ptr, std::vector<T *> output_data_vec, CpuKernelContext &ctx);

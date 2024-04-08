@@ -29,7 +29,7 @@ class SegmentMeanCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t SegmentMeanCompute(const CpuKernelContext &ctx);
+  static uint32_t SegmentMeanCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

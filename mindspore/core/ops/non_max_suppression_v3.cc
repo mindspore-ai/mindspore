@@ -41,8 +41,8 @@ namespace ops {
 namespace {
 abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
   const int input_num = 5;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   for (const auto &item : input_args) {
@@ -81,8 +81,8 @@ abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
 
 abstract::ShapePtr NonMaxSuppressionV3FrontendInferShape(const PrimitivePtr &primitive,
                                                          const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
   const int input_num = 5;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   for (const auto &item : input_args) {

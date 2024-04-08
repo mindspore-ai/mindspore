@@ -31,14 +31,14 @@ const char *kBucketize = "Bucketize";
 const int64_t kParallelDataNumSameShape = 64 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define BUCKETIZE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                           \
-    uint32_t result = BucketizeCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                       \
-      KERNEL_LOG_ERROR("Bucketize kernel compute failed."); \
-      return result;                                        \
-    }                                                       \
-    break;                                                  \
+#define BUCKETIZE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                     \
+    uint32_t result = BucketizeCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                 \
+      CUST_KERNEL_LOG_ERROR(ctx, "Bucketize kernel compute failed."); \
+      return result;                                                  \
+    }                                                                 \
+    break;                                                            \
   }
 
 int64_t get_tensor_length(aicpu::Tensor *t) {
@@ -52,32 +52,34 @@ int64_t get_tensor_length(aicpu::Tensor *t) {
 namespace aicpu {
 uint32_t BucketizeCpuKernel::Compute(CpuKernelContext &ctx) {
   // normal check
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Bucketize check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Bucketize check input and output number failed.");
   auto data_type = ctx.Input(0)->GetDataType();
 
-  KERNEL_CHECK_NULLPTR(ctx.GetAttr("boundaries"), KERNEL_STATUS_PARAM_INVALID, "Get boundaries failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.GetAttr("boundaries"), KERNEL_STATUS_PARAM_INVALID, "Get boundaries failed")
 
   // check input datatype
   Tensor *input = ctx.Input(kFirstInputIndex);
   DataType dt_input = input->GetDataType();
-  KERNEL_CHECK_FALSE((dt_input == DT_FLOAT || dt_input == DT_INT32 || dt_input == DT_INT64 || dt_input == DT_DOUBLE),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "Input data type must DT_FLOAT or DT_INT32 or DT_INT64 or DT_DOUBLE,"
-                     "but got data type[%s].",
-                     DTypeStr(dt_input).c_str());
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (dt_input == DT_FLOAT || dt_input == DT_INT32 || dt_input == DT_INT64 || dt_input == DT_DOUBLE),
+    KERNEL_STATUS_PARAM_INVALID,
+    "Input data type must DT_FLOAT or DT_INT32 or DT_INT64 or DT_DOUBLE,"
+    "but got data type[%s].",
+    DTypeStr(dt_input).c_str());
 
   // check output datatype
   Tensor *output = ctx.Output(kFirstOutputIndex);
   DataType dt_output = output->GetDataType();
-  KERNEL_CHECK_FALSE((dt_output == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
-                     "Output data type must DT_INT32, but got data type[%s].", DTypeStr(dt_output).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (dt_output == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
+                          "Output data type must DT_INT32, but got data type[%s].", DTypeStr(dt_output).c_str());
 
   auto input_sizes = input->GetTensorShape()->GetDimSizes();
   auto output_sizes = output->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((input_sizes == output_sizes), KERNEL_STATUS_PARAM_INVALID,
-                     "The tensor shape of input [%s] need be same with "
-                     "output [%s].",
-                     VectorToString(input_sizes).c_str(), VectorToString(output_sizes).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_sizes == output_sizes), KERNEL_STATUS_PARAM_INVALID,
+                          "The tensor shape of input [%s] need be same with "
+                          "output [%s].",
+                          VectorToString(input_sizes).c_str(), VectorToString(output_sizes).c_str());
 
   switch (data_type) {
     BUCKETIZE_COMPUTE_CASE(DT_INT32, int32_t, ctx)
@@ -85,14 +87,14 @@ uint32_t BucketizeCpuKernel::Compute(CpuKernelContext &ctx) {
     BUCKETIZE_COMPUTE_CASE(DT_FLOAT, float, ctx)
     BUCKETIZE_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("Bucketize kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Bucketize kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t BucketizeCpuKernel::BucketizeCompute(const CpuKernelContext &ctx) {
+uint32_t BucketizeCpuKernel::BucketizeCompute(CpuKernelContext &ctx) {
   const int64_t data_num = get_tensor_length(ctx.Input(0));
   auto boundaries = ctx.GetAttr("boundaries");
   std::vector<float> boundaries_data = boundaries->GetListFloat();

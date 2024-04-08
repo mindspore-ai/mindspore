@@ -32,10 +32,10 @@ class MatrixSetDiagV3CpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CheckParam(const CpuKernelContext &ctx);
+  uint32_t CheckParam(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

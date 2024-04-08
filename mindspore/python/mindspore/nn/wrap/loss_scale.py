@@ -71,7 +71,7 @@ def _tensor_ascend_grad_overflow(grad):
     status = ascend_grad_overflow(grad)
     base = Tensor(1.0, dtype=mstype.float32)
     output = base - status.all()
-    output = P.Reshape()(output, ((1,)))
+    output = P.Reshape()(output, ((-1,)))
     return output
 
 

@@ -17,8 +17,10 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_TENSOR_REDISTRIBUTION_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_TENSOR_REDISTRIBUTION_H_
 
-#include <vector>
 #include <map>
+#include <set>
+#include <vector>
+#include <utility>
 #include <string>
 #include "ir/value.h"
 #include "frontend/parallel/status.h"
@@ -30,7 +32,7 @@ namespace mindspore {
 namespace parallel {
 constexpr double ALLTOALL_SCALE_FACTOR = 2.0;
 constexpr double ALLGATHER_REDUCESCATTER_SCALE_FACTOR = 0.5;
-using AssembledDynamicDimsMapping = std::map<int64_t, AnfNodePtr>;
+using AssembledDynamicDimsMapping = std::map<int64_t, std::pair<size_t, AnfNodePtr>>;
 
 class TensorRedistribution {
  public:
@@ -74,22 +76,26 @@ class TensorRedistribution {
   TensorLayout assembled_from_layout() const {
     if (!this->IsAssembledStaticShape()) {
       MS_LOG(WARNING) << "TensorRedistribution didn't assemble static shape but call assembled_from_layout().";
-      return this->from_;
+      return this->from_origin_;
     }
     return this->layout_transfer_.from_in();
   }
   TensorLayout assembled_to_layout() const {
     if (!this->IsAssembledStaticShape()) {
       MS_LOG(WARNING) << "TensorRedistribution didn't assemble static shape but call assembled_to_layout().";
-      return this->to_;
+      return this->to_origin_;
     }
     return this->layout_transfer_.to_in();
   }
   AssembledDynamicDimsMapping GetDynamicDimsMapping() const { return this->dynamic_dim_mapping_; }
   void CreateAssembledDynamicMapping(const CNodePtr &cur_cnode, const AnfNodePtr &pre_cnode,
-                                     const FuncGraphPtr &func_graph);
+                                     const FuncGraphPtr &func_graph, int64_t redistribution_index);
 
  private:
+  void GetAssembledOriginLayout(TensorLayout *from_origin, TensorLayout *to_origin);
+  void UnifyAssembledMapping();
+  void UnifyAssembledMappingWithSameSize(const std::set<int64_t> &index_mapping);
+  void UnifyAssembledMappingWithDiffSize(const std::set<int64_t> &index_mapping);
   Status InferReshape(const TensorLayout &from_layout, const TensorLayout &to_layout,
                       OperatorVector *const operator_vector, OutPutInfoVector *const output_info_vector);
   Status InferRedistribution(const TensorLayout &from_layout, const TensorLayout &to_layout,
@@ -104,6 +110,7 @@ class TensorRedistribution {
   TensorLayout to_origin_;
   TensorLayout from_;
   TensorLayout to_;
+  TensorLayout assembled_static_origin_from_;
   bool is_inited_;
   RankList dev_list_;
   OperatorList operator_list_;

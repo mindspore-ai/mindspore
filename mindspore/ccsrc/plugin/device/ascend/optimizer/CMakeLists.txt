@@ -41,6 +41,7 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ir_fusion/flash_attention_fusion.cc"
         "./ir_fusion/mc2_fusion.cc"
         "./ir_fusion/add_layernorm_fusion.cc"
+        "./ir_fusion/shape_reshape_fusion.cc"
         "./enhancer/eliminate_maketuple_getitem.cc"
         )
 list(REMOVE_ITEM MS_OPTIMIZER_910B

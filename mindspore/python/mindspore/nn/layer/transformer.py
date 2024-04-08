@@ -628,11 +628,12 @@ class TransformerDecoder(Cell):
         - **memory** (Tensor) - The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
         - **tgt_mask** (Tensor, optional) - the mask of the tgt sequence. The shape is :math:`(T, T)`
-          or :math:`(N*nhead, T, T)` , where `nhead` is the arguent in:class:`mindspore.nn.TransformerDecoderLayer`.
+          or :math:`(N*nhead, T, T)` , where `nhead` is the arguent in :class:`mindspore.nn.TransformerDecoderLayer`.
           Supported types: float16, float32, float64, bool. Default: ``None``.
         - **memory_mask** (Tensor, optional) - the mask of the memory sequence. The shape is
           :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **tgt_key_padding_mask** (Tensor, optional) - the mask of the tgt keys per batch. Supported
+        - **tgt_key_padding_mask** (Tensor, optional) - the mask of the tgt keys per batch.
+          Shape is :math:`(T)`. Supported
           types: float16, float32, float64, bool. Default: ``None``.
         - **memory_key_padding_mask** (Tensor, optional) - the mask of the memory keys per batch. The shape
           is :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,

@@ -207,10 +207,10 @@ def _insert_cast_for_operators(stree, dtype, force_cast, *, white_list=None, bla
         if _operator_need_cast(node, force_cast, white_list, black_list):
             _insert_cast_for_operator(node, dtype)
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
-            force_cast = force_cast or _net_need_cast(node, force_cast, white_list, black_list)
+            force_cast_ = force_cast or _net_need_cast(node, force_cast, white_list, black_list)
             if not _precision_set_by_user(node.get_instance()):
                 subtree = node.get_sub_tree()
-                _insert_cast_for_operators(subtree, dtype, force_cast, white_list=white_list, black_list=black_list)
+                _insert_cast_for_operators(subtree, dtype, force_cast_, white_list=white_list, black_list=black_list)
 
 
 def _need_removed_cast_pair(node, dtype):
@@ -331,7 +331,7 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     :class:`mindspore.nn.LayerNorm`]
 
     For details on automatic mixed precision, refer to
-    `Automatic Mix Precision <https://www.mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_ .
+    `Automatic Mix Precision <https://www.mindspore.cn/tutorials/en/r2.3.q1/advanced/mixed_precision.html>`_ .
 
     Note:
         - Repeatedly calling mixed-precision interfaces, such as `custom_mixed_precision` and `auto_mixed_precision`,
@@ -362,7 +362,7 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     Examples:
         >>> from mindspore import amp
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> network = LeNet5()
         >>> amp_level = "O1"
         >>> net = amp.auto_mixed_precision(network, amp_level)
@@ -559,8 +559,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             - 'O1': Cast the operators in white_list to float16, the remaining operators are kept in float32.
               The operators in the whitelist: [Conv1d, Conv2d, Conv3d, Conv1dTranspose, Conv2dTranspose,
               Conv3dTranspose, Dense, LSTMCell, RNNCell, GRUCell, MatMul, BatchMatMul, PReLU, ReLU, Ger].
-            - 'O2': Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
-              using dynamic loss scale.
+            - 'O2': Cast network to float16, keep `mindspore.nn.BatchNorm` series interface,
+              :class:`mindspore.nn.LayerNorm` and `loss_fn` (if set) run in float32, using dynamic loss scale.
             - 'O3': Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
             - 'auto': Set to level to recommended level in different devices. Set level to 'O2' on GPU, Set
               level to 'O3' Ascend. The recommended level is chosen by the export experience, not applicable to all
@@ -591,13 +591,13 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             take no effect on this property.
 
     Raises:
-        ValueError: If device is CPU, property `loss_scale_manager` is not `None` or `FixedLossScaleManager`
-            (with property `drop_overflow_update=False` ).
+        ValueError: If device is CPU, property `loss_scale_manager` is not `None` or
+            :class:`mindspore.amp.FixedLossScaleManager` (with property `drop_overflow_update=False` ).
 
     Examples:
         >>> from mindspore import amp, nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> network = LeNet5()
         >>> net_loss = nn.SoftmaxCrossEntropyWithLogits(reduction="mean")
         >>> net_opt = nn.Momentum(network.trainable_params(), learning_rate=0.01, momentum=0.9)
@@ -744,7 +744,7 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
     Examples:
         >>> from mindspore import amp, nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> custom_white_list = amp.get_white_list()
         >>> custom_white_list.append(nn.Flatten)

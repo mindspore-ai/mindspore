@@ -180,6 +180,7 @@ void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node) {
 static CNodePtr InsertMakeTuple(const AnfNodePtr &prev, uint64_t num, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(prev);
   MS_EXCEPTION_IF_NULL(func_graph);
+  ScopeGuard scope_guard(prev->scope());
   std::vector<AnfNodePtr> make_tuple_inputs;
   make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   for (uint64_t i = 0; i < num; i++) {
@@ -350,14 +351,17 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Infer tensor redistribution failed.";
   }
-  redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
-    redistribution_oplist_ptr, tensor_redistribution->input_shape());
+  if (!tensor_redistribution->IsAssembledStaticShape()) {
+    redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
+      redistribution_oplist_ptr, tensor_redistribution->input_shape());
+  }
+
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:InferTensorRedistribution failed";
   }
   MS_LOG(DEBUG) << "Redistribution size " << redistribution_oplist_ptr->first.size();
   if (!redistribution_oplist_ptr->first.empty()) {
-    tensor_redistribution->CreateAssembledDynamicMapping(next_cnode, pre_cnode, func_graph);
+    tensor_redistribution->CreateAssembledDynamicMapping(next_cnode, pre_cnode, func_graph, node_pair.second);
     // insert node before next node
     InsertRedistribution(redistribution_oplist_ptr, next_cnode, func_graph, node_pair.second, pre_cnode,
                          tensor_redistribution);
@@ -1875,9 +1879,11 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
     bool is_next_reshape = false;
     mindspore::HashSet<AnfNodePtr> visit;
     auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1);
-    if (!next_layout_ptr) {
-      MS_LOG(WARNING)
-        << "FindNextLayout return nullptr, if reshape is not the last primitive, there must be some error";
+    if (next_layout_ptr == nullptr) {
+      std::string is_reshape = is_next_reshape ? "true" : "false";
+      MS_LOG(WARNING) << "FindNextLayout for " << cnode->fullname_with_scope()
+                      << " return nullptr, and is_next_reshape is " << is_next_reshape
+                      << ". If reshape is not the last primitive, there must be some error.";
     }
     if (next_layout_ptr) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
@@ -2039,7 +2045,8 @@ static void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_g
       sens_tensor_param->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(loss_grad_layout));
       return;
     }
-    if (sens_tensor_node->isa<CNode>()) {
+    bool is_dynamic = InDynamicGraph(sens_tensor_node->cast<CNodePtr>());
+    if (sens_tensor_node->isa<CNode>() && !is_dynamic) {
       auto op_list_ptr = InferSensRedistribution(sens_tensor_node, loss_grad_layout);
       if (op_list_ptr == nullptr) {
         return;
@@ -2049,6 +2056,9 @@ static void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_g
       MS_EXCEPTION_IF_NULL(func_graph);
       TensorRedistributionPtr tensor_redistribution = std::make_shared<TensorRedistribution>();
       InsertRedistribution(op_list_ptr, grad_sens_node, func_graph, 1, sens_tensor_cnode, tensor_redistribution);
+      return;
+    }
+    if (is_dynamic) {
       return;
     }
     MS_LOG(EXCEPTION) << "The type of sens node is not Tensor or Parameter or CNode, it is unsupported now.";
@@ -2302,7 +2312,7 @@ static void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const F
     auto cloned_parameter = cloned_parameter_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(cloned_parameter);
 
-    if (!ParameterIsCloned(cloned_parameter_node)) {
+    if (!ParameterIsCloned(cloned_parameter_node) && !IsStrategySaved(cloned_parameter_node)) {
       continue;
     }
     std::string cloned_param_name = cloned_parameter_node->cast<ParameterPtr>()->name();
@@ -2573,7 +2583,7 @@ bool CreateGroupsByCkptFile(const std::string &file) {
 
 static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager,
                                     int64_t pipeline_stages) {
-  if (!root->has_flag(BACKWARD) && pipeline_stages > 1) {
+  if (!root->has_flag(kSkipAutoParallelCompile) && !root->has_flag(BACKWARD) && pipeline_stages > 1) {
     root->set_flag(BACKWARD, true);
     auto parallel_context = parallel::ParallelContext::GetInstance();
     if (IsTraining(manager)) {
@@ -2590,7 +2600,8 @@ static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphMan
 }
 
 static void ReorderForGradAccumulation(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
-  if (!root->has_flag(BACKWARD) && ParallelContext::GetInstance()->grad_accumulation_step() > 1) {
+  if (!root->has_flag(kSkipAutoParallelCompile) && !root->has_flag(BACKWARD) &&
+      ParallelContext::GetInstance()->grad_accumulation_step() > 1) {
     root->set_flag(BACKWARD, true);
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
@@ -2741,7 +2752,8 @@ static AnfNodePtr FindExpandDimsWIthGradScale(const AnfNodePtr &node_ptr, const 
       }
       return queue_node;
     }
-    if (!IsSomePrimitiveList(cnode, {ENVIRONGET, MUL, SQUARE, REDUCE_SUM, EXPAND_DIMS, DEPEND, CAST, REF_TO_EMBED})) {
+    if (!IsSomePrimitiveList(cnode,
+                             {ENVIRONGET, MUL, SQUARE, REDUCE_SUM, EXPAND_DIMS, DEPEND, CAST, REF_TO_EMBED, EMBED})) {
       continue;
     }
     auto node_set = node_users_map.at(queue_node);
@@ -3088,6 +3100,11 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   // save strategy as checkpoint for multi-train
   CheckpointStrategy(all_nodes, root);
+
+  if (MergeEntireShapeForDynamic(root) != Status::SUCCESS) {
+    MS_LOG(ERROR) << "Merge entire shape for dynamic shape failed.";
+    return false;
+  }
 
   // ForwardCommunication BackwardCommunication TensorRedistribution
   ParallelCommunication(root, all_nodes, manager);

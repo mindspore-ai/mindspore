@@ -47,14 +47,14 @@ aclError AclInitAdapter::AclFinalize() {
 
   MS_LOG(INFO) << "Begin to aclFinalize.";
   init_flag_ = false;
-  return CALL_ASCEND_API2(aclFinalize);
+  return CALL_ASCEND_API(aclFinalize);
 }
 
 aclError AclInitAdapter::ForceFinalize() {
   std::lock_guard<std::mutex> lock(flag_mutex_);
   MS_LOG(INFO) << "Begin to force aclFinalize.";
   init_flag_ = false;
-  return CALL_ASCEND_API2(aclFinalize);
+  return CALL_ASCEND_API(aclFinalize);
 }
 
 AclEnvGuard::AclEnvGuard() : errno_(AclInitAdapter::GetInstance().AclInit(nullptr)) {

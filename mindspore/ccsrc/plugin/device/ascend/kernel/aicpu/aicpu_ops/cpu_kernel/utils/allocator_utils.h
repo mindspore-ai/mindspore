@@ -27,14 +27,15 @@
 namespace aicpu {
 class AICPU_VISIBILITY CpuKernelAllocatorUtils {
  public:
-  static uint32_t ParamCheck(const std::vector<int64_t> &dims, const void *data_ptr, Tensor *&outputResultTensor);
-  static uint32_t UpdateOutputDataTensor(const std::vector<int64_t> &dims, DataType type, const void *data_ptr,
-                                         int64_t input_data_size, Tensor *&outputResultTensor);
-  static uint32_t CheckOutputDataPtr(const uint64_t data_ptr);
-  static uint32_t DeleteOutputDataPtr(const uint64_t data_ptr);
-  static int64_t GetInputDataSize(const std::vector<int64_t> &dims, DataType type);
-  static uint32_t AllocateOutputTensorDataMemory(const std::vector<uint64_t> &shape, DataType type,
-                                                 Tensor *&outputResultTensor);
+  static uint32_t ParamCheck(CpuKernelContext &ctx, const std::vector<int64_t> &dims, const void *data_ptr,
+                             Tensor *&outputResultTensor);
+  static uint32_t UpdateOutputDataTensor(CpuKernelContext &ctx, const std::vector<int64_t> &dims, DataType type,
+                                         const void *data_ptr, int64_t input_data_size, Tensor *&outputResultTensor);
+  static uint32_t CheckOutputDataPtr(CpuKernelContext &ctx, const uint64_t data_ptr);
+  static uint32_t DeleteOutputDataPtr(CpuKernelContext &ctx, const uint64_t data_ptr);
+  static int64_t GetInputDataSize(CpuKernelContext &ctx, const std::vector<int64_t> &dims, DataType type);
+  static uint32_t AllocateOutputTensorDataMemory(CpuKernelContext &ctx, const std::vector<uint64_t> &shape,
+                                                 DataType type, Tensor *&outputResultTensor);
 };
 }  // namespace aicpu
 #endif  // AICPU_UTILS_ALLOCATOR_UTILS_H_

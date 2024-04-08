@@ -26,21 +26,21 @@
 namespace {
 const char *kEye = "Eye";
 constexpr size_t kValue2 = 2;
-#define EYE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                     \
-    uint32_t result = EyePartCompute<TYPE>(CTX);      \
-    if (result != KERNEL_STATUS_OK) {                 \
-      KERNEL_LOG_ERROR("Eye kernel compute failed."); \
-      return result;                                  \
-    }                                                 \
-    break;                                            \
+#define EYE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                               \
+    uint32_t result = EyePartCompute<TYPE>(CTX);                \
+    if (result != KERNEL_STATUS_OK) {                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "Eye kernel compute failed."); \
+      return result;                                            \
+    }                                                           \
+    break;                                                      \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t EyeCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
   auto data_type = ctx.Output(0)->GetDataType();
   switch (data_type) {
     EYE_COMPUTE_CASE(DT_BOOL, bool, ctx)
@@ -58,7 +58,7 @@ uint32_t EyeCpuKernel::Compute(CpuKernelContext &ctx) {
     EYE_COMPUTE_CASE(DT_COMPLEX64, std::complex<std::float_t>, ctx)
     EYE_COMPUTE_CASE(DT_COMPLEX128, std::complex<std::double_t>, ctx)
     default:
-      KERNEL_LOG_ERROR("Eye kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Eye kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -83,14 +83,14 @@ uint32_t EyeCpuKernel::EyePartCompute(CpuKernelContext &ctx) {
     auto copy_size = std::min(output_size, static_cast<uint64_t>(INT32_MAX));
     auto ret = memset_s(y_addr, output_size, 0, copy_size);
     if (ret != EOK) {
-      KERNEL_LOG_ERROR("For 'Eye', memset_s failed, ret=%d.", ret);
+      CUST_KERNEL_LOG_ERROR(ctx, "For 'Eye', memset_s failed, ret=%d.", ret);
       return KERNEL_STATUS_INNER_ERROR;
     }
     output_size -= copy_size;
     y_addr += copy_size;
   }
 
-  KERNEL_CHECK_NULLPTR(y->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, y->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
   auto output_y = reinterpret_cast<T *>(y->GetData());
   T num = static_cast<T>(1);
   int64_t inner_size = num_rows * num_cols;

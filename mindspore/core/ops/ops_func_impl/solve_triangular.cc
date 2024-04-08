@@ -99,21 +99,18 @@ TypePtr SolveTriangularFuncImpl::InferType(const PrimitivePtr &primitive,
     kNumberTypeInt16,
     kNumberTypeInt32,
   };
-  static const std::vector<TypeId> type_to_float64 = {kNumberTypeInt64};
   bool is_type_to_float32 =
     std::any_of(type_to_float32.begin(), type_to_float32.end(),
                 [&input_a_type_id](const TypeId &type_id) { return input_a_type_id == type_id; });
+  if (is_type_to_float32) return std::make_shared<TensorType>(kFloat32);
+
+  static const std::vector<TypeId> type_to_float64 = {kNumberTypeInt64};
   bool is_type_to_float64 =
     std::any_of(type_to_float64.begin(), type_to_float64.end(),
                 [&input_a_type_id](const TypeId &type_id) { return input_a_type_id == type_id; });
+  if (is_type_to_float64) return std::make_shared<TensorType>(kFloat64);
 
-  if (is_type_to_float32) {
-    return std::make_shared<TensorType>(kFloat32);
-  } else if (is_type_to_float64) {
-    return std::make_shared<TensorType>(kFloat64);
-  } else {
-    return input_a_type->Clone();
-  }
+  return input_a_type->Clone();
 }
 }  // namespace ops
 }  // namespace mindspore

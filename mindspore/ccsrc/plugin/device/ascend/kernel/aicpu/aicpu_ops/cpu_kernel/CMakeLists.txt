@@ -16,7 +16,6 @@ set(CPU_OPS_SRC
     ${ENVIRON_KERNELS}
     ${CMAKE_CURRENT_SOURCE_DIR}/ms_kernel/random/utils.cc
     ${UTILS_LISTS}
-    ${FORMAT_TRANSFER_LISTS}
 )
 
 add_library(mindspore_cpu_kernels SHARED ${CPU_OPS_SRC})

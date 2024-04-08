@@ -35,22 +35,23 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define MAXIMUM_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                         \
-    uint32_t result = MaximumCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                     \
-      KERNEL_LOG_ERROR("Maximum kernel compute failed."); \
-      return result;                                      \
-    }                                                     \
-    break;                                                \
+#define MAXIMUM_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                   \
+    uint32_t result = MaximumCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                               \
+      CUST_KERNEL_LOG_ERROR(ctx, "Maximum kernel compute failed."); \
+      return result;                                                \
+    }                                                               \
+    break;                                                          \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MaximumCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Maximum check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MaximumParamCheck(ctx), "Maximum check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Maximum check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MaximumParamCheck(ctx), "Maximum check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     MAXIMUM_COMPUTE_CASE(DT_INT32, int32_t, ctx)
@@ -59,34 +60,33 @@ uint32_t MaximumCpuKernel::Compute(CpuKernelContext &ctx) {
     MAXIMUM_COMPUTE_CASE(DT_FLOAT, float, ctx)
     MAXIMUM_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("Maximum kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Maximum kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MaximumCpuKernel::MaximumParamCheck(const CpuKernelContext &ctx) {
+uint32_t MaximumCpuKernel::MaximumParamCheck(CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *output = ctx.Output(0);
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
-  KERNEL_LOG_DEBUG(
-    "MaximumCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "MaximumCpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-void MaximumCpuKernel::SpecialComputeSameShape(int64_t start, int64_t end, const CpuKernelContext &ctx,
-                                               bool is_float16) {
+void MaximumCpuKernel::SpecialComputeSameShape(int64_t start, int64_t end, CpuKernelContext &ctx, bool is_float16) {
   auto input1 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input2 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -134,8 +134,7 @@ void MaximumCpuKernel::SpecialComputeSameShape(int64_t start, int64_t end, const
 }
 
 template <typename T>
-void MaximumCpuKernel::SpecialComputeXOneElement(int64_t start, int64_t end, const CpuKernelContext &ctx,
-                                                 bool is_float16) {
+void MaximumCpuKernel::SpecialComputeXOneElement(int64_t start, int64_t end, CpuKernelContext &ctx, bool is_float16) {
   auto input1 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input2 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -183,8 +182,7 @@ void MaximumCpuKernel::SpecialComputeXOneElement(int64_t start, int64_t end, con
 }
 
 template <typename T>
-void MaximumCpuKernel::SpecialComputeYOneElement(int64_t start, int64_t end, const CpuKernelContext &ctx,
-                                                 bool is_float16) {
+void MaximumCpuKernel::SpecialComputeYOneElement(int64_t start, int64_t end, CpuKernelContext &ctx, bool is_float16) {
   auto input1 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input2 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -232,7 +230,7 @@ void MaximumCpuKernel::SpecialComputeYOneElement(int64_t start, int64_t end, con
 }
 
 template <typename T>
-void MaximumCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const CpuKernelContext &ctx) {
+void MaximumCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, CpuKernelContext &ctx) {
   bool is_float16 = false;
   if (std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value || std::is_same<T, float>::value ||
       std::is_same<T, double>::value) {
@@ -251,13 +249,13 @@ void MaximumCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_
       SpecialComputeYOneElement<T>(start, end, ctx, is_float16);
       break;
     default:
-      KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+      CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
       break;
   }
 }
 
 template <typename T>
-uint32_t MaximumCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
+uint32_t MaximumCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
   int64_t in0_elements_nums = ctx.Input(0)->NumElements();
   int64_t in1_elements_nums = ctx.Input(1)->NumElements();
   int64_t data_num = ctx.Output(0)->NumElements();
@@ -278,8 +276,8 @@ uint32_t MaximumCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
 
     auto sharder_fmax = [&](int64_t start, int64_t end) { SpecialCompute<T>(type, start, end, ctx); };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_fmax),
-                        "Maximum Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_fmax),
+                             "Maximum Compute failed.");
   } else {
     SpecialCompute<T>(type, 0, data_num, ctx);
   }
@@ -288,8 +286,8 @@ uint32_t MaximumCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void MaximumCpuKernel::BcastComputeMultiKernel(int64_t start, int64_t end, const CpuKernelContext &ctx,
-                                               const Bcast &bcast, bool is_float16) {
+void MaximumCpuKernel::BcastComputeMultiKernel(int64_t start, int64_t end, CpuKernelContext &ctx, const Bcast &bcast,
+                                               bool is_float16) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -345,7 +343,7 @@ void MaximumCpuKernel::BcastComputeMultiKernel(int64_t start, int64_t end, const
 }
 
 template <typename T>
-void MaximumCpuKernel::BcastComputeOneKernel(const CpuKernelContext &ctx, const Bcast &bcast, bool is_float16) {
+void MaximumCpuKernel::BcastComputeOneKernel(CpuKernelContext &ctx, const Bcast &bcast, bool is_float16) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -402,7 +400,7 @@ void MaximumCpuKernel::BcastComputeOneKernel(const CpuKernelContext &ctx, const 
 }
 
 template <typename T>
-uint32_t MaximumCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
+uint32_t MaximumCpuKernel::BcastCompute(CpuKernelContext &ctx, const Bcast &bcast) {
   int64_t data_num = ctx.Output(0)->NumElements();
   bool is_float16 = false;
   if (std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value || std::is_same<T, float>::value ||
@@ -427,8 +425,8 @@ uint32_t MaximumCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast
       BcastComputeMultiKernel<T>(start, end, ctx, bcast, is_float16);
     };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_fmax),
-                        "Maximum Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_fmax),
+                             "Maximum Compute failed.");
   } else {
     BcastComputeOneKernel<T>(ctx, bcast, is_float16);
   }
@@ -436,7 +434,7 @@ uint32_t MaximumCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast
 }
 
 template <typename T>
-uint32_t MaximumCpuKernel::MaximumCompute(const CpuKernelContext &ctx) {
+uint32_t MaximumCpuKernel::MaximumCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
@@ -449,9 +447,9 @@ uint32_t MaximumCpuKernel::MaximumCompute(const CpuKernelContext &ctx) {
   if (isNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
 

@@ -33,10 +33,10 @@ const char *kRandomShuffle = "RandomShuffle";
 namespace aicpu {
 uint32_t RandomShuffleCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
-  KERNEL_CHECK_NULLPTR(input_0, KERNEL_STATUS_PARAM_INVALID, "Get input failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0, KERNEL_STATUS_PARAM_INVALID, "Get input failed")
 
   Tensor *output = ctx.Output(kFirstOutputIndex);
-  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
   auto data_type = static_cast<DataType>(output->GetDataType());
 
   switch (data_type) {
@@ -55,14 +55,14 @@ uint32_t RandomShuffleCpuKernel::Compute(CpuKernelContext &ctx) {
     RANDOM_SHUFFLE_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>)
     RANDOM_SHUFFLE_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>)
     default:
-      KERNEL_LOG_ERROR("RandomShuffle kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "RandomShuffle kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t RandomShuffleCpuKernel::RandomShuffleCompute(const CpuKernelContext &ctx, Tensor *output) {
+uint32_t RandomShuffleCpuKernel::RandomShuffleCompute(CpuKernelContext &ctx, Tensor *output) {
   uint64_t rng_seed = std::random_device()();
   auto rng = std::default_random_engine();
   rng.seed(rng_seed);
@@ -96,8 +96,8 @@ uint32_t RandomShuffleCpuKernel::RandomShuffleCompute(const CpuKernelContext &ct
   };
 
   int core_num = std::max(1, static_cast<int>(aicpu::CpuKernelUtils::GetCPUNum(ctx)) - 2);
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch_size, batch_size / core_num, shuffle_worker),
-                      "RandomShuffle Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, batch_size, batch_size / core_num, shuffle_worker),
+                           "RandomShuffle Compute failed.");
   return KERNEL_STATUS_OK;
 }
 

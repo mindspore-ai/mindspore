@@ -33,7 +33,7 @@ class ResizeNearestNeighborV2CpuKernel : public CpuKernel {
  private:
   uint32_t ResizeNearestNeighborV2ParamCheck(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ResizeNearestNeighborV2Compute(const CpuKernelContext &ctx);
+  uint32_t ResizeNearestNeighborV2Compute(CpuKernelContext &ctx);
   template <typename T>
   void InnerCompute(
     Eigen::Index b, Eigen::Index y,

@@ -26,17 +26,17 @@ namespace mindspore::kernel {
 bool HcomAllToAllKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcclAllToAll launch";
-  if (inputs.empty() || outputs.empty() || hccl_data_type_list_.empty()) {
+  if (inputs.empty() || hccl_data_type_list_.empty()) {
     MS_LOG(ERROR) << "Invalid AllToAll input, output or data type size (" << inputs.size() << ", " << outputs.size()
                   << ", " << hccl_data_type_list_.size() << ").";
     return false;
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
-  MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllToAll(inputs[0]->device_ptr(), outputs[0]->device_ptr(),
-                                                                   params_, data_type_, stream_ptr, comm_);
+  auto output_device_ptr = outputs.empty() ? nullptr : outputs[0]->device_ptr();
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllToAll(inputs[0]->device_ptr(), output_device_ptr, params_,
+                                                                   data_type_, stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcclAllToAll failed, ret:" << hccl_result;
     return false;

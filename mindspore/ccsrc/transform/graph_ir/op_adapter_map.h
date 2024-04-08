@@ -496,7 +496,6 @@ constexpr const char kNameIm2col[] = "Im2col";
 constexpr const char kNameCol2Im[] = "Col2Im";
 constexpr const char kNameAffineGrid[] = "AffineGrid";
 constexpr const char kNameFFN[] = "FFN";
-constexpr const char kNameBlendFaceBgPartOne[] = "BlendFaceBgPartOne";
 constexpr const char kNameNonZeroV2[] = "NonZeroV2";
 constexpr const char kNameResize[] = "Resize";
 constexpr const char kNameAdaptiveAvgPool[] = "AdaptiveAvgPool";
@@ -530,6 +529,7 @@ constexpr const char kNameCumulativeLogsumexp[] = "CumulativeLogsumexp";
 constexpr const char kNameMatmulReduceScatter[] = "MatmulReduceScatter";
 constexpr const char kNameAllGatherMatmul[] = "AllGatherMatmul";
 constexpr const char kSilentCheck[] = "SilentCheck";
+constexpr const char kNameUniformCandidateSampler[] = "UniformCandidateSampler";
 
 class OpAdapterDesc;
 

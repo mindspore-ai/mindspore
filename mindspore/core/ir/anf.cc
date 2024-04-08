@@ -87,12 +87,12 @@ void CheckCNodeInputsNum(const AnfNodeWeakPtrList &inputs) {
   constexpr size_t prim_num = 1;
   size_t input_tensor_num = inputs.size() - prim_num;
   if (prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_MEM) || prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_IO)) {
-    size_t monad_num = std::count_if(inputs.cbegin() + 1, inputs.end(), [](const AnfNodeWeakPtr &weak_input) {
-      const auto &input = weak_input.lock();
-      return HasAbstractMonad(input) || (IsPrimitiveCNode(input, prim::kPrimUpdateState) ||
-                                         IsValueNode<UMonad>(input) || IsValueNode<IOMonad>(input));
-    });
-
+    size_t monad_num =
+      static_cast<size_t>(std::count_if(inputs.cbegin() + 1, inputs.end(), [](const AnfNodeWeakPtr &weak_input) {
+        const auto &input = weak_input.lock();
+        return HasAbstractMonad(input) || (IsPrimitiveCNode(input, prim::kPrimUpdateState) ||
+                                           IsValueNode<UMonad>(input) || IsValueNode<IOMonad>(input));
+      }));
     // If monad input is parameter_monad, monad num is 0, actual monad num should be 1. And monad num is 0 if monad
     // pass has not been executed.
     if (monad_num == 0) {

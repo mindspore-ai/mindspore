@@ -32,7 +32,7 @@ class CauchyCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t CauchyCompute(const CpuKernelContext &ctx);
+  uint32_t CauchyCompute(CpuKernelContext &ctx);
 
   float median_ = 0.0;
   float sigma_ = 1.0;

@@ -323,9 +323,9 @@ bool ComputeGraphNode::ReconnectIfNeeded(const std::function<bool(void)> &func, 
 bool ComputeGraphNode::ReconnectWithTimeoutWindow(const std::function<bool(void)> &func, const std::string &error,
                                                   size_t time_out) {
   size_t time_out_in_milli = time_out * 1000;
-  size_t start_tick = CURRENT_TIMESTAMP_MILLI.count();
+  size_t start_tick = LongToSize(CURRENT_TIMESTAMP_MILLI.count());
   bool success = false;
-  while (!success && CURRENT_TIMESTAMP_MILLI.count() - start_tick <= time_out_in_milli) {
+  while (!success && LongToSize(CURRENT_TIMESTAMP_MILLI.count()) - start_tick <= time_out_in_milli) {
     success = func();
     if (!success) {
       // Retry to reconnect to the meta server.

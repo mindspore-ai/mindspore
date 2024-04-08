@@ -24,7 +24,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common import mutable
 from mindspore import context
 
-context.set_context(mode=context.GRAPH_MODE)
+context.set_context(mode=context.GRAPH_MODE, grad_for_scalar=True)
 
 
 def compare(a, b):

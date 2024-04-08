@@ -33,22 +33,22 @@ const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 constexpr double EPSLON = 1e-15;
 
-#define XDIVY_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                       \
-    uint32_t result = XdivyCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("Xdivy kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define XDIVY_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                 \
+    uint32_t result = XdivyCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "Xdivy kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t XdivyCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kXdivy);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kXdivy);
   BCalcInfo calc_info;
-  KERNEL_HANDLE_ERROR(XdivyParamCheck(ctx), "Xdivy check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, XdivyParamCheck(ctx), "Xdivy check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     XDIVY_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
@@ -57,7 +57,7 @@ uint32_t XdivyCpuKernel::Compute(CpuKernelContext &ctx) {
     XDIVY_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     XDIVY_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Xdivy kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Xdivy kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -70,14 +70,14 @@ uint32_t XdivyCpuKernel::XdivyParamCheck(CpuKernelContext &ctx) {
   Tensor *output = ctx.Output(0);
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
-  KERNEL_LOG_DEBUG(
-    "XdivyCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "XdivyCpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
@@ -104,7 +104,7 @@ uint32_t XdivyCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int6
       }
       break;
     default:
-      KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+      CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
       break;
   }
   return KERNEL_STATUS_OK;
@@ -126,10 +126,10 @@ uint32_t XdivyCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
     }
     auto sharder_div = [&](int64_t start, int64_t end) { SpecialCompute<T>(type, start, end, ctx); };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_div),
-                        "Xdivy Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_div),
+                             "Xdivy Compute failed.");
   } else {
     SpecialCompute<T>(type, 0, data_num, ctx);
   }
@@ -155,10 +155,10 @@ uint32_t XdivyCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_div),
-                        "Xdivy Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_div),
+                             "Xdivy Compute failed.");
   } else {
     for (int64_t i = 0; i < data_num; ++i) {
       *(out + i) = *(in0 + bcast.GetBroadcastXIndex(i)) / *(in1 + bcast.GetBroadcastYIndex(i)) + static_cast<T>(EPSLON);
@@ -179,9 +179,9 @@ uint32_t XdivyCpuKernel::XdivyCompute(CpuKernelContext &ctx) {
   if (noNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
     return BcastCompute<T>(ctx, bcast);

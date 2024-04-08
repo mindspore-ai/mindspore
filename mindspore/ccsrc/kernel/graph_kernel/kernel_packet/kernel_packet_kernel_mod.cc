@@ -61,7 +61,7 @@ bool kernelpacket::Init(KernelPacketInner *kernel_packet, const CNodePtr &real_n
     MS_LOG(DEBUG) << prev_out_idx << "th output of " << prev_node->DebugString();
     auto iter = std::find(outer_inputs.begin(), outer_inputs.end(), prev_node);
     if (iter != outer_inputs.end()) {
-      kernel_packet->input_map_[i] = iter - outer_inputs.begin();
+      kernel_packet->input_map_[i] = static_cast<size_t>(iter - outer_inputs.begin());
     } else {
       // Skip value node
       if (!symbol_engine->IsDependValue(prev_node)) {
@@ -182,10 +182,10 @@ int KernelPacketKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
         inner_inputs[i]->SetShape(tuple_shape);
       }
       // SetHostData, in case some operations use shape data when resize.
-      size_t data_size = kShapeTypeSize * shape_vector[0];
+      size_t data_size = kShapeTypeSize * static_cast<size_t>(shape_vector[0]);
       auto data_p = std::make_unique<int64_t[]>(shape_vector[0]);
       int64_t *raw_p = data_p.get();
-      (void)memcpy(raw_p, shape_values[idx_in_output].data(), data_size);
+      (void)memcpy_s(raw_p, data_size, shape_values[idx_in_output].data(), data_size);
       temp_host_datas.push_back(std::move(data_p));
       auto shape_address = std::make_shared<Address>(raw_p, data_size);
       inner_inputs[i]->SetHostData(shape_address);

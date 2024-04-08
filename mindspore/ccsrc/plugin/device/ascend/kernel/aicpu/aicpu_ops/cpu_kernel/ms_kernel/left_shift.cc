@@ -32,21 +32,22 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define LEFT_SHIFT_COMPUTE_CASE(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                           \
-    uint32_t result = LeftShiftCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                       \
-      KERNEL_LOG_ERROR("LeftShift kernel compute failed."); \
-      return result;                                        \
-    }                                                       \
-    break;                                                  \
+#define LEFT_SHIFT_COMPUTE_CASE(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                                     \
+    uint32_t result = LeftShiftCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                 \
+      CUST_KERNEL_LOG_ERROR(ctx, "LeftShift kernel compute failed."); \
+      return result;                                                  \
+    }                                                                 \
+    break;                                                            \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t LeftShiftCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "LeftShift check input and output number failed.");
-  KERNEL_HANDLE_ERROR(LeftShiftParamCheck(ctx), "LeftShift check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "LeftShift check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, LeftShiftParamCheck(ctx), "LeftShift check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     LEFT_SHIFT_COMPUTE_CASE(DT_INT8, int8_t, ctx)
@@ -59,33 +60,33 @@ uint32_t LeftShiftCpuKernel::Compute(CpuKernelContext &ctx) {
     LEFT_SHIFT_COMPUTE_CASE(DT_UINT64, uint64_t, ctx)
 
     default:
-      KERNEL_LOG_ERROR("LeftShift kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "LeftShift kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LeftShiftCpuKernel::LeftShiftParamCheck(const CpuKernelContext &ctx) {
+uint32_t LeftShiftCpuKernel::LeftShiftParamCheck(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *output = ctx.Output(0);
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
-  KERNEL_LOG_DEBUG(
-    "LeftShiftCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "LeftShiftCpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-void LeftShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const CpuKernelContext &ctx) {
+void LeftShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, CpuKernelContext &ctx) {
   auto input1 = static_cast<T *>(ctx.Input(0)->GetData());
   auto input2 = static_cast<T *>(ctx.Input(1)->GetData());
   auto output = static_cast<T *>(ctx.Output(0)->GetData());
@@ -124,12 +125,12 @@ void LeftShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int6
       break;
     }
     default:
-      KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+      CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
   }
 }
 
 template <typename T>
-uint32_t LeftShiftCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
+uint32_t LeftShiftCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
   int64_t input_0_elements_nums = ctx.Input(0)->NumElements();
   int64_t input_1_elements_nums = ctx.Input(1)->NumElements();
   int64_t data_num = ctx.Output(0)->NumElements();
@@ -148,9 +149,10 @@ uint32_t LeftShiftCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
 
     auto sharder_left_shift = [&](int64_t start, int64_t end) { SpecialCompute<T>(type, start, end, ctx); };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / ((max_core_num > 0) ? max_core_num : 1),
-                                                    sharder_left_shift),
-                        "LeftShift Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(
+                               ctx, data_num, data_num / ((max_core_num > 0) ? max_core_num : 1), sharder_left_shift),
+                             "LeftShift Compute failed.");
   } else {
     SpecialCompute<T>(type, 0, data_num, ctx);
   }
@@ -158,7 +160,7 @@ uint32_t LeftShiftCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LeftShiftCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
+uint32_t LeftShiftCpuKernel::BcastCompute(CpuKernelContext &ctx, const Bcast &bcast) {
   auto input_0 = static_cast<T *>(ctx.Input(0)->GetData());
   auto input_1 = static_cast<T *>(ctx.Input(1)->GetData());
   auto output = static_cast<T *>(ctx.Output(0)->GetData());
@@ -186,8 +188,9 @@ uint32_t LeftShiftCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bca
       max_core_num = 1;
     }
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_left_shift),
-                        "LeftShift Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_left_shift),
+                             "LeftShift Compute failed.");
   } else {
     for (int64_t i = 0; i < data_num; ++i) {
       T mid = *(input_1 + bcast.GetBroadcastYIndex(i));
@@ -202,7 +205,7 @@ uint32_t LeftShiftCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bca
 }
 
 template <typename T>
-uint32_t LeftShiftCpuKernel::LeftShiftCompute(const CpuKernelContext &ctx) {
+uint32_t LeftShiftCpuKernel::LeftShiftCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
@@ -215,9 +218,9 @@ uint32_t LeftShiftCpuKernel::LeftShiftCompute(const CpuKernelContext &ctx) {
   if (isNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
 

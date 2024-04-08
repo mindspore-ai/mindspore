@@ -56,7 +56,8 @@ int StridedSliceDynamicBaseCoder::Prepare(CoderContext *context) {
   CHECK_LESS_RETURN(output_tensors_.size(), C1NUM);
   strided_slice_param_ = reinterpret_cast<StridedSliceParameter *>(parameter_);
   CHECK_NULL_RETURN(strided_slice_param_);
-  MS_CHECK_RET_CODE(memset_s(&struct_, sizeof(struct_), 0, sizeof(struct_)) == EOK, "memset_s struct_ failed.");
+  MS_CHECK_TRUE_MSG(memset_s(&struct_, sizeof(struct_), 0, sizeof(struct_)) == EOK, RET_ERROR,
+                    "memset_s struct_ failed.");
   if (input_tensor_->data_type() != kNumberTypeInt8 && input_tensor_->data_type() != kNumberTypeFloat32 &&
       input_tensor_->data_type() != kNumberTypeInt32 && input_tensor_->data_type() != kNumberTypeFloat16) {
     MS_LOG(ERROR) << "Not supported data type: " << input_tensor_->data_type();

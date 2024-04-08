@@ -2,8 +2,9 @@
   "recompute_comm_overlap": false,
   "matmul_grad_comm_overlap": false,
   "enable_task_opt": false,
+  "enable_grad_comm_opt": false,
+  "enable_opt_shard_comm_opt": false,
   "enable_concat_eliminate_opt": false,
   "enable_begin_end_inline_opt": false,
-  "compute_communicate_fusion_level": 0,
-  "enable_grad_comm_overlap": false
+  "compute_communicate_fusion_level": 0
 }

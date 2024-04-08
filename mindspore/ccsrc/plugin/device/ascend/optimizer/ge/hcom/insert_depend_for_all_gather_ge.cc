@@ -39,6 +39,7 @@ void ReplaceLoadToTensorMove(const FuncGraphPtr &graph, const CNodePtr &load_cno
   }
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimTensorMove), load_cnode->input(kIndex1)};
   auto tensor_move = graph->NewCNode(inputs);
+  tensor_move->set_abstract(load_cnode->abstract());
   tensor_move->set_scope(load_cnode->scope());
   manager->Replace(load_cnode, tensor_move);
 }
@@ -192,7 +193,7 @@ bool InsertDependForAllGatherGe::Run(const FuncGraphPtr &graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
-    MS_LOG(WARNING) << "AllGather parallel optimization is not required in pipeline parallel mode.";
+    MS_LOG(INFO) << "AllGather parallel optimization is not required in pipeline parallel mode.";
     return false;
   }
   const auto cell_reuse = ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;

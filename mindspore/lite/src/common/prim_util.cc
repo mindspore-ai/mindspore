@@ -28,12 +28,15 @@ static std::set<schema::PrimitiveType> kTensorListOps = {
   schema::PrimitiveType_TensorListFromTensor, schema::PrimitiveType_TensorListGetItem,
   schema::PrimitiveType_TensorListReserve, schema::PrimitiveType_TensorListSetItem,
   schema::PrimitiveType_TensorListStack};
-
-static const char *const kInnerOpNames[C10NUM] = {"Inner_ToFormat",         "Inner_GltextureToOpencl",
-                                                  "Inner_Identity",         "Inner_ShapeFusion",
-                                                  "Inner_GraphKernel",      "Inner_SplitReduceConcatFusion",
-                                                  "Inner_EncoderLayer",     "Inner_DecoderLayer",
-                                                  "Inner_UsePastEmbedding", "Inner_CustomGru"};
+static const char *const kInnerOpNames[C20NUM] = {"Inner_ToFormat",           "Inner_GltextureToOpencl",
+                                                  "Inner_Identity",           "Inner_ShapeFusion",
+                                                  "Inner_GraphKernel",        "Inner_SplitReduceConcatFusion",
+                                                  "Inner_EncoderLayer",       "Inner_FseDecode",
+                                                  "Inner_DecoderLayer",       "Inner_UsePastEmbedding",
+                                                  "Inner_CustomGru",          "Inner_CastGatherReduceFusion",
+                                                  "Inner_ReduceConcatFusion", "Inner_AclCustomOp",
+                                                  "Inner_CustomMaskedFill",   "Inner_CustomTensorScatterMax",
+                                                  "Inner_CustomIsInf"};
 int GetPrimitiveType(const void *primitive, int schema_version) {
   if (primitive == nullptr) {
     return -1;

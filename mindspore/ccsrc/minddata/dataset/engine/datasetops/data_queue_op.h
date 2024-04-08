@@ -83,6 +83,8 @@ class DataQueueOp : public PipelineOp {
 
   Status GetDataInfo(DATA_INFO *data_info);
 
+  Status GetMbufQueueSize(size_t *queue_size);
+
   std::vector<std::vector<double>> GetSendInfo();
 
   // Name: Print()

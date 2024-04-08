@@ -42,8 +42,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
-                                                 const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 8;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
@@ -84,10 +83,10 @@ abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape_rank, kEqual, batch_rank, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("global_step_shape size", global_step_shape.size(), kEqual, batch_rank,
                                            primitive->name());
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_ptr});
+  return var_shape_ptr;
 }
 
-TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const int64_t input_num = 8;
@@ -122,7 +121,7 @@ TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<Abs
   (void)args_global_step.insert(std::make_pair("global_step_type", global_step_type));
   const std::set<TypePtr> valid_types1 = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_global_step, valid_types1, prim_name);
-  return std::make_shared<Tuple>(std::vector<TypePtr>{var_type});
+  return var_type;
 }
 }  // namespace
 

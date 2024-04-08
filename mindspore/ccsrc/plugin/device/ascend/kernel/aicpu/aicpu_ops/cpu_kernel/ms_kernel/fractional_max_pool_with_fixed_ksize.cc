@@ -49,14 +49,14 @@ constexpr int64_t kParallelDataNums = 128 * 1024;
       result = FractionalMaxPoolWithFixedKsizeCompute<TYPE, double>(X, RANDOM_SAMPLES, INPUT_N, INPUT_C, INPUT_H,      \
                                                                     INPUT_W, OUTPUT_H, OUTPUT_W, POOL_H, POOL_W, CTX); \
     } else {                                                                                                           \
-      KERNEL_LOG_ERROR(                                                                                                \
-        "FractionalMaxPoolWithFixedKsize kernel random_samples type [%s] "                                             \
-        "not support.",                                                                                                \
-        DTypeStr(RANDOM_SAMPLES_TYPE).c_str());                                                                        \
+      CUST_KERNEL_LOG_ERROR(ctx,                                                                                       \
+                            "FractionalMaxPoolWithFixedKsize kernel random_samples type [%s] "                         \
+                            "not support.",                                                                            \
+                            DTypeStr(RANDOM_SAMPLES_TYPE).c_str());                                                    \
       return KERNEL_STATUS_PARAM_INVALID;                                                                              \
     }                                                                                                                  \
     if (result != KERNEL_STATUS_OK) {                                                                                  \
-      KERNEL_LOG_ERROR("FractionalMaxPoolWithFixedKsize kernel compute failed.");                                      \
+      CUST_KERNEL_LOG_ERROR(ctx, "FractionalMaxPoolWithFixedKsize kernel compute failed.");                            \
       return result;                                                                                                   \
     }                                                                                                                  \
     break;                                                                                                             \
@@ -65,14 +65,15 @@ constexpr int64_t kParallelDataNums = 128 * 1024;
 
 namespace aicpu {
 uint32_t FractionalMaxPoolWithFixedKsize::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "FractionalMaxPoolWithFixedKsize check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "FractionalMaxPoolWithFixedKsize check input and output number failed.");
 
   AttrValue *ksize = ctx.GetAttr("ksize");
-  KERNEL_CHECK_NULLPTR(ksize, KERNEL_STATUS_PARAM_INVALID, "FractionalMaxPoolWithFixedKsize get attr[ksize] failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ksize, KERNEL_STATUS_PARAM_INVALID,
+                            "FractionalMaxPoolWithFixedKsize get attr[ksize] failed.");
   std::vector<int64_t> ksize_values = ksize->GetListInt();
-  KERNEL_CHECK_FALSE(ksize_values.size() == 1 || ksize_values.size() == 2, KERNEL_STATUS_PARAM_INVALID,
-                     "The size of attr[ksize] must be 1 or 2.");
+  CUST_KERNEL_CHECK_FALSE(ctx, ksize_values.size() == 1 || ksize_values.size() == 2, KERNEL_STATUS_PARAM_INVALID,
+                          "The size of attr[ksize] must be 1 or 2.");
   int64_t pool_h = ksize_values[0];
   int64_t pool_w = ksize_values.size() == 1 ? ksize_values[0] : ksize_values[1];
 
@@ -85,8 +86,8 @@ uint32_t FractionalMaxPoolWithFixedKsize::Compute(CpuKernelContext &ctx) {
   AttrValue *data_format = ctx.GetAttr("data_format");
   if (data_format != nullptr) {
     x_format = data_format->GetString();
-    KERNEL_CHECK_FALSE(x_format.compare("NCHW") == 0, KERNEL_STATUS_PARAM_INVALID,
-                       "data_format of input[x] must be NCHW.");
+    CUST_KERNEL_CHECK_FALSE(ctx, x_format.compare("NCHW") == 0, KERNEL_STATUS_PARAM_INVALID,
+                            "data_format of input[x] must be NCHW.");
   }
 
   Tensor *x = ctx.Input(0);
@@ -96,31 +97,33 @@ uint32_t FractionalMaxPoolWithFixedKsize::Compute(CpuKernelContext &ctx) {
   int64_t input_h = x_shape->GetDimSize(2);
   int64_t input_w = x_shape->GetDimSize(3);
 
-  KERNEL_CHECK_FALSE(output_h + pool_h - 1 <= input_h, KERNEL_STATUS_PARAM_INVALID,
-                     "FractionalMaxPoolWithFixedKsize pool height[%d] too "
-                     "large relative to input height[%d].",
-                     pool_h, input_h);
-  KERNEL_CHECK_FALSE(output_w + pool_w - 1 <= input_w, KERNEL_STATUS_PARAM_INVALID,
-                     "FractionalMaxPoolWithFixedKsize pool width[%d] too large "
-                     "relative to input width[%d].",
-                     pool_w, input_w);
+  CUST_KERNEL_CHECK_FALSE(ctx, output_h + pool_h - 1 <= input_h, KERNEL_STATUS_PARAM_INVALID,
+                          "FractionalMaxPoolWithFixedKsize pool height[%d] too "
+                          "large relative to input height[%d].",
+                          pool_h, input_h);
+  CUST_KERNEL_CHECK_FALSE(ctx, output_w + pool_w - 1 <= input_w, KERNEL_STATUS_PARAM_INVALID,
+                          "FractionalMaxPoolWithFixedKsize pool width[%d] too large "
+                          "relative to input width[%d].",
+                          pool_w, input_w);
 
   Tensor *random_samples = ctx.Input(1);
   auto random_samples_shape = random_samples->GetTensorShape();
   int32_t random_samples_dims = random_samples_shape->GetDims();
-  KERNEL_CHECK_FALSE(random_samples_dims == 3, KERNEL_STATUS_PARAM_INVALID,
-                     "The dim of input[random_samples] must be 3.");
-  KERNEL_CHECK_FALSE(x_shape->GetDimSize(0) == random_samples_shape->GetDimSize(0), KERNEL_STATUS_PARAM_INVALID,
-                     "The first dim of input[x] and input[random_samples] must be equal, but "
-                     "got x=[%d] and random_samples=[%d].",
-                     x_shape->GetDimSize(0), random_samples_shape->GetDimSize(0));
-  KERNEL_CHECK_FALSE(x_shape->GetDimSize(1) == random_samples_shape->GetDimSize(1), KERNEL_STATUS_PARAM_INVALID,
-                     "The second dim of input[x] and input[random_samples] must be equal, but "
-                     "got x=[%d] and random_samples=[%d].",
-                     x_shape->GetDimSize(1), random_samples_shape->GetDimSize(1));
-  KERNEL_CHECK_FALSE(random_samples_shape->GetDimSize(2) == 2, KERNEL_STATUS_PARAM_INVALID,
-                     "The third dim of input[random_samples] must be 2, but got [%d].",
-                     random_samples_shape->GetDimSize(2));
+  CUST_KERNEL_CHECK_FALSE(ctx, random_samples_dims == 3, KERNEL_STATUS_PARAM_INVALID,
+                          "The dim of input[random_samples] must be 3.");
+  CUST_KERNEL_CHECK_FALSE(ctx, x_shape->GetDimSize(0) == random_samples_shape->GetDimSize(0),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "The first dim of input[x] and input[random_samples] must be equal, but "
+                          "got x=[%d] and random_samples=[%d].",
+                          x_shape->GetDimSize(0), random_samples_shape->GetDimSize(0));
+  CUST_KERNEL_CHECK_FALSE(ctx, x_shape->GetDimSize(1) == random_samples_shape->GetDimSize(1),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "The second dim of input[x] and input[random_samples] must be equal, but "
+                          "got x=[%d] and random_samples=[%d].",
+                          x_shape->GetDimSize(1), random_samples_shape->GetDimSize(1));
+  CUST_KERNEL_CHECK_FALSE(ctx, random_samples_shape->GetDimSize(2) == 2, KERNEL_STATUS_PARAM_INVALID,
+                          "The third dim of input[random_samples] must be 2, but got [%d].",
+                          random_samples_shape->GetDimSize(2));
 
   auto random_samples_type = random_samples->GetDataType();
   auto data_type = x->GetDataType();
@@ -137,10 +140,10 @@ uint32_t FractionalMaxPoolWithFixedKsize::Compute(CpuKernelContext &ctx) {
     FRACTIONALMAXPOOLWITHFIXEDKSIZE_COMPUTE_CASE(DT_INT64, int64_t, random_samples_type, x, random_samples, input_n,
                                                  input_c, input_h, input_w, output_h, output_w, pool_h, pool_w, ctx)
     default:
-      KERNEL_LOG_ERROR(
-        "FractionalMaxPoolWithFixedKsize kernel input[x] type "
-        "[%s] not support.",
-        DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "FractionalMaxPoolWithFixedKsize kernel input[x] type "
+                            "[%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -166,7 +169,7 @@ uint32_t FractionalMaxPoolWithFixedKsize::FractionalMaxPoolWithFixedKsizeCompute
       SType *random_samples_single_batch_addr = random_samples_addr + n * input_c * 2;
       T *y_single_batch_addr = y_addr + n * input_c * output_h * output_w;
       int64_t *argmax_single_batch_addr = argmax_addr + n * input_c * output_h * output_w;
-      ComputeSingleBatch<T, SType>(x_single_batch_addr, random_samples_single_batch_addr, y_single_batch_addr,
+      ComputeSingleBatch<T, SType>(ctx, x_single_batch_addr, random_samples_single_batch_addr, y_single_batch_addr,
                                    argmax_single_batch_addr, input_c, input_h, input_w, output_h, output_w, pool_h,
                                    pool_w);
     }
@@ -183,14 +186,14 @@ uint32_t FractionalMaxPoolWithFixedKsize::FractionalMaxPoolWithFixedKsizeCompute
         T *y_single_batch_addr = y_addr + n * input_c * output_h * output_w;
         int64_t *argmax_single_batch_addr = argmax_addr + n * input_c * output_h * output_w;
 
-        ComputeSingleBatch<T, SType>(x_single_batch_addr, random_samples_single_batch_addr, y_single_batch_addr,
+        ComputeSingleBatch<T, SType>(ctx, x_single_batch_addr, random_samples_single_batch_addr, y_single_batch_addr,
                                      argmax_single_batch_addr, input_c, input_h, input_w, output_h, output_w, pool_h,
                                      pool_w);
       }
     };
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, input_n, input_n / max_core_num, shared_computeN);
     if (ret != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor shared_computeN failed.");
+      CUST_KERNEL_LOG_ERROR(ctx, "CpuKernelUtils::ParallelFor shared_computeN failed.");
       return KERNEL_STATUS_INNER_ERROR;
     }
   }
@@ -198,7 +201,8 @@ uint32_t FractionalMaxPoolWithFixedKsize::FractionalMaxPoolWithFixedKsizeCompute
 }
 
 template <typename T, typename SType>
-uint32_t FractionalMaxPoolWithFixedKsize::ComputeSingleBatch(T *x_addr, SType *random_samples_addr, T *y_addr,
+uint32_t FractionalMaxPoolWithFixedKsize::ComputeSingleBatch(CpuKernelContext &ctx, T *x_addr,
+                                                             SType *random_samples_addr, T *y_addr,
                                                              int64_t *argmax_addr, const int input_c, const int input_h,
                                                              const int input_w, const int output_h, const int output_w,
                                                              const int pool_h, const int pool_w) {
@@ -223,10 +227,10 @@ uint32_t FractionalMaxPoolWithFixedKsize::ComputeSingleBatch(T *x_addr, SType *r
 
         for (h2 = pool_h_start; h2 < pool_h_start + pool_h; h2++) {
           for (w2 = pool_w_start; w2 < pool_w_start + pool_w; w2++) {
-            KERNEL_CHECK_FALSE(h2 >= 0 && h2 < input_h, KERNEL_STATUS_PARAM_INVALID,
-                               "FractionalMaxPoolWithFixedKsizeCompute index H out of bound.");
-            KERNEL_CHECK_FALSE(w2 >= 0 && w2 < input_w, KERNEL_STATUS_PARAM_INVALID,
-                               "FractionalMaxPoolWithFixedKsizeCompute index W out of bound.");
+            CUST_KERNEL_CHECK_FALSE(ctx, h2 >= 0 && h2 < input_h, KERNEL_STATUS_PARAM_INVALID,
+                                    "FractionalMaxPoolWithFixedKsizeCompute index H out of bound.");
+            CUST_KERNEL_CHECK_FALSE(ctx, w2 >= 0 && w2 < input_w, KERNEL_STATUS_PARAM_INVALID,
+                                    "FractionalMaxPoolWithFixedKsizeCompute index W out of bound.");
             int index = h2 * input_w + w2;
             T value = x_plane_addr[index];
             if (value > max_value) {

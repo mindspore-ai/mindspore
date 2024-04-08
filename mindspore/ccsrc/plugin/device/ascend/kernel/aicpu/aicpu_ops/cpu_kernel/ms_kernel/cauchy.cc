@@ -30,33 +30,34 @@ const int64_t kParallelDataNums = 64 * 1024;
 const uint32_t knum = 2;
 }  // namespace
 
-#define CAUCHY_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                        \
-    uint32_t result = CauchyCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                    \
-      KERNEL_LOG_ERROR("Cauchy kernel compute failed."); \
-      return result;                                     \
-    }                                                    \
-    break;                                               \
+#define CAUCHY_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                  \
+    uint32_t result = CauchyCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                              \
+      CUST_KERNEL_LOG_ERROR(ctx, "Cauchy kernel compute failed."); \
+      return result;                                               \
+    }                                                              \
+    break;                                                         \
   }
 namespace aicpu {
 uint32_t CauchyCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *output_tensor = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output_tensor, KERNEL_STATUS_INNER_ERROR, "CauchyCompute check output_tensor is nullptr.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_tensor, KERNEL_STATUS_INNER_ERROR,
+                            "CauchyCompute check output_tensor is nullptr.");
   auto output_dtype = output_tensor->GetDataType();
 
   switch (output_dtype) {
     CAUCHY_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     CAUCHY_COMPUTE_CASE(DT_FLOAT, float, ctx)
     default:
-      KERNEL_LOG_ERROR("Cauchy kernel data type [%s] not support.", DTypeStr(output_dtype).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Cauchy kernel data type [%s] not support.", DTypeStr(output_dtype).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 };
 
 template <typename T>
-uint32_t CauchyCpuKernel::CauchyCompute(const CpuKernelContext &ctx) {
+uint32_t CauchyCpuKernel::CauchyCompute(CpuKernelContext &ctx) {
   AttrValue *median = ctx.GetAttr("median");
   if (median != nullptr) {
     median_ = median->GetFloat();
@@ -70,10 +71,10 @@ uint32_t CauchyCpuKernel::CauchyCompute(const CpuKernelContext &ctx) {
   Tensor *y_tensor = ctx.Output(0);
 
   AttrValue *output_size_attr = ctx.GetAttr("size");
-  KERNEL_CHECK_NULLPTR(output_size_attr, KERNEL_STATUS_PARAM_INVALID, "CauchyCompute get size failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_size_attr, KERNEL_STATUS_PARAM_INVALID, "CauchyCompute get size failed.");
   std::vector<int64_t> output_size = ctx.GetAttr("size")->GetListInt();
   if (output_size.empty()) {
-    KERNEL_LOG_ERROR("CauchyCompute get size is empty.");
+    CUST_KERNEL_LOG_ERROR(ctx, "CauchyCompute get size is empty.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -81,7 +82,8 @@ uint32_t CauchyCpuKernel::CauchyCompute(const CpuKernelContext &ctx) {
   y_shape->SetDimSizes(output_size);
 
   int64_t y_num = y_tensor->NumElements();
-  KERNEL_CHECK_NULLPTR(y_tensor->GetData(), KERNEL_STATUS_INNER_ERROR, "CauchyCompute check output_data is nullptr.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, y_tensor->GetData(), KERNEL_STATUS_INNER_ERROR,
+                            "CauchyCompute check output_data is nullptr.");
   T *y_data = static_cast<T *>(y_tensor->GetData());
   std::default_random_engine generator(std::random_device{}());
 
@@ -103,10 +105,10 @@ uint32_t CauchyCpuKernel::CauchyCompute(const CpuKernelContext &ctx) {
 
   uint32_t ret = CpuKernelUtils::ParallelFor(ctx, y_num, y_num / max_core_num, Cauchy_d);
   if (ret != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "CpuKernelUtils::ParallelFor failed.");
     return KERNEL_STATUS_INNER_ERROR;
   }
-  KERNEL_LOG_INFO("CauchyCpuKernel::ComputeCauchy end.");
+  CUST_KERNEL_LOG_INFO(ctx, "CauchyCpuKernel::ComputeCauchy end.");
   return KERNEL_STATUS_OK;
 }
 

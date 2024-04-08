@@ -501,7 +501,31 @@ ValuePtr ConvertCellObjToFuncGraph(const py::object &obj, const ValuePtrList &ar
     return nullptr;
   }
   // if the cell object has specified bprop, it has user-defined bprop function parse and record it
-  data_converter::SetFuncGraphByCellObj(func_graph, obj);
+  if (py::hasattr(obj, CUSTOM_BPROP_NAME)) {
+    bool enable_bprop_debug = py::cast<bool>(py::getattr(obj, "bprop_debug"));
+    FuncGraphPtr bprop_graph =
+      enable_bprop_debug ? ConvertToBpropCut(obj) : ConvertToFuncGraph(obj, {}, PYTHON_MOD_GET_BPROP_METHOD);
+    if (bprop_graph != nullptr) {
+      (void)func_graph->transforms().emplace(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph));
+      (void)bprop_graph->transforms().emplace("primal", FuncGraphTransform(func_graph));
+      func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+      func_graph->set_flag(FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP, true);
+    }
+  }
+  if (py::hasattr(obj, STAGE_NAME)) {
+    auto stage = py::cast<int>(py::getattr(obj, STAGE_NAME));
+    func_graph->set_stage(stage);
+  }
+  if (py::hasattr(obj, SEGMENT_NAME)) {
+    auto segment = py::cast<int>(py::getattr(obj, SEGMENT_NAME));
+    func_graph->set_segment(segment);
+  }
+  auto cell = py::cast<CellPtr>(obj);
+  if (cell != nullptr && cell->HasAttr(kAttrRandomOpSnapShot)) {
+    auto value = cell->GetAttr(kAttrRandomOpSnapShot);
+    MS_EXCEPTION_IF_NULL(value);
+    func_graph->set_attr(kAttrRandomOpSnapShot, value);
+  }
   return func_graph;
 }
 
@@ -809,56 +833,13 @@ bool ConvertStubData(const py::object &obj, ValuePtr *data, bool use_signature, 
   return ConvertData(obj, data, use_signature, dtype, forbid_reuse);
 }
 
-// Get all the trainable parameters of the reusable cell.
-void GenerateTopGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *params) {
-  MS_LOG(DEBUG) << "enter GenerateTopGraphParams: " << fg->ToString();
-  auto obj_value = fg->python_obj();
-  MS_EXCEPTION_IF_NULL(obj_value);
-  auto wrapper = dyn_cast_ptr<parse::PyObjectWrapper>(obj_value);
-  MS_EXCEPTION_IF_NULL(wrapper);
-  auto obj = wrapper->obj();
-  auto trainable_parameters = py::getattr(obj, "parameters_and_names", py::none())();
-  auto top_func_graph = Parser::GetTopFuncGraph();
-  for (auto tr : trainable_parameters) {
-    auto item = py::cast<py::tuple>(tr);
-    auto value = item[1];
-    auto par_name = item[0].cast<std::string>();
-    auto parameter_name = py::getattr(value, "name", py::str(par_name)).cast<std::string>();
-    auto exist_fv = top_func_graph->GetParameterByName(parameter_name);
-    if (exist_fv) {
-      params->push_back(exist_fv);
-      MS_LOG(DEBUG) << "exist: " << parameter_name;
-    } else {
-      auto fv = top_func_graph->AddFvParameter(parameter_name, GetParameterValue(value));
-      MS_LOG(DEBUG) << "New: " << parameter_name;
-      params->push_back(fv);
-    }
-  }
-  MS_LOG(DEBUG) << "finish GenerateTopGraphParams: " << fg->ToString();
-}
-
 FuncGraphPtr MakeReusingGraph(const FuncGraphPtr &base_graph) {
-  FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
-  // Make the reusable graph to be the no_inline status.
-  func_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
-  func_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
   static int order = 0;
-  func_graph->set_attr(FUNC_GRAPH_FLAG_CELL_LAZY_INLINE_ORDER, MakeValue(++order));
-  func_graph->debug_info()->set_name("CR_" + base_graph->debug_info()->name());
-  std::vector<AnfNodePtr> new_node_inputs;
-  new_node_inputs.push_back(NewValueNode(base_graph));
-  auto reusing_node = func_graph->NewCNode(prim::kPrimReusing, new_node_inputs);
-  new_node_inputs.clear();
-  new_node_inputs.push_back(reusing_node);
-  for (const auto &base_param : base_graph->parameters()) {
-    auto param = func_graph->add_parameter();
-    param->set_debug_info(base_param->debug_info());
-    new_node_inputs.push_back(param);
-  }
-  AnfNodePtr out = func_graph->NewCNodeInOrder(new_node_inputs);
-  func_graph->set_output(out);
-  MS_LOG(DEBUG) << "Cell: " << func_graph->ToString() << ", args: " << func_graph->parameters().size();
-  return func_graph;
+  base_graph->set_attr(FUNC_GRAPH_FLAG_CELL_LAZY_INLINE_ORDER, MakeValue(++order));
+  base_graph->debug_info()->set_name("CR_" + base_graph->debug_info()->name());
+  MS_LOG(INFO) << "Lazy inline reusing graph: " << base_graph->ToString()
+               << ", args: " << base_graph->parameters().size() << ", parse order: " << order;
+  return base_graph;
 }
 
 FuncGraphPtr MakeCellFuncGraph(const py::object &obj, const std::string &obj_id, const FuncGraphPtr &reusing_graph) {
@@ -871,22 +852,17 @@ FuncGraphPtr MakeCellFuncGraph(const py::object &obj, const std::string &obj_id,
   func_graph->debug_info()->set_name(function_name);
   PyObjectWrapperPtr python_obj = std::make_shared<PyObjectWrapper>(obj, "graph python obj");
   func_graph->set_python_obj(python_obj);
+  func_graph->set_flag(FUNC_GRAPH_FLAG_PROXY_GRAPH, true);
   std::vector<AnfNodePtr> new_node_inputs;
   new_node_inputs.push_back(NewValueNode(reusing_graph));
-  std::vector<AnfNodePtr> fvs;
-  GenerateTopGraphParams(func_graph, &fvs);
-  auto params = reusing_graph->parameters();
-  params.resize(params.size() - fvs.size());
-  for (auto origin_param : params) {
+  for (const auto &origin_param : reusing_graph->parameters()) {
     auto param = func_graph->add_parameter();
     param->set_debug_info(origin_param->debug_info());
     new_node_inputs.push_back(param);
   }
-  (void)new_node_inputs.insert(new_node_inputs.cend(), fvs.cbegin(), fvs.cend());
-
   AnfNodePtr out = func_graph->NewCNodeInOrder(new_node_inputs);
   func_graph->set_output(out);
-  MS_LOG(DEBUG) << "Cell: " << func_graph->ToString() << ", args: " << func_graph->parameters().size();
+  MS_LOG(INFO) << "Lazy inline cell: " << func_graph->ToString() << ", args: " << func_graph->parameters().size();
   return func_graph;
 }
 
@@ -911,17 +887,6 @@ FuncGraphPtr ProcessLazyInline(const py::object &obj, const ValuePtrList &args_v
     PyObjectWrapperPtr python_obj = std::make_shared<PyObjectWrapper>(obj, "graph python obj");
     base_graph->set_python_obj(python_obj);
     MS_LOG(DEBUG) << "Parse reusing function: " << reusing_graph->ToString();
-
-    std::vector<AnfNodePtr> fvs;
-    MS_LOG(DEBUG) << "Get Params: " << reusing_graph->ToString();
-    GenerateTopGraphParams(base_graph, &fvs);
-    for (auto &node : fvs) {
-      auto param = base_graph->add_parameter();
-      std::string name = "CR_" + node->debug_info()->name();
-      param->debug_info()->set_name(name);
-      param->set_name(name);
-    }
-    MS_LOG(DEBUG) << "Get Params: " << reusing_graph->ToString() << fvs.size();
     reusing_graph = MakeReusingGraph(base_graph);
     data_converter::CacheObjectValue(obj_key, reusing_graph);
   }
@@ -944,7 +909,8 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
     func_graph = value->cast<FuncGraphPtr>();
     if (!func_graph->dropped()) {
       bool has_forbid_reuse_attr = py::hasattr(obj, PYTHON_FUNCTION_FORBID_REUSE);
-      if (forbid_reuse || has_forbid_reuse_attr || pipeline::GetJitLevel() == "O0") {
+      if (forbid_reuse || has_forbid_reuse_attr ||
+          MsContext::GetInstance()->get_param<int>(MS_CTX_DEBUG_LEVEL) == kLevelDebug) {
         return BasicClone(func_graph);
       }
       return func_graph;
@@ -980,10 +946,6 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
     return BasicClone(func_graph);
   }
 
-  // Handle no_inline function
-  if (py::hasattr(obj, FUNC_GRAPH_FLAG_NO_INLINE)) {
-    func_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
-  }
   return func_graph;
 }
 
@@ -1126,35 +1088,6 @@ ValuePtr PyDataToStubNode(const py::object &obj) {
   ValuePtr value = nullptr;
   (void)ConvertStubData(to_convert, &value);
   return value;
-}
-
-void SetFuncGraphByCellObj(const FuncGraphPtr &func_graph, const py::object &obj) {
-  // if the cell object has specified bprop, it has user-defined bprop function parse and record it
-  if (py::hasattr(obj, CUSTOM_BPROP_NAME)) {
-    bool enable_bprop_debug = py::cast<bool>(py::getattr(obj, "bprop_debug"));
-    FuncGraphPtr bprop_graph =
-      enable_bprop_debug ? ConvertToBpropCut(obj) : ConvertToFuncGraph(obj, {}, PYTHON_MOD_GET_BPROP_METHOD);
-    if (bprop_graph != nullptr) {
-      (void)func_graph->transforms().emplace(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph));
-      (void)bprop_graph->transforms().emplace("primal", FuncGraphTransform(func_graph));
-      func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
-      func_graph->set_flag(FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP, true);
-    }
-  }
-  if (py::hasattr(obj, STAGE_NAME)) {
-    auto stage = py::cast<int>(py::getattr(obj, STAGE_NAME));
-    func_graph->set_stage(stage);
-  }
-  if (py::hasattr(obj, SEGMENT_NAME)) {
-    auto segment = py::cast<int>(py::getattr(obj, SEGMENT_NAME));
-    func_graph->set_segment(segment);
-  }
-  auto cell = py::cast<CellPtr>(obj);
-  if (cell != nullptr && cell->HasAttr(kAttrRandomOpSnapShot)) {
-    auto value = cell->GetAttr(kAttrRandomOpSnapShot);
-    MS_EXCEPTION_IF_NULL(value);
-    func_graph->set_attr(kAttrRandomOpSnapShot, value);
-  }
 }
 
 void ClearObjectCache() {

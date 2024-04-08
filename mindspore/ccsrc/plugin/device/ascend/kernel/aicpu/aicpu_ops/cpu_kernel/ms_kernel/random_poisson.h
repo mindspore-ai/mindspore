@@ -37,7 +37,7 @@ class RandomPoissonCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t Generate(const CpuKernelContext &ctx, Tensor *output);
+  uint32_t Generate(CpuKernelContext &ctx, Tensor *output);
   uint64_t seed_ = 0;
   uint64_t seed2_ = 0;
   std::mt19937 rng_;

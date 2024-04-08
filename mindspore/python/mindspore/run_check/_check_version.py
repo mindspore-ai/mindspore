@@ -527,7 +527,7 @@ def check_version_and_env_config():
         except OSError:
             logger.warning("Pre-Load Library libgomp.so.1 failed, which might cause TLS memory allocation failure. If "
                            "the failure occurs, please refer to the FAQ for a solution: "
-                           "https://www.mindspore.cn/docs/en/master/faq/installation.html.")
+                           "https://www.mindspore.cn/docs/en/r2.3.q1/faq/installation.html.")
         MSContext.get_instance().register_check_env_callback(check_env)
         MSContext.get_instance().register_set_env_callback(set_env)
         MSContext.get_instance().set_device_target_inner(MSContext.get_instance().get_param(ms_ctx_param.device_target))
@@ -569,6 +569,6 @@ def _add_cuda_path():
                 os.environ['PATH'] += os.pathsep + cuda_home_bin_path
 
 
-check_version_and_env_config()
 _set_pb_env()
+check_version_and_env_config()
 _add_cuda_path()

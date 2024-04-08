@@ -23,7 +23,6 @@ greater_equal:
             >>> from mindspore import Tensor, ops
             >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
             >>> other = Tensor(np.array([1, 1, 4]), mindspore.int32)
-            >>> greater_equal = ops.greater_equal()
-            >>> output = greater_equal(input, other)
+            >>> output = ops.greater_equal(input, other)
             >>> print(output)
             [True True False]

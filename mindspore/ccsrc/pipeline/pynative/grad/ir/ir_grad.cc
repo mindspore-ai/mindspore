@@ -380,6 +380,9 @@ CNodePtr IrGrad::GetBpropGraphCNode(const GradParamPtr &grad_param, const AnfNod
                                     AnfNodePtr *const tape_dout) {
   MS_EXCEPTION_IF_NULL(grad_param);
   auto [cache_hit, bprop_graph] = ir_bprop_->GetBpropGraph(grad_param);
+  if (grad_param->is_control_flow || grad_param->is_jit_self_dynamic_shape) {
+    need_do_manager_replace_ = true;
+  }
   return GetBPropCNode(grad_param, args, bprop_graph, cache_hit, tape_dout);
 }
 
@@ -524,6 +527,9 @@ void IrGrad::SetKNodeInfo(const ValuePtr &value, const AnfNodePtr &k_node, const
     const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
     const auto &abs_seq = out_abs->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(abs_seq);
+    if (abs_seq->dynamic_len()) {
+      return;
+    }
     if (value_sequence.size() != abs_seq->size()) {
       MS_LOG(EXCEPTION) << "Get value sequence size " << value_sequence.size() << " not equal to abstract size "
                         << abs_seq->size();

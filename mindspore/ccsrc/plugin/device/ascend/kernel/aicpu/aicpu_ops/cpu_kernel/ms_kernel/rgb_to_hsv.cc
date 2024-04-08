@@ -43,7 +43,7 @@ const std::vector<std::string> RGBToHSVCpuKernel::kernels_name_ = {"(DT_FLOAT16,
                                                                    "(DT_DOUBLE,DT_DOUBLE)"};
 
 template <typename T1, typename T2>
-uint32_t RGBToHSVCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t RGBToHSVCpuKernel::DoCompute(CpuKernelContext &ctx) {
   Tensor *input_tensor = ctx.Input(0);
   int64_t input0_elements_nums = input_tensor->NumElements();
   auto input_data = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
@@ -71,7 +71,7 @@ uint32_t RGBToHSVCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t RGBToHSVCpuKernel::CheckParam(const CpuKernelContext &ctx, const std::string &in_or_out, uint32_t index,
+uint32_t RGBToHSVCpuKernel::CheckParam(CpuKernelContext &ctx, const std::string &in_or_out, uint32_t index,
                                        size_t rank) {
   Tensor *param = nullptr;
   if (in_or_out == kInputStr) {
@@ -81,38 +81,40 @@ uint32_t RGBToHSVCpuKernel::CheckParam(const CpuKernelContext &ctx, const std::s
   }
   std::string err_header = ConcatString(kRGBToHSV, " op ", in_or_out, "[", index, "]");
 
-  KERNEL_CHECK_NULLPTR(param, KERNEL_STATUS_PARAM_INVALID, "%s tensor is nullptr.", err_header.c_str());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, param, KERNEL_STATUS_PARAM_INVALID, "%s tensor is nullptr.", err_header.c_str());
 
   auto param_shape = param->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(param_shape, KERNEL_STATUS_PARAM_INVALID, "%s tensor shape is nullptr.", err_header.c_str());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, param_shape, KERNEL_STATUS_PARAM_INVALID, "%s tensor shape is nullptr.",
+                            err_header.c_str());
   auto param_dim_sizes = param_shape->GetDimSizes();
   if (param_dim_sizes.size() < 1) {
-    KERNEL_LOG_ERROR("%s shape rank must be at least 1, but got shape[%zu].", err_header.c_str(),
-                     VectorToString(param_dim_sizes).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "%s shape rank must be at least 1, but got shape[%zu].", err_header.c_str(),
+                          VectorToString(param_dim_sizes).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (param->GetData() == nullptr) {
-    KERNEL_CHECK_NULLPTR(param, KERNEL_STATUS_PARAM_INVALID, "%s tensor data is nullptr.", err_header.c_str());
+    CUST_KERNEL_CHECK_NULLPTR(ctx, param, KERNEL_STATUS_PARAM_INVALID, "%s tensor data is nullptr.",
+                              err_header.c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t RGBToHSVCpuKernel::CheckShapes(const CpuKernelContext &ctx) {
+uint32_t RGBToHSVCpuKernel::CheckShapes(CpuKernelContext &ctx) {
   auto input0_shape = ctx.Input(kFirstInputIndex)->GetTensorShape()->GetDimSizes();
   if (input0_shape.back() != kImageChannels) {
-    KERNEL_LOG_ERROR(
-      "%s op input[0] shape last dim should be [%d], but got "
-      "shape[%s].",
-      kRGBToHSV, kImageChannels, VectorToString(input0_shape).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "%s op input[0] shape last dim should be [%d], but got "
+                          "shape[%s].",
+                          kRGBToHSV, kImageChannels, VectorToString(input0_shape).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t RGBToHSVCpuKernel::CheckParams(const CpuKernelContext &ctx) {
+uint32_t RGBToHSVCpuKernel::CheckParams(CpuKernelContext &ctx) {
   auto ret = CheckParam(ctx, kInputStr, kFirstInputIndex, kInputShapeRank);
   if (ret != KERNEL_STATUS_OK) {
     return ret;
@@ -127,14 +129,14 @@ uint32_t RGBToHSVCpuKernel::CheckParams(const CpuKernelContext &ctx) {
 
 uint32_t RGBToHSVCpuKernel::Compute(CpuKernelContext &ctx) {
   auto input0 = ctx.Input(kFirstInputIndex);
-  KERNEL_CHECK_NULLPTR(input0, KERNEL_STATUS_PARAM_INVALID, "%s input[0] tensor is nullptr.", kRGBToHSV);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input0, KERNEL_STATUS_PARAM_INVALID, "%s input[0] tensor is nullptr.", kRGBToHSV);
   DataType input0_data_type = input0->GetDataType();
-  KERNEL_LOG_DEBUG("%s op input[0] data type is [%s].", kRGBToHSV, DTypeStr(input0_data_type).c_str());
+  CUST_KERNEL_LOG_DEBUG(ctx, "%s op input[0] data type is [%s].", kRGBToHSV, DTypeStr(input0_data_type).c_str());
 
   auto output = ctx.Output(kFirstOutputIndex);
-  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "%s output[0] tensor is nullptr.", kRGBToHSV);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_PARAM_INVALID, "%s output[0] tensor is nullptr.", kRGBToHSV);
   DataType output_data_type = output->GetDataType();
-  KERNEL_LOG_DEBUG("%s op output[0] data type is [%s].", kRGBToHSV, DTypeStr(output_data_type).c_str());
+  CUST_KERNEL_LOG_DEBUG(ctx, "%s op output[0] data type is [%s].", kRGBToHSV, DTypeStr(output_data_type).c_str());
 
   std::string kernel_name = ConcatString("(", DTypeStr(input0_data_type), ",", DTypeStr(output_data_type), ")");
 
@@ -146,12 +148,12 @@ uint32_t RGBToHSVCpuKernel::Compute(CpuKernelContext &ctx) {
     }
     auto kernel = it->second;
     ret = kernel(ctx);
-    KERNEL_LOG_DEBUG("%s op end.", kRGBToHSV);
+    CUST_KERNEL_LOG_DEBUG(ctx, "%s op end.", kRGBToHSV);
     return ret;
   }
 
-  KERNEL_LOG_ERROR("%s op only support data type [%s], but got [%s].", kRGBToHSV, VectorToString(kernels_name_).c_str(),
-                   kernel_name.c_str());
+  CUST_KERNEL_LOG_ERROR(ctx, "%s op only support data type [%s], but got [%s].", kRGBToHSV,
+                        VectorToString(kernels_name_).c_str(), kernel_name.c_str());
   return KERNEL_STATUS_PARAM_INVALID;
 }
 

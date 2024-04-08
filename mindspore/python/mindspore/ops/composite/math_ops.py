@@ -89,8 +89,9 @@ def mm(input, mat2):
     :math:`(m \times p)` Tensor, `out` will be a :math:`(n \times p)` Tensor.
 
     Note:
-        This function cannot support broadcasting.
-        Refer to :func:`mindspore.ops.matmul` instead if you need a broadcastable function.
+        - This function cannot support broadcasting.
+          Refer to :func:`mindspore.ops.matmul` instead if you need a broadcastable function.
+        - On Ascend, float64 doesn't be supported.
 
     Args:
         input (Tensor): The first matrix of matrix multiplication.
@@ -113,8 +114,8 @@ def mm(input, mat2):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x1 = ms.Tensor(np.random.rand(2, 3))
-        >>> x2 = ms.Tensor(np.random.rand(3, 4))
+        >>> x1 = ms.Tensor(np.random.rand(2, 3), ms.float32)
+        >>> x2 = ms.Tensor(np.random.rand(3, 4), ms.float32)
         >>> out = ops.mm(x1, x2)
         >>> print(out.shape)
         (2, 4)

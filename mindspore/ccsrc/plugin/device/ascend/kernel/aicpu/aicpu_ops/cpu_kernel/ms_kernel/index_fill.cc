@@ -36,21 +36,22 @@ const char *kIndexFill = "IndexFill";
 const uint32_t kParallelDataNum = 16 * 1024;
 const uint32_t kParallelDataNumMid = 128 * 1024;
 
-#define INDEXFILL_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                           \
-    uint32_t result = DoCompute<TYPE>(CTX);                 \
-    if (result != KERNEL_STATUS_OK) {                       \
-      KERNEL_LOG_ERROR("IndexFill kernel compute failed."); \
-      return result;                                        \
-    }                                                       \
-    break;                                                  \
+#define INDEXFILL_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                     \
+    uint32_t result = DoCompute<TYPE>(CTX);                           \
+    if (result != KERNEL_STATUS_OK) {                                 \
+      CUST_KERNEL_LOG_ERROR(ctx, "IndexFill kernel compute failed."); \
+      return result;                                                  \
+    }                                                                 \
+    break;                                                            \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t IndexFillCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kNumInput, kNumOutput), "IndexFill check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kNumInput, kNumOutput),
+                           "IndexFill check input and output number failed.");
   // get input Tensors
   for (uint32_t i = 0; i < kNumInput; ++i) {
     Tensor *tensor = ctx.Input(i);
@@ -64,11 +65,11 @@ uint32_t IndexFillCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   DataType index_type = inputs_[2]->GetDataType();
 
   if (dim_data_type_ != DT_INT32 && dim_data_type_ != DT_INT64) {
-    KERNEL_LOG_ERROR("IndexFill: Expected dtype int32 or int64 for dim.");
+    CUST_KERNEL_LOG_ERROR(ctx, "IndexFill: Expected dtype int32 or int64 for dim.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (index_type != DT_INT32) {
-    KERNEL_LOG_ERROR("IndexFill: Expected dtype int32 for index.");
+    CUST_KERNEL_LOG_ERROR(ctx, "IndexFill: Expected dtype int32 for index.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -122,7 +123,7 @@ void IndexFillCpuKernel::SpecialCompute(int64_t start, int64_t end, const int32_
 }
 
 template <typename T>
-uint32_t IndexFillCpuKernel::SpecialComputeParallel(const CpuKernelContext &ctx, const uint32_t &data_num,
+uint32_t IndexFillCpuKernel::SpecialComputeParallel(CpuKernelContext &ctx, const uint32_t &data_num,
                                                     const int32_t input_dim, std::map<int32_t, bool> &index_dict) {
   uint32_t min_core_num = 1;
   uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
@@ -134,19 +135,19 @@ uint32_t IndexFillCpuKernel::SpecialComputeParallel(const CpuKernelContext &ctx,
     max_core_num = data_num;
   }
   if (max_core_num == 0) {
-    KERNEL_LOG_ERROR("The number of available CPU cores must be greater than 0!");
+    CUST_KERNEL_LOG_ERROR(ctx, "The number of available CPU cores must be greater than 0!");
     return KERNEL_STATUS_INNER_ERROR;
   }
 
   auto sharder_index_fill = [&](int64_t start, int64_t end) { SpecialCompute<T>(start, end, input_dim, index_dict); };
 
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_index_fill),
-                      "IndexFill Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_index_fill),
+                           "IndexFill Compute failed.");
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t IndexFillCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t IndexFillCpuKernel::DoCompute(CpuKernelContext &ctx) {
   int32_t input_dim;
 
   if (dim_data_type_ == DT_INT32) {
@@ -171,22 +172,22 @@ uint32_t IndexFillCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   if (x_dim_nums == 0) {
     for (int32_t i = 0; i < index_num; i++) {
       if (input_2[i] < -1 || input_2[i] > 0) {
-        KERNEL_LOG_ERROR("Invalid argument 3: out of range.");
+        CUST_KERNEL_LOG_ERROR(ctx, "Invalid argument 3: out of range.");
         return KERNEL_STATUS_PARAM_INVALID;
       } else {
         index_dict.insert(std::pair<int32_t, bool>(0, true));
       }
     }
   } else if (input_dim < -x_dim_nums || input_dim >= x_dim_nums) {
-    KERNEL_LOG_ERROR(
-      "Dimension out of range (expected to be in range of "
-      "[%d, %d], but got %d).",
-      0 - x_dim_nums, x_dim_nums - 1, input_dim);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Dimension out of range (expected to be in range of "
+                          "[%d, %d], but got %d).",
+                          0 - x_dim_nums, x_dim_nums - 1, input_dim);
     return KERNEL_STATUS_PARAM_INVALID;
   } else {
     for (int32_t i = 0; i < index_num; i++) {
       if (input_2[i] < -x_dims[real_input_dim] || input_2[i] >= x_dims[real_input_dim]) {
-        KERNEL_LOG_ERROR("Invalid argument 3: out of range.");
+        CUST_KERNEL_LOG_ERROR(ctx, "Invalid argument 3: out of range.");
         return KERNEL_STATUS_PARAM_INVALID;
       } else {
         input_2[i] = (input_2[i] < 0) ? (input_2[i] + x_dims[real_input_dim]) : input_2[i];
@@ -198,7 +199,7 @@ uint32_t IndexFillCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   if (data_num >= kParallelDataNum) {
     uint32_t res = SpecialComputeParallel<T>(ctx, data_num, real_input_dim, index_dict);
     if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
-      KERNEL_LOG_ERROR("IndexFill kernel SpecialComputeParallel failed.");
+      CUST_KERNEL_LOG_ERROR(ctx, "IndexFill kernel SpecialComputeParallel failed.");
       return res;
     }
   } else {
@@ -227,8 +228,8 @@ uint32_t IndexFillCpuKernel::Compute(CpuKernelContext &ctx) {
     INDEXFILL_COMPUTE_CASE(DT_FLOAT, float, ctx)
     INDEXFILL_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

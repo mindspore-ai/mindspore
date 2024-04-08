@@ -316,6 +316,7 @@ constexpr auto kAttrWithRelu = "with_relu";
 constexpr auto kAttrNeedGradFlagOfInputs = "need_grad_flag_of_inputs";
 constexpr auto kAttrIsCNodeNeedGrad = "is_cnode_need_grad";
 constexpr auto kAttrJitLevel = "jit_level";
+constexpr auto kAttrJitLevelO1 = "O1";
 constexpr auto kAttrJitLevelO2 = "O2";
 constexpr auto kAttrCellJitConfigDict = "_jit_config_dict";
 constexpr auto kAttrBinaryOutput = "binary_output";
@@ -406,7 +407,6 @@ constexpr auto kFlagPyNativeWithJitCallGraph = "pynative_with_jit_call_graph";
 constexpr auto kFlagJitCallGraph = "jit_call_graph";
 constexpr auto kFlagJitGraph = "jit_graph";
 constexpr auto kFlagSwitchInline = "switch_inline_graph";
-constexpr auto kAttrPackFunction = "pack_func";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";

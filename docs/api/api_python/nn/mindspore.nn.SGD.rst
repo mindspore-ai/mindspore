@@ -29,7 +29,7 @@ mindspore.nn.SGD
         .. include:: mindspore.nn.optim_note_weight_decay.rst
 
     参数：
-        - **params** (Union[list[Parameter], list[dict]]) - 当 `params` 为会更新的 `Parameter` 列表时，`params` 中的元素必须为类 `Parameter`。当 `params` 为 `dict` 列表时，"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"为可以解析的键。
+        - **params** (Union[list[Parameter], list[dict]]) - 当 `params` 为会更新的 `Parameter` 列表时， `params` 中的元素必须为类 `Parameter`。当 `params` 为 `dict` 列表时，"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"为可以解析的键。
 
           .. include:: mindspore.nn.optim_group_param.rst
           .. include:: mindspore.nn.optim_group_lr.rst

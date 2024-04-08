@@ -22,6 +22,7 @@ import os
 import math
 import copy
 import importlib
+import time
 import numpy as np
 
 import mindspore
@@ -189,7 +190,7 @@ class Model:
         >>> from mindspore.train import Model
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -198,7 +199,7 @@ class Model:
         >>> model.predict_network
         >>> model.eval_network
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> model.train(2, dataset)
     """
@@ -523,6 +524,18 @@ class Model:
                                                                         dataset_sink_mode=True,
                                                                         sink_size=sink_size)
             self._warmup_dataset(epoch, train_dataset, sink_size)
+            # Since dataset pipeline has been triggered, delete flag
+            delattr(train_dataset, "__no_send__")
+            if train_dataset.get_init_step() > 0:
+                mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
+                while mbuf_size == 0:
+                    time.sleep(10)
+                    mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
+                    if mbuf_size != 0:
+                        break
+                    logger.warning(f"Failover mode, waiting for dataset recover to specify step, "
+                                   f"current device queue size: {mbuf_size}")
+
             if context.get_auto_parallel_context("pipeline_stages") > 1 and valid_dataset:
                 train_network.add_flags_recursive(is_first_iteration=True)
             for inputs in train_dataset_helper:
@@ -1009,10 +1022,10 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> loss_scale_manager = ms.FixedLossScaleManager(1024., False)
@@ -1162,11 +1175,11 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
             >>> train_dataset = create_dataset("train")
             >>> valid_dataset = create_dataset("test")
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -1175,7 +1188,7 @@ class Model:
 
         Tutorial Examples:
             - `Advanced Encapsulation: Model - Train and Save Model
-              <https://www.mindspore.cn/tutorials/en/master/advanced/model.html#training-and-saving-model>`_
+              <https://www.mindspore.cn/tutorials/en/r2.3.q1/advanced/model.html#training-and-saving-model>`_
         """
         device_target = context.get_context("device_target")
         if _is_ps_mode() and not _cache_enable() and (device_target in ["Ascend", "CPU"]) and dataset_sink_mode:
@@ -1255,10 +1268,10 @@ class Model:
             >>> from mindspore.amp import FixedLossScaleManager
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> loss_scale_manager = FixedLossScaleManager()
@@ -1431,10 +1444,10 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
@@ -1442,7 +1455,7 @@ class Model:
 
         Tutorial Examples:
             - `Advanced Encapsulation: Model - Train and Save Model
-              <https://www.mindspore.cn/tutorials/en/master/advanced/model.html#training-and-saving-model>`_
+              <https://www.mindspore.cn/tutorials/en/r2.3.q1/advanced/model.html#training-and-saving-model>`_
         """
         valid_dataset = self._prepare_obf_dataset(valid_dataset)
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
@@ -1688,7 +1701,7 @@ class Model:
             >>>
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), mindspore.float32)
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> model = Model(LeNet5())
             >>> result = model.predict(input_data)
         """
@@ -1796,10 +1809,10 @@ class Model:
             >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL)
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> loss_scale_manager = ms.FixedLossScaleManager()

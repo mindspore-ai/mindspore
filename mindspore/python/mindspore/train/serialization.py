@@ -54,7 +54,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common._utils import is_shape_unknown
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.experimental import MapParameter
-from mindspore.ops import cat, reshape
+from mindspore.ops import Cast
 from mindspore.parallel._cell_wrapper import get_allgather_cell
 from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_tensor_slice_index
 from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
@@ -94,11 +94,14 @@ PARAMETER_SPLIT_SIZE = 1024 * 1024 * 1024
 ENCRYPT_BLOCK_SIZE = 64 * 1024
 INT_64_MAX = 9223372036854775807
 
+cpu_cast = Cast().set_device("CPU")
+
 
 class ParamDictFuture:
     def __init__(self, executor, param_dict_future):
         self.executor = executor
         self.param_dict_future = param_dict_future
+
     def result(self):
         param_dict = self.param_dict_future.result()
         self.executor.shutdown()
@@ -120,9 +123,13 @@ def _special_process_par(par, new_par):
         if new_par.data.shape[par_shape_len + i] != 1:
             return False
 
-    new_val = reshape(new_par, par.data.shape)
-    new_val = new_val.astype(par.data.dtype)
-    par.set_data(new_val)
+    if new_par.data.dtype == mstype.bfloat16:
+        new_val = cpu_cast(new_par.data, mstype.float32).asnumpy()
+    else:
+        new_val = new_par.data.asnumpy()
+
+    new_val = new_val.reshape(par.data.shape)
+    par.set_data(Tensor(new_val, par.data.dtype))
     return True
 
 
@@ -141,7 +148,10 @@ def _update_param(param, new_param, strict_load):
 
         if param.data.dtype != new_param.data.dtype:
             if _type_convert(param, new_param, strict_load):
-                new_tensor = new_param.data.astype(param.data.dtype)
+                if new_param.data.dtype == mstype.bfloat16:
+                    new_tensor = cpu_cast(new_param.data, param.data.dtype)
+                else:
+                    new_tensor = Tensor(new_param.data.asnumpy(), param.data.dtype)
                 param.set_data(new_tensor, param.sliced)
                 return
 
@@ -244,11 +254,14 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_
                         continue
                     if value[0] == "offload_parameter":
                         new_value = value[1:]
-                        new_value[2] = value[3].asnumpy().reshape(-1)
+                        new_value[2] = value[3]
                         _write_parameter_bytes_data(name, new_value, f, enc_key, plain_data)
                         _offload_if_config(value[3])
                         continue
                     if value[1] == "str":
+                        _write_parameter_data(name, value, f, enc_key, plain_data)
+                        continue
+                    if isinstance(value[2], np.ndarray):
                         _write_parameter_data(name, value, f, enc_key, plain_data)
                         continue
                     if isinstance(value[2], Tensor) and hasattr(value[2], "slice_num") and value[2].slice_num > 1:
@@ -424,7 +437,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         >>> import mindspore as ms
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> ms.save_checkpoint(net, "./lenet.ckpt",
         ...                    choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
@@ -444,7 +457,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+          <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     ckpt_file_name = _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name)
     integrated_save = Validator.check_bool(integrated_save)
@@ -625,6 +638,7 @@ def _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_f
             # in automatic model parallel scenario, some parameters were split to all the devices,
             # which should be combined before saving
             if key in parameter_layout_dict:
+                param_data = Tensor(value.data)
                 param_data = _get_merged_param_data(save_obj, parameter_layout_dict, key, param_data,
                                                     integrated_save)
 
@@ -699,7 +713,7 @@ def load(file_name, **kwargs):
 
             - obf_func (function): A python function used for loading obfuscated MindIR model, which can refer to
               `obfuscate_model()
-              <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.obfuscate_model.html>`_.
+              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore/mindspore.obfuscate_model.html>`_.
 
     Returns:
         GraphCell, a compiled graph that can executed by `GraphCell`.
@@ -729,7 +743,7 @@ def load(file_name, **kwargs):
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading MindIR
-          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-mindir>`_
+          <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/save_load.html#saving-and-loading-mindir>`_
     """
     if not isinstance(file_name, str):
         raise ValueError("For 'load', the argument 'file_name' must be string, but "
@@ -936,7 +950,7 @@ def obfuscate_model(obf_config, **kwargs):
         >>> import mindspore.nn as nn
         >>> import numpy as np
         >>> # Download ori_net.mindir
-        >>> # https://gitee.com/mindspore/mindspore/blob/r2.3/tests/ut/python/mindir/ori_net.mindir
+        >>> # https://gitee.com/mindspore/mindspore/blob/r2.3.q1/tests/ut/python/mindir/ori_net.mindir
         >>> input1 = ms.Tensor(np.ones((1, 1, 32, 32)).astype(np.float32))
         >>> obf_config = {'original_model_path': "./net.mindir",
         ...          'save_model_path': "./obf_net",
@@ -1075,7 +1089,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+          <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     ckpt_file_name = _check_ckpt_file_name(ckpt_file_name)
     specify_prefix = _check_prefix(specify_prefix)
@@ -1194,7 +1208,7 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
             matches the custom condition will be removed. Default: ``None`` .
 
     Returns:
-        ParamDictFuture, A custom class, calling its result method yields the load_checkpoint result.
+        A custom inner class, calling its `result` method yields the :func:`mindspore.load_checkpoint` result.
 
     Raises:
         ValueError: Checkpoint file's format is incorrect.
@@ -1207,14 +1221,14 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
         >>> from mindspore.train import Model
         >>> from mindspore.amp import FixedLossScaleManager
         >>> from mindspore import context
-        >>> from mindspore.train.serialization import load_checkpoint_async
-        >>> from mindspore.train.serialization import load_param_into_net
+        >>> from mindspore import load_checkpoint_async
+        >>> from mindspore import load_param_into_net
         >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> ckpt_file = "./checkpoint/LeNet5-1_32.ckpt"
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
@@ -1381,7 +1395,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         >>> import mindspore as ms
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
         >>> param_dict = ms.load_checkpoint(ckpt_file_name, filter_prefix="conv1")
@@ -1391,7 +1405,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+          <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     if not isinstance(net, nn.Cell):
         logger.critical("Failed to combine the net and the parameters.")
@@ -1556,11 +1570,23 @@ def _save_graph(network, file_name):
             os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR)
             f.write(graph_pb)
 
+
 def _reshape_tensor(tensor, dst_shape):
     """reshape tensor to dst shape"""
     np_tensor = tensor.asnumpy()
     np_tensor = np_tensor.reshape(dst_shape)
     return Tensor(np_tensor, tensor.dtype)
+
+
+def _check_param_for_integrate_save(pipeline_stages, uniform_split):
+    """check whether current settings and parameters are supported in integrated save checkpoint mode"""
+    if pipeline_stages > 1:
+        raise RuntimeError("Pipeline Parallel don't support Integrated save checkpoint now.")
+    if uniform_split == 0:
+        raise RuntimeError("For 'save_checkpoint' and in automatic model parallel scene, when set "
+                           "'integrated_save' to True, the checkpoint will be integrated save, it "
+                           "is only supports uniform split tensor now.")
+
 
 def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, integrated_save):
     """
@@ -1587,7 +1613,7 @@ def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, i
     before_reshape_full_shape = layout[6]
     after_reshape_slice_shape = layout[7]
     do_reshape = False
-    if before_reshape_full_shape and after_reshape_slice_shape\
+    if before_reshape_full_shape and after_reshape_slice_shape \
             and after_reshape_slice_shape != before_reshape_slice_shape:
         do_reshape = True
 
@@ -1602,12 +1628,7 @@ def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, i
     else:
         logger.info("Need to create allgather net for %s", param_name)
         if integrated_save:
-            if context.get_auto_parallel_context("pipeline_stages") > 1:
-                raise RuntimeError("Pipeline Parallel don't support Integrated save checkpoint now.")
-            if uniform_split == 0:
-                raise RuntimeError("For 'save_checkpoint' and in automatic model parallel scene, when set "
-                                   "'integrated_save' to True, the checkpoint will be integrated save, it "
-                                   "is only supports uniform split tensor now.")
+            _check_param_for_integrate_save(context.get_auto_parallel_context("pipeline_stages"), uniform_split)
             # while any dim is not equal to -1, means param is split and needs to be merged
             # pipeline parallel need to be supported here later
             if mp_weight:
@@ -1641,6 +1662,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         3. Exporting functions decorated with :func:`mindspore.jit` to mindir format is supported.
         4. When exporting a function decorated with :func:`mindspore.jit`, the function should not involve
            class properties in calculations.
+        5. AIR format is deprecated, and will be removed in a future version, please use other format or use
+           MindSpore Lite to do offline inference.
 
     Args:
         net (Union[Cell, function]): MindSpore network.
@@ -1706,7 +1729,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
@@ -1723,7 +1746,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading MindIR
-          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-mindir>`_
+          <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/save_load.html#saving-and-loading-mindir>`_
     """
     old_ms_jit_value = context.get_context("jit_syntax_level")
     context.set_context(jit_syntax_level=mindspore.STRICT)
@@ -1731,6 +1754,9 @@ def export(net, *inputs, file_name, file_format, **kwargs):
     supported_formats = ['AIR', 'ONNX', 'MINDIR']
     if file_format not in supported_formats:
         raise ValueError(f"For 'export', 'file_format' must be one of {supported_formats}, but got {file_format}.")
+    if file_format == 'AIR':
+        logger.warning("AIR format is deprecated, and will be removed in a future version, please use other format or "
+                       "use MindSpore Lite to do offline inference")
     Validator.check_file_name_by_regular(file_name)
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
 
@@ -1783,7 +1809,7 @@ def _get_funcgraph(net, *inputs):
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.get_funcgraph(net, input_tensor)
@@ -2492,20 +2518,20 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
     sliced_data = []
     for parameter in sliced_parameters:
         if parameter.data.dtype == mstype.bfloat16:
-            sliced_data.append(parameter.data.float().asnumpy())
+            sliced_data.append(cpu_cast(parameter.data, mstype.float32).asnumpy())
         else:
             sliced_data.append(parameter.data.asnumpy())
 
     if not strategy:
         merged_tensor = Tensor(np.concatenate(sliced_data))
+        merged_parameter = Parameter(merged_tensor, parameter_name, requires_grad, layerwise_parallel)
+
     else:
         if parameter_name not in strategy.keys():
             raise KeyError(f"For 'merge_sliced_parameter', the parameter name {parameter_name} should be a key in "
                            f"the 'strategy'. Please check 'sliced_parameter' and 'strategy'.")
         merged_tensor = _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even)
-    if parameter.data.dtype == mstype.bfloat16:
-        merged_tensor = merged_tensor.astype(mstype.bfloat16)
-    merged_parameter = Parameter(merged_tensor, parameter_name, requires_grad, layerwise_parallel)
+        merged_parameter = Parameter(merged_tensor, parameter_name, requires_grad, layerwise_parallel)
 
     return merged_parameter
 
@@ -2548,14 +2574,14 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
 
         >>> import os
         >>> import numpy as np
@@ -2700,10 +2726,13 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
                 param_index = list(set(param_index))
                 param_index.sort()
                 for rank_num in param_index:
-                    param_stride.append(param_total_dict[param.name][rank_num])
-                if not param_stride:
-                    param_stride = cat(param_stride)
-                sliced_param = Parameter(param_stride, name=param.name)
+                    if param_total_dict[param.name][rank_num].data.dtype == mstype.bfloat16:
+                        param_stride.append(
+                            cpu_cast(param_total_dict[param.name][rank_num].data, mstype.float32).asnumpy())
+                    else:
+                        param_stride.append(param_total_dict[param.name][rank_num].data.asnumpy())
+
+                sliced_param = Parameter(Tensor(np.concatenate(param_stride)), name=param.name)
             else:
                 sliced_param = param_total_dict[param.name][rank]
 
@@ -2716,17 +2745,22 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
             split_param = _merge_and_split(sliced_params, _param_unique_strategy, predict_strategy)
         opt_shard_group = predict_strategy[param.name][5] if predict_strategy else None
         if opt_shard_group:
+            if split_param.data.dtype == mstype.bfloat16:
+                data = cpu_cast(split_param.data, mstype.float32).asnumpy()
+            else:
+                data = split_param.data.asnumpy()
             rank = get_rank(opt_shard_group)
             size = get_group_size(opt_shard_group)
             try:
-                data_slice = split_param.data.split(size)[rank]
+                data_slice = np.split(data, size)[rank]
             except BaseException as e:
                 logger.critical("Failed to load opt shard slice in load distributed checkpoint for {}. Data shape is {}"
                                 " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
                 raise RuntimeError(e.__str__() + f"\nFor 'load_distributed_checkpoint', failed to load opt shard slice"
                                                  f" in load distributed checkpoint for {param.name}. Data shape is "
                                                  f"{split_param.data.shape} and group is {opt_shard_group}.") from e
-            split_param = Parameter(data_slice, param.name, split_param.requires_grad, split_param.layerwise_parallel)
+            split_param = Parameter(Tensor(data_slice), param.name,
+                                    split_param.requires_grad, split_param.layerwise_parallel)
         param_dict[param.name] = split_param
 
     if param_not_in_strategy:
@@ -2813,7 +2847,7 @@ def _merge_and_split(sliced_params, train_strategy, predict_strategy):
     param_name = merged_param.name
     tensor_layout = predict_strategy[param_name]
     rank = get_rank()
-    split_tensor = _load_tensor(merged_param.data, tensor_layout[0], tensor_layout[1], rank)
+    split_tensor = _load_tensor(merged_param.data, tensor_layout[0], tensor_layout[1], rank_id=rank)
     requires_grad = merged_param.requires_grad
     layerwise_parallel = merged_param.layerwise_parallel
     if merged_param.data.dtype == mstype.bfloat16:

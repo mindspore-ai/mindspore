@@ -1,9 +1,9 @@
 mindspore.ops
 ==============
 
-For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of ops Interface <https://mindspore.cn/docs/en/master/note/dynamic_shape_func.html>`_ .
+For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of ops Interface <https://mindspore.cn/docs/en/r2.3.q1/note/dynamic_shape_func.html>`_ .
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `mindspore.ops API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/func_api_updates_en.md>`_.
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `mindspore.ops API Interface Change <https://gitee.com/mindspore/docs/blob/r2.3.q1/resource/api_updates/func_api_updates_en.md>`_.
 
 Neural Network Layer Functions
 ------------------------------
@@ -444,25 +444,6 @@ Spectral Functions
     mindspore.ops.hamming_window
     mindspore.ops.hann_window
     mindspore.ops.kaiser_window
-
-Fast Fourier Transform Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.fft
-    mindspore.ops.fft2
-    mindspore.ops.fftn
-    mindspore.ops.fftshift
-    mindspore.ops.rfft
-    mindspore.ops.ifft
-    mindspore.ops.ifft2
-    mindspore.ops.ifftn
-    mindspore.ops.ifftshift
-    mindspore.ops.irfft
 
 Tensor Operation Functions
 --------------------------

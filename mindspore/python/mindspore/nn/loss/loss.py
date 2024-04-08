@@ -281,7 +281,7 @@ class MSELoss(LossBase):
           and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, loss of type float, the shape is zero if `reduction` is ``'mean'`` or ``'sum'`` .,
+        Tensor, loss of type float, the shape is zero if `reduction` is ``'mean'`` or ``'sum'`` ,
         while the shape of output is the broadcasted shape if `reduction` is 'none'.
 
     Raises:
@@ -568,10 +568,13 @@ class SmoothL1Loss(LossBase):
         \end{cases}
 
     .. note::
-        - SmoothL1Loss can be regarded as modified version of L1Loss or a combination of L1Loss and L2Loss.
-        - L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
-        - squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
-        - robust to outliers, and the loss function has better robustness.
+        - SmoothL1Loss can be regarded as modified version of :class:`mindspore.nn.L1Loss`
+          or a combination of :class:`mindspore.nn.L1Loss` and :class:`mindspore.ops.L2Loss`.
+        - :class:`mindspore.nn.L1Loss` computes the element-wise absolute difference between two input tensor
+          while :class:`mindspore.ops.L2Loss` computes the
+        - squared difference between two input tensors. :class:`mindspore.ops.L2Loss`
+          often leads to faster convergence but it is less
+          robust to outliers, and the loss function has better robustness.
 
     Args:
         beta (float): The loss function calculates the threshold of the transformation between L1Loss and L2Loss.
@@ -730,7 +733,7 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
 
     Raises:
         TypeError: If `sparse` is not a bool.
-        TypeError: If `sparse` is True and dtype of `labels` is neither int32 not int64.
+        TypeError: If `sparse` is True and dtype of `labels` is neither int32 nor int64.
         TypeError: If `sparse` is False and dtype of `labels` is neither float16 not float32.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
@@ -995,7 +998,7 @@ class SampledSoftmaxLoss(LossBase):
             Default to None, `UniformCandidateSampler` is applied. Default: ``None`` .
         remove_accidental_hits (bool): Whether to remove "accidental hits"
             where a sampled class equals to one of the labels classes. Default: ``True`` .
-        seed (int): Random seed for candidate sampling. Default: 0
+        seed (int): Random seed for candidate sampling. Default: ``0``.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'none'`` .
 
@@ -1004,7 +1007,7 @@ class SampledSoftmaxLoss(LossBase):
             - ``'sum'``: the output elements will be summed.
 
     Inputs:
-        - **weights** (Tensor) - Tensor of shape :math:`(C, dim)`.
+        - **weights** (Tensor) - The weights of input. Tensor of shape :math:`(C, dim)`.
         - **bias** (Tensor) - Tensor of shape :math:`(C,)`. The class biases.
         - **labels** (Tensor) - Tensor of shape :math:`(N, num\_true)`, type `int64, int32`. The labels classes.
         - **logits** (Tensor) - Tensor of shape :math:`(N, dim)`. The forward activations of the input network.
@@ -1015,7 +1018,7 @@ class SampledSoftmaxLoss(LossBase):
 
     Raises:
         TypeError: If `sampled_values` is not a list or tuple.
-        TypeError: If dtype of `labels` is neither int32 not int64.
+        TypeError: If dtype of `labels` is neither int32 nor int64.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If `num_sampled` or `num_true` is greater than `num_classes`.
         ValueError: If length of `sampled_values` is not equal to 3.
@@ -1512,13 +1515,13 @@ class MultiMarginLoss(LossBase):
             support float32, float16 or float64. Default: ``None`` , all classes are weighted equally.
 
     Inputs:
-        - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+        - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only supports float32, float16 or float64.
           x is :math:`x` in the above formula.
-        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
+        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only supports int64. The
           value of target should be non-negative, less than C. `target` is :math:`y` in the above formula.
 
     Outputs:
-        Tensor, When `reduction` is ``'none'``, the shape is :math:`(N,)`.
+        Tensor. When `reduction` is ``'none'``, the shape is :math:`(N,)`.
         Otherwise, it is a scalar. Has the same data type with `x`.
 
     Raises:
@@ -1527,8 +1530,8 @@ class MultiMarginLoss(LossBase):
         TypeError: If dtype of `reduction` is not str.
         TypeError: If dtype of `x` is not float16, float or float64.
         TypeError: If dtype of `weight` and `x` is not the same.
-        ValueError: If 'p' is not 1 or 2.
-        ValueError: If 'reduction' is not one of { ``'none'`` , ``'sum'`` , ``'mean'`` }.
+        ValueError: If `p` is not 1 or 2.
+        ValueError: If `reduction` is not one of { ``'none'`` , ``'sum'`` , ``'mean'`` }.
         ValueError: If shape[0] of `x` is not equal to shape[0] of `target`.
         ValueError: If shape[1] of `x` is not equal to shape[0] of `weight`.
         ValueError: IF rank of `weight` is not 1.
@@ -1692,7 +1695,7 @@ class CosineEmbeddingLoss(LossBase):
     Raises:
         TypeError: If `margin` is not a float.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
-        ValueError: If `margin` is not in range [-1, 1].
+        ValueError: If `margin` is not in range [-1.0, 1.0].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2184,7 +2187,7 @@ class TripletMarginLoss(LossBase):
             - ``'mean'``: compute and return the mean of elements in the output.
             - ``'sum'``: the output elements will be summed.
 
-        margin (Union[Tensor, float]) - Make a margin between the positive pair and the negative pair.
+        margin (Union[Tensor, float]): Make a margin between the positive pair and the negative pair.
             Default: ``1.0`` .
 
     Inputs:
@@ -2362,7 +2365,7 @@ class CrossEntropyLoss(LossBase):
     The CrossEntropyLoss support two kind of targets:
 
     - Class indices (int) in the range :math:`[0, C)` where :math:`C` is the number of classes,
-      the loss with reduction=none can be described as:
+      when reduction is ``none``, the loss can be described as:
 
       .. math::
 
@@ -2599,8 +2602,10 @@ class CTCLoss(LossBase):
           N is size of the batch and C is the number of classes. T, N and C are positive integers.
         - **targets** (Tensor) - A tensor of shape :math:`(N, S)` or (sum( `target_lengths` )),
           where S is max target length, means the target sequences.
-        - **input_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape(N). It means the lengths of the input.
-        - **target_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape(N). It means the lengths of the target.
+        - **input_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape :math:`(N)`.
+          It means the lengths of the input.
+        - **target_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape :math:`(N)`.
+          It means the lengths of the target.
 
     Outputs:
         - **neg_log_likelihood** (Tensor) - A loss value which is differentiable with respect to each input node.

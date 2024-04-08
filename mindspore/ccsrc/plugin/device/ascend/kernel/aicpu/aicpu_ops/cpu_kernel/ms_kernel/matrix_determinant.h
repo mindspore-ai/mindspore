@@ -32,9 +32,9 @@ class MatrixDeterminantCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t MatrixDeterminantCheck(const CpuKernelContext &ctx);
+  static uint32_t MatrixDeterminantCheck(CpuKernelContext &ctx);
   template <typename T>
-  static uint32_t MatrixDeterminantCompute(const CpuKernelContext &ctx);
+  static uint32_t MatrixDeterminantCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

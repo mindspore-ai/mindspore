@@ -29,41 +29,41 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 1;
 const char *kLog = "Log";
 
-#define LOG_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                     \
-    uint32_t result = LogCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                 \
-      KERNEL_LOG_ERROR("Log kernel compute failed."); \
-      return result;                                  \
-    }                                                 \
-    break;                                            \
+#define LOG_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                               \
+    uint32_t result = LogCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "Log kernel compute failed."); \
+      return result;                                            \
+    }                                                           \
+    break;                                                      \
   }
 
-#define LOG_COMPUTE_CASE2(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                     \
-    uint32_t result = LogCompute2(CTX);               \
-    if (result != KERNEL_STATUS_OK) {                 \
-      KERNEL_LOG_ERROR("Log kernel compute failed."); \
-      return result;                                  \
-    }                                                 \
-    break;                                            \
+#define LOG_COMPUTE_CASE2(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                               \
+    uint32_t result = LogCompute2(CTX);                         \
+    if (result != KERNEL_STATUS_OK) {                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "Log kernel compute failed."); \
+      return result;                                            \
+    }                                                           \
+    break;                                                      \
   }
 
-#define LOG_COMPUTE_CASE3(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                     \
-    uint32_t result = LogCompute3<TYPE>(CTX);         \
-    if (result != KERNEL_STATUS_OK) {                 \
-      KERNEL_LOG_ERROR("Log kernel compute failed."); \
-      return result;                                  \
-    }                                                 \
-    break;                                            \
+#define LOG_COMPUTE_CASE3(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                               \
+    uint32_t result = LogCompute3<TYPE>(CTX);                   \
+    if (result != KERNEL_STATUS_OK) {                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "Log kernel compute failed."); \
+      return result;                                            \
+    }                                                           \
+    break;                                                      \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t LogCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kLog);
-  KERNEL_HANDLE_ERROR(LogCheck(ctx), "[%s] check params failed.", kLog);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kLog);
+  CUST_KERNEL_HANDLE_ERROR(ctx, LogCheck(ctx), "[%s] check params failed.", kLog);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     LOG_COMPUTE_CASE2(DT_FLOAT16, Eigen::half, ctx)
@@ -72,35 +72,36 @@ uint32_t LogCpuKernel::Compute(CpuKernelContext &ctx) {
     LOG_COMPUTE_CASE3(DT_COMPLEX64, std::complex<float>, ctx)
     LOG_COMPUTE_CASE3(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Log kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Log kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LogCpuKernel::LogCheck(const CpuKernelContext &ctx) {
+uint32_t LogCpuKernel::LogCheck(CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed")
-  KERNEL_CHECK_NULLPTR(input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input tensor shape failed.")
   std::vector<int64_t> shape_x = input_0->GetTensorShape()->GetDimSizes();
   AttrValue *base_ptr = ctx.GetAttr("base");
-  KERNEL_CHECK_NULLPTR(base_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr base failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, base_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr base failed.");
   float base_ = base_ptr->GetFloat();
-  KERNEL_CHECK_FALSE(((base_ > 0 && base_ != 1.0) || base_ == -1.0), KERNEL_STATUS_PARAM_INVALID,
-                     "Attr base must be -1.0  or base > 0 and base is not "
-                     "equal to 1 , but got attr base[%lld]",
-                     base_);
+  CUST_KERNEL_CHECK_FALSE(ctx, ((base_ > 0 && base_ != 1.0) || base_ == -1.0), KERNEL_STATUS_PARAM_INVALID,
+                          "Attr base must be -1.0  or base > 0 and base is not "
+                          "equal to 1 , but got attr base[%lld]",
+                          base_);
   AttrValue *scale_ptr = ctx.GetAttr("scale");
-  KERNEL_CHECK_NULLPTR(scale_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr scale failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, scale_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr scale failed.");
   AttrValue *shift_ptr = ctx.GetAttr("shift");
-  KERNEL_CHECK_NULLPTR(shift_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr shift failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, shift_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr shift failed.");
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t LogCpuKernel::LogCompute(const CpuKernelContext &ctx) {
+uint32_t LogCpuKernel::LogCompute(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 
@@ -142,19 +143,19 @@ uint32_t LogCpuKernel::LogCompute(const CpuKernelContext &ctx) {
       }
       return KERNEL_STATUS_PARAM_INVALID;
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_log),
-                        "Log Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_log),
+                             "Log Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LogCpuKernel::LogCompute2(const CpuKernelContext &ctx) {
+uint32_t LogCpuKernel::LogCompute2(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<Eigen::half *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<Eigen::half *>(ctx.Output(0)->GetData());
   size_t data_num = ctx.Input(0)->NumElements();
   for (uint64_t i = 0; i < data_num; i++) {
     if (*(input_x + i) <= static_cast<Eigen::half>(0)) {
-      KERNEL_LOG_ERROR("[%llu] must be at least more than 0.", i);
+      CUST_KERNEL_LOG_ERROR(ctx, "[%llu] must be at least more than 0.", i);
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -198,14 +199,14 @@ uint32_t LogCpuKernel::LogCompute2(const CpuKernelContext &ctx) {
         *(output_y + i) = array_y(0, i) / array_z(0, 0);
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_log),
-                        "Log Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_log),
+                             "Log Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t LogCpuKernel::LogCompute3(const CpuKernelContext &ctx) {
+uint32_t LogCpuKernel::LogCompute3(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   size_t data_num = ctx.Input(0)->NumElements();
@@ -225,7 +226,7 @@ uint32_t LogCpuKernel::LogCompute3(const CpuKernelContext &ctx) {
   if (data_num <= 4 * 1024) {
     for (size_t i = 0; i < data_num; i++) {
       if (*(input_x + i) == static_cast<T>(0)) {
-        KERNEL_LOG_ERROR("[%llu] must be at least more than 0.", i);
+        CUST_KERNEL_LOG_ERROR(ctx, "[%llu] must be at least more than 0.", i);
         return KERNEL_STATUS_PARAM_INVALID;
       }
       *(output_y + i) = std::log(*(input_x + i) * scale_ + shift_) / std::log(base_);
@@ -239,15 +240,15 @@ uint32_t LogCpuKernel::LogCompute3(const CpuKernelContext &ctx) {
     auto shard_log = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         if (*(input_x + i) == static_cast<T>(0)) {
-          KERNEL_LOG_ERROR("[%llu] must be at least more than 0.", i);
+          CUST_KERNEL_LOG_ERROR(ctx, "[%llu] must be at least more than 0.", i);
           return KERNEL_STATUS_PARAM_INVALID;
         }
         *(output_y + i) = std::log(*(input_x + i) * scale_ + shift_) / std::log(base_);
       }
       return KERNEL_STATUS_PARAM_INVALID;
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_log),
-                        "Log Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_log),
+                             "Log Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

@@ -32,7 +32,7 @@ class MatrixBandPartCpuKernel : public CpuKernel {
 
   template <typename T>
   static uint32_t BandCompute(Tensor *x, int64_t lower, int64_t upper, Tensor *y, int64_t rows, int64_t cols,
-                              const CpuKernelContext &ctx);
+                              CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

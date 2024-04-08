@@ -66,19 +66,18 @@ SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std:
 }
 
 AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
-#ifdef ENABLE_PROFILE
-  double t = GetTime();
-#endif
-  AnfNodePtr result = (*transform_)(optimizer, node);
-#ifdef ENABLE_PROFILE
+  AnfNodePtr result;
   if (optimizer != nullptr) {
-    auto time = GetTime();
-    MsProfile::StatTime("substitution." + name_, time - t);
-    if (result != nullptr) {
-      MsProfile::StatTime("match." + name_, time - t);
+    MsProfileStatGuard stat_subs_guard("substitution." + name_);
+    MsProfileStatGuard stat_match_guard("match." + name_);
+    result = (*transform_)(optimizer, node);
+    if (result == nullptr) {
+      stat_match_guard.Interrupt();
     }
+  } else {
+    result = (*transform_)(optimizer, node);
   }
-#endif
+
   if (optimizer != nullptr && optimizer->is_watch_renormalize() && result != nullptr) {
     if ((renorm_action_ == FORCE_RENORM) || (result->abstract() == nullptr)) {
       optimizer->set_is_untyped_generated();
@@ -112,15 +111,10 @@ static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &n
     ScopeGuard scope_guard(node->scope());
     auto res = (*substitution)(optimizer, node);
     if (res != nullptr && res != node) {
-#ifdef ENABLE_PROFILE
-      double t = GetTime();
-#endif
+      MsProfileStatGuard stat_guard("replace." + substitution->name_);
       MS_LOG(DEBUG) << "Replace " << node->DebugString() << " with " << res->DebugString() << ", by "
                     << substitution->name_;
       (void)manager->Replace(node, res);
-#ifdef ENABLE_PROFILE
-      MsProfile::StatTime("replace." + substitution->name_, GetTime() - t);
-#endif
       return res;
     }
   }
@@ -189,9 +183,7 @@ static void UpdateTransformingListWithUserNodes(const FuncGraphManagerPtr &manag
 }
 
 bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const {
-#ifdef ENABLE_PROFILE
-  double start = GetTime();
-#endif
+  MsProfileStatGuard stat_guard("opt.transform." + optimizer->name());
   FuncGraphManagerPtr manager = optimizer->manager();
   auto seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
@@ -220,17 +212,12 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
     UpdateTransformingListForSubstitutions(node, &todo, change);
     UpdateTransformingListWithUserNodes(manager, node, &todo, change, seen);
   }
-#ifdef ENABLE_PROFILE
-  MsProfile::StatTime("opt.transforms." + optimizer->name(), GetTime() - start);
-#endif
   return changes;
 }
 
 bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph,
                                              const SubstitutionPtr &substitution) const {
-#ifdef ENABLE_PROFILE
-  double start = GetTime();
-#endif
+  MsProfileStatGuard stat_guard("opt.transform." + optimizer->name());
   FuncGraphManagerPtr manager = optimizer->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto seen = NewSeenGeneration();
@@ -258,10 +245,6 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
     UpdateTransformingListForIR(node, &todo, change, substitution);
     UpdateTransformingListWithUserNodes(manager, node, &todo, change, seen);
   }
-
-#ifdef ENABLE_PROFILE
-  MsProfile::StatTime("opt.transform." + optimizer->name(), GetTime() - start);
-#endif
   return changes;
 }
 

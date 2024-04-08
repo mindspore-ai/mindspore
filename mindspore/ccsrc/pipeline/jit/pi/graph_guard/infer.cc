@@ -448,7 +448,8 @@ static py::object ConvertCppTensor(const py::object &any) {
 
   if (PyDict_Check(op)) {
     Py_ssize_t pos = 0;
-    PyObject *key, *value;
+    PyObject *key;
+    PyObject *value;
     while (PyDict_Next(op, &pos, &key, &value)) {
       py::object new_value = ConvertCppTensor(py::cast<py::object>(value));
       PyDict_SetItem(op, key, new_value.ptr());
@@ -497,8 +498,9 @@ PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyO
     return pyObj.inc_ref().ptr();
   } else if (prim->HasPyObj()) {
     if (py::hasattr(adapter_obj, PY_PRIM_METHOD_INFER)) {
-      py::tuple py_vals(arglist.size() - monad_count);
-      for (size_t i = 0; i < arglist.size() - monad_count; ++i) {
+      size_t list_count = arglist.size() - size_t(monad_count);
+      py::tuple py_vals(list_count);
+      for (size_t i = 0; i < list_count; ++i) {
         py_vals[i] = py::reinterpret_borrow<py::object>(arglist[i]);
       }
       py::dict output = prim->RunInfer(py_vals);
@@ -632,7 +634,7 @@ static PyObject *InferSize(PyObject *, const std::vector<PyObject *> &args) {
   }
   size_t elements = 1;
   for (size_t i = 0; i < shape.size(); i++) {
-    elements *= shape[i];
+    elements *= size_t(shape[i]);
   }
   return PyLong_FromSize_t(elements);
 }
@@ -702,7 +704,7 @@ static bool CheckType(const char *mod_name, const char *type_name, bool check_su
   MS_EXCEPTION_IF_CHECK_FAIL(PyType_Check(cls.ptr()), "must be type");
   bool check_res = reinterpret_cast<PyObject *>(tp) == cls.ptr();
   if (!check_res && (check_sub_type)) {
-    check_res |= PyType_IsSubtype(tp, reinterpret_cast<PyTypeObject *>(cls.ptr()));
+    check_res |= (PyType_IsSubtype(tp, reinterpret_cast<PyTypeObject *>(cls.ptr())) != 0);
   }
   return check_res;
 }

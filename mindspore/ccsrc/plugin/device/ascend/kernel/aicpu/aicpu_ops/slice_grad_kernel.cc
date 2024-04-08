@@ -41,47 +41,50 @@ std::vector<int64_t> GetShape(const ::aicpuops::TensorShape &shape) {
 
 bool SliceGradKernel::CheckParams() const {
   if (io_addrs_.size() != kSliceGradInputNum + 1) {
-    AICPU_LOGE("For 'SliceGrad', input and output address list's size must be 5, but got %lu", io_addrs_.size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', input and output address list's size must be 5, but got %lu",
+                    io_addrs_.size());
     return false;
   }
 
   // check dy shape, N-D
   auto n = dy_shape_.size();
   if (n == 0) {
-    AICPU_LOGE("For 'SliceGrad', 'dy' shape can not be empty.");
+    CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', 'dy' shape can not be empty.");
     return false;
   }
 
   // check begin shape, 1-D with shape [N]
   if (begin_shape_.size() != 1) {
-    AICPU_LOGE("For 'SliceGrad', 'begin' shape rank must be 1, but got %lu", begin_shape_.size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', 'begin' shape rank must be 1, but got %lu", begin_shape_.size());
     return false;
   }
   if (LongToSize(begin_shape_[0]) != n) {
-    AICPU_LOGE("For 'SliceGrad', 'begin' shape must be [%lu], but got [%ld]", n, begin_shape_[0]);
+    CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', 'begin' shape must be [%lu], but got [%ld]", n, begin_shape_[0]);
     return false;
   }
 
   // check size shape, 1-D with shape [N]
   if (size_shape_.size() != 1) {
-    AICPU_LOGE("For 'SliceGrad', 'size' shape rank must be 1, but got %lu", size_shape_.size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', 'size' shape rank must be 1, but got %lu", size_shape_.size());
     return false;
   }
   if (LongToSize(size_shape_[0]) != n) {
-    AICPU_LOGE("For 'SliceGrad', 'size' shape must be [%lu], but got [%ld]", n, size_shape_[0]);
+    CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', 'size' shape must be [%lu], but got [%ld]", n, size_shape_[0]);
     return false;
   }
 
   // check output shape, N-D
   if (output_shape_.size() != n) {
-    AICPU_LOGE("For 'SliceGrad', 'dy' shape and output tensor shape must have same rank, but got %lu vs %lu", n,
-               output_shape_.size());
+    CUST_AICPU_LOGE(workspace_info_,
+                    "For 'SliceGrad', 'dy' shape and output tensor shape must have same rank, but got %lu vs %lu", n,
+                    output_shape_.size());
     return false;
   }
 
   for (size_t i = 0; i < n; ++i) {
     if (dy_shape_[i] <= 0 || dy_shape_[i] > output_shape_[i]) {
-      AICPU_LOGE(
+      CUST_AICPU_LOGE(
+        workspace_info_,
         "For 'SliceGrad', it is required that 0 < 'dy' shape[%lu] <= output tensor shape[%lu], but got %ld vs %ld", i,
         i, dy_shape_[i], output_shape_[i]);
       return false;
@@ -93,20 +96,22 @@ bool SliceGradKernel::CheckParams() const {
 bool SliceGradKernel::CheckBeginSizeValue() {
   for (size_t i = 0; i < begin_value_.size(); ++i) {
     if (begin_value_[i] < 0 || begin_value_[i] >= output_shape_[i]) {
-      AICPU_LOGE("For 'SliceGrad', 'begin' [%lu] must be in range [0, %ld), but got %ld", i, output_shape_[i],
-                 begin_value_[i]);
+      CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', 'begin' [%lu] must be in range [0, %ld), but got %ld", i,
+                      output_shape_[i], begin_value_[i]);
       return false;
     }
     if (size_value_[i] < 0) {
       size_value_[i] = output_shape_[i] - begin_value_[i];
     }
     if (size_value_[i] != dy_shape_[i]) {
-      AICPU_LOGE("For 'SliceGrad', 'size' [%lu] must be equal to 'dy' shape[%lu], but got %ld vs %ld", i, i,
-                 size_value_[i], dy_shape_[i]);
+      CUST_AICPU_LOGE(workspace_info_,
+                      "For 'SliceGrad', 'size' [%lu] must be equal to 'dy' shape[%lu], but got %ld vs %ld", i, i,
+                      size_value_[i], dy_shape_[i]);
       return false;
     }
     if (begin_value_[i] + size_value_[i] > output_shape_[i]) {
-      AICPU_LOGE(
+      CUST_AICPU_LOGE(
+        workspace_info_,
         "For 'SliceGrad', 'begin' [%lu] + 'size' [%lu] must be <= output tensor shape[%lu], but got %ld, %ld, %ld", i,
         i, i, begin_value_[i], size_value_[i], output_shape_[i]);
       return false;
@@ -139,7 +144,7 @@ uint32_t SliceGradKernel::SliceGradTask() {
   int64_t output_num = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>());
   size_t output_byte = LongToSize(output_num) * sizeof(S);
   if (memset_s(out_addr, output_byte, 0, output_byte) != EOK) {
-    AICPU_LOGE("For 'SliceGrad', memset_s on output tensor address failed!");
+    CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', memset_s on output tensor address failed!");
     return kAicpuKernelStateFailed;
   }
 
@@ -149,7 +154,7 @@ uint32_t SliceGradKernel::SliceGradTask() {
     size_t block_byte = LongToSize(dy_shape_[0]) * sizeof(S);
     S *out_start_addr = out_addr + begin_value_[0];
     if (memcpy_s(out_start_addr, block_byte, dy_addr, block_byte) != EOK) {
-      AICPU_LOGE("For 'SliceGrad', memcpy_s failed!");
+      CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', memcpy_s failed!");
       return kAicpuKernelStateFailed;
     }
     return kAicpuKernelStateSucess;
@@ -180,7 +185,7 @@ uint32_t SliceGradKernel::SliceGradTask() {
       S *dy_start_addr = dy_addr + i * block_sz;
       S *out_start_addr = out_addr + k * LongToSize(output_shape_.back()) + begin_value_.back();
       if (memcpy_s(out_start_addr, block_byte, dy_start_addr, block_byte) != EOK) {
-        AICPU_LOGE("For 'SliceGrad', memcpy_s failed! Current block index is %lu", i);
+        CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', memcpy_s failed! Current block index is %lu", i);
         return;
       }
     }
@@ -199,7 +204,8 @@ uint32_t SliceGradKernel::SliceGradTask() {
 uint32_t SliceGradKernel::ParseKernelParam() {
   // check input tensor number
   if (IntToSize(node_def_.inputs_size()) != kSliceGradInputNum) {
-    AICPU_LOGE("For 'SliceGrad', input tensor number must be 4, but got %d", node_def_.inputs_size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', input tensor number must be 4, but got %d",
+                    node_def_.inputs_size());
     return kAicpuKernelStateInvalid;
   }
 
@@ -218,13 +224,14 @@ uint32_t SliceGradKernel::ParseKernelParam() {
   size_shape_ = GetShape(size_tensor.tensor_shape());
   auto size_type = static_cast<aicpuops::DataType>(size_tensor.tensor_type());
   if (size_type != begin_type_) {
-    AICPU_LOGE("For 'SliceGrad', 'begin' and 'size' must have same data type.");
+    CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', 'begin' and 'size' must have same data type.");
     return kAicpuKernelStateInvalid;
   }
 
   // output
   if (node_def_.outputs_size() != 1) {
-    AICPU_LOGE("For 'SliceGrad', output tensor number must be 1, but got %d", node_def_.outputs_size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', output tensor number must be 1, but got %d",
+                    node_def_.outputs_size());
     return kAicpuKernelStateInvalid;
   }
   aicpuops::Tensor output_tensor = node_def_.outputs(0);
@@ -283,11 +290,11 @@ uint32_t SliceGradKernel::DoCompute() {
     std::bind(&SliceGradKernel::SliceGradTask<int64_t, int64_t>, this);
 
   if (func_list.find(begin_type_) == func_list.end()) {
-    AICPU_LOGE("'SliceGrad' does not support current 'begin' type.");
+    CUST_AICPU_LOGE(workspace_info_, "'SliceGrad' does not support current 'begin' type.");
     return kAicpuKernelStateFailed;
   }
   if (func_list[begin_type_].find(dy_type_) == func_list[begin_type_].end()) {
-    AICPU_LOGE("'SliceGrad' does not support current 'dy' type.");
+    CUST_AICPU_LOGE(workspace_info_, "'SliceGrad' does not support current 'dy' type.");
     return kAicpuKernelStateFailed;
   }
   return func_list[begin_type_][dy_type_]();

@@ -38,6 +38,7 @@ class BpropFuncGraphManager {
   FuncGraphPtr GetPrimBpropGraph(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &args_abs);
   FuncGraphPtr GetFuncGraphBpropGraph(const FuncGraphPtr &forward_graph, const ValuePtrList &inputs,
                                       const ValuePtr &out, const ValuePtr &dout);
+  void Clear();
 
  private:
   std::map<std::string, FuncGraphPtr> prim_to_bprop_;

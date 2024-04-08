@@ -318,7 +318,7 @@ def convert_types(inputs):
             flag = True
         if 'tuple' in inputs_dtypes[i]:
             data_type = inputs_dtypes[i].split('[')[1].strip(']')
-            if  data_type == 'tensor':
+            if data_type == 'tensor':
                 logging.info("Not support tuple[tensor] input.")
             elif data_type == 'int':
                 inputs_dtypes[i] = 'std::vector<int64_t>'

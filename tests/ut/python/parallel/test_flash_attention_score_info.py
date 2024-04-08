@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import json
 import pytest
 
 import mindspore as ms
@@ -34,7 +35,7 @@ def setup_function():
 grad_all = C.GradOperation(get_all=True)
 
 
-def generate_inputs(B, N, S, D, input_layout, use_mqa=False, with_real_shift=False, sparse_mode=0):
+def generate_inputs(B, N, S, D, input_layout, use_mqa=False, with_real_shift=True, sparse_mode=0):
     N_Q = N
     N_KV = 1 if use_mqa else N
     compressed_mask_mode = [2, 3, 4]
@@ -85,7 +86,7 @@ def compile_net(net, *inputs):
 
 class Net(nn.Cell):
     def __init__(self, head_num, keep_prob=0.9, input_layout="BSH", sparse_mode=0, use_mqa=False,
-                 with_real_shift=False, dp=None, mp=None, sp=1, enable_load_balance=False):
+                 with_real_shift=True, dp=None, mp=None, sp=1):
         super(Net, self).__init__()
         self.reshape = P.Reshape()
         self.drop_gen_mask = P.DropoutGenMask()
@@ -100,8 +101,7 @@ class Net(nn.Cell):
                                          pre_tokens=pre_tokens,
                                          next_tokens=next_tokens,
                                          input_layout=input_layout,
-                                         sparse_mode=sparse_mode,
-                                         enable_load_balance=enable_load_balance)
+                                         sparse_mode=sparse_mode)
         if dp is not None and mp is not None:
             kv_head_stra = 1 if use_mqa else mp
             if input_layout == "BSH":
@@ -152,9 +152,8 @@ def test_self_attention_standalone(keep_prob, input_layout, with_real_shift):
 
 
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
-@pytest.mark.parametrize('with_real_shift', [True, False])
 @pytest.mark.parametrize('sparse_mode', [2, 3, 4])
-def test_self_attention_standalone_with_compressed_mask(input_layout, with_real_shift, sparse_mode):
+def test_self_attention_standalone_with_compressed_mask(input_layout, sparse_mode):
     """
     Features: test FlashAttentionScoreInfo with compressed mask
     Description: StandAlone
@@ -165,19 +164,15 @@ def test_self_attention_standalone_with_compressed_mask(input_layout, with_real_
     context.set_auto_parallel_context(parallel_mode="stand_alone")
     B, N, S, D = 8, 16, 1024, 128
     query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D, input_layout,
-                                                               with_real_shift=with_real_shift,
                                                                sparse_mode=sparse_mode)
-    net = Net(N, input_layout=input_layout,
-              sparse_mode=sparse_mode,
-              with_real_shift=with_real_shift)
+    net = Net(N, input_layout=input_layout, sparse_mode=sparse_mode)
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
-@pytest.mark.parametrize('keep_prob', [0.9, 1.0])
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
 @pytest.mark.parametrize('use_mqa', [True, False])
 @pytest.mark.parametrize('with_real_shift', [True, False])
-def test_flash_attention_semi_auto_parallel(keep_prob, input_layout, use_mqa, with_real_shift):
+def test_flash_attention_semi_auto_parallel(input_layout, use_mqa, with_real_shift):
     """
     Features: test FlashAttentionScoreInfo
     Description: semi_auto_parallel with strategy
@@ -192,15 +187,14 @@ def test_flash_attention_semi_auto_parallel(keep_prob, input_layout, use_mqa, wi
                                                                input_layout,
                                                                use_mqa,
                                                                with_real_shift)
-    net = Net(N, keep_prob, input_layout, use_mqa=use_mqa,
+    net = Net(N, input_layout=input_layout, use_mqa=use_mqa,
               with_real_shift=with_real_shift, dp=dp, mp=mp)
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
-@pytest.mark.parametrize('with_real_shift', [True, False])
 @pytest.mark.parametrize('sparse_mode', [2, 3, 4])
-def test_flash_attention_with_compressed_mask(input_layout, with_real_shift, sparse_mode):
+def test_flash_attention_semi_auto_parallel_with_compressed_mask(input_layout, sparse_mode):
     """
     Features: test FlashAttentionScoreInfo with compressed mask
     Description: semi_auto_parallel with strategy
@@ -213,10 +207,8 @@ def test_flash_attention_with_compressed_mask(input_layout, with_real_shift, spa
     B, N, S, D = 8, 16, 1024, 128
     query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D,
                                                                input_layout,
-                                                               with_real_shift=with_real_shift,
                                                                sparse_mode=sparse_mode)
-    net = Net(N, input_layout=input_layout, sparse_mode=sparse_mode,
-              with_real_shift=with_real_shift, dp=dp, mp=mp)
+    net = Net(N, input_layout=input_layout, sparse_mode=sparse_mode, dp=dp, mp=mp)
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
@@ -257,11 +249,11 @@ def test_flash_attention_auto_parallel(keep_prob, input_layout, use_mqa, with_re
 
 
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
-@pytest.mark.parametrize('with_shift', [True, False])
-@pytest.mark.parametrize('sparse_mode', [0, 1, 2, 3, 4])
-def test_flash_attention_with_seq_parallel(input_layout, with_shift, sparse_mode):
+@pytest.mark.parametrize('use_mqa', [True, False])
+@pytest.mark.parametrize('with_real_shift', [True, False])
+def test_flash_attention_with_seq_parallel(input_layout, use_mqa, with_real_shift):
     """
-    Features: test FlashAttentionScoreInfo with sequence parallel
+    Features: test FlashAttentionScoreInfo with sequence parallel, sparse_mode=0
     Description: semi_auto_parallel with strategy, seq_parallel
     Expectation: compile success
     """
@@ -273,21 +265,19 @@ def test_flash_attention_with_seq_parallel(input_layout, with_shift, sparse_mode
     B, N, S, D = 8, 16, 1024, 128
     query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D,
                                                                input_layout,
-                                                               with_real_shift=with_shift,
-                                                               sparse_mode=sparse_mode)
-    net = Net(N, input_layout=input_layout, sparse_mode=sparse_mode,
-              with_real_shift=with_shift, dp=dp, mp=mp, sp=sp)
+                                                               use_mqa,
+                                                               with_real_shift)
+    net = Net(N, input_layout=input_layout, use_mqa=use_mqa,
+              with_real_shift=with_real_shift, dp=dp, mp=mp, sp=sp)
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
-@pytest.mark.parametrize('with_shift', [True])
-@pytest.mark.parametrize('sparse_mode', [0, 1, 2, 3, 4])
-@pytest.mark.parametrize('load_balance', [True, False])
-def test_flash_attention_with_load_balance(input_layout, with_shift, sparse_mode, load_balance):
+@pytest.mark.parametrize('sparse_mode', [2, 3, 4])
+def test_flash_attention_compressed_mask_with_seq_parallel(input_layout, sparse_mode):
     """
-    Features: test FlashAttentionScoreInfo with sequence parallel load balance
-    Description: semi_auto_parallel with strategy, seq_parallel and load_balance
+    Features: test FlashAttentionScoreInfo with sequence parallel, sparse_mode=[2, 3, 4]
+    Description: semi_auto_parallel with strategy, seq_parallel
     Expectation: compile success
     """
     set_auto_parallel_context(device_num=8, global_rank=0)
@@ -298,10 +288,65 @@ def test_flash_attention_with_load_balance(input_layout, with_shift, sparse_mode
     B, N, S, D = 8, 16, 1024, 128
     query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D,
                                                                input_layout,
-                                                               with_real_shift=with_shift,
                                                                sparse_mode=sparse_mode)
     net = Net(N, input_layout=input_layout, sparse_mode=sparse_mode,
-              with_real_shift=with_shift, dp=dp, mp=mp, sp=sp, enable_load_balance=load_balance)
+              dp=dp, mp=mp, sp=sp)
+    compile_net(net, query, key, value, real_shift, attn_mask)
+
+
+@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+@pytest.mark.parametrize('use_mqa', [True, False])
+@pytest.mark.parametrize('with_real_shift', [True, False])
+def test_flash_attention_with_load_balance(input_layout, use_mqa, with_real_shift):
+    """
+    Features: test FlashAttentionScoreInfo with sequence parallel load balance, sparse_mode=0
+    Description: semi_auto_parallel with strategy, seq_parallel and load_balance
+    Expectation: compile success
+    """
+    config = {"enable_flash_attention_load_balance": True,}
+    with open("./parallel_speed_up_for_fa.json", "w") as file:
+        json.dump(config, file, indent=4, separators=(',', ': '))
+    context.set_context(
+        ascend_config={"parallel_speed_up_json_path": "./parallel_speed_up_for_fa.json"})
+    set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode='semi_auto_parallel')
+    dp = 2
+    mp = 2
+    sp = 2
+    B, N, S, D = 8, 16, 1024, 128
+    query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D,
+                                                               input_layout,
+                                                               use_mqa=use_mqa,
+                                                               with_real_shift=with_real_shift)
+    net = Net(N, input_layout=input_layout, use_mqa=use_mqa, with_real_shift=with_real_shift,
+              dp=dp, mp=mp, sp=sp)
+    compile_net(net, query, key, value, real_shift, attn_mask)
+
+
+@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+@pytest.mark.parametrize('sparse_mode', [2, 3, 4])
+def test_flash_attention_compressed_mask_with_load_balance(input_layout, sparse_mode):
+    """
+    Features: test FlashAttentionScoreInfo with sequence parallel load balance, sparse_mode=[2, 3, 4]
+    Description: semi_auto_parallel with strategy, seq_parallel and load_balance
+    Expectation: compile success
+    """
+    config = {"enable_flash_attention_load_balance": True,}
+    with open("./parallel_speed_up_for_fa.json", "w") as file:
+        json.dump(config, file, indent=4, separators=(',', ': '))
+    context.set_context(
+        ascend_config={"parallel_speed_up_json_path": "./parallel_speed_up_for_fa.json"})
+    set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode='semi_auto_parallel')
+    dp = 2
+    mp = 2
+    sp = 2
+    B, N, S, D = 8, 16, 1024, 128
+    query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D,
+                                                               input_layout,
+                                                               sparse_mode=sparse_mode)
+    net = Net(N, input_layout=input_layout, sparse_mode=sparse_mode,
+              dp=dp, mp=mp, sp=sp)
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 

@@ -27,7 +27,7 @@ class EnvironCreateKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ParseKernelParam(const CpuKernelContext &ctx) const;
+  uint32_t ParseKernelParam(CpuKernelContext &ctx) const;
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_ENVIRON_CREATE_H_

@@ -85,8 +85,8 @@ MIND_API_OPERATOR_IMPL(LinearSumAssignment, BaseOperator);
 
 AbstractBasePtr LinearSumAssignmentInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
-  auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

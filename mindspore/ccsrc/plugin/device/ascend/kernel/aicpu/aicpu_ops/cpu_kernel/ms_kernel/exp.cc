@@ -26,31 +26,31 @@ const uint32_t kInputNum = 1;
 const char *kExp = "Exp";
 constexpr size_t kDataNum = 1024;
 
-#define EXP_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                     \
-    uint32_t result = ExpCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                 \
-      KERNEL_LOG_ERROR("Exp kernel compute failed."); \
-      return result;                                  \
-    }                                                 \
-    break;                                            \
+#define EXP_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                               \
+    uint32_t result = ExpCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "Exp kernel compute failed."); \
+      return result;                                            \
+    }                                                           \
+    break;                                                      \
   }
 
-#define EXP_COMPUTE_CASE2(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                     \
-    uint32_t result = ExpCompute2(CTX);               \
-    if (result != KERNEL_STATUS_OK) {                 \
-      KERNEL_LOG_ERROR("Exp kernel compute failed."); \
-      return result;                                  \
-    }                                                 \
-    break;                                            \
+#define EXP_COMPUTE_CASE2(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                               \
+    uint32_t result = ExpCompute2(CTX);                         \
+    if (result != KERNEL_STATUS_OK) {                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "Exp kernel compute failed."); \
+      return result;                                            \
+    }                                                           \
+    break;                                                      \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t ExpCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kExp);
-  KERNEL_HANDLE_ERROR(ExpCheck(ctx), "[%s] check params failed.", kExp);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kExp);
+  CUST_KERNEL_HANDLE_ERROR(ctx, ExpCheck(ctx), "[%s] check params failed.", kExp);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     EXP_COMPUTE_CASE2(DT_FLOAT16, Eigen::half, ctx)
@@ -59,7 +59,7 @@ uint32_t ExpCpuKernel::Compute(CpuKernelContext &ctx) {
     EXP_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     EXP_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Exp kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Exp kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -68,26 +68,27 @@ uint32_t ExpCpuKernel::Compute(CpuKernelContext &ctx) {
 uint32_t ExpCpuKernel::ExpCheck(CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
-  KERNEL_CHECK_NULLPTR(input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input tensor shape failed.")
   std::vector<int64_t> shape_x = input_0->GetTensorShape()->GetDimSizes();
   size_t shape_size = shape_x.size();
-  KERNEL_CHECK_FALSE((shape_size >= 0), KERNEL_STATUS_PARAM_INVALID, "Input must be at least rank 0, got [%zu].",
-                     shape_x.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_size >= 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Input must be at least rank 0, got [%zu].", shape_x.size())
   if (shape_size > 0) {
-    KERNEL_CHECK_FALSE((shape_x[shape_size - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "Input last dimension must be at least 1.")
+    CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
+                            "Input last dimension must be at least 1.")
   }
   AttrValue *base_ptr = ctx.GetAttr("base");
-  KERNEL_CHECK_NULLPTR(base_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr base failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, base_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr base failed.");
   float base_ = base_ptr->GetFloat();
-  KERNEL_CHECK_FALSE(((base_ > 0) || base_ == -1.0), KERNEL_STATUS_PARAM_INVALID,
-                     "Attr base must be -1.0  or base > 0, but got attr base[%lld]", base_);
+  CUST_KERNEL_CHECK_FALSE(ctx, ((base_ > 0) || base_ == -1.0), KERNEL_STATUS_PARAM_INVALID,
+                          "Attr base must be -1.0  or base > 0, but got attr base[%lld]", base_);
   AttrValue *scale_ptr = ctx.GetAttr("scale");
-  KERNEL_CHECK_NULLPTR(scale_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr scale failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, scale_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr scale failed.");
   AttrValue *shift_ptr = ctx.GetAttr("shift");
-  KERNEL_CHECK_NULLPTR(shift_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr shift failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, shift_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr shift failed.");
   return KERNEL_STATUS_OK;
 }
 
@@ -125,10 +126,10 @@ uint32_t ExpCpuKernel::ExpCompute(CpuKernelContext &ctx) {
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_exp),
-                        "Exp Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_exp),
+                             "Exp Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
@@ -175,10 +176,10 @@ uint32_t ExpCpuKernel::ExpCompute2(CpuKernelContext &ctx) {
         }
       };
       if (max_core_num == 0) {
-        KERNEL_LOG_ERROR("max_core_num could not be 0.");
+        CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
       }
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_exp),
-                          "Exp Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_exp),
+                               "Exp Compute failed.");
     }
   } else {
     for (size_t i = 0; i < data_num; i++) {
@@ -205,10 +206,10 @@ uint32_t ExpCpuKernel::ExpCompute2(CpuKernelContext &ctx) {
         }
       };
       if (max_core_num == 0) {
-        KERNEL_LOG_ERROR("max_core_num could not be 0.");
+        CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
       }
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_exp),
-                          "Exp Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_exp),
+                               "Exp Compute failed.");
     }
   }
   return KERNEL_STATUS_OK;

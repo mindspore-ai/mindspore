@@ -242,11 +242,11 @@ class Conv2d(_Conv):
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
             lowercase are both acceptable. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` . (NHWC is only supported in GPU now.)
@@ -295,7 +295,7 @@ class Conv2d(_Conv):
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
         ValueError: If `padding` is a tuple whose length is not equal to 4.
         ValueError: If `pad_mode` is not equal to 'pad' and `padding` is not equal to (0, 0, 0, 0).
-        ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -458,11 +458,11 @@ class Conv1d(_Conv):
             distributions as well as constant 'One' and 'Zero' distributions are possible. Alias ``'xavier_uniform'`` ,
             ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and lowercase are both acceptable.
             Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'``.
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
@@ -691,11 +691,11 @@ class Conv3d(_Conv):
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
             lowercase are both acceptable. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format. Currently only support ``'NCDHW'`` .
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
@@ -968,7 +968,7 @@ class Conv3dTranspose(_Conv):
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
         TypeError: If `kernel_size`, `stride`, `padding` , `dilation` or `output_padding`
-                   is neither an int not a tuple of three.
+                   is neither an int nor a tuple of three.
         TypeError: If input data type is not float16 or float32.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
@@ -1127,9 +1127,13 @@ class Conv2dTranspose(_Conv):
             respectively. If `output_padding` is not equal to 0, `pad_mode` must be `pad`.
             The value should be in range of `[0, max(stride, dilation))` . Default: ``0`` .
         dilation (Union[int, tuple[int]]): Dilation size of 2D convolution kernel.
-            The data type is an integer or a tuple of two integers. If :math:`k > 1`, the kernel is sampled
-            every `k` elements. The value of `k` on the height and width directions is in range of [1, H]
-            and [1, W] respectively. Default: ``1`` .
+            It can be a single int or a tuple of 2 integers. A single int means the dilation size is the same
+            in both the height and width directions. A tuple of two ints represents the dilation size in
+            the height and width directions, respectively.
+            Assuming :math:`dilation=(d0, d1)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the height direction and :math:`d1-1` elements in the width direction.
+            The values in the height and width dimensions are in the ranges [1, H] and [1, W], respectively.
+            Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be divisible by `group`.
             Default: ``1`` .
         has_bias (bool): Whether the Conv2dTranspose layer has a bias parameter. Default: ``False`` .
@@ -1183,7 +1187,7 @@ class Conv2dTranspose(_Conv):
 
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
-        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int not a tuple.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.

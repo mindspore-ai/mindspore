@@ -29,7 +29,6 @@ from mindspore._c_expression import typing
 from mindspore._c_expression import pyboost_cast
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import pyboost_tile
-from mindspore.ops._tracefunc import PackFunc
 from mindspore.common import dtype as mstype
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
@@ -37,6 +36,9 @@ from mindspore.ops.operations.manually_defined._inner import ScalarCast
 from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum
 from mindspore.common.initializer import Zero
 from mindspore.common.parameter import Parameter
+
+
+dtype_to_type_id = DtypeToEnum()
 
 
 class ScalarDiv(Primitive):
@@ -594,7 +596,8 @@ class BatchNorm(Primitive):
         Tuple of 5 Tensors, the normalized inputs and the updated parameters.
 
         - **output_x** (Tensor) - The same type and shape as the input_x. The shape is :math:`(N, C)`.
-        - **batch_mean** (Tensor) - The mean calculated per-dimension over the mini-batches, shape is :math:(C,).
+        - **batch_mean** (Tensor) - The mean calculated per-dimension over the mini-batches,
+          shape is :math:`(C,)`.
         - **batch_variance** (Tensor) - The variance calculated per-dimension over the mini-batches,
           shape is :math:`(C,)`.
         - **reserve_space_1** (Tensor) - The mean that needs to be reused when calculating gradients,
@@ -996,13 +999,12 @@ class Tile(Primitive):
     def __call__(self, input, dims):
         return _convert_stub(pyboost_tile(self, [input, dims]))
 
+    # pylint: disable=missing-docstring
     def check_elim(self, *args):
         base_tensor, dims = args
         if not isinstance(base_tensor, Tensor):
             raise TypeError(f"For '{self.name}', the type of 'input' must be Tensor, "
                             f"but got {type(base_tensor).__name__}.")
-        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
-            return (False, None)
         if not isinstance(dims, tuple):
             raise TypeError(f"For '{self.name}', the type of 'dims' must be tuple, "
                             f"but got {type(dims).__name__}.")
@@ -1162,7 +1164,7 @@ class Cast(Primitive):
                 data = x.data
                 if data.dtype == dtype:
                     return (True, x)
-            if isinstance(x, Tensor) and x.dtype == dtype and not PackFunc.is_tracing():
+            if isinstance(x, Tensor) and x.dtype == dtype:
                 x = Tensor(x)
                 x.set_cast_dtype()
                 return (True, x)
@@ -1174,7 +1176,7 @@ class Cast(Primitive):
         should_elim, output = self.check_elim(input_x, dtype)
         if should_elim:
             return output
-        return _convert_stub(pyboost_cast(self, [input_x, DtypeToEnum()('Cast', 'dtype', dtype)]))
+        return _convert_stub(pyboost_cast(self, [input_x, dtype_to_type_id('Cast', 'dtype', dtype)]))
 
 # Following is Python Infer Value.
 # A valid infer value function should be:
@@ -1193,9 +1195,11 @@ def infer_value_for_Tile(input, dims):
 
 def infer_value_for_Concat(tensors, axis):
     """Infer value for Concat op."""
-    if tensors is None or None in tensors or axis is None:
+    if not tensors or None in tensors or axis is None:
         return None
-    return Tensor(np.concatenate([x.asnumpy() for x in tensors], axis))
+
+    tensor_to_concat = [x.asnumpy() if x.dtype != mstype.bfloat16 else x.float().asnumpy() for x in tensors]
+    return Tensor(np.concatenate(tensor_to_concat, axis), dtype=tensors[0].dtype)
 
 
 def infer_value_for_ReduceSum(input_x, axis, keep_dims, skip_mode):

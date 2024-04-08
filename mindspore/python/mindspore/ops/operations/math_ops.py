@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
                              FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd,
                              CumSum, Less, LessEqual, AssignAdd)
+
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -726,8 +727,9 @@ class MatMul(Primitive):
     where the :math:`i,j` indicates the output of the i-th row and j-th column element.
 
     Note:
-        If :math:`N * M` cannot be divided by 16, the performance will be poor in ascend environment.
-        The dtype of inputs must be same.
+        - If :math:`N * M` cannot be divided by 16, the performance will be poor in ascend environment.
+        - The dtype of inputs must be same.
+        - On Ascend, float64 doesn't be supported.
 
     Args:
         transpose_a (bool): If ``True`` , `a` is transposed before multiplication. Default: ``False`` .
@@ -1154,8 +1156,7 @@ class Sub(_MathBinaryOp):
     Refer to :func:`mindspore.ops.sub` for more details.
 
     Note:
-        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
-          they must be able to broadcast to a common shape.
+        - When the two inputs have different shapes, they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
           [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
@@ -1164,11 +1165,10 @@ class Sub(_MathBinaryOp):
     Inputs:
         - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
           a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
           the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is the same as the two inputs after broadcasting,
@@ -1564,8 +1564,8 @@ class DivNoNan(Primitive):
     Inputs:
         - **x1** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
           a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
         - **x2** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
           a bool when the first input is a bool or a tensor whose data type is number or bool\_.
           When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -1937,8 +1937,8 @@ class Xlogy(Primitive):
     Inputs:
         - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
           a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
           a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
           When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -5463,7 +5463,7 @@ class Ormqr(Primitive):
         TypeError: If dtype of `x` or `tau` or `other` is not one of: float64, float32, complex64, complex128.
         ValueError: If `x` or `other` is less than 2D.
         ValueError: If rank(x) - rank(tau) != 1.
-        ValueError: If tau.shape[:-2] != x.shape[:-2]
+        ValueError: If tau.shape[:-1] != x.shape[:-2]
         ValueError: If other.shape[:-2] != x.shape[:-2]
         ValueError: If left == True, other.shape[-2] < tau.shape[-1].
         ValueError: If left == True, other.shape[-2] != x.shape[-2].

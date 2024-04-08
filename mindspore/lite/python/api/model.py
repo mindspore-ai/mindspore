@@ -299,6 +299,10 @@ class Model(BaseModel):
             RuntimeError: `weights` is not a list(list).
             RuntimeError: `weights` is a list, but the elements are not Tensor.
             RuntimeError: update weight failed.
+
+        Tutorial Examples:
+            - `Dynamic Weight Update
+              <https://www.mindspore.cn/lite/docs/en/r2.3/use/cloud_infer/runtime_python.html#dynamic-weight-update>`_
         """
         for weight in weights:
             for tensor in weight:

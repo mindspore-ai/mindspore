@@ -186,7 +186,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
 
     Note:
         In case that the output shape depends on crop_size, the crop_size must be constant.
-        For now, the backward of the operator only support bilinear method, for other methods, will return 0.
+        For now, the backward of the operator only supports bilinear method, for other methods, will return 0.
 
     Args:
         image (Tensor): A 4-D Tensor representing a batch of images. It has shape
@@ -223,7 +223,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
     Raises:
         TypeError: If `image` or `boxes` or `box_indices` is not a Tensor.
         TypeError: If `crop_size` is not a Tuple with two int32 elements.
-        TypeError: If dtype of `boxes` is not float or that of `box_indices` is not int.
+        TypeError: If dtype of `boxes` is not float or that of `box_indices` is not int32.
         TypeError: If `method` is not a str.
         TypeError: If `extrapolation_value` is not a float.
         ValueError: If the shape rank of `image` is not 4.

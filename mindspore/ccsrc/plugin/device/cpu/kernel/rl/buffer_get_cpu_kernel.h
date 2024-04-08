@@ -58,6 +58,9 @@ class BufferGetCpuKernelMod : public NativeCpuKernelMod {
     auto count_addr = GetDeviceAddress<int>(inputs, element_nums_);
     auto head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
     auto index_addr = GetDeviceAddress<int>(inputs, element_nums_ + kSecondInputIndex);
+    MS_EXCEPTION_IF_NULL(count_addr);
+    MS_EXCEPTION_IF_NULL(head_addr);
+    MS_EXCEPTION_IF_NULL(index_addr);
     int index = index_addr[0];
     if (index_addr[0] < 0) {
       index += count_addr[0];
@@ -76,6 +79,8 @@ class BufferGetCpuKernelMod : public NativeCpuKernelMod {
       for (size_t i = start; i < end; i++) {
         auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
         auto item_addr = GetDeviceAddress<unsigned char>(outputs, i);
+        MS_EXCEPTION_IF_NULL(buffer_addr);
+        MS_EXCEPTION_IF_NULL(item_addr);
         size_t one_exp_len = output_size_list_[i];
         size_t dist_len = one_exp_len;
         if (memcpy_s(item_addr, one_exp_len, buffer_addr + IntToSize(index) * one_exp_len, dist_len) != EOK) {

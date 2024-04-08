@@ -39,7 +39,7 @@ const char *kKLDiv{"KLDiv"};
 namespace aicpu {
 namespace detail {
 template <typename T>
-inline std::uint32_t ComputeKLDivKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeKLDivKernel(CpuKernelContext &ctx) {
   const auto ParallelFor = aicpu::CpuKernelUtils::ParallelFor;
   auto input = static_cast<T *>(ctx.Input(0)->GetData());
   auto target = static_cast<T *>(ctx.Input(1)->GetData());
@@ -49,7 +49,7 @@ inline std::uint32_t ComputeKLDivKernel(const CpuKernelContext &ctx) {
   uint32_t cores = aicpu::CpuKernelUtils::GetCPUNum(ctx);
   std::string reduction = ctx.GetAttr("reduction")->GetString();
   if (reduction != "sum" && reduction != "batchmean" && reduction != "none" && reduction != "mean") {
-    KERNEL_LOG_ERROR("%s is not a valid value for reduction", reduction.c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "%s is not a valid value for reduction", reduction.c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   bool parallel_flag = false;
@@ -108,52 +108,53 @@ inline std::uint32_t ComputeKLDivKernel(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-inline std::uint32_t ComputeKLDiv(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeKLDiv(CpuKernelContext &ctx) {
   uint32_t result = ComputeKLDivKernel<T>(ctx);
   if (result != 0) {
-    KERNEL_LOG_ERROR("KLDiv compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "KLDiv compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t KLDivExtraCheck(const CpuKernelContext &ctx) {
+inline std::uint32_t KLDivExtraCheck(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get input x data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get input x data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(1)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get input target data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get input target data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Output(0)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get output y data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get output y data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataSize() != ctx.Input(1)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the target "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the target "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::vector<int64_t> input_dims = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> target_dims = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   if (input_dims.size() != target_dims.size()) {
-    KERNEL_LOG_ERROR(
-      "The data dim size of the input x [%llu] need be the same as the "
-      "target "
-      "[%llu].",
-      input_dims.size(), target_dims.size());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data dim size of the input x [%llu] need be the same as the "
+                          "target "
+                          "[%llu].",
+                          input_dims.size(), target_dims.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   for (size_t index = 0; index < input_dims.size(); index++) {
     if (input_dims[index] != target_dims[index]) {
-      KERNEL_LOG_ERROR("The data dim of the input x need be the same as the target.");
+      CUST_KERNEL_LOG_ERROR(ctx, "The data dim of the input x need be the same as the target.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -165,7 +166,7 @@ std::uint32_t KLDivCheck(CpuKernelContext &ctx, uint32_t inputs_num, uint32_t ou
                                                                           : KLDivExtraCheck(ctx);
 }
 // DT_FLOAT16, DT_FLOAT, DT_DOUBLE
-std::uint32_t KLDivCompute(const CpuKernelContext &ctx) {
+std::uint32_t KLDivCompute(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_FLOAT16:
@@ -175,7 +176,7 @@ std::uint32_t KLDivCompute(const CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return ComputeKLDiv<std::double_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

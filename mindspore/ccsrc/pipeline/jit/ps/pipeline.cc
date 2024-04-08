@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/parallel/step_assigned_parallel.h"
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
-#include "frontend/expander/pack/packfunc.h"
 #include "frontend/expander/utils.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/convert_utils.h"
@@ -915,16 +914,14 @@ void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const st
   if (compile_cache_dep_files_.empty()) {
     return;
   }
-#ifdef ENABLE_PROFILE
-  double t1 = GetTime();
-#endif
-  static size_t idx = 0;
-  MS_EXCEPTION_IF_NULL(resource);
-  resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++, &compile_cache_consistent_);
-#ifdef ENABLE_PROFILE
-  double t2 = GetTime();
-  MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);
-#endif
+
+  {
+    MsProfileStatGuard stat_guard("LoadCachedFuncGraph");
+    static size_t idx = 0;
+    MS_EXCEPTION_IF_NULL(resource);
+    resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++,
+                                      &compile_cache_consistent_);
+  }
 }
 
 void GraphExecutorPy::ParallelPostProcess(const std::string &phase, bool use_compile_cache) {
@@ -967,8 +964,8 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphs();
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 1);
   ProcessStatus::GetInstance().RecordEnd();
-  expander::ClearCompileAllCache();
   CompileCacheContext::GetInstance().Clear();
+  parse::Parser::CleanParserResource();
   MS_LOG(INFO) << "Clean compile resource end";
 }
 
@@ -1176,6 +1173,9 @@ void GraphExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs,
 void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePtrList *args_abs) {
   std::vector<symshape::ops::SymbolInfoList> symbol_infos;
   symbol_infos.reserve(args_abs->size());
+  bool has_dyn_shape = false;
+  bool is_parallel = parallel::IsSemiOrAutoParallelMode();
+
   for (size_t i = 0; i < args.size(); i++) {
     auto iter = cur_convert_input_.find(args[i].ptr());
     if (iter == cur_convert_input_.end()) {
@@ -1185,14 +1185,13 @@ void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePt
     if (!iter->second.first->isa<MetaTensor>()) {
       continue;
     }
+    auto digital_shape = iter->second.second->GetShape();
+    if (digital_shape->IsDynamic()) {
+      has_dyn_shape = true;
+    }
     constexpr char symbolic_shape_attr[] = "symbolic_shape";
-    MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
-    std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-    bool is_parallel = (parallel_mode == parallel::kAutoParallel || parallel_mode == parallel::kSemiAutoParallel);
-
     if (!py::hasattr(args[i], symbolic_shape_attr)) {
       if (is_parallel) {
-        auto digital_shape = iter->second.second->GetShape();
         if (digital_shape != nullptr && digital_shape->isa<abstract::TensorShape>()) {
           info_list.resize(digital_shape->GetShapeVector().size());
         }
@@ -1229,7 +1228,7 @@ void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePt
 
   MS_LOG(DEBUG) << "before parallel symbol";
   parallel::PrintSymbolInfo(symbol_infos);
-  symbol_infos = parallel::ParallelSymbolInfo(symbol_infos);
+  symbol_infos = parallel::ParallelSymbolInfo(symbol_infos, has_dyn_shape);
   MS_LOG(DEBUG) << "after parallel symbol";
   parallel::PrintSymbolInfo(symbol_infos);
 
@@ -1314,14 +1313,10 @@ void CacheFuncGraph(const ResourcePtr &resource) {
   if (!resource->EnableCompileCache()) {
     return;
   }
-#ifdef ENABLE_PROFILE
-  double t1 = GetTime();
-#endif
-  resource->CacheFuncGraph();
-#ifdef ENABLE_PROFILE
-  double t2 = GetTime();
-  MsProfile::StatTime("SaveCacheFuncGraph", t2 - t1);
-#endif
+  {
+    MsProfileStatGuard stat_guard("SaveCacheFuncGraph");
+    resource->CacheFuncGraph();
+  }
 }
 
 void CheckInterpretNodeLineInfos() {
@@ -1463,10 +1458,14 @@ void Pipeline::Run() {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
   FuncGraphPtr user_graph = nullptr;
-  auto iter = std::find_if(actions_.begin(), actions_.end(),
-                           [](const ActionItem &item) { return item.first == kDistributedSplit; });
-  std::string cache_action = iter != actions_.end() ? kDistributedSplit : kValidate;
-  ProfileExecute(MsProfile::GetProfile(), [&user_graph, this, cache_action]() {
+#if defined(__linux__) && defined(WITH_BACKEND)
+  std::string last_compile_action = kDistributedSplit;
+#else
+  std::string last_compile_action = kValidate;
+#endif
+  bool already_print_profile = false;
+  static const auto compile_profile_finish_action = common::GetCompileConfig("COMPILE_PROFILE_FINISH_ACTION");
+  ProfileExecute(MsProfile::GetProfile(), [this, &user_graph, &last_compile_action, &already_print_profile]() {
     size_t i = 0;
     for (auto &action : actions_) {
 #ifdef ENABLE_TIMELINE
@@ -1489,9 +1488,19 @@ void Pipeline::Run() {
       });
       (void)profiler::CollectHostInfo(kCompiler, action.first, action.first, 0, 0, 1);
       ProcessStatus::GetInstance().RecordEnd();
-      if (action.first == "task_emit") {
+      if (!result) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
+      }
+
+      if (EnabledProfile() && compile_profile_finish_action == action.first) {
+        ProfileExecuteBreak(MsProfile::GetProfile());
+        MsProfile::Print();
+        already_print_profile = true;
+      }
+
+      if (action.first == kTaskEmit) {
         SetLoopCount(resource_);
-      } else if (action.first == cache_action) {
+      } else if (action.first == last_compile_action) {
         CheckInterpretNodeLineInfos();
         CacheFuncGraph(resource_);
 #ifndef ENABLE_SECURITY
@@ -1506,9 +1515,6 @@ void Pipeline::Run() {
         }
 #endif
 #endif
-      }
-      if (!result) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
       }
 
       FuncGraphPtr graph = resource_->func_graph();
@@ -1526,10 +1532,13 @@ void Pipeline::Run() {
 #endif
     }
   });
-#ifdef ENABLE_PROFILE
-  MsProfile::Print();
-  MsProfile::Reset();
-#endif
+
+  if (EnabledProfile()) {
+    if (!already_print_profile) {
+      MsProfile::Print();
+    }
+    MsProfile::Reset();
+  }
 
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
@@ -1544,8 +1553,9 @@ void Pipeline::Run() {
     if (distributed::collective::CollectiveManager::instance()->initialized()) {
       group_map = distributed::collective::CollectiveManager::instance()->get_group_map();
     }
-    if (parallel::g_device_manager != nullptr) {
+    if (parallel::g_device_manager == nullptr) {
       MS_LOG(WARNING) << "parallel::g_device_manager is not initialized. Skip dump parallel info.";
+    } else {
       auto global_rank_id = parallel::g_device_manager->global_rank();
       DumpParallelJson("dump_parallel_info_" + std::to_string(global_rank_id) + ".json", resource_->func_graph(),
                        global_rank_id, group_map);
@@ -1557,7 +1567,7 @@ void Pipeline::Run() {
 
 bool Pipeline::NeedCreateBackend() {
   return std::any_of(actions_.begin(), actions_.end(),
-                     [](const ActionItem &action) { return action.first == "task_emit" || action.first == "execute"; });
+                     [](const ActionItem &action) { return action.first == kTaskEmit || action.first == kExecute; });
 }
 
 void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list) {

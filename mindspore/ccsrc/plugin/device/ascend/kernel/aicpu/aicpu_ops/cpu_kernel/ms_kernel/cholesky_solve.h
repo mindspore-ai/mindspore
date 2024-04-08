@@ -32,7 +32,7 @@ class CholeskySolveCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx, const bool &upper);
+  uint32_t ComputeKernel(CpuKernelContext &ctx, const bool &upper);
 };
 }  // namespace aicpu
 #endif

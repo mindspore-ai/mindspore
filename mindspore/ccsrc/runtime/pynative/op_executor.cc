@@ -28,7 +28,10 @@ OpExecutor::OpExecutor() = default;
 
 OpExecutor::~OpExecutor() = default;
 
-void OpExecutor::RegisterForwardCallback(const std::function<void()> &callback) { forward_callback_ = callback; }
+void OpExecutor::RegisterForwardCallback(const std::function<void()> &callback) {
+  forward_callback_ = callback;
+  tensor::Tensor::RegisterLazyCallback([]() { OpExecutor::GetInstance().WaitAll(); });
+}
 
 void OpExecutor::Reset() { runtime::Pipeline::Get().backend_stage()->Reset(); }
 
@@ -84,6 +87,8 @@ void OpExecutor::ChildAfterFork() {
   MS_LOG(DEBUG) << "OpExecutor reinitialize after fork";
   MS_LOG(DEBUG) << "Reinitialize async_queue_.";
   runtime::Pipeline::Get().backend_stage()->ChildAfterFork();
+  // Refresh the lazy callback in Tensor.
+  tensor::Tensor::RegisterLazyCallback([]() { OpExecutor::GetInstance().WaitAll(); });
   MS_LOG(DEBUG) << "OpExecutor reinitialize after fork done.";
 }
 }  // namespace mindspore::runtime

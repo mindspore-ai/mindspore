@@ -38,14 +38,14 @@ constexpr uint32_t kHistogramOutputNum = 1;
 const int64_t kParallelDataNum = 7 * 1024;
 const int64_t kParallelDataNumMid = 35 * 1024;
 
-#define HISTOGRAM_COMPUTE_CASE(DTYPE, TYPE, TYPE_C, CTX)    \
-  case (DTYPE): {                                           \
-    uint32_t result = DoCompute<TYPE, TYPE_C>(CTX);         \
-    if (result != KERNEL_STATUS_OK) {                       \
-      KERNEL_LOG_ERROR("Histogram kernel compute failed."); \
-      return result;                                        \
-    }                                                       \
-    break;                                                  \
+#define HISTOGRAM_COMPUTE_CASE(DTYPE, TYPE, TYPE_C, CTX)              \
+  case (DTYPE): {                                                     \
+    uint32_t result = DoCompute<TYPE, TYPE_C>(CTX);                   \
+    if (result != KERNEL_STATUS_OK) {                                 \
+      CUST_KERNEL_LOG_ERROR(ctx, "Histogram kernel compute failed."); \
+      return result;                                                  \
+    }                                                                 \
+    break;                                                            \
   }
 
 #define HISTOGRAM_SINGLE_COMPUTE(begin, end, y_data)                                                             \
@@ -64,17 +64,17 @@ const int64_t kParallelDataNumMid = 35 * 1024;
 namespace aicpu {
 uint32_t HistogramCpuKernel::ParamCheck(CpuKernelContext &ctx) {
   // check input number and output number
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kHistogramInputNum, kHistogramOutputNum), "[%s] check params failed.",
-                      kHistogram);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kHistogramInputNum, kHistogramOutputNum), "[%s] check params failed.",
+                           kHistogram);
   const Tensor *x = ctx.Input(0);
   const Tensor *y = ctx.Output(0);
-  KERNEL_LOG_DEBUG("HistogramCpuKernel[%s], input x: size[%llu]; output y: size[%llu].", ctx.GetOpType().c_str(),
-                   x->GetDataSize(), y->GetDataSize());
+  CUST_KERNEL_LOG_DEBUG(ctx, "HistogramCpuKernel[%s], input x: size[%llu]; output y: size[%llu].",
+                        ctx.GetOpType().c_str(), x->GetDataSize(), y->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 
 template <typename T, typename InterType>
-uint32_t HistogramCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t HistogramCpuKernel::DoCompute(CpuKernelContext &ctx) {
   Tensor *x = ctx.Input(0);
   Tensor *y = ctx.Output(0);
   auto x_data = reinterpret_cast<T *>(x->GetData());
@@ -90,11 +90,12 @@ uint32_t HistogramCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   }
   if (ctx.GetAttr("bins")) {
     bins = ctx.GetAttr("bins")->GetInt();
-    KERNEL_CHECK_FALSE((bins > 0), KERNEL_STATUS_PARAM_INVALID, "The attr value 'bins' should greater than 0.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (bins > 0), KERNEL_STATUS_PARAM_INVALID,
+                            "The attr value 'bins' should greater than 0.");
   }
 
-  KERNEL_CHECK_FALSE((bins == y_num), KERNEL_STATUS_PARAM_INVALID,
-                     "The attr value 'bins' should equal to the shape of 'y'.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (bins == y_num), KERNEL_STATUS_PARAM_INVALID,
+                          "The attr value 'bins' should equal to the shape of 'y'.");
 
   // initial y as all zero
   std::fill(y_data, y_data + y_num, 0);
@@ -102,8 +103,8 @@ uint32_t HistogramCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   double leftmost_edge = static_cast<double>(min_attr);
   double rightmost_edge = static_cast<double>(max_attr);
   // min and max attr check
-  KERNEL_CHECK_FALSE((leftmost_edge <= rightmost_edge), KERNEL_STATUS_PARAM_INVALID,
-                     "The attr value 'max' should greater or equal 'min'.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (leftmost_edge <= rightmost_edge), KERNEL_STATUS_PARAM_INVALID,
+                          "The attr value 'max' should greater or equal 'min'.");
 
   auto min_max = std::minmax_element(x_data, x_data + x_num);
   auto x_min = *min_max.first;
@@ -121,7 +122,7 @@ uint32_t HistogramCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   }
   if (std::isinf(leftmost_edge) || std::isinf(rightmost_edge) || std::isnan(leftmost_edge) ||
       std::isnan(rightmost_edge)) {
-    KERNEL_LOG_ERROR("For Histogram, range of [%lf, %lf] is not finite.", leftmost_edge, rightmost_edge);
+    CUST_KERNEL_LOG_ERROR(ctx, "For Histogram, range of [%lf, %lf] is not finite.", leftmost_edge, rightmost_edge);
   }
 
   const InterType step = static_cast<InterType>(rightmost_edge) - static_cast<InterType>(leftmost_edge);
@@ -134,17 +135,18 @@ uint32_t HistogramCpuKernel::DoCompute(const CpuKernelContext &ctx) {
       max_core_num = std::min(max_core_num, 4U);
     }
     std::mutex hist_mutex;
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, x_num, x_num / max_core_num,
-                                                    [&](int64_t start, int64_t end) {
-                                                      // Allocates a tensor for the thread's local results
-                                                      std::vector<int32_t> hist_local(y_num, 0);
-                                                      HISTOGRAM_SINGLE_COMPUTE(start, end, hist_local)
-                                                      // Locks and updates the common output
-                                                      const std::lock_guard<std::mutex> lock(hist_mutex);
-                                                      std::transform(hist_local.begin(), hist_local.end(), y_data,
-                                                                     y_data, std::plus<int32_t>());
-                                                    }),
-                        "Histogram Parallel Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, x_num, x_num / max_core_num,
+                                                         [&](int64_t start, int64_t end) {
+                                                           // Allocates a tensor for the thread's local results
+                                                           std::vector<int32_t> hist_local(y_num, 0);
+                                                           HISTOGRAM_SINGLE_COMPUTE(start, end, hist_local)
+                                                           // Locks and updates the common output
+                                                           const std::lock_guard<std::mutex> lock(hist_mutex);
+                                                           std::transform(hist_local.begin(), hist_local.end(), y_data,
+                                                                          y_data, std::plus<int32_t>());
+                                                         }),
+                             "Histogram Parallel Compute failed.");
   } else {
     HISTOGRAM_SINGLE_COMPUTE(0, x_num, y_data)
   }
@@ -152,7 +154,7 @@ uint32_t HistogramCpuKernel::DoCompute(const CpuKernelContext &ctx) {
 }
 
 uint32_t HistogramCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(ParamCheck(ctx), "HistogramCpuKernel check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ParamCheck(ctx), "HistogramCpuKernel check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     HISTOGRAM_COMPUTE_CASE(DT_FLOAT16, Eigen::half, float, ctx)
@@ -161,7 +163,7 @@ uint32_t HistogramCpuKernel::Compute(CpuKernelContext &ctx) {
     HISTOGRAM_COMPUTE_CASE(DT_INT64, int64_t, double, ctx)
     HISTOGRAM_COMPUTE_CASE(DT_DOUBLE, double, double, ctx)
     default:
-      KERNEL_LOG_ERROR("Histogram kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Histogram kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

@@ -1,5 +1,5 @@
-- **float** - ¹Ì¶¨µÄÑ§Ï°ÂÊ¡£±ØÐë´óÓÚµÈÓÚÁã¡£
-- **int** - ¹Ì¶¨µÄÑ§Ï°ÂÊ¡£±ØÐë´óÓÚµÈÓÚÁã¡£ÕûÊýÀàÐÍ»á±»×ª»»Îª¸¡µãÊý¡£
-- **Tensor** - ¿ÉÒÔÊÇ±êÁ¿»òÒ»Î¬ÏòÁ¿¡£±êÁ¿ÊÇ¹Ì¶¨µÄÑ§Ï°ÂÊ¡£Ò»Î¬ÏòÁ¿ÊÇ¶¯Ì¬µÄÑ§Ï°ÂÊ£¬µÚi²½½«È¡ÏòÁ¿ÖÐµÚi¸öÖµ×÷ÎªÑ§Ï°ÂÊ¡£
-- **Iterable** - ¶¯Ì¬µÄÑ§Ï°ÂÊ¡£µÚi²½½«È¡µü´úÆ÷µÚi¸öÖµ×÷ÎªÑ§Ï°ÂÊ¡£
-- **LearningRateSchedule** - ¶¯Ì¬µÄÑ§Ï°ÂÊ¡£ÔÚÑµÁ·¹ý³ÌÖÐ£¬ÓÅ»¯Æ÷½«Ê¹ÓÃ²½Êý£¨step£©×÷ÎªÊäÈë£¬µ÷ÓÃ `LearningRateSchedule <https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore.nn.html#learningrateschedule%E7%B1%BB>`_ ÊµÀýÀ´¼ÆËãµ±Ç°Ñ§Ï°ÂÊ¡£
+- **float** - ï¿½Ì¶ï¿½ï¿½ï¿½Ñ§Ï°ï¿½Ê¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ã¡£
+- **int** - ï¿½Ì¶ï¿½ï¿½ï¿½Ñ§Ï°ï¿½Ê¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ã¡£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í»á±»×ªï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+- **Tensor** - ï¿½ï¿½ï¿½ï¿½ï¿½Ç±ï¿½ï¿½ï¿½ï¿½ï¿½Ò»Î¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¹Ì¶ï¿½ï¿½ï¿½Ñ§Ï°ï¿½Ê¡ï¿½Ò»Î¬ï¿½ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½Ì¬ï¿½ï¿½Ñ§Ï°ï¿½Ê£ï¿½ï¿½ï¿½iï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½iï¿½ï¿½Öµï¿½ï¿½ÎªÑ§Ï°ï¿½Ê¡ï¿½
+- **Iterable** - ï¿½ï¿½Ì¬ï¿½ï¿½Ñ§Ï°ï¿½Ê¡ï¿½ï¿½ï¿½iï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½iï¿½ï¿½Öµï¿½ï¿½ÎªÑ§Ï°ï¿½Ê¡ï¿½
+- **LearningRateSchedule** - ï¿½ï¿½Ì¬ï¿½ï¿½Ñ§Ï°ï¿½Ê¡ï¿½ï¿½ï¿½Ñµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½Å»ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½mindspore.cn/docs/zh-CN/r2.3.q1ateSchedule <https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore.nn.html#learningrateschedule%E7%B1%BB>`_ Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ãµ±Ç°Ñ§Ï°ï¿½Ê¡ï¿½

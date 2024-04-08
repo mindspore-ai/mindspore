@@ -27,6 +27,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/counter.h"
 #include "utils/trace_base.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace change {
@@ -793,6 +794,13 @@ void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const F
   source->set_dropped(true);
   if (source->manager().get() == this) {
     source->set_manager(nullptr);
+  }
+
+  if (source->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
+    target->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
+  }
+  if (source->has_flag(kTraining)) {
+    target->set_flag(kTraining, true);
   }
 }
 

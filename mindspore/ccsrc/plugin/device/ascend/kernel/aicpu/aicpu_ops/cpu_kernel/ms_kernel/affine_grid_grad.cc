@@ -59,66 +59,66 @@ const int x_size_W_5D = 4;
 const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 10 * 1024;
 
-#define AFFINEGRIDGRAD_COMPUTE_CASE(DTYPE, TYPE, DTYPE0, CTX)    \
-  case (DTYPE): {                                                \
-    uint32_t result;                                             \
-    if ((DTYPE0) == DT_INT32) {                                  \
-      result = AffineGridGradCompute<TYPE, int32_t>(CTX);        \
-    } else {                                                     \
-      result = AffineGridGradCompute<TYPE, int64_t>(CTX);        \
-    }                                                            \
-    if (result != KERNEL_STATUS_OK) {                            \
-      KERNEL_LOG_ERROR("AffineGridGrad kernel compute failed."); \
-      return result;                                             \
-    }                                                            \
-    break;                                                       \
+#define AFFINEGRIDGRAD_COMPUTE_CASE(DTYPE, TYPE, DTYPE0, CTX)              \
+  case (DTYPE): {                                                          \
+    uint32_t result;                                                       \
+    if ((DTYPE0) == DT_INT32) {                                            \
+      result = AffineGridGradCompute<TYPE, int32_t>(CTX);                  \
+    } else {                                                               \
+      result = AffineGridGradCompute<TYPE, int64_t>(CTX);                  \
+    }                                                                      \
+    if (result != KERNEL_STATUS_OK) {                                      \
+      CUST_KERNEL_LOG_ERROR(ctx, "AffineGridGrad kernel compute failed."); \
+      return result;                                                       \
+    }                                                                      \
+    break;                                                                 \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t AffineGridGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kAffineGridGradInputNum, kAffineGridGradOutputNum),
-                      "[%s] check input and output failed.", kAffineGridGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kAffineGridGradInputNum, kAffineGridGradOutputNum),
+                           "[%s] check input and output failed.", kAffineGridGrad);
   auto data_type0 = static_cast<DataType>(ctx.Input(kFirstInputIndex)->GetDataType());
   auto data_type1 = static_cast<DataType>(ctx.Input(kSecondInputIndex)->GetDataType());
   auto data_type2 = static_cast<DataType>(ctx.Output(kFirstOutputIndex)->GetDataType());
   if ((data_type1 != DT_INT32) && (data_type1 != DT_INT64)) {
-    KERNEL_LOG_ERROR(
-      "[%s] Data type of x_size requires int32 or int64, but got data type "
-      "[%s].",
-      ctx.GetOpType().c_str(), DTypeStr(data_type1).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "[%s] Data type of x_size requires int32 or int64, but got data type "
+                          "[%s].",
+                          ctx.GetOpType().c_str(), DTypeStr(data_type1).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (data_type0 != data_type2) {
-    KERNEL_LOG_ERROR(
-      "[%s] Data type of y_grad and x_grad requires same, but got data type "
-      "[%s] and [%s].",
-      ctx.GetOpType().c_str(), DTypeStr(data_type0).c_str(), DTypeStr(data_type2).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "[%s] Data type of y_grad and x_grad requires same, but got data type "
+                          "[%s] and [%s].",
+                          ctx.GetOpType().c_str(), DTypeStr(data_type0).c_str(), DTypeStr(data_type2).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (data_type1 == DT_INT32) {
-    KERNEL_HANDLE_ERROR(AffineGridGradCheck<int32_t>(ctx), "[%s] check params failed.", kAffineGridGrad);
+    CUST_KERNEL_HANDLE_ERROR(ctx, AffineGridGradCheck<int32_t>(ctx), "[%s] check params failed.", kAffineGridGrad);
   } else if (data_type1 == DT_INT64) {
-    KERNEL_HANDLE_ERROR(AffineGridGradCheck<int64_t>(ctx), "[%s] check params failed.", kAffineGridGrad);
+    CUST_KERNEL_HANDLE_ERROR(ctx, AffineGridGradCheck<int64_t>(ctx), "[%s] check params failed.", kAffineGridGrad);
   }
   switch (data_type0) {
     AFFINEGRIDGRAD_COMPUTE_CASE(DT_FLOAT16, Eigen::half, data_type1, ctx)
     AFFINEGRIDGRAD_COMPUTE_CASE(DT_FLOAT, float, data_type1, ctx)
     default:
-      KERNEL_LOG_ERROR("AffineGridGrad kernel data type [%s] not support.", DTypeStr(data_type0).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "AffineGridGrad kernel data type [%s] not support.", DTypeStr(data_type0).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T0>
-uint32_t AffineGridGradCpuKernel::AffineGridGradCheck(const CpuKernelContext &ctx) {
+uint32_t AffineGridGradCpuKernel::AffineGridGradCheck(CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(kFirstInputIndex);
   auto input_1 = ctx.Input(kSecondInputIndex);
   auto output_0 = ctx.Output(kFirstOutputIndex);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
-  KERNEL_CHECK_NULLPTR(input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
-  KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
   std::vector<int64_t> outputsize = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> input0 = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   auto input1 = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
@@ -126,14 +126,14 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCheck(const CpuKernelContext &ct
   if (outputsize[0] == len_x_size_4D) {
     if ((input0[N] != input1[N]) || (input0[y_grad_H_4D] != input1[x_size_H_4D]) ||
         (input0[y_grad_W_4D] != input1[x_size_W_4D]) || (input0[y_grad_3_4D] != y_grad_4_value_4D)) {
-      KERNEL_LOG_ERROR("There are some dimensional constraints between input0 and input1");
+      CUST_KERNEL_LOG_ERROR(ctx, "There are some dimensional constraints between input0 and input1");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   } else if (outputsize[0] == len_x_size_5D) {
     if ((input0[N] != input1[N]) || (input0[y_grad_D_5D] != input1[x_size_D_5D]) ||
         (input0[y_grad_H_5D] != input1[x_size_H_5D]) || (input0[y_grad_W_5D] != input1[x_size_W_5D]) ||
         (input0[y_grad_4_5D] != y_grad_5_value_5D)) {
-      KERNEL_LOG_ERROR("There are some dimensional constraints between input0 and input1");
+      CUST_KERNEL_LOG_ERROR(ctx, "There are some dimensional constraints between input0 and input1");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -141,10 +141,10 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCheck(const CpuKernelContext &ct
 }
 
 template <typename T, typename T0>
-uint32_t AffineGridGradCpuKernel::AffineGridGradCompute(const CpuKernelContext &ctx) {
+uint32_t AffineGridGradCpuKernel::AffineGridGradCompute(CpuKernelContext &ctx) {
   bool align_corners = false;
   AttrValue *align_corners_attr_ptr = ctx.GetAttr("align_corners");
-  KERNEL_CHECK_NULLPTR(align_corners_attr_ptr, KERNEL_STATUS_PARAM_INVALID, "'align_corners' is nullptr.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, align_corners_attr_ptr, KERNEL_STATUS_PARAM_INVALID, "'align_corners' is nullptr.")
   if (align_corners_attr_ptr) {
     align_corners = align_corners_attr_ptr->GetBool();
   }
@@ -158,7 +158,7 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCompute(const CpuKernelContext &
 }
 
 template <typename T, typename T0>
-uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_5D(const CpuKernelContext &ctx, bool align_corners) {
+uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_5D(CpuKernelContext &ctx, bool align_corners) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto D = *(data_out_size + x_size_D_5D);
   auto H = *(data_out_size + x_size_H_5D);
@@ -204,7 +204,7 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_5D(const CpuKernelContex
 }
 
 template <typename T0>
-Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_5D(const CpuKernelContext &ctx, Eigen::VectorXd vecX,
+Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_5D(CpuKernelContext &ctx, Eigen::VectorXd vecX,
                                                            Eigen::VectorXd vecY, Eigen::VectorXd vecZ) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto D = *(data_out_size + x_size_D_5D);
@@ -252,7 +252,7 @@ Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_5D(const CpuKernelContex
 }
 
 template <typename T, typename T0>
-uint32_t AffineGridGradCpuKernel::DoCompute_5D(const CpuKernelContext &ctx, Eigen::MatrixXf all) {
+uint32_t AffineGridGradCpuKernel::DoCompute_5D(CpuKernelContext &ctx, Eigen::MatrixXf all) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto N = data_out_size[0];
   auto D = *(data_out_size + x_size_D_5D);
@@ -290,7 +290,7 @@ uint32_t AffineGridGradCpuKernel::DoCompute_5D(const CpuKernelContext &ctx, Eige
 }
 
 template <typename T, typename T0>
-uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_4D(const CpuKernelContext &ctx, bool align_corners) {
+uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_4D(CpuKernelContext &ctx, bool align_corners) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto H = *(data_out_size + x_size_H_4D);
   auto W = *(data_out_size + x_size_W_4D);
@@ -325,7 +325,7 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_4D(const CpuKernelContex
 }
 
 template <typename T0>
-Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_4D(const CpuKernelContext &ctx, Eigen::VectorXd vecX,
+Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_4D(CpuKernelContext &ctx, Eigen::VectorXd vecX,
                                                            Eigen::VectorXd vecY) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto H = *(data_out_size + x_size_H_4D);
@@ -365,7 +365,7 @@ Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_4D(const CpuKernelContex
 }
 
 template <typename T, typename T0>
-uint32_t AffineGridGradCpuKernel::DoCompute_4D(const CpuKernelContext &ctx, Eigen::MatrixXf all) {
+uint32_t AffineGridGradCpuKernel::DoCompute_4D(CpuKernelContext &ctx, Eigen::MatrixXf all) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto N = data_out_size[0];
   auto H = *(data_out_size + x_size_H_4D);

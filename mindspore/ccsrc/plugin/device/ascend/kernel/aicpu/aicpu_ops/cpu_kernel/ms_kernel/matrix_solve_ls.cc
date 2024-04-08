@@ -34,59 +34,62 @@ const int64_t kNum2 = 2;
 namespace aicpu {
 uint32_t MatrixSolveLsCpuKernel::Compute(CpuKernelContext &ctx) {
   bool qr_chole = (ctx.GetAttr("fast") == nullptr) ? true : ctx.GetAttr("fast")->GetBool();
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "MatrixSolveLs check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MatrixSolveLs check input and output number failed.");
 
   Tensor *matrix = ctx.Input(kFirstInputIndex);
   Tensor *b = ctx.Input(kSecondInputIndex);
   Tensor *l2 = ctx.Input(2);
   Tensor *x = ctx.Output(0);
   if ((matrix->GetDataSize() == 0) || (b->GetDataSize() == 0)) {
-    KERNEL_LOG_ERROR("[%s] Input is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Input is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   auto shapea = matrix->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(shapea, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapea is null.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, shapea, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapea is null.");
   auto shapeb = b->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(shapeb, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapeb is null.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, shapeb, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapeb is null.");
   auto shapel2 = l2->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(shapel2, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapel2 is null.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, shapel2, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapel2 is null.");
   auto shapex = x->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(shapex, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapex is null.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, shapex, KERNEL_STATUS_PARAM_INVALID, "For MatrixSolveLs, shapex is null.");
   auto dims = shapea->GetDims();
 
   if (ctx.Input(1)->GetTensorShape()->GetDims() == 1) {
     if (shapea->GetDimSize(dims - kNum2) != shapeb->GetDimSize(0)) {
-      KERNEL_LOG_ERROR(
-        "[%s] #Rows mismatch between A and rhs."
-        "#Rows of A = [%llu], #Rows of rhs = [%llu]",
-        ctx.GetOpType().c_str(), shapea->GetDimSize(dims - kNum2), shapeb->GetDimSize(0));
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "[%s] #Rows mismatch between A and rhs."
+                            "#Rows of A = [%llu], #Rows of rhs = [%llu]",
+                            ctx.GetOpType().c_str(), shapea->GetDimSize(dims - kNum2), shapeb->GetDimSize(0));
       return KERNEL_STATUS_PARAM_INVALID;
     }
   } else {
     if (shapea->GetDimSize(dims - kNum2) != shapeb->GetDimSize(dims - kNum2)) {
-      KERNEL_LOG_ERROR(
-        "[%s] #Rows mismatch between A and rhs."
-        "#Rows of A = [%llu], #Rows of rhs = [%llu]",
-        ctx.GetOpType().c_str(), shapea->GetDimSize(dims - kNum2), shapeb->GetDimSize(dims - kNum2));
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "[%s] #Rows mismatch between A and rhs."
+                            "#Rows of A = [%llu], #Rows of rhs = [%llu]",
+                            ctx.GetOpType().c_str(), shapea->GetDimSize(dims - kNum2),
+                            shapeb->GetDimSize(dims - kNum2));
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
   if (shapel2->GetDims() != 0 && !(shapel2->GetDims() == 1 && shapel2->GetDimSize(0) == 1)) {
-    KERNEL_LOG_ERROR("[%s] Tensor l2 should be a scalar or a single 1-dimension number.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor l2 should be a scalar or a single 1-dimension number.",
+                          ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(1)->GetTensorShape()->GetDims() == 1) {
     if (shapex->GetDims() != shapeb->GetDims() || shapea->GetDimSize(dims - 1) != shapex->GetDimSize(0) ||
         shapex->GetDimSize(shapex->GetDims() - 1) != shapeb->GetDimSize(0)) {
-      KERNEL_LOG_ERROR("[%s] Tensor y shape mismatch.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor y shape mismatch.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   } else {
     if (shapex->GetDims() != shapeb->GetDims() ||
         shapea->GetDimSize(dims - 1) != shapex->GetDimSize(shapex->GetDims() - kNum2) ||
         shapex->GetDimSize(shapex->GetDims() - 1) != shapeb->GetDimSize(shapeb->GetDims() - 1)) {
-      KERNEL_LOG_ERROR("[%s] Tensor y shape mismatch.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor y shape mismatch.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -94,12 +97,12 @@ uint32_t MatrixSolveLsCpuKernel::Compute(CpuKernelContext &ctx) {
   auto a_data_type = matrix->GetDataType();
   auto b_data_type = b->GetDataType();
   if (a_data_type != b_data_type) {
-    KERNEL_LOG_ERROR("[%s] Tensor data type mismatch.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor data type mismatch.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (a_data_type != DT_FLOAT && a_data_type != DT_DOUBLE && a_data_type != DT_COMPLEX64 &&
       a_data_type != DT_COMPLEX128) {
-    KERNEL_LOG_ERROR("MatrixSolveLs kernel data type [%s] not support.", DTypeStr(a_data_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "MatrixSolveLs kernel data type [%s] not support.", DTypeStr(a_data_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -172,7 +175,7 @@ void MatrixSolveLsCpuKernel::RealCholeskySingleCompute(T *aptr, T *bptr, T *xptr
 }
 
 template <typename T>
-uint32_t MatrixSolveLsCpuKernel::RealCholesky(const CpuKernelContext &ctx) {
+uint32_t MatrixSolveLsCpuKernel::RealCholesky(CpuKernelContext &ctx) {
   auto dims = ctx.Input(0)->GetTensorShape()->GetDims();
   auto aptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto bptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
@@ -203,8 +206,9 @@ uint32_t MatrixSolveLsCpuKernel::RealCholesky(const CpuKernelContext &ctx) {
         RealCholeskySingleCompute(aptr + i * mat_size, bptr + i * rhs_size, xptr + i * res_size, l2, m, k, n);
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_matrix_solve_ls),
-                        "MatrixSolveLs Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_matrix_solve_ls),
+                             "MatrixSolveLs Compute failed.");
   } else {
     for (int64_t i = 0; i < batch; i++) {
       RealCholeskySingleCompute(aptr + i * mat_size, bptr + i * rhs_size, xptr + i * res_size, l2, m, k, n);
@@ -272,7 +276,7 @@ void MatrixSolveLsCpuKernel::ComplexCholeskySingleCompute(std::complex<T> *aptr,
 }
 
 template <typename T>
-uint32_t MatrixSolveLsCpuKernel::ComplexCholesky(const CpuKernelContext &ctx) {
+uint32_t MatrixSolveLsCpuKernel::ComplexCholesky(CpuKernelContext &ctx) {
   auto dims = ctx.Input(0)->GetTensorShape()->GetDims();
   auto l2 = reinterpret_cast<double *>(ctx.Input(2)->GetData());
   auto aptr = reinterpret_cast<std::complex<T> *>(ctx.Input(0)->GetData());
@@ -302,8 +306,9 @@ uint32_t MatrixSolveLsCpuKernel::ComplexCholesky(const CpuKernelContext &ctx) {
         ComplexCholeskySingleCompute(aptr + i * mat_size, bptr + i * rhs_size, xptr + i * res_size, l2, m, k, n);
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_matrix_solve_ls),
-                        "MatrixSolveLs Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_matrix_solve_ls),
+                             "MatrixSolveLs Compute failed.");
   } else {
     for (int64_t i = 0; i < batch; i++) {
       ComplexCholeskySingleCompute(aptr + i * mat_size, bptr + i * rhs_size, xptr + i * res_size, l2, m, k, n);
@@ -337,7 +342,7 @@ void MatrixSolveLsCpuKernel::RealQrSingleCompute(T *aptr, T *bptr, T *xptr, int6
 }
 
 template <typename T>
-uint32_t MatrixSolveLsCpuKernel::RealQr(const CpuKernelContext &ctx) {
+uint32_t MatrixSolveLsCpuKernel::RealQr(CpuKernelContext &ctx) {
   auto dims = ctx.Input(0)->GetTensorShape()->GetDims();
   auto aptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto bptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
@@ -366,8 +371,9 @@ uint32_t MatrixSolveLsCpuKernel::RealQr(const CpuKernelContext &ctx) {
         RealQrSingleCompute(aptr + i * mat_size, bptr + i * rhs_size, xptr + i * res_size, m, k, n);
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_matrix_solve_ls),
-                        "MatrixSolveLs Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_matrix_solve_ls),
+                             "MatrixSolveLs Compute failed.");
   } else {
     for (int64_t i = 0; i < batch; i++) {
       RealQrSingleCompute(aptr + i * mat_size, bptr + i * rhs_size, xptr + i * res_size, m, k, n);
@@ -417,7 +423,7 @@ void MatrixSolveLsCpuKernel::ComplexQrSingleCompute(std::complex<T> *aptr, std::
 }
 
 template <typename T>
-uint32_t MatrixSolveLsCpuKernel::ComplexQr(const CpuKernelContext &ctx) {
+uint32_t MatrixSolveLsCpuKernel::ComplexQr(CpuKernelContext &ctx) {
   auto dims = ctx.Input(0)->GetTensorShape()->GetDims();
   int64_t m = ctx.Input(0)->GetTensorShape()->GetDimSize(dims - 2);
   int64_t k = ctx.Input(0)->GetTensorShape()->GetDimSize(dims - 1);
@@ -446,8 +452,9 @@ uint32_t MatrixSolveLsCpuKernel::ComplexQr(const CpuKernelContext &ctx) {
         ComplexQrSingleCompute(aptr + i * mat_size, bptr + i * rhs_size, xptr + i * res_size, m, k, n);
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_matrix_solve_ls),
-                        "MatrixSolveLs Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_matrix_solve_ls),
+                             "MatrixSolveLs Compute failed.");
   } else {
     for (int64_t i = 0; i < batch; i++) {
       ComplexQrSingleCompute(aptr + i * mat_size, bptr + i * rhs_size, xptr + i * res_size, m, k, n);

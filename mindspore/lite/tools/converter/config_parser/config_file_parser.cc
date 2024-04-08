@@ -42,6 +42,9 @@ constexpr auto kDynamicQuantParam = "dynamic_quant_param";
 constexpr auto kGraphKernelParam = "graph_kernel_param";
 constexpr int kNumSize3 = 3;
 constexpr int kNumSize2 = 2;
+constexpr size_t kNumIndex0 = 0;
+constexpr size_t kNumIndex1 = 1;
+constexpr size_t kNumIndex2 = 2;
 }  // namespace
 using ShapeVector = std::vector<int64_t>;
 const int kBatchDim = 0;
@@ -431,6 +434,32 @@ bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
       return false;
     }
   }
+
+  auto op_attrs_str = FindInAscendMap(kOpAttrs, ascend_map);
+  std::vector<std::string> op_attrs_vec = {};
+  if (!op_attrs_str.empty()) {
+    MS_LOG(INFO) << "op_attrs_str: " << op_attrs_str;
+    op_attrs_vec = mindspore::lite::SplitStringToVector(op_attrs_str, ";");
+    std::map<std::string, std::string> attr;
+    for (auto op_attr_str : op_attrs_vec) {
+      MS_LOG(INFO) << "op_attr: " << op_attr_str;
+      auto op_attr = mindspore::lite::SplitStringToVector(op_attr_str, ":");
+      if (op_attr.size() != kNumSize3) {
+        return false;
+      }
+      auto op_type = op_attr[kNumIndex0];
+      auto attr_key = op_attr[kNumIndex1];
+      auto attr_value = op_attr[kNumIndex2];
+      param->aclModelOptionCfgParam.op_attrs_map[op_type].insert(std::make_pair(attr_key, attr_value));
+      param->ascendGeOptionCfg.op_attrs_map[op_type].insert(std::make_pair(attr_key, attr_value));
+    }
+  }
+  for (auto item : param->aclModelOptionCfgParam.op_attrs_map) {
+    for (auto attr : item.second) {
+      MS_LOG(INFO) << "op type: " << item.first << ", key: " << attr.first << ", value: " << attr.second;
+    }
+  }
+
   auto it = ascend_map.find("input_shape");
   if (it != ascend_map.end()) {
     param->aclModelOptionCfgParam.input_shape = RemoveInputShapeBrackets(it->second);

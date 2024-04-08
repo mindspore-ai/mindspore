@@ -38,14 +38,15 @@ const uint32_t paralledDataNum{2048};
 
 namespace aicpu {
 template <typename data_type, typename label_type>
-void SparseSoftmaxCrossEntropyWithLogitsSingleOp(data_type *input_features, label_type *input_labels,
-                                                 data_type *output_loss, data_type *output_backprop, int64_t batch_size,
-                                                 int64_t classes_num, size_t features_total) {
+void SparseSoftmaxCrossEntropyWithLogitsSingleOp(CpuKernelContext &ctx, data_type *input_features,
+                                                 label_type *input_labels, data_type *output_loss,
+                                                 data_type *output_backprop, int64_t batch_size, int64_t classes_num,
+                                                 size_t features_total) {
   double_t *dims_exp_sum = static_cast<double_t *>(malloc(batch_size * sizeof(double_t)));
   data_type *dims_maximum = static_cast<data_type *>(malloc(batch_size * sizeof(data_type)));
   auto ret = memset_s(dims_exp_sum, batch_size * sizeof(double_t), 0, batch_size * sizeof(double_t));
   if (ret != EOK) {
-    KERNEL_LOG_ERROR("For 'SparseSoftmaxCrossEntropyWithLogitsSingle', memset_s failed, ret=%d.", ret);
+    CUST_KERNEL_LOG_ERROR(ctx, "For 'SparseSoftmaxCrossEntropyWithLogitsSingle', memset_s failed, ret=%d.", ret);
   }
   Eigen::TensorMap<Eigen::Tensor<data_type, kDimSizeTwo>, Eigen::Aligned> logits(input_features, batch_size,
                                                                                  classes_num);
@@ -105,7 +106,7 @@ void SparseSoftmaxCrossEntropyWithLogitsMultiOp(data_type *input_features, label
   }
 }
 
-std::uint32_t SparseSoftmaxCrossEntropyWithLogitsExtraCheck(const CpuKernelContext &ctx) {
+std::uint32_t SparseSoftmaxCrossEntropyWithLogitsExtraCheck(CpuKernelContext &ctx) {
   Tensor *input_features = ctx.Input(0);
   Tensor *input_labels = ctx.Input(1);
   Tensor *output_loss = ctx.Output(0);
@@ -115,54 +116,54 @@ std::uint32_t SparseSoftmaxCrossEntropyWithLogitsExtraCheck(const CpuKernelConte
   std::vector<int64_t> loss_dims = output_loss->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> backprop_dims = output_backprop->GetTensorShape()->GetDimSizes();
   if ((input_features->GetDataSize() == 0) || (input_labels->GetDataSize() == 0)) {
-    KERNEL_LOG_INFO("[%s] Input is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_INFO(ctx, "[%s] Input is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (input_features->GetDataType() != output_loss->GetDataType() ||
       input_features->GetDataType() != output_backprop->GetDataType()) {
-    KERNEL_LOG_ERROR(
-      "The data type of the input features [%s], output loss [%s], output "
-      "backprop [%s] must be the same type.",
-      DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str(),
-      DTypeStr(ctx.Output(1)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data type of the input features [%s], output loss [%s], output "
+                          "backprop [%s] must be the same type.",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(1)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (input_labels->GetDataType() != DT_INT32 && input_labels->GetDataType() != DT_INT64) {
-    KERNEL_LOG_ERROR(
-      "The data type of the input labels [%s], must be the int32 or int64 "
-      "type.",
-      DTypeStr(ctx.Input(1)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data type of the input labels [%s], must be the int32 or int64 "
+                          "type.",
+                          DTypeStr(ctx.Input(1)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (features_dims.size() != kDimSizeTwo || labels_dims.size() != kDimSizeOne || loss_dims.size() != kDimSizeOne ||
       backprop_dims.size() != kDimSizeTwo) {
-    KERNEL_LOG_ERROR(
-      "The dims of the input features [%d], output backprop [%d] must be "
-      "[batch_size x num_classes]. the dims of input labels [%d], output "
-      "loss [%d] must be [batch_size].",
-      features_dims.size(), backprop_dims.size(), labels_dims.size(), loss_dims.size());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The dims of the input features [%d], output backprop [%d] must be "
+                          "[batch_size x num_classes]. the dims of input labels [%d], output "
+                          "loss [%d] must be [batch_size].",
+                          features_dims.size(), backprop_dims.size(), labels_dims.size(), loss_dims.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t batch_size = features_dims[0];
   int64_t num_classes = features_dims[1];
   if (labels_dims[0] != batch_size) {
-    KERNEL_LOG_ERROR("the size of label must be equal with batch_size[%d]", batch_size);
+    CUST_KERNEL_LOG_ERROR(ctx, "the size of label must be equal with batch_size[%d]", batch_size);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (loss_dims[0] != batch_size) {
-    KERNEL_LOG_ERROR("the size of loss must be equal with batch_size[%d]", batch_size);
+    CUST_KERNEL_LOG_ERROR(ctx, "the size of loss must be equal with batch_size[%d]", batch_size);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (backprop_dims[0] != batch_size || backprop_dims[1] != num_classes) {
-    KERNEL_LOG_ERROR("the size of label must be equal with [%d x %d], but get [%d x %d]", batch_size, num_classes,
-                     backprop_dims[0], backprop_dims[1]);
+    CUST_KERNEL_LOG_ERROR(ctx, "the size of label must be equal with [%d x %d], but get [%d x %d]", batch_size,
+                          num_classes, backprop_dims[0], backprop_dims[1]);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 template <typename data_type, typename label_type>
-inline uint32_t SparseSoftmaxCrossEntropyWithLogitsCompute(const CpuKernelContext &ctx) {
+inline uint32_t SparseSoftmaxCrossEntropyWithLogitsCompute(CpuKernelContext &ctx) {
   size_t features_total = static_cast<size_t>(ctx.Input(0)->NumElements());
   uint64_t total_size = ctx.Input(0)->GetDataSize();
   uint32_t cores = aicpu::CpuKernelUtils::GetCPUNum(ctx);
@@ -178,10 +179,10 @@ inline uint32_t SparseSoftmaxCrossEntropyWithLogitsCompute(const CpuKernelContex
   std::vector<std::int64_t> labels_dims = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   for (int64_t idx = 0; idx < labels_dims[0]; idx++) {
     if (input_labels[idx] >= dims[1]) {
-      KERNEL_LOG_ERROR(
-        "Received a label value of [%d] which is outside the valid range of "
-        "[0, %d).",
-        input_labels[idx], dims[1]);
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "Received a label value of [%d] which is outside the valid range of "
+                            "[0, %d).",
+                            input_labels[idx], dims[1]);
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -203,9 +204,9 @@ inline uint32_t SparseSoftmaxCrossEntropyWithLogitsCompute(const CpuKernelContex
     CpuKernelUtils::ParallelFor(ctx, batch_size, per_unit_size, shard);
   } else if (cores != 0) {
     SparseSoftmaxCrossEntropyWithLogitsSingleOp<data_type, label_type>(
-      input_features, input_labels, output_loss, output_backprop, batch_size, classes_num, features_total);
+      ctx, input_features, input_labels, output_loss, output_backprop, batch_size, classes_num, features_total);
   } else {
-    KERNEL_LOG_ERROR("SparseSoftmaxCrossEntropyWithLogits compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseSoftmaxCrossEntropyWithLogits compute failed.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   return KERNEL_STATUS_OK;
@@ -244,8 +245,8 @@ uint32_t SparseSoftmaxCrossEntropyWithLogitsCpuKernel::Compute(CpuKernelContext 
       }
     }
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

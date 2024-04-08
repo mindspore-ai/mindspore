@@ -36,17 +36,18 @@ namespace aicpu {
 uint32_t ReciprocalCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *x = ctx.Input(0);
   Tensor *y = ctx.Output(0);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kReciprocalOutputNum, kReciprocalInputNum), "Check Reciprocal params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kReciprocalOutputNum, kReciprocalInputNum),
+                           "Check Reciprocal params failed.");
   if (x->GetDataType() != y->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s]",
-                     DTypeStr(x->GetDataType()).c_str(), DTypeStr(y->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s]",
+                          DTypeStr(x->GetDataType()).c_str(), DTypeStr(y->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (x->GetDataSize() != y->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu]",
-      x->GetDataSize(), y->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu]",
+                          x->GetDataSize(), y->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -71,7 +72,7 @@ uint32_t ReciprocalCpuKernel::Compute(CpuKernelContext &ctx) {
       res = ReciprocalComputeComplex<std::complex<double>>(x, y, data_num, ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("Reciprocal kernel data type [%s] not support", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Reciprocal kernel data type [%s] not support", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (res != KERNEL_STATUS_OK) {
@@ -81,13 +82,13 @@ uint32_t ReciprocalCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t ReciprocalCpuKernel::ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, const CpuKernelContext &ctx) {
+uint32_t ReciprocalCpuKernel::ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(x->GetData());
   auto output_y = reinterpret_cast<T *>(y->GetData());
   if (data_num <= kParallelDataNums) {
     for (size_t i = 0; i < data_num; i++) {
       if (input_x[i] == static_cast<T>(0)) {
-        KERNEL_LOG_ERROR("Reciprocal kernel input[%d] cannot be 0", i);
+        CUST_KERNEL_LOG_ERROR(ctx, "Reciprocal kernel input[%d] cannot be 0", i);
         return KERNEL_STATUS_INNER_ERROR;
       }
       output_y[i] = static_cast<T>(1) / (input_x[i]);
@@ -102,7 +103,7 @@ uint32_t ReciprocalCpuKernel::ReciprocalCompute(Tensor *x, Tensor *y, uint64_t d
     auto shared_reciprocal = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         if (input_x[i] == static_cast<T>(0)) {
-          KERNEL_LOG_ERROR("Reciprocal kernel input[%d] cannot be 0", i);
+          CUST_KERNEL_LOG_ERROR(ctx, "Reciprocal kernel input[%d] cannot be 0", i);
           return KERNEL_STATUS_INNER_ERROR;
         }
         output_y[i] = static_cast<T>(1) / (input_x[i]);
@@ -110,22 +111,22 @@ uint32_t ReciprocalCpuKernel::ReciprocalCompute(Tensor *x, Tensor *y, uint64_t d
       return KERNEL_STATUS_OK;
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_reciprocal);
     if (ret != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor failed");
+      CUST_KERNEL_LOG_ERROR(ctx, "CpuKernelUtils::ParallelFor failed");
       return KERNEL_STATUS_INNER_ERROR;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_reciprocal),
-                        "Reciprocal Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_reciprocal),
+                             "Reciprocal Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t ReciprocalCpuKernel::ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num,
-                                                       const CpuKernelContext &ctx) {
+uint32_t ReciprocalCpuKernel::ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(x->GetData());
   auto output_y = reinterpret_cast<T *>(y->GetData());
   if (data_num <= kParallelDataNums) {
@@ -145,15 +146,16 @@ uint32_t ReciprocalCpuKernel::ReciprocalComputeComplex(Tensor *x, Tensor *y, uin
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_reciprocal);
     if (ret != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor failed");
+      CUST_KERNEL_LOG_ERROR(ctx, "CpuKernelUtils::ParallelFor failed");
       return KERNEL_STATUS_INNER_ERROR;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_reciprocal),
-                        "Reciprocal Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_reciprocal),
+                             "Reciprocal Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

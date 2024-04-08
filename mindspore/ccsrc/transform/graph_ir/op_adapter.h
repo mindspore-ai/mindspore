@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_H_
 
 #include <memory>
+#include <utility>
 #include <vector>
 #include <string>
 #include <map>
@@ -138,20 +139,22 @@ template <typename T>
 class OpAdapter : public BaseOpAdapter {
  public:
   using OpType = T;
-  OpAdapter()
-      : impl_(std::make_shared<OpAdapterImpl>(input_map_, dyn_input_map_, output_map_, dyn_output_map_, subgraph_map_,
-                                              dyn_subgraph_map_, attr_map_, enum_map_, input_attr_map_, attr_input_map_,
-                                              &cus_input_map_, &cus_output_map_, &extra_attr_, &name_counts_, this)) {
-    MS_EXCEPTION_IF_NULL(impl_);
-  }
-  explicit OpAdapter(const ExtraAttr &extra_attr)
-      : extra_attr_(extra_attr),
+  explicit OpAdapter(std::string op_type_obj)
+      : op_type_obj_(std::move(op_type_obj)),
         impl_(std::make_shared<OpAdapterImpl>(input_map_, dyn_input_map_, output_map_, dyn_output_map_, subgraph_map_,
                                               dyn_subgraph_map_, attr_map_, enum_map_, input_attr_map_, attr_input_map_,
                                               &cus_input_map_, &cus_output_map_, &extra_attr_, &name_counts_, this)) {
     MS_EXCEPTION_IF_NULL(impl_);
   }
-  ~OpAdapter() override {}
+  explicit OpAdapter(std::string op_type_obj, ExtraAttr extra_attr)
+      : op_type_obj_(std::move(op_type_obj)),
+        extra_attr_(std::move(extra_attr)),
+        impl_(std::make_shared<OpAdapterImpl>(input_map_, dyn_input_map_, output_map_, dyn_output_map_, subgraph_map_,
+                                              dyn_subgraph_map_, attr_map_, enum_map_, input_attr_map_, attr_input_map_,
+                                              &cus_input_map_, &cus_output_map_, &extra_attr_, &name_counts_, this)) {
+    MS_EXCEPTION_IF_NULL(impl_);
+  }
+  ~OpAdapter() override = default;
 
   bool IsCustomOp(const OperatorPtr &op) { return impl_->IsCustomOp(op); }
 
@@ -168,15 +171,11 @@ class OpAdapter : public BaseOpAdapter {
 
   OperatorPtr GenerateNormalOp(const AnfNodePtr &anf) const {
     OperatorPtr op = nullptr;
-    // There are duplicate names in ANF graph, do not assign ANF node name to GE
-    // GE will generate unique name automatically
-    if (anf != nullptr && anf->fullname_with_scope() != "") {
-      auto name = anf->fullname_with_scope();
-      op = std::make_shared<OpType>(name);
-    } else {
-      MS_LOG(DEBUG) << "no fullname_with_scope";
-      op = std::make_shared<OpType>();
+    std::string op_name;
+    if (anf != nullptr && !anf->fullname_with_scope().empty()) {
+      op_name = anf->fullname_with_scope();
     }
+    op = generate(op_name);
 
     // set dynamic output num if op use DYNAMIC_OUTPUT
     if ((op != nullptr) && (!dyn_output_map_.empty()) && (anf != nullptr)) {
@@ -214,15 +213,11 @@ class OpAdapter : public BaseOpAdapter {
 
   OperatorPtr GenerateDynamicOutputOp(const AnfNodePtr &anf) const {
     OperatorPtr op = nullptr;
-    // There are duplicate names in ANF graph, do not assign ANF node name to GE
-    // GE will generate unique name automatically
-    if (anf != nullptr && anf->fullname_with_scope() != "") {
-      MS_LOG(DEBUG) << anf->fullname_with_scope();
-      op = std::make_shared<OpType>(anf->fullname_with_scope());
-    } else {
-      MS_LOG(DEBUG) << "no fullname_with_scope";
-      op = std::make_shared<OpType>();
+    std::string op_name;
+    if (anf != nullptr && !anf->fullname_with_scope().empty()) {
+      op_name = anf->fullname_with_scope();
     }
+    op = generate(op_name);
     return op;
   }
 
@@ -247,7 +242,21 @@ class OpAdapter : public BaseOpAdapter {
     return op;
   }
 
-  OperatorPtr generate(const std::string &op_name) override { return std::make_shared<OpType>(op_name); }
+  OperatorPtr generate(const std::string &op_name) const override {
+    std::string op_name_fix = op_name;
+    if (op_name_fix.empty()) {
+      // There are duplicate names in ANF graph, do not assign ANF node name to GE
+      // GE will generate unique name automatically
+      static int64_t idx = 0;
+      op_name_fix = op_type_obj_ + "_NULL_" + std::to_string(idx++);
+    }
+    if (!::ge::OperatorFactory::IsExistOp(op_type_obj_.c_str())) {
+      MS_LOG(ERROR) << "OperatorFactory is not exist, op type: " << op_type_obj_;
+      return std::make_shared<Operator>(Operator(op_name_fix, op_type_obj_));
+    }
+    auto op = ::ge::OperatorFactory::CreateOperator(op_name_fix, op_type_obj_);
+    return std::make_shared<Operator>(op);
+  }
 
   OperatorPtr generateDynOutputOp(const AnfNodePtr &anf) override {
     OperatorPtr op = nullptr;
@@ -258,12 +267,10 @@ class OpAdapter : public BaseOpAdapter {
     return op;
   }
 
-  std::string getOpType() override {
-    if (op_type_.empty()) {
-      op_type_ = getOp()->GetOpType();
-    }
-    return op_type_;
-  }
+  std::string getOpType() override { return op_type_obj_; }
+
+  static std::string GetStaticOpType() { return op_type_; }
+
   const mindspore::HashMap<int, InputDesc> &getInputMap() override { return input_map_; }
   const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() override { return input_attr_map_; }
   const mindspore::HashMap<std::string, AttrDesc> &getAttrMap() override { return attr_map_; }
@@ -397,19 +404,19 @@ class OpAdapter : public BaseOpAdapter {
 
   int setAttr(const OperatorPtr &op, const AnfNodePtr &node) override { return impl_->setAttr(op, node); }
 
-  int setAttr(const std::string &attr_key, const ValuePtr &attr_value) {
+  int setAttr(const std::string &attr_key, const ValuePtr &attr_value) override {
     return impl_->setAttr(getOp(), attr_key, attr_value);
   }
 
-  int setAttr(const uint32_t &input_idx, const ValuePtr &attr_value) {
+  int setAttr(const uint32_t &input_idx, const ValuePtr &attr_value) override {
     return impl_->setAttr(getOp(), input_idx, attr_value);
   }
 
-  int getAttr(const std::string &attr_key, ValuePtr *attr_value) {
+  int getAttr(const std::string &attr_key, ValuePtr *attr_value) override {
     MS_EXCEPTION_IF_NULL(attr_value);
     return impl_->getAttr(getOp(), attr_key, attr_value);
   }
-  int getAttr(const uint32_t &input_idx, ValuePtr *attr_value) {
+  int getAttr(const uint32_t &input_idx, ValuePtr *attr_value) override {
     MS_EXCEPTION_IF_NULL(attr_value);
     return impl_->getAttr(getOp(), input_idx, attr_value);
   }
@@ -687,9 +694,149 @@ class OpAdapter : public BaseOpAdapter {
 
   static OperatorPtr getOp() {
     if (op_ == nullptr) {
-      op_ = std::make_shared<OpType>();
+      if (!::ge::OperatorFactory::IsExistOp(op_type_)) {
+        MS_LOG(EXCEPTION) << "OperatorFactory is not exist, op type: " << op_type_;
+      }
+      auto op = ::ge::OperatorFactory::CreateOperator("", op_type_);
+      op_ = std::make_shared<Operator>(op);
     }
     return op_;
+  }
+
+  // func list used to get ge attr type
+  template <typename S>
+  static S GetAttrType(const AnyTraits<S> &) {
+    S ret{};
+    return ret;
+  }
+
+  template <typename S>
+  static std::vector<S> GetAttrType(const AnyTraits<std::vector<S>> &, size_t size, S default_val) {
+    std::vector<S> ret{};
+    return ret;
+  }
+
+  // specialization for reverse bool
+  static bool GetAttrType(const AnyTraits<bool> &, bool reverse) {
+    bool ret = false;
+    return ret;
+  }
+
+  template <typename P, typename Q>
+  static Q GetAttrType(const AnyTraits<P> &traits_from, const AnyTraits<Q> &traits_to) {
+    Q ret{};
+    return ret;
+  }
+
+  // specialization for tensor
+  static GeTensor GetAttrType(const AnyTraits<mindspore::tensor::Tensor> &traits) {
+    GeTensor ret{};
+    return ret;
+  }
+
+  // specialization for int
+  static int64_t GetAttrType(const AnyTraits<int64_t>) {
+    int64_t ret{1};
+    return ret;
+  }
+
+  // specialization for float
+  static float GetAttrType(const AnyTraits<float>) {
+    float ret{1.0};
+    return ret;
+  }
+
+  static std::vector<std::vector<int64_t>> GetAttrType(const AnyTraits<std::vector<std::vector<int64_t>>>) {
+    std::vector<std::vector<int64_t>> ret{};
+    return ret;
+  }
+
+  static std::vector<int64_t> GetAttrType(const AnyTraits<std::vector<std::vector<int64_t>>>,
+                                          const AnyTraits<std::vector<int64_t>>) {
+    std::vector<int64_t> ret{};
+    return ret;
+  }
+
+  static int64_t GetAttrType(const AnyTraits<std::vector<int64_t>>, size_t index) {
+    int64_t ret{1};
+    return ret;
+  }
+
+  static std::vector<int64_t> GetAttrType(const AnyTraits<std::vector<int64_t>>,
+                                          const AnyTraits<std::vector<int64_t>>) {
+    std::vector<int64_t> ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<std::vector<int64_t>> anyTraitsVec,
+                                 const AnyTraits<std::string> anyTraitsStr) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::vector<float> GetAttrType(const AnyTraits<std::vector<float>> anyTraitsVec,
+                                        const AnyTraits<float> anyTraitsFlo) {
+    std::vector<float> ret{};
+    return ret;
+  }
+
+  static std::vector<int64_t> GetAttrType(const std::string &format, const AnyTraits<std::vector<int64_t>> anyTraitsVec,
+                                          const AnyTraits<int64_t> anyTraitsInt) {
+    std::vector<int64_t> ret{};
+    return ret;
+  }
+
+  // convert value list for value tuple to vector
+  template <typename P, typename Q>
+  static std::vector<Q> GetAttrType(const AnyTraits<P> &anyTraitsP, const AnyTraits<std::vector<Q>> anyTraitsQ) {
+    std::vector<Q> ret{};
+    return ret;
+  }
+
+  static int64_t GetAttrType(const AnyTraits<GeEnum>) {
+    int64_t ret{1};
+    return ret;
+  }
+
+  static GeDataType GetAttrType(const AnyTraits<GEType> anyTraitsGE) {
+    GeDataType ret{};
+    return ret;
+  }
+
+  static int64_t GetAttrType(const AnyTraits<GEType> anyTraitsGE, const AnyTraits<int64_t> anyTraitsInt) {
+    int64_t ret{1};
+    return ret;
+  }
+
+  static std::vector<GeDataType> GetAttrType(const AnyTraits<std::vector<GEType>> anyTraitsGE) {
+    std::vector<GeDataType> ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<GEDataFormat> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<GEPadMod> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<GEReduction> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<GEEnumToStr> enum_str, const std::vector<std::string> &enum_string) {
+    std::string ret{};
+    return ret;
+  }
+
+  // convert any value to tensor
+  static GeTensor GetAttrType(const AnyTraits<ValueAny> anyTraitsValue) {
+    GeTensor ret{};
+    return ret;
   }
 
   static const mindspore::HashMap<int, InputDesc> input_map_;
@@ -707,10 +854,11 @@ class OpAdapter : public BaseOpAdapter {
   static const bool dynamic_shape_support_;
   static mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> cus_input_map_;
   static mindspore::HashMap<std::string, std::map<int, std::string>> cus_output_map_;
+  static const char op_type_[];
+  std::string op_type_obj_;
   mindspore::HashMap<std::string, ValuePtr> extra_attr_;
   mindspore::HashMap<std::string, int> name_counts_;
   const std::shared_ptr<OpAdapterImpl> impl_;
-  std::string op_type_;
   // cache the Operator to avoid memory leak caused by 'std::make_shared<OpType>()'
   inline static OperatorPtr op_ = nullptr;
 };
@@ -741,6 +889,8 @@ template <typename T>
 mindspore::HashMap<std::string, std::map<int, std::string>> OpAdapter<T>::cus_output_map_;
 template <typename T>
 const bool OpAdapter<T>::dynamic_shape_support_{true};
+template <typename T>
+const char OpAdapter<T>::op_type_[]{""};
 
 // specialization for method
 }  // namespace transform

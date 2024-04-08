@@ -44,6 +44,7 @@ bool EnvironCreateCpuKernelMod::Launch(const std::vector<KernelTensor *> &, cons
   int64_t env_handle = EnvironMgr::GetInstance().Create();
 
   auto output = GetDeviceAddress<int64_t>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output);
   output[kIndex0] = env_handle;
   MS_LOG(DEBUG) << "Create env handle: " << output[kIndex0];
 

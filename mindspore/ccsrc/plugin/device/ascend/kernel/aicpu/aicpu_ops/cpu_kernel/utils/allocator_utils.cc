@@ -19,7 +19,7 @@
 #include "securec/include/securec.h"
 
 #include "cce/fwk_adpt_struct.h"
-#include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
+#include "inc/kernel_log.h"
 #include "context/common/status.h"
 
 namespace {
@@ -27,47 +27,48 @@ std::unordered_set<uint64_t> g_allocated_ptr;
 }
 
 namespace aicpu {
-uint32_t CpuKernelAllocatorUtils::ParamCheck(const std::vector<int64_t> &dims, const void *data_ptr,
-                                             Tensor *&outputResultTensor) {
+uint32_t CpuKernelAllocatorUtils::ParamCheck(CpuKernelContext &ctx, const std::vector<int64_t> &dims,
+                                             const void *data_ptr, Tensor *&outputResultTensor) {
   if (dims.empty()) {
-    KERNEL_LOG_ERROR("UpdateOutputDataTensor dims size == 0.");
+    CUST_KERNEL_LOG_ERROR(ctx, "UpdateOutputDataTensor dims size == 0.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_CHECK_NULLPTR(outputResultTensor, KERNEL_STATUS_PARAM_INVALID, "outputResultTensor nullptr");
-  KERNEL_CHECK_NULLPTR(data_ptr, KERNEL_STATUS_PARAM_INVALID, "data_ptr nullptr");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, outputResultTensor, KERNEL_STATUS_PARAM_INVALID, "outputResultTensor nullptr");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, data_ptr, KERNEL_STATUS_PARAM_INVALID, "data_ptr nullptr");
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CpuKernelAllocatorUtils::UpdateOutputDataTensor(const std::vector<int64_t> &dims, DataType type,
-                                                         const void *data_ptr, int64_t input_data_size,
+uint32_t CpuKernelAllocatorUtils::UpdateOutputDataTensor(CpuKernelContext &ctx, const std::vector<int64_t> &dims,
+                                                         DataType type, const void *data_ptr, int64_t input_data_size,
                                                          Tensor *&outputResultTensor) {
-  uint32_t check_ret = ParamCheck(dims, &data_ptr, outputResultTensor);
+  uint32_t check_ret = ParamCheck(ctx, dims, &data_ptr, outputResultTensor);
   if (check_ret != KERNEL_STATUS_OK) {
     return check_ret;
   }
-  KERNEL_LOG_INFO("UpdateOutputDataTensor::START!!");
+  CUST_KERNEL_LOG_INFO(ctx, "UpdateOutputDataTensor::START!!");
 
-  int64_t data_size = GetInputDataSize(dims, type);
+  int64_t data_size = GetInputDataSize(ctx, dims, type);
   if (data_size < 0) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (data_size > input_data_size) {
-    KERNEL_LOG_ERROR("data_size[%ld] mast less than input_data_size[%ld]!", data_size, input_data_size);
+    CUST_KERNEL_LOG_ERROR(ctx, "data_size[%ld] mast less than input_data_size[%ld]!", data_size, input_data_size);
     return KERNEL_STATUS_INNER_ERROR;
   }
 
   int64_t shape_buff_size = 0;
-  KERNEL_CHECK_ASSIGN_64S_MULTI(int64_t(dims.size()), int64_t(sizeof(int64_t)), shape_buff_size,
-                                KERNEL_STATUS_PARAM_INVALID);
+  CUST_KERNEL_CHECK_ASSIGN_64S_MULTI(ctx, int64_t(dims.size()), int64_t(sizeof(int64_t)), shape_buff_size,
+                                     KERNEL_STATUS_PARAM_INVALID);
 
   void *output_shape_ptr = malloc(shape_buff_size);
-  KERNEL_CHECK_NULLPTR(output_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "malloc error, size[%ld]!", shape_buff_size);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "malloc error, size[%ld]!",
+                            shape_buff_size);
 
   int32_t ret = memcpy_s(output_shape_ptr, shape_buff_size, dims.data(), shape_buff_size);
   if (ret != EOK) {
     free(output_shape_ptr);
-    KERNEL_LOG_ERROR("memcpy error, size[%ld], ret[%d]!", shape_buff_size, ret);
+    CUST_KERNEL_LOG_ERROR(ctx, "memcpy error, size[%ld], ret[%d]!", shape_buff_size, ret);
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -80,13 +81,13 @@ uint32_t CpuKernelAllocatorUtils::UpdateOutputDataTensor(const std::vector<int64
     result_summary->raw_data_ptr = reinterpret_cast<uint64_t>(nullptr);
     result_summary->shape_data_ptr = reinterpret_cast<uint64_t>(output_shape_ptr);
     (void)g_allocated_ptr.insert(result_summary->shape_data_ptr);
-    KERNEL_LOG_INFO("UpdateOutputDataTensor:: empty tensor END!!");
+    CUST_KERNEL_LOG_INFO(ctx, "UpdateOutputDataTensor:: empty tensor END!!");
     return KERNEL_STATUS_OK;
   }
 
   void *output_data_ptr = malloc(data_size);
   if (output_data_ptr == nullptr) {
-    KERNEL_LOG_ERROR("malloc error, size[%ld]!", data_size);
+    CUST_KERNEL_LOG_ERROR(ctx, "malloc error, size[%ld]!", data_size);
     free(output_shape_ptr);
     return KERNEL_STATUS_INNER_ERROR;
   }
@@ -95,88 +96,92 @@ uint32_t CpuKernelAllocatorUtils::UpdateOutputDataTensor(const std::vector<int64
   if (ret != EOK) {
     free(output_data_ptr);
     free(output_shape_ptr);
-    KERNEL_LOG_ERROR("memcpy_s error, size[%ld], ret[%d]!", data_size, ret);
+    CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s error, size[%ld], ret[%d]!", data_size, ret);
     return KERNEL_STATUS_INNER_ERROR;
   }
 
   result_summary->raw_data_ptr = reinterpret_cast<uint64_t>(output_data_ptr);
   result_summary->shape_data_ptr = reinterpret_cast<uint64_t>(output_shape_ptr);
-  KERNEL_LOG_INFO("raw_data_ptr [%p]", output_data_ptr);
-  KERNEL_LOG_INFO("shape_data_ptr [%p]", output_shape_ptr);
+  CUST_KERNEL_LOG_INFO(ctx, "raw_data_ptr [%p]", output_data_ptr);
+  CUST_KERNEL_LOG_INFO(ctx, "shape_data_ptr [%p]", output_shape_ptr);
 
   (void)g_allocated_ptr.insert(result_summary->raw_data_ptr);
   (void)g_allocated_ptr.insert(result_summary->shape_data_ptr);
-  KERNEL_LOG_INFO("UpdateOutputDataTensor :: END!!");
+  CUST_KERNEL_LOG_INFO(ctx, "UpdateOutputDataTensor :: END!!");
 
   return KERNEL_STATUS_OK;
 }
 
-int64_t CpuKernelAllocatorUtils::GetInputDataSize(const std::vector<int64_t> &dims, DataType type) {
+int64_t CpuKernelAllocatorUtils::GetInputDataSize(CpuKernelContext &ctx, const std::vector<int64_t> &dims,
+                                                  DataType type) {
   int64_t num_elements = 1;
   for (size_t i = 0; i < dims.size(); i++) {
-    KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, dims[i], num_elements, KERNEL_STATUS_PARAM_INVALID);
+    CUST_KERNEL_CHECK_ASSIGN_64S_MULTI(ctx, num_elements, dims[i], num_elements, KERNEL_STATUS_PARAM_INVALID);
   }
 
   int64_t data_size = 0;
   int element_size = GetSizeByDataType(type);
-  KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, int64_t(element_size), data_size, KERNEL_STATUS_PARAM_INVALID);
+  CUST_KERNEL_CHECK_ASSIGN_64S_MULTI(ctx, num_elements, int64_t(element_size), data_size, KERNEL_STATUS_PARAM_INVALID);
 
   if (data_size < 0) {
-    KERNEL_LOG_ERROR("UpdateOutputDataTensor data_size[%ld].", data_size);
+    CUST_KERNEL_LOG_ERROR(ctx, "UpdateOutputDataTensor data_size[%ld].", data_size);
   }
 
   return data_size;
 }
 
-uint32_t CpuKernelAllocatorUtils::CheckOutputDataPtr(const uint64_t data_ptr) {
+uint32_t CpuKernelAllocatorUtils::CheckOutputDataPtr(CpuKernelContext &ctx, const uint64_t data_ptr) {
   auto find_data_ptr = g_allocated_ptr.find(data_ptr);
   if ((find_data_ptr == g_allocated_ptr.end())) {
-    KERNEL_LOG_ERROR("CheckOutputDataPtr invalid [%lu].", data_ptr);
+    CUST_KERNEL_LOG_ERROR(ctx, "CheckOutputDataPtr invalid [%lu].", data_ptr);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CpuKernelAllocatorUtils::DeleteOutputDataPtr(const uint64_t data_ptr) {
-  KERNEL_LOG_INFO("DeleteOutputDataPtr [%lu]", data_ptr);
+uint32_t CpuKernelAllocatorUtils::DeleteOutputDataPtr(CpuKernelContext &ctx, const uint64_t data_ptr) {
+  CUST_KERNEL_LOG_INFO(ctx, "DeleteOutputDataPtr [%lu]", data_ptr);
   auto find_data_ptr = g_allocated_ptr.find(data_ptr);
   if (find_data_ptr != g_allocated_ptr.end()) {
     free(reinterpret_cast<void *>(data_ptr));
     g_allocated_ptr.erase(find_data_ptr);
   } else {
-    KERNEL_LOG_EVENT("DeleteOutputDataPtr invalid [%lu].", data_ptr);
+    CUST_KERNEL_LOG_WARN(ctx, "DeleteOutputDataPtr invalid [%lu].", data_ptr);
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CpuKernelAllocatorUtils::AllocateOutputTensorDataMemory(const std::vector<uint64_t> &shape, DataType type,
+uint32_t CpuKernelAllocatorUtils::AllocateOutputTensorDataMemory(CpuKernelContext &ctx,
+                                                                 const std::vector<uint64_t> &shape, DataType type,
                                                                  Tensor *&outputResultTensor) {
-  KERNEL_CHECK_NULLPTR(outputResultTensor, KERNEL_STATUS_PARAM_INVALID, "outputResultTensor nullptr");
-  KERNEL_LOG_INFO("AllocateOutputTensorDataMemory::START!!");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, outputResultTensor, KERNEL_STATUS_PARAM_INVALID, "outputResultTensor nullptr");
+  CUST_KERNEL_LOG_INFO(ctx, "AllocateOutputTensorDataMemory::START!!");
   if (shape.empty()) {
-    KERNEL_LOG_ERROR("AllocateOutputTensorDataMemory shape size == 0.");
+    CUST_KERNEL_LOG_ERROR(ctx, "AllocateOutputTensorDataMemory shape size == 0.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t num_elements = 1;
   for (size_t i = 0; i < shape.size(); i++) {
-    KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, static_cast<int64_t>(shape[i]), num_elements,
-                                  KERNEL_STATUS_PARAM_INVALID);
+    CUST_KERNEL_CHECK_ASSIGN_64S_MULTI(ctx, num_elements, static_cast<int64_t>(shape[i]), num_elements,
+                                       KERNEL_STATUS_PARAM_INVALID);
   }
 
   uint64_t data_size = 0;
   int32_t element_size = GetSizeByDataType(type);
-  KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, element_size, data_size, KERNEL_STATUS_PARAM_INVALID);
+  CUST_KERNEL_CHECK_ASSIGN_64S_MULTI(ctx, num_elements, element_size, data_size, KERNEL_STATUS_PARAM_INVALID);
   uint64_t shape_buffer_size = 0;
-  KERNEL_CHECK_ASSIGN_64S_MULTI(shape.size(), sizeof(int64_t), shape_buffer_size, KERNEL_STATUS_PARAM_INVALID);
+  CUST_KERNEL_CHECK_ASSIGN_64S_MULTI(ctx, shape.size(), sizeof(int64_t), shape_buffer_size,
+                                     KERNEL_STATUS_PARAM_INVALID);
 
   void *output_shape_ptr = malloc(shape_buffer_size);
-  KERNEL_CHECK_NULLPTR(output_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "malloc error, size[%llu]!", shape_buffer_size);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "malloc error, size[%llu]!",
+                            shape_buffer_size);
   int32_t ret = memcpy_s(output_shape_ptr, shape_buffer_size, shape.data(), shape_buffer_size);
   if (ret != EOK) {
     free(output_shape_ptr);
-    KERNEL_LOG_ERROR("memcpy error, size[%llu], ret[%d]!", shape_buffer_size, ret);
+    CUST_KERNEL_LOG_ERROR(ctx, "memcpy error, size[%llu], ret[%d]!", shape_buffer_size, ret);
     return KERNEL_STATUS_INNER_ERROR;
   }
   aicpu::FWKAdapter::ResultSummary *result_summary =
@@ -187,12 +192,12 @@ uint32_t CpuKernelAllocatorUtils::AllocateOutputTensorDataMemory(const std::vect
     result_summary->shape_data_ptr = reinterpret_cast<uint64_t>(output_shape_ptr);
     result_summary->shape_data_size = shape_buffer_size;
     (void)g_allocated_ptr.insert(result_summary->shape_data_ptr);
-    KERNEL_LOG_INFO("AllocateOutputTensorDataMemory:: empty tensor END!!");
+    CUST_KERNEL_LOG_INFO(ctx, "AllocateOutputTensorDataMemory:: empty tensor END!!");
     return KERNEL_STATUS_OK;
   }
   void *output_data_ptr = malloc(data_size);
   if (output_data_ptr == nullptr) {
-    KERNEL_LOG_ERROR("malloc error, size[%lu]!", data_size);
+    CUST_KERNEL_LOG_ERROR(ctx, "malloc error, size[%lu]!", data_size);
     free(output_shape_ptr);
     return KERNEL_STATUS_INNER_ERROR;
   }
@@ -202,12 +207,12 @@ uint32_t CpuKernelAllocatorUtils::AllocateOutputTensorDataMemory(const std::vect
   result_summary->shape_data_size = shape_buffer_size;
   result_summary->shape_data_ptr = reinterpret_cast<uint64_t>(output_shape_ptr);
 
-  KERNEL_LOG_INFO("raw_data_ptr [%llu]", output_data_ptr);
-  KERNEL_LOG_INFO("shape_data_ptr [%llu]", output_shape_ptr);
+  CUST_KERNEL_LOG_INFO(ctx, "raw_data_ptr [%llu]", output_data_ptr);
+  CUST_KERNEL_LOG_INFO(ctx, "shape_data_ptr [%llu]", output_shape_ptr);
 
   (void)g_allocated_ptr.insert(result_summary->raw_data_ptr);
   (void)g_allocated_ptr.insert(result_summary->shape_data_ptr);
-  KERNEL_LOG_INFO("AllocateOutputTensorDataMemory :: END!!");
+  CUST_KERNEL_LOG_INFO(ctx, "AllocateOutputTensorDataMemory :: END!!");
 
   return KERNEL_STATUS_OK;
 }

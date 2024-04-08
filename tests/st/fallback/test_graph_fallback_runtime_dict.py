@@ -671,7 +671,7 @@ def test_return_nested_dict_with_parameter2():
     assert out == [{'params': [net.x, net.y], 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -701,7 +701,7 @@ def test_nested_dict_with_parameter_constant1():
     assert out2 == 2
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -758,7 +758,7 @@ def test_return_nested_dict_with_parameter_constant1():
     assert out == [{'params': (net.x, net.y), 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -812,7 +812,7 @@ def test_return_nested_dict_with_parameter_constant3():
     assert out == {'params': (net.x, net.y), 'a': 1, 'b': {'params': net.x, 'a': 2}}
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

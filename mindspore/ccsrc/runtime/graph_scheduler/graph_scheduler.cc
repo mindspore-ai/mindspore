@@ -599,6 +599,13 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
       break;
     }
   }
+  for (const auto &graph : graph_compiler_info.graphs_) {
+    MS_EXCEPTION_IF_NULL(graph);
+    if (graph->has_kernel_need_user_data()) {
+      actor_set->has_kernel_need_user_data_ = true;
+      break;
+    }
+  }
 
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphTransform, 1, 0, 1);
   return actor_set.get();
@@ -690,10 +697,6 @@ void GraphScheduler::RefreshContextAndThreadPool(ActorSet *const actor_set, Acto
   static constexpr size_t kSingleThreadNum = 1;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto set_ctx = [&context_ptr](bool task_sink, bool is_multi_graph_sink) {
-    context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, task_sink);
-    context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, is_multi_graph_sink);
-  };
 
   auto calculate_runtime_pipeline_thread_num = [this]() {
     return already_spawn_kernel_async_infer_resize_actor_
@@ -703,15 +706,12 @@ void GraphScheduler::RefreshContextAndThreadPool(ActorSet *const actor_set, Acto
 
   if (!actor_set->kernel_actors_.empty()) {
     // kernel by kernel
-    set_ctx(false, false);
     thread_pool->SetActorThreadNum(default_actor_thread_num_);
   } else if (actor_set->super_kernel_actors_.size() == 1 && actor_set->control_actors_ == nullptr) {
     // multi graph sink
-    set_ctx(true, true);
     thread_pool->SetActorThreadNum(kSingleThreadNum + calculate_runtime_pipeline_thread_num());
   } else {
     // sub graph sink
-    set_ctx(true, false);
     thread_pool->SetActorThreadNum(kSingleThreadNum + calculate_runtime_pipeline_thread_num());
   }
 }
@@ -773,9 +773,10 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   }
   ActorDispatcher::set_is_multi_thread_execution(actor_set->is_multi_thread_execution_);
   ActorDispatcher::set_enable_multi_stream(actor_set->enable_multi_stream_);
+  ActorDispatcher::set_has_kernel_need_user_data(actor_set->has_kernel_need_user_data_);
   double start_time = GetTime();
-  ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors, args,
-                        &op_context, GraphExecutionStrategy::kPipeline);
+  ActorDispatcher::SendSync(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors,
+                            args, &op_context, GraphExecutionStrategy::kPipeline);
 
   // Get the run result.
   auto result_future = result[0].GetFuture();

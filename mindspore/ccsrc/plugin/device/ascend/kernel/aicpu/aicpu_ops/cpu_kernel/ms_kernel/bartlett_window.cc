@@ -30,8 +30,9 @@ const char *kBartlettWindow = "BartlettWindow";
 namespace aicpu {
 uint32_t BartlettWindowCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "BartlettWindow check input and output number failed.");
-  KERNEL_HANDLE_ERROR(BartlettWindowCheck(ctx), "BartlettWindow check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "BartlettWindow check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, BartlettWindowCheck(ctx), "BartlettWindow check params failed.");
   auto input_dtype = ctx.Input(0)->GetDataType();
   auto output_dtype = ctx.Output(0)->GetDataType();
   if (output_dtype == DT_FLOAT16) {
@@ -53,39 +54,40 @@ uint32_t BartlettWindowCpuKernel::Compute(CpuKernelContext &ctx) {
       return BartlettWindowCompute<int64_t, double>(ctx);
     }
   } else {
-    KERNEL_LOG_ERROR("BartlettWindow kernel data type [%s] not support.", DTypeStr(input_dtype).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "BartlettWindow kernel data type [%s] not support.", DTypeStr(input_dtype).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t BartlettWindowCpuKernel::BartlettWindowCheck(const CpuKernelContext &ctx) {
+uint32_t BartlettWindowCpuKernel::BartlettWindowCheck(CpuKernelContext &ctx) {
   auto input_info = ctx.Input(0);
   auto output_info = ctx.Output(0);
   DataType input_type = input_info->GetDataType();
-  KERNEL_CHECK_FALSE((input_type == DT_INT32) || (input_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input:[%s] should be an integertype ", DTypeStr(input_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_type == DT_INT32) || (input_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input:[%s] should be an integertype ", DTypeStr(input_type).c_str())
   DataType output_type = output_info->GetDataType();
-  KERNEL_CHECK_FALSE((output_type == DT_FLOAT16) || (output_type == DT_FLOAT) || (output_type == DT_DOUBLE),
-                     KERNEL_STATUS_PARAM_INVALID, "The data type of output:[%s] should be half, float or double ",
-                     DTypeStr(output_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (output_type == DT_FLOAT16) || (output_type == DT_FLOAT) || (output_type == DT_DOUBLE),
+                          KERNEL_STATUS_PARAM_INVALID, "The data type of output:[%s] should be half, float or double ",
+                          DTypeStr(output_type).c_str());
   auto input_data = reinterpret_cast<int64_t *>(input_info->GetData());
-  KERNEL_CHECK_FALSE((int)(*input_data) >= 0, KERNEL_STATUS_PARAM_INVALID,
-                     "The value of input:[%d] must be a non-negative integer", *input_data);
+  CUST_KERNEL_CHECK_FALSE(ctx, (int)(*input_data) >= 0, KERNEL_STATUS_PARAM_INVALID,
+                          "The value of input:[%d] must be a non-negative integer", *input_data);
   std::vector<int64_t> dim_vec = input_info->GetTensorShape()->GetDimSizes();
   int64_t dimsize = dim_vec.size();
-  KERNEL_CHECK_FALSE(dimsize <= 1, KERNEL_STATUS_PARAM_INVALID, "The dim of input:[%d] should not more than 1", dimsize)
-  KERNEL_LOG_DEBUG(
-    "BartlettWindowCpuKernel[%s], input: size[%llu];"
-    "output: size[%llu].",
-    ctx.GetOpType().c_str(), input_info->GetDataSize(), output_info->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, dimsize <= 1, KERNEL_STATUS_PARAM_INVALID,
+                          "The dim of input:[%d] should not more than 1", dimsize)
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "BartlettWindowCpuKernel[%s], input: size[%llu];"
+                        "output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_info->GetDataSize(), output_info->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T, typename DT_VAL>
-uint32_t BartlettWindowCpuKernel::BartlettWindowCompute(const CpuKernelContext &ctx) {
+uint32_t BartlettWindowCpuKernel::BartlettWindowCompute(CpuKernelContext &ctx) {
   auto input_info = ctx.Input(0);
   auto output_info = ctx.Output(0);
   auto input_x = reinterpret_cast<T *>(input_info->GetData());

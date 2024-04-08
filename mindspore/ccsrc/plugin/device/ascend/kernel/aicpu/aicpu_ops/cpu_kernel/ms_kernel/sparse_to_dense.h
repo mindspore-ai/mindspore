@@ -41,7 +41,7 @@ class SparseToDenseCpuKernel : public CpuKernel {
    * @return uint32_t: 0->success other->failed
    */
   template <typename ValueT>
-  uint32_t EigenSparseToDense(const CpuKernelContext &ctx, SparseTensor *st, const Tensor *indices, Tensor *output) {
+  uint32_t EigenSparseToDense(CpuKernelContext &ctx, SparseTensor *st, const Tensor *indices, Tensor *output) {
     if (indices->GetDataType() == DT_INT32) {
       return st->ToDense<int32_t, ValueT>(ctx, output);
     } else {
@@ -56,14 +56,14 @@ class SparseToDenseCpuKernel : public CpuKernel {
    * @param output: output tensor
    * @return uint32_t: 0->success other->failed
    */
-  uint32_t SparseToDense(const CpuKernelContext &ctx, SparseTensor *st, const Tensor *indices, Tensor *output);
+  uint32_t SparseToDense(CpuKernelContext &ctx, SparseTensor *st, const Tensor *indices, Tensor *output);
 
   /*
    * valid sparse to dense param
    * @param ctx: cpu kernel context
    * @return uint32_t: 0->success other->failed
    */
-  KernelStatus ValidParam(const CpuKernelContext &ctx);
+  KernelStatus ValidParam(CpuKernelContext &ctx);
 
   /*
    * parallel set default value to dense
@@ -73,7 +73,7 @@ class SparseToDenseCpuKernel : public CpuKernel {
    * @param output_size: output tensor size
    * @return uint32_t: 0->success other->failed
    */
-  uint32_t ParallelSetDefaultValue(const CpuKernelContext &ctx, const Tensor *default_value_tensor,
+  uint32_t ParallelSetDefaultValue(CpuKernelContext &ctx, const Tensor *default_value_tensor,
                                    const Tensor *output_tensor, int64_t output_size);
 
   /*
@@ -84,7 +84,7 @@ class SparseToDenseCpuKernel : public CpuKernel {
    * @param output_size: output tensor size
    * @return uint32_t: 0->success other->failed
    */
-  uint32_t SetDefaultValue(const CpuKernelContext &ctx, const Tensor *default_value_tensor, const Tensor *output_tensor,
+  uint32_t SetDefaultValue(CpuKernelContext &ctx, const Tensor *default_value_tensor, const Tensor *output_tensor,
                            int64_t output_size);
 };
 

@@ -28,7 +28,6 @@
 
 namespace mindspore::parallel {
 using Shape = std::vector<int64_t>;
-using AssembledDynamicDimsMapping = std::map<int64_t, AnfNodePtr>;
 
 class PrimeGenerator {
  public:
@@ -64,8 +63,6 @@ class DecomposeDim {
   int64_t factor() const { return this->factor_; }
   void set_factor(int64_t f) { this->factor_ = f; }
   bool IsDecomposable() const { return !this->prime_.empty(); }
-  bool CreateShapeTracingGraph(const AssembledDynamicDimsMapping &mapping, const FuncGraphPtr &func_graph,
-                               std::vector<AnfNodePtr> *anf_nodes);
 
  private:
   std::vector<int64_t> prime_;

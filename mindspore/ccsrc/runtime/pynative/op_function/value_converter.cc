@@ -16,7 +16,24 @@
 
 #include "runtime/pynative/op_function/value_converter.h"
 
+#include <vector>
+#include <memory>
+#include "kernel/pyboost/auto_generate/contiguous.h"
+
 namespace mindspore::runtime {
+namespace {
+tensor::TensorPtr GetContiguousTensor(OpRunnerInfo *op_runner_info, const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto device_address = tensor->device_address();
+  if (device_address == nullptr || device_address->GetTensorStorageInfo() == nullptr) {
+    return tensor;
+  }
+
+  auto op = CREATE_PYBOOST_OP(Contiguous, op_runner_info->device_target);
+  return op->Call(tensor);
+}
+}  // namespace
+
 Int64ImmPtr ValueConverter::ToInt(const ValuePtrList &inputs, size_t i) { return Convert<Int64ImmPtr>(inputs, i); }
 
 FP32ImmPtr ValueConverter::ToFloat(const ValuePtrList &inputs, size_t i) { return Convert<FP32ImmPtr>(inputs, i); }
@@ -67,5 +84,50 @@ std::optional<TypePtr> ValueConverter::ToDtypeOptional(const ValuePtrList &input
 
 std::optional<ValueTuplePtr> ValueConverter::ToValueTupleOptional(const ValuePtrList &inputs, size_t i) {
   return ConvertOptional<ValueTuplePtr>(inputs, i);
+}
+
+tensor::TensorPtr ValueConverter::ContiguousTensorValue(OpRunnerInfo *op_runner_info, const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(op_runner_info);
+  if (op_runner_info->device_target == kAscendDevice) {
+    return tensor;
+  }
+
+  return GetContiguousTensor(op_runner_info, tensor);
+}
+
+ValueTuplePtr ValueConverter::ContiguousTensorValue(OpRunnerInfo *op_runner_info, const ValueTuplePtr &tuple) {
+  MS_EXCEPTION_IF_NULL(op_runner_info);
+  MS_EXCEPTION_IF_NULL(tuple);
+  if (op_runner_info->device_target == kAscendDevice) {
+    return tuple;
+  }
+
+  const auto &value_list = tuple->value();
+  if (value_list.empty()) {
+    return tuple;
+  }
+
+  std::vector<ValuePtr> new_value_list(value_list);
+  bool need_rebuild_tuple = false;
+  for (size_t i = 0; i < value_list.size(); i++) {
+    auto val = value_list[i];
+    MS_EXCEPTION_IF_NULL(val);
+    if (!val->isa<tensor::Tensor>()) {
+      // No need to contiguous, when tuple is not tensor tuple.
+      break;
+    }
+
+    const auto &tensor = val->cast<tensor::TensorPtr>();
+    auto contiguous_tensor = GetContiguousTensor(op_runner_info, tensor);
+    if (contiguous_tensor != tensor) {
+      need_rebuild_tuple = true;
+      new_value_list[i] = contiguous_tensor;
+    }
+  }
+
+  if (need_rebuild_tuple) {
+    return std::make_shared<ValueTuple>(new_value_list);
+  }
+  return tuple;
 }
 }  // namespace mindspore::runtime

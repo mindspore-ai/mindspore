@@ -30,7 +30,7 @@ class MatrixPowerCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx);
+  uint32_t ComputeKernel(CpuKernelContext &ctx);
   int powervalue_;
 };
 }  // namespace aicpu

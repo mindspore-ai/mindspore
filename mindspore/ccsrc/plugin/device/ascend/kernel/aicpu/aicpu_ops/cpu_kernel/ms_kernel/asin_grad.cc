@@ -34,8 +34,9 @@ int64_t data_num = 1;
 namespace aicpu {
 uint32_t AsinGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "AsinGrad check input and output number failed.");
-  KERNEL_HANDLE_ERROR(AsinGradParamCheck(ctx), "AsinGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "AsinGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, AsinGradParamCheck(ctx), "AsinGrad check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   data_num = ctx.Output(0)->NumElements();
   if (data_num >= kParallelDataNum) {
@@ -58,31 +59,32 @@ uint32_t AsinGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return AsinGradComputeRealType<double>(ctx);
     default:
-      KERNEL_LOG_ERROR("AsinGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "AsinGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t AsinGradCpuKernel::AsinGradParamCheck(const CpuKernelContext &ctx) {
+uint32_t AsinGradCpuKernel::AsinGradParamCheck(CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_y = ctx.Input(0);
   Tensor *input_dy = ctx.Input(1);
   Tensor *output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input_y->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 'y' failed.")
-  KERNEL_CHECK_NULLPTR(input_dy->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 'dy' data failed.")
-  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_y->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 'y' failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_dy->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 'dy' data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
   DataType input_y_type = input_y->GetDataType();
   DataType input_dy_type = input_dy->GetDataType();
-  KERNEL_CHECK_FALSE((input_y_type == input_dy_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of y [%s] need be same with "
-                     "dy [%s].",
-                     DTypeStr(input_y_type).c_str(), DTypeStr(input_dy_type).c_str())
-  KERNEL_LOG_DEBUG(
-    "AsinGradCpuKernel[%s], y: size[%llu];"
-    "dy: size[%llu], z: size[%llu].",
-    ctx.GetOpType().c_str(), input_y->GetDataSize(), input_dy->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_y_type == input_dy_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of y [%s] need be same with "
+                          "dy [%s].",
+                          DTypeStr(input_y_type).c_str(), DTypeStr(input_dy_type).c_str())
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "AsinGradCpuKernel[%s], y: size[%llu];"
+                        "dy: size[%llu], z: size[%llu].",
+                        ctx.GetOpType().c_str(), input_y->GetDataSize(), input_dy->GetDataSize(),
+                        output->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 
@@ -108,17 +110,18 @@ void AsinGradCpuKernel::SpecialCompute(int64_t start, int64_t end, const T *inpu
 }
 
 template <typename T>
-uint32_t AsinGradCpuKernel::AsinGradComputeRealType(const CpuKernelContext &ctx) {
+uint32_t AsinGradCpuKernel::AsinGradComputeRealType(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   if (data_num >= kParallelDataNum) {
     auto sharder_asin_grad = [&](int64_t start, int64_t end) { SpecialCompute<T>(start, end, in0, in1, out); };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max core num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max core num could not be 0");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_asin_grad),
-                        "AsinGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_asin_grad),
+                             "AsinGrad Compute failed.");
   } else {
     SpecialCompute<T>(0, data_num, in0, in1, out);
   }
@@ -149,17 +152,18 @@ void AsinGradCpuKernel::SpecialComputeFP16(int64_t start, int64_t end, const T *
 }
 
 template <typename T>
-uint32_t AsinGradCpuKernel::AsinGradComputeFP16(const CpuKernelContext &ctx) {
+uint32_t AsinGradCpuKernel::AsinGradComputeFP16(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   if (data_num >= kParallelDataNum) {
     auto sharder_asin_grad = [&](int64_t start, int64_t end) { SpecialComputeFP16<T>(start, end, in0, in1, out); };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max core num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max core num could not be 0");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_asin_grad),
-                        "AsinGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_asin_grad),
+                             "AsinGrad Compute failed.");
   } else {
     SpecialComputeFP16<T>(0, data_num, in0, in1, out);
   }

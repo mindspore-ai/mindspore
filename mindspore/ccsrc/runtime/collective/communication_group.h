@@ -96,23 +96,36 @@ using CommunicationGroupPtr = std::shared_ptr<CommunicationGroup>;
 }  // namespace device
 }  // namespace mindspore
 
-#define CHECK_RET(expression, result, message)                                                     \
-  do {                                                                                             \
-    auto ret = (expression);                                                                       \
-    if (ret != (result)) {                                                                         \
-      std::ostringstream oss;                                                                      \
-      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__ << ": " << (message); \
-      pybind11::pybind11_fail(oss.str());                                                          \
-    }                                                                                              \
+#ifndef COMM_GROUP_HDR_FILE_REL_PATH
+#define COMM_GROUP_HDR_FILE_REL_PATH "mindspore/ccsrc/runtime/collective/communication_group.h"
+#endif
+static constexpr size_t GetCommLibFileRelPathPos() noexcept {
+  return sizeof(__FILE__) > sizeof(COMM_GROUP_HDR_FILE_REL_PATH)
+           ? sizeof(__FILE__) - sizeof(COMM_GROUP_HDR_FILE_REL_PATH)
+           : 0;
+}
+
+#define REL_FILE_PATH                                                                                               \
+  (sizeof(__FILE__) > GetCommLibFileRelPathPos() ? static_cast<const char *>(__FILE__) + GetCommLibFileRelPathPos() \
+                                                 : static_cast<const char *>(__FILE__))
+
+#define CHECK_RET(expression, result, message)                                                          \
+  do {                                                                                                  \
+    auto ret = (expression);                                                                            \
+    if (ret != (result)) {                                                                              \
+      std::ostringstream oss;                                                                           \
+      oss << "Error in file " << REL_FILE_PATH << " | Error on line " << __LINE__ << ": " << (message); \
+      pybind11::pybind11_fail(oss.str());                                                               \
+    }                                                                                                   \
   } while (0)
 
-#define CHECK_IF_NULL(ptr)                                                                               \
-  do {                                                                                                   \
-    if ((ptr) == nullptr) {                                                                              \
-      std::ostringstream oss;                                                                            \
-      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__ << ": The pointer[" << #ptr \
-          << "] is null.";                                                                               \
-      pybind11::pybind11_fail(oss.str());                                                                \
-    }                                                                                                    \
+#define CHECK_IF_NULL(ptr)                                                                                    \
+  do {                                                                                                        \
+    if ((ptr) == nullptr) {                                                                                   \
+      std::ostringstream oss;                                                                                 \
+      oss << "Error in file " << REL_FILE_PATH << " | Error on line " << __LINE__ << ": The pointer[" << #ptr \
+          << "] is null.";                                                                                    \
+      pybind11::pybind11_fail(oss.str());                                                                     \
+    }                                                                                                         \
   } while (0)
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_COLLECTIVE_COMMUNICATION_GROUP_H_

@@ -17,9 +17,9 @@ mindspore.ops.rfft
         - **norm** (str, 可选) - 标准化类型。默认值： ``None`` ，默认为 ``"backward"`` 。
           3种标准化类型定义为：
 
-            - ``"backward"`` ：不乘以标准化系数。
-            - ``"forward"`` ： 乘以标准化系数 :math:`1/n` 。
-            - ``"ortho"`` ：乘以标准化系数 :math:`1/\sqrt{n}` 。
+          - ``"backward"`` ：不乘以标准化系数。
+          - ``"forward"`` ： 乘以标准化系数 :math:`1/n` 。
+          - ``"ortho"`` ：乘以标准化系数 :math:`1/\sqrt{n}` 。
 
     返回：
         Tensor， `input` 进行实数离散傅里叶变换的结果，变换结果的数据类型为complex64/128， `dim` 轴大小为 :math:`n // 2 + 1`，

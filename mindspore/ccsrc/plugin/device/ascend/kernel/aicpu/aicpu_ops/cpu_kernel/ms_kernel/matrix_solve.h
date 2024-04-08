@@ -28,10 +28,10 @@ class MatrixSolveCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t MatrixSolveDataAndTypeCheck(const CpuKernelContext &ctx);
+  uint32_t MatrixSolveDataAndTypeCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t MatrixSolveCompute(const CpuKernelContext &ctx);
+  uint32_t MatrixSolveCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

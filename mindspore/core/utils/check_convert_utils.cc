@@ -406,6 +406,20 @@ bool CheckElementAbstractUnSupport(const AbstractBasePtr abs) {
     return false;
   }
   if (abs->isa<abstract::AbstractSequence>() && !abs->isa<abstract::AbstractSparseTensor>()) {
+    abstract::AbstractSequencePtr seq = abs->cast<abstract::AbstractSequencePtr>();
+    if (seq->dynamic_len()) {
+      auto elem = seq->dynamic_len_element_abs();
+      if (elem->BuildType()->type_id() == kNumberTypeInt64) {
+        return false;
+      }
+    } else {
+      auto elements = seq->elements();
+      if (elements.empty() || std::all_of(elements.cbegin(), elements.cend(), [](const AbstractBasePtr &elem) {
+            return elem->BuildType()->type_id() == kNumberTypeInt64;
+          })) {
+        return false;
+      }
+    }
     return true;
   }
   if (abs->isa<abstract::AbstractDictionary>()) {
@@ -450,7 +464,7 @@ bool CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(const std::vect
     if (CheckElementAbstractUnSupport(first_element)) {
       return true;
     }
-    auto first_element_shape = first_element->BuildShape();
+    auto first_element_shape = first_element->GetShape();
     MS_EXCEPTION_IF_NULL(first_element_shape);
     auto first_element_type = first_element->BuildType();
     MS_EXCEPTION_IF_NULL(first_element_type);
@@ -464,7 +478,7 @@ bool CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(const std::vect
       if (first_element_type_id != cur_element_type_id) {
         return true;
       }
-      auto cur_element_shape = cur_element->BuildShape();
+      auto cur_element_shape = cur_element->GetShape();
       MS_EXCEPTION_IF_NULL(cur_element_shape);
       if (*first_element_shape != *cur_element_shape) {
         return true;
@@ -1493,7 +1507,7 @@ size_t CheckAndConvertUtils::GetRemoveUMonadAbsNum(const AbstractBasePtrList &ab
 bool CheckAndConvertUtils::HasDynamicShapeInput(const AbstractBasePtrList &abs_list) {
   for (const auto &item : abs_list) {
     MS_EXCEPTION_IF_NULL(item);
-    auto shape = item->BuildShape();
+    auto shape = item->GetShape();
     if (shape->IsDynamic()) {
       return true;
     }

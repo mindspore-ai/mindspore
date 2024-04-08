@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,10 @@
 #include "transform/graph_ir/op_adapter.h"
 #include "graph/operator_reg.h"
 #include "ge/ge_api.h"
-#include "op_proto/inc/hcom_ops.h"
 
 namespace mindspore {
 namespace transform {
 class BaseOpAdapter;
-using HcomBroadcast = ::ge::op::HcomBroadcast;
 
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
 using InputNameAndType = std::vector<std::pair<std::string, bool>>;
@@ -98,8 +96,11 @@ class DfGraphConvertor {
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph, const std::string &phase_prefix,
                             RefModeFlag ref_mode_type = RefModeFlag::kRefModeEnv,
                             const std::vector<std::string> &extra_variables_names = {},
-                            SetDynRefDataFunc dyn_ref_data_func = nullptr)
-      : anf_graph_(anf_graph), extra_variables_names_(extra_variables_names), phase_prefix_(phase_prefix) {
+                            SetDynRefDataFunc dyn_ref_data_func = nullptr, bool offline_convert = false)
+      : anf_graph_(anf_graph),
+        extra_variables_names_(extra_variables_names),
+        phase_prefix_(phase_prefix),
+        offline_convert_(offline_convert) {
     MS_EXCEPTION_IF_NULL(anf_graph);
     if (ref_mode_type == RefModeFlag::kRefModeEnv) {
       ref_mode_ = IsEnableRefMode();
@@ -191,7 +192,7 @@ class DfGraphConvertor {
   void DrawOpInput(const AnfNodePtr &node, const AnfNodePtr &pred, size_t i);
   void SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node);
   void SetOpAttrToInput(const OpAdapterPtr &adpt, const CNodePtr &node);
-  void SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
+  void SetupBroadcast(const OperatorPtr &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
                       const DfGraphPtr &broadcast_graph, std::vector<::ge::Operator> broadcast_input);
   void SetupParamInitSubGraph(const TensorOrderMap &tensors, const std::vector<::ge::Operator> *init_input,
                               bool is_sink_size_repeat);
@@ -397,6 +398,7 @@ class DfGraphConvertor {
   bool is_kernel_graph_ = false;
 
   std::string phase_prefix_;
+  bool offline_convert_ = false;
   void AddInputInDataSink(std::vector<Operator> *inputs);
 };
 }  // namespace transform

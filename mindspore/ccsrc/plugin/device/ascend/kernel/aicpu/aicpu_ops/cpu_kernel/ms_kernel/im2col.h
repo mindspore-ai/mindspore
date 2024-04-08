@@ -33,7 +33,7 @@ class Im2colCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t Im2colCompute(const CpuKernelContext &ctx);
+  uint32_t Im2colCompute(CpuKernelContext &ctx);
   template <typename T>
   void InnerCompute(int64_t c_col, T *x_ptr, T *y_ptr);
   uint32_t Im2colParamCheck(CpuKernelContext &ctx);

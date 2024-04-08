@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_STRING_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_STRING_OPS_DECLARE_H_
 
-#include "op_proto/inc/string_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 
 DECLARE_OP_ADAPTER(StringUpper)
@@ -28,7 +27,6 @@ DECLARE_OP_USE_OUTPUT(StringLength)
 
 DECLARE_OP_ADAPTER(StringFormat)
 DECLARE_OP_USE_DYN_INPUT(StringFormat)
-DECLARE_OP_ATTR(StringFormat)
 DECLARE_OP_USE_OUTPUT(StringFormat)
 
 DECLARE_OP_ADAPTER(DecodeBase64)

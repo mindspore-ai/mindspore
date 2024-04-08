@@ -75,11 +75,6 @@ struct OpGradInfo {
   std::vector<ValuePtr> input_value{};
   ValuePtr out_value{nullptr};
   std::vector<InputType> input_value_grad_type{};
-  // Currently only packfunc will use the grad_graph_id, and it will not be used in other scenarios.
-  // Since the current grad process uses the prim in FrontendOpRunInfo, not the prim in BackendOpRunInfo,
-  // the grad_graph_id cannot be placed in the prim attr during the async run,
-  // and the grad_graph_id will be able to the prim attr later.
-  int64_t grad_graph_id{-1};
   size_t output_size;
 };
 using OpGradInfoPtr = std::shared_ptr<OpGradInfo>;

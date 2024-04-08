@@ -23,19 +23,19 @@ namespace aicpu {
 namespace {
 const char *kSparseDenseCwiseAdd = "SparseDenseCwiseAdd";
 
-#define SPARSE_DENSE_CWISE_ADD_COMPUTE_CASE(DTYPE, TYPE, CTX)         \
-  case (DTYPE): {                                                     \
-    uint32_t result = SparseDenseCwiseOpCompute<TYPE>(CTX);           \
-    if (result != KERNEL_STATUS_OK) {                                 \
-      KERNEL_LOG_ERROR("SparseDenseCwiseAdd kernel compute failed."); \
-      return result;                                                  \
-    }                                                                 \
-    break;                                                            \
+#define SPARSE_DENSE_CWISE_ADD_COMPUTE_CASE(DTYPE, TYPE, CTX)                   \
+  case (DTYPE): {                                                               \
+    uint32_t result = SparseDenseCwiseOpCompute<TYPE>(CTX);                     \
+    if (result != KERNEL_STATUS_OK) {                                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseDenseCwiseAdd kernel compute failed."); \
+      return result;                                                            \
+    }                                                                           \
+    break;                                                                      \
   }
 }  // namespace
 
 uint32_t SparseDenseCwiseAddKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(CheckParams(ctx), "SparseDenseCwiseAdd check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CheckParams(ctx), "SparseDenseCwiseAdd check params failed.");
 
   auto data_type = ctx.Input(1)->GetDataType();
   switch (data_type) {
@@ -53,7 +53,7 @@ uint32_t SparseDenseCwiseAddKernel::Compute(CpuKernelContext &ctx) {
     SPARSE_DENSE_CWISE_ADD_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     SPARSE_DENSE_CWISE_ADD_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("SparseDenseCwiseAdd kernel data type %s not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseDenseCwiseAdd kernel data type %s not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 

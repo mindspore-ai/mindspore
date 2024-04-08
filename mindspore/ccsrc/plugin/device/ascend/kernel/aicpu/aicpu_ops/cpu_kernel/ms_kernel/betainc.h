@@ -34,7 +34,7 @@ class BetaincCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t BetaincCompute(const CpuKernelContext &ctx);
+  uint32_t BetaincCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_BETAINC_H_

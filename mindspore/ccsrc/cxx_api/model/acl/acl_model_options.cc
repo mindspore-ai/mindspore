@@ -62,7 +62,7 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   if (!ascend_info->GetInputShape().empty()) {
     input_shape_ = ascend_info->GetInputShape();
   }
-  const char *soc_name = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *soc_name = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name == nullptr) {
     MS_LOG(WARNING) << "Get soc version failed.";
     return;
@@ -71,7 +71,7 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
 }
 
 std::string AclModelOptions::GetSocName() {
-  const char *soc_name = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *soc_name = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name == nullptr) {
     MS_LOG(WARNING) << "Get soc version failed.";
     return "";

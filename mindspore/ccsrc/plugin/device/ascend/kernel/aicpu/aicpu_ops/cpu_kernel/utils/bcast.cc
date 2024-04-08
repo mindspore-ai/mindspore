@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
+#include "inc/kernel_log.h"
 #include "context/common/status.h"
 
 namespace {
@@ -30,7 +30,7 @@ enum class State { UNKNOWN, SAME, X_ONE, Y_ONE };
 }  // namespace
 
 namespace aicpu {
-uint32_t Bcast::Init(const std::vector<int64_t> &x, const std::vector<int64_t> &y) {
+uint32_t Bcast::Init(CpuKernelContext &ctx, const std::vector<int64_t> &x, const std::vector<int64_t> &y) {
   State prev = State::UNKNOWN;
   for (size_t i = 0; i < x.size(); ++i) {
     State curr = State::UNKNOWN;
@@ -59,7 +59,7 @@ uint32_t Bcast::Init(const std::vector<int64_t> &x, const std::vector<int64_t> &
       curr = State::Y_ONE;
     } else {
       valid_ = false;
-      KERNEL_LOG_ERROR("Broadcast failed, x_shape[%zu]=%ld, y_shape[%zu]=%ld", i, x_i, i, y_i);
+      CUST_KERNEL_LOG_ERROR(ctx, "Broadcast failed, x_shape[%zu]=%ld, y_shape[%zu]=%ld", i, x_i, i, y_i);
       return KERNEL_STATUS_PARAM_INVALID;
     }
     shape_out_.emplace_back(o_i);
@@ -83,7 +83,8 @@ uint32_t Bcast::Init(const std::vector<int64_t> &x, const std::vector<int64_t> &
   return KERNEL_STATUS_OK;
 }
 
-Bcast::Bcast(std::vector<int64_t> &x_shape, std::vector<int64_t> &y_shape) : valid_(true) {
+Bcast::Bcast(CpuKernelContext &ctx, std::vector<int64_t> &x_shape, std::vector<int64_t> &y_shape)
+    : ctx(ctx), valid_(true) {
   if (x_shape == y_shape) {
     int64_t elements_num = 1;
     for (size_t i = 0; i < x_shape.size(); ++i) {
@@ -106,7 +107,7 @@ Bcast::Bcast(std::vector<int64_t> &x_shape, std::vector<int64_t> &y_shape) : val
       x.resize(y.size(), kNoBroadcastValue);
     }
 
-    auto ret = Init(x, y);
+    auto ret = Init(ctx, x, y);
     if (ret != KERNEL_STATUS_OK) {
       return;
     }
@@ -220,15 +221,15 @@ uint32_t Bcast::GenerateBcastInfo(const BCalcInfo &calcInfo) {
   std::reverse(y_reshape_.begin(), y_reshape_.end());
   // Check if shape match
   if (shape_out.size() != max_size) {
-    KERNEL_LOG_ERROR("shape mismatch, max_dim_in=%zu, dim_out=%zu.", max_size, shape_out.size());
+    CUST_KERNEL_LOG_ERROR(ctx, "shape mismatch, max_dim_in=%zu, dim_out=%zu.", max_size, shape_out.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   for (size_t i = 0; i < max_size; i++) {
     if (shape_out_[i] != std::max(x_reshape_[i], y_reshape_[i])) {
-      KERNEL_LOG_ERROR(
-        "shape mismatch, dim_x[%zu]=%ld, dim_y[%zu]=%ld, "
-        "dim_out[%zu]=%ld.",
-        i, x_reshape_[i], i, y_reshape_[i], i, shape_out_[i]);
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "shape mismatch, dim_x[%zu]=%ld, dim_y[%zu]=%ld, "
+                            "dim_out[%zu]=%ld.",
+                            i, x_reshape_[i], i, y_reshape_[i], i, shape_out_[i]);
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -245,7 +246,8 @@ uint32_t Bcast::GenerateBcastInfo(const BCalcInfo &calcInfo) {
     } else if (y_reshape_[i] == kNoBroadcastValue) {
       y_bcast_[i] = x_reshape_[i];
     } else {
-      KERNEL_LOG_ERROR("Broadcast not support, dim_x[%zu]=%ld, dim_y[%zu]=%ld.", i, x_reshape_[i], i, y_reshape_[i]);
+      CUST_KERNEL_LOG_ERROR(ctx, "Broadcast not support, dim_x[%zu]=%ld, dim_y[%zu]=%ld.", i, x_reshape_[i], i,
+                            y_reshape_[i]);
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }

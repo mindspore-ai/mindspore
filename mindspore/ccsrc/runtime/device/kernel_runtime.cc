@@ -1364,6 +1364,7 @@ void KernelRuntime::GenKernelTensorLaunchArgs(const CNodePtr &cnode, std::vector
 #endif
     for (auto index : clean_output_indexes) {
       auto device_address = AnfAlgo::GetOutputAddr(pre_node, index);
+      MS_EXCEPTION_IF_NULL(device_address);
       const auto &input = device_address->kernel_tensor();
       MS_EXCEPTION_IF_NULL(input);
       if (mem_scheduler != nullptr) {

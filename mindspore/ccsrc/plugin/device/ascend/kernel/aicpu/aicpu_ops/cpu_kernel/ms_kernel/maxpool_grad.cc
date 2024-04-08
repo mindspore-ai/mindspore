@@ -164,7 +164,7 @@ uint32_t SpatialMaxPoolWithArgMaxHelper(CpuKernelContext &ctx, const PoolParams 
       dx_ptr += X_stride;
     }
   };
-  auto shard = [&params, &in_mat, &out_mat, &out_arg_max_mat, &input_backprop, &output_arg_max, &out_backprop,
+  auto shard = [&ctx, &params, &in_mat, &out_mat, &out_arg_max_mat, &input_backprop, &output_arg_max, &out_backprop,
                 &tensor_out_backprop, include_batch_in_index](int64_t start, int64_t limit) {
     const int32_t depth = params.depth;
     const int32_t in_rows = params.tensor_rows;
@@ -240,7 +240,7 @@ uint32_t SpatialMaxPoolWithArgMaxHelper(CpuKernelContext &ctx, const PoolParams 
             input_backprop_flat(input_backprop_index) += out_backprop_flat(index);
           }
         } else {
-          KERNEL_LOG_ERROR("[MaxPoolGrad] Backpropagate boundsCheck failed");
+          CUST_KERNEL_LOG_ERROR(ctx, "[MaxPoolGrad] Backpropagate boundsCheck failed");
           return KERNEL_STATUS_PARAM_INVALID;
         }
       }
@@ -274,36 +274,37 @@ uint32_t SpatialMaxPoolWithArgMaxHelper(CpuKernelContext &ctx, const PoolParams 
     return CpuKernelUtils::ParallelFor(ctx, params.tensor_batch, params.tensor_batch / max_core_num, shard);
   }
 }
-uint32_t CheckMaxPoolGrad(const CpuKernelContext &ctx) {
+uint32_t CheckMaxPoolGrad(CpuKernelContext &ctx) {
   Tensor *tensor_in = ctx.Input(kFirstInputIndex);
   Tensor *tensor_out = ctx.Input(kSecondInputIndex);
   Tensor *out_backprop = ctx.Input(kThirdInputIndex);
   const std::vector<std::string> attr = {"ksize", "strides", "padding"};
 
-  KERNEL_CHECK_FALSE(NormalCheck(ctx, kMaxPoolGradInputNum, kMaxPoolGradOutputNum, attr) == KERNEL_STATUS_OK,
-                     KERNEL_STATUS_PARAM_INVALID, "[MaxPoolGrad] NormalCheck input and output failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, NormalCheck(ctx, kMaxPoolGradInputNum, kMaxPoolGradOutputNum, attr) == KERNEL_STATUS_OK,
+                          KERNEL_STATUS_PARAM_INVALID, "[MaxPoolGrad] NormalCheck input and output failed.");
   // check tensor_in dims
   Tensor &input0 = *(tensor_in);
   auto input_shape_ptr = input0.GetTensorShape();
-  KERNEL_CHECK_FALSE(input_shape_ptr->GetDims() == 4, KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [4D] tensor expected for input(0).");
+  CUST_KERNEL_CHECK_FALSE(ctx, input_shape_ptr->GetDims() == 4, KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [4D] tensor expected for input(0).");
   // check tensor_out dims
   Tensor &input1 = *(tensor_out);
   auto output_shape_ptr = input1.GetTensorShape();
-  KERNEL_CHECK_FALSE(output_shape_ptr->GetDims() == 4, KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [4D] tensor expected for input(1).");
+  CUST_KERNEL_CHECK_FALSE(ctx, output_shape_ptr->GetDims() == 4, KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [4D] tensor expected for input(1).");
   // check out_backprop dims
   Tensor &input2 = *(out_backprop);
   auto grad_shape_ptr = input2.GetTensorShape();
-  KERNEL_CHECK_FALSE(grad_shape_ptr->GetDims() == 4, KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [4D] tensor expected for input(2).");
+  CUST_KERNEL_CHECK_FALSE(ctx, grad_shape_ptr->GetDims() == 4, KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [4D] tensor expected for input(2).");
   // check output data
-  KERNEL_LOG_DEBUG("[MaxPoolGrad] Parameters check pass.");
+  CUST_KERNEL_LOG_DEBUG(ctx, "[MaxPoolGrad] Parameters check pass.");
   return KERNEL_STATUS_OK;
 }
-uint32_t GetOutputSizeGrad(int input_size, int kernel_size, int stride, const std::string &padding,
-                           int64_t *output_size, int64_t *padding_before, int64_t *padding_after) {
-  KERNEL_CHECK_FALSE(stride > 0, KERNEL_STATUS_PARAM_INVALID, "[MaxPoolGrad] Stride must be positive.");
+uint32_t GetOutputSizeGrad(CpuKernelContext &ctx, int input_size, int kernel_size, int stride,
+                           const std::string &padding, int64_t *output_size, int64_t *padding_before,
+                           int64_t *padding_after) {
+  CUST_KERNEL_CHECK_FALSE(ctx, stride > 0, KERNEL_STATUS_PARAM_INVALID, "[MaxPoolGrad] Stride must be positive.");
   std::string same("SAME");
   std::string valid("VALID");
   if (valid == padding) {
@@ -317,33 +318,33 @@ uint32_t GetOutputSizeGrad(int input_size, int kernel_size, int stride, const st
     *padding_before = padding_need / 2;
     *padding_after = padding_need - *padding_before;
   } else {
-    KERNEL_LOG_ERROR("[MaxPoolGrad] Padding is invalid.");
+    CUST_KERNEL_LOG_ERROR(ctx, "[MaxPoolGrad] Padding is invalid.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (*output_size < 0) {
-    KERNEL_LOG_ERROR("[MaxPoolGrad] Computed output size is negative.");
+    CUST_KERNEL_LOG_ERROR(ctx, "[MaxPoolGrad] Computed output size is negative.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 uint32_t ConstructPoolParams(aicpu::CpuKernelContext &ctx, const aicpu::TensorShape &data_format, PoolParams *params) {
   Format format = data_format.GetFormat();
-  KERNEL_CHECK_FALSE((format == FORMAT_NHWC || format == FORMAT_NCHW), KERNEL_STATUS_PARAM_INVALID,
-                     "[MaxPoolGrad] Format is not NHWC or NCHW.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (format == FORMAT_NHWC || format == FORMAT_NCHW), KERNEL_STATUS_PARAM_INVALID,
+                          "[MaxPoolGrad] Format is not NHWC or NCHW.");
   std::vector<int64_t> tensor_in_shapes = data_format.GetDimSizes();
   std::vector<int64_t> ksize = ctx.GetAttr("ksize")->GetListInt();
   std::vector<int64_t> strides = ctx.GetAttr("strides")->GetListInt();
   std::string padding = ctx.GetAttr("padding")->GetString();
   std::string data_format_str = "";
   if (ctx.GetAttr("data_format") == nullptr) {
-    KERNEL_LOG_INFO("[MaxPoolGrad] Attr data_format is empty, using default value NHWC.");
+    CUST_KERNEL_LOG_INFO(ctx, "[MaxPoolGrad] Attr data_format is empty, using default value NHWC.");
     format = FORMAT_NHWC;
   } else {
     std::map<std::string, aicpu::Format> format_str_to_enum_map = {{"NHWC", FORMAT_NHWC}, {"NCHW", FORMAT_NCHW}};
     data_format_str = ctx.GetAttr("data_format")->GetString();
 
-    KERNEL_HANDLE_ERROR(format_str_to_enum_map.find(data_format_str) == format_str_to_enum_map.end(),
-                        "[MaxPoolGrad] data_format string is invalid.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, format_str_to_enum_map.find(data_format_str) == format_str_to_enum_map.end(),
+                             "[MaxPoolGrad] data_format string is invalid.");
     format = format_str_to_enum_map[data_format_str];
   }
   switch (format) {
@@ -372,21 +373,21 @@ uint32_t ConstructPoolParams(aicpu::CpuKernelContext &ctx, const aicpu::TensorSh
       (*params).strides_depth = strides[kFormatNCHWIndexC];
       break;
     default:
-      KERNEL_LOG_ERROR("[MaxPoolGrad] Format is not NHWC or NCHW, current is [%d].", format);
+      CUST_KERNEL_LOG_ERROR(ctx, "[MaxPoolGrad] Format is not NHWC or NCHW, current is [%d].", format);
       return KERNEL_STATUS_PARAM_INVALID;
   }
   // 1 types of pooling is supported: 2d pooling on w/h
   // depth pooling on channel is not supported
-  KERNEL_CHECK_FALSE((*params).ksize_depth == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "[MaxPoolGrad] Only pooling on width/height is supported.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (*params).ksize_depth == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "[MaxPoolGrad] Only pooling on width/height is supported.");
   // Padding calc
   if ((*params).ksize_depth == 1) {
-    uint32_t ret1 = GetOutputSizeGrad((*params).tensor_rows, (*params).ksize_rows, (*params).strides_rows, padding,
+    uint32_t ret1 = GetOutputSizeGrad(ctx, (*params).tensor_rows, (*params).ksize_rows, (*params).strides_rows, padding,
                                       &(*params).out_height, &(*params).pad_top, &(*params).pad_bottom);
-    uint32_t ret2 = GetOutputSizeGrad((*params).tensor_cols, (*params).ksize_cols, (*params).strides_cols, padding,
+    uint32_t ret2 = GetOutputSizeGrad(ctx, (*params).tensor_cols, (*params).ksize_cols, (*params).strides_cols, padding,
                                       &(*params).out_width, &(*params).pad_left, &(*params).pad_right);
-    KERNEL_CHECK_FALSE(ret1 == KERNEL_STATUS_OK && ret2 == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
-                       "[MaxPoolGrad] An error occurred while calculating output size.");
+    CUST_KERNEL_CHECK_FALSE(ctx, ret1 == KERNEL_STATUS_OK && ret2 == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
+                            "[MaxPoolGrad] An error occurred while calculating output size.");
     (*params).out_depth = (*params).depth;
   }
   return KERNEL_STATUS_OK;
@@ -395,13 +396,13 @@ template <class T>
 uint32_t ComputeMaxPoolGradImpl(CpuKernelContext &ctx) {
   TensorShape ts = *(ctx.Input(kFirstInputIndex)->GetTensorShape());
   PoolParams params;
-  KERNEL_CHECK_FALSE(ConstructPoolParams(ctx, ts, &params) == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
-                     "[MaxPoolGrad] Parameters construct failed.")
+  CUST_KERNEL_CHECK_FALSE(ctx, ConstructPoolParams(ctx, ts, &params) == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
+                          "[MaxPoolGrad] Parameters construct failed.")
   return SpatialMaxPoolWithArgMaxHelper<T, int64_t>(ctx, params);
 }
 uint32_t MaxPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_CHECK_FALSE(CheckMaxPoolGrad(ctx) == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
-                     "[MaxPoolGrad] Parameters check failure.");
+  CUST_KERNEL_CHECK_FALSE(ctx, CheckMaxPoolGrad(ctx) == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
+                          "[MaxPoolGrad] Parameters check failure.");
   DataType input_type = ctx.Input(kFirstInputIndex)->GetDataType();
   switch (input_type) {
     case DT_FLOAT16:
@@ -427,7 +428,7 @@ uint32_t MaxPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_UINT64:
       return ComputeMaxPoolGradImpl<uint64_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("[MaxPoolGrad] Input Data type [%s] is not supported.", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[MaxPoolGrad] Input Data type [%s] is not supported.", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

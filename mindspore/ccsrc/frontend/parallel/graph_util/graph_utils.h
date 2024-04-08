@@ -40,6 +40,11 @@ CNodePtr CreateShape(const AnfNodePtr &pre_cnode, const FuncGraphPtr &func_graph
 AnfNodePtr GetAccuGrad(const std::vector<AnfNodePtr> &parameters, const std::string &weight_name);
 AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redistribution, const Param &param,
                                       const FuncGraphPtr &func_graph);
+AnfNodePtr CreateDiv(const AnfNodePtr &input_node, int64_t divisor, const FuncGraphPtr &func_graph,
+                     bool to_long = false, const std::string &inst_name = "");
+CNodePtr CreateSplit(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph,
+                     const std::string &inst_name = "");
+bool IsToBeInsertedSplitOp(const Operator &op);
 Status MergeEntireShapeForDynamic(const FuncGraphPtr &func_graph);
 }  // namespace mindspore::parallel
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GRAPH_UTILS_H_

@@ -320,6 +320,8 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsNoOuputNode(const AnfNodePtr &node);
   static ValuePtr ValueToScalar(const ValuePtr &value, TypeId type_id);
   static std::vector<ValuePtr> TransformVectorRefToMultiValue(const VectorRef &base_ref);
+  static bool HasIncorporateCallNode(const CNodePtr &cnode);
+  static bool IsDynamicGraph(const FuncGraphPtr &func_graph);
 };
 
 inline AnfNodePtr CreateShapeVectorNode(const ShapeVector &value) {

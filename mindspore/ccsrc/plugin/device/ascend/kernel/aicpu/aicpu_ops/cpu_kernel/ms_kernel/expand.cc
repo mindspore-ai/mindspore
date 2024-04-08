@@ -39,8 +39,8 @@ const uint32_t Num8 = 8;
 namespace aicpu {
 uint32_t ExpandCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, ExpandInputNum, ExpandOutputDescNum),
-                      "Expand check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, ExpandInputNum, ExpandOutputDescNum),
+                           "Expand check input and output number failed.");
   auto data_type = static_cast<DataType>(ctx.Input(kFirstInputIndex)->GetDataType());
   switch (data_type) {
     case DT_FLOAT16:
@@ -60,14 +60,14 @@ uint32_t ExpandCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_BOOL:
       return ExpandCompute<bool>(ctx);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <int32_t RANK, typename T, int32_t OPTION>
-uint32_t ExpandCpuKernel::BroadcastCompute(const CpuKernelContext &ctx, BCalcInfo &calc_info) {
+uint32_t ExpandCpuKernel::BroadcastCompute(CpuKernelContext &ctx, BCalcInfo &calc_info) {
   Eigen::TensorMap<Eigen::Tensor<T, 1>, OPTION> input0(static_cast<T *>(calc_info.input_0->GetData()),
                                                        calc_info.input_0->GetTensorShape()->NumElements());
   Eigen::TensorMap<Eigen::Tensor<T, 1>, OPTION> input1(static_cast<T *>(calc_info.input_1->GetData()),
@@ -95,9 +95,9 @@ uint32_t ExpandCpuKernel::ExpandCompute(CpuKernelContext &ctx) {
   calc_info.input_1 = ctx.Output(kFirstOutputIndex);
   calc_info.output = ctx.Output(kFirstOutputIndex);
 
-  Bcast bcast;
+  Bcast bcast(ctx);
   if (bcast.GenerateBcastInfo(calc_info) != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("[%s] Generate broadcast info failed.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Generate broadcast info failed.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   (void)bcast.GetBcastVec(calc_info);
@@ -127,14 +127,14 @@ uint32_t ExpandCpuKernel::ExpandCompute(CpuKernelContext &ctx) {
     case Num8:
       return ExpandCalculateWithAlignedCheck<Num8, T>(ctx, calc_info);
     default:
-      KERNEL_LOG_ERROR("[%s] Rank of output should expand than 8 but get [%zu].", ctx.GetOpType().c_str(),
-                       calc_info.shape_out.size());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Rank of output should expand than 8 but get [%zu].", ctx.GetOpType().c_str(),
+                            calc_info.shape_out.size());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <int32_t RANK, typename T>
-uint32_t ExpandCpuKernel::ExpandCalculateWithAlignedCheck(const CpuKernelContext &ctx, BCalcInfo &calc_info) {
+uint32_t ExpandCpuKernel::ExpandCalculateWithAlignedCheck(CpuKernelContext &ctx, BCalcInfo &calc_info) {
   if (AlignedCheck(calc_info)) {
     return BroadcastCompute<RANK, T, Eigen::Aligned>(ctx, calc_info);
   }

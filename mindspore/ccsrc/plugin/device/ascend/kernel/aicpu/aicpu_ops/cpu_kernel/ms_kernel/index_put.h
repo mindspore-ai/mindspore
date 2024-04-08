@@ -32,22 +32,22 @@ class IndexPutCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t IndexPutParmCheck(const CpuKernelContext &ctx);
+  uint32_t IndexPutParmCheck(CpuKernelContext &ctx);
 
   void Transpose(std::vector<std::vector<int64_t>> *A) const;
 
   int64_t Multiplicative(const std::vector<int64_t> &tensorshapes, int64_t start, int64_t end);
 
   template <typename T>
-  bool ComputeNospecial(std::vector<int64_t> x1_shape, T *x2, size_t x2_nums,
+  bool ComputeNospecial(CpuKernelContext &ctx, std::vector<int64_t> x1_shape, T *x2, size_t x2_nums,
                         std::vector<std::vector<int64_t>> indices_value, T *y, int accumulate);
 
   template <typename T>
-  bool ComputeSpecial(std::vector<int64_t> x1_shape, T *x2, size_t x2_nums,
+  bool ComputeSpecial(CpuKernelContext &ctx, std::vector<int64_t> x1_shape, T *x2, size_t x2_nums,
                       std::vector<std::vector<int64_t>> indices_value, T *y, int accumulate);
 
   template <typename T, typename T0>
-  uint32_t IndexPutCompute(const CpuKernelContext &ctx);
+  uint32_t IndexPutCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_INDEX_PUT_H_

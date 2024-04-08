@@ -224,7 +224,6 @@ CNodePtr CreateNewCNodeForReplace(const CNodePtr &origin_node, const PrimitivePt
   MS_EXCEPTION_IF_NULL(new_prim);
   auto op_name = new_prim->name();
   auto op_def = mindspore::ops::GetOpDef(op_name);
-
   if (op_def != nullptr) {
     // For new defined op, almost all old attrs is changed to inputs.
     std::vector<std::string> latter_erase;

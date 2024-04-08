@@ -40,19 +40,19 @@ const int64_t kParallelDataNumMid = 56 * 1024;
 
 namespace aicpu {
 uint32_t TripletMarginLossCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      " TripletMarginLoss check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           " TripletMarginLoss check input and output number failed.");
   auto data_type_x = static_cast<DataType>(ctx.Input(0)->GetDataType());
   auto data_type_positive = static_cast<DataType>(ctx.Input(1)->GetDataType());
   auto data_type_negative = static_cast<DataType>(ctx.Input(2)->GetDataType());
   if (data_type_x != data_type_negative || data_type_positive != data_type_negative ||
       data_type_x != data_type_positive) {
-    KERNEL_LOG_ERROR(
-      "[%s] Data type of inputs requires to be the same, but got data type "
-      "[%s] and "
-      "[%s], type[%s].",
-      ctx.GetOpType().c_str(), DTypeStr(data_type_x).c_str(), DTypeStr(data_type_positive).c_str(),
-      DTypeStr(data_type_negative).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "[%s] Data type of inputs requires to be the same, but got data type "
+                          "[%s] and "
+                          "[%s], type[%s].",
+                          ctx.GetOpType().c_str(), DTypeStr(data_type_x).c_str(), DTypeStr(data_type_positive).c_str(),
+                          DTypeStr(data_type_negative).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   AttrValue *Attr_p = ctx.GetAttr("p");
@@ -170,8 +170,8 @@ uint32_t TripletMarginLossCpuKernel::Compute(CpuKernelContext &ctx) {
         data_num_output_reduction_none, data_num_each_batch_input, data_num_each_batch_output_reduction_none,
         batch_size, once_compute_size, broadcast, x_reshape_vector, positive_reshape_vector, negative_reshape_vector);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not supported, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(data_type_x).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not supported, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(data_type_x).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -242,7 +242,7 @@ uint32_t TripletMarginLossCpuKernel::TripletMarginLossComputeRealType(
     float temp2;
     float temp3;
     if (data_num_each_batch_input == 0) {
-      KERNEL_LOG_ERROR("data_num_each_batch_input could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "data_num_each_batch_input could not be 0.");
     }
     for (int64_t n = 0; n < once_compute_thread_size / data_num_each_batch_input; n++) {
       int64_t i = start / data_num_each_batch_input;
@@ -323,7 +323,7 @@ uint32_t TripletMarginLossCpuKernel::TripletMarginLossComputeRealType(
       max_core_num = std::min(max_core_num, 4U);  // up to 4 cpu cores
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, num_elements,
                                 data_num_each_batch_input * ADULT_AGE * (batch_size / max_core_num + 1),
@@ -487,7 +487,7 @@ uint32_t TripletMarginLossCpuKernel::TripletMarginLossComputeComplexType(
     float negative_distance;
     float swap_distance;
     if (data_num_each_batch_input == 0) {
-      KERNEL_LOG_ERROR("data_num_each_batch_input could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "data_num_each_batch_input could not be 0.");
     }
     for (int64_t n = 0; n < (once_compute_thread_size) / data_num_each_batch_input; n++) {
       int64_t i = start / data_num_each_batch_input;
@@ -550,7 +550,7 @@ uint32_t TripletMarginLossCpuKernel::TripletMarginLossComputeComplexType(
       max_core_num = std::min(max_core_num, 4U);  // up to 4 cpu cores
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, num_elements,
                                 data_num_each_batch_input * ADULT_AGE * (batch_size / max_core_num + 1),
@@ -696,7 +696,7 @@ uint32_t TripletMarginLossCpuKernel::TripletMarginLossComputeRealTypeFloat16(
     float temp2;
     float temp3;
     if (data_num_each_batch_input == 0) {
-      KERNEL_LOG_ERROR("data_num_each_batch_input could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "data_num_each_batch_input could not be 0.");
     }
     for (int64_t n = 0; n < (once_compute_thread_size) / data_num_each_batch_input; n++) {
       int64_t i = start / data_num_each_batch_input;
@@ -770,7 +770,7 @@ uint32_t TripletMarginLossCpuKernel::TripletMarginLossComputeRealTypeFloat16(
       max_core_num = std::min(max_core_num, 4U);  // up to 4 cpu cores
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, num_elements,
                                 data_num_each_batch_input * ADULT_AGE * (batch_size / max_core_num + 1),

@@ -29,7 +29,7 @@ class DenseToCSRSparseMatrixCpuKernel : public CpuKernel {
 
  private:
   template <typename indiceT, typename valueT>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx);
+  uint32_t ComputeKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

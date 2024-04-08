@@ -75,7 +75,6 @@ const AnfNodePtr BatchNormReluFusion::Process(const FuncGraphPtr &graph, const A
   }
   auto is_train_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), is_train_idx);
   auto format_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), format_idx);
-
   if (!utils::isa<ValueNodePtr>(is_train_input_node) || !utils::isa<ValueNodePtr>(format_input_node)) {
     return nullptr;
   }

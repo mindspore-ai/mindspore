@@ -56,7 +56,5 @@ def _logical_and_tensor(x, y):
 
 @logical_and.register_default()
 def default_logical_and(x, y):
-    """
-    Default function for logical and.
-   """
+    """Default function for logical and."""
     return x and y

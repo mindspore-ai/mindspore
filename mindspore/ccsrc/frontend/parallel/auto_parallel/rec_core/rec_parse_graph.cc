@@ -431,6 +431,17 @@ void Eliminate_Aux_Outgoing(size_t node_index, const std::shared_ptr<Graph> &gra
   }
 }
 
+static void EraseEliminatedNode(std::vector<size_t> *nodes, const std::shared_ptr<std::vector<size_t>> &index_list) {
+  for (size_t j = nodes->size(); j > 0; j--) {
+    bool IsEliminated = (index_list->at(nodes->at(j - 1)) == SIZE_MAX);
+    if (IsEliminated) {
+      (void)nodes->erase(nodes->begin() + SizeToLong(j) - 1);
+    } else {
+      nodes->at(j - 1) = index_list->at(nodes->at(j - 1));
+    }
+  }
+}
+
 std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
                                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                                       const std::shared_ptr<std::vector<size_t>> &index_list,
@@ -464,32 +475,11 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
     }
     new_graph->nodes.push_back(graph->nodes[i]);
     auto *node_in = &new_graph->nodes[index_list->at(i)].node_in;
-    for (size_t j = node_in->size(); j > 0; j--) {
-      bool IsEliminated = (index_list->at(node_in->at(j - 1)) == SIZE_MAX);
-      if (IsEliminated) {
-        (void)node_in->erase(node_in->cbegin() + SizeToLong(j) - 1);
-      } else {
-        node_in->at(j - 1) = index_list->at(node_in->at(j - 1));
-      }
-    }
+    EraseEliminatedNode(node_in, index_list);
     auto *node_in_aux = &new_graph->nodes[index_list->at(i)].node_in_aux;
-    for (size_t j = node_in_aux->size(); j > 0; j--) {
-      bool IsEliminated = (index_list->at(node_in_aux->at(j - 1)) == SIZE_MAX);
-      if (IsEliminated) {
-        (void)node_in_aux->erase(node_in_aux->begin() + SizeToLong(j) - 1);
-      } else {
-        node_in_aux->at(j - 1) = index_list->at(node_in_aux->at(j - 1));
-      }
-    }
+    EraseEliminatedNode(node_in_aux, index_list);
     auto *node_out = &new_graph->nodes[index_list->at(i)].node_out;
-    for (size_t j = node_out->size(); j > 0; j--) {
-      bool IsEliminated = (index_list->at(node_out->at(j - 1)) == SIZE_MAX);
-      if (IsEliminated) {
-        (void)node_out->erase(node_out->cbegin() + SizeToLong(j) - 1);
-      } else {
-        node_out->at(j - 1) = index_list->at(node_out->at(j - 1));
-      }
-    }
+    EraseEliminatedNode(node_out, index_list);
   }
   return new_graph;
 }

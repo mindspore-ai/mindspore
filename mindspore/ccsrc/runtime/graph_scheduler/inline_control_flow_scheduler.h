@@ -33,7 +33,9 @@ class InlineControlFlowScheduler {
   void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
 
  private:
-  void LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info);
+  void LinkControlArrowByExecutionOrder(
+    const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,
+    const mindspore::HashMap<std::string, AbstractActor *> &branch_name_to_gather_actor);
   // Fix the member variables for condition actors.
   void HandleConditionSwitchActor(const KernelActorPtr &kernel_actor);
   void HandleConditionGatherActor(const KernelActorPtr &kernel_actor);

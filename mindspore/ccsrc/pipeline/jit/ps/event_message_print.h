@@ -28,6 +28,7 @@ class EventMessage {
   static void PrintCompileEndMsg(const std::string &phase, const std::string &obj_desc);
 
   static void PrintEventMessage(const std::string &message);
+  static void PrintCompileStatusMessage(const std::string &message);
 };
 }  // namespace pipeline
 }  // namespace mindspore

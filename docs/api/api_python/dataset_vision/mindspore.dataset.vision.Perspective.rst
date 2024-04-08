@@ -21,11 +21,13 @@ mindspore.dataset.vision.Perspective
 
     教程样例：
         - `视觉变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
 
     .. py:method:: device(device_target="CPU")
 
         指定该变换执行的设备。
+
+        - 当执行设备是 Ascend 时，输入数据的维度限制为[6, 10]和[8192, 4096]之间。
 
         - 当执行设备是 CPU 时，输入数据支持 `uint8` 、 `float32` 或者 `float64` 类型。
         - 当执行设备是 Ascend 时，输入数据支持 `uint8` 或者 `float32` 类型。

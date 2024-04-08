@@ -30,33 +30,34 @@ const char *kArgMinWithValue = "ArgMinWithValue";
 
 namespace aicpu {
 template <class T>
-uint32_t ExecArgMinWithValue(const CpuKernelContext &ctx) {
+uint32_t ExecArgMinWithValue(CpuKernelContext &ctx) {
   // Get Tensors
   Tensor *input_tensor = ctx.Input(kFirstInputIndex);
   Tensor *indice_tensor = ctx.Output(kFirstOutputIndex);
   Tensor *values_tensor = ctx.Output(kSecondOutputIndex);
   // Get raw ptrs
-  KERNEL_CHECK_NULLPTR(input_tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
-  KERNEL_CHECK_NULLPTR(indice_tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
-  KERNEL_CHECK_NULLPTR(values_tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, indice_tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, values_tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed.")
   const T *input = reinterpret_cast<T *>(input_tensor->GetData());
   int32_t *indice = reinterpret_cast<int32_t *>(indice_tensor->GetData());
   T *values = reinterpret_cast<T *>(values_tensor->GetData());
   // Process attrs
   auto input_shape = input_tensor->GetTensorShape()->GetDimSizes();
   int64_t input_shape_size = static_cast<int64_t>(input_shape.size());
-  KERNEL_CHECK_NULLPTR(ctx.GetAttr("dimension"), KERNEL_STATUS_PARAM_INVALID, "Get attr 'dimension' data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.GetAttr("dimension"), KERNEL_STATUS_PARAM_INVALID,
+                            "Get attr 'dimension' data failed.")
   int64_t dim = ctx.GetAttr("dimension")->GetInt();
   int64_t upper_bound_included = static_cast<int64_t>(input_shape_size - 1);
   int64_t lower_bound_included = static_cast<int64_t>(-input_shape_size);
   if (dim > upper_bound_included || dim < lower_bound_included) {
     if (input_shape_size == 0) {
       if (dim != -1 && dim != 0) {
-        KERNEL_LOG_ERROR("[ArgMinWithValue] Dimension is out of range.");
+        CUST_KERNEL_LOG_ERROR(ctx, "[ArgMinWithValue] Dimension is out of range.");
         return KERNEL_STATUS_PARAM_INVALID;
       }
     } else {
-      KERNEL_LOG_ERROR("[ArgMinWithValue] Dimension is out of range.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[ArgMinWithValue] Dimension is out of range.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -108,19 +109,20 @@ uint32_t ExecArgMinWithValue(const CpuKernelContext &ctx) {
     }
     // log error if max_core num is 0
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("[ArgMinWithValue] max_core_num is 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[ArgMinWithValue] max_core_num is 0.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_outer, num_outer / max_core_num, argmin_wv_shard),
-                        "[ArgMinWithValue] Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, num_outer, num_outer / max_core_num, argmin_wv_shard),
+                             "[ArgMinWithValue] Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t ArgMinWithValueCpuKernel::Compute(CpuKernelContext &ctx) {
   const std::vector<std::string> required_attrs = {"dimension"};
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kArgMinWithValueInputNum, kArgMinWithValueOutputNum, required_attrs),
-                      "[ArgMinWithValue] Check input_num, output_num, required_attr failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kArgMinWithValueInputNum, kArgMinWithValueOutputNum, required_attrs),
+                           "[ArgMinWithValue] Check input_num, output_num, required_attr failed.");
   auto data_type = ctx.Input(kFirstInputIndex)->GetDataType();
   switch (data_type) {
     case DT_FLOAT16:
@@ -157,7 +159,7 @@ uint32_t ArgMinWithValueCpuKernel::Compute(CpuKernelContext &ctx) {
       return ExecArgMinWithValue<uint64_t>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("[ArgMinWithValue] Data type [%s] is not supported.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[ArgMinWithValue] Data type [%s] is not supported.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

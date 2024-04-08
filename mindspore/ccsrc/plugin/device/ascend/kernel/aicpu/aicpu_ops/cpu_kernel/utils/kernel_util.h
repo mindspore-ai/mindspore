@@ -25,8 +25,8 @@
 #include <map>
 #include <memory>
 
-#include "cpu_context.h"
-#include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
+#include "inc/cpu_context.h"
+#include "inc/kernel_log.h"
 #include "context/common/status.h"
 
 namespace aicpu {
@@ -126,7 +126,7 @@ std::string FmtToStr(const T &t) {
   return fmt;
 }
 
-std::string FormatToSerialString(Format format);
+std::string FormatToSerialString(CpuKernelContext &ctx, Format format);
 
 /**
  * Get primary-format from format,
@@ -161,7 +161,7 @@ bool IsEmptyTensor(Tensor *tensor);
  * @param xy product of x and y
  * @return true: normal, false: overflow
  */
-inline bool MulWithoutOverflow(const int64_t x, const int64_t y, int64_t &xy) {
+inline bool MulWithoutOverflow(CpuKernelContext &ctx, const int64_t x, const int64_t y, int64_t &xy) {
   // Multiply in uint64 rather than int64 since signed overflow is undefined.
   // Negative values will wrap around to large unsigned values in the casts
   // (see section 4.7 [conv.integral] of the C++14 standard).
@@ -174,7 +174,7 @@ inline bool MulWithoutOverflow(const int64_t x, const int64_t y, int64_t &xy) {
     // Ensure nonnegativity.  Note that negative numbers will appear "large"
     // to the unsigned comparisons above.
     if (x < 0 || y < 0) {
-      KERNEL_LOG_ERROR("Can't multiply negative numbers.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Can't multiply negative numbers.");
       return false;
     }
 
@@ -229,7 +229,7 @@ inline bool ShapeVectorIsSame(const std::vector<int64_t> &shape, const std::vect
  * @param ctx context
  * @return status code
  */
-uint32_t NormalMathCheck(const CpuKernelContext &ctx);
+uint32_t NormalMathCheck(CpuKernelContext &ctx);
 
 /**
  * @brief normal check for kernel
@@ -238,7 +238,7 @@ uint32_t NormalMathCheck(const CpuKernelContext &ctx);
  * @param outputs_num num of outputs
  * @return status code
  */
-uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num);
+uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num);
 
 /**
  * @brief normal check for kernel
@@ -248,7 +248,7 @@ uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, con
  * @param attr_names names of attrs
  * @return status code
  */
-uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num,
+uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num,
                      const std::vector<std::string> &attr_names);
 
 bool IsScalar(const std::vector<int64_t> &shape);
@@ -288,8 +288,8 @@ std::string DTypeStr(DataType dtype);
  * @param prim_name ops name
  * @return status code
  */
-uint32_t CheckTensorTypeSame(const std::map<std::string, DataType> &types, const DataType &check_type,
-                             const std::string &prim_name);
+uint32_t CheckTensorTypeSame(CpuKernelContext &ctx, const std::map<std::string, DataType> &types,
+                             const DataType &check_type, const std::string &prim_name);
 
 /**
  * @brief check tensor type is same
@@ -298,36 +298,36 @@ uint32_t CheckTensorTypeSame(const std::map<std::string, DataType> &types, const
  * @param prim_name ops name
  * @return status code
  */
-uint32_t CheckTensorShapeSame(const std::map<std::string, TensorShapePtr> &shapes,
+uint32_t CheckTensorShapeSame(CpuKernelContext &ctx, const std::map<std::string, TensorShapePtr> &shapes,
                               const std::vector<int64_t> &check_shape, const std::string &prim_name);
 
-inline size_t IntToSize(int u) {
+inline size_t IntToSize(CpuKernelContext &ctx, int u) {
   if (u < 0) {
-    AICPU_LOGE("The int value [%d] is less than 0.", u);
+    CUST_AICPU_LOGE(ctx, "The int value [%d] is less than 0.", u);
     return SIZE_MAX;
   }
   return static_cast<size_t>(u);
 }
 
-inline int SizeToInt(size_t u) {
+inline int SizeToInt(CpuKernelContext &ctx, size_t u) {
   if (u > static_cast<size_t>((std::numeric_limits<int>::max)())) {
-    AICPU_LOGE("The size_t value [%lu] exceeds the maximum value of int.", u);
+    CUST_AICPU_LOGE(ctx, "The size_t value [%lu] exceeds the maximum value of int.", u);
     return INT_MAX;
   }
   return static_cast<int>(u);
 }
 
-inline size_t LongToSize(int64_t u) {
+inline size_t LongToSize(CpuKernelContext &ctx, int64_t u) {
   if (u < 0) {
-    AICPU_LOGE("The int64_t value [%ld] is less than 0.", u);
+    CUST_AICPU_LOGE(ctx, "The int64_t value [%ld] is less than 0.", u);
     return SIZE_MAX;
   }
   return static_cast<size_t>(u);
 }
 
-inline int32_t LongToInt(int64_t u) {
+inline int32_t LongToInt(CpuKernelContext &ctx, int64_t u) {
   if (u > static_cast<int64_t>((std::numeric_limits<int32_t>::max)())) {
-    AICPU_LOGE("The size_t value [%ld] exceeds the maximum value of int.", u);
+    CUST_AICPU_LOGE(ctx, "The size_t value [%ld] exceeds the maximum value of int.", u);
     return INT_MAX;
   }
   return static_cast<int32_t>(u);

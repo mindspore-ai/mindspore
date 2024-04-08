@@ -128,8 +128,9 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static void ConvertContiguousTensorSync(const tensor::TensorPtr &tensor);
 
   // Convert old_device_address to contiguous device address.
-  static device::DeviceAddressPtr ConvertContiguousDeviceAddressSync(
-    const device::DeviceAddressPtr &old_device_address);
+  static device::DeviceAddressPtr ConvertContiguousDeviceAddress(const DeviceContext *device_context,
+                                                                 const device::DeviceAddressPtr &old_device_address,
+                                                                 bool is_sync);
 
  private:
   static void UpdateKernelTensorHostInfoByNode(const kernel::KernelTensorPtr &kernel_tensor, const AnfNodePtr &node,

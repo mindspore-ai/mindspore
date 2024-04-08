@@ -58,7 +58,6 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
     MS_EXCEPTION_IF_NULL(abs);
     return !abs->isa<abstract::AbstractSequence>();
   });
-
   if (convert_to_interpret) {
     const std::vector<std::string> funcs_str{"zip"};
     auto ret_node = fallback::GeneratePyInterpretWithAbstract(ret_graph, funcs_str, args_abs_list.size());

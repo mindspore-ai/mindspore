@@ -364,7 +364,7 @@ class Parameter(Tensor_):
 
         Tutorial Examples:
             - `Parameter Server Mode
-              <https://www.mindspore.cn/tutorials/experts/en/master/parallel/parameter_server_training.html>`_
+              <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/parameter_server_training.html>`_
         """
         if not _is_ps_mode() or not (_is_role_worker() or _is_role_pserver() or _is_role_sched()):
             raise RuntimeError("Must complete following two steps before calling set_param_ps: \n"
@@ -787,7 +787,17 @@ class Parameter(Tensor_):
         return new_param
 
     @_LogActionOnce(logger=logger, key='add_pipeline_stage')
+    @deprecated("2.3", "add_pipeline_stage")
     def add_pipeline_stage(self, stage):
+        """
+        Add a pipeline stage to the parameter.
+
+        Args:
+            stage(int): The pipeline stage to be added.
+
+        Raise:
+            TypeError: If `stage` is not a positive number or not int type.
+        """
         logger.warning(f"This interface may be deleted in the future.")
         if not isinstance(stage, int) or stage < 0:
             raise TypeError("`stage` must be a positive number of int type")
@@ -1013,7 +1023,7 @@ class ParameterTuple(tuple):
 
         Tutorial Examples:
             - `Cell and Parameter - Parameter Tuple
-              <https://mindspore.cn/tutorials/en/master/advanced/modules/layer.html#parameter-tuple>`_
+              <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/modules/layer.html#parameter-tuple>`_
         """
         Validator.check_str_by_regular(prefix)
         new = []

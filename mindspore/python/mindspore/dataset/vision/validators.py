@@ -36,7 +36,7 @@ def check_affine(method):
         [degrees, translate, scale, shear, resample, fill_value], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(degrees, (int, float), "degrees")
-        check_degrees(degrees)
+        check_value(degrees, [-180, 180], "degrees")
 
         type_check(translate, (list, tuple), "translate")
         if len(translate) != 2:
@@ -54,8 +54,13 @@ def check_affine(method):
                 raise TypeError("The length of shear should be 2.")
             for i, _ in enumerate(shear):
                 type_check(shear[i], (int, float), "shear[{}]".format(i))
+                check_value(shear[i], [-180, 180], "shear[{}]".format(i))
+        else:
+            check_value(shear, [-180, 180], "shear")
 
         type_check(resample, (Inter,), "resample")
+        if resample in [Inter.ANTIALIAS, Inter.PILCUBIC]:
+            raise RuntimeError("Unsupported interpolation, only NEAREST, LINEAR, CUBIC and AREA.")
 
         check_fill_value(fill_value)
 
@@ -182,6 +187,7 @@ def check_padding(padding):
     """Parsing the padding arguments and check if it is legal."""
     type_check(padding, (tuple, list, numbers.Number), "padding")
     if isinstance(padding, numbers.Number):
+        type_check(padding, (int,), "padding")
         check_value(padding, (0, INT32_MAX), "padding")
     if isinstance(padding, (tuple, list)):
         if len(padding) not in (2, 4):

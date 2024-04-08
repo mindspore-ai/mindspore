@@ -272,7 +272,7 @@ class TensorDump(Primitive):
         >>> x = np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float32)
         >>> input_x = Tensor(x)
         >>> net = Net()
-        >>> net(input_x)
+        >>> out = net(input_x)
         >>> time.sleep(0.5)
         >>> add = np.load('0_add.npy')
         >>> print(add)

@@ -106,8 +106,8 @@ def test_ascend_profiling():
         add = Net()
         add(Tensor(x), Tensor(y))
         profiler.analyse()
-        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/summary/op_summary*")) == 1
-        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/summary/op_statistic*")) == 1
+        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_output/op_summary*")) == 1
+        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_output/op_statistic*")) == 1
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/l2_cache.data*")) >= 2
 
 

@@ -46,7 +46,6 @@ TypePtr BinaryExtOpFuncImpl::InferType(const PrimitivePtr &primitive,
   auto type_id2 = element2->type_id();
 
   auto alpha_type = input_args[kInputIndex2]->GetType();
-
   if (alpha_type == kFloat32 && (isIntegralType(type_id1) || isIntegralType(type_id2))) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', floating alpha need floating input and other, but got " << dtype1->ToString()

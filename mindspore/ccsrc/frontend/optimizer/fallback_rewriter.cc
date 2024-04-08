@@ -263,10 +263,14 @@ class BeforeOptARewriter : public BaseRewriter {
         auto kw_abs = abs->cast_ptr<abstract::AbstractKeywordArg>();
         para->set_abstract(kw_abs->get_arg());
       }
-      if (!allow_fallback_runtime || !is_dict_output_) {
+      // If the dict input is not used in graph, convert it to tuple directly.
+      auto dict_param_not_used =
+        abs->isa<abstract::AbstractDictionary>() && manager_->node_users().find(para) == manager_->node_users().end();
+      if ((!allow_fallback_runtime || !is_dict_output_) && !dict_param_not_used) {
         continue;
       }
       auto new_node_and_abs = ConvertParameterDictAbstract(para, para->abstract());
+      new_node_and_abs.first->set_abstract(new_node_and_abs.second);
       if (new_node_and_abs.first == para) {
         continue;
       }
@@ -1782,15 +1786,15 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertPrint(const CNodePtr &cnode) const {
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    if (!CheckInputsHasAnyType(cnode) && !HasPyExecuteInput(cnode)) {
+      return nullptr;
+    }
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
       MS_LOG(WARNING) << "When using the print statement with some syntaxes that is not supported in graph mode, "
                       << "it is best to set jit_syntax_level to LAX.\n";
-      return nullptr;
-    }
-    const auto &fg = cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(fg);
-    if (!CheckInputsHasAnyType(cnode) && !HasPyExecuteInput(cnode)) {
       return nullptr;
     }
     // Skip the io_monad input

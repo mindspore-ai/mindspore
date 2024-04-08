@@ -61,7 +61,7 @@ int SliceDynamicFP16Coder::DoCode(CoderContext *const context) {
 }
 
 int SliceDynamicFP16Coder::Init() {
-  MS_CHECK_RET_CODE(memset_s(&param_, sizeof(param_), 0, sizeof(param_)) == EOK, "memset_s failed.");
+  MS_CHECK_TRUE_MSG(memset_s(&param_, sizeof(param_), 0, sizeof(param_)) == EOK, RET_ERROR, "memset_s failed.");
   auto begin_tensor = input_tensors_[SECOND_INPUT];
   auto size_tensor = input_tensors_[THIRD_INPUT];
   data_shape_ = shape_info_container_->GetTemplateShape(input_tensor_);

@@ -33,26 +33,26 @@ const uint32_t kInputNum = 5;
 const uint32_t kOutputNum = 1;
 const char *CSRSparseMatrixToDense = "CSRSparseMatrixToDense";
 
-#define SWITCH_CASE(_IDX_T, _VALUE_T, VALUE_T, FLAG, CTX)                                                  \
-  case _VALUE_T:                                                                                           \
-    switch (_IDX_T) {                                                                                      \
-      case DT_INT32:                                                                                       \
-        (FLAG) = DoCompute<int32_t, VALUE_T>(CTX);                                                         \
-        break;                                                                                             \
-      case DT_INT64:                                                                                       \
-        (FLAG) = DoCompute<int64_t, VALUE_T>(CTX);                                                         \
-        break;                                                                                             \
-      default:                                                                                             \
-        KERNEL_LOG_ERROR("CSRSparseMatrixToDense index type [%s] not support.", DTypeStr(_IDX_T).c_str()); \
-        return KERNEL_STATUS_PARAM_INVALID;                                                                \
-    }                                                                                                      \
+#define SWITCH_CASE(_IDX_T, _VALUE_T, VALUE_T, FLAG, CTX)                                                            \
+  case _VALUE_T:                                                                                                     \
+    switch (_IDX_T) {                                                                                                \
+      case DT_INT32:                                                                                                 \
+        (FLAG) = DoCompute<int32_t, VALUE_T>(CTX);                                                                   \
+        break;                                                                                                       \
+      case DT_INT64:                                                                                                 \
+        (FLAG) = DoCompute<int64_t, VALUE_T>(CTX);                                                                   \
+        break;                                                                                                       \
+      default:                                                                                                       \
+        CUST_KERNEL_LOG_ERROR(ctx, "CSRSparseMatrixToDense index type [%s] not support.", DTypeStr(_IDX_T).c_str()); \
+        return KERNEL_STATUS_PARAM_INVALID;                                                                          \
+    }                                                                                                                \
     break;
 
 }  // namespace
 
 namespace aicpu {
 uint32_t CSRSparseMatrixToDenseCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "CSRSparseMatrixToDense normal check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "CSRSparseMatrixToDense normal check failed.");
   DataType indice_type = ctx.Input(0)->GetDataType();
   DataType value_type = ctx.Input(4)->GetDataType();
   uint32_t status = 0;
@@ -62,15 +62,15 @@ uint32_t CSRSparseMatrixToDenseCpuKernel::Compute(CpuKernelContext &ctx) {
     SWITCH_CASE(indice_type, DT_COMPLEX64, std::complex<float_t>, status, ctx)
     SWITCH_CASE(indice_type, DT_COMPLEX128, std::complex<double_t>, status, ctx)
     default:
-      KERNEL_LOG_ERROR("CSRSparseMatrixToDense values type [%s] not support.", DTypeStr(value_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "CSRSparseMatrixToDense values type [%s] not support.", DTypeStr(value_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_HANDLE_ERROR(status, "CSRSparseMatrixToDense compute failed!");
+  CUST_KERNEL_HANDLE_ERROR(ctx, status, "CSRSparseMatrixToDense compute failed!");
   return KERNEL_STATUS_OK;
 }
 
 template <typename indiceT, typename valueT>
-uint32_t CSRSparseMatrixToDenseCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t CSRSparseMatrixToDenseCpuKernel::DoCompute(CpuKernelContext &ctx) {
   indiceT batch_size = ctx.Input(1)->NumElements() - 1;
   auto rank = ctx.Input(0)->NumElements();
   int shift = (rank == 2) ? 0 : 1;
@@ -94,7 +94,7 @@ uint32_t CSRSparseMatrixToDenseCpuKernel::DoCompute(const CpuKernelContext &ctx)
   uint32_t max_core = std::max(min_core, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
   max_core = std::min(max_core, (uint32_t)batch_size);
   if (max_core == 0) {
-    KERNEL_LOG_ERROR("Max core num cannot be zero.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Max core num cannot be zero.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto shard = [&](int64_t start, int64_t end) {
@@ -115,8 +115,8 @@ uint32_t CSRSparseMatrixToDenseCpuKernel::DoCompute(const CpuKernelContext &ctx)
       }
     }
   };
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch_size, batch_size / max_core, shard),
-                      "CSRSparseMatrixToDense Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, batch_size, batch_size / max_core, shard),
+                           "CSRSparseMatrixToDense Compute failed.");
   return KERNEL_STATUS_OK;
 }
 

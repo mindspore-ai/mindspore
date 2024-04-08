@@ -18,6 +18,7 @@
 #include <memory>
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
+#include "ops/op_enum.h"
 
 namespace mindspore {
 namespace lite {
@@ -27,9 +28,11 @@ PrimitiveCPtr OnnxGridSample3DParser::Parse(const onnx::GraphProto &onnx_graph, 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "mode") {
-      prim->set_interpolation_mode(onnx_node_attr.i());
+      int64_t mode = ops::StringToEnumImpl(prim->name(), "interpolation_mode", onnx_node_attr.s());
+      prim->set_interpolation_mode(mode);
     } else if (attribute_name == "padding_mode") {
-      prim->set_padding_mode(onnx_node_attr.i());
+      int64_t padding_mode = ops::StringToEnumImpl(prim->name(), "padding_mode", onnx_node_attr.s());
+      prim->set_padding_mode(padding_mode);
     } else if (attribute_name == "align_corners") {
       prim->set_align_corners(static_cast<bool>(onnx_node_attr.i()));
     }

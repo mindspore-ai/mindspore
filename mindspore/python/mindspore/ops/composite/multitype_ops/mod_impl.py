@@ -82,7 +82,5 @@ def _tensor_mod_list(x, y):
 
 @mod.register_default()
 def default_mod(x, y):
-    """
-    Default function for mod.
-   """
+    """Default function for mod."""
     return x % y

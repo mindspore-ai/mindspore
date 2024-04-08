@@ -22,15 +22,14 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore import nn, Tensor, context
+from mindspore import context, nn
 from mindspore.common.initializer import Normal
-from mindspore.train import Loss
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
-from mindspore.train import Model
+from mindspore.train import Loss, Model
 from mindspore.train.summary.summary_record import _get_summary_tensor_data, _record_summary_tensor_data
-from tests.st.summary.dataset import create_mnist_dataset
 from tests.security_utils import security_off_wrap
+from tests.st.summary.dataset import create_mnist_dataset
 
 
 class LeNet5(nn.Cell):
@@ -53,7 +52,7 @@ class LeNet5(nn.Cell):
         self.image_summary = P.ImageSummary()
         self.histogram_summary = P.HistogramSummary()
         self.tensor_summary = P.TensorSummary()
-        self.channel = Tensor(num_channel)
+        self.channel = ms.Tensor(num_channel)
 
     def construct(self, x):
         """construct"""
@@ -92,7 +91,7 @@ class TestSummaryOps:
         if os.path.exists(cls.base_summary_dir):
             shutil.rmtree(cls.base_summary_dir)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -123,7 +122,7 @@ class TestSummaryOps:
         assert np.allclose(expected_data, histogram_data)
         assert not np.allclose(0, x_fc3)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -153,7 +152,7 @@ class TestSummaryOps:
         assert np.allclose(expected_data, histogram_data)
         assert not np.allclose(0, x_fc3)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -186,7 +185,7 @@ class TestSummaryOps:
 
         del os.environ['GRAPH_OP_RUN']
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -199,9 +198,9 @@ class TestSummaryOps:
         expected_data = next(ds_train_iter)['image'].asnumpy()
 
         net = LeNet5()
-        dynamic_shape = Tensor(shape=[None, None, None, None], dtype=ms.float32)
+        dynamic_shape = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
         net.set_inputs(dynamic_shape)
-        net(Tensor(expected_data))
+        net(ms.Tensor(expected_data))
 
         time.sleep(0.5)
         summary_data = _get_summary_tensor_data()
@@ -214,3 +213,37 @@ class TestSummaryOps:
         assert np.allclose(expected_data, tensor_data)
         assert np.allclose(expected_data, histogram_data)
         assert not np.allclose(0, x_fc3)
+
+    @pytest.mark.level1
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_gpu_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_summary_op_in_duplicate_name(self):
+        """
+        Feature: Test summary ops
+        Description: Verify that the summary operator name is duplicated
+        Expectation: success
+        """
+        class SummaryDemo(nn.Cell):
+            def __init__(self,):
+                super(SummaryDemo, self).__init__()
+                self.add = P.Add()
+                self.summary = P.TensorSummary()
+
+            def construct(self, x, y):
+                x = self.add(x, y)
+                self.summary("data", x)
+                self.summary("data", x)
+                return x
+
+        ms.set_context(mode=ms.GRAPH_MODE)
+        net = SummaryDemo()
+        out = net(ms.Tensor([1.], dtype=ms.float32),
+                  ms.Tensor([2.], dtype=ms.float32))
+
+        time.sleep(0.5)
+        _record_summary_tensor_data()
+        summary_data = _get_summary_tensor_data()
+        assert summary_data['data[:Tensor]'].asnumpy() == out.asnumpy()

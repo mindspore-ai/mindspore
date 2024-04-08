@@ -118,7 +118,10 @@ bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
   MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
   (void)device_context->GetDeprecatedInterface()->OpenTsd(ms_context);
   try {
-    if (!common::UseHostCollective()) {
+    if (!common::GetEnv(kSimulationLevel).empty()) {
+      std::string rank_id_str = std::to_string(0);
+      (void)hccl::HcclAdapter::GetInstance().InitHccl(local_rank_id, rank_id_str);
+    } else if (!common::UseHostCollective()) {
       // Use rank table to launch distribtued job.
       MS_LOG(WARNING)
         << "Launch Ascend distributed job in RankTable manner. This manner will be deprecated in later version of "
@@ -228,6 +231,16 @@ HcclComm AscendCollectiveCommLib::HcclCommunicator(const std::string &group_name
   auto group = std::dynamic_pointer_cast<AscendCommunicationGroup>(groups_[group_name]);
   CHECK_IF_NULL(group);
   return group->hccl_communicator();
+}
+
+std::string AscendCollectiveCommLib::HcclInnerCommName(const std::string &group_name) {
+  if (!common::UseHostCollective() || hccl::HcclAdapter::GetInstance().UseHcclCM()) {
+    return "";
+  }
+  CHECK_RET((groups_.count(group_name) != 0), true, "The HCCL group " + group_name + " does not existed.");
+  auto group = std::dynamic_pointer_cast<AscendCommunicationGroup>(groups_[group_name]);
+  CHECK_IF_NULL(group);
+  return group->inner_comm_name();
 }
 
 uint32_t AscendCollectiveCommLib::GetRankId(const std::string &group_name) {

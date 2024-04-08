@@ -10,7 +10,9 @@ next_after:
         .. math::
         
             out_{i} =  nextafter({input_{i}, other_{i}})
-    
+
+        For more detailed information, refer to `A Self Regularized Non-Monotonic Neural Activation Function <https://arxiv.org/abs/1908.08681>`_.
+
         Args:
             input (Tensor): The first input tensor. The shape of tensor is :math:`(N,*)` where :math:`*` means,
                 any number of additional dimensions. Must be one of the following types: float32, float64.

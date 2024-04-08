@@ -24,21 +24,23 @@ def _generate_cmd(cmd, cmd_args, output_name):
     edirecting the output to a log file.
 
     """
-    if cmd != 'python' and cmd != 'pytest':
+    if cmd not in ['python', 'pytest']:
         # If user don't set binary file name, defaulty use 'python' to launch the job.
         command = f"python {cmd} {' '.join(cmd_args)} > {output_name} 2>&1 &"
     else:
         command = f"{cmd} {' '.join(cmd_args)} > {output_name} 2>&1 &"
     return command
 
+
 def _generate_cmd_args_list(cmd, cmd_args):
     """
     Generates arguments list for 'Popen'. It consists of a binary file name and subsequential arguments.
     """
-    if cmd != 'python' and cmd != 'pytest':
+    if cmd not in ['python', 'pytest']:
         # If user don't set binary file name, defaulty use 'python' to launch the job.
         return ['python'] + [cmd] + cmd_args
     return [cmd] + cmd_args
+
 
 def _generate_cmd_args_list_with_core(cmd, cmd_args, cpu_start, cpu_end):
     """
@@ -47,13 +49,14 @@ def _generate_cmd_args_list_with_core(cmd, cmd_args, cpu_start, cpu_end):
     # Bind cpu cores to this process.
     taskset_args = ['taskset'] + ['-c'] + [str(cpu_start) + '-' + str(cpu_end)]
     final_cmd = []
-    if cmd != 'python' and cmd != 'pytest':
+    if cmd not in ['python', 'pytest']:
         # If user don't set binary file name, defaulty use 'python' to launch the job.
         final_cmd = taskset_args + ['python'] + [cmd] + cmd_args
     else:
         final_cmd = taskset_args + [cmd] + cmd_args
     logger.info(f"Launch process with command: {' '.join(final_cmd)}")
     return final_cmd
+
 
 def _generate_url(addr, port):
     """
@@ -62,6 +65,7 @@ def _generate_url(addr, port):
     """
     url = f"http://{addr}:{port}/"
     return url
+
 
 def _is_local_ip(ip_address):
     """
@@ -75,9 +79,10 @@ def _is_local_ip(ip_address):
     for info in addr_infos:
         for addr in info["addr_info"]:
             if addr["local"] == ip_address:
-                print(f"IP address found on this node. Address info:{addr}.")
+                logger.info(f"IP address found on this node. Address info:{addr}.")
                 return True
     return False
+
 
 def _send_scale_num(url, scale_num):
     """
@@ -92,6 +97,7 @@ def _send_scale_num(url, scale_num):
         return response_bool
     except requests.exceptions.RequestException:
         return None
+
 
 def _get_status_and_params(url):
     """

@@ -75,7 +75,7 @@ DataType
     ============================   =================
     Type                            Description
     ============================   =================
-    ``tensor``                      MindSpore's ``tensor`` type. Data format uses NCHW. For details, see `tensor <https://www.gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/common/tensor.py>`_.
+    ``tensor``                      MindSpore's ``tensor`` type. Data format uses NCHW. For details, see `tensor <https://www.gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/python/mindspore/common/tensor.py>`_.
     ``bool_``                       Boolean ``True`` or ``False``.
     ``int_``                        Integer scalar.
     ``uint``                        Unsigned integer scalar.
@@ -151,6 +151,7 @@ Serialization
     mindspore.export
     mindspore.load
     mindspore.load_checkpoint
+    mindspore.load_checkpoint_async
     mindspore.load_distributed_checkpoint
     mindspore.load_mindir
     mindspore.load_param_into_net
@@ -203,8 +204,9 @@ Parallel
     :template: classtemplate.rst
 
     mindspore.Layout
-    mindspore.shard
     mindspore.parameter_broadcast
+    mindspore.shard
+    mindspore.sync_pipeline_shared_parameters
 
 JIT
 ---
@@ -236,6 +238,7 @@ Dataset Helper
     :template: classtemplate.rst
 
     mindspore.DatasetHelper
+    mindspore.Symbol
     mindspore.connect_network_with_dataset
     mindspore.data_sink
 

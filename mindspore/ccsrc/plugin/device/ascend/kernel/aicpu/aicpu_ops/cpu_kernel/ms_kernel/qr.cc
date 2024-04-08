@@ -29,22 +29,22 @@ const char *kQr = "Qr";
 constexpr int64_t kParallelDataNums = 16 * 1024;
 constexpr int64_t kParallelDataNumsMid = 128 * 1024;
 
-#define QR_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                    \
-    uint32_t result = QrCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                \
-      KERNEL_LOG_ERROR("Qr kernel compute failed."); \
-      return result;                                 \
-    }                                                \
-    break;                                           \
+#define QR_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                              \
+    uint32_t result = QrCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                          \
+      CUST_KERNEL_LOG_ERROR(ctx, "Qr kernel compute failed."); \
+      return result;                                           \
+    }                                                          \
+    break;                                                     \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t QrCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kQr);
-  KERNEL_HANDLE_ERROR(QrCheck(ctx), "[%s] check params failed.", kQr);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kQr);
+  CUST_KERNEL_HANDLE_ERROR(ctx, QrCheck(ctx), "[%s] check params failed.", kQr);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     QR_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
@@ -53,32 +53,33 @@ uint32_t QrCpuKernel::Compute(CpuKernelContext &ctx) {
     QR_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     QR_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Qr kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Qr kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t QrCpuKernel::QrCheck(const CpuKernelContext &ctx) {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed")
-  KERNEL_CHECK_NULLPTR(ctx.Output(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed")
+uint32_t QrCpuKernel::QrCheck(CpuKernelContext &ctx) {
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed")
   auto attr_full_matrices = ctx.GetAttr("full_matrices");
-  KERNEL_CHECK_NULLPTR(attr_full_matrices, KERNEL_STATUS_PARAM_INVALID, "Get full_matrices attr failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr_full_matrices, KERNEL_STATUS_PARAM_INVALID, "Get full_matrices attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input tensor shape failed.")
   std::vector<int64_t> shape_x = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   size_t shape_size = shape_x.size();
-  KERNEL_CHECK_FALSE((shape_size > 1), KERNEL_STATUS_PARAM_INVALID, "Input x must be at least rank 2.")
-  KERNEL_CHECK_FALSE((shape_x[shape_size - 2] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Dimension [%zu] must be at least 1, but [%zu].", shape_size - 2, shape_x[shape_size - 2])
-  KERNEL_CHECK_FALSE((shape_x[shape_size - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Dimension [%zu] must be at least 1, but [%zu].", shape_size - 1, shape_x[shape_size - 1])
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_size > 1), KERNEL_STATUS_PARAM_INVALID, "Input x must be at least rank 2.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size - 2] > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Dimension [%zu] must be at least 1, but [%zu].", shape_size - 2, shape_x[shape_size - 2])
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Dimension [%zu] must be at least 1, but [%zu].", shape_size - 1, shape_x[shape_size - 1])
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t QrCpuKernel::QrCompute(const CpuKernelContext &ctx) {
+uint32_t QrCpuKernel::QrCompute(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_q = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto output_r = reinterpret_cast<T *>(ctx.Output(1)->GetData());
@@ -144,8 +145,8 @@ uint32_t QrCpuKernel::QrCompute(const CpuKernelContext &ctx) {
           }
         }
       };
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, martix_num, martix_num / max_core_num, shard_qr),
-                          "Qr Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, martix_num, martix_num / max_core_num, shard_qr),
+                               "Qr Compute failed.");
     }
   }
   return KERNEL_STATUS_OK;

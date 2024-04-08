@@ -39,11 +39,11 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::GetInputAndCheck(CpuKer
   Tensor *origin_input = ctx.Input(0);
   Tensor *out_backprop = ctx.Input(1);
   Tensor *argmax = ctx.Input(2);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "FractionalMaxPool3DGradWithFixedKsize check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "FractionalMaxPool3DGradWithFixedKsize check params failed.");
   AttrValue *data_format = ctx.GetAttr("data_format");
-  KERNEL_CHECK_NULLPTR(data_format, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:data_format failed.",
-                       kFractionalMaxPool3DGradWithFixedKsize);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, data_format, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:data_format failed.",
+                            kFractionalMaxPool3DGradWithFixedKsize);
   input_shape = origin_input->GetTensorShape()->GetDimSizes();
   out_backprop_shape = out_backprop->GetTensorShape()->GetDimSizes();
   argmax_shape = argmax->GetTensorShape()->GetDimSizes();
@@ -52,32 +52,34 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::GetInputAndCheck(CpuKer
   int64_t argmax_dims = argmax_shape.size();
 
   for (int64_t i = 0; i < input_dims; i++) {
-    KERNEL_CHECK_FALSE((origin_input->GetTensorShape()->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "FractionalMaxPool3DGradWithFixedKsize: expected input to have non-empty spatial dimensions, "
-                       "but input has sizes [%d] with dimension [%d] being empty.",
-                       input_dims, i);
+    CUST_KERNEL_CHECK_FALSE(
+      ctx, (origin_input->GetTensorShape()->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
+      "FractionalMaxPool3DGradWithFixedKsize: expected input to have non-empty spatial dimensions, "
+      "but input has sizes [%d] with dimension [%d] being empty.",
+      input_dims, i);
   }
-  KERNEL_CHECK_FALSE((input_dims == Num4 || input_dims == Num5), KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [4D] or [5D] (batch mode) tensor expected for input.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_dims == Num4 || input_dims == Num5), KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [4D] or [5D] (batch mode) tensor expected for input.");
 
   for (int64_t i = 0; i < out_backprop_dims; i++) {
-    KERNEL_CHECK_FALSE(
-      (out_backprop->GetTensorShape()->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
+    CUST_KERNEL_CHECK_FALSE(
+      ctx, (out_backprop->GetTensorShape()->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
       "FractionalMaxPool3DGradWithFixedKsize: expected out_backprop to have non-empty spatial dimensions, "
       "but out_backprop has sizes [%d] with dimension [%d] being empty.",
       out_backprop_dims, i);
   }
-  KERNEL_CHECK_FALSE((out_backprop_dims == Num4 || out_backprop_dims == Num5), KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [4D] or [5D] (batch mode) tensor expected for out_backprop.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (out_backprop_dims == Num4 || out_backprop_dims == Num5), KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [4D] or [5D] (batch mode) tensor expected for out_backprop.");
 
   for (int64_t i = 0; i < argmax_dims; i++) {
-    KERNEL_CHECK_FALSE((argmax->GetTensorShape()->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "FractionalMaxPool3DGradWithFixedKsize: expected argmax to have non-empty spatial dimensions, "
-                       "but argmax has sizes [%d] with dimension [%d] being empty.",
-                       argmax_dims, i);
+    CUST_KERNEL_CHECK_FALSE(
+      ctx, (argmax->GetTensorShape()->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
+      "FractionalMaxPool3DGradWithFixedKsize: expected argmax to have non-empty spatial dimensions, "
+      "but argmax has sizes [%d] with dimension [%d] being empty.",
+      argmax_dims, i);
   }
-  KERNEL_CHECK_FALSE((argmax_dims == Num4 || argmax_dims == Num5), KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [4D] or [5D] (batch mode) tensor expected for argmax.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (argmax_dims == Num4 || argmax_dims == Num5), KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [4D] or [5D] (batch mode) tensor expected for argmax.");
   return KERNEL_STATUS_OK;
 }
 
@@ -152,7 +154,7 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::FractionalMaxPool3DGrad
     auto copy_size = std::min(output_size, static_cast<uint64_t>(INT32_MAX));
     auto ret = memset_s(output_addr, output_size, 0, copy_size);
     if (ret != EOK) {
-      KERNEL_LOG_ERROR("For 'FractionalMaxPool3DGradWithFixedKsize', memset_s failed, ret=%d.", ret);
+      CUST_KERNEL_LOG_ERROR(ctx, "For 'FractionalMaxPool3DGradWithFixedKsize', memset_s failed, ret=%d.", ret);
       return KERNEL_STATUS_INNER_ERROR;
     }
     output_size -= copy_size;
@@ -166,7 +168,7 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::FractionalMaxPool3DGrad
       max_core_num = inputC;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num should not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num should not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, inputC, inputC / max_core_num, [&](int64_t start, int64_t end) {
       for (auto plane = start; plane < end; ++plane) {
@@ -179,8 +181,8 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::FractionalMaxPool3DGrad
             for (w = 0; w < outputW; ++w) {
               argmax_t outputIndex = t * outputH * outputW + h * outputW + w;
               argmax_t index = argmaxForPlane[outputIndex];
-              KERNEL_CHECK_FALSE(index >= 0 && index < inputT * inputH * inputW, KERNEL_STATUS_PARAM_INVALID,
-                                 "FractionalMaxPool3DGradWithFixedKsize index value is illegal.");
+              CUST_KERNEL_CHECK_FALSE(ctx, index >= 0 && index < inputT * inputH * inputW, KERNEL_STATUS_PARAM_INVALID,
+                                      "FractionalMaxPool3DGradWithFixedKsize index value is illegal.");
               outputForPlane[index] += outbackpropForPlane[outputIndex];
             }
           }
@@ -195,7 +197,7 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::FractionalMaxPool3DGrad
       max_core_num = inputN;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num should not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num should not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, inputN, inputN / max_core_num, [&](int64_t start, int64_t end) {
       for (auto batch = start; batch < end; ++batch) {
@@ -212,8 +214,9 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::FractionalMaxPool3DGrad
               for (w = 0; w < outputW; ++w) {
                 argmax_t outputIndex = t * outputH * outputW + h * outputW + w;
                 argmax_t index = argmaxForPlane[outputIndex];
-                KERNEL_CHECK_FALSE(index >= 0 && index < inputT * inputH * inputW, KERNEL_STATUS_PARAM_INVALID,
-                                   "FractionalMaxPool3DGradWithFixedKsize index value is illegal.");
+                CUST_KERNEL_CHECK_FALSE(ctx, index >= 0 && index < inputT * inputH * inputW,
+                                        KERNEL_STATUS_PARAM_INVALID,
+                                        "FractionalMaxPool3DGradWithFixedKsize index value is illegal.");
                 outputForPlane[index] += outbackpropForPlane[outputIndex];
               }
             }
@@ -235,20 +238,20 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::DoComputeWithArgmaxType
     case DT_INT64:
       return FractionalMaxPool3DGradWithFixedKsizeOutCpuTemplate<backprop_t, int64_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("argmax_type [%s] must be in [{DT_INT32, DT_INT64}].", DTypeStr(argmax_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "argmax_type [%s] must be in [{DT_INT32, DT_INT64}].", DTypeStr(argmax_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(GetInputAndCheck(ctx), "kFractionalMaxPool3DGradWithFixedKsize check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, GetInputAndCheck(ctx), "kFractionalMaxPool3DGradWithFixedKsize check params failed.");
   auto origin_input_type = ctx.Input(0)->GetDataType();
   auto out_backprop_type = ctx.Input(1)->GetDataType();
   auto argmax_type = ctx.Input(2)->GetDataType();
-  KERNEL_CHECK_FALSE((origin_input_type == out_backprop_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of origin_input [%s] need be same with "
-                     "out_backprop [%s].",
-                     DTypeStr(origin_input_type).c_str(), DTypeStr(out_backprop_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (origin_input_type == out_backprop_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of origin_input [%s] need be same with "
+                          "out_backprop [%s].",
+                          DTypeStr(origin_input_type).c_str(), DTypeStr(out_backprop_type).c_str());
   switch (out_backprop_type) {
     case DT_FLOAT16:
       return DoComputeWithArgmaxType<Eigen::half>(ctx, argmax_type);
@@ -261,8 +264,9 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::Compute(CpuKernelContex
     case DT_INT64:
       return DoComputeWithArgmaxType<int64_t>(ctx, argmax_type);
     default:
-      KERNEL_LOG_ERROR("kFractionalMaxPool3DGradWithFixedKsize kernel out_backprop_type type [%s] not support.",
-                       DTypeStr(out_backprop_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "kFractionalMaxPool3DGradWithFixedKsize kernel out_backprop_type type [%s] not support.",
+                            DTypeStr(out_backprop_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 

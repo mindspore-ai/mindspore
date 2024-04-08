@@ -290,7 +290,5 @@ def _tensor_mul_cootensor(x, y):
 
 @mul.register_default()
 def default_mul(x, y):
-    """
-    Default function for mul.
-   """
+    """Default function for mul."""
     return x * y

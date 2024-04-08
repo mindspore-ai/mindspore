@@ -37,7 +37,7 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
     """
     Merge parallel strategy between all pipeline stages in pipeline parallel mode.
     For more details about converting distributed Checkpoint, please refer to
-    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/master/parallel/model_transformation.html>`_.
+    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/model_transformation.html>`_.
 
     Note:
         Strategy file of each pipeline stage should be included in src_strategy_dirs.
@@ -75,9 +75,9 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
 
 def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=None):
     """
-    List of original distributed checkpoint rank index for obtaining the target checkpoint of a rank_id
-    during the distributed checkpoint conversion. For more details about converting distributed Checkpoint,
-    please refer to `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/master/parallel/model_transformation.html>`_.
+    List of original distributed checkpoint rank index for obtaining the target checkpoint of a rank_id during the
+    distributed checkpoint conversion. For more details about converting distributed Checkpoint, please refer to
+    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/model_transformation.html>`_.
 
     Args:
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
@@ -140,7 +140,7 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
     """
     Transform distributed checkpoint from source sharding strategy to destination sharding strategy by rank
     for a network. For more details about converting distributed Checkpoint, please refer to
-    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/master/parallel/model_transformation.html>`_.
+    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/model_transformation.html>`_.
 
     Args:
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
@@ -230,7 +230,7 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
     """
     Transform distributed checkpoint from source sharding strategy to destination sharding strategy for a rank.
     For more details about converting distributed Checkpoint, please refer to
-    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/master/parallel/model_transformation.html>`_.
+    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/model_transformation.html>`_.
 
     Note:
         The `src_checkpoints_dir` directory structure should be organized like "src_checkpoints_dir/rank_0/a.ckpt", the
@@ -384,7 +384,7 @@ def _sync_params(name, param, layout):
 
 def sync_pipeline_shared_parameters(net):
     """synchronize pipeline parallel stage shared parameters.
-    Parameters may be shared between different stages in pipeline parallel inference. For example, `embedding table` is
+    Parameters may be shared between different stages. For example, `embedding table` is
     shared by `WordEmbedding` layer and `LMHead` layer, which are usually split into different stages. It is necessary
     to perform synchronization after `embedding table` changes.
 
@@ -397,14 +397,17 @@ def sync_pipeline_shared_parameters(net):
     Examples:
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> from mindspore import nn, Parameter, Tensor
+        >>> from mindspore import nn, ops, Parameter, Tensor
         >>> class VocabEmbedding(nn.Cell):
         ...     def __init__(self, vocab_size, embedding_size):
         ...         super().__init__()
-        ...         self.embedding_table = Parameter(Tensor(np.ones([vocab_size, embedding_size])), name='embedding')
+        ...         self.embedding_table = Parameter(Tensor(np.ones([vocab_size, embedding_size]), ms.float32),
+        ...                                          name='embedding')
+        ...         self.gather = ops.Gather()
         ...
         ...     def construct(self, x):
         ...         output = self.gather(self.embedding_table, x, 0)
+        ...         output = output.squeeze(1)
         ...         return output, self.embedding_table.value()
         ...
         >>> class LMHead(nn.Cell):
@@ -413,7 +416,6 @@ def sync_pipeline_shared_parameters(net):
         ...         self.matmul = ops.MatMul(transpose_b=True)
         ...
         ...     def construct(self, state, embed):
-        ...         state = state.reshape(-1, state.shape[-1])
         ...         return self.matmul(state, embed)
         ...
         >>> class Network(nn.Cell):
@@ -433,13 +435,19 @@ def sync_pipeline_shared_parameters(net):
         >>> net.head.pipeline_stage = 1
         >>> x = Tensor(np.ones((8, 4))
         >>> net.compile()
-        >>> ms.parallel.sync_pipeline_shared_parameters(net)
+        >>> ms.sync_pipeline_shared_parameters(net)
         >>> print(net.word_embedding.embedding_table.asnumpy())
         >>> [[1. 1. 1. 1.]
              [1. 1. 1. 1.]
              [1. 1. 1. 1.]
              [1. 1. 1. 1.]]
     """
+
+    if not isinstance(net, ms.nn.Cell):
+        ms.log.critical("Failed to synchronize pipeline shared parameters.")
+        msg = ("For 'sync_pipeline_shared_parameters', the argument 'net' should be a Cell, "
+               "but got {}.".format(type(net)))
+        raise TypeError(msg)
 
     layout_dict = net.parameter_layout_dict
     if _is_in_auto_parallel_mode() and not layout_dict:

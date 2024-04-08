@@ -30,14 +30,14 @@ const int64_t kParallelDataNum = 2 * 1024;
 const int64_t kParallelDataNumMid = 16 * 1024;
 const char *defaultDataFormat = "NCHW";
 
-#define AVGPOOL_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                         \
-    uint32_t result = AvgPoolCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                     \
-      KERNEL_LOG_ERROR("AvgPool kernel compute failed."); \
-      return result;                                      \
-    }                                                     \
-    break;                                                \
+#define AVGPOOL_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                   \
+    uint32_t result = AvgPoolCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                               \
+      CUST_KERNEL_LOG_ERROR(ctx, "AvgPool kernel compute failed."); \
+      return result;                                                \
+    }                                                               \
+    break;                                                          \
   }
 
 }  // namespace
@@ -45,38 +45,39 @@ const char *defaultDataFormat = "NCHW";
 namespace aicpu {
 uint32_t AvgPoolCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "AvgPool check input and output number failed.");
-  KERNEL_HANDLE_ERROR(AvgPoolParamCheck(ctx), "AvgPool check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "AvgPool check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, AvgPoolParamCheck(ctx), "AvgPool check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     AVGPOOL_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     AVGPOOL_COMPUTE_CASE(DT_FLOAT, float, ctx)
     AVGPOOL_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("AvgPool kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "AvgPool kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t AvgPoolCpuKernel::AvgPoolParamCheck(const CpuKernelContext &ctx) {
+uint32_t AvgPoolCpuKernel::AvgPoolParamCheck(CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_0 = ctx.Input(0);
   Tensor *output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(ctx.GetAttr("ksize"), KERNEL_STATUS_PARAM_INVALID, "Attr ksize can't be null")
-  KERNEL_CHECK_NULLPTR(ctx.GetAttr("strides"), KERNEL_STATUS_PARAM_INVALID, "Attr strides can't be null")
-  KERNEL_CHECK_NULLPTR(ctx.GetAttr("padding"), KERNEL_STATUS_PARAM_INVALID, "Attr padding can't be null")
-  KERNEL_LOG_DEBUG(
-    "AvgPoolCpuKernel[%s], input0: size[%llu];"
-    "output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.GetAttr("ksize"), KERNEL_STATUS_PARAM_INVALID, "Attr ksize can't be null")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.GetAttr("strides"), KERNEL_STATUS_PARAM_INVALID, "Attr strides can't be null")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.GetAttr("padding"), KERNEL_STATUS_PARAM_INVALID, "Attr padding can't be null")
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "AvgPoolCpuKernel[%s], input0: size[%llu];"
+                        "output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), output->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t AvgPoolCpuKernel::AvgPoolProcess(const CpuKernelContext &ctx, AvgPoolCalcArgs args) {
+uint32_t AvgPoolCpuKernel::AvgPoolProcess(CpuKernelContext &ctx, AvgPoolCalcArgs args) {
   // NCHW
   auto input0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output0 = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -103,8 +104,8 @@ uint32_t AvgPoolCpuKernel::AvgPoolProcess(const CpuKernelContext &ctx, AvgPoolCa
         RealComputeNHWC<T>(start, end, args, input0, output0);
       }
     };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, args.batch_size, args.batch_size / max_core_num, sharder_avgpool),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, args.batch_size, args.batch_size / max_core_num, sharder_avgpool),
       "AvgPool Compute failed.");
   } else {
     if (args.data_format == "NCHW") {
@@ -200,7 +201,7 @@ void AvgPoolCpuKernel::RealComputeNHWC(int64_t start, int64_t end, AvgPoolCalcAr
 }
 
 template <typename T>
-uint32_t AvgPoolCpuKernel::AvgPoolCompute(const CpuKernelContext &ctx) {
+uint32_t AvgPoolCpuKernel::AvgPoolCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
 

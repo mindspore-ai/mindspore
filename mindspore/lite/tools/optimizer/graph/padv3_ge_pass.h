@@ -33,7 +33,8 @@ class PadV3GePass : public Pass {
   STATUS ProcessPadV3ForGE(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
   const CNodePtr CreateStridedSlice(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, int64_t index);
   const CNodePtr ProcessSliceNConcat(const FuncGraphPtr &func_graph, const AnfNodePtr &pad_node,
-                                     const AnfNodePtr &input_node, int64_t fill_length, std::string concat_node_name);
+                                     const AnfNodePtr &input_node, int64_t padding_length,
+                                     std::string concat_node_name);
   const int64_t GetPaddingLength(const FuncGraphPtr &func_graph, const CNodePtr &pad_node);
   const ValueNodePtr GenerateDataValue(const FuncGraphPtr &func_graph, int64_t value);
   const ValueNodePtr GenerateDataValueTuple(const FuncGraphPtr &func_graph, int64_t value);

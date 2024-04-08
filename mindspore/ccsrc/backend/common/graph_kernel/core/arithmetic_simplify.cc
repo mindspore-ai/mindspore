@@ -748,7 +748,7 @@ class StridedSlicePatternTree : public PatternTree {
     if (begin_mask != 0 || end_mask != 0 || ellipsis_mask != 0) {
       return false;
     }
-    auto shrink_axis_mask = GetValue<int64_t>(origin_root->attrs().find("shrink_axis_mask")->second);
+    auto shrink_axis_mask = LongToSize(GetValue<int64_t>(origin_root->attrs().find("shrink_axis_mask")->second));
     for (size_t i = 0; i < input_shape.size(); i++) {
       if (((shrink_axis_mask >> i) & 1) != 0 && input_shape[i] != 1) {
         return false;

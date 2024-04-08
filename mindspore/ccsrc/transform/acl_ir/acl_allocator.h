@@ -18,17 +18,23 @@
 #define MINDSPORE_CCSRC_TRANSFORM_ACL_IR_ACL_ALLOCATOR_H_
 
 #include <memory>
+#include <string>
 #include "utils/hash_map.h"
-#include "runtime/device/memory_manager.h"
-#include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
+#include "runtime/hardware/device_context_manager.h"
 #include "acl/acl_rt_allocator.h"
 
 namespace mindspore {
 namespace transform {
 class AclAllocator {
  public:
-  AclAllocator(void *stream, std::shared_ptr<device::ascend::AscendMemoryManager> mem_manager)
-      : stream_(stream), mem_manager_(mem_manager) {}
+  explicit AclAllocator(void *stream) : stream_(stream) {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
+    MS_EXCEPTION_IF_NULL(device_context_);
+  }
   ~AclAllocator() = default;
 
   // Acl register func.
@@ -43,7 +49,7 @@ class AclAllocator {
 
  private:
   void *stream_{nullptr};
-  std::shared_ptr<device::ascend::AscendMemoryManager> mem_manager_{nullptr};
+  device::DeviceContext *device_context_{nullptr};
   aclrtAllocatorDesc allocator_desc_{nullptr};
 };
 using AclAllocatorPtr = std::shared_ptr<AclAllocator>;
@@ -57,11 +63,10 @@ class AclAllocatorRegister {
 
  private:
   AclAllocatorRegister() = default;
-  AclAllocatorPtr NewAclAllocator(void *stream, std::shared_ptr<device::ascend::AscendMemoryManager> mem_manager);
+  AclAllocatorPtr NewAclAllocator(void *stream);
   void FreeAclAllocatorRes(const AclAllocatorPtr &allocator_obj);
 
   mindspore::HashMap<void *, AclAllocatorPtr> allocator_map_;
-  std::shared_ptr<device::ascend::AscendMemoryManager> mem_manager_{nullptr};
 };
 }  // namespace transform
 }  // namespace mindspore

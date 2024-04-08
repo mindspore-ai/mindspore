@@ -309,7 +309,7 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
 
     Raises:
-        TypeError: If `input_x` is not an Tensor.
+        TypeError: If `input_x` is not a Tensor.
         TypeError: If `kernel_size` or `stride` is not an int.
         TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
         ValueError: If length of shape of `input_x` is not equal to `3`.
@@ -459,7 +459,7 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: If `input_x` is not an Tensor.
+        TypeError: If `input_x` is not a Tensor.
         TypeError: If `kernel_size` or `stride` is neither int nor tuple.
         TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
         TypeError: If `divisor_override` is not an int.
@@ -562,7 +562,7 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `input_x`.
 
     Raises:
-        TypeError: If `input_x` is not an Tensor.
+        TypeError: If `input_x` is not a Tensor.
         TypeError: If `kernel_size`, `stride` or `padding` is neither an int not a tuple.
         TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
         TypeError: If `divisor_override` is not an int.
@@ -1622,7 +1622,7 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
             is an int number that represents depth, height and width of the kernel, or a tuple
             of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer.
-        output_size (Union[int, tuple[int]], optional): The Shape of the target `output_size`,
+        output_size (Union[int, tuple[int]], optional): The shape of the target `output_size`,
             is an int number that represents depth, height and width, or a tuple
             of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer.
@@ -1728,10 +1728,10 @@ def kl_div(logits, labels, reduction='mean'):
 
     .. math::
         \ell(x, target) = \begin{cases}
-        L, & \text{if reduction} = \text{'none';}\\
-        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-        \operatorname{batchmean}(L), & \text{if reduction} = \text{'batchmean';}\\
-        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        L(x, target), & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L(x, target)), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L(x, target)) / x.\operatorname{shape}[0], & \text{if reduction} = \text{'batchmean';}\\
+        \operatorname{sum}(L(x, target)),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     where :math:`x` represents `logits`.
@@ -1741,7 +1741,7 @@ def kl_div(logits, labels, reduction='mean'):
     Note:
         - Currently it does not support float64 input on `Ascend`.
         - The output aligns with the mathematical definition of Kullback-Leibler divergence
-          only when `reduction` is set to 'batchmean'.
+          only when `reduction` is set to ``'batchmean'``.
 
     Args:
         logits (Tensor): The input Tensor. The data type must be float16, float32 or float64.
@@ -1761,7 +1761,7 @@ def kl_div(logits, labels, reduction='mean'):
     Raises:
         TypeError: If `reduction` is not a str.
         TypeError: If neither `logits` nor `labels` is a Tensor.
-        TypeError: If dtype of `logits` or `labels` is not float32.
+        TypeError: If dtype of `logits` or `labels` is not the supported type.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2525,7 +2525,7 @@ def soft_margin_loss(input, target, reduction='mean'):
 
     Args:
         input (Tensor): Predict data. Data type must be float16 or float32.
-        target (Tensor): Ground truth data, with the same type and shape as `logits`.
+        target (Tensor): Ground truth data, with the same type and shape as `input`.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
@@ -2534,7 +2534,7 @@ def soft_margin_loss(input, target, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Outputs:
-        Tensor or Scalar. If `reduction` is ``'none'``, its shape is the same as `logits`.
+        Tensor or Scalar. If `reduction` is ``'none'``, its shape is the same as `input`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -2630,7 +2630,7 @@ def softmin(x, axis=-1, *, dtype=None):
             `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
 
     Returns:
-        Tensor, with the same type and shape as the logits.
+        Tensor, with the same type and shape as `x`.
 
     Raises:
         TypeError: If `axis` is not an int or a tuple.
@@ -2682,10 +2682,10 @@ def softshrink(x, lambd=0.5):
         Tensor, has the same shape and data type as `x`.
 
     Raises:
-        TypeError: If lambd is not a float.
-        TypeError: If input_x is not a Tensor.
-        TypeError: If dtype of input_x is neither float16 nor float32.
-        ValueError: If lambd is less than 0.
+        TypeError: If `lambd` is not a float.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `lambd` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2787,13 +2787,14 @@ def selu(input_x):
         :align: center
 
     Args:
-        input_x (Tensor): Tensor of any dimension, the data type is float16 or float32.
+        input_x (Tensor): Tensor of any dimension,
+            the data type is int8, int32, float16, float32, or float64 (CPU, GPU only).
 
     Returns:
         Tensor, with the same type and shape as the `input_x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` is not int8, int32, float16, float32, or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3071,7 +3072,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         TypeError: If `strides`, `padding`, `kernel_size` or `dilations` is not a tuple with integer elements.
         TypeError: If `modulated` is not a bool.
         ValueError: If the tuple size of `strides`, `padding`, `kernel_size` or `dilations` is not expected.
-        ValueError: The N or C dimensions of 'strides' or `dilations` is not set to 1.
+        ValueError: The N or C dimensions of `strides` or `dilations` is not set to 1.
         ValueError: If `modulated` is not set to True.
 
     .. warning::
@@ -3164,8 +3165,10 @@ def pad(input_x, padding, mode='constant', value=None):
     Pads the input tensor according to the padding.
 
     Args:
-        input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
-        padding (Union[tuple[int], list[int], Tensor]): Filling position of pad.
+        input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions
+            which is required to be no more than 5 in Ascend.
+        padding (Union[tuple[int], list[int], Tensor]): Filling position of pad where the negative value is not
+            supported while running in Ascend.
             :math:`\left\lfloor\frac{\text{len(padding)}}{2}\right\rfloor` dimensions
             of `input_x` will be padded.
 
@@ -3210,11 +3213,13 @@ def pad(input_x, padding, mode='constant', value=None):
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `paddings` is not an int of tuple or int of list.
+        TypeError: If `padding` is not an int of tuple or int of list.
         TypeError: If `input_x` is not a Tensor.
         ValueError: If length of `padding` is not even.
         ValueError: If length of `padding` is greater than 6.
         ValueError: If `mode` is not ``'constant'`` and `value` not ``None``.
+        ValueError: If rank of `input_x` is more than 5 while running in Ascend.
+        ValueError: If `paddings` contains negative value while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3271,7 +3276,7 @@ def pad(input_x, padding, mode='constant', value=None):
         return input_x
     if not isinstance(padding, Tensor):
         _check_pad_inputs(padding)
-        padding = Tensor(padding)
+        padding = tuple(padding)
     is_expand = False
     if mode == "constant":
         value = 0 if value is None else value
@@ -3284,7 +3289,7 @@ def pad(input_x, padding, mode='constant', value=None):
             raise ValueError(f"For 'pad', the padding mode '{mode}' can not set value, but got value {value}.")
         if mode == "replicate":
             mode = "edge"
-        if padding.shape[0] // 2 + 1 == input_x.ndim:
+        if len(padding) // 2 + 1 == input_x.ndim:
             input_x = input_x.expand_dims(0)
             is_expand = True
     out = PadV3(mode=mode, paddings_contiguous=True)(input_x, padding, value)
@@ -3321,7 +3326,7 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
         TypeError: If `lower` is not a float or an int.
         TypeError: If `upper` is not a float or an int.
         TypeError: If `input` is not a Tensor.
-        TypeError: If `input` is not a Tensor of mindspore.float16 or mindpore.float32.
+        TypeError: If `input` is not a Tensor of mindspore.float16 or mindspore.float32.
         ValueError: If `lower` is greater than upper.
 
     Supported Platforms:
@@ -3423,6 +3428,21 @@ def _innner_log_softmax(inputs, axis):
     return inputs - logsumexp(inputs, axis, True)
 
 
+def _check_cross_entropy_inputs(input, target, weight, ignore_index, reduction, label_smoothing):
+    """
+    Check inputs for cross_entropy().
+    """
+    _check_is_tensor('input', input, "cross_entropy_loss")
+    _check_is_tensor('target', target, "cross_entropy_loss")
+    _check_is_tensor('weight', weight, "cross_entropy_loss")
+    check_int_const(ignore_index, 'ignore_index', "cross_entropy_loss")
+    check_non_negative_float_const(label_smoothing, 'label_smoothing', "cross_entropy_loss")
+    check_string_const(reduction, ['none', 'mean', 'sum'], 'reduction', "cross_entropy_loss")
+    if input.dtype not in [mstype.float64, mstype.float32, mstype.float16]:
+        raise TypeError(f'For cross_entropy, the input dtype should be mstype.float64, mstype.float32 or'
+                        f'mstype.float16, but got dtype:{input.dtype}.')
+
+
 def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0):
     r"""
     The cross entropy loss between input and target.
@@ -3480,7 +3500,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
             `input` is expected to be log-probabilities, data type must be float16 or float32.
         target (Tensor): For class indices, tensor of shape :math:`()`, :math:`(N)` or
             :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32. For probabilities, tensor of shape :math:`(C,)` ,
-            :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32.
+            :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32 or float64.
         weight (Tensor): A rescaling weight applied to the loss of each batch element.
             If not None, the shape is :math:`(C,)`, data type must be float16 or float32. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored
@@ -3513,12 +3533,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
         >>> target = ms.Tensor(np.random.randn(3, 5), ms.float32)
         >>> output = ms.ops.cross_entropy(inputs, target)
     """
-    _check_is_tensor('input', input, "cross_entropy_loss")
-    _check_is_tensor('target', target, "cross_entropy_loss")
-    _check_is_tensor('weight', weight, "cross_entropy_loss")
-    check_int_const(ignore_index, 'ignore_index', "cross_entropy_loss")
-    check_non_negative_float_const(label_smoothing, 'label_smoothing', "cross_entropy_loss")
-    check_string_const(reduction, ['none', 'mean', 'sum'], 'reduction', "cross_entropy_loss")
+    _check_cross_entropy_inputs(input, target, weight, ignore_index, reduction, label_smoothing)
     class_dim = 0 if input.ndim == 1 else 1
     if target.dtype in [mstype.float32, mstype.float16]:
         return _cross_entropy(input, target, class_dim, weight, reduction, label_smoothing)
@@ -3769,6 +3784,7 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+            Data type is float16, float32 or float64.
         target (Tensor): Ground truth data, tensor of shape :math:`(N, *)`, same shape and dtype as the `input`.
         beta (float): A parameter used to control the point where the function will change between
             L1 to L2 loss. The value should be greater than zero. Default: ``1.0`` .
@@ -4188,7 +4204,7 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
         input2 (Tensor): Tensor of shape :math:`(N, *)`, same shape and dtype as `input1`.
         target (Tensor): Contains value 1 or -1. Suppose the shape of `input1` is
           :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
-        margin (float, optional): Should be in [-1.0, 1.0]. Default: 0.0.
+        margin (float, optional): Should be in [-1.0, 1.0]. Default: ``0.0``.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
@@ -4203,7 +4219,7 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
     Raises:
         TypeError: If `margin` is not a float.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
-        ValueError: If `margin` is not in range [-1, 1].
+        ValueError: If `margin` is not in range [-1.0, 1.0].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4301,7 +4317,7 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
             W_{out} = \left\lfloor\frac{W_{in} + 2 \times \text{padding}[2] - \text{dilation}[2] \times
             (\text{kernel_size}[2] - 1) - 1}{\text{stride}[2]} + 1\right\rfloor
 
-        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64. It will be return
+        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64. It will be returned
           only when `return_indices` is ``True`` .
 
     Raises:
@@ -4949,7 +4965,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
-        That is, when `groups>1`, condition `C_{in}` = `C_{out}` = `groups` must be satisfied.
+        That is, when `groups>1`, condition :math:`C_{in}` = :math:`C_{out}` = `groups` must be satisfied.
 
     Args:
         input (Tensor): Input Tensor of shape :math:`(N, C_{in}, L_{in})`.
@@ -5101,7 +5117,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
-        That is, when `groups>1`, condition `C_{in}` = `C_{out}` = `groups` must be satisfied.
+        That is, when `groups>1`, condition :math:`C_{in}` = :math:`C_{out}` = `groups` must be satisfied.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -5292,7 +5308,7 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 def huber_loss(input, target, reduction='mean', delta=1.0):
     r"""
     Calculates the error between the predicted value and the target value,
-    which has the best of both the loss of l1 and the loss of mse.
+    which has the best of both the loss of :func:`mindspore.ops.l1_loss` and the loss of :func:`mindspore.ops.mse_loss`.
 
     Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the `reduction` parameter
     is set to ``'none'`` then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
@@ -5644,7 +5660,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
     where :math:`bias` is the output channel bias, :math:`ccor` is
-    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
+    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_
     , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
@@ -6021,8 +6037,8 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor. If `reduction` is ``'none'``, returns a Tensor with the same shape as `target`.
-        Otherwise, it is a scalar.
+        - **outputs** - Tensor. If `reduction` is ``'none'``, returns a Tensor with the same shape as `target`.
+          Otherwise, it is a scalar.
 
     Raises:
         TypeError: If dtype of `p` or `target` is not int.
@@ -6211,6 +6227,8 @@ def gelu(input, approximate='none'):
     .. math::
         GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
 
+    For the related GELU graph, refer to `GELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_gelu.png>`_ .
+
     GELU Activation Function Graph:
 
     .. image:: ../images/GELU.png
@@ -6226,8 +6244,8 @@ def gelu(input, approximate='none'):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64.
-        ValueError: If `approximate` value is neither `none` or `tanh`.
+        TypeError: If dtype of `input` is not bfloat16, float16, float32 or float64.
+        ValueError: If `approximate` value is neither `none` nor `tanh`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6338,7 +6356,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
               L_{out} = \left\lfloor\frac{L_{in} - \text{kernel_size}}{\text{stride}} + 1\right\rfloor
 
     Raises:
-        TypeError: If `x` is not an Tensor.
+        TypeError: If `x` is not a Tensor.
         TypeError: If `kernel_size` or `stride` is not an int.
         TypeError: If `ceil_mode` is not a bool.
         TypeError: If `norm_type` is neither float nor int.
@@ -6422,7 +6440,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
               W_{out} = \left\lfloor\frac{W_{in} - \text{kernel_size}[1]}{\text{stride}[1]} + 1\right\rfloor
 
     Raises:
-        TypeError: If `x` is not an Tensor.
+        TypeError: If `x` is not a Tensor.
         TypeError: If `kernel_size` or `stride` is neither int nor tuple.
         TypeError: If `ceil_mode` is not a bool.
         TypeError: If `norm_type` is neither float nor int.
@@ -6601,7 +6619,7 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
         Tensor. If `reduction` is ``"none"``, its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
 
     Raises:
-        TypeError: If `anchor` or `positive` or 'negative' is not a Tensor.
+        TypeError: If `anchor` or `positive` or `negative` is not a Tensor.
         TypeError: If dtype of `anchor`, `positive` and `negative` is not the same.
         TypeError: If `margin` is not a float.
         TypeError: If `p` is not an int.
@@ -7125,7 +7143,7 @@ def prompt_flash_attention(query, key, value, attn_mask, actual_seq_lengths, act
                quant_scale1, deq_scale2, quant_scale2, quant_offset2)
 
 
-def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, padding_mask, dequant_scale1, quant_scale1,
+def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, pse_shift, dequant_scale1, quant_scale1,
                           dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table,
                           num_heads, input_layout="BSH", scale_value=1.0, num_key_value_heads=0, block_size=0,
                           inner_precise=1):
@@ -7151,7 +7169,7 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, padd
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or bool.
           Input tensor of shape :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)`.
         - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int.
-        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16.
+        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32.
         - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
         - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float.
         - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
@@ -7178,7 +7196,7 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, padd
 
     _ifa = _get_cache_prim(NN_OPS.IncreFlashAttention)(num_heads, input_layout, scale_value, num_key_value_heads,
                                                        block_size, inner_precise)
-    return _ifa(query, key, value, attn_mask, actual_seq_lengths, padding_mask, dequant_scale1, quant_scale1,
+    return _ifa(query, key, value, attn_mask, actual_seq_lengths, pse_shift, dequant_scale1, quant_scale1,
                 dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table)
 
 

@@ -35,7 +35,7 @@ const char *kQuantile = "Quantile";
 
 namespace aicpu {
 template <typename T>
-uint32_t QuantileCpuKernel::GetInputAndCheck(const CpuKernelContext &ctx) {
+uint32_t QuantileCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   input_ = ctx.Input(0);
   DataType input_type = input_->GetDataType();
   int64_t input_dim = input_->GetTensorShape()->GetDims();
@@ -54,29 +54,30 @@ uint32_t QuantileCpuKernel::GetInputAndCheck(const CpuKernelContext &ctx) {
   auto ignore_attr = ctx.GetAttr("ignore_nan");
   ignore_nan_ = (ignore_attr == nullptr) ? false : ignore_attr->GetBool();
 
-  KERNEL_CHECK_FALSE(input_size > 0, KERNEL_STATUS_PARAM_INVALID, "quantile() input tensor must be non-empty");
-  KERNEL_CHECK_FALSE(q_dim <= 1, KERNEL_STATUS_PARAM_INVALID,
-                     "quantile() q must be a scalar or 1D tensor,but got dimension = [%d].", q_dim);
-  KERNEL_CHECK_FALSE(input_type == q_type, KERNEL_STATUS_PARAM_INVALID,
-                     "quantile() q tensor must be same dtype as the input tensor");
+  CUST_KERNEL_CHECK_FALSE(ctx, input_size > 0, KERNEL_STATUS_PARAM_INVALID,
+                          "quantile() input tensor must be non-empty");
+  CUST_KERNEL_CHECK_FALSE(ctx, q_dim <= 1, KERNEL_STATUS_PARAM_INVALID,
+                          "quantile() q must be a scalar or 1D tensor,but got dimension = [%d].", q_dim);
+  CUST_KERNEL_CHECK_FALSE(ctx, input_type == q_type, KERNEL_STATUS_PARAM_INVALID,
+                          "quantile() q tensor must be same dtype as the input tensor");
 
   for (int64_t j = 0; j < q_size; ++j) {
-    KERNEL_CHECK_FALSE(q_addrs[j] <= 1 && q_addrs[j] >= 0, KERNEL_STATUS_PARAM_INVALID,
-                       "quantile() q values must be in the range [0, 1]");
+    CUST_KERNEL_CHECK_FALSE(ctx, q_addrs[j] <= 1 && q_addrs[j] >= 0, KERNEL_STATUS_PARAM_INVALID,
+                            "quantile() q values must be in the range [0, 1]");
   }
   DataType out_type = ctx.Output(0)->GetDataType();
   output_ = ctx.Output(0);
-  KERNEL_CHECK_FALSE(out_type == input_type, KERNEL_STATUS_PARAM_INVALID,
-                     "quantile() out tensor must be same dtype as the input tensor");
+  CUST_KERNEL_CHECK_FALSE(ctx, out_type == input_type, KERNEL_STATUS_PARAM_INVALID,
+                          "quantile() out tensor must be same dtype as the input tensor");
   if (dim_ != kQuantileAttrDefaultDim) {
-    KERNEL_CHECK_FALSE(dim_ >= min && dim_ <= max, KERNEL_STATUS_PARAM_INVALID,
-                       "Dimension out of range (expected to be in range of [%d] and [%d]).", min, max);
+    CUST_KERNEL_CHECK_FALSE(ctx, dim_ >= min && dim_ <= max, KERNEL_STATUS_PARAM_INVALID,
+                            "Dimension out of range (expected to be in range of [%d] and [%d]).", min, max);
   }
-  dim_ = MaybeWrapDim(dim_, input_dim);
+  dim_ = MaybeWrapDim(ctx, dim_, input_dim);
   return KERNEL_STATUS_OK;
 }
 
-uint32_t QuantileCpuKernel::MaybeWrapDim(int64_t dim, int64_t dim_post_expr) {
+uint32_t QuantileCpuKernel::MaybeWrapDim(CpuKernelContext &ctx, int64_t dim, int64_t dim_post_expr) {
   if (dim == kQuantileAttrDefaultDim) {
     return dim;
   }
@@ -85,8 +86,8 @@ uint32_t QuantileCpuKernel::MaybeWrapDim(int64_t dim, int64_t dim_post_expr) {
   }
   int64_t min = -dim_post_expr;
   int64_t max = dim_post_expr - 1;
-  KERNEL_CHECK_FALSE(dim >= min && dim <= max, KERNEL_STATUS_PARAM_INVALID,
-                     "Dimension out of range (expected to be in range of [%d] and [%d]).", min, max)
+  CUST_KERNEL_CHECK_FALSE(ctx, dim >= min && dim <= max, KERNEL_STATUS_PARAM_INVALID,
+                          "Dimension out of range (expected to be in range of [%d] and [%d]).", min, max)
   if (dim < 0) {
     dim += dim_post_expr;
   }
@@ -279,7 +280,7 @@ std::vector<int64_t> QuantileCpuKernel::SetQuantileOutputShape() {
 }
 
 template <typename T>
-uint32_t QuantileCpuKernel::QuantileCompute(const CpuKernelContext &ctx) {
+uint32_t QuantileCpuKernel::QuantileCompute(CpuKernelContext &ctx) {
   T *input_addrs = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   size_t data_size = input_->GetTensorShape()->NumElements() * sizeof(T);
 
@@ -316,7 +317,7 @@ uint32_t QuantileCpuKernel::QuantileCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-uint32_t QuantileCpuKernel::DoParallelQuantile(const CpuKernelContext &ctx, std::vector<T> sorted,
+uint32_t QuantileCpuKernel::DoParallelQuantile(CpuKernelContext &ctx, std::vector<T> sorted,
                                                std::vector<int64_t> input_dims) {
   int64_t input_shape_size = input_->GetTensorShape()->GetDims();
   std::vector<int64_t> input_shape_dims = input_->GetTensorShape()->GetDimSizes();
@@ -328,8 +329,9 @@ uint32_t QuantileCpuKernel::DoParallelQuantile(const CpuKernelContext &ctx, std:
     auto shard_quantile = [&](size_t start, size_t end) {
       QuantileComputeParallelFunc<T>(start, end, last_shape_size, &sorted);
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, n / last_shape_size, last_shape_size, shard_quantile),
-                        "Quantile Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, n / last_shape_size, last_shape_size, shard_quantile),
+                             "Quantile Compute failed.");
   } else {
     input_shape_dims.push_back(1);
     sorted = transpose<T>(sorted, input_shape_dims, dim_);
@@ -341,8 +343,9 @@ uint32_t QuantileCpuKernel::DoParallelQuantile(const CpuKernelContext &ctx, std:
     auto shard_quantile = [&](size_t start, size_t end) {
       QuantileComputeParallelFunc<T>(start, end, last_shape_size, &sorted);
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, n / last_shape_size, last_shape_size, shard_quantile),
-                        "Quantile Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, n / last_shape_size, last_shape_size, shard_quantile),
+                             "Quantile Compute failed.");
   }
   return 0;
 }
@@ -373,7 +376,8 @@ void QuantileCpuKernel::SetOutput(std::vector<int64_t> *out_shape) {
 }
 
 uint32_t QuantileCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kQuantileInputNum, kQuantileOutputNum), "[%s] check params failed.", kQuantile);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kQuantileInputNum, kQuantileOutputNum), "[%s] check params failed.",
+                           kQuantile);
   uint32_t res = KERNEL_STATUS_OK;
 
   auto data_type = ctx.Input(0)->GetDataType();
@@ -385,10 +389,10 @@ uint32_t QuantileCpuKernel::Compute(CpuKernelContext &ctx) {
       res = GetInputAndCheck<double>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("Quantile invalid input type [%s]", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Quantile invalid input type [%s]", DTypeStr(data_type).c_str());
       break;
   }
-  KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "GetInputAndCheck failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (res == KERNEL_STATUS_OK), res, "GetInputAndCheck failed.");
   switch (data_type) {
     case DT_FLOAT:
       res = QuantileCompute<float>(ctx);
@@ -397,7 +401,7 @@ uint32_t QuantileCpuKernel::Compute(CpuKernelContext &ctx) {
       res = QuantileCompute<double>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("Quantile invalid input type [%s]", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Quantile invalid input type [%s]", DTypeStr(data_type).c_str());
       break;
   }
   if (res != KERNEL_STATUS_OK) {

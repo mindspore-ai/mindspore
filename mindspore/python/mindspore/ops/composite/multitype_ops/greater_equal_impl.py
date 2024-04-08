@@ -105,7 +105,5 @@ def _greater_equal_list(x, y):
 
 @greater_equal.register_default()
 def default_greater_equal(x, y):
-    """
-    Default function for greater equal.
-   """
+    """Default function for greater equal."""
     return x >= y

@@ -198,7 +198,7 @@ class OpApiTensorConverter : public AttrHelper<OpApiTensorConverter> {
   inline aclDataType GetDataType(const ValuePtr &value) { return AclConverter::ConvertType(value->type()->type_id()); }
 };
 
-inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
+inline aclTensor *ConvertType(const mindspore::kernel::KernelTensor *tensor) {
   static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
   if (aclCreateTensor == nullptr) {
     return nullptr;
@@ -248,6 +248,10 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   }
 
   return acl_tensor;
+}
+
+inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
+  return ConvertType(reinterpret_cast<const mindspore::kernel::KernelTensor *>(tensor));
 }
 
 inline aclTensor *ConvertType(std::pair<mindspore::kernel::KernelTensor *, bool> tensor_and_trans) {
@@ -504,6 +508,42 @@ template <>
 inline TypeId ConvertKernelTensor<TypeId>(mindspore::kernel::KernelTensor *tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   return tensor->dtype_id();
+}
+
+template <>
+inline std::vector<mindspore::kernel::KernelTensor *>
+ConvertKernelTensor<std::vector<mindspore::kernel::KernelTensor *>>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->type_id() != kObjectTypeTuple && tensor->type_id() != kObjectTypeList) {
+    return {tensor};
+  }
+  auto shape = tensor->GetShapeVector();
+  if (shape.empty()) {
+    MS_LOG(EXCEPTION) << "Current tensor is a tuple of tensor, but get a empty shape!";
+  }
+  if (shape[kIndex0] <= 0) {
+    MS_LOG(EXCEPTION) << shape << " is an invalid shape, please check op infer!";
+  }
+
+  std::vector<mindspore::kernel::KernelTensor *> res;
+
+  auto split_num = shape[kIndex0];
+  auto offset = tensor->size() / split_num;
+  auto new_shape = shape;
+  new_shape.erase(new_shape.begin());
+
+  for (int i = 0; i < split_num; ++i) {
+    auto new_tensor = new KernelTensor(*tensor);
+    new_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(tensor->dtype_id())));
+    auto tensor_shape = std::make_shared<abstract::TensorShape>();
+    tensor_shape->SetShapeVector(new_shape);
+    new_tensor->SetShape(tensor_shape);
+    new_tensor->set_device_ptr(
+      reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(tensor->device_ptr()) + offset * i));
+    new_tensor->set_size(offset);
+    (void)res.emplace_back(new_tensor);
+  }
+  return res;
 }
 
 inline void Release(aclTensor *p) {

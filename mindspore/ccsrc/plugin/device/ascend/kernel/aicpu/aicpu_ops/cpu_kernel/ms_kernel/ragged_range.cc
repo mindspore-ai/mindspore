@@ -40,7 +40,7 @@ constexpr int64_t kParallelDataNums = 16 * 1024;
       RaggedRangeCompute<TYPE, TSPLITS>(NROWS, STARTS, LIMITS, DELTAS, BROADCAST_START, BROADCAST_LIMITS,   \
                                         BROADCAST_DELTAS, RT_NESTED_SPLITS, RT_DENSE_VALUE, CTX);           \
     if (result != KERNEL_STATUS_OK) {                                                                       \
-      KERNEL_LOG_ERROR("RaggedRange kernel compute failed.");                                               \
+      CUST_KERNEL_LOG_ERROR(ctx, "RaggedRange kernel compute failed.");                                     \
       return result;                                                                                        \
     }                                                                                                       \
     break;                                                                                                  \
@@ -50,7 +50,7 @@ constexpr int64_t kParallelDataNums = 16 * 1024;
 
 namespace aicpu {
 uint32_t RaggedRange::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "RaggedRange check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "RaggedRange check params failed.");
   Tensor *starts = ctx.Input(0);
   auto starts_shape = starts->GetTensorShape();
   int32_t starts_dim = starts_shape->GetDims();
@@ -63,9 +63,9 @@ uint32_t RaggedRange::Compute(CpuKernelContext &ctx) {
   auto deltas_shape = deltas->GetTensorShape();
   int32_t deltas_dim = deltas_shape->GetDims();
 
-  KERNEL_CHECK_FALSE((starts_dim <= 1), KERNEL_STATUS_PARAM_INVALID, "starts must be a scalar or vector.");
-  KERNEL_CHECK_FALSE((limits_dim <= 1), KERNEL_STATUS_PARAM_INVALID, "limits must be a scalar or vector.");
-  KERNEL_CHECK_FALSE((deltas_dim <= 1), KERNEL_STATUS_PARAM_INVALID, "deltas must be a scalar or vector.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (starts_dim <= 1), KERNEL_STATUS_PARAM_INVALID, "starts must be a scalar or vector.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (limits_dim <= 1), KERNEL_STATUS_PARAM_INVALID, "limits must be a scalar or vector.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (deltas_dim <= 1), KERNEL_STATUS_PARAM_INVALID, "deltas must be a scalar or vector.");
 
   bool broadcast_starts = starts_dim == 0;
   bool broadcast_limits = limits_dim == 0;
@@ -76,17 +76,17 @@ uint32_t RaggedRange::Compute(CpuKernelContext &ctx) {
   if (!broadcast_limits) in_sizes.push_back(limits_shape->GetDimSize(0));
   if (!broadcast_deltas) in_sizes.push_back(deltas_shape->GetDimSize(0));
   for (uint32_t i = 1; i < in_sizes.size(); ++i) {
-    KERNEL_CHECK_FALSE((in_sizes[i] == in_sizes[i - 1]), KERNEL_STATUS_PARAM_INVALID,
-                       "starts, limits, and deltas must have the same shape.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (in_sizes[i] == in_sizes[i - 1]), KERNEL_STATUS_PARAM_INVALID,
+                            "starts, limits, and deltas must have the same shape.");
   }
 
   uint32_t nrows = in_sizes.empty() ? 1 : in_sizes[0];
 
   AttrValue *attr = ctx.GetAttr("Tsplits");
-  KERNEL_CHECK_NULLPTR(attr, KERNEL_STATUS_PARAM_INVALID, "Get attr[Tsplits] failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr, KERNEL_STATUS_PARAM_INVALID, "Get attr[Tsplits] failed.");
   DataType Tsplits = attr->GetDataType();
-  KERNEL_CHECK_FALSE((Tsplits == DT_INT32 || Tsplits == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "The attr Tsplits must be int32 or int64.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (Tsplits == DT_INT32 || Tsplits == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "The attr Tsplits must be int32 or int64.");
 
   Tensor *rt_nested_splits = ctx.Output(0);
   Tensor *rt_dense_values = ctx.Output(1);
@@ -94,8 +94,8 @@ uint32_t RaggedRange::Compute(CpuKernelContext &ctx) {
   auto starts_type = starts->GetDataType();
   auto limits_type = limits->GetDataType();
   auto deltas_type = deltas->GetDataType();
-  KERNEL_CHECK_FALSE((starts_type == limits_type && limits_type == deltas_type), KERNEL_STATUS_PARAM_INVALID,
-                     "starts, limits and deltas must have the same type.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (starts_type == limits_type && limits_type == deltas_type), KERNEL_STATUS_PARAM_INVALID,
+                          "starts, limits and deltas must have the same type.");
 
   if (Tsplits == DT_INT32) {
     switch (starts_type) {
@@ -108,8 +108,8 @@ uint32_t RaggedRange::Compute(CpuKernelContext &ctx) {
       RAGGEDRANGE_COMPUTE_CASE(DT_INT64, int64_t, int32_t, nrows, starts, limits, deltas, broadcast_starts,
                                broadcast_limits, broadcast_deltas, rt_nested_splits, rt_dense_values, ctx)
       default:
-        KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                         DTypeStr(starts_type).c_str());
+        CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                              ctx.GetOpType().c_str(), DTypeStr(starts_type).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
   } else {
@@ -123,8 +123,8 @@ uint32_t RaggedRange::Compute(CpuKernelContext &ctx) {
       RAGGEDRANGE_COMPUTE_CASE(DT_INT64, int64_t, int64_t, nrows, starts, limits, deltas, broadcast_starts,
                                broadcast_limits, broadcast_deltas, rt_nested_splits, rt_dense_values, ctx)
       default:
-        KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                         DTypeStr(starts_type).c_str());
+        CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                              ctx.GetOpType().c_str(), DTypeStr(starts_type).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -135,8 +135,7 @@ uint32_t RaggedRange::Compute(CpuKernelContext &ctx) {
 template <typename T, typename TSPLITS>
 uint32_t RaggedRange::RaggedRangeCompute(const uint32_t nrows, Tensor *starts, Tensor *limits, Tensor *deltas,
                                          bool broadcast_starts, bool broadcast_limits, bool broadcast_deltas,
-                                         Tensor *rt_nested_splits, Tensor *rt_dense_values,
-                                         const CpuKernelContext &ctx) {
+                                         Tensor *rt_nested_splits, Tensor *rt_dense_values, CpuKernelContext &ctx) {
   T *starts_addr = reinterpret_cast<T *>(starts->GetData());
   T *limits_addr = reinterpret_cast<T *>(limits->GetData());
   T *deltas_addr = reinterpret_cast<T *>(deltas->GetData());
@@ -147,7 +146,7 @@ uint32_t RaggedRange::RaggedRangeCompute(const uint32_t nrows, Tensor *starts, T
     T start = broadcast_starts ? starts_addr[0] : starts_addr[row];
     T limit = broadcast_limits ? limits_addr[0] : limits_addr[row];
     T delta = broadcast_deltas ? deltas_addr[0] : deltas_addr[row];
-    KERNEL_CHECK_FALSE((delta != 0), KERNEL_STATUS_PARAM_INVALID, "Requires delta != 0.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (delta != 0), KERNEL_STATUS_PARAM_INVALID, "Requires delta != 0.");
     rt_nested_splits_addr[row + 1] = rt_nested_splits_addr[row] + RangeSize<T, TSPLITS>(start, limit, delta);
   }
 
@@ -183,7 +182,7 @@ uint32_t RaggedRange::RaggedRangeCompute(const uint32_t nrows, Tensor *starts, T
     };
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, nrows, nrows / max_core_num, shared_rtvalues);
     if (ret != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor failed.");
+      CUST_KERNEL_LOG_ERROR(ctx, "CpuKernelUtils::ParallelFor failed.");
       return KERNEL_STATUS_INNER_ERROR;
     }
   }

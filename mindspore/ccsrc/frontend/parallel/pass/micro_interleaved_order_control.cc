@@ -26,6 +26,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/utils.h"
 #include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/pass/pass_utils.h"
@@ -178,9 +179,9 @@ void InsertDepend(const FuncGraphManagerPtr &manager, const CNodePtr &comm_node_
   }
   std::vector<AnfNodePtr> depend1_inputs{NewValueNode(prim::kPrimDepend), comm_node_a, comm_node_b_input_node};
   auto depend_node1 = comm_node_a->func_graph()->NewCNode(depend1_inputs);
+  MS_EXCEPTION_IF_NULL(depend_node1);
   depend_node1->set_abstract(comm_node_a->abstract()->Clone());
   depend_node1->AddAttr("micro_interleaved_depend1", MakeValue(true));
-  MS_EXCEPTION_IF_NULL(depend_node1);
   manager->Replace(comm_node_a, depend_node1);
   // next_comm_node_a_input -> depend -> comm_node_b_output
   for (const auto &pair : manager->node_users()[comm_node_b]) {
@@ -193,9 +194,9 @@ void InsertDepend(const FuncGraphManagerPtr &manager, const CNodePtr &comm_node_
   }
   std::vector<AnfNodePtr> depend2_inputs{NewValueNode(prim::kPrimDepend), comm_node_b, next_comm_node_a_input_node};
   auto depend_node2 = next_comm_node_a_input_node->func_graph()->NewCNode(depend2_inputs);
+  MS_EXCEPTION_IF_NULL(depend_node2);
   depend_node2->AddAttr("micro_interleaved_depend2", MakeValue(true));
   depend_node2->set_abstract(comm_node_b->abstract()->Clone());
-  MS_EXCEPTION_IF_NULL(depend_node2);
   manager->Replace(comm_node_b, depend_node2);
 }
 
@@ -252,6 +253,9 @@ CNodePtr GetInputBorderNode(const CNodePtr &node) {
       if (IsPrimitiveCNode(queue_end->input(i))) {
         auto queue_end_input_cnode = queue_end->input(i)->cast<CNodePtr>();
         if (queue_end_input_cnode->HasAttr("fine_grained_interleaved_border")) {
+          if (IsPrimitiveCNode(queue_end_input_cnode, prim::kPrimStridedSliceGrad)) {
+            return queue_end_input_cnode;
+          }
           return queue_end;
         }
         anf_queue.push(queue_end->input(i)->cast<CNodePtr>());

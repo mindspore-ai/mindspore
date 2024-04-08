@@ -29,48 +29,48 @@ const uint32_t kInputNum = 2;
 const char *kComplex = "Complex";
 constexpr int64_t kFloatMaxNums = 8 * 128 * 1024;
 constexpr int64_t kDoubleMaxNums = 16 * 128 * 1024;
-#define Complex_COMPUTE_CASE(IN_DTYPE, IN_TYPE, OUT_DTYPE, CTX)                                             \
-  case (IN_DTYPE): {                                                                                        \
-    switch (OUT_DTYPE) {                                                                                    \
-      case (DT_COMPLEX64): {                                                                                \
-        uint32_t result = ComplexCompute<float, std::complex<float>>(CTX);                                  \
-        if (result != KERNEL_STATUS_OK) {                                                                   \
-          KERNEL_LOG_ERROR("Complex kernel compute failed.");                                               \
-          return result;                                                                                    \
-        }                                                                                                   \
-        break;                                                                                              \
-      }                                                                                                     \
-      case (DT_COMPLEX128): {                                                                               \
-        uint32_t result = ComplexCompute<double, std::complex<double>>(CTX);                                \
-        if (result != KERNEL_STATUS_OK) {                                                                   \
-          KERNEL_LOG_ERROR("Complex kernel compute failed.");                                               \
-          return result;                                                                                    \
-        }                                                                                                   \
-        break;                                                                                              \
-      }                                                                                                     \
-      default:                                                                                              \
-        KERNEL_LOG_ERROR("Complex kernel output data type [%s] not support.", DTypeStr(OUT_DTYPE).c_str()); \
-        return KERNEL_STATUS_PARAM_INVALID;                                                                 \
-    }                                                                                                       \
-    break;                                                                                                  \
+#define Complex_COMPUTE_CASE(IN_DTYPE, IN_TYPE, OUT_DTYPE, CTX)                                                       \
+  case (IN_DTYPE): {                                                                                                  \
+    switch (OUT_DTYPE) {                                                                                              \
+      case (DT_COMPLEX64): {                                                                                          \
+        uint32_t result = ComplexCompute<float, std::complex<float>>(CTX);                                            \
+        if (result != KERNEL_STATUS_OK) {                                                                             \
+          CUST_KERNEL_LOG_ERROR(ctx, "Complex kernel compute failed.");                                               \
+          return result;                                                                                              \
+        }                                                                                                             \
+        break;                                                                                                        \
+      }                                                                                                               \
+      case (DT_COMPLEX128): {                                                                                         \
+        uint32_t result = ComplexCompute<double, std::complex<double>>(CTX);                                          \
+        if (result != KERNEL_STATUS_OK) {                                                                             \
+          CUST_KERNEL_LOG_ERROR(ctx, "Complex kernel compute failed.");                                               \
+          return result;                                                                                              \
+        }                                                                                                             \
+        break;                                                                                                        \
+      }                                                                                                               \
+      default:                                                                                                        \
+        CUST_KERNEL_LOG_ERROR(ctx, "Complex kernel output data type [%s] not support.", DTypeStr(OUT_DTYPE).c_str()); \
+        return KERNEL_STATUS_PARAM_INVALID;                                                                           \
+    }                                                                                                                 \
+    break;                                                                                                            \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t ComplexCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
-                      "[%s] check input and output failed.", kComplex);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
+                           "[%s] check input and output failed.", kComplex);
   DataType input_type = ctx.Input(0)->GetDataType();
   switch (input_type) {
     Complex_COMPUTE_CASE(DT_FLOAT, float, DT_COMPLEX64, ctx)
       Complex_COMPUTE_CASE(DT_DOUBLE, double, DT_COMPLEX128, ctx) default
-        : KERNEL_LOG_ERROR("Complex kernel input data type [%s] not support.", DTypeStr(input_type).c_str());
+        : CUST_KERNEL_LOG_ERROR(ctx, "Complex kernel input data type [%s] not support.", DTypeStr(input_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 template <typename T, typename t>
-uint32_t ComplexCpuKernel::ComplexCompute(const CpuKernelContext &ctx) {
+uint32_t ComplexCpuKernel::ComplexCompute(CpuKernelContext &ctx) {
   auto input0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto output = reinterpret_cast<t *>(ctx.Output(0)->GetData());
@@ -93,8 +93,8 @@ uint32_t ComplexCpuKernel::ComplexCompute(const CpuKernelContext &ctx) {
         *(output + index) = t(*(input0 + index), *(input1 + index));
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_complex),
-                        "complex Compute failed");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_complex),
+                             "complex Compute failed");
   }
   return KERNEL_STATUS_OK;
 }

@@ -30,14 +30,14 @@ const char *kBincount = "Bincount";
 const int64_t kParallelDataNum = 64 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define BINCOUNT_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                          \
-    uint32_t result = BincountCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                      \
-      KERNEL_LOG_ERROR("Bincount kernel compute failed."); \
-      return result;                                       \
-    }                                                      \
-    break;                                                 \
+#define BINCOUNT_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                    \
+    uint32_t result = BincountCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                \
+      CUST_KERNEL_LOG_ERROR(ctx, "Bincount kernel compute failed."); \
+      return result;                                                 \
+    }                                                                \
+    break;                                                           \
   }
 
 int64_t get_tensor_length(aicpu::Tensor *t) {
@@ -50,8 +50,7 @@ int64_t get_tensor_length(aicpu::Tensor *t) {
 
 namespace aicpu {
 template <typename T_in, typename T_out>
-void BincountTask(Tensor *input_arr, int32_t num_bins, Tensor *input_weights, Tensor *output,
-                  const CpuKernelContext &ctx) {
+void BincountTask(Tensor *input_arr, int32_t num_bins, Tensor *input_weights, Tensor *output, CpuKernelContext &ctx) {
   auto bin_array = reinterpret_cast<T_in *>(input_arr->GetData());
   T_out *bin_weights = nullptr;
   if (input_weights != nullptr) {
@@ -90,7 +89,8 @@ void BincountCpuKernel::SetMap() {
 
 uint32_t BincountCpuKernel::Compute(CpuKernelContext &ctx) {
   // normal check
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Bincount check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Bincount check input and output number failed.");
 
   Tensor *input_arr = ctx.Input(kFirstInputIndex);
   Tensor *input_size = ctx.Input(kSecondInputIndex);
@@ -100,62 +100,63 @@ uint32_t BincountCpuKernel::Compute(CpuKernelContext &ctx) {
   if (has_weight) {
     auto input_arr_sizes = input_arr->GetTensorShape()->NumElements();
     auto input_weights_sizes = input_weights->GetTensorShape()->NumElements();
-    KERNEL_CHECK_FALSE((input_arr_sizes == input_weights_sizes), KERNEL_STATUS_PARAM_INVALID,
-                       "The shape size of input_arr [%d] need be same with"
-                       "input_weights [%d].",
-                       input_arr_sizes, input_weights_sizes);
+    CUST_KERNEL_CHECK_FALSE(ctx, (input_arr_sizes == input_weights_sizes), KERNEL_STATUS_PARAM_INVALID,
+                            "The shape size of input_arr [%d] need be same with"
+                            "input_weights [%d].",
+                            input_arr_sizes, input_weights_sizes);
   }
 
   // check input datatype
   DataType dt_arr = input_arr->GetDataType();
-  KERNEL_CHECK_FALSE((dt_arr == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
-                     "Input_arr data type must DT_INT32, but got data type[%s].", DTypeStr(dt_arr).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (dt_arr == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
+                          "Input_arr data type must DT_INT32, but got data type[%s].", DTypeStr(dt_arr).c_str());
 
   DataType dt_size = input_size->GetDataType();
-  KERNEL_CHECK_FALSE((dt_size == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
-                     "Input_size data type must DT_INT32, but got data type[%s].", DTypeStr(dt_size).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (dt_size == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
+                          "Input_size data type must DT_INT32, but got data type[%s].", DTypeStr(dt_size).c_str());
 
   DataType dt_weights = input_weights->GetDataType();
-  KERNEL_CHECK_FALSE(
-    (dt_weights == DT_FLOAT || dt_weights == DT_INT32 || dt_weights == DT_INT64 || dt_weights == DT_DOUBLE),
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (dt_weights == DT_FLOAT || dt_weights == DT_INT32 || dt_weights == DT_INT64 || dt_weights == DT_DOUBLE),
     KERNEL_STATUS_PARAM_INVALID,
     "Input_weights data type must DT_FLOAT or DT_INT32 or DT_INT64 or DT_DOUBLE,"
     "but got data type[%s].",
     DTypeStr(dt_weights).c_str());
 
   // check input dimension
-  KERNEL_CHECK_FALSE((input_size->GetTensorShape()->GetDims() == 0 ||
-                      (input_size->GetTensorShape()->GetDims() == 1 && get_tensor_length(input_size) == 1)),
-                     KERNEL_STATUS_PARAM_INVALID, "Input_size should be a scalar");
+  CUST_KERNEL_CHECK_FALSE(ctx,
+                          (input_size->GetTensorShape()->GetDims() == 0 ||
+                           (input_size->GetTensorShape()->GetDims() == 1 && get_tensor_length(input_size) == 1)),
+                          KERNEL_STATUS_PARAM_INVALID, "Input_size should be a scalar");
 
   // check num_bins nonnegative
   auto num_bins = reinterpret_cast<int32_t *>(input_size->GetData());  // int32_t
-  KERNEL_CHECK_FALSE((*num_bins >= 0), KERNEL_STATUS_PARAM_INVALID, "num_size should be nonnegative, but got [%d].",
-                     *num_bins);
+  CUST_KERNEL_CHECK_FALSE(ctx, (*num_bins >= 0), KERNEL_STATUS_PARAM_INVALID,
+                          "num_size should be nonnegative, but got [%d].", *num_bins);
 
   // check input_arr nonnegative
   auto bin_array = reinterpret_cast<int32_t *>(input_arr->GetData());
   const int64_t array_num = get_tensor_length(input_arr);
   for (int64_t i = 0; i < array_num; i++) {
-    KERNEL_CHECK_FALSE((bin_array[i] >= 0), KERNEL_STATUS_PARAM_INVALID, "array should be nonnegative, but got [%d].",
-                       bin_array[i]);
+    CUST_KERNEL_CHECK_FALSE(ctx, (bin_array[i] >= 0), KERNEL_STATUS_PARAM_INVALID,
+                            "array should be nonnegative, but got [%d].", bin_array[i]);
   }
 
   // check output datatype
   Tensor *output = ctx.Output(kFirstOutputIndex);
   DataType dt_output = output->GetDataType();
-  KERNEL_CHECK_FALSE(
-    (dt_output == DT_FLOAT || dt_output == DT_INT32 || dt_output == DT_INT64 || dt_output == DT_DOUBLE),
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (dt_output == DT_FLOAT || dt_output == DT_INT32 || dt_output == DT_INT64 || dt_output == DT_DOUBLE),
     KERNEL_STATUS_PARAM_INVALID,
     "Output data type must DT_FLOAT or DT_INT32 or DT_INT64 or DT_DOUBLE,"
     "but got data type[%s].",
     DTypeStr(dt_output).c_str());
 
   // check that input weights and output have the same datatype
-  KERNEL_CHECK_FALSE((dt_weights == dt_output), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input_weights [%s] need be same with "
-                     "output [%s].",
-                     DTypeStr(dt_weights).c_str(), DTypeStr(dt_output).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (dt_weights == dt_output), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input_weights [%s] need be same with "
+                          "output [%s].",
+                          DTypeStr(dt_weights).c_str(), DTypeStr(dt_output).c_str());
 
   SetMap();
   if (!has_weight) {

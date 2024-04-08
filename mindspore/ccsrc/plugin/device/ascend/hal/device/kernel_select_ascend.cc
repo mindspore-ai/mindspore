@@ -582,7 +582,7 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
 
   // The shape op use the cpu kernel priorly.
   static const std::set<std::string> select_host_priorly = {kShapeOpName};
-  if (select_host_priorly.count(op_name) != 0) {
+  if ((select_host_priorly.count(op_name) != 0) && AnfAlgo::IsNodeSupportKernelSelectBackoff(node, graph)) {
     return {false, op_name + " select host kernel priorly.", NotSupportError};
   }
 
@@ -645,7 +645,7 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
     return false;
   }
 
-  static bool special_format = GetFormatMode() == "0";
+  bool special_format = GetFormatMode(node) == "0";
   if (special_format && !kernel_graph->is_dynamic_shape()) {
     return false;
   }

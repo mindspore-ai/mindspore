@@ -345,9 +345,6 @@ Status ReshapeInfo::ComputeReplaceOp() {
       return SUCCESS;
     }
     auto output_shape = output_layout_.tensor_shape_origin().array();
-    if (output_shape.size() == 1 && output_shape.front() == DYNAMIC_DIM_VAL) {
-      return SUCCESS;
-    }
     if (std::count(output_shape.cbegin(), output_shape.cend(), DYNAMIC_DIM_VAL) > 1) {
       replace_op_.clear();
       replace_op_info_.clear();
@@ -361,7 +358,6 @@ Status ReshapeInfo::ComputeReplaceOp() {
     }
 
     RankList dev_list = stage_device_list();
-    // TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
     TensorRedistributionPtr tensor_redistribution =
       this->CreateReshapeTensorRedistribution(!is_generating_costs_, true);
     tensor_redistribution->SetPreAndNextCNode(reshape_input, this->cnode_);
@@ -376,9 +372,8 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
-
     RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
-    if (!is_generating_costs_) {
+    if (!is_generating_costs_ && !tensor_redistribution->IsAssembledStaticShape()) {
       redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
         redistribution_oplist_ptr, tensor_redistribution->input_shape());
     }
@@ -392,7 +387,7 @@ Status ReshapeInfo::ComputeReplaceOp() {
     }
     if (tensor_redistribution->IsAssembledStaticShape()) {
       auto func_graph = this->cnode_->func_graph();
-      tensor_redistribution->CreateAssembledDynamicMapping(this->cnode_, reshape_input, func_graph);
+      tensor_redistribution->CreateAssembledDynamicMapping(this->cnode_, reshape_input, func_graph, INDEX_ONE);
     }
     replace_op_ = redistribution_oplist_ptr->first;
     replace_op_info_ = redistribution_oplist_ptr->second;

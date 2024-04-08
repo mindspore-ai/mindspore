@@ -1198,10 +1198,10 @@ void PyParser::PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &o
       return ss.str();
     };
     if (tensor != nullptr) {
-      MS_EXCEPTION(ValueError) << "For " << op_def->name_ << ", the " << idx << "'th input is a Tensor whose shape is "
-                               << PrintVectorFunc(tensor->shape()) << " and dtype is ["
-                               << TypeIdToString(tensor->data_type()) << "], which can not be converted to "
-                               << ops::EnumToString(op_arg.arg_dtype_) << ".";
+      MS_EXCEPTION(TypeError) << "For " << op_def->name_ << ", the " << idx << "'th input is a Tensor whose shape is "
+                              << PrintVectorFunc(tensor->shape()) << " and dtype is ["
+                              << TypeIdToString(tensor->data_type()) << "], which can not be converted to "
+                              << ops::EnumToString(op_arg.arg_dtype_) << ".";
     }
   }
   std::vector<std::string> op_type_list;
@@ -2192,9 +2192,9 @@ CallBackFn AutoGrad::CreateGraphCallBack(const FuncGraphPtr &call_graph, const s
   if (need_compile) {
     resource = std::make_shared<pipeline::Resource>();
     resource->set_func_graph(call_graph);
-    auto manager = resource->manager();
-    manager->AddFuncGraph(call_graph, true);
     if (graph_call_condition.is_func_grad_) {
+      auto manager = resource->manager();
+      manager->AddFuncGraph(call_graph, false);
       (void)opt::EnvironConversion(resource);
       if (graph_call_condition.jit_out_has_dict_) {
         MS_LOG(DEBUG) << "Jit out is dict, need convert make dict to pyexecute";
@@ -2216,6 +2216,7 @@ CallBackFn AutoGrad::CreateGraphCallBack(const FuncGraphPtr &call_graph, const s
     if (need_compile) {
       MS_LOG(DEBUG) << "Start emit action for graph " << resource->func_graph()->ToString();
       auto manager = resource->manager();
+      manager->AddFuncGraph(resource->func_graph(), true);
       resource->SetBackendAsync([]() { return compile::CreateBackend(); });
       // kFlagJitCallGraph is set false to compile sub graph in control flow
       if (is_control_flow) {

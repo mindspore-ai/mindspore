@@ -27,26 +27,26 @@ class SparseAddmmCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t SparseAddmmCheck(const CpuKernelContext &ctx);
+  uint32_t SparseAddmmCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t ComputeRowAndCol1(const CpuKernelContext &ctx,
+  uint32_t ComputeRowAndCol1(CpuKernelContext &ctx,
                              Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> *sparse, int64_t row_x1,
                              int64_t col_x1);
 
   template <typename T>
-  uint32_t ComputeRowAndCol2(const CpuKernelContext &ctx,
+  uint32_t ComputeRowAndCol2(CpuKernelContext &ctx,
                              Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> *dense, int64_t row_x2,
                              int64_t col_x2);
 
   template <typename T>
-  uint32_t ComputeRowAndCol3(const CpuKernelContext &ctx,
+  uint32_t ComputeRowAndCol3(CpuKernelContext &ctx,
                              const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &sparse,
                              const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &dense,
                              int64_t row_x1, int64_t col_x2);
 
   template <typename T, typename T1>
-  uint32_t SparseAddmmCompute(const CpuKernelContext &ctx);
+  uint32_t SparseAddmmCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -76,6 +76,39 @@ class StageSimpleNet(nn.Cell):
         return x
 
 
+class StageSimpleWithLazyInlineNet(nn.Cell):
+    @lazy_inline
+    def __init__(self, w_l, micro, stage_num=2):
+        super().__init__()
+        self.micro_size = micro
+        self.block = nn.CellList()
+        self.add = P.TensorAdd()
+        self.w_l = w_l
+        self.add_list = []
+        self.relu_block = nn.CellList()
+        for i in range(self.micro_size):
+            cell = SimpleNet(w_l[i])
+            relu = nn.ReLU()
+            if self.micro_size > stage_num:
+                cell.pipeline_stage = i // 2
+                relu.pipline_stage = i // 2
+            else:
+                cell.pipeline_stage = i
+                relu.pipline_stage = i
+            self.relu_block.append(relu)
+            self.block.append(cell)
+            self.add_list.append(
+                Parameter(Tensor(np.full((1, 16), 0.1, dtype=np.float32)), name=f"weight{i}"))
+        self.add_tuple = ParameterTuple(self.add_list)
+
+    def construct(self, x):
+        for i in range(self.micro_size):
+            x = self.block[i](x)
+            x = self.relu_block[i](x)
+            x = self.add(x, self.add_tuple[i])
+        return x
+
+
 class DatasetLenet():
     def __init__(self, data, label, length=3):
         self.data = data
@@ -669,6 +702,29 @@ def test_pipeline_split_stage1_lazy_inline():
     w4 = Tensor(0.1 * np.random.randn(16, 16).astype(np.float32))
     w_l = [[w1, w2], [w3, w4]]
     net = StageSimpleNet(w_l, 2)
+    pipeline_net = PipelineCell(net, 2)
+    data = Tensor(np.ones([16, 16]), dtype=ms.float32)
+    pipeline_net(data)
+
+
+def test_pipeline_split_stage1_lazy_inline_2():
+    """
+    Feature: test PipelineSplit with 8 devices in auto parallel with lazy inline.
+    Description: net with pipeline parallel in auto parallel mode using 8 devices, stage0 with lazy inline.
+    Expectation: success.
+    """
+    context.set_auto_parallel_context(
+        device_num=8, global_rank=4, pipeline_stages=2)
+    context.set_auto_parallel_context(
+        parallel_mode="auto_parallel", search_mode="recursive_programming")
+    context.set_context(device_target="Ascend")
+
+    w1 = Tensor(0.1 * np.random.randn(16, 16).astype(np.float32))
+    w2 = Tensor(0.1 * np.random.randn(16, 16).astype(np.float32))
+    w3 = Tensor(0.1 * np.random.randn(16, 16).astype(np.float32))
+    w4 = Tensor(0.1 * np.random.randn(16, 16).astype(np.float32))
+    w_l = [[w1, w2], [w3, w4]]
+    net = StageSimpleWithLazyInlineNet(w_l, 2)
     pipeline_net = PipelineCell(net, 2)
     data = Tensor(np.ones([16, 16]), dtype=ms.float32)
     pipeline_net(data)

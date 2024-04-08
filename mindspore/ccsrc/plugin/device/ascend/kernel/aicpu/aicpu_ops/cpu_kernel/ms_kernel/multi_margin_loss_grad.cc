@@ -39,9 +39,9 @@ uint32_t MultiMarginLossGradCpuKernel::Compute(CpuKernelContext &ctx) {
   if (ctx.GetInputsSize() == SERV_TYPE_QUERY) {
     kInputNum = SERV_TYPE_QUERY;
   }
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "MultiMarginLossGrad check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MultiMarginLossGradCheck(ctx), "MultiMarginLossGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MultiMarginLossGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MultiMarginLossGradCheck(ctx), "MultiMarginLossGrad check params failed.");
   auto data_type = ctx.Input(1)->GetDataType();
   switch (data_type) {
     case DT_FLOAT16:
@@ -51,7 +51,7 @@ uint32_t MultiMarginLossGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return MultiMarginLossGradCompute<double>(ctx);
     default:
-      KERNEL_LOG_ERROR("MultiMarginLossGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MultiMarginLossGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -65,42 +65,45 @@ uint32_t MultiMarginLossGradCpuKernel::MultiMarginLossGradCheck(CpuKernelContext
   constexpr int ADULT_AGE = 4;
   DataType input_x_type = input_x->GetDataType();
   DataType input_target_type = input_target->GetDataType();
-  KERNEL_CHECK_FALSE((input_target_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of target [%s] should be int64.", DTypeStr(input_target_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_target_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of target [%s] should be int64.", DTypeStr(input_target_type).c_str())
   auto target = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
   int64_t dims = ctx.Input(1)->GetTensorShape()->GetDimSize(1);
   int64_t batch_size = ctx.Input(1)->GetTensorShape()->GetDimSize(0);
   if (ctx.GetInputsSize() == ADULT_AGE) {
     auto input_weight = ctx.Input(3);
     DataType input_weight_type = input_weight->GetDataType();
-    KERNEL_CHECK_FALSE((input_weight_type == input_x_type), KERNEL_STATUS_PARAM_INVALID,
-                       "weight should have the same dtype with x, but get [%s].", DTypeStr(input_weight_type).c_str())
+    CUST_KERNEL_CHECK_FALSE(ctx, (input_weight_type == input_x_type), KERNEL_STATUS_PARAM_INVALID,
+                            "weight should have the same dtype with x, but get [%s].",
+                            DTypeStr(input_weight_type).c_str())
   }
-  KERNEL_CHECK_FALSE((ctx.Input(1)->GetTensorShape()->GetDims() == SERV_TYPE_SET), KERNEL_STATUS_PARAM_INVALID,
-                     "Rank of x should be 2.")
-  KERNEL_CHECK_FALSE((ctx.Input(2)->GetTensorShape()->GetDims() == SERV_TYPE_BRWD), KERNEL_STATUS_PARAM_INVALID,
-                     "Rank of target should be 1.")
-  KERNEL_CHECK_FALSE((batch_size == ctx.Input(2)->GetTensorShape()->GetDimSize(0)), KERNEL_STATUS_PARAM_INVALID,
-                     "[%s] 's x's dimension[0] should be the same as target's "
-                     "dimension[0].",
-                     ctx.GetOpType().c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(1)->GetTensorShape()->GetDims() == SERV_TYPE_SET),
+                          KERNEL_STATUS_PARAM_INVALID, "Rank of x should be 2.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(2)->GetTensorShape()->GetDims() == SERV_TYPE_BRWD),
+                          KERNEL_STATUS_PARAM_INVALID, "Rank of target should be 1.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (batch_size == ctx.Input(2)->GetTensorShape()->GetDimSize(0)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "[%s] 's x's dimension[0] should be the same as target's "
+                          "dimension[0].",
+                          ctx.GetOpType().c_str())
   for (int64_t i = 0; i < batch_size; i++) {
-    KERNEL_CHECK_FALSE(*(target + i) >= 0 && (*(target + i) < dims), KERNEL_STATUS_PARAM_INVALID,
-                       "[%s]'s target out of range.", ctx.GetOpType().c_str());
+    CUST_KERNEL_CHECK_FALSE(ctx, *(target + i) >= 0 && (*(target + i) < dims), KERNEL_STATUS_PARAM_INVALID,
+                            "[%s]'s target out of range.", ctx.GetOpType().c_str());
   }
   AttrValue *Attr_red = ctx.GetAttr("reduction");
   std::string reduction = (Attr_red == nullptr) ? "mean" : Attr_red->GetString();
   if (reduction == "none") {
-    KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDimSize(0) == ctx.Input(1)->GetTensorShape()->GetDimSize(0),
-                       KERNEL_STATUS_PARAM_INVALID,
-                       "[%s] 's y_grad's shape should be the same as "
-                       "target when reduction is none.",
-                       ctx.GetOpType().c_str())
+    CUST_KERNEL_CHECK_FALSE(
+      ctx, ctx.Input(0)->GetTensorShape()->GetDimSize(0) == ctx.Input(1)->GetTensorShape()->GetDimSize(0),
+      KERNEL_STATUS_PARAM_INVALID,
+      "[%s] 's y_grad's shape should be the same as "
+      "target when reduction is none.",
+      ctx.GetOpType().c_str())
   } else {
-    KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() <= 1, KERNEL_STATUS_PARAM_INVALID,
-                       "[%s] 's y_grad should be a scalar "
-                       "when reduction is mean or sum.",
-                       ctx.GetOpType().c_str())
+    CUST_KERNEL_CHECK_FALSE(ctx, ctx.Input(0)->GetTensorShape()->GetDims() <= 1, KERNEL_STATUS_PARAM_INVALID,
+                            "[%s] 's y_grad should be a scalar "
+                            "when reduction is mean or sum.",
+                            ctx.GetOpType().c_str())
   }
   return KERNEL_STATUS_OK;
 }
@@ -130,7 +133,7 @@ uint32_t MultiMarginLossGradCpuKernel::MultiMarginLossGradCompute(CpuKernelConte
   AttrValue *Attr_p = ctx.GetAttr("p");
   int p = (Attr_p == nullptr) ? 1 : Attr_p->GetInt();
   if (p != SERV_TYPE_BRWD && p != SERV_TYPE_SET) {
-    KERNEL_LOG_ERROR("MultiMarginLossGrad kernel attr p should be 1 or 2.");
+    CUST_KERNEL_LOG_ERROR(ctx, "MultiMarginLossGrad kernel attr p should be 1 or 2.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   AttrValue *Attr_margin = ctx.GetAttr("margin");
@@ -149,7 +152,7 @@ uint32_t MultiMarginLossGradCpuKernel::MultiMarginLossGradCompute(CpuKernelConte
     auto calculate_data = calculate.data();
     int64_t once_compute_thread_size = end - start;
     if (dims == 0) {
-      KERNEL_LOG_ERROR("dims could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "dims could not be 0.");
     }
     for (int64_t i = 0; i < once_compute_thread_size / dims; i++) {
       int64_t m = start / dims;
@@ -205,7 +208,7 @@ uint32_t MultiMarginLossGradCpuKernel::MultiMarginLossGradCompute(CpuKernelConte
     }
   } else {
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, ctx.Input(1)->NumElements(), dims * ADULT_AGE * (batch_size / max_core_num + 1),
                                 shard_multi_margin_loss_grad);
@@ -255,7 +258,7 @@ uint32_t MultiMarginLossGradCpuKernel::MultiMarginLossGradComputeFP16(CpuKernelC
   AttrValue *Attr_p = ctx.GetAttr("p");
   int p = (Attr_p == nullptr) ? 1 : Attr_p->GetInt();
   if (p != SERV_TYPE_BRWD && p != SERV_TYPE_SET) {
-    KERNEL_LOG_ERROR("MultiMarginLossGrad kernel attr p should be 1 or 2.");
+    CUST_KERNEL_LOG_ERROR(ctx, "MultiMarginLossGrad kernel attr p should be 1 or 2.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   AttrValue *Attr_margin = ctx.GetAttr("margin");
@@ -274,7 +277,7 @@ uint32_t MultiMarginLossGradCpuKernel::MultiMarginLossGradComputeFP16(CpuKernelC
     auto calculate_data = calculate.data();
     int64_t once_compute_thread_size = end - start;
     if (dims == 0) {
-      KERNEL_LOG_ERROR("dims could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "dims could not be 0.");
     }
     for (int64_t i = 0; i < once_compute_thread_size / dims; i++) {
       int64_t m = start / dims;
@@ -330,7 +333,7 @@ uint32_t MultiMarginLossGradCpuKernel::MultiMarginLossGradComputeFP16(CpuKernelC
     }
   } else {
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, ctx.Input(1)->NumElements(), dims * ADULT_AGE * (batch_size / max_core_num + 1),
                                 shard_multi_margin_loss_grad);

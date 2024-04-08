@@ -67,6 +67,7 @@ cust_op_lists = [
     "cropandresize",
     "cropandresizegradimage",
     "cropandresizegradboxes",
+    "csrsparsematrixtosparsetensor",
     "cumprod",
     "cumulativelogsumexp",
     "dataformatvecpermute",
@@ -122,6 +123,7 @@ cust_op_lists = [
     "igammagrada",
     "im2col",
     "indexfill",
+    "indexput",
     "irfft",
     "irfftgrad",
     "isinf",
@@ -136,6 +138,7 @@ cust_op_lists = [
     "log",
     "log1p",
     "logicalxor",
+    "logit",
     "lognormalreverse",
     "logspace",
     "loguniformcandidatesampler",
@@ -261,6 +264,7 @@ cust_op_lists = [
     "environget",
     "environset",
     "layernormgradgrad",
+    "pdistgrad",
     "batchnormgradgrad",
 ]
 

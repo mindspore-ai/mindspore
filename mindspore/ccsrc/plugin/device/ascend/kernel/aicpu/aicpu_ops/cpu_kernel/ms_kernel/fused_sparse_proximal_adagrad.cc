@@ -34,7 +34,7 @@ constexpr uint32_t kOutputVarIndex = 0;
 constexpr uint32_t kOutputAccumIndex = 1;
 const char *kFusedSparseProximalAdagrad = "FusedSparseProximalAdagrad";
 
-void ComputeProximalAdagrad(MultiThreadComputeParams *input_params, size_t start, size_t end) {
+void ComputeProximalAdagrad(CpuKernelContext &ctx, MultiThreadComputeParams *input_params, size_t start, size_t end) {
   auto var = input_params->var_;
   auto accum = input_params->accum_;
   auto lr = input_params->lr_;
@@ -46,7 +46,7 @@ void ComputeProximalAdagrad(MultiThreadComputeParams *input_params, size_t start
   for (size_t i = start; i < end; ++i) {
     int index = unique_sparse_grad.indices_[i];
     if (index < 0 || static_cast<size_t>(index) >= var_first_dim_size) {
-      AICPU_LOGE("Index %d in indices is out of range after unique process", index);
+      CUST_AICPU_LOGE(ctx, "Index %d in indices is out of range after unique process", index);
     }
     size_t start_index = var_outer_dim_size * index;
     size_t end_index = start_index + var_outer_dim_size;
@@ -90,7 +90,7 @@ uint32_t FusedSparseProximalAdagradCpuKernel::DoCompute(CpuKernelContext &ctx) {
     free(new_indices);
     new_grad = NULL;
     new_indices = NULL;
-    KERNEL_LOG_ERROR("Malloc failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Malloc failed.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
@@ -106,8 +106,9 @@ uint32_t FusedSparseProximalAdagradCpuKernel::DoCompute(CpuKernelContext &ctx) {
   input_params.sparse_grad_ = unique_sparse_grad;
   input_params.var_first_dim_size_ = var_first_dim_size_;
   input_params.var_outer_dim_size_ = var_outer_dim_size_;
-  KERNEL_HANDLE_ERROR(MultiThreadCompute(ctx, ComputeProximalAdagrad, &input_params, unique_sparse_grad.indices_size_),
-                      "Compute worker failed.");
+  CUST_KERNEL_HANDLE_ERROR(
+    ctx, MultiThreadCompute(ctx, ComputeProximalAdagrad, &input_params, unique_sparse_grad.indices_size_),
+    "Compute worker failed.");
   free(new_grad);
   free(new_indices);
   new_grad = NULL;
@@ -116,8 +117,8 @@ uint32_t FusedSparseProximalAdagradCpuKernel::DoCompute(CpuKernelContext &ctx) {
 }
 
 uint32_t FusedSparseProximalAdagradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kFusedSparseProximalAdagradInputNum, kFusedSparseProximalAdagradOutputNum),
-                      "Check failed.");
+  CUST_KERNEL_HANDLE_ERROR(
+    ctx, NormalCheck(ctx, kFusedSparseProximalAdagradInputNum, kFusedSparseProximalAdagradOutputNum), "Check failed.");
   auto var = ctx.Input(kVarIndex);
   auto var_shape = var->GetTensorShape()->GetDimSizes();
   auto grad = ctx.Input(kGradIndex);
@@ -129,13 +130,13 @@ uint32_t FusedSparseProximalAdagradCpuKernel::Compute(CpuKernelContext &ctx) {
     if (i == kIndicesIndex) continue;
     auto dtype = ctx.Input(i)->GetDataType();
     if (dtype != DT_FLOAT) {
-      KERNEL_LOG_ERROR("Only support data type 'float', but got [%s]", DTypeStr(dtype).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Only support data type 'float', but got [%s]", DTypeStr(dtype).c_str());
       return KERNEL_STATUS_INNER_ERROR;
     }
   }
 
   if (var_shape.empty()) {
-    AICPU_LOGE("var must be at least 1D");
+    CUST_AICPU_LOGE(ctx, "var must be at least 1D");
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (grad_shape.empty()) {
@@ -144,18 +145,18 @@ uint32_t FusedSparseProximalAdagradCpuKernel::Compute(CpuKernelContext &ctx) {
   var_first_dim_size_ = var_shape[0];
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
-      AICPU_LOGE("The shape of var and grad must equal in dimension %d", i);
+      CUST_AICPU_LOGE(ctx, "The shape of var and grad must equal in dimension %d", i);
       return KERNEL_STATUS_INNER_ERROR;
     }
     var_outer_dim_size_ *= var_shape[i];
   }
   if (indices_shape.size() != 1) {
-    AICPU_LOGE("indices must be 1D");
+    CUST_AICPU_LOGE(ctx, "indices must be 1D");
     return KERNEL_STATUS_INNER_ERROR;
   }
   indices_size_ = indices_shape[0];
   if (grad_shape[0] != static_cast<int64_t>(indices_size_)) {
-    AICPU_LOGE("The first dimension of grad shape must be equal to indices");
+    CUST_AICPU_LOGE(ctx, "The first dimension of grad shape must be equal to indices");
     return KERNEL_STATUS_INNER_ERROR;
   }
   return DoCompute(ctx);

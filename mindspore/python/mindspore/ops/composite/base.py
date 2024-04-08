@@ -1238,6 +1238,7 @@ class _StarredUnpackMerge(StarredUnpackMerge_):
 starred_unpack_merge = _StarredUnpackMerge('starred_unpack_merge')
 """`starred_unpack_merge` will generate a tuple of starred unpack merge for inputs."""
 
+
 class _IterConverter(IterConverter_):
     """Convert input to interable object"""
 
@@ -1252,6 +1253,7 @@ class _IterConverter(IterConverter_):
 iter_converter = _IterConverter('iter_converter')
 """`iter_converter` will convert input to ietrable object"""
 
+
 class _HasNext(HasNext_):
     """Check whether the input has next value"""
 
@@ -1265,6 +1267,7 @@ class _HasNext(HasNext_):
 
 ms_hasnext = _HasNext('has_next')
 """`ms_hasnext` will check whether the input has next value"""
+
 
 class _Next(Next_):
     """Get next element and res elements for input"""

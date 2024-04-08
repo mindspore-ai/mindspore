@@ -29,7 +29,7 @@ class ArgMinCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2, typename T3>
-  static uint32_t ArgMinCompute(const CpuKernelContext &ctx);
+  static uint32_t ArgMinCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

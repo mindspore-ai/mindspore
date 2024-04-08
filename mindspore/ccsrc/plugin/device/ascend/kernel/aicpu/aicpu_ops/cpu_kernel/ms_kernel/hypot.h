@@ -28,16 +28,16 @@ class HypotCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t HypotParamCheck(const CpuKernelContext &ctx);
+  uint32_t HypotParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t NoBcastCompute(const CpuKernelContext &ctx);
+  uint32_t NoBcastCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast);
+  uint32_t BcastCompute(CpuKernelContext &ctx, const Bcast &bcast);
 
   template <typename T>
-  uint32_t HypotCompute(const CpuKernelContext &ctx);
+  uint32_t HypotCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

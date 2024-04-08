@@ -32,8 +32,8 @@ namespace ops {
 namespace {
 abstract::TupleShapePtr SparseApplyRMSPropInferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 6, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);

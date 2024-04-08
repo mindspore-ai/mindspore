@@ -60,7 +60,9 @@ bool EnvironSetCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, c
   auto input_key = GetDeviceAddress<int64_t>(inputs, kIndex1);
   auto input_value = GetDeviceAddress<void>(inputs, kIndex2);
   auto output_handle = GetDeviceAddress<int64_t>(outputs, kIndex0);
-
+  MS_EXCEPTION_IF_NULL(input_handle);
+  MS_EXCEPTION_IF_NULL(input_key);
+  MS_EXCEPTION_IF_NULL(output_handle);
   // Get host handle and host key.
   int64_t host_handle = input_handle[kIndex0];
   int64_t host_key = input_key[kIndex0];

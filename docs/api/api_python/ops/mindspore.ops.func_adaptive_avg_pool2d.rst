@@ -37,7 +37,7 @@ mindspore.ops.adaptive_avg_pool2d
             output\_size[0] + input\_shape[-1], & \text{if } output\_size text{ is (h, None);}\\
             input\_shape[-2:], & \text{if } output\_size text{ is (None, None);}\\
             (h, h), & \text{if } output\_size text{ is h;}\\
-            (h, w), & \text{if } output\size text{ is (h, w)}
+            (h, w), & \text{if } output\_size text{ is (h, w)}
             \end{cases}
 
     异常：

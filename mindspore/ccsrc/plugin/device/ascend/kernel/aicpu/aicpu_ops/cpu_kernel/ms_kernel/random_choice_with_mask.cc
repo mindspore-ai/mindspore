@@ -47,7 +47,7 @@ void CalcCoordAndWrite(int64_t idx, int32_t *output, const std::vector<int64_t> 
 }
 }  // namespace
 
-uint32_t RandomChoiceWithMaskCpuKernel::RandomChoiceWithMaskCompute(const CpuKernelContext &ctx) {
+uint32_t RandomChoiceWithMaskCpuKernel::RandomChoiceWithMaskCompute(CpuKernelContext &ctx) {
   auto input = reinterpret_cast<bool *>(ctx.Input(0)->GetData());
   auto output_coordinate = reinterpret_cast<int32_t *>(ctx.Output(0)->GetData());
   auto mask = reinterpret_cast<bool *>(ctx.Output(1)->GetData());
@@ -81,14 +81,14 @@ uint32_t RandomChoiceWithMaskCpuKernel::Compute(CpuKernelContext &ctx) {
   auto *mask = reinterpret_cast<bool *>(ctx.Output(1)->GetData());
   size_t input_rank = dims_.size();
   auto count_ptr = ctx.GetAttr("count");
-  KERNEL_CHECK_NULLPTR(count_ptr, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'count'.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, count_ptr, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'count'.");
   count_target_ = count_ptr->GetInt();
   size_t output_coord_size = input_rank * count_target_ * sizeof(int32_t);
   size_t mask_size = count_target_ * sizeof(bool);
   auto ret = memset_s(output_data, output_coord_size, 0, output_coord_size);
-  KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR, "memset failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_INNER_ERROR, "memset failed.");
   ret = memset_s(mask, mask_size, 0, mask_size);
-  KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR, "memset failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_INNER_ERROR, "memset failed.");
 
   return RandomChoiceWithMaskCompute(ctx);
 }

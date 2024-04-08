@@ -515,6 +515,7 @@ CNodePtr IrPassForward::ConvertConstInputToAttr(const CNodePtr &cnode, bool is_d
   }
   // Pyboost op no need convert input to attr
   if (runtime::PyBoostOpExecute::GetInstance().IsPyBoostOpRegistered(prim->name())) {
+    cnode->AddAttr(kAttrConvertAttrNode, MakeValue(true));
     return cnode;
   }
   auto TraverseCNode = [this, is_dynamic_shape](const CNodePtr &cnode) {

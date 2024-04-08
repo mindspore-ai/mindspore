@@ -14,7 +14,6 @@
 # ============================================================================
 
 """Operators for array."""
-# pylint: disable=unused-import
 import copy
 import itertools
 import numbers
@@ -30,10 +29,8 @@ from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore import _checkparam as validator
 from mindspore._checkparam import _check_3d_int_or_tuple
-from mindspore.ops._tracefunc import PackFunc
 from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
-from mindspore.common.parameter import Parameter
 from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
@@ -820,7 +817,7 @@ class Size(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input parameters, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         int. A scalar representing the elements' size of `input_x`, tensor is the number of elements
@@ -1007,7 +1004,7 @@ class MatrixDiagPartV3(Primitive):
 class MatrixSetDiagV3(Primitive):
     r"""
     Updates the diagonal part of a batched tensor.
-    It takes an Tensor `x` and `diagonal` as input and returns a Tensor in which
+    It takes a Tensor `x` and `diagonal` as input and returns a Tensor in which
     the specified diagonal values in the innermost matrices will be replaced
     by the values in the `diagonal`.
 
@@ -2860,7 +2857,7 @@ class Triu(Primitive):
         - **y** (Tensor) - A tensor has the same shape and data type as input.
 
     Raises:
-        TypeError: If `x` is not an Tensor.
+        TypeError: If `x` is not a Tensor.
         TypeError: If `diagonal` is not an int.
         ValueError: If the dimension of `input` is less than 2.
 

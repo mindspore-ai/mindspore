@@ -31,9 +31,9 @@ class HSVToRGBCpuKernel : public CpuKernel {
 
  private:
   uint32_t HSVToRGBCheck(CpuKernelContext &ctx);
-  uint32_t HSVToRGBComputeHalf(const CpuKernelContext &ctx);
+  uint32_t HSVToRGBComputeHalf(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t HSVToRGBCompute(const CpuKernelContext &ctx);
+  uint32_t HSVToRGBCompute(CpuKernelContext &ctx);
   template <typename T>
   void ConvertOnePixel(T h, T s, T v, T *r, T *g, T *b);
 };

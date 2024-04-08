@@ -564,7 +564,7 @@ void DFunctor::MapMorphism() {
 
 FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
   // K user defined cell bprop.
-  auto bprop = primal->transforms().find(parse::CUSTOM_BPROP_NAME);
+  auto bprop = primal->transforms().find("bprop");
   if (bprop != primal->transforms().end()) {
     FuncGraphPtr bprop_graph = bprop->second.func_graph();
     resources_->manager()->AddFuncGraph(bprop_graph);
@@ -611,13 +611,7 @@ bool StopGradientForScalar(const CNodePtr &cnode) {
     return false;
   }
   auto abs = cnode->abstract();
-  if (abs == nullptr || !(abs->isa<abstract::AbstractScalar>())) {
-    return false;
-  }
-  if (abs->BuildType()->isa<Number>() && abs->BuildValue()->isa<ValueAny>()) {
-    return false;
-  }
-  return true;
+  return abs != nullptr && abs->isa<abstract::AbstractScalar>();
 }
 
 // Construct representation graph for {CNode, Index} of Primitive.

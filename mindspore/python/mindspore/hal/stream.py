@@ -260,6 +260,7 @@ def set_cur_stream(stream):
                         f" but got {type(stream)}.")
     set_cur_stream_(stream)
 
+
 def current_stream():
     r"""
     Return current stream used on this device.
@@ -274,6 +275,7 @@ def current_stream():
     """
     return Stream(stream=current_stream_())
 
+
 def default_stream():
     r"""
     Return default stream on this device.
@@ -287,6 +289,7 @@ def default_stream():
         >>> assert cur_stream == ms.hal.default_stream()
     """
     return Stream(stream=default_stream_())
+
 
 class StreamCtx():
     r"""

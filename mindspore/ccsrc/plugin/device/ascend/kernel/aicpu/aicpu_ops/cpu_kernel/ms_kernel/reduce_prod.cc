@@ -27,24 +27,24 @@
 namespace {
 const char *kReduceProd = "ReduceProd";
 
-#define REDUCEPROD_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)    \
-  case (DTYPE): {                                            \
-    uint32_t result = ReduceProdCompute<TYPE1, TYPE2>(CTX);  \
-    if (result != KERNEL_STATUS_OK) {                        \
-      KERNEL_LOG_ERROR("ReduceProd kernel compute failed."); \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define REDUCEPROD_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)              \
+  case (DTYPE): {                                                      \
+    uint32_t result = ReduceProdCompute<TYPE1, TYPE2>(CTX);            \
+    if (result != KERNEL_STATUS_OK) {                                  \
+      CUST_KERNEL_LOG_ERROR(ctx, "ReduceProd kernel compute failed."); \
+      return result;                                                   \
+    }                                                                  \
+    break;                                                             \
   }
 
-#define REDUCEPROD_COMPUTE_CASE_CP(DTYPE, TYPE1, TYPE2, CTX)        \
-  case (DTYPE): {                                                   \
-    uint32_t result = ReduceProdCompute_Complex<TYPE1, TYPE2>(CTX); \
-    if (result != KERNEL_STATUS_OK) {                               \
-      KERNEL_LOG_ERROR("ReduceProd kernel compute failed.");        \
-      return result;                                                \
-    }                                                               \
-    break;                                                          \
+#define REDUCEPROD_COMPUTE_CASE_CP(DTYPE, TYPE1, TYPE2, CTX)           \
+  case (DTYPE): {                                                      \
+    uint32_t result = ReduceProdCompute_Complex<TYPE1, TYPE2>(CTX);    \
+    if (result != KERNEL_STATUS_OK) {                                  \
+      CUST_KERNEL_LOG_ERROR(ctx, "ReduceProd kernel compute failed."); \
+      return result;                                                   \
+    }                                                                  \
+    break;                                                             \
   }
 
 #define REDUCEPROD_COMPUTE_CASE_ALL(TYPE, CTX)                               \
@@ -83,15 +83,15 @@ uint32_t ReduceProdCpuKernel::Compute(CpuKernelContext &ctx) {
   uint32_t input_num = ctx.GetInputsSize();
   uint32_t output_num = ctx.GetOutputsSize();
   if (input_num != 2 || output_num != 1) {
-    KERNEL_LOG_ERROR("The number of input or output parameters does not match.");
+    CUST_KERNEL_LOG_ERROR(ctx, "The number of input or output parameters does not match.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   Tensor *input_data = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(input_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input[0] failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input[0] failed.")
   Tensor *axes_data = ctx.Input(1);
-  KERNEL_CHECK_NULLPTR(axes_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input[1] failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, axes_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input[1] failed.")
   Tensor *output_data = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output[0] failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output[0] failed.");
   DataType data_type = ctx.Input(0)->GetDataType();
   DataType axes_type = ctx.Input(1)->GetDataType();
   switch (axes_type) {
@@ -99,7 +99,7 @@ uint32_t ReduceProdCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (data_type) {
         REDUCEPROD_COMPUTE_CASE_ALL(int32_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -107,12 +107,12 @@ uint32_t ReduceProdCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (data_type) {
         REDUCEPROD_COMPUTE_CASE_ALL(int64_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     default:
-      KERNEL_LOG_ERROR("Input[1] data type[%s] not supported.", DTypeStr(axes_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Input[1] data type[%s] not supported.", DTypeStr(axes_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -132,7 +132,7 @@ prod consists of one same base address and different offset addresses
 input_data_address = base_address + offset_address
 */
 template <typename T1, typename T2>
-uint32_t ReduceProdCpuKernel::ReduceProdCompute(const CpuKernelContext &ctx) {
+uint32_t ReduceProdCpuKernel::ReduceProdCompute(CpuKernelContext &ctx) {
   Tensor *input_data = ctx.Input(0);
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   const int64_t input_data_num = input_data->NumElements();
@@ -156,7 +156,7 @@ uint32_t ReduceProdCpuKernel::ReduceProdCompute(const CpuKernelContext &ctx) {
   // Check the effectiveness of the value of axes
   for (int64_t i = 0; i < axes_data_num; i++) {
     if ((*(axes_data_addr + i) >= input_data_dims) || (*(axes_data_addr + i) < -input_data_dims)) {
-      KERNEL_LOG_ERROR("The value of axes is incorrect.");
+      CUST_KERNEL_LOG_ERROR(ctx, "The value of axes is incorrect.");
       return KERNEL_STATUS_PARAM_INVALID;
     } else if (*(axes_data_addr + i) < 0) {
       *(axes_data_addr + i) += input_data_dims;
@@ -269,8 +269,8 @@ uint32_t ReduceProdCpuKernel::ReduceProdCompute(const CpuKernelContext &ctx) {
           output_data_addr[i] = data_prod;
         }
       };
-      KERNEL_HANDLE_ERROR(
-        CpuKernelUtils::ParallelFor(ctx, output_data_num, output_data_num / max_core_num, shard_compute),
+      CUST_KERNEL_HANDLE_ERROR(
+        ctx, CpuKernelUtils::ParallelFor(ctx, output_data_num, output_data_num / max_core_num, shard_compute),
         "ReduceProd Compute failed.");
     } else {
       for (int64_t i = 0; i < output_data_num; i++) {
@@ -311,7 +311,7 @@ uint32_t ReduceProdCpuKernel::ReduceProdCompute(const CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t ReduceProdCpuKernel::ReduceProdCompute_Complex(const CpuKernelContext &ctx) {
+uint32_t ReduceProdCpuKernel::ReduceProdCompute_Complex(CpuKernelContext &ctx) {
   Tensor *input_data = ctx.Input(0);
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   const int64_t input_data_num = input_data->NumElements();
@@ -335,7 +335,7 @@ uint32_t ReduceProdCpuKernel::ReduceProdCompute_Complex(const CpuKernelContext &
   // Check the effectiveness of the value of axes
   for (int64_t i = 0; i < axes_data_num; i++) {
     if ((*(axes_data_addr + i) >= input_data_dims) || (*(axes_data_addr + i) < -input_data_dims)) {
-      KERNEL_LOG_ERROR("The value of axes is incorrect.");
+      CUST_KERNEL_LOG_ERROR(ctx, "The value of axes is incorrect.");
       return KERNEL_STATUS_PARAM_INVALID;
     } else if (*(axes_data_addr + i) < 0) {
       *(axes_data_addr + i) += input_data_dims;
@@ -452,8 +452,8 @@ uint32_t ReduceProdCpuKernel::ReduceProdCompute_Complex(const CpuKernelContext &
           output_data_addr[i] = data_prod;
         }
       };
-      KERNEL_HANDLE_ERROR(
-        CpuKernelUtils::ParallelFor(ctx, output_data_num, output_data_num / max_core_num, shard_compute),
+      CUST_KERNEL_HANDLE_ERROR(
+        ctx, CpuKernelUtils::ParallelFor(ctx, output_data_num, output_data_num / max_core_num, shard_compute),
         "ReduceProd Compute failed.");
     } else {
       for (int64_t i = 0; i < output_data_num; i++) {

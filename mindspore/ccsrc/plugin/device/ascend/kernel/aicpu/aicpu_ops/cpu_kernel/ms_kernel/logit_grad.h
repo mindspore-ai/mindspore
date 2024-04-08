@@ -30,7 +30,7 @@ class LogitGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t LogitGradCompute(const CpuKernelContext &ctx);
+  uint32_t LogitGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

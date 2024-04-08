@@ -74,7 +74,7 @@ int HcomSendKernel::SendShapeForDynamic() {
     if (!client_->Connect(server_url_, retry_count)) {
       MS_LOG(EXCEPTION) << "Failed to connect to server of actor, server_url: " << server_url_;
     }
-    MS_LOG(DEBUG) << "server key is " << server_url_key << ", server url is " << server_url_;
+    MS_LOG(INFO) << "server key is " << server_url_key << ", server url is " << server_url_;
   }
 
   // rpc 4. send shape

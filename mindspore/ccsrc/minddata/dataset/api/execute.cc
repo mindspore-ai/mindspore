@@ -101,9 +101,11 @@ Status Execute::InitResource(MapTargetDevice device_type, uint32_t device_id) {
         std::string error = "Get Soc Version failed.";
         RETURN_STATUS_UNEXPECTED(error);
       }
-      if (soc_version.find("Ascend910B") == std::string::npos) {
-        std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B";
+      if (soc_version.find("Ascend910B") == std::string::npos && soc_version.find("Ascend910C") == std::string::npos) {
+        std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B / Ascend910C";
         MS_LOG(ERROR) << err_msg;
+        // reset the device_context_, because the Soc is not support yet
+        device_context_ = nullptr;
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
 

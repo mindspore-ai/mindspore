@@ -29,7 +29,7 @@ class SparseTensorToCSRSparseMatrixCpuKernel : public CpuKernel {
 
  private:
   template <typename indicesT, typename dataT>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx);
+  uint32_t ComputeKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -35,8 +35,8 @@ mindspore.ops.fold
         Tensor，数据类型与 `input` 相同。
 
     异常：
-        - **TypeError** - 如果 `kernel_size` 、 `stride` 、 `dilation` 、 `kernel_size` 的数据类型不是int、tuple或者list。
+        - **TypeError** - 如果 `kernel_size` 、 `stride` 、 `dilation` 、 `padding` 的数据类型不是int、tuple或者list。
         - **ValueError** - 如果 `kernel_size`, `dilation`, `stride` 包含元素的值小于等于0或者元素个数大于 `2` 。
-        - **ValueError** - 如果 `padding` 包含元素的值小于零。
+        - **ValueError** - 如果 `padding` 包含元素的值小于零或者元素个数大于 `2` 。
         - **ValueError** - 如果 `input.shape[1] != kernel_size[0] * kernel_size[1]` 。
         - **ValueError** - 如果 `input.shape[2]` 与计算出的滑块数量不匹配。

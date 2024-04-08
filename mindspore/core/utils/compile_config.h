@@ -50,8 +50,9 @@ class MS_CORE_API CompileConfigManager {
 
  private:
   CompileConfigManager() = default;
-  inline static CompileConfigCollectFunc collect_func_ = nullptr;
+  inline static CompileConfigCollectFunc collect_func_{nullptr};
   std::map<std::string, std::string> compile_config_;
+  bool collect_finished_{false};
 };
 
 namespace common {

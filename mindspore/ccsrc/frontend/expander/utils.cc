@@ -31,7 +31,6 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "frontend/expander/bprop/bprop.h"
-#include "frontend/expander/pack/packfunc.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "backend/common/graph_kernel/adapter/expander.h"
 #include "utils/ms_context.h"
@@ -94,7 +93,6 @@ ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
       }
     }
   }
-  // TODO(dyn_shape): need deleted after moving all python infer to c++ infer.
   auto new_prim = parallel::CreateOpInstance(attrs, primc->name(), "");
   MS_EXCEPTION_IF_NULL(new_prim);
   (void)new_prim->cast<PrimitivePtr>()->SetAttrs(primc->attrs());
@@ -194,9 +192,6 @@ AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node) {
   return new_node;
 }
 
-void ClearAllCache() {
-  ClearAllPackCache();
-  bprop::ClearBpropOpGraphMap();
-}
+void ClearAllCache() { bprop::ClearBpropOpGraphMap(); }
 }  // namespace expander
 }  // namespace mindspore

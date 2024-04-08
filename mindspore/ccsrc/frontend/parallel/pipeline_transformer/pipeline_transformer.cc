@@ -51,6 +51,21 @@
 
 namespace mindspore {
 namespace parallel {
+namespace {
+void SetMakeTupleAbstract(const CNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    return;
+  }
+
+  AbstractBasePtrList abstract_list;
+  for (size_t i = 1; i < node->inputs().size(); i++) {
+    abstract_list.emplace_back(node->input(i)->abstract());
+  }
+  auto abs = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  node->set_abstract(abs);
+}
+}  // namespace
+
 mindspore::HashMap<int64_t, int64_t> send_tag_map;
 mindspore::HashMap<int64_t, int64_t> recv_tag_map;
 const std::set<PrimitivePtr> WHITE_LIST = {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimCast};
@@ -394,6 +409,7 @@ void PipelineTransformer::LabelMicroBatch() {
   MS_EXCEPTION_IF_NULL(virtual_dataset_);
   auto node_user_map = manager_->node_users();
   auto node_users = node_user_map[virtual_dataset_];
+  auto stage_num = g_device_manager->stage_num();
   for (auto &node_user : node_users) {
     if (IsPrimitiveCNode(node_user.first, prim::kPrimTupleGetItem)) {
       auto data_users = manager_->node_users()[node_user.first];
@@ -403,6 +419,10 @@ void PipelineTransformer::LabelMicroBatch() {
         data_users = node_user_map[node_first];
       }
       auto micro_size = int64_t(MicroSize(data_users));
+      if (is_train_ && micro_size < stage_num) {
+        MS_LOG(EXCEPTION) << "The size of micro_batch must be greater than or equal to stage_num. But got the size of "
+                          << "micro_batch is " << micro_size << " and the stage_num is " << stage_num;
+      }
       micro_size_ = micro_size;
       auto batch_axis = GetBatchAxisForInput(data_users);
       MS_LOG(INFO) << "For the "
@@ -802,6 +822,19 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   return std::make_pair(sends, recvs);
 }
 
+void PipelineTransformer::FillParameterStage(const CNodePtr &node, std::set<int64_t> *const parameter_stage) {
+  auto stage_info = node->user_data<NodeStageInfo>();
+  if (stage_info != nullptr && stage_info->stage() != -1) {
+    (void)(parameter_stage->insert(stage_info->stage()));
+  } else {
+    auto graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(graph);
+    if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
+      (void)(parameter_stage->insert(graph->stage()));
+    }
+  }
+}
+
 bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
                                              const std::vector<AnfNodePtr> &parameters,
                                              const NodeUsersMap &node_users_map,
@@ -814,7 +847,8 @@ bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
   }
   const auto &input = node->input(0);
   if (!IsValueNode<FuncGraph>(input)) {
-    return false;
+    FillParameterStage(node, parameter_stage);
+    return true;
   }
   if (GetValueNode<FuncGraphPtr>(input) != shared_cell_) {
     return false;
@@ -823,23 +857,16 @@ bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
   const auto &param = parameters.at(pos);
   MS_EXCEPTION_IF_NULL(param);
   auto loads = GetLoadNodeByParam(param);
-  const auto &iter = node_users_map.find(loads.back());
-  if (iter == node_users_map.end()) {
-    return true;
-  }
-  const auto &users = (*iter).second;
-  for (auto &user : users) {
-    auto user_cnode = user.first->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(user_cnode);
-    auto stage_info = user_cnode->user_data<NodeStageInfo>();
-    if (stage_info != nullptr && stage_info->stage() != -1) {
-      (void)((*parameter_stage).insert(stage_info->stage()));
-    } else {
-      auto graph = user_cnode->func_graph();
-      MS_EXCEPTION_IF_NULL(graph);
-      if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
-        (void)((*parameter_stage).insert(graph->stage()));
-      }
+  for (auto &load : loads) {
+    const auto &iter = node_users_map.find(load);
+    if (iter == node_users_map.end()) {
+      continue;
+    }
+    const auto &users = (*iter).second;
+    for (auto &user : users) {
+      auto user_cnode = user.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(user_cnode);
+      FillParameterStage(user_cnode, parameter_stage);
     }
   }
   return true;
@@ -860,18 +887,7 @@ void PipelineTransformer::ParameterColoring() {
         if (GetStageByArgument(user_cnode, load_user.second, share_cell_parameters, node_users_map, &parameter_stage)) {
           continue;
         }
-        auto stage_info = user_cnode->user_data<NodeStageInfo>();
-        if (stage_info != nullptr && stage_info->stage() != -1) {
-          (void)parameter_stage.insert(stage_info->stage());
-          continue;
-        } else {
-          auto graph = user_cnode->func_graph();
-          MS_EXCEPTION_IF_NULL(graph);
-          if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
-            (void)parameter_stage.insert(graph->stage());
-            continue;
-          }
-        }
+        FillParameterStage(user_cnode, &parameter_stage);
       }
     }
     auto param_info = parameter->cast<ParameterPtr>()->param_info();
@@ -897,6 +913,8 @@ void PipelineTransformer::RemoveMonadNode() {
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
+    auto abs = cnode->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
     auto stage_info = cnode->user_data<NodeStageInfo>();
     if (stage_info == nullptr) {
       continue;
@@ -905,8 +923,11 @@ void PipelineTransformer::RemoveMonadNode() {
     if (stage != stage_ && stage != -1) {
       auto node_users = node_users_map[node];
       for (auto &user_node : node_users) {
-        auto u_node = NewValueNode(kUMonad);
-        manager_->SetEdge(user_node.first, user_node.second, u_node);
+        auto monad_node = NewValueNode(kUMonad);
+        if (abs->isa<abstract::AbstractIOMonad>()) {
+          monad_node = NewValueNode(kIOMonad);
+        }
+        manager_->SetEdge(user_node.first, user_node.second, monad_node);
       }
     }
   }
@@ -1270,7 +1291,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   return std::make_pair(send_ops, receive_ops);
 }
 
-tensor::TensorPtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
+AnfNodePtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
   auto out_shapes = GetNodeShape(node);
   if (out_shapes.size() <= index) {
     MS_LOG(EXCEPTION) << "the index is out of range, the size of output_shapes is " << out_shapes.size()
@@ -1282,9 +1303,37 @@ tensor::TensorPtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node
                          "scenarios, the output shape is "
                       << out_shape;
   }
+
+  // Modify output dimension when enable data parallel since only the last stage enable VirtualOutput redistribution.
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+  int64_t dev_num = full_batch ? 1 : g_device_manager->stage_device_num();
+  if (dev_num == 0) {
+    MS_LOG(EXCEPTION) << "Device num must be larger than 0, but get 0.";
+  }
+
+  if (!is_train_ && !out_shape.empty() && out_shape[0] % dev_num == 0) {
+    out_shape[0] /= dev_num;
+  }
+
   auto out_shape_type = GetShapeType(node, out_shape, index);
   auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shape);
-  return zero_tensor;
+  MS_EXCEPTION_IF_NULL(zero_tensor);
+
+  auto value_node = NewValueNode(zero_tensor);
+  MS_EXCEPTION_IF_NULL(value_node);
+
+  // Build abstract from node to prevent confusion between Scalar and 0D-Tensor.
+  auto abs = node->abstract()->Clone();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto elements = abs->cast<abstract::AbstractSequencePtr>()->elements();
+    abs = elements.at(index)->Clone();
+    MS_EXCEPTION_IF_NULL(abs);
+  }
+
+  abs->set_shape(std::make_shared<abstract::Shape>(out_shape));
+  value_node->set_abstract(abs);
+  return value_node;
 }
 
 AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
@@ -1303,12 +1352,12 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
         (void)out_tuple_inputs.emplace_back(temp_tuple);
         continue;
       }
-      (void)out_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(real_out_cnode->input(i), 0)));
+      (void)out_tuple_inputs.emplace_back(CreateZeroseOutput(real_out_cnode->input(i), 0));
     }
   }
   if (out_tuple_inputs.size() > INDEX_ONE) {
     auto out_tuple = main_graph_->NewCNode(out_tuple_inputs);
-    out_tuple->set_abstract(real_out->abstract());
+    SetMakeTupleAbstract(out_tuple);
     return out_tuple;
   } else {
     auto real_out_shapes = GetNodeShape(real_out);
@@ -1317,9 +1366,8 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
     if (real_out_shapes.size() > 1 && real_kernel.second == -1) {
       out_tensor = CreateTupleZeroTensor(real_out, real_out_shapes.size());
     } else {
-      out_tensor = NewValueNode(CreateZeroseOutput(real_out, 0));
+      out_tensor = CreateZeroseOutput(real_out, 0);
     }
-    out_tensor->set_abstract(real_out->abstract());
     return out_tensor;
   }
   return nullptr;
@@ -1727,9 +1775,10 @@ AnfNodePtr PipelineTransformer::CreateTupleZeroTensor(const AnfNodePtr &node, si
   std::vector<AnfNodePtr> temp_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   auto out_shapes = GetNodeShape(node);
   for (size_t ele = 0; ele < out_shapes.size(); ++ele) {
-    temp_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(node, ele)));
+    temp_tuple_inputs.emplace_back(CreateZeroseOutput(node, ele));
   }
   auto temp_tuple = main_graph_->NewCNode(temp_tuple_inputs);
+  SetMakeTupleAbstract(temp_tuple);
   return temp_tuple;
 }
 
@@ -1785,8 +1834,13 @@ void PipelineTransformer::RedundancyNode(const AnfNodePtr &node,
       continue;
     }
     if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
-      auto u_node = NewValueNode(kUMonad);
-      manager_->SetEdge(cnode, node_user_pair.second, u_node);
+      auto abs = cnode->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      auto monad_node = NewValueNode(kUMonad);
+      if (abs->isa<abstract::AbstractIOMonad>()) {
+        monad_node = NewValueNode(kIOMonad);
+      }
+      manager_->SetEdge(cnode, node_user_pair.second, monad_node);
       continue;
     }
     // node->make_tuple, record with a map, Unified deleted later.
@@ -1932,8 +1986,7 @@ void PipelineTransformer::ElimParameter() {
         continue;
       }
       if (root_->has_flag(NO_UPDATE) && IsPrimitiveCNode(make_tuple_user, prim::kPrimAddN)) {
-        auto zeros = CreateZeroseOutput(input, 0);
-        new_inputs.push_back(NewValueNode(zeros));
+        new_inputs.push_back(CreateZeroseOutput(input, 0));
       }
     }
     auto new_make_tuple = fg->NewCNode(new_inputs);

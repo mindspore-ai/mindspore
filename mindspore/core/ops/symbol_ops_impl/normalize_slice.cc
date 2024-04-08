@@ -99,9 +99,13 @@ SymbolPtr NormalizeSliceValueBuilder(OperationBuilder *b) {
   auto stop = b->GetInputValue(kIndex2);
   auto step = b->GetInputValue(kIndex3);
   auto tuple_index_axis = b->GetAttr(kAttrTupleIndexAxis);
+  MS_EXCEPTION_IF_NULL(tuple_index_axis);
   auto tuple_index_types = b->GetAttr(kAttrTupleIndexTypes);
+  MS_EXCEPTION_IF_NULL(tuple_index_types);
   auto expand_dims_mask = b->GetAttr(kAttrExpandDimsMask);
+  MS_EXCEPTION_IF_NULL(expand_dims_mask);
   auto init_by_none = b->GetAttr(kAttrInitByNone);
+  MS_EXCEPTION_IF_NULL(init_by_none);
   return b->Emit(std::make_shared<NormalizeSlice>(
     SymbolPtrList{data_shape, start, stop, step, tuple_index_axis, tuple_index_types, expand_dims_mask, init_by_none}));
 }

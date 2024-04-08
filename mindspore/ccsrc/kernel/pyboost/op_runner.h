@@ -83,7 +83,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
 
   // Tensor is held by Abstract, may lead to memory leak.
   static AbstractBasePtr ConvertAbstract(const TensorPtr &t) {
-    auto abs = t->ToAbstract();
+    auto abs = t->GetAbstractCache();
     abs->set_value(kValueAny);
     t->set_abstract(abs);
     abstract_cache_.Push(abs);
@@ -94,12 +94,12 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     AbstractBasePtrList abs_list(t->value().size());
     for (size_t i = 0; i < t->value().size(); ++i) {
       auto &val = t->value()[i];
-      auto abs = val->ToAbstract();
+      AbstractBasePtr abs = nullptr;
       if (val->isa<tensor::Tensor>()) {
-        abs->set_value(kValueAny);
         auto tensor = val->cast<tensor::TensorPtr>();
-        tensor->set_abstract(abs);
-        abstract_cache_.Push(abs);
+        abs = ConvertAbstract(tensor);
+      } else {
+        abs = val->ToAbstract();
       }
       abs_list[i] = abs;
     }

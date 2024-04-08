@@ -22,6 +22,7 @@
 #include <vector>
 #include <cmath>
 
+#include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
@@ -108,8 +109,8 @@ Status ResizeBilinearV2Info::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status ResizeBilinearV2Info::CheckStrategyForDynamicShape(const StrategyPtr &) {
-  if (inputs_shape_[0][2] == -1 || inputs_shape_[0][3] == -1 || outputs_shape_[0][2] == -1 ||
-      outputs_shape_[0][3] == -1) {
+  if (inputs_shape_[kIndex0][kIndex2] == -1 || inputs_shape_[kIndex0][kIndex3] == -1 ||
+      outputs_shape_[kIndex0][kIndex2] == -1 || outputs_shape_[kIndex0][kIndex3] == -1) {
     MS_LOG(ERROR) << name_ << ": it does not support H or W dimension dynamic shape now, the input shape is "
                   << ShapeToString(inputs_shape_[0]) << ", the output shape is " << ShapeToString(outputs_shape_[0]);
     return FAILED;

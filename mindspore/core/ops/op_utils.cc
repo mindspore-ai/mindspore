@@ -355,11 +355,11 @@ std::bitset<kBitSize> MakeDimMask(std::vector<int64_t> dims, int64_t ndim) {
 }
 
 abstract::ShapePtr ReduceExtInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_shape_ptr = input_args[0]->BuildShape();
+  auto input_shape_ptr = input_args[0]->GetShape();
   const auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr)[kShape];
   int64_t ndim = static_cast<int64_t>(input_shape.size());
-  auto dim = GetValue<std::vector<int64_t>>(input_args[1]->BuildValue());
-  auto keepdim = GetValue<bool>(input_args[2]->BuildValue());
+  auto dim = GetValue<std::vector<int64_t>>(input_args[1]->GetValue());
+  auto keepdim = GetValue<bool>(input_args[2]->GetValue());
   std::bitset<kBitSize> mask = MakeDimMask(dim, ndim);
   auto shape = input_shape;
 
@@ -376,7 +376,7 @@ abstract::ShapePtr ReduceExtInferShape(const PrimitivePtr &primitive, const std:
 }
 
 TypePtr ReduceExtInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto dtype_ptr = input_args[3]->BuildValue();
+  auto dtype_ptr = input_args[3]->GetValue();
   (void)CheckAndConvertUtils::CheckTypeValid("input", input_args[0]->BuildType(),
                                              common_valid_types_with_complex_and_bool, prim->name());
   auto dtype_type_ptr = dtype_ptr->cast<TypePtr>();
@@ -637,8 +637,9 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
     abs->CheckAndConvertToDynamicLenSequence();
     return abs;
   }
-
-  if (!x_shape.empty()) {
+  if (x_shape.empty()) {
+    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
+  } else {
     for (int64_t i = 0; i < x_shape[0]; i++) {
       abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
     }
@@ -646,6 +647,7 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
   auto abs = std::make_shared<T>(abs_list);
   return abs;
 }
+
 void CheckDynamicLengthSequenceSetItem(const std::string &op_name, const abstract::AbstractSequencePtr &queue,
                                        const AbstractBasePtr &target) {
   auto element_abs = queue->dynamic_len_element_abs();
@@ -875,6 +877,11 @@ std::string GetInputNameByIndex(const std::string &op_name, size_t index) {
   }
   auto input = op_def->args_[index];
   return input.arg_name_;
+}
+
+bool HasOpDef(const std::string &op_name) {
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  return op_def != nullptr;
 }
 
 size_t GetOpInputsNum(const std::string &op_name) {

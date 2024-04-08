@@ -127,7 +127,7 @@ REG_STRING_TO_ENUM(padding_mode, StrToPaddingModeMap)
 REG_STRING_TO_ENUM(direction, StrToEnumMap{{"UNIDIRECTIONAL", Direction::UNIDIRECTIONAL}})
 
 // CellType
-REG_STRING_TO_ENUM(cell_type, StrToEnumMap{{"LSTM", CellType::LSTM}})
+REG_STRING_TO_ENUM(cell_type, StrToEnumMap{{"LSTM", CellType::CELL_TYPE_LSTM}})
 
 // Group
 REG_STRING_TO_ENUM(group, StrToEnumMap{{"SYNC_BN_GROUP0", Group::SYNC_BN_GROUP0}})

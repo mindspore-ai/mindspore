@@ -135,7 +135,7 @@ def _to_full_shapes(shapes, device_num):
             if len(shape) != len(dataset_strategy[index]):
                 raise ValueError("The input shapes item size {} is not equal to "
                                  "dataset strategy item size {}".format(len(shape), len(dataset_strategy[index])))
-            new_shape = ()
+            new_shape = []
             for i, item in enumerate(shape):
                 if item > 0:
                     new_shape += (item * dataset_strategy[index][i],)  # static shape
@@ -148,6 +148,43 @@ def _to_full_shapes(shapes, device_num):
         for i, item in enumerate(shape):
             if i == 0 and item > 0:
                 shape_v += (item * device_num,)  # only for static shape
+            else:
+                shape_v += (item,)
+        new_shapes.append(shape_v)
+    return new_shapes
+
+
+def _origin_shapes(shapes):
+    """resume origin shape after full shape."""
+    if _need_to_full():
+        device_num = _get_device_num() // _get_pipeline_stages()
+    else:
+        return shapes
+    new_shapes = []
+    dataset_strategy = ()
+    if context.get_auto_parallel_context("dataset_strategy") not in ("data_parallel", "full_batch"):
+        dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
+    if dataset_strategy:
+        if len(shapes) != len(dataset_strategy):
+            raise ValueError("The input shapes size {} is not equal to "
+                             "dataset strategy size {}".format(len(shapes), len(dataset_strategy)))
+        for index, shape in enumerate(shapes):
+            if len(shape) != len(dataset_strategy[index]):
+                raise ValueError("The input shapes item size {} is not equal to "
+                                 "dataset strategy item size {}".format(len(shape), len(dataset_strategy[index])))
+            new_shape = []
+            for i, item in enumerate(shape):
+                if item > 0:
+                    new_shape += (item // dataset_strategy[index][i],)  # static shape
+                else:
+                    new_shape += (item,)  # dynamic shape
+            new_shapes.append(new_shape)
+        return new_shapes
+    for shape in shapes:
+        shape_v = []
+        for i, item in enumerate(shape):
+            if i == 0 and item > 0:
+                shape_v += (item // device_num,)  # only for static shape
             else:
                 shape_v += (item,)
         new_shapes.append(shape_v)
@@ -453,14 +490,10 @@ def _handle_symbol_inputs(symbol_inputs):
     return symbol_inputs
 
 
-def _change_symbols_for_parallel(shapes, symbol_inputs=None):
-    """create or modify symbol inputs"""
-    # no need to handle the symbol if full_batch is true or it's not parallel mode
+def _no_need_to_change_symbols(shapes):
+    """no need to handle the symbol if full_batch is true or it's not parallel mode"""
     if not _need_to_full():
-        return symbol_inputs
-
-    # the symbol_inputs is [[{'divisor': 8}, 16], [{'divisor': 8}, 16]]
-    # the dataset_shapes is [(-1, 16), (-1, 16)]
+        return True
 
     # if static shape, return
     is_dynamic_shape = False
@@ -469,8 +502,17 @@ def _change_symbols_for_parallel(shapes, symbol_inputs=None):
             is_dynamic_shape = True
             break
     if is_dynamic_shape is False:
-        return symbol_inputs
+        return True
 
+    return False
+
+
+def _change_symbols_for_parallel(shapes, symbol_inputs=None):
+    """create or modify symbol inputs"""
+    if _no_need_to_change_symbols(shapes) is True:
+        return symbol_inputs
+    # the symbol_inputs is [[{'divisor': 8}, 16], [{'divisor': 8}, 16]]
+    # the dataset_shapes is [(-1, 16), (-1, 16)]
     # if symbol_inputs is [None, None, ..., None], reset it
     if symbol_inputs is not None and all(s is None for s in symbol_inputs):
         symbol_inputs = []
@@ -486,8 +528,16 @@ def _change_symbols_for_parallel(shapes, symbol_inputs=None):
                     symbol_inputs[i][j] = {divisor_key: 1}
     else:
         for i, s in enumerate(symbol_inputs):
+            # the symbol_inputs may be [None, [{'divisor': 8}, 16]]
+            # and the dataset_shapes is [(-1, 16), (-1, 16)], need to handle None
+            if s is None:
+                symbol_inputs[i] = shapes[i]
+                for k, item in enumerate(symbol_inputs[i]):
+                    if item == -1:
+                        symbol_inputs[i][k] = {divisor_key: 1}
+                s = symbol_inputs[i]
             for j, item in enumerate(s):
-                if isinstance(item, dict) and bool(item) is False:
+                if isinstance(item, dict) and bool(item) is False:  # the item is empty
                     symbol_inputs[i][j] = {divisor_key: 1}
 
     return _handle_symbol_inputs(symbol_inputs)

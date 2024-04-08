@@ -23,7 +23,6 @@
 #include "cpu_types.h"
 #include "inc/kernel_log.h"
 #include "context/common/status.h"
-#include "utils/bcast.h"
 #include "utils/kernel_util.h"
 #include "cpu_context.h"
 
@@ -41,7 +40,7 @@ inline T ScalarAddV2(T a, T b) {
   return a + b;
 }
 template <typename T>
-inline std::uint32_t ParallelForAddV2(const CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
+inline std::uint32_t ParallelForAddV2(CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
                                       const std::function<void(std::int64_t, std::int64_t)> &work) {
   if (total > kAddV2ParallelNum)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
@@ -51,7 +50,7 @@ inline std::uint32_t ParallelForAddV2(const CpuKernelContext &ctx, std::int64_t 
 }
 
 template <>
-inline std::uint32_t ParallelForAddV2<std::int64_t>(const CpuKernelContext &ctx, std::int64_t total,
+inline std::uint32_t ParallelForAddV2<std::int64_t>(CpuKernelContext &ctx, std::int64_t total,
                                                     std::int64_t per_unit_size,
                                                     const std::function<void(std::int64_t, std::int64_t)> &work) {
   const std::int64_t kNumber1 = 32;
@@ -63,7 +62,7 @@ inline std::uint32_t ParallelForAddV2<std::int64_t>(const CpuKernelContext &ctx,
 }
 
 template <>
-inline std::uint32_t ParallelForAddV2<std::double_t>(const CpuKernelContext &ctx, std::int64_t total,
+inline std::uint32_t ParallelForAddV2<std::double_t>(CpuKernelContext &ctx, std::int64_t total,
                                                      std::int64_t per_unit_size,
                                                      const std::function<void(std::int64_t, std::int64_t)> &work) {
   const std::int64_t kNumber2 = 16;
@@ -75,7 +74,7 @@ inline std::uint32_t ParallelForAddV2<std::double_t>(const CpuKernelContext &ctx
 }
 
 template <typename T>
-inline std::uint32_t ComputeAddV2Kernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeAddV2Kernel(CpuKernelContext &ctx) {
   T *input0{static_cast<T *>(ctx.Input(0)->GetData())};
   T *input1{static_cast<T *>(ctx.Input(1)->GetData())};
   T *output{static_cast<T *>(ctx.Output(0)->GetData())};
@@ -88,43 +87,44 @@ inline std::uint32_t ComputeAddV2Kernel(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-inline std::uint32_t ComputeAddV2(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeAddV2(CpuKernelContext &ctx) {
   std::uint32_t result{ComputeAddV2Kernel<T>(ctx)};
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("AddV2 compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "AddV2 compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t ExtraCheckAddV2(const CpuKernelContext &ctx) {
+inline std::uint32_t ExtraCheckAddV2(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetDataType() != ctx.Input(1)->GetDataType()) {
-    KERNEL_LOG_ERROR(
-      "The data type of the first input [%s] need be the same as the second "
-      "input [%s].",
-      DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Input(1)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data type of the first input [%s] need be the same as the second "
+                          "input [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Input(1)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckAddV2(const CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
+inline std::uint32_t CheckAddV2(CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
   return NormalCheck(const_cast<CpuKernelContext &>(ctx), kAddV2InputNum, kAddV2OutputNum) ? KERNEL_STATUS_PARAM_INVALID
                                                                                            : ExtraCheckAddV2(ctx);
 }
 
-inline std::uint32_t ComputeAddV2(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeAddV2(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_INT8:
@@ -148,7 +148,7 @@ inline std::uint32_t ComputeAddV2(const CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return ComputeAddV2<std::complex<std::double_t>>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

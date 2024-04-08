@@ -204,7 +204,6 @@ def test_init_step_with_non_mappable_generator_with_len():
     ds.config.set_seed(original_seed)
 
 
-@pytest.mark.skip(reason="random timeout")
 @pytest.mark.parametrize("fast_recovery_mode", (True, False))
 @pytest.mark.parametrize("shuffle", (True, False))
 def test_init_step_with_mappable_generator(fast_recovery_mode, shuffle):
@@ -234,8 +233,8 @@ def test_init_step_with_mappable_generator(fast_recovery_mode, shuffle):
     if shuffle:
         dataset = dataset.shuffle(6)
 
-    dataset = dataset.repeat(2)
     dataset = dataset.batch(3)
+    dataset = dataset.repeat(1)
 
     num_epochs = 2
     dataset_size = dataset.get_dataset_size()

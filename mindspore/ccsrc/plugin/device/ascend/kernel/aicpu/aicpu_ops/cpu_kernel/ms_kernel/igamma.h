@@ -31,10 +31,10 @@ class IgammaCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t IgammaCheck(const CpuKernelContext &ctx);
+  static uint32_t IgammaCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t IgammaCompute(const CpuKernelContext &ctx);
+  static uint32_t IgammaCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

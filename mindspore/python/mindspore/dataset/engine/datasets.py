@@ -861,11 +861,11 @@ class Dataset:
         `output_columns` , and if not specified, the column name of output column is same as that of `input_columns` .
 
         - If you use transformations (
-          `vision transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
+          `vision transform <https://mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.vision>`_ ,
-          `nlp transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
+          `nlp transform <https://mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.text>`_ ,
-          `audio transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
+          `audio transform <https://mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.audio>`_ )
           provided by mindspore dataset, please use the following parameters:
 
@@ -3286,6 +3286,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.warning_ctl = None
         # cache thread (get_ident()) to worker_id mapping in Python layer
         self.python_threads_to_workers = {}
+        self.eof = None
 
     def __del__(self):
         try:
@@ -3416,17 +3417,19 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
     # When main process exit, subprocesses will be terminate
     @staticmethod
-    def _clean_process(ppid, workers):
+    def _clean_process(ppid, workers, quit_signal):
         """
             This is the execute function of clean process, if we found main process exited, we will clean subprocesses.
 
         Args:
             ppid: The process id of main process.
             workers: The list of subprocesses.
-
+            quit_signal: The flag of quit.
         """
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         while _PythonMultiprocessing.is_process_alive(ppid):
+            if quit_signal.is_set():
+                return
             time.sleep(0.1)
 
         _PythonMultiprocessing._terminate_processes(workers)
@@ -3558,8 +3561,9 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         The cleaning subprocess will cleanup subprocesses when main process was killed.
         """
         if platform.system().lower() != 'windows':
+            self.eof = multiprocessing.Event()
             self.cleaning_process = multiprocessing.Process(target=self._clean_process,
-                                                            args=(self.ppid, self.workers),
+                                                            args=(self.ppid, self.workers, self.eof),
                                                             name="OrphanCleaner",
                                                             daemon=True)
             self.cleaning_process.start()
@@ -3580,6 +3584,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         if hasattr(self, 'watch_dog') and self.watch_dog is not None and hasattr(self, 'eot') and self.eot is not None:
             self._abort_watchdog()
         if hasattr(self, 'cleaning_process') and self.cleaning_process is not None:
+            if hasattr(self, 'eof') and self.eof is not None and not self.eof.is_set():
+                self.eof.set()
             _PythonMultiprocessing._terminate_processes([self.cleaning_process])
             del self.cleaning_process
 
@@ -4223,6 +4229,12 @@ class _ToDevice:
         """
         return self._to_device.GetDataInfo()
 
+    def get_mbuf_queue_size(self):
+        """
+        Get element numbers inside mbuf.
+        """
+        return self._to_device.GetMbufQueueSize()
+
     def get_send_info(self):
         """
         In sink mode, it returns the send information of dataset at this moment.
@@ -4336,6 +4348,14 @@ class TransferDataset(Dataset):
         if self._to_device is not None:
             return self._to_device.get_data_info()
         raise RuntimeError("Calling get_data_info with bad state.")
+
+    def get_mbuf_queue_size(self):
+        """
+        Get element numbers inside mbuf.
+        """
+        if self._to_device is not None:
+            return self._to_device.get_mbuf_queue_size()
+        raise RuntimeError("Device queue is not init, call get_mbuf_queue_size failed.")
 
     def get_send_info(self):
         """

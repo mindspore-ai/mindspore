@@ -33,9 +33,9 @@ const char *kSparseTensorDenseMatMul = "SparseTensorDenseMatMul";
 
 namespace aicpu {
 uint32_t SparseTensorDenseMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "SparseTensorDenseMatMul check input and output number failed.");
-  KERNEL_HANDLE_ERROR(SparseTensorDenseMatMulCheck(ctx), "SparseTensorDenseMatMul check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SparseTensorDenseMatMul check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, SparseTensorDenseMatMulCheck(ctx), "SparseTensorDenseMatMul check params failed.");
   DataType sparse_data_type = ctx.Input(1)->GetDataType();
   DataType indice_data_type = ctx.Input(0)->GetDataType();
   DataType dense_data_type = ctx.Input(3)->GetDataType();
@@ -108,20 +108,20 @@ uint32_t SparseTensorDenseMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
              y_data_type == DT_FLOAT16) {
     ret = RegularCalculate<Eigen::half, int32_t, Eigen::half, Eigen::half>(ctx);
   } else {
-    KERNEL_LOG_ERROR(
-      "sparse_tensor_dense_mat_mul kernel wrong datatype."
-      "sparse_data_type [%s],"
-      "indices_data_type [%s],"
-      "dense_data_type [%s],"
-      "y_data_type [%s].",
-      DTypeStr(sparse_data_type).c_str(), DTypeStr(indice_data_type).c_str(), DTypeStr(dense_data_type).c_str(),
-      DTypeStr(y_data_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "sparse_tensor_dense_mat_mul kernel wrong datatype."
+                          "sparse_data_type [%s],"
+                          "indices_data_type [%s],"
+                          "dense_data_type [%s],"
+                          "y_data_type [%s].",
+                          DTypeStr(sparse_data_type).c_str(), DTypeStr(indice_data_type).c_str(),
+                          DTypeStr(dense_data_type).c_str(), DTypeStr(y_data_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;
 }
 template <class SparseType, class IndicesType, class DenseType, class OutputType>
-uint32_t SparseTensorDenseMatMulCpuKernel::RegularCalculate(const CpuKernelContext &ctx) {
+uint32_t SparseTensorDenseMatMulCpuKernel::RegularCalculate(CpuKernelContext &ctx) {
   Tensor *x1_indices = ctx.Input(0);
   Tensor *x1_values = ctx.Input(1);
   Tensor *x1_shape = ctx.Input(2);
@@ -160,9 +160,9 @@ uint32_t SparseTensorDenseMatMulCpuKernel::RegularCalculate(const CpuKernelConte
     if (adjoint_a->GetBool()) {
       std::swap(row, col);
     }
-    KERNEL_CHECK_FALSE(row < static_cast<uint64_t>(x1_row) && col < static_cast<uint64_t>(x1_col),
-                       KERNEL_STATUS_PARAM_INVALID,
-                       "For 'SparseTensorDenseMatmul', the indice [%lu, %lu] is out of bounds.", row, col);
+    CUST_KERNEL_CHECK_FALSE(ctx, row < static_cast<uint64_t>(x1_row) && col < static_cast<uint64_t>(x1_col),
+                            KERNEL_STATUS_PARAM_INVALID,
+                            "For 'SparseTensorDenseMatmul', the indice [%lu, %lu] is out of bounds.", row, col);
     if (x2_col < COL_SHED) {
       for (uint64_t j = 0; j < x2_col; j++) {
         uint64_t idx = adjoint_b->GetBool() ? (j * x2_row + col) : (col * x2_col + j);
@@ -191,12 +191,12 @@ uint32_t SparseTensorDenseMatMulCpuKernel::RegularCalculate(const CpuKernelConte
         y_data[row * x2_col + j] += a * b;
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, x2_col, x2_col / max_core, fun),
-                        "SparseTensorDenseMatMul Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, x2_col, x2_col / max_core, fun),
+                             "SparseTensorDenseMatMul Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t SparseTensorDenseMatMulCpuKernel::SparseTensorDenseMatMulCheck(const CpuKernelContext &ctx) {
+uint32_t SparseTensorDenseMatMulCpuKernel::SparseTensorDenseMatMulCheck(CpuKernelContext &ctx) {
   Tensor *x1_indices = ctx.Input(0);
   Tensor *x1_values = ctx.Input(1);
   Tensor *x1_shape = ctx.Input(2);
@@ -204,27 +204,30 @@ uint32_t SparseTensorDenseMatMulCpuKernel::SparseTensorDenseMatMulCheck(const Cp
   Tensor *y = ctx.Output(0);
   AttrValue *adjoint_a = ctx.GetAttr("adjoint_a");
   AttrValue *adjoint_b = ctx.GetAttr("adjoint_b");
-  KERNEL_CHECK_NULLPTR(x1_indices, KERNEL_STATUS_PARAM_INVALID, "Get input 0 failed.")
-  KERNEL_CHECK_NULLPTR(x1_values, KERNEL_STATUS_PARAM_INVALID, "Get input 1 failed.")
-  KERNEL_CHECK_NULLPTR(x1_shape, KERNEL_STATUS_PARAM_INVALID, "Get input 2 failed.")
-  KERNEL_CHECK_NULLPTR(x2, KERNEL_STATUS_PARAM_INVALID, "Get input 3 failed.")
-  KERNEL_CHECK_NULLPTR(y, KERNEL_STATUS_PARAM_INVALID, "Get output 0 failed.")
-  KERNEL_CHECK_NULLPTR(adjoint_a, KERNEL_STATUS_PARAM_INVALID, "Get attribute adjoint_a failed.")
-  KERNEL_CHECK_NULLPTR(adjoint_b, KERNEL_STATUS_PARAM_INVALID, "Get attribute adjoint_b failed.")
-  KERNEL_CHECK_FALSE(x1_indices->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
-  KERNEL_CHECK_FALSE(x1_values->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
-  KERNEL_CHECK_FALSE(x1_indices->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.")
-  KERNEL_CHECK_FALSE(x2->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 3 data failed.")
-  KERNEL_CHECK_FALSE(y->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
-  KERNEL_CHECK_FALSE(x1_shape->GetDataType() == DT_INT64, KERNEL_STATUS_PARAM_INVALID, "x1_shape must be DT_INT64")
-  KERNEL_CHECK_FALSE(x1_shape->GetTensorShape()->GetDims() == 1 && x1_shape->NumElements() == 2 &&
-                       x1_indices->GetTensorShape()->GetDimSize(0) == x1_values->NumElements(),
-                     KERNEL_STATUS_PARAM_INVALID, "sparse tensor x1 dimension error.")
-  KERNEL_CHECK_FALSE(x2->GetTensorShape()->GetDims() == 2, KERNEL_STATUS_PARAM_INVALID, "matrix x2 dimension error.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x1_indices, KERNEL_STATUS_PARAM_INVALID, "Get input 0 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x1_values, KERNEL_STATUS_PARAM_INVALID, "Get input 1 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x1_shape, KERNEL_STATUS_PARAM_INVALID, "Get input 2 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x2, KERNEL_STATUS_PARAM_INVALID, "Get input 3 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, y, KERNEL_STATUS_PARAM_INVALID, "Get output 0 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, adjoint_a, KERNEL_STATUS_PARAM_INVALID, "Get attribute adjoint_a failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, adjoint_b, KERNEL_STATUS_PARAM_INVALID, "Get attribute adjoint_b failed.")
+  CUST_KERNEL_CHECK_FALSE(ctx, x1_indices->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_FALSE(ctx, x1_values->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_FALSE(ctx, x1_indices->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.")
+  CUST_KERNEL_CHECK_FALSE(ctx, x2->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 3 data failed.")
+  CUST_KERNEL_CHECK_FALSE(ctx, y->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
+  CUST_KERNEL_CHECK_FALSE(ctx, x1_shape->GetDataType() == DT_INT64, KERNEL_STATUS_PARAM_INVALID,
+                          "x1_shape must be DT_INT64")
+  CUST_KERNEL_CHECK_FALSE(ctx,
+                          x1_shape->GetTensorShape()->GetDims() == 1 && x1_shape->NumElements() == 2 &&
+                            x1_indices->GetTensorShape()->GetDimSize(0) == x1_values->NumElements(),
+                          KERNEL_STATUS_PARAM_INVALID, "sparse tensor x1 dimension error.")
+  CUST_KERNEL_CHECK_FALSE(ctx, x2->GetTensorShape()->GetDims() == 2, KERNEL_STATUS_PARAM_INVALID,
+                          "matrix x2 dimension error.")
   int64_t *x1_shape_data = reinterpret_cast<int64_t *>(x1_shape->GetData());
   uint64_t x1_col = x1_shape_data[!adjoint_a->GetBool()];
   uint64_t x2_row = x2->GetTensorShape()->GetDimSize(adjoint_b->GetBool());
-  KERNEL_CHECK_FALSE(x1_col == x2_row, KERNEL_STATUS_PARAM_INVALID, "can not do matrix multiplication.")
+  CUST_KERNEL_CHECK_FALSE(ctx, x1_col == x2_row, KERNEL_STATUS_PARAM_INVALID, "can not do matrix multiplication.")
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kSparseTensorDenseMatMul, SparseTensorDenseMatMulCpuKernel);

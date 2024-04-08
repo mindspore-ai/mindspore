@@ -46,7 +46,7 @@ const char *kLuUnpack = "LuUnpack";
 }  // namespace
 namespace aicpu {
 template <typename T_data, typename T_pivots>
-uint32_t LuUnpackCpuKernel::LuUnpack(const CpuKernelContext &ctx, T_pivots *Lu_pivots_working_ptr, int64_t matrix_index,
+uint32_t LuUnpackCpuKernel::LuUnpack(CpuKernelContext &ctx, T_pivots *Lu_pivots_working_ptr, int64_t matrix_index,
                                      T_data *P_eye) {
   int32_t Lu_data_dims = ctx.Input(kFirstInputIndex)->GetTensorShape()->GetDims();
   int64_t Lu_data_dim1 = ctx.Input(kFirstInputIndex)->GetTensorShape()->GetDimSize(Lu_data_dims - 2);
@@ -127,7 +127,7 @@ uint32_t LuUnpackCpuKernel::LuUnpack(const CpuKernelContext &ctx, T_pivots *Lu_p
     auto offset = matrix_index * pivots_stride + out_idx;
     auto ret = memcpy_s(output_y0 + offset, output_size - offset * sizeof(T_data), P_eye + params_idx, slice_size);
     if (ret != EOK) {
-      KERNEL_LOG_ERROR("For 'LuUnpack', memcpy_s failed, ret=%d.", ret);
+      CUST_KERNEL_LOG_ERROR(ctx, "For 'LuUnpack', memcpy_s failed, ret=%d.", ret);
       return KERNEL_STATUS_INNER_ERROR;
     }
   }
@@ -135,7 +135,7 @@ uint32_t LuUnpackCpuKernel::LuUnpack(const CpuKernelContext &ctx, T_pivots *Lu_p
 }
 
 template <typename T_data, typename T_pivots>
-uint32_t LuUnpackCpuKernel::LuUnpackCompute(const CpuKernelContext &ctx) {
+uint32_t LuUnpackCpuKernel::LuUnpackCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(kFirstInputIndex);
   Tensor *input1_tensor = ctx.Input(kSecondInputIndex);
   auto input_0_Shape = input0_tensor->GetTensorShape();
@@ -183,10 +183,10 @@ uint32_t LuUnpackCpuKernel::LuUnpackCompute(const CpuKernelContext &ctx) {
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch_num, batch_num / max_core_num, sharder),
-                        "LuUnpack Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, batch_num, batch_num / max_core_num, sharder),
+                             "LuUnpack Compute failed.");
     if (parallel_status != KERNEL_STATUS_OK) {
       return KERNEL_STATUS_PARAM_INVALID;
     }
@@ -245,7 +245,7 @@ void LuUnpackCpuKernel::SetMap() {
   calls_[DT_UINT8][DT_UINT8] = LuUnpackCompute<uint8_t, uint8_t>;
 }
 
-void LuUnpackCpuKernel::SetOutputShape(const CpuKernelContext &ctx) {
+void LuUnpackCpuKernel::SetOutputShape(CpuKernelContext &ctx) {
   Tensor *LU_data_ = ctx.Input(0);
   Tensor *output0 = ctx.Output(0);
   Tensor *output1 = ctx.Output(1);
@@ -272,17 +272,18 @@ void LuUnpackCpuKernel::SetOutputShape(const CpuKernelContext &ctx) {
 }
 
 uint32_t LuUnpackCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "LuUnpack check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "LuUnpack check input and output number failed.");
   Tensor *LU_data_ = ctx.Input(0);
   Tensor *LU_pivots_ = ctx.Input(1);
   std::shared_ptr<TensorShape> LU_data_shape = LU_data_->GetTensorShape();
   std::shared_ptr<TensorShape> LU_pivots_shape = LU_pivots_->GetTensorShape();
   int32_t LU_data_rank = LU_data_shape->GetDims();
   if (LU_data_rank < kLuDataMinRank) {
-    KERNEL_LOG_ERROR(
-      "The input dim size of LU_data must be at least 2-D, "
-      "while %d",
-      LU_data_rank);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The input dim size of LU_data must be at least 2-D, "
+                          "while %d",
+                          LU_data_rank);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int32_t Lu_data_dims = LU_data_shape->GetDims();
@@ -291,19 +292,19 @@ uint32_t LuUnpackCpuKernel::Compute(CpuKernelContext &ctx) {
   int32_t Lu_pivots_dims = LU_pivots_shape->GetDims();
   int64_t Lu_pivots_dim = LU_pivots_shape->GetDimSize(Lu_pivots_dims - 1);
   if (Lu_pivots_dim != std::min(Lu_data_dim1, Lu_data_dim2)) {
-    KERNEL_LOG_ERROR(
-      "The last dimension of LU_pivots must be the same as the minimum value "
-      "of the last two dimensions of LU_data, "
-      "but got The last dimension of LU_pivots [%d], the minimum value of "
-      "the last two dimensions of LU_data: [%d]",
-      Lu_pivots_dim, std::min(Lu_data_dim1, Lu_data_dim2));
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The last dimension of LU_pivots must be the same as the minimum value "
+                          "of the last two dimensions of LU_data, "
+                          "but got The last dimension of LU_pivots [%d], the minimum value of "
+                          "the last two dimensions of LU_data: [%d]",
+                          Lu_pivots_dim, std::min(Lu_data_dim1, Lu_data_dim2));
     return KERNEL_STATUS_PARAM_INVALID;
   }
   for (int32_t i = 0; i < Lu_pivots_dims - 1; i++) {
     if (LU_data_shape->GetDimSize(i) != LU_pivots_shape->GetDimSize(i)) {
-      KERNEL_LOG_ERROR(
-        " LU_data's batch dimensions does not match LU_pivots's batch "
-        "dimensions.");
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            " LU_data's batch dimensions does not match LU_pivots's batch "
+                            "dimensions.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -315,25 +316,25 @@ uint32_t LuUnpackCpuKernel::Compute(CpuKernelContext &ctx) {
                             LU_data_dtype != DT_INT8 && LU_data_dtype != DT_UINT8 && LU_data_dtype != DT_INT16 &&
                             LU_data_dtype != DT_INT32 && LU_data_dtype != DT_INT64;
   if (LU_data_dtype_flag) {
-    KERNEL_LOG_ERROR(
-      "Op LuUnpack first input LU_data_type's data type should be of the "
-      "follows: "
-      "DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, "
-      "DT_FLOAT, DT_DOUBLE, "
-      "but this type is [%s].",
-      DTypeStr(LU_data_dtype).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Op LuUnpack first input LU_data_type's data type should be of the "
+                          "follows: "
+                          "DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, "
+                          "DT_FLOAT, DT_DOUBLE, "
+                          "but this type is [%s].",
+                          DTypeStr(LU_data_dtype).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   DataType LU_pivots_dtype = static_cast<DataType>(LU_pivots_->GetDataType());
   bool LU_pivots_dtype_flag = LU_pivots_dtype != DT_INT8 && LU_pivots_dtype != DT_UINT8 &&
                               LU_pivots_dtype != DT_INT16 && LU_pivots_dtype != DT_INT32 && LU_pivots_dtype != DT_INT64;
   if (LU_pivots_dtype_flag) {
-    KERNEL_LOG_ERROR(
-      "Op LuUnpack second input LU_pivots_type's data type should be of the "
-      "follows: "
-      "DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_INT64, "
-      "but this type is [%s].",
-      DTypeStr(LU_pivots_dtype).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Op LuUnpack second input LU_pivots_type's data type should be of the "
+                          "follows: "
+                          "DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_INT64, "
+                          "but this type is [%s].",
+                          DTypeStr(LU_pivots_dtype).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   SetMap();
@@ -343,9 +344,9 @@ uint32_t LuUnpackCpuKernel::Compute(CpuKernelContext &ctx) {
   for (uint64_t i = 0; i < LU_data_type_vec.size(); i++) {
     for (uint64_t j = 0; j < LU_pivots_type_vec.size(); j++) {
       if (LU_data_dtype == LU_data_type_vec[i] && LU_pivots_dtype == LU_pivots_type_vec[j]) {
-        KERNEL_HANDLE_ERROR(calls_[LU_data_type_vec[i]][LU_pivots_type_vec[j]](ctx),
-                            "The elements of LU_pivots must be greater than 1 "
-                            "and be less than the size of LU_pivots's last dimension.");
+        CUST_KERNEL_HANDLE_ERROR(ctx, calls_[LU_data_type_vec[i]][LU_pivots_type_vec[j]](ctx),
+                                 "The elements of LU_pivots must be greater than 1 "
+                                 "and be less than the size of LU_pivots's last dimension.");
       }
     }
   }

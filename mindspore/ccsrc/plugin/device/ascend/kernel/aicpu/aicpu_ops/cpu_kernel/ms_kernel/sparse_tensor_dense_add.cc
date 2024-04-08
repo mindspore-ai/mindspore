@@ -39,7 +39,7 @@ constexpr uint64_t kParallelDataNums = 256 * 1024;
 namespace aicpu {
 uint32_t SparseTensorDenseAddCpuKernel::Compute(CpuKernelContext &ctx) {
   if (NormalCheck(ctx, kInputNum, kOutputNum) != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Check SparseTensorDenseAdd params failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Check SparseTensorDenseAdd params failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   uint32_t res = ValidateInputs(ctx);
@@ -71,13 +71,13 @@ uint32_t SparseTensorDenseAddCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return DoCompute<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename T>
-uint32_t SparseTensorDenseAddCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t SparseTensorDenseAddCpuKernel::DoCompute(CpuKernelContext &ctx) {
   Tensor *a_indices = ctx.Input(0);
   Tensor *a_values = ctx.Input(1);
   Tensor *b = ctx.Input(3);
@@ -105,7 +105,7 @@ uint32_t SparseTensorDenseAddCpuKernel::DoCompute(const CpuKernelContext &ctx) {
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_sparsetensordenseadd);
   }
@@ -136,7 +136,7 @@ uint32_t SparseTensorDenseAddCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseTensorDenseAddCpuKernel::ValidateInputs(const CpuKernelContext &ctx) {
+uint32_t SparseTensorDenseAddCpuKernel::ValidateInputs(CpuKernelContext &ctx) {
   Tensor *a_indices_t = ctx.Input(0);
   Tensor *a_values_t = ctx.Input(1);
   Tensor *a_shape_t = ctx.Input(2);
@@ -150,13 +150,14 @@ uint32_t SparseTensorDenseAddCpuKernel::ValidateInputs(const CpuKernelContext &c
   const int min_ndims = 1;
   const int max_ndims = 5;
   if (ndims < min_ndims || ndims > max_ndims) {
-    KERNEL_LOG_ERROR("Only tensors with ranks between 1 and 5 are currently supported. Tensor rank: [%d]", ndims);
+    CUST_KERNEL_LOG_ERROR(ctx, "Only tensors with ranks between 1 and 5 are currently supported. Tensor rank: [%d]",
+                          ndims);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // valid data type
   if (input0_dt != input1_dt || input1_dt != input2_dt) {
-    KERNEL_LOG_ERROR("x1_values data type[%s], x2 data type[%s] and y data type[%s] must be same.",
-                     DTypeStr(input0_dt).c_str(), DTypeStr(input1_dt).c_str(), DTypeStr(input2_dt).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "x1_values data type[%s], x2 data type[%s] and y data type[%s] must be same.",
+                          DTypeStr(input0_dt).c_str(), DTypeStr(input1_dt).c_str(), DTypeStr(input2_dt).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int32_t IndiceType = a_indices_t->GetDataType();
@@ -164,38 +165,39 @@ uint32_t SparseTensorDenseAddCpuKernel::ValidateInputs(const CpuKernelContext &c
   bool validIndiceType = (IndiceType != DT_INT64 && IndiceType != DT_INT32);
   bool validShapeType = (ShapeType != DT_INT64 && ShapeType != DT_INT32);
   if (validShapeType || validIndiceType) {
-    KERNEL_LOG_ERROR(
-      "Valid indice or shape data type failed, indiceType [%d], shapeType "
-      "[%d].",
-      IndiceType, ShapeType);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Valid indice or shape data type failed, indiceType [%d], shapeType "
+                          "[%d].",
+                          IndiceType, ShapeType);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (IndiceType != ShapeType) {
-    KERNEL_LOG_ERROR(
-      "Indice type and shape type should be same, indiceType [%d], shapeType "
-      "[%d].",
-      IndiceType, ShapeType);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Indice type and shape type should be same, indiceType [%d], shapeType "
+                          "[%d].",
+                          IndiceType, ShapeType);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   //  valid data shape
   if (a_indices_t->GetTensorShape()->GetDims() != a_indices_shape_dims) {
-    KERNEL_LOG_ERROR("Input a_indices should be a matrix but get dim size: [%d].",
-                     a_indices_t->GetTensorShape()->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx, "Input a_indices should be a matrix but get dim size: [%d].",
+                          a_indices_t->GetTensorShape()->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (a_values_t->GetTensorShape()->GetDims() != 1 || a_shape_t->GetTensorShape()->GetDims() != 1) {
-    KERNEL_LOG_ERROR(
-      "Inputs a_values and a_shape should be vectors but received shapes: "
-      "[%d] and [%d]",
-      a_values_t->GetTensorShape()->GetDims(), a_shape_t->GetTensorShape()->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Inputs a_values and a_shape should be vectors but received shapes: "
+                          "[%d] and [%d]",
+                          a_values_t->GetTensorShape()->GetDims(), a_shape_t->GetTensorShape()->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (a_shape_t->NumElements() != b_t->GetTensorShape()->GetDims() ||
       out_t->GetTensorShape()->GetDims() != b_t->GetTensorShape()->GetDims()) {
-    KERNEL_LOG_ERROR(
-      "Three operands have different ranks; received: [%lld] , [%lld] and "
-      "[%lld]",
-      a_shape_t->NumElements(), b_t->GetTensorShape()->GetDims(), out_t->GetTensorShape()->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Three operands have different ranks; received: [%lld] , [%lld] and "
+                          "[%lld]",
+                          a_shape_t->NumElements(), b_t->GetTensorShape()->GetDims(),
+                          out_t->GetTensorShape()->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::shared_ptr<EigenTensor> a_shape_ = std::make_shared<EigenTensor>(a_shape_t, a_shape_t->GetData());
@@ -204,10 +206,11 @@ uint32_t SparseTensorDenseAddCpuKernel::ValidateInputs(const CpuKernelContext &c
     for (int i = 0; i < b_t->GetTensorShape()->GetDims(); i++) {
       if (out_t->GetTensorShape()->GetDimSize(i) != b_t->GetTensorShape()->GetDimSize(i) ||
           a_shape_flat(i) != b_t->GetTensorShape()->GetDimSize(i)) {
-        KERNEL_LOG_ERROR(
-          "Dimension [%d] does not equal (no broadcasting is supported): y "
-          "side [%lld] vs x2 shape side [%lld] vs x1 shape side [%lld]",
-          i, out_t->GetTensorShape()->GetDimSize(i), b_t->GetTensorShape()->GetDimSize(i), a_shape_flat(i));
+        CUST_KERNEL_LOG_ERROR(ctx,
+                              "Dimension [%d] does not equal (no broadcasting is supported): y "
+                              "side [%lld] vs x2 shape side [%lld] vs x1 shape side [%lld]",
+                              i, out_t->GetTensorShape()->GetDimSize(i), b_t->GetTensorShape()->GetDimSize(i),
+                              a_shape_flat(i));
         return KERNEL_STATUS_PARAM_INVALID;
       }
     }
@@ -216,10 +219,11 @@ uint32_t SparseTensorDenseAddCpuKernel::ValidateInputs(const CpuKernelContext &c
     for (int i = 0; i < b_t->GetTensorShape()->GetDims(); i++) {
       if (out_t->GetTensorShape()->GetDimSize(i) != b_t->GetTensorShape()->GetDimSize(i) ||
           a_shape_flat(i) != b_t->GetTensorShape()->GetDimSize(i)) {
-        KERNEL_LOG_ERROR(
-          "Dimension [%d] does not equal (no broadcasting is supported): y "
-          "side [%lld] vs x2 shape side [%lld] vs x1 shape side [%lld]",
-          i, out_t->GetTensorShape()->GetDimSize(i), b_t->GetTensorShape()->GetDimSize(i), a_shape_flat(i));
+        CUST_KERNEL_LOG_ERROR(ctx,
+                              "Dimension [%d] does not equal (no broadcasting is supported): y "
+                              "side [%lld] vs x2 shape side [%lld] vs x1 shape side [%lld]",
+                              i, out_t->GetTensorShape()->GetDimSize(i), b_t->GetTensorShape()->GetDimSize(i),
+                              a_shape_flat(i));
         return KERNEL_STATUS_PARAM_INVALID;
       }
     }

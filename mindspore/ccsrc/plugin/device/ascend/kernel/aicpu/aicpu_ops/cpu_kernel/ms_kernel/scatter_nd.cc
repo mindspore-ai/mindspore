@@ -35,7 +35,7 @@ const char *kScatterNd = "ScatterNd";
 
 namespace aicpu {
 uint32_t ScatterNdCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check ScatterNd Input and Output failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Check ScatterNd Input and Output failed.");
 
   Tensor *input_indices = ctx.Input(0);
   Tensor *input_x = ctx.Input(1);
@@ -47,26 +47,26 @@ uint32_t ScatterNdCpuKernel::Compute(CpuKernelContext &ctx) {
   int64_t indices_shape_m = shape_indices->GetDimSize(shape_indices->GetDims() - 1);
 
   if (shape_x->GetDims() < 1) {
-    KERNEL_LOG_ERROR("[%s] Tensor input_x's rank less than 1.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input_x's rank less than 1.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (shape_indices->GetDims() < 1) {
-    KERNEL_LOG_ERROR("[%s] Tensor input_indices's rank less than 1.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input_indices's rank less than 1.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (shape_shape->GetDims() < 1) {
-    KERNEL_LOG_ERROR("[%s] Tensor input_shape's rank less than 1.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input_shape's rank less than 1.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (indices_shape_m > shape_shape->NumElements()) {
-    KERNEL_LOG_ERROR("[%s] Tensor input_shape&input_indices ranks mismatch.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input_shape&input_indices ranks mismatch.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   for (int64_t i = 0; i < shape_indices->GetDims() - 1; i++) {
     if (shape_indices->GetDimSize(i) != shape_x->GetDimSize(i)) {
-      KERNEL_LOG_ERROR("[%s], shape_indices and shape_updates mismatch.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s], shape_indices and shape_updates mismatch.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -75,11 +75,11 @@ uint32_t ScatterNdCpuKernel::Compute(CpuKernelContext &ctx) {
   auto data_type_indices = input_indices->GetDataType();
   auto data_type_shape = input_shape->GetDataType();
   if (data_type_shape != DT_INT32 && data_type_shape != DT_INT64) {
-    KERNEL_LOG_ERROR("ScatterNd kernel data type [%s] not support.", DTypeStr(data_type_shape).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "ScatterNd kernel data type [%s] not support.", DTypeStr(data_type_shape).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (data_type_indices != DT_INT32 && data_type_indices != DT_INT64) {
-    KERNEL_LOG_ERROR("ScatterNd kernel data type [%s] not support.", DTypeStr(data_type_indices).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "ScatterNd kernel data type [%s] not support.", DTypeStr(data_type_indices).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -113,13 +113,13 @@ uint32_t ScatterNdCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_BOOL:
       return DTYPE_CHOOSE<bool>(ctx);
     default:
-      KERNEL_LOG_ERROR("ScatterNd kernel data type [%s] not support.", DTypeStr(data_type_x).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "ScatterNd kernel data type [%s] not support.", DTypeStr(data_type_x).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename data_type_x>
-uint32_t ScatterNdCpuKernel::DTYPE_CHOOSE(const CpuKernelContext &ctx) {
+uint32_t ScatterNdCpuKernel::DTYPE_CHOOSE(CpuKernelContext &ctx) {
   auto indices_type = static_cast<DataType>(ctx.Input(0)->GetDataType());
   auto shape_type = static_cast<DataType>(ctx.Input(2)->GetDataType());
   if (indices_type == DT_INT32) {
@@ -135,13 +135,13 @@ uint32_t ScatterNdCpuKernel::DTYPE_CHOOSE(const CpuKernelContext &ctx) {
       return ScatterNdComputeRealKernel<int64_t, int64_t, data_type_x>(ctx);
     }
   }
-  KERNEL_LOG_ERROR("[%s] Data type of input is not supported, input data type is [%s].", ctx.GetOpType().c_str(),
-                   DTypeStr(indices_type).c_str());
+  CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not supported, input data type is [%s].",
+                        ctx.GetOpType().c_str(), DTypeStr(indices_type).c_str());
   return KERNEL_STATUS_PARAM_INVALID;
 }
 
 template <typename indices_type, typename shape_type, typename data_type_x>
-uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(const CpuKernelContext &ctx) {
+uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(CpuKernelContext &ctx) {
   int64_t n_slices = 1;
   int64_t slice_size = 1;
 
@@ -155,7 +155,7 @@ uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(const CpuKernelContext &
   auto updates_shape = ctx.Input(1)->GetTensorShape();
   for (int64_t i = 0; i < dims_shape - indices_nd; i++) {
     if (updates_shape->GetDimSize(i + shape_indices->GetDims() - 1) != data_shape[i + indices_nd]) {
-      KERNEL_LOG_ERROR("[%s], shape_indices and shape_updates mismatch.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s], shape_indices and shape_updates mismatch.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -189,7 +189,7 @@ uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(const CpuKernelContext &
     auto copy_size = std::min(output_size, static_cast<uint64_t>(INT32_MAX));
     auto ret = memset_s(output_addr, output_size, 0, copy_size);
     if (ret != EOK) {
-      KERNEL_LOG_ERROR("For 'ScatterNd', memset_s failed, ret=%d.", ret);
+      CUST_KERNEL_LOG_ERROR(ctx, "For 'ScatterNd', memset_s failed, ret=%d.", ret);
       return KERNEL_STATUS_INNER_ERROR;
     }
     output_size -= copy_size;
@@ -207,7 +207,7 @@ uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(const CpuKernelContext &
       }
       if (out_bound) continue;
       for (int64_t j = 0; j < slice_size; j++) {
-        AtomicAdd(&Output_data[to_pos + j], Updates_data[i * slice_size + j]);
+        AtomicAdd(ctx, &Output_data[to_pos + j], Updates_data[i * slice_size + j]);
       }
     }
   };
@@ -216,8 +216,8 @@ uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(const CpuKernelContext &
   if (max_core_num_total > n_slices) {
     max_core_num_total = n_slices;
   }
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, n_slices, n_slices / max_core_num_total, task),
-                      "ScatterND task Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, n_slices, n_slices / max_core_num_total, task),
+                           "ScatterND task Compute failed.");
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kScatterNd, ScatterNdCpuKernel);

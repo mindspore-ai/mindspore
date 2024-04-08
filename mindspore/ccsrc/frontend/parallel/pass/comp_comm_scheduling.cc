@@ -30,6 +30,7 @@
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "mindspore/ccsrc/frontend/parallel/step_parallel.h"
 #include "mindspore/core/utils/misc.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 #include "include/backend/optimizer/helper.h"
 
@@ -591,7 +592,7 @@ SchedulingOutput FastGreedyScheduler::ProcessCore(std::vector<std::shared_ptr<Ta
     const auto &num_cores = type_to_num.second;
     for (int i = 0; i < num_cores; ++i) {
       ProcessingElement new_pe;
-      new_pe.id = count + i;
+      new_pe.id = count + IntToSize(i);
       new_pe.type = type;
       new_pe.load = 0;
       new_pe.idle.emplace_back(0, SIZE_MAX);

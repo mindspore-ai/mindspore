@@ -31,10 +31,10 @@ class ScatterNdUpdateCpuKernel : public CpuKernel {
 
  private:
   template <typename var_type>
-  uint32_t DTYPE_CHOOSE(const CpuKernelContext &ctx);
+  uint32_t DTYPE_CHOOSE(CpuKernelContext &ctx);
 
   template <typename var_type, typename indices_type>
-  uint32_t ScatterNdUpdateComputeRealKernel(const CpuKernelContext &ctx);
+  uint32_t ScatterNdUpdateComputeRealKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

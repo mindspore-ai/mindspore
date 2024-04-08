@@ -34,34 +34,34 @@ const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 16 * 1024;
 const char *kLogit = "Logit";
 
-#define LOGIT_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                       \
-    uint32_t result = LogitCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("Logit kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define LOGIT_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                 \
+    uint32_t result = LogitCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "Logit kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t LogitCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kLogit);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kLogit);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     LOGIT_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     LOGIT_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     LOGIT_COMPUTE_CASE(DT_FLOAT, float, ctx)
     default:
-      KERNEL_LOG_ERROR("Logit kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Logit kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t LogitCpuKernel::LogitCompute(const CpuKernelContext &ctx) {
+uint32_t LogitCpuKernel::LogitCompute(CpuKernelContext &ctx) {
   auto input_tensor = ctx.Input(0);
   auto output_tensor = ctx.Output(0);
   auto input = reinterpret_cast<T *>(input_tensor->GetData());
@@ -100,11 +100,11 @@ uint32_t LogitCpuKernel::LogitCompute(const CpuKernelContext &ctx) {
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max core num is 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max core num is 0");
       return KERNEL_STATUS_PARAM_INVALID;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_less),
-                        "Logit Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_less),
+                             "Logit Compute failed.");
   } else {
     T one = T(1);
     T up_bound = static_cast<T>(1) - static_cast<T>(eps);

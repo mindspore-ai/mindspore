@@ -21,7 +21,7 @@ mindspore.ops.binary_cross_entropy
         \end{cases}
 
     .. warning::
-        - `x` 的值必须要在0-1范围内。
+        - `logits` 的值必须要在0-1范围内。
 
     参数：
         - **logits** (Tensor) - 输入预测值，其数据类型为float16或float32。

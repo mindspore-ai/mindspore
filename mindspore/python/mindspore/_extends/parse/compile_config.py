@@ -12,6 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Name: COMPILE_PROFILE
+Function: Whether to do profile and print profile log.
+Value Range:
+    1: Enable.
+    Default: Disable.
+"""
+COMPILE_PROFILE = ''
+
+"""
+Name: COMPILE_PROFILE_FINISH_ACTION
+Function: Specify the last action name to print profile log.
+Value Range:
+    Action name string, for example, validate.
+"""
+COMPILE_PROFILE_FINISH_ACTION = ''
 
 """
 Name: FALLBACK_SUPPORT_LIST_DICT_INPLACE
@@ -189,6 +205,8 @@ TRACE_LABEL_WITH_UNIQUE_ID = ''
 
 
 __all__ = [
+    "COMPILE_PROFILE",
+    "COMPILE_PROFILE_FINISH_ACTION",
     "FALLBACK_SUPPORT_LIST_DICT_INPLACE",
     "FALLBACK_FORCE_ANY",
     "IF_PARALLEL_CALL",

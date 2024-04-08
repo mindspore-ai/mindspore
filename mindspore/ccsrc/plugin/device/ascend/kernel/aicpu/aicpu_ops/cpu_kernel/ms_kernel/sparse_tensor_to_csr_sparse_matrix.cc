@@ -29,34 +29,35 @@ const int DIM3 = 3;
 
 namespace aicpu {
 uint32_t SparseTensorToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "SparseTensorToCSRSparseMatrix normal check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SparseTensorToCSRSparseMatrix normal check failed.");
   Tensor *x_indices = ctx.Input(0);
   Tensor *x_values = ctx.Input(1);
   Tensor *x_dense_shape = ctx.Input(2);
 
   const int rank = x_dense_shape->NumElements();
   if (rank != DIM2 && rank != DIM3) {
-    KERNEL_LOG_ERROR("SparseTensor must have rank 2 or 3.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseTensor must have rank 2 or 3.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   auto x_indices_shape = x_indices->GetTensorShape();
   auto x_values_shape = x_values->GetTensorShape();
   if (x_indices_shape->NumElements() / rank != x_values_shape->NumElements()) {
-    KERNEL_LOG_ERROR("Tensor x_indices&x_values's ranks mismatch.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Tensor x_indices&x_values's ranks mismatch.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   auto x_dense_shape_data_type = x_dense_shape->GetDataType();
   auto x_indices_data_type = x_indices->GetDataType();
   if (x_indices_data_type != DT_INT32 && x_indices_data_type != DT_INT64) {
-    KERNEL_LOG_ERROR("SparseTensorToCSRSparseMatrix kernel data type [%s] not support.",
-                     DTypeStr(x_indices_data_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseTensorToCSRSparseMatrix kernel data type [%s] not support.",
+                          DTypeStr(x_indices_data_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (x_dense_shape_data_type != x_indices_data_type) {
-    KERNEL_LOG_ERROR("SparseTensorToCSRSparseMatrix kernel data type mismatch.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseTensorToCSRSparseMatrix kernel data type mismatch.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -79,10 +80,10 @@ uint32_t SparseTensorToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) 
           status = ComputeKernel<int32_t, std::complex<double> >(ctx);
           break;
         default:
-          KERNEL_LOG_ERROR(
-            "SparseTensorToCSRSparseMatrix kernel data type [%s] not "
-            "support.",
-            DTypeStr(x_values_data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx,
+                                "SparseTensorToCSRSparseMatrix kernel data type [%s] not "
+                                "support.",
+                                DTypeStr(x_values_data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -101,20 +102,20 @@ uint32_t SparseTensorToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) 
           status = ComputeKernel<int64_t, std::complex<double> >(ctx);
           break;
         default:
-          KERNEL_LOG_ERROR(
-            "SparseTensorToCSRSparseMatrix kernel data type [%s] not "
-            "support.",
-            DTypeStr(x_values_data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx,
+                                "SparseTensorToCSRSparseMatrix kernel data type [%s] not "
+                                "support.",
+                                DTypeStr(x_values_data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     default:
-      KERNEL_LOG_ERROR("data type of indices is not int32 or int64");
+      CUST_KERNEL_LOG_ERROR(ctx, "data type of indices is not int32 or int64");
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (status != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("SparseTensorToCSRSparseMatrix kernel compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseTensorToCSRSparseMatrix kernel compute failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -124,7 +125,7 @@ uint32_t SparseTensorToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) 
 REGISTER_MS_CPU_KERNEL(SparseTensorToCSRSparseMatrix, SparseTensorToCSRSparseMatrixCpuKernel);
 
 template <typename indicesT, typename dataT>
-uint32_t SparseTensorToCSRSparseMatrixCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
+uint32_t SparseTensorToCSRSparseMatrixCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
   auto x_dense_shape = ctx.Input(2);
   auto x_dense_shape_ptr = static_cast<indicesT *>(x_dense_shape->GetData());
   auto y_dense_shape_ptr = static_cast<indicesT *>(ctx.Output(0)->GetData());

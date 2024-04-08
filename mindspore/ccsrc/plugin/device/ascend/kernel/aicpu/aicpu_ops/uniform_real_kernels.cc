@@ -46,6 +46,8 @@ uint32_t UniformRealKernel::DoCompute() {
   uint64_t rng_seed =
     random::GetKernelBaseRandomStates(io_addrs_, kCountsIndex, kStatesIndex, seed_, seed2_, "UniformReal", &kernel_ret);
   if (kernel_ret != kAicpuKernelStateSucess) {
+    free(tmp_out);
+    tmp_out = NULL;
     return kAicpuKernelStateFailed;
   }
   rng_.seed(rng_seed);
@@ -59,8 +61,9 @@ uint32_t UniformRealKernel::DoCompute() {
     memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), out_count_ * sizeof(float), tmp_out, out_count_ * sizeof(float));
   free(tmp_out);
   tmp_out = NULL;
-  if (ret < 0) {
-    return kAicpuKernelStateInvalid;
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("memcpy_s failed, ret=%d.", ret)
+    return KERNEL_STATUS_INNNER_ERROR;
   }
   return kAicpuKernelStateSucess;
 }

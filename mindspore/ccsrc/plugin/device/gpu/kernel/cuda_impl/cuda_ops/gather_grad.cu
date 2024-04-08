@@ -23,40 +23,44 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename T, typename S>
-__global__ void GatherGradKernel(const T *index, const S *grad, S *output, size_t dim_before_axis_index,
-                                 size_t dim_at_axis_index, size_t dim_after_axis_index, size_t dim_at_axis_out,
-                                 size_t dim_after_axis_out, size_t num) {
+__global__ void GatherGradKernel(const T *index, const S *grad, S *output, size_t dim, size_t num, size_t rank,
+                                 const ShapeHelper output_shape, const ShapeHelper index_shape) {
   for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < num; id += blockDim.x * gridDim.x) {
     T j = index[id];
     if (j < 0) {
-      j += static_cast<T>(dim_at_axis_out);
+      j += static_cast<T>(output_shape.shape[dim]);
     }
     CUDA_KERNEL_ASSERT(j >= 0);
     size_t j_read = static_cast<size_t>(j);
-    CUDA_KERNEL_ASSERT(j_read < dim_at_axis_out);
-
-    size_t offset = id % dim_after_axis_index + j_read * dim_after_axis_out +
-                    ((id / (dim_after_axis_index * dim_at_axis_index)) % dim_before_axis_index) *
-                      (dim_at_axis_out * dim_after_axis_out);
+    CUDA_KERNEL_ASSERT(j_read < output_shape.shape[dim]);
+    size_t offset = 0;
+    size_t moved_id = id;
+    size_t moved_offset = 1;
+    for (size_t i = rank; i > 0; i--) {
+      auto real_i = i - 1;
+      auto cur_idx = moved_id % index_shape.shape[real_i];
+      moved_id = moved_id / index_shape.shape[real_i];
+      auto cur_input_idx = real_i == dim ? j_read : cur_idx;
+      offset += cur_input_idx * moved_offset;
+      moved_offset *= output_shape.shape[real_i];
+    }
     MsAtomicAdd(output + offset, grad[id]);
   }
   return;
 }
 
 template <typename T, typename S>
-cudaError_t GatherGrad(const T *index, const S *grad, S *output, size_t dim_before_axis_index, size_t dim_at_axis_index,
-                       size_t dim_after_axis_index, size_t dim_at_axis_out, size_t dim_after_axis_out, size_t num,
-                       cudaStream_t stream) {
-  GatherGradKernel<<<GET_BLOCKS(num), GET_THREADS, 0, stream>>>(index, grad, output, dim_before_axis_index,
-                                                                dim_at_axis_index, dim_after_axis_index,
-                                                                dim_at_axis_out, dim_after_axis_out, num);
+cudaError_t GatherGrad(const T *index, const S *grad, S *output, size_t dim, size_t num, size_t rank,
+                       const ShapeHelper &output_shape, const ShapeHelper &index_shape, cudaStream_t stream) {
+  GatherGradKernel<<<GET_BLOCKS(num), GET_THREADS, 0, stream>>>(index, grad, output, dim, num, rank, output_shape,
+                                                                index_shape);
   return GetCudaStatus();
 }
 
-#define SPECIALIZE_KERNEL(T, S)                                                                       \
-  template CUDA_LIB_EXPORT cudaError_t GatherGrad<T, S>(                                              \
-    const T *index, const S *grad, S *output, size_t dim_before_axis_index, size_t dim_at_axis_index, \
-    size_t dim_after_axis_index, size_t dim_at_axis_out, size_t dim_after_axis_out, size_t num, cudaStream_t stream);
+#define SPECIALIZE_KERNEL(T, S)                                                                                   \
+  template CUDA_LIB_EXPORT cudaError_t GatherGrad<T, S>(const T *index, const S *grad, S *output, size_t dim,     \
+                                                        size_t num, size_t rank, const ShapeHelper &output_shape, \
+                                                        const ShapeHelper &index_shape, cudaStream_t stream);
 
 SPECIALIZE_KERNEL(int, Complex<double>)
 SPECIALIZE_KERNEL(int64_t, Complex<double>)

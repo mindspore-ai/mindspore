@@ -549,46 +549,6 @@ Math operations include basic and advanced math operations on tensors, and they 
     mindspore.numpy.unwrap
     mindspore.numpy.var
 
-Fast Fourier Transforms (FFTs)
------------------------------------------
-
-FFTs submodule include basic and advanced FFT operations.
-For example: 1-D to N-D discrete Fourier transform and its inverse transform, discrete cosine transform, fast Hankel transform, etc.
-
-- One-dimensional fast Fourier transform
-
-  The following code implements a one-dimensional fast Fourier transform on the input `x`:
-
-  .. code-block:: python
-
-      import mindspore.numpy as np
-
-      x = np.array([1.6243454, -0.6117564, -0.5281718, -1.0729686])
-      output = np.fft.fft(x)
-      print(output)
-
-  The result is as follows:
-
-  .. code-block::
-
-      [-0.5885514+0j 2.1525172-0.4612122j 2.7808984+0j 2.1525172+0.4612122j]
-
-.. msplatformautosummary::
-    :toctree: numpy
-    :nosignatures:
-    :template: classtemplate_inherited.rst
-    
-    mindspore.numpy.fft.fft
-    mindspore.numpy.fft.fft2
-    mindspore.numpy.fft.fftn
-    mindspore.numpy.fft.fftshift
-    mindspore.numpy.fft.rfft
-    mindspore.numpy.fft.ifft
-    mindspore.numpy.fft.ifft2
-    mindspore.numpy.fft.ifftn
-    mindspore.numpy.fft.ifftshift
-    mindspore.numpy.fft.irfft
-
 Interact With MindSpore Functions
 ---------------------------------
 
@@ -704,7 +664,7 @@ The following are examples:
         ...
        Tensor(shape=[4], dtype=Float32, value= [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00,  2.00000000e+00]))
 
-  For more details, see `API GradOperation <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.GradOperation.html>`_ .
+  For more details, see `API GradOperation <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/ops/mindspore.ops.GradOperation.html>`_ .
 
 - Use mindspore.set_context to control execution mode
 
@@ -730,7 +690,7 @@ The following are examples:
       set_context(device_target="Ascend")
       ...
 
-  For more details, see `API mindspore.set_context <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ .
+  For more details, see `API mindspore.set_context <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ .
 
 - Use mindspore.numpy in MindSpore Deep Learning Models
 

@@ -17,9 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GATHER_GRAD_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GATHER_GRAD_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherd.cuh"
 template <typename T, typename S>
-CUDA_LIB_EXPORT cudaError_t GatherGrad(const T *index, const S *grad, S *output, size_t dim_before_axis_index,
-                                       size_t dim_at_axis_index, size_t dim_after_axis_index, size_t dim_at_axis_out,
-                                       size_t dim_after_axis_out, size_t num, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t GatherGrad(const T *index, const S *grad, S *output, size_t dim, size_t num, size_t rank,
+                                       const ShapeHelper &output_shape, const ShapeHelper &index_shape,
+                                       cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GATHER_GRAD_CUH_

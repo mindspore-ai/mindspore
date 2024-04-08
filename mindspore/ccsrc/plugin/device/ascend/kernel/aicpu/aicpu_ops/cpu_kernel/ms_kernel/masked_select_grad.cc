@@ -34,21 +34,21 @@ const char *const kMaskedSelectGrad = "MaskedSelectGrad";
 namespace aicpu {
 uint32_t MaskedSelectGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kMaskedSelectGradInputNum, kMaskedSelectGradOutputNum),
-                      "[%s] check params failed.", kMaskedSelectGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kMaskedSelectGradInputNum, kMaskedSelectGradOutputNum),
+                           "[%s] check params failed.", kMaskedSelectGrad);
 
   // choose compute function depend on dataType
   auto data_type0 = static_cast<DataType>(ctx.Input(kFirstInputIndex)->GetDataType());
   auto data_type1 = static_cast<DataType>(ctx.Input(kSecondInputIndex)->GetDataType());
   auto data_type2 = static_cast<DataType>(ctx.Input(2)->GetDataType());
   if (data_type1 != DT_BOOL) {
-    KERNEL_LOG_ERROR("[%s] Data type of mask requires bool, but got data type [%s].", ctx.GetOpType().c_str(),
-                     DTypeStr(data_type1).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of mask requires bool, but got data type [%s].", ctx.GetOpType().c_str(),
+                          DTypeStr(data_type1).c_str());
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
   if (data_type0 != data_type2) {
-    KERNEL_LOG_ERROR("[%s] Data type of x and y requires same, but got data type [%s] and [%s].",
-                     ctx.GetOpType().c_str(), DTypeStr(data_type0).c_str(), DTypeStr(data_type2).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of x and y requires same, but got data type [%s] and [%s].",
+                          ctx.GetOpType().c_str(), DTypeStr(data_type0).c_str(), DTypeStr(data_type2).c_str());
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
   switch (data_type0) {
@@ -77,29 +77,30 @@ uint32_t MaskedSelectGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_BOOL:
       return MaskedSelectGradCompute<bool>(ctx);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(data_type0).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(data_type0).c_str());
       return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
 }
 
 template <typename T>
-uint32_t MaskedSelectGradCpuKernel::MaskedSelectGradCompute(const CpuKernelContext &ctx) {
+uint32_t MaskedSelectGradCpuKernel::MaskedSelectGradCompute(CpuKernelContext &ctx) {
   bool *mask = reinterpret_cast<bool *>(ctx.Input(1)->GetData());
-  KERNEL_CHECK_NULLPTR(mask, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "[%s] get input_data[1] failed.",
-                       kMaskedSelectGrad);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, mask, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "[%s] get input_data[1] failed.", kMaskedSelectGrad);
   T *grad = reinterpret_cast<T *>(ctx.Input(2)->GetData());
-  KERNEL_CHECK_NULLPTR(grad, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "[%s] get input_data[2] failed.",
-                       kMaskedSelectGrad);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, grad, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "[%s] get input_data[2] failed.", kMaskedSelectGrad);
   T *dx = reinterpret_cast<T *>(ctx.Output(0)->GetData());
-  KERNEL_CHECK_NULLPTR(dx, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "[%s] get output_data[0] failed.",
-                       kMaskedSelectGrad);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, dx, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "[%s] get output_data[0] failed.", kMaskedSelectGrad);
 
   auto input_shape_a = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   auto input_shape_b = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> output_shape;
   auto ret = GetBroadcastShape(input_shape_a, input_shape_b, output_shape);
-  KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Shape of x and mask can't be broadcast.");
+  CUST_KERNEL_CHECK_FALSE(ctx, ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
+                          "Shape of x and mask can't be broadcast.");
   uint64_t tensor_size = 1;
   for (const int64_t &d : output_shape) {
     tensor_size *= static_cast<uint64_t>(d);

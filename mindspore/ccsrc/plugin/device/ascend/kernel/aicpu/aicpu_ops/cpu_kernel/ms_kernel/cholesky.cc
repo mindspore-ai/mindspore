@@ -34,7 +34,7 @@ const char *Cholesky = "Cholesky";
 
 namespace aicpu {
 uint32_t CholeskyCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Cholesky check input and output failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Cholesky check input and output failed.");
 
   Tensor *input = ctx.Input(0);
   AttrValue *upper = ctx.GetAttr("upper");
@@ -47,7 +47,7 @@ uint32_t CholeskyCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return ComputeKernel<double>(ctx, upperinfo);
     default:
-      KERNEL_LOG_ERROR("Cholesky kernel data type [%s] not support.", DTypeStr(data_type_in).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Cholesky kernel data type [%s] not support.", DTypeStr(data_type_in).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -55,7 +55,7 @@ uint32_t CholeskyCpuKernel::Compute(CpuKernelContext &ctx) {
 REGISTER_MS_CPU_KERNEL(Cholesky, CholeskyCpuKernel);
 
 template <typename T>
-uint32_t CholeskyCpuKernel::ComputeKernel(const CpuKernelContext &ctx, const bool &upper) {
+uint32_t CholeskyCpuKernel::ComputeKernel(CpuKernelContext &ctx, const bool &upper) {
   auto inputptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto outputptr = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   std::vector<int64_t> dims = ctx.Input(0)->GetTensorShape()->GetDimSizes();
@@ -81,7 +81,7 @@ uint32_t CholeskyCpuKernel::ComputeKernel(const CpuKernelContext &ctx, const boo
     Eigen::LLT<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> A_llt(A);
 
     if (!A.isApprox(A.transpose()) || A_llt.info() == Eigen::NumericalIssue) {
-      KERNEL_LOG_ERROR("There exists non semi-positive definitie matrix!");
+      CUST_KERNEL_LOG_ERROR(ctx, "There exists non semi-positive definitie matrix!");
       return KERNEL_STATUS_INNER_ERROR;
     }
 

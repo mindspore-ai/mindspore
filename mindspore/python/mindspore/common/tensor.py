@@ -83,11 +83,11 @@ def tensor(input_data=None, dtype=None, shape=None, init=None, internal=False, c
     based on the `dtype` argument.
 
     Please refer to `Creating and Using Tensor
-    <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#mindspore-user-defined-data-types>`_ .
+    <https://www.mindspore.cn/docs/en/r2.3.q1/note/static_graph_syntax_support.html#mindspore-user-defined-data-types>`_ .
 
     The difference between it and the Tensor class is that it adds
     `Annotation
-    <https://www.mindspore.cn/docs/en/master/design/dynamic_graph_and_static_graph.html?#annotation-type>`_
+    <https://www.mindspore.cn/docs/en/r2.3.q1/design/dynamic_graph_and_static_graph.html?#annotation-type>`_
     which can prevent the generation of AnyType compared to the Tensor class.
 
     The arguments and return values are the same as the Tensor class. Also see: :class:`mindspore.Tensor`.
@@ -128,11 +128,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         dtype (:class:`mindspore.dtype`): Used to indicate the data type of the output Tensor. The argument should
             be defined in `mindspore.dtype`. If it is ``None`` , the data type of the output Tensor will be the same
             as the `input_data`. Default: ``None`` .
-        shape (Union[tuple, list, int]): Used to indicate the shape of the output Tensor. The argument should be
-            a list of integers, a tuple of integers or an integer. If `input_data` is available,
-            `shape` doesn't need to be set. If None in shape, a tensor of dynamic shape is created, `input_data`
-            doesn't need to be set; if None not in shape, a tensor of static shape is created, `input_data` or `init`
-            must be set. Default: ``None`` .
+        shape (Union[tuple, list, int, :class:`mindspore.Symbol`]): Used to indicate the shape of the output Tensor.
+            If `input_data` is available, `shape` doesn't need to be set. If ``None`` or `Symbol` exists in `shape` ,
+            a tensor of dynamic shape is created, `input_data` doesn't need to be set; if only integers exist in
+            `shape`, a tensor of static shape is created, `input_data` or `init` must be set. Default: ``None`` .
         init (Initializer): The information of init data.
             `init` is used for delayed initialization in parallel mode, when using init, `dtype` and `shape` must be
             set. Default: ``None`` .
@@ -276,6 +275,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         self.slice_num_of_persistent_data_ = None
         self.slice_shape_of_persistent_data_ = None
+
+        # the auto gradient information
+        self._grad = None
+        self._grad_fn = None
+        self._requires_grad = False
+        self._retain_grad = False
 
     @classmethod
     def __subclasshook__(cls, sub):
@@ -565,6 +570,83 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             2
         """
         return len(self._shape)
+
+    @property
+    def grad(self):
+        r"""
+        Get the gradient value.
+        """
+        return self._grad
+
+    @grad.setter
+    def grad(self, grad):
+        r"""
+        Set the gradient value.
+        """
+        self._grad = grad
+
+    @property
+    def grad_fn(self):
+        r"""
+        The function for backward.
+        """
+        return self._grad_fn
+
+    @grad_fn.setter
+    def grad_fn(self, grad_fn):
+        r"""
+        Set the function for backward.
+        """
+        self._grad_fn = grad_fn
+
+    @property
+    def is_leaf(self):
+        r"""
+        Whether the stub tensor is leaf.
+        They will be a leaf if they have requires_grad and requires_grad is False,
+        Or they were created by user.
+        """
+        return self._requires_grad is False or self._grad_fn is None
+
+    @property
+    def requires_grad(self):
+        r"""
+        Whether the stub tensor need requires grad.
+        """
+        return self._requires_grad
+
+    @requires_grad.setter
+    def requires_grad(self, requires_grad):
+        r"""
+        Mark the stub tensor whether need requires gradient.
+        """
+        self._requires_grad = requires_grad
+
+    def retain_grad(self):
+        r"""
+        Enable the stub tensor which is not non-leaf to have the grad during backward().
+        """
+        if not self._requires_grad:
+            RuntimeError("can't retain_grad on Tensor that has requires_grad = False.")
+        self._retain_grad = self._grad_fn is not None
+
+    @property
+    def retains_grad(self):
+        r"""
+        Is True if the stub tensor is non-leaf and its grad is enabled to be populated during backward().
+        """
+        return self._retain_grad
+
+    def backward(self, grad=None):
+        r"""
+        Calculate the gradient.
+        """
+        if grad is None:
+            grad = Tensor(np.ones(self.shape), self.dtype)
+        if self._grad_fn is not None:
+            self._grad_fn.apply(grad)
+        elif self._requires_grad:
+            self._grad = grad
 
     @property
     def H(self):
@@ -975,8 +1057,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         if self.has_init:
             self.init_data()
-        if self.dtype == mstype.bfloat16:
-            raise TypeError(f"For asnumpy, the type of tensor cannot be BFloat16, but got {self.dtype}.")
         return Tensor_.asnumpy(self)
 
     def numpy(self):
@@ -1122,7 +1202,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Examples:
             >>> import mindspore as ms
             >>> x = ms.Tensor([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]], dtype=ms.float32)
-            >>> ret = x.stride()
+            >>> x.stride()
             [5, 1]
         """
         stride = Tensor_.stride(self)
@@ -2640,7 +2720,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
                 to get one shard of a parameter's slice. For more information about optimizer parallel, please refer to:
                 `Optimizer Parallel
-                <https://www.mindspore.cn/tutorials/experts/en/master/parallel/optimizer_parallel.html>`_.
+                <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/optimizer_parallel.html>`_.
                 Default: ``None``.
 
         Returns:
@@ -3182,36 +3262,36 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Return sum of tensor elements over a given axis.
 
         Note:
-            Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and
-            `extobj` are not supported.
+            Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are not supported.
+            The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
         Args:
-            axis (Union[None, int, tuple(int), list(int)]): Axis or axes along which a sum is performed.
+            axis (Union[None, int, tuple(int), list(int), Tensor]): Axis or axes along which a sum is performed.
                 Default: ``None`` .
-                If None, sum all the elements of the input tensor.
-                If the axis is negative, it counts from the last to the first axis.
-                If the axis is a tuple or list of ints, a sum is performed on all the axes specified in the tuple
-                or list instead of a single axis or all the axes as before.
+                If ``None`` , sum all the elements of the input tensor.
+                If the `axis` is negative, it counts from the last to the first `axis`.
+                If the `axis` is a tuple or list of ints, a sum is performed on all the axes specified in the tuple
+                or list instead of a single `axis` or all the axes as before.
             dtype (:class:`mindspore.dtype`, optional): defaults to ``None`` . Overrides the dtype of the
                 output Tensor.
             keepdims (bool): If this is set to ``True`` , the axes which are reduced are left in the result as
                 dimensions with size one. With this option, the result will broadcast correctly against the input
-                array. If the default value is passed, then keepdims will not be passed through to the sum method
+                array. If the default value is passed, then `keepdims` will not be passed through to the sum method
                 of sub-classes of ndarray, however any non-default value will be. If the sub-class method does not
-                implement keepdims any exceptions will be raised. Default: ``False`` .
+                implement `keepdims` any exceptions will be raised. Default: ``False`` .
             initial (scalar): Starting value for the sum. Default: ``None`` .
 
         Returns:
-            Tensor. A tensor with the same shape as input, with the specified axis removed.
-            If the input tensor is a 0-d array, or if the axis is ``None`` , a scalar is returned.
+            Tensor. A tensor with the same shape as input, with the specified `axis` removed.
+            If the input tensor is a 0-d array, or if the `axis` is ``None`` , a scalar is returned.
 
         Raises:
-            TypeError: If input is not array_like, or `axis` is not int, tuple of ints or list of ints,
+            TypeError: If input is not array_like, or `axis` is not int, tuple of ints, list of ints or Tensor,
                 or `keepdims` is not integer, or `initial` is not scalar.
-            ValueError: If any axis is out of range or duplicate axes exist.
+            ValueError: If any `axis` is out of range or duplicate axes exist.
 
         See also:
-            - :func:`mindspore.Tensor.cumsum`: Return the cumulative sum of the elements along a given axis.
+            - :func:`mindspore.Tensor.cumsum`: Return the cumulative sum of the elements along a given `axis`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

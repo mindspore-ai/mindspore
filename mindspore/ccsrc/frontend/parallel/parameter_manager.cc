@@ -354,6 +354,22 @@ void HandleSymbolicKeyInstance(const FuncGraphPtr &root, const std::vector<AnfNo
   }
 }
 
+bool IsStrategySaved(const AnfNodePtr &parameter_node) {
+  MS_EXCEPTION_IF_NULL(parameter_node);
+  auto cloned_parameter = parameter_node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(cloned_parameter);
+
+  // find the clone parameter
+  if (!cloned_parameter->has_default()) {
+    return false;
+  }
+  auto param_value = cloned_parameter->param_info();
+  if (param_value == nullptr) {
+    return false;
+  }
+  return param_value->strategy_ckpt_saved();
+}
+
 bool ParameterIsCloned(const AnfNodePtr &parameter_node) {
   MS_EXCEPTION_IF_NULL(parameter_node);
   auto cloned_parameter = parameter_node->cast<ParameterPtr>();
@@ -444,6 +460,17 @@ py::object GetPyParameterObj(const ParamInfoPtr &param_info, const std::string &
   return python_adapter::GetPyObjAttr(py_obj, obj);
 }
 
+static bool IsAccuGradObj(const py::object &py_obj) {
+  auto name = python_adapter::GetPyObjAttr(py_obj, PARAM_NAME);
+  if (py::isinstance<py::none>(name)) {
+    return false;
+  }
+  if (py::cast<std::string>(name).find(ACCU_GRADS) == 0) {
+    return true;
+  }
+  return false;
+}
+
 void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &tensor_layout) {
   auto param_info = parameter->param_info();
   if (param_info == nullptr) {
@@ -481,6 +508,7 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
   (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, py_obj, py::str(phase), layout);
 
   // handle cloned parameter, like accu_grad and optimizer param
+  auto grad_accumulation_shard = ParallelContext::GetInstance()->grad_accumulation_shard();
   auto cloned_py_obj = GetPyParameterObj(param_info, CLONED_OBJ);
   if (!py::isinstance<py::none>(cloned_py_obj)) {
     if (!py::isinstance<py::list>(cloned_py_obj)) {
@@ -489,8 +517,16 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
     auto obj_list = py::cast<py::list>(cloned_py_obj);
     for (size_t i = 0; i < obj_list.size(); ++i) {
       py::object each_cloned_obj = obj_list[i];
+      auto cloned_param_slice_shape = tensor_layout->slice_shape().array();
+      if (!opt_shard_group.empty()) {
+        if (!IsAccuGradObj(each_cloned_obj) || grad_accumulation_shard) {
+          cloned_param_slice_shape = tensor_layout->opt_shard_slice_shape();
+        }
+      }
+      py::tuple cloned_param_layout = py::make_tuple(device_arrangement, tensor_map, cloned_param_slice_shape,
+                                                     field_size, uniform_split, opt_shard_group, full_shape);
       (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, each_cloned_obj, py::str(phase),
-                                     layout);
+                                     cloned_param_layout);
     }
   }
 }
@@ -745,16 +781,20 @@ static bool AdafactorStateIsOptShard(const std::string &opt_shard_group, size_t 
   std::string exp_row_name = EXP_AVG_SQ_ROW + param_name;
   std::string exp_col_name = EXP_AVG_SQ_COL + param_name;
   std::string exp_avg_name = EXP_AVG_SQ + param_name;
+  std::string exp_insta_row_name = EXP_AVG_INSTA_ROW + param_name;
+  std::string exp_insta_col_name = EXP_AVG_INSTA_COL + param_name;
 
   if (shape_size > 2 && state_name == exp_avg_name) {
     return false;
   }
 
-  if (shape_size == 2 && (state_name == exp_col_name || state_name == exp_avg_name)) {
+  if (shape_size == 2 &&
+      (state_name == exp_col_name || state_name == exp_avg_name || state_name == exp_insta_col_name)) {
     return false;
   }
 
-  if (shape_size == 1 && (state_name == exp_row_name || state_name == exp_col_name)) {
+  if (shape_size == 1 &&
+      (state_name == exp_row_name || state_name == exp_col_name || state_name == exp_insta_row_name)) {
     return false;
   }
 
@@ -857,17 +897,10 @@ static std::pair<AnfNodePtr, bool> FindParameterByFuncGraph(const AnfNodePtr &no
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(fg);
-  auto fg_parameters = fg->parameters();
 
   auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr).first;
-  auto pre_cnode = pre_node->cast<CNodePtr>();
-  for (size_t index = 1; index < pre_cnode->size(); ++index) {
-    auto res = FindParameter(pre_cnode->input(index), pre_cnode->func_graph());
-    if (!res.first) {
-      continue;
-    }
-    return res;
+  if (pre_node) {
+    return FindParameter(pre_node, pre_node->func_graph());
   }
   return std::make_pair(nullptr, false);
 }
@@ -1373,6 +1406,16 @@ void HandleMirrorInAdaSum(
   }
 }
 
+void SetParamInfoSaveStrategy(ParameterPtr row_col_param) {
+  if (!row_col_param) {
+    return;
+  }
+  auto param_info = row_col_param->param_info();
+  if (param_info) {
+    param_info->set_strategy_ckpt_saved(true);
+  }
+}
+
 void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                                const FuncGraphManagerPtr &manager) {
   MS_LOG(INFO) << "Adafactor or Came optimizer process start";
@@ -1458,9 +1501,9 @@ void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNo
 
       if (AdafactorStateIsOptShard(tensor_layout->opt_shard_group(), shape_size, param_name, row_col_param_name)) {
         new_tensor_layout.set_opt_shard_group(tensor_layout->opt_shard_group());
-        new_tensor_layout.GenerateOptShardSliceShape();
+        new_tensor_layout.set_opt_shard_slice_shape(opt_shard_slice_shape);
       }
-
+      SetParamInfoSaveStrategy(row_col_param);
       auto cloned_abstract = row_col_node->abstract()->Clone();
       MS_EXCEPTION_IF_NULL(cloned_abstract);
       std::shared_ptr<abstract::BaseShape> parallel_shape = std::make_shared<abstract::Shape>(opt_shard_slice_shape);

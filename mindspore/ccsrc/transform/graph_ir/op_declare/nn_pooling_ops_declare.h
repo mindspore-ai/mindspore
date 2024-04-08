@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_POOLING_OPS_DECLARE_H_
 
 #include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "op_proto/inc/nn_pooling_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_nn_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
@@ -158,4 +157,7 @@ DECLARE_CUST_OP_USE_OUTPUT(FractionalMaxPool3DWithFixedKsize)
 
 DECLARE_CUST_OP_ADAPTER(FractionalMaxPool3DGradWithFixedKsize)
 DECLARE_CUST_OP_USE_OUTPUT(FractionalMaxPool3DGradWithFixedKsize)
+
+DECLARE_CUST_OP_ADAPTER(MaxPool3DWithArgmax)
+DECLARE_CUST_OP_USE_OUTPUT(MaxPool3DWithArgmax)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_POOLING_OPS_DECLARE_H_

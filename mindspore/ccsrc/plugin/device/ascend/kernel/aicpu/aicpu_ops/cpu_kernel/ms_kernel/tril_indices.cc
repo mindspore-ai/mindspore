@@ -28,28 +28,28 @@
 namespace {
 const char *kTrilIndices = "TrilIndices";
 
-#define TRIL_INDICES_COMPUTE_CASE(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                             \
-    uint32_t result = DoCompute<TYPE>(CTX);                   \
-    if (result != KERNEL_STATUS_OK) {                         \
-      KERNEL_LOG_ERROR("TrilIndices kernel compute failed."); \
-      return result;                                          \
-    }                                                         \
-    break;                                                    \
+#define TRIL_INDICES_COMPUTE_CASE(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                                       \
+    uint32_t result = DoCompute<TYPE>(CTX);                             \
+    if (result != KERNEL_STATUS_OK) {                                   \
+      CUST_KERNEL_LOG_ERROR(ctx, "TrilIndices kernel compute failed."); \
+      return result;                                                    \
+    }                                                                   \
+    break;                                                              \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t TrilIndicesCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(TrilIndicesAttrOutputCheck(ctx), "Tril Indices check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, TrilIndicesAttrOutputCheck(ctx), "Tril Indices check params failed.");
   Tensor *output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_PARAM_INVALID, "Get output failed.")
   auto data_type = ctx.Output(0)->GetDataType();
   switch (data_type) {
     TRIL_INDICES_COMPUTE_CASE(DT_INT32, int32_t, ctx)
     TRIL_INDICES_COMPUTE_CASE(DT_INT64, int64_t, ctx)
     default:
-      KERNEL_LOG_ERROR("TrilIndices kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "TrilIndices kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -57,7 +57,7 @@ uint32_t TrilIndicesCpuKernel::Compute(CpuKernelContext &ctx) {
 
 template <typename T>
 uint32_t TrilIndicesCpuKernel::DoCompute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(TrilIndicesAttrOutputCheck(ctx), "Tril Indices check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, TrilIndicesAttrOutputCheck(ctx), "Tril Indices check params failed.");
   AttrValue *row_ptr = ctx.GetAttr("row");
   AttrValue *col_ptr = ctx.GetAttr("col");
   AttrValue *offset_ptr = ctx.GetAttr("offset");
@@ -95,13 +95,13 @@ uint32_t TrilIndicesCpuKernel::DoCompute(CpuKernelContext &ctx) {
 uint32_t TrilIndicesCpuKernel::TrilIndicesAttrOutputCheck(CpuKernelContext &ctx) {
   auto row_ptr = ctx.GetAttr("row");
   auto col_ptr = ctx.GetAttr("col");
-  KERNEL_CHECK_NULLPTR(row_ptr, KERNEL_STATUS_PARAM_INVALID, "Get row attr failed.")
-  KERNEL_CHECK_NULLPTR(col_ptr, KERNEL_STATUS_PARAM_INVALID, "Get col attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, row_ptr, KERNEL_STATUS_PARAM_INVALID, "Get row attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, col_ptr, KERNEL_STATUS_PARAM_INVALID, "Get col attr failed.")
 
   auto output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
-  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
-  KERNEL_CHECK_NULLPTR(output->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get output shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get output shape failed.")
   return KERNEL_STATUS_OK;
 }
 

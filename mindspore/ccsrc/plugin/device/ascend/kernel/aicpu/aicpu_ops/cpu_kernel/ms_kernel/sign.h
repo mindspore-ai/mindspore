@@ -28,13 +28,13 @@ class SignCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  KernelStatus SignCheck(const CpuKernelContext &ctx) const;
+  KernelStatus SignCheck(CpuKernelContext &ctx) const;
 
   template <typename T>
-  uint32_t SignCompute(const CpuKernelContext &ctx);
+  uint32_t SignCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SignComputeComplex(const CpuKernelContext &ctx);
+  uint32_t SignComputeComplex(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

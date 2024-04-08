@@ -110,9 +110,6 @@ void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &ke
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInputForPrint>());
   common_pm->AddPass(std::make_shared<BroadcastToFusion>());
   common_pm->AddPass(std::make_shared<AddAttrToNode>());
-  if (kernel_graph->has_attr(kAttrPackFunction)) {
-    common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
-  }
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

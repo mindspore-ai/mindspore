@@ -38,14 +38,14 @@ const uint32_t kIndex6 = 6;
 const uint32_t kIndex7 = 7;
 const char *kTranspose = "Transpose";
 
-#define TRANSPOSE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                           \
-    uint32_t result = TransposeCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                       \
-      KERNEL_LOG_ERROR("Transpose kernel compute failed."); \
-      return result;                                        \
-    }                                                       \
-    break;                                                  \
+#define TRANSPOSE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                     \
+    uint32_t result = TransposeCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                 \
+      CUST_KERNEL_LOG_ERROR(ctx, "Transpose kernel compute failed."); \
+      return result;                                                  \
+    }                                                                 \
+    break;                                                            \
   }
 }  // namespace
 
@@ -69,8 +69,9 @@ uint32_t TransposeCpuKernel::GetTransposeValue(Tensor *tensor, std::vector<int64
 }
 
 uint32_t TransposeCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kTranspose);
-  KERNEL_HANDLE_ERROR(TransposeParamCheck(ctx), "[%s] check params failed.", kTranspose);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kTranspose);
+  CUST_KERNEL_HANDLE_ERROR(ctx, TransposeParamCheck(ctx), "[%s] check params failed.", kTranspose);
   auto x_type = ctx.Input(0)->GetDataType();
   switch (x_type) {
     TRANSPOSE_COMPUTE_CASE(DT_BOOL, bool, ctx)
@@ -88,7 +89,7 @@ uint32_t TransposeCpuKernel::Compute(CpuKernelContext &ctx) {
     TRANSPOSE_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     TRANSPOSE_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Transpose kernel data type [%s] not support.", DTypeStr(x_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Transpose kernel data type [%s] not support.", DTypeStr(x_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -102,26 +103,27 @@ uint32_t TransposeCpuKernel::TransposeParamCheck(CpuKernelContext &ctx) {
   auto perm_tensor = ctx.Input(kIndex1);
   auto y_tensor = ctx.Output(kIndex0);
 
-  KERNEL_CHECK_FALSE((shape_perm.size() == kDim1), KERNEL_STATUS_PARAM_INVALID,
-                     "Expected perm to be 1-D tensors , but got [%zu]-D tensors.", shape_x.size())
-  KERNEL_CHECK_FALSE((perm_tensor->NumElements() == (unsigned int)shape_x.size()), KERNEL_STATUS_PARAM_INVALID,
-                     "Expected the size of perm to be [%zu], but got [%zu].", shape_x.size(),
-                     perm_tensor->NumElements())
-  KERNEL_CHECK_FALSE((GetTransposeValue(perm_tensor, perm) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
-                     "perm must be either int32 or int64, but got [%s].", DTypeStr(perm_tensor->GetDataType()).c_str())
-  KERNEL_CHECK_FALSE((shape_x.size() > kDim1), KERNEL_STATUS_PARAM_INVALID,
-                     "Expected the dimension of x to be greater than 1-D, but got [%zu].", shape_x.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_perm.size() == kDim1), KERNEL_STATUS_PARAM_INVALID,
+                          "Expected perm to be 1-D tensors , but got [%zu]-D tensors.", shape_x.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (perm_tensor->NumElements() == (unsigned int)shape_x.size()),
+                          KERNEL_STATUS_PARAM_INVALID, "Expected the size of perm to be [%zu], but got [%zu].",
+                          shape_x.size(), perm_tensor->NumElements())
+  CUST_KERNEL_CHECK_FALSE(ctx, (GetTransposeValue(perm_tensor, perm) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
+                          "perm must be either int32 or int64, but got [%s].",
+                          DTypeStr(perm_tensor->GetDataType()).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x.size() > kDim1), KERNEL_STATUS_PARAM_INVALID,
+                          "Expected the dimension of x to be greater than 1-D, but got [%zu].", shape_x.size())
 
   std::vector<int64_t> shape_y;
   for (size_t i = 0; i < shape_x.size(); ++i) {
     int64_t perm_value = perm.at(i);
     if (shape_x.at(i) == 0) {
-      KERNEL_CHECK_FALSE((perm_value == 0), KERNEL_STATUS_PARAM_INVALID,
-                         "Expected perm[%zu] == 0 (got %zu), when x shape[%zu] == 0.", i, perm_value, i)
+      CUST_KERNEL_CHECK_FALSE(ctx, (perm_value == 0), KERNEL_STATUS_PARAM_INVALID,
+                              "Expected perm[%zu] == 0 (got %zu), when x shape[%zu] == 0.", i, perm_value, i)
     } else {
-      KERNEL_CHECK_FALSE((0 <= perm_value && perm_value <= (unsigned int)shape_x.size() - 1),
-                         KERNEL_STATUS_PARAM_INVALID, "Expected perm[%zu] in [0, %zu], but got %zu.", i, shape_x.size(),
-                         perm_value)
+      CUST_KERNEL_CHECK_FALSE(ctx, (0 <= perm_value && perm_value <= (unsigned int)shape_x.size() - 1),
+                              KERNEL_STATUS_PARAM_INVALID, "Expected perm[%zu] in [0, %zu], but got %zu.", i,
+                              shape_x.size(), perm_value)
     }
     int64_t temp_value = 0;
     for (size_t j = 0; j < shape_x.size(); ++j) {
@@ -129,8 +131,8 @@ uint32_t TransposeCpuKernel::TransposeParamCheck(CpuKernelContext &ctx) {
         break;
       } else {
         temp_value = j + 1;
-        KERNEL_CHECK_FALSE((temp_value < (unsigned int)shape_x.size()), KERNEL_STATUS_PARAM_INVALID,
-                           "Expected perm value is unique.")
+        CUST_KERNEL_CHECK_FALSE(ctx, (temp_value < (unsigned int)shape_x.size()), KERNEL_STATUS_PARAM_INVALID,
+                                "Expected perm value is unique.")
       }
     }
     shape_y.push_back(shape_x.at(perm_value));
@@ -150,7 +152,7 @@ uint32_t TransposeCpuKernel::TransposeCompute(CpuKernelContext &ctx) {
   auto output_data = reinterpret_cast<T *>(y_data);
   size_t input_dims = shape_x.size();
   if (input_dims < kMinDim || input_dims > kMaxDim) {
-    KERNEL_LOG_ERROR("[%s] : Unhandled input dimensions [%zu].", kTranspose, input_dims);
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] : Unhandled input dimensions [%zu].", kTranspose, input_dims);
     return KERNEL_STATUS_INNER_ERROR;
   }
   size_t offset = kMaxDim - input_dims;

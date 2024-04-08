@@ -45,7 +45,7 @@ inline Eigen::half ScalarLgamma(Eigen::half x) {
   return val;
 }
 
-inline std::uint32_t ParallelForLgamma(const CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
+inline std::uint32_t ParallelForLgamma(CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
                                        const std::function<void(std::int64_t, std::int64_t)> &work) {
   if (total > kLgammaParallelNum)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
@@ -55,7 +55,7 @@ inline std::uint32_t ParallelForLgamma(const CpuKernelContext &ctx, std::int64_t
 }
 
 template <typename Tin, typename Tout>
-inline std::uint32_t ComputeLgammaKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeLgammaKernel(CpuKernelContext &ctx) {
   Tin *input0{static_cast<Tin *>(ctx.Input(0)->GetData())};
   Tout *output{static_cast<Tout *>(ctx.Output(0)->GetData())};
   std::int64_t total{ctx.Input(0)->NumElements()};
@@ -67,20 +67,20 @@ inline std::uint32_t ComputeLgammaKernel(const CpuKernelContext &ctx) {
 }
 
 template <typename Tin, typename Tout>
-inline std::uint32_t ComputeLgamma(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeLgamma(CpuKernelContext &ctx) {
   std::uint32_t result{ComputeLgammaKernel<Tin, Tout>(ctx)};
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Lgamma compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Lgamma compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t ExtraCheckLgamma(const CpuKernelContext &ctx) {
+inline std::uint32_t ExtraCheckLgamma(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -90,7 +90,7 @@ inline std::uint32_t CheckLgamma(CpuKernelContext &ctx, std::uint32_t inputs_num
   return NormalCheck(ctx, kLgammaInputNum, kLgammaOutputNum) ? KERNEL_STATUS_PARAM_INVALID : ExtraCheckLgamma(ctx);
 }
 
-inline std::uint32_t ComputeLgamma(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeLgamma(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_DOUBLE:
@@ -102,7 +102,7 @@ inline std::uint32_t ComputeLgamma(const CpuKernelContext &ctx) {
     case DT_INT32:
       return ComputeLgamma<std::int32_t, std::float_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

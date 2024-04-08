@@ -263,11 +263,11 @@ def concat(tensors, axis=0):
     Alias for :func:`mindspore.ops.cat()`.
 
     Tutorial Examples:
-        - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/master/beginner/tensor.html#tensor-operation>`_
+        - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/tensor.html#tensor-operation>`_
         - `Vision Transformer Image Classification - Building ViT as a whole
-          <https://mindspore.cn/tutorials/application/en/master/cv/vit.html#building-vit-as-a-whole>`_
+          <https://mindspore.cn/tutorials/application/en/r2.3.q1/cv/vit.html#building-vit-as-a-whole>`_
         - `Sentiment Classification Implemented by RNN - Dense
-          <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html#dense>`_
+          <https://mindspore.cn/tutorials/application/en/r2.3.q1/nlp/sentiment_analysis.html#dense>`_
     """
     return cat(tensors, axis)
 
@@ -648,8 +648,8 @@ def fill(type, shape, value):  # pylint: disable=redefined-outer-name
 
     Args:
         type (mindspore.dtype): The specified type of output tensor. The data type only supports
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+            `bool_ <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ and
+            `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ .
         shape (Union(Tensor, tuple[int])): The specified shape of output tensor.
         value (Union(Tensor, number.Number, bool)): Value to fill the returned tensor.
 
@@ -1273,7 +1273,7 @@ def size(input_x):
 
     Args:
         input_x (Tensor): Input parameters, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
 
     Returns:
         int. A scalar representing the elements' size of `input_x`, tensor is the number of elements
@@ -2865,21 +2865,24 @@ def gather_elements(input, dim, index):
 
         output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
 
-    `input` and `index` have the same length of dimensions, and all dimensions except `dim` have the same size.
-    If `dim` = i, `input` is an n-D tensor with shape :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})`,
-    the `index` must be an n-D tensor with shape :math:`(z_0, z_1, ..., y, ..., z_{n-1})`
-    where `y`>=1 and the output will have the same shape with `index`.
+    `input` and `index` have the same length of dimensions, and `index.shape[axis] <= input.shape[axis]`
+    where axis goes through all dimensions of `input` except `dim`.
+
+    .. warning::
+        On Ascend, the behavior is unpredictable in the following cases:
+
+        - the value of `index` is not in the range `[-input.shape[dim], input.shape[dim])` in forward;
+        - the value of `index` is not in the range `[0, input.shape[dim])` in backward.
 
     Args:
         input (Tensor): The input tensor.
-        dim (int): The axis along which to index. It must be int32 or int64. The value range is [-input.ndim,
-            input.ndim).
+        dim (int): The axis along which to index. It must be int32 or int64. The value range is `[-input.ndim,
+            input.ndim)`.
         index (Tensor): The indices of elements to gather. It can be one of the following data types:
-            int32, int64. The value range of each index element is [-input.shape(dim), input.shape(dim)).
+            int32, int64. The value range of each index element is `[-input.shape(dim), input.shape(dim))`.
 
     Returns:
-        Tensor, has the same shape as index tensor, the shape of tensor is :math:`(z_0, z_1, ..., y, ..., z_{n-1})`,
-        and has the same data type with `input`.
+        Tensor, has the same shape as `index` tensor and has the same data type with `input`.
 
     Raises:
         TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
@@ -4533,7 +4536,7 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
     Combines an array of sliding local blocks into a large containing tensor.
 
     Args:
-        input_x (Tensor): 4D tensor with data type float16 or float.
+        input_x (Tensor): 4D tensor with data type float16 or float32.
         output_size (Tensor): 1D tensor with 2 elements of data type int.
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
@@ -5668,10 +5671,11 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         dilation (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: ``1`` .
         padding (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be
-            a tuple/list of one or two `int` for height and width.
-            If one int, pad_height = pad_width.
-            If two int, pad_height = padding[0], pad_width = padding[1].
-            Default: ``0`` .
+            a tuple/list of one or two `int` for height and width. Default: ``0`` .
+
+            - If one int, pad_height = pad_width.
+            - If two int, pad_height = padding[0], pad_width = padding[1].
+
         stride (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: ``1`` .
 

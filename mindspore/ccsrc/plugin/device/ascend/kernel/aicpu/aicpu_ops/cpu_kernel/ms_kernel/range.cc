@@ -47,7 +47,7 @@ T Sign(T num) {
 
 template <typename T>
 uint32_t RangeKernel::RangeTask(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kRangeInputNum, kRangeOutputNum), "NormalCheck failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kRangeInputNum, kRangeOutputNum), "NormalCheck failed.");
   auto start = reinterpret_cast<T *>(ctx.Input(0))[0];
   auto limit = reinterpret_cast<T *>(ctx.Input(1))[0];
   auto delta = reinterpret_cast<T *>(ctx.Input(2))[0];
@@ -59,11 +59,11 @@ uint32_t RangeKernel::RangeTask(CpuKernelContext &ctx) {
     } else {
       output_size = static_cast<size_t>(std::ceil((limit - start) / delta));
     }
-    for (int index = 0; index < SizeToInt(output_size); index++) {
+    for (int index = 0; index < SizeToInt(ctx, output_size); index++) {
       output[index] = delta * index + start;
     }
   } else {
-    KERNEL_LOG_ERROR("Invalid delta size.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Invalid delta size.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   return KERNEL_STATUS_OK;
@@ -82,7 +82,7 @@ uint32_t RangeKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return RangeTask<double>(ctx);
     default:
-      KERNEL_LOG_ERROR("Input data type not supported: %s", DTypeStr(index_type_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Input data type not supported: %s", DTypeStr(index_type_).c_str());
       return KERNEL_STATUS_INNER_ERROR;
   }
 }

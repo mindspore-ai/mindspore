@@ -67,7 +67,7 @@ struct InvStd {
 }  // namespace
 
 namespace aicpu {
-uint32_t InstanceNormV2CpuKernel::InstanceNormV2TypeCheck(const CpuKernelContext &ctx) {
+uint32_t InstanceNormV2CpuKernel::InstanceNormV2TypeCheck(CpuKernelContext &ctx) {
   auto x_type = ctx.Input(InstanceNormV2InXIndex)->GetDataType();
   auto gamma_type = ctx.Input(InstanceNormV2InGammaIndex)->GetDataType();
   auto beta_type = ctx.Input(InstanceNormV2InBetaIndex)->GetDataType();
@@ -78,11 +78,11 @@ uint32_t InstanceNormV2CpuKernel::InstanceNormV2TypeCheck(const CpuKernelContext
   auto batch_variance_type = ctx.Output(InstanceNormV2OutBatchVarianceIndex)->GetDataType();
 
   if (x_type != y_type) {
-    KERNEL_LOG_ERROR(
-      "For primitive[%s]'s input arguments x should have the same "
-      "data type with output arguments y, but y type is [%s], x type is "
-      "[%s].",
-      kInstanceNormV2, DTypeStr(y_type).c_str(), DTypeStr(x_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "For primitive[%s]'s input arguments x should have the same "
+                          "data type with output arguments y, but y type is [%s], x type is "
+                          "[%s].",
+                          kInstanceNormV2, DTypeStr(y_type).c_str(), DTypeStr(x_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   const std::map<std::string, DataType> types = {{"gamma", gamma_type},
@@ -91,10 +91,10 @@ uint32_t InstanceNormV2CpuKernel::InstanceNormV2TypeCheck(const CpuKernelContext
                                                  {"variance", variance_type},
                                                  {"batch_mean", batch_mean_type},
                                                  {"batch_variance", batch_variance_type}};
-  return CheckTensorTypeSame(types, DT_FLOAT, kInstanceNormV2);
+  return CheckTensorTypeSame(ctx, types, DT_FLOAT, kInstanceNormV2);
 }
 
-uint32_t InstanceNormV2CpuKernel::InstanceNormV2ShapeCheck(const CpuKernelContext &ctx) {
+uint32_t InstanceNormV2CpuKernel::InstanceNormV2ShapeCheck(CpuKernelContext &ctx) {
   auto x_shape_ptr = ctx.Input(InstanceNormV2InXIndex)->GetTensorShape();
   auto gamma_shape_ptr = ctx.Input(InstanceNormV2InGammaIndex)->GetTensorShape();
   auto beta_shape_ptr = ctx.Input(InstanceNormV2InBetaIndex)->GetTensorShape();
@@ -106,7 +106,7 @@ uint32_t InstanceNormV2CpuKernel::InstanceNormV2ShapeCheck(const CpuKernelContex
 
   auto y_shape = y_shape_ptr->GetDimSizes();
   auto x_shape = x_shape_ptr->GetDimSizes();
-  auto res = CheckTensorShapeSame({{"x", x_shape_ptr}}, y_shape, kInstanceNormV2);
+  auto res = CheckTensorShapeSame(ctx, {{"x", x_shape_ptr}}, y_shape, kInstanceNormV2);
   if (res != KERNEL_STATUS_OK) {
     return res;
   }
@@ -144,18 +144,18 @@ uint32_t InstanceNormV2CpuKernel::InstanceNormV2ShapeCheck(const CpuKernelContex
     batch_channels_2d_ = {x_shape[kFormatNC1HWC0IndexN] * x_shape[kFormatNC1HWC0IndexC1],
                           x_shape[kFormatNC1HWC0IndexC0]};
   } else {
-    KERNEL_LOG_ERROR(
-      "For primitive[%s]'s input arguments x only "
-      "support NHWC, NCHW and NC1HWC0, but get data format [%s]",
-      kInstanceNormV2, FormatToSerialString(x_format).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "For primitive[%s]'s input arguments x only "
+                          "support NHWC, NCHW and NC1HWC0, but get data format [%s]",
+                          kInstanceNormV2, FormatToSerialString(ctx, x_format).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   constexpr int64_t image_min = 1;
   if (image_size <= image_min) {
-    KERNEL_LOG_ERROR(
-      "For primitive[%s], expected more than 1 value per instance, but get "
-      "[%ld] value per instance.",
-      kInstanceNormV2, image_size);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "For primitive[%s], expected more than 1 value per instance, but get "
+                          "[%ld] value per instance.",
+                          kInstanceNormV2, image_size);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   const std::map<std::string, TensorShapePtr> shapes = {{"gamma", gamma_shape_ptr},
@@ -164,10 +164,10 @@ uint32_t InstanceNormV2CpuKernel::InstanceNormV2ShapeCheck(const CpuKernelContex
                                                         {"variance", variance_shape_ptr},
                                                         {"batch_mean", batch_mean_shape_ptr},
                                                         {"batch_variance", batch_variance_shape_ptr}};
-  return CheckTensorShapeSame(shapes, check_shape, kInstanceNormV2);
+  return CheckTensorShapeSame(ctx, shapes, check_shape, kInstanceNormV2);
 }
 
-uint32_t InstanceNormV2CpuKernel::InstanceNormV2AttrCheck(const CpuKernelContext &ctx) {
+uint32_t InstanceNormV2CpuKernel::InstanceNormV2AttrCheck(CpuKernelContext &ctx) {
   constexpr float epsilon_min = 0.0;
   constexpr float epsilon_max = 1.0;
   auto epsilon_ptr = ctx.GetAttr("epsilon");
@@ -175,10 +175,10 @@ uint32_t InstanceNormV2CpuKernel::InstanceNormV2AttrCheck(const CpuKernelContext
     epsilon_ = epsilon_ptr->GetFloat();
   }
   if (epsilon_ < epsilon_min || epsilon_ >= epsilon_max) {
-    KERNEL_LOG_ERROR(
-      "For primitive[%s], attr epsilon value should be in [0, 1), but get "
-      "[%f].",
-      kInstanceNormV2, epsilon_);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "For primitive[%s], attr epsilon value should be in [0, 1), but get "
+                          "[%f].",
+                          kInstanceNormV2, epsilon_);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto momentum_ptr = ctx.GetAttr("momentum");
@@ -186,10 +186,10 @@ uint32_t InstanceNormV2CpuKernel::InstanceNormV2AttrCheck(const CpuKernelContext
     momentum_ = momentum_ptr->GetFloat();
   }
   if (momentum_ < epsilon_min || momentum_ > epsilon_max) {
-    KERNEL_LOG_ERROR(
-      "For primitive[%s], attr momentum value should be in [0, 1], but get "
-      "[%f].",
-      kInstanceNormV2, momentum_);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "For primitive[%s], attr momentum value should be in [0, 1], but get "
+                          "[%f].",
+                          kInstanceNormV2, momentum_);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto is_training_ptr = ctx.GetAttr("is_training");
@@ -199,20 +199,20 @@ uint32_t InstanceNormV2CpuKernel::InstanceNormV2AttrCheck(const CpuKernelContext
   return KERNEL_STATUS_OK;
 }
 
-uint32_t InstanceNormV2CpuKernel::InstanceNormV2ParamCheck(const CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(InstanceNormV2TypeCheck(ctx), "InstanceNormV2 check type failed.");
-  KERNEL_HANDLE_ERROR(InstanceNormV2ShapeCheck(ctx), "InstanceNormV2 check shape failed.");
-  KERNEL_HANDLE_ERROR(InstanceNormV2AttrCheck(ctx), "InstanceNormV2 check attr failed.");
+uint32_t InstanceNormV2CpuKernel::InstanceNormV2ParamCheck(CpuKernelContext &ctx) {
+  CUST_KERNEL_HANDLE_ERROR(ctx, InstanceNormV2TypeCheck(ctx), "InstanceNormV2 check type failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, InstanceNormV2ShapeCheck(ctx), "InstanceNormV2 check shape failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, InstanceNormV2AttrCheck(ctx), "InstanceNormV2 check attr failed.");
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t InstanceNormV2CpuKernel::CollectStatsKernel(const CpuKernelContext &ctx, float *_mean_, float *_var_sum) {
+uint32_t InstanceNormV2CpuKernel::CollectStatsKernel(CpuKernelContext &ctx, float *_mean_, float *_var_sum) {
   const int64_t batch = x_shape_4d_[kFormatNHWCIndexN];
   const int64_t channel = x_shape_4d_[kFormatNHWCIndexC];
   const int64_t image_size = x_shape_4d_[kFormatNHWCIndexH] * x_shape_4d_[kFormatNHWCIndexW];
-  KERNEL_CHECK_FALSE((channel != 0), KERNEL_STATUS_PARAM_INVALID, "Channel can not be zero!");
-  KERNEL_CHECK_FALSE((image_size != 0), KERNEL_STATUS_PARAM_INVALID, "image_size can not be zero!");
+  CUST_KERNEL_CHECK_FALSE(ctx, (channel != 0), KERNEL_STATUS_PARAM_INVALID, "Channel can not be zero!");
+  CUST_KERNEL_CHECK_FALSE(ctx, (image_size != 0), KERNEL_STATUS_PARAM_INVALID, "image_size can not be zero!");
   std::vector<int64_t> shape_3d = {batch, image_size, channel};
   auto x_3d = EigenTensor(shape_3d, ctx.Input(InstanceNormV2InXIndex)->GetData()).tensor<T, kDim3>();
   auto loop_batch = [&](int64_t begin, int64_t end) {
@@ -241,12 +241,12 @@ uint32_t InstanceNormV2CpuKernel::CollectStatsKernel(const CpuKernelContext &ctx
 }
 
 template <typename T, template <typename S> class VarTransform>
-uint32_t InstanceNormV2CpuKernel::UpdateStatsTemplate(const CpuKernelContext &ctx) {
+uint32_t InstanceNormV2CpuKernel::UpdateStatsTemplate(CpuKernelContext &ctx) {
   std::vector<float> _var_sum(instance_num, float_init_zero);
   std::vector<float> _mean_(instance_num, float_init_zero);
   (void)CollectStatsKernel<T>(ctx, _mean_.data(), _var_sum.data());
   const int64_t image_size = x_shape_4d_[kFormatNHWCIndexH] * x_shape_4d_[kFormatNHWCIndexW];
-  KERNEL_CHECK_FALSE((image_size != 0), KERNEL_STATUS_PARAM_INVALID, "image_size can not be zero!");
+  CUST_KERNEL_CHECK_FALSE(ctx, (image_size != 0), KERNEL_STATUS_PARAM_INVALID, "image_size can not be zero!");
   std::vector<int64_t> batch_channels_1d_ = {batch_channels_2d_.front() * batch_channels_2d_.back()};
   auto running_mean_vec = EigenTensor(batch_channels_1d_, ctx.Input(InstanceNormV2InMeanIndex)->GetData()).vec<float>();
   auto running_var_vec =
@@ -277,7 +277,7 @@ uint32_t InstanceNormV2CpuKernel::UpdateStatsTemplate(const CpuKernelContext &ct
 }
 
 uint32_t InstanceNormV2CpuKernel::CollectLinearAndConstant(
-  const CpuKernelContext &ctx, const typename TTypes<float>::Vec &gamma, const typename TTypes<float>::Vec &beta,
+  CpuKernelContext &ctx, const typename TTypes<float>::Vec &gamma, const typename TTypes<float>::Vec &beta,
   const typename TTypes<float>::Vec &running_mean, const typename TTypes<float>::Vec &running_var,
   const typename TTypes<float>::Vec &save_mean, const typename TTypes<float>::Vec &save_invstd, float *_alpha_,
   float *_beta_) {
@@ -291,7 +291,7 @@ uint32_t InstanceNormV2CpuKernel::CollectLinearAndConstant(
       } else {
         mean = running_mean(idx);
         float _std_ = std::sqrt(running_var(idx) + static_cast<float>(epsilon_));
-        KERNEL_CHECK_FALSE((_std_ != 0), KERNEL_STATUS_PARAM_INVALID, "_std_ can not be zero!");
+        CUST_KERNEL_CHECK_FALSE(ctx, (_std_ != 0), KERNEL_STATUS_PARAM_INVALID, "_std_ can not be zero!");
         invstd = float_init_one / _std_;
       }
       _alpha_[idx] = invstd * gamma(idx);
@@ -303,7 +303,7 @@ uint32_t InstanceNormV2CpuKernel::CollectLinearAndConstant(
 }
 
 template <typename T>
-uint32_t InstanceNormV2CpuKernel::TransformInput(const CpuKernelContext &ctx) {
+uint32_t InstanceNormV2CpuKernel::TransformInput(CpuKernelContext &ctx) {
   const int64_t batch = x_shape_4d_[kFormatNHWCIndexN];
   const int64_t channel = x_shape_4d_[kFormatNHWCIndexC];
   const int64_t image_size = x_shape_4d_[kFormatNHWCIndexH] * x_shape_4d_[kFormatNHWCIndexW];
@@ -341,7 +341,7 @@ uint32_t InstanceNormV2CpuKernel::TransformInput(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t InstanceNormV2CpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t InstanceNormV2CpuKernel::DoCompute(CpuKernelContext &ctx) {
   auto batch_mean_ptr = static_cast<float *>(ctx.Output(InstanceNormV2OutBatchMeanIndex)->GetData());
   auto batch_var_ptr = static_cast<float *>(ctx.Output(InstanceNormV2OutBatchVarianceIndex)->GetData());
   (void)std::fill_n(batch_mean_ptr, instance_num, float_init_zero);
@@ -356,9 +356,9 @@ uint32_t InstanceNormV2CpuKernel::DoCompute(const CpuKernelContext &ctx) {
 
 uint32_t InstanceNormV2CpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInstanceNormV2InputsNum, kInstanceNormV2OutputNum),
-                      "InstanceNormV2 check input and output number failed.");
-  KERNEL_HANDLE_ERROR(InstanceNormV2ParamCheck(ctx), "InstanceNormV2 check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInstanceNormV2InputsNum, kInstanceNormV2OutputNum),
+                           "InstanceNormV2 check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, InstanceNormV2ParamCheck(ctx), "InstanceNormV2 check params failed.");
   auto data_type = ctx.Input(InstanceNormV2InXIndex)->GetDataType();
   uint32_t result;
   switch (data_type) {
@@ -369,11 +369,11 @@ uint32_t InstanceNormV2CpuKernel::Compute(CpuKernelContext &ctx) {
       result = DoCompute<float>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("InstanceNormV2 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "InstanceNormV2 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("InstanceNormV2 kernel compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "InstanceNormV2 kernel compute failed.");
   }
   return result;
 }

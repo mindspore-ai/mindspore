@@ -153,7 +153,6 @@ class FutureBase {
 // Tensor entity class
 class MS_CORE_API Tensor : public MetaTensor {
  public:
-  abstract::AbstractBasePtr ToAbstract() override;
   Tensor() = default;
 
   /// \brief Create tensor from another tensor, data is shared.
@@ -324,6 +323,17 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] tensor The Tensor object to be compared.
   /// \return True if having same type, shape and data address, otherwise false.
   bool operator==(const Tensor &tensor) const;
+
+  /// \brief Create Abstract for Tensor.
+  ///
+  /// \return Abstract of Tensor.
+  abstract::AbstractBasePtr ToAbstract() override;
+
+  /// \brief Get Abstract cache. The value of the abstract is null.
+  /// Only used by InferShape in PyNative mode.
+  ///
+  /// \return Abstract of tensor.
+  abstract::AbstractBasePtr GetAbstractCache();
 
   /// \brief It is different from 'operator==' which just compares shape/type/address,
   /// it does real value comparison.
@@ -650,8 +660,8 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   /// \brief Set lazy callback function to this Tensor
   ///
-  /// \param[in] lazy_callback The callback from backend when lazy build is enabled
-  void set_lazy_callback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
+  /// \param[in] lazy_callback Wait for async tasks finish before data_sync.
+  static void RegisterLazyCallback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
 
   /// \brief Set contiguous callback function to this Tensor
   ///
@@ -804,6 +814,8 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   const int64_t storage_offset() const;
 
+  void set_need_pipeline_sync(bool need_pipeline_sync) { need_pipeline_sync_ = need_pipeline_sync; }
+
  private:
   void ExecuteLazyTask() const;
 
@@ -824,13 +836,14 @@ class MS_CORE_API Tensor : public MetaTensor {
   // Release device address of graph output tensor or not.
   bool need_release_device_mem_{false};
   bool cache_enable_{false};
+  bool need_pipeline_sync_{false};
   // Tensor base shape which contain dynamic shape info.
   BaseShapePtr base_shape_ptr_{nullptr};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
   std::shared_ptr<Tensor> hashmap_tensor_ptr_{nullptr};
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
-  std::function<void(void)> lazy_callback_{nullptr};
+  inline static std::function<void(void)> lazy_callback_{nullptr};
   std::function<DeviceSyncPtr(const DeviceSyncPtr &)> contiguous_callback_{nullptr};
   std::function<void(const Tensor *)> update_value_callback_{nullptr};
   PinnedMemRegister *pin_mem_register_{nullptr};
@@ -839,6 +852,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   std::string tensor_name_;
   mutable std::shared_ptr<FutureBase<DeviceSync>> address_future_{};
+  // Abstract cache for PyNative InferShape.
   std::weak_ptr<abstract::AbstractBase> abstract_;
 };
 

@@ -474,10 +474,11 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 
   if (axis == 1) {
     // freq
-    for (auto ind = 0; ind < (*output)->Size() / input_shape[-2] * mask_width; ind++) {
+    const auto kShapeIndex = -2;
+    for (auto ind = 0; ind < (*output)->Size() / input_shape[kShapeIndex] * mask_width; ind++) {
       int block_num = ind / (mask_width * input_shape[-1]);
       auto start_pos = ind % (mask_width * input_shape[-1]) + mask_start * input_shape[-1] +
-                       input_shape[-1] * input_shape[-2] * block_num;
+                       input_shape[-1] * input_shape[kShapeIndex] * block_num;
       auto start_mem_pos = const_cast<uchar *>((*output)->GetBuffer() + start_pos * cell_size);
       if ((*output)->type() != DataType::DE_FLOAT64) {
         // tensor float 32

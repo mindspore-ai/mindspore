@@ -41,39 +41,41 @@ const std::int64_t kAdjustHueFive = 5;
 
 namespace aicpu {
 namespace detail {
-inline std::uint32_t ExtraCheckAdjustHue(const CpuKernelContext &ctx) {
+inline std::uint32_t ExtraCheckAdjustHue(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(1)->GetDataType() != aicpu::DataType::DT_FLOAT) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be [%s].", DTypeStr(ctx.Input(1)->GetDataType()).c_str(),
-                     DTypeStr(aicpu::DataType::DT_FLOAT).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be [%s].",
+                          DTypeStr(ctx.Input(1)->GetDataType()).c_str(), DTypeStr(aicpu::DataType::DT_FLOAT).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(1)->GetDataSize() != kAdjustHueFour) {
-    KERNEL_LOG_ERROR("The data size of the input [%llu] need be [%llu].", ctx.Input(1)->GetDataSize(), kAdjustHueFour);
+    CUST_KERNEL_LOG_ERROR(ctx, "The data size of the input [%llu] need be [%llu].", ctx.Input(1)->GetDataSize(),
+                          kAdjustHueFour);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::shared_ptr<TensorShape> images_shape = ctx.Input(0)->GetTensorShape();
   int32_t dims = images_shape->GetDims();
   int64_t last_dim_size = images_shape->GetDimSize(dims - 1);
   if (last_dim_size != kAdjustHueThree) {
-    KERNEL_LOG_ERROR("input must have 3 channels but instead has %llu channels.", last_dim_size);
+    CUST_KERNEL_LOG_ERROR(ctx, "input must have 3 channels but instead has %llu channels.", last_dim_size);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckAdjustHue(const CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
+inline std::uint32_t CheckAdjustHue(CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
   return NormalCheck(const_cast<CpuKernelContext &>(ctx), kAdjustHueTwo, kAdjustHueOne) ? KERNEL_STATUS_PARAM_INVALID
                                                                                         : ExtraCheckAdjustHue(ctx);
 }
@@ -235,7 +237,7 @@ RgbTuple hsv2rgb(const float h, const float s, const float v) {
 }
 
 template <typename T>
-uint32_t AdjustHueCpuKernel::DoCompute(const CpuKernelContext &ctx, const ComputeOptions &options) {
+uint32_t AdjustHueCpuKernel::DoCompute(CpuKernelContext &ctx, const ComputeOptions &options) {
   const Tensor *input = options.input;
   const Tensor *delta = options.delta;
   Tensor *output = options.output;
@@ -274,8 +276,8 @@ uint32_t AdjustHueCpuKernel::DoCompute(const CpuKernelContext &ctx, const Comput
   if (total > kAdjustHueParallelNum) {
     auto cores = aicpu::CpuKernelUtils::GetCPUNum(ctx);
     std::int64_t per_unit_size = total / std::min(std::max(1L, cores - 2L), total);
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, sharder_adjusthue),
-                        "AdjustHue Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, sharder_adjusthue),
+                             "AdjustHue Compute failed.");
   } else {
     sharder_adjusthue(0, total);
   }
@@ -284,7 +286,7 @@ uint32_t AdjustHueCpuKernel::DoCompute(const CpuKernelContext &ctx, const Comput
 }
 
 template <typename T>
-uint32_t AdjustHueCpuKernel::DoComputeHalf(const CpuKernelContext &ctx, const ComputeOptions &options) {
+uint32_t AdjustHueCpuKernel::DoComputeHalf(CpuKernelContext &ctx, const ComputeOptions &options) {
   const Tensor *input = options.input;
   const Tensor *delta = options.delta;
   Tensor *output = options.output;
@@ -316,8 +318,8 @@ uint32_t AdjustHueCpuKernel::DoComputeHalf(const CpuKernelContext &ctx, const Co
   if (total > kAdjustHueParallelNum) {
     auto cores = aicpu::CpuKernelUtils::GetCPUNum(ctx);
     std::int64_t per_unit_size = total / std::min(std::max(1L, cores - 2L), total);
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, sharder_adjusthue),
-                        "AdjustHue Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, sharder_adjusthue),
+                             "AdjustHue Compute failed.");
   } else {
     sharder_adjusthue(0, total);
   }
@@ -325,8 +327,8 @@ uint32_t AdjustHueCpuKernel::DoComputeHalf(const CpuKernelContext &ctx, const Co
   return KERNEL_STATUS_OK;
 }
 uint32_t AdjustHueCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(detail::CheckAdjustHue(ctx, kAdjustHueTwo, kAdjustHueOne),
-                      "AdjustHue check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, detail::CheckAdjustHue(ctx, kAdjustHueTwo, kAdjustHueOne),
+                           "AdjustHue check input and output number failed.");
   Tensor *input = ctx.Input(0);
   Tensor *delta = ctx.Input(1);
   Tensor *output = ctx.Output(0);
@@ -335,7 +337,7 @@ uint32_t AdjustHueCpuKernel::Compute(CpuKernelContext &ctx) {
 
   auto channels = input->GetTensorShape()->GetDimSize(dims - 1);
   if (channels == 0) {
-    KERNEL_LOG_ERROR("input must have 3 channels but instead has 0 channels.");
+    CUST_KERNEL_LOG_ERROR(ctx, "input must have 3 channels but instead has 0 channels.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -367,7 +369,7 @@ uint32_t AdjustHueCpuKernel::Compute(CpuKernelContext &ctx) {
       }
       break;
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 

@@ -284,15 +284,16 @@ void FlashAttentionScoreInfo::InitSplittableInputs() {
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
     auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    int64_t attn_s1_group = is_attn_mask_compressed_ ? 0 : s1_group;
     if (attn_mask_shape.size() == kSizeTwo) {
       // attn_mask_shape: (S1, S2)
-      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_group, -1};
+      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {attn_s1_group, 0};
     } else if (attn_mask_shape.size() == kSizeFour) {
       // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
       auto attn_mask_n1_group = attn_mask_shape[kIndex1] == 1 ? 0 : n1_group;
-      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {batch_group, attn_mask_n1_group, s1_group, 1};
+      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {batch_group, attn_mask_n1_group, attn_s1_group,
+                                                                         0};
     }
-    splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {1, 0, 0, 0};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputPrefixIndex]) {
     splittable_inputs_[ops::kFlashAttentionScoreInputPrefixIndex] = {batch_group};
@@ -310,7 +311,9 @@ Status FlashAttentionScoreInfo::GetAttrs() {
   next_tokens_ = GetIntAttr(kAttrNextTokens);
   input_layout_ = GetStringAttr(kAttrInputLayout);
   sparse_mode_ = GetIntAttr(kAttrSparseMode);
-  enable_load_balance_ = GetBoolAttr(kAttrEnableLoadBalance);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  enable_load_balance_ = ms_context->get_param<bool>(MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE);
   is_attn_mask_compressed_ =
     std::find(needCompressAttnMask.begin(), needCompressAttnMask.end(), sparse_mode_) != needCompressAttnMask.end();
   need_update_op_attrs_mode_ = sparse_mode_ != ops::kSparseAllMask;
@@ -484,8 +487,14 @@ std::tuple<int64_t, int64_t> FlashAttentionScoreInfo::GetAttentionMaskAttrs(cons
     q_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQKVSeqDimBNSD];
   }
   int64_t q_len_each_split = q_seq_length / split_num;
-  int64_t new_pre_tokens =
-    (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) ? pre_tokens_ : kv_seq_length;
+  int64_t new_pre_tokens;
+  if (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) {
+    new_pre_tokens = pre_tokens_;
+  } else if (sparse_mode_ == ops::kSparseLeftUpCausal) {
+    new_pre_tokens = q_seq_length;
+  } else {
+    new_pre_tokens = kv_seq_length;
+  }
   int64_t new_next_tokens =
     (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) ? next_tokens_ : 0;
   switch (opAttrUpdateMap.at(sparse_mode_)) {
@@ -563,19 +572,8 @@ void FlashAttentionScoreInfo::LoadBalanceSplitAlongSeqDim(size_t input_index, Ge
       *exchange_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(1)});
       break;
     case ops::kFlashAttentionScoreInputRealShiftIndex:
-      if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
-        split_attrs = {std::make_pair(AXIS, MakeValue<int64_t>(kInputQKVSeqDimBNSD)),
-                       std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
-        *split_node = gen_g->PushBack({gen_g->NewOpInst(SPLIT, split_attrs), gen_g->virtual_input_node()});
-        *keep_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(0)});
-        *exchange_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(1)});
-      } else {
-        *keep_node = gen_g->virtual_input_node();
-        *exchange_node = gen_g->virtual_input_node();
-      }
-      break;
     case ops::kFlashAttentionScoreInputDropMaskIndex:
-      if (is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+      if (is_input_passed_[input_index]) {
         split_attrs = {std::make_pair(AXIS, MakeValue<int64_t>(kInputQKVSeqDimBNSD)),
                        std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
         *split_node = gen_g->PushBack({gen_g->NewOpInst(SPLIT, split_attrs), gen_g->virtual_input_node()});

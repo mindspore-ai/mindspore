@@ -35,22 +35,22 @@ namespace dataset {
 uint32_t ReshapeKernel::DoCompute() {
   size_t type_size = GetDataTypeSize(matrix_info_.matrix_type);
   if (type_size < 1) {
-    AICPU_LOGE("don't support input tensor types");
+    CUST_AICPU_LOGE(workspace_info_, "don't support input tensor types");
     return kAicpuKernelStateFailed;
   }
   auto dstData = reinterpret_cast<void *>(io_addrs_[1]);
   int64_t dstSize = static_cast<int64_t>(input_size_ * type_size);
   auto srcData = reinterpret_cast<void *>(io_addrs_[0]);
   int64_t srcSize = static_cast<int64_t>(input_size_ * type_size);
-  AICPU_LOGD("Begin memcpy tensor data len [%lu]", srcSize);
+  CUST_AICPU_LOGD(workspace_info_, "Begin memcpy tensor data len [%lu]", srcSize);
   std::atomic<bool> task_flag(true);
-  auto shard = [&task_flag, &dstData, &srcData, dstSize](int64_t start, int64_t limit) {
+  auto shard = [&](int64_t start, int64_t limit) {
     char *dst = reinterpret_cast<char *>(dstData) + start;
     const char *src = reinterpret_cast<const char *>(srcData) + start;
     int64_t len = limit - start;
     if (len < 0L) {
       task_flag.store(false);
-      AICPU_LOGE("Len is less than zero, len[%lld]", len);
+      CUST_AICPU_LOGE(workspace_info_, "Len is less than zero, len[%lld]", len);
       return;
     }
     int64_t dstMax = dstSize - start > static_cast<int64_t>(SECUREC_MEM_CPY_MAX_LEN)
@@ -59,8 +59,8 @@ uint32_t ReshapeKernel::DoCompute() {
     auto mem_ret = memcpy_s(dst, dstMax, src, len);
     if (mem_ret != EOK) {
       task_flag.store(false);
-      AICPU_LOGE("Failed to memcpy tensor data, destSize=[%lld], count=[%lld], errorCode=[%d].", dstSize - start, len,
-                 mem_ret);
+      CUST_AICPU_LOGE(workspace_info_, "Failed to memcpy tensor data, destSize=[%lld], count=[%lld], errorCode=[%d].",
+                      dstSize - start, len, mem_ret);
       return;
     }
   };
@@ -73,7 +73,7 @@ uint32_t ReshapeKernel::DoCompute() {
 }
 
 uint32_t ReshapeKernel::ParseKernelParam() {
-  AICPU_LOGI("aicpu ReshapeKernel");
+  CUST_AICPU_LOGI(workspace_info_, "aicpu ReshapeKernel");
   aicpuops::Tensor input_tensor = node_def_.inputs(0);
   aicpuops::TensorShape input_shape = input_tensor.tensor_shape();
   input_size_ = 1;

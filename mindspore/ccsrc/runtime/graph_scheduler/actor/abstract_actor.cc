@@ -46,7 +46,8 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
                 << ", origin ref count:" << input_data->data_->original_ref_count()
                 << ", current ref count:" << input_data->data_->ref_count()
                 << ", dynamic ref count:" << input_data->data_->dynamic_ref_count()
-                << ", flag:" << input_data->data_->flag() << " user data:" << input_data->data_->user_data();
+                << ", flag:" << input_data->data_->flag() << " user data:" << input_data->data_->user_data()
+                << " from memory pool:" << input_data->data_->from_mem_pool();
 
   if (is_run) {
     Run(context);

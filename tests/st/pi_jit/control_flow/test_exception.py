@@ -398,7 +398,7 @@ def test_exception_case_11():
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert jcr["compile_count_"] == 1
-    assert jcr["break_count_"] == 1
+    assert jcr["break_count_"] == 0
     assert expected == res
 
 
@@ -514,7 +514,7 @@ def test_exception_case_14():
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert jcr["compile_count_"] == 1
-    assert jcr["break_count_"] == 1
+    assert jcr["break_count_"] == 0
     assert expected == res
 
 

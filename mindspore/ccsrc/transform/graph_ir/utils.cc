@@ -325,10 +325,16 @@ GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options) {
 
 void SetGraphRunner(const GraphRunnerPtr &runner) { DfGraphManager::GetInstance().SetGraphRunner(runner); }
 void ClearGraph() { DfGraphManager::GetInstance().ClearGraph(); }
-Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options, const bool &is_cloud) {
+
+Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options, const bool &is_cloud,
+                const bool &need_aoe) {
   auto ret = DfGraphManager::GetInstance().AddGraph(name, graph, options, is_cloud);
   if (ret != Status::SUCCESS) {
     return ret;
+  }
+  if (need_aoe) {
+    transform::AddOptimizeGraph(name);
+    transform::DfGraphManager::GetInstance().AoeGeGraph();
   }
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
@@ -357,9 +363,11 @@ void EnableAoeOffline() { AoeUtil::GetInstance().SetOfflineEnvDumpGeGraph(); }
 
 // convert
 
-DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix,
-                                 RefModeFlag ref_mode_type) {
-  auto converter = std::make_shared<transform::DfGraphConvertor>(graph, phase_prefix, ref_mode_type);
+DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix, RefModeFlag ref_mode_type,
+                                 bool offline_convert) {
+  std::vector<std::string> extra_variables_names = {};
+  auto converter = std::make_shared<transform::DfGraphConvertor>(graph, phase_prefix, ref_mode_type,
+                                                                 extra_variables_names, nullptr, offline_convert);
   return converter;
 }
 

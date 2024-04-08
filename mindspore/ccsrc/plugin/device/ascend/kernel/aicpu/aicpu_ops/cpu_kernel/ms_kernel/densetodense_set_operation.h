@@ -31,12 +31,12 @@ class DenseToDenseSetOperationCpuKernel : public CpuKernel {
   virtual uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t Check(const CpuKernelContext &ctx);
+  uint32_t Check(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t OutputSparseTensor(const CpuKernelContext &ctx, const std::vector<int64_t> &output_shape,
-                              const int64_t num_values, const std::map<std::vector<int64_t>, std::set<T>> &sets);
+  uint32_t OutputSparseTensor(CpuKernelContext &ctx, const std::vector<int64_t> &output_shape, const int64_t num_values,
+                              const std::map<std::vector<int64_t>, std::set<T>> &sets);
   template <typename T>
   void ApplySetOperation(const std::set<T> &set1, const std::set<T> &set2, std::set<T> &result);
 

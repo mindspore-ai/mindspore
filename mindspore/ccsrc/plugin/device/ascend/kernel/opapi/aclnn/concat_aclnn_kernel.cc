@@ -28,6 +28,11 @@ std::pair<std::vector<KernelTensor *>, int64_t> GetConcatRealInputs(const std::v
 
   auto last_element = inputs.end() - 1;
   std::vector<KernelTensor *> tensors(inputs.begin(), last_element);
+  if (inputs.size() == kConcatMinNum) {
+    tensors.clear();
+    tensors = transform::ConvertKernelTensor<std::vector<KernelTensor *>>(inputs[kIndex0]);
+  }
+
   auto last_kernel_tensor = *last_element;
   MS_EXCEPTION_IF_NULL(last_kernel_tensor);
   auto axis = last_kernel_tensor->GetValueWithCheck<int64_t>();

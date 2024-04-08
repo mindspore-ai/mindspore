@@ -26,13 +26,13 @@ namespace aicpu {
  * @return status code
  */
 template <typename T>
-uint32_t EqualCalculate(const CpuKernelContext &ctx, BCalcInfo &calcInfo, bool flag) {
+uint32_t EqualCalculate(CpuKernelContext &ctx, BCalcInfo &calcInfo, bool flag) {
   auto input_x1 = reinterpret_cast<T *>(calcInfo.input_0->GetData());
   auto input_x2 = reinterpret_cast<T *>(calcInfo.input_1->GetData());
   auto output_y = reinterpret_cast<bool *>(calcInfo.output->GetData());
-  KERNEL_CHECK_NULLPTR(input_x1, KERNEL_STATUS_PARAM_INVALID, "Get input x1 data failed.")
-  KERNEL_CHECK_NULLPTR(input_x2, KERNEL_STATUS_PARAM_INVALID, "Get input x2 data failed.")
-  KERNEL_CHECK_NULLPTR(output_y, KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_x1, KERNEL_STATUS_PARAM_INVALID, "Get input x1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_x2, KERNEL_STATUS_PARAM_INVALID, "Get input x2 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_y, KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
   size_t data_num = calcInfo.x_indexes.size();
   auto shard_equal = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -41,7 +41,7 @@ uint32_t EqualCalculate(const CpuKernelContext &ctx, BCalcInfo &calcInfo, bool f
       output_y[i] = (flag == true) ? (*x_index == *y_index) : (*x_index != *y_index);
     }
   };
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, 1, shard_equal), "Equal calculate failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, 1, shard_equal), "Equal calculate failed.");
   return KERNEL_STATUS_OK;
 }
 /**
@@ -51,25 +51,26 @@ uint32_t EqualCalculate(const CpuKernelContext &ctx, BCalcInfo &calcInfo, bool f
  * @return status code
  */
 template <typename T>
-uint32_t EqualCompute(const CpuKernelContext &ctx, bool flag) {
+uint32_t EqualCompute(CpuKernelContext &ctx, bool flag) {
   BCalcInfo calcInfo;
   calcInfo.input_0 = ctx.Input(0);
   calcInfo.input_1 = ctx.Input(1);
   calcInfo.output = ctx.Output(0);
   DataType input0_type = calcInfo.input_0->GetDataType();
   DataType input1_type = calcInfo.input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "DataType of x1 [%d] should be same as x2 [%d].", static_cast<int32_t>(input0_type),
-                     static_cast<int32_t>(input1_type))
-  KERNEL_LOG_INFO(
-    "CpuKernel[%s], input x1 : addr[%p], size[%llu];"
-    "input x2: addr[%p], size[%llu];"
-    "output: addr[%p], size[%llu].",
-    ctx.GetOpType().c_str(), calcInfo.input_0->GetData(), calcInfo.input_0->GetDataSize(), calcInfo.input_1->GetData(),
-    calcInfo.input_1->GetDataSize(), calcInfo.output->GetData(), calcInfo.output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "DataType of x1 [%d] should be same as x2 [%d].", static_cast<int32_t>(input0_type),
+                          static_cast<int32_t>(input1_type))
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "CpuKernel[%s], input x1 : addr[%p], size[%llu];"
+                       "input x2: addr[%p], size[%llu];"
+                       "output: addr[%p], size[%llu].",
+                       ctx.GetOpType().c_str(), calcInfo.input_0->GetData(), calcInfo.input_0->GetDataSize(),
+                       calcInfo.input_1->GetData(), calcInfo.input_1->GetDataSize(), calcInfo.output->GetData(),
+                       calcInfo.output->GetDataSize());
 
   Bcast bcast;
-  KERNEL_HANDLE_ERROR(bcast.GenerateBcastInfo(calcInfo), "Generate broadcast info failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, bcast.GenerateBcastInfo(calcInfo), "Generate broadcast info failed.");
   bcast.BCastIndexes(calcInfo.x_indexes, calcInfo.y_indexes);
   bcast.GetBcastVec(calcInfo);
 

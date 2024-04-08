@@ -226,7 +226,8 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
                 << " device tensor:" << input_data->data_ << " ptr:" << input_data->data_->GetPtr()
                 << " ref count:" << input_data->data_->ref_count()
                 << " origin ref count:" << input_data->data_->original_ref_count()
-                << " dynamic ref count:" << input_data->data_->dynamic_ref_count();
+                << " dynamic ref count:" << input_data->data_->dynamic_ref_count()
+                << " from memory pool:" << input_data->data_->from_mem_pool();
   auto output_position = IntToSize(input_data->index_);
   if (output_position >= outputs_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");
@@ -345,11 +346,14 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
     kernel_tensor->SetType(output_kernel_tensor->GetType());
     kernel_tensor->SetShape(output_kernel_tensor->GetShape());
     kernel_tensor->set_stream_id(device_tensor->stream_id());
+    // SetShape will calculate a default size by host shape, need to set real device size for special format.
+    kernel_tensor->set_size(device_tensor->GetSize());
     auto tensor_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(tensor_device_address);
-    MS_LOG(DEBUG) << "Create device tensor:" << tensor_device_address << " type:" << tensor_device_address->type_id()
+    MS_LOG(DEBUG) << "Create device tensor:" << tensor_device_address << ", size: " << kernel_tensor->size()
+                  << " type:" << tensor_device_address->type_id()
                   << " output node:" << output_node->fullname_with_scope() << " output index:" << output_index
-                  << " output position:" << output_position;
+                  << " output position:" << output_position << ", origin output device tensor: " << device_tensor;
     tensor->set_device_address(tensor_device_address);
     output_node_to_tensor_device_address_[{output_node, output_index}] = tensor_device_address;
   }
@@ -406,7 +410,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
       if (!device_context->device_res_manager_->AllocateMemory(tensor_device_address.get())) {
         MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
-                          << ") memory isn't enough and alloc failed, kernel name: "
+                          << ") memory isn't enough and alloc failed in output actor, kernel name: "
                           << output_node->fullname_with_scope() << ", alloc size: " << tensor_device_address->GetSize()
                           << "B.";
       }

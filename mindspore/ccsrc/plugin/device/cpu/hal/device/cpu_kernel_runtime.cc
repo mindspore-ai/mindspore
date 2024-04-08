@@ -455,9 +455,10 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
   (void)mindspore::RDR::RecordMemAddressInfo(SubModuleId::SM_KERNEL, name);
 #endif
   for (const auto &kernel : kernels) {
-#ifdef ENABLE_PROFILE
-    double start_time = GetTime();
-#endif
+    double start_time = 0;
+    if (IS_OUTPUT_ON(mindspore::kInfo)) {
+      start_time = GetTime();
+    }
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     // akg kernel do not support dynamic shape by now
@@ -511,10 +512,10 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
       MS_LOG(EXCEPTION) << "Launch kernel failed." << trace::DumpSourceLines(kernel);
     }
     static_cast<CPUMemoryManager *>(mem_manager_.get())->DecreaseAddressRefCount(kernel);
-#ifdef ENABLE_PROFILE
-    double cost_time = GetTime() - start_time;
-    MS_LOG(INFO) << "cpu kernel: " << kernel->fullname_with_scope() << "  costs " << cost_time * 1e6 << " us";
-#endif
+    if (IS_OUTPUT_ON(mindspore::kInfo)) {
+      double cost_time = GetTime() - start_time;
+      MS_LOG(INFO) << "cpu kernel: " << kernel->fullname_with_scope() << "  costs " << cost_time * 1e6 << " us";
+    }
   }
 #ifndef ENABLE_SECURITY
   if (iter_dump_flag) {

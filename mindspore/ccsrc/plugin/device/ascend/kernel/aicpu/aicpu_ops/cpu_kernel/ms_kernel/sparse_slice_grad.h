@@ -27,10 +27,11 @@ class SparseSliceGradCpuKernel : public CpuKernel {
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
-  uint32_t SparseSliceGradParamCheck(Tensor *backprop_val_grad, Tensor *indices, Tensor *start, Tensor *new_indices);
+  uint32_t SparseSliceGradParamCheck(CpuKernelContext &ctx, Tensor *backprop_val_grad, Tensor *indices, Tensor *start,
+                                     Tensor *new_indices);
 
   template <typename T>
-  uint32_t GradCompute(const CpuKernelContext &ctx);
+  uint32_t GradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

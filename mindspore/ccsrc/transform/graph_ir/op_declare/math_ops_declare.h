@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_
 
-#include "op_proto/inc/math_ops.h"
-#include "op_proto/inc/ragged_math_ops.h"
-#include "op_proto/inc/spectral_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_math_ops.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
@@ -75,6 +72,9 @@ DECLARE_OP_USE_OUTPUT(HistogramFixedWidth)
 
 DECLARE_OP_ADAPTER(Pdist)
 DECLARE_OP_USE_OUTPUT(Pdist)
+
+DECLARE_CUST_OP_ADAPTER(PdistGrad)
+DECLARE_CUST_OP_USE_OUTPUT(PdistGrad)
 
 DECLARE_OP_ADAPTER(SoftMarginLossGrad)
 DECLARE_OP_USE_OUTPUT(SoftMarginLossGrad)
@@ -247,4 +247,9 @@ DECLARE_OP_USE_OUTPUT(Zeta)
 DECLARE_OP_ADAPTER(SilentCheck)
 DECLARE_OP_USE_OUTPUT(SilentCheck)
 
+DECLARE_OP_ADAPTER(Cross)
+DECLARE_OP_USE_OUTPUT(Cross)
+
+DECLARE_CUST_OP_ADAPTER(Logit)
+DECLARE_CUST_OP_USE_OUTPUT(Logit)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_

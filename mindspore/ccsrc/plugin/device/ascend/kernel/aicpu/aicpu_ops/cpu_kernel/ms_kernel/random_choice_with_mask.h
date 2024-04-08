@@ -28,7 +28,7 @@ class RandomChoiceWithMaskCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t RandomChoiceWithMaskCompute(const CpuKernelContext &ctx);
+  uint32_t RandomChoiceWithMaskCompute(CpuKernelContext &ctx);
 
   int64_t count_target_;
   int64_t seed_;

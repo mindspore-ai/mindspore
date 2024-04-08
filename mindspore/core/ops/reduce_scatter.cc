@@ -102,7 +102,7 @@ class ReduceScatterInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto dtype = input_args[kIndex0]->GetType();
-    const std::set<TypePtr> default_valid_types = {kInt8, kInt32, kFloat16, kFloat32, kBFloat16};
+    const std::set<TypePtr> default_valid_types = {kInt8, kInt32, kFloat16, kFloat32, kBFloat16, kComplex64};
     const std::set<TypePtr> gpu_valid_types = {kBool,   kInt8,    kInt32,   kUInt32, kInt64,
                                                kUInt64, kFloat16, kFloat32, kFloat64};
     const std::string input_name = "input";

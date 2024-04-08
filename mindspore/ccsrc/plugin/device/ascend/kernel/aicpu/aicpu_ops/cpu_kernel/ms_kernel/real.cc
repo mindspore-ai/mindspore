@@ -27,49 +27,49 @@ const char *kReal = "Real";
 constexpr int64_t kFolatDataNums = 8 * 128 * 1024;
 constexpr int64_t kDoubleDataNums = 16 * 128 * 1024;
 
-#define Real_COMPUTE_CASE(IN_DTYPE, IN_TYPE, OUT_DTYPE, CTX)                                             \
-  case (IN_DTYPE): {                                                                                     \
-    switch (OUT_DTYPE) {                                                                                 \
-      case (DT_FLOAT): {                                                                                 \
-        uint32_t result = RealCompute<IN_TYPE, float>(CTX);                                              \
-        if (result != KERNEL_STATUS_OK) {                                                                \
-          KERNEL_LOG_ERROR("Real kernel compute failed.");                                               \
-          return result;                                                                                 \
-        }                                                                                                \
-        break;                                                                                           \
-      }                                                                                                  \
-      case (DT_DOUBLE): {                                                                                \
-        uint32_t result = RealCompute<IN_TYPE, double>(CTX);                                             \
-        if (result != KERNEL_STATUS_OK) {                                                                \
-          KERNEL_LOG_ERROR("Real kernel compute failed.");                                               \
-          return result;                                                                                 \
-        }                                                                                                \
-        break;                                                                                           \
-      }                                                                                                  \
-      default:                                                                                           \
-        KERNEL_LOG_ERROR("Real kernel output data type [%s] not support.", DTypeStr(OUT_DTYPE).c_str()); \
-        return KERNEL_STATUS_PARAM_INVALID;                                                              \
-    }                                                                                                    \
-    break;                                                                                               \
+#define Real_COMPUTE_CASE(IN_DTYPE, IN_TYPE, OUT_DTYPE, CTX)                                                       \
+  case (IN_DTYPE): {                                                                                               \
+    switch (OUT_DTYPE) {                                                                                           \
+      case (DT_FLOAT): {                                                                                           \
+        uint32_t result = RealCompute<IN_TYPE, float>(CTX);                                                        \
+        if (result != KERNEL_STATUS_OK) {                                                                          \
+          CUST_KERNEL_LOG_ERROR(ctx, "Real kernel compute failed.");                                               \
+          return result;                                                                                           \
+        }                                                                                                          \
+        break;                                                                                                     \
+      }                                                                                                            \
+      case (DT_DOUBLE): {                                                                                          \
+        uint32_t result = RealCompute<IN_TYPE, double>(CTX);                                                       \
+        if (result != KERNEL_STATUS_OK) {                                                                          \
+          CUST_KERNEL_LOG_ERROR(ctx, "Real kernel compute failed.");                                               \
+          return result;                                                                                           \
+        }                                                                                                          \
+        break;                                                                                                     \
+      }                                                                                                            \
+      default:                                                                                                     \
+        CUST_KERNEL_LOG_ERROR(ctx, "Real kernel output data type [%s] not support.", DTypeStr(OUT_DTYPE).c_str()); \
+        return KERNEL_STATUS_PARAM_INVALID;                                                                        \
+    }                                                                                                              \
+    break;                                                                                                         \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t RealCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kReal);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kReal);
 
   DataType input_type = ctx.Input(0)->GetDataType();
   switch (input_type) {
     Real_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, DT_FLOAT, ctx)
       Real_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, DT_DOUBLE, ctx) default
-        : KERNEL_LOG_ERROR("Real kernel input data type [%s] not support.", DTypeStr(input_type).c_str());
+        : CUST_KERNEL_LOG_ERROR(ctx, "Real kernel input data type [%s] not support.", DTypeStr(input_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T, typename t>
-uint32_t RealCpuKernel::RealCompute(const CpuKernelContext &ctx) {
+uint32_t RealCpuKernel::RealCompute(CpuKernelContext &ctx) {
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output = reinterpret_cast<t *>(ctx.Output(0)->GetData());
 
@@ -92,8 +92,8 @@ uint32_t RealCpuKernel::RealCompute(const CpuKernelContext &ctx) {
         *(output + index) = (*(input + index)).real();
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_real),
-                        "real Compute failed");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_real),
+                             "real Compute failed");
   }
   return KERNEL_STATUS_OK;
 }

@@ -297,7 +297,7 @@ static ChunkMap GroupingAbstractTensors(const AbstractBasePtrList &elements, siz
                         << element->type_name() << ".";
     }
     // Calculate data size (number of elements) by shape.
-    auto base_shape = abs_tensor->BuildShape();
+    auto base_shape = abs_tensor->GetShape();
     MS_EXCEPTION_IF_NULL(base_shape);
     auto shape = base_shape->cast<ShapePtr>();
     if (shape == nullptr) {

@@ -487,7 +487,7 @@ NodePtrList BinopGather(BpropBuilder *ib) {
   }
   int64_t axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
   auto batch_dims = GetIntValue(batch_dims_ptr);
-  auto ind_shp_size = ind_shp.size();
+  auto ind_shp_size = SizeToLong(ind_shp.size());
   while (batch_dims < 0) {
     batch_dims += ind_shp_size;
   }

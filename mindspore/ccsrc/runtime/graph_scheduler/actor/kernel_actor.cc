@@ -644,6 +644,11 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 
 void KernelActor::ExecuteInferShapeTask(OpContext<DeviceTensor> *const context) {
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInfer, GetAID().Name());
+  if (IsRunningFailed(context)) {
+    MS_LOG(INFO) << "Run failed and early stop infer shape for kernel: " << kernel_->fullname_with_scope();
+    return;
+  }
+
   if (is_dynamic_type_) {
     InferShapeAndType();
   } else if (is_dynamic_shape_) {
@@ -655,6 +660,11 @@ void KernelActor::ExecuteInferShapeTask(OpContext<DeviceTensor> *const context) 
 
 void KernelActor::ExecuteResizeKernelModTask(OpContext<DeviceTensor> *const context) {
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelResize, GetAID().Name());
+  if (IsRunningFailed(context)) {
+    MS_LOG(INFO) << "Run failed and early stop resize for kernel: " << kernel_->fullname_with_scope();
+    return;
+  }
+
   if (has_dynamic_) {
     device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
     ResizeKernelMod();
@@ -678,12 +688,15 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
     MS_LOG(INFO) << "Run failed and early stop launch kernel: " << kernel_->fullname_with_scope();
     return;
   }
-  PreLaunchKernel(context);
+  // For performance, Only kernel need user data (such as PyExecute op) need call 'PreLaunchKernel', the
+  // 'PreLaunchKernel' will be removed in the future.
+  if (ActorDispatcher::has_kernel_need_user_data()) {
+    PreLaunchKernel(context);
+  }
 
   // 2. Launch kernel if need.
   device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
-  bool skip_launch = CollectiveManager::instance()->need_reinit() || IsSkippedLaunch(kernel_, nullptr);
-  if (!skip_launch && !LaunchKernel(context)) {
+  if (!IsSkippedLaunch(kernel_, nullptr) && !LaunchKernel(context)) {
     MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
   }
 

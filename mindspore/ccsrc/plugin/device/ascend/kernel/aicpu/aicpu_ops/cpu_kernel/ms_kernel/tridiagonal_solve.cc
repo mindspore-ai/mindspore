@@ -42,12 +42,12 @@ uint32_t TridiagonalSolveCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   diags_tensor_ = ctx.Input(0);
   rhs_tensor_ = ctx.Input(1);
   output_tensor_ = ctx.Output(0);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, 2, 1), "Less check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, 2, 1), "Less check input and output number failed.");
   // get shape指针
   std::shared_ptr<TensorShape> diags_shape = diags_tensor_->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(diags_shape, KERNEL_STATUS_PARAM_INVALID, "Get shape of input[0], diags failed");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, diags_shape, KERNEL_STATUS_PARAM_INVALID, "Get shape of input[0], diags failed");
   std::shared_ptr<TensorShape> rhs_shape = rhs_tensor_->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(rhs_shape, KERNEL_STATUS_PARAM_INVALID, "Get shape of input[1], rhs failed");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, rhs_shape, KERNEL_STATUS_PARAM_INVALID, "Get shape of input[1], rhs failed");
 
   // get 输入维度
   int32_t diags_rank = diags_shape->GetDims();
@@ -77,52 +77,53 @@ uint32_t TridiagonalSolveCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
 
   //  1) 维度小于2
   if (diags_rank < 2) {
-    KERNEL_LOG_ERROR("Expected diags to have rank at least 2, got[%d]", diags_rank);
+    CUST_KERNEL_LOG_ERROR(ctx, "Expected diags to have rank at least 2, got[%d]", diags_rank);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   // 2) diags和rhs维度不匹配
   if (rhs_rank != diags_rank) {
-    KERNEL_LOG_ERROR("Expected the rank of rhs to be [%d] or [%d], got [%d]", diags_rank - 1, diags_rank, rhs_rank);
+    CUST_KERNEL_LOG_ERROR(ctx, "Expected the rank of rhs to be [%d] or [%d], got [%d]", diags_rank - 1, diags_rank,
+                          rhs_rank);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   //  3) diags没有三行
   DimSize0 = diags_shape->GetDimSize(diags_rank - 2);
   if (DimSize0 != 3) {
-    KERNEL_LOG_ERROR("Expected 3 diagonals got [%d]", DimSize0);
+    CUST_KERNEL_LOG_ERROR(ctx, "Expected 3 diagonals got [%d]", DimSize0);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   // 4) batch_size不一致
   for (int i = 0; i < diags_rank - 2; i++) {
     if (diags_dimsize[i] != rhs_dimsize[i]) {
-      KERNEL_LOG_ERROR("Batch shapes of diags and rhs are incompatible");
+      CUST_KERNEL_LOG_ERROR(ctx, "Batch shapes of diags and rhs are incompatible");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
   //  5) diags和rhs类型不一致
   if (diags_type_ != rhs_type_) {
-    KERNEL_LOG_ERROR("The type of diags and rhs are incompatible");
+    CUST_KERNEL_LOG_ERROR(ctx, "The type of diags and rhs are incompatible");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   //  6) 输入为空
   if (diags_dimsize.size() == 0 || rhs_dimsize.size() == 0) {
-    KERNEL_LOG_ERROR("The input is null");
+    CUST_KERNEL_LOG_ERROR(ctx, "The input is null");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // 7)diags和rhs长度不匹配
   int DimSize1 = diags_shape->GetDimSize(diags_rank - 1);
   int RhsSize0 = rhs_shape->GetDimSize(rhs_rank - 2);
   if (DimSize1 != RhsSize0) {
-    KERNEL_LOG_ERROR("The length of diags and rhs are incompatible");
+    CUST_KERNEL_LOG_ERROR(ctx, "The length of diags and rhs are incompatible");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   // 8) 输入的数据类型无法处理
   if (diags_type_ != DT_FLOAT && diags_type_ != DT_DOUBLE && diags_type_ != DT_COMPLEX64 &&
       diags_type_ != DT_COMPLEX128) {
-    KERNEL_LOG_ERROR("The type of inputs are invalid");
+    CUST_KERNEL_LOG_ERROR(ctx, "The type of inputs are invalid");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -150,7 +151,8 @@ uint32_t TridiagonalSolveCpuKernel::choosedatatype_(CpuKernelContext &ctx, size_
         break;
       }
       default: {
-        KERNEL_LOG_ERROR(
+        CUST_KERNEL_LOG_ERROR(
+          ctx,
           "Tridiagonal-solve op support input tensor type: float、double、complex64、complex128,should not be tensor "
           "type [%s]",
           data_type_);
@@ -172,7 +174,8 @@ uint32_t TridiagonalSolveCpuKernel::choosedatatype_(CpuKernelContext &ctx, size_
         res = DoCompute2<std::complex<double>>(ctx, nth_batch, i);
         break;
       default: {
-        KERNEL_LOG_ERROR(
+        CUST_KERNEL_LOG_ERROR(
+          ctx,
           "Tridiagonal-solve op support input tensor type: float、double、complex64、complex128,should not be tensor "
           "type [%s]",
           data_type_);
@@ -244,7 +247,7 @@ uint32_t TridiagonalSolveCpuKernel::DoCompute1(CpuKernelContext &ctx, size_t nth
     if (abs(u(i, 0)) >= abs(subdiag(i + 1))) {
       // No row interchange.
       if (u(i, 0) == zero) {
-        KERNEL_LOG_ERROR("The first element of diag should not be zero");
+        CUST_KERNEL_LOG_ERROR(ctx, "The first element of diag should not be zero");
         return KERNEL_STATUS_PARAM_INVALID;
       }
       const T factor = subdiag(i + 1) / u(i, 0);
@@ -269,7 +272,7 @@ uint32_t TridiagonalSolveCpuKernel::DoCompute1(CpuKernelContext &ctx, size_t nth
     }
   }
   if (u(n - 1, 0) == zero) {
-    KERNEL_LOG_ERROR("The last element of diag should not be zero");
+    CUST_KERNEL_LOG_ERROR(ctx, "The last element of diag should not be zero");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -291,7 +294,7 @@ uint32_t TridiagonalSolveCpuKernel::DoCompute1(CpuKernelContext &ctx, size_t nth
     }
   }
 
-  // KERNEL_LOG_INFO("TridiagonalSolveCpuKernel::DoCompute end! ");
+  // CUST_KERNEL_LOG_INFO(ctx, "TridiagonalSolveCpuKernel::DoCompute end! ");
   return KERNEL_STATUS_OK;
 }
 
@@ -347,7 +350,7 @@ uint32_t TridiagonalSolveCpuKernel::DoCompute2(CpuKernelContext &ctx, size_t nth
   }
 
   if (diag(0) == zero) {
-    KERNEL_LOG_ERROR("The first element of diag should not be zero");
+    CUST_KERNEL_LOG_ERROR(ctx, "The first element of diag should not be zero");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -356,7 +359,7 @@ uint32_t TridiagonalSolveCpuKernel::DoCompute2(CpuKernelContext &ctx, size_t nth
   for (int i = 1; i < n; ++i) {
     auto denom = diag(i) - subdiag(i) * u(i - 1);
     if (denom == zero) {
-      KERNEL_LOG_ERROR("The diag should not be zero");
+      CUST_KERNEL_LOG_ERROR(ctx, "The diag should not be zero");
       return KERNEL_STATUS_PARAM_INVALID;
     }
     u(i) = superdiag(i) / denom;
@@ -373,7 +376,7 @@ uint32_t TridiagonalSolveCpuKernel::DoCompute2(CpuKernelContext &ctx, size_t nth
     }
   }
 
-  KERNEL_LOG_INFO("TridiagonalSolveCpuKernel::DoCompute end! ");
+  CUST_KERNEL_LOG_INFO(ctx, "TridiagonalSolveCpuKernel::DoCompute end! ");
   return KERNEL_STATUS_OK;
 }
 

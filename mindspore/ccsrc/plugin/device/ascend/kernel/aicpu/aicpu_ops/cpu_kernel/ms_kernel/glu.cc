@@ -33,11 +33,11 @@ namespace aicpu {
 uint32_t GluCpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
   // get input value
   Tensor *value_ptr = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(value_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input value failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, value_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input value failed.");
   value_data_ptr_ = value_ptr->GetData();
-  KERNEL_CHECK_NULLPTR(value_data_ptr_, KERNEL_STATUS_PARAM_INVALID, "Get input value data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, value_data_ptr_, KERNEL_STATUS_PARAM_INVALID, "Get input value data failed.");
   auto value_shape_ptr = value_ptr->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(value_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input value shape failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, value_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input value shape failed.");
   value_dim_ = value_shape_ptr->GetDims();
   // get Attr axis
   AttrValue *split_dim_ptr = ctx.GetAttr("axis");
@@ -46,27 +46,27 @@ uint32_t GluCpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
   } else {
     split_dim_ = -1;
   }
-  KERNEL_CHECK_FALSE((value_dim_ > split_dim_) && (-value_dim_ <= split_dim_), KERNEL_STATUS_PARAM_INVALID,
-                     "Dim of Input value must lesser than value_dim_ and greater than or "
-                     "equal to minus value_dim_, split_dim_ is [%d], value_dim_ is [%d].",
-                     split_dim_, value_dim_);
+  CUST_KERNEL_CHECK_FALSE(ctx, (value_dim_ > split_dim_) && (-value_dim_ <= split_dim_), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of Input value must lesser than value_dim_ and greater than or "
+                          "equal to minus value_dim_, split_dim_ is [%d], value_dim_ is [%d].",
+                          split_dim_, value_dim_);
   if (split_dim_ < 0) {
     split_dim_ += value_dim_;
   }
   data_type_ = value_ptr->GetDataType();
   value_num_ = value_ptr->NumElements();
   value_shape_vec_ = value_shape_ptr->GetDimSizes();
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Glu check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Glu check input and output number failed.");
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t GluCpuKernel::SplitWithDimZero(const CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr) {
+uint32_t GluCpuKernel::SplitWithDimZero(CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr) {
   int64_t copy_num = value_num_ / value_shape_vec_[0];
   T *input_copy_ptr = input_data_ptr;
-  KERNEL_CHECK_FALSE((value_shape_vec_[0] % 2 == 0), KERNEL_STATUS_PARAM_INVALID,
-                     "The length of the split dimension must be even.", value_shape_vec_[0]);
+  CUST_KERNEL_CHECK_FALSE(ctx, (value_shape_vec_[0] % 2 == 0), KERNEL_STATUS_PARAM_INVALID,
+                          "The length of the split dimension must be even.", value_shape_vec_[0]);
   int64_t size_split = value_shape_vec_[0] / 2;
   // set output[0]
   int64_t copy_size_per = size_split * copy_num;
@@ -83,14 +83,15 @@ uint32_t GluCpuKernel::SplitWithDimZero(const CpuKernelContext &ctx, T *input_da
   if (copy_size_per < kParallelDataNum) {
     sharder_glu(0, copy_size_per);
   } else {
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, copy_size_per, copy_size_per / max_core_num, sharder_glu),
-                        "Glu Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, copy_size_per, copy_size_per / max_core_num, sharder_glu),
+                             "Glu Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t GluCpuKernel::SplitCompute(const CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr) {
+uint32_t GluCpuKernel::SplitCompute(CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr) {
   uint32_t min_core_num = 1;
   int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
   int64_t prefix = 1;
@@ -98,8 +99,8 @@ uint32_t GluCpuKernel::SplitCompute(const CpuKernelContext &ctx, T *input_data_p
     prefix *= value_shape_vec_[i];
   }
   int64_t midfix = value_shape_vec_[split_dim_];
-  KERNEL_CHECK_FALSE((midfix % 2 == 0), KERNEL_STATUS_PARAM_INVALID, "The length of the split dimension must be even.",
-                     midfix);
+  CUST_KERNEL_CHECK_FALSE(ctx, (midfix % 2 == 0), KERNEL_STATUS_PARAM_INVALID,
+                          "The length of the split dimension must be even.", midfix);
   int64_t size_split = midfix / 2;
   int64_t subfix = 1;
   for (size_t i = split_dim_ + 1; i < value_shape_vec_.size(); i++) {
@@ -126,8 +127,8 @@ uint32_t GluCpuKernel::SplitCompute(const CpuKernelContext &ctx, T *input_data_p
   if (prefix < kParallelDataNum) {
     sharder_glu(0, prefix);
   } else {
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, prefix, prefix / max_core_num, sharder_glu),
-                        "Glu Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, prefix, prefix / max_core_num, sharder_glu),
+                             "Glu Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
@@ -139,19 +140,19 @@ uint32_t GluCpuKernel::DoCompute(CpuKernelContext &ctx) {
   T *dest_output_backup_ptr = reinterpret_cast<T *>(dest_output_data_ptr);
   T *input_data_ptr = reinterpret_cast<T *>(value_data_ptr_);
   if (split_dim_ == 0) {
-    KERNEL_CHECK_FALSE((SplitWithDimZero<T>(ctx, input_data_ptr, dest_output_backup_ptr) == KERNEL_STATUS_OK),
-                       KERNEL_STATUS_PARAM_INVALID, "SplitWithDimZero failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (SplitWithDimZero<T>(ctx, input_data_ptr, dest_output_backup_ptr) == KERNEL_STATUS_OK),
+                            KERNEL_STATUS_PARAM_INVALID, "SplitWithDimZero failed.");
     return KERNEL_STATUS_OK;
   } else {
-    KERNEL_CHECK_FALSE((SplitCompute<T>(ctx, input_data_ptr, dest_output_backup_ptr) == KERNEL_STATUS_OK),
-                       KERNEL_STATUS_PARAM_INVALID, "Split Compute failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (SplitCompute<T>(ctx, input_data_ptr, dest_output_backup_ptr) == KERNEL_STATUS_OK),
+                            KERNEL_STATUS_PARAM_INVALID, "Split Compute failed.");
     return KERNEL_STATUS_OK;
   }
 }
 
 uint32_t GluCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_CHECK_FALSE((CheckAndInitParams(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
-                     "CheckAndInitParams failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (CheckAndInitParams(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
+                          "CheckAndInitParams failed.");
   switch (data_type_) {
     case DT_FLOAT16:
       return DoCompute<Eigen::half>(ctx);
@@ -160,7 +161,7 @@ uint32_t GluCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return DoCompute<double>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported datatype[%s]", DTypeStr(data_type_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported datatype[%s]", DTypeStr(data_type_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

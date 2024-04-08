@@ -45,13 +45,15 @@
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t nTwo = 2;
-constexpr int64_t kPaddingsSizeTwo = 2;
-constexpr int64_t kPaddingsSizeFour = 4;
+constexpr auto nTwo = 2;
+constexpr auto kPaddingsSizeTwo = 2;
+constexpr auto kPaddingsSizeFour = 4;
+constexpr auto kConstantInput = 3;
 void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_size, const int64_t size) {
   constexpr int64_t kPaddingsSizeSix = 6;
   constexpr int64_t nThree = 3;
@@ -85,6 +87,24 @@ void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_siz
     }
   }
 }
+
+void PaddingsValueCheck(const std::string &prim_name, const std::vector<int64_t> &x_shape,
+                        const std::vector<int64_t> &paddings_arg) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    (void)CheckAndConvertUtils::CheckPositiveVector("paddings", paddings_arg, prim_name);
+  }
+  auto x_shape_reverse = x_shape;
+  std::reverse_copy(x_shape.begin(), x_shape.end(), x_shape_reverse.begin());
+  for (size_t i = 0; i < paddings_arg.size(); i++) {
+    if (paddings_arg[i] < 0) {
+      (void)CheckAndConvertUtils::CheckInteger("paddings_value", paddings_arg[i], CompareEnum::kGreaterEqual,
+                                               -x_shape_reverse[i / nTwo], prim_name);
+    }
+  }
+}
+
 void ReflectModeCheck(const std::string &prim_name, const int64_t paddings_size, std::vector<int64_t> x_shape,
                       std::vector<int64_t> paddings_arg, const int64_t size) {
   constexpr int64_t kReflectMaxDims = 4;
@@ -118,6 +138,9 @@ void ReflectModeCheck(const std::string &prim_name, const int64_t paddings_size,
 
 abstract::ShapePtr PaddingNoTensor(abstract::BaseShapePtr paddings_shape_ptr, const std::vector<int64_t> &x_shape) {
   auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(paddings_shape_ptr)[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("paddings_dim", SizeToLong(paddings_shape.size()), kEqual, kDim1, "PadV3");
+  (void)CheckAndConvertUtils::CheckInteger("paddings_length", paddings_shape[kIndex0], kLessEqual,
+                                           SizeToLong(x_shape.size() * nTwo), "PadV3");
   size_t pad_dim = 0;
   if (paddings_shape.size() >= 1) {
     pad_dim = paddings_shape[0] / nTwo;
@@ -128,6 +151,15 @@ abstract::ShapePtr PaddingNoTensor(abstract::BaseShapePtr paddings_shape_ptr, co
     out_shape[i] = abstract::Shape::kShapeDimAny;
   }
   return std::make_shared<abstract::Shape>(out_shape);
+}
+
+void CheckAscendInputXDim(const size_t &x_dim, const std::string &prim_name) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && x_dim > kDim5) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of 'x' must be no more than " << kDim5
+                             << " while running in Ascend.";
+  }
 }
 
 abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -145,6 +177,7 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   if (dim_size == 0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of 'x' must bigger than 0.";
   }
+  CheckAscendInputXDim(dim_size, prim_name);
   if (input_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>(dim_size, abstract::Shape::kShapeDimAny));
   }
@@ -176,14 +209,6 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   if (mode != kConstant) {
     (void)CheckAndConvertUtils::CheckInteger("input dims for edge, reflect or circular mode", size, kGreaterEqual,
                                              kOtherMinDims, prim_name);
-    auto type_constant_value = input_args[kIndex2]->GetType();
-    if (!type_constant_value->isa<TypeNone>()) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << prim_name
-        << "', the input[constant_value] is only valid when the attribute[mode] is `constant`. DO NOT set "
-           "it in ["
-        << mode << "] mode.";
-    }
     if (mode == kReflect) {
       ReflectModeCheck(prim_name, paddings_size, x_shape, paddings_arg, size);
     } else {
@@ -192,6 +217,8 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   }
 
   PaddingsSizeCheck(primitive, paddings_size, size);
+  // Checker: whether paddings_value + x_shape_value < 0 or not
+  PaddingsValueCheck(prim_name, x_shape, paddings_arg);
   for (int64_t i = 0; i < paddings_size; ++i) {
     paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));
   }
@@ -249,13 +276,21 @@ TypePtr PadV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 
 AbstractBasePtr PadV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  constexpr int64_t kConstantInput = 3;
   constexpr int64_t kOtherInput = 2;
   auto mode = GetValue<string>(primitive->GetAttr("mode"));
   if (mode == kConstant) {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kConstantInput, primitive->name());
   } else {
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kOtherInput, primitive->name());
+    if (input_args.size() == kConstantInput) {
+      auto type_constant_value = input_args[kIndex2]->GetType();
+      if (!type_constant_value->isa<TypeNone>()) {
+        MS_EXCEPTION(ValueError)
+          << "For '" << primitive->name()
+          << "', the input[constant_value] is only valid when the attribute[mode] is `constant`. DO NOT set it in ["
+          << mode << "] mode.";
+      }
+    }
   }
   auto infer_type = PadV3InferType(primitive, input_args);
   auto infer_shape = PadV3InferShape(primitive, input_args);

@@ -31,8 +31,8 @@ const uint32_t tensor_in_and_out_dims = 4;
 
 namespace aicpu {
 uint32_t FractionalMaxPoolGradCpuKernel::FractionalMaxPoolGradParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, k_InputNum, k_OutputNum),
-                      "FractionalMaxPoolGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, k_InputNum, k_OutputNum),
+                           "FractionalMaxPoolGrad check input and output number failed.");
   Tensor *orig_input = ctx.Input(0);
   Tensor *orig_output = ctx.Input(1);
   Tensor *out_backprop = ctx.Input(2);
@@ -43,25 +43,25 @@ uint32_t FractionalMaxPoolGradCpuKernel::FractionalMaxPoolGradParamCheck(CpuKern
   auto out_backprop_shape = out_backprop->GetTensorShape();
   int32_t out_backprop_dims = out_backprop_shape->GetDims();
   if (orig_input->GetDataType() != orig_output->GetDataType()) {
-    KERNEL_LOG_ERROR(
-      "The data type of the orig_output [%s] need be the same as the "
-      "orig_input [%s].",
-      DTypeStr(orig_output->GetDataType()).c_str(), DTypeStr(orig_input->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data type of the orig_output [%s] need be the same as the "
+                          "orig_input [%s].",
+                          DTypeStr(orig_output->GetDataType()).c_str(), DTypeStr(orig_input->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (orig_input->GetDataType() != out_backprop->GetDataType()) {
-    KERNEL_LOG_ERROR(
-      "The data type of the out_backprop [%s] need be the same as the "
-      "orig_input [%s].",
-      DTypeStr(out_backprop->GetDataType()).c_str(), DTypeStr(orig_input->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data type of the out_backprop [%s] need be the same as the "
+                          "orig_input [%s].",
+                          DTypeStr(out_backprop->GetDataType()).c_str(), DTypeStr(orig_input->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_CHECK_FALSE((orig_input_dims == tensor_in_and_out_dims), KERNEL_STATUS_PARAM_INVALID,
-                     "orig_input should be a tensor of rank 4.");
-  KERNEL_CHECK_FALSE((orig_output_dims == tensor_in_and_out_dims), KERNEL_STATUS_PARAM_INVALID,
-                     "orig_output should be a tensor of rank 4.");
-  KERNEL_CHECK_FALSE((out_backprop_dims == tensor_in_and_out_dims), KERNEL_STATUS_PARAM_INVALID,
-                     "out_backprop should be a tensor of rank 4.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (orig_input_dims == tensor_in_and_out_dims), KERNEL_STATUS_PARAM_INVALID,
+                          "orig_input should be a tensor of rank 4.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (orig_output_dims == tensor_in_and_out_dims), KERNEL_STATUS_PARAM_INVALID,
+                          "orig_output should be a tensor of rank 4.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (out_backprop_dims == tensor_in_and_out_dims), KERNEL_STATUS_PARAM_INVALID,
+                          "out_backprop should be a tensor of rank 4.");
   return KERNEL_STATUS_OK;
 }
 
@@ -196,9 +196,10 @@ uint32_t FractionalMaxPoolGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
           }
         }
       };
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, height_seq_len, height_seq_len / max_core_num,
-                                                      sharder_fractionalmaxpoolgrad_index),
-                          "FractionalMaxPoolGrad Index Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx,
+                               CpuKernelUtils::ParallelFor(ctx, height_seq_len, height_seq_len / max_core_num,
+                                                           sharder_fractionalmaxpoolgrad_index),
+                               "FractionalMaxPoolGrad Index Compute failed.");
     }
   }
   for (int i = 0; i < tensor_in_num; i++) {
@@ -209,18 +210,18 @@ uint32_t FractionalMaxPoolGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
   int num_total_inputs = output->NumElements();
   for (int index = 0; index < num_total_outputs; ++index) {
     int input_backprop_index = tensor_out_arg_max[index];
-    KERNEL_CHECK_FALSE((input_backprop_index >= 0 && input_backprop_index < num_total_inputs),
-                       KERNEL_STATUS_PARAM_INVALID,
-                       "Invalid input backprop index:[%d], The maximum number of output is: "
-                       "[%d].",
-                       input_backprop_index, num_total_inputs);
+    CUST_KERNEL_CHECK_FALSE(ctx, (input_backprop_index >= 0 && input_backprop_index < num_total_inputs),
+                            KERNEL_STATUS_PARAM_INVALID,
+                            "Invalid input backprop index:[%d], The maximum number of output is: "
+                            "[%d].",
+                            input_backprop_index, num_total_inputs);
     *(output_data + input_backprop_index) += *(out_backprop_data + index);
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t FractionalMaxPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(FractionalMaxPoolGradParamCheck(ctx), "Check FractionalMaxPoolGrad params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, FractionalMaxPoolGradParamCheck(ctx), "Check FractionalMaxPoolGrad params failed.");
   Tensor *input = ctx.Input(0);
   auto data_type = input->GetDataType();
   switch (data_type) {
@@ -233,7 +234,8 @@ uint32_t FractionalMaxPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_INT64:
       return DoCompute<int64_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("FractionalMaxPoolGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "FractionalMaxPoolGrad kernel data type [%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

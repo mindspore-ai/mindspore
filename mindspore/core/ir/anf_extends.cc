@@ -23,6 +23,7 @@
 #include "ir/visitor.h"
 #include "ir/func_graph.h"
 #include "utils/anf_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -46,24 +47,6 @@ std::string CNode::fullname_with_scope() {
     return fullname_with_scope_;
   }
 
-#ifndef ENABLE_SECURITY
-  if (IsApply(prim::kPrimScalarSummary) || IsApply(prim::kPrimTensorSummary) || IsApply(prim::kPrimImageSummary) ||
-      IsApply(prim::kPrimHistogramSummary)) {
-    std::string tag = GetValue<std::string>(GetValueNode(input(1)));
-    std::string name;
-    if (IsApply(prim::kPrimScalarSummary)) {
-      name = tag + "[:Scalar]";
-    } else if (IsApply(prim::kPrimImageSummary)) {
-      name = tag + "[:Image]";
-    } else if (IsApply(prim::kPrimHistogramSummary)) {
-      name = tag + "[:Histogram]";
-    } else {
-      name = tag + "[:Tensor]";
-    }
-    fullname_with_scope_ = name;
-    return fullname_with_scope_;
-  }
-#endif
   // cnode input 0 should be primitive ptr or funcgraph ptr
   auto value_ptr = input(0)->cast<ValueNodePtr>();
   if (value_ptr == nullptr) {

@@ -34,11 +34,12 @@ uint32_t SparseSliceGradCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *indices = ctx.Input(1);
   Tensor *start = ctx.Input(2);
   Tensor *new_indices = ctx.Input(3);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "sparseslicegrad check input and output number failed.");
-  KERNEL_HANDLE_ERROR(SparseSliceGradParamCheck(backprop_val_grad, indices, start, new_indices),
-                      "sparseslicegrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "sparseslicegrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, SparseSliceGradParamCheck(ctx, backprop_val_grad, indices, start, new_indices),
+                           "sparseslicegrad check params failed.");
   DataType input0_type = ctx.Input(0)->GetDataType();
-  KERNEL_LOG_DEBUG("%s op input[a] data type is [%s].", kSparseSliceGrad, DTypeStr(input0_type).c_str());
+  CUST_KERNEL_LOG_DEBUG(ctx, "%s op input[a] data type is [%s].", kSparseSliceGrad, DTypeStr(input0_type).c_str());
   switch (input0_type) {
     case DT_INT8:
       GradCompute<int8_t>(ctx);
@@ -75,14 +76,14 @@ uint32_t SparseSliceGradCpuKernel::Compute(CpuKernelContext &ctx) {
       break;
 
     default:
-      KERNEL_LOG_ERROR("SparseSliceGrad kernel data type [%s] not support.", DTypeStr(input0_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseSliceGrad kernel data type [%s] not support.", DTypeStr(input0_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SparseSliceGradCpuKernel::GradCompute(const CpuKernelContext &ctx) {
+uint32_t SparseSliceGradCpuKernel::GradCompute(CpuKernelContext &ctx) {
   Tensor *backprop_val_grad = ctx.Input(0);
   Tensor *indices = ctx.Input(1);
   Tensor *start = ctx.Input(2);
@@ -94,7 +95,7 @@ uint32_t SparseSliceGradCpuKernel::GradCompute(const CpuKernelContext &ctx) {
   auto output_size = y_grad->GetDataSize();
   auto ret = memset_s(y_grad_vec, output_size, 0, sizeof(T) * input_nnz);
   if (ret != EOK) {
-    KERNEL_LOG_ERROR("For 'SparseSlice', memset_s failed, ret=%d.", ret);
+    CUST_KERNEL_LOG_ERROR(ctx, "For 'SparseSlice', memset_s failed, ret=%d.", ret);
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -123,45 +124,48 @@ uint32_t SparseSliceGradCpuKernel::GradCompute(const CpuKernelContext &ctx) {
       ++j;
     }
   }
-  KERNEL_CHECK_FALSE((backprop_val_grad->NumElements() == j), KERNEL_STATUS_PARAM_INVALID,
-                     "Elements of backprop_val_grad aren't all propagated."
-                     "Num elements:",
-                     backprop_val_grad->NumElements(), ", used: ", j);
+  CUST_KERNEL_CHECK_FALSE(ctx, (backprop_val_grad->NumElements() == j), KERNEL_STATUS_PARAM_INVALID,
+                          "Elements of backprop_val_grad aren't all propagated."
+                          "Num elements:",
+                          backprop_val_grad->NumElements(), ", used: ", j);
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseSliceGradCpuKernel::SparseSliceGradParamCheck(Tensor *backprop_val_grad, Tensor *indices, Tensor *start,
-                                                             Tensor *new_indices) {
-  KERNEL_CHECK_FALSE((IsVector(backprop_val_grad->GetTensorShape()->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
-                     "Input backprop_val_grad should be a vector but received shape: [%d].",
-                     backprop_val_grad->GetTensorShape()->GetDimSizes());
-  KERNEL_CHECK_FALSE(
-    (IsMatrix(indices->GetTensorShape()->GetDimSizes()) && IsMatrix(new_indices->GetTensorShape()->GetDimSizes())),
+uint32_t SparseSliceGradCpuKernel::SparseSliceGradParamCheck(CpuKernelContext &ctx, Tensor *backprop_val_grad,
+                                                             Tensor *indices, Tensor *start, Tensor *new_indices) {
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsVector(backprop_val_grad->GetTensorShape()->GetDimSizes())),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "Input backprop_val_grad should be a vector but received shape: [%d].",
+                          backprop_val_grad->GetTensorShape()->GetDimSizes());
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (IsMatrix(indices->GetTensorShape()->GetDimSizes()) && IsMatrix(new_indices->GetTensorShape()->GetDimSizes())),
     KERNEL_STATUS_PARAM_INVALID,
     "Input and output indices should be matrices [%lld], but "
     "received shapes: [%lld].",
     indices->GetTensorShape()->GetDimSizes(), new_indices->GetTensorShape()->GetDimSizes());
   auto indices_shape = indices->GetTensorShape();
   auto new_indices_shape = new_indices->GetTensorShape();
-  KERNEL_CHECK_FALSE((indices_shape->GetDimSize(1) == new_indices_shape->GetDimSize(1)), KERNEL_STATUS_PARAM_INVALID,
-                     "The input and output should have the same, ndims: got: [%d] and [%d].",
-                     indices_shape->GetDimSize(1), new_indices_shape->GetDimSize(1));
-  KERNEL_CHECK_FALSE((new_indices_shape->GetDimSize(0) <= indices_shape->GetDimSize(0)), KERNEL_STATUS_PARAM_INVALID,
-                     "# rows of output_indices should be not greater than of input_indices, "
-                     "got: [%d] and [%d].",
-                     new_indices_shape->GetDimSize(0), indices_shape->GetDimSize(0));
-  KERNEL_CHECK_FALSE((backprop_val_grad->NumElements() == new_indices_shape->GetDimSize(0)),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "# elements of backprop_val_grad and rows of new_indices should match "
-                     "(#nnz of sum): got [%d] and [%d].",
-                     backprop_val_grad->NumElements(), new_indices_shape->GetDimSize(0));
-  KERNEL_CHECK_FALSE((IsVector(start->GetTensorShape()->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
-                     "The start should be a vector but received shape [%s].",
-                     VectorToString(start->GetTensorShape()->GetDimSizes()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (indices_shape->GetDimSize(1) == new_indices_shape->GetDimSize(1)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "The input and output should have the same, ndims: got: [%d] and [%d].",
+                          indices_shape->GetDimSize(1), new_indices_shape->GetDimSize(1));
+  CUST_KERNEL_CHECK_FALSE(ctx, (new_indices_shape->GetDimSize(0) <= indices_shape->GetDimSize(0)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "# rows of output_indices should be not greater than of input_indices, "
+                          "got: [%d] and [%d].",
+                          new_indices_shape->GetDimSize(0), indices_shape->GetDimSize(0));
+  CUST_KERNEL_CHECK_FALSE(ctx, (backprop_val_grad->NumElements() == new_indices_shape->GetDimSize(0)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "# elements of backprop_val_grad and rows of new_indices should match "
+                          "(#nnz of sum): got [%d] and [%d].",
+                          backprop_val_grad->NumElements(), new_indices_shape->GetDimSize(0));
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsVector(start->GetTensorShape()->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
+                          "The start should be a vector but received shape [%s].",
+                          VectorToString(start->GetTensorShape()->GetDimSizes()).c_str());
   const int num_dims = indices_shape->GetDimSize(1);
-  KERNEL_CHECK_FALSE((num_dims == start->NumElements()), KERNEL_STATUS_PARAM_INVALID,
-                     "Expected start must be a vector of length [%d] but got length [%d].", num_dims,
-                     start->NumElements());
+  CUST_KERNEL_CHECK_FALSE(ctx, (num_dims == start->NumElements()), KERNEL_STATUS_PARAM_INVALID,
+                          "Expected start must be a vector of length [%d] but got length [%d].", num_dims,
+                          start->NumElements());
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kSparseSliceGrad, SparseSliceGradCpuKernel);

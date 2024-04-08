@@ -29,9 +29,27 @@
 #include "transform/graph_ir/transform_util.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "ops/framework_op_name.h"
+#include "ops/framework_ops.h"
 
 namespace mindspore::transform {
 namespace {
+bool IsUsedBySwitchOp(const AnfNodePtr &node, const NodeUsersMap &node_users) {
+  if (common::AnfAlgo::GetCNodeName(node) != prim::kPrimPartial->name()) {
+    return false;
+  }
+
+  auto iter = node_users.find(node);
+  if (iter != node_users.end()) {
+    for (const auto &partial_user : iter->second) {
+      if (common::AnfAlgo::GetCNodeName(partial_user.first) == prim::kPrimSwitch->name()) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipVirtualNode(const FuncGraphManagerPtr &manager,
                                                                       const AnfNodePtr &node) {
   std::vector<std::pair<AnfNodePtr, int>> res;
@@ -46,8 +64,12 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipVirtualNode(const Func
   while (!anf_queue.empty()) {
     auto queue_front = anf_queue.front();
     anf_queue.pop();
-    if (AnfUtils::IsRealKernel(queue_front.first) && common::AnfAlgo::GetCNodeName(queue_front.first) != kCastOpName &&
-        common::AnfAlgo::GetCNodeName(queue_front.first) != kTensorMoveOpName) {
+    // NOTE fix: do not support trans from NC1HWC0 to ND between parameter and Switch-op
+    if (IsUsedBySwitchOp(queue_front.first, node_users_map)) {
+      return {};
+    }
+    std::string op_name = common::AnfAlgo::GetCNodeName(queue_front.first);
+    if (AnfUtils::IsRealKernel(queue_front.first) && op_name != kCastOpName && op_name != kTensorMoveOpName) {
       res.push_back(queue_front);
       continue;
     }
@@ -119,22 +141,24 @@ void StorageFormatConvertor::SetStorageFormatFromConfig(const AnfGraphPtr &anf_g
     }
     // Step 3: check origin shape dims
     auto &storage_format_info = storage_format_info_opt.value();
-    if (storage_format_info.func_ && !storage_format_info.func_(desc)) {
+    auto fmt_opt = storage_format_info.func_(user_node.first, desc);
+    if (!fmt_opt.has_value()) {
       continue;
     }
     // Step 4: update desc and param format
     MS_EXCEPTION_IF_NULL(user_node.first);
-    auto format = GetGeFormat(param, user_node.first, storage_format_info.format_, desc->GetOriginShape().GetDimNum());
+    std::string store_fmt = fmt_opt.value();
+    auto format = GetGeFormat(param, user_node.first, store_fmt, desc->GetOriginShape().GetDimNum());
     MS_LOG(INFO) << "Update desc format from config, graph: " << anf_graph->ToString()
                  << ", used node: " << user_node.first->DebugString() << ", full name: " << user_node.first->ToString()
-                 << ",input idx: " << user_node.second << ", storage format: " << storage_format_info.format_
+                 << ",input idx: " << user_node.second << ", storage format: " << store_fmt
                  << ", pre param: " << param->DebugString() << ", full name: " << param->ToString();
     UpdateTensorDesc(desc, format);
     if (!storage_format_info.expand_dims_.empty()) {
       MS_LOG(INFO) << "Set expand dims rule stub.";
       // desc->SetExpandDimsRule(storage_format_info.expand_dims_);
     }
-    UpdateParameterKernelInfo(param, storage_format_info.format_);
+    UpdateParameterKernelInfo(param, store_fmt);
   }
 }
 

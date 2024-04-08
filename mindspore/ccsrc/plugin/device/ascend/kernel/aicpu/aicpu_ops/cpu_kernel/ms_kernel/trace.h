@@ -29,7 +29,7 @@ class TraceCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  static uint32_t TraceCompute(Tensor *input, Tensor *output, const CpuKernelContext &ctx);
+  static uint32_t TraceCompute(Tensor *input, Tensor *output, CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

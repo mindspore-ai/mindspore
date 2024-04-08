@@ -83,7 +83,5 @@ def _tensor_pow_list(x, y):
 
 @pow_.register_default()
 def default_pow(x, y):
-    """
-    Default function for pow.
-   """
+    """Default function for pow."""
     return x ** y

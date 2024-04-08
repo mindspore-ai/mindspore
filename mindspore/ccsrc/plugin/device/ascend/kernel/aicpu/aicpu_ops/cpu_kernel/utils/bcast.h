@@ -49,8 +49,8 @@ struct BCalcInfo {
 
 class Bcast {
  public:
-  Bcast() : valid_(true) {}
-  Bcast(std::vector<int64_t> &x_shape, std::vector<int64_t> &y_shape);
+  Bcast(CpuKernelContext &ctx) : ctx(ctx), valid_(true) {}
+  Bcast(CpuKernelContext &ctx, std::vector<int64_t> &x_shape, std::vector<int64_t> &y_shape);
   ~Bcast() = default;
 
   uint32_t GenerateBcastInfo(const BCalcInfo &calcInfo);
@@ -66,8 +66,9 @@ class Bcast {
   const std::vector<int64_t> &y_bcast() const { return y_bcast_; }
 
  private:
-  uint32_t Init(const std::vector<int64_t> &x, const std::vector<int64_t> &y);
+  uint32_t Init(CpuKernelContext &ctx, const std::vector<int64_t> &x, const std::vector<int64_t> &y);
 
+  CpuKernelContext &ctx;
   bool valid_;
   std::vector<int64_t> x_reshape_;
   std::vector<int64_t> y_reshape_;

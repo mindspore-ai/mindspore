@@ -19,7 +19,7 @@
 using namespace AscendC;
 
 namespace {
-constexpr int64_t kBufferNum = 2;
+constexpr int64_t kBufferNum = 1;
 const int64_t kDivisor = 4;
 static __aicore__ inline int64_t CeilRound(int64_t value, int64_t divisor) {
   if (divisor == 0) {
@@ -173,6 +173,81 @@ class KernelPromptKvCache {
   int64_t update_h_stride_ = 0;
 };
 
+template <typename T>
+class KernelPromptKvCacheCopyAll {
+ public:
+  __aicore__ inline KernelPromptKvCacheCopyAll() {}
+
+  __aicore__ inline void InitParam(GM_ADDR tiling) {
+    GET_TILING_DATA(tiling_data, tiling);
+    core_num_ = tiling_data.core_num;
+    former_each_core_bs_num_ = tiling_data.former_each_core_bs_num;
+    tail_each_core_bs_num_ = tiling_data.tail_each_core_bs_num;
+    split_us_ = tiling_data.split_us;
+    former_block_us_ = tiling_data.former_block_us;
+    tail_block_us_ = tiling_data.tail_block_us;
+  }
+
+  __aicore__ inline void Process(GM_ADDR cache, GM_ADDR update, GM_ADDR valid_seq_len, GM_ADDR batch_index,
+                                 GM_ADDR seq_len_axis, GM_ADDR new_max_seq_len, GM_ADDR cur_max_seq_len,
+                                 GM_ADDR tiling_data) {
+    core_idx_ = GetBlockIdx();
+    InitParam(tiling_data);
+    if (core_idx_ >= core_num_) {
+      return;
+    }
+    if (g_coreType == AIC) {
+      return;
+    }
+    if (core_idx_ != core_num_ - 1) {
+      each_core_bs_num_ = former_each_core_bs_num_;
+    } else {
+      each_core_bs_num_ = tail_each_core_bs_num_;
+    }
+    pipe_barrier((pipe_t)PIPE_ALL);
+
+    pipe_.InitBuffer(update_queue_, kBufferNum, former_block_us_ * sizeof(T));
+    for (int64_t i = 0; i < split_us_; ++i) {
+      int64_t u_block_len;
+      if (i == split_us_ - 1) {
+        u_block_len = tail_block_us_;
+      } else {
+        u_block_len = former_block_us_;
+      }
+      LocalTensor<T> update_in_local_tensor = update_queue_.AllocTensor<T>();
+      update_gm_.SetGlobalBuffer((__gm__ T *)update + core_idx_ * former_each_core_bs_num_ + i * former_block_us_,
+                                 u_block_len);
+      out_gm_.SetGlobalBuffer((__gm__ T *)cache + core_idx_ * former_each_core_bs_num_ + i * former_block_us_,
+                              u_block_len);
+      pipe_barrier((pipe_t)PIPE_ALL);
+      DataCopy(update_in_local_tensor, update_gm_, u_block_len);
+      update_queue_.EnQue(update_in_local_tensor);
+      LocalTensor<T> update_in_local_tensor_out = update_queue_.DeQue<T>();
+      pipe_barrier((pipe_t)PIPE_ALL);
+      DataCopy(out_gm_, update_in_local_tensor_out, u_block_len);
+      update_queue_.FreeTensor(update_in_local_tensor_out);
+    }
+  }
+
+ private:
+  // gm
+  GlobalTensor<T> update_gm_;
+  GlobalTensor<T> out_gm_;
+
+  TPipe pipe_;
+  TQue<QuePosition::VECIN, 1> update_queue_;
+
+  int64_t core_idx_ = 0;
+  int64_t core_num_ = 0;
+  int64_t each_core_bs_num_ = 0;
+  int64_t former_each_core_bs_num_ = 0;
+  int64_t tail_each_core_bs_num_ = 0;
+
+  int64_t split_us_ = 0;
+  int64_t former_block_us_ = 0;
+  int64_t tail_block_us_ = 0;
+};
+
 extern "C" __global__ __aicore__ void prompt_kv_cache(GM_ADDR cache, GM_ADDR update, GM_ADDR valid_seq_len,
                                                       GM_ADDR batch_index, GM_ADDR seq_len_axis,
                                                       GM_ADDR new_max_seq_len, GM_ADDR cur_max_seq_len, GM_ADDR out,
@@ -185,6 +260,15 @@ extern "C" __global__ __aicore__ void prompt_kv_cache(GM_ADDR cache, GM_ADDR upd
     op.Process(cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len, tiling);
   } else if (TILING_KEY_IS(4)) {
     KernelPromptKvCache<int32_t> op;
+    op.Process(cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len, tiling);
+  } else if (TILING_KEY_IS(10)) {
+    KernelPromptKvCacheCopyAll<int8_t> op;
+    op.Process(cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len, tiling);
+  } else if (TILING_KEY_IS(20)) {
+    KernelPromptKvCacheCopyAll<int16_t> op;
+    op.Process(cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len, tiling);
+  } else if (TILING_KEY_IS(40)) {
+    KernelPromptKvCacheCopyAll<int32_t> op;
     op.Process(cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len, tiling);
   }
 }

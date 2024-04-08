@@ -28,41 +28,41 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 1;
 const char *kExpm1 = "Expm1";
 
-#define EXPM1_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                       \
-    uint32_t result = Expm1Compute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("Expm1 kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define EXPM1_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                 \
+    uint32_t result = Expm1Compute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "Expm1 kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 
-#define EXPM1_COMPUTE_CASE2(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                       \
-    uint32_t result = Expm1Compute2<TYPE>(CTX);         \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("Expm1 kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define EXPM1_COMPUTE_CASE2(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                                 \
+    uint32_t result = Expm1Compute2<TYPE>(CTX);                   \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "Expm1 kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 
-#define EXPM1_COMPUTE_CASE3(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                       \
-    uint32_t result = Expm1Compute3<TYPE>(CTX);         \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("Expm1 kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define EXPM1_COMPUTE_CASE3(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                                 \
+    uint32_t result = Expm1Compute3<TYPE>(CTX);                   \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "Expm1 kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t Expm1CpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kExpm1);
-  KERNEL_HANDLE_ERROR(Expm1Check(ctx), "[%s] check params failed.", kExpm1);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kExpm1);
+  CUST_KERNEL_HANDLE_ERROR(ctx, Expm1Check(ctx), "[%s] check params failed.", kExpm1);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     EXPM1_COMPUTE_CASE2(DT_FLOAT16, Eigen::half, ctx)
@@ -71,15 +71,15 @@ uint32_t Expm1CpuKernel::Compute(CpuKernelContext &ctx) {
     EXPM1_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     EXPM1_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Expm1 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Expm1 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t Expm1CpuKernel::Expm1Check(CpuKernelContext &ctx) {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
   return KERNEL_STATUS_OK;
 }
 
@@ -108,8 +108,8 @@ uint32_t Expm1CpuKernel::Expm1Compute(CpuKernelContext &ctx) {
         (*(output_y + i)) = Eigen::numext::exp(*(input_x + i)) + num0;
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_expm1),
-                        "Expm1 Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_expm1),
+                             "Expm1 Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
@@ -136,8 +136,8 @@ uint32_t Expm1CpuKernel::Expm1Compute2(CpuKernelContext &ctx) {
         *(output_y + i) = exp(*(input_x + i)) + num0;
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_expm1),
-                        "Expm1 Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_expm1),
+                             "Expm1 Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
@@ -164,8 +164,8 @@ uint32_t Expm1CpuKernel::Expm1Compute3(CpuKernelContext &ctx) {
         *(output_y + i) = expm1(*(input_x + i));
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_expm1),
-                        "Expm1 Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_expm1),
+                             "Expm1 Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

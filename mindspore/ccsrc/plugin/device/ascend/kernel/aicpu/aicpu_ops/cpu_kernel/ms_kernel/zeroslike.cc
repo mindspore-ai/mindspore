@@ -26,22 +26,23 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 1;
 const char *const kZerosLike = "ZerosLike";
 
-#define ZEROSLIKE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                           \
-    uint32_t result = ZerosLikePartCompute<TYPE>(CTX);      \
-    if (result != KERNEL_STATUS_OK) {                       \
-      KERNEL_LOG_ERROR("ZerosLike kernel compute failed."); \
-      return result;                                        \
-    }                                                       \
-    break;                                                  \
+#define ZEROSLIKE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                     \
+    uint32_t result = ZerosLikePartCompute<TYPE>(CTX);                \
+    if (result != KERNEL_STATUS_OK) {                                 \
+      CUST_KERNEL_LOG_ERROR(ctx, "ZerosLike kernel compute failed."); \
+      return result;                                                  \
+    }                                                                 \
+    break;                                                            \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t ZerosLikeCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kZerosLike);
-  KERNEL_HANDLE_ERROR(ZerosLikeCheck(ctx), "[%s] check params failed.", kZerosLike);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kZerosLike);
+  CUST_KERNEL_HANDLE_ERROR(ctx, ZerosLikeCheck(ctx), "[%s] check params failed.", kZerosLike);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     ZEROSLIKE_COMPUTE_CASE(DT_BOOL, bool, ctx)
@@ -59,29 +60,29 @@ uint32_t ZerosLikeCpuKernel::Compute(CpuKernelContext &ctx) {
     ZEROSLIKE_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     ZEROSLIKE_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("ZerosLike kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "ZerosLike kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ZerosLikeCpuKernel::ZerosLikeCheck(const CpuKernelContext &ctx) const {
+uint32_t ZerosLikeCpuKernel::ZerosLikeCheck(CpuKernelContext &ctx) const {
   auto input = ctx.Input(0);
   auto output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
-  KERNEL_CHECK_NULLPTR(input->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t ZerosLikeCpuKernel::ZerosLikePartCompute(const CpuKernelContext &ctx) {
+uint32_t ZerosLikeCpuKernel::ZerosLikePartCompute(CpuKernelContext &ctx) {
   size_t data_num = static_cast<size_t>(ctx.Input(0)->NumElements());
   Tensor *y = ctx.Output(0);
   auto y_addr = y->GetData();
   auto ret = memset_s(y_addr, data_num * sizeof(T), 0, data_num * sizeof(T));
   if (ret != EOK) {
-    KERNEL_LOG_ERROR("memset_s error, ret=%d", ret);
+    CUST_KERNEL_LOG_ERROR(ctx, "memset_s error, ret=%d", ret);
   }
   return KERNEL_STATUS_OK;
 }

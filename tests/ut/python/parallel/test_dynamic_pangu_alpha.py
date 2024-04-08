@@ -1015,7 +1015,7 @@ class PanguAlphaWithLoss(nn.Cell):
         if self.eod_reset:
             self.slice_mask = P.StridedSlice().shard(((config.dp, 1, 1),))
 
-    def construct(self, input_ids, input_position=None, attention_mask=None):
+    def construct(self, input_ids, input_position, attention_mask):
         r"""
         PanguAlphaWithLoss
         """

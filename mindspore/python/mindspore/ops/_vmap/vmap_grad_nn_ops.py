@@ -27,6 +27,7 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
     _bdim_at_front, _vmap_clone_prim, _bdim_at_any, _handle_broadcasting
 from mindspore.ops.auto_generate.gen_arg_handler import Format, Reduction
 
+
 @vmap_rules_getters.register(G.NLLLossGrad)
 def get_nll_loss_grad_vmap_rule(prim, axis_size):
     r"""

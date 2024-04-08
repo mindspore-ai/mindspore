@@ -35,7 +35,7 @@ const int OUTPUT_PARAMS_NUM = 1;
 namespace aicpu {
 uint32_t SparseMatrixMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
   if (ValidParam(ctx) != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("valid sparse matrix mat mul param error.");
+    CUST_KERNEL_LOG_ERROR(ctx, "valid sparse matrix mat mul param error.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   DataType indice_type = ctx.Input(0)->GetDataType();
@@ -57,7 +57,7 @@ uint32_t SparseMatrixMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
           status = DoCompute<int32_t, std::complex<double_t> >(ctx);
           break;
         default:
-          KERNEL_LOG_ERROR("data type of dense shape is not int32 or int64");
+          CUST_KERNEL_LOG_ERROR(ctx, "data type of dense shape is not int32 or int64");
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -76,17 +76,17 @@ uint32_t SparseMatrixMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
           status = DoCompute<int64_t, std::complex<double_t> >(ctx);
           break;
         default:
-          KERNEL_LOG_ERROR("data type of dense shape is not int32 or int64");
+          CUST_KERNEL_LOG_ERROR(ctx, "data type of dense shape is not int32 or int64");
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     default:
-      KERNEL_LOG_ERROR("data type of dense shape is not int32 or int64");
+      CUST_KERNEL_LOG_ERROR(ctx, "data type of dense shape is not int32 or int64");
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (status != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("error in do the actual compute!");
+    CUST_KERNEL_LOG_ERROR(ctx, "error in do the actual compute!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -112,8 +112,8 @@ SparseMatrixMatMulCpuKernel::CreateEigenSparseMatrix(indiceT rows, indiceT cols,
   return sparse_matrix;
 }
 
-uint32_t SparseMatrixMatMulCpuKernel::ValidParam(const CpuKernelContext &ctx) {
-  KERNEL_LOG_DEBUG("Start to execute ValidParam.");
+uint32_t SparseMatrixMatMulCpuKernel::ValidParam(CpuKernelContext &ctx) {
+  CUST_KERNEL_LOG_DEBUG(ctx, "Start to execute ValidParam.");
   // valid input and output nullptr
   if (NormalCheck(ctx, INPUT_PARAMS_NUM, OUTPUT_PARAMS_NUM) != KERNEL_STATUS_OK) {
     return KERNEL_STATUS_PARAM_INVALID;
@@ -129,19 +129,19 @@ uint32_t SparseMatrixMatMulCpuKernel::ValidParam(const CpuKernelContext &ctx) {
       checkStatus = CheckMatMul<int64_t>(ctx);
       break;
     default:
-      // KERNEL_LOG_ERROR("data type of dense shape is not int32 or int64");
+      // CUST_KERNEL_LOG_ERROR(ctx, "data type of dense shape is not int32 or int64");
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (checkStatus != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("the two input matrixs cannot mul cause their dim!");
+    CUST_KERNEL_LOG_ERROR(ctx, "the two input matrixs cannot mul cause their dim!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SparseMatrixMatMulCpuKernel::CheckMatMul(const CpuKernelContext &ctx) {
-  KERNEL_LOG_DEBUG("check if the matrix can mul");
+uint32_t SparseMatrixMatMulCpuKernel::CheckMatMul(CpuKernelContext &ctx) {
+  CUST_KERNEL_LOG_DEBUG(ctx, "check if the matrix can mul");
 
   const int rank = ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   const int row_dim = (rank == 2) ? 0 : 1;
@@ -170,14 +170,14 @@ uint32_t SparseMatrixMatMulCpuKernel::CheckMatMul(const CpuKernelContext &ctx) {
   T x1_col = (transpose_a || adjoint_a) ? shape_x1[row_dim] : shape_x1[row_dim + 1];
   T x2_row = (transpose_b || adjoint_b) ? shape_x2[row_dim + 1] : shape_x2[row_dim];
   if (x1_col != x2_row) {
-    KERNEL_LOG_ERROR("x1's col is no equal x2's row, cannot do mat mul!");
+    CUST_KERNEL_LOG_ERROR(ctx, "x1's col is no equal x2's row, cannot do mat mul!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename indiceT, typename valueT>
-uint32_t SparseMatrixMatMulCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t SparseMatrixMatMulCpuKernel::DoCompute(CpuKernelContext &ctx) {
   using Matrix = Eigen::Matrix<valueT, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
   indiceT batch_size = ctx.Input(1)->NumElements() - 1;
@@ -226,11 +226,12 @@ uint32_t SparseMatrixMatMulCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
   max_core_num = std::min(max_core_num, (uint32_t)batch_size);
   if (max_core_num == 0) {
-    KERNEL_LOG_ERROR("max core num cannot be zero");
+    CUST_KERNEL_LOG_ERROR(ctx, "max core num cannot be zero");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
-  KERNEL_HANDLE_ERROR(
+  CUST_KERNEL_HANDLE_ERROR(
+    ctx,
     CpuKernelUtils::ParallelFor(ctx, batch_size, batch_size / max_core_num,
                                 [&](int64_t start, int64_t end) {
                                   for (int64_t i = start; i < end; i++) {
@@ -272,7 +273,7 @@ uint32_t SparseMatrixMatMulCpuKernel::DoCompute(const CpuKernelContext &ctx) {
               output_values_data + i * row_output * col_output);
   }
 
-  KERNEL_LOG_DEBUG("DoCompute end!!");
+  CUST_KERNEL_LOG_DEBUG(ctx, "DoCompute end!!");
   return KERNEL_STATUS_OK;
 }
 

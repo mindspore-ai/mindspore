@@ -222,6 +222,21 @@ REG_CUST_OP(MaxUnpool2DGrad)
   .REQUIRED_ATTR(output_shape, ListInt)
   .REQUIRED_ATTR(data_format, String)
   .CUST_OP_END_FACTORY_REG(MaxUnpool2DGrad)
+
+REG_CUST_OP(MaxPool3DWithArgmax)
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                        DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .OUTPUT(y, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                            DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .OUTPUT(argmax, TensorType({DT_INT32, DT_INT64}))
+  .REQUIRED_ATTR(ksize, ListInt)
+  .REQUIRED_ATTR(strides, ListInt)
+  .REQUIRED_ATTR(pads, ListInt)
+  .REQUIRED_ATTR(dilation, ListInt)
+  .REQUIRED_ATTR(ceil_mode, Bool)
+  .REQUIRED_ATTR(data_format, String)
+  .REQUIRED_ATTR(argmax_type, String)
+  .CUST_OP_END_FACTORY_REG(MaxPool3DWithArgmax)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_NN_OPS_H_
 

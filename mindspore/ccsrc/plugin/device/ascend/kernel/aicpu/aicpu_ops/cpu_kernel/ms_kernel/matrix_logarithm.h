@@ -26,9 +26,9 @@ class MatrixLogarithmCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t MatrixLogarithmCheck(const CpuKernelContext &ctx);
+  uint32_t MatrixLogarithmCheck(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t MatrixLogarithmCompute(const CpuKernelContext &ctx);
+  uint32_t MatrixLogarithmCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

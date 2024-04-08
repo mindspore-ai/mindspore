@@ -7,7 +7,7 @@ relu:
 
         .. math::
 
-            ReLU(input) = (input)^+ = max(0, input)
+            ReLU(input) = (input)^+ = \max(0, input)
 
         ReLU Activation Function Graph:
     

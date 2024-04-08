@@ -17,12 +17,31 @@
 #define AICPU_KERNELS_NORMALIZED_SOLVE_TRIANGULAR_H_
 
 #include "inc/ms_cpu_kernel.h"
+#include "Eigen/Dense"
 
 namespace aicpu {
 class SolveTriangularCpuKernel : public CpuKernel {
  public:
   SolveTriangularCpuKernel() = default;
   ~SolveTriangularCpuKernel() override = default;
+  template <typename Derived_a, typename Derived_b, typename T>
+  static inline void solve(const Eigen::MatrixBase<Derived_a> &a, const Eigen::MatrixBase<Derived_b> &b, T *output_addr,
+                           int m, int n, bool lower, bool unit_diagonal) {
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output(output_addr, m, n);
+    if (unit_diagonal) {
+      if (lower) {
+        output.noalias() = a.template triangularView<Eigen::UnitLower>().solve(b);
+      } else {
+        output.noalias() = a.template triangularView<Eigen::UnitUpper>().solve(b);
+      }
+    } else {
+      if (lower) {
+        output.noalias() = a.template triangularView<Eigen::Lower>().solve(b);
+      } else {
+        output.noalias() = a.template triangularView<Eigen::Upper>().solve(b);
+      }
+    }
+  }
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;

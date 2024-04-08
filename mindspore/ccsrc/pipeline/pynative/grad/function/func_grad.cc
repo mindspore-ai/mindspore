@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/primitive_utils.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "ops/framework_ops.h"
@@ -254,6 +255,7 @@ ValuePtrList GraphRoot::BuildFlattenSensGradient(const ValuePtrList &sens_gradie
 }
 
 FuncGrad::FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bprop_graph, bool grad_by_value) {
+  MS_LOG(DEBUG) << "Start FuncGrad, input size: " << input_param_values.size();
   for (size_t i = 0; i < input_param_values.size(); ++i) {
     const auto &input_param_value = input_param_values[i];
     auto func_node = std::make_shared<BackwardNode>("input" + std::to_string(i));
@@ -746,8 +748,10 @@ ValuePtr FuncGrad::Finish(const TensorPtrList &weights, const std::vector<size_t
   BuildForwardLastNode(sens);
   PruningGradGraph(weights, grad_attr, grad_position);
   if (last_variable_->is_need_grad()) {
+    GilReleaseWithCheck gil_release;
     BackPropagate();
   }
+  python_adapter::PyAdapterCallback::ProcessUnPairedCellHook(true);
   ValuePtr gradients = GetGrads(weights, grad_position, grad_attr);
   ClearGrads(weights);
   return gradients;

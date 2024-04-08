@@ -147,7 +147,7 @@ inline Eigen::half ScalarPolygamma(int64_t a, Eigen::half x) {
   return val;
 }
 
-inline std::uint32_t ParallelForPolygamma(const CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
+inline std::uint32_t ParallelForPolygamma(CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
                                           const std::function<void(std::int64_t, std::int64_t)> &work) {
   if (total > kPolygammaParallelNum)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
@@ -157,7 +157,7 @@ inline std::uint32_t ParallelForPolygamma(const CpuKernelContext &ctx, std::int6
 }
 
 template <typename T1, typename T2>
-inline std::uint32_t ComputePolygammaKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputePolygammaKernel(CpuKernelContext &ctx) {
   auto input0 = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto input1 = reinterpret_cast<T2 *>(ctx.Input(1)->GetData());
   auto output = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());
@@ -173,10 +173,10 @@ inline std::uint32_t ComputePolygammaKernel(const CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-inline std::uint32_t ComputePolygamma(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputePolygamma(CpuKernelContext &ctx) {
   std::uint32_t result{ComputePolygammaKernel<T1, T2>(ctx)};
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Polygamma compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Polygamma compute failed.");
   }
   return result;
   return KERNEL_STATUS_OK;
@@ -186,7 +186,7 @@ inline std::uint32_t CheckPolygamma(CpuKernelContext &ctx, std::uint32_t inputs_
   return NormalCheck(ctx, kPolygammaInputNum, kPolygammaOutputNum) ? KERNEL_STATUS_PARAM_INVALID : KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t ComputePolygamma(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputePolygamma(CpuKernelContext &ctx) {
   DataType input0_type{ctx.Input(0)->GetDataType()};
   DataType input1_type{ctx.Input(1)->GetDataType()};
   switch (input0_type) {
@@ -199,7 +199,7 @@ inline std::uint32_t ComputePolygamma(const CpuKernelContext &ctx) {
         case DT_DOUBLE:
           return ComputePolygamma<std::int32_t, std::double_t>(ctx);
         default:
-          KERNEL_LOG_ERROR("Unsupported input1 data type [%s].", DTypeStr(input1_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input1 data type [%s].", DTypeStr(input1_type).c_str());
       }
     case DT_INT64:
       switch (input1_type) {
@@ -210,10 +210,10 @@ inline std::uint32_t ComputePolygamma(const CpuKernelContext &ctx) {
         case DT_DOUBLE:
           return ComputePolygamma<std::int64_t, std::double_t>(ctx);
         default:
-          KERNEL_LOG_ERROR("Unsupported input1 data type [%s].", DTypeStr(input1_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input1 data type [%s].", DTypeStr(input1_type).c_str());
       }
     default:
-      KERNEL_LOG_ERROR("Unsupported input0 data type [%s].", DTypeStr(input0_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input0 data type [%s].", DTypeStr(input0_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

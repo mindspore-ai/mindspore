@@ -27,7 +27,7 @@ def vmap(fn, in_axes=0, out_axes=0):
     Vmap is pioneered by Jax and it removes the restriction of batch dimension on the operator, and provides a
     more convenient and unified operator expression. Moreover, it allows users to composite with other functional
     modules such as :func:`mindspore.grad`, to improve the development efficiency, please refer to the
-    `Automatic Vectorization (Vmap) <https://www.mindspore.cn/tutorials/experts/en/master/vmap/vmap.html>`_ tutorial
+    `Automatic Vectorization (Vmap) <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/vmap/vmap.html>`_ tutorial
     for more detail. In addition, the vectorizing map does not execute loops outside the function, but sinks loops
     into the primitive operations of the function for better performance. When combined with `Graph Kernel Fusion`,
     operational efficiency would be further improved.
@@ -37,11 +37,11 @@ def vmap(fn, in_axes=0, out_axes=0):
 
     Note:
         - The power of vmap comes from the implementation of VmapRules of primitives. Although we have designed a
-        generalized rule for user custom operators, we can not guarantee that it works well for all operators,
-        unknown exceptions may occur, please be aware the risk of use.
+          generalized rule for user custom operators, we can not guarantee that it works well for all operators,
+          unknown exceptions may occur, please be aware the risk of use.
         - When calling the random number generation methods within the scope of vmap, the same random number is
-        generated among vector functions each time. If you expect each vector branch to use different random numbers,
-        you need to generate batch random numbers externally in advance and then transfer them to vmap.
+          generated among vector functions each time. If you expect each vector branch to use different random numbers,
+          you need to generate batch random numbers externally in advance and then transfer them to vmap.
 
     Args:
         fn (Union[Cell, Function, CellList]): Function to be mapped along the parameter axes, which takes at least one
@@ -69,13 +69,13 @@ def vmap(fn, in_axes=0, out_axes=0):
         correspond to those of `fn`, but it adds an extra batch dimension at positions specified by `in_axes` and
         `out_axes`.
 
-    Raises:
-        RuntimeError: If base elements in `in_axes` or `out_axes` are not a None or an integer.
-            If the all base elements in `in_axes` or `out_axes` are None.
-            If `in_axes` is not single integer, and the length of `in_axes` is not equal to the arguments sizes.
-            If `out_axes` is not single integer, and the length of `out_axes` is not equal to the outputs sizes.
-            If the `axis_size` of each arguments in the scope of `vmap` are not equal.
-            If the axis in `in_axes` or `out_axes` is out of bounds.
+    :raise RuntimeError:
+        - If base elements in `in_axes` or `out_axes` are not a None or an integer.
+        - If the all base elements in `in_axes` or `out_axes` are None.
+        - If `in_axes` is not single integer, and the length of `in_axes` is not equal to the arguments sizes.
+        - If `out_axes` is not single integer, and the length of `out_axes` is not equal to the outputs sizes.
+        - If the `axis_size` of each arguments in the scope of `vmap` are not equal.
+        - If the axis in `in_axes` or `out_axes` is out of bounds.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

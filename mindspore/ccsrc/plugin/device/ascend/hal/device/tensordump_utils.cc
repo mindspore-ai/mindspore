@@ -15,16 +15,12 @@
  */
 
 #include "plugin/device/ascend/hal/device/tensordump_utils.h"
-#include <functional>
-#include <map>
-#include <memory>
 #include <string>
-#include <utility>
+#include <fstream>
 #include "debug/data_dump/npy_header.h"
-#include "mindspore/core/utils/file_utils.h"
-#include "plugin/device/ascend/hal/device/ascend_data_queue.h"
-#include "transform/symbol/acl_tdt_symbol.h"
-#include "transform/symbol/symbol_utils.h"
+#include "ir/tensor.h"
+#include "utils/file_utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore::device::ascend {
 namespace {
@@ -131,30 +127,21 @@ TensorDumpUtils &TensorDumpUtils::GetInstance() {
   return instance;
 }
 
-void TensorDumpUtils::AsyncSaveDatasetToNpyFile(acltdtDataset *acl_dataset) {
-  std::string tensor_name = std::string{CALL_ASCEND_API(acltdtGetDatasetName, acl_dataset)};
+void TensorDumpUtils::AsyncSaveDatasetToNpyFile(const ScopeAclTdtDataset &dataset) {
+  std::string tensor_name = dataset.GetDatasetName();
   MS_LOG(INFO) << "For 'TensorDump' ops, acltdt received Tensor name is " << tensor_name;
   if (tensor_name.empty()) {
     MS_LOG(ERROR) << "For 'TensorDump' ops, the args of 'file' is empty, skip this data.";
     return;
   }
-  size_t acl_dataset_size = CALL_ASCEND_API(acltdtGetDatasetSize, acl_dataset);
 
-  for (size_t i = 0; i < acl_dataset_size; i++) {
-    acltdtDataItem *item = CALL_ASCEND_API(acltdtGetDataItem, acl_dataset, i);
-    MS_EXCEPTION_IF_NULL(item);
-    if (CALL_ASCEND_API(acltdtGetTensorTypeFromItem, item) == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
-      MS_LOG(INFO) << "end of sequence" << std::endl;
-      break;
+  auto file_name = TensorNameToArrayName(tensor_name);
+  for (auto data_elem : dataset.GetDataItems()) {
+    if (std::holds_alternative<std::string>(data_elem)) {
+      MS_LOG(WARNING) << "Ignore data of string type: " << std::get<std::string>(data_elem);
     }
-    auto tensor_ptr = acltdtDataItemToTensorPtr(item);
-    auto file_name = TensorNameToArrayName(tensor_name);
-    if (tensor_ptr != nullptr) {
-      file_writer.Submit(std::bind(SaveTensor2NPY, file_name, tensor_ptr));
-    } else {
-      MS_LOG(ERROR) << "For 'TensorDump' ops, convert acltdtItem to Tensor failed, the Tensor name is" << tensor_name
-                    << ", skip this data.";
-    }
+    auto tensor_ptr = std::get<mindspore::tensor::TensorPtr>(data_elem);
+    file_writer.Submit(std::bind(SaveTensor2NPY, file_name, tensor_ptr));
   }
 }
 

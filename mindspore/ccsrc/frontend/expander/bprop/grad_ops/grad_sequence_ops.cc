@@ -18,10 +18,26 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
+namespace {
+TypePtr GetRealType(const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->isa<Tuple>()) {
+    return GetRealType(type->cast<TuplePtr>()->elements()[0]);
+  }
+  if (type->isa<List>()) {
+    return GetRealType(type->cast<ListPtr>()->elements()[0]);
+  }
+  if (type->isa<TensorType>()) {
+    return type->cast<TensorTypePtr>()->element();
+  }
+  return type;
+}
+}  // namespace
+
 NodePtrList SequenceToTensorGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
-  dout = ib->Cast(dout, ib->GetDtype(x));
+  dout = ib->Cast(dout, GetRealType(ib->GetDtype(x)));
   auto dx = ib->TensorToSequence(dout, x->abstract());
   return {dx, ib->OutZeros(ib->GetInput(kIndex1))};
 }
@@ -46,7 +62,7 @@ NodePtrList SequenceMaxMinGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto index = ib->Emit("SequenceIndex", {x, out});
+  auto index = ib->Emit("SequenceIndex", {x, out, ib->Value<int64_t>(0), ib->Len(x)});
   auto dx = ib->SequenceSetItem(ib->ZerosLike(x), index, dout);
   return {dx};
 }

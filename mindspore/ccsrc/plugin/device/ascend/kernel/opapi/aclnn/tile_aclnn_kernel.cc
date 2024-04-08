@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include <memory>
 #include <functional>
 #include "ir/tensor.h"
-#include "runtime/stream.h"
 #include "runtime/device/kernel_runtime.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/op_api_convert.h"

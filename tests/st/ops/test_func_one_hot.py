@@ -29,6 +29,8 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_one_hot(mode):
@@ -38,7 +40,7 @@ def test_ops_one_hot(mode):
     Expectation: success
     """
     ms.set_context(mode=mode)
-    x = ms.Tensor(np.array([0, 1, 2]), ms.int32)
+    x = ms.Tensor(np.array([0, 1, 2]), ms.int64)
     net = Net()
     output = net(x)
     expect_output = [[1, 0, 0],

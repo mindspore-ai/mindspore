@@ -33,20 +33,20 @@ const uint32_t kInputNum = 3;
 constexpr int64_t kParallelDataNums = 16 * 1024;
 constexpr int64_t kParallelDataNumsMid = 7 * 1024;
 
-#define SWITCH_PARALLEL(SHARD, end_num, divisor)                                                  \
-  if (end_num >= (kParallelDataNumsMid / divisor)) {                                              \
-    uint32_t min_core_num = 1;                                                                    \
-    int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);     \
-    if (end_num < (kParallelDataNums / divisor)) {                                                \
-      max_core_num = std::min(max_core_num, 4L);                                                  \
-    }                                                                                             \
-    if (max_core_num > end_num) {                                                                 \
-      max_core_num = end_num;                                                                     \
-    }                                                                                             \
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, end_num, end_num / max_core_num, SHARD), \
-                        "PdistGrad #SHARD Compute failed.");                                      \
-  } else {                                                                                        \
-    SHARD(0, end_num);                                                                            \
+#define SWITCH_PARALLEL(SHARD, end_num, divisor)                                                            \
+  if (end_num >= (kParallelDataNumsMid / divisor)) {                                                        \
+    uint32_t min_core_num = 1;                                                                              \
+    int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);               \
+    if (end_num < (kParallelDataNums / divisor)) {                                                          \
+      max_core_num = std::min(max_core_num, 4L);                                                            \
+    }                                                                                                       \
+    if (max_core_num > end_num) {                                                                           \
+      max_core_num = end_num;                                                                               \
+    }                                                                                                       \
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, end_num, end_num / max_core_num, SHARD), \
+                             "PdistGrad #SHARD Compute failed.");                                           \
+  } else {                                                                                                  \
+    SHARD(0, end_num);                                                                                      \
   }
 }  // namespace
 
@@ -134,23 +134,24 @@ struct Grad {
 };  // Grad
 
 uint32_t PdistGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "PdistGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "PdistGrad check input and output number failed.");
   DataType input_type = ctx.Input(1)->GetDataType();
   DataType output_type = ctx.Output(0)->GetDataType();
-  KERNEL_CHECK_FALSE((input_type == output_type), KERNEL_STATUS_PARAM_INVALID,
-                     "Input data type[%s] is not equal to output data type[%s].", DTypeStr(input_type).c_str(),
-                     DTypeStr(output_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_type == output_type), KERNEL_STATUS_PARAM_INVALID,
+                          "Input data type[%s] is not equal to output data type[%s].", DTypeStr(input_type).c_str(),
+                          DTypeStr(output_type).c_str());
   uint64_t input_size = ctx.Input(1)->GetDataSize();
   uint64_t output_size = ctx.Output(0)->GetDataSize();
-  KERNEL_CHECK_FALSE((input_size == output_size), KERNEL_STATUS_PARAM_INVALID,
-                     "Input data size[%llu] is not equal to output data size[%llu].", input_size, output_size);
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_size == output_size), KERNEL_STATUS_PARAM_INVALID,
+                          "Input data size[%llu] is not equal to output data size[%llu].", input_size, output_size);
   switch (input_type) {
     case DT_FLOAT16:
       return PdistGradCompute<Eigen::half>(ctx);
     case DT_FLOAT:
       return PdistGradCompute<float>(ctx);
     default:
-      KERNEL_LOG_ERROR("PdistGrad kernel data type [%s] not support.", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "PdistGrad kernel data type [%s] not support.", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -172,7 +173,7 @@ uint32_t PdistGradCpuKernel::PdistGradCompute(CpuKernelContext &ctx) {
   if (p_attr != nullptr) {
     p = p_attr->GetFloat();
   }
-  KERNEL_CHECK_FALSE((p >= 0), KERNEL_STATUS_PARAM_INVALID, "Attr[p] data cannot be less than 0.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (p >= 0), KERNEL_STATUS_PARAM_INVALID, "Attr[p] data cannot be less than 0.");
 
   uint32_t ret = Grad<T>::PdistGradComputeKernel(grad, x, pdist, y, p, ctx);
   if (ret != KERNEL_STATUS_OK) {

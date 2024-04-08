@@ -35,43 +35,44 @@ const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 float sigma = 1.0;
 std::mutex mtx;
 
-#define SmoothL1LossGradV2_COMPUTE_CASE(DTYPE, REDUCTION, TYPE, CTX) \
-  case (DTYPE): {                                                    \
-    KERNEL_LOG_INFO("Compute [%s]", DTypeStr(data_type).c_str());    \
-    uint32_t result = KERNEL_STATUS_PARAM_INVALID;                   \
-    if ((REDUCTION) == "mean") {                                     \
-      result = ComputeMean<TYPE>(CTX);                               \
-    } else if ((REDUCTION) == "sum") {                               \
-      result = ComputeSum<TYPE>(CTX);                                \
-    } else if ((REDUCTION) == "none") {                              \
-      result = ComputeNone<TYPE>(CTX);                               \
-    }                                                                \
-    if (result != KERNEL_STATUS_OK) {                                \
-      KERNEL_LOG_ERROR("SmoothL1LossGradV2 kernel compute failed."); \
-      return result;                                                 \
-    }                                                                \
-    break;                                                           \
+#define SmoothL1LossGradV2_COMPUTE_CASE(DTYPE, REDUCTION, TYPE, CTX)           \
+  case (DTYPE): {                                                              \
+    CUST_KERNEL_LOG_INFO(ctx, "Compute [%s]", DTypeStr(data_type).c_str());    \
+    uint32_t result = KERNEL_STATUS_PARAM_INVALID;                             \
+    if ((REDUCTION) == "mean") {                                               \
+      result = ComputeMean<TYPE>(CTX);                                         \
+    } else if ((REDUCTION) == "sum") {                                         \
+      result = ComputeSum<TYPE>(CTX);                                          \
+    } else if ((REDUCTION) == "none") {                                        \
+      result = ComputeNone<TYPE>(CTX);                                         \
+    }                                                                          \
+    if (result != KERNEL_STATUS_OK) {                                          \
+      CUST_KERNEL_LOG_ERROR(ctx, "SmoothL1LossGradV2 kernel compute failed."); \
+      return result;                                                           \
+    }                                                                          \
+    break;                                                                     \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t SmoothL1LossGradV2CpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "SmoothL1LossGradV2 check input and output number failed.");
-  KERNEL_HANDLE_ERROR(ParamCheck(ctx), "SmoothL1LossGradV2 check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SmoothL1LossGradV2 check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ParamCheck(ctx), "SmoothL1LossGradV2 check params failed.");
 
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     SmoothL1LossGradV2_COMPUTE_CASE(DT_FLOAT16, reduction, Eigen::half, ctx)
       SmoothL1LossGradV2_COMPUTE_CASE(DT_FLOAT, reduction, float, ctx)
         SmoothL1LossGradV2_COMPUTE_CASE(DT_DOUBLE, reduction, double, ctx) default
-        : KERNEL_LOG_ERROR("SmoothL1LossGradV2 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+        : CUST_KERNEL_LOG_ERROR(ctx, "SmoothL1LossGradV2 kernel data type [%s] not support.",
+                                DTypeStr(data_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SmoothL1LossGradV2CpuKernel::ParamCheck(const CpuKernelContext &ctx) {
+uint32_t SmoothL1LossGradV2CpuKernel::ParamCheck(CpuKernelContext &ctx) {
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
   Tensor *dout_tensor = ctx.Input(2);
@@ -80,51 +81,53 @@ uint32_t SmoothL1LossGradV2CpuKernel::ParamCheck(const CpuKernelContext &ctx) {
   DataType label_type = label_tensor->GetDataType();
   DataType dout_type = dout_tensor->GetDataType();
   DataType gradient_type = gradient_tensor->GetDataType();
-  KERNEL_CHECK_FALSE((predict_type == label_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of predict [%s] need be same with "
-                     "label [%s].",
-                     DTypeStr(predict_type).c_str(), DTypeStr(label_type).c_str());
-  KERNEL_CHECK_FALSE((predict_type == dout_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of predict [%s] need be same with "
-                     "dout [%s].",
-                     DTypeStr(predict_type).c_str(), DTypeStr(dout_type).c_str());
-  KERNEL_CHECK_FALSE((predict_type == gradient_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of predict [%s] need be same with "
-                     "gradient [%s].",
-                     DTypeStr(predict_type).c_str(), DTypeStr(gradient_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (predict_type == label_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of predict [%s] need be same with "
+                          "label [%s].",
+                          DTypeStr(predict_type).c_str(), DTypeStr(label_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (predict_type == dout_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of predict [%s] need be same with "
+                          "dout [%s].",
+                          DTypeStr(predict_type).c_str(), DTypeStr(dout_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (predict_type == gradient_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of predict [%s] need be same with "
+                          "gradient [%s].",
+                          DTypeStr(predict_type).c_str(), DTypeStr(gradient_type).c_str());
   auto predict_shape = predict_tensor->GetTensorShape();
   auto label_shape = label_tensor->GetTensorShape();
   auto gradient_shape = gradient_tensor->GetTensorShape();
   int32_t predict_dims = predict_shape->GetDims();
   int32_t label_dims = label_shape->GetDims();
   int32_t gradient_dims = gradient_shape->GetDims();
-  KERNEL_CHECK_FALSE((predict_dims == label_dims), KERNEL_STATUS_PARAM_INVALID,
-                     "the input shape dim of predict [%d] need be same with "
-                     "label [%d].",
-                     predict_dims, label_dims);
-  KERNEL_CHECK_FALSE((predict_dims == gradient_dims), KERNEL_STATUS_PARAM_INVALID,
-                     "the input shape dim of predict [%d] need be same with "
-                     "gradient [%d].",
-                     predict_dims, gradient_dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, (predict_dims == label_dims), KERNEL_STATUS_PARAM_INVALID,
+                          "the input shape dim of predict [%d] need be same with "
+                          "label [%d].",
+                          predict_dims, label_dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, (predict_dims == gradient_dims), KERNEL_STATUS_PARAM_INVALID,
+                          "the input shape dim of predict [%d] need be same with "
+                          "gradient [%d].",
+                          predict_dims, gradient_dims);
   for (int32_t i = 0; i < predict_dims; i++) {
-    KERNEL_CHECK_FALSE((predict_shape->GetDimSize(i) == label_shape->GetDimSize(i)), KERNEL_STATUS_PARAM_INVALID,
-                       "the every input shape dim of predict [%d] need be same with "
-                       "label [%d] where dim in [%d].",
-                       predict_shape->GetDimSize(i), label_shape->GetDimSize(i), i);
-    KERNEL_CHECK_FALSE((predict_shape->GetDimSize(i) == gradient_shape->GetDimSize(i)), KERNEL_STATUS_PARAM_INVALID,
-                       "the every input shape dim of predict [%d] need be same with "
-                       "gradient [%d] where dim in [%d].",
-                       predict_shape->GetDimSize(i), gradient_shape->GetDimSize(i), i);
+    CUST_KERNEL_CHECK_FALSE(ctx, (predict_shape->GetDimSize(i) == label_shape->GetDimSize(i)),
+                            KERNEL_STATUS_PARAM_INVALID,
+                            "the every input shape dim of predict [%d] need be same with "
+                            "label [%d] where dim in [%d].",
+                            predict_shape->GetDimSize(i), label_shape->GetDimSize(i), i);
+    CUST_KERNEL_CHECK_FALSE(ctx, (predict_shape->GetDimSize(i) == gradient_shape->GetDimSize(i)),
+                            KERNEL_STATUS_PARAM_INVALID,
+                            "the every input shape dim of predict [%d] need be same with "
+                            "gradient [%d] where dim in [%d].",
+                            predict_shape->GetDimSize(i), gradient_shape->GetDimSize(i), i);
   }
-  KERNEL_LOG_DEBUG(
-    "SmoothL1LossGradV2CpuKernel[%s], predict: size[%llu];"
-    "label: size[%llu], dout: size[%llu], gradient: size[%llu].",
-    ctx.GetOpType().c_str(), predict_tensor->GetDataSize(), label_tensor->GetDataSize(), dout_tensor->GetDataSize(),
-    gradient_tensor->GetDataSize());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "SmoothL1LossGradV2CpuKernel[%s], predict: size[%llu];"
+                        "label: size[%llu], dout: size[%llu], gradient: size[%llu].",
+                        ctx.GetOpType().c_str(), predict_tensor->GetDataSize(), label_tensor->GetDataSize(),
+                        dout_tensor->GetDataSize(), gradient_tensor->GetDataSize());
   return AttributesCheck(ctx);
 }
 
-uint32_t SmoothL1LossGradV2CpuKernel::AttributesCheck(const CpuKernelContext &ctx) {
+uint32_t SmoothL1LossGradV2CpuKernel::AttributesCheck(CpuKernelContext &ctx) {
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *dout_tensor = ctx.Input(2);
   Tensor *gradient_tensor = ctx.Output(0);
@@ -138,38 +141,42 @@ uint32_t SmoothL1LossGradV2CpuKernel::AttributesCheck(const CpuKernelContext &ct
   auto reduction_attr = ctx.GetAttr("reduction");
   sigma = sigma_attr == nullptr ? 1.0 : sigma_attr->GetFloat();
   reduction = reduction_attr == nullptr ? "mean" : reduction_attr->GetString();
-  KERNEL_CHECK_FALSE(sigma >= 0, KERNEL_STATUS_PARAM_INVALID,
-                     "the sigma value must greater than or equal to 0 "
-                     "when value of input sigma is [%f].",
-                     sigma);
-  KERNEL_CHECK_FALSE((reduction == "none" || reduction == "mean" || reduction == "sum"), KERNEL_STATUS_PARAM_INVALID,
-                     "the reduction value must be a value in a range of ['none','mean','sum'].", reduction);
+  CUST_KERNEL_CHECK_FALSE(ctx, sigma >= 0, KERNEL_STATUS_PARAM_INVALID,
+                          "the sigma value must greater than or equal to 0 "
+                          "when value of input sigma is [%f].",
+                          sigma);
+  CUST_KERNEL_CHECK_FALSE(ctx, (reduction == "none" || reduction == "mean" || reduction == "sum"),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "the reduction value must be a value in a range of ['none','mean','sum'].", reduction);
   if (reduction == "none" || reduction == "mean" || reduction == "sum") {
-    KERNEL_CHECK_FALSE((predict_dims == gradient_dims), KERNEL_STATUS_PARAM_INVALID,
-                       "the input shape dim of predict [%d] need be same with "
-                       "gradient [%d].",
-                       predict_dims, gradient_dims);
+    CUST_KERNEL_CHECK_FALSE(ctx, (predict_dims == gradient_dims), KERNEL_STATUS_PARAM_INVALID,
+                            "the input shape dim of predict [%d] need be same with "
+                            "gradient [%d].",
+                            predict_dims, gradient_dims);
     for (int32_t i = 0; i < predict_dims; i++) {
-      KERNEL_CHECK_FALSE((predict_shape->GetDimSize(i) == gradient_shape->GetDimSize(i)), KERNEL_STATUS_PARAM_INVALID,
-                         "the input shape dim of predict [%d] must be same with "
-                         "gradient [%d] where dim in [%d].",
-                         predict_shape->GetDimSize(i), gradient_shape->GetDimSize(i), i);
+      CUST_KERNEL_CHECK_FALSE(ctx, (predict_shape->GetDimSize(i) == gradient_shape->GetDimSize(i)),
+                              KERNEL_STATUS_PARAM_INVALID,
+                              "the input shape dim of predict [%d] must be same with "
+                              "gradient [%d] where dim in [%d].",
+                              predict_shape->GetDimSize(i), gradient_shape->GetDimSize(i), i);
     }
   }
   if (reduction == "none") {
-    KERNEL_CHECK_FALSE((predict_dims == dout_dims), KERNEL_STATUS_PARAM_INVALID,
-                       "the input shape dim of predict [%d] need be same with "
-                       "dout [%d].",
-                       predict_dims, dout_dims);
+    CUST_KERNEL_CHECK_FALSE(ctx, (predict_dims == dout_dims), KERNEL_STATUS_PARAM_INVALID,
+                            "the input shape dim of predict [%d] need be same with "
+                            "dout [%d].",
+                            predict_dims, dout_dims);
     for (int32_t i = 0; i < predict_dims; i++) {
-      KERNEL_CHECK_FALSE((predict_shape->GetDimSize(i) == dout_shape->GetDimSize(i)), KERNEL_STATUS_PARAM_INVALID,
-                         "the every input shape dim of predict [%d] need be same with "
-                         "dout [%d] where dim in [%d].",
-                         predict_shape->GetDimSize(i), dout_shape->GetDimSize(i), i);
+      CUST_KERNEL_CHECK_FALSE(ctx, (predict_shape->GetDimSize(i) == dout_shape->GetDimSize(i)),
+                              KERNEL_STATUS_PARAM_INVALID,
+                              "the every input shape dim of predict [%d] need be same with "
+                              "dout [%d] where dim in [%d].",
+                              predict_shape->GetDimSize(i), dout_shape->GetDimSize(i), i);
     }
   } else if (reduction == "sum" || reduction == "mean") {
-    KERNEL_CHECK_FALSE((dout_dims == 0) || ((dout_dims == 1) && (dout_tensor->NumElements() == 1)),
-                       KERNEL_STATUS_PARAM_INVALID, "the dout shape dim of dout [%d] need be a scalar.", dout_dims);
+    CUST_KERNEL_CHECK_FALSE(ctx, (dout_dims == 0) || ((dout_dims == 1) && (dout_tensor->NumElements() == 1)),
+                            KERNEL_STATUS_PARAM_INVALID, "the dout shape dim of dout [%d] need be a scalar.",
+                            dout_dims);
   }
   return KERNEL_STATUS_OK;
 }
@@ -178,8 +185,8 @@ uint32_t SmoothL1LossGradV2CpuKernel::AttributesCheck(const CpuKernelContext &ct
 // -1 * dout        if  x  <= -sigma
 // x / sigma * dout if |x| <  sigma
 template <typename T>
-uint32_t SmoothL1LossGradV2CpuKernel::ComputeSum(const CpuKernelContext &ctx) {
-  KERNEL_LOG_INFO("SmoothL1LossGradV2CpuKernel::ComputeSum start");
+uint32_t SmoothL1LossGradV2CpuKernel::ComputeSum(CpuKernelContext &ctx) {
+  CUST_KERNEL_LOG_INFO(ctx, "SmoothL1LossGradV2CpuKernel::ComputeSum start");
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
   Tensor *dout_tensor = ctx.Input(2);
@@ -204,7 +211,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeSum(const CpuKernelContext &ctx) {
       } else if (x >= T(sigma)) {
         *(result + i) = T(1) * dout;
       } else if (sigma == 0) {
-        KERNEL_LOG_ERROR("attribute sigma could not be 0.");
+        CUST_KERNEL_LOG_ERROR(ctx, "attribute sigma could not be 0.");
       } else {
         *(result + i) = x / T(sigma) * dout;
       }
@@ -214,7 +221,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeSum(const CpuKernelContext &ctx) {
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num cannot be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num cannot be 0.");
     }
     if (max_core_num > data_num) {
       max_core_num = data_num;
@@ -232,7 +239,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeSum(const CpuKernelContext &ctx) {
         } else if (x >= T(sigma)) {
           *(result + i) = T(1) * dout;
         } else if (sigma == 0) {
-          KERNEL_LOG_ERROR("attribute sigma could not be 0.");
+          CUST_KERNEL_LOG_ERROR(ctx, "attribute sigma could not be 0.");
         } else {
           *(result + i) = x / T(sigma) * dout;
         }
@@ -240,14 +247,14 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeSum(const CpuKernelContext &ctx) {
     };
     return CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_smoothl1lossgradv2);
   }
-  KERNEL_LOG_INFO("SmoothL1LossGradV2CpuKernel::ComputeSum end");
+  CUST_KERNEL_LOG_INFO(ctx, "SmoothL1LossGradV2CpuKernel::ComputeSum end");
 }
 
 // Mean's result is Sum's result divided by the total number of elements per
 // element
 template <typename T>
-uint32_t SmoothL1LossGradV2CpuKernel::ComputeMean(const CpuKernelContext &ctx) {
-  KERNEL_LOG_INFO("SmoothL1LossGradV2CpuKernel::ComputeMean start");
+uint32_t SmoothL1LossGradV2CpuKernel::ComputeMean(CpuKernelContext &ctx) {
+  CUST_KERNEL_LOG_INFO(ctx, "SmoothL1LossGradV2CpuKernel::ComputeMean start");
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
   Tensor *dout_tensor = ctx.Input(2);
@@ -258,7 +265,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeMean(const CpuKernelContext &ctx) {
   T *gradient_val = static_cast<T *>(gradient_tensor->GetData());
   int64_t data_num = predict_tensor->NumElements();
   if (data_num == 0) {
-    KERNEL_LOG_ERROR("data_num cannot be 0.");
+    CUST_KERNEL_LOG_ERROR(ctx, "data_num cannot be 0.");
   }
   int64_t data_size = data_num * sizeof(T);
   T *result = gradient_val;
@@ -275,7 +282,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeMean(const CpuKernelContext &ctx) {
       } else if (x >= T(sigma)) {
         *(result + i) = T(1) / data_num * dout;
       } else if (sigma == 0) {
-        KERNEL_LOG_ERROR("attribute sigma could not be 0.");
+        CUST_KERNEL_LOG_ERROR(ctx, "attribute sigma could not be 0.");
       } else {
         *(result + i) = x / T(sigma) / data_num * dout;
       }
@@ -285,7 +292,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeMean(const CpuKernelContext &ctx) {
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num cannot be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num cannot be 0.");
     }
     if (max_core_num > data_num) {
       max_core_num = data_num;
@@ -303,7 +310,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeMean(const CpuKernelContext &ctx) {
         } else if (x >= T(sigma)) {
           *(result + i) = T(1) / data_num * dout;
         } else if (sigma == 0) {
-          KERNEL_LOG_ERROR("attribute sigma could not be 0.");
+          CUST_KERNEL_LOG_ERROR(ctx, "attribute sigma could not be 0.");
         } else {
           *(result + i) = x / T(sigma) / data_num * dout;
         }
@@ -311,15 +318,15 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeMean(const CpuKernelContext &ctx) {
     };
     return CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_smoothl1lossgradv2);
   }
-  KERNEL_LOG_INFO("SmoothL1LossGradV2CpuKernel::ComputeMean end");
+  CUST_KERNEL_LOG_INFO(ctx, "SmoothL1LossGradV2CpuKernel::ComputeMean end");
 }
 
 // "None" takes grad_output as a parameter,
 // and the end result is that result of "Sum" is multiplied by the grad_output
 // one by one, that is, the weight is increased
 template <typename T>
-uint32_t SmoothL1LossGradV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
-  KERNEL_LOG_INFO("SmoothL1LossGradV2CpuKernel::ComputeNone start");
+uint32_t SmoothL1LossGradV2CpuKernel::ComputeNone(CpuKernelContext &ctx) {
+  CUST_KERNEL_LOG_INFO(ctx, "SmoothL1LossGradV2CpuKernel::ComputeNone start");
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
   Tensor *dout_tensor = ctx.Input(2);
@@ -344,7 +351,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
       } else if (x >= T(sigma)) {
         *(result + i) = T(1) * dout;
       } else if (sigma == 0) {
-        KERNEL_LOG_ERROR("attribute sigma could not be 0.");
+        CUST_KERNEL_LOG_ERROR(ctx, "attribute sigma could not be 0.");
       } else {
         *(result + i) = dout * x / T(sigma);
       }
@@ -354,7 +361,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num cannot be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num cannot be 0.");
     }
     if (max_core_num > data_num) {
       max_core_num = data_num;
@@ -372,7 +379,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
         } else if (x >= T(sigma)) {
           *(result + i) = T(1) * dout;
         } else if (sigma == 0) {
-          KERNEL_LOG_ERROR("attribute sigma could not be 0.");
+          CUST_KERNEL_LOG_ERROR(ctx, "attribute sigma could not be 0.");
         } else {
           *(result + i) = dout * x / T(sigma);
         }
@@ -380,7 +387,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
     };
     return CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_smoothl1lossgradv2);
   }
-  KERNEL_LOG_INFO("SmoothL1LossGradV2CpuKernel::ComputeNone end");
+  CUST_KERNEL_LOG_INFO(ctx, "SmoothL1LossGradV2CpuKernel::ComputeNone end");
 }
 
 REGISTER_MS_CPU_KERNEL(kSmoothL1LossGradV2, SmoothL1LossGradV2CpuKernel);

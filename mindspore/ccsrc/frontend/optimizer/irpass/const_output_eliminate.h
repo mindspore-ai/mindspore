@@ -166,7 +166,6 @@ class ConstOutputEliminater : public AnfVisitor {
       return false;
     }
     auto output = fg->output();
-
     if (!IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
       return false;
     }
@@ -250,7 +249,6 @@ class ConstOutputEliminater : public AnfVisitor {
 
     auto mng = func->manager();
     auto users = mng->node_users()[node];
-
     if (users.empty()) {
       return false;
     }

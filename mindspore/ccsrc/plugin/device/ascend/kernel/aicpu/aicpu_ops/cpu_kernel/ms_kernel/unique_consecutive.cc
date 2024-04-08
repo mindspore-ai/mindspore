@@ -130,7 +130,7 @@ std::vector<std::vector<T1>> ReshapeInput(const std::vector<int64_t> &input_shap
 }  // namespace
 
 namespace aicpu {
-void UniqueConsecutiveCpuKernel::DefaultSet(const CpuKernelContext &ctx) {
+void UniqueConsecutiveCpuKernel::DefaultSet(CpuKernelContext &ctx) {
   // Get the inuput and output
   Tensor *output_y = ctx.Output(0);
   auto y_shape = ctx.Output(0)->GetTensorShape();
@@ -170,8 +170,7 @@ void UniqueConsecutiveCpuKernel::OutputYSet(const std::vector<int64_t> &y_shape_
 }
 
 template <typename T2>
-void UniqueConsecutiveCpuKernel::SetOuputIdxandCount(const CpuKernelContext &ctx,
-                                                     const std::vector<int64_t> &idx_shape_,
+void UniqueConsecutiveCpuKernel::SetOuputIdxandCount(CpuKernelContext &ctx, const std::vector<int64_t> &idx_shape_,
                                                      const std::vector<int64_t> &count_shape_, T2 *idx_dataptr,
                                                      T2 *count_dataptr) {
   std::vector<int64_t> shape = {0};
@@ -205,7 +204,7 @@ void UniqueConsecutiveCpuKernel::SetOuputIdxandCount(const CpuKernelContext &ctx
 }
 
 template <typename T2>
-uint32_t UniqueConsecutiveCpuKernel::DtypeMapNone(const CpuKernelContext &ctx, DataType x_dtype) {
+uint32_t UniqueConsecutiveCpuKernel::DtypeMapNone(CpuKernelContext &ctx, DataType x_dtype) {
   switch (x_dtype) {
     case DT_COMPLEX128:
       return DoComputeNone<complex<double>, T2>(ctx);
@@ -234,13 +233,13 @@ uint32_t UniqueConsecutiveCpuKernel::DtypeMapNone(const CpuKernelContext &ctx, D
     case DT_UINT64:
       return DoComputeNone<uint64_t, T2>(ctx);
     default:
-      KERNEL_LOG_ERROR("[UniqueConsecutive]: Input data type [%s] not support.", DTypeStr(x_dtype).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[UniqueConsecutive]: Input data type [%s] not support.", DTypeStr(x_dtype).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename T2>
-uint32_t UniqueConsecutiveCpuKernel::DtypeMapDim(const CpuKernelContext &ctx, int32_t tmp_axis, DataType x_dtype) {
+uint32_t UniqueConsecutiveCpuKernel::DtypeMapDim(CpuKernelContext &ctx, int32_t tmp_axis, DataType x_dtype) {
   switch (x_dtype) {
     case DT_COMPLEX128:
       return DoComputeDim<complex<double>, T2>(ctx, tmp_axis);
@@ -269,13 +268,13 @@ uint32_t UniqueConsecutiveCpuKernel::DtypeMapDim(const CpuKernelContext &ctx, in
     case DT_UINT64:
       return DoComputeDim<uint64_t, T2>(ctx, tmp_axis);
     default:
-      KERNEL_LOG_ERROR("[UniqueConsecutive]: Input data type [%s] not support.", DTypeStr(x_dtype).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[UniqueConsecutive]: Input data type [%s] not support.", DTypeStr(x_dtype).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename T1, typename T2>
-uint32_t UniqueConsecutiveCpuKernel::DoComputeNone(const CpuKernelContext &ctx) {
+uint32_t UniqueConsecutiveCpuKernel::DoComputeNone(CpuKernelContext &ctx) {
   // Get the inuput and output y
   Tensor *input_x = ctx.Input(0);
   Tensor *output_y = ctx.Output(0);
@@ -286,7 +285,7 @@ uint32_t UniqueConsecutiveCpuKernel::DoComputeNone(const CpuKernelContext &ctx) 
   // Compute
   if (numel > 0) {
     T2 *idx_dataptr = new (std::nothrow) T2[numel];
-    KERNEL_CHECK_NULLPTR(idx_dataptr, KERNEL_STATUS_INNER_ERROR, "apply memory failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, idx_dataptr, KERNEL_STATUS_INNER_ERROR, "apply memory failed.");
     T2 *count_dataptr = new (std::nothrow) T2[numel];
     if (count_dataptr == nullptr) {
       delete[] idx_dataptr;
@@ -327,7 +326,7 @@ uint32_t UniqueConsecutiveCpuKernel::DoComputeNone(const CpuKernelContext &ctx) 
 }
 
 template <typename T1, typename T2>
-uint32_t UniqueConsecutiveCpuKernel::DoComputeDim(const CpuKernelContext &ctx, const int32_t axis) {
+uint32_t UniqueConsecutiveCpuKernel::DoComputeDim(CpuKernelContext &ctx, const int32_t axis) {
   auto x_dataptr = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto y_dataptr = reinterpret_cast<T1 *>(ctx.Output(0)->GetData());
   auto input_shape = ctx.Input(0)->GetTensorShape();
@@ -338,18 +337,18 @@ uint32_t UniqueConsecutiveCpuKernel::DoComputeDim(const CpuKernelContext &ctx, c
   int64_t dim0 = input_shape_[static_cast<size_t>(axis)];
   idx_shape_.push_back(dim0);
   if (dim0 == 0) {
-    KERNEL_CHECK_FALSE((num_zero_dims == 1), KERNEL_STATUS_PARAM_INVALID,
-                       "[UniqueConsecutive]: Number of zero sized dimensions "
-                       "is more than one, so unique cannot be applied.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (num_zero_dims == 1), KERNEL_STATUS_PARAM_INVALID,
+                            "[UniqueConsecutive]: Number of zero sized dimensions "
+                            "is more than one, so unique cannot be applied.");
     DefaultSet(ctx);
     return KERNEL_STATUS_OK;
   }
-  KERNEL_CHECK_FALSE((num_zero_dims == 0), KERNEL_STATUS_PARAM_INVALID,
-                     "[UniqueConsecutive]: There are 0 sized dimensions, and "
-                     "they aren't selected, so unique cannot be applied");
+  CUST_KERNEL_CHECK_FALSE(ctx, (num_zero_dims == 0), KERNEL_STATUS_PARAM_INVALID,
+                          "[UniqueConsecutive]: There are 0 sized dimensions, and "
+                          "they aren't selected, so unique cannot be applied");
   if (input_shape_.size() != 1) {
     T2 *idx_dataptr = new (std::nothrow) T2[dim0];
-    KERNEL_CHECK_NULLPTR(idx_dataptr, KERNEL_STATUS_INNER_ERROR, "apply memory failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, idx_dataptr, KERNEL_STATUS_INNER_ERROR, "apply memory failed.");
     T2 *count_dataptr = new (std::nothrow) T2[dim0];
     if (count_dataptr == nullptr) {
       delete[] idx_dataptr;
@@ -389,7 +388,7 @@ uint32_t UniqueConsecutiveCpuKernel::DoComputeDim(const CpuKernelContext &ctx, c
   return KERNEL_STATUS_OK;
 }
 
-uint32_t UniqueConsecutiveCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t UniqueConsecutiveCpuKernel::DoCompute(CpuKernelContext &ctx) {
   auto x_dtype = ctx.Input(0)->GetDataType();
   auto idx_dtype = ctx.Output(1)->GetDataType();
   auto count_dtype = ctx.Output(2)->GetDataType();
@@ -401,10 +400,10 @@ uint32_t UniqueConsecutiveCpuKernel::DoCompute(const CpuKernelContext &ctx) {
       case DT_INT64:
         return DtypeMapNone<int64_t>(ctx, x_dtype);
       default:
-        KERNEL_LOG_ERROR(
-          "[UniqueConsecutive]: Output idx and count data type [%s] "
-          "and [%s] not support.",
-          DTypeStr(idx_dtype).c_str(), DTypeStr(count_dtype).c_str());
+        CUST_KERNEL_LOG_ERROR(ctx,
+                              "[UniqueConsecutive]: Output idx and count data type [%s] "
+                              "and [%s] not support.",
+                              DTypeStr(idx_dtype).c_str(), DTypeStr(count_dtype).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
   } else {
@@ -415,10 +414,10 @@ uint32_t UniqueConsecutiveCpuKernel::DoCompute(const CpuKernelContext &ctx) {
       case DT_INT64:
         return DtypeMapDim<int64_t>(ctx, tmp_axis, x_dtype);
       default:
-        KERNEL_LOG_ERROR(
-          "[UniqueConsecutive]: Output idx and count data type [%s] "
-          "and [%s] not support.",
-          DTypeStr(idx_dtype).c_str(), DTypeStr(count_dtype).c_str());
+        CUST_KERNEL_LOG_ERROR(ctx,
+                              "[UniqueConsecutive]: Output idx and count data type [%s] "
+                              "and [%s] not support.",
+                              DTypeStr(idx_dtype).c_str(), DTypeStr(count_dtype).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -427,21 +426,21 @@ uint32_t UniqueConsecutiveCpuKernel::DoCompute(const CpuKernelContext &ctx) {
 uint32_t UniqueConsecutiveCpuKernel::ExtraParamCheck(CpuKernelContext &ctx) {
   // Check output y.
   Tensor *output_0 = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output_0, KERNEL_STATUS_PARAM_INVALID, "Get [y] tensor failed.");
-  KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get [y] data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0, KERNEL_STATUS_PARAM_INVALID, "Get [y] tensor failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get [y] data failed.");
   input_type_ = ctx.Input(0)->GetDataType();
   DataType output0_type = ctx.Output(0)->GetDataType();
-  KERNEL_CHECK_FALSE((input_type_ == output0_type), KERNEL_STATUS_PARAM_INVALID,
-                     "[UniqueConsecutive]: The data type of output y [%s] need "
-                     "be same with input [%s].",
-                     DTypeStr(output0_type).c_str(), DTypeStr(input_type_).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_type_ == output0_type), KERNEL_STATUS_PARAM_INVALID,
+                          "[UniqueConsecutive]: The data type of output y [%s] need "
+                          "be same with input [%s].",
+                          DTypeStr(output0_type).c_str(), DTypeStr(input_type_).c_str());
   // Check output idx
   AttrValue *return_idx = ctx.GetAttr("return_idx");
   return_idx_ = (return_idx == nullptr) ? false : (return_idx->GetBool());
   if (return_idx_) {
     Tensor *output_1 = ctx.Output(1);
-    KERNEL_CHECK_NULLPTR(output_1, KERNEL_STATUS_PARAM_INVALID, "Get [indices] tensor failed.");
-    KERNEL_CHECK_NULLPTR(output_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get [indices] data failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, output_1, KERNEL_STATUS_PARAM_INVALID, "Get [indices] tensor failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, output_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get [indices] data failed.");
     idx_dtype_ = output_1->GetDataType();
   }
   // Check output counts
@@ -449,25 +448,25 @@ uint32_t UniqueConsecutiveCpuKernel::ExtraParamCheck(CpuKernelContext &ctx) {
   return_counts_ = (return_counts == nullptr) ? false : (return_counts->GetBool());
   if (return_counts_) {
     Tensor *output_2 = ctx.Output(2);
-    KERNEL_CHECK_NULLPTR(output_2, KERNEL_STATUS_PARAM_INVALID, "Get [counts] tensor failed.");
-    KERNEL_CHECK_NULLPTR(output_2->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get [counts] data failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, output_2, KERNEL_STATUS_PARAM_INVALID, "Get [counts] tensor failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, output_2->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get [counts] data failed.");
     count_dtype_ = output_2->GetDataType();
   }
   // Check idx and counts datatype
   if (return_counts_ && return_idx_) {
-    KERNEL_CHECK_FALSE((idx_dtype_ == count_dtype_), KERNEL_STATUS_PARAM_INVALID,
-                       "[UniqueConsecutive]: Output idx and count data type "
-                       "[%s] and [%s] is not identical.",
-                       DTypeStr(idx_dtype_).c_str(), DTypeStr(count_dtype_).c_str())
+    CUST_KERNEL_CHECK_FALSE(ctx, (idx_dtype_ == count_dtype_), KERNEL_STATUS_PARAM_INVALID,
+                            "[UniqueConsecutive]: Output idx and count data type "
+                            "[%s] and [%s] is not identical.",
+                            DTypeStr(idx_dtype_).c_str(), DTypeStr(count_dtype_).c_str())
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t UniqueConsecutiveCpuKernel::Compute(CpuKernelContext &ctx) {
   // Check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kDynamicOutput),
-                      "[UniqueConsecutive]: Check input and output number failed.");
-  KERNEL_HANDLE_ERROR(ExtraParamCheck(ctx), "[UniqueConsecutive]: check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kDynamicOutput),
+                           "[UniqueConsecutive]: Check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ExtraParamCheck(ctx), "[UniqueConsecutive]: check params failed.");
   // Get the attr
   AttrValue *axis = ctx.GetAttr("axis");
   axis_ = (axis == nullptr) ? NoneN : static_cast<int32_t>(axis->GetInt());
@@ -476,19 +475,19 @@ uint32_t UniqueConsecutiveCpuKernel::Compute(CpuKernelContext &ctx) {
   auto input_size = input_x->GetTensorShape()->GetDims();
   // Check the axis
   if (input_size == 0 && axis_ != NoneN) {
-    KERNEL_LOG_ERROR(
-      "[UniqueConsecutive]: axis specified as %d but tensor has no "
-      "dimensions.",
-      axis_);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "[UniqueConsecutive]: axis specified as %d but tensor has no "
+                          "dimensions.",
+                          axis_);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int32_t min_d = std::min(-input_size, input_size - 1);
   int32_t max_d = std::max(-input_size, input_size - 1);
   if ((axis_ < min_d || axis_ > max_d) && axis_ != NoneN) {
-    KERNEL_LOG_ERROR(
-      "[UniqueConsecutive]: Axis out of range (expected to be in range of "
-      "[%d, %d]).",
-      min_d, max_d);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "[UniqueConsecutive]: Axis out of range (expected to be in range of "
+                          "[%d, %d]).",
+                          min_d, max_d);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // DoCompute

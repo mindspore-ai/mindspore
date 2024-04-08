@@ -15,7 +15,7 @@
 """Entrypoint of ms_run"""
 import ast
 from argparse import REMAINDER, ArgumentParser
-from .process_entity import  _ProcessManager
+from .process_entity import _ProcessManager
 
 def get_args():
     """
@@ -90,6 +90,20 @@ def get_args():
         type=ast.literal_eval,
         choices=[True, False],
         help="specifies whether msrun should bind cpu cores to spawned processes."
+    )
+    parser.add_argument(
+        "--sim_level",
+        default=-1,
+        type=int,
+        choices=[0, 1],
+        help="specifies simulation level. When this argument is set, msrun only spawns one process "
+             "but export RANK_SIZE with value worker_num and RANK_ID with value sim_rank_id."
+    )
+    parser.add_argument(
+        "--sim_rank_id",
+        default=0,
+        type=int,
+        help="specifies simulation process's rank id. Only one process is spawned in simulation scenario."
     )
     parser.add_argument(
         "task_script",

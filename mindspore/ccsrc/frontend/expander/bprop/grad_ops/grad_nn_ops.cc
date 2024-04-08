@@ -25,6 +25,7 @@
 #include "ops/nn_optimizer_op_name.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -409,7 +410,8 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto indices = ib->TupleGetItem(out, kIndex1);
   auto dout0 = ib->TupleGetItem(dout, kIndex0);
   auto in_shape = ib->GetShape(input_x);
-  if (IsDynamic(in_shape)) {
+  auto indices_shape = ib->GetShape(indices);
+  if (IsDynamic(in_shape) || IsDynamic(indices_shape)) {
     auto re0 = ib->ShapeCalc(g_topk_1, {indices})[0];
     NodePtr ind_2d = ib->Reshape(indices, re0);
     auto res = ib->ShapeCalc(g_topk_2, {input_x, ind_2d});
@@ -1375,6 +1377,7 @@ REG_BPROP_BUILDER("InstanceNorm").SetUnusedInputs({i2, i3, i4}).SetBody(BODYFUNC
 REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto scale = ib->GetInput(kIndex1);
+  auto bias = ib->GetInput(kIndex2);
   auto mean = ib->GetInput(kIndex3);
   auto variance = ib->GetInput(kIndex4);
   auto is_training = ib->GetInput(kIndex5);
@@ -1409,9 +1412,10 @@ REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     saved_variance = ib->TupleGetItem(cond_out, 1);
   }
   auto reserve = ib->TupleGetItem(out, 2);
-
+  bool is_scale_or_bias_grad = (scale->need_compute_grad_out() || bias->need_compute_grad_out());
   out = ib->BatchNormGrad(
-    {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve, is_training, epsilon, data_format});
+    {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve, is_training, epsilon, data_format},
+    is_scale_or_bias_grad);
   auto dx = ib->TupleGetItem(out, 0);
   auto dscale = ib->TupleGetItem(out, 1);
   auto dbias = ib->TupleGetItem(out, 2);
@@ -1896,7 +1900,8 @@ REG_BPROP_BUILDER("MaxPool3DWithArgmax").SetBody(BODYFUNC(ib) {
                       {"pads", ib->GetAttr("pads")},
                       {"dilation", ib->GetAttr("dilation")},
                       {"ceil_mode", ib->GetAttr("ceil_mode")},
-                      {"format", ib->GetAttr("format")}});
+                      {"format", ib->GetAttr("format")},
+                      {"argmax_type", ib->GetAttr("argmax_type")}});
   return {dx};
 });
 
@@ -2119,10 +2124,29 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   if (mode == "constant") {
     MS_EXCEPTION_IF_NULL(paddings);
     auto pad_value = GetIntList(paddings);
-    (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
-    auto constant_values = ib->GetInput(kIndex2);
-    dx = ib->Emit("PadV3", {dout, ib->Tensor(pad_value), ib->ZerosLike(constant_values)},
-                  {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+      (void)CheckAndConvertUtils::CheckPositiveVector("paddings", pad_value, "PadV3Grad");
+      auto x = ib->GetInput(kIndex0);
+      auto x_shape = ib->GetShape(x);
+      std::vector<std::vector<int64_t>> ordered_paddings(x_shape.size(), {0, 0});
+      const size_t step_2 = 2;
+      for (size_t i = 0; i < pad_value.size(); i += step_2) {
+        std::vector<int64_t> split_paddings = {pad_value[i], pad_value[i + 1]};
+        ordered_paddings[x_shape.size() - (i / step_2) - 1] = split_paddings;
+      }
+      std::vector<int64_t> begin;
+      for (const auto &item : ordered_paddings) {
+        begin.emplace_back(item[0]);
+      }
+      dx = ib->Slice(dout, ib->EmitValue(MakeValue(begin)), ib->EmitValue(MakeValue(x_shape)));
+    } else {
+      (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
+      auto constant_values = ib->GetInput(kIndex2);
+      dx = ib->Emit("PadV3", {dout, ib->Tensor(pad_value), ib->ZerosLike(constant_values)},
+                    {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
+    }
   } else {
     dx = ib->Emit("PadV3Grad", {dout, paddings},
                   {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});

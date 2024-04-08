@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -41,8 +42,11 @@ namespace opt {
  */
 class FlashAttentionFusion : public MultiplePatternProcessPass {
  public:
-  explicit FlashAttentionFusion(const std::string &name = "FlashAttentionFusion", bool multigraph = true)
-      : MultiplePatternProcessPass(name, multigraph) {}
+  explicit FlashAttentionFusion(std::map<std::string, std::map<std::string, std::string>> op_attrs_map,
+                                const std::string &name = "FlashAttentionFusion", bool multigraph = true)
+      : MultiplePatternProcessPass(name, multigraph) {
+    op_attrs_map_ = op_attrs_map;
+  }
 
   ~FlashAttentionFusion() override = default;
 
@@ -51,6 +55,8 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   AnfNodePtr Process(const std::string &, const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
+  std::map<std::string, std::map<std::string, std::string>> op_attrs_map_;
+
   CNodePtr CreatePromptFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                   const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
                                                   const AnfNodePtr &atten_mask, int64_t num_heads, int64_t next_token,
@@ -97,7 +103,8 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   CNodePtr CreateFlashAttentionNodeForSDEinsum(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                                const AnfNodePtr &node, const EquivPtr &equiv) const;
 
-  CNodePtr CreatePadCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t pad_size) const;
+  CNodePtr CreatePadCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t pad_size,
+                          const std::string &node_name = "") const;
   CNodePtr CreateSliceCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t slice_size) const;
   CNodePtr GetSDDynamicShapeParam(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   float GetScaleValueForDynamicShape(const AnfNodePtr &mul_const_input) const;

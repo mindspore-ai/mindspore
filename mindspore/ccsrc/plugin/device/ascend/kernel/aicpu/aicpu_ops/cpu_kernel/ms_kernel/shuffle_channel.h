@@ -30,10 +30,10 @@ class ShuffleChannelCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ShuffleChannelParamCheck(const CpuKernelContext &ctx);
+  uint32_t ShuffleChannelParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t ShuffleChannelCompute(const CpuKernelContext &ctx);
+  uint32_t ShuffleChannelCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

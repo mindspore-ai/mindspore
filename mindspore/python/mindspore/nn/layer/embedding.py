@@ -66,7 +66,7 @@ class Embedding(Cell):
         use_one_hot (bool): Specifies whether to apply one_hot encoding form. Default: ``False`` .
         embedding_table (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
             Refer to class `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             for the values of string when a string is specified. Default: ``'normal'`` .
         dtype (:class:`mindspore.dtype`): Data type of `x`. Default: ``mstype.float32`` .
         padding_idx (int, None): When the padding_idx encounters index, the output embedding vector of this index

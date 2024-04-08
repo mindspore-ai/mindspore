@@ -29,10 +29,10 @@ class AngleCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t AngleCheck(const CpuKernelContext &ctx);
+  uint32_t AngleCheck(CpuKernelContext &ctx);
 
   template <typename T, typename t>
-  uint32_t AngleCompute(const CpuKernelContext &ctx);
+  uint32_t AngleCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

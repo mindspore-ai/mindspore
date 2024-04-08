@@ -436,40 +436,33 @@ Status MatMul::CheckInputLayout() {
                   << " dose not equal to device_matrix of input1 " << in_layout1.device_arrangement_origin().array();
     return FAILED;
   }
-
+  std::vector<int64_t> map_verify;
   size_t axis0 = in_layout0.tensor_shape_before().array().size() - 1;
   if (transpose_a_) {
     axis0--;
   }
-  size_t axis1 = in_layout0.tensor_shape_before().array().size() - 2;
+  auto m_v =
+    in_layout0.tensor_map_before()[in_layout0.tensor_shape_before().array().size() * kSizeTwo - kIndex3 - axis0];
+  (void)std::copy(m_v.begin(), m_v.end(), std::back_inserter(map_verify));
+  size_t axis1 = in_layout1.tensor_shape_before().array().size() - 2;
   if (transpose_b_) {
     axis1++;
   }
+  auto n_v =
+    in_layout1.tensor_map_before()[in_layout1.tensor_shape_before().array().size() * kSizeTwo - kIndex3 - axis1];
+  (void)std::copy(n_v.begin(), n_v.end(), std::back_inserter(map_verify));
+
   if (in_layout0.tensor_map_before()[axis0] != in_layout1.tensor_map_before()[axis1]) {
     MS_LOG(ERROR) << "The shard size of reduce_dim is not equal for input0 and input1";
     return FAILED;
   }
-  std::vector<int64_t> map_verify;
-  for (size_t i = 0; i < in_layout0.tensor_map_before().size(); ++i) {
-    if (i == axis0) {
-      continue;
-    }
-    auto m_v = in_layout0.tensor_map_before()[i];
-    (void)std::copy(m_v.begin(), m_v.end(), std::back_inserter(map_verify));
-  }
-  for (size_t j = 0; j < in_layout1.tensor_map_before().size(); ++j) {
-    if (j == axis1) {
-      continue;
-    }
-    auto m_v = in_layout1.tensor_map_before()[j];
-    (void)std::copy(m_v.begin(), m_v.end(), std::back_inserter(map_verify));
-  }
+
   std::sort(map_verify.begin(), map_verify.end());
   for (size_t i = 0; i + 1 < map_verify.size(); ++i) {
-    if (map_verify[i] == map_verify[i + 1]) {
+    if (map_verify[i] == map_verify[i + 1] && map_verify[i] > 0) {
       MS_LOG(ERROR) << "The device_matrix " << in_layout0.device_arrangement_origin().array() << " axis "
-                    << in_layout0.device_arrangement_origin().array().size() - 1 - map_verify[i]
-                    << "has been shard for more than once and not sharding the reduce_dim for matmul.";
+                    << in_layout0.device_arrangement_origin().array().size() - 1 - LongToSize(map_verify[i])
+                    << " has been shard for more than once and not sharding the reduce_dim for matmul.";
       return FAILED;
     }
   }
@@ -546,11 +539,13 @@ TensorLayout MatMul::InferOutputLayout() {
   }
 
   if (!transpose_b_) {
-    output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[inputs_shape_[kIndex1].size() - 1]);
-    output_tensor_shape.push_back(input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - 1));
+    output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[inputs_shape_[kIndex1].size() - kDim1]);
+    output_tensor_shape.push_back(
+      input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - kDim1));
   } else {
-    output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[inputs_shape_[kIndex1].size() - 2]);
-    output_tensor_shape.push_back(input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - 2));
+    output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[inputs_shape_[kIndex1].size() - kDim2]);
+    output_tensor_shape.push_back(
+      input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - kDim2));
   }
 
   TensorLayout output_tensor_layout;

@@ -97,10 +97,10 @@ mindspore.nn.Adam
         - **TypeError** - `parameters` 的元素不是Parameter或字典。
         - **TypeError** - `beta1` 、 `beta2` 、 `eps` 或 `loss_scale` 不是float。
         - **TypeError** - `weight_decay` 不是float或int。
-        - **TypeError** - `use_locking` 、 `use_nesterov` 、`use_amsgrad` 、`use_lazy` 或 `use_offload` 不是bool。
+        - **TypeError** - `use_locking` 、 `use_nesterov` 、 `use_amsgrad` 、 `use_lazy` 或 `use_offload` 不是bool。
         - **ValueError** - `loss_scale` 或 `eps` 小于或等于0。
-        - **ValueError** - `beta1` 、`beta2` 不在（0.0, 1.0）范围内。
+        - **ValueError** - `beta1` 、 `beta2` 不在（0.0, 1.0）范围内。
         - **ValueError** - `weight_decay` 小于0。
         - **ValueError** - `use_lazy` 和 `use_offload` 均为 ``True`` 。
         - **ValueError** - `use_amsgrad` 为True时， `use_lazy` 或 `use_offload` 亦为 ``True`` 。
-        - **ValueError** - 在分布式训练时，`use_amsgrad` 为 ``True`` 。
+        - **ValueError** - 在分布式训练时， `use_amsgrad` 为 ``True`` 。

@@ -147,7 +147,7 @@ def test_tensor_print_1():
         sys.stdout.flush()
         time.sleep(0.1)
 
-    patterns = {'Tensor(x): \nTensor(shape=[5], dtype=Int64, value=[1 2 3 4 5])\n\n'}
+    patterns = {'Tensor(x): \nTensor(shape=[5], dtype=Int64, value=[1 2 3 4 5])\n'}
     check_output(cap.output, patterns)
 
 

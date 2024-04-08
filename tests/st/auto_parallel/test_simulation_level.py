@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 import os
 import numpy as np
 import mindspore.nn as nn
@@ -23,7 +24,6 @@ from mindspore.communication.management import init, create_group, destroy_group
 
 os.environ["MS_SIMULATION_LEVEL"] = "0"
 context.set_context(mode=context.GRAPH_MODE)
-init()
 
 
 class DenseNet(nn.Cell):
@@ -44,6 +44,37 @@ input_ = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
 label_ = Tensor(np.zeros([32, 128]).astype(np.float32))
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_run_graph_kbk():
+    """
+    Feature: simulation level.
+    Description: run graph when set simulation level 1.
+    Expectation: no exception.
+    """
+    os.environ["MS_SIMULATION_LEVEL"] = "1"
+    os.environ["RANK_SIZE"] = "32"
+    os.environ["RANK_ID"] = "1"
+    os.environ["GRAPH_OP_RUN"] = "1"
+    os.environ["OMPI_COMMAND"] = "1"
+    os.environ["PMIX_RANK"] = "1"
+    init()
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net = DenseNet()
+    net.fc1.matmul.shard(((4, 1), (8, 1)))
+    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    loss_fn = nn.SoftmaxCrossEntropyWithLogits()
+    net = WithLossCell(net, loss_fn)
+    train_net = TrainOneStepCell(net, optimizer)
+    train_net.set_train()
+    train_net(input_, label_)
+    context.reset_auto_parallel_context()
+    os.environ["GRAPH_OP_RUN"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
+
+
 def test_get_group_size_default():
     """
     Feature: simulation level.
@@ -51,6 +82,7 @@ def test_get_group_size_default():
     Expectation: return default 1.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
+    init()
     ret = get_group_size()
     assert ret == 1
     os.environ["MS_SIMULATION_LEVEL"] = ""
@@ -64,6 +96,7 @@ def test_get_group_size_env():
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "8"
+    init()
     ret = get_group_size()
     assert ret == 8
     os.environ["MS_SIMULATION_LEVEL"] = ""
@@ -76,6 +109,7 @@ def test_get_rank_id_default():
     Expectation: return default 0.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
+    init()
     ret = get_rank()
     assert ret == 0
     os.environ["MS_SIMULATION_LEVEL"] = ""
@@ -89,6 +123,7 @@ def test_get_rank_id_env():
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_ID"] = "7"
+    init()
     ret = get_rank()
     assert ret == 7
     os.environ["MS_SIMULATION_LEVEL"] = ""
@@ -103,6 +138,7 @@ def test_get_local_rank_id():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "9"
+    init()
     ret = get_local_rank()
     assert ret == 1
     os.environ["MS_SIMULATION_LEVEL"] = ""
@@ -117,6 +153,7 @@ def test_create_group():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "7"
+    init()
     group = "g-01234567"
     rank_ids = [i for i in range(8)]
     create_group(group, rank_ids)
@@ -136,6 +173,7 @@ def test_destroy_group():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "7"
+    init()
     group = "g8-01234567"
     rank_ids = [i for i in range(8)]
     create_group(group, rank_ids)
@@ -152,6 +190,7 @@ def test_get_world_rank_from_group_rank():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "9"
+    init()
     group = "g-to-w-8+01234567"
     rank_ids = [i + 8 for i in range(8)]
     create_group(group, rank_ids)
@@ -169,6 +208,7 @@ def test_get_group_rank_from_world_rank():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "9"
+    init()
     group = "w-to-g-8+01234567"
     rank_ids = [i + 8 for i in range(8)]
     create_group(group, rank_ids)
@@ -186,6 +226,7 @@ def test_simulation_graph():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "1"
+    init()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net = DenseNet()
     net.fc1.matmul.shard(((4, 1), (8, 1)))
@@ -193,7 +234,10 @@ def test_simulation_graph():
     context.reset_auto_parallel_context()
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
-
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_run_graph():
     """
     Feature: simulation level.
@@ -203,6 +247,7 @@ def test_run_graph():
     os.environ["MS_SIMULATION_LEVEL"] = "1"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "1"
+    init()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net = DenseNet()
     net.fc1.matmul.shard(((4, 1), (8, 1)))
@@ -213,29 +258,4 @@ def test_run_graph():
     train_net.set_train()
     train_net(input_, label_)
     context.reset_auto_parallel_context()
-    os.environ["MS_SIMULATION_LEVEL"] = ""
-
-def test_run_graph_kbk():
-    """
-    Feature: simulation level.
-    Description: run graph when set simulation level 1.
-    Expectation: no exception.
-    """
-    os.environ["MS_SIMULATION_LEVEL"] = "1"
-    os.environ["RANK_SIZE"] = "32"
-    os.environ["RANK_ID"] = "1"
-    os.environ["GRAPH_OP_RUN"] = "1"
-    os.environ["OMPI_COMMAND"] = "1"
-    os.environ["PMIX_RANK"] = "1"
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net = DenseNet()
-    net.fc1.matmul.shard(((4, 1), (8, 1)))
-    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-    loss_fn = nn.SoftmaxCrossEntropyWithLogits()
-    net = WithLossCell(net, loss_fn)
-    train_net = TrainOneStepCell(net, optimizer)
-    train_net.set_train()
-    train_net(input_, label_)
-    context.reset_auto_parallel_context()
-    os.environ["GRAPH_OP_RUN"] = ""
     os.environ["MS_SIMULATION_LEVEL"] = ""

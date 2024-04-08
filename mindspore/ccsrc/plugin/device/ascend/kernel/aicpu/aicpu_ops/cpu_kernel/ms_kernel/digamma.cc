@@ -97,7 +97,7 @@ static inline double calc_digamma(double x) {
   return result + log(x) - (HALF / x) - y;
 }
 
-inline std::uint32_t ParallelForDigamma(const CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
+inline std::uint32_t ParallelForDigamma(CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
                                         const std::function<void(std::int64_t, std::int64_t)> &work) {
   if (total > kDigammaParallelNum)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
@@ -107,7 +107,7 @@ inline std::uint32_t ParallelForDigamma(const CpuKernelContext &ctx, std::int64_
 }
 
 template <typename T>
-inline std::uint32_t ComputeDigammaKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeDigammaKernel(CpuKernelContext &ctx) {
   T *input0{static_cast<T *>(ctx.Input(0)->GetData())};
   T *output{static_cast<T *>(ctx.Output(0)->GetData())};
   std::int64_t total{ctx.Input(0)->NumElements()};
@@ -119,25 +119,26 @@ inline std::uint32_t ComputeDigammaKernel(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-inline std::uint32_t ComputeDigamma(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeDigamma(CpuKernelContext &ctx) {
   std::uint32_t result{ComputeDigammaKernel<T>(ctx)};
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Digamma compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Digamma compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t ExtraCheckDigamma(const CpuKernelContext &ctx) {
+inline std::uint32_t ExtraCheckDigamma(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -147,7 +148,7 @@ inline std::uint32_t CheckDigamma(CpuKernelContext &ctx, std::uint32_t inputs_nu
   return NormalCheck(ctx, kDigammaInputNum, kDigammaOutputNum) ? KERNEL_STATUS_PARAM_INVALID : ExtraCheckDigamma(ctx);
 }
 
-inline std::uint32_t ComputeDigamma(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeDigamma(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_FLOAT16:
@@ -155,7 +156,7 @@ inline std::uint32_t ComputeDigamma(const CpuKernelContext &ctx) {
     case DT_FLOAT:
       return ComputeDigamma<std::float_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

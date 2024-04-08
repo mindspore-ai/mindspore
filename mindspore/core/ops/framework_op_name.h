@@ -44,7 +44,6 @@ constexpr auto kEnvironDestroyAllOpName = "EnvironDestroyAll";
 constexpr auto kMutableOpName = "mutable";
 constexpr auto kGetGradOpName = "GetGrad";
 constexpr auto kSetSizeOpName = "SetSize";
-constexpr auto kPackFuncOpName = "PackFunc";
 constexpr auto kIsInstanceOpName = "isinstance";
 constexpr auto kStringUpperOpName = "StringUpper";
 constexpr auto kStringLowerOpName = "StringLower";

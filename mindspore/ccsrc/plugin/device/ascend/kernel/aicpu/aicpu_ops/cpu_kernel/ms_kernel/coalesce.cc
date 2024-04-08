@@ -35,7 +35,7 @@ const char *kCoalesce = "Coalesce";
 
 namespace aicpu {
 uint32_t CoalesceCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Coalesce normal check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Coalesce normal check failed.");
   auto x_values_type = ctx.Input(1)->GetDataType();
   if (x_values_type == DT_DOUBLE) {
     return ComputeKernel<double>(ctx);
@@ -48,7 +48,7 @@ uint32_t CoalesceCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t CoalesceCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
+uint32_t CoalesceCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
   Tensor *x_indices = ctx.Input(0);
   Tensor *x_values = ctx.Input(1);
   Tensor *x_shape = ctx.Input(2);
@@ -66,14 +66,15 @@ uint32_t CoalesceCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
 
   for (int64_t i = 0; i < x_nnz; i++) {
     for (int64_t j = 0; j < num_dims; j++) {
-      KERNEL_CHECK_FALSE(
-        (x_indices_ptr[j * x_nnz + i] >= 0), KERNEL_STATUS_PARAM_INVALID,
+      CUST_KERNEL_CHECK_FALSE(
+        ctx, (x_indices_ptr[j * x_nnz + i] >= 0), KERNEL_STATUS_PARAM_INVALID,
         "For Coalesce, values of elements of x_indices should be non-negative, but got x_indices[%d][%d] = %d.", j, i,
         x_indices_ptr[j * x_nnz + i])
-      KERNEL_CHECK_FALSE((x_indices_ptr[j * x_nnz + i] < x_shape_ptr[j]), KERNEL_STATUS_PARAM_INVALID,
-                         "For Coalesce, values of elements of x_indices should not exceed the limit set by x_shape, "
-                         "but got x_indices[%d][%d] = %d, got x_shape[%d] = %d.",
-                         j, i, x_indices_ptr[j * x_nnz + i], j, x_shape_ptr[j])
+      CUST_KERNEL_CHECK_FALSE(
+        ctx, (x_indices_ptr[j * x_nnz + i] < x_shape_ptr[j]), KERNEL_STATUS_PARAM_INVALID,
+        "For Coalesce, values of elements of x_indices should not exceed the limit set by x_shape, "
+        "but got x_indices[%d][%d] = %d, got x_shape[%d] = %d.",
+        j, i, x_indices_ptr[j * x_nnz + i], j, x_shape_ptr[j])
     }
   }
 

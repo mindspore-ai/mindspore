@@ -122,11 +122,17 @@ class DATASET_API Tensor {
   static Status CreateFromMSTensor(const MSTensor &in, TensorPtr *out);
 
 #ifdef ENABLE_PYTHON
-  /// Create a Tensor from a given py::array
+  /// Create a Tensor from a given py::array, but copy the memory of numpy
   /// \param[in] arr py::array
   /// \param[out] out Created tensor
   /// \return Status Code
-  static Status CreateFromNpArray(py::array arr, TensorPtr *out);
+  static Status CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *out);
+
+  /// Create a Tensor from a given py::array, but reuse the memory of numpy
+  /// \param[in] arr py::array
+  /// \param[out] out Created tensor
+  /// \return Status Code
+  static Status CreateFromNpArrayNoCopy(py::array arr, TensorPtr *out);
 
   /// Helper function to create a tensor from a Python dictionary object
   /// \param[in] obj pybind11 wrapper for Python dictionary object

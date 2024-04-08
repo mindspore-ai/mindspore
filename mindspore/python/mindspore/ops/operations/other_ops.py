@@ -22,10 +22,8 @@ from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 from mindspore._c_expression import typing
-from mindspore.ops.auto_generate import Identity
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops._tracefunc import PackFunc
-from ..auto_generate import Assign
+from ..auto_generate import Assign, Identity
 
 
 class Load(PrimitiveWithCheck):
@@ -49,8 +47,6 @@ class Load(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['ref', 'u'], outputs=['output'])
 
     def __call__(self, *args):
-        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
-            return super().__call__(*args)
         return _get_cache_prim(Identity)()(args[0])
 
     def check_dtype(self, variable):
@@ -174,8 +170,8 @@ class BoundingBoxDecode(Primitive):
         ...                                          max_shape=(768, 1280), wh_ratio_clip=0.016)
         >>> output = boundingbox_decode(anchor_box, deltas)
         >>> print(output)
-        [[ 4.1953125  0.         0.         5.1953125]
-         [ 2.140625   0.         3.859375  60.59375  ]]
+        [[ 4.194528  0.         0.         5.194528]
+         [ 2.1408591   0.         3.8591409  60.598152  ]]
 
     """
 
@@ -525,8 +521,6 @@ class Depend(Primitive):
         self.add_prim_attr('side_effect_propagate', 1)
 
     def __call__(self, value, expr):
-        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
-            return super().__call__(value, expr)
         return value
 
 
@@ -829,8 +823,9 @@ class PyFunc(PrimitiveWithInfer):
                        "Do not use it as it could be any uninitialized data.")
         return (typing.TensorType(mstype.int32),)
 
+
 class Reusing(Primitive):
-    """
+    r"""
     Make the function graph to be labeled as no inline.
 
     Refer to :func:`mindspore.ops.Reusing` for more details.

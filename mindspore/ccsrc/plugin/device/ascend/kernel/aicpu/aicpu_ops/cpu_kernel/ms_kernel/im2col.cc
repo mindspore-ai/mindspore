@@ -47,37 +47,38 @@ bool VectorShapeAndValueCheck(const std::vector<int64_t> &values) {
 }
 
 uint32_t Im2colCpuKernel::Im2colParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kIm2colInputNum, kIm2colOutputNum), "[%s] check params failed.", kIm2col);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kIm2colInputNum, kIm2colOutputNum), "[%s] check params failed.",
+                           kIm2col);
   // check the shape、format of input tensor x
   const Tensor *x = ctx.Input(0);
-  KERNEL_CHECK_FALSE(x->GetTensorShape()->GetDims() == kValue4, KERNEL_STATUS_PARAM_INVALID,
-                     "Input tensor x must be 4D tensor.");
+  CUST_KERNEL_CHECK_FALSE(ctx, x->GetTensorShape()->GetDims() == kValue4, KERNEL_STATUS_PARAM_INVALID,
+                          "Input tensor x must be 4D tensor.");
   Format x_format = x->GetTensorShape()->GetFormat();
-  KERNEL_CHECK_FALSE(x_format == FORMAT_NCHW || x_format == FORMAT_NHWC, KERNEL_STATUS_PARAM_INVALID,
-                     "Input tensor x format only support NHWC, NCHW.");
+  CUST_KERNEL_CHECK_FALSE(ctx, x_format == FORMAT_NCHW || x_format == FORMAT_NHWC, KERNEL_STATUS_PARAM_INVALID,
+                          "Input tensor x format only support NHWC, NCHW.");
   // ksizes check
-  KERNEL_CHECK_NULLPTR(ctx.GetAttr("ksizes"), KERNEL_STATUS_PARAM_INVALID, "Attr 'ksizes' is necessary.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.GetAttr("ksizes"), KERNEL_STATUS_PARAM_INVALID, "Attr 'ksizes' is necessary.");
   ksizes = ctx.GetAttr("ksizes")->GetListInt();
-  KERNEL_CHECK_FALSE(VectorShapeAndValueCheck(ksizes), KERNEL_STATUS_PARAM_INVALID,
-                     "The size of ksizes must be 1 or 2 and value > 0.");
+  CUST_KERNEL_CHECK_FALSE(ctx, VectorShapeAndValueCheck(ksizes), KERNEL_STATUS_PARAM_INVALID,
+                          "The size of ksizes must be 1 or 2 and value > 0.");
   // strides check
   if (NotNull(ctx.GetAttr("strides"))) {
     strides = ctx.GetAttr("strides")->GetListInt();
-    KERNEL_CHECK_FALSE(VectorShapeAndValueCheck(strides), KERNEL_STATUS_PARAM_INVALID,
-                       "The size of strides must be 1 or 2 and value > 0.");
+    CUST_KERNEL_CHECK_FALSE(ctx, VectorShapeAndValueCheck(strides), KERNEL_STATUS_PARAM_INVALID,
+                            "The size of strides must be 1 or 2 and value > 0.");
   }
   // dilations check
   if (NotNull(ctx.GetAttr("dilations"))) {
     dilations = ctx.GetAttr("dilations")->GetListInt();
-    KERNEL_CHECK_FALSE(VectorShapeAndValueCheck(dilations), KERNEL_STATUS_PARAM_INVALID,
-                       "The size of dilations must be 1 or 2 and value > 0.");
+    CUST_KERNEL_CHECK_FALSE(ctx, VectorShapeAndValueCheck(dilations), KERNEL_STATUS_PARAM_INVALID,
+                            "The size of dilations must be 1 or 2 and value > 0.");
   }
   if (NotNull(ctx.GetAttr("pads"))) {
     pads = ctx.GetAttr("pads")->GetListInt();
     auto iter = std::find_if(pads.begin(), pads.end(), [&](const int64_t &item) -> bool { return (item < 0); });
-    KERNEL_CHECK_FALSE(iter == pads.end(), KERNEL_STATUS_PARAM_INVALID, "The values of pads must >= 0.");
-    KERNEL_CHECK_FALSE(pads.size() == kValue1 || pads.size() == kValue2 || pads.size() == kValue4,
-                       KERNEL_STATUS_PARAM_INVALID, "The size of pads must be 1, 2 or 4.");
+    CUST_KERNEL_CHECK_FALSE(ctx, iter == pads.end(), KERNEL_STATUS_PARAM_INVALID, "The values of pads must >= 0.");
+    CUST_KERNEL_CHECK_FALSE(ctx, pads.size() == kValue1 || pads.size() == kValue2 || pads.size() == kValue4,
+                            KERNEL_STATUS_PARAM_INVALID, "The size of pads must be 1, 2 or 4.");
   }
   return KERNEL_STATUS_OK;
 }
@@ -107,7 +108,7 @@ void Im2colCpuKernel::InnerCompute(int64_t c_col, T *x_ptr, T *y_ptr) {
 }
 
 template <typename T>
-uint32_t Im2colCpuKernel::Im2colCompute(const CpuKernelContext &ctx) {
+uint32_t Im2colCpuKernel::Im2colCompute(CpuKernelContext &ctx) {
   Tensor *x = ctx.Input(0);
   Tensor *y = ctx.Output(0);
   std::vector<int64_t> y_shapes = y->GetTensorShape()->GetDimSizes();
@@ -156,8 +157,8 @@ uint32_t Im2colCpuKernel::Im2colCompute(const CpuKernelContext &ctx) {
     (input_width + pad_width + pad_width - (dilation_width * (kernel_width - kValue1) + kValue1)) / stride_width +
     kValue1;
 
-  KERNEL_CHECK_FALSE(total_block == out_width * out_height, KERNEL_STATUS_PARAM_INVALID,
-                     "For 'Im2Col', the output shape's last dim must be equal to out_width * out_width");
+  CUST_KERNEL_CHECK_FALSE(ctx, total_block == out_width * out_height, KERNEL_STATUS_PARAM_INVALID,
+                          "For 'Im2Col', the output shape's last dim must be equal to out_width * out_width");
 
   auto x_ptr = reinterpret_cast<T *>(x->GetData());
   auto y_ptr = reinterpret_cast<T *>(y->GetData());
@@ -174,7 +175,7 @@ uint32_t Im2colCpuKernel::Im2colCompute(const CpuKernelContext &ctx) {
 }
 
 uint32_t Im2colCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(Im2colParamCheck(ctx), "[%s] check params failed.", kIm2col);
+  CUST_KERNEL_HANDLE_ERROR(ctx, Im2colParamCheck(ctx), "[%s] check params failed.", kIm2col);
   auto data_type = ctx.Input(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_OK;
   switch (data_type) {
@@ -209,7 +210,7 @@ uint32_t Im2colCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = Im2colCompute<std::complex<double>>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("Im2col kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Im2col kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       ret = KERNEL_STATUS_PARAM_INVALID;
       break;
   }

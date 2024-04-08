@@ -31,7 +31,7 @@ class LstsqCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t LstsqCompute(const CpuKernelContext &ctx);
+  static uint32_t LstsqCompute(CpuKernelContext &ctx);
 };
 }  // namespace  aicpu
 #endif

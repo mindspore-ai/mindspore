@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "ir/func_graph_cloner.h"
 #include "backend/common/graph_kernel/core/value_depend_op_utils.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore::graphkernel {
 // find outputs of nodes
@@ -131,6 +133,18 @@ bool IsFiniteScalar(void *data, TypeId type_id) {
   return true;
 }
 
+void UpdateBuildInfoOutputKernelObjectType(const AnfNodePtr &node) {
+  if (node->kernel_info() == nullptr) {
+    return;
+  }
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+  if (build_info != nullptr && build_info->GetAllOutputKernelObjectTypes().empty()) {
+    auto abs_type = AnfAlgo::GetAbstractObjectType(node->abstract());
+    auto object_type = kernel::TypeIdToKernelObjectType(abs_type);
+    build_info->SetOutputsKernelObjectType(std::vector<kernel::KernelObjectType>{object_type});
+  }
+}
+
 bool ConvertTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
   auto cnodes = fg->GetOrderedCnodes();
   mindspore::OrderedSet<AnfNodePtr> value_nodes;
@@ -166,6 +180,7 @@ bool ConvertTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr
     auto parameter = fg->add_parameter();
     parameter->set_abstract(vnode->abstract());
     parameter->set_kernel_info(vnode->kernel_info_ptr());
+    UpdateBuildInfoOutputKernelObjectType(parameter);
     (void)mng->Replace(vnode, parameter);
     inputs_ptr->push_back(vnode);
   }

@@ -27,13 +27,13 @@ const char *kFillV2 = "FillV2";
 const int64_t kParallelDataNumCriticalPoint1 = 128 * 1024;
 const int64_t kParallelDataNumCriticalPoint2 = 2 * 1024 * 1024;
 
-#define CALCULATE_DIMS_DTYPE_CASE(DTYPE, TYPE)                        \
-  case (DTYPE): {                                                     \
-    if (CalculateDims<TYPE>(dims_tensor, dims) != KERNEL_STATUS_OK) { \
-      KERNEL_LOG_ERROR("Fill kernel calculate dims failed.");         \
-      return KERNEL_STATUS_PARAM_INVALID;                             \
-    }                                                                 \
-    break;                                                            \
+#define CALCULATE_DIMS_DTYPE_CASE(ctx, DTYPE, TYPE)                        \
+  case (DTYPE): {                                                          \
+    if (CalculateDims<TYPE>(ctx, dims_tensor, dims) != KERNEL_STATUS_OK) { \
+      CUST_KERNEL_LOG_ERROR(ctx, "Fill kernel calculate dims failed.");    \
+      return KERNEL_STATUS_PARAM_INVALID;                                  \
+    }                                                                      \
+    break;                                                                 \
   }
 
 #define FILL_GENERATE_DTYPE_CASE(DTYPE, TYPE)    \
@@ -46,29 +46,29 @@ const int64_t kParallelDataNumCriticalPoint2 = 2 * 1024 * 1024;
 namespace aicpu {
 uint32_t FillCpuKernel::Compute(CpuKernelContext &ctx) {
   // 校验输入个数和输出个数，以及输入和输入tensor的属性是否为空
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Check input and output number failed.");
 
   std::vector<int64_t> dims;
   Tensor *dims_tensor = ctx.Input(0);
   auto dims_dtype = dims_tensor->GetDataType();
   switch (dims_dtype) {
-    CALCULATE_DIMS_DTYPE_CASE(DT_INT32, int32_t)
-    CALCULATE_DIMS_DTYPE_CASE(DT_INT64, int64_t)
+    CALCULATE_DIMS_DTYPE_CASE(ctx, DT_INT32, int32_t)
+    CALCULATE_DIMS_DTYPE_CASE(ctx, DT_INT64, int64_t)
     default:
-      KERNEL_LOG_ERROR("Fill kernel dims data_type [%u] not support, support data_types: DT_INT32, DT_INT64.",
-                       dims_dtype);
+      CUST_KERNEL_LOG_ERROR(ctx, "Fill kernel dims data_type [%u] not support, support data_types: DT_INT32, DT_INT64.",
+                            dims_dtype);
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   Tensor *value_tensor = ctx.Input(1);
   if (value_tensor->NumElements() != 1) {
-    KERNEL_LOG_ERROR("Fill kernel value input is not a scalar.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Fill kernel value input is not a scalar.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   Tensor *output = ctx.Output(0);
   if (output->GetTensorShape()->GetDims() != static_cast<int64_t>(dims.size())) {
-    KERNEL_LOG_ERROR("Fill kernel output shape not matched.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Fill kernel output shape not matched.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (output->GetTensorShape()->GetDimSizes() != dims) {
@@ -78,7 +78,8 @@ uint32_t FillCpuKernel::Compute(CpuKernelContext &ctx) {
   auto input_dtype = value_tensor->GetDataType();
   auto output_dtype = output->GetDataType();
   if (input_dtype != output_dtype) {
-    KERNEL_LOG_ERROR(
+    CUST_KERNEL_LOG_ERROR(
+      ctx,
       "Fill kernel data type not matched, value input dtype [%u], output dtype [%u], support data_types: "
       "DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16, "
       "DT_UINT32, DT_UINT64, DT_UINT8, DT_BOOL.",
@@ -102,7 +103,8 @@ uint32_t FillCpuKernel::Compute(CpuKernelContext &ctx) {
     FILL_GENERATE_DTYPE_CASE(DT_COMPLEX64, std::complex<float>)
     FILL_GENERATE_DTYPE_CASE(DT_COMPLEX128, std::complex<double>)
     default:
-      KERNEL_LOG_ERROR(
+      CUST_KERNEL_LOG_ERROR(
+        ctx,
         "Fill kernel data type [%u] not support, not support data_types: DT_STRING, DT_DUAL_SUB_INT8, "
         "DT_DUAL_SUB_UINT8, DT_QUINT8, DT_QINT8, DT_QINT32, DT_QINT16, DT_QUINT16, DT_RESOURCE, DT_STRING_REF, "
         "DT_DUAL, DT_UNDEFINED.",
@@ -114,7 +116,7 @@ uint32_t FillCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t FillCpuKernel::CalculateDims(const Tensor *dims_tensor, std::vector<int64_t> &dims) {
+uint32_t FillCpuKernel::CalculateDims(CpuKernelContext &ctx, const Tensor *dims_tensor, std::vector<int64_t> &dims) {
   // 获取第一个输入tensor中的元素个数，第一个输入是一个一维的tensor(dims_tensor)
   uint64_t data_num = dims_tensor->GetDataSize() / sizeof(T);
   auto dims_data = reinterpret_cast<const T *>(dims_tensor->GetData());
@@ -122,11 +124,11 @@ uint32_t FillCpuKernel::CalculateDims(const Tensor *dims_tensor, std::vector<int
   for (uint64_t i = 0; i < data_num; i++) {
     auto dim = *(dims_data + i);
     if (dim < 0) {
-      KERNEL_LOG_ERROR("dims input dim [%llu] is negative, value=[%lld].", i, static_cast<int64_t>(dim));
+      CUST_KERNEL_LOG_ERROR(ctx, "dims input dim [%llu] is negative, value=[%lld].", i, static_cast<int64_t>(dim));
       return KERNEL_STATUS_PARAM_INVALID;
     }
     if (dim == 0) {
-      KERNEL_LOG_INFO("dims input dim [%llu] is zero.", i);
+      CUST_KERNEL_LOG_INFO(ctx, "dims input dim [%llu] is zero.", i);
       dims.clear();
       break;
     }

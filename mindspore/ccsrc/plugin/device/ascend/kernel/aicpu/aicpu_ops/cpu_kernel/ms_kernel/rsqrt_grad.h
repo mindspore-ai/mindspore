@@ -36,13 +36,13 @@ class RsqrtGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t RsqrtGradCompute(const CpuKernelContext &ctx);
+  uint32_t RsqrtGradCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t RsqrtGradComputeComplex(const CpuKernelContext &ctx);
+  uint32_t RsqrtGradComputeComplex(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t RsqrtGradComputeFP16(const CpuKernelContext &ctx);
+  uint32_t RsqrtGradComputeFP16(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_MUL_H_

@@ -63,15 +63,19 @@ IndexHandleLevel TensorIndex::PreHandleIndex(const AbstractBasePtr &data, const 
 
 // Parse slice to start, stop, step
 AnfNodePtrList TensorIndex::ParseSlice(const AnfNodePtr &index_node, const abstract::AbstractSlicePtr &abs_slice_ptr,
-                                       std::vector<int64_t> *init_by_one) {
+                                       std::vector<int64_t> *init_by_one, bool is_need_convert_to_scalar) {
   auto slice_info_abs = {abs_slice_ptr->start(), abs_slice_ptr->stop(), abs_slice_ptr->step()};
   const std::vector<string> &slice_str = {kSliceStart, kSliceStop, kSliceStep};
   AnfNodePtrList slice_nodes;
   (void)std::transform(
     slice_info_abs.begin(), slice_info_abs.end(), slice_str.begin(), std::back_inserter(slice_nodes),
-    [this, &index_node](const AbstractBasePtr &slice_abs, const string &str) -> AnfNodePtr {
+    [this, &index_node, &is_need_convert_to_scalar](const AbstractBasePtr &slice_abs, const string &str) -> AnfNodePtr {
       if (IsAnyValue(slice_abs)) {
-        return res_graph_->NewCNode({NewValueNode(prim::kPrimSliceGetItem), index_node, NewValueNode(str)});
+        auto res_node = res_graph_->NewCNode({NewValueNode(prim::kPrimSliceGetItem), index_node, NewValueNode(str)});
+        if (is_need_convert_to_scalar && slice_abs->isa<abstract::AbstractTensor>()) {
+          return res_graph_->NewCNode({NewValueNode(prim::kPrimTensorToScalar), res_node});
+        }
+        return res_node;
       }
       if (slice_abs->isa<abstract::AbstractNone>()) {
         return NewValueNode(kZeroAnfValue);
@@ -161,7 +165,7 @@ static ValueNodePtr MakeRemoveExpandedDimsNode(bool has_true, bool has_sequence,
 void TensorIndexGetitem::GetItemBySlice(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
                                         const AbstractBasePtr &data, const abstract::AbstractSlicePtr &abs_slice_ptr) {
   std::vector<int64_t> init_by_none;
-  auto slice_nodes = ParseSlice(index_node, abs_slice_ptr, &init_by_none);
+  auto slice_nodes = ParseSlice(index_node, abs_slice_ptr, &init_by_none, true);
   auto strided_slice_vnode = MakeStridedSliceNode();
   for (size_t i = 0; i < slice_nodes.size(); i++) {
     auto make_tuple = NewValueNode(prim::kPrimMakeTuple);
@@ -465,7 +469,7 @@ std::tuple<AnfNodePtr, AnfNodePtr, AnfNodePtr, std::vector<int64_t>> TensorIndex
   const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &index_abs,
   const std::vector<int64_t> &tuple_index_types, size_t tuple_index) {
   std::vector<int64_t> init_by_none;
-  auto slice_nodes = ParseSlice(index_node, dyn_cast<abstract::AbstractSlice>(index_abs), &init_by_none);
+  auto slice_nodes = ParseSlice(index_node, dyn_cast<abstract::AbstractSlice>(index_abs), &init_by_none, true);
   return {slice_nodes[kIndex0], slice_nodes[kIndex1], slice_nodes[kIndex2], init_by_none};
 }
 

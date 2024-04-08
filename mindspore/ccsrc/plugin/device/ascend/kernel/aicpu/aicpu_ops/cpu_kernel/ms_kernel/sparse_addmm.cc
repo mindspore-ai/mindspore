@@ -32,38 +32,39 @@ const uint32_t kDimsNum2 = 2;
 const char *kSparseAddmm = "SparseAddmm";
 constexpr int64_t kParallelDataNums = 16;
 
-#define SPARSEADDMM_COMPUTE_CASE(DTYPE, TYPE, CTX)              \
-  case (DTYPE): {                                               \
-    if (indices_type == DT_INT64) {                             \
-      uint32_t result = SparseAddmmCompute<TYPE, int64_t>(CTX); \
-      if (result != KERNEL_STATUS_OK) {                         \
-        KERNEL_LOG_ERROR("SparseAddmm kernel compute failed."); \
-        return result;                                          \
-      }                                                         \
-      break;                                                    \
-    } else {                                                    \
-      uint32_t result = SparseAddmmCompute<TYPE, int32_t>(CTX); \
-      if (result != KERNEL_STATUS_OK) {                         \
-        KERNEL_LOG_ERROR("SparseAddmm kernel compute failed."); \
-        return result;                                          \
-      }                                                         \
-      break;                                                    \
-    }                                                           \
+#define SPARSEADDMM_COMPUTE_CASE(DTYPE, TYPE, CTX)                        \
+  case (DTYPE): {                                                         \
+    if (indices_type == DT_INT64) {                                       \
+      uint32_t result = SparseAddmmCompute<TYPE, int64_t>(CTX);           \
+      if (result != KERNEL_STATUS_OK) {                                   \
+        CUST_KERNEL_LOG_ERROR(ctx, "SparseAddmm kernel compute failed."); \
+        return result;                                                    \
+      }                                                                   \
+      break;                                                              \
+    } else {                                                              \
+      uint32_t result = SparseAddmmCompute<TYPE, int32_t>(CTX);           \
+      if (result != KERNEL_STATUS_OK) {                                   \
+        CUST_KERNEL_LOG_ERROR(ctx, "SparseAddmm kernel compute failed."); \
+        return result;                                                    \
+      }                                                                   \
+      break;                                                              \
+    }                                                                     \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t SparseAddmmCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kSparseAddmm);
-  KERNEL_HANDLE_ERROR(SparseAddmmCheck(ctx), "[%s] check params failed.", kSparseAddmm);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kSparseAddmm);
+  CUST_KERNEL_HANDLE_ERROR(ctx, SparseAddmmCheck(ctx), "[%s] check params failed.", kSparseAddmm);
   DataType data_type = ctx.Input(1)->GetDataType();
   DataType data_type1 = ctx.Input(3)->GetDataType();
   DataType indices_type = ctx.Input(0)->GetDataType();
   if (data_type != data_type1) {
-    KERNEL_LOG_ERROR(
-      "sparse data type is no equal dense data type, sparsetype [%d], "
-      "densetype [%d].",
-      data_type, data_type1);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "sparse data type is no equal dense data type, sparsetype [%d], "
+                          "densetype [%d].",
+                          data_type, data_type1);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   switch (data_type) {
@@ -81,13 +82,13 @@ uint32_t SparseAddmmCpuKernel::Compute(CpuKernelContext &ctx) {
     SPARSEADDMM_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     SPARSEADDMM_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("SparseAddmm kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseAddmm kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(const CpuKernelContext &ctx) {
+uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(CpuKernelContext &ctx) {
   Tensor *indices_tensor = ctx.Input(0);
   Tensor *values_tensor = ctx.Input(1);
   Tensor *shape_tensor = ctx.Input(2);
@@ -95,18 +96,18 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(const CpuKernelContext &ctx) {
   Tensor *beta_tensor = ctx.Input(6);
 
   if (alpha_tensor->GetTensorShape()->NumElements() != 1) {
-    KERNEL_LOG_ERROR(
-      "alpha_tensor should be a number,but got NumElements "
-      "[%d].",
-      alpha_tensor->GetTensorShape()->NumElements());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "alpha_tensor should be a number,but got NumElements "
+                          "[%d].",
+                          alpha_tensor->GetTensorShape()->NumElements());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (beta_tensor->GetTensorShape()->NumElements() != 1) {
-    KERNEL_LOG_ERROR(
-      "beta_tensor should be a number,but got NumElements "
-      "[%d].",
-      beta_tensor->GetTensorShape()->NumElements());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "beta_tensor should be a number,but got NumElements "
+                          "[%d].",
+                          beta_tensor->GetTensorShape()->NumElements());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -116,10 +117,10 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(const CpuKernelContext &ctx) {
   auto indices_shape = indices_tensor->GetTensorShape();
   // sparse_indices
   if (static_cast<uint32_t>(indices_shape->GetDims()) > kDimsNum2) {
-    KERNEL_LOG_ERROR(
-      "Sparse_indices should be a scalar, vector, or matrix, got dim "
-      "size [%d].",
-      indices_shape->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Sparse_indices should be a scalar, vector, or matrix, got dim "
+                          "size [%d].",
+                          indices_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   const int64_t elems_num = indices_shape->GetDims() > 0 ? indices_shape->GetDimSize(0) : 1;
@@ -127,12 +128,12 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(const CpuKernelContext &ctx) {
 
   // output_shape
   if (sparse_shape->GetDims() != 1) {
-    KERNEL_LOG_ERROR("Sparse_shape should be a vector, got dim size [%d].", sparse_shape->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx, "Sparse_shape should be a vector, got dim size [%d].", sparse_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (shape_tensor->NumElements() != dims_num) {
-    KERNEL_LOG_ERROR("Sparse_shape has incorrect number of elements [%lld], should be [%lld]",
-                     shape_tensor->NumElements(), dims_num);
+    CUST_KERNEL_LOG_ERROR(ctx, "Sparse_shape has incorrect number of elements [%lld], should be [%lld]",
+                          shape_tensor->NumElements(), dims_num);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -142,22 +143,23 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(const CpuKernelContext &ctx) {
   bool validIndiceType = ((IndiceType != DT_INT32) && (IndiceType != DT_INT64));
   bool validShapeType = ((ShapeType != DT_INT32) && (ShapeType != DT_INT64));
   if (validShapeType || validIndiceType) {
-    KERNEL_LOG_ERROR(
-      "Valid indice or Sparse shape data type failed, indiceType [%d], "
-      "shapeType [%d].",
-      IndiceType, ShapeType);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Valid indice or Sparse shape data type failed, indiceType [%d], "
+                          "shapeType [%d].",
+                          IndiceType, ShapeType);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   // sparse_values
   int32_t values_dims_size = values_shape->GetDims();
   if ((values_dims_size != 0) && (values_dims_size != 1)) {
-    KERNEL_LOG_ERROR("Values_shape should be a scalar or a vector, got dim size [%d].", values_shape->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx, "Values_shape should be a scalar or a vector, got dim size [%d].",
+                          values_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if ((values_dims_size == 1) && (values_tensor->NumElements() != elems_num)) {
-    KERNEL_LOG_ERROR("Values_shape has incorrect number of elements [%lld], should be [%lld]",
-                     values_tensor->NumElements(), elems_num);
+    CUST_KERNEL_LOG_ERROR(ctx, "Values_shape has incorrect number of elements [%lld], should be [%lld]",
+                          values_tensor->NumElements(), elems_num);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -165,8 +167,8 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(const CpuKernelContext &ctx) {
 
 template <typename T>
 uint32_t SparseAddmmCpuKernel::ComputeRowAndCol1(
-  const CpuKernelContext &ctx, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> *sparse,
-  int64_t row_x1, int64_t col_x1) {
+  CpuKernelContext &ctx, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> *sparse, int64_t row_x1,
+  int64_t col_x1) {
   auto *indices_tensor = ctx.Input(0);
   auto *values_tensor = ctx.Input(1);
 
@@ -210,7 +212,7 @@ uint32_t SparseAddmmCpuKernel::ComputeRowAndCol1(
 
 template <typename T>
 uint32_t SparseAddmmCpuKernel::ComputeRowAndCol2(
-  const CpuKernelContext &ctx, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> *dense, int64_t row_x2,
+  CpuKernelContext &ctx, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> *dense, int64_t row_x2,
   int64_t col_x2) {
   auto *dense_tensor = ctx.Input(3);
   auto dense_data = reinterpret_cast<T *>(dense_tensor->GetData());
@@ -237,7 +239,7 @@ uint32_t SparseAddmmCpuKernel::ComputeRowAndCol2(
 
 template <typename T>
 uint32_t SparseAddmmCpuKernel::ComputeRowAndCol3(
-  const CpuKernelContext &ctx, const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &sparse,
+  CpuKernelContext &ctx, const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &sparse,
   const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &dense, int64_t row_x1, int64_t col_x2) {
   auto *x3_dense_tensor = ctx.Input(4);
   auto *alpha_tensor = ctx.Input(5);
@@ -276,7 +278,7 @@ uint32_t SparseAddmmCpuKernel::ComputeRowAndCol3(
 }
 
 template <typename T, typename T1>
-uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(const CpuKernelContext &ctx) {
+uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(CpuKernelContext &ctx) {
   auto *shape_tensor = ctx.Input(2);
   auto *dense_tensor = ctx.Input(3);
   auto *x3_dense_tensor = ctx.Input(4);
@@ -298,7 +300,7 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(const CpuKernelContext &ctx) {
   sparse.setZero(row_x1, col_x1);
   uint32_t result = ComputeRowAndCol1(ctx, &sparse, row_x1, col_x1);
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("SparseAddmm compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseAddmm compute failed.");
     return result;
   }
 
@@ -311,29 +313,29 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(const CpuKernelContext &ctx) {
   const int64_t col_x3 = shape_x3[1];
 
   if (row_x3 != row_x1) {
-    KERNEL_LOG_ERROR("x1's row is no equal x3's row, cannot do add!");
+    CUST_KERNEL_LOG_ERROR(ctx, "x1's row is no equal x3's row, cannot do add!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (col_x3 != col_x2) {
-    KERNEL_LOG_ERROR("x2's col is no equal x3's col, cannot do add!");
+    CUST_KERNEL_LOG_ERROR(ctx, "x2's col is no equal x3's col, cannot do add!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dense(row_x2, col_x2);
   result = ComputeRowAndCol2(ctx, &dense, row_x2, col_x2);
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("SparseAddmm compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseAddmm compute failed.");
     return result;
   }
 
   if (col_x1 != row_x2) {
-    KERNEL_LOG_ERROR("x1's col is no equal x2's row, cannot do mat mul!");
+    CUST_KERNEL_LOG_ERROR(ctx, "x1's col is no equal x2's row, cannot do mat mul!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   result = ComputeRowAndCol3(ctx, sparse, dense, row_x1, col_x2);
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("SparseAddmm compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseAddmm compute failed.");
     return result;
   }
 

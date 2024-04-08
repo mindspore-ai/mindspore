@@ -31,16 +31,16 @@ class SetSizeCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t SetSizeCompute(const CpuKernelContext &ctx, SparseTensor &st);
-  uint32_t SetSizeCompute_string(const CpuKernelContext &ctx, SparseTensor &st);
-  uint32_t SparseTensorFromContext(const CpuKernelContext &ctx, const bool validate_indices, SparseTensor &st);
+  uint32_t SetSizeCompute(CpuKernelContext &ctx, SparseTensor &st);
+  uint32_t SetSizeCompute_string(CpuKernelContext &ctx, SparseTensor &st);
+  uint32_t SparseTensorFromContext(CpuKernelContext &ctx, const bool validate_indices, SparseTensor &st);
   template <typename T>
-  uint32_t PopulateFromSparseGroup(const CpuKernelContext &ctx, const Group &group,
+  uint32_t PopulateFromSparseGroup(CpuKernelContext &ctx, const Group &group,
                                    const std::vector<int64_t> &sparse_tensor_shape, std::unordered_set<T> *result);
   template <typename T>
-  uint32_t CheckGroup(const CpuKernelContext &ctx, const Group &group, const std::vector<int64_t> &sparse_tensor_shape);
+  uint32_t CheckGroup(CpuKernelContext &ctx, const Group &group, const std::vector<int64_t> &sparse_tensor_shape);
   bool validate_indices_ = true;
-  uint32_t IndicesValid(const CpuKernelContext &ctx, SparseTensor &st);
+  uint32_t IndicesValid(CpuKernelContext &ctx, SparseTensor &st);
 
   int32_t dims_;
   std::unordered_set<std::string> all_indices_;

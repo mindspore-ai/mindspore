@@ -20,7 +20,6 @@
 #include <complex>
 
 #include "inc/ms_cpu_kernel.h"
-#include "utils/bcast.h"
 
 namespace aicpu {
 class AcoshGradCpuKernel : public CpuKernel {
@@ -32,16 +31,16 @@ class AcoshGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t AcoshGradParamCheck(const CpuKernelContext &ctx);
+  static uint32_t AcoshGradParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t AcoshGradCompute(const CpuKernelContext &ctx);
+  static uint32_t AcoshGradCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t AcoshGradComputeComplex(const CpuKernelContext &ctx);
+  static uint32_t AcoshGradComputeComplex(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t AcoshGradComputeFP16(const CpuKernelContext &ctx);
+  static uint32_t AcoshGradComputeFP16(CpuKernelContext &ctx);
 
   template <typename T>
   static void SpecialCompute(int64_t start, int64_t end, const T *input1, const T *input2, T *output);

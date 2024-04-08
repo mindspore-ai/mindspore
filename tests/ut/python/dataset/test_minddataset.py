@@ -2945,6 +2945,53 @@ def test_minddataset_with_encode_and_hash_check():
     minddataset_with_encode_and_hash_check("89012345abcdefgh", "SM4-CBC", "sha512")
 
 
+def create_empty_file(file_name):
+    """Create empty file"""
+    if os.path.exists("{}".format(file_name)):
+        os.remove("{}".format(file_name))
+
+    f = open(file_name, 'w')
+    f.close()
+    assert os.path.exists(file_name)
+
+
+def test_minddataset_with_empty_file():
+    """
+    Feature: MindDataset
+    Description: Read empty file
+    Expectation: With exception
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    # single file
+    create_empty_file(file_name)
+    create_empty_file(file_name + ".db")
+
+    with pytest.raises(RuntimeError) as err:
+        reader = ds.MindDataset(file_name)
+    assert "Invalid file, the size of mindrecord file: " in str(err.value)
+
+    os.remove(file_name)
+    os.remove(file_name + ".db")
+
+    # multi files
+    file_name1 = file_name + "1"
+    create_empty_file(file_name1)
+    create_empty_file(file_name1 + ".db")
+    file_name2 = file_name + "2"
+    create_empty_file(file_name2)
+    create_empty_file(file_name2 + ".db")
+
+    with pytest.raises(RuntimeError) as err:
+        reader = ds.MindDataset([file_name1, file_name2])
+    assert "Invalid file, the size of mindrecord file: " in str(err.value)
+
+    os.remove(file_name1)
+    os.remove(file_name1 + ".db")
+    os.remove(file_name2)
+    os.remove(file_name2 + ".db")
+
+
 if __name__ == '__main__':
     test_nlp_compress_data(add_and_remove_nlp_compress_file)
     test_nlp_compress_data_old_version(add_and_remove_nlp_compress_file)
@@ -2983,3 +3030,4 @@ if __name__ == '__main__':
     test_field_is_null_numpy()
     test_for_loop_dataset_iterator(add_and_remove_nlp_compress_file)
     test_minddataset_with_encode_and_hash_check()
+    test_minddataset_with_empty_file()

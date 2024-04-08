@@ -313,37 +313,6 @@ IMPLEMT_INFERFUNC(ScaleAndTranslateGrad, ScaleAndTranslateGradInfer) {
 INFER_FUNC_REG(ScaleAndTranslateGrad, ScaleAndTranslateGradInfer);
 // ----------------ScaleAndTranslateGrad END-------------------
 
-// ----------------ResizeBicubicGrad-------------------
-IMPLEMT_INFERFUNC(ResizeBicubicGrad, ResizeBicubicGradInfer) {
-  TensorDesc desc = op.GetOutputDescByName("y");
-  Format input_format = static_cast<ge::Format>(ge::GetPrimaryFormat(op.GetInputDesc(0).GetFormat()));
-  vector<int64_t> grads_shape = op.GetInputDesc(0).GetShape().GetDims();
-  vector<int64_t> org_images_shape = op.GetInputDesc(1).GetShape().GetDims();
-  vector<int64_t> y_shape;
-  if (input_format == FORMAT_NHWC && grads_shape.size() > 3 && org_images_shape.size() > 2) {
-    y_shape.push_back(grads_shape[0]);
-    y_shape.push_back(org_images_shape[1]);
-    y_shape.push_back(org_images_shape[2]);
-    y_shape.push_back(grads_shape[3]);
-  } else if (input_format == FORMAT_NCHW && grads_shape.size() > 1 && org_images_shape.size() > 3) {
-    y_shape.push_back(grads_shape[0]);
-    y_shape.push_back(grads_shape[1]);
-    y_shape.push_back(org_images_shape[2]);
-    y_shape.push_back(org_images_shape[3]);
-  } else {
-    std::string str_input_format = GeFormatToString(input_format);
-    std::string err_msg = ConcatString("only supporting NCHW and NHWC, current format is [", str_input_format, "]");
-    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
-  }
-  desc.SetShape(ge::Shape(y_shape));
-  auto type = op.GetInputDesc(1).GetDataType();
-  desc.SetDataType(type);
-  return op.UpdateOutputDesc("y", desc);
-}
-
-INFER_FUNC_REG(ResizeBicubicGrad, ResizeBicubicGradInfer);
-// ----------------ResizeBicubicGrad END-------------------
-
 graphStatus CropAndResizeInputRankCheck(const ge::Operator &op, const TensorDesc &x_desc, Shape &x_shape,
                                         const TensorDesc &boxes_desc, Shape &boxes_shape,
                                         const TensorDesc &box_index_desc, Shape &box_index_shape,

@@ -16,10 +16,10 @@
 #include "solve_triangular_grad.h"
 #include <cstdint>
 #include <string.h>
-#include "Eigen/Dense"
 #include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+#include "solve_triangular.h"
 
 namespace {
 const char *kSolveTriangularGrad = "SolveTriangularGrad";
@@ -42,8 +42,8 @@ constexpr int64_t kTransC = 2;
 namespace aicpu {
 
 uint32_t SolveTriangularGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kSolveTriangularGradInputsNum, kSolveTriangularGradOutputsNum),
-                      "[%s] check input and output failed.", kSolveTriangularGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kSolveTriangularGradInputsNum, kSolveTriangularGradOutputsNum),
+                           "[%s] check input and output failed.", kSolveTriangularGrad);
   auto a_type = ctx.Input(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_OK;
   switch (a_type) {
@@ -75,30 +75,11 @@ uint32_t SolveTriangularGradCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = SolveTriangularGradCompute<std::complex<double>, std::complex<double>, std::complex<double>>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(a_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(a_type).c_str());
       ret = KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;
-}
-
-template <typename Derived_a, typename Derived_b, typename T>
-inline void solve(const Eigen::MatrixBase<Derived_a> &a, const Eigen::MatrixBase<Derived_b> &b, T *output_addr, int m,
-                  int n, bool lower, bool unit_diagonal) {
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output(output_addr, m, n);
-  if (unit_diagonal) {
-    if (lower) {
-      output.noalias() = a.template triangularView<Eigen::UnitLower>().solve(b);
-    } else {
-      output.noalias() = a.template triangularView<Eigen::UnitUpper>().solve(b);
-    }
-  } else {
-    if (lower) {
-      output.noalias() = a.template triangularView<Eigen::Lower>().solve(b);
-    } else {
-      output.noalias() = a.template triangularView<Eigen::Upper>().solve(b);
-    }
-  }
 }
 
 template <typename T>
@@ -154,14 +135,14 @@ uint32_t SolveTriangularGradCpuKernel::SolveTriangularGradCompute(CpuKernelConte
   size_t db_mat_size = x_mat_size;
 
   T_grad *casted_a_addr = static_cast<T_grad *>(malloc(sizeof(T_grad) * a_mat_size));
-  KERNEL_CHECK_NULLPTR(casted_a_addr, KERNEL_STATUS_PARAM_INVALID,
-                       "[Solve_triangular] Malloc memory [casted_a_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, casted_a_addr, KERNEL_STATUS_PARAM_INVALID,
+                            "[Solve_triangular] Malloc memory [casted_a_array] failed!")
   T_grad *casted_x_addr = static_cast<T_grad *>(malloc(sizeof(T_grad) * x_mat_size));
-  KERNEL_CHECK_NULLPTR(casted_x_addr, KERNEL_STATUS_PARAM_INVALID,
-                       "[Solve_triangular] Malloc memory [casted_x_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, casted_x_addr, KERNEL_STATUS_PARAM_INVALID,
+                            "[Solve_triangular] Malloc memory [casted_x_array] failed!")
   T_grad *casted_dx_addr = static_cast<T_grad *>(malloc(sizeof(T_grad) * dx_mat_size));
-  KERNEL_CHECK_NULLPTR(casted_dx_addr, KERNEL_STATUS_PARAM_INVALID,
-                       "[Solve_triangular] Malloc memory [casted_dx_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, casted_dx_addr, KERNEL_STATUS_PARAM_INVALID,
+                            "[Solve_triangular] Malloc memory [casted_dx_array] failed!")
 
   for (size_t i = 0; i < batch; ++i) {
     T_in *a_batch_addr = input_a_addr + i * a_mat_size;
@@ -183,13 +164,13 @@ uint32_t SolveTriangularGradCpuKernel::SolveTriangularGradCompute(CpuKernelConte
     Eigen::Map<Eigen::Matrix<T_grad, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> dx(casted_dx_addr, m, n);
     if (trans == kTransT) {
       Eigen::Map<Eigen::Matrix<T_grad, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> a(casted_a_addr, m, m);
-      solve(a, dx, db_batch_addr, m, n, lower, unit_diagonal);
+      SolveTriangularCpuKernel::solve(a, dx, db_batch_addr, m, n, lower, unit_diagonal);
     } else if (trans == kTransN) {
       Eigen::Map<Eigen::Matrix<T_grad, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>> a(casted_a_addr, m, m);
-      solve(a, dx, db_batch_addr, m, n, !lower, unit_diagonal);
+      SolveTriangularCpuKernel::solve(a, dx, db_batch_addr, m, n, !lower, unit_diagonal);
     } else {
       Eigen::Map<Eigen::Matrix<T_grad, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> a(casted_a_addr, m, m);
-      solve(a.conjugate(), dx, db_batch_addr, m, n, lower, unit_diagonal);
+      SolveTriangularCpuKernel::solve(a.conjugate(), dx, db_batch_addr, m, n, lower, unit_diagonal);
     }
     Eigen::Map<Eigen::Matrix<T_grad, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> x(casted_x_addr, m, n);
     Eigen::Map<Eigen::Matrix<T_grad, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> db(db_batch_addr, m, n);

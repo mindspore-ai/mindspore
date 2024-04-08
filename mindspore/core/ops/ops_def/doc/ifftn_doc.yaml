@@ -48,7 +48,7 @@ ifftn:
           >>> import mindspore
           >>> from mindspore import Tensor, ops
           >>> input = ops.ones((2, 2, 2))
-          >>> out = ops.ifftn(input, s=(2, 2, 2), axes=(0, 1, 2), norm="backward")
+          >>> ops.ifftn(input, s=(2, 2, 2), dim=(0, 1, 2), norm="backward")
           Tensor(shape=[2, 2, 2], dtype=Complex64, value=
           [[[1+0j, 0+0j],
            [0+0j, 0+0j]],

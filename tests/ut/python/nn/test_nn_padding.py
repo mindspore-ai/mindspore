@@ -95,7 +95,7 @@ def test_constant_pad_1d_infer():
     print(output.shape)
 
     print("=================case 3====================")
-    padding = (-1, 0)
+    padding = (1, 0)
     value = 0.5
     net = ConstantPad1dNet(padding, value)
     output = net(Tensor(x))
@@ -125,7 +125,7 @@ def test_constant_pad_1d_train():
     print(output)
 
     print("=================case 3====================")
-    padding = (-1, 0)
+    padding = (1, 0)
     value = 0.5
     grad = Grad(ConstantPad1dNet(padding, value))
     output = grad(Tensor(x))
@@ -156,7 +156,7 @@ def test_constant_pad_2d_infer():
     print(output.shape)
 
     print("=================case 3====================")
-    padding = (-1, 1, 0, 1)
+    padding = (1, 1, 0, 1)
     value = 0.5
     net = ConstantPad2dNet(padding, value)
     output = net(Tensor(x))
@@ -186,7 +186,7 @@ def test_constant_pad_2d_train():
     print(output)
 
     print("=================case 3====================")
-    padding = (-1, 1, 0, 1)
+    padding = (1, 1, 0, 1)
     value = 0.5
     grad = Grad(ConstantPad2dNet(padding, value))
     output = grad(Tensor(x))
@@ -217,7 +217,7 @@ def test_constant_pad_3d_infer():
     print(output.shape)
 
     print("=================case 3====================")
-    padding = (-1, 1, 0, 1, 1, 0)
+    padding = (1, 1, 0, 1, 1, 0)
     value = 0.5
     net = ConstantPad3dNet(padding, value)
     output = net(Tensor(x))
@@ -247,7 +247,7 @@ def test_constant_pad_3d_train():
     print(output)
 
     print("=================case 3====================")
-    padding = (-1, 1, 0, 1, 1, 0)
+    padding = (1, 1, 0, 1, 1, 0)
     value = 0.5
     grad = Grad(ConstantPad3dNet(padding, value))
     output = grad(Tensor(x))
@@ -276,7 +276,7 @@ def test_zero_pad_2d_infer():
     print(output.shape)
 
     print("=================case 3====================")
-    padding = (-1, 1, 0, 1)
+    padding = (1, 1, 0, 1)
     net = ZeroPad2dNet(padding)
     output = net(Tensor(x))
     print(output)
@@ -304,7 +304,7 @@ def test_zero_pad_2d_train():
     print(output)
 
     print("=================case 3====================")
-    padding = (-1, 1, 0, 1)
+    padding = (1, 1, 0, 1)
     grad = Grad(ZeroPad2dNet(padding))
     output = grad(Tensor(x))
     print(output)

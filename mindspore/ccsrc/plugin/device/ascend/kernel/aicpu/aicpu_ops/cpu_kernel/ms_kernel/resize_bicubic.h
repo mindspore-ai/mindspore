@@ -24,7 +24,7 @@
 namespace aicpu {
 
 template <typename T1, typename T2>
-uint32_t DoCompute(const CpuKernelContext &ctx);
+uint32_t DoCompute(CpuKernelContext &ctx);
 class ResizeBicubicCpuKernel : public CpuKernel {
  public:
   ~ResizeBicubicCpuKernel() = default;

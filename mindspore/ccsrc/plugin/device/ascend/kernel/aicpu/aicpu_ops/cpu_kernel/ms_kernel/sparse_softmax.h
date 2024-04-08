@@ -30,10 +30,10 @@ class SparseSoftmaxCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t SparseSoftmaxCheck(const CpuKernelContext &ctx);
+  uint32_t SparseSoftmaxCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SparseSoftmaxCompute(const CpuKernelContext &ctx);
+  uint32_t SparseSoftmaxCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

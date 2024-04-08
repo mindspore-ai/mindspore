@@ -67,42 +67,40 @@ int64_t CheckInputDimPart2(int64_t dim, int64_t goldValue, string dimStr, string
 std::vector<int64_t> CheckInputsShapePart2(const string &op_name, const std::vector<AbstractBasePtr> &input_args) {
   int64_t m = abstract::Shape::kShapeDimAny;
   int64_t n = abstract::Shape::kShapeDimAny;
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (!IsDynamicRank(grad_shape)) {
     size_t expect_rank = 2;
     CheckAndConvertUtils::CheckInteger("rank of grad", grad_shape.size(), kEqual, expect_rank, op_name);
     m = grad_shape[grad_shape.size() - 1];
     n = grad_shape[grad_shape.size() - 2];
   }
-  auto sum_grad_r_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto sum_grad_r_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (!IsDynamicRank(sum_grad_r_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of sum_grad_r", sum_grad_r_shape.size(), kEqual, 1, op_name);
     n = CheckInputDimPart2(sum_grad_r_shape[sum_grad_r_shape.size() - 1], n, "last dim of sum_grad_r", op_name);
   }
-  auto sum_grad_c_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto sum_grad_c_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (!IsDynamicRank(sum_grad_c_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of sum_grad_c", sum_grad_c_shape.size(), kEqual, 1, op_name);
     m = CheckInputDimPart2(sum_grad_c_shape[sum_grad_c_shape.size() - 1], m, "last dim of sum_grad_c", op_name);
   }
   auto sum_grad_rc_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   if (!IsDynamicRank(sum_grad_rc_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of sum_grad_rc", sum_grad_rc_shape.size(), kEqual, 1, op_name);
   }
-  auto r_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto r_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
   if (!IsDynamicRank(r_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of r", r_shape.size(), kEqual, 1, op_name);
     n = CheckInputDimPart2(r_shape[r_shape.size() - 1], n, "last dim of r", op_name);
   }
-  auto c_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+  auto c_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
   if (!IsDynamicRank(c_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of c", c_shape.size(), kEqual, 1, op_name);
     m = CheckInputDimPart2(c_shape[c_shape.size() - 1], m, "last dim of c", op_name);
   }
   if (input_args[kInputIndex7]->GetType()->type_id() != kMetaTypeNone) {
-    auto sum_r_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
+    auto sum_r_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->GetShape())[kShape];
     if (!IsDynamicRank(c_shape)) {
       CheckAndConvertUtils::CheckInteger("rank of sum_r", sum_r_shape.size(), kEqual, 1, op_name);
     }

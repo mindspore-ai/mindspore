@@ -29,14 +29,14 @@ const int64_t kParallelDataNumMid = 4 * 1024;
 const int64_t kParallelDataNumSameShape = 16 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 32 * 1024;
 
-#define FLOORDIV_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                          \
-    uint32_t result = FloorDivCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                      \
-      KERNEL_LOG_ERROR("FloorDiv kernel compute failed."); \
-      return result;                                       \
-    }                                                      \
-    break;                                                 \
+#define FLOORDIV_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                    \
+    uint32_t result = FloorDivCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                \
+      CUST_KERNEL_LOG_ERROR(ctx, "FloorDiv kernel compute failed."); \
+      return result;                                                 \
+    }                                                                \
+    break;                                                           \
   }
 
 template <typename T>
@@ -63,8 +63,9 @@ bool CheckZero(const Eigen::half &data) {
 namespace aicpu {
 uint32_t FloorDivCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kFloorDiv);
-  KERNEL_HANDLE_ERROR(FloorDivParamCheck(ctx), "[%s] check params failed.", kFloorDiv);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kFloorDiv);
+  CUST_KERNEL_HANDLE_ERROR(ctx, FloorDivParamCheck(ctx), "[%s] check params failed.", kFloorDiv);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     FLOORDIV_COMPUTE_CASE(DT_INT8, int8_t, ctx)
@@ -77,27 +78,27 @@ uint32_t FloorDivCpuKernel::Compute(CpuKernelContext &ctx) {
     FLOORDIV_COMPUTE_CASE(DT_FLOAT, float, ctx)
     FLOORDIV_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("FloorDiv kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "FloorDiv kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t FloorDivCpuKernel::FloorDivParamCheck(const CpuKernelContext &ctx) const {
+uint32_t FloorDivCpuKernel::FloorDivParamCheck(CpuKernelContext &ctx) const {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
-  KERNEL_CHECK_NULLPTR(input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
-  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
 
   return KERNEL_STATUS_OK;
 }
@@ -157,13 +158,13 @@ int64_t DivCal(const int64_t &x_i, const int64_t &y_i) {
 // 3. input2 is a 1D tensor with only one element or input2 is scalar
 // 4. the shapes of input1 and input2 are different
 template <typename T>
-uint32_t FloorDivCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *input1,
-                                           const T *input2, T *output) {
+uint32_t FloorDivCpuKernel::SpecialCompute(CpuKernelContext &ctx, BcastShapeType type, int64_t start, int64_t end,
+                                           const T *input1, const T *input2, T *output) {
   switch (type) {
     case BcastShapeType::SAME_SHAPE:
       for (int64_t i = start; i < end; ++i) {
         if (CheckZero(*(input2 + i))) {
-          KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+          CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         }
         *(output + i) = DivCal<T>(*(input1 + i), *(input2 + i));
@@ -172,7 +173,7 @@ uint32_t FloorDivCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, i
     case BcastShapeType::X_ONE_ELEMENT:
       for (int64_t i = start; i < end; ++i) {
         if (CheckZero(*(input2 + i))) {
-          KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+          CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         }
         *(output + i) = DivCal<T>(*input1, *(input2 + i));
@@ -181,21 +182,21 @@ uint32_t FloorDivCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, i
     case BcastShapeType::Y_ONE_ELEMENT:
       for (int64_t i = start; i < end; ++i) {
         if (CheckZero(*input2)) {
-          KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+          CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         }
         *(output + i) = DivCal<T>(*(input1 + i), *input2);
       }
       break;
     default:
-      KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+      CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
       break;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t FloorDivCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
+uint32_t FloorDivCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -219,22 +220,23 @@ uint32_t FloorDivCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
     }
     uint32_t status = KERNEL_STATUS_OK;
     auto sharder_floor_div = [&](int64_t start, int64_t end) {
-      uint32_t status_sharder = SpecialCompute<T>(type, start, end, in0, in1, out);
+      uint32_t status_sharder = SpecialCompute<T>(ctx, type, start, end, in0, in1, out);
       if (status_sharder != KERNEL_STATUS_OK) {
         status = status_sharder;
       }
     };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_floor_div),
-                        "FloorDiv Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_floor_div),
+                             "FloorDiv Compute failed.");
     return status;
   }
 
-  return SpecialCompute<T>(type, 0, data_num, in0, in1, out);
+  return SpecialCompute<T>(ctx, type, 0, data_num, in0, in1, out);
 }
 
 template <typename T>
-uint32_t FloorDivCpuKernel::BcastParallelCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
+uint32_t FloorDivCpuKernel::BcastParallelCompute(CpuKernelContext &ctx, const Bcast &bcast) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -254,7 +256,7 @@ uint32_t FloorDivCpuKernel::BcastParallelCompute(const CpuKernelContext &ctx, co
   auto sharder_floor_div = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; ++i) {
       if (CheckZero(*(in1 + bcast.GetBroadcastYIndex(i)))) {
-        KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+        CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
         status = KERNEL_STATUS_INNER_ERROR;
         break;
       }
@@ -262,13 +264,13 @@ uint32_t FloorDivCpuKernel::BcastParallelCompute(const CpuKernelContext &ctx, co
     }
   };
 
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_floor_div),
-                      "FloorDiv Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_floor_div),
+                           "FloorDiv Compute failed.");
   return status;
 }
 
 template <typename T>
-uint32_t FloorDivCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
+uint32_t FloorDivCpuKernel::BcastCompute(CpuKernelContext &ctx, const Bcast &bcast) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -279,7 +281,7 @@ uint32_t FloorDivCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcas
   } else {
     for (int64_t i = 0; i < data_num; ++i) {
       if (CheckZero(*(in1 + bcast.GetBroadcastYIndex(i)))) {
-        KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+        CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
         return KERNEL_STATUS_INNER_ERROR;
       }
       *(out + i) = DivCal<T>(*(in0 + bcast.GetBroadcastXIndex(i)), *(in1 + bcast.GetBroadcastYIndex(i)));
@@ -289,7 +291,7 @@ uint32_t FloorDivCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcas
 }
 
 template <typename T>
-uint32_t FloorDivCpuKernel::FloorDivCompute(const CpuKernelContext &ctx) {
+uint32_t FloorDivCpuKernel::FloorDivCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
@@ -302,9 +304,9 @@ uint32_t FloorDivCpuKernel::FloorDivCompute(const CpuKernelContext &ctx) {
   if (isNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
 

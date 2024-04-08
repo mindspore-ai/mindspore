@@ -192,7 +192,5 @@ def _mstype_in_tuple(x, y):
 
 @in_.register_default()
 def default_in(x, y):
-    """
-    Default function for in.
-   """
+    """Default function for in."""
     return x in y

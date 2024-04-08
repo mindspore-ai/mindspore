@@ -29,17 +29,17 @@ uint32_t UnravelIndexCpuKernel::Compute(CpuKernelContext &ctx) {
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     case DT_INT32: {
-      KERNEL_HANDLE_ERROR(DataAndTypeCheck<int32_t>(ctx), " data or type check failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, DataAndTypeCheck<int32_t>(ctx), " data or type check failed.");
       UnravelCompute<int32_t>(ctx);
       break;
     }
     case DT_INT64: {
-      KERNEL_HANDLE_ERROR(DataAndTypeCheck<int64_t>(ctx), " data or type check failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, DataAndTypeCheck<int64_t>(ctx), " data or type check failed.");
       UnravelCompute<int64_t>(ctx);
       break;
     }
     default: {
-      KERNEL_LOG_ERROR("UnravelIndex kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "UnravelIndex kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -49,7 +49,8 @@ uint32_t UnravelIndexCpuKernel::Compute(CpuKernelContext &ctx) {
 
 template <typename T>
 uint32_t UnravelIndexCpuKernel::DataAndTypeCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Unravel_Index check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Unravel_Index check input and output number failed.");
   Tensor *indices = ctx.Input(0);
   Tensor *dims = ctx.Input(1);
   auto dims_number = ctx.Input(1)->NumElements();
@@ -59,19 +60,21 @@ uint32_t UnravelIndexCpuKernel::DataAndTypeCheck(CpuKernelContext &ctx) {
   auto indices_type = indices->GetDataType();
   auto dims_type = dims->GetDataType();
   T dims_multi = 1;
-  KERNEL_CHECK_FALSE((indices_type == dims_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(indices_type).c_str(), DTypeStr(dims_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (indices_type == dims_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(indices_type).c_str(), DTypeStr(dims_type).c_str())
 
   for (auto i = 0; i < dims_number; i++) {
-    KERNEL_CHECK_FALSE((*(dims_data + i) > 0), KERNEL_STATUS_PARAM_INVALID, "Dimension number must be more than 0.")
+    CUST_KERNEL_CHECK_FALSE(ctx, (*(dims_data + i) > 0), KERNEL_STATUS_PARAM_INVALID,
+                            "Dimension number must be more than 0.")
     dims_multi = dims_multi * (*(dims_data + i));
   }
   for (auto i = 0; i < indices_number; i++) {
-    KERNEL_CHECK_FALSE((*(indices_data + i) >= 0), KERNEL_STATUS_PARAM_INVALID, "Indice number must be more than 0.")
-    KERNEL_CHECK_FALSE((*(indices_data + i) < dims_multi), KERNEL_STATUS_PARAM_INVALID,
-                       "Index is out of bound as with dims");
+    CUST_KERNEL_CHECK_FALSE(ctx, (*(indices_data + i) >= 0), KERNEL_STATUS_PARAM_INVALID,
+                            "Indice number must be more than 0.")
+    CUST_KERNEL_CHECK_FALSE(ctx, (*(indices_data + i) < dims_multi), KERNEL_STATUS_PARAM_INVALID,
+                            "Index is out of bound as with dims");
   }
 
   return KERNEL_STATUS_OK;
@@ -102,8 +105,9 @@ uint32_t UnravelIndexCpuKernel ::UnravelCompute(CpuKernelContext &ctx) {
         }
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_unravel_index),
-                        "Unravel Index Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_unravel_index),
+                             "Unravel Index Compute failed.");
   } else {
     for (auto j = 0; j < indices_number; j++) {
       T Quotient = *(indices_data + j);

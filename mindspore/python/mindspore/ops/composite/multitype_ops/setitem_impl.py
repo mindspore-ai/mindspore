@@ -879,8 +879,6 @@ def _map_tensor_setitem(map_tensor, key_tensor, value_tensor):
 
 @setitem.register_default()
 def default_getitem(x, y, z):
-    """
-    Default function for setitem.
-   """
+    """Default function for setitem."""
     x[y] = z
     return x

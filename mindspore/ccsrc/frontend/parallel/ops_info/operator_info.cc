@@ -155,9 +155,20 @@ Status OperatorInfo::CheckStrategyByVector(const Shapes &stra, const Shapes &inp
 
       int64_t shape_value = sub_input_shape.at(j);
       if (shape_value != -1 && (shape_value % strategy_value) != 0) {
-        MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value << " at "
-                      << j << " cannot be divisible by strategy value " << strategy_value << ", shape is "
-                      << sub_input_shape;
+        if (dynamic_shape_flag_) {
+          Shapes origin_shapes = inputs_shape_clone_;
+          if (strategy_ != nullptr) {  // if strategy_ is not null, means that check output strategy
+            origin_shapes = outputs_shape_clone_;
+          }
+          MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape or divisor "
+                        << shape_value << " at " << j << " cannot be divisible by strategy value " << strategy_value
+                        << ", shape is " << ShapeToString(origin_shapes[i]) << ", divisor is "
+                        << ShapeToString(sub_input_shape);
+        } else {
+          MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
+                        << " at " << j << " cannot be divisible by strategy value " << strategy_value << ", shape is "
+                        << ShapeToString(sub_input_shape);
+        }
         return FAILED;
       }
 
@@ -202,6 +213,8 @@ void OperatorInfo::ResetQueueMember() {
     inputs_tensor_map_.clear();
     dev_matrix_shape_.clear();
   }
+  strategy_ = nullptr;
+  out_strategy_ = nullptr;
 }
 
 Status OperatorInfo::CheckLayoutConfigBase() {
@@ -380,12 +393,34 @@ bool OperatorInfo::IsDynamicRank() {
   return False;
 }
 
+Status OperatorInfo::GetRepeatedNumInDevMatrixRight() {
+  bool repeated_num_right = true;
+  auto iter = attrs_.find(REPEATED_NUM_IN_DEV_MATRIX_RIGHT);
+  if (iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    if (iter->second->isa<BoolImm>()) {
+      repeated_num_right = iter->second->cast<BoolImmPtr>()->value();
+      MS_LOG(INFO) << name_ << ": attr " << REPEATED_NUM_IN_DEV_MATRIX_RIGHT << " will be set to "
+                   << repeated_num_right;
+    } else {
+      MS_LOG(ERROR) << name_ << ": The value of " << REPEATED_NUM_IN_DEV_MATRIX_RIGHT << " is not bool.";
+      return FAILED;
+    }
+  }
+  repeated_num_in_dev_matrix_right_ = repeated_num_right;
+  return SUCCESS;
+}
+
 Status OperatorInfo::InferAttrs() {
   if (infer_attrs_completed_) {
     return SUCCESS;
   }
 
   if (GetAttrs() != SUCCESS) {
+    return FAILED;
+  }
+
+  if (GetRepeatedNumInDevMatrixRight() != SUCCESS) {
     return FAILED;
   }
 
@@ -399,7 +434,6 @@ Status OperatorInfo::InferAttrs() {
 
   is_dynamic_shape_ = IsDynamicShape();
   is_dynamic_rank_ = IsDynamicRank();
-
   if (is_dynamic_rank_) {
     MS_LOG(ERROR) << name_
                   << ": it does not support dynamic rank now, the inupts' shape: " << ShapesToString(inputs_shape_)
@@ -649,8 +683,7 @@ Operator CreateScalarMulOp(int64_t scalar) {
   OperatorAttrs operator_attrs;
   OperatorParams operator_param;
   constexpr size_t parameter_pos = 2;
-  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(scalar);
-  ValuePtr scale_value = MakeValue(tensor_ptr);
+  ValuePtr scale_value = MakeValue(std::make_shared<Int64Imm>(scalar));
   (void)operator_param.emplace_back(std::make_pair(std::make_pair(Y, scale_value), parameter_pos));
   OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
 
@@ -925,12 +958,12 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
     MS_LOG(INFO) << name_ << ": The dev size is 1, no need to create group.";
     return SUCCESS;
   }
+  int64_t repeated_size = SizeToLong(group_devices.size());
   int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
   MS_EXCEPTION_IF_ZERO("optimizer_weight_shard_size", optimizer_weight_shard_size);
-  if (optimizer_weight_shard_size != -1) {
+  if (optimizer_weight_shard_size != -1 && repeated_size > optimizer_weight_shard_size) {
     // not fully use opt shard
     int64_t index = std::find(group_devices.begin(), group_devices.end(), rank) - group_devices.begin();
-    int64_t repeated_size = SizeToLong(group_devices.size());
     if (repeated_size % optimizer_weight_shard_size != 0 || repeated_size < optimizer_weight_shard_size) {
       MS_LOG(WARNING) << "Parallel optimizer:"
                       << " optimizer_weight_shard_size " << optimizer_weight_shard_size
@@ -1101,6 +1134,14 @@ void OperatorInfo::ResumeShapes() {
   outputs_shape_ = outputs_shape_clone_;
 }
 
+void OperatorInfo::DynamicShapeCheckStrategyLog() {
+  if (!dynamic_shape_flag_) {
+    return;
+  }
+  MS_LOG(ERROR) << name_ << ": the origin shape of inputs is " << ShapesToString(inputs_shape_clone_)
+                << ", but the divisor info of inputs is " << ShapesToString(inputs_divisor_);
+}
+
 // auto insert repeated_calculation_num for dev_matrix_shape when repeated_calculation_num > 1
 Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy,
                                                         const StrategyPtr &out_strategy) {
@@ -1123,6 +1164,7 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
     DivisorsReplaceShapes();  // in dynamic shape, using divisors replace to shapes before CheckStrategy
     // must be after InferAttrs()
     if (CheckStrategy(in_strategy) != SUCCESS) {
+      DynamicShapeCheckStrategyLog();
       FILTER_LOG(is_auto_parallel_) << name_ << ": CheckStrategy failed.";
       return FAILED;
     }

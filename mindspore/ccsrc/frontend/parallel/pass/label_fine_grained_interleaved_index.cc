@@ -131,10 +131,16 @@ void LabelFineGrainedInterleavedBackWardBeginEnd(const std::vector<CNodePtr> &al
     if (bp_node_iter == forward_begin_end_nodes.end()) {
       continue;
     }
-    cnode->AddPrimalAttr(parallel::FINE_GRAINED_INTERLEAVED_BLOCK,
-                         (*bp_node_iter)->GetPrimalAttr(parallel::FINE_GRAINED_INTERLEAVED_BLOCK));
-    cnode->AddAttr(parallel::MICRO_INTERLEAVED_INDEX, (*bp_node_iter)->GetAttr(parallel::MICRO_INTERLEAVED_INDEX));
-    cnode->AddAttr("fine_grained_interleaved_border", (*bp_node_iter)->GetAttr("fine_grained_interleaved_border"));
+    if ((*bp_node_iter)->HasPrimalAttr(parallel::FINE_GRAINED_INTERLEAVED_BLOCK)) {
+      cnode->AddPrimalAttr(parallel::FINE_GRAINED_INTERLEAVED_BLOCK,
+                           (*bp_node_iter)->GetPrimalAttr(parallel::FINE_GRAINED_INTERLEAVED_BLOCK));
+    }
+    if ((*bp_node_iter)->HasAttr(parallel::MICRO_INTERLEAVED_INDEX)) {
+      cnode->AddAttr(parallel::MICRO_INTERLEAVED_INDEX, (*bp_node_iter)->GetAttr(parallel::MICRO_INTERLEAVED_INDEX));
+    }
+    if ((*bp_node_iter)->HasAttr("fine_grained_interleaved_border")) {
+      cnode->AddAttr("fine_grained_interleaved_border", (*bp_node_iter)->GetAttr("fine_grained_interleaved_border"));
+    }
   }
 }
 

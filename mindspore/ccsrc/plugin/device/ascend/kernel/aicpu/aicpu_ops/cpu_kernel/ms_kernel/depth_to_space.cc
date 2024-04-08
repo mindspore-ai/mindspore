@@ -17,14 +17,14 @@ const uint32_t kInputNum = 1;
 const uint32_t kOutputNum = 1;
 const char *kDepthToSpace = "DepthToSpace";
 
-#define DEPTHTOSPACE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                              \
-    uint32_t result = DoCompute<TYPE>(CTX);                    \
-    if (result != KERNEL_STATUS_OK) {                          \
-      KERNEL_LOG_ERROR("DepthToSpace kernel compute failed."); \
-      return result;                                           \
-    }                                                          \
-    break;                                                     \
+#define DEPTHTOSPACE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                        \
+    uint32_t result = DoCompute<TYPE>(CTX);                              \
+    if (result != KERNEL_STATUS_OK) {                                    \
+      CUST_KERNEL_LOG_ERROR(ctx, "DepthToSpace kernel compute failed."); \
+      return result;                                                     \
+    }                                                                    \
+    break;                                                               \
   }
 }  // namespace
 
@@ -52,21 +52,21 @@ uint32_t DepthToSpaceCpuKernel::DoCompute(CpuKernelContext &ctx) {
   if (block_size == zero && block_size * block_size == zero) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_CHECK_FALSE((block_size >= two), KERNEL_STATUS_PARAM_INVALID,
-                     "The value of block_size must be greater than 2");
+  CUST_KERNEL_CHECK_FALSE(ctx, (block_size >= two), KERNEL_STATUS_PARAM_INVALID,
+                          "The value of block_size must be greater than 2");
 
   std::vector<int64_t> output_dims;
   if (data_format_ == "NHWC") {
-    KERNEL_CHECK_FALSE((input_dims[c_nhwc] % block_size * block_size == zero), KERNEL_STATUS_PARAM_INVALID,
-                       "Channels must can be divided by block_size * block_size.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (input_dims[c_nhwc] % block_size * block_size == zero), KERNEL_STATUS_PARAM_INVALID,
+                            "Channels must can be divided by block_size * block_size.");
     output_dims = {input_dims[n_nhwc], input_dims[h_nhwc] * block_size, input_dims[w_nhwc] * block_size,
                    input_dims[c_nhwc] / (block_size * block_size)};
     output_shape->SetDimSizes(output_dims);
     input_dims = {input_dims[n_nhwc], input_dims[c_nhwc], input_dims[h_nhwc], input_dims[w_nhwc]};
     output_dims = {output_dims[n_nhwc], output_dims[c_nhwc], output_dims[h_nhwc], output_dims[w_nhwc]};
   } else if (data_format_ == "NCHW") {
-    KERNEL_CHECK_FALSE((input_dims[h_nchw] % block_size * block_size == zero), KERNEL_STATUS_PARAM_INVALID,
-                       "Channels must can be divided by block_size * block_size.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (input_dims[h_nchw] % block_size * block_size == zero), KERNEL_STATUS_PARAM_INVALID,
+                            "Channels must can be divided by block_size * block_size.");
     output_dims = {input_dims[n_nchw], input_dims[h_nchw] / (block_size * block_size), input_dims[w_nchw] * block_size,
                    input_dims[c_nchw] * block_size};
     output_shape->SetDimSizes(output_dims);
@@ -110,25 +110,26 @@ uint32_t DepthToSpaceCpuKernel::STDParamCheck(CpuKernelContext &ctx) {
   auto input = ctx.Input(0);
   auto output = ctx.Output(0);
 
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "DepthToSpace check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "DepthToSpace check input and output number failed.");
 
-  KERNEL_LOG_DEBUG(
-    "DepthToSpaceCpuKernel[%s], input0: size[%llu];"
-    "output: size[%llu].",
-    ctx.GetOpType().c_str(), input->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "DepthToSpaceCpuKernel[%s], input0: size[%llu];"
+                        "output: size[%llu].",
+                        ctx.GetOpType().c_str(), input->GetDataSize(), output->GetDataSize());
 
   // check data_format
   std::vector<std::string> attr_name1 = {"data_format"};
   AttrValue *attr_data_format = ctx.GetAttr("data_format");
   data_format_ = (attr_data_format == nullptr) ? "NHWC" : (attr_data_format->GetString());
-  KERNEL_CHECK_FALSE((data_format_ == "NHWC" || data_format_ == "NCHW"), KERNEL_STATUS_PARAM_INVALID,
-                     "The data_format must be NCHW, NHWC or NCHW_VECT_C, but got: [%s]", data_format_);
+  CUST_KERNEL_CHECK_FALSE(ctx, (data_format_ == "NHWC" || data_format_ == "NCHW"), KERNEL_STATUS_PARAM_INVALID,
+                          "The data_format must be NCHW, NHWC or NCHW_VECT_C, but got: [%s]", data_format_);
 
   return KERNEL_STATUS_OK;
 }
 
 uint32_t DepthToSpaceCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(STDParamCheck(ctx), "DepthToSpace check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, STDParamCheck(ctx), "DepthToSpace check params failed.");
   Tensor *input0_tensor = ctx.Input(0);
   auto input_data_type = input0_tensor->GetDataType();
 
@@ -150,7 +151,7 @@ uint32_t DepthToSpaceCpuKernel::Compute(CpuKernelContext &ctx) {
     DEPTHTOSPACE_COMPUTE_CASE(DT_QINT16, int16_t, ctx)
     DEPTHTOSPACE_COMPUTE_CASE(DT_QINT32, int32_t, ctx)
     default:
-      KERNEL_LOG_ERROR("DepthToSpace kernel data type[%s] not support.", DTypeStr(input_data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "DepthToSpace kernel data type[%s] not support.", DTypeStr(input_data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

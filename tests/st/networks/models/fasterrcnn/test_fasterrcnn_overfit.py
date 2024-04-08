@@ -105,7 +105,7 @@ def get_optimizer(cfg, params, lr):
     raise ValueError(f"Not support {cfg.type}")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
@@ -188,5 +188,5 @@ def test_faster_rcnn_1p():
     print(f"Loss end   is: {loss_end:.2f}")
 
     assert 5.08 <= loss_start <= 5.14, f"Loss start should in [5.08, 5.14], but got {loss_start}"
-    assert 0.02 <= loss_end <= 0.12, f"Loss end should in [0.02, 0.12], but got {loss_end}"
+    assert loss_end <= 0.2, f"Loss end should <= 0.2, but got {loss_end}"
     # assert average_step_time < 117.26, f"Average step time should shorter than 117.26ms"

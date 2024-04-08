@@ -449,7 +449,7 @@ class ReLUV3(Primitive):
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         Tensor of shape :math:`(N, *)`, with the same type and shape as the `input_x`.
@@ -2489,6 +2489,9 @@ class MultiMarginLoss(Primitive):
         self.margin = validator.check_value_type('margin', margin, [float], self.name)
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.init_prim_io_names(inputs=['x', 'target', 'weight'], outputs=['y'])
+
+    def __call__(self, x, target, weight=None):
+        return super().__call__(x, target, weight)
 
 
 class SoftMarginLoss(Primitive):
@@ -5851,7 +5854,7 @@ class SparseApplyFtrl(Primitive):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn, Parameter
+        >>> from mindspore import Tensor, nn, Parameter, ops
         >>> class SparseApplyFtrlNet(nn.Cell):
         ...     def __init__(self):
         ...         super(SparseApplyFtrlNet, self).__init__()
@@ -9977,6 +9980,7 @@ class PromptFlashAttention(Primitive):
                                         "deq_scale2", "quant_scale2", "quant_offset2"],
                                 outputs=["attention_out"])
 
+
 class IncreFlashAttention(Primitive):
     r"""
     The interface for fully inference.
@@ -10000,7 +10004,7 @@ class IncreFlashAttention(Primitive):
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or bool.
           Input tensor of shape :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)`.
         - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int.
-        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16.
+        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32.
         - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
         - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float.
         - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
@@ -10035,7 +10039,7 @@ class IncreFlashAttention(Primitive):
         validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "actual_seq_lengths", "padding_mask",
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "actual_seq_lengths", "pse_shift",
                                         "dequant_scale1", "quant_scale1", "dequant_scale2", "quant_scale2",
                                         "quant_offset2", "antiquant_scale", "antiquant_offset", "block_table"],
                                 outputs=["attention_out"])
@@ -10091,9 +10095,6 @@ class FlashAttentionScore(Primitive):
             - 7: Represents the dilated scenario, not implemented yet.
             - 8: Represents the block_local scenario, not implemented yet.
 
-        enable_load_balance (bool): Enable load balance of calculation on each rank. Only take effect
-        when sequence parallel is used. Default False.
-
     Inputs:
         - **query** (Tensor[float16, bfloat16]) - The query tensor.
           Input tensor of shape :math:`(B, S1, H1)` or `(B, N1, S1, D)`.
@@ -10128,7 +10129,7 @@ class FlashAttentionScore(Primitive):
 
     @prim_attr_register
     def __init__(self, head_num=1, keep_prob=1.0, scale_value=1.0, pre_tokens=2147483647, next_tokens=2147483647,
-                 inner_precise=0, input_layout="BSH", sparse_mode=0, enable_load_balance=False):
+                 inner_precise=0, input_layout="BSH", sparse_mode=0):
         """Initialize FlashAttentionScore"""
         validator.check_value_type('head_num', head_num, [int], self.name)
         validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
@@ -10139,7 +10140,6 @@ class FlashAttentionScore(Primitive):
         validator.check_value_type('next_tokens', next_tokens, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
         validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
-        validator.check_value_type('enable_load_balance', enable_load_balance, [bool], self.name)
         valid_sparse_mode = [0, 1, 2, 3, 4]
         if sparse_mode not in valid_sparse_mode:
             raise ValueError(f"Attribute 'sparse_mode' must be one of {valid_sparse_mode}, but got {sparse_mode}")

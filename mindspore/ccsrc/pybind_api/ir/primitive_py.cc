@@ -438,8 +438,10 @@ BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
 }
 
 BaseRef PrimitivePy::RunVariableHookFunction(const py::tuple &py_args) const {
+  py::tuple converted_args(py_args.size());
+  ConvertCTensorToPyTensor(py_args, &converted_args);
   constexpr size_t grad_output_index = 2;
-  py::object grad_output = py_args[grad_output_index];
+  py::object grad_output = converted_args[grad_output_index];
   for (const auto &elem : backward_hook_fn_) {
     py::object code_obj = py::getattr(elem.second, "__code__");
     py::object co_name = py::getattr(code_obj, "co_name");
@@ -489,11 +491,9 @@ py::function PrimitivePy::GetComputeFunction() const {
   MS_LOG(DEBUG) << name() << ": get_vm_impl_fn";
   py::function get_fn = python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
   py::function vm_fn = get_fn(python_obj_);
-
   if (py::isinstance<py::none>(vm_fn)) {
     vm_fn = get_fn(name());
   }
-
   if (py::isinstance<py::none>(vm_fn)) {
     MS_LOG(DEBUG) << "Cannot find " << python_obj_.attr("__class__").attr("__name__").cast<std::string>();
     vm_fn = mindspore::GetComputeFunction(Primitive::name());

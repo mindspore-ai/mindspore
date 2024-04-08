@@ -31,35 +31,37 @@ constexpr uint32_t tensor_in_and_out_dims = 4;
 
 namespace aicpu {
 uint32_t FractionalAvgPoolCpuKernel::FractionalAvgPoolParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, k_InputNum, k_OutputNum),
-                      "FractionalAvgPool Check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, k_InputNum, k_OutputNum),
+                           "FractionalAvgPool Check input and output number failed.");
   Tensor *input = ctx.Input(0);
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the output [%s] need be the same as the input [%s]",
-                     DTypeStr(ctx.Output(0)->GetDataType()).c_str(), DTypeStr(ctx.Input(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the output [%s] need be the same as the input [%s]",
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto input_shape = input->GetTensorShape();
   int32_t input_dims = input_shape->GetDims();
   for (int32_t i = 0; i < input_dims; i++) {
-    KERNEL_CHECK_FALSE((input_shape->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "FractionalAvgPool: expected input to have non-empty spatial "
-                       "dimensions, "
-                       "but input has sizes [%d] with dimension [%d] being empty.",
-                       input_dims, i);
+    CUST_KERNEL_CHECK_FALSE(ctx, (input_shape->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
+                            "FractionalAvgPool: expected input to have non-empty spatial "
+                            "dimensions, "
+                            "but input has sizes [%d] with dimension [%d] being empty.",
+                            input_dims, i);
   }
-  KERNEL_CHECK_FALSE((input_dims == tensor_in_and_out_dims), KERNEL_STATUS_PARAM_INVALID,
-                     "tensor_in must be 4-dimensional.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_dims == tensor_in_and_out_dims), KERNEL_STATUS_PARAM_INVALID,
+                          "tensor_in must be 4-dimensional.");
   AttrValue *pooling_ratio = ctx.GetAttr("pooling_ratio");
-  KERNEL_CHECK_NULLPTR(pooling_ratio, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:pooling_ratio failed.",
-                       kFractionalAvgPool);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, pooling_ratio, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:pooling_ratio failed.",
+                            kFractionalAvgPool);
   int32_t pooling_ratio_size = pooling_ratio->ListFloatSize();
-  KERNEL_CHECK_FALSE((pooling_ratio_size == tensor_in_and_out_dims), KERNEL_STATUS_PARAM_INVALID,
-                     "pooling_ratio field must specify 4 dimensions.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (pooling_ratio_size == tensor_in_and_out_dims), KERNEL_STATUS_PARAM_INVALID,
+                          "pooling_ratio field must specify 4 dimensions.");
   std::vector<float> pooling_ratio_data = ctx.GetAttr("pooling_ratio")->GetListFloat();
-  KERNEL_CHECK_FALSE((pooling_ratio_data[0] == 1.0 && pooling_ratio_data[3] == 1.0), KERNEL_STATUS_PARAM_INVALID,
-                     "FractionalAvgPool is not yet supported on the batch nor channel "
-                     "dimension.The first and last elements of pooling ratio must be 1.0.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (pooling_ratio_data[0] == 1.0 && pooling_ratio_data[3] == 1.0),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "FractionalAvgPool is not yet supported on the batch nor channel "
+                          "dimension.The first and last elements of pooling ratio must be 1.0.");
   return KERNEL_STATUS_OK;
 }
 
@@ -98,7 +100,8 @@ static std::vector<int64_t> GeneratePoolingSequenceRandom(int input_length, int 
   return diff;
 }
 
-std::vector<int64_t> GeneratePoolingSequence(int input_length, int output_length, bool pseudo_random, int seed) {
+std::vector<int64_t> GeneratePoolingSequence(CpuKernelContext &ctx, int input_length, int output_length,
+                                             bool pseudo_random, int seed) {
   std::vector<int64_t> diff;
   if (input_length % output_length == 0) {
     diff = std::vector<int64_t>(output_length, input_length / output_length);
@@ -111,7 +114,7 @@ std::vector<int64_t> GeneratePoolingSequence(int input_length, int output_length
   int k = input_length / output_length;
   for (int i = 0; i < output_length; i++) {
     if (diff[i] < k || diff[i] > k + 1) {
-      KERNEL_LOG_ERROR("FractionalAvgPool kernel GeneratePoolingSequence diff[%d] is error");
+      CUST_KERNEL_LOG_ERROR(ctx, "FractionalAvgPool kernel GeneratePoolingSequence diff[%d] is error");
     }
   }
   std::vector<int64_t> cum_seq(output_length + 1, 0);
@@ -146,8 +149,8 @@ uint32_t FractionalAvgPoolCpuKernel::DoCompute(CpuKernelContext &ctx) {
   }
   for (uint32_t i = 0; i < tensor_in_and_out_dims; ++i) {
     output_size[i] = static_cast<int>(std::floor(input_size[i] / pooling_ratio[i]));
-    KERNEL_CHECK_FALSE((output_size[i] > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "FractionalAvgPool kernel outputsize[%d] cannot be 0");
+    CUST_KERNEL_CHECK_FALSE(ctx, (output_size[i] > 0), KERNEL_STATUS_PARAM_INVALID,
+                            "FractionalAvgPool kernel outputsize[%d] cannot be 0");
   }
   auto input_data = static_cast<T *>(ctx.Input(0)->GetData());
   auto output_data = static_cast<T *>(output->GetData());
@@ -162,8 +165,8 @@ uint32_t FractionalAvgPoolCpuKernel::DoCompute(CpuKernelContext &ctx) {
       seed2 = generator();
     }
   } else {
-    KERNEL_CHECK_FALSE(((seed == 0) && (seed2 == 0)), KERNEL_STATUS_PARAM_INVALID,
-                       "Both seed and seed2 should be 0 if deterministic is false.");
+    CUST_KERNEL_CHECK_FALSE(ctx, ((seed == 0) && (seed2 == 0)), KERNEL_STATUS_PARAM_INVALID,
+                            "Both seed and seed2 should be 0 if deterministic is false.");
   }
   if (seed == 0 && seed2 != 0) {
     seed = seed2;
@@ -171,8 +174,8 @@ uint32_t FractionalAvgPoolCpuKernel::DoCompute(CpuKernelContext &ctx) {
   // Generate pooling sequence.
   std::vector<int64_t> height_cum_seq;
   std::vector<int64_t> width_cum_seq;
-  height_cum_seq = GeneratePoolingSequence(input_size[1], output_size[1], pseudo_random, seed);
-  width_cum_seq = GeneratePoolingSequence(input_size[2], output_size[2], pseudo_random, seed);
+  height_cum_seq = GeneratePoolingSequence(ctx, input_size[1], output_size[1], pseudo_random, seed);
+  width_cum_seq = GeneratePoolingSequence(ctx, input_size[2], output_size[2], pseudo_random, seed);
   for (uint32_t i = 0; i < height_cum_seq.size(); ++i) {
     *(output_height_seq_tensor + i) = height_cum_seq[i];
   }
@@ -263,16 +266,17 @@ uint32_t FractionalAvgPoolCpuKernel::DoCompute(CpuKernelContext &ctx) {
           }
         }
       };
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, height_cum_len, height_cum_len / max_core_num,
-                                                      sharder_fractionalavgpool_index),
-                          "FractionalAvgPool Index Compute failed");
+      CUST_KERNEL_HANDLE_ERROR(ctx,
+                               CpuKernelUtils::ParallelFor(ctx, height_cum_len, height_cum_len / max_core_num,
+                                                           sharder_fractionalavgpool_index),
+                               "FractionalAvgPool Index Compute failed");
     }
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t FractionalAvgPoolCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(FractionalAvgPoolParamCheck(ctx), "Check FractionalAvgPool params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, FractionalAvgPoolParamCheck(ctx), "Check FractionalAvgPool params failed.");
   Tensor *input = ctx.Input(0);
   auto data_type = input->GetDataType();
   switch (data_type) {
@@ -285,7 +289,7 @@ uint32_t FractionalAvgPoolCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_INT64:
       return DoCompute<int64_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("FractionalAvgPool kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "FractionalAvgPool kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

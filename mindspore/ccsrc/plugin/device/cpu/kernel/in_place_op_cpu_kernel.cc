@@ -82,6 +82,7 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
                 const std::vector<KernelTensor *> &) override {
     kernel_name_ = primitive->name();
     auto value_ptr = primitive->GetAttr(ops::kIndices);
+    MS_EXCEPTION_IF_NULL(value_ptr);
     if (value_ptr->isa<ValueSequence>()) {
       indices_ = GetValue<std::vector<int64_t>>(value_ptr);
     } else {

@@ -61,29 +61,30 @@ static inline uint64_t HashLen0to16(const char *s, size_t len) {
 
 uint64_t FarmHash64(const char *s, const size_t len) { return HashLen0to16(s, len); }
 
-uint64_t Fingerprint64(const std::string s) { return FarmHash64(s.data(), s.size()); }
+uint64_t Fingerprint64(CpuKernelContext &ctx, const std::string s) { return FarmHash64(s.data(), s.size()); }
 
 template <typename InternalType>
 class ColumnInterface {
  public:
   virtual int64_t FeatureCount(int64_t batch) const = 0;
-  virtual InternalType Feature(int64_t batch, int64_t n) const = 0;
+  virtual InternalType Feature(CpuKernelContext &ctx, int64_t batch, int64_t n) const = 0;
   virtual ~ColumnInterface() {}
 };
 
 template <typename InternalType>
 class SparseTensorColumn : public ColumnInterface<InternalType> {
  public:
-  SparseTensorColumn(Tensor *values, std::vector<int64_t> feature_counts, std::vector<int64_t> feature_start_indices)
+  SparseTensorColumn(CpuKernelContext &ctx, Tensor *values, std::vector<int64_t> feature_counts,
+                     std::vector<int64_t> feature_start_indices)
       : values_(values),
         feature_counts_(std::move(feature_counts)),
         feature_start_indices_(std::move(feature_start_indices)) {
     if (feature_counts_.size() != feature_start_indices_.size()) {
-      KERNEL_LOG_ERROR("feature_counts_ is not equal to feature_start_indices_.");
+      CUST_KERNEL_LOG_ERROR(ctx, "feature_counts_ is not equal to feature_start_indices_.");
     }
   }
   int64_t FeatureCount(int64_t batch) const override { return feature_counts_[batch]; }
-  InternalType Feature(int64_t batch, int64_t n) const override;
+  InternalType Feature(CpuKernelContext &ctx, int64_t batch, int64_t n) const override;
   ~SparseTensorColumn() override {}
 
  private:
@@ -93,7 +94,7 @@ class SparseTensorColumn : public ColumnInterface<InternalType> {
 };
 
 template <>
-std::string SparseTensorColumn<std::string>::Feature(int64_t batch, int64_t n) const {
+std::string SparseTensorColumn<std::string>::Feature(CpuKernelContext &, int64_t batch, int64_t n) const {
   const int64_t start = feature_start_indices_[batch];
   EigenTensor values_e(values_, values_->GetData());
   if (DT_STRING == values_->GetDataType()) return values_e.vec<std::string>().data()[start + n];
@@ -101,11 +102,11 @@ std::string SparseTensorColumn<std::string>::Feature(int64_t batch, int64_t n) c
 }
 
 template <>
-int64_t SparseTensorColumn<int64_t>::Feature(int64_t batch, int64_t n) const {
+int64_t SparseTensorColumn<int64_t>::Feature(CpuKernelContext &ctx, int64_t batch, int64_t n) const {
   const int64_t start = feature_start_indices_[batch];
   EigenTensor values_e(values_, values_->GetData());
   if (DT_STRING == values_->GetDataType()) {
-    return Fingerprint64(values_e.vec<std::string>().data()[start + n]);
+    return Fingerprint64(ctx, values_e.vec<std::string>().data()[start + n]);
   }
   return values_e.vec<int64_t>().data()[start + n];
 }
@@ -115,7 +116,7 @@ class DenseTensorColumn : public ColumnInterface<InternalType> {
  public:
   explicit DenseTensorColumn(Tensor *tensor) : tensor_(tensor) {}
   int64_t FeatureCount(int64_t batch) const override { return tensor_->GetTensorShape()->GetDimSize(1); }
-  InternalType Feature(int64_t batch, int64_t n) const override;
+  InternalType Feature(CpuKernelContext &ctx, int64_t batch, int64_t n) const override;
   ~DenseTensorColumn() override {}
 
  private:
@@ -123,14 +124,14 @@ class DenseTensorColumn : public ColumnInterface<InternalType> {
 };
 
 template <>
-int64_t DenseTensorColumn<int64_t>::Feature(int64_t batch, int64_t n) const {
+int64_t DenseTensorColumn<int64_t>::Feature(CpuKernelContext &ctx, int64_t batch, int64_t n) const {
   EigenTensor tensor_e(tensor_, tensor_->GetData());
-  if (DT_STRING == tensor_->GetDataType()) return Fingerprint64(tensor_e.matrix<std::string>()(batch, n));
+  if (DT_STRING == tensor_->GetDataType()) return Fingerprint64(ctx, tensor_e.matrix<std::string>()(batch, n));
   return tensor_e.matrix<int64_t>()(batch, n);
 }
 
 template <>
-std::string DenseTensorColumn<std::string>::Feature(int64_t batch, int64_t n) const {
+std::string DenseTensorColumn<std::string>::Feature(CpuKernelContext &ctx, int64_t batch, int64_t n) const {
   EigenTensor tensor_e(tensor_, tensor_->GetData());
   if (DT_STRING == tensor_->GetDataType()) return tensor_e.matrix<std::string>()(batch, n);
   return std::to_string(tensor_e.matrix<int64_t>()(batch, n));
@@ -163,11 +164,12 @@ class StringCrosser {
   StringCrosser(const std::vector<std::unique_ptr<ColumnInterface<InternalType>>> &columns,
                 const int64_t num_buckets_unused, const uint64_t hash_key_unused)
       : columns_(columns) {}
-  std::string Generate(const int64_t batch_index, const std::vector<int64_t> &permutation) const {
+  std::string Generate(CpuKernelContext &ctx, const int64_t batch_index,
+                       const std::vector<int64_t> &permutation) const {
     static const auto k_feature_separator = "_X_";
     std::vector<InternalType> cross_vec(columns_.size());
     for (size_t i = 0; i < permutation.size(); i++) {
-      cross_vec[i] = columns_[i]->Feature(batch_index, permutation[i]);
+      cross_vec[i] = columns_[i]->Feature(ctx, batch_index, permutation[i]);
     }
     size_t i;
     std::string str1 = "";
@@ -200,10 +202,10 @@ class HashCrosser {
     return result;
   }
 
-  int64_t Generate(const int64_t batch_index, const std::vector<int64_t> &permutation) const {
+  int64_t Generate(CpuKernelContext &ctx, const int64_t batch_index, const std::vector<int64_t> &permutation) const {
     uint64_t hashed_output = hash_key_;
     for (size_t i = 0; i < permutation.size(); ++i) {
-      uint64_t hash_i = columns_[i]->Feature(batch_index, permutation[i]);
+      uint64_t hash_i = columns_[i]->Feature(ctx, batch_index, permutation[i]);
       hashed_output = FingerprintCat64(hashed_output, hash_i);
     }
     if (num_buckets_ > 0) {
@@ -306,7 +308,8 @@ void ExtractFeatureData(const OpInputList &indices_list_in, int64_t batch_size,
 }
 
 template <typename InternalType>
-std::vector<std::unique_ptr<ColumnInterface<InternalType>>> ColumnsFromInput(const OpInputList &indices_list_in,
+std::vector<std::unique_ptr<ColumnInterface<InternalType>>> ColumnsFromInput(CpuKernelContext &ctx,
+                                                                             const OpInputList &indices_list_in,
                                                                              const OpInputList &values_list_in,
                                                                              const OpInputList &shapes_list_in,
                                                                              const OpInputList &dense_list_in) {
@@ -319,7 +322,7 @@ std::vector<std::unique_ptr<ColumnInterface<InternalType>>> ColumnsFromInput(con
   columns.reserve(values_list_in.size());
   for (int64_t i = 0; i < values_list_in.size(); ++i) {
     columns.emplace_back(
-      new SparseTensorColumn<InternalType>(values_list_in[i], feature_counts[i], feature_start_indices[i]));
+      new SparseTensorColumn<InternalType>(ctx, values_list_in[i], feature_counts[i], feature_start_indices[i]));
   }
   for (int64_t i = 0; i < dense_list_in.size(); ++i) {
     columns.emplace_back(new DenseTensorColumn<InternalType>(dense_list_in[i]));
@@ -410,16 +413,16 @@ uint32_t SparseCrossCpuKernel::SparseCrossCompute(CpuKernelContext &ctx) {
   int64_t value = 2;
   for (int64_t i = 0; i < size; i++) {
     if (indices_list_in[i]->GetTensorShape()->GetDimSize(1) != value) {
-      KERNEL_LOG_ERROR("Expected D2 of index to be 2 got [%d], at position [%d].",
-                       indices_list_in[i]->GetTensorShape()->GetDimSize(1), i);
+      CUST_KERNEL_LOG_ERROR(ctx, "Expected D2 of index to be 2 got [%d], at position [%d].",
+                            indices_list_in[i]->GetTensorShape()->GetDimSize(1), i);
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
   for (int64_t i = 0; i < size; i++) {
     if (indices_list_in[i]->GetTensorShape()->GetDimSize(0) != values_list_in[i]->GetTensorShape()->GetDimSize(0)) {
-      KERNEL_LOG_ERROR("Expected size of values to be [%d], but got [%d] at position [%d].",
-                       indices_list_in[i]->GetTensorShape()->GetDimSize(0),
-                       values_list_in[i]->GetTensorShape()->GetDimSize(0), i);
+      CUST_KERNEL_LOG_ERROR(ctx, "Expected size of values to be [%d], but got [%d] at position [%d].",
+                            indices_list_in[i]->GetTensorShape()->GetDimSize(0),
+                            values_list_in[i]->GetTensorShape()->GetDimSize(0), i);
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -427,19 +430,19 @@ uint32_t SparseCrossCpuKernel::SparseCrossCompute(CpuKernelContext &ctx) {
   for (int64_t i = 0; i < size; i++) {
     EigenTensor shapes_list_in_e(shapes_list_in[i], shapes_list_in[i]->GetData());
     if (shapes_list_in_e.vec<int64_t>().size() != value) {
-      KERNEL_LOG_ERROR("shape should imply a 2D tensor, but got [%d].", shapes_list_in[i]->GetTensorShape());
+      CUST_KERNEL_LOG_ERROR(ctx, "shape should imply a 2D tensor, but got [%d].", shapes_list_in[i]->GetTensorShape());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
   for (int64_t i = 0; i < dense_list_in.size(); ++i) {
     if (dense_list_in[i]->GetTensorShape()->GetDimSize(0) != batch_size) {
-      KERNEL_LOG_ERROR("Expected batch size [%d],got [%d].", batch_size,
-                       dense_list_in[i]->GetTensorShape()->GetDimSize(0));
+      CUST_KERNEL_LOG_ERROR(ctx, "Expected batch size [%d],got [%d].", batch_size,
+                            dense_list_in[i]->GetTensorShape()->GetDimSize(0));
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
   std::vector<std::unique_ptr<ColumnInterface<InternalType>>> columns =
-    ColumnsFromInput<InternalType>(indices_list_in, values_list_in, shapes_list_in, dense_list_in);
+    ColumnsFromInput<InternalType>(ctx, indices_list_in, values_list_in, shapes_list_in, dense_list_in);
   typename CrossTraits<HASHED_OUTPUT, InternalType>::Crosser crosser(columns, num_buckets_, hash_key_);
   Tensor *indices_out = ctx.Output(0);
   Tensor *values_out = ctx.Output(1);
@@ -453,7 +456,7 @@ uint32_t SparseCrossCpuKernel::SparseCrossCompute(CpuKernelContext &ctx) {
     while (product_iterator.HasNext()) {
       const auto permutation = product_iterator.Next();
 
-      updater.Update(b, cross_count, crosser.Generate(b, permutation));
+      updater.Update(b, cross_count, crosser.Generate(ctx, b, permutation));
       cross_count++;
     }
   }

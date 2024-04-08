@@ -50,6 +50,11 @@ enum JitSyntaxLevel : int {
   kLax,         // JIT Fallback fully enabled.
 };
 
+enum DebugLevel : int {
+  kLevelRelease,  // Used for deployment scenarios, compile performance will be better.
+  kLevelDebug,    // For debugging scenarios, compile performance will decrease.
+};
+
 enum class CellReuseLevel { kNoCellReuse, kNoInline, kLazyInline };
 
 const int kGraphMode = 0;
@@ -122,6 +127,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_MATMUL_ALLOW_TF32,
   MS_CTX_ENABLE_BEGIN_END_INLINE_OPT,
   MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT,
+  MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE,
   MS_CTX_TYPE_BOOL_END,
 
   // parameter of type int
@@ -131,6 +137,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_SAVE_GRAPHS_FLAG,
   MS_CTX_JIT_SYNTAX_LEVEL,
   MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL,
+  MS_CTX_DEBUG_LEVEL,
   MS_CTX_TYPE_INT_END,
 
   // parameter of type uint32

@@ -37,7 +37,7 @@ const AnfNodePtr SparseCrossFusionProcess(const FuncGraphPtr &graph, const AnfNo
       n += 1;
     } else if (input_node->isa<CNode>()) {
       size_t tuple_num = AnfUtils::GetOutputTensorNum(input_node);
-      n += tuple_num;
+      n += SizeToLong(tuple_num);
     } else {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << "has a unsupported input " << input_node->DebugString();
     }

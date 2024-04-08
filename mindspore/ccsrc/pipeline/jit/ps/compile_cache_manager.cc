@@ -327,14 +327,14 @@ std::string CompileCacheManager::GetCachedDataQueueName(const std::string &datas
     return queue_name;
   }
   data_queue_num_++;
+  auto &config_mng = ConfigManager::GetInstance();
+  if (config_mng.dataset_phase().empty()) {
+    config_mng.set_dataset_phase(dataset_phase);
+  }
   // if queue name has cached, we should not get it again from cache file in the same process.
   auto &context = CompileCacheContext::GetInstance();
   if (context.has_cached_queue_name()) {
     return queue_name;
-  }
-  auto &config_mng = ConfigManager::GetInstance();
-  if (config_mng.dataset_phase().empty()) {
-    config_mng.set_dataset_phase(dataset_phase);
   }
   const auto &filename = GetDataQueueNameCachePath(std::to_string(CompileCacheManager::data_queue_num_));
   MS_LOG(INFO) << "Get data queue name from file " << filename;

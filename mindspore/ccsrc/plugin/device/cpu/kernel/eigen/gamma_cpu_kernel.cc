@@ -198,7 +198,6 @@ bool GammaCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
     auto ele_size =
       LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
     outputs[0]->set_size(ele_size * UnitSizeInBytes(outputs[0]->dtype_id()));
-
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' output size and input size mismatch.";
   }

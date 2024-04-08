@@ -34,7 +34,7 @@ class IgammaGradACpuKernel : public CpuKernel {
   static uint32_t IgammaGradACheckAndBroadCast(CpuKernelContext &ctx, BCalcInfo *calc_info);
 
   template <typename T>
-  static uint32_t IgammaGradACompute(const CpuKernelContext &ctx, const BCalcInfo &calc_info);
+  static uint32_t IgammaGradACompute(CpuKernelContext &ctx, const BCalcInfo &calc_info);
 };
 }  // namespace aicpu
 #endif

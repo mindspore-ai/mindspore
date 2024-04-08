@@ -26,7 +26,7 @@ class ReverseSequenceMsCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  KernelStatus GetInputAndCheck(const CpuKernelContext &ctx);
+  KernelStatus GetInputAndCheck(CpuKernelContext &ctx);
 
   std::vector<void *> ioAddrs_;
   size_t seq_dim_ = 0;

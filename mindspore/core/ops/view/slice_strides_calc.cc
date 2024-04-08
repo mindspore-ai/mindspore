@@ -85,7 +85,7 @@ TensorStorageInfoPtrList SliceCalc(const PrimitivePtr &prim, const std::vector<V
     if (new_shape[idx] == -1) {
       new_shape[idx] = old_shape[idx] - begin[idx];
     }
-    new_storage_offset += begin[idx] * new_strides[idx];
+    new_storage_offset += LongToSize(begin[idx] * new_strides[idx]);
   }
 
   auto new_storage_info =

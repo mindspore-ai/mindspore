@@ -46,6 +46,8 @@ mindspore.set_context
     |                         |  reserve_class_name_in_scope |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  pynative_synchronize        |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  debug_level                 |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
     | 执行控制                |   mode                       |   CPU/GPU/Ascend           |
     |                         +------------------------------+----------------------------+
@@ -125,7 +127,7 @@ mindspore.set_context
 
           - **mem_Reuse**：表示内存复用功能是否打开。设置为 ``True`` 时，将打开内存复用功能。设置为 ``False`` 时，将关闭内存复用功能。
 
-          配置详细信息，请查看 `Running Data Recorder <https://www.mindspore.cn/tutorials/experts/zh-CN/master/debug/rdr.html>`_ 和 `内存复用 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/optimize/mem_reuse.html>`_ 。
+          配置详细信息，请查看 `Running Data Recorder <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.q1/debug/rdr.html>`_ 和 `内存复用 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.q1/optimize/mem_reuse.html>`_ 。
 
         - **precompile_only** (bool) - 表示是否仅预编译网络。默认值： ``False`` 。设置为 ``True`` 时，仅编译网络，而不执行网络。
         - **reserve_class_name_in_scope** (bool) - 表示是否将网络类名称保存到所属ScopeName中。默认值： ``True`` 。每个节点都有一个ScopeName。子节点的ScopeName是其父节点。如果 `reserve_class_name_in_scope` 设置为 ``True`` ，则类名将保存在ScopeName中的关键字"net-"之后。例如：
@@ -136,7 +138,7 @@ mindspore.set_context
 
         - **pynative_synchronize** (bool) - 表示是否在PyNative模式下启动设备同步执行。默认值： ``False`` 。设置为 ``False`` 时，将在设备上异步执行算子。当算子执行出错时，将无法定位特定错误脚本代码的位置。当设置为 ``True`` 时，将在设备上同步执行算子。这将降低程序的执行性能。此时，当算子执行出错时，可以根据错误的调用栈来定位错误脚本代码的位置。
         - **mode** (int) - 表示在GRAPH_MODE(0)或PYNATIVE_MODE(1)模式中运行，两种模式都支持所有后端。默认值： ``PYNATIVE_MODE`` 。
-        - **enable_graph_kernel** (bool) - 表示开启图算融合去优化网络执行性能。默认值： ``False`` 。如果 `enable_graph_kernel` 设置为 ``True`` ，则可以启用加速。有关图算融合的详细信息，请查看 `使能图算融合 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/optimize/graph_fusion_engine.html>`_ 。
+        - **enable_graph_kernel** (bool) - 表示开启图算融合去优化网络执行性能。默认值： ``False`` 。如果 `enable_graph_kernel` 设置为 ``True`` ，则可以启用加速。有关图算融合的详细信息，请查看 `使能图算融合 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.q1/optimize/graph_fusion_engine.html>`_ 。
         - **graph_kernel_flags** (str) - 图算融合的优化选项，当与enable_graph_kernel冲突时，它的优先级更高。其仅适用于有经验的用户。例如：
 
           .. code-block::
@@ -172,10 +174,10 @@ mindspore.set_context
         - **runtime_num_threads** (int) - 运行时actor和CPU算子核使用的线程池线程数，必须大于等于 ``0`` 。默认值为 ``30`` ，如果同时运行多个进程，应将该值设置得小一些，以避免线程争用。
         - **disable_format_transform** (bool) - 表示是否取消NCHW到NHWC的自动格式转换功能。当fp16的网络性能不如fp32的时，可以设置 `disable_format_transform` 为 ``True`` ，以尝试提高训练性能。默认值： ``False`` 。
         - **support_binary** (bool) - 是否支持在图形模式下运行.pyc或.so。如果要支持在图形模式下运行.so或.pyc，可将 `support_binary` 置为 ``True`` ，并运行一次.py文件，从而将接口源码保存到接口定义.py文件中，因此要保证该文件可写。然后将.py文件编译成.pyc或.so文件，即可在图模式下运行。
-        - **memory_optimize_level** (str) - 内存优化级别，默认值： ``O0`` 。其值必须在 ['O0', 'O1'] 范围中。
+        - **memory_optimize_level** (str) - 内存优化级别，Ascend平台下默认值 ``O1``，其他平台默认值： ``O0`` 。其值必须在 ['O0', 'O1'] 范围中。
 
-          - O0: 执行性能优先，关闭 SOMAS (Safe Optimized Memory Allocation Solver)。
-          - O1: 内存性能优先，使能 SOMAS。
+          - O0: 执行性能优先，关闭 SOMAS (Safe Optimized Memory Allocation Solver) 和一些其他内存优化。
+          - O1: 内存性能优先，使能 SOMAS 和一些其他内存优化。
         - **memory_offload** (str) - 是否开启Offload功能，在内存不足场景下将空闲数据临时拷贝至Host侧内存。其值必须在['ON', 'OFF']范围中，默认值为 ``'OFF'`` 。
 
           - ON：开启memory offload功能。在Ascend硬件平台，未设置环境变量“GRAPH_OP_RUN=1”时本参数不生效；设置memory_optimize_level='O1'时本参数不生效。
@@ -213,20 +215,24 @@ mindspore.set_context
             - global (dict): 设置global类的选项。
             - session (dict): 设置session类的选项。
 
-          - **parallel_speed_up_json_path** (Union[str, None]): 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ 。
+          - **parallel_speed_up_json_path** (Union[str, None]): 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/config/parallel_speed_up.json>`_ 。
             当设置为None时，表示不启用。
 
             - **recompute_comm_overlap** (bool): 为 ``True`` 时表示开启反向重计算和通信掩盖。默认值： ``False`` 。
             - **matmul_grad_comm_overlap** (bool): 为 ``True`` 时表示开启反向Matmul和通信掩盖。默认值： ``False`` 。
             - **enable_task_opt** (bool): 为 ``True`` 时表示开启通信算子task数量优化。默认值： ``False`` 。
-            - **interleaved_matmul_comm** (bool): 为 ``True`` 时表示开启Matmul-Comm的细粒度双副本优化。默认值： ``False`` 。
-            - **interleaved_layernorm_comm** (bool): 为 ``True`` 时表示开启LayerNorm-Comm细粒度双副本优化。默认值： ``False`` 。
+            - **enable_grad_comm_opt** (bool): 为 ``True`` 时表示开启梯度dx计算与数据并行梯度通信的掩盖，暂时不支持 `LazyInline <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore/mindspore.lazy_inline.html>`_ 功能下开启。默认值： ``False`` 。
+            - **enable_opt_shard_comm_opt** (bool): 为 ``True`` 时表示开启正向计算与优化器并行的AllGather通信的掩盖，暂时不支持 `LazyInline <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore/mindspore.lazy_inline.html>`_ 功能下开启。默认值： ``False`` 。
             - **enable_concat_eliminate_opt** (bool): 为 ``True`` 时表示开启Concat消除优化，当前在开启细粒度双副本优化时有收益。默认值： ``False`` 。
             - **enable_begin_end_inline_opt** (bool): 为 ``True`` 时表示开启首尾micro_batch子图的内联，用于半自动并行子图模式，流水线并行场景，一般需要和其它通信计算掩盖优化一起使用。默认值： ``False`` 。
             - **compute_communicate_fusion_level** (int): 控制通算融合的级别。默认值：``0``。
+
               - 0: 不启用通算融合。
+
               - 1: 仅对前向节点使能通算融合。
+
               - 2: 仅对反向节点使能通算融合。
+
               - 3: 对所有节点使能通算融合。
           - **host_scheduling_max_threshold** (int): 控制静态小图（根图）执行时是否使用动态shape调度的最大阈值，默认阈值为0。如果静态根图节点个数小于最大阈值，则使用动态shape调度。大模型场景，该方式可以节约stream资源。如果静态根图节点个数大于最大阈值，则保持原有流程不变。
 
@@ -235,6 +241,11 @@ mindspore.set_context
 
           - ``STRICT`` : 仅支持基础语法，且执行性能最佳。可用于MindIR导入导出。
           - ``LAX`` : 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。由于存在可能无法导出的语法，不能用于MindIR导入导出。
+
+        - **debug_level** (int) - 设置调试过程的配置。其值必须为 ``RELEASE`` 或 ``DEBUG`` 。默认值： ``RELEASE`` 。
+
+          - ``RELEASE`` : 正常场景下使用，一些调试信息会被丢弃以获取一个较好的编译性能。
+          - ``DEBUG`` : 当错误发生时，用来调试，在编译过程中，更多的调试信息会被记录下来。
 
         - **gpu_config** (dict) - 设置GPU硬件平台专用的参数，默认不设置。
           目前只支持GPU硬件平台上设置conv_fprop_algo、conv_dgrad_algo、conv_wgrad_algo、conv_allow_tf32和matmul_allow_tf32参数。

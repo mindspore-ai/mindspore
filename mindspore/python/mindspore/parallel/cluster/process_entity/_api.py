@@ -107,6 +107,9 @@ class _ProcessManager:
         self.master_port = args.master_port
 
         self.worker_num = args.worker_num
+        if self.worker_num <= 0:
+            raise ValueError(f"worker_num must be greater than 0, but got {self.worker_num}.")
+        self.exported_rank_size = self.worker_num
         self.local_worker_num = args.local_worker_num
         self.node_rank = args.node_rank
 
@@ -114,6 +117,16 @@ class _ProcessManager:
         self.join = args.join
         self.cluster_time_out = args.cluster_time_out
         self.bind_core = args.bind_core
+
+        self.sim_level = args.sim_level
+        self.sim_rank_id = args.sim_rank_id
+        self.is_simulation = (self.sim_level != -1)
+        if self.is_simulation:
+            # If simulation level is set, reset the worker_num and local_worker_num to 1
+            # so that host cluster could be initialized.
+            self.worker_num = 1
+            self.local_worker_num = 1
+            os.environ["MS_SIMULATION_LEVEL"] = str(self.sim_level)
 
         self.cmd = args.task_script
         self.cmd_args = args.task_script_args
@@ -125,9 +138,9 @@ class _ProcessManager:
 
         # Create log directory and set the permission if not exists.
         if self.log_dir and not os.path.exists(self.log_dir):
+            permissions = os.R_OK | os.W_OK | os.X_OK
+            origin_mask = os.umask(permissions << 3 | permissions)
             try:
-                permissions = os.R_OK | os.W_OK | os.X_OK
-                origin_mask = os.umask(permissions << 3 | permissions)
                 mode = permissions << 6
                 os.makedirs(self.log_dir, mode=mode, exist_ok=True)
             finally:
@@ -138,7 +151,7 @@ class _ProcessManager:
         Runs the process manager.
 
         """
-        os.environ["RANK_SIZE"] = str(self.worker_num)
+        os.environ["RANK_SIZE"] = str(self.exported_rank_size)
         if self.is_scale:
             response_message = _send_scale_num(self.scheduler_url, self.scale_num)
             is_first_manager = response_message
@@ -182,6 +195,9 @@ class _ProcessManager:
                            "You can access 'RANK_ID' environment variable after calling "
                            "'mindspore.communication.init()'")
 
+        if self.is_simulation and self.worker_num != 1:
+            raise ValueError(f"Simulation level is set, worker_num must be 1, but got {self.worker_num}.")
+
         for i in range(self.local_worker_num):
             node_id, log_name = self._get_node_id_and_log_path(i)
             if node_id is None:
@@ -193,6 +209,9 @@ class _ProcessManager:
                 os.environ["RANK_ID"] = str(node_id)
                 logger.warning(f"Start worker process with rank id:{node_id}, log file:{log_name}. "
                                "Environment variable [RANK_ID] is exported.")
+            if self.is_simulation:
+                # Reset RANK_ID env to sim_rank_id.
+                os.environ["RANK_ID"] = str(self.sim_rank_id)
 
             cpu_num = subprocess.getoutput("cat /proc/cpuinfo|grep processor|wc -l")
             if not cpu_num.isdigit():
@@ -302,8 +321,10 @@ class _ProcessManager:
             time_out_node_log = re.findall(r"node: .* is timed out", scheduler_log)
 
             # Filter out node ids of the processes which exit abnormally.
-            node_id_splitter = lambda l: re.split(" is timed out", re.split("node: ", l)[1])[0]
-            time_out_node_ids = list(node_id_splitter(l) for l in time_out_node_log)
+            def node_id_splitter(id):
+                return re.split(" is timed out", re.split("node: ", id)[1])[0]
+            for id in time_out_node_log:
+                time_out_node_ids.append(node_id_splitter(id))
 
         # If 'time_out_node_ids' is not empty, only analyze logs of these time out nodes.
         # Unless get the error logs of all workers.
@@ -311,9 +332,11 @@ class _ProcessManager:
             os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
             logger.error(f"Time out nodes are {time_out_node_ids}")
             # Get the logs which have these timeout node ids.
-            grepper = lambda id: subprocess.getoutput(f"grep -rn 'This node {id}' {self.log_dir}"
-                                                      "|awk -F: '{print $1}'")
-            log_names = list(grepper(id) for id in time_out_node_ids)
+            def grepper(id):
+                return subprocess.getoutput(f"grep -rn 'This node {id}' {self.log_dir}"" | awk -F: '{print $1}'")
+            log_names = []
+            for id in time_out_node_ids:
+                log_names.append(grepper(id))
             for log in log_names:
                 logger.error(f"cat log {log} error info and tail log:"
                              "==========================")

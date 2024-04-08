@@ -15,6 +15,7 @@
  */
 
 #include "op_proto/inc/random_ops.h"
+#include "op_proto/inc/math_ops.h"
 #include "op_proto/inc/stateful_random_ops.h"
 #include "custom_op_proto/cust_random_ops.h"
 #include "register/op_impl_registry.h"
@@ -170,8 +171,34 @@ CUST_IMPLEMT_INFERFUNC(Gamma, GammaInfer) {
     return GRAPH_PARAM_INVALID;
   }
 
+  Tensor alpha_data;
+  ge::Shape alpha_shape;
+  if (op.GetInputConstData("alpha", alpha_data) != GRAPH_SUCCESS) {
+    OP_LOGI(TbeGetName(op).c_str(), "Get const value failed of [alpha]");
+    auto alpha_desc = op.GetInputDesc("alpha");
+    alpha_shape = alpha_desc.GetShape();
+  } else {
+    alpha_shape = alpha_data.GetTensorDesc().GetShape();
+  }
+
+  Tensor beta_data;
+  ge::Shape beta_shape;
+  if (op.GetInputConstData("beta", beta_data) != GRAPH_SUCCESS) {
+    OP_LOGI(TbeGetName(op).c_str(), "Get const value failed of [beta]");
+    auto beta_desc = op.GetInputDesc("beta");
+    beta_shape = beta_desc.GetShape();
+  } else {
+    beta_shape = beta_data.GetTensorDesc().GetShape();
+  }
+  std::string op_name = TbeGetName(op);
+  ge::Shape broadcast_shape;
+  ge::Shape output_shape;
+  InferBroadcastshapeForStatic(alpha_shape, beta_shape, broadcast_shape);
+  InferBroadcastshapeForStatic(Shape(shape_dims), broadcast_shape, output_shape);
+  OP_LOGI(op_name.c_str(), "infer output_shape: %s", to_string(output_shape).c_str());
+
   auto output_desc = op.GetOutputDesc("output");
-  output_desc.SetShape(Shape(shape_dims));
+  output_desc.SetShape(output_shape);
   output_desc.SetDataType(DT_FLOAT);
   op.UpdateOutputDesc("output", output_desc);
   return GRAPH_SUCCESS;
@@ -236,6 +263,42 @@ CUST_IMPLEMT_INFERFUNC(LogUniformCandidateSampler, LogUniformCandidateSamplerInf
 CUST_INFER_FUNC_REG(LogUniformCandidateSampler, LogUniformCandidateSamplerInfer);
 // ----------------LogUniformCandidateSampler END-------------------
 
+// ----------------Multinomial-------------------
+IMPLEMT_COMMON_INFERFUNC(MultinomialInfer) {
+  auto logits_desc = op.GetInputDescByName("logits");
+  auto num_samples_desc = op.GetInputDescByName("num_samples");
+  auto output_desc = op.GetOutputDescByName("y");
+
+  DataType logits_dtype = logits_desc.GetDataType();
+  ge::Shape logits_shape = logits_desc.GetShape();
+  int64_t num_samples = UNKNOWN_DIM;
+
+  std::vector<std::string> input_infer_depends = {"num_samples"};
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
+  Tensor num_samples_tensor;
+  if (op.GetInputConstData("num_samples", num_samples_tensor) == GRAPH_SUCCESS) {
+    if (MakeDimForScalarInput(num_samples_tensor, num_samples, op) != GRAPH_SUCCESS) {
+      return GRAPH_FAILED;
+    }
+  }
+
+  DataType output_dtype;
+  if (op.GetAttr("dtype", output_dtype) != GRAPH_SUCCESS) {
+    output_dtype = logits_dtype;
+  }
+  if (logits_shape.GetDims().size() == 2) {
+    output_desc.SetShape(ge::Shape({logits_shape.GetDim(0), num_samples}));
+  } else {
+    output_desc.SetShape(ge::Shape({num_samples}));
+  }
+  output_desc.SetDataType(output_dtype);
+
+  return op.UpdateOutputDesc("y", output_desc);
+}
+
+CUST_COMMON_INFER_FUNC_REG(Multinomial, MultinomialInfer);
+// ----------------Multinomial END-------------------
+
 IMPLEMT_COMMON_INFERFUNC(BatchSizeAndNumSampleInferShape) {
   auto logits_desc = op.GetInputDescByName("logits");
   auto num_samples_desc = op.GetInputDescByName("num_samples");
@@ -266,7 +329,6 @@ IMPLEMT_COMMON_INFERFUNC(BatchSizeAndNumSampleInferShape) {
   return op.UpdateOutputDesc("y", output_desc);
 }
 
-CUST_COMMON_INFER_FUNC_REG(Multinomial, BatchSizeAndNumSampleInferShape);
 CUST_COMMON_INFER_FUNC_REG(RandomCategorical, BatchSizeAndNumSampleInferShape);
 CUST_ONE_IN_ONE_OUT_INFER(RandomShuffle, x, y);
 
@@ -354,17 +416,42 @@ CUST_INFER_FUNC_REG(RandomUniformInt, RandomUniformIntInfer);
 // ----------------RandomUniformInt End-------------------
 
 // ----------------Igamma-------------------
-CUST_IMPLEMT_INFERFUNC(Igamma, IgammaInfer) {
-  DataType a_type = op.GetInputDescByName("a").GetDataType();
-  TensorDesc z_desc = op.GetOutputDescByName("z");
-  z_desc.SetDataType(a_type);
-  if (op.UpdateOutputDesc("z", z_desc) != GRAPH_SUCCESS) {
-    return GRAPH_FAILED;
-  }
-  return BROADCAST_INFER("a", "x", "z")(op);
-}
 
+#define IGAMMA_INFER()                                          \
+  do {                                                          \
+    DataType a_type = op.GetInputDescByName("a").GetDataType(); \
+    TensorDesc z_desc = op.GetOutputDescByName("z");            \
+    z_desc.SetDataType(a_type);                                 \
+    if (op.UpdateOutputDesc("z", z_desc) != GRAPH_SUCCESS) {    \
+      return GRAPH_FAILED;                                      \
+    }                                                           \
+    auto a_desc = op.GetInputDescByName("a");                   \
+    auto a_shape = a_desc.GetShape();                           \
+    if (IsUnknownRankShape(a_shape)) {                          \
+      std::vector<int64_t> out_dim{ge::UNKNOWN_DIM_NUM};        \
+      z_desc.SetShape(ge::Shape(out_dim));                      \
+      return op.UpdateOutputDesc("z", z_desc);                  \
+    }                                                           \
+    if (IsUnknown(a_shape.GetDims())) {                         \
+      int64_t x_rank = a_shape.GetDims().size();                \
+      std::vector<int64_t> out_dim(x_rank);                     \
+      for (int64_t di = 0; di < x_rank; di++) {                 \
+        out_dim[di] = UNKNOWN_DIM;                              \
+      }                                                         \
+      z_desc.SetShape(ge::Shape(out_dim));                      \
+      return op.UpdateOutputDesc("z", z_desc);                  \
+    }                                                           \
+    return BROADCAST_INFER("a", "x", "z")(op);                  \
+  } while (false)
+
+CUST_IMPLEMT_INFERFUNC(Igamma, IgammaInfer) { IGAMMA_INFER(); }
 CUST_INFER_FUNC_REG(Igamma, IgammaInfer);
+
+IMPLEMT_INFERFUNC(Igammac, IgammacInfer) { IGAMMA_INFER(); }
+INFER_FUNC_REG(Igammac, IgammacInfer);
+
+IMPLEMT_INFERFUNC(IgammaGradA, IgammaGradAInfer) { IGAMMA_INFER(); }
+INFER_FUNC_REG(IgammaGradA, IgammaGradAInfer);
 // ----------------Igamma END-------------------
 
 // ----------------Poisson-------------------

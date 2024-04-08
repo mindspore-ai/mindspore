@@ -24,7 +24,7 @@ mindspore.nn.MaxPool3d
         - **padding** (Union(int, tuple[int], list[int])) - 池化填充值。默认值： ``0`` 。 `padding` 只能是一个整数或者包含一个或三个整数的tuple/list，若 `padding` 为一个整数或包含一个整数的tuple/list，则会分别在输入的前后上下左右六个方向进行 `padding` 次的填充，若 `padding` 为一个包含三个整数的tuple/list，则会在输入的前后进行 `padding[0]` 次的填充，上下进行 `padding[1]` 次的填充，在输入的左右进行 `padding[2]` 次的填充。
         - **dilation** (Union(int, tuple[int])) - 卷积核中各个元素之间的间隔大小，用于提升池化操作的感受野。如果为tuple，其值必须包含一个或三个整数。默认值： ``1`` 。
         - **return_indices** (bool) - 若为True，则返回一个包含两个Tensor的Tuple，表示池化的计算结果以及生成max值的位置，否则，仅返回池化计算结果。默认值： ``False`` 。
-        - **ceil_mode** (bool) - 若为True，使用ceil模式来计算输出shape。若为False，使用floor模式来计算输出shape。默认值： ``False`` 。
+        - **ceil_mode** (bool) - 若为 ``True`` ，使用ceil模式来计算输出shape。若为 ``False`` ，使用floor模式来计算输出shape。默认值： ``False`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 或者 :math:`(C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。

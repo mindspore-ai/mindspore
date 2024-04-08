@@ -179,11 +179,7 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
  protected:
   void InitSizeLists() {
     size_t input_size = size_ * sizeof(T);
-    if (!use_center_) {
-      output_size_list_.push_back(input_size);
-    } else {
-      output_size_list_.push_back(input_size);
-    }
+    output_size_list_.push_back(input_size);
   }
 
  private:

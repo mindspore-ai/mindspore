@@ -27,14 +27,14 @@ const uint32_t kInputNum = 2;
 const uint32_t kOutputNum = 1;
 const char *kLowerBound = "LowerBound";
 
-#define LOWERBOUND_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)    \
-  case (DTYPE): {                                            \
-    uint32_t result = LowerBoundCompute<TYPE1, TYPE2>(CTX);  \
-    if (result != KERNEL_STATUS_OK) {                        \
-      KERNEL_LOG_ERROR("LowerBound kernel compute failed."); \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define LOWERBOUND_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)              \
+  case (DTYPE): {                                                      \
+    uint32_t result = LowerBoundCompute<TYPE1, TYPE2>(CTX);            \
+    if (result != KERNEL_STATUS_OK) {                                  \
+      CUST_KERNEL_LOG_ERROR(ctx, "LowerBound kernel compute failed."); \
+      return result;                                                   \
+    }                                                                  \
+    break;                                                             \
   }
 
 #define LOWERBOUND_COMPUTE_CASE_ALL(TYPE, CTX)                \
@@ -51,7 +51,8 @@ const char *kLowerBound = "LowerBound";
 
 namespace aicpu {
 uint32_t LowerBoundCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "LowerBound check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "LowerBound check input and output number failed.");
   Tensor *sorted_x_data = ctx.Input(0);
   Tensor *values_data = ctx.Input(1);
   Tensor *output_data = ctx.Output(0);
@@ -59,8 +60,8 @@ uint32_t LowerBoundCpuKernel::Compute(CpuKernelContext &ctx) {
   auto sorted_x_type = sorted_x_data->GetDataType();
   auto values_type = values_data->GetDataType();
   if (sorted_x_type != values_type) {
-    KERNEL_LOG_ERROR("Input[0] data type[%s] must be same with Input[1] data type[%s]", DTypeStr(sorted_x_type).c_str(),
-                     DTypeStr(values_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] must be same with Input[1] data type[%s]",
+                          DTypeStr(sorted_x_type).c_str(), DTypeStr(values_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   switch (output_type) {
@@ -68,7 +69,7 @@ uint32_t LowerBoundCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (sorted_x_type) {
         LOWERBOUND_COMPUTE_CASE_ALL(int32_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input data type[%s] not supported.", DTypeStr(sorted_x_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input data type[%s] not supported.", DTypeStr(sorted_x_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -76,19 +77,19 @@ uint32_t LowerBoundCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (sorted_x_type) {
         LOWERBOUND_COMPUTE_CASE_ALL(int64_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input data type[%s] not supported.", DTypeStr(sorted_x_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input data type[%s] not supported.", DTypeStr(sorted_x_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     default:
-      KERNEL_LOG_ERROR("Output data type[%s] not supported.", DTypeStr(output_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Output data type[%s] not supported.", DTypeStr(output_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T1, typename T2>
-uint32_t LowerBoundCpuKernel::LowerBoundCompute(const CpuKernelContext &ctx) {
+uint32_t LowerBoundCpuKernel::LowerBoundCompute(CpuKernelContext &ctx) {
   Tensor *sorted_x_data = ctx.Input(0);
   auto sorted_x_data_addr = reinterpret_cast<T1 *>(sorted_x_data->GetData());
   auto sorted_x_data_shape = sorted_x_data->GetTensorShape();
@@ -101,8 +102,9 @@ uint32_t LowerBoundCpuKernel::LowerBoundCompute(const CpuKernelContext &ctx) {
   Tensor *output_data = ctx.Output(0);
   auto output_data_addr = reinterpret_cast<T2 *>(output_data->GetData());
   if (sorted_x_data_shape_dims[0] != values_data_shape_dims[0]) {
-    KERNEL_LOG_ERROR("The number of rows of Input[0]:([%d]) should be consistent with that of Input[1]:([%d]).",
-                     sorted_x_data_shape_dims[0], values_data_shape_dims[0]);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The number of rows of Input[0]:([%d]) should be consistent with that of Input[1]:([%d]).",
+                          sorted_x_data_shape_dims[0], values_data_shape_dims[0]);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t sorted_x_data_column = sorted_x_data_shape_dims[1];
@@ -144,8 +146,8 @@ uint32_t LowerBoundCpuKernel::LowerBoundCompute(const CpuKernelContext &ctx) {
         output_data_addr[i] = low - seq_row * sorted_x_data_column;
       }
     };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, values_data_num, values_data_num / sum_core_num, shard_compute),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, values_data_num, values_data_num / sum_core_num, shard_compute),
       "LowerBound Compute failed.");
   }
   return KERNEL_STATUS_OK;

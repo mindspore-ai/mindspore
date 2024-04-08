@@ -16,7 +16,7 @@ mindspore.ops.Tril
         - **x** (Tensor) - 输入Tensor。shape为 :math:`(M, N, *)` ，其中 :math:`*` 为任意数量的额外维度。
 
     输出：
-        Tensor，其数据类型和shape维度与 `input_x` 相同。shape的第一个维度等于 `segment_ids` 最后一个元素的值加1，其他维度与 `input_x` 一致。
+        Tensor，其数据类型和shape维度与输入 `x` 相同。
 
     异常：
         - **TypeError** - 如果 `x` 不是Tensor。

@@ -52,7 +52,6 @@ int NetTrainCApi::SaveModels() {
     }
     auto status =
       MSExportModel(ms_model_, kMSModelTypeMindIR, (flags_->export_file_).c_str(), kMSNO_QUANT, false, nullptr, 0);
-
     if (status != kMSStatusSuccess) {
       MS_LOG(ERROR) << "Export non quantized model error " << flags_->export_file_;
       std::cout << "Export non quantized model error " << flags_->export_file_ << std::endl;
@@ -159,9 +158,27 @@ int NetTrainCApi::InitMSContext() {
 
 char **NetTrainCApi::TransStrVectorToCharArrays(const std::vector<std::string> &s) {
   char **char_arr = static_cast<char **>(malloc(s.size() * sizeof(char *)));
+  if (char_arr == nullptr) {
+    return nullptr;
+  }
   for (size_t i = 0; i < s.size(); i++) {
     char_arr[i] = static_cast<char *>(malloc((s[i].size() + 1)));
-    strcpy_s(char_arr[i], s[i].size() + 1, s[i].c_str());
+    if (char_arr[i] == nullptr) {
+      for (size_t j = 0; j < i; j++) {
+        free(char_arr[j]);
+      }
+      free(char_arr);
+      return nullptr;
+    }
+    auto ret = strcpy_s(char_arr[i], s[i].size() + 1, s[i].c_str());
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "strcpy_s failed, ret = " << ret;
+      for (size_t j = 0; j <= i; j++) {
+        free(char_arr[j]);
+      }
+      free(char_arr);
+      return nullptr;
+    }
   }
   return char_arr;
 }

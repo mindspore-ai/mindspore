@@ -31,14 +31,14 @@ const uint32_t BOUNDING_BOXES_SIZE = 4;
 
 const char *kSDBBExt2 = "SampleDistortedBoundingBoxExt2";
 
-#define SDBBExt2CpuKernel_COMPUTE_CASE(DTYPE, TYPE, CTX)                         \
-  case (DTYPE): {                                                                \
-    uint32_t result = SDBBExt2Compute<TYPE>(CTX);                                \
-    if (result != KERNEL_STATUS_OK) {                                            \
-      KERNEL_LOG_ERROR("SampleDistortedBoundingBoxExt2 kernel compute failed."); \
-      return result;                                                             \
-    }                                                                            \
-    break;                                                                       \
+#define SDBBExt2CpuKernel_COMPUTE_CASE(DTYPE, TYPE, CTX)                                   \
+  case (DTYPE): {                                                                          \
+    uint32_t result = SDBBExt2Compute<TYPE>(CTX);                                          \
+    if (result != KERNEL_STATUS_OK) {                                                      \
+      CUST_KERNEL_LOG_ERROR(ctx, "SampleDistortedBoundingBoxExt2 kernel compute failed."); \
+      return result;                                                                       \
+    }                                                                                      \
+    break;                                                                                 \
   }
 }  // namespace
 
@@ -57,7 +57,7 @@ void SDBBExt2CpuKernel::InitPhiloxRandom(int64_t seed, int64_t seed2) {
   generator_ = random::PhiloxRandom(seed, seed2);
 }
 
-float SDBBExt2CpuKernel::RandFloat() {
+float SDBBExt2CpuKernel::RandFloat(CpuKernelContext &ctx) {
   uint32_t x = GenerateSingle();
   const uint32_t man = x & 0x7fffffu;  // 23 bit mantissa
   const uint32_t exp = static_cast<uint32_t>(127);
@@ -66,7 +66,7 @@ float SDBBExt2CpuKernel::RandFloat() {
   float result;
   auto ret = memcpy_s(&result, sizeof(result), &val, sizeof(val));
   if (ret != EOK) {
-    KERNEL_LOG_ERROR("For 'SampleDistortedBoundingBoxExt2', memcpy_s failed, ret=%d.", ret);
+    CUST_KERNEL_LOG_ERROR(ctx, "For 'SampleDistortedBoundingBoxExt2', memcpy_s failed, ret=%d.", ret);
   }
   return result - 1.0f;
 }
@@ -192,99 +192,102 @@ bool SDBBExt2CpuKernel::GenerateRandomCrop(int original_width, int original_heig
 
 uint32_t SDBBExt2CpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "SampleDistortedBoundingBoxExt2 check input and output number failed.");
-  KERNEL_HANDLE_ERROR(SDBBExt2Check(ctx), "SampleDistortedBoundingBoxExt2 check params or bcast failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SampleDistortedBoundingBoxExt2 check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, SDBBExt2Check(ctx), "SampleDistortedBoundingBoxExt2 check params or bcast failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     SDBBExt2CpuKernel_COMPUTE_CASE(DT_UINT8, uint8_t, ctx) SDBBExt2CpuKernel_COMPUTE_CASE(DT_INT8, int8_t, ctx)
       SDBBExt2CpuKernel_COMPUTE_CASE(DT_INT16, int16_t, ctx) SDBBExt2CpuKernel_COMPUTE_CASE(DT_INT32, int32_t, ctx)
         SDBBExt2CpuKernel_COMPUTE_CASE(DT_INT64, int64_t, ctx) default
-        : KERNEL_LOG_ERROR("SampleDistortedBoundingBoxExt2 kernel data type [%s] not support.",
-                           DTypeStr(data_type).c_str());
+        : CUST_KERNEL_LOG_ERROR(ctx, "SampleDistortedBoundingBoxExt2 kernel data type [%s] not support.",
+                                DTypeStr(data_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SDBBExt2CpuKernel::SDBBExt2Check(const CpuKernelContext &ctx) {
+uint32_t SDBBExt2CpuKernel::SDBBExt2Check(CpuKernelContext &ctx) {
   auto image_size = ctx.Input(0);
   auto bounding_boxes = ctx.Input(1);
   auto min_object_covered = ctx.Input(2);
   auto begin = ctx.Output(0);
   auto size = ctx.Output(1);
   auto bboxes = ctx.Output(2);
-  KERNEL_CHECK_NULLPTR(image_size->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
-  KERNEL_CHECK_NULLPTR(bounding_boxes->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
-  KERNEL_CHECK_NULLPTR(min_object_covered->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.")
-  KERNEL_CHECK_NULLPTR(begin->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed")
-  KERNEL_CHECK_NULLPTR(size->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed")
-  KERNEL_CHECK_NULLPTR(bboxes->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 2 data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, image_size->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, bounding_boxes->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, min_object_covered->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, begin->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, size->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, bboxes->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 2 data failed")
 
   auto attr_seed = ctx.GetAttr("seed");
-  KERNEL_CHECK_NULLPTR(attr_seed, KERNEL_STATUS_PARAM_INVALID, "Get seed attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr_seed, KERNEL_STATUS_PARAM_INVALID, "Get seed attr failed.")
   seed = attr_seed->GetInt();
 
   auto attr_seed2 = ctx.GetAttr("seed2");
-  KERNEL_CHECK_NULLPTR(attr_seed2, KERNEL_STATUS_PARAM_INVALID, "Get seed2 attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr_seed2, KERNEL_STATUS_PARAM_INVALID, "Get seed2 attr failed.")
   seed2 = attr_seed2->GetInt();
 
   auto attr_aspect_ratio_range = ctx.GetAttr("aspect_ratio_range");
-  KERNEL_CHECK_NULLPTR(attr_aspect_ratio_range, KERNEL_STATUS_PARAM_INVALID, "Get aspect_ratio_range attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr_aspect_ratio_range, KERNEL_STATUS_PARAM_INVALID,
+                            "Get aspect_ratio_range attr failed.")
   aspect_ratio_range = attr_aspect_ratio_range->GetListFloat();
 
   auto attr_area_range = ctx.GetAttr("area_range");
-  KERNEL_CHECK_NULLPTR(attr_area_range, KERNEL_STATUS_PARAM_INVALID, "Get area_range attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr_area_range, KERNEL_STATUS_PARAM_INVALID, "Get area_range attr failed.")
   area_range = attr_area_range->GetListFloat();
 
   auto attr_max_attempts = ctx.GetAttr("max_attempts");
-  KERNEL_CHECK_NULLPTR(attr_max_attempts, KERNEL_STATUS_PARAM_INVALID, "Get max_attempts attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr_max_attempts, KERNEL_STATUS_PARAM_INVALID, "Get max_attempts attr failed.")
   max_attempts = attr_max_attempts->GetInt();
 
   auto attr_use_image_if_no_bounding_boxes = ctx.GetAttr("use_image_if_no_bounding_boxes");
-  KERNEL_CHECK_NULLPTR(attr_use_image_if_no_bounding_boxes, KERNEL_STATUS_PARAM_INVALID,
-                       "Get use_image_if_no_bounding_boxes attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr_use_image_if_no_bounding_boxes, KERNEL_STATUS_PARAM_INVALID,
+                            "Get use_image_if_no_bounding_boxes attr failed.")
   use_image_if_no_bounding_boxes = attr_use_image_if_no_bounding_boxes->GetBool();
 
-  KERNEL_CHECK_NULLPTR(image_size->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input image_size shape failed.")
-  KERNEL_CHECK_NULLPTR(bounding_boxes->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
-                       "Get input bounding_boxes shape failed.")
-  KERNEL_CHECK_NULLPTR(min_object_covered->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
-                       "Get input min_object_covered shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, image_size->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input image_size shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, bounding_boxes->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input bounding_boxes shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, min_object_covered->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input min_object_covered shape failed.")
 
   std::vector<int64_t> shape_image_size = image_size->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_bounding_boxes = bounding_boxes->GetTensorShape()->GetDimSizes();
 
-  KERNEL_CHECK_FALSE((shape_image_size.size() == 1), KERNEL_STATUS_PARAM_INVALID,
-                     "image_size must be 1-dimensional, got: [%d].", shape_image_size.size())
-  KERNEL_CHECK_FALSE((shape_image_size.at(0) == IMAGE_SIZE_NUM), KERNEL_STATUS_PARAM_INVALID,
-                     "image_size must contain 3 elements, got: [%d].", shape_image_size.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_image_size.size() == 1), KERNEL_STATUS_PARAM_INVALID,
+                          "image_size must be 1-dimensional, got: [%d].", shape_image_size.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_image_size.at(0) == IMAGE_SIZE_NUM), KERNEL_STATUS_PARAM_INVALID,
+                          "image_size must contain 3 elements, got: [%d].", shape_image_size.size())
 
-  KERNEL_CHECK_FALSE((shape_bounding_boxes.size() == SHAPE_BOUNDING_BOXES_SIZE), KERNEL_STATUS_PARAM_INVALID,
-                     "input boxes must be 3-dimensional [batch, num_boxes, "
-                     "coords], got: [%d].",
-                     shape_bounding_boxes.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_bounding_boxes.size() == SHAPE_BOUNDING_BOXES_SIZE), KERNEL_STATUS_PARAM_INVALID,
+                          "input boxes must be 3-dimensional [batch, num_boxes, "
+                          "coords], got: [%d].",
+                          shape_bounding_boxes.size())
 
-  KERNEL_CHECK_FALSE((shape_bounding_boxes.at(shape_bounding_boxes.size() - 1) == BOUNDING_BOXES_SIZE),
-                     KERNEL_STATUS_PARAM_INVALID, "bounding boxes must have shape [4], got: [%d].",
-                     shape_bounding_boxes.at(shape_bounding_boxes.size() - 1))
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_bounding_boxes.at(shape_bounding_boxes.size() - 1) == BOUNDING_BOXES_SIZE),
+                          KERNEL_STATUS_PARAM_INVALID, "bounding boxes must have shape [4], got: [%d].",
+                          shape_bounding_boxes.at(shape_bounding_boxes.size() - 1))
 
   const int aspect_ratio_range_size = 2;
-  KERNEL_CHECK_FALSE((aspect_ratio_range.size() == aspect_ratio_range_size), KERNEL_STATUS_PARAM_INVALID,
-                     "Aspect ratio range field must specify 2 dimensions.")
-  KERNEL_CHECK_FALSE((aspect_ratio_range[0] > 0 && aspect_ratio_range[1] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Aspect ratio range must be positive: [%f], [%f].", aspect_ratio_range[0], aspect_ratio_range[1])
+  CUST_KERNEL_CHECK_FALSE(ctx, (aspect_ratio_range.size() == aspect_ratio_range_size), KERNEL_STATUS_PARAM_INVALID,
+                          "Aspect ratio range field must specify 2 dimensions.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (aspect_ratio_range[0] > 0 && aspect_ratio_range[1] > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Aspect ratio range must be positive: [%f], [%f].", aspect_ratio_range[0],
+                          aspect_ratio_range[1])
 
   const int area_range_size = 2;
-  KERNEL_CHECK_FALSE((area_range.size() == area_range_size), KERNEL_STATUS_PARAM_INVALID,
-                     "Area range field must specify 2 dimensions.")
-  KERNEL_CHECK_FALSE((area_range[0] > 0 && area_range[1] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Area range must be positive: [%f], [%f].", area_range[0], area_range[1])
-  KERNEL_CHECK_FALSE((area_range[0] <= 1 && area_range[1] <= 1), KERNEL_STATUS_PARAM_INVALID,
-                     "Area range must be less then or equal to 1.0: [%f], [%f].", area_range[0], area_range[1])
+  CUST_KERNEL_CHECK_FALSE(ctx, (area_range.size() == area_range_size), KERNEL_STATUS_PARAM_INVALID,
+                          "Area range field must specify 2 dimensions.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (area_range[0] > 0 && area_range[1] > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Area range must be positive: [%f], [%f].", area_range[0], area_range[1])
+  CUST_KERNEL_CHECK_FALSE(ctx, (area_range[0] <= 1 && area_range[1] <= 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Area range must be less then or equal to 1.0: [%f], [%f].", area_range[0], area_range[1])
 
-  KERNEL_CHECK_FALSE((max_attempts > 0), KERNEL_STATUS_PARAM_INVALID, "Max attempts must be positive: [%d]",
-                     max_attempts)
+  CUST_KERNEL_CHECK_FALSE(ctx, (max_attempts > 0), KERNEL_STATUS_PARAM_INVALID, "Max attempts must be positive: [%d]",
+                          max_attempts)
   return KERNEL_STATUS_OK;
 }
 
@@ -300,13 +303,13 @@ uint32_t SDBBExt2CpuKernel::SDBBExt2Compute(CpuKernelContext &ctx) {
   const int32_t height = static_cast<int32_t>(image_size[0]);
   const int32_t width = static_cast<int32_t>(image_size[1]);
   if (!(height > 0 && width > 0)) {
-    KERNEL_LOG_ERROR("Image height and width must be positive, got: [%d] and [%d]", height, width);
+    CUST_KERNEL_LOG_ERROR(ctx, "Image height and width must be positive, got: [%d] and [%d]", height, width);
     return KERNEL_STATUS_INNER_ERROR;
   }
   float min_object_covered_val = 0.0;
   min_object_covered_val = *min_object_covered;
   if (min_object_covered_val < 0.0 || min_object_covered_val > 1.0) {
-    KERNEL_LOG_ERROR("min_object_covered must be in [0.0, 1.0], got: [%f]", min_object_covered_val);
+    CUST_KERNEL_LOG_ERROR(ctx, "min_object_covered must be in [0.0, 1.0], got: [%f]", min_object_covered_val);
     return KERNEL_STATUS_INNER_ERROR;
   }
   const int index_y_min = 0;
@@ -319,19 +322,19 @@ uint32_t SDBBExt2CpuKernel::SDBBExt2Compute(CpuKernelContext &ctx) {
   if (size_bounding_boxes > 0) {
     for (int b = 0; b < size_bounding_boxes / kBBoxSize; ++b) {
       if (!(bounding_boxes[b * kBBoxSize + index_x_min] < bounding_boxes[b * kBBoxSize + index_x_max])) {
-        KERNEL_LOG_ERROR("x_min must be less than x_max, got: [%f] and [%f]",
-                         bounding_boxes[b * kBBoxSize + index_x_min], bounding_boxes[b * kBBoxSize + index_x_max]);
+        CUST_KERNEL_LOG_ERROR(ctx, "x_min must be less than x_max, got: [%f] and [%f]",
+                              bounding_boxes[b * kBBoxSize + index_x_min], bounding_boxes[b * kBBoxSize + index_x_max]);
         return KERNEL_STATUS_INNER_ERROR;
       }
       if (!(bounding_boxes[b * kBBoxSize + index_y_min] < bounding_boxes[b * kBBoxSize + index_y_max])) {
-        KERNEL_LOG_ERROR("y_min must be less than y_max, got: [%f] and [%f]",
-                         bounding_boxes[b * kBBoxSize + index_y_min], bounding_boxes[b * kBBoxSize + index_y_max]);
+        CUST_KERNEL_LOG_ERROR(ctx, "y_min must be less than y_max, got: [%f] and [%f]",
+                              bounding_boxes[b * kBBoxSize + index_y_min], bounding_boxes[b * kBBoxSize + index_y_max]);
         return KERNEL_STATUS_INNER_ERROR;
       }
       for (int i = 0; i < kBBoxSize; ++i) {
         if (bounding_boxes[b * kBBoxSize + i] < 0.0 || bounding_boxes[b * kBBoxSize + i] > 1.0) {
-          KERNEL_LOG_ERROR("All bounding box coordinates must be in [0.0, 1.0], got: [%f]",
-                           bounding_boxes[b * kBBoxSize + i]);
+          CUST_KERNEL_LOG_ERROR(ctx, "All bounding box coordinates must be in [0.0, 1.0], got: [%f]",
+                                bounding_boxes[b * kBBoxSize + i]);
           return KERNEL_STATUS_INNER_ERROR;
         }
       }
@@ -346,10 +349,10 @@ uint32_t SDBBExt2CpuKernel::SDBBExt2Compute(CpuKernelContext &ctx) {
   const Rectangle image_rect(0, 0, width, height);
   if (boxes.empty()) {
     if (!use_image_if_no_bounding_boxes) {
-      KERNEL_LOG_ERROR(
-        "No bounding boxes provided as input. One must "
-        "enable use_image_if_no_bounding_boxes if you wish "
-        "to not provide any bounding boxes.");
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "No bounding boxes provided as input. One must "
+                            "enable use_image_if_no_bounding_boxes if you wish "
+                            "to not provide any bounding boxes.");
       return KERNEL_STATUS_INNER_ERROR;
     }
 
@@ -367,7 +370,7 @@ uint32_t SDBBExt2CpuKernel::SDBBExt2Compute(CpuKernelContext &ctx) {
   bool sample_generated = false;
   for (int i = 0; i < max_attempts; ++i) {
     const float sample_aspect_ratio =
-      RandFloat() * (max_sample_aspect_ratio - min_sample_aspect_ratio) + min_sample_aspect_ratio;
+      RandFloat(ctx) * (max_sample_aspect_ratio - min_sample_aspect_ratio) + min_sample_aspect_ratio;
     if (GenerateRandomCrop(width, height, min_sample_area, max_sample_area, sample_aspect_ratio, &crop_rect)) {
       if (SatisfiesOverlapConstraints(crop_rect, min_object_covered_val, boxes)) {
         sample_generated = true;
@@ -387,14 +390,14 @@ uint32_t SDBBExt2CpuKernel::SDBBExt2Compute(CpuKernelContext &ctx) {
   const int offset_height = crop_rect.min_y_;
 
   if (width < target_width + offset_width) {
-    KERNEL_LOG_ERROR("width must be >= target_width + offset_width: [%d] vs [%d] + [%d]", width, target_width,
-                     offset_width);
+    CUST_KERNEL_LOG_ERROR(ctx, "width must be >= target_width + offset_width: [%d] vs [%d] + [%d]", width, target_width,
+                          offset_width);
     return KERNEL_STATUS_INNER_ERROR;
   }
 
   if (height < target_height + offset_height) {
-    KERNEL_LOG_ERROR("height must be >= target_height + offset_height: [%d] vs [%d] + [%d]", height, target_height,
-                     offset_height);
+    CUST_KERNEL_LOG_ERROR(ctx, "height must be >= target_height + offset_height: [%d] vs [%d] + [%d]", height,
+                          target_height, offset_height);
     return KERNEL_STATUS_INNER_ERROR;
   }
 

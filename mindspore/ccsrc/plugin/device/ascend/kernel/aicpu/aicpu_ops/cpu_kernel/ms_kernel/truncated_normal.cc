@@ -48,7 +48,7 @@ uint32_t TruncatedNormalCpuKernel::DoCompute(CpuKernelContext &ctx) {
   std::vector<int64_t> out_put_dims;
   for (auto i = 0; i < input_data_nums; ++i) {
     if (*(input_data + i) <= 0) {
-      KERNEL_LOG_ERROR("Shape elements must be > 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Shape elements must be > 0.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
     out_put_dims.push_back(input_data[i]);
@@ -102,21 +102,23 @@ uint32_t TruncatedNormalCpuKernel::DataAndTypeCheck(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *output = ctx.Output(0);
   auto input_data_nums = input->NumElements();
-  KERNEL_CHECK_FALSE((input_data_nums >= kInputSizes), KERNEL_STATUS_PARAM_INVALID, "Input data elements must >= 2.");
-  KERNEL_CHECK_FALSE((input->GetTensorShape()->GetDimSizes().size() == kInputDims), KERNEL_STATUS_PARAM_INVALID,
-                     "Input tensor must be a 1-D tensor.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_data_nums >= kInputSizes), KERNEL_STATUS_PARAM_INVALID,
+                          "Input data elements must >= 2.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input->GetTensorShape()->GetDimSizes().size() == kInputDims),
+                          KERNEL_STATUS_PARAM_INVALID, "Input tensor must be a 1-D tensor.");
   auto input_datatype = input->GetDataType();
   auto output_datatype = output->GetDataType();
-  KERNEL_CHECK_FALSE((input_datatype == DT_INT32 || input_datatype == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "Input type must be int64 or int32.");
-  KERNEL_CHECK_FALSE((output_datatype == DT_FLOAT16 || output_datatype == DT_FLOAT || output_datatype == DT_DOUBLE),
-                     KERNEL_STATUS_PARAM_INVALID, "Out put type must be one of float16, float32 or double.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_datatype == DT_INT32 || input_datatype == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "Input type must be int64 or int32.");
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (output_datatype == DT_FLOAT16 || output_datatype == DT_FLOAT || output_datatype == DT_DOUBLE),
+    KERNEL_STATUS_PARAM_INVALID, "Out put type must be one of float16, float32 or double.");
   return KERNEL_STATUS_OK;
 }
 
 uint32_t TruncatedNormalCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kTruncatedNormal);
-  KERNEL_HANDLE_ERROR(DataAndTypeCheck(ctx), " TruncatedNormal input elements value  check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kTruncatedNormal);
+  CUST_KERNEL_HANDLE_ERROR(ctx, DataAndTypeCheck(ctx), " TruncatedNormal input elements value  check failed.");
   auto input_datatype = ctx.Input(0)->GetDataType();
 
   // get attrs
@@ -134,11 +136,11 @@ uint32_t TruncatedNormalCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = DoCompute<int64_t>(ctx);
       break;
     default: {
-      KERNEL_LOG_WARN("TruncatedNormal kernel data type [%s] not support.", DTypeStr(input_datatype).c_str());
+      CUST_KERNEL_LOG_WARN(ctx, "TruncatedNormal kernel data type [%s] not support.", DTypeStr(input_datatype).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
-  KERNEL_CHECK_FALSE((ret == KERNEL_STATUS_OK), ret, "Compute failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (ret == KERNEL_STATUS_OK), ret, "Compute failed.");
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kTruncatedNormal, TruncatedNormalCpuKernel);

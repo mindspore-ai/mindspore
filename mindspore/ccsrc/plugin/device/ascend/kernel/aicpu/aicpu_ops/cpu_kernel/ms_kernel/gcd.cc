@@ -53,10 +53,10 @@ uint32_t GcdIOTypeCheck(CpuKernelContext &ctx, int32_t &dual_types) {
   auto x1_type = x1->GetDataType();
   auto x2_type = x2->GetDataType();
   auto y_type = y->GetDataType();
-  KERNEL_CHECK_FALSE(supported_types.count(x1_type) != 0, KERNEL_STATUS_PARAM_INVALID,
-                     "[Gcd] input x1 data type [%s] is not supported.", DTypeStr(x1_type).c_str());
-  KERNEL_CHECK_FALSE(supported_types.count(x2_type) != 0, KERNEL_STATUS_PARAM_INVALID,
-                     "[Gcd] input x2 data type [%s] is not supported.", DTypeStr(x2_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, supported_types.count(x1_type) != 0, KERNEL_STATUS_PARAM_INVALID,
+                          "[Gcd] input x1 data type [%s] is not supported.", DTypeStr(x1_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, supported_types.count(x2_type) != 0, KERNEL_STATUS_PARAM_INVALID,
+                          "[Gcd] input x2 data type [%s] is not supported.", DTypeStr(x2_type).c_str());
   int32_t x1_is_i32 = static_cast<int32_t>(x1_type == DT_INT32) << 1;
   int32_t x2_is_i32 = static_cast<int32_t>(x2_type == DT_INT32);
   int32_t _dual_types = x1_is_i32 | x2_is_i32;
@@ -64,17 +64,17 @@ uint32_t GcdIOTypeCheck(CpuKernelContext &ctx, int32_t &dual_types) {
     case kInput_64_64:
     case kInput_64_32:
     case kInput_32_64:
-      KERNEL_CHECK_FALSE(y_type == DT_INT64, KERNEL_STATUS_PARAM_INVALID,
-                         "[Gcd] output y data type [%s] is not supported.", DTypeStr(y_type).c_str());
+      CUST_KERNEL_CHECK_FALSE(ctx, y_type == DT_INT64, KERNEL_STATUS_PARAM_INVALID,
+                              "[Gcd] output y data type [%s] is not supported.", DTypeStr(y_type).c_str());
       dual_types = _dual_types;
       break;
     case kInput_32_32:
-      KERNEL_CHECK_FALSE(y_type == DT_INT32, KERNEL_STATUS_PARAM_INVALID,
-                         "[Gcd] output y data type [%s] is not supported.", DTypeStr(y_type).c_str());
+      CUST_KERNEL_CHECK_FALSE(ctx, y_type == DT_INT32, KERNEL_STATUS_PARAM_INVALID,
+                              "[Gcd] output y data type [%s] is not supported.", DTypeStr(y_type).c_str());
       dual_types = _dual_types;
       break;
     default:
-      KERNEL_LOG_ERROR("[Gcd] input data type tuple is not supported.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[Gcd] input data type tuple is not supported.");
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -99,12 +99,12 @@ uint32_t GcdElewiseCompute(CpuKernelContext &ctx, const T1 *x1_ptr, const T2 *x2
       max_core_num = data_num;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("[Gcd] max_core_num is 0, please check the cpu num.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[Gcd] max_core_num is 0, please check the cpu num.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, gcd_shard);
     if (ret != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("[Gcd] Gcd Compute failed.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[Gcd] Gcd Compute failed.");
       return ret;
     }
   } else {
@@ -122,24 +122,25 @@ uint32_t GcdCompute(CpuKernelContext &ctx) {
   const T2 *x2_ptr = reinterpret_cast<const T2 *>(x2->GetData());
   T3 *y_ptr = reinterpret_cast<T3 *>(y->GetData());
   auto x1_shape_ptr = x1->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(x1_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: x1 shape is nullptr.", kGcd);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x1_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: x1 shape is nullptr.", kGcd);
   auto x1_shape = x1_shape_ptr->GetDimSizes();
   auto x2_shape_ptr = x2->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(x2_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: x2 shape is nullptr.", kGcd);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x2_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: x2 shape is nullptr.", kGcd);
   auto x2_shape = x2_shape_ptr->GetDimSizes();
-  Bcast bcast(x1_shape, x2_shape);
+  Bcast bcast(ctx, x1_shape, x2_shape);
   if (bcast.IsValid()) {
     return GcdElewiseCompute<T1, T2, T3>(ctx, x1_ptr, x2_ptr, y_ptr, bcast);
   } else {
-    KERNEL_LOG_ERROR("[Gcd] broadcast failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "[Gcd] broadcast failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 uint32_t GcdCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kGcdInputNum, kGcdOutputNum), "[Gcd] check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kGcdInputNum, kGcdOutputNum),
+                           "[Gcd] check input and output number failed.");
   int32_t dual_types = static_cast<int32_t>(-1);
-  KERNEL_HANDLE_ERROR(GcdIOTypeCheck(ctx, dual_types), "[Gcd] check data type failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, GcdIOTypeCheck(ctx, dual_types), "[Gcd] check data type failed.");
   switch (dual_types) {
     case kInput_64_64:
       return GcdCompute<int64_t, int64_t, int64_t>(ctx);
@@ -154,7 +155,7 @@ uint32_t GcdCpuKernel::Compute(CpuKernelContext &ctx) {
       return GcdCompute<int32_t, int32_t, int32_t>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("[Gcd] input data type tuple is not supported.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[Gcd] input data type tuple is not supported.");
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

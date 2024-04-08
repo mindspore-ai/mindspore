@@ -131,6 +131,8 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_CONV_ALLOW_TF32, true);
   set_param<bool>(MS_CTX_MATMUL_ALLOW_TF32, false);
   set_param<int>(MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL, 0);
+  set_param<int>(MS_CTX_DEBUG_LEVEL, kLevelRelease);
+  set_param<bool>(MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE, false);
 
   uint32_t kDefaultInterOpParallelThreads = 0;
   uint32_t kDefaultRuntimeNumThreads = 30;
@@ -520,22 +522,34 @@ bool MsContext::EnableAoeOffline() const {
 bool MsContext::IsKByKExecutorMode() const {
   // Get jit level.
   const auto &jit_config = PhaseManager::GetInstance().jit_config();
-  std::string jit_level = "O1";
+  std::string jit_level = "";
+  static std::string jit_level_log = "";
   auto iter = jit_config.find("jit_level");
   if (iter != jit_config.end()) {
     jit_level = iter->second;
   }
-  MS_LOG(INFO) << "The jit level is: " << jit_level;
 
+  auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (jit_level.empty()) {
+    auto device_target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    if (mode == kGraphMode && device_target == kAscendDevice) {
+      jit_level = kAttrJitLevelO2;
+    } else {
+      jit_level = kAttrJitLevelO1;
+    }
+  }
+  if (jit_level_log != jit_level) {
+    jit_level_log = jit_level;
+    MS_LOG(INFO) << "The jit level is: " << jit_level_log;
+  }
   if (get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
     MS_LOG(INFO) << "Enable kbyk executor mode by mem offload.";
     return true;
   }
 
-  auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
   if (mode == kPynativeMode) {
-    if (common::GetEnv("MS_PYNATIVE_GE") == "1" || jit_level == "O2") {
-      MS_LOG(INFO) << "The pynative mode enable ge executor mode by MS_PYNATIVE_GE or JitLevelO2.";
+    if (jit_level == "O2") {
+      MS_LOG(INFO) << "The pynative mode enable ge executor mode by JitLevelO2.";
       return false;
     }
     MS_LOG(INFO) << "The pynative mode enable kbyk executor mode.";
@@ -543,7 +557,7 @@ bool MsContext::IsKByKExecutorMode() const {
   }
 
   if (mode == kGraphMode) {
-    if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == "O0") {
+    if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == "O0" || jit_level == "O1") {
       MS_LOG(INFO) << "The graph mode enable kbyk executor mode by GRAPH_OP_RUN or JitLevelO0.";
       return true;
     }

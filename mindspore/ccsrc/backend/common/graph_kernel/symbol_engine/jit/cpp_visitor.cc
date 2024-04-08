@@ -110,8 +110,12 @@ void CppVisitor::CompileImpl() {
   auto kernel_meta_path = KernelMetaPath();
   (void)FileUtils::CreateNotExistDirs(kernel_meta_path);
   std::string cpp_file_name(kernel_meta_path + kPrefix + name_ + ".cc");
-  MS_LOG(DEBUG) << "SymbolEngineJit c++ function saved to: " << cpp_file_name;
-  std::ofstream cpp_file(cpp_file_name);
+  auto real_filename = FileUtils::GetRealPath(cpp_file_name.c_str());
+  if (!real_filename.has_value()) {
+    MS_LOG(EXCEPTION) << "Failed to get real name for " << cpp_file_name;
+  }
+  MS_LOG(DEBUG) << "SymbolEngineJit c++ function saved to: " << real_filename.value();
+  std::ofstream cpp_file(real_filename.value());
 
   // --- generate  .cc file
   const string header = R"(
@@ -124,13 +128,12 @@ void CppVisitor::CompileImpl() {
   for (auto &func : func_blocks_) {
     cpp_file << func << "\n";
   }
-
   cpp_file.close();
 
   // compile to dyn lib
   std::stringstream cmd;
   std::string so_name(kernel_meta_path + kPrefix + name_ + ".so");
-  cmd << "g++ -fPIC -shared -std=c++17 " << cpp_file_name << " -o " << so_name << " 2>&1";
+  cmd << "g++ -fPIC -shared -std=c++17 " << real_filename.value() << " -o " << so_name << " 2>&1";
 
   // create library
   constexpr size_t kBufferSize = 256;
@@ -157,9 +160,13 @@ CppVisitor::DynFuncType CppVisitor::LoadFunc(const std::string &func_name) {
     compile_thread_.join();
   }
   if (!dynlib_) {
-    dynlib_ = dlopen((KernelMetaPath() + kPrefix + name_ + ".so").c_str(), RTLD_LAZY);
+    auto so_name = FileUtils::GetRealPath((KernelMetaPath() + kPrefix + name_ + ".so").c_str());
+    if (!so_name.has_value()) {
+      MS_LOG(EXCEPTION) << "Failed to get real path for " << KernelMetaPath() << kPrefix << name_ << ".so";
+    }
+    dynlib_ = dlopen(so_name.value().c_str(), RTLD_LAZY);
     if (!dynlib_) {
-      MS_LOG(EXCEPTION) << "Cannot open dynamic library " << name_ << ".so :" << dlerror() << '\n';
+      MS_LOG(EXCEPTION) << "Cannot open dynamic library " << so_name.value() << ".so :" << dlerror() << '\n';
     }
   }
 
@@ -265,7 +272,7 @@ void CppVisitor::Visit(const ast::Shape &shape) {
   }
   if (!shape.smbls_.empty()) {
     // remove the last ", "
-    constexpr size_t remove_len = 2;
+    constexpr int remove_len = 2;
     sentence.seekp(-remove_len, sentence.cur);
   }
 

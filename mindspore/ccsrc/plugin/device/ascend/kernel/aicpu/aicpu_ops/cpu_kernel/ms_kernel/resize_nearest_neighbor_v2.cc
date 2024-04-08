@@ -57,7 +57,8 @@ inline float CalculateResizeScale(int64_t in_size, int64_t out_size, bool align_
 }
 
 uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2ParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kResizeNearestNeighborV2);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.",
+                           kResizeNearestNeighborV2);
   Tensor *x_ptr = ctx.Input(0);
   Tensor *size_ptr = ctx.Input(1);
   auto format = x_ptr->GetTensorShape()->GetFormat();
@@ -88,45 +89,45 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2ParamCheck(Cpu
   auto size_dims = size_ptr->GetTensorShape()->GetDims();
   auto size_data = static_cast<int32_t *>(size_ptr->GetData());
 
-  KERNEL_CHECK_FALSE(!(half_pixel_centers && align_corners), KERNEL_STATUS_PARAM_INVALID,
-                     "If half_pixel_centers is True, "
-                     "align_corners must be False, but got half_pixel_centers %s, "
-                     "align_corners %s.",
-                     half_pixel_centers == true ? "True" : "False", align_corners == true ? "True" : "False");
-  KERNEL_CHECK_FALSE(x_dims == kDim4, KERNEL_STATUS_PARAM_INVALID, "x must be 4-dimensional but got %d-dimensional.",
-                     x_dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, !(half_pixel_centers && align_corners), KERNEL_STATUS_PARAM_INVALID,
+                          "If half_pixel_centers is True, "
+                          "align_corners must be False, but got half_pixel_centers %s, "
+                          "align_corners %s.",
+                          half_pixel_centers == true ? "True" : "False", align_corners == true ? "True" : "False");
+  CUST_KERNEL_CHECK_FALSE(ctx, x_dims == kDim4, KERNEL_STATUS_PARAM_INVALID,
+                          "x must be 4-dimensional but got %d-dimensional.", x_dims);
   auto channels = x_shape[c_idx];
-  KERNEL_CHECK_FALSE(channels > kValue0, KERNEL_STATUS_PARAM_INVALID,
-                     "image must have at least one channel but got %d channel.", channels);
+  CUST_KERNEL_CHECK_FALSE(ctx, channels > kValue0, KERNEL_STATUS_PARAM_INVALID,
+                          "image must have at least one channel but got %d channel.", channels);
   auto height = x_shape[h_idx];
   auto width = x_shape[w_idx];
-  KERNEL_CHECK_FALSE(height > kValue0 && width > kValue0, KERNEL_STATUS_PARAM_INVALID,
-                     "x image must be of non-zero size but got height %d, width %d.", height, width);
-  KERNEL_CHECK_FALSE(height < INT32_MAX && width < INT32_MAX, KERNEL_STATUS_PARAM_INVALID,
-                     "x sizes must be between 0 and max int32 but got but "
-                     "got height %d, width %d.",
-                     height, width);
+  CUST_KERNEL_CHECK_FALSE(ctx, height > kValue0 && width > kValue0, KERNEL_STATUS_PARAM_INVALID,
+                          "x image must be of non-zero size but got height %d, width %d.", height, width);
+  CUST_KERNEL_CHECK_FALSE(ctx, height < INT32_MAX && width < INT32_MAX, KERNEL_STATUS_PARAM_INVALID,
+                          "x sizes must be between 0 and max int32 but got but "
+                          "got height %d, width %d.",
+                          height, width);
   auto in_height = static_cast<int32_t>(height);
   auto in_width = static_cast<int32_t>(width);
-  KERNEL_CHECK_FALSE(size_dims == kDim1, KERNEL_STATUS_PARAM_INVALID, "size_shape must be 1-dimensional but got %d.",
-                     size_dims);
-  KERNEL_CHECK_FALSE(size_ptr->NumElements() == kNumElements2, KERNEL_STATUS_PARAM_INVALID,
-                     "shape_t must have two elements but got %d element(s).", size_ptr->NumElements());
-  KERNEL_CHECK_FALSE(size_data[kIndex0] > 0 && size_data[kIndex1] > 0, KERNEL_STATUS_PARAM_INVALID,
-                     "output dimensions must be positive but got height %d, width %d.", size_data[kIndex0],
-                     size_data[kIndex1]);
+  CUST_KERNEL_CHECK_FALSE(ctx, size_dims == kDim1, KERNEL_STATUS_PARAM_INVALID,
+                          "size_shape must be 1-dimensional but got %d.", size_dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, size_ptr->NumElements() == kNumElements2, KERNEL_STATUS_PARAM_INVALID,
+                          "shape_t must have two elements but got %d element(s).", size_ptr->NumElements());
+  CUST_KERNEL_CHECK_FALSE(ctx, size_data[kIndex0] > 0 && size_data[kIndex1] > 0, KERNEL_STATUS_PARAM_INVALID,
+                          "output dimensions must be positive but got height %d, width %d.", size_data[kIndex0],
+                          size_data[kIndex1]);
   auto out_height = size_data[0];
   auto out_width = size_data[1];
 
   auto height_scale = CalculateResizeScale(in_height, out_height, align_corners);
   auto width_scale = CalculateResizeScale(in_width, out_width, align_corners);
-  KERNEL_CHECK_FALSE(ceilf((out_height - 1) * height_scale) <= static_cast<float>(INT64_MAX),
-                     KERNEL_STATUS_PARAM_INVALID, "input image height scale would cause an overflow.");
-  KERNEL_CHECK_FALSE(ceilf((out_width - 1) * width_scale) <= static_cast<float>(INT64_MAX), KERNEL_STATUS_PARAM_INVALID,
-                     "input image width scale would cause an overflow.");
-  KERNEL_CHECK_FALSE(in_height < (1 << kMaxValue) && in_width < (1 << kMaxValue), KERNEL_STATUS_PARAM_INVALID,
-                     "nearest neighbor requires max height "
-                     "& width of 2^24.");
+  CUST_KERNEL_CHECK_FALSE(ctx, ceilf((out_height - 1) * height_scale) <= static_cast<float>(INT64_MAX),
+                          KERNEL_STATUS_PARAM_INVALID, "input image height scale would cause an overflow.");
+  CUST_KERNEL_CHECK_FALSE(ctx, ceilf((out_width - 1) * width_scale) <= static_cast<float>(INT64_MAX),
+                          KERNEL_STATUS_PARAM_INVALID, "input image width scale would cause an overflow.");
+  CUST_KERNEL_CHECK_FALSE(ctx, in_height < (1 << kMaxValue) && in_width < (1 << kMaxValue), KERNEL_STATUS_PARAM_INVALID,
+                          "nearest neighbor requires max height "
+                          "& width of 2^24.");
 
   // Set Output Shape
   std::vector<int64_t> y_shape(x_shape);
@@ -158,7 +159,7 @@ uint32_t ResizeNearestNeighborV2CpuKernel::Compute(CpuKernelContext &ctx) {
       res = ResizeNearestNeighborV2Compute<double>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("For ResizeNearestNeighborV2, invalid input type [%s].", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "For ResizeNearestNeighborV2, invalid input type [%s].", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return res;
@@ -197,7 +198,7 @@ void ResizeNearestNeighborV2CpuKernel::InnerCompute(
 }
 
 template <typename T>
-uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2Compute(const CpuKernelContext &ctx) {
+uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2Compute(CpuKernelContext &ctx) {
   Tensor *input_x = ctx.Input(0);
   Tensor *output_y = ctx.Output(0);
   std::vector<int64_t> x_shape = input_x->GetTensorShape()->GetDimSizes();

@@ -53,6 +53,15 @@ REG_OP(PromptKvCache)
   .OUTPUT(out, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_FLOAT16, DT_FLOAT, DT_INT32, DT_BFLOAT16}))
   .OP_END_FACTORY_REG(PromptKvCache)
 
+REG_OP(EmbeddingLookup)
+  .INPUT(param, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_UINT32, DT_INT64, DT_UINT64,
+                            DT_FLOAT16, DT_FLOAT, DT_FLOAT64, DT_BFLOAT16, DT_BOOL}))
+  .INPUT(indices, TensorType({DT_INT8, DT_INT16, DT_INT32, DT_INT64}))
+  .INPUT(offset, TensorType({DT_INT8, DT_INT16, DT_INT32, DT_INT64}))
+  .OUTPUT(output, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_UINT16, DT_INT32, DT_UINT32, DT_INT64, DT_UINT64,
+                              DT_FLOAT16, DT_FLOAT, DT_FLOAT64, DT_BFLOAT16, DT_BOOL}))
+  .OP_END_FACTORY_REG(EmbeddingLookup)
+
 REG_CUST_OP(NoRepeatNGram)
   .INPUT(state_seq, TensorType({DT_INT32}))
   .INPUT(log_probs, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))

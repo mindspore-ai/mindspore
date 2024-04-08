@@ -360,7 +360,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): Number of epochs to decay over.
         power (float): The power of polynomial. It must be greater than 0.
-        update_decay_epoch (bool): If true, update `decay_epoch`. Default: ``False`` .
+        update_decay_epoch (bool): If ``true``, update `decay_epoch`. Default: ``False`` .
 
     Returns:
         list[float]. The size of list is `total_step`.

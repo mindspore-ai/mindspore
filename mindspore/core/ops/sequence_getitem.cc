@@ -176,6 +176,8 @@ class SequenceGetItemInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SequenceGetItemInnerInfer(primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 MIND_API_OPERATOR_IMPL(TupleGetItem, BaseOperator);
 MIND_API_OPERATOR_IMPL(RealTupleGetItem, BaseOperator);

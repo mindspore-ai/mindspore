@@ -261,7 +261,7 @@ INPUT_MAP(Eye) = EMPTY_INPUT_MAP;
 ATTR_MAP(Eye) = EMPTY_ATTR_MAP;
 INPUT_ATTR_MAP(Eye) = {{1, ATTR_DESC(num_rows, AnyTraits<int64_t>())},
                        {2, ATTR_DESC(num_columns, AnyTraits<int64_t>())},
-                       {3, ATTR_DESC(dtype, AnyTraits<GEType>())}};
+                       {3, ATTR_DESC(dtype, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
 OUTPUT_MAP(Eye) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Eye, kNameEye, ADPT_DESC(Eye));
 
@@ -322,4 +322,11 @@ ATTR_MAP(SparseTensorDenseMatMul) = {{"adjoint_a", ATTR_DESC(adjoint_a, AnyTrait
                                      {"adjoint_b", ATTR_DESC(adjoint_b, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseTensorDenseMatMul) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SparseTensorDenseMatMul, kNameSparseTensorDenseMatmul, ADPT_DESC(SparseTensorDenseMatMul));
+
+// IndexPut
+CUST_INPUT_MAP(IndexPut) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+CUST_DYN_INPUT_MAP(IndexPut) = {{3, DYN_INPUT_DESC(indices)}};
+CUST_ATTR_MAP(IndexPut) = {{"accumulate", ATTR_DESC(accumulate, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(IndexPut) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IndexPut, prim::kPrimIndexPut->name(), CUST_ADPT_DESC(IndexPut));
 }  // namespace mindspore::transform

@@ -29,7 +29,7 @@ class UpsampleNearest3dCpuKernel : public CpuKernel {
   uint32_t UpsampleNearest3dParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t UpsampleNearest3dCompute(const CpuKernelContext &ctx);
+  uint32_t UpsampleNearest3dCompute(CpuKernelContext &ctx);
 
   std::vector<int64_t> none_list;
 };

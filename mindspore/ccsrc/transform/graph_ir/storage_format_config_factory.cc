@@ -19,15 +19,14 @@
 #include <utility>
 
 namespace mindspore::transform {
-StorageFormatConfig &StorageFormatConfig::set_index_format(size_t index, const std::string &format,
-                                                           const DimsCheckFunc &func_, const std::string &expend_dims) {
+StorageFormatConfig &StorageFormatConfig::set_index_format(size_t index, const GetFormatFunc &func,
+                                                           const std::string &expend_dims) {
   StorageFormatInfo info;
-  info.format_ = format;
   info.expand_dims_ = expend_dims;
-  info.func_ = func_;
+  info.func_ = func;
   auto ret = storage_format_infoes_.emplace(index + 1, info);
   if (!ret.second) {
-    MS_LOG(ERROR) << "Set index format op type: " << op_type_ << ", index: " << index << ", format: " << format
+    MS_LOG(ERROR) << "Set index format op type: " << op_type_ << ", index: " << index
                   << ", expand_dims: " << expend_dims << " failed.";
   }
   return *this;

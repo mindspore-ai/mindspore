@@ -130,7 +130,6 @@ bool ExtendNode(const AnfNodePtr &node, const SymbolEnginePtr &main_engine, cons
   MS_EXCEPTION_IF_NULL(cnode);
 
   auto nodes = FindNodesDependOnValue(node, main_engine);
-
   if (nodes.size() > 1) {
     MS_LOG(DEBUG) << "The size of list of nodes to be clustered: " << nodes.size();
     config.base_node = node;

@@ -88,13 +88,9 @@ SymbolPtr MatMulShapeBuilder(OperationBuilder *b) {
   auto x = b->GetInputShape(kIndex0);
   auto y = b->GetInputShape(kIndex1);
   auto trans_a = b->GetAttr("transpose_a");
-  if (trans_a == nullptr) {
-    trans_a = BoolSymbol::Make(false);
-  }
+  MS_EXCEPTION_IF_NULL(trans_a);
   auto trans_b = b->GetAttr("transpose_b");
-  if (trans_b == nullptr) {
-    trans_b = BoolSymbol::Make(false);
-  }
+  MS_EXCEPTION_IF_NULL(trans_b);
   return b->Emit(std::make_shared<MatMul>(HAS_BATCH, x, y, trans_a, trans_b));
 }
 

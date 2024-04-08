@@ -40,7 +40,7 @@ template <typename T>
 inline const typename T::value_type ScalarComplexAbs(const T &x) {
   return std::abs(x);
 }
-inline std::uint32_t ParallelForComplexAbs(const CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
+inline std::uint32_t ParallelForComplexAbs(CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
                                            const std::function<void(std::int64_t, std::int64_t)> &work) {
   if (total > kComplexAbsParallelNum)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
@@ -49,7 +49,7 @@ inline std::uint32_t ParallelForComplexAbs(const CpuKernelContext &ctx, std::int
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-inline std::uint32_t ComputeComplexAbsKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeComplexAbsKernel(CpuKernelContext &ctx) {
   T *input0{static_cast<T *>(ctx.Input(0)->GetData())};
   typename T::value_type *output{static_cast<typename T::value_type *>(ctx.Output(0)->GetData())};
   std::int64_t total{ctx.Input(0)->NumElements()};
@@ -61,33 +61,34 @@ inline std::uint32_t ComputeComplexAbsKernel(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-inline std::uint32_t ComputeComplexAbs(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeComplexAbs(CpuKernelContext &ctx) {
   std::uint32_t result{ComputeComplexAbsKernel<T>(ctx)};
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("ComplexAbs compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "ComplexAbs compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t ExtraCheckComplexAbs(const CpuKernelContext &ctx) {
+inline std::uint32_t ExtraCheckComplexAbs(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetDataType() == ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR(
-      "The data type of the input [%s] should not be the same as the output "
-      "[%s].",
-      DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data type of the input [%s] should not be the same as the output "
+                          "[%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize() * 2) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be as twice as the output "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be as twice as the output "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t ComputeComplexAbs(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeComplexAbs(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_COMPLEX64:
@@ -95,7 +96,7 @@ inline std::uint32_t ComputeComplexAbs(const CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return ComputeComplexAbs<std::complex<std::double_t>>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

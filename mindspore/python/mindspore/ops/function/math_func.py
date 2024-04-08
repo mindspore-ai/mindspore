@@ -37,7 +37,7 @@ from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
-from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, cos, cosh,
+from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, sub, cos, cosh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
@@ -108,7 +108,6 @@ def get_x_shape(x_shape):
 #####################################
 absolute_ = P.Abs()
 cast_ = P.Cast()
-not_equal_ = not_equal
 tensor_add = P.Add()
 tensor_ceil = P.Ceil()
 tensor_div = P.RealDiv()
@@ -656,54 +655,6 @@ def permute(input, axis):
     return transpose_(input, axis)
 
 
-def sub(input, other):
-    r"""
-    Subtracts the second input tensor from the first input tensor element-wise.
-
-    .. math::
-
-        out_{i} = input_{i} - other_{i}
-
-    Note:
-        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
-          they must be able to broadcast to a common shape.
-        - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
-        - The two inputs comply with the implicit type conversion rules to make the data types
-          consistent.
-
-    Args:
-        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
-            a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
-            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `input` and `other` are not number.Number or bool or Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> other = Tensor(np.array([4, 5, 6]), mindspore.int32)
-        >>> output = ops.sub(input, other)
-        >>> print(output)
-        [-3 -3 -3]
-    """
-    return tensor_sub(input, other)
-
-
 def subtract(input, other, *, alpha=1):
     r"""
     Performs the element-wise subtract of input tensors.
@@ -765,16 +716,16 @@ def div(input, other, *, rounding_mode=None):
     r"""
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
+    .. math::
+
+        out_{i} = input_{i} / other_{i}
+
     Note:
         - When the two inputs have different shapes, they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
           [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
-
-    .. math::
-
-        out_{i} = input_{i} / other_{i}
 
     Args:
         input (Union[Tensor, Number, bool]): The first input is a number or
@@ -1168,7 +1119,7 @@ def logical_not(input):
         out_{i} = \\neg input_{i}
 
     Args:
-        input (Tensor): The input tensor, the dtype must be bool.
+        input (Tensor): The input tensor.
 
     Returns:
         Tensor, the shape is the same as the `input`, and the dtype is bool.
@@ -1198,15 +1149,13 @@ def logical_or(input, other):
     Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
 
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them must be bool.
+    When the inputs are two tensors, the shapes of them could be broadcast.
 
-    When the inputs are one tensor and one bool, the bool object could only be a constant,
-    and the data type of the tensor must be bool.
+    When the inputs are one tensor and one bool, the bool object could only be a constant.
 
     .. math::
 
-        out_{i} = x_{i} \\vee y_{i}
+        out_{i} = input_{i} \\vee other_{i}
 
     Note:
         logical_or supports broadcasting.
@@ -1258,11 +1207,9 @@ def logical_and(input, other):
     Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
 
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them must be bool.
+    When the inputs are two tensors, the shapes of them could be broadcast.
 
-    When the inputs are one tensor and one bool, the bool object could only be a constant,
-    and the data type of the tensor must be bool.
+    When the inputs are one tensor and one bool, the bool object could only be a constant.
 
     .. math::
 
@@ -1546,7 +1493,7 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
             Default: ``None`` .
 
     Returns:
-        Tensor, The covariance matrix Tensor of `input`.
+        Tensor, the covariance matrix Tensor of `input`.
 
     Raises:
         ValueError: If the dimensions of input is greater than 2.
@@ -1705,8 +1652,8 @@ def xlogy(input, other):
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, number.Number, bool]): The second input is a number.Number or
             a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -2988,6 +2935,7 @@ def ldexp(x, other):
     out = tensor_mul(x, tensor_pow(2.0, other))
     return out
 
+
 def logit(input, eps=None):
     r"""
     Calculate the logit of a tensor element-wise.
@@ -3067,8 +3015,8 @@ def le(input, other):
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -3120,8 +3068,8 @@ def gt(input, other):
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+            `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ .
         other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -3296,7 +3244,7 @@ def ne(input, other):
         >>> print(output)
         [False False  True]
     """
-    return not_equal_(input, other)
+    return not_equal(input, other)
 
 
 def approximate_equal(x, y, tolerance=1e-5):
@@ -3813,6 +3761,8 @@ def nanmean(input, axis=None, keepdims=False, *, dtype=None):
     """
     _check_is_tensor("input", input, "nanmean")
     _check_repeat_in_axis(axis, input.ndim, "nanmean")
+    if input.dtype not in mstype.float_type:
+        raise TypeError(f"For 'nanmean', input should be floating point dtype, but got {type(input)}.")
     nan_sum = nansum(input, axis, keepdims)
     is_num = isnan(input).logical_not()
     is_num = is_num.sum(axis=axis, keepdims=keepdims)
@@ -3908,7 +3858,7 @@ def ormqr(input, tau, other, left=True, transpose=False):
         TypeError: If dtype of `input` or `tau` or `other` is not one of: float64, float32, complex64, complex128.
         ValueError: If the dimension of `input` or `other` is less than 2D.
         ValueError: If rank(`input`) - rank(`tau`) != 1.
-        ValueError: If tau.shape[:-2] != input.shape[:-2]
+        ValueError: If tau.shape[:-1] != input.shape[:-2]
         ValueError: If other.shape[:-2] != input.shape[:-2]
         ValueError: If left == true, other.shape[-2] < tau.shape[-1].
         ValueError: If left == true, other.shape[-2] != input.shape[-2].
@@ -4782,7 +4732,7 @@ def addmv(input, mat, vec, *, beta=1, alpha=1):
 
     Raises:
         TypeError: If `mat`, `vec`, `input` is not a Tensor.
-        TypeError: If inputs `mat`, 'vec' are not the same dtype.
+        TypeError: If inputs `mat`, `vec` are not the same dtype.
         ValueError: If `mat` is not a 2-D Tensor.
         ValueError: If `vec` is not a 1-D Tensor.
 
@@ -4937,7 +4887,7 @@ def lcm(input, other):
 
     Raises:
         TypeError: If data type `input` or `other` is not int32 or int64.
-        ValueError: If shape of two inputs are not broadcastable.
+        ValueError: If shapes of two inputs are not broadcastable.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4983,7 +4933,7 @@ def cdist(x1, x2, p=2.0):
         ValueError: If dimension of `x1` is not the same as `x2`.
         ValueError: If dimension of `x1` or `x2` is neither 2 nor 3.
         ValueError: If the batch shape of `x1` is not the same as the shape of `x2`.
-        ValueError: If the number of columns of `x1` is not the same as the number of `x2`.
+        ValueError: If the number of columns of `x1` is not the same as that of `x2`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5432,6 +5382,8 @@ def cummin(input, axis):
         >>> print(output[1])
         [0 1 1 1 4 4]
     """
+    if isinstance(axis, bool):
+        raise TypeError(f"For 'cummin', the date type of 'axis' must be Int, but got {axis}.")
     cummin_op = _get_cache_prim(Cummin)(axis=0)
     if axis == 0:
         out1, out2 = cummin_op(input)
@@ -5732,7 +5684,7 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
 
     Note:
         Zero-shaped Tensor is not supported, a value error is raised if
-        an empty Tensor is encountered. Any dimension of an Tensor is 0 is considered
+        an empty Tensor is encountered. Any dimension of a Tensor is 0, which is considered
         an empty Tensor. Tensor with shape of :math:`(0,)`, :math:`(1, 2, 0, 4)` are all
         empty Tensor.
 
@@ -6151,8 +6103,8 @@ def combinations(input, r=2, with_replacement=False):
     r"""
     Returns all r-length subsequences of input Tensor.
 
-    When `with_replacement` is set to `False`, it works similar to Python's
-    `itertools.combinations`, and when `with_replacement` is set to `True`,
+    When `with_replacement` is set to ``False``, it works similar to Python's
+    `itertools.combinations`, and when `with_replacement` is set to ``True``,
     it behaves like `itertools.combinations_with_replacement`.
 
     Args:
@@ -6530,29 +6482,35 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
     reduce a dimension of `input` along specified `axis`. `keepdims` determines whether the dimensions of
     output and input are the same.
 
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
+
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
             dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep
+        keepdims (bool): If ``True`` , keep these reduced dimensions and the length is 1. If ``False`` , don't keep
             these dimensions. Default: ``False`` .
 
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
             on empty slice. Default: ``None`` .
-        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
-            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
-            the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates True by default.
+        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input` with the
+            value in `initial`. If ``True`` , do not replace, otherwise replace. For the index of ``True`` in `where`,
+            the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates ``True`` by
+            default.
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is None, and `keepdims` is False,
+        - If `axis` is ``None`` , and `keepdims` is ``False`` ,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keepdims` is False,
+        - If `axis` is int, set as 1, and `keepdims` is ``False`` ,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keepdims` is False,
+        - If `axis` is tuple(int), set as (1, 2), and `keepdims` is ``False`` ,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+        - If `axis` is 1-D Tensor, set as [1, 2], and `keepdims` is ``False`` ,
           the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
@@ -6634,29 +6592,35 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
     reduce a dimension of `input` along specified `axis`.  `keepdims` determines whether the dimensions of
     output and input are the same.
 
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
+
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
             dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep these
-            dimensions. Default: ``False`` .
+        keepdims (bool): If ``True`` , keep these reduced dimensions and the length is 1. If ``False`` , don't keep
+            these dimensions. Default: ``False`` .
 
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
             on empty slice. Default: ``None`` .
-        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
-            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
-            the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates True by default.
+        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input` with the
+            value in `initial`. If ``True`` , do not replace, otherwise replace. For the index of ``True`` in `where`,
+            the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates ``True`` by
+            default.
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is None, and `keepdims` is False, the output is a 0-D tensor representing the product of all
-          elements in the input tensor.
-        - If `axis` is int, set as 1, and `keepdims` is False, the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keepdims` is False, the shape of output is
-          :math:`(x_0, x_3, ..., x_R)`.
+        - If `axis` is ``None`` , and `keepdims` is ``False`` , the output is a 0-D tensor representing the product of
+            all elements in the input tensor.
+        - If `axis` is int, set as 1, and `keepdims` is ``False`` , the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int), set as (1, 2), and `keepdims` is ``False`` , the shape of output is
+            :math:`(x_0, x_3, ..., x_R)`.
+        - If `axis` is 1-D Tensor, set as [1, 2], and `keepdims` is ``False`` , the shape of output is
+            :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -6719,26 +6683,32 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
 def mean(x, axis=None, keep_dims=False):
     r"""
     Reduces all dimension of a tensor by averaging all elements in the dimension, by default.
-    And reduce a dimension of `x` along the specified `axis`. `keep_dims`
+    And reduce a dimension of `input` along the specified `axis`. `keep_dims`
     determines whether the dimensions of the output and input are the same.
+
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
-            dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: ``False`` .
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` ,
+            reduce all dimensions. Only constant value is allowed. Assume the rank of `input` is r,
+            and the value range is [-r,r).
+        keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is None, and `keep_dims` is False,
-          the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False,
-          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
+            the output is a 0-D tensor representing the product of all elements in the input tensor.
+        - If `axis` is int, set as 1, and `keep_dims` is ``False`` ,
+            the shape of output is :math:`(x_0, x_2, ..., x_R)`.
         - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is ``False`` ,
-          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+            the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+        - If `axis` is 1-D Tensor, set as [1, 2], and `keep_dims` is ``False`` ,
+            the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -6772,26 +6742,26 @@ def mean(x, axis=None, keep_dims=False):
         >>> output = ops.mean(x, 0, True)
         >>> print(output)
         [[[4. 4. 4. 4. 4. 4.]
-          [5. 5. 5. 5. 5. 5.]
-          [6. 6. 6. 6. 6. 6.]]]
+        [5. 5. 5. 5. 5. 5.]
+        [6. 6. 6. 6. 6. 6.]]]
         >>> # case 3: Reduces a dimension along the axis 1
         >>> output = ops.mean(x, 1, True)
         >>> print(output)
         [[[2. 2. 2. 2. 2. 2.]]
-         [[5. 5. 5. 5. 5. 5.]]
-         [[8. 8. 8. 8. 8. 8.]]]
+        [[5. 5. 5. 5. 5. 5.]]
+        [[8. 8. 8. 8. 8. 8.]]]
         >>> # case 4: Reduces a dimension along the axis 2
         >>> output = ops.mean(x, 2, True)
         >>> print(output)
         [[[ 2.]
-          [ 2.]
-          [ 2.]]
-         [[ 4.]
-          [ 5.]
-          [ 6.]]
-         [[ 6.]
-          [ 8.]
-          [10.]]]
+        [ 2.]
+        [ 2.]]
+        [[ 4.]
+        [ 5.]
+        [ 6.]]
+        [[ 6.]
+        [ 8.]
+        [10.]]]
     """
     if axis is None:
         axis = ()
@@ -6801,25 +6771,30 @@ def mean(x, axis=None, keep_dims=False):
 def prod(input, axis=None, keep_dims=False):
     r"""
     Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can
-    reduce a dimension of `input` along the axis. Determine whether the dimensions of the output and input are the same
-    by controlling `keep_dims`.
+    reduce a dimension of `input` along the `axis`. Determine whether the dimensions of the output and input are the
+    same by controlling `keep_dims`.
+
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
             dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: ``False`` .
+        keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is None, and `keep_dims` is False,
+        - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False,
+        - If `axis` is int, set as 1, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_0, input_2, ..., input_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is ``False`` ,
+          the shape of output is :math:`(input_0, input_3, ..., input_R)`.
+        - If `axis` is 1-D Tensor, set as [1, 2], and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_0, input_3, ..., input_R)`.
 
     Raises:
@@ -7624,9 +7599,9 @@ def gumbel_softmax(logits, tau=1.0, hard=False, dim=-1):
     Raises:
         TypeError: If `logits` is not a Tensor.
         TypeError: If dtype of `logits` is not one of: float16, float32.
-        TypeError: If `tau` is not an float.
+        TypeError: If `tau` is not a float.
         TypeError: If `hard` is not a bool.
-        TypeError: If `dim` is not a int.
+        TypeError: If `dim` is not an int.
         ValueError: If If `tau` is not positive.
 
     Supported Platforms:
@@ -7939,15 +7914,15 @@ def matmul(input, other):
 
     Args:
         input (Tensor): Input tensor, scalar not allowed.
-          The last dimension of `input` must be the same size as the second last dimension of `other`.
-          And the shape of input and other could be broadcast.
+            The last dimension of `input` must be the same size as the second last dimension of `other`.
+            And the shape of input and other could be broadcast.
         other (Tensor): Input tensor, scalar not allowed.
-          The last dimension of `input` must be the same size as the second last dimension of `other`.
-          And the shape of input and other could be broadcast.
+            The last dimension of `input` must be the same size as the second last dimension of `other`.
+            And the shape of input and other could be broadcast.
 
     Returns:
         Tensor or scalar, the matrix product of the inputs. This is a scalar only
-        when both `input`, `other` are 1-d vectors.
+            when both `input`, `other` are 1-d vectors.
 
     Raises:
         TypeError: If the dtype of `input` and the dtype of `other` are not the same.
@@ -8672,31 +8647,37 @@ def _check_is_tensor(param_name, input, cls_name):
 def all(input, axis=None, keep_dims=False):
     r"""
     Reduces a dimension of `input` by the "logical AND" of all elements in the dimension, by default. And also can
-    reduce a dimension of `input` along the axis. Determine whether the dimensions of the output and input are the same
-    by controlling `keep_dims`.
+    reduce a dimension of `input` along the `axis`. Determine whether the dimensions of the output and input are the
+    same by controlling `keep_dims`.
+
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
         input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
             any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is
-            r, axis must be in the range [-rank(input), rank(input)). Default: ``None`` , all dimensions are reduced.
-        keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default : ``False`` .
+        axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce.
+            Suppose the rank of `input` is r, `axis` must be in the range [-rank(input), rank(input)).
+            Default: ``None`` , all dimensions are reduced.
+        keep_dims (bool, optional): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default : ``False`` .
 
     Returns:
         Tensor, the dtype is bool.
 
-        - If `axis` is None, and `keep_dims` is ``False`` ,
+        - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
           the output is a 0-D Tensor representing the "logical AND" of all elements in the input Tensor.
         - If `axis` is int, such as 2, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_3, ..., input_R)`.
-        - If `axis` is tuple(int), such as (2, 3), and `keep_dims` is False,
+        - If `axis` is tuple(int), such as (2, 3), and `keep_dims` is ``False`` ,
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
+        - If `axis` is 1-D Tensor, such as [2, 3], and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8731,31 +8712,37 @@ def all(input, axis=None, keep_dims=False):
 def any(input, axis=None, keep_dims=False):
     r"""
     Reduces a dimension of `input` by the "logical OR" of all elements in the dimension, by default. And also can
-    reduce a dimension of `input` along the axis. Determine whether the dimensions of the output and input are the same
-    by controlling `keep_dims`.
+    reduce a dimension of `input` along the `axis`. Determine whether the dimensions of the output and input are the
+    same by controlling `keep_dims`.
+
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
         input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
             any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is r,
-            axis must be in the range [-rank(input), rank(input)). Default: ``None`` , all dimensions are reduced.
-        keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default : ``False`` .
+        axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce.
+            Suppose the rank of `input` is r, `axis` must be in the range [-rank(input), rank(input)).
+            Default: ``None`` , all dimensions are reduced.
+        keep_dims (bool, optional): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default : ``False`` .
 
     Returns:
         Tensor, the dtype is bool.
 
-        - If `axis` is None, and `keep_dims` is ``False`` ,
+        - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
           the output is a 0-D Tensor representing the "logical OR" of all elements in the input Tensor.
         - If `axis` is int, such as 2, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_3, ..., input_R)`.
         - If `axis` is tuple(int), such as (2, 3), and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_4, ..., input_R)`.
+        - If `axis` is 1-D Tensor, such as [2, 3], and `keep_dims` is ``False`` ,
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -9801,7 +9788,7 @@ def logical_xor(input, other):
 
     .. math::
 
-        out_{i} = x_{i} \oplus y_{i}
+        out_{i} = input_{i} \oplus other_{i}
 
     Args:
         input (Tensor): The first input is a tensor whose data type can be implicitly converted to bool.
@@ -10057,25 +10044,28 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
     """
     Calculate sum of Tensor elements over a given dim.
 
+    Note:
+        The `dim` with tensor type is only used for compatibility with older versions and is not recommended.
+
     Args:
         input (Tensor): The input tensor.
-        dim (Union[None, int, tuple(int), list(int)]): Dimensions along which a sum is performed.
-            If None, sum all the elements of the input tensor.
+        dim (Union[None, int, tuple(int), list(int), Tensor]): Dimensions along which a sum is performed.
+            If ``None`` , sum all the elements of the input tensor.
             If the `dim` is a tuple or list of ints, a sum is performed on all the dimensions specified in the tuple.
-            Must be in the range :math:`[-input.ndim, input.ndim)` . Default: ``None``.
+            Must be in the range :math:`[-input.ndim, input.ndim)` . Default: ``None`` .
         keepdim (bool): Whether the output tensor has dim retained or not.
-            If True, keep these reduced dimensions and the length is 1.
-            If False, don't keep these dimensions. Default: ``False``.
+            If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: ``None``.
+        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: ``None`` .
 
     Returns:
-       A Tensor, sum of elements over a given dim in `input`.
+       A Tensor, sum of elements over a given `dim` in `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `dim` is not an int, tulpe(int), list(int) or None.
+        TypeError: If `dim` is not an int, tulpe(int), list(int), Tensor or None.
         ValueError: If `dim` is not in the range :math:`[-input.ndim, input.ndim)` .
         TypeError: If `keepdim` is not a bool.
 
@@ -10924,7 +10914,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims)
 
     tensor_0 = ops.zeros(x.shape, x.dtype)
-    nonzero_bool = not_equal_(x, tensor_0)
+    nonzero_bool = not_equal(x, tensor_0)
     # ReduceSum only support float16 or float32 tensor.
     nonzero_val = cast_(nonzero_bool, mstype.float32)
     nonzero_num = cast_(reduce_sum(nonzero_val, axis), dtype)

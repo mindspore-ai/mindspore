@@ -240,7 +240,7 @@ BaseShapePtr OpInferCommon::InferShape(const PrimitivePtr &primitive,
     return nullptr;
   }
 
-  return inferred_res->BuildShape();
+  return inferred_res->GetShape();
 }
 
 TypePtr OpInferCommon::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {

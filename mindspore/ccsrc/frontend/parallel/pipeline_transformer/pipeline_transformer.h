@@ -97,7 +97,7 @@ class PipelineTransformer {
   bool IsRedundancyParameter(const AnfNodePtr &parameter, const std::vector<AnfNodePtr> &non_cloned_parameters);
   void ElimParameter();
   void FreezeGradient();
-  tensor::TensorPtr CreateZeroseOutput(const AnfNodePtr &node, size_t index);
+  AnfNodePtr CreateZeroseOutput(const AnfNodePtr &node, size_t index);
   AnfNodePtr GetZeroOutputs(const FuncGraphPtr &graph);
 
   std::pair<OperatorInfoPtr, int> GetOpInfoPair(const AnfNodePtr &node, const AnfNodePtr &graph_param,
@@ -119,6 +119,7 @@ class PipelineTransformer {
                           const NodeUsersMap &node_users_map, std::set<int64_t> *const parameter_stage);
   size_t GetBatchAxisForInput(const AnfNodeIndexSet &input_node_users) const;
   void UpdateParameterSharedInfo(const AnfNodePtr &node, const AnfNodePtr &communcate_op, bool is_send);
+  void FillParameterStage(const CNodePtr &node, std::set<int64_t> *const parameter_stage);
   FuncGraphManagerPtr manager_;
   int64_t stage_;
   FuncGraphPtr root_;

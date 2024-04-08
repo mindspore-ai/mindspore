@@ -30,33 +30,34 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 3;
 constexpr int64_t kParallelDataNums = 64;
 const char *const kBetainc = "Betainc";
-#define BETAINC_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                         \
-    uint32_t result = BetaincCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                     \
-      KERNEL_LOG_ERROR("Betainc kernel compute failed."); \
-      return result;                                      \
-    }                                                     \
-    break;                                                \
+#define BETAINC_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                   \
+    uint32_t result = BetaincCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                               \
+      CUST_KERNEL_LOG_ERROR(ctx, "Betainc kernel compute failed."); \
+      return result;                                                \
+    }                                                               \
+    break;                                                          \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t BetaincCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Betainc check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Betainc check input and output number failed.");
   auto a_shape = ctx.Input(0)->GetTensorShape();
   auto b_shape = ctx.Input(1)->GetTensorShape();
   auto x_shape = ctx.Input(2)->GetTensorShape();
 
   // dims check
   if (a_shape->GetDims() > 0 && b_shape->GetDims() > 0) {
-    KERNEL_CHECK_FALSE((a_shape->GetDimSizes() == b_shape->GetDimSizes()), KERNEL_STATUS_PARAM_INVALID,
-                       "Shapes of a and b are inconsistent")
+    CUST_KERNEL_CHECK_FALSE(ctx, (a_shape->GetDimSizes() == b_shape->GetDimSizes()), KERNEL_STATUS_PARAM_INVALID,
+                            "Shapes of a and b are inconsistent")
   }
   if (a_shape->GetDims() > 0 && x_shape->GetDims() > 0) {
-    KERNEL_CHECK_FALSE((a_shape->GetDimSizes() == x_shape->GetDimSizes()), KERNEL_STATUS_PARAM_INVALID,
-                       "Shapes of a and x are inconsistent")
+    CUST_KERNEL_CHECK_FALSE(ctx, (a_shape->GetDimSizes() == x_shape->GetDimSizes()), KERNEL_STATUS_PARAM_INVALID,
+                            "Shapes of a and x are inconsistent")
   }
 
   // check input datatype
@@ -64,37 +65,37 @@ uint32_t BetaincCpuKernel::Compute(CpuKernelContext &ctx) {
   DataType b_dtype = ctx.Input(1)->GetDataType();
   DataType x_dtype = ctx.Input(2)->GetDataType();
 
-  KERNEL_CHECK_FALSE((b_dtype == a_dtype), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input[1] [%s] need be same with input[0] [%s].", DTypeStr(b_dtype).c_str(),
-                     DTypeStr(a_dtype).c_str());
-  KERNEL_CHECK_FALSE((x_dtype == a_dtype), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input[2] [%s] need be same with input[0] [%s].", DTypeStr(x_dtype).c_str(),
-                     DTypeStr(a_dtype).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (b_dtype == a_dtype), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input[1] [%s] need be same with input[0] [%s].", DTypeStr(b_dtype).c_str(),
+                          DTypeStr(a_dtype).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (x_dtype == a_dtype), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input[2] [%s] need be same with input[0] [%s].", DTypeStr(x_dtype).c_str(),
+                          DTypeStr(a_dtype).c_str());
 
   switch (a_dtype) {
     BETAINC_COMPUTE_CASE(DT_FLOAT, float, ctx)
     BETAINC_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("Betainc kernel data type [%s] not support.", DTypeStr(a_dtype).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Betainc kernel data type [%s] not support.", DTypeStr(a_dtype).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SwitchParallel(const std::function<void(int64_t, int64_t)> &func, int64_t end_num, const CpuKernelContext &ctx,
+uint32_t SwitchParallel(const std::function<void(int64_t, int64_t)> &func, int64_t end_num, CpuKernelContext &ctx,
                         int64_t max_core_num, int64_t data_num) {
   if (data_num <= kParallelDataNums) {
     func(0, end_num);
   } else {
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, end_num, end_num / max_core_num, func),
-                        "Betainc func Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, end_num, end_num / max_core_num, func),
+                             "Betainc func Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t RunParallel(const CpuKernelContext &ctx, std::vector<T *> data_pointers, int data_num) {
+uint32_t RunParallel(CpuKernelContext &ctx, std::vector<T *> data_pointers, int data_num) {
   uint32_t min_core_num = 1;
   int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
   if (max_core_num > data_num) {
@@ -112,7 +113,7 @@ uint32_t RunParallel(const CpuKernelContext &ctx, std::vector<T *> data_pointers
 }
 
 template <typename T>
-uint32_t BetaincCpuKernel::BetaincCompute(const CpuKernelContext &ctx) {
+uint32_t BetaincCpuKernel::BetaincCompute(CpuKernelContext &ctx) {
   auto input_a = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input_b = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto input_x = reinterpret_cast<T *>(ctx.Input(2)->GetData());

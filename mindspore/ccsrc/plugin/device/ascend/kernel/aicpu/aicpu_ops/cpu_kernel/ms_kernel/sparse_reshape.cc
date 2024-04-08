@@ -48,8 +48,8 @@ void SparseReshapeCpuKernel::SpecialCompute(int64_t start, int64_t end, const in
 
 uint32_t SparseReshapeCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kSparseReshapeInputNum, kSparseReshapeOutputNum), "[%s] check params failed.",
-                      kSparseReshape);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kSparseReshapeInputNum, kSparseReshapeOutputNum),
+                           "[%s] check params failed.", kSparseReshape);
 
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
@@ -57,12 +57,13 @@ uint32_t SparseReshapeCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *output_0 = ctx.Output(0);
   Tensor *output_1 = ctx.Output(1);
 
-  KERNEL_CHECK_FALSE(
+  CUST_KERNEL_CHECK_FALSE(
+    ctx,
     (input_0->GetDataType() == DT_INT64 && input_1->GetDataType() == DT_INT64 && input_2->GetDataType() == DT_INT64 &&
      output_0->GetDataType() == DT_INT64 && output_1->GetDataType() == DT_INT64),
     KERNEL_STATUS_INNER_ERROR, "the data of SparseReshape kernel must be DT_INT64.");
-  KERNEL_CHECK_FALSE((input_0->GetTensorShape()->GetDimSize(1) == input_1->GetTensorShape()->GetDimSize(0)),
-                     KERNEL_STATUS_INNER_ERROR, "Input tensor rank must match input shape length.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_0->GetTensorShape()->GetDimSize(1) == input_1->GetTensorShape()->GetDimSize(0)),
+                          KERNEL_STATUS_INNER_ERROR, "Input tensor rank must match input shape length.");
 
   int64_t *in0 = reinterpret_cast<int64_t *>(input_0->GetData());
   int64_t *in1 = reinterpret_cast<int64_t *>(input_1->GetData());
@@ -84,13 +85,14 @@ uint32_t SparseReshapeCpuKernel::Compute(CpuKernelContext &ctx) {
   for (int d = 0; d < output_rank; d++) {
     const int64_t size = *(in2 + d);
     if (size == -1) {
-      KERNEL_CHECK_FALSE((unknown_index == -1), KERNEL_STATUS_INNER_ERROR,
-                         "only one output dimension may be -1, "
-                         "not both [%d] and [%d]",
-                         unknown_index, d);
+      CUST_KERNEL_CHECK_FALSE(ctx, (unknown_index == -1), KERNEL_STATUS_INNER_ERROR,
+                              "only one output dimension may be -1, "
+                              "not both [%d] and [%d]",
+                              unknown_index, d);
       unknown_index = d;
     } else {
-      KERNEL_CHECK_FALSE((size >= 0), KERNEL_STATUS_INNER_ERROR, "size [%d] must be non-negative, not [%ld]", d, size);
+      CUST_KERNEL_CHECK_FALSE(ctx, (size >= 0), KERNEL_STATUS_INNER_ERROR, "size [%d] must be non-negative, not [%ld]",
+                              d, size);
       product *= size;
       *(out1 + d) = size;
       out_num *= size;
@@ -98,24 +100,24 @@ uint32_t SparseReshapeCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 
   if (unknown_index != -1) {
-    KERNEL_CHECK_FALSE((product >= 0), KERNEL_STATUS_INNER_ERROR,
-                       "reshape cannot infer the missing "
-                       "input size for an empty tensor unless all "
-                       "specified input sizes are non-zero");
+    CUST_KERNEL_CHECK_FALSE(ctx, (product >= 0), KERNEL_STATUS_INNER_ERROR,
+                            "reshape cannot infer the missing "
+                            "input size for an empty tensor unless all "
+                            "specified input sizes are non-zero");
     const int64_t missing = dense_size / product;
-    KERNEL_CHECK_FALSE((product * missing == dense_size), KERNEL_STATUS_INNER_ERROR,
-                       "Input to reshape is a SparseTensor with [%ld]"
-                       " dense values, but the requested shape requires"
-                       " a multiple of [%ld].",
-                       dense_size, product);
+    CUST_KERNEL_CHECK_FALSE(ctx, (product * missing == dense_size), KERNEL_STATUS_INNER_ERROR,
+                            "Input to reshape is a SparseTensor with [%ld]"
+                            " dense values, but the requested shape requires"
+                            " a multiple of [%ld].",
+                            dense_size, product);
     out_num *= missing;
     *(out1 + unknown_index) = missing;
   }
 
-  KERNEL_CHECK_FALSE((out_num == dense_size), KERNEL_STATUS_INNER_ERROR,
-                     "Input to reshape is a tensor with [%ld]"
-                     " dense values, but the requested shape has [%ld].",
-                     dense_size, out_num);
+  CUST_KERNEL_CHECK_FALSE(ctx, (out_num == dense_size), KERNEL_STATUS_INNER_ERROR,
+                          "Input to reshape is a tensor with [%ld]"
+                          " dense values, but the requested shape has [%ld].",
+                          dense_size, out_num);
 
   int64_t input_size = input_0->GetDataSize();
   int64_t output_size = output_0->GetDataSize();
@@ -129,9 +131,9 @@ uint32_t SparseReshapeCpuKernel::Compute(CpuKernelContext &ctx) {
     }
     if (flag) {
       auto mem_ret = memcpy_s(out0, output_size, in0, input_size);
-      KERNEL_CHECK_FALSE(mem_ret == EOK, KERNEL_STATUS_INNER_ERROR,
-                         "[%s] memcpy_s to output failed, destMax [%ld], count [%ld].", kSparseReshape, output_size,
-                         input_size);
+      CUST_KERNEL_CHECK_FALSE(ctx, mem_ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                              "[%s] memcpy_s to output failed, destMax [%ld], count [%ld].", kSparseReshape,
+                              output_size, input_size);
       return KERNEL_STATUS_OK;
     }
   }
@@ -155,7 +157,7 @@ uint32_t SparseReshapeCpuKernel::Compute(CpuKernelContext &ctx) {
   if (nnz * input_rank >= kParallelDataNumSameShape) {
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
-    KERNEL_CHECK_FALSE(max_core_num != 0, KERNEL_STATUS_INNER_ERROR, "core num should not be 0.");
+    CUST_KERNEL_CHECK_FALSE(ctx, max_core_num != 0, KERNEL_STATUS_INNER_ERROR, "core num should not be 0.");
     if (nnz * input_rank <= kParallelDataNumSameShapeMid) {
       max_core_num = std::min(max_core_num, 4U);  // up to 4 cpu cores
     }
@@ -166,8 +168,8 @@ uint32_t SparseReshapeCpuKernel::Compute(CpuKernelContext &ctx) {
       SpecialCompute(start, end, in0, out0, input_strides, output_strides, input_rank, output_rank);
     };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, nnz, nnz / max_core_num, sharder_sparse_reshape),
-                        "SparseReshape Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, nnz, nnz / max_core_num, sharder_sparse_reshape),
+                             "SparseReshape Compute failed.");
   } else {
     SpecialCompute(0, nnz, in0, out0, input_strides, output_strides, input_rank, output_rank);
   }

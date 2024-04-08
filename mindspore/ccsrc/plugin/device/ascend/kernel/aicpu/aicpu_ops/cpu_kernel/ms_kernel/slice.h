@@ -35,12 +35,12 @@ class SliceCpuKernel : public CpuKernel {
   std::vector<int64_t> size;
 
   uint32_t GetSliceValue(Tensor *tensor, std::vector<int64_t> &value);
-  uint32_t SliceCheck(const CpuKernelContext &ctx);
+  uint32_t SliceCheck(CpuKernelContext &ctx);
   template <typename T>
   void SliceRealCompute(size_t input_dims, T *input_data, T *output_data, const std::vector<int64_t> &shape_x,
                         const std::vector<int64_t> &shape_y);
   template <typename T>
-  uint32_t SliceCompute(const CpuKernelContext &ctx);
+  uint32_t SliceCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -41,7 +41,8 @@ Eigen::half CalcOutput(Eigen::half input, float p) {
 
 namespace aicpu {
 template <typename T>
-static uint32_t CalDropout2d(float p, std::vector<void *> &io_addrs_, std::vector<int64_t> &shape) {
+static uint32_t CalDropout2d(CpuKernelContext &ctx, float p, std::vector<void *> &io_addrs_,
+                             std::vector<int64_t> &shape) {
   // inputs
   T *input = reinterpret_cast<T *>(io_addrs_[0]);
   // outputs
@@ -57,21 +58,21 @@ static uint32_t CalDropout2d(float p, std::vector<void *> &io_addrs_, std::vecto
   size_t channel_size = H * W;
   size_t data_num = channel_num * channel_size;
   if (INT64_MAX / channel_num < channel_size) {
-    KERNEL_LOG_ERROR("channel_num is out of range!");
+    CUST_KERNEL_LOG_ERROR(ctx, "channel_num is out of range!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (p > 1 || p < 0) {
-    KERNEL_LOG_ERROR("dropout probability must be between 0 and 1, but got %f", p);
+    CUST_KERNEL_LOG_ERROR(ctx, "dropout probability must be between 0 and 1, but got %f", p);
     return KERNEL_STATUS_PARAM_INVALID;
   } else if (p == 0) {
     auto ret = memcpy_s(output, data_num * sizeof(T), input, data_num * sizeof(T));
-    KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout2d memcpy_s failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout2d memcpy_s failed.");
     std::fill(&mask[0], &mask[data_num], true);
     return KERNEL_STATUS_OK;
   } else if (p == 1) {
     auto ret = memset_s(output, data_num * sizeof(T), 0x00, data_num * sizeof(T));
-    KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout2d memset_s failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout2d memset_s failed.");
     std::fill(&mask[0], &mask[data_num], false);
     return KERNEL_STATUS_OK;
   }
@@ -84,7 +85,7 @@ static uint32_t CalDropout2d(float p, std::vector<void *> &io_addrs_, std::vecto
     bool drop = b(g);
     if (drop) {
       auto ret = memset_s(output + channel_size * i, channel_size * sizeof(T), 0x00, channel_size * sizeof(T));
-      KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout2d memset_s failed.");
+      CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout2d memset_s failed.");
       std::fill(&mask[channel_size * i], &mask[channel_size * (i + 1)], false);
     } else {
       for (int j = 0; j < static_cast<int>(channel_size); ++j) {
@@ -103,43 +104,47 @@ uint32_t Dropout2dCpuKernel::Compute(CpuKernelContext &ctx) {
     return res;
   }
 
-  static std::map<int, std::function<uint32_t(float, std::vector<void *> &, std::vector<int64_t> &)>> calls = {
-    {DT_FLOAT16, CalDropout2d<Eigen::half>}, {DT_FLOAT, CalDropout2d<float>},     {DT_DOUBLE, CalDropout2d<double>},
-    {DT_INT8, CalDropout2d<int8_t>},         {DT_INT16, CalDropout2d<int16_t>},   {DT_INT32, CalDropout2d<int32_t>},
-    {DT_INT64, CalDropout2d<int64_t>},       {DT_UINT8, CalDropout2d<uint8_t>},   {DT_UINT16, CalDropout2d<uint16_t>},
-    {DT_UINT32, CalDropout2d<uint32_t>},     {DT_UINT64, CalDropout2d<uint64_t>}, {DT_BOOL, CalDropout2d<bool>}};
+  static std::map<int,
+                  std::function<uint32_t(CpuKernelContext &, float, std::vector<void *> &, std::vector<int64_t> &)>>
+    calls = {
+      {DT_FLOAT16, CalDropout2d<Eigen::half>}, {DT_FLOAT, CalDropout2d<float>},     {DT_DOUBLE, CalDropout2d<double>},
+      {DT_INT8, CalDropout2d<int8_t>},         {DT_INT16, CalDropout2d<int16_t>},   {DT_INT32, CalDropout2d<int32_t>},
+      {DT_INT64, CalDropout2d<int64_t>},       {DT_UINT8, CalDropout2d<uint8_t>},   {DT_UINT16, CalDropout2d<uint16_t>},
+      {DT_UINT32, CalDropout2d<uint32_t>},     {DT_UINT64, CalDropout2d<uint64_t>}, {DT_BOOL, CalDropout2d<bool>}};
 
   auto iter = calls.find(input_dtype_);
   if (iter == calls.end()) {
-    KERNEL_LOG_ERROR("Dropout2d op don't support index tensor types: %s", typeid(input_dtype_).name());
+    CUST_KERNEL_LOG_ERROR(ctx, "Dropout2d op don't support index tensor types: %s", typeid(input_dtype_).name());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
-  return iter->second(p_, io_addrs_, input_shape_);
+  return iter->second(ctx, p_, io_addrs_, input_shape_);
 }
 
 uint32_t Dropout2dCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   AttrValue *keep_prob = ctx.GetAttr("keep_prob");
-  KERNEL_CHECK_NULLPTR(keep_prob, KERNEL_STATUS_PARAM_INVALID, "get attr:keep_prob failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, keep_prob, KERNEL_STATUS_PARAM_INVALID, "get attr:keep_prob failed.");
   p_ = 1 - keep_prob->GetFloat();
 
   // get input_tensor
   Tensor *input_tensor = ctx.Input(0);
   if (input_tensor == nullptr) {
-    KERNEL_LOG_ERROR("Dropout2dCpuKernel::get input:0 failed");
+    CUST_KERNEL_LOG_ERROR(ctx, "Dropout2dCpuKernel::get input:0 failed");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   input_dtype_ = static_cast<DataType>(input_tensor->GetDataType());
 
   std::shared_ptr<TensorShape> input_shape = input_tensor->GetTensorShape();
-  KERNEL_CHECK_FALSE((input_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID, "Dropout2d input tensor must be 4-D.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "Dropout2d input tensor must be 4-D.");
   input_shape_ = input_shape->GetDimSizes();
 
   Tensor *output_tensor = ctx.Output(0);
   io_addrs_.push_back(reinterpret_cast<void *>(input_tensor->GetData()));
   io_addrs_.push_back(reinterpret_cast<void *>(output_tensor->GetData()));
   io_addrs_.push_back(reinterpret_cast<void *>(ctx.Output(1)->GetData()));
-  KERNEL_CHECK_FALSE((io_addrs_.size() == 3), KERNEL_STATUS_PARAM_INVALID, "The size of io_addrs_ must be 3.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (io_addrs_.size() == 3), KERNEL_STATUS_PARAM_INVALID,
+                          "The size of io_addrs_ must be 3.");
   return KERNEL_STATUS_OK;
 }
 

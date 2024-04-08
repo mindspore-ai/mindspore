@@ -39,16 +39,16 @@ class EnvironMgr {
   EnvironMgr &operator=(EnvironMgr &&) = delete;
 
   // Create the env object and return the unique env handle.
-  int64_t Create();
+  int64_t Create(CpuKernelContext &ctx);
 
   EnvironPtr Get(int64_t handle);
 
-  void Clear();
+  void Clear(CpuKernelContext &ctx);
 
   // Check whether the inputs of EnvironGet kernel or EnvironSet kernel are valid.
-  bool CheckEnvInput(const CpuKernelContext &ctx) const;
+  bool CheckEnvInput(CpuKernelContext &ctx) const;
   // Check whether is scalar tensor. Environ handle and env key only support scalar tensor currently.
-  bool IsScalarTensor(const Tensor *tensor) const;
+  bool IsScalarTensor(CpuKernelContext &ctx, const Tensor *tensor) const;
 
  private:
   EnvironMgr() = default;

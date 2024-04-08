@@ -2368,9 +2368,10 @@ void OnnxExporter::ExportPrimCast(const FuncGraphPtr &, const CNodePtr &node,
     attr_proto->set_name("to");
     attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
     auto type_value = dyn_cast<ValueNode>(input_type)->value();
-    auto type_ptr = dyn_cast<Type>(type_value);
+    auto type_ptr = dyn_cast<Int64Imm>(type_value);
     MS_EXCEPTION_IF_NULL(type_ptr);
-    attr_proto->set_i(GetOnnxDataType(type_ptr->type_id()));
+    auto type_id = static_cast<TypeId>(type_ptr->value());
+    attr_proto->set_i(GetOnnxDataType(type_id));
   } else {
     MS_LOG(EXCEPTION) << "Need to convert MindSpore Cast input(1) to ONNX Cast to attribute.";
   }

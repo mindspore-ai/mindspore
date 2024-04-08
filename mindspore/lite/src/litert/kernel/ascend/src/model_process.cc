@@ -104,7 +104,7 @@ static std::string ShapeToString(const std::vector<int64_t> &shape) {
 }
 
 STATUS ModelProcess::PreInitModelResource() {
-  model_desc_ = CALL_ASCEND_API2(aclmdlCreateDesc);
+  model_desc_ = CALL_ASCEND_API(aclmdlCreateDesc);
   aclError acl_ret = CALL_ASCEND_API(aclmdlGetDesc, model_desc_, model_id_);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Read model desc failed, ret = " << acl_ret;
@@ -251,7 +251,7 @@ STATUS ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size
 
 STATUS ModelProcess::InitOutputsBuffer() {
   aclError ret;
-  outputs_ = CALL_ASCEND_API2(aclmdlCreateDataset);
+  outputs_ = CALL_ASCEND_API(aclmdlCreateDataset);
   if (outputs_ == nullptr) {
     MS_LOG(ERROR) << "Create output dataset failed";
     return lite::RET_ERROR;
@@ -486,7 +486,7 @@ void ModelProcess::UpdateBufferSize(const std::vector<mindspore::MSTensor> &inpu
 
 STATUS ModelProcess::CheckAndInitInput(const std::vector<mindspore::MSTensor> &inputs) {
   aclError ret;
-  inputs_ = CALL_ASCEND_API2(aclmdlCreateDataset);
+  inputs_ = CALL_ASCEND_API(aclmdlCreateDataset);
   // check inputs
   if (CheckTensorByTensorInfo(inputs, input_infos_) != lite::RET_OK) {
     MS_LOG(ERROR) << "Check input tensor failed.";

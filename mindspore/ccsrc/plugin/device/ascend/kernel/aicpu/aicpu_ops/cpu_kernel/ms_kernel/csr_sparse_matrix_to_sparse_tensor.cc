@@ -35,7 +35,8 @@ const int DIM3 = 3;
 
 namespace aicpu {
 uint32_t CSRSparseMatrixToSparseTensorCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "CSRSparseMatrixToSparseTensor normal check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "CSRSparseMatrixToSparseTensor normal check failed.");
   Tensor *x_dense_shape = ctx.Input(0);
   Tensor *x_batch_pointers = ctx.Input(1);
   Tensor *x_row_pointers = ctx.Input(2);
@@ -44,7 +45,7 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::Compute(CpuKernelContext &ctx) 
 
   const int rank = x_dense_shape->NumElements();
   if (rank != DIM2 && rank != DIM3) {
-    KERNEL_LOG_ERROR("CSR SparseMatrix must have rank 2 or 3.");
+    CUST_KERNEL_LOG_ERROR(ctx, "CSR SparseMatrix must have rank 2 or 3.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -52,7 +53,7 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::Compute(CpuKernelContext &ctx) 
   auto x_col_indices_shape = x_col_indices->GetTensorShape();
   auto x_values_shape = x_values->GetTensorShape();
   if (x_col_indices_shape->NumElements() != x_values_shape->NumElements()) {
-    KERNEL_LOG_ERROR("Tensor x_col_indices&x_values's ranks mismatch.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Tensor x_col_indices&x_values's ranks mismatch.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -61,14 +62,14 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::Compute(CpuKernelContext &ctx) 
   auto x_row_pointers_data_type = x_row_pointers->GetDataType();
   auto x_col_indices_data_type = x_col_indices->GetDataType();
   if (x_col_indices_data_type != DT_INT32 && x_col_indices_data_type != DT_INT64) {
-    KERNEL_LOG_ERROR("CSRSparseMatrixToSparseTensor kernel data type [%s] not support.",
-                     DTypeStr(x_col_indices_data_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "CSRSparseMatrixToSparseTensor kernel data type [%s] not support.",
+                          DTypeStr(x_col_indices_data_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (x_dense_shape_data_type != x_col_indices_data_type || x_batch_pointers_data_type != x_col_indices_data_type ||
       x_row_pointers_data_type != x_col_indices_data_type) {
-    KERNEL_LOG_ERROR("CSRSparseMatrixToSparseTensor kernel data type mismatch.");
+    CUST_KERNEL_LOG_ERROR(ctx, "CSRSparseMatrixToSparseTensor kernel data type mismatch.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -91,10 +92,10 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::Compute(CpuKernelContext &ctx) 
           status = ComputeKernel<int32_t, std::complex<double> >(ctx);
           break;
         default:
-          KERNEL_LOG_ERROR(
-            "CSRSparseMatrixToSparseTensor kernel data type [%s] not "
-            "support.",
-            DTypeStr(x_values_data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx,
+                                "CSRSparseMatrixToSparseTensor kernel data type [%s] not "
+                                "support.",
+                                DTypeStr(x_values_data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -113,20 +114,20 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::Compute(CpuKernelContext &ctx) 
           status = ComputeKernel<int64_t, std::complex<double> >(ctx);
           break;
         default:
-          KERNEL_LOG_ERROR(
-            "CSRSparseMatrixToSparseTensor kernel data type [%s] not "
-            "support.",
-            DTypeStr(x_values_data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx,
+                                "CSRSparseMatrixToSparseTensor kernel data type [%s] not "
+                                "support.",
+                                DTypeStr(x_values_data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     default:
-      KERNEL_LOG_ERROR("data type of indices is not int32 or int64");
+      CUST_KERNEL_LOG_ERROR(ctx, "data type of indices is not int32 or int64");
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (status != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("CSRSparseMatrixToSparseTensor kernel compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "CSRSparseMatrixToSparseTensor kernel compute failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -136,7 +137,7 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::Compute(CpuKernelContext &ctx) 
 REGISTER_MS_CPU_KERNEL(CSRSparseMatrixToSparseTensor, CSRSparseMatrixToSparseTensorCpuKernel);
 
 template <typename indicesT, typename dataT>
-uint32_t CSRSparseMatrixToSparseTensorCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
+uint32_t CSRSparseMatrixToSparseTensorCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
   auto x_dense_shape = ctx.Input(0);
   auto x_dense_shape_ptr = static_cast<indicesT *>(x_dense_shape->GetData());
   auto dense_shape_ptr = static_cast<indicesT *>(ctx.Output(2)->GetData());
@@ -170,11 +171,11 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::ComputeKernel(const CpuKernelCo
     };
 
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch_size, batch_size / max_core_num, sharder),
-                        "CSRSparseMatrixToSparseTensor Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, batch_size, batch_size / max_core_num, sharder),
+                             "CSRSparseMatrixToSparseTensor Compute failed.");
   } else {
     SpecialCompute<indicesT>(0, batch_size, ctx);
   }
@@ -184,7 +185,7 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::ComputeKernel(const CpuKernelCo
 
 template <typename indicesT>
 void CSRSparseMatrixToSparseTensorCpuKernel::SpecialCompute(int64_t batch_begin, int64_t batch_end,
-                                                            const CpuKernelContext &ctx) {
+                                                            CpuKernelContext &ctx) {
   auto x_dense_shape = ctx.Input(0);
   const int rank = x_dense_shape->NumElements();
   auto x_dense_shape_ptr = static_cast<indicesT *>(x_dense_shape->GetData());
@@ -213,7 +214,7 @@ void CSRSparseMatrixToSparseTensorCpuKernel::SpecialCompute(int64_t batch_begin,
 }
 
 template <typename indicesT>
-void CSRSparseMatrixToSparseTensorCpuKernel::IndicesCompute(const CpuKernelContext &ctx, int64_t indices_offset,
+void CSRSparseMatrixToSparseTensorCpuKernel::IndicesCompute(CpuKernelContext &ctx, int64_t indices_offset,
                                                             const int64_t batch_idx, const int64_t row_idx,
                                                             const int64_t col_idx) {
   const int rank = ctx.Input(0)->NumElements();

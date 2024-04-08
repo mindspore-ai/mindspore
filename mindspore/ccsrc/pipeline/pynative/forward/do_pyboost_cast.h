@@ -35,17 +35,20 @@ class PyBoostCastOperation : public CastBaseOperation {
   PyBoostCastOperation() = default;
   ~PyBoostCastOperation() = default;
 
+  template <typename... InputArgs, std::size_t... Index>
+  auto SetTensorMixPrecisionCastHelper(const FrontendOpRunInfoPtr &op_run_info, std::index_sequence<Index...>,
+                                       const InputArgs &... input_args) {
+    return std::make_tuple(SetTensorMixPrecisionCast(op_run_info, input_args, Index)...);
+  }
+
   template <typename... InputArgs>
   auto DoMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const InputArgs &... input_args) {
     // Mixed precision conversion tensors which has cast dtype
     if (op_run_info->async_status.disable_mix_precision) {
       return std::make_tuple(input_args...);
     }
-    size_t index = sizeof...(input_args);
-    auto decrease_index_fn = [&index]() { return --index; };
-    // Notice, the input_args of variadic template in make_tuple obtaining is reverse
-    auto ret = std::make_tuple(SetTensorMixPrecisionCast(op_run_info, input_args, decrease_index_fn())...);
-    return ret;
+    return SetTensorMixPrecisionCastHelper(op_run_info, std::make_index_sequence<sizeof...(InputArgs)>(),
+                                           input_args...);
   }
 
   template <typename T>
@@ -125,8 +128,8 @@ class PyBoostCastOperation : public CastBaseOperation {
       } else if ((!v->template isa<BoolImm>() && v->template isa<IntegerImm>())) {
         has_scalar_int64 = true;
       }
+      type_table_.insert(index);
     }
-
     max_type = JudgeMaxType(max_type, has_scalar_float32, has_scalar_int64, has_tensor_int8);
     MS_EXCEPTION_IF_NULL(dst_type);
     (*dst_type)[type] = std::make_pair(max_type, has_tensor_input);
@@ -156,6 +159,7 @@ class PyBoostCastOperation : public CastBaseOperation {
     MS_EXCEPTION_IF_NULL(op_run_info);
     std::vector<SignatureEnumDType> dtypes;
     mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> dst_type;
+    type_table_.clear();
     const auto &it = implicit_cast_map_.find(op_run_info->base_op_run_info.op_name);
     if (it == implicit_cast_map_.end()) {
       // Get current inputs signatures
@@ -189,6 +193,10 @@ class PyBoostCastOperation : public CastBaseOperation {
   Item DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
                        const mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, size_t index, const Item &t) const {
+    // index is reverse in variable parameter template
+    if (type_table_.find(index) == type_table_.end()) {
+      return t;
+    }
     // No need to implicit cast if no dtype.
     const auto &signature = op_run_info->signatures;
     if (dtypes.empty() || dtypes[index] == SignatureEnumDType::kDTypeEmptyDefaultValue) {
@@ -253,7 +261,10 @@ class PyBoostCastOperation : public CastBaseOperation {
                   const Item &t) const {
     MS_EXCEPTION_IF_NULL(t);
     MS_LOG(DEBUG) << "Get input type " << typeid(t).name();
-    return t;
+    ValuePtr v = t->template cast<ValuePtr>();
+    auto ret = DoAutoCast(op_run_info, dst_type, index, v)->template cast<Item>();
+    MS_EXCEPTION_IF_NULL(ret);
+    return ret;
   }
 
   ValuePtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const std::pair<TypeId, bool> &dst_type, size_t index,
@@ -272,6 +283,8 @@ class PyBoostCastOperation : public CastBaseOperation {
                                          size_t index) const;
   ValuePtrList SetSeqMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &v_seq,
                                       size_t index) const;
+
+  mindspore::HashSet<size_t> type_table_;
 };
 using PyBoostCastOperationPtr = std::shared_ptr<PyBoostCastOperation>;
 

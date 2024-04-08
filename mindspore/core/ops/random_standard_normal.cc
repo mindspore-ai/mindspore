@@ -129,7 +129,7 @@ TypePtr RandomStandardNormalInferType(const PrimitivePtr &primitive, const std::
     MS_EXCEPTION_IF_NULL(elements_type);
     const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
     for (const auto &input_dtype : elements_type->elements()) {
-      (void)CheckAndConvertUtils::CheckTypeValid("shape", input_dtype, valid_shape_types, prim_name);
+      (void)CheckAndConvertUtils::CheckSubClass("shape", input_dtype, valid_shape_types, prim_name);
     }
   } else if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
     const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};

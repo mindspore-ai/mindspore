@@ -96,9 +96,6 @@ void SideEffect::RestoreSideEffect(CodeGenerator *code_gen) const {
     if (item->GetOpcode() == BUILD_LIST) {
       if (GetReplaceMap().size() != 0) {
         for (auto &replace_map : GetReplaceMap()) {
-          std::cout << replace_map.first->ToString() << std::endl;
-          std::cout << replace_map.second->ToString() << std::endl;
-
           if (item == replace_map.first) {
             code_gen->LoadValue(replace_map.second);
           }

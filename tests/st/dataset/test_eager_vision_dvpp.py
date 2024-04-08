@@ -309,6 +309,33 @@ def test_eager_resize_dvpp_exception():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_eager_resize_dvpp_exception_with_910A():
+    """
+    Feature: Resize op when Ascend910A
+    Description: Will prompt exception not supported
+    Expectation: With exception
+    """
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # HWC
+    img = cv2.imread(input_apple_jpg)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    # run the op
+    with pytest.raises(RuntimeError):
+        _ = vision.Resize(size=(64, 32)).device("Ascend")(img)
+
+    # retry to run the op
+    with pytest.raises(RuntimeError):
+        _ = vision.Resize(size=(64, 32)).device("Ascend")(img)
+
+
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_eager_normalize_dvpp():
@@ -1366,7 +1393,7 @@ def test_eager_gaussian_blur_dvpp_exception():
     img = np.ones([30, 60, 3], dtype=np.uint8)
     with pytest.raises(RuntimeError) as error_info:
         img = vision.GaussianBlur(9, 9).device("Ascend")(img)
-    assert "the value of gaussian kernel only supports [1, 3, 5]" in str(error_info.value)
+    assert "`kernel_size` only supports values 1, 3, and 5" in str(error_info.value)
 
 
 @pytest.mark.level0
@@ -1423,11 +1450,11 @@ def test_eager_affine_dvpp_exception():
         img = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")(img)
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(error_info.value)
 
-    # the input is out of [4, 6] to [32768, 4096]
+    # the input is out of [4, 6] to [32768, 32768]
     img = np.ones([4, 5, 3], dtype=np.uint8)
     with pytest.raises(RuntimeError) as error_info:
         img = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")(img)
-    assert "the input shape should be from [4, 6] to [32768, 4096]" in str(error_info.value)
+    assert "the input shape should be from [4, 6] to [32768, 32768]" in str(error_info.value)
 
     # the input kernel is invalid
     img = np.ones([30, 60, 3], dtype=np.uint8)
@@ -1458,6 +1485,7 @@ if __name__ == '__main__':
     test_eager_resize_dvpp()
     test_resize_performance()
     test_eager_resize_dvpp_exception()
+    test_eager_resize_dvpp_exception_with_910A()
     test_eager_decode_dvpp()
     test_eager_decode_dvpp_exception()
     test_eager_normalize_dvpp()

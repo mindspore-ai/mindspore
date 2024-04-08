@@ -26,6 +26,7 @@
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "backend/graph_compiler/transform.h"
 #include "backend/common/pass/erase_invalid_micro_depend.h"
+#include "backend/common/pass/erase_not_cut_attr.h"
 #include "backend/common/pass/switch_not_cut.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/common/utils/callbacks.h"
@@ -549,19 +550,27 @@ void DoUnifyMindIRPass(const FuncGraphPtr &graph, const std::shared_ptr<opt::Gra
 #endif
 }
 bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (!context->IsKByKExecutorMode()) {
+  static const auto is_enable_switch_inline = (common::GetEnv("MS_ENABLE_SWITCH_INLINE") == "1");
+  if (!is_enable_switch_inline) {
     return false;
   }
+
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  // Only support ge backend, kernel by kernel mode and multi-funcgraph.
+  static const bool is_enable_ge = (context->backend_policy() == "ge");
+  if (!is_enable_ge || !context->IsKByKExecutorMode() || graph->func_graphs_used_total().empty()) {
+    return false;
+  }
+
   MS_EXCEPTION_IF_NULL(graph);
+  // Not support recursive.
   if (std::any_of(graph->func_graphs_used_total().cbegin(), graph->func_graphs_used_total().cend(),
                   [](const auto &sub_graph) { return sub_graph->recursive(); })) {
     return false;
   }
 
-  if (context->CellReuseLevel() == CellReuseLevel::kLazyInline) {
-  } else {
+  if (context->CellReuseLevel() != CellReuseLevel::kLazyInline) {
     auto is_include_no_switch_call = [](const FuncGraphPtr &graph) {
       MS_EXCEPTION_IF_NULL(graph);
       const auto &nodes = TopoSort(graph->get_return());
@@ -638,6 +647,9 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
   unify_mindir_pm->AddPass(std::make_shared<opt::EraseInvalidMicroDepend>());
+  if (common::AnfAlgo::IsDynamicGraph(root_graph)) {
+    unify_mindir_pm->AddPass(std::make_shared<opt::EraseNotCutAttr>());
+  }
   if (IsEnableControlFlowInline(root_graph)) {
     unify_mindir_pm->AddPass(std::make_shared<opt::SwitchNotCut>());
   }
@@ -996,7 +1008,6 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
 
   MS_LOG(INFO) << "Status record: start run actor: " << actor_info;
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRunGraph, 1, 0, 0);
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageGetInputs, 1, 0, 0);
   std::vector<std::vector<tensor::TensorPtr>> input_tensors;
   if (graph_compiler_info.exist_flatten_concat_) {
     input_tensors = GetRunGraphInputs(graph_compiler_info, args);
@@ -1008,26 +1019,19 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
       });
     });
   }
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageGetInputs, 1, 0, 1);
   // Release python gil.
   mindspore::ScopedLongRunning long_running;
   // Run actor DAG.
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRun, 1, 0, 0);
   runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors, args);
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRun, 1, 0, 1);
 
   {
     uint64_t start_time = 0;
     PROFILER_START(start_time);
     MS_EXCEPTION_IF_NULL(graph_compiler_);
     graph_compiler_->Summary(graph_compiler_info.graphs_);
-
-    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageConstructOutputs, 1, 0, 0);
     ConstructOutputs(actor_set, outputs, root_graph_);
-    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageConstructOutputs, 1, 0, 1);
-
     actor_set->output_actor_->FreeSummaryNodeMem();
     runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
     PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kOutputProcess, actor_set->name_,

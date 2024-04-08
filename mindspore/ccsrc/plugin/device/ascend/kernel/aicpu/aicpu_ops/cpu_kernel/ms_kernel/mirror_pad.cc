@@ -46,13 +46,13 @@ template <typename T>
 uint32_t MirrorPadCpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
   // check params
   attr_names.emplace_back("mode");
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kMirrotPadInputNum, kMirrotPadOutputNum, attr_names),
-                      "[%s] check params failed.", kMirrorPad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kMirrotPadInputNum, kMirrotPadOutputNum, attr_names),
+                           "[%s] check params failed.", kMirrorPad);
   // get Attr mode
   AttrValue *mode_ptr = ctx.GetAttr("mode");
   auto mode = mode_ptr->GetString();
-  KERNEL_CHECK_FALSE((mode == "SYMMETRIC" || mode == "REFLECT"), KERNEL_STATUS_PARAM_INVALID,
-                     "Attr mode must be either REFLECT or SYMMETRIC, but got attr mode[%s]", mode);
+  CUST_KERNEL_CHECK_FALSE(ctx, (mode == "SYMMETRIC" || mode == "REFLECT"), KERNEL_STATUS_PARAM_INVALID,
+                          "Attr mode must be either REFLECT or SYMMETRIC, but got attr mode[%s]", mode);
   if (mode == "SYMMETRIC") {
     offset_ = 0;
   } else if (mode == "REFLECT") {
@@ -64,23 +64,23 @@ uint32_t MirrorPadCpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
   auto x_shape_ptr = x_ptr->GetTensorShape();
   auto dims = x_shape_ptr->GetDims();
   dims_ = x_shape_ptr->GetDims();
-  KERNEL_CHECK_FALSE((kMinDims <= dims && dims <= kMaxDims), KERNEL_STATUS_PARAM_INVALID,
-                     "inputs rank not in [%lld, %lld]: %lld", kMinDims, kMaxDims, dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, (kMinDims <= dims && dims <= kMaxDims), KERNEL_STATUS_PARAM_INVALID,
+                          "inputs rank not in [%lld, %lld]: %lld", kMinDims, kMaxDims, dims);
   // get input paddings
   Tensor *paddings_ptr = ctx.Input(1);
   auto paddings_shape_ptr = paddings_ptr->GetTensorShape();
-  KERNEL_CHECK_FALSE((paddings_ptr->GetDataType() == DT_INT32 || paddings_ptr->GetDataType() == DT_INT64),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "Input split_dim data type must be DT_INT32 or DT_INT64, "
-                     "but got data type[%s]",
-                     DTypeStr(paddings_ptr->GetDataType()).c_str());
-  KERNEL_CHECK_FALSE(IsMatrix(paddings_shape_ptr->GetDimSizes()) && paddings_shape_ptr->GetDimSize(1),
-                     KERNEL_STATUS_PARAM_INVALID, "paddings must be a matrix with 2 columns: [%lld] ",
-                     paddings_shape_ptr->GetDimSizes());
-  KERNEL_CHECK_FALSE(dims == paddings_shape_ptr->GetDimSize(0), KERNEL_STATUS_PARAM_INVALID,
-                     "The first dimension of paddings must be the rank of inputs [%lld] , "
-                     "[%lld]",
-                     x_shape_ptr->GetDimSizes(), paddings_shape_ptr->GetDimSizes());
+  CUST_KERNEL_CHECK_FALSE(ctx, (paddings_ptr->GetDataType() == DT_INT32 || paddings_ptr->GetDataType() == DT_INT64),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "Input split_dim data type must be DT_INT32 or DT_INT64, "
+                          "but got data type[%s]",
+                          DTypeStr(paddings_ptr->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, IsMatrix(paddings_shape_ptr->GetDimSizes()) && paddings_shape_ptr->GetDimSize(1),
+                          KERNEL_STATUS_PARAM_INVALID, "paddings must be a matrix with 2 columns: [%lld] ",
+                          paddings_shape_ptr->GetDimSizes());
+  CUST_KERNEL_CHECK_FALSE(ctx, dims == paddings_shape_ptr->GetDimSize(0), KERNEL_STATUS_PARAM_INVALID,
+                          "The first dimension of paddings must be the rank of inputs [%lld] , "
+                          "[%lld]",
+                          x_shape_ptr->GetDimSizes(), paddings_shape_ptr->GetDimSizes());
   // Compute the shape of the output tensor, and allocate it.
   auto size_pads_data = reinterpret_cast<T *>(paddings_ptr->GetData());
   input_num_elements = 1;
@@ -89,20 +89,20 @@ uint32_t MirrorPadCpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
     int64_t before = *(size_pads_data + d * 2);
     int64_t after = *(size_pads_data + d * 2 + 1);
     padding_.push_back(std::make_pair(before, after));
-    KERNEL_CHECK_FALSE(before >= 0 && after >= 0, KERNEL_STATUS_PARAM_INVALID,
-                       "paddings must be non-negative: [%lld]  [%lld]", before, after);
+    CUST_KERNEL_CHECK_FALSE(ctx, before >= 0 && after >= 0, KERNEL_STATUS_PARAM_INVALID,
+                            "paddings must be non-negative: [%lld]  [%lld]", before, after);
     if (offset_ == 0) {
-      KERNEL_CHECK_FALSE(before <= x_shape_ptr->GetDimSize(d) && after <= x_shape_ptr->GetDimSize(d),
-                         KERNEL_STATUS_PARAM_INVALID,
-                         "paddings must be no greater "
-                         "than the dimension size: [%lld] , [%lld]  greater than [%lld] ",
-                         before, after, x_shape_ptr->GetDimSize(d));
+      CUST_KERNEL_CHECK_FALSE(ctx, before <= x_shape_ptr->GetDimSize(d) && after <= x_shape_ptr->GetDimSize(d),
+                              KERNEL_STATUS_PARAM_INVALID,
+                              "paddings must be no greater "
+                              "than the dimension size: [%lld] , [%lld]  greater than [%lld] ",
+                              before, after, x_shape_ptr->GetDimSize(d));
     } else if (offset_ == 1) {
-      KERNEL_CHECK_FALSE(before < x_shape_ptr->GetDimSize(d) && after < x_shape_ptr->GetDimSize(d),
-                         KERNEL_STATUS_PARAM_INVALID,
-                         "paddings must be no greater "
-                         "than the dimension size: [%lld] , [%lld]  not less than [%lld] ",
-                         before, after, x_shape_ptr->GetDimSize(d));
+      CUST_KERNEL_CHECK_FALSE(ctx, before < x_shape_ptr->GetDimSize(d) && after < x_shape_ptr->GetDimSize(d),
+                              KERNEL_STATUS_PARAM_INVALID,
+                              "paddings must be no greater "
+                              "than the dimension size: [%lld] , [%lld]  not less than [%lld] ",
+                              before, after, x_shape_ptr->GetDimSize(d));
     }
     input_dim_shape.push_back(x_shape_ptr->GetDimSize(d));
     int64_t dimi = after + x_shape_ptr->GetDimSize(d) + before;
@@ -120,17 +120,17 @@ uint32_t MirrorPadCpuKernel::DoCompute(CpuKernelContext &ctx) {
   if (output_num_elements == ctx.Input(0)->NumElements() || dims_ == 0) {
     uint64_t copy_size = ctx.Input(0)->GetDataSize();
     auto mem_ret = memcpy_s(output_data, copy_size, input_data_ptr, copy_size);
-    KERNEL_CHECK_FALSE((mem_ret == EOK), KERNEL_STATUS_PARAM_INVALID,
-                       "Memcpy size[%zu] from input value to output failed.", copy_size);
+    CUST_KERNEL_CHECK_FALSE(ctx, (mem_ret == EOK), KERNEL_STATUS_PARAM_INVALID,
+                            "Memcpy size[%zu] from input value to output failed.", copy_size);
   } else {
-    KERNEL_CHECK_FALSE((MirrorPadCompute<T>(input_data_ptr, output_data) == KERNEL_STATUS_OK),
-                       KERNEL_STATUS_PARAM_INVALID, "MirrorPadCompute failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (MirrorPadCompute<T>(ctx, input_data_ptr, output_data) == KERNEL_STATUS_OK),
+                            KERNEL_STATUS_PARAM_INVALID, "MirrorPadCompute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t MirrorPadCpuKernel::MirrorPadCompute(T *input_data_ptr, T *output_data_ptr) {
+uint32_t MirrorPadCpuKernel::MirrorPadCompute(CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr) {
   input_strides_.resize(dims_);
   output_strides_.resize(dims_);
   input_strides_[dims_ - 1] = 1;
@@ -155,8 +155,8 @@ uint32_t MirrorPadCpuKernel::MirrorPadCompute(T *input_data_ptr, T *output_data_
                input_data_ptr + input_num_elements - padding_[0].second - offset_, padding_[0].second * sizeof(T));
     auto ret3 = memcpy_s(output_data_ptr + padding_[0].first, input_num_elements * sizeof(T), input_data_ptr,
                          input_num_elements * sizeof(T));
-    KERNEL_CHECK_FALSE((ret1 == EOK && ret2 == EOK && ret3 == EOK), KERNEL_STATUS_INNER_ERROR,
-                       "For 'MirrorPad', memcpy_s failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (ret1 == EOK && ret2 == EOK && ret3 == EOK), KERNEL_STATUS_INNER_ERROR,
+                            "For 'MirrorPad', memcpy_s failed.");
     std::reverse(output_data_ptr, output_data_ptr + padding_[0].first);
     std::reverse(output_data_ptr + padding_[0].first + input_num_elements,
                  output_data_ptr + padding_[0].first + input_num_elements + padding_[0].second);
@@ -172,7 +172,7 @@ uint32_t MirrorPadCpuKernel::MirrorPadCompute(T *input_data_ptr, T *output_data_
   int64_t copy_size = sizeof(T) * input_dim_shape[dims_ - 1];
   while (inx < input_num_elements) {
     auto ret = memcpy_s(output_data_ptr + output_index, copy_size, input_data_ptr + inx, copy_size);
-    KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR, "For 'MirrorPad', memcpy_s failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_INNER_ERROR, "For 'MirrorPad', memcpy_s failed.");
     output_pos.push_back(output_index);
     pos[dims_ - kTwo] += 1;
     int64_t dep = dims_ - 1;
@@ -197,13 +197,13 @@ uint32_t MirrorPadCpuKernel::MirrorPadCompute(T *input_data_ptr, T *output_data_
       for (int64_t cnt = 1; cnt <= padding_[i].first; ++cnt) {
         auto ret = memcpy_s(base_output_ptr1 - cnt * block_size, copy_size,
                             base_output_ptr1 + (cnt - 1 + offset_) * block_size, copy_size);
-        KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR, "For 'MirrorPad', memcpy_s failed.");
+        CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_INNER_ERROR, "For 'MirrorPad', memcpy_s failed.");
       }
       T *base_output_ptr2 = output_data_ptr + item + input_dim_shape[i] * block_size;
       for (int64_t cnt = 1; cnt <= padding_[i].second; ++cnt) {
         auto ret = memcpy_s(base_output_ptr2 + (cnt - 1) * block_size, copy_size,
                             base_output_ptr2 - (cnt + offset_) * block_size, copy_size);
-        KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR, "For 'MirrorPad', memcpy_s failed.");
+        CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_INNER_ERROR, "For 'MirrorPad', memcpy_s failed.");
       }
       if (i > 0 && count % input_dim_shape[i - 1] == 0) {
         tmp_pos.push_back(item - padding_[i].first * block_size);
@@ -222,11 +222,11 @@ uint32_t MirrorPadCpuKernel::MirrorPadCompute(T *input_data_ptr, T *output_data_
 uint32_t MirrorPadCpuKernel::Compute(CpuKernelContext &ctx) {
   auto padding_type_ = ctx.Input(1)->GetDataType();
   if (padding_type_ == DT_INT32) {
-    KERNEL_CHECK_FALSE((CheckAndInitParams<int32_t>(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
-                       "CheckAndInitParams failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (CheckAndInitParams<int32_t>(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
+                            "CheckAndInitParams failed.");
   } else {
-    KERNEL_CHECK_FALSE((CheckAndInitParams<int64_t>(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
-                       "CheckAndInitParams failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (CheckAndInitParams<int64_t>(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
+                            "CheckAndInitParams failed.");
   }
   switch (data_type_) {
     case DT_FLOAT16:
@@ -254,7 +254,7 @@ uint32_t MirrorPadCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return DoCompute<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported datatype[%s]", DTypeStr(data_type_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported datatype[%s]", DTypeStr(data_type_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

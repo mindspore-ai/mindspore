@@ -163,7 +163,6 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     MS_EXCEPTION_IF_NULL(context);
     static const auto input_name = common::GetEnv("MS_DEV_DUMP_IR_PASSES");
     auto enable_dump_pass_ir = (input_name.size() != 0) || enable_dump_pass;
-
     if ((enable_dump_pass_ir && context->CanDump(kIntroductory)) || context->CanDump(kFully)) {
       auto fg_name = "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(index) + "_" +
                      pass_names_[index];

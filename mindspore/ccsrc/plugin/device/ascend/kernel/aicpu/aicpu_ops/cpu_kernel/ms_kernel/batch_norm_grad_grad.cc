@@ -35,28 +35,28 @@ const int kParallelDataNumMid = 16;
 
 const char *const kBatchNormGradGrad = "BatchNormGradGrad";
 
-#define BATCHNORMGRADGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                                   \
-    uint32_t result = ParallelCompute<TYPE>(CTX);                   \
-    if (result != KERNEL_STATUS_OK) {                               \
-      KERNEL_LOG_ERROR("BatchNormGradGrad kernel compute failed."); \
-      return result;                                                \
-    }                                                               \
-    break;                                                          \
+#define BATCHNORMGRADGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                             \
+    uint32_t result = ParallelCompute<TYPE>(CTX);                             \
+    if (result != KERNEL_STATUS_OK) {                                         \
+      CUST_KERNEL_LOG_ERROR(ctx, "BatchNormGradGrad kernel compute failed."); \
+      return result;                                                          \
+    }                                                                         \
+    break;                                                                    \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t BatchNormGradGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "BatchNormGradGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "BatchNormGradGrad check input and output number failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     BATCHNORMGRADGRAD_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     BATCHNORMGRADGRAD_COMPUTE_CASE(DT_FLOAT, float, ctx)
     default:
-      KERNEL_LOG_ERROR("BatchNormGradGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "BatchNormGradGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -64,7 +64,7 @@ uint32_t BatchNormGradGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t BatchNormGradGradCpuKernel::ParallelCompute(const CpuKernelContext &ctx) {
+uint32_t BatchNormGradGradCpuKernel::ParallelCompute(CpuKernelContext &ctx) {
   // handle attr
   AttrValue *Attr_data_format = ctx.GetAttr("data_format");
   std::string data_format = (Attr_data_format == nullptr) ? "NHWC" : Attr_data_format->GetString();
@@ -76,7 +76,7 @@ uint32_t BatchNormGradGradCpuKernel::ParallelCompute(const CpuKernelContext &ctx
   auto reserve_space_2 = reinterpret_cast<float *>(ctx.Input(4)->GetData());  // fp32
   for (int j = 0; j < C_num; j++) {
     if (*(reserve_space_2 + j) < 0) {
-      KERNEL_LOG_ERROR("'reserve_space_2' must be no less than zero");
+      CUST_KERNEL_LOG_ERROR(ctx, "'reserve_space_2' must be no less than zero");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -110,8 +110,8 @@ uint32_t BatchNormGradGradCpuKernel::ParallelCompute(const CpuKernelContext &ctx
         }
       };
 
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, C_num, C_num / max_core_num, sharder_BNGG),
-                          "BatchNormGradGrad Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, C_num, C_num / max_core_num, sharder_BNGG),
+                               "BatchNormGradGrad Compute failed.");
     } else {
       if (is_training) {
         TrainingComputeNHWC<T>(ctx, 0, C_num);
@@ -125,7 +125,7 @@ uint32_t BatchNormGradGradCpuKernel::ParallelCompute(const CpuKernelContext &ctx
 }
 
 template <typename T>
-void BatchNormGradGradCpuKernel::TrainingComputeNHWC(const CpuKernelContext &ctx, int start, int end) {
+void BatchNormGradGradCpuKernel::TrainingComputeNHWC(CpuKernelContext &ctx, int start, int end) {
   auto x_ori = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto dy_ori = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());            // fp32
@@ -307,7 +307,7 @@ void BatchNormGradGradCpuKernel::TrainingComputeNHWC(const CpuKernelContext &ctx
 }
 
 template <typename T>
-void BatchNormGradGradCpuKernel::InferenceComputeNHWC(const CpuKernelContext &ctx, int start, int end) {
+void BatchNormGradGradCpuKernel::InferenceComputeNHWC(CpuKernelContext &ctx, int start, int end) {
   auto x_ori = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto dy_ori = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());            // fp32
@@ -392,7 +392,7 @@ void BatchNormGradGradCpuKernel::InferenceComputeNHWC(const CpuKernelContext &ct
 }
 
 template <typename T>
-void BatchNormGradGradCpuKernel::TrainingComputeNCHW(const CpuKernelContext &ctx) {
+void BatchNormGradGradCpuKernel::TrainingComputeNCHW(CpuKernelContext &ctx) {
   auto x_ori = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto dy_ori = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());            // fp32
@@ -575,7 +575,7 @@ void BatchNormGradGradCpuKernel::TrainingComputeNCHW(const CpuKernelContext &ctx
 }
 
 template <typename T>
-void BatchNormGradGradCpuKernel::InferenceComputeNCHW(const CpuKernelContext &ctx) {
+void BatchNormGradGradCpuKernel::InferenceComputeNCHW(CpuKernelContext &ctx) {
   auto x_ori = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto dy_ori = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());            // fp32

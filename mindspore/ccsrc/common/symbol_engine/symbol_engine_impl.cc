@@ -90,10 +90,10 @@ class ControlFlowJoinNode : public SpecialCNodeHelper {
     MS_EXCEPTION_IF_NULL(input0);
     return input0;
   }
-  SymbolEngineImpl *symbol_engine() const {
+  SymbolEngineImplPtr symbol_engine() const {
     auto symbol_engine = cnode_->func_graph()->symbol_engine();
     MS_EXCEPTION_IF_NULL(symbol_engine);
-    auto symbol_engine_impl = symbol_engine->cast_ptr<SymbolEngineImpl>();
+    auto symbol_engine_impl = symbol_engine->cast<SymbolEngineImplPtr>();
     MS_EXCEPTION_IF_NULL(symbol_engine_impl);
     return symbol_engine_impl;
   }

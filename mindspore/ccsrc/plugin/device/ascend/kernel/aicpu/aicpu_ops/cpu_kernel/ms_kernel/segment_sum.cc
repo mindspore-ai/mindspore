@@ -20,6 +20,7 @@
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
+namespace aicpu {
 namespace {
 const uint32_t kInputNum = 2;
 const uint32_t kOutputNum = 1;
@@ -27,14 +28,14 @@ constexpr int64_t kValueTwo = 2;
 const char *kSegmentSum = "SegmentSum";
 const int64_t kDataSize = 2 * 1024;
 
-#define SEGMENTSUM_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)    \
-  case (DTYPE): {                                            \
-    uint32_t result = SegmentSumCompute<TYPE1, TYPE2>(CTX);  \
-    if (result != KERNEL_STATUS_OK) {                        \
-      KERNEL_LOG_ERROR("SegmentSum kernel compute failed."); \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define SEGMENTSUM_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)              \
+  case (DTYPE): {                                                      \
+    uint32_t result = SegmentSumCompute<TYPE1, TYPE2>(CTX);            \
+    if (result != KERNEL_STATUS_OK) {                                  \
+      CUST_KERNEL_LOG_ERROR(ctx, "SegmentSum kernel compute failed."); \
+      return result;                                                   \
+    }                                                                  \
+    break;                                                             \
   }
 
 #define SEGMENTSUM_COMPUTE_CASE_ALL(TYPE, CTX)                            \
@@ -53,16 +54,16 @@ const int64_t kDataSize = 2 * 1024;
   SEGMENTSUM_COMPUTE_CASE(DT_DOUBLE, double, TYPE, CTX)
 
 template <typename T>
-uint32_t SegmentIdsCompute(const T *segment_ids_data_addr, const int64_t segment_ids_data_num,
+uint32_t SegmentIdsCompute(CpuKernelContext &ctx, const T *segment_ids_data_addr, const int64_t segment_ids_data_num,
                            std::vector<int64_t> *const segments) {
   if (segment_ids_data_addr[0] < 0) {
-    KERNEL_LOG_ERROR("Input[1] must be nonnegative data.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Input[1] must be nonnegative data.");
     return aicpu::KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t seg_tmp = 1;
   for (int64_t i = 0; i < segment_ids_data_num - 1; i++) {
     if (segment_ids_data_addr[i] > segment_ids_data_addr[i + 1]) {
-      KERNEL_LOG_ERROR("Input[1] must be an ascending ordered sequence.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Input[1] must be an ascending ordered sequence.");
       return aicpu::KERNEL_STATUS_PARAM_INVALID;
     }
     if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
@@ -94,9 +95,9 @@ void InnerCompute(size_t start, size_t end, const int64_t input_addr_base, const
 }
 }  // namespace
 
-namespace aicpu {
 uint32_t SegmentSumCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "SegmentSum check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SegmentSum check input and output number failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   auto segment_ids_type = ctx.Input(1)->GetDataType();
   switch (segment_ids_type) {
@@ -104,7 +105,7 @@ uint32_t SegmentSumCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (data_type) {
         SEGMENTSUM_COMPUTE_CASE_ALL(int32_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -113,13 +114,13 @@ uint32_t SegmentSumCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (data_type) {
         SEGMENTSUM_COMPUTE_CASE_ALL(int64_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     }
     default: {
-      KERNEL_LOG_ERROR("Input[1] data type[%s] not supported.", DTypeStr(segment_ids_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Input[1] data type[%s] not supported.", DTypeStr(segment_ids_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -127,7 +128,7 @@ uint32_t SegmentSumCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t SegmentSumCpuKernel::SegmentSumCompute(const CpuKernelContext &ctx) {
+uint32_t SegmentSumCpuKernel::SegmentSumCompute(CpuKernelContext &ctx) {
   Tensor *input_x_data = ctx.Input(0);
   auto input_x_data_addr = reinterpret_cast<T1 *>(input_x_data->GetData());
   auto input_x_shape = input_x_data->GetTensorShape();
@@ -144,12 +145,12 @@ uint32_t SegmentSumCpuKernel::SegmentSumCompute(const CpuKernelContext &ctx) {
   output_data->GetTensorShape()->SetDimSizes(output_data_shape_sizes);
   auto output_data_shape = output_data->GetTensorShape();
   if (output_data_shape->GetDimSize(0) < input_x_dims[0]) {
-    KERNEL_LOG_ERROR("The number of segments of the segmentation result of segment_ids is too large.");
+    CUST_KERNEL_LOG_ERROR(ctx, "The number of segments of the segmentation result of segment_ids is too large.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   output_data_shape->SetDimSizes(input_x_dims);
   if (!output_data->SetTensorShape(output_data_shape.get())) {
-    KERNEL_LOG_ERROR("Set output shape failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Set output shape failed.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   int64_t output_data_num = output_data->NumElements();
@@ -158,10 +159,10 @@ uint32_t SegmentSumCpuKernel::SegmentSumCompute(const CpuKernelContext &ctx) {
   }
   std::vector<int64_t> segments;
   if (segment_ids_data_num != (input_x_data->GetTensorShape()->GetDimSize(0))) {
-    KERNEL_LOG_ERROR("The amount of data for input[1] must be equal to the first dimension of input[0].");
+    CUST_KERNEL_LOG_ERROR(ctx, "The amount of data for input[1] must be equal to the first dimension of input[0].");
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (auto status = SegmentIdsCompute(segment_ids_data_addr, segment_ids_data_num, &segments);
+  if (auto status = SegmentIdsCompute(ctx, segment_ids_data_addr, segment_ids_data_num, &segments);
       status != KERNEL_STATUS_OK) {
     return status;
   }
@@ -188,8 +189,8 @@ uint32_t SegmentSumCpuKernel::SegmentSumCompute(const CpuKernelContext &ctx) {
           InnerCompute(start, end, input_addr_base, num_compare_per, count, count_no, input_x_data_addr,
                        output_data_addr, segment_ids_data_addr);
         };
-        KERNEL_HANDLE_ERROR(
-          CpuKernelUtils::ParallelFor(ctx, num_compare_per, num_compare_per / sum_core_num, shard_compute),
+        CUST_KERNEL_HANDLE_ERROR(
+          ctx, CpuKernelUtils::ParallelFor(ctx, num_compare_per, num_compare_per / sum_core_num, shard_compute),
           "SegmentSum Compute failed.");
       }
     }
@@ -211,8 +212,8 @@ uint32_t SegmentSumCpuKernel::SegmentSumCompute(const CpuKernelContext &ctx) {
                      input_x_data_addr, output_data_addr, segment_ids_data_addr);
       }
     };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, num_segments, num_segments / sum_core_num_seg, shard_compute_seg),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, num_segments, num_segments / sum_core_num_seg, shard_compute_seg),
       "SegmentSum Compute failed.");
   }
   return KERNEL_STATUS_OK;

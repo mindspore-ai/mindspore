@@ -56,56 +56,58 @@ const graphStatus GRAPH_SUCCESS = 0;
 
 class RaggedTensorToTensorCpuKernel : public CpuKernel {
  public:
-  graphStatus GetRowPartitionTypes(const CpuKernelContext &ctx);
+  graphStatus GetRowPartitionTypes(CpuKernelContext &ctx);
   int32_t GetRaggedRank(const std::vector<RowPartitionType> &partition_types);
   RowPartitionType GetRowPartitionTypeByDimension(int dimension);
 
   template <typename INDEX_TYPE>
-  typename TTypes<INDEX_TYPE>::Flat GetRowPartitionTensor(const CpuKernelContext &c, int64_t dimension);
+  typename TTypes<INDEX_TYPE>::Flat GetRowPartitionTensor(CpuKernelContext &c, int64_t dimension);
 
   string RowPartitionTypeToString(RowPartitionType row_partition_type);
 
-  graphStatus ValidateDefaultValueShape(const TensorShapeProto &default_value_shape,
+  graphStatus ValidateDefaultValueShape(CpuKernelContext &ctx, const TensorShapeProto &default_value_shape,
                                         const TensorShapeProto &value_shape, const char *op_name);
 
-  graphStatus AsProto(Tensor *tshape, TensorShapeProto *proto, std::string name) const;
+  graphStatus AsProto(CpuKernelContext &ctx, Tensor *tshape, TensorShapeProto *proto, std::string name) const;
 
-  graphStatus CombineRaggedTensorToTensorShapes(int32_t ragged_rank, const TensorShapeProto &shape,
-                                                const TensorShapeProto &value_shape, TensorShapeProto *output_shape,
-                                                const char *op_name);
-
-  template <typename INDEX_TYPE>
-  uint32_t CalculateOutputSize(INDEX_TYPE first_dim, const CpuKernelContext &c, vector<INDEX_TYPE> *result);
+  graphStatus CombineRaggedTensorToTensorShapes(CpuKernelContext &ctx, int32_t ragged_rank,
+                                                const TensorShapeProto &shape, const TensorShapeProto &value_shape,
+                                                TensorShapeProto *output_shape, const char *op_name);
 
   template <typename INDEX_TYPE>
-  vector<INDEX_TYPE> CalculateFirstParentOutputIndex(INDEX_TYPE first_dimension, INDEX_TYPE output_index_multiplier,
+  uint32_t CalculateOutputSize(CpuKernelContext &ctx, INDEX_TYPE first_dim, CpuKernelContext &c,
+                               vector<INDEX_TYPE> *result);
+
+  template <typename INDEX_TYPE>
+  vector<INDEX_TYPE> CalculateFirstParentOutputIndex(CpuKernelContext &ctx, INDEX_TYPE first_dimension,
+                                                     INDEX_TYPE output_index_multiplier,
                                                      INDEX_TYPE first_dimension_output);
 
   template <typename INDEX_TYPE>
-  uint32_t CalculateOutputIndexRowSplit(const typename TTypes<INDEX_TYPE>::Flat &row_split,
+  uint32_t CalculateOutputIndexRowSplit(CpuKernelContext &ctx, const typename TTypes<INDEX_TYPE>::Flat &row_split,
                                         const vector<INDEX_TYPE> &parent_output_index,
                                         INDEX_TYPE output_index_multiplier, INDEX_TYPE output_size,
                                         vector<INDEX_TYPE> *result);
 
   template <typename INDEX_TYPE>
-  uint32_t CalculateOutputIndexValueRowID(const typename TTypes<INDEX_TYPE>::Flat &value_rowids,
+  uint32_t CalculateOutputIndexValueRowID(CpuKernelContext &ctx, const typename TTypes<INDEX_TYPE>::Flat &value_rowids,
                                           const vector<INDEX_TYPE> &parent_output_index,
                                           INDEX_TYPE output_index_multiplier, INDEX_TYPE output_size,
                                           vector<INDEX_TYPE> *result);
 
   template <typename INDEX_TYPE>
-  uint32_t CalculateOutputIndex(const CpuKernelContext &context, int64_t dimension,
+  uint32_t CalculateOutputIndex(CpuKernelContext &context, int64_t dimension,
                                 const vector<INDEX_TYPE> &parent_output_index, INDEX_TYPE output_index_multiplier,
                                 INDEX_TYPE output_size, vector<INDEX_TYPE> *result);
 
   template <typename INDEX_TYPE>
-  uint32_t GetFirstDimensionSize(const CpuKernelContext &context, INDEX_TYPE *result);
+  uint32_t GetFirstDimensionSize(CpuKernelContext &context, INDEX_TYPE *result);
 
   template <typename INDEX_TYPE, typename VALUE_TYPE>
-  uint32_t DoCompute(const CpuKernelContext &context);
+  uint32_t DoCompute(CpuKernelContext &context);
 
   template <typename INDEX_TYPE, typename VALUE_TYPE>
-  uint32_t SetOutput(const CpuKernelContext &context, const vector<INDEX_TYPE> &output_index, Tensor *output_tensor);
+  uint32_t SetOutput(CpuKernelContext &context, const vector<INDEX_TYPE> &output_index, Tensor *output_tensor);
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;

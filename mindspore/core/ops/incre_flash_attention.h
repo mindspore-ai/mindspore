@@ -33,7 +33,7 @@ enum IncreFlashAttentionInputIndex : size_t {
   kIncreFlashAttentionInputValueIndex,
   kIncreFlashAttentionInputAttnMaskIndex,
   kIncreFlashAttentionInputActualSeqLengths,
-  kIncreFlashAttentionInputPaddingMaskIndex,
+  kIncreFlashAttentionInputPseShiftIndex,
   kIncreFlashAttentionInputDequantScale1,
   kIncreFlashAttentionInputQuantScale1,
   kIncreFlashAttentionInputDequantScale2,

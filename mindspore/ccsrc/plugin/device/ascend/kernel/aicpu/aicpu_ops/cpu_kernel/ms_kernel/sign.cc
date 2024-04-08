@@ -25,31 +25,31 @@ const uint32_t kInputNum = 1;
 const char *const kSign = "Sign";
 constexpr int64_t kParallelDataNums = 128 * 1024;
 
-#define SIGN_COMPUTE_CASE(DTYPE, TYPE, CTX)                  \
-  case (DTYPE): {                                            \
-    uint32_t result = SignCompute<TYPE>(CTX);                \
-    if (result != static_cast<uint32_t>(KERNEL_STATUS_OK)) { \
-      KERNEL_LOG_ERROR("Sign kernel compute failed.");       \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define SIGN_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                \
+    uint32_t result = SignCompute<TYPE>(CTX);                    \
+    if (result != static_cast<uint32_t>(KERNEL_STATUS_OK)) {     \
+      CUST_KERNEL_LOG_ERROR(ctx, "Sign kernel compute failed."); \
+      return result;                                             \
+    }                                                            \
+    break;                                                       \
   }
 
-#define SIGN_COMPUTE_CASE2(DTYPE, TYPE, CTX)                 \
-  case (DTYPE): {                                            \
-    uint32_t result = SignComputeComplex<TYPE>(CTX);         \
-    if (result != static_cast<uint32_t>(KERNEL_STATUS_OK)) { \
-      KERNEL_LOG_ERROR("Sign kernel compute failed.");       \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define SIGN_COMPUTE_CASE2(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                                \
+    uint32_t result = SignComputeComplex<TYPE>(CTX);             \
+    if (result != static_cast<uint32_t>(KERNEL_STATUS_OK)) {     \
+      CUST_KERNEL_LOG_ERROR(ctx, "Sign kernel compute failed."); \
+      return result;                                             \
+    }                                                            \
+    break;                                                       \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t SignCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kSign);
-  KERNEL_HANDLE_ERROR(static_cast<uint32_t>(SignCheck(ctx)), "[%s] check params failed.", kSign);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kSign);
+  CUST_KERNEL_HANDLE_ERROR(ctx, static_cast<uint32_t>(SignCheck(ctx)), "[%s] check params failed.", kSign);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     SIGN_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
@@ -60,23 +60,24 @@ uint32_t SignCpuKernel::Compute(CpuKernelContext &ctx) {
     SIGN_COMPUTE_CASE2(DT_COMPLEX64, std::complex<float>, ctx)
     SIGN_COMPUTE_CASE2(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Sign kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Sign kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
 
-KernelStatus SignCpuKernel::SignCheck(const CpuKernelContext &ctx) const {
+KernelStatus SignCpuKernel::SignCheck(CpuKernelContext &ctx) const {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
-  KERNEL_CHECK_NULLPTR(input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input tensor shape failed.")
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SignCpuKernel::SignCompute(const CpuKernelContext &ctx) {
+uint32_t SignCpuKernel::SignCompute(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   int64_t data_num = ctx.Input(0)->NumElements();
@@ -108,14 +109,14 @@ uint32_t SignCpuKernel::SignCompute(const CpuKernelContext &ctx) {
         }
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_sign),
-                        "Sign Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_sign),
+                             "Sign Compute failed.");
   }
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
 
 template <typename T>
-uint32_t SignCpuKernel::SignComputeComplex(const CpuKernelContext &ctx) {
+uint32_t SignCpuKernel::SignComputeComplex(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   int64_t data_num = ctx.Input(0)->NumElements();
@@ -143,10 +144,10 @@ uint32_t SignCpuKernel::SignComputeComplex(const CpuKernelContext &ctx) {
         }
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_sign),
-                        "Sign Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_sign),
+                             "Sign Compute failed.");
   }
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
-REGISTER_MS_CPU_KERNEL(kSign, SignCpuKernel);
+REGISTER_CPU_KERNEL(kSign, SignCpuKernel);
 }  // namespace aicpu

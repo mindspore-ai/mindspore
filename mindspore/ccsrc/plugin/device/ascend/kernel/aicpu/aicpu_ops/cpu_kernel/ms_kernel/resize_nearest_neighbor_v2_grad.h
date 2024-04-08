@@ -35,7 +35,7 @@ class ResizeNearestNeighborV2GradCpuKernel : public CpuKernel {
   uint32_t ResizeNearestNeighborV2GradParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t ResizeNearestNeighborV2GradCompute(const CpuKernelContext &ctx);
+  uint32_t ResizeNearestNeighborV2GradCompute(CpuKernelContext &ctx);
 
   template <typename T, typename S>
   void RealCompute(T *const grads_4d, S *const y_4d);

@@ -626,7 +626,6 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
                          std::back_inserter(input_types), [](const DataType &Dtype) { return Dtype.dtype; });
 
     bool mis_match = CheckAttrForAllSameInput(input_num, input_types, cur_kernel_attr);
-
     if (mis_match) {
       continue;
     }

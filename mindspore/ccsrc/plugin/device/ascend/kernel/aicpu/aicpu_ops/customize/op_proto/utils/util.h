@@ -223,6 +223,8 @@ bool CheckInputDataType(const Operator &op, std::string *data_type, const std::s
 
 std::vector<int64_t> TwoBroadcastShape(const std::vector<int64_t> &dimsX, const std::vector<int64_t> &dimsY);
 
+bool InferBroadcastshapeForStatic(const Shape &shape_x, const Shape &shape_y, Shape &shape_output);
+
 std::vector<std::pair<int64_t, int64_t>> TwoShapeAndRangeBroadcast(
   const std::vector<int64_t> &dims_out, const std::vector<std::pair<int64_t, int64_t>> &shape_range_x,
   std::vector<std::pair<int64_t, int64_t>> &shape_range_y);

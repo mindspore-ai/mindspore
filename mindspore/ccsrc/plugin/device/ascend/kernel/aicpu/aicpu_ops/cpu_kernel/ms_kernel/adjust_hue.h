@@ -49,9 +49,9 @@ class AdjustHueCpuKernel final : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx, const ComputeOptions &options);
+  uint32_t DoCompute(CpuKernelContext &ctx, const ComputeOptions &options);
   template <typename T>
-  uint32_t DoComputeHalf(const CpuKernelContext &ctx, const ComputeOptions &options);
+  uint32_t DoComputeHalf(CpuKernelContext &ctx, const ComputeOptions &options);
 };
 }  // namespace aicpu
 #endif

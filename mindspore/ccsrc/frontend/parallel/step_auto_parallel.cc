@@ -1442,7 +1442,6 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
 
   ReInitCostGraph(all_nodes, root, dyn_shape_tmp_fix);
   auto ops = entire_costgraph->GetOperators();
-
   if (dyn_shape_tmp_fix && HasUserConfiguredStrategy(ops)) {
     MS_LOG(WARNING) << "Now the split strategy will be automatically generated through SAPP, which will overwrite "
                        "the strategy that has been manually configured by the user.";

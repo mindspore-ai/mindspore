@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,14 @@
 #include "include/transform/graph_ir/types.h"
 #include "include/transform/graph_ir/utils.h"
 #include "include/common/utils/scoped_long_running.h"
-#include "graph/model.h"
-#include "framework/common/helper/model_helper.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
+#include "acl/acl_base.h"
+#include "graph/graph_buffer.h"
+#include "graph/graph.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
-#include "graph/utils/graph_utils_ex.h"
 #include "mindspore/core/utils/singleton.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/tensorsummary_utils.h"
@@ -199,16 +199,14 @@ void AscendDeprecatedInterface::ExportDFGraph(const std::string &file_name, cons
       return;
     }
     // get model stream
-    ::ge::Model model("", "");
-    model.SetGraph(::ge::GraphUtilsEx::GetComputeGraph(*ge_graph));
-    ::ge::Buffer model_data;
-    auto ge_ret = model.Save(model_data);
+    ::ge::GraphBuffer model_data;
+    auto ge_ret = ge_graph->SaveToMem(model_data);
     if (ge_ret != ::ge::SUCCESS) {
       MS_LOG(ERROR) << "ERROR: GE model save fail";
       return;
     }
     // convert model and key into py::bytes
-    const std::string str(reinterpret_cast<char *>(model_data.GetData()), model_data.GetSize());
+    const std::string str(reinterpret_cast<const char *>(model_data.GetData()), model_data.GetSize());
     py::bytes model_bytes(str);
     py::bytes key_bytes(key);
 
@@ -289,10 +287,13 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
                       << "]. The details refer to 'Ascend Error Message'.";
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
-  auto thread_crt = [](const std::string &path, const acltdtChannelHandle *acl_handle) {
-    return std::thread(TensorPrint(path, acl_handle));
-  };
-  CreateTensorPrintThread(thread_crt);
+
+  if (!ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+    MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
+      std::bind(&TensorPrintUtils::PrintReceiveData, &TensorPrintUtils::GetInstance(), std::placeholders::_1),
+      device_id, kChannelNameNpuLog, kPrintOpName));
+  }
+
   if (ms_context_ptr->backend_policy() == "ge") {
     MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
       std::bind(&TensorDumpUtils::AsyncSaveDatasetToNpyFile, &TensorDumpUtils::GetInstance(), std::placeholders::_1),
@@ -317,7 +318,7 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
   if (force || ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
     pybind11::gil_scoped_release gil_release;
-    DestroyTensorPrintThread();
+    MbufDataHandlerManager::GetInstance().DestoryPrintHandler();
     if (ms_context_ptr->backend_policy() == "ge") {
       MbufDataHandlerManager::GetInstance().DestoryHandler();
     }
@@ -346,7 +347,7 @@ bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &ms
 }
 
 bool AscendDeprecatedInterface::CheckIsAscend910Soc() {
-  const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     return false;
   }
@@ -355,19 +356,6 @@ bool AscendDeprecatedInterface::CheckIsAscend910Soc() {
     return false;
   }
   return true;
-}
-
-void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {
-  // check om
-  MS_EXCEPTION_IF_NULL(om_data);
-  ::ge::ModelHelper helper;
-  ::ge::ModelData model_data;
-  model_data.model_data = om_data->MutableData();
-  model_data.model_len = om_data->DataSize();
-  ::ge::Status ret = helper.LoadRootModel(model_data);
-  if (ret != ::ge::SUCCESS) {
-    MS_LOG(EXCEPTION) << "Invalid input data cannot parse to om.";
-  }
 }
 
 void AscendDeprecatedInterface::UnregisterExternalAllocator() {

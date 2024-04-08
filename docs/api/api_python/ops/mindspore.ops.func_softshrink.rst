@@ -23,7 +23,7 @@ mindspore.ops.softshrink
         - **lambd** (float) - :math:`\lambda` ，应大于等于0。默认值： ``0.5`` 。
 
     返回：
-        Tensor，shape和数据类型与输入相同。
+        Tensor，shape和数据类型与 `x` 相同。
 
     异常：
         - **TypeError** - `lambd` 不是float。

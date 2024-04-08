@@ -25,25 +25,26 @@ std::vector<std::string> attr_names;
 }  // namespace
 
 namespace aicpu {
-uint32_t SplitCpuKernel::CheckAndInitParams(const CpuKernelContext &ctx) {
+uint32_t SplitCpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
   // check params
   AttrValue *num_split_ptr = ctx.GetAttr("num_split");
   num_split_ = num_split_ptr->GetInt();
   uint32_t kSplitOutputNum = num_split_ptr->GetInt();
   attr_names.emplace_back("num_split");
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kSplitInputNum, kSplitOutputNum, attr_names), "[%s] check params failed.",
-                      kSplit);
-  KERNEL_CHECK_FALSE((num_split_ >= 1), KERNEL_STATUS_PARAM_INVALID,
-                     "Attr num_split must >= 1, but got attr num_split[%lld]", num_split_);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kSplitInputNum, kSplitOutputNum, attr_names),
+                           "[%s] check params failed.", kSplit);
+  CUST_KERNEL_CHECK_FALSE(ctx, (num_split_ >= 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Attr num_split must >= 1, but got attr num_split[%lld]", num_split_);
   Tensor *split_dim_ptr = ctx.Input(0);
   auto split_dim_shape_ptr = split_dim_ptr->GetTensorShape();
-  KERNEL_CHECK_FALSE((split_dim_shape_ptr->GetDims() == 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Input split_dim should be a scalar integer, but got rank[%lld]", split_dim_shape_ptr->GetDims());
-  KERNEL_CHECK_FALSE((split_dim_ptr->GetDataType() == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
-                     "Input split_dim data type must be DT_INT32, but got data type[%s]",
-                     DTypeStr(split_dim_ptr->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (split_dim_shape_ptr->GetDims() == 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Input split_dim should be a scalar integer, but got rank[%lld]",
+                          split_dim_shape_ptr->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, (split_dim_ptr->GetDataType() == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
+                          "Input split_dim data type must be DT_INT32, but got data type[%s]",
+                          DTypeStr(split_dim_ptr->GetDataType()).c_str());
   auto split_dim_data_ptr = split_dim_ptr->GetData();
-  KERNEL_CHECK_NULLPTR(split_dim_data_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input split_dim data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, split_dim_data_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input split_dim data failed.");
   split_dim_ = *(reinterpret_cast<int32_t *>(split_dim_data_ptr));
   Tensor *value_ptr = ctx.Input(1);
   value_data_ptr_ = value_ptr->GetData();
@@ -52,16 +53,16 @@ uint32_t SplitCpuKernel::CheckAndInitParams(const CpuKernelContext &ctx) {
   if (split_dim_ < 0) {
     split_dim_ += value_dim;
   }
-  KERNEL_CHECK_FALSE(value_dim > split_dim_, KERNEL_STATUS_PARAM_INVALID,
-                     "Dim of Input value must greater than split_dim, value dim is [%d], split_dim is [%d].", value_dim,
-                     num_split_);
+  CUST_KERNEL_CHECK_FALSE(ctx, value_dim > split_dim_, KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of Input value must greater than split_dim, value dim is [%d], split_dim is [%d].",
+                          value_dim, num_split_);
   value_shape_vec_ = value_shape_ptr->GetDimSizes();
   data_type_ = value_ptr->GetDataType();
   value_num_ = value_ptr->NumElements();
-  KERNEL_CHECK_FALSE((value_shape_ptr->GetDimSize(split_dim_) % num_split_ == 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Number of ways to split should evenly divide the split "
-                     "dimension, but got split_dim [%d] (size = [%lld]) and num_split is [%lld]",
-                     split_dim_, value_shape_ptr->GetDimSize(split_dim_), num_split_);
+  CUST_KERNEL_CHECK_FALSE(ctx, (value_shape_ptr->GetDimSize(split_dim_) % num_split_ == 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Number of ways to split should evenly divide the split "
+                          "dimension, but got split_dim [%d] (size = [%lld]) and num_split is [%lld]",
+                          split_dim_, value_shape_ptr->GetDimSize(split_dim_), num_split_);
   output_ptr_vec_.resize(num_split_);
   for (int64_t i = 0; i < num_split_; i++) {
     Tensor *output_ptr = ctx.Output(i);
@@ -72,7 +73,7 @@ uint32_t SplitCpuKernel::CheckAndInitParams(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SplitCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t SplitCpuKernel::DoCompute(CpuKernelContext &ctx) {
   T *input_data_ptr = static_cast<T *>(value_data_ptr_);
   std::vector<T *> output_data_vec;
   output_data_vec.resize(num_split_);
@@ -81,31 +82,32 @@ uint32_t SplitCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   }
 
   if (num_split_ == 1) {
-    KERNEL_CHECK_FALSE((SplitWithOneOutput<T>(input_data_ptr, output_data_vec) == KERNEL_STATUS_OK),
-                       KERNEL_STATUS_PARAM_INVALID, "SplitWithOneOutput failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (SplitWithOneOutput<T>(ctx, input_data_ptr, output_data_vec) == KERNEL_STATUS_OK),
+                            KERNEL_STATUS_PARAM_INVALID, "SplitWithOneOutput failed.");
     return KERNEL_STATUS_OK;
   }
   if (split_dim_ == 0) {
-    KERNEL_CHECK_FALSE((SplitWithDimZero<T>(input_data_ptr, output_data_vec) == KERNEL_STATUS_OK),
-                       KERNEL_STATUS_PARAM_INVALID, "SplitWithDimZero failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (SplitWithDimZero<T>(ctx, input_data_ptr, output_data_vec) == KERNEL_STATUS_OK),
+                            KERNEL_STATUS_PARAM_INVALID, "SplitWithDimZero failed.");
     return KERNEL_STATUS_OK;
   }
-  KERNEL_CHECK_FALSE((SplitCompute<T>(input_data_ptr, output_data_vec) == KERNEL_STATUS_OK),
-                     KERNEL_STATUS_PARAM_INVALID, "Split Compute failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (SplitCompute<T>(ctx, input_data_ptr, output_data_vec) == KERNEL_STATUS_OK),
+                          KERNEL_STATUS_PARAM_INVALID, "Split Compute failed.");
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SplitCpuKernel::SplitWithOneOutput(T *input_data_ptr, std::vector<T *> output_data_vec) {
+uint32_t SplitCpuKernel::SplitWithOneOutput(CpuKernelContext &ctx, T *input_data_ptr,
+                                            std::vector<T *> output_data_vec) {
   int64_t copy_size = value_num_ * sizeof(T);
   auto mem_ret = memcpy_s(output_data_vec[0], copy_size, input_data_ptr, copy_size);
-  KERNEL_CHECK_FALSE((mem_ret == EOK), KERNEL_STATUS_PARAM_INVALID,
-                     "Memcpy size[%zu] from input value to output[0] failed.", copy_size);
+  CUST_KERNEL_CHECK_FALSE(ctx, (mem_ret == EOK), KERNEL_STATUS_PARAM_INVALID,
+                          "Memcpy size[%zu] from input value to output[0] failed.", copy_size);
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SplitCpuKernel::SplitWithDimZero(T *input_data_ptr, std::vector<T *> output_data_vec) {
+uint32_t SplitCpuKernel::SplitWithDimZero(CpuKernelContext &ctx, T *input_data_ptr, std::vector<T *> output_data_vec) {
   int64_t copy_num = value_num_ / value_shape_vec_[0];
   T *input_copy_ptr = input_data_ptr;
   const int64_t split_dim_output_size = value_shape_vec_[0] / num_split_;
@@ -113,15 +115,15 @@ uint32_t SplitCpuKernel::SplitWithDimZero(T *input_data_ptr, std::vector<T *> ou
     int64_t copy_size_per = copy_num * split_dim_output_size;
     int64_t copy_size = copy_size_per * sizeof(T);
     auto mem_ret = memcpy_s(output_data_vec[i], copy_size, input_copy_ptr, copy_size);
-    KERNEL_CHECK_FALSE((mem_ret == EOK), KERNEL_STATUS_PARAM_INVALID,
-                       "Memcpy size[%zu] from input value to output[%d] failed.", copy_size, i);
+    CUST_KERNEL_CHECK_FALSE(ctx, (mem_ret == EOK), KERNEL_STATUS_PARAM_INVALID,
+                            "Memcpy size[%zu] from input value to output[%d] failed.", copy_size, i);
     input_copy_ptr += copy_size_per;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SplitCpuKernel::SplitCompute(T *input_data_ptr, std::vector<T *> output_data_vec) {
+uint32_t SplitCpuKernel::SplitCompute(CpuKernelContext &ctx, T *input_data_ptr, std::vector<T *> output_data_vec) {
   int64_t prefix = 1;
   for (int32_t i = 0; i < split_dim_; ++i) {
     prefix *= value_shape_vec_[i];
@@ -140,8 +142,8 @@ uint32_t SplitCpuKernel::SplitCompute(T *input_data_ptr, std::vector<T *> output
     int64_t copy_size = copy_num * sizeof(T);
     for (int64_t j = 0; j < prefix; j++) {
       auto mem_ret = memcpy_s(output_data_ptr, copy_size, input_copy_ptr, copy_size);
-      KERNEL_CHECK_FALSE((mem_ret == EOK), KERNEL_STATUS_PARAM_INVALID,
-                         "Memcpy size[%zu] from input value to output[%d] failed.", copy_size, i);
+      CUST_KERNEL_CHECK_FALSE(ctx, (mem_ret == EOK), KERNEL_STATUS_PARAM_INVALID,
+                              "Memcpy size[%zu] from input value to output[%d] failed.", copy_size, i);
       input_copy_ptr += (subfix * midfix);
       output_data_ptr += copy_num;
     }
@@ -151,8 +153,8 @@ uint32_t SplitCpuKernel::SplitCompute(T *input_data_ptr, std::vector<T *> output
 }
 
 uint32_t SplitCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_CHECK_FALSE((CheckAndInitParams(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
-                     "CheckAndInitParams failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (CheckAndInitParams(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
+                          "CheckAndInitParams failed.");
   switch (data_type_) {
     case DT_FLOAT16:
       return DoCompute<Eigen::half>(ctx);
@@ -183,7 +185,7 @@ uint32_t SplitCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return DoCompute<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported datatype[%s]", DTypeStr(data_type_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported datatype[%s]", DTypeStr(data_type_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

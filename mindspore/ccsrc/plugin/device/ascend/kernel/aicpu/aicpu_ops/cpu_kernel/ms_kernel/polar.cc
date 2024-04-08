@@ -33,14 +33,14 @@ namespace aicpu {
 uint32_t PolarCpuKernel::Compute(CpuKernelContext &ctx) {
   DataType abs_type = ctx.Input(0)->GetDataType();
   DataType angle_type = ctx.Input(1)->GetDataType();
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Polar check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Polar check input and output number failed.");
   if (abs_type == DT_FLOAT && angle_type == DT_FLOAT) {
     return PolarCompute<float>(ctx);
   } else if (abs_type == DT_DOUBLE && angle_type == DT_DOUBLE) {
     return PolarCompute<double>(ctx);
   } else {
-    KERNEL_LOG_ERROR("Polar kernel data type [%s],[%s] not support.", DTypeStr(abs_type).c_str(),
-                     DTypeStr(angle_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "Polar kernel data type [%s],[%s] not support.", DTypeStr(abs_type).c_str(),
+                          DTypeStr(angle_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -70,8 +70,8 @@ uint32_t PolarCpuKernel::PolarCompute(CpuKernelContext &ctx) {
       max_core_num = elements;
     }
     if (max_core_num > 0) {
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, elements, elements / max_core_num, sharder_polar),
-                          "Polar Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, elements, elements / max_core_num, sharder_polar),
+                               "Polar Compute failed.");
     }
   } else {
     sharder_polar(0, elements);

@@ -27,7 +27,7 @@ const char *kDropout3D = "Dropout3D";
 
 namespace aicpu {
 template <typename T>
-static uint32_t CalDropout3d(float p, const CpuKernelContext &ctx, std::vector<int64_t> &shape) {
+static uint32_t CalDropout3d(float p, CpuKernelContext &ctx, std::vector<int64_t> &shape) {
   // inputs
   T *input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   // outputs
@@ -44,21 +44,21 @@ static uint32_t CalDropout3d(float p, const CpuKernelContext &ctx, std::vector<i
   size_t channel_size = D * H * W;
   size_t data_num = channel_num * channel_size;
   if (INT64_MAX / channel_num < channel_size) {
-    KERNEL_LOG_ERROR("channel_num is out of range!");
+    CUST_KERNEL_LOG_ERROR(ctx, "channel_num is out of range!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (p > 1 || p < 0) {
-    KERNEL_LOG_ERROR("dropout probability must be between 0 and 1, but got %f", p);
+    CUST_KERNEL_LOG_ERROR(ctx, "dropout probability must be between 0 and 1, but got %f", p);
     return KERNEL_STATUS_PARAM_INVALID;
   } else if (p == 0) {
     auto ret = memcpy_s(output, data_num * sizeof(T), input, data_num * sizeof(T));
-    KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout3d memcpy_s failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout3d memcpy_s failed.");
     std::fill(&mask[0], &mask[data_num], true);
     return KERNEL_STATUS_OK;
   } else if (p == 1) {
     auto ret = memset_s(output, data_num * sizeof(T), 0x00, data_num * sizeof(T));
-    KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout3d memset_s failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout3d memset_s failed.");
     std::fill(&mask[0], &mask[data_num], false);
     return KERNEL_STATUS_OK;
   }
@@ -78,7 +78,7 @@ static uint32_t CalDropout3d(float p, const CpuKernelContext &ctx, std::vector<i
     bool drop = b(g);
     if (drop) {
       auto ret = memset_s(output + channel_size * i, channel_size * sizeof(T), 0x00, channel_size * sizeof(T));
-      KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout3d memset_s failed.");
+      CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Dropout3d memset_s failed.");
       std::fill(&mask[channel_size * i], &mask[channel_size * (i + 1)], false);
     } else {
       for (int j = 0; j < static_cast<int>(channel_size); ++j) {
@@ -97,7 +97,7 @@ uint32_t Dropout3DCpuKernel::Compute(CpuKernelContext &ctx) {
     return res;
   }
 
-  std::map<DataType, std::function<uint32_t(float, const CpuKernelContext &, std::vector<int64_t> &)>> calls;
+  std::map<DataType, std::function<uint32_t(float, CpuKernelContext &, std::vector<int64_t> &)>> calls;
   calls[DT_FLOAT16] = CalDropout3d<Eigen::half>;
   calls[DT_FLOAT] = CalDropout3d<float>;
   calls[DT_DOUBLE] = CalDropout3d<double>;
@@ -113,7 +113,7 @@ uint32_t Dropout3DCpuKernel::Compute(CpuKernelContext &ctx) {
 
   auto iter = calls.find(input_dtype_);
   if (iter == calls.end()) {
-    KERNEL_LOG_ERROR("Dropout3d op don't support index tensor types: %s", typeid(input_dtype_).name());
+    CUST_KERNEL_LOG_ERROR(ctx, "Dropout3d op don't support index tensor types: %s", typeid(input_dtype_).name());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -121,10 +121,10 @@ uint32_t Dropout3DCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 uint32_t Dropout3DCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kDropout3DInputNum, kDropout3DOutputNum), "%s check failed.",
-                      ctx.GetOpType().c_str());
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kDropout3DInputNum, kDropout3DOutputNum), "%s check failed.",
+                           ctx.GetOpType().c_str());
   AttrValue *keep_prob = ctx.GetAttr("keep_prob");
-  KERNEL_CHECK_NULLPTR(keep_prob, KERNEL_STATUS_PARAM_INVALID, "get attr:keep_prob failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, keep_prob, KERNEL_STATUS_PARAM_INVALID, "get attr:keep_prob failed.");
   p_ = 1 - keep_prob->GetFloat();
 
   // get input_tensor
@@ -132,7 +132,8 @@ uint32_t Dropout3DCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   input_dtype_ = static_cast<DataType>(input_tensor->GetDataType());
 
   std::shared_ptr<TensorShape> input_shape = input_tensor->GetTensorShape();
-  KERNEL_CHECK_FALSE((input_shape->GetDims() == 5), KERNEL_STATUS_PARAM_INVALID, "Dropout3d input tensor must be 5-D.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_shape->GetDims() == 5), KERNEL_STATUS_PARAM_INVALID,
+                          "Dropout3d input tensor must be 5-D.");
   input_shape_ = input_shape->GetDimSizes();
   return KERNEL_STATUS_OK;
 }

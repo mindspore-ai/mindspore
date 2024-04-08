@@ -77,38 +77,8 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node);
 CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info,
                      bool use_fake_abstract = false);
 void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfNodePtr &node);
-template <typename T>
-ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t data_length) {
-  // Create tensor value.
-  if (info.type == nullptr) {
-    MS_LOG(EXCEPTION) << "Data type can not be nullptr when creating scalar tensor!";
-  }
 
-  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(info.type->type_id(), info.shape);
-  MS_EXCEPTION_IF_NULL(tensor);
-  tensor::DeviceInfo device_info{info.format, info.type};
-  tensor->set_device_info(device_info);
-  auto data_ptr = tensor->data_c();
-  MS_EXCEPTION_IF_NULL(data_ptr);
-  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), &value, data_length);
-  if (ret_code != EOK) {
-    MS_LOG(EXCEPTION) << "Failed to copy data into scalar tensor, memcpy_s errorno: " << ret_code;
-  }
-
-  // Create value node.
-  ValueNodePtr new_value_node = std::make_shared<ValueNode>(tensor);
-  new_value_node->set_abstract(tensor->ToAbstract());
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  new_value_node->set_kernel_info(kernel_info);
-  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{info.format});
-  std::vector<TypeId> types = {info.type->type_id()};
-  kernel_build_info_builder->SetOutputsDeviceType(types);
-  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
-
-  return new_value_node;
-}
-
+ValueNodePtr CreateTensorValueNode(const DataInfo &info, void *value_ptr, size_t data_length);
 AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx);
 bool IsBufferStitchNode(const AnfNodePtr &node);
 bool CheckDefaultFormat(const AnfNodePtr &node);

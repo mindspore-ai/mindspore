@@ -36,7 +36,8 @@ class DivNoNanCpuKernel : public CpuKernel {
   uint32_t DivNoNanParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *input1, const T *input2, T *output);
+  uint32_t SpecialCompute(CpuKernelContext &ctx, BcastShapeType type, int64_t start, int64_t end, const T *input1,
+                          const T *input2, T *output);
 
   template <typename T>
   uint32_t NoBcastCompute(CpuKernelContext &ctx);

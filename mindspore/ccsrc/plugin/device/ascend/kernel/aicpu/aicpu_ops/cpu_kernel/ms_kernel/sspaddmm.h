@@ -38,24 +38,24 @@ class SspaddmmCpuKernel : public CpuKernel {
   const int64_t kParallelDataNumSameShape_ = 14 * 1024;
   const int64_t kParallelDataNumSameShapeMid_ = 7 * 1024;
   template <typename T>
-  void Clear(Tensor *tensor, const CpuKernelContext &ctx);
+  void Clear(Tensor *tensor, CpuKernelContext &ctx);
   template <typename T>
-  void ClearIndices(Tensor *tensor, const CpuKernelContext &ctx);
+  void ClearIndices(Tensor *tensor, CpuKernelContext &ctx);
   template <typename T1>
-  uint32_t BoundaryCheck(Tensor *, Tensor *, int64_t, const CpuKernelContext &);
+  uint32_t BoundaryCheck(Tensor *, Tensor *, int64_t, CpuKernelContext &);
   template <typename T>
-  uint32_t SspaddmmCompute(const CpuKernelContext &ctx);
+  uint32_t SspaddmmCompute(CpuKernelContext &ctx);
   template <typename T_idx, typename T>
-  uint32_t SparseAddSparse(const CpuKernelContext &ctx, Tensor *input_indices_tensor, T *in_val_addr,
+  uint32_t SparseAddSparse(CpuKernelContext &ctx, Tensor *input_indices_tensor, T *in_val_addr,
                            Tensor *output_indices_tensor, Tensor *output_values_tensor);
   template <typename T_idx, typename T>
-  uint32_t SparseMulDense(const CpuKernelContext &ctx, Tensor *mat1_indices_tensor, T *mat1_val_addr,
+  uint32_t SparseMulDense(CpuKernelContext &ctx, Tensor *mat1_indices_tensor, T *mat1_val_addr,
                           Tensor *mat2_values_tensor, Tensor *output_indices_tensor, Tensor *output_values_tensor,
                           const int64_t row, const int64_t col);
   template <typename T>
-  T *ScalarSparseMul(const CpuKernelContext &ctx, Tensor *vals, Tensor *scalar);
+  T *ScalarSparseMul(CpuKernelContext &ctx, Tensor *vals, Tensor *scalar);
   int64_t GetIndicesNum(Tensor *tensor);
-  uint32_t ValidParam(const CpuKernelContext &ctx);
+  uint32_t ValidParam(CpuKernelContext &ctx);
 };  // namespace CpuKernel
 };  // namespace aicpu
 #endif

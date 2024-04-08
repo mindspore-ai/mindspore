@@ -33,7 +33,5 @@ def _right_shift_scalar(x, y):
 
 @right_shift.register_default()
 def default_right_shift(x, y):
-    """
-    Default function for right shift.
-   """
+    """Default function for right shift."""
     return x >> y

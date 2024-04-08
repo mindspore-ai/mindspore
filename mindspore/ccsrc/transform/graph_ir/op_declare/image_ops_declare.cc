@@ -163,8 +163,8 @@ REG_ADPT_DESC(DecodeImage, kNameDecodeImage, ADPT_DESC(DecodeImage))
 
 // SyncResizeBilinearV2Grad
 INPUT_MAP(SyncResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
-ATTR_MAP(SyncResizeBilinearV2Grad) = {{"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>())},
-                                      {"ori_image_size", ATTR_DESC(ori_image_size, AnyTraits<std::vector<int64_t>>())},
+INPUT_ATTR_MAP(SyncResizeBilinearV2Grad) = {{3, ATTR_DESC(size, AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(SyncResizeBilinearV2Grad) = {{"ori_image_size", ATTR_DESC(ori_image_size, AnyTraits<std::vector<int64_t>>())},
                                       {"src_start_w", ATTR_DESC(src_start_w, AnyTraits<int64_t>())},
                                       {"dst_start_w", ATTR_DESC(dst_start_w, AnyTraits<int64_t>())},
                                       {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
@@ -294,8 +294,9 @@ REG_ADPT_DESC(ScaleAndTranslateGrad, prim::kPrimScaleAndTranslateGrad->name(), A
 
 // ResizeBicubicGrad
 INPUT_MAP(ResizeBicubicGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
-ATTR_MAP(ResizeBicubicGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
-                               {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ResizeBicubicGrad) = {{3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                     {4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+ATTR_MAP(ResizeBicubicGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ResizeBicubicGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBicubicGrad, prim::kPrimResizeBicubicGrad->name(), ADPT_DESC(ResizeBicubicGrad));
 

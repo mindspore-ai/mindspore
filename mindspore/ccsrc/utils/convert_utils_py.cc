@@ -40,7 +40,6 @@
 #include "include/common/fallback.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/convert_utils.h"
-#include "frontend/expander/pack/pack_expander.h"
 
 namespace mindspore {
 py::object BuiltinsToPyData(const Any &value);
@@ -680,7 +679,11 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
       *ret_val = py::cast(tensor);
     }
     *ret_val = SetAdaptedAttrToTensor(*ret_val, output->abstract());
-    py::setattr(*ret_val, "__ms_parameter_output__", py::bool_(true));
+    auto abs = output->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractTensor>()) {
+      py::setattr(*ret_val, "__ms_parameter_output__", py::bool_(true));
+    }
     return true;
   }
   return false;
@@ -826,12 +829,7 @@ ValuePtr PyStubNodeCast(const py::handle &obj) {
 
 std::pair<ShapeVector, TypePtr> GetStubTensorInfo(const py::handle &obj) {
   auto py_stub = py::getattr(obj, stub::PY_ATTR_STUB);
-  ValuePtr stub;
-  if (py::isinstance<expander::PackNode>(py_stub)) {
-    stub = py_stub.cast<expander::PackNodePtr>();
-  } else {
-    stub = py_stub.cast<stub::StubNodePtr>();
-  }
+  ValuePtr stub = py_stub.cast<stub::StubNodePtr>();
   AbstractBasePtr stub_abs;
   if (stub == nullptr) {
     auto tensor_ptr = py::getattr(obj, stub::PY_ATTR_TENSOR).cast<tensor::TensorPtr>();

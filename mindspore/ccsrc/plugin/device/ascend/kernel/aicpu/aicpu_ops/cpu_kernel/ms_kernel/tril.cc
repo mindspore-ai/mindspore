@@ -30,49 +30,49 @@ const char *kTril = "Tril";
 constexpr int64_t kParallelDataNums = 1024 * 1024;
 const int32_t minDims = 2;
 
-#define TRIL_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                      \
-    uint32_t result = DoCompute<TYPE>(CTX);            \
-    if (result != KERNEL_STATUS_OK) {                  \
-      KERNEL_LOG_ERROR("Tril kernel compute failed."); \
-      return result;                                   \
-    }                                                  \
-    break;                                             \
+#define TRIL_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                \
+    uint32_t result = DoCompute<TYPE>(CTX);                      \
+    if (result != KERNEL_STATUS_OK) {                            \
+      CUST_KERNEL_LOG_ERROR(ctx, "Tril kernel compute failed."); \
+      return result;                                             \
+    }                                                            \
+    break;                                                       \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t TrilCpuKernel::ValidParam(CpuKernelContext &ctx) {
   auto input = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(input, KERNEL_STATUS_PARAM_INVALID, "Get input failed")
-  KERNEL_CHECK_NULLPTR(input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input, KERNEL_STATUS_PARAM_INVALID, "Get input failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed")
 
   auto output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
-  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
 
   auto input_shape = ctx.Input(0)->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input_shape, KERNEL_STATUS_PARAM_INVALID, "Get input shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_shape, KERNEL_STATUS_PARAM_INVALID, "Get input shape failed.")
   auto output_shape = ctx.Output(0)->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(output_shape, KERNEL_STATUS_PARAM_INVALID, "Get output shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_shape, KERNEL_STATUS_PARAM_INVALID, "Get output shape failed.")
 
   auto input_dims = input_shape->GetDims();
 
-  KERNEL_CHECK_FALSE(input_dims >= minDims, KERNEL_STATUS_PARAM_INVALID,
-                     "Input must be at least rank 2, but got rank [%d]", input_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, input_dims >= minDims, KERNEL_STATUS_PARAM_INVALID,
+                          "Input must be at least rank 2, but got rank [%d]", input_shape->GetDims());
 
   auto input_data_type = input->GetDataType();
   auto output_data_type = output->GetDataType();
-  KERNEL_CHECK_FALSE(input_data_type == output_data_type, KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input [%s] need be same with output [%s].", DTypeStr(input_data_type).c_str(),
-                     DTypeStr(output_data_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, input_data_type == output_data_type, KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input [%s] need be same with output [%s].",
+                          DTypeStr(input_data_type).c_str(), DTypeStr(output_data_type).c_str())
 
-  KERNEL_CHECK_FALSE(input_shape->GetDimSizes() == output_shape->GetDimSizes(), KERNEL_STATUS_PARAM_INVALID,
-                     "The output shape size should be same as the input shape size.");
+  CUST_KERNEL_CHECK_FALSE(ctx, input_shape->GetDimSizes() == output_shape->GetDimSizes(), KERNEL_STATUS_PARAM_INVALID,
+                          "The output shape size should be same as the input shape size.");
 
   AttrValue *diagonal = ctx.GetAttr("diagonal");
   diagonal_ = (diagonal == nullptr) ? 0 : (diagonal->GetInt());
-  KERNEL_LOG_DEBUG("%s Attr[diagonal] value[%d]", kTril, diagonal_);
+  CUST_KERNEL_LOG_DEBUG(ctx, "%s Attr[diagonal] value[%d]", kTril, diagonal_);
 
   return KERNEL_STATUS_OK;
 }
@@ -88,7 +88,7 @@ uint32_t TrilCpuKernel::ComputeTril(CpuKernelContext &ctx, size_t k) {
       for (int j = i + 1; j <= i + diagonal_ && j < matrix_height_; j++) {
         int offset = i * matrix_height_ + j;
         auto ret = memcpy_s(output.data() + offset, sizeof(T), input.data() + offset, sizeof(T));
-        KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_PARAM_INVALID, "memcpy_s error");
+        CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "memcpy_s error");
       }
     }
   } else {
@@ -96,7 +96,7 @@ uint32_t TrilCpuKernel::ComputeTril(CpuKernelContext &ctx, size_t k) {
       for (int i = j; i < j - diagonal_ && i < matrix_width_; i++) {
         auto ret = memset_s(output.data() + i * matrix_height_ + j, sizeof(T), 0, sizeof(T));
         if (ret != EOK) {
-          KERNEL_LOG_ERROR("For 'Tril', memset_s failed, ret=%d.", ret);
+          CUST_KERNEL_LOG_ERROR(ctx, "For 'Tril', memset_s failed, ret=%d.", ret);
           return KERNEL_STATUS_INNER_ERROR;
         }
       }
@@ -138,12 +138,12 @@ uint32_t TrilCpuKernel::DoCompute(CpuKernelContext &ctx) {
       max_core_num = matrixs_num;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
       return KERNEL_STATUS_INNER_ERROR;
     }
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, matrixs_num, matrixs_num / max_core_num, shard_tril);
     if (ret != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor failed.");
+      CUST_KERNEL_LOG_ERROR(ctx, "CpuKernelUtils::ParallelFor failed.");
       return KERNEL_STATUS_INNER_ERROR;
     }
   }
@@ -152,8 +152,8 @@ uint32_t TrilCpuKernel::DoCompute(CpuKernelContext &ctx) {
 }
 
 uint32_t TrilCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check Greater params failed.");
-  KERNEL_HANDLE_ERROR(ValidParam(ctx), "[%s] check params failed.", kTril);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Check Greater params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ValidParam(ctx), "[%s] check params failed.", kTril);
 
   auto data_type = ctx.Input(0)->GetDataType();
 
@@ -171,7 +171,7 @@ uint32_t TrilCpuKernel::Compute(CpuKernelContext &ctx) {
     TRIL_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     TRIL_COMPUTE_CASE(DT_BOOL, bool, ctx)
     default:
-      KERNEL_LOG_ERROR("Tril kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Tril kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

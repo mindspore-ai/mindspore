@@ -620,26 +620,22 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
         }
       }
     }
-    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
-        find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "FFN") != plugin_custom_ops.end()) {
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "FFN") != plugin_custom_ops.end()) {
       MS_LOG(INFO) << "using FFN";
       MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpFFNFusion}), lite::RET_ERROR,
                         "FFN op pass failed.");
     }
-    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
-        find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "AddLayerNorm") != plugin_custom_ops.end()) {
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "AddLayerNorm") != plugin_custom_ops.end()) {
       MS_LOG(INFO) << "run " << kAddLayerNormFusion;
       MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kAddLayerNormFusion}), lite::RET_ERROR,
                         "AddLayerNorm op pass failed.");
     }
-    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
-        find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GeGluV2") != plugin_custom_ops.end()) {
-      MS_LOG(INFO) << "using GeGluV2";
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GeGluV2") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "Using GeGluV2";
       MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpGeGluV2Fusion}), lite::RET_ERROR,
                         "GeGluV2 op pass failed.");
     }
-    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
-        find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GroupNormSilu") != plugin_custom_ops.end()) {
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GroupNormSilu") != plugin_custom_ops.end()) {
       MS_LOG(INFO) << "using GroupNormSilu";
       MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpGroupNormSiluFusion}), lite::RET_ERROR,
                         "GroupNormSilu op pass failed.");

@@ -52,7 +52,5 @@ def _scalar_bitwise_and_tensor(x, y):
 
 @bitwise_and.register_default()
 def default_bitwsie_add(x, y):
-    """
-    Default function for bitwise_and.
-   """
+    """Default function for bitwise_and."""
     return x & y

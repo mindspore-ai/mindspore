@@ -282,6 +282,8 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
     topo_sorting_mode = "2";
   }
   (*ge_options)["ge.topoSortingMode"] = topo_sorting_mode;
+  // disable RemoveSameConstPass, it will be caused the communication failed on multi-card.
+  (*ge_options)["ge.disableOptimizations"] = "RemoveSameConstPass";
 
   (*ge_options)["ge.exec.memoryOptimizationPolicy"] = "MemoryPriority";
   MS_LOG(INFO) << "Set GE topo mode to memory-priority.";
@@ -480,7 +482,7 @@ void GeDeviceContext::InitDump() const {
     return;
   }
   if (dump_parser.FileFormatIsNpy()) {
-    (void)Adx::AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
+    (void)acldumpRegCallback(mindspore::ascend::DumpDataCallBack, 0);
   }
 }
 
@@ -492,9 +494,6 @@ void GeDeviceContext::FinalizeDump() const {
   }
   if (dump_parser.FileFormatIsNpy() && dump_parser.IsTensorDump()) {
     mindspore::ascend::AscendAsyncDumpManager::GetInstance().WaitForWriteFileFinished();
-  }
-  if (dump_parser.FileFormatIsNpy()) {
-    Adx::AdxUnRegDumpProcessCallBack();
   }
 }
 
@@ -516,14 +515,14 @@ uint32_t GeDeviceContext::GetDeviceCount() {
 }
 
 std::string GeDeviceContext::GetDeviceName(uint32_t) {
-  const char *name = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *name = CALL_ASCEND_API(aclrtGetSocName);
   std::string device_name = (name == nullptr) ? "" : name;
   return device_name;
 }
 
 AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
   AscendDeviceProperties device_properties;
-  const char *name = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *name = CALL_ASCEND_API(aclrtGetSocName);
   device_properties.name = (name == nullptr) ? "" : name;
 
   size_t free_size{0}, total_size{0};
@@ -546,7 +545,7 @@ void SetContextSocVersion(MsContext *ctx) {
     {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
     {"Ascend910B4", "ascend910b"},  {"Ascend910C1", "ascend910c"},  {"Ascend910C2", "ascend910c"},
     {"Ascend910C3", "ascend910c"}};
-  const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     MS_LOG(ERROR) << "Get soc name failed.";
     return;

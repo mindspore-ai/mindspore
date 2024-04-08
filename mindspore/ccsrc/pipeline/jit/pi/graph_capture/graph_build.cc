@@ -532,8 +532,7 @@ bool GraphBuilder::DoCellAccess(const Instr &instr) {
 
 // Parse byteCode -- SETUP_WITH
 bool GraphBuilder::DoWith(const Instr &instr) {
-  auto state = py::error_already_set();
-  if (graph_->Config().GetBoolConfig(GraphJitConfig::kSkipException) || state.type().ptr() == PyExc_RuntimeError) {
+  if (graph_->Config().GetBoolConfig(GraphJitConfig::kSkipException) || PyErr_Occurred()) {
     graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceSkip_Exception);
     return false;
   }
@@ -596,9 +595,7 @@ bool GraphBuilder::DoException(const Instr &instr) {
       // run exit func
       push(exc);
       push(exc);
-      auto newInstr = Instr(instr.bci(), CALL_FUNCTION, 3);
-      newInstr.set_line(instr.line());
-      if (!DoCall(newInstr)) {
+      if (!DoCall({CALL_FUNCTION, 3})) {
         MS_LOG(ERROR) << "function '__exit__' runs failed here, it should be successful!";
         return false;
       }
@@ -660,6 +657,9 @@ bool GraphBuilder::DoGlobalAccess(const Instr &instr) {
         if (obj == nullptr) {
           PyErr_Clear();
           obj = PyObject_GetItem(PyEval_GetBuiltins(), key);
+          if (obj == nullptr) {
+            PyErr_Clear();
+          }
         }
         py::object pyobj = py::reinterpret_steal<py::object>(obj);
         auto n = NewValueNode(AObject::Convert(pyobj), instr, {});
@@ -841,7 +841,6 @@ bool GraphBuilder::DoGetItem(const Instr &instr) {
   }
   if (call_getitem) {
     /**
-     * TODO:
      * check safe callable of __getitem__ if user defined.
      */
     AObject *vo = l->binary_subscr(r);
@@ -917,7 +916,6 @@ bool GraphBuilder::DoSideEffect(const Instr &instr, const std::vector<ValueNode 
     return false;
   }
   index = index < 0 ? (size + index) : index;
-  items[index] = value;
   AObject *object_info = AObject::BuildOperations(CollectObjects(items), BUILD_LIST);
   new_node = NewValueNode(object_info, BUILD_LIST, items.size(), items);
   if (!ReplaceAll(container, new_node)) {
@@ -926,6 +924,7 @@ bool GraphBuilder::DoSideEffect(const Instr &instr, const std::vector<ValueNode 
   for (auto item : items) {
     graph_->GetTracedNodes().push_back(item);
   }
+  items[index] = value;
   NewValueNode(nullptr, instr, {value, container, key});
   graph_->GetSideEffect()->SetSideEffectNode(new_node);
   graph_->GetSideEffect()->SetReplaceMap(new_node, container);
@@ -1497,7 +1496,7 @@ void GraphBuilder::HandleLoop() {
     return;
   }
   /**
-   * TODO(chaiyouheng): before trace start, unrolling loop. avoid graph status is changed while trace loop
+   * (chaiyouheng): before trace start, unrolling loop. avoid graph status is changed while trace loop
    *       just unrolling a small loop that call nn.CellList.
    *
    * LoopUnrolling loopUnrollingExe = LoopUnrolling(*graph_);
@@ -1933,7 +1932,7 @@ ValueNode *GetSelfFromMethod(ValueNode *method) {
   }
   ValueNode *self = method->input(0);
   /**
-   * TODO(chaiyouheng):
+   * (chaiyouheng):
    * Check method is a generic attribute
    * descr = _PyType_Lookup(self->GetVobj()->GetTypeObject(), py::str(method->GetName()).ptr());
    * Check descr == nullptr || !PyFunction_Check(descr)

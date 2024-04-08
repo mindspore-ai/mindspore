@@ -38,7 +38,7 @@ BoolImmPtr ConvertBool(const py::object &obj) {
 }
 
 Int64ImmPtr ConvertInt(const py::object &obj) {
-  if (!py::isinstance<py::int_>(obj)) {
+  if (py::isinstance<py::bool_>(obj) || !py::isinstance<py::int_>(obj)) {
     return nullptr;
   }
   return PyCast<int64_t, Int64Imm>(obj);
@@ -106,6 +106,9 @@ ValuePtr Converter::ToTensor(const py::list &python_args, size_t i) {
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto tensor = parse::ConvertTensor(obj);
   if (tensor != nullptr) {
+    if (tensor->isa<tensor::Tensor>()) {
+      tensor->cast<tensor::TensorPtr>()->set_need_pipeline_sync(true);
+    }
     return tensor;
   }
   if (!op_arg.cast_dtype_.empty()) {

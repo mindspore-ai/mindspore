@@ -9,8 +9,6 @@ sub_ext:
     Note:
         - When the two inputs have different shapes,
           they must be able to broadcast to a common shape.
-        - The two inputs and alpha cannot be bool type at the same time,
-          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
         - The two inputs and alpha comply with the implicit type conversion rules to make the data types
           consistent.
     

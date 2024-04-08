@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 
-package debugger.dump;
+package toolkit.dumpdata;
 
 
 enum OutputDataType {

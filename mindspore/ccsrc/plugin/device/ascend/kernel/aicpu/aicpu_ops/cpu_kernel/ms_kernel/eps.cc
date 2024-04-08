@@ -30,29 +30,30 @@ const char *const kEps = "Eps";
 const int64_t kParallelDataNumCriticalPoint1 = 128 * 1024;
 const int64_t kParallelDataNumCriticalPoint2 = 2 * 1024 * 1024;
 
-#define EPS_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                     \
-    uint32_t result = EpsPartCompute<TYPE>(CTX);      \
-    if (result != KERNEL_STATUS_OK) {                 \
-      KERNEL_LOG_ERROR("Eps kernel compute failed."); \
-      return result;                                  \
-    }                                                 \
-    break;                                            \
+#define EPS_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                               \
+    uint32_t result = EpsPartCompute<TYPE>(CTX);                \
+    if (result != KERNEL_STATUS_OK) {                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "Eps kernel compute failed."); \
+      return result;                                            \
+    }                                                           \
+    break;                                                      \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t EpsCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kEps);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kEps);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     EPS_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     EPS_COMPUTE_CASE(DT_FLOAT, float, ctx)
     EPS_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("For Eps, the supported data types are ['float16', 'float32', 'float64'], but got: [%s].",
-                       DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "For Eps, the supported data types are ['float16', 'float32', 'float64'], but got: [%s].",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -70,7 +71,7 @@ T getEpsilon() {
 }
 
 template <typename T>
-uint32_t EpsCpuKernel::EpsPartCompute(const CpuKernelContext &ctx) {
+uint32_t EpsCpuKernel::EpsPartCompute(CpuKernelContext &ctx) {
   size_t data_num = static_cast<size_t>(ctx.Input(0)->NumElements());
   auto output_data = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   T min_val = getEpsilon<T>();

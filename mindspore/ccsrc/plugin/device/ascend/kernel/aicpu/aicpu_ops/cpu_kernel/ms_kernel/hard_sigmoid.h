@@ -29,7 +29,7 @@ class HardSigmoidCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t HardSigmoidCompute(const CpuKernelContext &ctx);
+  uint32_t HardSigmoidCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -54,8 +54,8 @@ class SparseMaximumCpuKernel : public CpuKernel {
                                           std::vector<std::pair<bool, int64_t>> *entries_to_copy);
 
   template <typename T>
-  uint32_t EigenedSparseMax(const DataBank &databank);
+  uint32_t EigenedSparseMax(CpuKernelContext &ctx, const DataBank &databank);
 
-  static uint32_t NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &calc_info);
+  static uint32_t NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &calc_info);
 };
 }  // namespace aicpu

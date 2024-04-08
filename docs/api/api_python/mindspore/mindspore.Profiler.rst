@@ -53,6 +53,7 @@ mindspore.Profiler
             - **step_list** (list, 可选) - 只分析指定step的性能数据。此参数默认值为 ``None``，即进行全解析。
 
     .. py:method:: offline_analyse(path: str, pretty=False, step_list=None)
+        :classmethod:
 
         离线分析训练的性能数据，性能数据采集结束后调用。
 
@@ -80,7 +81,6 @@ mindspore.Profiler
 
         异常：
             - **RuntimeError** - Profiler已经开启。
-            - **RuntimeError** - 停止Minddata采集后，不支持重复开启。
             - **RuntimeError** - 如果 `start_profile` 参数未设置或设置为 ``True`` 。
 
     .. py:method:: stop()

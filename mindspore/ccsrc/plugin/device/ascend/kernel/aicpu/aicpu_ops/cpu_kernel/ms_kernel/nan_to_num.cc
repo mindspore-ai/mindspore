@@ -84,14 +84,16 @@ uint32_t NanToNumCpuKernel::NanToNumCompute(CpuKernelContext &ctx) {
     if (max_core_num > date_size) {
       max_core_num = date_size;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, date_size, date_size / max_core_num, shard_nan_to_num),
-                        "NanoNum Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, date_size, date_size / max_core_num, shard_nan_to_num),
+                             "NanoNum Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t NanToNumCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kNanToNumInputNum, kNanToNumOutputNum), "[%s] check params failed.", kNanToNum);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kNanToNumInputNum, kNanToNumOutputNum), "[%s] check params failed.",
+                           kNanToNum);
   auto data_type = ctx.Input(0)->GetDataType();
   uint32_t res = KERNEL_STATUS_OK;
   switch (data_type) {
@@ -102,7 +104,7 @@ uint32_t NanToNumCpuKernel::Compute(CpuKernelContext &ctx) {
       res = NanToNumCompute<float>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("NanToNum invalid input type [%s]", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "NanToNum invalid input type [%s]", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (res != KERNEL_STATUS_OK) {

@@ -147,7 +147,7 @@ void FetchRealParameterByNode(const KernelWithIndex &node, std::set<KernelWithIn
     (void)invalid_call_nodes->emplace(node_with_index);
     const auto &iter = call_node_to_func_graphs.find(node_with_index.first);
     if (iter == call_node_to_func_graphs.end()) {
-      MS_LOG(WARNING) << "Invalid call node:" << node_with_index.first->DebugString();
+      MS_LOG(DEBUG) << "Invalid call node:" << node_with_index.first->DebugString();
       return;
     }
     const auto &func_graphs = iter->second;
@@ -562,7 +562,7 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
   // 3. One output node.
   const auto &abstract = real_node->abstract();
   if (abstract == nullptr) {
-    MS_LOG(WARNING) << "Empty abstract for node:" << real_node->DebugString();
+    MS_LOG(DEBUG) << "Empty abstract for node:" << real_node->DebugString();
     (void)results.emplace_back(common::AnfAlgo::VisitKernelWithReturnType(real_node, real_index));
     return results;
   }
@@ -619,7 +619,7 @@ void AddFormalToRealParameter(const AnfNodePtr &formal_parameter, const AnfNodeP
     std::set<KernelWithIndex> invalid_call_nodes;
     FetchRealParameterByNode({real_parameter, i}, &real_parameters, &invalid_call_nodes, call_node_to_func_graphs);
     if (real_parameters.empty()) {
-      MS_LOG(WARNING) << "Failed to find real parameter for formal parameter:" << real_parameter->DebugString();
+      MS_LOG(DEBUG) << "Failed to find real parameter for formal parameter:" << real_parameter->DebugString();
       continue;
     }
 
@@ -773,8 +773,8 @@ KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index) {
     MS_LOG(EXCEPTION) << "Failed to find index for node:" << get_item_src_node;
   }
   if (indexes.size() > 1) {
-    MS_LOG(WARNING) << "Output size:" << indexes.size() << " for node:" << get_item_src_node->DebugString()
-                    << " more than 1";
+    MS_LOG(DEBUG) << "Output size:" << indexes.size() << " for node:" << get_item_src_node->DebugString()
+                  << " more than 1";
   }
   return {get_item_src_node, *(indexes.begin())};
 }
@@ -892,7 +892,7 @@ bool IsPartialInput(const AnfNodePtr &node) {
   const auto &branch_abstract = branch_node->abstract();
   // If abstract is empty, the default is true.
   if (branch_abstract == nullptr) {
-    MS_LOG(WARNING) << "Failed to get abstract by true branch input of switch node:" << node->DebugString();
+    MS_LOG(DEBUG) << "Failed to get abstract by true branch input of switch node:" << node->DebugString();
     return true;
   }
 
@@ -904,7 +904,7 @@ bool IsPartialInput(const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(sequence_abstract);
     const auto &sub_abstracts = sequence_abstract->elements();
     if (sub_abstracts.empty() || sub_abstracts[0] == nullptr) {
-      MS_LOG(WARNING) << "Failed to get abstract by true branch input of switch node:" << node->DebugString();
+      MS_LOG(DEBUG) << "Failed to get abstract by true branch input of switch node:" << node->DebugString();
       return true;
     }
     if (sub_abstracts[0]->isa<abstract::AbstractFunction>()) {
@@ -1175,7 +1175,7 @@ void ControlNodeParser::ParseDynamicLenFormalParameterByPartial(const AnfNodePtr
   }
   const auto &func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kPartialFuncGraphPos));
   if (func_graph == nullptr) {
-    MS_LOG(WARNING) << "Failed to get funcgraph in partial node:" << node->DebugString();
+    MS_LOG(DEBUG) << "Failed to get funcgraph in partial node:" << node->DebugString();
     return;
   }
   if (func_graph->parameters().size() < input_num - kPartialInputStartPos) {
@@ -1770,8 +1770,8 @@ void ControlNodeParser::FetchDeviceContextByNode(const std::vector<KernelWithInd
       // the output, the output type of the funcgraph called by it should have been determined, if not, an exception
       // will be thrown.
       if (call_device_contexts.empty() || call_device_contexts.size() <= output_node.second) {
-        MS_LOG(WARNING) << "Cannot find device context for call node:" << output_node.first->DebugString()
-                        << " device contexts size:" << call_device_contexts.size() << " index:" << output_node.second;
+        MS_LOG(DEBUG) << "Cannot find device context for call node:" << output_node.first->DebugString()
+                      << " device contexts size:" << call_device_contexts.size() << " index:" << output_node.second;
         (void)return_device_contexts->emplace_back(default_context);
       } else {
         MS_EXCEPTION_IF_NULL(call_device_contexts[output_node.second]);
@@ -1784,7 +1784,7 @@ void ControlNodeParser::FetchDeviceContextByNode(const std::vector<KernelWithInd
       // If the output is a cnode, get the device context type by the kernel.
       const auto &iter = front_to_backend_kernels_.find(output_node);
       if (iter == front_to_backend_kernels_.end()) {
-        MS_LOG(WARNING) << "Cannot find backend kernel for cnode:" << output_node.first->DebugString();
+        MS_LOG(DEBUG) << "Cannot find backend kernel for cnode:" << output_node.first->DebugString();
         (void)return_device_contexts->emplace_back(default_context);
         continue;
       }
@@ -2117,11 +2117,11 @@ void ControlNodeParser::ParseAllRealParameterByFormalParameter(const KernelWithI
     if (func_graph == root_func_graph_) {
       return;
     }
-    MS_LOG(WARNING) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
-                    << ", maybe there is no call node for funcgraph:"
-                    << (formal_parameter.first->func_graph() == nullptr
-                          ? "null"
-                          : formal_parameter.first->func_graph()->ToString());
+    MS_LOG(DEBUG) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
+                  << ", maybe there is no call node for funcgraph:"
+                  << (formal_parameter.first->func_graph() == nullptr
+                        ? "null"
+                        : formal_parameter.first->func_graph()->ToString());
     return;
   }
   const auto &real_parameters = src_iter->second;
@@ -2357,7 +2357,7 @@ void ControlNodeParser::ParseFirstControlNodeAndKernelGraphForFuncGraph(const st
       // Fetch the level of control node.
       const auto &level_iter = node_to_level_.find(control_node);
       if (level_iter == node_to_level_.end()) {
-        MS_LOG(WARNING) << "Failed to get level for call node:" << control_node->DebugString();
+        MS_LOG(DEBUG) << "Failed to get level for call node:" << control_node->DebugString();
         continue;
       }
 

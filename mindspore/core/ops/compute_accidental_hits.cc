@@ -96,7 +96,6 @@ AbstractBasePtr ComputeAccidentalHitsInfer(const abstract::AnalysisEnginePtr &, 
   auto prim_name = primitive->name();
   auto true_classes_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
   auto sampled_candidates_shape = input_args[kInputIndex1]->GetShape()->GetShapeVector();
-
   // support dynamic rank
   if (IsDynamicRank(true_classes_shape) || IsDynamicRank(sampled_candidates_shape)) {
     auto out_elem_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});

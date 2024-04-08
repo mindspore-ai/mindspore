@@ -43,13 +43,13 @@ const char *kRandomPoisson = "RandomPoisson";
 namespace aicpu {
 uint32_t RandomPoissonCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
-  KERNEL_CHECK_NULLPTR(input_0, KERNEL_STATUS_PARAM_INVALID, "Get input_0 shape failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0, KERNEL_STATUS_PARAM_INVALID, "Get input_0 shape failed")
 
   Tensor *input_1 = ctx.Input(kSecondInputIndex);
-  KERNEL_CHECK_NULLPTR(input_1, KERNEL_STATUS_PARAM_INVALID, "Get input_1 rate failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_1, KERNEL_STATUS_PARAM_INVALID, "Get input_1 rate failed")
 
   Tensor *output = ctx.Output(kFirstOutputIndex);
-  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
   auto data_type = static_cast<DataType>(output->GetDataType());
 
   AttrValue *seed_ptr = ctx.GetAttr("seed");
@@ -64,14 +64,14 @@ uint32_t RandomPoissonCpuKernel::Compute(CpuKernelContext &ctx) {
     RANDOM_POISSON_GENERATE_CASE(DT_INT32, int)
     RANDOM_POISSON_GENERATE_CASE(DT_INT64, int64_t)
     default:
-      KERNEL_LOG_ERROR("RandomPoisson kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "RandomPoisson kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t RandomPoissonCpuKernel::Generate(const CpuKernelContext &ctx, Tensor *output) {
+uint32_t RandomPoissonCpuKernel::Generate(CpuKernelContext &ctx, Tensor *output) {
   // reset the state of ops
   /*
   uint32_t kernel_ret = 0;

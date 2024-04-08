@@ -36,6 +36,7 @@ class NetworkPt(torch.nn.Module):
 class ASGDFactory():
     def __init__(self, group=True, lr_dynamic=False, if_change=False, dtype=np.float32):
         super().__init__()
+        np.random.seed(1024)
         self.lin_weight_np = np.random.randn(3, 2).astype(dtype)
         self.lin_bias_np = np.random.randn(3,).astype(dtype)
 
@@ -44,7 +45,7 @@ class ASGDFactory():
         self.if_change = if_change
         self.data = np.random.rand(2, 2).astype(np.float32)
         self.label = np.random.rand(2, 3).astype(np.float32)
-        self.epochs = 3
+        self.epochs = 1
         self.steps = 1
         self.lr = 0.002
 

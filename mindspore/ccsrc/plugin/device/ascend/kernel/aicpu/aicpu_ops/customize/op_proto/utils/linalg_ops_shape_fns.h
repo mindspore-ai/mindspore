@@ -33,13 +33,7 @@ namespace ge {
  * @return status whether this operation success
  */
 graphStatus MakeBatchSquareMatrix(const TensorDesc &tensor, Shape &out, const ge::Operator &op);
-///**
-// * Generate a square matrix's Shape
-// * @param tensor Input ge tensor desc ptr
-// * @param out Output GeShape
-// * @return status whether this operation success
-// */
-// graphStatus MakeBatchSquareMatrix(const TensorDesc &tensor_desc, Shape &out, const ge::Operator &op);
+
 /**
  * Solving linear equations from matrices common shape func
  * @param tensor1 first input tensor

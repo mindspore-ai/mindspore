@@ -558,8 +558,9 @@ void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) c
       tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     }
 
-    auto device_address_ptr =
-      std::make_shared<GeHostAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id, kAscendDevice, 0);
+    auto device_id = device_context_->device_context_key().device_id_;
+    auto device_address_ptr = std::make_shared<GeHostAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id,
+                                                              kAscendDevice, device_id);
     device_address_ptr->set_is_ptr_persisted(false);
     AnfAlgo::SetOutputAddr(device_address_ptr, 0, input_node.get());
   }
@@ -582,8 +583,9 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
     auto i = output_with_index.second;
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
 
+    auto device_id = device_context_->device_context_key().device_id_;
     const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
-      output_with_index, nullptr, 0, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, 0);
+      output_with_index, nullptr, 0, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, device_id);
 
     auto output_device_addr = std::make_shared<GeHostAddress>(kernel_tensor);
     AnfAlgo::SetOutputAddr(output_device_addr, i, output_node.get());
@@ -678,9 +680,6 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->AssignStaticMemoryInput(*kernel_graph.get());
-  for (auto &child_graph : kernel_graph->child_graph_order()) {
-    AllocParameterMemory(child_graph.lock(), memo);
-  }
 }
 
 void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph) {
@@ -942,15 +941,15 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   auto use_compile_cache = compile_cache_context.UseCompileCache();
   std::map<std::string, ShapeVector> origin_shape;
-  std::set<KernelGraphPtr> memo;
-  GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
+  const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
   if (use_compile_cache) {
     MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
+    std::set<KernelGraphPtr> memo;
+    GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
     if (!BuildFakeGraph(graph)) {
       return false;
     }
   } else {
-    const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
     (void)BuildGraph(graph, tensor_order_map);
   }
   SetDynamicShapeAttr(graph);
@@ -1071,17 +1070,17 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     // delete SetCPUMemManager when delete env MS_DISABLE_REF_MODE
     ResManager()->SetCPUMemManager();
     std::map<std::string, ShapeVector> origin_shape;
+    const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
     auto &compile_cache_context = CompileCacheContext::GetInstance();
     auto use_compile_cache = compile_cache_context.UseCompileCache();
-    std::set<KernelGraphPtr> memo;
-    GEGraphOptimization::GetInstance().OptimizeGEGraph(kg, &memo);
     if (use_compile_cache) {
       MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
+      std::set<KernelGraphPtr> memo;
+      GEGraphOptimization::GetInstance().OptimizeGEGraph(kg, &memo);
       if (!BuildFakeGraph(kg)) {
         return false;
       }
     } else {
-      const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
       (void)BuildGraph(kg, tensor_order_map);
     }
     SetDynamicShapeAttr(kg);

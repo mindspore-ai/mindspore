@@ -46,15 +46,15 @@ namespace ops {
 namespace {
 abstract::TupleShapePtr SilentCheckInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
-  auto input_grad_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto input_grad_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(input_grad_shape_ptr);
-  auto pre_val_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto pre_val_shape_ptr = input_args[kInputIndex2]->GetShape();
   MS_EXCEPTION_IF_NULL(pre_val_shape_ptr);
-  auto min_val_shape_ptr = input_args[kInputIndex3]->BuildShape();
+  auto min_val_shape_ptr = input_args[kInputIndex3]->GetShape();
   MS_EXCEPTION_IF_NULL(min_val_shape_ptr);
-  auto max_val_shape_ptr = input_args[kInputIndex4]->BuildShape();
+  auto max_val_shape_ptr = input_args[kInputIndex4]->GetShape();
   MS_EXCEPTION_IF_NULL(max_val_shape_ptr);
-  auto val_counter_shape_ptr = input_args[kInputIndex5]->BuildShape();
+  auto val_counter_shape_ptr = input_args[kInputIndex5]->GetShape();
   MS_EXCEPTION_IF_NULL(val_counter_shape_ptr);
 
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{

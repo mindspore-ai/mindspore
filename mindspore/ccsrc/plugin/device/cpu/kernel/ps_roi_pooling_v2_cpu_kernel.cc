@@ -226,7 +226,10 @@ bool PSROIPoolingCpuKernelMod::PSROIPoolingLauncher(const std::vector<KernelTens
 
   constexpr size_t unit_size = sizeof(T);
   auto memset_task = [&](size_t start, size_t end) {
-    (void)memset_s(output_data + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
+    auto ret = memset_s(output_data + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memset_s failed: " << ret;
+    }
   };
   ParallelLaunchAutoSearch(memset_task, outputs[0]->size() / unit_size, this, &parallel_search_info_);
 

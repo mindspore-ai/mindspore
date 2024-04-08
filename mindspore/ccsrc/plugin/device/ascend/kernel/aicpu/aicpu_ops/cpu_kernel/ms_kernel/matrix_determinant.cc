@@ -28,23 +28,23 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 1;
 const char *kMatrixDeterminant = "MatrixDeterminant";
 
-#define MatrixDeterminant_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                                   \
-    uint32_t result = MatrixDeterminantCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                               \
-      KERNEL_LOG_ERROR("MatrixDeterminant kernel compute failed."); \
-      return result;                                                \
-    }                                                               \
-    break;                                                          \
+#define MatrixDeterminant_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                             \
+    uint32_t result = MatrixDeterminantCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                         \
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixDeterminant kernel compute failed."); \
+      return result;                                                          \
+    }                                                                         \
+    break;                                                                    \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MatrixDeterminantCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "MatrixDeterminant check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MatrixDeterminantCheck(ctx), "MatrixDeterminant check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MatrixDeterminant check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MatrixDeterminantCheck(ctx), "MatrixDeterminant check params failed.");
   Tensor *input = ctx.Input(0);
   // Check whether the number of matrices is > 0
   auto shape = input->GetTensorShape();
@@ -52,13 +52,13 @@ uint32_t MatrixDeterminantCpuKernel::Compute(CpuKernelContext &ctx) {
   int k = dims.size();
   for (int i = 0; i < k - 2; i++) {
     if (dims[i] <= 0) {
-      KERNEL_LOG_ERROR("The input must be one or more squares.");
+      CUST_KERNEL_LOG_ERROR(ctx, "The input must be one or more squares.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
   // Check if it's a square array
   if (dims[dims.size() - 1] == 0 || dims[dims.size() - 2] != dims[dims.size() - 1]) {
-    KERNEL_LOG_ERROR("The input must be one or more squares.");
+    CUST_KERNEL_LOG_ERROR(ctx, "The input must be one or more squares.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // Check element type
@@ -67,28 +67,28 @@ uint32_t MatrixDeterminantCpuKernel::Compute(CpuKernelContext &ctx) {
     MatrixDeterminant_COMPUTE_CASE(DT_FLOAT, float, ctx) MatrixDeterminant_COMPUTE_CASE(DT_DOUBLE, double, ctx)
       MatrixDeterminant_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
         MatrixDeterminant_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx) default
-        : KERNEL_LOG_ERROR(
-            "MatrixDeterminant kernel dims data_type [%s] "
-            "not support,support data_types: DT_INT32, DT_INT64, "
-            "DT_COMPLEX64, DT_COMPLEX128.",
-            DTypeStr(input_dtype).c_str());
+        : CUST_KERNEL_LOG_ERROR(ctx,
+                                "MatrixDeterminant kernel dims data_type [%s] "
+                                "not support,support data_types: DT_INT32, DT_INT64, "
+                                "DT_COMPLEX64, DT_COMPLEX128.",
+                                DTypeStr(input_dtype).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCheck(const CpuKernelContext &ctx) {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
-  KERNEL_LOG_INFO(
-    "MatrixDeterminantCpuKernel[%s], input: size[%llu];"
-    "output: size[%llu].",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCheck(CpuKernelContext &ctx) {
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "MatrixDeterminantCpuKernel[%s], input: size[%llu];"
+                       "output: size[%llu].",
+                       ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCompute(const CpuKernelContext &ctx) {
+uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCompute(CpuKernelContext &ctx) {
   Tensor *input_tensor = ctx.Input(0);
   Tensor *output_tensor = ctx.Output(0);
   std::vector<int64_t> dims = input_tensor->GetTensorShape()->GetDimSizes();
@@ -112,8 +112,8 @@ uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCompute(const CpuKernelCon
       *(output + k) = result;
     }
   };
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, n, 1, shard_matrix_determinant),
-                      "MatrixDeterminant Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, n, 1, shard_matrix_determinant),
+                           "MatrixDeterminant Compute failed.");
   return KERNEL_STATUS_OK;
 }
 

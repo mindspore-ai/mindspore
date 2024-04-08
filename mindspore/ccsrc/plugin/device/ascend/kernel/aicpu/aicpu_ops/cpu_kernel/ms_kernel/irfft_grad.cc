@@ -42,7 +42,7 @@ using NormMode = mindspore::NormMode;
   case (DTYPE): {                                                      \
     uint32_t result = IRFFTGradCompute<INTYPE, MIDTYPE, OUTTYPE>(CTX); \
     if (result != KERNEL_STATUS_OK) {                                  \
-      KERNEL_LOG_ERROR("IRFFTGrad kernel compute failed.");            \
+      CUST_KERNEL_LOG_ERROR(ctx, "IRFFTGrad kernel compute failed.");  \
       return result;                                                   \
     }                                                                  \
     break;                                                             \
@@ -56,7 +56,8 @@ uint32_t IRFFTGradCpuKernel::Compute(CpuKernelContext &ctx) {
   if (op_name.find(op_prefix) == 0) {
     op_name.erase(op_name.begin(), op_name.begin() + op_prefix.size());
   }
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", op_name.c_str());
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           op_name.c_str());
   auto x_type = ctx.Input(kIndex0)->GetDataType();
   switch (x_type) {
     //    IRFFTGRAD_COMPUTE_CASE(DT_INT16, int16_t, float, complex64, ctx)
@@ -68,7 +69,7 @@ uint32_t IRFFTGradCpuKernel::Compute(CpuKernelContext &ctx) {
       //    IRFFTGRAD_COMPUTE_CASE(DT_COMPLEX64, complex64, complex64, complex64, ctx)
       //    IRFFTGRAD_COMPUTE_CASE(DT_COMPLEX128, complex128, complex128, complex128, ctx)
     default:
-      KERNEL_LOG_ERROR("IRFFTGrad kernel data type [%s] not support.", DTypeStr(x_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "IRFFTGrad kernel data type [%s] not support.", DTypeStr(x_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -238,7 +239,7 @@ uint32_t IRFFTGradCpuKernel::IRFFTGradCompute(CpuKernelContext &ctx) {
   if (memset_s(calculate_input, sizeof(T_mid) * calculate_element, 0, sizeof(T_mid) * calculate_element) != EOK) {
     free(calculate_input);
     calculate_input = nullptr;
-    KERNEL_LOG_ERROR("For 'IRFFTGrad', memset_s failed. ");
+    CUST_KERNEL_LOG_ERROR(ctx, "For 'IRFFTGrad', memset_s failed. ");
     return KERNEL_STATUS_INNER_ERROR;
   }
   IRFFTGradGenerateCalculateInput<T_in, T_mid>(input_ptr, calculate_input, input_element, tensor_shape, calculate_shape,

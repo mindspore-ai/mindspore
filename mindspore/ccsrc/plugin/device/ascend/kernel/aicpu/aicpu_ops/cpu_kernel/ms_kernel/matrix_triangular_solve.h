@@ -34,9 +34,9 @@ class MatrixTriangularSolveCpuKernel : public CpuKernel {
   bool adjoint;
 
   template <typename T>
-  static uint32_t MatrixTriangularSolveCompute(const CpuKernelContext &ctx);
+  static uint32_t MatrixTriangularSolveCompute(CpuKernelContext &ctx);
 
-  static uint32_t MatrixTriangularSolveCheck(const CpuKernelContext &ctx);
+  static uint32_t MatrixTriangularSolveCheck(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

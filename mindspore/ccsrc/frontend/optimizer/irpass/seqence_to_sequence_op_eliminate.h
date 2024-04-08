@@ -44,6 +44,7 @@ class ListToTupleEliminator : public AnfVisitor {
       if (real_node == nullptr) {
         return nullptr;
       }
+      MS_EXCEPTION_IF_NULL(real_node->abstract());
       auto input_abs = real_node->abstract()->cast<abstract::AbstractListPtr>();
       MS_EXCEPTION_IF_NULL(input_abs);
       if (!input_abs->dynamic_len()) {
@@ -83,6 +84,7 @@ class TupleToListEliminator : public AnfVisitor {
       if (real_node == nullptr) {
         return nullptr;
       }
+      MS_EXCEPTION_IF_NULL(real_node->abstract());
       auto input_abs = real_node->abstract()->cast<abstract::AbstractTuplePtr>();
       MS_EXCEPTION_IF_NULL(input_abs);
       if (!input_abs->dynamic_len()) {

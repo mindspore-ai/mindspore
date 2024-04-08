@@ -37,7 +37,7 @@ namespace aicpu {
 namespace detail {
 
 template <typename T>
-inline std::uint32_t ParallelForAddN(const CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
+inline std::uint32_t ParallelForAddN(CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
                                      const std::function<void(std::int64_t, std::int64_t)> &work) {
   if (total > kAddNParallelNum)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
@@ -47,9 +47,9 @@ inline std::uint32_t ParallelForAddN(const CpuKernelContext &ctx, std::int64_t t
 }
 
 template <typename T>
-inline std::uint32_t ComputeAddNKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeAddNKernel(CpuKernelContext &ctx) {
   AttrValue *n_ptr{ctx.GetAttr("N")};
-  KERNEL_CHECK_NULLPTR(n_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr N failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, n_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr N failed.");
   std::int64_t per_batch_elements{n_ptr->GetInt()};
   T *output{static_cast<T *>(ctx.Output(0)->GetData())};
   std::int64_t total{ctx.Output(0)->NumElements()};
@@ -66,38 +66,39 @@ inline std::uint32_t ComputeAddNKernel(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-inline std::uint32_t ComputeAddN(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeAddN(CpuKernelContext &ctx) {
   std::uint32_t result{ComputeAddNKernel<T>(ctx)};
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("AddN compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "AddN compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t ExtraCheckAddN(const CpuKernelContext &ctx) {
+inline std::uint32_t ExtraCheckAddN(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   AttrValue *n_ptr = ctx.GetAttr("N");
-  KERNEL_CHECK_NULLPTR(n_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr N failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, n_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr N failed.");
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckAddN(const CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
+inline std::uint32_t CheckAddN(CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
   return NormalCheck(const_cast<CpuKernelContext &>(ctx), kAddNInputNum, kAddNOutputNum) ? KERNEL_STATUS_PARAM_INVALID
                                                                                          : ExtraCheckAddN(ctx);
 }
 
-inline std::uint32_t ComputeAddN(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeAddN(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_INT8:
@@ -127,7 +128,7 @@ inline std::uint32_t ComputeAddN(const CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return ComputeAddN<std::complex<std::double_t>>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

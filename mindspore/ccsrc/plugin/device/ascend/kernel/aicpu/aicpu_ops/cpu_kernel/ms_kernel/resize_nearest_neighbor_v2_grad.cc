@@ -56,8 +56,8 @@ inline float CalculateResizeScale(int64_t in_size, int64_t out_size, bool align_
 }
 
 uint32_t ResizeNearestNeighborV2GradCpuKernel::ResizeNearestNeighborV2GradParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.",
-                      kResizeNearestNeighborV2Grad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.",
+                           kResizeNearestNeighborV2Grad);
   Tensor *grads_ptr = ctx.Input(0);
   Tensor *size_ptr = ctx.Input(1);
 
@@ -66,17 +66,17 @@ uint32_t ResizeNearestNeighborV2GradCpuKernel::ResizeNearestNeighborV2GradParamC
   auto size_dims = size_ptr->GetTensorShape()->GetDims();
   auto size_data = static_cast<int32_t *>(size_ptr->GetData());
 
-  KERNEL_CHECK_FALSE(grads_dims == kDim4, KERNEL_STATUS_PARAM_INVALID,
-                     "grads must be 4-dimensional but got %d-dimensional.", grads_dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, grads_dims == kDim4, KERNEL_STATUS_PARAM_INVALID,
+                          "grads must be 4-dimensional but got %d-dimensional.", grads_dims);
 
-  KERNEL_CHECK_FALSE(size_dims == kDim1, KERNEL_STATUS_PARAM_INVALID, "size_shape must be 1-dimensional but got %d.",
-                     size_dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, size_dims == kDim1, KERNEL_STATUS_PARAM_INVALID,
+                          "size_shape must be 1-dimensional but got %d.", size_dims);
 
-  KERNEL_CHECK_FALSE(size_ptr->NumElements() == kNumElements2, KERNEL_STATUS_PARAM_INVALID,
-                     "size must have two elements but got %d element(s).", size_ptr->NumElements());
-  KERNEL_CHECK_FALSE(size_data[kIndex0] > 0 && size_data[kIndex1] > 0, KERNEL_STATUS_PARAM_INVALID,
-                     "size elements must be positive but got height %d, width %d.", size_data[kIndex0],
-                     size_data[kIndex1]);
+  CUST_KERNEL_CHECK_FALSE(ctx, size_ptr->NumElements() == kNumElements2, KERNEL_STATUS_PARAM_INVALID,
+                          "size must have two elements but got %d element(s).", size_ptr->NumElements());
+  CUST_KERNEL_CHECK_FALSE(ctx, size_data[kIndex0] > 0 && size_data[kIndex1] > 0, KERNEL_STATUS_PARAM_INVALID,
+                          "size elements must be positive but got height %d, width %d.", size_data[kIndex0],
+                          size_data[kIndex1]);
 
   AttrValue *align_corners_ptr = ctx.GetAttr("align_corners");
   AttrValue *half_pixel_centers_ptr = ctx.GetAttr("half_pixel_centers");
@@ -109,14 +109,15 @@ uint32_t ResizeNearestNeighborV2GradCpuKernel::Compute(CpuKernelContext &ctx) {
       res = ResizeNearestNeighborV2GradCompute<double>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("For ResizeNearestNeighborV2Grad, invalid input type [%s].", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "For ResizeNearestNeighborV2Grad, invalid input type [%s].",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return res;
 }
 
 template <typename T>
-uint32_t ResizeNearestNeighborV2GradCpuKernel::ResizeNearestNeighborV2GradCompute(const CpuKernelContext &ctx) {
+uint32_t ResizeNearestNeighborV2GradCpuKernel::ResizeNearestNeighborV2GradCompute(CpuKernelContext &ctx) {
   Tensor *input_grads = ctx.Input(0);
   Tensor *output_y = ctx.Output(0);
   grads_shape = input_grads->GetTensorShape()->GetDimSizes();
@@ -130,16 +131,16 @@ uint32_t ResizeNearestNeighborV2GradCpuKernel::ResizeNearestNeighborV2GradComput
     std::vector<float> y_work_copy(1);
     y_work_copy.resize(y_size);
     int ret = memset_s(y_work_copy.data(), y_size * sizeof(float), 0, y_size * sizeof(float));
-    KERNEL_CHECK_FALSE(ret == EOK, KERNEL_STATUS_INNER_ERROR,
-                       "For 'ResizeNearestNeighborV2Grad', memset_s error. Error no: %d.", ret);
+    CUST_KERNEL_CHECK_FALSE(ctx, ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                            "For 'ResizeNearestNeighborV2Grad', memset_s error. Error no: %d.", ret);
     RealCompute<T, float>(grads_4d, y_work_copy.data());
     for (size_t idx = 0; idx < y_size; ++idx) {
       y_4d[idx] = static_cast<T>(y_work_copy[idx]);
     }
   } else {
     int ret = memset_s(y_4d, y_size * sizeof(T), 0, y_size * sizeof(T));
-    KERNEL_CHECK_FALSE(ret == EOK, KERNEL_STATUS_INNER_ERROR,
-                       "For 'ResizeNearestNeighborV2Grad', memset_s error. Error no: %d.", ret);
+    CUST_KERNEL_CHECK_FALSE(ctx, ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                            "For 'ResizeNearestNeighborV2Grad', memset_s error. Error no: %d.", ret);
     RealCompute<T, T>(grads_4d, y_4d);
   }
   return KERNEL_STATUS_OK;

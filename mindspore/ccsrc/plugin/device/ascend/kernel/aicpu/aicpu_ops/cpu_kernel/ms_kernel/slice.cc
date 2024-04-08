@@ -26,14 +26,14 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 3;
 const char *kSlice = "Slice";
 
-#define SLICE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                       \
-    uint32_t result = SliceCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("Slice kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define SLICE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                 \
+    uint32_t result = SliceCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "Slice kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 }  // namespace
 
@@ -57,8 +57,8 @@ uint32_t SliceCpuKernel::GetSliceValue(Tensor *tensor, std::vector<int64_t> &val
 }
 
 uint32_t SliceCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kSlice);
-  KERNEL_HANDLE_ERROR(SliceCheck(ctx), "[%s] check params failed.", kSlice);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kSlice);
+  CUST_KERNEL_HANDLE_ERROR(ctx, SliceCheck(ctx), "[%s] check params failed.", kSlice);
   auto x_type = ctx.Input(0)->GetDataType();
   switch (x_type) {
     SLICE_COMPUTE_CASE(DT_BOOL, bool, ctx)
@@ -76,25 +76,28 @@ uint32_t SliceCpuKernel::Compute(CpuKernelContext &ctx) {
     SLICE_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     SLICE_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Slice kernel data type [%s] not support.", DTypeStr(x_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Slice kernel data type [%s] not support.", DTypeStr(x_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SliceCpuKernel::SliceCheck(const CpuKernelContext &ctx) {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(kThirdInputIndex)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
+uint32_t SliceCpuKernel::SliceCheck(CpuKernelContext &ctx) {
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(kThirdInputIndex)->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input 2 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
 
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 tensor shape failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(1)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 tensor shape failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(kThirdInputIndex)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
-                       "Get input 2 tensor shape failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
-                       "Get output 0 tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input 0 tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(1)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input 1 tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(kThirdInputIndex)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input 2 tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get output 0 tensor shape failed.")
 
   std::vector<int64_t> shape_x = ctx.Input(0)->GetTensorShape()->GetDimSizes();
 
@@ -102,18 +105,19 @@ uint32_t SliceCpuKernel::SliceCheck(const CpuKernelContext &ctx) {
   auto size_tensor = ctx.Input(2);
   auto y_tensor = ctx.Output(0);
 
-  KERNEL_CHECK_FALSE((offsets_tensor->NumElements() == static_cast<int64_t>(shape_x.size())),
-                     KERNEL_STATUS_PARAM_INVALID, "Expected offsets to be 1-D tensors of size [%zu], but got [%zu].",
-                     shape_x.size(), offsets_tensor->NumElements())
-  KERNEL_CHECK_FALSE((size_tensor->NumElements() == static_cast<int64_t>(shape_x.size())), KERNEL_STATUS_PARAM_INVALID,
-                     "Expected size to be 1-D tensors of size [%zu], but got [%zu].", shape_x.size(),
-                     size_tensor->NumElements())
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (offsets_tensor->NumElements() == static_cast<int64_t>(shape_x.size())), KERNEL_STATUS_PARAM_INVALID,
+    "Expected offsets to be 1-D tensors of size [%zu], but got [%zu].", shape_x.size(), offsets_tensor->NumElements())
+  CUST_KERNEL_CHECK_FALSE(ctx, (size_tensor->NumElements() == static_cast<int64_t>(shape_x.size())),
+                          KERNEL_STATUS_PARAM_INVALID, "Expected size to be 1-D tensors of size [%zu], but got [%zu].",
+                          shape_x.size(), size_tensor->NumElements())
 
-  KERNEL_CHECK_FALSE((GetSliceValue(offsets_tensor, offsets) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
-                     "Offsets must be either int32 or int64, but got [%s].",
-                     DTypeStr(offsets_tensor->GetDataType()).c_str())
-  KERNEL_CHECK_FALSE((GetSliceValue(size_tensor, size) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
-                     "Size must be either int32 or int64, but got [%s].", DTypeStr(size_tensor->GetDataType()).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (GetSliceValue(offsets_tensor, offsets) == KERNEL_STATUS_OK),
+                          KERNEL_STATUS_PARAM_INVALID, "Offsets must be either int32 or int64, but got [%s].",
+                          DTypeStr(offsets_tensor->GetDataType()).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (GetSliceValue(size_tensor, size) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
+                          "Size must be either int32 or int64, but got [%s].",
+                          DTypeStr(size_tensor->GetDataType()).c_str())
 
   is_identity = true;
   slice_dim0 = true;
@@ -125,15 +129,15 @@ uint32_t SliceCpuKernel::SliceCheck(const CpuKernelContext &ctx) {
     int64_t offset = offsets.at(i);
     int64_t size_dim = size.at(i);
     if (shape_x.at(i) == 0) {
-      KERNEL_CHECK_FALSE((offset == 0 && size_dim == 0), KERNEL_STATUS_PARAM_INVALID,
-                         "Expected offsets[%zu] == 0 (got %zu) and size[%zu] == 0 (got %zu),"
-                         " when x shape[%zu] == 0.",
-                         i, offset, i, size_dim, i)
+      CUST_KERNEL_CHECK_FALSE(ctx, (offset == 0 && size_dim == 0), KERNEL_STATUS_PARAM_INVALID,
+                              "Expected offsets[%zu] == 0 (got %zu) and size[%zu] == 0 (got %zu),"
+                              " when x shape[%zu] == 0.",
+                              i, offset, i, size_dim, i)
     } else {
-      KERNEL_CHECK_FALSE((0 <= offset && offset < shape_x.at(i)), KERNEL_STATUS_PARAM_INVALID,
-                         "Expected offsets[%zu] in [0, %zu], but got %zu.", i, shape_x.at(i), offset)
-      KERNEL_CHECK_FALSE((0 <= size_dim && offset + size_dim <= shape_x.at(i)), KERNEL_STATUS_PARAM_INVALID,
-                         "Expected size[%zu] in [0, %zu], but got %zu.", i, shape_x.at(i) - offset, size_dim)
+      CUST_KERNEL_CHECK_FALSE(ctx, (0 <= offset && offset < shape_x.at(i)), KERNEL_STATUS_PARAM_INVALID,
+                              "Expected offsets[%zu] in [0, %zu], but got %zu.", i, shape_x.at(i), offset)
+      CUST_KERNEL_CHECK_FALSE(ctx, (0 <= size_dim && offset + size_dim <= shape_x.at(i)), KERNEL_STATUS_PARAM_INVALID,
+                              "Expected size[%zu] in [0, %zu], but got %zu.", i, shape_x.at(i) - offset, size_dim)
     }
     bool take_all = (offset == 0) && (size_dim == shape_x.at(i));
     is_identity &= take_all;
@@ -246,7 +250,7 @@ void SliceCpuKernel::SliceRealCompute(size_t input_dims, T *input_data, T *outpu
 }
 
 template <typename T>
-uint32_t SliceCpuKernel::SliceCompute(const CpuKernelContext &ctx) {
+uint32_t SliceCpuKernel::SliceCompute(CpuKernelContext &ctx) {
   auto x_data = ctx.Input(0)->GetData();
   auto y_data = ctx.Output(0)->GetData();
   int64_t num_output = ctx.Output(0)->NumElements();
@@ -258,22 +262,22 @@ uint32_t SliceCpuKernel::SliceCompute(const CpuKernelContext &ctx) {
   if (is_identity) {
     int64_t input_size = ctx.Input(0)->GetDataSize();
     int cpret = memcpy_s(y_data, input_size, x_data, input_size);
-    KERNEL_CHECK_FALSE((cpret == EOK), KERNEL_STATUS_INNER_ERROR, "[%s] memcpy_s to output failed, size [%llu].",
-                       kSlice, input_size);
+    CUST_KERNEL_CHECK_FALSE(ctx, (cpret == EOK), KERNEL_STATUS_INNER_ERROR,
+                            "[%s] memcpy_s to output failed, size [%llu].", kSlice, input_size);
     return KERNEL_STATUS_OK;
   }
   if (slice_dim0) {
     int data_size = size.at(0);
     data_size = data_size * sizeof(T);
     int cpret = memcpy_s(y_data, data_size, static_cast<T *>(x_data) + offsets.at(0), data_size);
-    KERNEL_CHECK_FALSE((cpret == EOK), KERNEL_STATUS_INNER_ERROR, "[%s] memcpy_s to output failed, size [%llu].",
-                       kSlice, data_size);
+    CUST_KERNEL_CHECK_FALSE(ctx, (cpret == EOK), KERNEL_STATUS_INNER_ERROR,
+                            "[%s] memcpy_s to output failed, size [%llu].", kSlice, data_size);
     return KERNEL_STATUS_OK;
   }
 
   size_t input_dims = shape_x.size();
   if (input_dims < INPUT_NUM2 || input_dims > INPUT_NUM7) {
-    KERNEL_LOG_ERROR("[%s] : Unhandled input dimensions [%zu].", kSlice, input_dims);
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] : Unhandled input dimensions [%zu].", kSlice, input_dims);
     return KERNEL_STATUS_INNER_ERROR;
   }
 

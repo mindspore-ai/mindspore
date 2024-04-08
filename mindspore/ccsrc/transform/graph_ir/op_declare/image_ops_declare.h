@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 #include "transform/graph_ir/custom_op_proto/cust_image_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
-#include "op_proto/inc/image_ops.h"
 
 DECLARE_OP_ADAPTER(ResizeNearestNeighborV2)
 DECLARE_OP_USE_OUTPUT(ResizeNearestNeighborV2)

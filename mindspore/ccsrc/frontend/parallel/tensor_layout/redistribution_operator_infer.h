@@ -44,7 +44,7 @@ class RedistributionOperatorInfer {
   explicit RedistributionOperatorInfer(bool construct_op_flag = true)
       : construct_op_flag_(construct_op_flag), is_cost_model_(false) {}
   Status Init(const TensorLayout &tensor_layout, const Map &out_tensor_map, RankList dev_list,
-              bool is_cost_model = false);
+              bool is_cost_model = false, bool is_dynamic_shape = false);
   ~RedistributionOperatorInfer() = default;
   OperatorList operator_list() const { return operator_list_; }
   OperatorVector operator_vector() const { return operator_vector_; }

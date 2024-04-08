@@ -24,7 +24,6 @@ greater:
             >>> from mindspore import Tensor, ops
             >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
             >>> other = Tensor(np.array([1, 1, 4]), mindspore.int32)
-            >>> greater = ops.greater()
-            >>> output = greater(input, other)
+            >>> output = ops.greater(input, other)
             >>> print(output)
             [False True False]

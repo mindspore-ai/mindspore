@@ -37,7 +37,7 @@ class BiasAddCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t BiasAddCompute(const CpuKernelContext &ctx);
+  uint32_t BiasAddCompute(CpuKernelContext &ctx);
 
   /**
    * @brief Check if input&output addr is aligned
@@ -47,14 +47,14 @@ class BiasAddCpuKernel : public CpuKernel {
   bool AlignedCheck(const BCalcInfo &calc_info);
 
   template <int32_t RANK, typename T>
-  uint32_t BiasAddCalculateWithAlignedCheck(const CpuKernelContext &ctx, const BCalcInfo &calc_info);
+  uint32_t BiasAddCalculateWithAlignedCheck(CpuKernelContext &ctx, const BCalcInfo &calc_info);
 
   /**
    * @brief Eigen calculate for all types
    * @param calc_info data used to calculate
    */
   template <int32_t RANK, typename T, int32_t OPTION>
-  uint32_t BiasAddCalculate(const CpuKernelContext &ctx, const BCalcInfo &calc_info);
+  uint32_t BiasAddCalculate(CpuKernelContext &ctx, const BCalcInfo &calc_info);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_BIAS_ADD_GRAD_H_

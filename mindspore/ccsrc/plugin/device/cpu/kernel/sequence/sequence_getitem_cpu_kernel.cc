@@ -51,7 +51,7 @@ int SequenceGetItemCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   if (tuple_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
   }
-  auto length = static_cast<int64_t>(tuple_shape[0]);
+  auto length = tuple_shape[0];
   if (length <= 0) {
     MS_EXCEPTION(ValueError) << "For RealTupleGetItem, the element size of tuple input should great than 0, but got "
                              << length << ".";
@@ -66,10 +66,9 @@ int SequenceGetItemCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
     index_value += length;
   }
   auto index = LongToSize(index_value);
-
   auto user_data = inputs[0]->user_data();
   if (user_data == nullptr || !user_data->has(kRealElementsSize)) {
-    offset_size_ = inputs[0]->size() / length * index;
+    offset_size_ = inputs[0]->size() / LongToSize(length) * index;
     return KRET_OK;
   }
 

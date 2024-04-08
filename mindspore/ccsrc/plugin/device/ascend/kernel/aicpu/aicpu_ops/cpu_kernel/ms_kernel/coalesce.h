@@ -30,7 +30,7 @@ class CoalesceCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  static uint32_t ComputeKernel(const CpuKernelContext &ctx);
+  static uint32_t ComputeKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

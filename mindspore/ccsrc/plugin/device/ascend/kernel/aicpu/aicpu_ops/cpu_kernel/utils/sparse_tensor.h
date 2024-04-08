@@ -112,19 +112,20 @@ class SparseTensor {
    * @param order: order vec
    * @return uint32_t: 0->success other->failed
    */
-  uint32_t CreateSparseTensor(Tensor *ix, Tensor *tensorvals, std::vector<int64_t> shape, std::vector<int64_t> order);
+  uint32_t CreateSparseTensor(CpuKernelContext &ctx, Tensor *ix, Tensor *tensorvals, std::vector<int64_t> shape,
+                              std::vector<int64_t> order);
 
   /*
    * sparse indices valid
    * @return uint32_t: 0->success other->failed
    */
-  uint32_t IndicesValid(const CpuKernelContext &ctx) const;
+  uint32_t IndicesValid(CpuKernelContext &ctx);
 
   template <typename T>
-  void Reorder(const std::vector<int64_t> &order) {
+  void Reorder(CpuKernelContext &ctx, const std::vector<int64_t> &order) {
     int32_t order_size = static_cast<int32_t>(order.size());
     if (order_size != dims_) {
-      KERNEL_LOG_ERROR("Order length must be SparseTensor rank");
+      CUST_KERNEL_LOG_ERROR(ctx, "Order length must be SparseTensor rank");
     }
     auto ix_t = ix_->matrix<int64_t>();
     auto vals_t = vals_->vec<T>();
@@ -179,7 +180,7 @@ class SparseTensor {
    * group sparse tensor
    * @return GroupIterable
    */
-  GroupIterable group(const std::vector<int64_t> &group_ix) const;
+  GroupIterable group(CpuKernelContext &ctx, const std::vector<int64_t> &group_ix) const;
   /*
    * sparse eigen tensor indices valid
    * @return uint32_t: 0->success other->failed
@@ -193,7 +194,7 @@ class SparseTensor {
   std::vector<int64_t> shape() const { return shape_; }
 
   template <typename T>
-  uint32_t EigenTensorIndicesValidCheck(int64_t dims_size) const {
+  uint32_t EigenTensorIndicesValidCheck(CpuKernelContext &ctx, int64_t dims_size) const {
     const auto ix_t = ix_->matrix<T>();
     for (int64_t n = 1; n < dims_size; ++n) {
       bool valid = true;
@@ -212,15 +213,15 @@ class SparseTensor {
         }
       }
       if (!valid) {
-        KERNEL_LOG_ERROR("Indices is out of bounds, index=%lld.", n);
+        CUST_KERNEL_LOG_ERROR(ctx, "Indices is out of bounds, index=%lld.", n);
         return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
       }
       if (!increasing) {
-        KERNEL_LOG_ERROR("indices is out of order, index=%lld.", n);
+        CUST_KERNEL_LOG_ERROR(ctx, "indices is out of order, index=%lld.", n);
         return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
       }
       if (!different) {
-        KERNEL_LOG_ERROR("indices is repeated, index=%lld.", n);
+        CUST_KERNEL_LOG_ERROR(ctx, "indices is repeated, index=%lld.", n);
         return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
       }
     }
@@ -231,50 +232,50 @@ class SparseTensor {
    * @return uint32_t: 0->success other->failed
    */
   template <typename T>
-  uint32_t EigenTensorIndicesValidParaCheck(const CpuKernelContext &ctx, int64_t dims_size) const {
+  uint32_t EigenTensorIndicesValidParaCheck(CpuKernelContext &ctx, int64_t dims_size) {
     uint32_t min_core_num = 1;
     int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
     uint32_t result = static_cast<uint32_t>(KERNEL_STATUS_OK);
-    (void)aicpu::CpuKernelUtils::ParallelFor(ctx, dims_size, dims_size / max_core_num,
-                                             [&](std::int64_t begin, std::int64_t end) {
-                                               int64_t start = begin;
-                                               if (begin == 0) {
-                                                 start = begin + 1;
-                                               }
-                                               const auto ix_t = ix_->matrix<T>();
-                                               for (int64_t n = start; n < end; ++n) {
-                                                 bool valid = true;
-                                                 bool different = false;
-                                                 bool increasing = true;
-                                                 for (int32_t di = 0; di < dims_; ++di) {
-                                                   if (ix_t(n, di) < 0 || ix_t(n, di) >= shape_[di]) {
-                                                     valid = false;
-                                                   }
-                                                   int64_t diff = ix_t(n, order_[di]) - ix_t(n - 1, order_[di]);
-                                                   if (diff > 0) {
-                                                     different = true;
-                                                   }
-                                                   if (!different && diff < 0) {
-                                                     increasing = false;
-                                                   }
-                                                 }
-                                                 if (!valid) {
-                                                   KERNEL_LOG_ERROR("Indices is out of bounds, index=%lld.", n);
-                                                   result = static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
-                                                   return;
-                                                 }
-                                                 if (!increasing) {
-                                                   KERNEL_LOG_ERROR("indices is out of order, index=%lld.", n);
-                                                   result = static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
-                                                   return;
-                                                 }
-                                                 if (!different) {
-                                                   KERNEL_LOG_ERROR("indices is repeated, index=%lld.", n);
-                                                   result = static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
-                                                   return;
-                                                 }
-                                               }
-                                             });
+    (void)aicpu::CpuKernelUtils::ParallelFor(
+      ctx, dims_size, dims_size / max_core_num, [&](std::int64_t begin, std::int64_t end) {
+        int64_t start = begin;
+        if (begin == 0) {
+          start = begin + 1;
+        }
+        const auto ix_t = ix_->matrix<T>();
+        for (int64_t n = start; n < end; ++n) {
+          bool valid = true;
+          bool different = false;
+          bool increasing = true;
+          for (int32_t di = 0; di < dims_; ++di) {
+            if (ix_t(n, di) < 0 || ix_t(n, di) >= shape_[di]) {
+              valid = false;
+            }
+            int64_t diff = ix_t(n, order_[di]) - ix_t(n - 1, order_[di]);
+            if (diff > 0) {
+              different = true;
+            }
+            if (!different && diff < 0) {
+              increasing = false;
+            }
+          }
+          if (!valid) {
+            CUST_KERNEL_LOG_ERROR(ctx, "Indices is out of bounds, index=%lld.", n);
+            result = static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
+            return;
+          }
+          if (!increasing) {
+            CUST_KERNEL_LOG_ERROR(ctx, "indices is out of order, index=%lld.", n);
+            result = static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
+            return;
+          }
+          if (!different) {
+            CUST_KERNEL_LOG_ERROR(ctx, "indices is repeated, index=%lld.", n);
+            result = static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
+            return;
+          }
+        }
+      });
     return result;
   }
   /*
@@ -282,21 +283,21 @@ class SparseTensor {
    * @return uint32_t: 0->success other->failed
    */
   template <typename T>
-  uint32_t EigenTensorIndicesValid(const CpuKernelContext &ctx) const {
+  uint32_t EigenTensorIndicesValid(CpuKernelContext &ctx) {
     const auto ix_t = ix_->matrix<T>();
     int64_t dims_size =
       (ix_->GetTensor()->GetTensorShape()->GetDims() == 0) ? 1 : ix_->GetTensor()->GetTensorShape()->GetDimSize(0);
     if (dims_size > 0) {
       for (int32_t di = 0; di < dims_; ++di) {
         if ((ix_t(0, di) < 0) || (ix_t(0, di) >= shape_[di])) {
-          KERNEL_LOG_ERROR("Indices is out of bounds, index=0.");
+          CUST_KERNEL_LOG_ERROR(ctx, "Indices is out of bounds, index=0.");
           return KERNEL_STATUS_PARAM_INVALID;
         }
       }
     }
     const int64_t paralled_data_size = 16 * 1024;
     if (dims_size < paralled_data_size) {
-      return EigenTensorIndicesValidCheck<T>(dims_size);
+      return EigenTensorIndicesValidCheck<T>(ctx, dims_size);
     } else {
       return EigenTensorIndicesValidParaCheck<T>(ctx, dims_size);
     }
@@ -307,7 +308,7 @@ class SparseTensor {
    * @param output: output tensor
    * @return bool: true->success false->failed
    */
-  bool ValidateToDense(const Tensor *out) const;
+  bool ValidateToDense(CpuKernelContext &ctx, const Tensor *out) const;
 
   /*
    * sparse tensor to dense tensor
@@ -315,7 +316,7 @@ class SparseTensor {
    * @return uint32_t: 0->success other->failed
    */
   template <typename IndiceT, typename ValueT>
-  uint32_t ToDenseParallel(const CpuKernelContext &ctx, Tensor *output) {
+  uint32_t ToDenseParallel(CpuKernelContext &ctx, Tensor *output) {
     EigenTensor outputET(output, output->GetData());
     auto output_t = outputET.flat<ValueT>();
     auto ix_t = ix_->matrix<IndiceT>();
@@ -345,15 +346,16 @@ class SparseTensor {
         }
         if (invalid_dims) {
           result = static_cast<uint32_t>(KERNEL_STATUS_INNER_ERROR);
-          KERNEL_LOG_ERROR("Sparse to dense got invalid dims.");
+          CUST_KERNEL_LOG_ERROR(ctx, "Sparse to dense got invalid dims.");
           return;
         }
         output_t(ix) = vals_t(n);
       }
       return;
     };
-    KERNEL_HANDLE_ERROR(aicpu::CpuKernelUtils::ParallelFor(ctx, vals_size, vals_size / max_core_num, parallel_proc),
-                        "SparseToDense Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, aicpu::CpuKernelUtils::ParallelFor(ctx, vals_size, vals_size / max_core_num, parallel_proc),
+      "SparseToDense Compute failed.");
     return result;
   }
 
@@ -363,14 +365,14 @@ class SparseTensor {
    * @return uint32_t: 0->success other->failed
    */
   template <typename IndiceT, typename ValueT>
-  uint32_t ToDense(const CpuKernelContext &ctx, Tensor *output) {
-    KERNEL_LOG_INFO("Start to execute ToDense.");
+  uint32_t ToDense(CpuKernelContext &ctx, Tensor *output) {
+    CUST_KERNEL_LOG_INFO(ctx, "Start to execute ToDense.");
     if (output == nullptr || output->GetData() == nullptr) {
-      KERNEL_LOG_ERROR("Output tensor is nullptr.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Output tensor is nullptr.");
       return KERNEL_STATUS_INNER_ERROR;
     }
-    if (!ValidateToDense(output)) {
-      KERNEL_LOG_ERROR("Validate to dense param failed.");
+    if (!ValidateToDense(ctx, output)) {
+      CUST_KERNEL_LOG_ERROR(ctx, "Validate to dense param failed.");
       return KERNEL_STATUS_INNER_ERROR;
     }
     auto vals_t = vals_->vec<ValueT>();
@@ -401,7 +403,7 @@ class SparseTensor {
         ix += strides[d] * ix_n_d;
       }
       if (invalid_dims) {
-        KERNEL_LOG_ERROR("Sparse to dense got invalid dims.");
+        CUST_KERNEL_LOG_ERROR(ctx, "Sparse to dense got invalid dims.");
         return KERNEL_STATUS_INNER_ERROR;
       }
       output_t(ix) = vals_t(n);
@@ -410,7 +412,7 @@ class SparseTensor {
   }
 
   template <typename IndiceT, typename ValueT>
-  uint32_t GetIndicesAndValues(Tensor *y_indices, Tensor *y_values) {
+  uint32_t GetIndicesAndValues(CpuKernelContext &ctx, Tensor *y_indices, Tensor *y_values) {
     auto dims = y_indices->GetTensorShape()->GetDimSize(0);
     auto elements = order_.size();
     auto ix_t = ix_->matrix<IndiceT>();
@@ -421,7 +423,7 @@ class SparseTensor {
       *(values + n) = vals_t(n);
       for (std::size_t di = 0; di < elements; ++di) {
         if (ix_t(n, di) < 0 || ix_t(n, di) >= shape_[di]) {
-          KERNEL_LOG_ERROR("indices is out of bounds, index=%lld.", n);
+          CUST_KERNEL_LOG_ERROR(ctx, "indices is out of bounds, index=%lld.", n);
           return KERNEL_STATUS_PARAM_INVALID;
         }
         *(indices + n * elements + di) = ix_t(n, di);

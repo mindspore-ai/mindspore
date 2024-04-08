@@ -74,10 +74,10 @@ class Environ {
     return nullptr;
   }
 
-  void Clear() {
+  void Clear(CpuKernelContext &ctx) {
     // Foreach values to free the value addr.
     for (auto &value : values_) {
-      KERNEL_CHECK_NULLPTR_VOID(value.second, "value.second is null.");
+      CUST_KERNEL_CHECK_NULLPTR_VOID(ctx, value.second, "value.second is null.");
       free(value.second->addr_);
     }
     values_.clear();

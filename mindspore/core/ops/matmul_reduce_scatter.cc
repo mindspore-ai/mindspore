@@ -71,9 +71,9 @@ abstract::TupleShapePtr MatmulReduceScatterInferShape(const PrimitivePtr &primit
   auto x2_row = is_trans_b ? 1 : 0;
   auto x2_col = is_trans_b ? 0 : 1;
   auto x1_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMatmulReduceScatterInputX1Index]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMatmulReduceScatterInputX1Index]->GetShape())[kShape];
   auto x2_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMatmulReduceScatterInputX2Index]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMatmulReduceScatterInputX2Index]->GetShape())[kShape];
   if (x1_shape.size() != kX1X2Rank || x2_shape.size() != kX1X2Rank) {
     MS_LOG(EXCEPTION) << op_name << ": The rank both of x1 and x2 must be " << kX1X2Rank << ", but got "
                       << x1_shape.size() << " and " << x2_shape.size();
@@ -89,7 +89,7 @@ abstract::TupleShapePtr MatmulReduceScatterInferShape(const PrimitivePtr &primit
   }
   if (input_args[kMatmulReduceScatterInputBiasIndex]->BuildType()->type_id() != kMetaTypeNone) {
     auto bias_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-      input_args[kMatmulReduceScatterInputBiasIndex]->BuildShape())[kShape];
+      input_args[kMatmulReduceScatterInputBiasIndex]->GetShape())[kShape];
     ShapeVector expect_bias_shape{x2_shape[x2_col]};
     if (bias_shape != expect_bias_shape) {
       MS_LOG(EXCEPTION) << op_name << ": The shape of input `bias` must be " << expect_bias_shape << ", but got shape "

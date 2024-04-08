@@ -49,10 +49,10 @@ class SparseFillEmptyRowsCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &calc_info);
+  uint32_t NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &calc_info);
 
   template <typename T>
-  uint32_t ComputeSparseFillEmptyRows(DataBank &databank);
+  uint32_t ComputeSparseFillEmptyRows(CpuKernelContext &ctx, DataBank &databank);
 };
 }  // namespace aicpu
 #endif

@@ -26,7 +26,8 @@ class ChannelShuffle(Cell):
     :math:`\frac{g}{}` and :math:`g` to restore Tensor to the original shape.
 
     Args:
-        groups (int): Number of groups to divide channels in, must be greater than 0. Refer to :math:`g`.
+        groups (int): Number of groups to divide channels in, must be greater than 0.
+            Refer to :math:`g` in the above formula.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, C_{in}, H_{in}, W_{in})`.
@@ -35,7 +36,7 @@ class ChannelShuffle(Cell):
         Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If `groups` is not an int.
+        TypeError: If `groups` is not a positive integer.
         ValueError: If `groups` is less than 1.
         ValueError: If dims of `x` is less than 3.
         ValueError: If number of channels can not be divisible by groups.

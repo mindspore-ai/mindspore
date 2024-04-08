@@ -33,7 +33,8 @@ class MindDataSkipPushdownTestOptimizationPass : public UT::DatasetOpTesting {
   /// \param[in] root_target Target dataset for compare
   /// \param[in] step Skip step
   /// \return Status of the function
-  Status prepare_trees(std::shared_ptr<Dataset> root_original, std::shared_ptr<Dataset> root_target, int64_t step = 0) {
+  Status prepare_trees(std::shared_ptr<Dataset> root_original, std::shared_ptr<Dataset> root_target, int64_t step = 0,
+                       bool check_pipeline = true) {
     auto ir_tree = std::make_shared<TreeAdapter>(TreeAdapter::UsageFlag::kDeReset);
 
     // Get the dataset size for calculating the initial epoch
@@ -47,7 +48,7 @@ class MindDataSkipPushdownTestOptimizationPass : public UT::DatasetOpTesting {
     RETURN_IF_NOT_OK(ir_tree_target->Compile(root_target->IRNode(), 1,
                                              0));  // Step is 0 for target node tree
 
-    if (step != 0) {
+    if (step != 0 && check_pipeline) {
       RETURN_IF_NOT_OK(compare_pass(ir_tree_target->RootIRNode(), ir_tree->RootIRNode()));
     }
     RETURN_IF_NOT_OK(compare_pass_row(ir_tree_target, ir_tree));
@@ -367,19 +368,19 @@ TEST_F(MindDataSkipPushdownTestOptimizationPass, SkipPushdownSkip0) {
 
   root = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Project({"label", "image"})->Skip(0);
   root_target = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Project({"label", "image"});
-  EXPECT_OK(prepare_trees(root, root_target, 0));
+  EXPECT_OK(prepare_trees(root, root_target, 0, false));
 
   root = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())
            ->Skip(0)
            ->Project({"label", "image"})
            ->Skip(0);
   root_target = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Project({"label", "image"});
-  EXPECT_OK(prepare_trees(root, root_target, 0));
+  EXPECT_OK(prepare_trees(root, root_target, 0, false));
 
   root = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Skip(0)->Project({"label", "image"});
   root_target =
     ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())->Skip(1)->Project({"label", "image"});
-  EXPECT_OK(prepare_trees(root, root_target, 1));
+  EXPECT_OK(prepare_trees(root, root_target, 1, false));
 
   root = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>())
            ->Skip(2)

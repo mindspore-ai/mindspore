@@ -289,8 +289,8 @@ NodePtrList FuncPassForward::ConvertConstInputToAttr(const PrimitivePtr &prim, c
   return ChangeInputToAttr(prim, inputs, input_names, input_to_attr);
 }
 
-NodePtr FuncPassForward::BatchNormGradToBNInferGrad(const NodePtrList &inputs) {
-  if (device_target_ != kAscendDevice) {
+NodePtr FuncPassForward::BatchNormGradToBNInferGrad(const NodePtrList &inputs, bool is_scale_or_bias_grad) {
+  if (device_target_ != kAscendDevice || is_scale_or_bias_grad) {
     return func_builder_->Emit(kBatchNormGradOpName, inputs);
   }
   constexpr size_t kIdxIsTraining = 6;

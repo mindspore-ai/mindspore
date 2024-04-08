@@ -25,11 +25,24 @@ class Layout():
     Parallel layout describes the detailed sharding information.
 
     Note:
-        It is valid only in semi auto parallel or auto parallel mode.
+        - It is valid only in semi auto parallel or auto parallel mode.
+        - The multiplication result of the `device_matrix` must be equal to the device count in a pipeline stage.
+        - When the layout function is invoked to constructs a sharding strategy, each alias name is only allowed to be
+          used once to shard a tensor.
 
     Args:
         device_matrix (tuple): Describe the shape of devices arrangement, its element type is int.
         alias_name (tuple): The alias name for each axis of device_matrix, its length shoits element type is string.
+
+    Raises:
+        TypeError: `device_matrix` is not a tuple type.
+        TypeError: `alias_name` is not a tuple type.
+        ValueError: `device_matrix` length is not equal to `alias_name` length.
+        TypeError: The element of `device_matrix` is not int type.
+        TypeError: The element of `alias_name` is not a str type.
+        ValueError: The element of `alias_name` is an empty str.
+        ValueError: The element of `alias_name` is "None".
+        ValueError: `alias_name` contains repeated element.
 
     Examples:
         >>> from mindspore import Layout
@@ -41,7 +54,7 @@ class Layout():
 
     def __init__(self, device_matrix, alias_name):
         if not isinstance(device_matrix, tuple):
-            raise TypeError(f'device_shape must be tuple type, but got:{type(device_matrix)}')
+            raise TypeError(f'device_matrix must be tuple type, but got:{type(device_matrix)}')
         if not isinstance(alias_name, tuple):
             raise TypeError(f'alias_name must be tuple type, but got:{type(alias_name)}')
         if len(device_matrix) != len(alias_name):
@@ -52,6 +65,8 @@ class Layout():
         for in_ele in alias_name:
             if not isinstance(in_ele, str):
                 raise TypeError(f'The element of alias_name must be str type, but got:{type(in_ele)}')
+            if not in_ele:
+                raise ValueError(f"The element of alias_name can not be empty.")
             if in_ele == "None":
                 raise ValueError(f"The element of alias_name can not set 'None', because 'None' means no sharding.")
         if len(set(alias_name)) != len(alias_name):
@@ -65,18 +80,18 @@ class Layout():
         writed_map = ()
         for ele in tensor_map:
             if isinstance(ele, tuple):
-                map = ()
+                ele_map = ()
                 for item in ele:
                     if item == "None":
-                        map += (-1,)
+                        ele_map += (-1,)
                         continue
                     if item not in self._alias_name:
                         raise ValueError(f'The axis {item} is not found in {self._alias_name}')
                     if item in writed_map:
                         raise ValueError(f'The axis {item} has been set more than one in {self._alias_name}')
-                    map += (len(self._alias_name) - 1 - self._alias_name.index(item),)
+                    ele_map += (len(self._alias_name) - 1 - self._alias_name.index(item),)
                     writed_map += (item,)
-                self._tensor_map += (map,)
+                self._tensor_map += (ele_map,)
                 continue
             if ele == "None":
                 self._tensor_map += (-1,)
@@ -313,7 +328,7 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
 
     Tutorial Examples:
         - `Functional Operator Sharding
-          <https://www.mindspore.cn/tutorials/experts/en/master/parallel/pynative_shard_function_parallel.html>`_
+          <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/pynative_shard_function_parallel.html>`_
     """
     if not isinstance(fn, (ms.nn.Cell)):
         logger.warning("'fn' is not a mindspore.nn.Cell, and its definition cannot involve Parameter; "

@@ -33,7 +33,7 @@ def test_adam_bporp_with_cache():
     Description: Verify if the loss is converged
     Expectation: success
     """
-    ms.set_context(mode=ms.PYNATIVE_MODE)
+    ms.set_context(mode=ms.PYNATIVE_MODE, pynative_synchronize=True)
 
     class NetAdam(nn.Cell):
         def __init__(self):

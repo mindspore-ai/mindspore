@@ -19,6 +19,7 @@
 #include <memory>
 #include "backend/graph_compiler/backend.h"
 #include "include/common/utils/contract.h"
+#include "include/common/utils/stub_tensor.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "utils/log_adapter.h"
 
@@ -46,18 +47,20 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const AnfNodePtr &func, const ValuePtrL
 
 ValuePtr GradExecutor::RunGraph(const FuncGraphPtr &func_graph, const ValuePtrList &inputs, const ValuePtr &out,
                                 const ValuePtr &dout) {
-  VectorRef args;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(args),
-                 [](const ValuePtr &input) { return BaseRef(input); });
-  args.push_back(BaseRef(out));
-  args.push_back(BaseRef(dout));
+  ValuePtrList args(inputs.begin(), inputs.end());
+  args.push_back(out);
+  args.push_back(dout);
   return RunGraph(func_graph, args);
 }
 
 ValuePtr GradExecutor::RunGraph(const FuncGraphPtr &func_graph, const ValuePtrList &inputs) {
   VectorRef args;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(args),
-                 [](const ValuePtr &input) { return BaseRef(input); });
+  std::transform(inputs.begin(), inputs.end(), std::back_inserter(args), [](const ValuePtr &input) {
+    if (!input->isa<stub::TensorNode>()) {
+      return BaseRef(input);
+    }
+    return BaseRef(input->cast<stub::StubNodePtr>()->WaitValue());
+  });
   return RunGraph(func_graph, args);
 }
 

@@ -49,7 +49,7 @@ class Event(Event_):
         >>> c += 2
         >>> end.record()
         >>> with ms.hal.StreamCtx(s2):
-        ...     start.wait()
+        ...     start.synchronize()
         ...     end.synchronize()
         ...     e = c + d
         >>> ms.hal.synchronize()
@@ -98,6 +98,25 @@ class Event(Event_):
 
         Raises:
             TypeError: If 'stream' is neither a :class:`mindspore.hal.Stream` nor a ``None``.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> event = ms.hal.Event()
+            >>> s1 = ms.hal.Stream()
+            >>> s2 = ms.hal.Stream()
+            >>> a = Tensor(np.ones([2, 2]), ms.float32)
+            >>> b = Tensor(np.ones([2, 2]), ms.float32)
+            >>> with ms.hal.StreamCtx(s1):
+            ...     c = ops.matmul(a, b)
+            ...     event.record()
+            >>> event.wait()
+            >>> d = c + 2
+            >>> ms.hal.synchronize()
+            >>> print(d)
+            [[4. 4.]
+             [4. 4.]]
         """
         if stream is None:
             stream = current_stream_()

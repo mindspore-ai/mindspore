@@ -34,34 +34,34 @@ const uint32_t kInputNum = 4;
 constexpr int64_t kParallelDataNums = 1024;
 const char *kScaleAndTranslate = "ScaleAndTranslate";
 const char *kScaleAndTranslateGrad = "ScaleAndTranslateGrad";
-#define SCALEANDTRANSLATE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                                   \
-    uint32_t result = ScaleAndTranslateCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                               \
-      KERNEL_LOG_ERROR("ScaleAndTranslate kernel compute failed."); \
-      return result;                                                \
-    }                                                               \
-    break;                                                          \
+#define SCALEANDTRANSLATE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                             \
+    uint32_t result = ScaleAndTranslateCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                         \
+      CUST_KERNEL_LOG_ERROR(ctx, "ScaleAndTranslate kernel compute failed."); \
+      return result;                                                          \
+    }                                                                         \
+    break;                                                                    \
   }
 
-#define SCALEANDTRANSLATEGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                                       \
-    uint32_t result = ScaleAndTranslateGradCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                                   \
-      KERNEL_LOG_ERROR("ScaleAndTranslateGrad kernel compute failed."); \
-      return result;                                                    \
-    }                                                                   \
-    break;                                                              \
+#define SCALEANDTRANSLATEGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                                 \
+    uint32_t result = ScaleAndTranslateGradCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "ScaleAndTranslateGrad kernel compute failed."); \
+      return result;                                                              \
+    }                                                                             \
+    break;                                                                        \
   }
 
-#define SWITCH_PARALLEL(SHARD, end_num, ctx)                                 \
-  if ((end_num) <= kParallelDataNums) {                                      \
-    for (size_t i = 0; i < size_t(end_num); i++) {                           \
-      SHARD(i, i + 1);                                                       \
-    }                                                                        \
-  } else {                                                                   \
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, end_num, 1, SHARD), \
-                        "ScaleAndTranslate #SHARD Compute failed.");         \
+#define SWITCH_PARALLEL(SHARD, end_num, ctx)                                           \
+  if ((end_num) <= kParallelDataNums) {                                                \
+    for (size_t i = 0; i < size_t(end_num); i++) {                                     \
+      SHARD(i, i + 1);                                                                 \
+    }                                                                                  \
+  } else {                                                                             \
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, end_num, 1, SHARD), \
+                             "ScaleAndTranslate #SHARD Compute failed.");              \
   }
 
 }  // namespace
@@ -76,9 +76,9 @@ inline const T &Clamp(const T &low, const T &high, const T &value) {
 }
 
 template <typename Kernel>
-uint32_t ComputeSpansCore(const CpuKernelContext &context, const Kernel &kernel, const int64_t output_size,
-                          const int64_t input_size, const float scale, const float translate, const bool antialias,
-                          Spans *spans) {
+uint32_t ComputeSpansCore(CpuKernelContext &ctx, CpuKernelContext &context, const Kernel &kernel,
+                          const int64_t output_size, const int64_t input_size, const float scale, const float translate,
+                          const bool antialias, Spans *spans) {
   const float inv_scale = 1.0 / scale;
   const float inv_translate = -inv_scale * translate;
   const float kernel_scale = antialias ? std::max(inv_scale, 1.0f) : 1.0f;
@@ -111,7 +111,7 @@ uint32_t ComputeSpansCore(const CpuKernelContext &context, const Kernel &kernel,
       span_end = Clamp(static_cast<int64_t>(0), input_size - 1, span_end) + 1;
       const int this_span_size = span_end - span_start;
       if (this_span_size > spans->span_size) {
-        KERNEL_LOG_ERROR("Span is too large: [%d] vs [%d].", this_span_size, spans->span_size);
+        CUST_KERNEL_LOG_ERROR(ctx, "Span is too large: [%d] vs [%d].", this_span_size, spans->span_size);
       }
       float total_weight_sum = 0.0f;
       temp_weights.clear();
@@ -137,7 +137,7 @@ uint32_t ComputeSpansCore(const CpuKernelContext &context, const Kernel &kernel,
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ComputeGradSpansCore(const CpuKernelContext &context, const Spans *spans, const int64_t forward_output_size,
+uint32_t ComputeGradSpansCore(CpuKernelContext &context, const Spans *spans, const int64_t forward_output_size,
                               const int64_t forward_input_size, Spans *grad_spans) {
   struct GradComponent {
     int index;
@@ -193,53 +193,54 @@ uint32_t ComputeGradSpansCore(const CpuKernelContext &context, const Spans *span
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ComputeSpans(const CpuKernelContext &context, const aicpu::SamplingKernelType kernel_type,
+uint32_t ComputeSpans(CpuKernelContext &ctx, CpuKernelContext &context, const aicpu::SamplingKernelType kernel_type,
                       const int64_t output_size, const int64_t input_size, const float scale, const float translate,
                       const bool antialias, Spans *spans) {
   switch (kernel_type) {
     case Lanczos1Kernel: {
-      return ComputeSpansCore(context, CreateLanczos1Kernel(), output_size, input_size, scale, translate, antialias,
-                              spans);
+      return ComputeSpansCore(ctx, context, CreateLanczos1Kernel(), output_size, input_size, scale, translate,
+                              antialias, spans);
     }
     case Lanczos3Kernel: {
-      return ComputeSpansCore(context, CreateLanczos3Kernel(), output_size, input_size, scale, translate, antialias,
-                              spans);
+      return ComputeSpansCore(ctx, context, CreateLanczos3Kernel(), output_size, input_size, scale, translate,
+                              antialias, spans);
     }
     case Lanczos5Kernel: {
-      return ComputeSpansCore(context, CreateLanczos5Kernel(), output_size, input_size, scale, translate, antialias,
-                              spans);
+      return ComputeSpansCore(ctx, context, CreateLanczos5Kernel(), output_size, input_size, scale, translate,
+                              antialias, spans);
     }
     case GaussianKernel: {
-      return ComputeSpansCore(context, CreateGaussianKernel(), output_size, input_size, scale, translate, antialias,
-                              spans);
+      return ComputeSpansCore(ctx, context, CreateGaussianKernel(), output_size, input_size, scale, translate,
+                              antialias, spans);
     }
     case BoxKernel: {
-      return ComputeSpansCore(context, CreateBoxKernel(), output_size, input_size, scale, translate, antialias, spans);
+      return ComputeSpansCore(ctx, context, CreateBoxKernel(), output_size, input_size, scale, translate, antialias,
+                              spans);
     }
     case TriangleKernel: {
-      return ComputeSpansCore(context, CreateTriangleKernel(), output_size, input_size, scale, translate, antialias,
-                              spans);
+      return ComputeSpansCore(ctx, context, CreateTriangleKernel(), output_size, input_size, scale, translate,
+                              antialias, spans);
     }
     case KeysCubicKernel: {
-      return ComputeSpansCore(context, CreateKeysCubicKernel(), output_size, input_size, scale, translate, antialias,
-                              spans);
+      return ComputeSpansCore(ctx, context, CreateKeysCubicKernel(), output_size, input_size, scale, translate,
+                              antialias, spans);
     }
     case MitchellCubicKernel: {
-      return ComputeSpansCore(context, CreateMitchellCubicKernel(), output_size, input_size, scale, translate,
+      return ComputeSpansCore(ctx, context, CreateMitchellCubicKernel(), output_size, input_size, scale, translate,
                               antialias, spans);
     }
     default:
-      KERNEL_LOG_ERROR("kernel_type kernel data type [%u] not support.", kernel_type);
+      CUST_KERNEL_LOG_ERROR(ctx, "kernel_type kernel data type [%u] not support.", kernel_type);
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ComputeGradSpans(const CpuKernelContext &context, const SamplingKernelType kernel_type,
+uint32_t ComputeGradSpans(CpuKernelContext &ctx, CpuKernelContext &context, const SamplingKernelType kernel_type,
                           const int64_t forward_output_size, const int64_t forward_input_size, const float scale,
                           const float translate, const bool antialias, Spans *grad_spans) {
   Spans spans;
-  ComputeSpans(context, kernel_type, forward_output_size, forward_input_size, scale, translate, antialias, &spans);
+  ComputeSpans(ctx, context, kernel_type, forward_output_size, forward_input_size, scale, translate, antialias, &spans);
   uint32_t Status = ComputeGradSpansCore(context, &spans, forward_output_size, forward_input_size, grad_spans);
   delete spans.starts;
   delete spans.weights;
@@ -249,9 +250,9 @@ uint32_t ComputeGradSpans(const CpuKernelContext &context, const SamplingKernelT
 
 uint32_t ScaleAndTranslateCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "ScaleAndTranslate check input and output number failed.");
-  KERNEL_HANDLE_ERROR(ScaleAndTranslateCheck(ctx), "ScaleAndTranslate check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "ScaleAndTranslate check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ScaleAndTranslateCheck(ctx), "ScaleAndTranslate check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     SCALEANDTRANSLATE_COMPUTE_CASE(DT_INT8, int8_t, ctx)
@@ -264,7 +265,7 @@ uint32_t ScaleAndTranslateCpuKernel::Compute(CpuKernelContext &ctx) {
     SCALEANDTRANSLATE_COMPUTE_CASE(DT_FLOAT, float, ctx)
     SCALEANDTRANSLATE_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("ScaleAndTranslate kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "ScaleAndTranslate kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -273,83 +274,84 @@ uint32_t ScaleAndTranslateCpuKernel::Compute(CpuKernelContext &ctx) {
 // namespace aicpu {
 uint32_t ScaleAndTranslateGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "ScaleAndTranslateGrad check input and output number failed.");
-  KERNEL_HANDLE_ERROR(ScaleAndTranslateGradCheck(ctx), "ScaleAndTranslateGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "ScaleAndTranslateGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ScaleAndTranslateGradCheck(ctx), "ScaleAndTranslateGrad check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     SCALEANDTRANSLATEGRAD_COMPUTE_CASE(DT_FLOAT, float, ctx)
     default:
-      KERNEL_LOG_ERROR("ScaleAndTranslateGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "ScaleAndTranslateGrad kernel data type [%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCheck(const CpuKernelContext &ctx) {
+uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCheck(CpuKernelContext &ctx) {
   auto input0_shape = ctx.Input(0)->GetTensorShape();
   auto input1_shape = ctx.Input(1)->GetTensorShape();
   // dims check
-  KERNEL_CHECK_FALSE((input0_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID,
-                     "The input0's dims=[%d] must be 4-dimensional", input0_shape->GetDims())
-  KERNEL_CHECK_FALSE((input1_shape->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID,
-                     "The input1's dims=[%d] must be 1-dimensional", input1_shape->GetDims())
-  KERNEL_CHECK_FALSE((input1_shape->NumElements() == 2), KERNEL_STATUS_PARAM_INVALID,
-                     "The input1's numelements=[%d] must have two elements", input1_shape->NumElements())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "The input0's dims=[%d] must be 4-dimensional", input0_shape->GetDims())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_shape->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID,
+                          "The input1's dims=[%d] must be 1-dimensional", input1_shape->GetDims())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_shape->NumElements() == 2), KERNEL_STATUS_PARAM_INVALID,
+                          "The input1's numelements=[%d] must have two elements", input1_shape->NumElements())
 
   DataType input1_type = ctx.Input(1)->GetDataType();
   DataType input2_type = ctx.Input(2)->GetDataType();
   DataType input3_type = ctx.Input(3)->GetDataType();
 
   // dtypes check
-  KERNEL_CHECK_FALSE((input1_type == DT_INT32), KERNEL_STATUS_PARAM_INVALID, "The input1's dtype=[%d] must be DT_INT32",
-                     DTypeStr(input1_type).c_str())
-  KERNEL_CHECK_FALSE((input2_type == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID, "The input2's dtype=[%d] must be DT_FLOAT",
-                     DTypeStr(input2_type).c_str())
-  KERNEL_CHECK_FALSE((input3_type == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID, "The input3's dtype=[%d] must be DT_FLOAT",
-                     DTypeStr(input3_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_type == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
+                          "The input1's dtype=[%d] must be DT_INT32", DTypeStr(input1_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input2_type == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The input2's dtype=[%d] must be DT_FLOAT", DTypeStr(input2_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input3_type == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The input3's dtype=[%d] must be DT_FLOAT", DTypeStr(input3_type).c_str())
 
-  KERNEL_LOG_INFO(
-    "ScaleAndTranslateCpuKernel[%s], input0: size[%llu], input1: size[%llu];"
-    "input2: size[%llu], input3: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(), ctx.Input(2)->GetDataSize(),
-    ctx.Input(3)->GetDataSize(), ctx.Output(0)->GetDataSize());
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "ScaleAndTranslateCpuKernel[%s], input0: size[%llu], input1: size[%llu];"
+                       "input2: size[%llu], input3: size[%llu], output: size[%llu].",
+                       ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(),
+                       ctx.Input(2)->GetDataSize(), ctx.Input(3)->GetDataSize(), ctx.Output(0)->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCheck(const CpuKernelContext &ctx) {
+uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCheck(CpuKernelContext &ctx) {
   auto input0_shape = ctx.Input(0)->GetTensorShape();  // batch_size
   auto input1_shape = ctx.Input(1)->GetTensorShape();  // forward_input_height
   // dims check
-  KERNEL_CHECK_FALSE((input0_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID,
-                     "The input_grad dims=[%d] must be 4-dimensional", input0_shape->GetDims())
-  KERNEL_CHECK_FALSE((input1_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID,
-                     "The original_image dims=[%d] must be 4-dimensional", input1_shape->GetDims())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "The input_grad dims=[%d] must be 4-dimensional", input0_shape->GetDims())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "The original_image dims=[%d] must be 4-dimensional", input1_shape->GetDims())
 
   DataType input1_type = ctx.Input(1)->GetDataType();
   DataType input2_type = ctx.Input(2)->GetDataType();
   DataType input3_type = ctx.Input(3)->GetDataType();
   // dtypes check
-  KERNEL_CHECK_FALSE((input1_type == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID, "The input1's dtype=[%d] must be DT_FLOAT",
-                     DTypeStr(input1_type).c_str())
-  KERNEL_CHECK_FALSE((input2_type == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID, "The input2's type=[%d] must be DT_FLOAT",
-                     DTypeStr(input2_type).c_str())
-  KERNEL_CHECK_FALSE((input3_type == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID, "The input3's dtype=[%d] must be DT_FLOAT",
-                     DTypeStr(input3_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_type == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The input1's dtype=[%d] must be DT_FLOAT", DTypeStr(input1_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input2_type == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The input2's type=[%d] must be DT_FLOAT", DTypeStr(input2_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input3_type == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The input3's dtype=[%d] must be DT_FLOAT", DTypeStr(input3_type).c_str())
 
-  KERNEL_LOG_INFO(
-    "ScaleAndTranslateGradCpuKernel[%s], input0: size[%llu], input1: "
-    "size[%llu];"
-    "input2: size[%llu], input3: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(), ctx.Input(2)->GetDataSize(),
-    ctx.Input(3)->GetDataSize(), ctx.Output(0)->GetDataSize());
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "ScaleAndTranslateGradCpuKernel[%s], input0: size[%llu], input1: "
+                       "size[%llu];"
+                       "input2: size[%llu], input3: size[%llu], output: size[%llu].",
+                       ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(),
+                       ctx.Input(2)->GetDataSize(), ctx.Input(3)->GetDataSize(), ctx.Output(0)->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(const CpuKernelContext &ctx) {
+uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(CpuKernelContext &ctx) {
   auto input_size = reinterpret_cast<int32_t *>(ctx.Input(1)->GetData());
   auto input_scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());
   auto input_translation = reinterpret_cast<float *>(ctx.Input(3)->GetData());
@@ -371,19 +373,20 @@ uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(const CpuKernelCon
   const int64_t input_width = input0_shape->GetDimSize(2);
   const int64_t channels = input0_shape->GetDimSize(3);
 
-  KERNEL_CHECK_FALSE((output_height > 0 && output_width > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "output_height = [%d] and output_width = [%d] must be positive", output_height, output_width)
-  KERNEL_CHECK_FALSE((channels > 0), KERNEL_STATUS_PARAM_INVALID, "image_channel = [%d] must have at least one",
-                     channels)
-  KERNEL_CHECK_FALSE((input_height > 0 && input_width > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "input_height = [%d] and input_width = [%d] must be of non-zero size", input_height, input_width)
+  CUST_KERNEL_CHECK_FALSE(ctx, (output_height > 0 && output_width > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "output_height = [%d] and output_width = [%d] must be positive", output_height, output_width)
+  CUST_KERNEL_CHECK_FALSE(ctx, (channels > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "image_channel = [%d] must have at least one", channels)
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_height > 0 && input_width > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "input_height = [%d] and input_width = [%d] must be of non-zero size", input_height,
+                          input_width)
 
   float row_scale, col_scale;
   row_scale = input_scale[0];
   col_scale = input_scale[1];
 
-  KERNEL_CHECK_FALSE((row_scale > 0 && col_scale > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "row_scale = [%d] and col_scale = [%d] must be greater than zero.", row_scale, col_scale)
+  CUST_KERNEL_CHECK_FALSE(ctx, (row_scale > 0 && col_scale > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "row_scale = [%d] and col_scale = [%d] must be greater than zero.", row_scale, col_scale)
 
   float row_translation, col_translation;
   row_translation = input_translation[0];
@@ -397,10 +400,10 @@ uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(const CpuKernelCon
   typename TTypes<float, 4>::Tensor output_data(outputTensor.tensor<float, 4>());
 
   Spans col_spans;
-  ComputeSpans(ctx, kernel_type_, output_width, input_width, col_scale, col_translation, antialias_, &col_spans);
+  ComputeSpans(ctx, ctx, kernel_type_, output_width, input_width, col_scale, col_translation, antialias_, &col_spans);
 
   Spans row_spans;
-  ComputeSpans(ctx, kernel_type_, output_height, input_height, row_scale, row_translation, antialias_, &row_spans);
+  ComputeSpans(ctx, ctx, kernel_type_, output_height, input_height, row_scale, row_translation, antialias_, &row_spans);
 
   Eigen::Tensor<float, 4> intermediate_tensor_middle(batch_size, output_height, input_width, channels);
   Eigen::TensorMap<Eigen::Tensor<float, 4>> intermediate_data(intermediate_tensor_middle.data(),
@@ -422,7 +425,7 @@ uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(const CpuKernelCon
 }
 
 template <typename T>
-uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCompute(const CpuKernelContext &ctx) {
+uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCompute(CpuKernelContext &ctx) {
   auto input_scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());
   auto input_translation = reinterpret_cast<float *>(ctx.Input(3)->GetData());
   std::string kernel_type_str = ctx.GetAttr("kernel_type")->GetString();
@@ -445,8 +448,8 @@ uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCompute(const CpuK
   row_scale = input_scale[0];
   col_scale = input_scale[1];
 
-  KERNEL_CHECK_FALSE((row_scale > 0 && col_scale > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "row_scale = [%d] and col_scale = [%d] must be of non-zero size", row_scale, col_scale)
+  CUST_KERNEL_CHECK_FALSE(ctx, (row_scale > 0 && col_scale > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "row_scale = [%d] and col_scale = [%d] must be of non-zero size", row_scale, col_scale)
 
   float row_translation, col_translation;
   row_translation = input_translation[0];
@@ -463,11 +466,11 @@ uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCompute(const CpuK
   const int64_t forward_output_width = input_grad.dimension(2);
 
   Spans col_spans;
-  ComputeGradSpans(ctx, kernel_type_, forward_output_width, forward_input_width, col_scale, col_translation, antialias_,
-                   &col_spans);
+  ComputeGradSpans(ctx, ctx, kernel_type_, forward_output_width, forward_input_width, col_scale, col_translation,
+                   antialias_, &col_spans);
 
   Spans row_spans;
-  ComputeGradSpans(ctx, kernel_type_, forward_output_height, forward_input_height, row_scale, row_translation,
+  ComputeGradSpans(ctx, ctx, kernel_type_, forward_output_height, forward_input_height, row_scale, row_translation,
                    antialias_, &row_spans);
 
   Eigen::Tensor<float, 4> intermediate_tensor_middle(batch_size, forward_input_height, forward_output_width, channels);
@@ -491,7 +494,7 @@ uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCompute(const CpuK
 }
 
 template <typename T>
-uint32_t GatherColumns(const CpuKernelContext &context, int span_size, const int32_t *starts, const float *weights,
+uint32_t GatherColumns(CpuKernelContext &context, int span_size, const int32_t *starts, const float *weights,
                        const T *image, const int64_t input_height, const int64_t input_width,
                        const int64_t output_height, const int64_t output_width, const int channels, float *output) {
   const int64_t in_row_size = input_width * channels;
@@ -531,7 +534,7 @@ inline void AddScaledVector(const T *in_vec, int vec_len, float weight, float *o
 }
 
 template <typename T>
-uint32_t GatherRows(const CpuKernelContext &context, int span_size, const int32_t *starts, const float *weights,
+uint32_t GatherRows(CpuKernelContext &context, int span_size, const int32_t *starts, const float *weights,
                     const T *image, const int64_t input_height, const int64_t input_width, const int64_t output_height,
                     const int64_t output_width, const int channels, float *output) {
   const int64_t in_row_size = input_width * channels;
@@ -557,7 +560,7 @@ uint32_t GatherRows(const CpuKernelContext &context, int span_size, const int32_
 }
 
 template <typename T>
-uint32_t GatherSpans<T>::operator()(const aicpu::CpuKernelContext &context, int row_span_size,
+uint32_t GatherSpans<T>::operator()(aicpu::CpuKernelContext &context, int row_span_size,
                                     Eigen::TensorMap<Eigen::Tensor<int32_t, 1>> row_starts,
                                     Eigen::TensorMap<Eigen::Tensor<float, 1>> row_weights, int col_span_size,
                                     Eigen::TensorMap<Eigen::Tensor<int32_t, 1>> col_starts,

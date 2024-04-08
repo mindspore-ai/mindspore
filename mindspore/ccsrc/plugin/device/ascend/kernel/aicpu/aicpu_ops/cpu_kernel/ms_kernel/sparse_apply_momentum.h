@@ -28,10 +28,10 @@ class SparseApplyMomentumCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ValidParam(const CpuKernelContext &ctx);
+  uint32_t ValidParam(CpuKernelContext &ctx);
 
   template <typename T, typename TI>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 
   bool use_locking_ = false;
   bool use_nesterov_ = false;
