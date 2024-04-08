@@ -149,14 +149,25 @@ py::object Utils::GetModuleAttr(const std::string &mod_name, const std::string &
     attr = PyObject_GetAttrString(mod, attr_name.c_str());
     Py_DECREF(mod);
   }
-  if (attr == nullptr) {
-    if (_throw) {
-      throw py::error_already_set();
-    }
-    Utils::ReportPythonException();
-    PyErr_Clear();
+  if (attr != nullptr) {
+    return py::reinterpret_steal<py::object>(attr);
   }
-  return py::reinterpret_steal<py::object>(attr);
+  if (!_throw) {
+    PyErr_Clear();
+    return py::object();
+  }
+  if (!PyErr_Occurred()) {
+    if (mod == nullptr) {
+      if (_import) {
+        PyErr_Format(PyExc_ModuleNotFoundError, "No module named %s", mod_name.c_str());
+      } else {
+        PyErr_Format(PyExc_KeyError, "sys.modules[%s]", mod_name.c_str());
+      }
+    } else if (attr == nullptr) {
+      PyErr_Format(PyExc_AttributeError, "%S no attribute %s", mod, attr_name.c_str());
+    }
+  }
+  throw py::error_already_set();
 }
 
 std::string Utils::ReportPythonException() {
@@ -202,9 +213,9 @@ static std::pair<py::object, py::object> PackExArgs(const std::vector<py::object
       PyObject *vals = PyDict_Values(kwargs.ptr());
       PyObject *keys = PyDict_Keys(kwargs.ptr());
       PyObject *new_args = PySequence_Concat(pargs.ptr(), vals);
-      pargs = py::reinterpret_steal<py::object>(new_args);
-      kwargs = py::reinterpret_steal<py::object>(keys);
       Py_DECREF(vals);
+      pargs = py::reinterpret_steal<py::tuple>(new_args);
+      kwargs = py::reinterpret_steal<py::tuple>(keys);
     }
   } while (0);
   return {pargs, kwargs};
@@ -399,6 +410,29 @@ py::object GetPyCodeObject(const py::object &any, bool exact_func) {
   // self reference self at __call__, recursive call self.
   // just call once
   return GetPyCodeObject(py::reinterpret_steal<py::object>(call), true);
+}
+
+const char *GetFuncName(const py::object &f) {
+  PyObject *func = f.ptr();
+  if (func == nullptr) {
+    return "";
+  }
+  if (PyMethod_Check(func)) {
+    func = PyMethod_GET_FUNCTION(func);
+  }
+  if (PyCFunction_Check(func)) {
+    return reinterpret_cast<PyCFunctionObject *>(func)->m_ml->ml_name;
+  }
+  PyCodeObject *co = nullptr;
+  if (PyFunction_Check(func)) {
+    co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func));
+  }
+  if (co) {
+    return PyUnicode_AsUTF8(co->co_name);
+  }
+  PyTypeObject *tp = PyType_Check(func) ? reinterpret_cast<PyTypeObject *>(func) : Py_TYPE(func);
+  const char *res = strrchr(tp->tp_name, '.');
+  return res ? res + 1 : tp->tp_name;
 }
 
 bool CheckConstPyObject(PyObject *cnst) {

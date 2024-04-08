@@ -223,10 +223,6 @@ AbstractObjectBase::Type AbstractObjectBase::GetPyType(PyObject *o) {
   if (o == nullptr) {
     return kTypeAnyValue;
   }
-  py::object obj = py::cast<py::object>(o);
-  if (py::hasattr(obj, PYTHON_PRIMITIVE_FUNCTION_FLAG)) {
-    return kTypePrimitiveFunction;
-  }
   FIND_MAP_CACHE(const_object_type_map, o);
   if (PyLong_Check(o)) {
     return (Py_ABS(Py_SIZE(o)) > 2) ? kTypeAnyValue : kTypeInt;
@@ -239,7 +235,7 @@ AbstractObjectBase::Type AbstractObjectBase::GetMsType(PyTypeObject *tp) {
     {IsStubTensorType<true>, kTypeStubTensor}, {IsTensorType<true>, kTypeTensor},
     {IsCellListType<false>, kTypeNNCellList},  {IsCellType<true>, kTypeCell},
     {IsPrimitiveType<true>, kTypePrimitive},   {IsMetaFuncGraphType<true>, kTypeMetaFuncGraph},
-    {IsMSDTypeType<true>, kTypeMSDType},
+    {IsMSDTypeType<true>, kTypeMSDType},       {IsPrimitiveFunctionType<true>, kTypePrimitiveFunction},
   };
   if (tp == nullptr) {
     return kTypeAnyValue;
