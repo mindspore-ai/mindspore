@@ -79,6 +79,9 @@ expander::NodePtrList NativeBackwardFunc::PreProcess(const ValuePtrList &inputs,
                                                      const ValuePtr &dout) const {
   expander::NodePtrList node_inputs;
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(node_inputs), [this](const auto &input) {
+    if (input == nullptr) {
+      return ir_builder_->NewFuncNode(kNone, kNone->ToAbstract(), InputType::kConstant);
+    }
     ValuePtr value = input;
     if (input->template isa<stub::TensorNode>()) {
       value = input->template cast<stub::StubNodePtr>()->WaitValue();
