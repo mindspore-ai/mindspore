@@ -44,11 +44,12 @@ def _convert_to_list(strategy, rank_id=None):
             origin_param_name = param_name
             if "-" in param_name:
                 pipeline_stage, origin_param_name = param_name.split("-")
+                pipeline_stage = int(pipeline_stage)
             if origin_param_name not in train_map:
                 train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, field_size, shard_stride,
-                                                shard_size, [int(pipeline_stage)]]
+                                                shard_size, [pipeline_stage]]
             else:
-                update_pipeline_stage_list = train_map.get(origin_param_name)[6] + [int(pipeline_stage),]
+                update_pipeline_stage_list = train_map.get(origin_param_name)[6] + [pipeline_stage,]
                 if rank_id is not None:
                     stage_device_num = np.prod(dev_mat)
                     stage_id = rank_id // stage_device_num
@@ -382,6 +383,7 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
     Transform model parallel dimension for distributed checkpoint files.
     """
     transform_param_dict = {}
+    device_num = -1
     for param_name, _ in param_total_dict.items():
         tensor_shape = list(param_total_dict[param_name].values())[0].shape
         from_dev_matrix = [1]
@@ -444,6 +446,9 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
         if param_type_dict[param_name][rank_id % device_num] == "BFloat16":
             transform_para.set_dtype(ms.bfloat16)
         transform_param_dict[param_name] = transform_para
+    if device_num < 1:
+        raise ValueError("None of the parameters in checkpoint file are in either src strategy or "
+                         "dst strategy. Please check correctness of strategy files.")
 
     # Handle those parameter like learning_rate, global_step which not in strategy_file.
     for param_name, _ in param_total_dict.items():
