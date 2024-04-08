@@ -90,6 +90,17 @@ class BACKEND_EXPORT PyBoostDeviceTask : public AsyncTask {
   std::function<void()> run_func_;
 };
 
+class BACKEND_EXPORT DeviceLaunchTask : public AsyncTask {
+ public:
+  explicit DeviceLaunchTask(std::function<void()> run_func) : AsyncTask(kKernelTask), run_func_(std::move(run_func)) {}
+  ~DeviceLaunchTask() = default;
+
+  void Run() override;
+
+ private:
+  std::function<void()> run_func_;
+};
+
 class BACKEND_EXPORT PassthroughDeviceTask : public AsyncTask {
  public:
   explicit PassthroughDeviceTask(std::function<void(void)> run_func)
