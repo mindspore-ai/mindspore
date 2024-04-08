@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,13 +59,25 @@ def case_input_dyn(mode, device_target, dtype="float32"):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_resize_bilinear_ascend():
+def test_resize_bilinear_ascend_graph_mode():
     """
     Feature: Test resize_bilinear on ascend.
     Description:  The shape of input is dynamic.
     Expectation: Assert that results are consistent with expect.
     """
     case_input_dyn(context.GRAPH_MODE, "Ascend")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_resize_bilinear_ascend_pynative_mode():
+    """
+    Feature: Test resize_bilinear on ascend.
+    Description:  The shape of input is dynamic.
+    Expectation: Assert that results are consistent with expect.
+    """
     case_input_dyn(context.PYNATIVE_MODE, "Ascend")
 
 
