@@ -171,12 +171,12 @@ std::string MapToStrJoin(const std::map<K, V> &options, const std::string &kv_se
   std::ostringstream oss;
   bool first_dim = true;
   for (auto &x : options) {
-    oss << x.first << kv_sep << x.second;
     if (!first_dim) {
       oss << item_sep;
     } else {
       first_dim = false;
     }
+    oss << x.first << kv_sep << x.second;
   }
   return oss.str();
 }
