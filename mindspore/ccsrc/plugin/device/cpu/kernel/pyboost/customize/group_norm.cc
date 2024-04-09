@@ -23,9 +23,9 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void GroupNormCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                           const Int64ImmPtr &num_groups, const std::optional<TensorPtr> &gamma_opt_tensor,
-                           const std::optional<TensorPtr> &beta_opt_tensor, const FP32ImmPtr &eps) {
+void GroupNormCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
+                           const Int64ImmPtr &num_groups, const std::optional<BaseTensorPtr> &gamma_opt_tensor,
+                           const std::optional<BaseTensorPtr> &beta_opt_tensor, const FP32ImmPtr &eps) {
   MS_LOG(DEBUG) << "Call start";
 
   OpRunner::InferOpOutput(op, input_tensor, num_groups, gamma_opt_tensor, beta_opt_tensor, eps);

@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace pynative {
 using TensorIdWithOpInfo = mindspore::HashMap<std::string, std::pair<std::string, size_t>>;
-using OpInfoWithTensorObject = std::map<std::string, std::vector<std::pair<size_t, tensor::TensorPtr>>>;
+using OpInfoWithTensorObject = std::map<std::string, std::vector<std::pair<size_t, tensor::BaseTensorPtr>>>;
 
 struct TensorReplaceInfo {
   TensorIdWithOpInfo id_with_op_info{};

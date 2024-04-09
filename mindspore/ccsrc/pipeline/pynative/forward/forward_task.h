@@ -92,7 +92,6 @@ class BackendTask : public runtime::AsyncTask {
         backend_op_run_info_(std::move(backend_op_run_info)) {}
   ~BackendTask() override = default;
   void Run() override;
-  void SetException(const std::exception_ptr &e) override;
 
  private:
   std::function<void(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info)>

@@ -47,6 +47,8 @@ struct PyDataToValueRegister {
 }  // namespace
 using Tensor = mindspore::tensor::Tensor;
 using TensorPtr = mindspore::tensor::TensorPtr;
+using BaseTensor = mindspore::tensor::BaseTensor;
+using BaseTensorPtr = mindspore::tensor::BaseTensorPtr;
 using MetaTensor = mindspore::tensor::MetaTensor;
 using MetaTensorPtr = mindspore::tensor::MetaTensorPtr;
 using CSRTensor = mindspore::tensor::CSRTensor;
@@ -733,6 +735,7 @@ static const std::vector<DataConvertFuncPtr> &GetDataConvertFuncs() {
     std::make_shared<ByFuncDataConvertFunc>(IsStubTensor, ConvertStubTensor),
     std::make_shared<ByFuncDataConvertFunc>(IsNamedTuple, ConvertNamedTuple),
     std::make_shared<ByTypeDataConvertFunc<Tensor>>(ObjCast<TensorPtr>),
+    std::make_shared<ByTypeDataConvertFunc<BaseTensor>>(ObjCast<BaseTensorPtr>),
     std::make_shared<ByTypeDataConvertFunc<py::tuple>>(ConvertTuple),
     std::make_shared<ByTypeDataConvertFunc<py::list>>(ConvertList),
     std::make_shared<ByTypeDataConvertFunc<py::bool_>>(PyCast<BoolImm, bool>),

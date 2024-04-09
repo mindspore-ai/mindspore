@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-ValueTuplePtr GetTransposePerm(const TensorPtr &weight_tensor) {
+ValueTuplePtr GetTransposePerm(const BaseTensorPtr &weight_tensor) {
   const auto &shape = weight_tensor->shape();
   int64_t size = shape.size();
   std::vector<ValuePtr> perm(size);
@@ -43,9 +43,9 @@ ValueTuplePtr GetTransposePerm(const TensorPtr &weight_tensor) {
   return std::make_shared<ValueTuple>(perm);
 }
 }  // namespace
-tensor::TensorPtr MatMulAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                        const TensorPtr &mat2_tensor, const BoolImmPtr &transpose_a,
-                                        const BoolImmPtr &transpose_b) {
+tensor::BaseTensorPtr MatMulAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
+                                            const BaseTensorPtr &mat2_tensor, const BoolImmPtr &transpose_a,
+                                            const BoolImmPtr &transpose_b) {
   OpRunner::InferOpOutput(op, input_tensor, mat2_tensor, transpose_a, transpose_b);
   auto transpose_a_imm = GetValue<bool>(transpose_a);
   auto transpose_b_imm = GetValue<bool>(transpose_b);
@@ -55,14 +55,14 @@ tensor::TensorPtr MatMulAscendCustomize(const std::shared_ptr<OpRunner> &op, con
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   auto device_context = op->device_context();
-  TensorPtr input_tensor_ = input_tensor;
+  BaseTensorPtr input_tensor_ = input_tensor;
   if (transpose_a_imm) {
     const auto &device_name = device_context->device_context_key_.device_name_;
     auto transpose_op = CREATE_PYBOOST_OP(Transpose, device_name);
     input_tensor_ = transpose_op->Call(input_tensor, GetTransposePerm(input_tensor));
   }
 
-  TensorPtr mat2_tensor_ = mat2_tensor;
+  BaseTensorPtr mat2_tensor_ = mat2_tensor;
   if (transpose_b_imm) {
     const auto &device_name = device_context->device_context_key_.device_name_;
     auto transpose_op = CREATE_PYBOOST_OP(Transpose, device_name);

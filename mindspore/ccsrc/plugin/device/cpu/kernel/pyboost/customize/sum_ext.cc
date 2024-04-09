@@ -24,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void SumExtCPUCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor, const ValuePtr &axis,
+void SumExtCPUCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor, const ValuePtr &axis,
                    const BoolImmPtr &keep_dims, const BoolImmPtr &skip_mode,
                    const std::vector<AbstractBasePtr> &input_abs) {
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
@@ -52,7 +52,7 @@ void SumExtCPUCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_t
 }
 }  // namespace
 
-void SumExtCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+void SumExtCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
                         const std::optional<ValueTuplePtr> &axis, const BoolImmPtr &keep_dims,
                         const std::optional<Int64ImmPtr> &dtype) {
   OpRunner::InferOpOutput(op, input_tensor, axis, keep_dims, dtype);
@@ -68,7 +68,7 @@ void SumExtCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &in
   // Infer function has confirmed the actual dtype of output
   TypeId out_dtype = op->output_abs()->GetType()->cast<TensorTypePtr>()->element()->type_id();
 
-  TensorPtr act_tensor = input_tensor;
+  BaseTensorPtr act_tensor = input_tensor;
   // Call Cast before Launch ReduceSum
   if (input_tensor->data_type() != out_dtype) {
     MS_LOG(DEBUG) << "Call Cast cpu kernel, src dtype: " << TypeIdToString(input_tensor->data_type())

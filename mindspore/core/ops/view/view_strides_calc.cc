@@ -54,7 +54,7 @@ ShapeVector update_shape(const ShapeVector &input_shape, ShapeVector shape) {
   return shape;
 }
 
-TensorStorageInfoPtrList ViewCalcImpl(const PrimitivePtr &prim, const tensor::TensorPtr &input_tensor,
+TensorStorageInfoPtrList ViewCalcImpl(const PrimitivePtr &prim, const tensor::BaseTensorPtr &input_tensor,
                                       const std::vector<int64_t> &shape) {
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
@@ -73,7 +73,7 @@ TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<Va
   if (inputs.size() != kViewInputsNum) {
     return {};
   }
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto ori_storage_info = input_tensor->storage_info();
   if (ori_storage_info != nullptr && !ori_storage_info->is_contiguous) {

@@ -114,15 +114,15 @@ ValuePtr Converter::ToTensor(const py::list &python_args, size_t i) {
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto tensor = parse::ConvertTensor(obj);
   if (tensor != nullptr) {
-    if (tensor->isa<tensor::Tensor>()) {
-      tensor->cast<tensor::TensorPtr>()->set_need_pipeline_sync(true);
+    if (tensor->isa<tensor::BaseTensor>()) {
+      tensor->cast<tensor::BaseTensorPtr>()->set_need_pipeline_sync(true);
     }
     return tensor;
   }
   if (!op_arg.cast_dtype_.empty()) {
     auto convert = ConvertByCastDtype(obj, op_arg, i);
-    if (convert != nullptr && convert->isa<tensor::Tensor>()) {
-      return convert->cast<tensor::TensorPtr>();
+    if (convert != nullptr && convert->isa<tensor::BaseTensor>()) {
+      return convert->cast<tensor::BaseTensorPtr>();
     }
   }
 

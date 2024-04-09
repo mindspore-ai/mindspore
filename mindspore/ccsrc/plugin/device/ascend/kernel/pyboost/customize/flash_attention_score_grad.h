@@ -27,12 +27,12 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr FlashAttentionScoreGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
-  const TensorPtr &dy, const std::optional<TensorPtr> &pse_shift, const std::optional<TensorPtr> &drop_mask,
-  const std::optional<TensorPtr> &padding_mask, const std::optional<TensorPtr> &attn_mask,
-  const std::optional<TensorPtr> &softmax_max, const std::optional<TensorPtr> &softmax_sum,
-  const std::optional<TensorPtr> &softmax_in, const std::optional<TensorPtr> &attention_in,
+tensor::BaseTensorPtr FlashAttentionScoreGradAscendCustomize(
+  const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &query, const BaseTensorPtr &key, const BaseTensorPtr &value,
+  const BaseTensorPtr &dy, const std::optional<BaseTensorPtr> &pse_shift, const std::optional<BaseTensorPtr> &drop_mask,
+  const std::optional<BaseTensorPtr> &padding_mask, const std::optional<BaseTensorPtr> &attn_mask,
+  const std::optional<BaseTensorPtr> &softmax_max, const std::optional<BaseTensorPtr> &softmax_sum,
+  const std::optional<BaseTensorPtr> &softmax_in, const std::optional<BaseTensorPtr> &attention_in,
   const std::optional<ValueTuplePtr> &prefix, const std::optional<ValueTuplePtr> &actual_seq_qlen,
   const std::optional<ValueTuplePtr> &actual_seq_kvlen, const Int64ImmPtr head_num, const FP32ImmPtr keep_prob,
   const FP32ImmPtr scale_value, const Int64ImmPtr pre_tokens, const Int64ImmPtr next_tokens,

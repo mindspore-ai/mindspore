@@ -144,7 +144,6 @@ struct FrontendOpRunInfo {
   std::vector<ops::OP_DTYPE> source_type{};
   AsyncStatus async_status;
   mindspore::HashSet<size_t> input_to_attr{};
-  std::vector<DeviceAddressPromisePtr> device_sync_promises;
 };
 using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;
 

@@ -62,8 +62,8 @@ ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePt
   }
   auto new_shape = tensor_abs->BuildShape()->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(new_shape);
-  if (value->isa<mindspore::tensor::Tensor>()) {
-    auto tensor_value = value->cast<mindspore::tensor::TensorPtr>();
+  if (value->isa<mindspore::tensor::BaseTensor>()) {
+    auto tensor_value = value->cast<mindspore::tensor::BaseTensorPtr>();
     return std::make_shared<mindspore::tensor::Tensor>(tensor_value->data_type(), new_shape->shape(),
                                                        tensor_value->data_c(), tensor_value->Size());
   } else if (value->isa<ValueTuple>()) {
@@ -79,8 +79,8 @@ ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePt
 
 ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
-    auto tensor = v->cast<tensor::TensorPtr>();
+  if (v->isa<tensor::BaseTensor>()) {
+    auto tensor = v->cast<tensor::BaseTensorPtr>();
     // This constructor will make a tensor with the new id
     auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
     new_tensor->set_need_pipeline_sync(true);
@@ -155,14 +155,14 @@ bool IsDynamicInputs(const FrontendOpRunInfoPtr &op_run_info) {
     if (tuple_inputs.empty()) {
       continue;
     }
-    if (tuple_inputs[0]->isa<tensor::Tensor>() || tuple_inputs[0]->isa<stub::TensorNode>()) {
+    if (tuple_inputs[0]->isa<tensor::BaseTensor>() || tuple_inputs[0]->isa<stub::TensorNode>()) {
       return true;
     }
   }
   return false;
 }
 
-ValuePtr ConstructOutputInVM(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &result) {
+ValuePtr ConstructOutputInVM(const std::vector<ValuePtr> &result) {
   if (result.size() == 1) {
     return result[kIndex0];
   }
@@ -178,8 +178,6 @@ void UpdateOutputStubNodeValue(const FrontendOpRunInfoPtr &op_run_info) {
 BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
   auto backend_op_run_info = std::make_shared<BackendOpRunInfo>(
     op_run_info->base_op_run_info, std::make_shared<Primitive>(*op_run_info->op_grad_info->op_prim), true, false);
-  // Need to update promise in backend task.
-  backend_op_run_info->device_sync_promises = std::move(op_run_info->device_sync_promises);
   // Erase RandomOp cache avoid memory leak.
   if (AnfAlgo::NeedEraseCache(backend_op_run_info->op_prim)) {
     backend_op_run_info->base_op_run_info.need_earse_cache = true;
@@ -210,20 +208,12 @@ void TransformOutputValues(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
-void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs,
-                        std::vector<DeviceAddressPromisePtr> *device_sync_promises) {
-  auto create_tensor = [&outputs, &device_sync_promises](const TypePtr &type, const ShapeVector &shape_vector) {
+void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
+  auto create_tensor = [&outputs](const TypePtr &type, const ShapeVector &shape_vector) {
     auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
     output_tensor->set_need_pipeline_sync(true);
     (void)outputs->emplace_back(output_tensor);
     MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
-
-    DeviceAddressPromisePtr promise =
-      std::make_shared<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
-    auto future = promise->GetFuture();
-    auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
-    output_tensor->set_address_future(device_address_future);
-    (void)device_sync_promises->emplace_back(std::move(promise));
   };
 
   MS_EXCEPTION_IF_NULL(abstract);
@@ -231,7 +221,7 @@ void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::Ten
     auto seq = abstract->cast<abstract::AbstractSequencePtr>();
     auto elements = seq->elements();
     for (const auto &element : elements) {
-      CreateOutputTensor(element, outputs, device_sync_promises);
+      CreateOutputTensor(element, outputs);
     }
   } else if (abstract->isa<abstract::AbstractTensor>()) {
     auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
@@ -429,7 +419,8 @@ void ForwardExecutor::ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_ru
 }
 
 void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info,
-                                          const tensor::TensorPtr &view_input_tensor, runtime::KernelTaskType task_type,
+                                          const tensor::BaseTensorPtr &view_input_tensor,
+                                          runtime::KernelTaskType task_type,
                                           const TensorStorageInfoPtrList &storage_infos, bool is_tuple_output) {
   const bool is_single_tensor_output = storage_infos.size() == 1 && !is_tuple_output;
   // Generate output abs by storage_info.
@@ -483,11 +474,11 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
   // Only split and chunk has mul outputs, and input tensor is first input.
   auto view_value = op_run_info->op_grad_info->input_value[0];
   MS_EXCEPTION_IF_NULL(view_value);
-  if (!view_value->isa<tensor::Tensor>()) {
+  if (!view_value->isa<tensor::BaseTensor>()) {
     MS_EXCEPTION(TypeError) << "For primitive[" << op_run_info->base_op_run_info.op_name
                             << "],  the input[0] should be Tensor, but got:" << view_value->ToString();
   }
-  auto view_input_tensor = view_value->cast<tensor::TensorPtr>();
+  auto view_input_tensor = view_value->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(view_input_tensor);
 
   auto storage_infos = strides_calc_func(op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_value);
@@ -842,7 +833,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     for (size_t i = 0; i < op_run_info->input_size; i++) {
       result[i] = CopyTensorValueWithNewId(op_run_info->op_grad_info->input_value[i]);
     }
-    auto result_v = ConstructOutputInVM(op_run_info, result);
+    auto result_v = ConstructOutputInVM(result);
     if (op_run_info->requires_grad) {
       op_run_info->op_grad_info->output_size = result.size();
       (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, InputType::kOpOutput);
@@ -996,7 +987,7 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info,
   return RunOpInMsInner(op_run_info, backend_op_run_info);
 }
 
-void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input_tensor,
+void ForwardExecutor::CreateInputAddressForViewOp(const tensor::BaseTensorPtr &input_tensor,
                                                   const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(input_tensor);
 
@@ -1049,14 +1040,14 @@ void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
   CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->requires_grad ? grad()->top_cell() : nullptr);
   for (const auto &value : op_run_info->base_op_run_info.expanded_input_values) {
-    if (!value->isa<tensor::Tensor>()) {
+    if (!value->isa<tensor::BaseTensor>()) {
       continue;
     }
   }
 }
 
 void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info,
-                                             const tensor::TensorPtr &input_tensor,
+                                             const tensor::BaseTensorPtr &input_tensor,
                                              const TensorStorageInfoPtr &storage_info,
                                              runtime::KernelTaskType task_type) {
   MS_EXCEPTION_IF_NULL(input_tensor);
@@ -1101,8 +1092,7 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
 }
 
 void ForwardExecutor::PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const {
-  CreateOutputTensor(op_run_info->base_op_run_info.abstract, &op_run_info->base_op_run_info.output_tensors,
-                     &op_run_info->device_sync_promises);
+  CreateOutputTensor(op_run_info->base_op_run_info.abstract, &op_run_info->base_op_run_info.output_tensors);
   TransformOutputValues(op_run_info);
   UpdateOutputStubNodeValue(op_run_info);
   // Not use GetNext abs

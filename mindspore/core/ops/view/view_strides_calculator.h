@@ -56,7 +56,7 @@ struct OldTensorInfo {
 };
 using OldTensorInfoPtr = std::shared_ptr<OldTensorInfo>;
 
-OldTensorInfoPtr GetOldTensorInfo(const tensor::TensorPtr &tensor);
+OldTensorInfoPtr GetOldTensorInfo(const tensor::BaseTensorPtr &tensor);
 
 class MIND_API ViewStridesCalcFactory {
  public:

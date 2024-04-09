@@ -101,8 +101,8 @@ AnfNodePtr GetTupleItemNodeInput(const KernelGraphPtr &tape, const AnfNodePtr &n
 
 bool IsConstant(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    const auto &tensor = value->cast<tensor::TensorPtr>();
+  if (value->isa<tensor::BaseTensor>()) {
+    const auto &tensor = value->cast<tensor::BaseTensorPtr>();
     auto auto_grad_meta_data = tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     if (auto_grad_meta_data->input_type() == InputType::kParameter ||
@@ -397,7 +397,7 @@ void IrGrad::UpdateOutputNodeOfTopCell(const ValuePtr &sens_out) {
   UpdateSensParameter(ad_param()->sens_value_);
 }
 
-FuncGraphPtr IrGrad::Finish(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
+FuncGraphPtr IrGrad::Finish(const tensor::BaseTensorPtrList &weights, const std::vector<size_t> &grad_position,
                             const GradAttr &grad_attr) {
   // Set sens node and weights node
   SetSensAndWeights(weights, grad_attr.has_sens);
@@ -465,8 +465,8 @@ void IrGrad::BuildKNodeListFromPrimalCNode(const ValuePtrList &input_value,
 
 AnfNodePtr IrGrad::BuildKNodeForCNodeInput(const ValuePtr &input, const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(input);
-  if (input->isa<tensor::Tensor>()) {
-    const auto &tensor = input->cast<tensor::TensorPtr>();
+  if (input->isa<tensor::BaseTensor>()) {
+    const auto &tensor = input->cast<tensor::BaseTensorPtr>();
     const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     auto k_node = auto_grad_meta_data->k_node();
@@ -518,8 +518,8 @@ void IrGrad::BuildKNodeListForHighOrderGraph(const ValuePtrList &input_value,
 }
 
 void IrGrad::SetKNodeInfo(const ValuePtr &value, const AnfNodePtr &k_node, const AbstractBasePtr &out_abs) {
-  if (value->isa<tensor::Tensor>()) {
-    auto tensor = value->cast<tensor::TensorPtr>();
+  if (value->isa<tensor::BaseTensor>()) {
+    auto tensor = value->cast<tensor::BaseTensorPtr>();
     auto auto_grad_meta_data = tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     auto_grad_meta_data->set_k_node(k_node);
@@ -567,8 +567,8 @@ AnfNodePtr IrGrad::BuildKNode(const AnfNodePtr &prim, const GradParamPtr &grad_p
 
 void IrGrad::UpdateSensParameter(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    const auto &sens_tensor = value->cast<tensor::TensorPtr>();
+  if (value->isa<tensor::BaseTensor>()) {
+    const auto &sens_tensor = value->cast<tensor::BaseTensorPtr>();
     const auto &auto_grad_meta_data = sens_tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     const auto variable = auto_grad_meta_data->variable();
@@ -590,7 +590,7 @@ void IrGrad::UpdateSensParameter(const ValuePtr &value) {
   }
 }
 
-ParameterPtr IrGrad::ExtractParameter(const tensor::TensorPtr &tensor) const {
+ParameterPtr IrGrad::ExtractParameter(const tensor::BaseTensorPtr &tensor) const {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
   if (auto_grad_meta_data != nullptr && PyNativeAlgo::Common::IsParam(auto_grad_meta_data->input_type())) {
@@ -599,7 +599,7 @@ ParameterPtr IrGrad::ExtractParameter(const tensor::TensorPtr &tensor) const {
   return nullptr;
 }
 
-void IrGrad::SetSensAndWeights(const tensor::TensorPtrList &weights, bool has_sens_arg) {
+void IrGrad::SetSensAndWeights(const tensor::BaseTensorPtrList &weights, bool has_sens_arg) {
   const auto &sens_abstract = ir_bprop_->BuildForwardLastNode();
   ParameterPtr sens_param = nullptr;
   if (has_sens_arg) {
@@ -633,7 +633,7 @@ void IrGrad::SetSensAndWeights(const tensor::TensorPtrList &weights, bool has_se
   }
 }
 
-AnfNodePtr IrGrad::GetGradNodeByIndex(const tensor::TensorPtr &tensor) {
+AnfNodePtr IrGrad::GetGradNodeByIndex(const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   auto auto_grad_meta_data = tensor->auto_grad_meta_data();
   MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
@@ -694,7 +694,8 @@ AnfNodePtr IrGrad::GetInputGrad(bool grad_all_inputs, bool get_by_position, cons
   return input_grad_ret;
 }
 
-AnfNodePtr IrGrad::GetWeightGrad(bool grad_weights, const tensor::TensorPtrList &weights, bool weight_param_is_tuple) {
+AnfNodePtr IrGrad::GetWeightGrad(bool grad_weights, const tensor::BaseTensorPtrList &weights,
+                                 bool weight_param_is_tuple) {
   // No need to return gradient of weights.
   if (!grad_weights) {
     return nullptr;
@@ -716,7 +717,7 @@ AnfNodePtr IrGrad::GetWeightGrad(bool grad_weights, const tensor::TensorPtrList 
   }
 }
 
-void IrGrad::SetOutput(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
+void IrGrad::SetOutput(const tensor::BaseTensorPtrList &weights, const std::vector<size_t> &grad_position,
                        const GradAttr &grad_attr) {
   auto inputs_grad_ret = GetInputGrad(grad_attr.grad_all_inputs, grad_attr.get_by_position, grad_position);
   auto weights_grad_ret = GetWeightGrad(grad_attr.grad_weights, weights, grad_attr.weight_param_is_tuple);
@@ -842,7 +843,7 @@ void IrGrad::ReplacePrimalParameter(bool has_sens_arg) {
   ElimateTupleGetItem();
 }
 
-void IrGrad::UpdateTapeParameter(const tensor::TensorPtr &tensor) {
+void IrGrad::UpdateTapeParameter(const tensor::BaseTensorPtr &tensor) {
   auto p = ad_param()->tape_->add_parameter();
   auto param = ExtractParameter(tensor);
   if (param == nullptr) {

@@ -67,15 +67,6 @@ void BackendTask::Run() {
   op_run_info_ = nullptr;
 }
 
-void BackendTask::SetException(const std::exception_ptr &e) {
-  if (backend_op_run_info_ != nullptr) {
-    for (auto &promise : backend_op_run_info_->device_sync_promises) {
-      MS_EXCEPTION_IF_NULL(promise);
-      promise->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(nullptr, e));
-    }
-  }
-}
-
 void AllocViewMemBackendTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
                                      std::string("AllocView"), false);

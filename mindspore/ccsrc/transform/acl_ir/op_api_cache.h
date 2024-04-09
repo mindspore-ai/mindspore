@@ -52,9 +52,12 @@ void GatherInfo(mindspore::kernel::KernelTensor *);
 void GatherInfo(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
 void GatherInfo(const std::vector<mindspore::kernel::KernelTensor *> &);
 
+void GatherInfo(const mindspore::tensor::BaseTensorPtr &);
+void GatherInfo(const std::optional<tensor::BaseTensorPtr> &);
+void GatherInfo(const std::vector<tensor::BaseTensorPtr> &);
 void GatherInfo(const mindspore::tensor::TensorPtr &);
-void GatherInfo(const std::optional<TensorPtr> &);
-void GatherInfo(const std::vector<TensorPtr> &);
+void GatherInfo(const std::optional<tensor::TensorPtr> &);
+void GatherInfo(const std::vector<tensor::TensorPtr> &);
 
 template <typename T>
 void GatherInfo(const T &value) {

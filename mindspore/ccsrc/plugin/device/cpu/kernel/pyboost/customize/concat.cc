@@ -31,7 +31,7 @@ namespace pyboost {
 void ConcatCpuCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &tensors, const Int64ImmPtr &axis) {
   MS_EXCEPTION_IF_NULL(op);
   OpRunner::InferOpOutput(op, tensors, axis);
-  std::vector<tensor::TensorPtr> tensors_vector = ConvertValueTupleToVector<tensor::TensorPtr>(tensors);
+  std::vector<tensor::BaseTensorPtr> tensors_vector = ConvertValueTupleToVector<tensor::BaseTensorPtr>(tensors);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), tensors_vector);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());

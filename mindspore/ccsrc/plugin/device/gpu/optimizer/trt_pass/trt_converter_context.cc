@@ -135,7 +135,7 @@ bool TrtConverterContext::InitValueNodeTable() {
       MS_EXCEPTION_IF_NULL(node_value);
 
       if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
-        std::vector<tensor::TensorPtr> tensors;
+        std::vector<tensor::BaseTensorPtr> tensors;
         TensorValueToTensor(node_value, &tensors);
         for (size_t i = 0; i < tensors.size(); i++) {
           const auto &tensor = tensors[i];

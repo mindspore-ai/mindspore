@@ -192,7 +192,7 @@ AbstractBasePtr InferOperation::GetInputValueAbs(const FrontendOpRunInfoPtr &op_
                                                  size_t input_index) {
   // Get tuple or list abs
   MS_EXCEPTION_IF_NULL(input_value);
-  if (input_value->isa<tensor::Tensor>()) {
+  if (input_value->isa<tensor::BaseTensor>()) {
     op_run_info->input_value_id[input_index] = PyNativeAlgo::Common::GetIdByValue(input_value);
   }
   if (input_value->isa<ValueSequence>()) {
@@ -214,7 +214,7 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
   abstract::AbstractBasePtrList abs_list(tuple_value_size);
   for (size_t i = 0; i < tuple_value_size; ++i) {
     const auto &item = tuple_value->value()[i];
-    const auto &item_id = (item->isa<tensor::Tensor>() ? PyNativeAlgo::Common::GetIdByValue(item) : "");
+    const auto &item_id = (item->isa<tensor::BaseTensor>() ? PyNativeAlgo::Common::GetIdByValue(item) : "");
     abs_list[i] = GetAbstractByValue(item, input_index, item_id);
   }
   // Create output abstract by value type.
@@ -232,7 +232,7 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
 AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t input_index,
                                                    const std::string &input_id) {
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
+  if (value->isa<tensor::BaseTensor>()) {
     auto cache_abs = GetNodeAbsById(input_id);
     if (cache_abs != nullptr) {
       MS_LOG(DEBUG) << "The abstract of input " << input_index << " hits cache.";
@@ -242,7 +242,7 @@ AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t
 
   // Get abstract by input value.
   const auto &abs = value->ToAbstract();
-  if (value->isa<tensor::Tensor>()) {
+  if (value->isa<tensor::BaseTensor>()) {
     SetNodeAbsById(input_id, PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs));
   }
   return abs;

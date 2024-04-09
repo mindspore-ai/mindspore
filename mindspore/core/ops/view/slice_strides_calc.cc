@@ -54,7 +54,7 @@ void SliceInputsCheck(const PrimitivePtr &prim, const std::vector<int64_t> &tens
 }
 
 TensorStorageInfoPtrList SliceCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kSliceInputsNum) || !inputs[kInputIndex0]->isa<tensor::Tensor>()) {
+  if (CheckInputsNull(inputs, kSliceInputsNum) || !inputs[kInputIndex0]->isa<tensor::BaseTensor>()) {
     MS_LOG(EXCEPTION) << "inputs num is invalid, num:" << inputs.size();
   }
 
@@ -62,7 +62,7 @@ TensorStorageInfoPtrList SliceCalc(const PrimitivePtr &prim, const std::vector<V
     return {};
   }
 
-  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto input_type = input_tensor->Dtype();
   (void)CheckAndConvertUtils::CheckTypeValid("input", input_type, common_valid_types_with_complex_and_bool,

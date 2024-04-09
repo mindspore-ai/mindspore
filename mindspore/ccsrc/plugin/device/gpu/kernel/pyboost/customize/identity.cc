@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr IdentityGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
+tensor::BaseTensorPtr IdentityGPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor) {
   MS_LOG(DEBUG) << "Identity call start";
   auto stream = device::gpu::GPUDeviceManager::GetInstance().GetStream(op->stream_id());
   IdentityCustomize(op, x_tensor, stream);

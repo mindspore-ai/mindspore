@@ -34,6 +34,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+using BaseTensorPtr = tensor::BaseTensorPtr;
 // OpRunner is a base class for operators.
 // OpRunner records the operator's input abstract,
 // output abstract and output Tensors for grad,
@@ -56,13 +57,13 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   void set_output_abs(const AbstractBasePtr &output_abs) { output_abs_ = output_abs; }
   const DeviceContext *device_context() const { return device_context_; }
   const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
-  const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
-  void set_outputs(const std::vector<tensor::TensorPtr> &outputs) { outputs_ = outputs; }
+  const std::vector<tensor::BaseTensorPtr> &outputs() const { return outputs_; }
+  void set_outputs(const std::vector<tensor::BaseTensorPtr> &outputs) { outputs_ = outputs; }
   void set_stream_id(size_t stream_id) { stream_id_ = stream_id; }
   size_t stream_id() const { return stream_id_; }
   ValueSimpleInfoPtr output_value_simple_info() const { return output_value_simple_info_; }
 
-  const tensor::TensorPtr &output(const size_t &idx) {
+  const tensor::BaseTensorPtr &output(const size_t &idx) {
     if (idx >= outputs_.size()) {
       MS_LOG(EXCEPTION) << "idx is out of bounds, idx:" << idx << ", outputs_.size():" << outputs_.size();
     }
@@ -105,7 +106,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   std::vector<AbstractBasePtr> input_abs_{};
   AbstractBasePtr output_abs_{nullptr};
   // Forward output for grad.
-  std::vector<tensor::TensorPtr> outputs_{};
+  std::vector<tensor::BaseTensorPtr> outputs_{};
   const DeviceContext *device_context_{nullptr};
   // Device address promise for multi-stage pipeline.
   std::vector<pynative::DeviceAddressPromisePtr> device_sync_promises_;

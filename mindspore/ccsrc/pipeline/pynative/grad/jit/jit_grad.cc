@@ -206,7 +206,7 @@ void Jit::RunReplace(const CNodePtr &added_node, const ValuePtrList &total_outpu
     std::vector<ValuePtr> new_values;
     for (size_t j = index; j < index + output_num; ++j) {
       // If jit graph reused in dynamic shape, added output tensor should be update tensor address in run actor
-      auto tensor = total_output_tensors[j]->cast<tensor::TensorPtr>();
+      auto tensor = total_output_tensors[j]->cast<tensor::BaseTensorPtr>();
       if (tensor != nullptr) {
         tensor->set_is_forward_output(true);
       }
