@@ -97,7 +97,7 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
 
   if (options["hbm_ddr"] == "on") {
     const char *hbmFreq = "100";
-    aclError hbmRet = aclprofSetConfig(ACL_PROF_SYS_HARDWARE_MEM_FREQ, hbmFreq, strlen(hbmFreq));
+    aclError hbmRet = CALL_ASCEND_API(aclprofSetConfig, ACL_PROF_SYS_HARDWARE_MEM_FREQ, hbmFreq, strlen(hbmFreq));
     if (hbmRet != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Failed to set hbm profiling config. error_code : " << static_cast<int>(hbmRet);
     }
@@ -105,7 +105,7 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
 
   if (options["pcie"] == "on") {
     const char *pcieFreq = "50";
-    aclError pcieRet = aclprofSetConfig(ACL_PROF_SYS_INTERCONNECTION_FREQ, pcieFreq, strlen(pcieFreq));
+    aclError pcieRet = CALL_ASCEND_API(aclprofSetConfig, ACL_PROF_SYS_INTERCONNECTION_FREQ, pcieFreq, strlen(pcieFreq));
     if (pcieRet != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Failed to set pcie profiling config. error_code : " << static_cast<int>(pcieRet);
     }

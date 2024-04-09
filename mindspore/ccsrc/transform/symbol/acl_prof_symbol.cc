@@ -25,6 +25,7 @@ aclprofFinalizeFunObj aclprofFinalize_ = nullptr;
 aclprofInitFunObj aclprofInit_ = nullptr;
 aclprofStartFunObj aclprofStart_ = nullptr;
 aclprofStopFunObj aclprofStop_ = nullptr;
+aclprofSetConfigFunObj aclprofSetConfig_ = nullptr;
 aclprofCreateStepInfoFunObj aclprofCreateStepInfo_ = nullptr;
 aclprofGetStepTimestampFunObj aclprofGetStepTimestamp_ = nullptr;
 aclprofDestroyStepInfoFunObj aclprofDestroyStepInfo_ = nullptr;
@@ -42,6 +43,7 @@ void LoadProfApiSymbol(const std::string &ascend_path) {
   aclprofInit_ = DlsymAscendFuncObj(aclprofInit, handler);
   aclprofStart_ = DlsymAscendFuncObj(aclprofStart, handler);
   aclprofStop_ = DlsymAscendFuncObj(aclprofStop, handler);
+  aclprofSetConfig_ = DlsymAscendFuncObj(aclprofSetConfig, handler);
   aclprofCreateStepInfo_ = DlsymAscendFuncObj(aclprofCreateStepInfo, handler);
   aclprofGetStepTimestamp_ = DlsymAscendFuncObj(aclprofGetStepTimestamp, handler);
   aclprofDestroyStepInfo_ = DlsymAscendFuncObj(aclprofDestroyStepInfo, handler);
