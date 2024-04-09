@@ -46,6 +46,7 @@ class AscendMemAdapter {
   uint8_t *GetBaseAddr() const;
   bool FreeStaticDevMem(void *) const { return true; }
   void ResetDynamicMemory();
+  int64_t GetActualPeakMemory() const { return actual_peak_memory_; }
   void UpdateActualPeakMemory(int64_t memory) { actual_peak_memory_ = std::max(actual_peak_memory_, memory); }
 
   static size_t GetRoundUpAlignSize(size_t input_size);

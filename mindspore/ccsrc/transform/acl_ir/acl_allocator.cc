@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "transform/symbol/acl_rt_allocator_symbol.h"
 #include "transform/symbol/symbol_utils.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 
 namespace mindspore {
 namespace transform {
@@ -31,6 +32,9 @@ void *AclAllocator::AllocFunc(void *obj, size_t size) {
   if (block == nullptr) {
     MS_LOG(EXCEPTION) << "Malloc Mem From Mem Pool failed, size:" << size;
   }
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "AclWorkspace", "", "");
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddCompileTimeMemInfo, "AclWorkspace", size, block,
+                                                 device::tracker::MemType::kWorkSpace);
   return block;
 }
 

@@ -132,7 +132,8 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
                     << ", device address addr: " << device_addr << ", size: " << size
                     << ", from persistent mem: " << from_persistent_mem << ", need recycle: " << need_recycle;
   }
-  device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), stream_id);
+  device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), ActualPeakStatistics(),
+                                       stream_id);
 
   if (IsMemoryPoolRecycle()) {
     (void)mem_bufs_.insert(device_addr);
@@ -721,7 +722,8 @@ void DynamicMemPoolBestFit::KeepTensorMemByAddr(const DeviceMemPtr &device_addr,
   MS_EXCEPTION_IF_NULL(device_addr);
   // Fetch the memblock and membuf by the device address.
   auto [mem_block, mem_buf, mem_mng] = FindByKeepAddr(device_addr);
-  device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), mem_block->stream_id_);
+  device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), ActualPeakStatistics(),
+                                       mem_block->stream_id_);
   MS_EXCEPTION_IF_NULL(mem_block);
   MS_EXCEPTION_IF_NULL(mem_buf);
   MS_EXCEPTION_IF_NULL(mem_mng);

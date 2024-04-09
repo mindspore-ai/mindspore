@@ -42,6 +42,7 @@ enum class MemType : int {
   kPyNativeInput,
   kPyNativeOutput,
   kGeFeatureMemory,
+  kWorkSpace,
   kOther
 };
 
@@ -58,6 +59,7 @@ const std::map<MemType, std::string> MemTypeToStr = {{MemType::kWeight, "Weight"
                                                      {MemType::kPyNativeInput, "PyNativeInput"},
                                                      {MemType::kPyNativeOutput, "PyNativeOutput"},
                                                      {MemType::kGeFeatureMemory, "GeFeatureMemory"},
+                                                     {MemType::kWorkSpace, "WorkSpace"},
                                                      {MemType::kOther, "Other"}};
 using DeviceMemPtr = const void *;
 using KernelTensorPtr = const void *;
@@ -84,6 +86,7 @@ struct MemBlockInfo {
   std::weak_ptr<MemInfo> mem_info;
   bool is_bind;
   uint32_t stream_id;
+  size_t actual_peak_memory;
   size_t size;
   std::string pool_name;
   MemBlockInfo()
@@ -92,6 +95,7 @@ struct MemBlockInfo {
         device_addr(nullptr),
         is_bind(false),
         stream_id(0),
+        actual_peak_memory(0),
         size(0),
         pool_name() {}
 };
@@ -127,7 +131,7 @@ class BACKEND_EXPORT MemTracker {
   virtual void UpdateMemInfo(KernelTensorPtr kernel_tensor, MemType mem_type, const std::string &file_name,
                              size_t line_num) = 0;
   virtual void AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name,
-                             uint32_t stream_id) = 0;
+                             size_t actual_peak_memory, uint32_t stream_id) = 0;
   virtual void FreeMemBlock(DeviceMemPtr device_addr) = 0;
   virtual void UseMemBlock(const std::string &task_name, DeviceMemPtr device_addr, const std::string &file_name,
                            size_t line_num) = 0;
@@ -149,7 +153,8 @@ class BACKEND_EXPORT MemoryTrackerEnabled : public MemTracker {
                              const std::string &file_name, size_t line_num) override;
   void UpdateMemInfo(KernelTensorPtr kernel_tensor, MemType mem_type, const std::string &file_name,
                      size_t line_num) override;
-  void AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name, uint32_t stream_id) override;
+  void AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name, size_t actual_peak_memory,
+                     uint32_t stream_id) override;
   void FreeMemBlock(DeviceMemPtr device_addr) override;
   void UseMemBlock(const std::string &task_name, DeviceMemPtr device_addr, const std::string &file_name,
                    size_t line_num) override;
@@ -195,8 +200,8 @@ class BACKEND_EXPORT MemoryTrackerDisabled : public MemTracker {
                              const std::string &file_name, size_t line_num) override {}
   void UpdateMemInfo(KernelTensorPtr kernel_tensor, MemType mem_type, const std::string &file_name,
                      size_t line_num) override {}
-  void AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name, uint32_t stream_id) override {
-  }
+  void AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name, size_t actual_peak_memory,
+                     uint32_t stream_id) override {}
   void FreeMemBlock(DeviceMemPtr device_addr) override {}
   void UseMemBlock(const std::string &task_name, DeviceMemPtr device_addr, const std::string &file_name,
                    size_t line_num) override {}
