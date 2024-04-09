@@ -838,7 +838,7 @@ std::string GetActorSubName(AbstractActor *actor) {
   const auto &pos = name.find_last_of("/");
   return kernel_graph_name + name.substr(pos + 1);
 }
-using ActorInputMap = std::map<size_t, std::tuple<std::string, BaseShapePtr, TypePtr>>;
+using ActorInputMap = std::map<size_t, std::tuple<std::string, DeviceAddressPtr>>;
 void AddInputActorInfo(ActorInputMap *actor_inputs, AbstractActor *input_actor, const AbstractActor *const actor,
                        const ActorInfoMap &actor_info, size_t from_index, size_t to_index) {
   MS_EXCEPTION_IF_NULL(actor_inputs);
@@ -852,16 +852,11 @@ void AddInputActorInfo(ActorInputMap *actor_inputs, AbstractActor *input_actor, 
   if (input_iter != actor_info.end()) {
     const auto &input_name =
       "%" + std::to_string(std::get<0>(input_iter->second)) + "[" + std::to_string(from_index) + "]";
-    const auto &input_shapes = std::get<1>(input_iter->second);
-    const auto &input_types = std::get<2>(input_iter->second);
-    auto shape =
-      ((from_index < input_shapes.size() && input_shapes[from_index] != nullptr) ? input_shapes[from_index] : nullptr);
-    auto type =
-      ((from_index < input_types.size() && input_types[from_index] != nullptr) ? input_types[from_index] : nullptr);
-    (*actor_inputs)[to_index] = {input_name, shape, type};
+    const auto &input_device_addresses = std::get<1>(input_iter->second);
+    (*actor_inputs)[to_index] = {
+      input_name, (from_index < input_device_addresses.size() ? input_device_addresses[from_index] : nullptr)};
   } else {
-    (*actor_inputs)[to_index] = {input_actor->GetAID().Name() + "[" + std::to_string(from_index) + "]", nullptr,
-                                 nullptr};
+    (*actor_inputs)[to_index] = {input_actor->GetAID().Name() + "[" + std::to_string(from_index) + "]", {}};
   }
 }
 
@@ -998,8 +993,8 @@ void FetchInputDeviceTensorStore(const AnfNodePtr &key, size_t index, const Abst
                  << " same to:" << std::get<0>((*actor_inputs)[index]);
     return;
   }
-  (*actor_inputs)[index] = {input_name, key->Shape() == nullptr ? nullptr : key->Shape(),
-                            key->Type() == nullptr ? nullptr : key->Type()};
+  auto device_tensor = DeviceTensorStore::GetInstance().Fetch(key.get(), actor->device_contexts()[0]->GetDeviceType());
+  (*actor_inputs)[index] = {input_name, device_tensor};
 }
 
 void FetchInputForHostQueueDSActor(AbstractActor *actor, ActorInputMap *actor_inputs) {
@@ -1010,18 +1005,15 @@ void FetchInputForHostQueueDSActor(AbstractActor *actor, ActorInputMap *actor_in
   for (size_t i = 0; i < ds_actor->data_nodes().size(); ++i) {
     const auto &node_pair = ds_actor->data_nodes()[i];
     if (node_pair.first == nullptr) {
-      (*actor_inputs)[i] = {"null", nullptr, nullptr};
+      (*actor_inputs)[i] = {"null", nullptr};
+      continue;
+    }
+    if (!AnfAlgo::OutputAddrExist(node_pair.first, node_pair.second, false)) {
+      (*actor_inputs)[i] = {"null", nullptr};
       continue;
     }
     auto device_address = AnfAlgo::GetMutableOutputAddr(node_pair.first, node_pair.second, false);
-    if (device_address == nullptr || device_address->kernel_tensor() == nullptr) {
-      (*actor_inputs)[i] = {"null", nullptr, nullptr};
-      continue;
-    }
-    const auto &kernel_tensor = device_address->kernel_tensor();
-    (*actor_inputs)[i] = {node_pair.first->DebugString(0),
-                          kernel_tensor->GetShape() == nullptr ? nullptr : kernel_tensor->GetShape(),
-                          kernel_tensor->GetType() == nullptr ? nullptr : kernel_tensor->GetType()};
+    (*actor_inputs)[i] = {node_pair.first->DebugString(0), device_address};
   }
 }
 
@@ -1047,24 +1039,23 @@ void FetchInputData(AbstractActor *actor, ActorInputMap *actor_inputs, ActorInfo
   }
 }
 
-void FetchOutputInfo(AbstractActor *actor, std::vector<BaseShapePtr> *output_shapes, std::vector<TypePtr> *output_types,
+void FetchOutputInfo(AbstractActor *actor, std::vector<DeviceAddressPtr> *output_device_addresses,
                      const ActorInputMap &actor_inputs) {
   MS_EXCEPTION_IF_NULL(actor);
-  MS_EXCEPTION_IF_NULL(output_shapes);
-  MS_EXCEPTION_IF_NULL(output_types);
-  if (actor->type() == KernelTransformType::kKernelActor) {
+  MS_EXCEPTION_IF_NULL(output_device_addresses);
+  if (actor->type() == KernelTransformType::kKernelActor ||
+      actor->type() == KernelTransformType::kConditionGatherActor ||
+      actor->type() == KernelTransformType::kConditionSwitchActor) {
     const auto &kernel_actor = dynamic_cast<KernelActor *>(actor);
     if (kernel_actor != nullptr && kernel_actor->kernel() != nullptr &&
         kernel_actor->kernel()->kernel_info() != nullptr) {
       const auto &kernel_info = dynamic_cast<KernelInfo *>(kernel_actor->kernel()->kernel_info());
       MS_EXCEPTION_IF_NULL(kernel_info);
       const auto &device_addresses = kernel_info->output_address_list();
-      for (const auto &device_address : device_addresses) {
-        if (device_address != nullptr && device_address->kernel_tensor() != nullptr) {
-          output_shapes->emplace_back(device_address->kernel_tensor()->GetShape());
-          output_types->emplace_back(device_address->kernel_tensor()->GetType());
-        }
-      }
+      std::for_each(device_addresses.begin(), device_addresses.end(),
+                    [output_device_addresses](const auto &device_address) {
+                      output_device_addresses->emplace_back(device_address);
+                    });
     }
   } else if (actor->type() == KernelTransformType::kSuperKernelActor) {
     if (actor->output_data_arrows().size() != actor->output_data_nodes().size()) {
@@ -1085,21 +1076,17 @@ void FetchOutputInfo(AbstractActor *actor, std::vector<BaseShapePtr> *output_sha
       MS_EXCEPTION_IF_NULL(output_pair.first);
       const auto &node_index = common::AnfAlgo::VisitKernelWithReturnType(output_pair.first, output_pair.second, false);
       MS_EXCEPTION_IF_NULL(node_index.first);
-      auto device_address = AnfAlgo::GetMutableOutputAddr(node_index.first, node_index.second, false);
-      if (device_address == nullptr || device_address->kernel_tensor() == nullptr) {
+      if (!AnfAlgo::OutputAddrExist(node_index.first, node_index.second, false)) {
         MS_LOG(INFO) << "For actor:" << actor->GetAID() << " output node:" << node_index.first->fullname_with_scope()
-                     << " has invalid device address:" << device_address;
-        output_shapes->emplace_back(nullptr);
-        output_types->emplace_back(nullptr);
+                     << " has no device address.";
+        output_device_addresses->emplace_back(nullptr);
         continue;
       }
-      output_shapes->emplace_back(device_address->kernel_tensor()->GetShape());
-      output_types->emplace_back(device_address->kernel_tensor()->GetType());
+      output_device_addresses->emplace_back(AnfAlgo::GetMutableOutputAddr(node_index.first, node_index.second, false));
     }
   } else {
-    for_each(actor_inputs.begin(), actor_inputs.end(), [output_shapes, output_types](const auto &pair) {
-      output_shapes->emplace_back(std::get<1>(pair.second));
-      output_types->emplace_back(std::get<2>(pair.second));
+    for_each(actor_inputs.begin(), actor_inputs.end(), [output_device_addresses](const auto &pair) {
+      output_device_addresses->emplace_back(std::get<1>(pair.second));
     });
   }
 }
@@ -1191,16 +1178,46 @@ std::vector<AbstractActor *> TopoSortForActor(AbstractActor *root) {
   return actors;
 }
 
+void DumpShapeAndType(const std::vector<DeviceAddressPtr> &output_device_addresses, const ActorInputMap &actor_inputs,
+                      std::ofstream &ofs) {
+  std::string shape = "\t# shape : ";
+  std::string type = "\t# type : ";
+  for (const auto &pair : actor_inputs) {
+    const auto &device_address = std::get<1>(pair.second);
+    if (device_address == nullptr || device_address->kernel_tensor() == nullptr) {
+      shape = shape + "<null> ";
+      type = type + "<null> ";
+      continue;
+    }
+    const auto &kernel_tensor = device_address->kernel_tensor();
+    shape =
+      shape + "<" + (kernel_tensor->GetShape() == nullptr ? "null" : kernel_tensor->GetShape()->ToString()) + "> ";
+    type = type + "<" + (kernel_tensor->GetType() == nullptr ? "null" : kernel_tensor->GetType()->ToString()) + "> ";
+  }
+  shape += "-> ";
+  type += "-> ";
+  for_each(output_device_addresses.begin(), output_device_addresses.end(), [&shape, &type](const auto &device_address) {
+    if (device_address == nullptr || device_address->kernel_tensor() == nullptr) {
+      shape = shape + "<null> ";
+      type = type + "<null> ";
+      return;
+    }
+    const auto &kernel_tensor = device_address->kernel_tensor();
+    shape =
+      shape + "<" + (kernel_tensor->GetShape() == nullptr ? "null" : kernel_tensor->GetShape()->ToString()) + "> ";
+    type = type + "<" + (kernel_tensor->GetType() == nullptr ? "null" : kernel_tensor->GetType()->ToString()) + "> ";
+  });
+  ofs << shape << "\n" << type << "\n";
+}
+
 void DumpActorInfo(AbstractActor *actor, size_t index, ActorInfoMap *actor_info, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   MS_EXCEPTION_IF_NULL(actor_info);
   ActorInputMap actor_inputs;
   FetchInputData(actor, &actor_inputs, actor_info);
-
-  std::vector<BaseShapePtr> output_shapes;
-  std::vector<TypePtr> output_types;
-  FetchOutputInfo(actor, &output_shapes, &output_types, actor_inputs);
-  (*actor_info)[actor] = {index, output_shapes, output_types};
+  std::vector<DeviceAddressPtr> output_device_addresses;
+  FetchOutputInfo(actor, &output_device_addresses, actor_inputs);
+  (*actor_info)[actor] = {index, output_device_addresses};
 
   // Dump input data.
   ofs << "%" << index << " = " << GetActorSubName(actor) << "(";
@@ -1241,21 +1258,16 @@ void DumpActorInfo(AbstractActor *actor, size_t index, ActorInfoMap *actor_info,
   DumpActorInfo(actor, ofs);
 
   // Dump output info.
-  std::string shape = "\t# shape : ";
-  std::string type = "\t# type : ";
-  for (const auto &pair : actor_inputs) {
-    shape = shape + "<" + (std::get<1>(pair.second) == nullptr ? "null" : std::get<1>(pair.second)->ToString()) + "> ";
-    type = type + "<" + (std::get<2>(pair.second) == nullptr ? "null" : std::get<2>(pair.second)->ToString()) + "> ";
-  }
-  shape += "-> ";
-  type += "-> ";
-  for_each(output_shapes.begin(), output_shapes.end(), [&shape](const auto &shape_ptr) {
-    shape = shape + "<" + (shape_ptr == nullptr ? "null" : shape_ptr->ToString()) + "> ";
+  DumpShapeAndType(output_device_addresses, actor_inputs, ofs);
+  ofs << "\t# device address : ";
+  for_each(output_device_addresses.begin(), output_device_addresses.end(), [&ofs](const auto &device_address) {
+    if (device_address == nullptr || device_address->kernel_tensor() == nullptr) {
+      ofs << "<" << device_address << "> ";
+      return;
+    }
+    ofs << "<" << device_address << " : ref count:" << device_address->original_ref_count() << "> ";
   });
-  for_each(output_types.begin(), output_types.end(), [&type](const auto &type_ptr) {
-    type = type + "<" + (type_ptr == nullptr ? "null" : type_ptr->ToString()) + "> ";
-  });
-  ofs << shape << "\n" << type << "\n";
+  ofs << "\n\t# AID : " << actor->GetAID().Name() << "\n";
 }
 }  // namespace runtime
 }  // namespace mindspore

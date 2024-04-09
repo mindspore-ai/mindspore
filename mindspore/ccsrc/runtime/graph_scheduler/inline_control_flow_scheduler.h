@@ -31,7 +31,7 @@ class InlineControlFlowScheduler {
   DISABLE_COPY_AND_ASSIGN(InlineControlFlowScheduler);
 
   // Link control arrows and fix the member variables for condition actors.
-  void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
+  void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info, bool execution_order_running);
 
  private:
   void LinkControlArrowByExecutionOrder(

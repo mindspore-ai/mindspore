@@ -543,13 +543,11 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   const mindspore::HashMap<AnfNodePtr, std::string> &inline_sub_graph_kernels() const {
     return inline_sub_graph_kernels_;
   }
-  mindspore::HashMap<AnfNodePtr, AnfNodePtr> condition_gather_to_switch() const { return condition_gather_to_switch_; }
-  void AddConditionGatherSwitchPair(const AnfNodePtr &condition_gather, const AnfNodePtr &condition_switch) {
-    condition_gather_to_switch_[condition_gather] = condition_switch;
+  const mindspore::HashMap<AnfNodePtr, AnfNodePtr> &condition_gather_to_switch() const {
+    return condition_gather_to_switch_;
   }
-  void RemoveConditionGatherSwitchPair(const AnfNodePtr &condition_gather) {
-    condition_gather_to_switch_.erase(condition_gather);
-  }
+  void AddConditionGatherSwitchPair(const AnfNodePtr &condition_gather, const AnfNodePtr &condition_switch);
+  void RemoveConditionGatherSwitchPair(const AnfNodePtr &condition_gather);
 
   void set_is_from_pynative(const bool &from_pynative) { from_pynative_ = from_pynative; }
   bool is_from_pynative() const { return from_pynative_; }

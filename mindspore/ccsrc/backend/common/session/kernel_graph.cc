@@ -333,6 +333,18 @@ void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) const 
   }
 }
 
+void KernelGraph::AddConditionGatherSwitchPair(const AnfNodePtr &condition_gather, const AnfNodePtr &condition_switch) {
+  MS_EXCEPTION_IF_NULL(condition_gather);
+  MS_EXCEPTION_IF_NULL(condition_switch);
+  condition_gather_to_switch_[condition_gather] = condition_switch;
+  MS_LOG(DEBUG) << "Add condition gather node:" << condition_gather->fullname_with_scope()
+                << " and switch node:" << condition_switch->fullname_with_scope() << " for graph:" << ToString();
+}
+
+void KernelGraph::RemoveConditionGatherSwitchPair(const AnfNodePtr &condition_gather) {
+  condition_gather_to_switch_.erase(condition_gather);
+}
+
 void KernelGraph::ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const {
   if (kOpAssignKernelNameList.find(common::AnfAlgo::GetCNodeName(cnode)) == kOpAssignKernelNameList.end()) {
     MS_LOG(EXCEPTION) << "Only supported to change the node [Assign , AssignSub, AssignAdd] node's input feature map "
@@ -1089,9 +1101,12 @@ void KernelGraph::UpdateInternalParameter() {
     }
     MS_LOG(INFO) << "Cache internal parameter: " << parameter->DebugString()
                  << " to front node: " << new_front_node_with_index.first->DebugString()
+                 << " full name: " << new_front_node_with_index.first->fullname_with_scope()
+                 << " node ptr:" << new_front_node_with_index.first
                  << " with index: " << new_front_node_with_index.second
                  << ", from front node: " << front_node_with_index.first->DebugString()
-                 << " with index: " << front_node_with_index.second;
+                 << " full name: " << front_node_with_index.first->fullname_with_scope()
+                 << ", node ptr: " << front_node_with_index.first << " with index: " << front_node_with_index.second;
     internal_parameter_to_front_node_map_[parameter] = new_front_node_with_index;
   }
 }
@@ -1101,6 +1116,11 @@ void KernelGraph::CacheInternalParameterToFrontNode(const AnfNodePtr &parameter,
   if ((parameter == nullptr) || (front_node_with_index.first == nullptr)) {
     return;
   }
+  MS_LOG(DEBUG) << "Cache internal parameter: " << parameter->DebugString()
+                << " to front node: " << front_node_with_index.first->DebugString()
+                << " full name: " << front_node_with_index.first->fullname_with_scope()
+                << " node ptr:" << front_node_with_index.first << " with index: " << front_node_with_index.second
+                << " for graph:" << ToString();
   internal_parameter_to_front_node_map_[parameter] = front_node_with_index;
 }
 
@@ -1168,9 +1188,11 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const AnfNodePtrList &bac
     graph_output_to_front_node_map_[backend_output_node] = front_output_node;
     front_node_to_graph_output_map_[front_output_node] = backend_output_node;
     MS_LOG(INFO) << "Backend output: " << backend_output_node.first->fullname_with_scope()
-                 << " with index: " << backend_output_node.second
+                 << " debug string: " << backend_output_node.first->DebugString()
+                 << " node ptr:" << backend_output_node.first << " with index: " << backend_output_node.second
                  << " map to front node: " << front_output_node.first->fullname_with_scope()
-                 << " with index: " << front_output_node.second;
+                 << " debug string: " << front_output_node.first->DebugString()
+                 << " node ptr: " << front_output_node.first << " with index: " << front_output_node.second;
   }
 }
 

@@ -675,20 +675,21 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
     if (iter == graph->condition_gather_to_switch().end()) {
       MS_LOG(EXCEPTION) << "Failed to get condition switch node for gather:" << kernel->DebugString();
     }
-    MS_EXCEPTION_IF_NULL(iter->second);
+    auto switch_node = iter->second;
+    MS_EXCEPTION_IF_NULL(switch_node);
     const auto &inline_iter = graph->inline_sub_graph_kernels().find(kernel);
     if (inline_iter != graph->inline_sub_graph_kernels().end()) {
       graph->AddInlineSubgraphKernel(new_kernel, inline_iter->second);
       MS_LOG(INFO) << "Add new condition gather node:" << new_kernel->fullname_with_scope()
                    << " subgraph name:" << inline_iter->second << " to graph:" << graph->ToString();
     }
-    graph->AddConditionGatherSwitchPair(new_kernel, iter->second);
+    graph->AddConditionGatherSwitchPair(new_kernel, switch_node);
     graph->RemoveConditionGatherSwitchPair(kernel);
     MS_LOG(INFO) << "Add new condition gather node:" << new_kernel->fullname_with_scope()
                  << " to replace node:" << kernel->fullname_with_scope() << " branch name:"
                  << (kernel->HasAttr(kAttrBranchGraphName) ? new_kernel->GetAttr(kAttrBranchGraphName)->ToString()
                                                            : " null")
-                 << " for switch node:" << iter->second->fullname_with_scope() << " in graph:" << graph->ToString();
+                 << " for switch node:" << switch_node->fullname_with_scope() << " in graph:" << graph->ToString();
   }
   graph->SetExecOrderByDefault();
 
