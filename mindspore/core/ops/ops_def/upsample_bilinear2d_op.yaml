@@ -1,0 +1,26 @@
+#operator upsample_bilinear2d
+upsample_bilinear2d:
+    args:
+        x:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+        align_corners:
+            dtype: bool
+            default: False
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleBilinear2D
+    dispatch:
+        enable: True
+        Ascend: UpsampleBilinear2DAscend

@@ -25,7 +25,6 @@
 #include "abstract/utils.h"
 #include "kernel/kernel.h"
 #include "kernel/ops_utils.h"
-#include "ops/upsample_nearest_3d.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_nearest_3d_impl.cuh"
 #include "utils/log_adapter.h"
 
@@ -95,19 +94,13 @@ bool UpsampleNearest3dGpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
   return true;
 }
 
-#define UpsampleNearest3D_GPU_KERNEL_REG(X_T, S)                   \
-  std::make_pair(KernelAttr()                                      \
-                   .AddInputAttr(X_T)                              \
-                   .AddOptionalInputAttr(kNumberTypeInt32)         \
-                   .AddOptionalInputAttr(kNumberTypeFloat32)       \
-                   .AddOutputAttr(X_T),                            \
-                 &UpsampleNearest3dGpuKernelMod::LaunchKernel<S>), \
-    std::make_pair(KernelAttr()                                    \
-                     .AddInputAttr(X_T)                            \
-                     .AddOptionalInputAttr(kNumberTypeInt64)       \
-                     .AddOptionalInputAttr(kNumberTypeFloat32)     \
-                     .AddOutputAttr(X_T),                          \
-                   &UpsampleNearest3dGpuKernelMod::LaunchKernel<S>)
+#define UpsampleNearest3D_GPU_KERNEL_REG(X_T, S)                               \
+  std::make_pair(KernelAttr()                                                  \
+                   .AddInputAttr(X_T)                                          \
+                   .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)   \
+                   .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeFloat32) \
+                   .AddOutputAttr(X_T),                                        \
+                 &UpsampleNearest3dGpuKernelMod::LaunchKernel<S>)
 
 std::vector<std::pair<KernelAttr, UpsampleNearest3dGpuKernelMod::UpsampleNearest3dFunc>>
   UpsampleNearest3dGpuKernelMod::func_list_ = {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeUInt8, uint8_t),

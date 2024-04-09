@@ -28,7 +28,7 @@ endfunction()
 function(merge_files SRC_DIR OUT_FILE_FOLDER OUT_FILE_PREFIX EXCLUDE_FILES_PATTERN)
     message(STATUS "[merge_files] From ${SRC_DIR} to ${OUT_FILE_NAME}, exclude files: ${EXCLUDE_FILES_PATTERN}")
     set(MAX_TIMESTAMP "000000000000.00")
-    set(MAX_MERGE_FILE_NUM 300)
+    set(MAX_MERGE_FILE_NUM 200)
 
     file(GLOB_RECURSE SRC_LIST ${SRC_DIR}/*.cc)
     list(SORT SRC_LIST)
