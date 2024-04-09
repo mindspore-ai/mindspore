@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -564,6 +564,7 @@ class BatchNorm(Primitive):
         - If the operation is used for inference, and outputs "reserve_space_1" and "reserve_space_2" are available,
           then "reserve_space_1" has the same value as "mean" and "reserve_space_2" has the same value as "variance".
         - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
+        - In PyNative mode, the input type is float16, which may have accuracy issues, so float32 is recommended.
 
     Args:
         is_training (bool): If `is_training` is ``True`` , `mean` and `variance` are computed during training.
