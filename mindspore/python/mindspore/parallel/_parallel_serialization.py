@@ -41,12 +41,13 @@ def _convert_to_list(strategy, rank_id=None):
             origin_param_name = param_name
             if "-" in param_name:
                 pipeline_stage, origin_param_name = param_name.split("-")
+                pipeline_stage = int(pipeline_stage)
             if origin_param_name not in train_map:
                 train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, int(layout.field),
                                                 int(layout.opt_weight_shard_step), int(layout.opt_weight_shard_size),
-                                                [int(pipeline_stage)]]
+                                                [pipeline_stage]]
             else:
-                update_pipeline_stage_list = train_map.get(origin_param_name)[6] + [int(pipeline_stage)]
+                update_pipeline_stage_list = train_map.get(origin_param_name)[6] + [pipeline_stage]
                 if rank_id is not None:
                     stage_device_num = np.prod(dev_mat)
                     is_device0_and_pipeline0 = ((rank_id // stage_device_num) == 0) and (pipeline_stage == 0)
