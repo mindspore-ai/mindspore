@@ -42,6 +42,12 @@ class ActivationBase : public OperatorInfo {
   Status InferTensorMap() override;
   Status InferOutputTensorMap() override;
   Status InferDevMatrixShape() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputTensorInfo() override;
+
+ private:
+  TensorLayout output_infer_tensor_layout_;
 };
 
 class Activation : public ActivationBase {
@@ -88,12 +94,6 @@ class GeLUInfo : public ActivationOther {
 
  protected:
   Status InferForwardCommunicationByLayout() override;
-  Status CheckInputLayout() override;
-  Status CheckOutputLayout() override;
-  Status InferOutputTensorInfo() override;
-
- private:
-  TensorLayout output_infer_tensor_layout_;
 };
 
 class FastGeLUInfo : public ActivationOther {
