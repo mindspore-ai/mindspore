@@ -7120,6 +7120,7 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, pse_
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
+        If there is no input parameter and no default value, None needs to be passed.
 
     Inputs:
         - **query** (Tensor) - The query tensor with data type of float16 or bfloat16.
