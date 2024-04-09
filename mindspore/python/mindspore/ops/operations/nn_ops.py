@@ -9997,6 +9997,17 @@ class IncreFlashAttention(Primitive):
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
+        If there is no input parameter and no default value, None needs to be passed.
+
+    Args:
+    - **num_heads**  (int) - The number of heads.
+    - **input_layout** (str) - the data layout of the input qkv, support `(BSH)` and `(BNSD)`. Default `BSH`.
+    - **scale_value** (double) - The scale value indicating the scale coefficient, which is used as the scalar of
+        Muls in the calculation. Default: 1.0.
+    - **num_key_value_heads** (int) - head numbers of key/value which are used in GQA algorithm.
+        The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+    - **block_size** (int) - Default: 0.
+    - **inner_precise** (int) - Default: 1.
 
     Inputs:
         - **query** (Tensor) - The query tensor with data type of float16 or bfloat16.
@@ -10017,14 +10028,6 @@ class IncreFlashAttention(Primitive):
         - **antiquant_scale** (Tensor) - Quantitative parametor, the tensor with data type of float.
         - **antiquant_offset** (Tensor) - Quantitative parametor, the tensor with data type of float.
         - **block_table** (Tensor) - The tensor with data type of float.
-        - **num_heads**  (int) - The number of heads.
-        - **input_layout** (str) - the data layout of the input qkv, support `(BSH)` and `(BNSD)`. Default `BSH`.
-        - **scale_value** (double) - The scale value indicating the scale coefficient, which is used as the scalar of
-          Muls in the calculation. Default: 1.0.
-        - **num_key_value_heads** (int) - head numbers of key/value which are used in GQA algorithm.
-          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
-        - **block_size** (int) - Default: 0.
-        - **inner_precise** (int) - Default: 1.
 
     Outputs:
         - **attention_out** (Tensor) - Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
