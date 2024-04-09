@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -531,6 +531,8 @@ class Model:
                                                                         dataset_sink_mode=True,
                                                                         sink_size=sink_size)
             self._warmup_dataset(epoch, train_dataset, sink_size)
+            # Since dataset pipeline has been triggered, delete flag
+            delattr(train_dataset, "__no_send__")
             if train_dataset.get_init_step() > 0:
                 mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
                 while mbuf_size == 0:
