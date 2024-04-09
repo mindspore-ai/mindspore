@@ -475,7 +475,7 @@ void UpdateOutputAbstract(const VectorRef &outputs, const session::BackendOpRunI
                 << op_run_info->base_op_run_info.abstract->ToString();
 }
 
-tensor::TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index) {
+tensor::BaseTensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index) {
   MS_EXCEPTION_IF_NULL(output_node);
   const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
@@ -496,7 +496,7 @@ tensor::TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t outpu
 
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
-  auto tensor = std::make_shared<tensor::Tensor>(kernel_tensor->dtype_id(), kernel_tensor->GetShapeVector());
+  auto tensor = std::make_shared<tensor::BaseTensor>(kernel_tensor->dtype_id(), kernel_tensor->GetShapeVector());
 
   // Put device tensor into host tensor.
   tensor->set_device_address(device_tensor);
@@ -514,10 +514,10 @@ tensor::TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t outpu
 
   return tensor;
 }
-tensor::TensorPtr CreateOutputTensorDynamicImpl(const OpCompilerInfoPtr &op_compiler_info,
-                                                const AnfNodePtr &output_node, size_t output_index,
-                                                const std::shared_ptr<device::DeviceAddress> &address,
-                                                size_t idx_in_graph_outputs) {
+tensor::BaseTensorPtr CreateOutputTensorDynamicImpl(const OpCompilerInfoPtr &op_compiler_info,
+                                                    const AnfNodePtr &output_node, size_t output_index,
+                                                    const std::shared_ptr<device::DeviceAddress> &address,
+                                                    size_t idx_in_graph_outputs) {
   MS_EXCEPTION_IF_NULL(output_node);
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
@@ -531,7 +531,7 @@ tensor::TensorPtr CreateOutputTensorDynamicImpl(const OpCompilerInfoPtr &op_comp
 
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
-  auto tensor = std::make_shared<tensor::Tensor>(address->type_id(), address->host_shape());
+  auto tensor = std::make_shared<tensor::BaseTensor>(address->type_id(), address->host_shape());
 
   // Put device tensor into host tensor.
   address->SetNodeIndex(output_node, output_index);
