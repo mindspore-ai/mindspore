@@ -166,8 +166,7 @@ struct PyBoost {
   static FrontendOpRunInfoPtr Init(const PrimitivePtr &prim, const py::list &args);
   static void DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info,
                      ValuePtrList &&op_inputs);
-  static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info,
-                              const std::vector<tensor::BaseTensorPtr> &outputs);
+  static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const kernel::pyboost::OpPtr &op);
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract,
                                const kernel::pyboost::OpPtr &op);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info);
