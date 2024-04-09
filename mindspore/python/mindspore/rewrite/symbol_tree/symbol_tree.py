@@ -37,6 +37,7 @@ from ..common.namer import TargetNamer, NodeNamer, ClassNamer
 from ..common.observer import Observer
 from ..common.observable import Observable
 from ..common.event import Event
+from ..common.namespace import normalize_path, is_ms_file
 
 if sys.version_info >= (3, 9):
     import ast as astunparse # pylint: disable=reimported, ungrouped-imports
@@ -294,8 +295,7 @@ class SymbolTree(Observer, Observable, NodeManager):
     @staticmethod
     def _process_relative_import(import_node: Union[ast.Import, ast.ImportFrom], file_path: str):
         """Process relative imports"""
-        file_path = os.path.normcase(file_path)
-        file_path = os.path.normpath(file_path)
+        file_path = normalize_path(file_path)
         if isinstance(import_node, ast.ImportFrom):
             # pad the ImportFrom with parent path
             # e.g. from ..C import xxx -> from A.B.C import xxx
@@ -1508,7 +1508,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         file_path = inspect.getfile(type(self.get_origin_network()))
         module = None
         for m in list(sys.modules.values()):
-            if hasattr(m, "__file__") and m.__file__ and os.path.normcase(m.__file__) == os.path.normcase(file_path):
+            if hasattr(m, "__file__") and m.__file__ and normalize_path(m.__file__) == normalize_path(file_path):
                 module = m
                 break
         if not module:
@@ -1564,8 +1564,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         When level_num = 2(e.g. from ..xxx import yyy), the path one level above the current path will be saved.
         """
         file_path = os.path.dirname(os.path.abspath(file_path))
-        file_path = os.path.normcase(file_path)
-        file_path = os.path.normpath(file_path)
+        file_path = normalize_path(file_path)
         if level_num > 1:
             for _ in range(level_num - 1):
                 file_path = os.path.dirname(file_path)
@@ -1577,7 +1576,10 @@ class SymbolTree(Observer, Observable, NodeManager):
 
     def save_imports_from_file(self, file_path, belonging_ast: ast.AST = None):
         """Save imports from file"""
-        self.save_file_path_to_sys(0, file_path, belonging_ast)
+        # Save path of current file into sys.path to support import other files under current path.
+        # The files under the mindspore module do not need to be saved because full import paths are used.
+        if not is_ms_file(file_path):
+            self.save_file_path_to_sys(0, file_path, belonging_ast)
         if not os.path.exists(file_path):
             raise RuntimeError(f"For MindSpore Rewrite, in module parser, file {file_path} not exist.")
         with open(file_path, "r", encoding="utf-8") as f:
@@ -1612,10 +1614,10 @@ class SymbolTree(Observer, Observable, NodeManager):
         else:
             # add import of obj to ast
             func_file_path = inspect.getabsfile(module)
-            func_file_path = os.path.normcase(func_file_path)
+            func_file_path = normalize_path(func_file_path)
             prefix_paths = []
             for path in sys.path:
-                path = os.path.normcase(path)
+                path = normalize_path(path)
                 if func_file_path.startswith(path):
                     prefix_paths.append(path)
             prefix_paths.sort(key=len, reverse=True)
