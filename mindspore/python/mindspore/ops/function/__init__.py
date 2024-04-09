@@ -261,6 +261,7 @@ from .math_func import (
     matrix_determinant,
     det,
     linspace,
+    linspace_ext,
     lu_solve,
     matrix_solve,
     maximum,
