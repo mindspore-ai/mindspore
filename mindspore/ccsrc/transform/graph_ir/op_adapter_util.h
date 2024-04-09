@@ -139,6 +139,8 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEReduction>);
 
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<FASInputLayoutMode>);
 
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GECoordinateTransformMode>);
+
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEEnumToStr>, const std::vector<std::string> &);
 
 template <typename P, typename Q>

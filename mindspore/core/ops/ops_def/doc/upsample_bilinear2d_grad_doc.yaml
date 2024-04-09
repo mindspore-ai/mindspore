@@ -1,0 +1,26 @@
+upsample_bilinear2d_grad:
+    description: |
+        Upsample the 2-D gradient data with bilinear interpolation algorithm.
+
+        Note:
+            One of 'scales' and 'output_size' must be specified. And it is an error if both are specified.
+
+        Inputs:
+            - **dy** (Tensor) - Tensor of shape [N, C, H, W]. Must be one of the following types:
+                float16, float32, float64.
+            - **input_size** (Union[tuple[int], list[int]]): An required tuple[int] which contains 4 elements:
+                [batch, channels, height, width]. Must:
+                input_size[0] == dy.shape[0]
+                input_size[1] == dy.shape[1].
+            - **output_size** (Union[tuple[int], list[int]]): An optional tuple[int]. Default: ``None``.
+                It contains 2 elements: height, width, whose elements should be the same as `dy`. Must:
+                dy.shape[2] == output_size[0],
+                dy.shape[3] == output_size[1].
+            - **scales** (Union[tuple[float], list[float]]): An optional tuple[float]. Default: ``None``.
+                The scale array along each dimension, contain 2 elements: scale_height, scale_width. Must:
+                dy.shape[2] == floor(input_size[2] * scales[0],
+                dy.shape[3] == floor(input_size[3] * scales[1].
+            - **align_corners** (bool): An optional bool. Default: ``False``.
+
+        Outputs:
+            - **dx** (Tensor) - A Tensor with shape depending on intput_size, and its' dtype is the same as `dy`.

@@ -22,7 +22,6 @@
 #include <utility>
 #include "kernel/ops_utils.h"
 #include "mindspore/core/abstract/utils.h"
-#include "mindspore/core/ops/grad/upsample_nearest_3d_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_nearest_3d_grad_impl.cuh"
 #include "utils/log_adapter.h"
 
@@ -101,35 +100,14 @@ bool UpsampleNearest3DGradGpuKernelMod::LaunchKernel(const std::vector<KernelTen
   return true;
 }
 
-#define UpsampleNearest3D_GRAD_GPU_KERNEL_REG(M_S, T)                    \
-  std::make_pair(KernelAttr()                                            \
-                   .AddInputAttr(M_S)                                    \
-                   .AddInputAttr(kNumberTypeInt32)                       \
-                   .AddOptionalInputAttr(kNumberTypeInt32)               \
-                   .AddOptionalInputAttr(kNumberTypeFloat32)             \
-                   .AddOutputAttr(M_S),                                  \
-                 &UpsampleNearest3DGradGpuKernelMod::LaunchKernel<T>),   \
-    std::make_pair(KernelAttr()                                          \
-                     .AddInputAttr(M_S)                                  \
-                     .AddInputAttr(kNumberTypeInt32)                     \
-                     .AddOptionalInputAttr(kNumberTypeInt64)             \
-                     .AddOptionalInputAttr(kNumberTypeFloat32)           \
-                     .AddOutputAttr(M_S),                                \
-                   &UpsampleNearest3DGradGpuKernelMod::LaunchKernel<T>), \
-    std::make_pair(KernelAttr()                                          \
-                     .AddInputAttr(M_S)                                  \
-                     .AddInputAttr(kNumberTypeInt64)                     \
-                     .AddOptionalInputAttr(kNumberTypeInt32)             \
-                     .AddOptionalInputAttr(kNumberTypeFloat32)           \
-                     .AddOutputAttr(M_S),                                \
-                   &UpsampleNearest3DGradGpuKernelMod::LaunchKernel<T>), \
-    std::make_pair(KernelAttr()                                          \
-                     .AddInputAttr(M_S)                                  \
-                     .AddInputAttr(kNumberTypeInt64)                     \
-                     .AddOptionalInputAttr(kNumberTypeInt64)             \
-                     .AddOptionalInputAttr(kNumberTypeFloat32)           \
-                     .AddOutputAttr(M_S),                                \
-                   &UpsampleNearest3DGradGpuKernelMod::LaunchKernel<T>)
+#define UpsampleNearest3D_GRAD_GPU_KERNEL_REG(M_S, T)                          \
+  std::make_pair(KernelAttr()                                                  \
+                   .AddInputAttr(M_S)                                          \
+                   .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)           \
+                   .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)   \
+                   .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeFloat32) \
+                   .AddOutputAttr(M_S),                                        \
+                 &UpsampleNearest3DGradGpuKernelMod::LaunchKernel<T>)
 
 std::vector<std::pair<KernelAttr, UpsampleNearest3DGradGpuKernelMod::UpsampleNearest3DGradFunc>>
   UpsampleNearest3DGradGpuKernelMod::func_list_ = {

@@ -18,6 +18,7 @@
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 #include "ops/op_utils.h"
 #include "ops/auto_generate/gen_ops_name.h"
 #include "ops/renorm.h"
@@ -244,6 +245,377 @@ REG_FALLBACK_BUILDER("LayerNormGradExt").SetBody(BODYFUNC(ib) {
   auto rstd = ib->GetInput(kIndex4);
   auto gamma = ib->GetInput(kIndex5);
   return {ib->Emit("LayerNormGradV3", {dy, x, rstd, mean, gamma})};
+});
+
+class UpsampleNearest1DShapeCalc : public ShapeCalcFunctor {
+ public:
+  UpsampleNearest1DShapeCalc() : ShapeCalcFunctor("ShapeCalc_UpsampleNearest1D") {}
+  ~UpsampleNearest1DShapeCalc() override = default;
+  MS_DECLARE_PARENT(UpsampleNearest1DShapeCalc, ShapeCalcFunctor)
+
+  ValuePtr ToValue() const override { return nullptr; }
+  void FromValue(const ValuePtr &value) override {}
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    // inputs: {output_size}
+    auto output_size = inputs.at(0);
+    std::vector<int64_t> size{output_size.at(0), 1};
+    return {size};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override { return {2}; }
+};
+REG_FUNCTOR("ShapeCalc_UpsampleNearest1D", UpsampleNearest1DShapeCalc);
+
+REG_FALLBACK_BUILDER("UpsampleNearest1D").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+
+  NodePtr size_node;
+  if (output_size->abstract()->BuildType()->isa<TypeNone>()) {
+    auto value_ptr = scales->BuildValue();
+    auto x_shape = x->shape();
+    if (!IsDynamicShape(x_shape) && ops::IsValueKnown(value_ptr)) {
+      auto scales = GetValue<std::vector<pyfloat>>(value_ptr);
+      std::vector<int64_t> size{static_cast<int64_t>(x_shape[2] * scales[0]), 1};
+      size_node = ib->Value(size);
+    } else {
+      MS_LOG(ERROR) << "For UpsampleNearest1D, x should not be dynamic shape and scales should be const.";
+      size_node = ib->Value(std::vector<int64_t>{1, 1});
+    }
+  } else {
+    auto value_ptr = output_size->BuildValue();
+    if (ops::IsValueKnown(value_ptr)) {
+      auto output_size_val = GetValue<std::vector<int64_t>>(value_ptr);
+      std::vector<int64_t> size{output_size_val.at(0), 1};
+      size_node = ib->Value(size);
+    } else {
+      size_node = ib->ShapeCalc(std::make_shared<UpsampleNearest1DShapeCalc>(), {output_size}, {0})[0];
+    }
+  }
+
+  auto new_x = ib->ExpandDims(x, -1);
+  auto out = ib->Emit("ResizeNearestNeighborV2", {new_x, size_node, ib->Value(false), ib->Value(false)});
+
+  auto real_out = ib->Squeeze(out, MakeValue(std::vector<int64_t>{-1}));
+
+  return {real_out};
+});
+
+class UpsampleNearest2DShapeCalc : public ShapeCalcFunctor {
+ public:
+  UpsampleNearest2DShapeCalc() : ShapeCalcFunctor("ShapeCalc_UpsampleNearest2D") {}
+  ~UpsampleNearest2DShapeCalc() override = default;
+  MS_DECLARE_PARENT(UpsampleNearest2DShapeCalc, ShapeCalcFunctor)
+
+  ValuePtr ToValue() const override { return nullptr; }
+  void FromValue(const ValuePtr &value) override {}
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    // inputs: {output_size}
+    auto output_size = inputs.at(0);
+    std::vector<int64_t> size(2, 1);
+    std::transform(output_size.begin(), std::min(output_size.begin() + kIndex2, output_size.end()), size.begin(),
+                   [](int64_t v) { return v; });
+    return {size};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override { return {2}; }
+};
+REG_FUNCTOR("ShapeCalc_UpsampleNearest2D", UpsampleNearest2DShapeCalc);
+
+REG_FALLBACK_BUILDER("UpsampleNearest2D").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+
+  NodePtr size_node;
+  auto x_shape = x->shape();
+  if (output_size->abstract()->BuildType()->isa<TypeNone>()) {
+    auto value_ptr = scales->BuildValue();
+    if (!IsDynamicShape(x_shape) && ops::IsValueKnown(value_ptr)) {
+      auto scales = GetValue<std::vector<pyfloat>>(value_ptr);
+      std::vector<int64_t> size{static_cast<int64_t>(x_shape[2] * scales[0]),
+                                static_cast<int64_t>(x_shape[3] * scales[1])};
+      size_node = ib->Value(size);
+    } else {
+      MS_LOG(ERROR) << "For UpsampleNearest2D, x should not be dynamic and scales should be const.";
+      size_node = ib->Value(std::vector<int64_t>{1, 1});
+    }
+  } else {
+    if (IsDynamicRank(x_shape)) {
+      auto value_ptr = output_size->BuildValue();
+      if (ops::IsValueKnown(value_ptr)) {
+        auto output_size_val = GetValue<std::vector<int64_t>>(value_ptr);
+        std::vector<int64_t> size(2, 1);
+        std::transform(output_size_val.begin(), std::min(output_size_val.begin() + kIndex2, output_size_val.end()),
+                       size.begin(), [](int64_t v) { return v; });
+        size_node = ib->Value(size);
+      } else {
+        size_node = ib->ShapeCalc(std::make_shared<UpsampleNearest2DShapeCalc>(), {output_size}, {0})[0];
+      }
+    } else {
+      size_node = output_size;
+    }
+  }
+
+  auto out = ib->Emit("ResizeNearestNeighborV2", {x, size_node, ib->Value(false), ib->Value(false)});
+
+  return {out};
+});
+
+class UpsampleNearest1DGradShapeCalc : public ShapeCalcFunctor {
+ public:
+  UpsampleNearest1DGradShapeCalc() : ShapeCalcFunctor("ShapeCalc_UpsampleNearest1DGrad") {}
+  ~UpsampleNearest1DGradShapeCalc() override = default;
+  MS_DECLARE_PARENT(UpsampleNearest1DGradShapeCalc, ShapeCalcFunctor)
+
+  ValuePtr ToValue() const override { return nullptr; }
+  void FromValue(const ValuePtr &value) override {}
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    // inputs: {input_size}
+    auto input_size = inputs.at(0);
+    std::vector<int64_t> size{input_size[input_size.size() - 1], 1};
+    return {size};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override { return {2}; }
+};
+REG_FUNCTOR("ShapeCalc_UpsampleNearest1DGrad", UpsampleNearest1DGradShapeCalc);
+
+REG_FALLBACK_BUILDER("UpsampleNearest1DGrad").SetBody(BODYFUNC(ib) {
+  auto grad = ib->GetInput(kIndex0);
+  auto input_size = ib->GetInput(kIndex1);
+  auto output_size = ib->GetInput(kIndex2);
+  auto scales = ib->GetInput(kIndex3);
+
+  auto value_ptr = input_size->BuildValue();
+  NodePtr size_node;
+  if (ops::IsValueKnown(value_ptr)) {
+    auto input_size_val = GetValue<std::vector<int64_t>>(value_ptr);
+    std::vector<int64_t> size{input_size_val[input_size_val.size() - 1], 1};
+    size_node = ib->Value(size);
+  } else {
+    size_node = ib->ShapeCalc(std::make_shared<UpsampleNearest1DGradShapeCalc>(), {input_size}, {0})[0];
+  }
+
+  auto new_grad = ib->ExpandDims(grad, -1);
+  auto out = ib->Emit("ResizeNearestNeighborV2Grad", {new_grad, size_node, ib->Value(false), ib->Value(false)});
+
+  auto dx = ib->Squeeze(out, MakeValue(std::vector<int64_t>{-1}));
+
+  return {dx};
+});
+
+class UpsampleNearest2DGradShapeCalc : public ShapeCalcFunctor {
+ public:
+  UpsampleNearest2DGradShapeCalc() : ShapeCalcFunctor("ShapeCalc_UpsampleNearest2DGrad") {}
+  ~UpsampleNearest2DGradShapeCalc() override = default;
+  MS_DECLARE_PARENT(UpsampleNearest2DGradShapeCalc, ShapeCalcFunctor)
+
+  ValuePtr ToValue() const override { return nullptr; }
+  void FromValue(const ValuePtr &value) override {}
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    // inputs: {input_size}
+    auto input_size = inputs.at(0);
+    std::vector<int64_t> size{input_size.begin() + (input_size.size() - kIndex2), input_size.end()};
+    return {size};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override { return {2}; }
+};
+REG_FUNCTOR("ShapeCalc_UpsampleNearest2DGrad", UpsampleNearest2DGradShapeCalc);
+
+REG_FALLBACK_BUILDER("UpsampleNearest2DGrad").SetBody(BODYFUNC(ib) {
+  auto grad = ib->GetInput(kIndex0);
+  auto input_size = ib->GetInput(kIndex1);
+  auto output_size = ib->GetInput(kIndex2);
+  auto scales = ib->GetInput(kIndex3);
+
+  auto value_ptr = input_size->BuildValue();
+  NodePtr size_node;
+  if (ops::IsValueKnown(value_ptr)) {
+    auto input_size_val = GetValue<std::vector<int64_t>>(value_ptr);
+    std::vector<int64_t> size{input_size_val.begin() + (input_size_val.size() - kIndex2), input_size_val.end()};
+    size_node = ib->Value(size);
+  } else {
+    size_node = ib->ShapeCalc(std::make_shared<UpsampleNearest2DGradShapeCalc>(), {input_size}, {0})[0];
+  }
+
+  auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {grad, size_node, ib->Value(false), ib->Value(false)});
+
+  return {dx};
+});
+
+REG_FALLBACK_BUILDER("UpsampleBilinear2D").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto output_size = ib->GetInput(kIndex1);
+  auto align_corners = ib->GetInput(kIndex3);
+  if (output_size->abstract()->BuildType()->isa<TypeNone>()) {
+    MS_LOG(EXCEPTION)
+      << "For UpsampleBilinear2D, only output_size is supported in GE backend and it should not be None.";
+  }
+  auto out = ib->Emit("ResizeBilinearV2", {x, output_size, align_corners, ib->BoolNot(align_corners)});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("UpsampleBilinear2DGrad").SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex0);
+  auto input_size = ib->GetInput(kIndex1);
+  auto output_size = ib->GetInput(kIndex2);
+  auto align_corners = ib->GetInput(kIndex4);
+  if (output_size->abstract()->BuildType()->isa<TypeNone>()) {
+    MS_LOG(EXCEPTION)
+      << "For UpsampleBilinear2DGrad, only output_size is supported in GE backend and it should not be None.";
+  }
+  // create original_image tensor
+  auto value_ptr = input_size->BuildValue();
+  if (!ops::IsValueKnown(value_ptr)) {
+    MS_LOG(EXCEPTION) << "For UpsampleBilinear2DGrad, input_size should be const.";
+  }
+  auto x_type = dout->dtype()->type_id();
+  auto x_shape = GetValue<std::vector<int64_t>>(value_ptr);
+  auto x = ib->Fill(static_cast<double>(0.), x_shape, x_type);
+
+  auto out = ib->Emit("ResizeBilinearGrad", {dout, x, align_corners, ib->BoolNot(align_corners)});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("UpsampleLinear1D").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto align_corners = ib->GetInput(kIndex3);
+
+  NodePtr sizes_node{nullptr};
+  NodePtr scales_node{nullptr};
+  auto x_shape = x->shape();
+  if (output_size->abstract()->isa<abstract::AbstractNone>()) {
+    scales_node = scales;
+    // fetch sizes
+    auto scales_value_ptr = scales->BuildValue();
+    MS_EXCEPTION_IF_NULL(scales_value_ptr);
+    if (ops::IsValueKnown(scales_value_ptr)) {
+      auto scales_value = GetValue<std::vector<pyfloat>>(scales_value_ptr);
+      std::vector<int64_t> sizes_vec{static_cast<int64_t>(x_shape.at(kIndex2) * scales_value.at(kIndex0))};
+      sizes_node = ib->Value(sizes_vec);
+    } else {
+      MS_LOG(EXCEPTION) << "For UpsampleLinear1D, scales should be const.";
+    }
+  } else {
+    sizes_node = output_size;
+    // fetch scales
+    auto output_size_value_ptr = output_size->BuildValue();
+    MS_EXCEPTION_IF_NULL(output_size_value_ptr);
+    if (ops::IsValueKnown(output_size_value_ptr)) {
+      auto output_size_value = GetValue<std::vector<int64_t>>(output_size_value_ptr);
+      std::vector<float> scales_vec{static_cast<float>(output_size_value.at(kIndex0)) /
+                                    static_cast<float>(x_shape.at(kIndex2))};
+      scales_node = ib->Value(scales_vec);
+    } else {
+      MS_LOG(EXCEPTION) << "For UpsampleLinear1D, output_size should be const.";
+    }
+  }
+
+  NodePtr coordinate_transformation_mode_node{nullptr};
+  auto align_corners_ptr = align_corners->BuildValue();
+  MS_EXCEPTION_IF_NULL(align_corners_ptr);
+  if (ops::IsValueKnown(align_corners_ptr)) {
+    auto align_corners_val = GetValue<bool>(align_corners_ptr);
+    coordinate_transformation_mode_node = align_corners_val
+                                            ? ib->Value(static_cast<int64_t>(CoordinateTransformMode::ALIGN_CORNERS))
+                                            : ib->Value(static_cast<int64_t>(CoordinateTransformMode::HALF_PIXEL));
+  } else {
+    MS_LOG(EXCEPTION) << "For UpsampleLinear1D, align_corners should be const.";
+  }
+
+  auto new_x = ib->ExpandDims(x, -2);
+  auto out = ib->Emit("ResizeD", {new_x, sizes_node, scales_node, coordinate_transformation_mode_node},
+                      {{"mode", MakeValue("linear")}});
+  auto real_out = ib->Squeeze(out, MakeValue(std::vector<int64_t>{-2}));
+
+  return {real_out};
+});
+
+REG_FALLBACK_BUILDER("UpsampleLinear1DGrad").SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex0);
+  auto input_size = ib->GetInput(kIndex1);
+  auto output_size = ib->GetInput(kIndex2);
+  auto scale_factor = ib->GetInput(kIndex3);
+  auto align_corners = ib->GetInput(kIndex4);
+
+  auto align_corners_ptr = align_corners->BuildValue();
+  MS_EXCEPTION_IF_NULL(align_corners_ptr);
+  if (ops::IsValueKnown(align_corners_ptr)) {
+    auto align_corners_val = GetValue<bool>(align_corners_ptr);
+    if (!align_corners_val && !scale_factor->abstract()->BuildType()->isa<TypeNone>()) {
+      MS_LOG(EXCEPTION) << "For UpsampleLinear1DGrad with align_corners false, scales was not supported.";
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "For UpsampleLinear1DGrad, align_corners should be const.";
+  }
+
+  auto dout_type = dout->dtype()->type_id();
+  NodePtr origin_image{nullptr};
+  auto value_ptr = input_size->BuildValue();
+  if (ops::IsValueKnown(value_ptr)) {
+    auto input_size_val = GetValue<std::vector<int64_t>>(value_ptr);
+    input_size_val.insert(input_size_val.begin() + kIndex2, 1);
+    origin_image = ib->Fill(static_cast<double>(0.), input_size_val, dout_type);
+  } else {
+    MS_LOG(EXCEPTION) << "For UpsampleLinear1DGrad, input_size should be const.";
+  }
+
+  auto new_dout = ib->ExpandDims(ib->Cast(dout, TypeId::kNumberTypeFloat32), -2);
+  auto dx = ib->Emit("ResizeBilinearGrad", {new_dout, origin_image, align_corners, ib->BoolNot(align_corners)});
+
+  auto real_dx = ib->Squeeze(ib->Cast(dx, dout_type), MakeValue(std::vector<int64_t>{-2}));
+
+  return {real_dx};
+});
+
+REG_FALLBACK_BUILDER("ResizeLinear1D").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto size = ib->GetInput(kIndex1);
+  auto coordinate_transformation_mode = ib->GetInput(kIndex2);
+
+  // fetch scales
+  NodePtr scales_node{nullptr};
+  auto x_shape = x->shape();
+  auto size_value_ptr = size->BuildValue();
+  MS_EXCEPTION_IF_NULL(size_value_ptr);
+  if (ops::IsValueKnown(size_value_ptr)) {
+    auto size_value = GetValue<std::vector<int64_t>>(size_value_ptr);
+    std::vector<float> scales_vec{static_cast<float>(size_value.at(kIndex0)) / static_cast<float>(x_shape.at(kIndex2))};
+    scales_node = ib->Value(scales_vec);
+  } else {
+    MS_LOG(EXCEPTION) << "For ResizeLinear1D, size should be const.";
+  }
+
+  auto new_x = ib->ExpandDims(x, -2);
+  auto out =
+    ib->Emit("ResizeD", {new_x, size, scales_node, coordinate_transformation_mode}, {{"mode", MakeValue("linear")}});
+  auto real_out = ib->Squeeze(out, MakeValue(std::vector<int64_t>{-2}));
+
+  return {real_out};
+});
+
+REG_FALLBACK_BUILDER("ResizeLinear1DGrad").SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex0);
+  auto x = ib->GetInput(kIndex1);
+  auto coordinate_transformation_mode = ib->GetInput(kIndex2);
+
+  auto new_dout = ib->ExpandDims(ib->Cast(dout, TypeId::kNumberTypeFloat32), -2);
+  NodePtr align_corners{nullptr};
+  auto value_ptr = coordinate_transformation_mode->BuildValue();
+  if (ops::IsValueKnown(value_ptr)) {
+    auto mode = static_cast<CoordinateTransformMode>(GetValue<int64_t>(value_ptr));
+    align_corners = mode == CoordinateTransformMode ::ALIGN_CORNERS ? ib->Value(true) : ib->Value(false);
+  } else {
+    MS_LOG(EXCEPTION) << "For ResizeLinear1DGrad, coordinate_transformation_mode should be const.";
+  }
+
+  auto dx = ib->Emit("ResizeBilinearGrad", {new_dout, x, align_corners, ib->BoolNot(align_corners)});
+
+  auto dout_type = dout->dtype()->type_id();
+  auto real_dx = ib->Squeeze(ib->Cast(dx, dout_type), MakeValue(std::vector<int64_t>{-2}));
+
+  return {real_dx};
 });
 
 // It is just a temporary modification. If the attributes of the `TensorScatterElements`

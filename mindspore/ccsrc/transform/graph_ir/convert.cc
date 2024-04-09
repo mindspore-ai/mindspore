@@ -111,6 +111,7 @@ const std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputD
   {kResizeNearestNeighborGradOpName, {{2, kNumberTypeInt32}}},
   {kResizeNearestNeighborOpName, {{2, kNumberTypeInt32}}},
   {kResizeNearestNeighborV2OpName, {{2, kNumberTypeInt32}}},
+  {kResizeNearestNeighborV2GradOpName, {{2, kNumberTypeInt32}}},
   {kResizeBicubicOpName, {{2, kNumberTypeInt32}}},
   {kConv2DBackpropFilterOpName, {{3, kNumberTypeInt32}}},
   {kConv2DBackpropInputOpName, {{3, kNumberTypeInt32}}},

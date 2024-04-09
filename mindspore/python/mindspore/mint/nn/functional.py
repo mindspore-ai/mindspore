@@ -36,7 +36,7 @@ from mindspore.ops.functional import pad_ext as pad
 # 8
 
 # 9
-
+from mindspore.ops.function.nn_func import interpolate_ext as interpolate
 # 10
 
 # 11
@@ -239,7 +239,7 @@ __all__ = [
     # 8
 
     # 9
-
+    'interpolate',
     # 10
 
     # 11
