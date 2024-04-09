@@ -2415,10 +2415,16 @@ void ClearResPart2() {
       device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+    MS_LOG(INFO) << "Start clear graph wrapper...";
     device_context->GetDeprecatedInterface()->ClearGraphWrapper();
+    MS_LOG(INFO) << "End clear graph wrapper...";
+    MS_LOG(INFO) << "Start clear op adapter map...";
     device_context->GetDeprecatedInterface()->ClearOpAdapterMap();
+    MS_LOG(INFO) << "End clear op adapter map...";
     // unregister external allocator, before clear stream and graphrunner
+    MS_LOG(INFO) << "Start unregister external allocator...";
     device_context->GetDeprecatedInterface()->UnregisterExternalAllocator();
+    MS_LOG(INFO) << "End unregister external allocator...";
     // clear runtime resource after clear graph when ge
     MS_LOG(INFO) << "Start clear kernel runtime...";
     device::KernelRuntimeManager::Instance().ClearRuntimeResource();
