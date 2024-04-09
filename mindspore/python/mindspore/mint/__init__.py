@@ -19,8 +19,9 @@ from mindspore.ops.extend import array_func, math_func, nn_func
 from mindspore.mint.nn.functional import *
 from mindspore.mint.nn import functional
 from mindspore.ops import erf, where
+from mindspore.ops.function.math_func import linspace_ext as linspace
 
-__all__ = ['erf', 'where']
+__all__ = ['erf', 'where', 'linspace']
 __all__.extend(array_func.__all__)
 __all__.extend(math_func.__all__)
 __all__.extend(nn_func.__all__)

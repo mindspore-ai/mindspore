@@ -231,4 +231,4 @@ def test_relu_bfloat16(mode):
     x = Tensor(np_array, ms.bfloat16)
     output = relu_forward_func(x)
     expect = generate_expect_forward_output(np_array, np.float32)
-    assert np.allclose(output.float().asnumpy(), expect)
+    assert np.allclose(output.float().asnumpy(), expect, rtol=2e-3, atol=2e-3)

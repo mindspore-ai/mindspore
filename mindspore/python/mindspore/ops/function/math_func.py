@@ -31,7 +31,7 @@ from mindspore.ops import composite as C
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations._inner_ops import TileSize
-from mindspore.ops.auto_generate import Cummin, BatchMatMul
+from mindspore.ops.auto_generate import Cummin, BatchMatMul, LinSpaceExt
 from mindspore.ops import auto_generate
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
@@ -2567,6 +2567,52 @@ def linspace(start, end, steps):
     if not isinstance(end, Tensor):
         end = Tensor(end, mstype.float32)
     return linspace_(start, end, steps)
+
+
+def linspace_ext(start, end, steps, *, dtype=None):
+    r"""
+    Returns a Tensor whose value is `steps` evenly spaced in the interval `start` and `end` (including `start` and
+    `end`), and the length of the output Tensor is `steps`.
+
+    .. math::
+        \begin{aligned}
+        &step = (end - start)/(steps - 1)\\
+        &output = [start, start+step, start+2*step, ... , end]
+        \end{aligned}
+
+    Args:
+        start (Union[Tensor, Number]): Start value of interval.
+          If `start` is Tensor, data type must be float32 or float64 and with shape of 0-D.
+        end (Union[Tensor, Number]): Last value of interval.
+          If `end` is Tensor, data type must be float32 or float64 and with shape of 0-D.
+        steps (Union[Tensor, int]): Number of ticks in the interval, inclusive of start and end.
+            Must be positive int number or 0D int32/int64 Tensor.
+
+    Keyword Args:
+        dtype (mindspore.dtype, optional): The output Tensor data type. Default: ``None`` , the data type of output
+            Tensor is float32.
+
+    Returns:
+        Tensor, has the shape of :math:`(steps,)`.
+
+    Raises:
+        TypeError: If dtype of `start` or dtype of `end` is not supported.
+        ValueError: If shape of `start` or shape of `end` is not 0-D.
+        TypeError: If `steps` is not int or 0D int32/int64 Tensor.
+        ValueError: If `steps` is not positive int number.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> start = Tensor(1, mindspore.float32)
+        >>> end = Tensor(10, mindspore.float32)
+        >>> steps = 5
+        >>> output = ops.linspace_ext(start, end, steps, dtype=mindspore.float32)
+        >>> print(output)
+        [ 1.    3.25  5.5   7.75 10.  ]
+    """
+    return  _get_cache_prim(LinSpaceExt)()(start, end, steps, dtype)
 
 
 def det(input):
@@ -11429,6 +11475,7 @@ __all__ = [
     'matrix_determinant',
     'det',
     'linspace',
+    'linspace_ext',
     'logspace',
     'lu_solve',
     'matrix_solve',
