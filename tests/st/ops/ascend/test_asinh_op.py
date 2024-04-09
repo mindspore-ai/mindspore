@@ -21,7 +21,7 @@ from mindspore import Tensor
 # all cases tested against dchip
 
 
-def test_asinh_forward_tensor_api(nptype):
+def asinh_forward_tensor_api(nptype):
     """
     Feature: test asinh forward tensor api for given input dtype.
     Description: test inputs for given input dtype.
@@ -44,6 +44,6 @@ def test_asinh_forward_float32_tensor_api():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_asinh_forward_tensor_api(np.float32)
+    asinh_forward_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    test_asinh_forward_tensor_api(np.float32)
+    asinh_forward_tensor_api(np.float32)

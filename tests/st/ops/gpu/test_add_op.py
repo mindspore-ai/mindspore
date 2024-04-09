@@ -262,7 +262,7 @@ def test_add_dynamic_int32():
     add_dynamic(np.int32)
 
 
-def test_add_tensor_api(nptype):
+def add_tensor_api(nptype):
     """
     Feature: test add tensor api.
     Description: test inputs given their dtype.
@@ -285,6 +285,6 @@ def test_add_float32_tensor_api():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_add_tensor_api(np.float32)
+    add_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_add_tensor_api(np.float32)
+    add_tensor_api(np.float32)

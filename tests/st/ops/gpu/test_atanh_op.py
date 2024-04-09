@@ -111,7 +111,7 @@ def test_atanh_complex128():
     assert np.allclose(output_ms.asnumpy(), expect)
 
 
-def test_atanh_forward_tensor_api(nptype):
+def atanh_forward_tensor_api(nptype):
     """
     Feature: test atanh forward tensor api for given input dtype.
     Description: test inputs for given input dtype.
@@ -133,6 +133,6 @@ def test_atanh_forward_float32_tensor_api():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_atanh_forward_tensor_api(np.float32)
+    atanh_forward_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_atanh_forward_tensor_api(np.float32)
+    atanh_forward_tensor_api(np.float32)

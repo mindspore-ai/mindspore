@@ -51,7 +51,7 @@ def test_atan(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-def test_atan_forward_tensor_api(nptype):
+def atan_forward_tensor_api(nptype):
     """
     Feature: test atan forward tensor api for given input dtype.
     Description: test inputs for given input dtype.
@@ -73,9 +73,9 @@ def test_atan_forward_float32_tensor_api():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    test_atan_forward_tensor_api(np.float32)
+    atan_forward_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    test_atan_forward_tensor_api(np.float32)
+    atan_forward_tensor_api(np.float32)
 
 
 @pytest.mark.level0

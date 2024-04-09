@@ -19,7 +19,7 @@ import mindspore.context as context
 from mindspore import Tensor
 
 
-def test_addr_tensor_api(nptype):
+def addr_tensor_api(nptype):
     """
     Feature: test addr tensor api.
     Description: test inputs given their dtype.
@@ -43,6 +43,6 @@ def test_addr_float32_tensor_api():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_addr_tensor_api(np.float32)
+    addr_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_addr_tensor_api(np.float32)
+    addr_tensor_api(np.float32)

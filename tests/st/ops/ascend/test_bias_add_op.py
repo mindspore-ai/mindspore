@@ -22,7 +22,7 @@ from mindspore.ops import functional as F
 # all cases tested against dchip
 
 
-def test_bias_add_forward_functional(nptype):
+def bias_add_forward_functional(nptype):
     """
     Feature: test bias_add forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -46,6 +46,6 @@ def test_bias_add_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_bias_add_forward_functional(np.float32)
+    bias_add_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    test_bias_add_forward_functional(np.float32)
+    bias_add_forward_functional(np.float32)
