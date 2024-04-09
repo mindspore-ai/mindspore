@@ -1399,7 +1399,10 @@ def set_context(**kwargs):
               - allow_mix_precision_bf16: Automatic mixing precision, facing the whole network operator, according to
                 the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
 
-            - jit_compile (bool): Whether to select online compilation. the default value is based on CANN.
+            - jit_compile (bool): Whether to select online compilation. When set to 'True', online compilation is
+              prioritized. When set to 'False', compiled operator binary files are prioritized to improve compilation
+              performance. The default settings are online compilation for static shape, and compiled operator binary
+              files for dynamic shape.
             - atomic_clean_policy (int): The policy for cleaning memory occupied by atomic operators in the network.
               Default: ``1`` .
 
