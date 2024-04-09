@@ -122,6 +122,7 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
       case kNumberTypeFloat16:
       case kNumberTypeFloat32:
       case kNumberTypeFloat64:
+      case kNumberTypeBFloat16:
         const_tensor = std::make_shared<tensor::Tensor>(static_cast<double>(input), TypeIdToType(type_id));
         break;
       default:
