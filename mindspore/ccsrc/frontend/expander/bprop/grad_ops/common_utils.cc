@@ -615,7 +615,7 @@ NodePtr ArgminOrArgmaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &ax
     auto dout_ori = [&dout_value](Emitter *e) -> NodePtrList { return {dout_value}; };
     dout_value = ib->Conditional(cond, dout_ori, dout_expand);
   }
-  NodePtr dx_zeros = ib->ZerosLike(x);
+  NodePtr dx_zeros = ib->Zeros(x);
   auto dx = Scatter_(ib, dx_zeros, axis, indices, dout_value, "none");
   return dx;
 }
