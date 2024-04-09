@@ -11,7 +11,7 @@ mindspore.nn.ZeroPad2d
     输入：
         - **x** (Tensor) - 输入Tensor，shape为 :math:`(N, *)`，其中 :math:`*` 表示任意维度。在Ascend后端运行时，不支持维度大于5。
 
-    返回：
+    输出：
         Tensor，填充后的Tensor。
 
     异常：
