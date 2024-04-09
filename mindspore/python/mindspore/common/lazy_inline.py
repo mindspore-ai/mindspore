@@ -153,18 +153,17 @@ def lazy_inline(fn=None, attrs=None):
         ...
         >>> test_compile()
     """
-    if inspect.isclass(fn):
-        tips = "The lazy_inline should decorate the __init__ function, not the class {}.".format(fn.__name__) \
-               + " File: " + inspect.getfile(fn)
-        raise ValueError(tips)
-
-    if fn.__name__ != "__init__":
-        tips = "The lazy_inline should decorate the __init__ function, not the function: {}.".format(fn.__name__) \
-               + " line: " + str(fn.__code__.co_firstlineno) + " in " \
-               + fn.__code__.co_filename
-        raise ValueError(tips)
 
     def lazy_inline_wrap(fn):
+        if inspect.isclass(fn):
+            tips = "The lazy_inline should decorate the __init__ function, not the class {}.".format(fn.__name__) \
+                   + " File: " + inspect.getfile(fn)
+            raise ValueError(tips)
+        if fn.__name__ != "__init__":
+            tips = "The lazy_inline should decorate the __init__ function, not the function: {}.".format(fn.__name__) \
+                   + " line: " + str(fn.__code__.co_firstlineno) + " in " \
+                   + fn.__code__.co_filename
+            raise ValueError(tips)
 
         def check_parameters(self):
             if hasattr(fn, "has_tips_"):
