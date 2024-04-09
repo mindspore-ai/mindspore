@@ -137,13 +137,14 @@ void MemoryTrackerEnabled::BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMe
 }
 
 void MemoryTrackerEnabled::AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name,
-                                         uint32_t stream_id) {
+                                         size_t actual_peak_memory, uint32_t stream_id) {
   std::lock_guard<std::mutex> lock(mutex_);
   time_stamp_++;
   auto mem_block = std::make_shared<MemBlockInfo>();
   MS_EXCEPTION_IF_NULL(mem_block);
   mem_block->device_addr = device_addr;
   mem_block->start_time_stamp = time_stamp_;
+  mem_block->actual_peak_memory = actual_peak_memory;
   mem_block->size = size;
   mem_block->pool_name = pool_name;
   mem_block->stream_id = stream_id;
@@ -205,6 +206,8 @@ const std::vector<std::pair<std::string, std::function<void(const MemBlockInfoPt
   {"stream_id", [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) { oss << mem_block->stream_id; }},
   {"pool_type", [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) { oss << mem_block->pool_name; }},
   {"size", [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) { oss << mem_block->size; }},
+  {"actual_peak_memory",
+   [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) { oss << mem_block->actual_peak_memory; }},
   {"file_name",
    [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
      auto mem_info = mem_block->mem_info.lock();
@@ -292,15 +295,10 @@ std::string GetWorldGroup() {
 }
 
 std::string GetRankID() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   auto world_group = GetWorldGroup();
   uint32_t rank_id = 0;
-  auto env_rank_id = common::GetEnv("RANK_ID");
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !env_rank_id.empty()) {
-    if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
-      MS_LOG(INFO) << "Failed to get rank id.";
-    }
+  if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
+    MS_LOG(INFO) << "Failed to get rank id.";
   }
   return std::to_string(rank_id);
 }
