@@ -630,7 +630,11 @@ class ZeroPad2d(_ConstantPadNd):
             The remaining dimensions of the output are consistent with those of the input.
             Only support non-negative value while running in Ascend.
 
-    Returns:
+    Inputs:
+        - **x** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+          It is not supported that the size of dimensions is greater than 5 while running on Ascend.
+
+    Outputs:
         Tensor, the tensor after padding.
 
     Raises:
