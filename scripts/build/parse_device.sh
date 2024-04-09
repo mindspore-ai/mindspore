@@ -92,9 +92,7 @@ parse_device()
     export USE_LLVM=$HAS_LLVM
   fi
   export ENABLE_DVM="off"
-  if [[ "X$ENABLE_D" = "Xon" ]]; then
-    source ${BASEPATH}/scripts/build/check_binary_file.sh
-  fi
+  source ${BASEPATH}/scripts/build/check_binary_file.sh
   if [[ "X$ENABLE_INTERNAL_KERNELS" == "Xon" ]]; then
     source ${BASEPATH}/scripts/build/check_and_build_ms_kernels_internal.sh
   fi
