@@ -1221,7 +1221,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   // Update run graph by single op flag. Has two scenario:
   // 1. Dynamic shape(or structure) or Dynamic structure
   // 2. Has bprop cut op
-  bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp, auto_grad_cell->bprop_graph_run_by_single_op());
+  // If set_inputs, but has constrol flow, we need run by actor.
+  bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp,
+                        auto_grad_cell->bprop_graph_run_by_single_op() && !top_cell()->has_control_flow());
   if (top_cell()->has_call_graph()) {
     bprop_graph->set_flag(kFlagPyNativeWithJitCallGraph, true);
   }
