@@ -23,7 +23,7 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "mindspore/core/ops/op_name.h"
 #include "src/common/common.h"
-#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {

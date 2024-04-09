@@ -24,7 +24,7 @@
 #include "include/common/utils/utils.h"
 #include "ops/math_op_name.h"
 #include "utils/ms_context.h"
-#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/acl_compiler_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 

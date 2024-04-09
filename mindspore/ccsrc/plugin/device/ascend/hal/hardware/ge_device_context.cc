@@ -39,7 +39,6 @@
 #include "mindspore/core/utils/file_utils.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
-#include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
