@@ -35,7 +35,7 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, 
                              SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad, GridSampler2DGrad,
                              ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad, ResizeNearestNeighborGrad, LayerNormGrad,
                              HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad,
-                             FlashAttentionScoreGrad)
+                             FlashAttentionScoreGrad, UpsampleTrilinear3DGrad, UpsampleNearest3DGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -1535,40 +1535,6 @@ class RandomGammaGrad(Primitive):
         self.add_prim_attr("side_effect_hidden", True)
 
 
-class UpsampleNearest3DGrad(Primitive):
-    """
-    Upsample the 3-D gradient data  with the nearest neighbor interpolation algorithm.
-
-    Note:
-        Only one of 'scales' and 'output_size' can be specified, and it is an error if both are specified.
-
-    Inputs:
-        - **dy** (Tensor) - Tensor of shape [N, C, D, H, W], Must be one of the following types:
-            float16, float32, float64.
-        - **input_size** (listInt): An required listInt, which contain 5 elements:
-            [min_batch, channels, depth, height, width].
-            Must: input_size[0] == dy_tensor_size[0], input_size[1] == dy_tensor_size[1].
-        - **output_size** (listInt): An optional listInt. Default: ``None``.
-            It contains 3 elements: depth, height, width, whose elements should be the same as `dy`.
-            Must:
-            dy_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0],
-            dy_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1],
-            dy_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
-        - **scales** (listFloat): An optional listFloat. Default: ``None``.
-            The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
-            The number of elements of 'scales' should be the same as the rank of `dy`.
-
-    Outputs:
-        - **dx**- (Tensor) - A 5-D tensor. Has the same type as `dy`, shape depends on `input_size`.
-    """
-    @prim_attr_register
-    def __init__(self):
-        """Initialize UpsampleNearest3DGrad."""
-        self.init_prim_io_names(
-            inputs=['dy', 'input_size', 'output_size', 'scales'],
-            outputs=['dx'])
-
-
 class ROIAlignGrad(Primitive):
     """
     ROIAlignGrad operator.
@@ -2498,45 +2464,6 @@ class MultiMarginLossGrad(Primitive):
 
     def __call__(self, y_grad, x, target, weight=None):
         return super().__call__(y_grad, x, target, weight)
-
-
-class UpsampleTrilinear3DGrad(Primitive):
-    r"""
-    Upsample the 3-D gradient data with trilinear interpolation algorithm.
-
-    Note:
-        One of 'scales' and 'output_size' must be specified. And it is an error if both are specified.
-
-    Args:
-        align_corners (bool): An optional bool. Default: ``False``.
-
-    Inputs:
-        - **dy** (Tensor) - Tensor of shape [N, C, D, H, W]. Must be one of the following types:
-          float16, float32, float64.
-        - **input_size** (Union[tuple[int], list[int]]): An required listInt which contains 5 elements:
-          [batch, channels, depth, height, width]. Must:
-          input_size[0] == dy_tensor_size[0]
-          input_size[1] == dy_tensor_size[1].
-        - **output_size** (Union[tuple[int], list[int]]): An optional listInt. Default: ``None``.
-          It contains 3 elements: depth, height, width, whose elements should be the same as `dy`. Must:
-          dy_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]
-          dy_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]
-          dy_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
-        - **scales** (Union[tuple[float], list[float]]): An optional listFloat. Default: ``None``.
-          The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
-          The number of elements of 'scales' should be the same as the rank of input `dy`.
-
-    Outputs:
-        - **dx** (Tensor) - A Tensor with shape depending on intput_size, and its' dtype is the same as `dy`.
-    """
-    @prim_attr_register
-    def __init__(self, align_corners=False):
-        """Initialize UpsampleTrilinear3DGrad."""
-        self.init_prim_io_names(
-            inputs=['dy', 'input_size', 'output_size', 'scales'],
-            outputs=['dx'])
-        self.align_corners = align_corners
-        self.add_prim_attr('align_corners', self.align_corners)
 
 
 class SparseSegmentMeanGrad(Primitive):

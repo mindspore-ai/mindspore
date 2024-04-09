@@ -1234,6 +1234,48 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) 
   return {dx1, dx2, dgrad};
 });
 
+REG_BPROP_BUILDER("UpsampleNearest1D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->Shape(x);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("UpsampleNearest1DGrad", {dout, x_shape, output_size, scales});
+  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales)};
+});
+
+REG_BPROP_BUILDER("UpsampleLinear1D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->Shape(x);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto align_corners = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("UpsampleLinear1DGrad", {dout, x_shape, output_size, scales, align_corners});
+  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales), ib->OutZeros(align_corners)};
+});
+
+REG_BPROP_BUILDER("UpsampleNearest2D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->Shape(x);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("UpsampleNearest2DGrad", {dout, x_shape, output_size, scales});
+  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales)};
+});
+
+REG_BPROP_BUILDER("UpsampleBilinear2D").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->Shape(x);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto align_corners = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("UpsampleBilinear2DGrad", {dout, x_shape, output_size, scales, align_corners});
+  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales), ib->OutZeros(align_corners)};
+});
+
 REG_BPROP_BUILDER("UpsampleNearest3D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_shape = ib->Shape(x);
@@ -1244,15 +1286,15 @@ REG_BPROP_BUILDER("UpsampleNearest3D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib
   return {dx, ib->OutZeros(output_size), ib->OutZeros(scales)};
 });
 
-REG_BPROP_BUILDER("UpsampleTrilinear3D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("UpsampleTrilinear3D").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_shape = ib->Shape(x);
   auto output_size = ib->GetInput(kIndex1);
   auto scales = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
-  auto dx = ib->Emit("UpsampleTrilinear3DGrad", {dout, x_shape, output_size, scales},
-                     {{"align_corners", ib->GetAttr("align_corners")}});
-  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales)};
+  auto align_corners = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("UpsampleTrilinear3DGrad", {dout, x_shape, output_size, scales, align_corners});
+  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales), ib->OutZeros(align_corners)};
 });
 
 REG_BPROP_BUILDER("Dropout2D").SetUnusedInputs({i0}).SetBody(Dropout2DBpropExpander);

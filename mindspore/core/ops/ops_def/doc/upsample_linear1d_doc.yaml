@@ -1,0 +1,52 @@
+upsample_linear3d:
+    description: |
+        Performs upsampling with trilinear interpolation across 1dims for 3dim input Tensor.
+
+        This operator scale up the volumetric input with specified `output_size` or `scales` factors,
+        using trilinear upscaling algorithm.
+
+        Note:
+            One of `scales` and `output_size` must be specified. And it is an error if both are specified.
+
+        Inputs:
+            - **x** (Tensor) - 3D tensor of shape :math:`(N, C, L_{in})`. Supporting types:
+                [float16, float32, float64].
+            - **output_size** (Union[tuple[int], list[int]]):  A tuple or list of 1 int elements
+                :math:`(output\_length)`. Default: ``None``.
+            - **scales** (Union[tuple[float], list[float]]): A tuple or list of 1 float
+                elements :math:`(scale\_length)`. Default: ``None``.
+            - **align_corners** (bool, optional): An optional bool. Default: ``False``.
+                If ``True``, the input and output tensors are aligned by the center points of their corner pixels,
+                preserving the values at the corner pixels.
+                If ``False`` , the input and output tensors are aligned by the corner points of their corner pixels,
+                and the interpolation use edge value padding for out of boundary values.
+
+        Outputs:
+            - **y** (Tensor) - Upsampled output with the same data type as `x`, whose shape is
+              :math:`(N, C, L_{out})`.
+
+        Raises:
+            TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
+            TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
+            TypeError: If dtype of `x` is not in [float16, float32, float64].
+            TypeError: If type of `align_corners` is not bool.
+            ValueError: If any value of `output_size` is negative or zero when `output_size` is not ``None``.
+            ValueError: If any value of `scales` is negative or zero when `scales` is not ``None``.
+            ValueError: If shape of `x` is not 3D.
+            ValueError: If none of `scales` and `output_size` is specified or both specified.
+            ValueError: If size of `scales` is not equal 1 when `scales` is specified.
+            ValueError: If size of `output_size` is not equal 1 when `output_size` is specified.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> op = ops.auto_generate.UpsampleLinear1D()
+            >>> x = Tensor(np.array([[[0.1, 0.3, 0.5], [0.7, 0.9, 1.1]]]).astype(np.float32))
+            >>> output_size=[6,]
+            >>> out = op(x, output_size, None, True)
+            >>> print(out)
+            [[[0.1, 0.18, 0.26, 0.34, 0.42, 0.5],
+              [0.7, 0.78, 0.86, 0.94, 1.02, 1.1]]]

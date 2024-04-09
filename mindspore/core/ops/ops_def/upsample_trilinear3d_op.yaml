@@ -1,0 +1,27 @@
+#operator upsample_trilinear3d
+upsample_trilinear3d:
+    args:
+        x:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+        align_corners:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleTrilinear3D
+    dispatch:
+        enable: True
+        Ascend: UpsampleTrilinear3DAscend

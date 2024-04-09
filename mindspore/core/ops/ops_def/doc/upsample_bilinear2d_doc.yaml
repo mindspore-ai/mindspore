@@ -1,0 +1,65 @@
+upsample_bilinear2d:
+    description: |
+        Performs upsampling with trilinear interpolation across 2dims for 4dim input Tensor.
+
+        This operator scale up the volumetric input with specified `output_size` or `scales` factors,
+        using trilinear upscaling algorithm.
+
+        Note:
+            One of `scales` and `output_size` must be specified. And it is an error if both are specified.
+
+        Inputs:
+            - **x** (Tensor) - 4D tensor of shape :math:`(N, C, H_{in}, W_{in})`. Supporting types:
+                float16, float32, float64].
+            - **output_size** (Union[tuple[int], list[int]]):  A tuple or list of 2 int elements
+                :math:`(output\_height, output\_width)`. Default: ``None``.
+            - **scales** (Union[tuple[float], list[float]]): A tuple or list of 2 float
+                elements :math:`(scale\_height, scale\_width)`. Default: ``None``.
+            - **align_corners** (bool, optional): An optional bool. Default: ``False``.
+                If ``True``, the input and output tensors are aligned by the center points of their corner pixels,
+                preserving the values at the corner pixels.
+                If ``False`` , the input and output tensors are aligned by the corner points of their corner pixels,
+                and the interpolation use edge value padding for out of boundary values.
+
+        Outputs:
+            - **y** (Tensor) - Upsampled output with the same data type as `x`, whose shape is
+                :math:`(N, C, H_{out}, W_{out})`.
+
+        Raises:
+            TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
+            TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
+            TypeError: If dtype of `x` is not in [float16, float32, float64].
+            TypeError: If type of `align_corners` is not bool.
+            ValueError: If any value of `output_size` is negative or zero when `output_size` is not ``None``.
+            ValueError: If any value of `scales` is negative or zero when `scales` is not ``None``.
+            ValueError: If shape of `x` is not 4D.
+            ValueError: If none of `scales` and `output_size` is specified or both specified.
+            ValueError: If size of `scales` is not equal 2 when `scales` is specified.
+            ValueError: If size of `output_size` is not equal 2 when `output_size` is specified.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> net = ops.UpsampleTrilinear3D()
+            >>> in_x = Tensor(input_data=np.random.randn(2, 3, 4, 512, 256))
+            >>> output_size=[4, 64, 48]
+            >>> out = net(in_x, output_size, None)
+            >>> print(out.shape)
+            (2, 3, 4, 64, 48)
+            >>>
+            >>> net = ops.auto_generate.UpsampleBilinear2D()
+            >>> in_x = Tensor(np.array([[[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], [[0.7, 0.8, 0.9], [1.0, 1.1, 1.2]]]]).astype(np.float32))
+            >>> output_size=[4, 5]
+            >>> out = net(in_x, output_size, None, True)
+            >>> print(out)
+            [[[[0.1000, 0.1500, 0.2000, 0.2500, 0.3000],
+               [0.2000, 0.2500, 0.3000, 0.3500, 0.4000],
+               [0.3000, 0.3500, 0.4000, 0.4500, 0.5000],
+               [0.4000, 0.4500, 0.5000, 0.5500, 0.6000]],
+              [[0.7000, 0.7500, 0.8000, 0.8500, 0.9000],
+               [0.8000, 0.8500, 0.9000, 0.9500, 1.0000],
+               [0.9000, 0.9500, 1.0000, 1.0500, 1.1000],
+               [1.0000, 1.0500, 1.1000, 1.1500, 1.2000]]]]
