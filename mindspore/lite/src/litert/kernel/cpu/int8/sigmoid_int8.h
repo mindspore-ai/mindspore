@@ -34,7 +34,7 @@ class SigmoidInt8CPUKernel : public LiteKernel {
   int Run() override;
   int DoActivation(int task_id);
 
- private:
+ protected:
   int8_t table_list_[256]{0};
 };
 }  // namespace mindspore::kernel
