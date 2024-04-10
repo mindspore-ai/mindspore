@@ -212,6 +212,38 @@ function(__install_ascend_ascendc)
             ${ASCENDC_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
 endfunction()
 
+function(__install_ascend_native)
+        install(TARGETS ascend_native_plugin
+        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(TARGET ascend_native_kernels_impl)
+                install(TARGETS ascend_native_kernels_impl
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+        if(TARGET ascend_native_mix)
+                install(TARGETS ascend_native_mix
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+        if(TARGET ascend_native_vector)
+                install(TARGETS ascend_native_vector
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+        if(TARGET ascend_native_ai)
+                install(TARGETS ascend_native_ai
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+        if(TARGET tilingx)
+                install(TARGETS tilingx
+                DESTINATION ${RUNTIME_DESTINATION} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+        if(TARGET hccl_adapter_mid)
+                install(FILES ${ompi_LIBPATH}/libmpi.so ${ompi_LIBPATH}/libmpi.so.40 ${ompi_LIBPATH}/libmpi.so.40.30.4
+                DESTINATION ${RUNTIME_LIB_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+endfunction()
+
+
+
 # full mode will also package the files of lite_cv mode.
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     # full header files
@@ -412,6 +444,9 @@ if(PLATFORM_ARM64)
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             __install_ascend_tbe_and_aicpu()
             __install_ascend_ascendc()
+            if(MSLITE_ASCEND_TARGET)
+                __install_ascend_native()
+            endif()
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
@@ -876,14 +911,7 @@ else()
             __install_ascend_tbe_and_aicpu()
             __install_ascend_ascendc()
             if(MSLITE_ASCEND_TARGET)
-                install(TARGETS ascend_native_plugin
-                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-                if(TARGET ascend_native_kernels_impl)
-                        install(TARGETS ascend_native_kernels_impl
-                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-                endif()
-                install(TARGETS hccl_plugin
-                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                __install_ascend_native()
             endif()
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)

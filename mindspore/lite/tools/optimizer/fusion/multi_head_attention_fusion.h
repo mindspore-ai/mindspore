@@ -52,14 +52,15 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   VectorRef DefineMPWithMaskPatternT5() const;
   VectorRef DefineMPWithMaskPatternT5New(bool transpose = true, bool no_div_flag = false) const;
   VectorRef DefineMPPatternSwin(bool flag = true) const;
-  VectorRef DefinePatternPangu(bool alpha, bool distributed = false) const;
+  VectorRef DefinePatternPangu(bool alpha, bool distributed = false, bool transpose_qv = false) const;
   VectorRef DefinePatternMultiBatch(VectorRef input) const;
   VectorRef DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &bias, const BaseRef &axis,
                             const BaseRef &transpose_var, bool test_div = false, bool transpose = true,
                             bool mul = false) const;
   VectorRef DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &axis,
                             const BaseRef &transpose_var, bool test_div, bool transpose) const;
-
+  VectorRef DefineEmbeddingV(const BaseRef &input, const BaseRef &weight, const BaseRef &bias,
+                             const BaseRef &axis) const;
   // create masked-multi-head-attention
   CNodePtr CreateMaskedMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                               const mindspore::AnfNodePtr &node, bool mask = true) const;
@@ -75,9 +76,10 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
                         const AnfNodePtr &vnode) const;
   std::shared_ptr<ops::Attention> CreatePrim(const EquivPtr &equiv, bool cross) const;
   bool IsCross(const EquivPtr &equiv) const;
-  std::vector<AnfNodePtr> GetNewNodeInputs(const EquivPtr &equiv, ParameterPtr q_weight_param,
-                                           ParameterPtr c_weight_param, AnfNodePtr weight_o, ParameterPtr c_bias_param,
-                                           AnfNodePtr bias_o, bool mask, bool cross) const;
+  std::vector<AnfNodePtr> GetNewNodeInputs(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
+                                           ParameterPtr q_weight_param, ParameterPtr c_weight_param,
+                                           AnfNodePtr weight_o, ParameterPtr c_bias_param, AnfNodePtr bias_o, bool mask,
+                                           bool cross) const;
   std::tuple<AnfNodePtr, std::shared_ptr<tensor::Tensor>, std::shared_ptr<tensor::Tensor>,
              std::shared_ptr<tensor::Tensor> >
   GetAttentionNodeWeights(const EquivPtr &equiv, std::vector<AnfNodePtr> *redundant) const;
@@ -97,6 +99,8 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   const std::string kPatternNameSigmaUsePast = "PatternNameSigmaUsePast";
   const std::string kPatternNameAlphaDistributedUsePast = "kPatternNameAlphaDistributedUsePast";
   const std::string kPatternNameSigmaDistributedUsePastMB = "kPatternNameSigmaDistributedUsePastMB";
+  const std::string kPatternNameAlphaDistributedUsePastT = "kPatternNameAlphaDistributedUsePastT";
+  const std::string kPatternNameSigmaDistributedUsePastMBT = "kPatternNameSigmaDistributedUsePastMBT";
 
   mutable VarPtr input_q_{nullptr};
   mutable VarPtr input_k_{nullptr};
@@ -124,9 +128,12 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   mutable VarPtr reshape_axis_{nullptr};
   mutable VarPtr v_transpose_{nullptr};
   mutable VarPtr k_transpose_{nullptr};
+  mutable VarPtr is_reshape_{nullptr};
   mutable VarPtr dense_{nullptr};
 
   mutable bool t5_x_{false};
+  mutable bool distributed_{false};
+  mutable bool not_transpose_{false};
   mutable float scale_{true};
 };
 }  // namespace opt

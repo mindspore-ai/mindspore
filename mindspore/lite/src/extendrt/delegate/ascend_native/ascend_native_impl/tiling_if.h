@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_ADD_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_ADD_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_TILING_IF_H
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_TILING_IF_H
+#include <vector>
+#include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 namespace mindspore::ascend_native {
-void AddFp32(void *x1, void *x2, void *y, uint64_t elem_num, void *q);
-void AddFp16(void *x1, void *x2, void *y, uint64_t elem_num, void *q);
+int buildTiling(int blockDim, int M, int N, int K, bool transposeA, bool transposeB, bool isBias, void *tilingPtr,
+                int size);
+int tiling_size();
+void buildMMExtra(mindspore::ascend_native::MMExtra *e, uint32_t bmm_num = 1, uint32_t lda = -1, uint32_t ldb = -1,
+                  uint32_t ldc = -1);
 }  // namespace mindspore::ascend_native
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_ADD_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_TILING_IF_H

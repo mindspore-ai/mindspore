@@ -148,6 +148,9 @@ static const char *const kConverterParams = "converter_params";
 static const char *const kConverterOutputFile = "output_file";
 // om converter options
 static const char *const kOMConverterOptionsSection = "om_converter";
+// copy context
+static const char *const kCopySection = "copy_context";
+static const char *const kMaskTensorName = "mask_tensor_name";
 
 static const char *const KModelUserInfo = "user_info";
 

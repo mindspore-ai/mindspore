@@ -23,14 +23,14 @@
 
 #include "ops/base_operator.h"
 #include "include/api/data_type.h"
-
+#include "ops/auto_generate/gen_lite_ops.h"
 namespace mindspore {
 namespace ops {
-constexpr auto kNameCopy = "Copy";
+constexpr auto kNameAscendNativeCopy = "AscendNativeCopy";
 constexpr auto kCopyFormat = "copy_format";
 
 /// \brief Custom defined user-defined operator prototype.
-class MIND_API Copy : public BaseOperator {
+class MIND_API AscendNativeCopy : public BaseOperator {
  public:
   enum CopyFormatType : int {
     NONE = 0,
@@ -38,9 +38,9 @@ class MIND_API Copy : public BaseOperator {
     DEVICE_HOST,
   };
 
-  MIND_API_BASE_MEMBER(Copy);
+  MIND_API_BASE_MEMBER(AscendNativeCopy);
   /// \brief Constructor.
-  Copy() : BaseOperator(kNameCopy) {}
+  AscendNativeCopy() : BaseOperator(kNameAscendNativeCopy) {}
   void set_copy_format(CopyFormatType format);
   int get_copy_format() const;
 };

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_GATHER_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_GATHER_H_
+
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_MATMUL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_MATMUL_H_
+
 namespace mindspore::ascend_native {
-void GatherFp32(void *y1, void *x1, int32_t *indices, int num_of_indices, size_t len_to_copy, int num_of_tiles,
-                size_t tile_size, void *handle);
-void GatherFp16(void *y1, void *x1, int32_t *indices, int num_of_indices, size_t len_to_copy, int num_of_tiles,
-                size_t tile_size, void *handle);
+void MatmulMix(bool ta, bool tb, void *mat_a, void *mat_b, void *mat_c, void *bias, void *tiling_data_d,
+               void *tiling_data_h, void *ws, bool bmm, void *extra, void *stream, void *ctx);
 }  // namespace mindspore::ascend_native
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_GATHER_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_MATMUL_H_

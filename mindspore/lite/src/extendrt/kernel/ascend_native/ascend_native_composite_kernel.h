@@ -17,13 +17,16 @@
 #ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_COMPOSITE_KERNEL_H_
 #define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_COMPOSITE_KERNEL_H_
 
-#include "extendrt/delegate/ascend_native/ascend_native_base_kernel.h"
+#include <sched.h>
 #include <string>
 #include <set>
 #include <memory>
 #include <vector>
+#include <utility>
 #include <unordered_map>
 #include "infer/context.h"
+#include "extendrt/delegate/type.h"
+#include "extendrt/delegate/ascend_native/ascend_native_base_kernel.h"
 
 namespace mindspore::kernel {
 class AscendNativeCompositeKernel : public AscendNativeBaseKernel {
@@ -31,8 +34,27 @@ class AscendNativeCompositeKernel : public AscendNativeBaseKernel {
   // AscendNativeCompositeKernel = delete;
 
   AscendNativeCompositeKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
-                              InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
-      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name) {}
+                              InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name,
+                              const void *acl_ctx)
+      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name, acl_ctx) {
+    ParseAffinity();
+  }
+
+  ~AscendNativeCompositeKernel() {
+    ascend_native::SetContext(const_cast<void *>(acl_ctx_));
+    if (alt_stream_ != nullptr) {
+      ascend_native::DestroyStream(const_cast<void *>(alt_stream_));
+      alt_stream_ = nullptr;
+    }
+    if (stream_ != nullptr) {
+      ascend_native::DestroyStream(const_cast<void *>(stream_));
+      stream_ = nullptr;
+    }
+    if (acl_ctx_ != nullptr) {
+      ascend_native::DestroyCtx(const_cast<void *>(acl_ctx_));
+      acl_ctx_ = nullptr;
+    }
+  }
 
   int Prepare() override;
   int Run() override;
@@ -44,6 +66,8 @@ class AscendNativeCompositeKernel : public AscendNativeBaseKernel {
   bool IsWeightInputHanledInner() const override { return true; }
 
   void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
+
+  void set_pangu_sigma(bool pangu_sigma) { pangu_sigma_ = pangu_sigma; }
 
  private:
   std::shared_ptr<kernel::AscendNativeBaseKernel> CreateKernel(const AnfNodePtr &node);
@@ -66,8 +90,11 @@ class AscendNativeCompositeKernel : public AscendNativeBaseKernel {
   std::set<kernel::InferTensor *> allocated_tensors_;
   std::unordered_map<kernel::InferTensor *, size_t> offset_map_;
   size_t ws_size_{0};
-
-  static constexpr size_t max_ws_size_ = static_cast<size_t>(2100) * (1 << 20);
+  bool pangu_sigma_{false};
+  static constexpr size_t max_ws_size_ = static_cast<size_t>(6000) * (1 << 20);
+  std::vector<std::pair<int, int>> affinity_ = {};
+  cpu_set_t cpuAffinity(int dev_id);
+  int ParseAffinity();
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_COMPOSITE_KERNEL_H_

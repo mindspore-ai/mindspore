@@ -59,7 +59,6 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   const std::string kPatternEncoderLayerNormT5Pre = "PatternEncoderLayerNormT5Pre";
   const std::string kPatternQueryLayerUsePast = "PatternQueryLayerUsePast";
   const std::string kPatternSigmaDistributed = "PatternSigmaDistributed";
-  const std::string kPatternSigmaDistributedEmbedding = "PatternSigmaDistributedEmbedding";
   const std::string kPatternSigmaMoeDistributed = "PatternSigmaMoeDistributed";
   const std::string kPatternSigmaMoeWithLastLayerNormDistributed = "PatternSigmaMoeWithLastLayerNormDistributed";
   const std::string kPatternSigmaWithLastLayerNormDistributed = "PatternSigmaWithLastLayerNormDistributed";
@@ -92,11 +91,15 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   const std::string kPatternSigmaQueryLayerDistributedMBMoe = "kPatternSigmaQueryLayerDistributedMBMoe";
   const std::string kPatternSigmaQueryLayerDistributedMoe = "kPatternSigmaQueryLayerDistributedMoe";
   const std::string kPatternSigmaEmbeddingDistributed = "kPatternSigmaEmbeddingDistributed";
+  const std::string kPatternSigmaEmbeddingBig = "kPatternSigmaEmbeddingBig";
+  const std::string kPatternSigmaBig = "kPatternSigmaBig";
+  const std::string kPatternSigmaWithLastLayerNormBig = "kPatternSigmaWithLastLayerNormBig";
+  const std::string kPatternSigmaQueryBig = "kPatternSigmaQueryBig";
 
   VectorRef DefinePatternEncoderLayer(bool post_layernorm, bool layernorm_fusion, bool is_position_bias_, bool mask,
                                       bool is_layer_norm) const;
   VectorRef DefinePatternEncoderSigma(bool moe, bool use_past, bool distributed, bool is_layer_norm, bool query_layer,
-                                      bool multi_batch, bool first_encoder, bool gelu) const;
+                                      bool multi_batch, bool first_encoder, bool gelu, bool big_model) const;
 
   VectorRef DefinePatternEncoderAlpha(bool moe, bool distributed, bool is_layer_norm, bool query_layer,
                                       bool use_past) const;
@@ -131,6 +134,7 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   bool IsUsePast(const std::string &pattern_name) const;
   bool IsUsePastMB(const std::string &pattern_name) const;
   bool IsUsePastAlpha(const std::string &pattern_name) const;
+  bool IsUsePastDistributed(const std::string &pattern_name) const;
   bool IsLastLayerNorm(const std::string &pattern_name) const;
   bool IsLayerNormFusion(const std::string &pattern_name) const;
   bool IsMoe(const std::string &pattern_name) const;

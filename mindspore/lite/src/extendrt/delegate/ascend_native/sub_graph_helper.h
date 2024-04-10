@@ -81,16 +81,16 @@ class SubGraphHelper : public std::enable_shared_from_this<SubGraphHelper> {
   void FixAllNodes(const AnfNodePtrList &nodes);
   const SubGraphPtr &GetSbg(int i) const { return sg_v_[i]; }
   AnfNodePtr CreateGetItemAndCopyUnique(const AnfNodePtr &node, int id, const CNodePtr &cinput,
-                                        ops::Copy::CopyFormatType type);
+                                        ops::AscendNativeCopy::CopyFormatType type);
   bool IsGraphInput(const AnfNodePtr &node) const;
   void Dump(std::string file_name) const;
+  CNodePtr CreateGetItem(const AnfNodePtr &node, int id, const CNodePtr &input);
 
  private:
   int GetOutputsCount(int group);
   int GetOutputId(int group, const CNodePtr &input) const;
   void AddSubGraphOutput(int group, const CNodePtr &cnode) { GetSbg(group)->AddOutput(cnode); }
-  CNodePtr CreateGetItem(const AnfNodePtr &node, int id, const CNodePtr &input);
-  CNodePtr CreateCopyNode(const AnfNodePtr &input, ops::Copy::CopyFormatType type);
+  CNodePtr CreateCopyNode(const AnfNodePtr &input, ops::AscendNativeCopy::CopyFormatType type);
   void SetOutputsAndAbstract(const AnfNodePtrList &nodes);
   void UpdateInput(const CNodePtr &cnode, int index, const AnfNodePtr &input) const;
   void FixOutput();

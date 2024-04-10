@@ -17,6 +17,7 @@
 #include "extendrt/kernel/ascend_native/ascend_native_copy_kernel.h"
 #include <algorithm>
 #include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
+#include "extendrt/delegate/ascend_native/ascend_native_impl/vector_core/copy_cast.h"
 #include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 #include "extendrt/delegate/ops/copy.h"
 
@@ -26,25 +27,23 @@ int AscendNativeCopyKernel::InferShape() {
   auto const &data_type = in_tensors_[0]->data_type();
   bool is_float =
     (data_type == kNumberTypeFloat32) || (data_type == kNumberTypeFloat16) || (data_type == kNumberTypeFloat);
-  if (copy_type_ == ops::Copy::CopyFormatType::HOST_DEVICE) {
+  if (copy_type_ == ops::AscendNativeCopy::CopyFormatType::HOST_DEVICE) {
     if (is_float) {
       out_tensors_[0]->set_data_type(kNumberTypeFloat16);
     } else {
       out_tensors_[0]->set_data_type(data_type);
     }
-  } else if (copy_type_ == ops::Copy::CopyFormatType::DEVICE_HOST) {
-    if (is_float) {
-      out_tensors_[0]->set_data_type(kNumberTypeFloat32);
-    } else {
-      out_tensors_[0]->set_data_type(data_type);
-    }
+  } else if (copy_type_ == ops::AscendNativeCopy::CopyFormatType::DEVICE_HOST) {
+    out_tensors_[0]->set_data_type(data_type);
   }
   return lite::RET_OK;
 }
 
 int AscendNativeCopyKernel::Prepare() {
+  ascend_native::SetContext(const_cast<void *>(acl_ctx_));
   auto prim = GetValueNode<PrimitivePtr>(primitive_.cnode->input(0));
-  copy_type_ = static_cast<ops::Copy::CopyFormatType>(GetValue<int64_t>(prim->GetAttr(mindspore::ops::kCopyFormat)));
+  copy_type_ =
+    static_cast<ops::AscendNativeCopy::CopyFormatType>(GetValue<int64_t>(prim->GetAttr(mindspore::ops::kCopyFormat)));
   auto ret = InferShape();
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Ascend native copy kernel inferShape failed.";
@@ -54,11 +53,15 @@ int AscendNativeCopyKernel::Prepare() {
 }
 
 int AscendNativeCopyKernel::PreProcess() {
+  ascend_native::SetContext(const_cast<void *>(acl_ctx_));
   out_tensors_[0]->ResetRefCount();
+  if ((in_tensors_[0]->tensor_name().compare("attention_mask")) == 0) {
+    return lite::RET_OK;
+  }
   switch (copy_type_) {
-    case ops::Copy::CopyFormatType::HOST_DEVICE: {
+    case ops::AscendNativeCopy::CopyFormatType::HOST_DEVICE: {
       if (out_tensors_[0]->device_data() == nullptr) {
-        auto device_data = ascend_native::MallocDevice(out_tensors_[0]->Size(), const_cast<void *>(stream_));
+        auto device_data = ascend_native::MallocDevice(out_tensors_[0]->Size());
         if (device_data == nullptr) {
           MS_LOG(ERROR) << "fail to allocate " << out_tensors_[0]->Size() << "Bytes for device";
           return lite::RET_NULL_PTR;
@@ -67,7 +70,7 @@ int AscendNativeCopyKernel::PreProcess() {
       }
       break;
     }
-    case ops::Copy::CopyFormatType::DEVICE_HOST: {
+    case ops::AscendNativeCopy::CopyFormatType::DEVICE_HOST: {
       if (out_tensors_[0]->data() == nullptr) {
         out_tensors_[0]->MallocData();
         if (out_tensors_[0]->data() == nullptr) {
@@ -77,7 +80,7 @@ int AscendNativeCopyKernel::PreProcess() {
       }
       break;
     }
-    case ops::Copy::CopyFormatType::NONE: {
+    case ops::AscendNativeCopy::CopyFormatType::NONE: {
       MS_LOG(WARNING) << "Ascend native copy kernel type is none. Kernel is redundant.";
       break;
     }
@@ -88,10 +91,10 @@ int AscendNativeCopyKernel::PreProcess() {
   }
   return lite::RET_OK;
 }
-
-void PrintTensor(InferTensor *tensor, int max_len, void *stream) {
+// print device tensor
+void PrintDeviceTensor(InferTensor *tensor, int max_len, void *stream, void *ctx) {
   int elem = std::min(static_cast<int>(tensor->ElementsNum()), max_len);
-  std::cout << "device tensor " << tensor->tensor_name() << " data:";
+  std::cout << "device tensor " << tensor->tensor_name() << "elem " << elem << std::endl;
   switch (tensor->data_type()) {
     case kNumberTypeFloat16:
       ascend_native::PrintFp16(tensor->device_data(), elem, stream);
@@ -108,10 +111,15 @@ void PrintTensor(InferTensor *tensor, int max_len, void *stream) {
   std::cout << std::endl;
 }
 
-void PrintTensor(InferTensor *tensor, int max_len) {
+// print host tensor
+void PrintHostTensor(InferTensor *tensor, int max_len, void *stream) {
   int elem = std::min(static_cast<int>(tensor->ElementsNum()), max_len);
-  std::cout << "host tensor " << tensor->tensor_name() << " data:";
+  std::cout << "host tensor " << tensor->tensor_name() << "elem" << elem << std::endl;
   switch (tensor->data_type()) {
+    case kNumberTypeFloat16: {
+      ascend_native::PrintFp16Host(tensor->data(), elem, stream);
+      break;
+    }
     case kNumberTypeFloat32: {
       auto ptr = static_cast<float *>(tensor->data());
       for (int i = 0; i < elem; i++) {
@@ -134,10 +142,15 @@ void PrintTensor(InferTensor *tensor, int max_len) {
 
 int AscendNativeCopyKernel::Run() {
   MS_LOG(INFO) << "AscendNativeCopyKernel::Execute";
+  ascend_native::SetContext(const_cast<void *>(acl_ctx_));
   auto elem = out_tensors_[0]->ElementsNum();
   // Execute copy
+  if ((in_tensors_[0]->tensor_name().compare(mask_tensor_name_)) == 0) {
+    return lite::RET_OK;
+  }
+
   switch (copy_type_) {
-    case ops::Copy::CopyFormatType::HOST_DEVICE: {
+    case ops::AscendNativeCopy::CopyFormatType::HOST_DEVICE: {
       if (in_tensors_[0]->data() == nullptr) {
         MS_LOG(ERROR) << "no host data to tensor " << in_tensors_[0]->tensor_name();
         return lite::RET_ERROR;
@@ -171,21 +184,25 @@ int AscendNativeCopyKernel::Run() {
       }
       break;
     }
-    case ops::Copy::CopyFormatType::DEVICE_HOST: {
+    case ops::AscendNativeCopy::CopyFormatType::DEVICE_HOST: {
       if (in_tensors_[0]->device_data() == nullptr) {
         MS_LOG(ERROR) << "no device data to tensor " << in_tensors_[0]->tensor_name();
         return lite::RET_ERROR;
       }
-      out_tensors_[0]->set_data_type(kNumberTypeFloat32);
-      if (elem * sizeof(float) > out_tensors_[0]->Size()) {
-        MS_LOG(ERROR) << "wrong output size";
-        return lite::RET_ERROR;
+      int elem_size = mindspore::lite::DataTypeSize(out_tensors_[0]->data_type());
+      switch (elem_size) {
+        case Num4:
+          ascend_native::CopyDeviceFp16ToHostFp32(in_tensors_[0]->device_data(), out_tensors_[0]->data(), elem,
+                                                  const_cast<void *>(stream_));
+          break;
+        case Num2:
+          ascend_native::CopyDeviceFp16ToHostFp16(in_tensors_[0]->device_data(), out_tensors_[0]->data(), elem,
+                                                  const_cast<void *>(stream_));
+          break;
       }
-      ascend_native::CopyDeviceFp16ToHostFp32(in_tensors_[0]->device_data(), out_tensors_[0]->data(), elem,
-                                              const_cast<void *>(stream_));
       break;
     }
-    case ops::Copy::CopyFormatType::NONE: {
+    case ops::AscendNativeCopy::CopyFormatType::NONE: {
       MS_LOG(WARNING) << "Ascend native copy kernel type is none. Kernel is redundant.";
       break;
     }
@@ -198,25 +215,24 @@ int AscendNativeCopyKernel::Run() {
 }
 
 int AscendNativeCopyKernel::PostProcess() {
+  if ((in_tensors_[0]->tensor_name().compare("attention_mask")) == 0) {
+    return lite::RET_OK;
+  }
   switch (copy_type_) {
-    case ops::Copy::CopyFormatType::HOST_DEVICE: {
+    case ops::AscendNativeCopy::CopyFormatType::HOST_DEVICE: {
       in_tensors_[0]->DecRefCount();
       break;
     }
-    case ops::Copy::CopyFormatType::DEVICE_HOST: {
+    case ops::AscendNativeCopy::CopyFormatType::DEVICE_HOST: {
       auto ref = in_tensors_[0]->ref_count() - 1;
       in_tensors_[0]->set_ref_count(ref);
       if (ref < 0) {
         MS_LOG(ERROR) << "less than zero reference count";
         return lite::RET_ERROR;
       }
-      if (ref == 0) {
-        ascend_native::FreeDevice(in_tensors_[0]->device_data(), const_cast<void *>(stream_));
-        in_tensors_[0]->set_device_data(nullptr);
-      }
       break;
     }
-    case ops::Copy::CopyFormatType::NONE: {
+    case ops::AscendNativeCopy::CopyFormatType::NONE: {
       MS_LOG(WARNING) << "Ascend native copy kernel type is none. Kernel is redundant.";
       break;
     }
@@ -229,5 +245,6 @@ int AscendNativeCopyKernel::PostProcess() {
 }
 
 int AscendNativeCopyKernel::ReSize() { return lite::RET_OK; }
-REGISTER_ASCEND_NATIVE_CREATOR(ops::kNameCopy, AscendNativeCopyKernel)
+
+REGISTER_ASCEND_NATIVE_CREATOR(ops::kNameAscendNativeCopy, AscendNativeCopyKernel)
 }  // namespace mindspore::kernel

@@ -24,11 +24,13 @@
 #include "src/extendrt/graph_compiler/compile_result.h"
 #include "src/extendrt/graph_compiler/single_graph_scheduler.h"
 #include "src/extendrt/graph_compiler/compile_option.h"
+#include "src/common/config_infos.h"
 
 namespace mindspore::lite {
 class DefaultGraphCompiler : public infer::abstract::GraphCompiler {
  public:
-  explicit DefaultGraphCompiler(const std::shared_ptr<Context> &context) : context_(context) {
+  explicit DefaultGraphCompiler(const std::shared_ptr<Context> &context, const ConfigInfos config_infos)
+      : context_(context), config_infos_(config_infos) {
     inner_context_ = nullptr;
   }
   ~DefaultGraphCompiler() override = default;
@@ -70,6 +72,7 @@ class DefaultGraphCompiler : public infer::abstract::GraphCompiler {
   const std::shared_ptr<Context> &context_;
   InferContextPtr inner_context_{nullptr};
   CompileOptionPtr option_{nullptr};
+  const ConfigInfos config_infos_;
 };
 }  // namespace mindspore::lite
 
