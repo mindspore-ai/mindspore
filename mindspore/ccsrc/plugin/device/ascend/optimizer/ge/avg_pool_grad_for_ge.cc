@@ -23,6 +23,7 @@
 #include "ops/conv_pool_ops.h"
 #include "ops/array_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "ops/shape_calc.h"
 
 namespace mindspore {
 namespace opt {
@@ -55,7 +56,14 @@ const AnfNodePtr AvgPoolGradForGE::Process(const FuncGraphPtr &graph, const AnfN
   }
   // new avg_pool_grad_node
   auto inputs = avg_pool_grad_node->inputs();
-  std::vector<AnfNodePtr> new_inputs = {inputs.at(0), shape_node};
+  auto op_node = inputs.at(0);
+  std::vector<AnfNodePtr> new_inputs = {op_node, shape_node};
+  // Reset ValueDepend
+  MS_EXCEPTION_IF_NULL(op_node);
+  auto prim = GetValueNode<PrimitivePtr>(op_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  std::vector<int64_t> depend_indices{0, 2, 3, 4};
+  prim->AddAttr(ops::kAttrValueDepend, MakeValue(depend_indices));
   constexpr size_t dout_index = kIndex3;
   for (size_t i = dout_index; i < inputs.size(); ++i) {
     new_inputs.push_back(inputs[i]);
