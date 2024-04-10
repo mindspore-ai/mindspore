@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
 
 import numpy as np
 import pytest
@@ -24,6 +25,7 @@ from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 rtol = 1e-3
 
+
 class MatMulCell(Cell):
     def __init__(self):
         super().__init__()
@@ -31,6 +33,15 @@ class MatMulCell(Cell):
 
     def construct(self, x, y):
         return self.matmul(x, y)
+
+
+class MatMulGradCell(Cell):
+    def __init__(self):
+        super().__init__()
+        self.matmul_grad = ops.grad(matmul, (0, 1))
+
+    def construct(self, x, y):
+        return self.matmul_grad(x, y)
 
 
 @pytest.mark.level0
@@ -51,8 +62,8 @@ class MatMulCell(Cell):
 ])
 def test_ops(context_mode, shape1, shape2, output_shape1, output_shape2):
     """
-    Feature: MatMulExt op.
-    Description: test matmul_ext
+    Feature: ops.matmul
+    Description: static
     Expectation: expect correct shape result.
     """
     ms.set_context(mode=context_mode)
@@ -75,7 +86,7 @@ def test_ops(context_mode, shape1, shape2, output_shape1, output_shape2):
 @pytest.mark.platform_arm_ascend_training
 def test_ops_dynamic():
     """
-    Feature: ops.extend.add
+    Feature: ops.matmul
     Description: dynamic shape and rank
     Expectation: success
     """
@@ -87,6 +98,33 @@ def test_ops_dynamic():
     TEST_OP(matmul, [[x1, y1], [x2, y2]], dump_ir=True, custom_flag='2')
 
 
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+def test_mix_dynamic_shape():
+    """
+    Feature: ops.matmul
+    Description: mix dynamic shape
+    Expectation: success
+    """
+    os.environ['GRAPH_OP_RUN'] = '1'
+    shape1, shape2 = [1, 10, 20, 64], [1, 10, 64, 77]
+    ms.set_context(mode=ms.GRAPH_MODE)
+
+    matmul_cell = MatMulCell()
+    # 2 x 2
+    x = random_input(shape1)
+    y = random_input(shape2)
+
+    _ = matmul_cell(ms.tensor(x), ms.tensor(y))
+
+    grad_matmul_cell = MatMulGradCell()
+    grad_matmul_cell.set_inputs(
+        ms.tensor(shape=[1, 10, None, None], dtype=ms.float32),
+        ms.tensor(shape=[1, 10, None, 77], dtype=ms.float32),
+    )
+    _, _ = grad_matmul_cell(ms.tensor(x), ms.tensor(y))
+    del os.environ['GRAPH_OP_RUN']
 
 
 def random_input(shape, dtype=np.float32):

@@ -262,6 +262,7 @@ std::vector<int64_t> GetIntList(const NodePtr &node) {
 NodePtr StaticBinopGradCommon(BpropBuilder *ib, const NodePtr &dx, const ShapeArray &shape,
                               const ShapeArray &broadcast_shape, size_t shift, size_t index, bool *is_dynamic_shape) {
   NodePtr reduce_dx = dx;
+  auto shape_dynamic_dims = std::count_if(shape[index].begin(), shape[index].end(), [](int64_t x) { return x <= -1; });
   if (broadcast_shape[kIndex0].empty() || broadcast_shape[kIndex1].empty()) {
     if (broadcast_shape[index].empty()) {
       if (shift) {
@@ -272,7 +273,7 @@ NodePtr StaticBinopGradCommon(BpropBuilder *ib, const NodePtr &dx, const ShapeAr
         reduce_dx = ib->ReduceSum(reduce_dx);
       }
     }
-  } else if (!IsDynamic(broadcast_shape[0]) && !IsDynamic(broadcast_shape[1])) {
+  } else if (!IsDynamic(broadcast_shape[0]) && !IsDynamic(broadcast_shape[1]) && shape_dynamic_dims <= 1) {
     std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgsInferValue(broadcast_shape[0], broadcast_shape[1]);
     if (!bc_axis[index].empty()) {
       reduce_dx = ib->ReduceSum(reduce_dx, bc_axis[index], ib->GetRank(reduce_dx) == shape[index].size());
