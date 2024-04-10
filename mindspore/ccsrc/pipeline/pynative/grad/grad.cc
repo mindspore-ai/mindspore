@@ -46,6 +46,8 @@ namespace pynative {
 namespace {
 const mindspore::HashSet<std::string> kHookOp = {"HookBackward", "CellBackwardHook"};
 const char kGrad[] = "grad";
+constexpr auto kNeedRecompute = "is_cell_recompute";
+constexpr auto kInternalParams = "internal_params";
 const size_t kContainerRatio = 2;
 
 void ParsePyArgsToInputArgsInfo(const InputArgsInfoPtr &input_args_info, const py::object &obj, const py::args &args) {
@@ -580,10 +582,9 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, false));
   } else if (input_args_info->grad_is_running && top_cell()->grad_order() != input_args_info->grad_order) {
     MS_LOG(DEBUG) << "Nested grad graph existed in custom bprop";
-    SaveInputTensorGradInfo(input_args_info);
+    parent_top_cell_ = top_cell();
     MakeNewTopGraph(input_args_info);
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, true));
-    top_cell()->set_is_ir_grad(true);
   } else if (input_args_info->is_high_order_top_cell) {
     MS_LOG(DEBUG) << "Nested grad graph existed in construct";
     SaveInputTensorGradInfo(input_args_info);
@@ -810,6 +811,7 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   op_run_info->base_op_run_info.op_name = input_args_info->custom_bprop_prim->name();
   op_run_info->op_grad_info->op_prim = input_args_info->custom_bprop_prim;
   op_run_info->op_grad_info->input_value = input_args_info->input_arg_value_vec;
+  op_run_info->op_grad_info->is_need_recompute = input_args_info->is_need_recompute;
   op_run_info->input_size = input_args_info->input_arg_value_vec.size();
   op_run_info->input_value_id = input_args_info->input_arg_id_vec;
   op_run_info->real_out = input_args_info->out_value;
@@ -828,6 +830,9 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, nullptr, InputType::kOpOutput);
   PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
   DoOpGrad(op_run_info);
+  top_cell()->GetOpInfo(op_run_info, false);
+  UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
+                                             op_run_info->base_op_run_info.stream_id);
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(
     op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_abs, op_run_info->base_op_run_info.abstract);
   (void)dynamic_shape()->CheckNodeDynamic(top_cell(), op_run_info->op_grad_info->input_value, node_info);
@@ -846,27 +851,9 @@ void GradExecutor::GetCustomBpropPrim(const py::object &obj, const py::args &arg
   MS_LOG(DEBUG) << "Get custom bprop prim";
   py::function bprop_func = py::getattr(obj, parse::CUSTOM_BPROP_NAME);
   py::object code_obj = py::getattr(bprop_func, "__code__");
-  // When the co_names is empty, we will still get a tuple which is empty.
-  auto co_names = py::getattr(code_obj, "co_names").cast<py::tuple>();
-  for (auto name : co_names) {
-    if (!py::hasattr(obj, name)) {
-      continue;
-    }
-    auto var = py::getattr(obj, name);
-    if (py::hasattr(var, "__parameter__") && py::isinstance<tensor::MetaTensor>(var)) {
-      MS_LOG(EXCEPTION) << "The user defined 'bprop' function does not support using Parameter.";
-    }
-  }
-
   py::object co_name = py::getattr(code_obj, "co_name");
   if (std::string(py::str(co_name)) == "staging_specialize") {
     MS_LOG(EXCEPTION) << "Decorating bprop with '@jit' is not supported.";
-  }
-  // Three parameters self, out and dout need to be excluded
-  const size_t inputs_num = static_cast<size_t>(py::getattr(code_obj, "co_argcount").cast<int64_t>() - 3);
-  if (inputs_num != args.size()) {
-    MS_EXCEPTION(TypeError) << "Size of bprop func inputs[" << inputs_num
-                            << "] is not equal to the size of cell inputs[" << args.size() << "]";
   }
 
   auto bprop_func_cellid = PyNativeAlgo::PyParser::GetIdByPyObj(bprop_func);
@@ -875,7 +862,21 @@ void GradExecutor::GetCustomBpropPrim(const py::object &obj, const py::args &arg
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (py::isinstance<Cell>(obj)) {
     const auto &cell_ptr = obj.cast<CellPtr>();
+    input_args_info->is_need_recompute = cell_ptr->HasAttr(kNeedRecompute);
     fake_prim->set_bprop_cls_name(cell_ptr->name());
+  }
+  if (py::hasattr(obj, kInternalParams)) {
+    py::object weights = py::getattr(obj, kInternalParams);
+    if (py::isinstance<py::tuple>(weights) || py::isinstance<py::list>(weights)) {
+      auto weights_tuple = py::cast<py::tuple>(weights);
+      for (size_t i = 0; i < weights_tuple.size(); ++i) {
+        const auto value = PyNativeAlgo::DataConvert::PyObjToValue(weights_tuple[i]);
+        auto tensor = value->cast<tensor::BaseTensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        (void)input_args_info->input_arg_value_vec.emplace_back(tensor);
+        (void)input_args_info->input_arg_id_vec.emplace_back(tensor->id());
+      }
+    }
   }
   fake_prim->AddBackwardHookFn(0, bprop_func);
 
@@ -993,6 +994,11 @@ py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::o
   } else {
     auto grads = RunBackward(grad_attr, w_args, p_args);
     top_cell()->ClearParamGradInfo();
+    // For custom nested grad, we need resume grad info when finish custom grad.
+    if (parent_top_cell_ != nullptr) {
+      ResumeParamGradInfo(parent_top_cell_);
+      parent_top_cell_ = nullptr;
+    }
     AsyncClearAutoGradCell(top_cell());
     ClearGradRes();
     return grads;
@@ -1376,6 +1382,11 @@ py::object GradExecutor::RunGradGraph() {
   MakeNestedCnode(top_input_args_info_->has_custom_bprop, top_input_args_info_->input_arg_value_vec,
                   resource->optimize_graph(), out_value);
   top_input_args_info_ = nullptr;
+  // For custom nested grad, we need resume grad info when finish custom grad.
+  if (parent_top_cell_ != nullptr) {
+    ResumeParamGradInfo(parent_top_cell_);
+    parent_top_cell_ = nullptr;
+  }
   return BaseRefToPyData(out_value);
 }
 

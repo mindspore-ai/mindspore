@@ -65,12 +65,15 @@ ValuePtrList PaddingGradientInput(const ValuePtr &grad, size_t output_size, size
   return gradients;
 }
 
-VectorRef GeneratePythonArgs(const ValuePtrList &inputs, const ValuePtr &output) {
+VectorRef GeneratePythonArgs(const ValuePtrList &inputs, const ValuePtr &output, bool is_need_recompute) {
   VectorRef args;
   for (const auto &value : inputs) {
     (void)args.emplace_back(value);
   }
-  (void)args.emplace_back(output);
+  // If we not need recompute, we save output.
+  if (!is_need_recompute) {
+    (void)args.emplace_back(output);
+  }
   return args;
 }
 
@@ -507,8 +510,9 @@ BackwardNodePtr FuncGrad::BuildCustomBackwardNode(const PrimitivePtr &prim, cons
 BackwardNodePtr FuncGrad::BuildHookBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
                                                 const OpGradInfoPtr &op_grad_info) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto bprop_cut = PyNativeAlgo::AutoGrad::BuildBpropCutPrim(prim);
-  VectorRef args = GeneratePythonArgs(op_grad_info->input_value, op_grad_info->out_value);
+  auto bprop_cut = PyNativeAlgo::AutoGrad::BuildBpropCutPrim(prim, op_grad_info->is_need_recompute);
+  VectorRef args =
+    GeneratePythonArgs(op_grad_info->input_value, op_grad_info->out_value, op_grad_info->is_need_recompute);
   auto fn = std::make_shared<HookBackwardNode>(prim->name(), bprop_cut, std::move(args), op_grad_info->output_size);
   fn->UpdateNextEdges(flatten_inputs);
   return fn;

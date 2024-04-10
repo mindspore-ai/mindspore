@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 
-from mindspore import Tensor, nn, context, Parameter
+from mindspore import Tensor, nn, context
 from mindspore import dtype as mstype
 from mindspore.ops import composite as C
 
@@ -146,38 +146,6 @@ def test_user_define_bprop_check_dtype():
     grad_net = GradNet(net)
     with pytest.raises(TypeError) as ex:
         ret = grad_net(x, sens)
-
-
-def test_user_define_bprop_check_parameter():
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.par = Parameter(Tensor(np.array([[1.1, 2.2, 3.3], [2.0, 3.0, 4.0]], dtype=np.float32)), name="par")
-            self.grad = Tensor(np.array([[1.1, 2.2, 3.3], [2.0, 3.0, 4.0]], dtype=np.float16))
-
-        def construct(self, x):
-            ret = x * 2 + self.par
-            return ret
-
-        def bprop(self, x, out, dout):
-            return dout + self.par
-
-    class GradNet(nn.Cell):
-        def __init__(self, net):
-            super(GradNet, self).__init__()
-            self.net = net
-
-        def construct(self, x, sens):
-            return grad_all_with_sens(self.net)(x, sens)
-
-    x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
-    sens = Tensor(np.array([[1.0, 2.0, 0.0], [0.0, 3.0, 4.0]], dtype=np.float32))
-    context.set_context(mode=context.PYNATIVE_MODE, check_bprop=True)
-    net = Net()
-    grad_net = GradNet(net)
-    with pytest.raises(RuntimeError) as ex:
-        ret = grad_net(x, sens)
-    assert "The user defined 'bprop' function does not support using Parameter." in str(ex.value)
 
 
 def test_user_define_bprop_check_number():

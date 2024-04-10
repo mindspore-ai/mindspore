@@ -193,30 +193,35 @@ void IrBprop::BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &p
   BuildBPropCutCNode(cnode, prim, outputs);
 }
 
-void IrBprop::BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs) {
+void IrBprop::BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs,
+                                 bool is_need_recompute) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto bprop_cut = PyNativeAlgo::AutoGrad::BuildBpropCutPrim(prim);
+  auto bprop_cut = PyNativeAlgo::AutoGrad::BuildBpropCutPrim(prim, is_need_recompute);
+
   // Create gradient outputs cnode
   AnfNodePtrList inputs{NewValueNode(bprop_cut)};
-  // Get input, get output, get dout
-  for (size_t i = 1; i < cnode->size(); ++i) {
+  for (size_t i = 1; i < cnode->size() - 2; ++i) {
     (void)inputs.emplace_back(cnode->input(i));
   }
-  auto bprop_cut_cnode = ad_param_->tape_->FuncGraph::NewCNode(inputs);
+  if (!is_need_recompute) {
+    // If not recompute, we should add out as bprop input.
+    (void)inputs.emplace_back(cnode->input(cnode->size() - 2));
+  }
+  (void)inputs.emplace_back(cnode->input(cnode->size() - 1));
 
-  size_t input_num = cnode->size() - 2;
+  auto bprop_cut_cnode = ad_param_->tape_->FuncGraph::NewCNode(inputs);
   AbstractBasePtrList abs_list;
-  for (size_t i = 1; i < cnode->size(); ++i) {
-    // bprop_cut_cnode ith input used cnode->input(i)
+  // Only add last input dout to user.
+  AddUser(cnode->input(cnode->size() - 1), bprop_cut_cnode, bprop_cut_cnode->size() - 1);
+  for (size_t i = 1; i < cnode->size() - 2; ++i) {
+    // Input may be parameter, we need add to user map.
     AddUser(cnode->input(i), bprop_cut_cnode, i);
-    if (i < input_num) {
-      auto din = ad_param_->tape_->FuncGraph::NewCNode(
-        {NewValueNode(prim::kPrimTupleGetItem), bprop_cut_cnode, NewValueNode(static_cast<int64_t>(i - 1))});
-      MS_EXCEPTION_IF_NULL(cnode->input(i)->abstract());
-      din->set_abstract(cnode->input(i)->abstract());
-      (void)abs_list.emplace_back(cnode->input(i)->abstract());
-      (void)outputs->emplace_back(din);
-    }
+    auto din = ad_param_->tape_->FuncGraph::NewCNode(
+      {NewValueNode(prim::kPrimTupleGetItem), bprop_cut_cnode, NewValueNode(static_cast<int64_t>(i - 1))});
+    MS_EXCEPTION_IF_NULL(cnode->input(i)->abstract());
+    din->set_abstract(cnode->input(i)->abstract());
+    (void)abs_list.emplace_back(cnode->input(i)->abstract());
+    (void)outputs->emplace_back(din);
   }
   bprop_cut_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
   ad_param_->tape_->set_flag(kFlagPyNativeBpropGraphWithBpropCut, true);

@@ -246,6 +246,8 @@ class GradExecutor {
   std::stack<TopCellInfoPtr> high_order_stack_;
   // Record all top cell which has been ran
   mindspore::OrderedMap<std::string, TopCellInfoPtr> already_run_top_cell_;
+  // parent top cell for custom nested grad.
+  TopCellInfoPtr parent_top_cell_;
   ForwardExecutorWeakPtr forward_executor_;
   JitPtr jit_;
   DynamicShapePtr dynamic_shape_{nullptr};

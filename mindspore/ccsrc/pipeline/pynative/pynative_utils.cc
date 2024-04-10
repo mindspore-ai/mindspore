@@ -2339,7 +2339,7 @@ CallBackFn AutoGrad::CreateGraphCallBack(const FuncGraphPtr &call_graph, const s
   return fn;
 }
 
-PrimitivePyPtr AutoGrad::BuildBpropCutPrim(const PrimitivePtr &prim) {
+PrimitivePyPtr AutoGrad::BuildBpropCutPrim(const PrimitivePtr &prim, bool is_need_recompute) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_py = prim->cast<PrimitivePyPtr>();
   MS_EXCEPTION_IF_NULL(prim_py);
@@ -2358,6 +2358,9 @@ PrimitivePyPtr AutoGrad::BuildBpropCutPrim(const PrimitivePtr &prim) {
     (void)bprop_cut->AddAttr("custom_op_bprop", MakeValue(true));
   }
   (void)bprop_cut->AddAttr("custom_op_name", MakeValue(prim->name()));
+  if (is_need_recompute) {
+    (void)bprop_cut->AddAttr("is_recompute", MakeValue(true));
+  }
   return bprop_cut;
 }
 

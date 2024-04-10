@@ -129,6 +129,7 @@ mindspore
 
     mindspore.Layout
     mindspore.parameter_broadcast
+    mindspore.recompute
     mindspore.shard
     mindspore.sync_pipeline_shared_parameters
 
