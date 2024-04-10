@@ -494,6 +494,8 @@ TypePtr GetTypeByStringStarts(const std::string &type_name) {
     {"uint", [](const std::string &type_name) -> TypePtr { return StringToNumberType<UInt>(type_name, "uint"); }},
     {"Float", [](const std::string &type_name) -> TypePtr { return StringToNumberType<Float>(type_name, "Float"); }},
     {"float", [](const std::string &type_name) -> TypePtr { return StringToNumberType<Float>(type_name, "float"); }},
+    {"BFloat", [](const std::string &type_name) -> TypePtr { return StringToNumberType<BFloat>(type_name, "BFloat"); }},
+    {"bfloat", [](const std::string &type_name) -> TypePtr { return StringToNumberType<BFloat>(type_name, "bfloat"); }},
     {"Complex", [](const std::string &tname) -> TypePtr { return StringToNumberType<Complex>(tname, "Complex"); }},
     {"complex", [](const std::string &tname) -> TypePtr { return StringToNumberType<Complex>(tname, "complex"); }},
     {"Tensor", [](const std::string &type_name) -> TypePtr { return TensorStrToType(type_name); }},
