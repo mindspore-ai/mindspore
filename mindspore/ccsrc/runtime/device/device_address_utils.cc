@@ -1214,15 +1214,23 @@ device::DeviceAddressPtr DeviceAddressUtils::ConvertContiguousDeviceAddress(
   if (is_sync) {
     // ExecuteKernelTask sync, need to wait until all tasks in queue are complete.
     runtime::OpExecutor::GetInstance().WaitAll();
+    if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
+          runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
+      MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
+    }
+    runtime::OpExecutor::GetInstance().WaitAll();
+  } else {
+    auto async_task = [device_context, old_device_address, new_device_address, stream_id]() {
+      if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
+            runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
+        MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
+      }
+    };
+
+    runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
+      std::make_shared<runtime::PassthroughDeviceTask>(async_task));
   }
 
-  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
-        runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
-    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
-  }
-  if (is_sync) {
-    runtime::OpExecutor::GetInstance().WaitAll();
-  }
   return new_device_address;
 }
 
