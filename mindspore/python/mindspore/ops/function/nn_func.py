@@ -43,7 +43,7 @@ from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple,
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
 from mindspore.ops.auto_generate.gen_ops_prim import GroupNorm
-from mindspore.ops.auto_generate.gen_ops_prim import embedding_op
+from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -5159,6 +5159,75 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     return output
 
 
+def conv_transpose2d(input, weight, bias=None, stride=1, padding=0, output_padding=0, groups=1, dilation=1):
+    r"""
+    Calculates a 2D transposed convolution, which can be regarded as Conv2d for the gradient of the input,
+    also called deconvolution (although it is not an actual deconvolution).
+
+    The input is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    where :math:`N` is batch size, :math:`C_{in}` is space dimension,
+    :math:`H_{in}, W_{in}` are the height and width of the feature layer respectively.
+
+    When Conv2d and Conv2dTranspose are initialized with the same parameters, and `pad_mode` is set to 'pad',
+    :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be paded to the height and width
+    directions of the input, they are inverses of each other in regard to the input and output shapes in this case.
+    However, when `stride` > 1, Conv2d maps multiple input shapes to the same output shape. Deconvolutional network
+    can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
+
+    Args:
+        input (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        weight (Tensor): Tensor of shape
+            :math:`(N, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})`, then the size of kernel
+            is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`.
+        bias (Tensor, optional): Bias Tensor with shape :math:`(C_{out})`.
+            When bias is ``None`` , zeros will be used. Default: ``None`` .
+        stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: ``1`` .
+        padding (Union(int, tuple[int], list[int]), optional): Implicit paddings on both sides of the input `x`.
+            Can be an integer or a tuple/list with 2 integers.
+        output_padding (Union[int, tuple[int]]): The number of padding on the height and width directions of the output.
+            The data type is an integer or a tuple of two integers. If `output_padding` is an integer,
+            then the bottom and right padding are all equal to `output_padding`. If `output_padding` is a tuple of
+            2 integers, then the bottom and right padding is equal to `output_padding[0]`, `output_padding[1]`
+            respectively.
+        groups (int, optional): Splits `input` into groups. Default: ``1`` .
+        dilation (Union(int, tuple[int]), optional): Gaps between kernel elements.The data type is int or a tuple of
+            2 integers. Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
+            there will be :math:`k - 1` pixels skipped for each sampling location. Its value must
+            be greater than or equal to 1 and bounded by the height and width of the input `x`. Default: ``1`` .
+
+    Returns:
+        Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
+        To see how different pad modes affect the output shape, please refer to
+        :class:`mindspore.nn.Conv2dTranspose` for more details.
+
+
+    Raises:
+        TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
+        TypeError: `groups` is not an int.
+        TypeError: If `bias` is not a Tensor.
+        ValueError: If  the shape of `bias` is not :math:`(C_{out})` .
+        ValueError: If `stride` or `dilation` is less than 1.
+        ValueError: If `padding` is a tuple/list whose length is not equal to 2.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.ones([1, 6, 32, 32]), mindspore.float32)
+        >>> weight = Tensor(np.ones([6, 3, 5, 5]), mindspore.float32)
+        >>> output = ops.conv_transpose2d(x, weight)
+        >>> print(output.shape)
+        (1, 3, 36, 36)
+    """
+    conv = _get_cache_prim(Convolution)(stride, padding, dilation, True, output_padding, groups)
+    return conv(input, weight, bias)
+
+
 def hardsigmoid(input):
     r"""
     Hard sigmoid activation function.
@@ -7331,6 +7400,7 @@ __all__ = [
     'conv3d_transpose',
     'conv1d',
     'conv2d',
+    'conv_transpose2d',
     'sigmoid',
     'logsigmoid',
     'relu',
