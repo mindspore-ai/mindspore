@@ -50,7 +50,7 @@ class CtrlWhile2ElifContinueInIf(Cell):
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_continue_in_if():
     '''
-    TEST_SUMMARY: test control flow, 2elif in while, continue in if
+    Description: test control flow, 2elif in while, continue in if
     use tensor get_item, set_item as condition
     Expectation: no expectation
     '''
