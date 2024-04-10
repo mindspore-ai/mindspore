@@ -44,6 +44,22 @@ void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) 
     if (AnfAlgo::IsKernelSelectBackoffOp(node)) {
       continue;
     }
+    auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(node);
+    // for runtime speed up
+    bool input_multi_graph_safe = true;
+    for (size_t i = 0; i < input_tensor_num; i++) {
+      auto input_node = node->input(i + 1);
+      MS_EXCEPTION_IF_NULL(input_node);
+      auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+      auto real_input = kernel_with_index.first;
+      // input from other graph
+      if (real_input->isa<Parameter>()) {
+        input_multi_graph_safe = false;
+      }
+    }
+    if (input_multi_graph_safe) {
+      node->AddAttr(kAttrInputMultiStreamSafe, MakeValue(true));
+    }
     if (common::AnfAlgo::IsCommunicationOp(node)) {
       AnfAlgo::SetStreamId(kWorldGroupStreamIndex, node.get());
       common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(kWorldGroupStreamIndex), node);
