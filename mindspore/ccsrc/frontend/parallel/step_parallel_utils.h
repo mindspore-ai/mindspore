@@ -108,6 +108,7 @@ TypePtr FindChildCastWithFP32ToFP16(const std::pair<AnfNodePtr, int> &res, const
 void LabelGenMaskMicro(const FuncGraphPtr &root);
 void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const std::string &backward_comm_name,
                        const std::string &param_name, int32_t fusion_id);
+void AddNodeMirrorInfo(const CNodePtr &cnode, const std::string &param_name);
 void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes);
 bool IsPynativeParallel();
 bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph);
