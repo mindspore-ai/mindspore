@@ -1005,6 +1005,7 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
         }
         MS_LOG(INFO) << "Find parameter " << param_name << " for node " << GetPrimName(node->cast<CNodePtr>())
                      << " and share the mirror.";
+        AddNodeMirrorInfo(node->cast<CNodePtr>(), param_name);
         continue;
       }
     }
@@ -1290,6 +1291,9 @@ void InsertParallelOpt(const FuncGraphPtr &root, const AnfNodePtr &parameter, co
         auto next_cnode = FindCNode(parameter, op_name, cnode->func_graph(), 0);
         if (next_cnode.first) {
           manager->SetEdge(cnode, param_pair.second, next_cnode.second);
+          auto param_ptr = parameter->cast<ParameterPtr>();
+          MS_EXCEPTION_IF_NULL(param_ptr);
+          AddNodeMirrorInfo(cnode, param_ptr->name());
           MS_LOG(INFO) << "Parallel optimizer is shared between " << parameter->ToString() << " and "
                        << GetPrimName(cnode);
         } else {
