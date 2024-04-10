@@ -1515,7 +1515,7 @@ Status ShardReader::ConsumerOneTask(int64_t task_id, uint32_t consumer_id,
   // read the blob from data file
   std::shared_ptr<Page> page_ptr;
   RETURN_IF_NOT_OK_MR(shard_header_->GetPageByGroupId(group_id, shard_id, &page_ptr));
-  MS_LOG(DEBUG) << "[Internal ERROR] Success to get page by group id: " << group_id;
+  MS_LOG(DEBUG) << "Success to get page by group id: " << group_id;
 
   // Pack image list
   std::vector<uint8_t> images(blob_end - blob_start);
@@ -1702,12 +1702,12 @@ void ShardReader::ShuffleTask() {
     if (std::dynamic_pointer_cast<ShardShuffle>(op) && has_sharding == false) {
       auto s = (*op)(tasks_);
       if (s.IsError()) {
-        MS_LOG(WARNING) << "[Internal ERROR] Failed to redo randomSampler in new epoch.";
+        MS_LOG(WARNING) << "Failed to redo randomSampler in new epoch.";
       }
     } else if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
       auto s = (*op)(tasks_);
       if (s.IsError()) {
-        MS_LOG(WARNING) << "[Internal ERROR] Failed to redo distributeSampler in new epoch.";
+        MS_LOG(WARNING) << "Failed to redo distributeSampler in new epoch.";
       }
     }
   }

@@ -24,7 +24,8 @@ namespace mindspore {
 namespace dataset {
 class MDChannelInfo {
  public:
-  explicit MDChannelInfo(std::string channel_name) : channel_name_(channel_name), preprocess_batch_(0) {}
+  explicit MDChannelInfo(std::string channel_name)
+      : channel_name_(channel_name), preprocess_batch_(0), push_first_start_time_("-1"), push_first_end_time_("-1") {}
 
   ~MDChannelInfo() = default;
 
@@ -34,7 +35,13 @@ class MDChannelInfo {
 
   Status RecordBatchQueue(int64_t batch_queue_size);
 
+  Status RecordDeviceQueue(int64_t device_queue_size);
+
   Status RecordPreprocessBatch(int64_t preprocess_batch);
+
+  Status RecordPushFirstStartTime();
+
+  Status RecordPushFirstEndTime();
 
   Status RecordPushStartTime();
 
@@ -43,10 +50,12 @@ class MDChannelInfo {
  private:
   std::string channel_name_;
   std::deque<int64_t> batch_queue_;
+  std::deque<int32_t> device_queue_;
   int64_t preprocess_batch_;
+  std::string push_first_start_time_;  // record the push start time for first batch
+  std::string push_first_end_time_;    // record the push end time for first batch
   std::deque<std::string> push_start_time_;
   std::deque<std::string> push_end_time_;
-  std::mutex mutex_;
 };
 }  // namespace dataset
 }  // namespace mindspore
