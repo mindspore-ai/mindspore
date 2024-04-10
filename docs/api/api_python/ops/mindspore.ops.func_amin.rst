@@ -18,7 +18,7 @@ mindspore.ops.amin
         - **where** (Tensor[bool], 可选) - 表示是否需要将 `input` 中的原始值替换为 `initial` 值的Tensor。若为 ``True`` 则不替换，若为 ``False`` 则替换。 `where` 中为 ``False`` 的位置，必须提供对应的 `initial` 值。默认值： ``None`` ，表示 ``True`` 。
 
     返回：
-        Tensor。
+        Tensor，和输入Tensor数据类型一致。
 
         - 如果 `axis` 为 ``None`` ，且 `keepdims` 为 ``False`` ，则输出一个零维Tensor，表示输入Tensor中所有元素的最小值。
         - 如果 `axis` 为int，取值为1，并且 `keepdims` 为 ``False`` ，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。

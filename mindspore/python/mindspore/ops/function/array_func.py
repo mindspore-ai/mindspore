@@ -5074,7 +5074,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         TypeError: If `input` is not Tensor.
         TypeError: If `keepdims` is not a bool.
         TypeError: If `axis` is not an int.
-        TypeError: If `initial` is not a number.
+        TypeError: If `initial` is not a scalar.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
