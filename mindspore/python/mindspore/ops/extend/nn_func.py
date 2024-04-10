@@ -163,7 +163,6 @@ def conv2d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
         ValueError: If `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `padding` is a tuple/list whose length is not equal to 2.
-        ValueError: If `pad_mode` is not equal to 'pad' and `padding` is greater than 0.
 
     Supported Platforms:
         ``Ascend``

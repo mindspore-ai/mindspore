@@ -19,7 +19,7 @@ convolution_grad:
       dtype: tuple[int]
       default: 0
       prim_init: True
-      arg_handler: to_paddings
+      arg_handler: to_2d_paddings
     dilation:
       dtype: tuple[int]
       default: 1

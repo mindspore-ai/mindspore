@@ -515,6 +515,7 @@ from .nn_func import (
     conv3d_transpose,
     conv1d,
     conv2d,
+    conv_transpose2d,
     sigmoid,
     logsigmoid,
     relu,
