@@ -15,7 +15,6 @@
 """Parse ast.Assign in construct function to node of SymbolTree."""
 from typing import Union, List, Dict
 import types
-import os
 import ast
 import sys
 import inspect
@@ -32,7 +31,7 @@ from ..node import Node, TreeNode, NodeManager, CallFunction, CellContainer, Con
 from ..api.scoped_value import ScopedValue
 from ..ast_helpers import AstFlattener, AstConverter, AstFinder
 from ..common.error_log import error_str
-from ..common.namespace import is_subtree, is_ms_function, is_third_party
+from ..common.namespace import is_subtree, is_ms_function, is_third_party, normalize_path
 from ..common.namer import FunctionNamer
 
 
@@ -169,10 +168,10 @@ class AssignParser(Parser):
         """Get module where the node manager is located"""
         # get module where function object is used
         func_path = AssignParser._get_path_of_node_manager(node_manager)
-        func_path = os.path.normcase(os.path.normpath(func_path))
+        func_path = normalize_path(func_path)
         modules = list(sys.modules.values())
         for m in modules:
-            if hasattr(m, "__file__") and m.__file__ is not None and func_path == os.path.normcase(m.__file__):
+            if hasattr(m, "__file__") and m.__file__ is not None and func_path == normalize_path(m.__file__):
                 return m, func_path
         return None, func_path
 

@@ -48,6 +48,24 @@ def is_subtree(cls_inst):
     return True
 
 
+def normalize_path(file_path):
+    "Normalize file path"
+    file_path = os.path.normcase(file_path)
+    file_path = os.path.normpath(file_path)
+    return file_path
+
+
+def is_ms_file(file_path):
+    "Determine whether 'file_path' is a mindspore file."
+    ms_module = sys.modules.get('mindspore')
+    if ms_module is None:
+        return False
+    ms_path = ms_module.__file__
+    ms_path = normalize_path(ms_path)
+    ms_path = ms_path.rsplit(os.path.sep, 1)[0]
+    return file_path.startswith(ms_path)
+
+
 def is_ms_function(func_obj):
     """Determine whether 'func_obj' is a mindspore function."""
     if isinstance(func_obj, types.BuiltinFunctionType):
@@ -57,14 +75,8 @@ def is_ms_function(func_obj):
         func_file = inspect.getabsfile(func_obj)
     except TypeError:
         return False
-    func_file = os.path.normcase(func_file)
-    ms_module = sys.modules.get('mindspore')
-    if ms_module is None:
-        return False
-    ms_path = ms_module.__file__
-    ms_path = os.path.normcase(ms_path)
-    ms_path = ms_path.rsplit(os.path.sep, 1)[0]
-    return func_file.startswith(ms_path)
+    func_file = normalize_path(func_file)
+    return is_ms_file(func_file)
 
 
 def is_functional(func_name):
