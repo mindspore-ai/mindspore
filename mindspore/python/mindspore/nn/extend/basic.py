@@ -18,6 +18,7 @@ from __future__ import absolute_import
 
 import math
 
+import mindspore.common.dtype as mstype
 from mindspore import _checkparam as Validator
 from mindspore._extends import cell_attr_register
 from mindspore.common.initializer import initializer, HeUniform, Uniform
@@ -52,6 +53,7 @@ class Linear(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as `x`. The values of str refer to the function `initializer`. Default: ``None`` ,
             bias will be initialized using Uniform.
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``None`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_features)`. The `in_features` in `Args` should be equal
@@ -89,7 +91,8 @@ class Linear(Cell):
                  out_features,
                  bias=True,
                  weight_init=None,
-                 bias_init=None):
+                 bias_init=None,
+                 dtype=None):
         """Initialize Linear."""
         super(Linear, self).__init__()
         self.in_features = Validator.check_positive_int(
@@ -99,6 +102,8 @@ class Linear(Cell):
         self.has_bias = Validator.check_bool(
             bias, "has_bias", self.cls_name)
         self.dense = P.Dense()
+        if dtype is None:
+            dtype = mstype.float32
         if isinstance(weight_init, Tensor):
             if weight_init.ndim != 2 or weight_init.shape[0] != out_features or \
                     weight_init.shape[1] != in_features:
@@ -109,7 +114,7 @@ class Linear(Cell):
         if weight_init is None:
             weight_init = HeUniform(math.sqrt(5))
         self.weight = Parameter(initializer(
-            weight_init, [out_features, in_features]), name="weight")
+            weight_init, [out_features, in_features], dtype=dtype), name="weight")
 
         self.bias = None
         if self.has_bias:
@@ -122,7 +127,7 @@ class Linear(Cell):
                 bound = 1 / math.sqrt(in_features)
                 bias_init = Uniform(scale=bound)
             self.bias = Parameter(initializer(
-                bias_init, [out_features]), name="bias")
+                bias_init, [out_features], dtype=dtype), name="bias")
 
     def construct(self, x):
         x = self.dense(x, self.weight, self.bias)
