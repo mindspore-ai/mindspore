@@ -14,7 +14,7 @@ mindspore.ops.prod
         - **keep_dims** (bool) - 如果为 ``True`` ，则保留缩小的维度，大小为1。否则移除维度。默认值： ``False`` 。
 
     返回：
-        Tensor。
+        Tensor，和输入Tensor数据类型一致。
 
         - 如果 `axis` 为 ``None`` ，且 `keep_dims` 为 ``False`` ，则输出一个零维Tensor，表示输入Tensor中所有元素的乘积。
         - 如果 `axis` 为int，取值为1，并且 `keep_dims` 为 ``False`` ，则输出的shape为 :math:`(input_0, input_2, ..., input_R)` 。

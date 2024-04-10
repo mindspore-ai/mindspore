@@ -3023,9 +3023,6 @@ def le(input, other):
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
-    Raises:
-        NA.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3160,6 +3157,7 @@ def eq(input, other):
 
     Note:
         - `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+        - The inputs must be two Tensors, or one Tensor and one Scalar.
         - The shapes of the inputs can be broadcasted to each other.
 
     Args:
@@ -3388,7 +3386,7 @@ def isreal(input):
         input (Tensor): The input tensor.
 
     Returns:
-       Tensor, true where `input` is real number, false otherwise.
+       Tensor, ``true`` where `input` is real number, ``false`` otherwise.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -3602,6 +3600,7 @@ def median(input, axis=-1, keepdims=False):
     Args:
         input (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
         axis (int, optional): The dimension need to reduce. Default: ``-1`` .
+            The value range is [-dims, dims - 1], where `dims` is the dimension length of `input`.
         keepdims (bool, optional): Whether the output tensor need to retain `axis` dimension or not.
             Default: ``False`` .
 
@@ -3615,7 +3614,7 @@ def median(input, axis=-1, keepdims=False):
     Raises:
         TypeError: If dtype of `input` is not one of the following: int16, int32, int64, float32, float64.
         TypeError: If input `input` is not a Tensor.
-        TypeError: If `axis` is not a int.
+        TypeError: If `axis` is not an int.
         TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
 
@@ -5720,7 +5719,7 @@ def tril_indices(row, col, offset=0, *, dtype=mstype.int64):
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: ``mstype.int64`` .
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: ``mstype.int64`` .
 
     Returns:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type is specified by `dtype`.
@@ -6563,12 +6562,12 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
         Tensor, has the same data type as input tensor.
 
         - If `axis` is ``None`` , and `keepdims` is ``False`` , the output is a 0-D tensor representing the product of
-            all elements in the input tensor.
+          all elements in the input tensor.
         - If `axis` is int, set as 1, and `keepdims` is ``False`` , the shape of output is :math:`(x_0, x_2, ..., x_R)`.
         - If `axis` is tuple(int), set as (1, 2), and `keepdims` is ``False`` , the shape of output is
-            :math:`(x_0, x_3, ..., x_R)`.
+          :math:`(x_0, x_3, ..., x_R)`.
         - If `axis` is 1-D Tensor, set as [1, 2], and `keepdims` is ``False`` , the shape of output is
-            :math:`(x_0, x_3, ..., x_R)`.
+          :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -8291,7 +8290,7 @@ def xdivy(x, y):
 
     Raises:
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64, complex64, complex128, bool].
+        TypeError: If dtype of `x` and `y` is not in [float16, float32, float64, complex64, complex128, bool].
         ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
         RuntimeError: If the data type of `x`, `y` conversion of Parameter is given
                       but data type conversion of Parameter is not supported.
@@ -8602,7 +8601,7 @@ def remainder(input, other):
 
     Raises:
         TypeError: If neither `input` nor `other` is one of the following: Tensor, number, bool.
-        ValueError: If the shape `input` and `other` cannot be broadcasted to each other.
+        ValueError: If the shape of `input` and `other` cannot be broadcasted to each other.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8862,7 +8861,7 @@ def trapz(y, x=None, *, dx=1.0, dim=-1):
         TypeError: If `y` is not a Tensor.
         TypeError: If `x` is not None and is not a Tensor.
         TypeError: If `dx` is not a float number.
-        TypeError: If `dim` is not a Integer.
+        TypeError: If `dim` is not an integer.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -9533,7 +9532,7 @@ def isposinf(input):
         input (Tensor): Input values.
 
     Returns:
-       Tensor, true where `input` is positive infinity, false otherwise.
+       Tensor, ``true`` where `input` is positive infinity, ``false`` otherwise.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -9561,7 +9560,7 @@ def isneginf(input):
         input (Tensor): Input Tensor.
 
     Returns:
-       Tensor, true where `input` is negative infinity, false otherwise.
+       Tensor, ``true`` where `input` is negative infinity, ``false`` otherwise.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -9944,7 +9943,7 @@ def zeta(input, other):
             Represented as :math:`q` in the formula.
 
     Returns:
-        Tensor, The result of Hurwitz zeta function.
+        Tensor, the result of Hurwitz zeta function.
 
     Raises:
         TypeError: If neither `input` nor `other` is not tensor.
