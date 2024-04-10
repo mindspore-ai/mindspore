@@ -79,6 +79,30 @@ def to_dilations(op_name, arg_name, dilation):
     raise ValueError(arg_invalid_info(op_name, arg_name, dilation))
 
 
+def to_output_padding(op_name, arg_name, output_padding):
+    """
+    convert output_padding: int/tuple[int*4] -> tuple[int*2].
+    """
+    if isinstance(output_padding, int):
+        return (output_padding, output_padding)
+    if isinstance(output_padding, (tuple, list)):
+        if len(output_padding) == 4:
+            return (output_padding[2], output_padding[3])
+        return output_padding
+    raise ValueError(arg_invalid_info(op_name, arg_name, output_padding))
+
+
+def to_2d_paddings(op_name, arg_name, pad):
+    """
+    convert paddings: int -> tuple[int*2].
+    """
+    if isinstance(pad, int):
+        return (pad,) * 2
+    if isinstance(pad, (tuple, list)):
+        return pad
+    raise ValueError(arg_invalid_info(op_name, arg_name, pad))
+
+
 def to_paddings(op_name, arg_name, pad):
     """
     convert paddings: int -> tuple[int*4].

@@ -238,6 +238,39 @@ REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {dx, dw};
 });
 
+REG_BPROP_BUILDER("Convolution").SetUnusedInputs({i9}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto w = ib->GetInput(kIndex1);
+  auto bias = ib->GetInput(kIndex2);
+  auto pad_value = ib->GetInput(kIndex3);
+  auto stride_value = ib->GetInput(kIndex4);
+  auto dilation_value = ib->GetInput(kIndex5);
+  auto transposed_value = ib->GetInput(kIndex6);
+  auto output_padding_value = ib->GetInput(kIndex7);
+  auto group_value = ib->GetInput(kIndex8);
+
+  auto bias_type = bias->abstract()->BuildType();
+  bool bias_mask = bias_type->isa<TypeNone>() ? false : bias->need_compute_grad_out();
+  std::vector<int64_t> output_mask_vec = {x->need_compute_grad_out(), w->need_compute_grad_out(), bias_mask};
+  auto output_mask = ib->EmitValue(MakeValue(output_mask_vec));
+
+  auto conv2d_grad_out =
+    ib->Emit(kConvolutionGradOpName, {ib->GetInput(kIndex10), x, w, bias, pad_value, stride_value, dilation_value,
+                                      transposed_value, output_padding_value, group_value, output_mask});
+  auto dx = ib->TupleGetItem(conv2d_grad_out, 0);
+  auto dw = ib->TupleGetItem(conv2d_grad_out, 1);
+  auto dbias = ib->TupleGetItem(conv2d_grad_out, 2);
+  return {dx,
+          dw,
+          dbias,
+          ib->OutZeros(pad_value),
+          ib->OutZeros(stride_value),
+          ib->OutZeros(dilation_value),
+          ib->OutZeros(transposed_value),
+          ib->OutZeros(output_padding_value),
+          ib->OutZeros(group_value)};
+});
+
 REG_BPROP_BUILDER("MaxPool").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
@@ -2169,6 +2202,34 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogitsV2").SetUnusedInputs({i1})
     grad = grad + (ib->TupleGetItem(dout, 1) - ib->Squeeze(matmul_tmp, MakeValue(ShapeVector{1}))) * softmax;
   }
   return {grad, ib->OutZeros(labels)};
+});
+
+REG_BPROP_BUILDER("ConstantPadNd").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto paddings = ib->GetInput(kIndex1);
+  bool has_constant_values = ib->GetInputs().size() == kDim5;
+  auto dout = has_constant_values ? ib->GetInput(kIndex4) : ib->GetInput(kIndex3);
+  NodePtr neg_pad;
+
+  MS_EXCEPTION_IF_NULL(paddings);
+  auto pad_opt = ops::GetArrayValue<int64_t>(paddings->BuildValue());
+  if (pad_opt.has_value()) {
+    auto pad_value = pad_opt.value().ToVector();
+    (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
+    neg_pad = ib->Value<ShapeVector>(pad_value);
+  } else {
+    auto pad_tensor = ib->SequenceToTensor(paddings);
+    auto neg_pad_tensor = ib->Emit("Neg", {pad_tensor});
+    neg_pad = ib->TensorToTuple(neg_pad_tensor);
+  }
+
+  auto constant_values = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("ConstantPadNd", {dout, neg_pad, ib->ZerosLike(constant_values)});
+  if (has_constant_values) {
+    auto constant_values = ib->GetInput(kIndex2);
+    return {dx, ib->OutZeros(paddings), ib->OutZeros(constant_values)};
+  } else {
+    return {dx, ib->OutZeros(paddings)};
+  }
 });
 
 REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {

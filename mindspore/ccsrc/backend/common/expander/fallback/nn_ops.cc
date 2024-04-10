@@ -17,6 +17,7 @@
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
+#include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 #include "ops/auto_generate/gen_ops_name.h"
 #include "ops/renorm.h"
@@ -280,6 +281,40 @@ REG_FALLBACK_BUILDER("Zeros").SetBody(BODYFUNC(ib) {
   auto out_type = TypeIdToType(static_cast<TypeId>(dtype_val));
   auto value = ib->Tensor(0, out_type);
   auto out = ib->Emit("FillV2", {size, value});
+  return {out};
+});
+
+NodePtr PaddingTupleToTensor(NodePtr paddings, FallbackIRBuilder *ib) {
+  auto padding_value = paddings->BuildValue();
+  auto padding_vec = CheckAndConvertUtils::CheckIntOrTupleInt("padding", padding_value, "pad");
+  auto padding_tensor = ib->Tensor(padding_vec);
+  return padding_tensor;
+}
+
+bool IsInputNeedExpand(NodePtr paddingsTensor, NodePtr inputTensor) {
+  auto padding_shape = paddingsTensor->shape();
+  auto input_x_shape = inputTensor->shape();
+  return ((padding_shape[0] / 2) + 1) == SizeToInt(input_x_shape.size());
+}
+
+REG_FALLBACK_BUILDER("ConstantPadNd").SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto padding = ib->GetInput(kIndex1);
+  auto value = ib->GetInput(kIndex2);
+  auto value_tensor = ib->ScalarToTensor(value);
+  if (value->dtype() != input_x->dtype()) {
+    value_tensor = ib->Cast(value_tensor, input_x->dtype());
+  }
+  auto padding_tensor = PaddingTupleToTensor(padding, ib);
+  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
+  if (is_expand) {
+    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
+  }
+  auto out = ib->Emit("PadV3", {input_x, padding_tensor, value_tensor},
+                      {{"mode", MakeValue<string>("constant")}, {"paddings_contiguous", MakeValue(true)}});
+  if (is_expand) {
+    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
+  }
   return {out};
 });
 

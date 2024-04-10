@@ -41,6 +41,10 @@ from .math_func import (
     sub
 )
 
+from .nn_func import (
+    conv2d
+)
+
 __all__ = []
 __all__.extend(array_func.__all__)
 __all__.extend(math_func.__all__)
