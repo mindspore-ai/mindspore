@@ -1,7 +1,7 @@
 mindspore.nn.extend.Linear
 ==========================
 
-.. py:class:: mindspore.nn.extend.Linear(in_features, out_features, bias=True, weight_init=None, bias_init=None)
+.. py:class:: mindspore.nn.extend.Linear(in_features, out_features, bias=True, weight_init=None, bias_init=None, dtype=None)
 
     全连接层。
 
@@ -18,6 +18,7 @@ mindspore.nn.extend.Linear
         - **bias** (bool) - 是否使用偏置向量 :math:`\text{bias}` 。默认值： ``True`` 。
         - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 `initializer`。默认值： ``None`` ，权重使用HeUniform初始化。
         - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 `initializer`。默认值： ``None`` ，偏差使用Uniform初始化。
+        - **dtype** (:class:`mindspore.dtype`) - Parameter的数据类型。默认值： ``None`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(*, in\_features)` 的Tensor。参数中的 `in_features` 应等于输入中的 :math:`in\_features` 。
