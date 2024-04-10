@@ -1,0 +1,19 @@
+approvers:
+- hbhu_bin
+- yangzhenzhang
+- liuchongming74
+- chenfei52
+- jpc_chenjianping
+- hwcaifubi
+- luoyang42
+- changzherui
+- dayschan
+- david-he91
+- fangzehua
+- zyli2020
+- nicholas_yhr
+- fengyixing
+- lllrt
+
+options:
+    no_parent_owners: true
