@@ -173,6 +173,11 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode, bool is_proto)
     MS_LOG(DEBUG) << "Not find infer function GetValueDependArgIndices, prim name: " << prim_name;
     // if not found in infer, consider all the non-tensor inputs as value depend args.
     ori = ops::GetInputDependValueList(primitive);
+    if (prim_name == ops::kNameAvgPoolGrad && primitive->HasAttr(ops::kAttrValueDepend)) {
+      auto value_depend_vector = GetValue<std::vector<int64_t>>(primitive->GetAttr(ops::kAttrValueDepend));
+      ori.clear();
+      ori.insert(value_depend_vector.begin(), value_depend_vector.end());
+    }
   }
   if (ori.empty()) {
     return ori;
