@@ -2094,6 +2094,8 @@ class HorizontalFlip(ImageTensorOperation):
     """
     Flip the input image horizontally.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Raises:
         RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
@@ -2135,7 +2137,8 @@ class HorizontalFlip(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is Ascend, input shape should be limited from [4, 6] to [8192, 4096].
+        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -3016,6 +3019,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
     """
     Apply perspective transformation on input image.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         start_points (Sequence[Sequence[int, int]]): Sequence of the starting point coordinates, containing four
             two-element subsequences, corresponding to [top-left, top-right, bottom-right, bottom-left] of the
@@ -3084,7 +3089,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is Ascend, input shape should be limited from [6, 10] to [8192, 4096].
+        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1 and 3.
+          The input data has a height limit of [6, 8192] and a width limit of [10, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -5694,6 +5700,8 @@ class ResizedCrop(ImageTensorOperation):
     """
     Crop the input image at a specific region and resize it to desired size.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         top (int): Horizontal ordinate of the upper left corner of the crop region.
         left (int): Vertical ordinate of the upper left corner of the crop region.
@@ -5769,7 +5777,8 @@ class ResizedCrop(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is Ascend, input/output shape should be limited from [4, 6] to [32768, 32768].
+        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1 and 3.
+          The input data has a height limit of [4, 32768] and a width limit of [6, 32768].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -6657,6 +6666,8 @@ class VerticalFlip(ImageTensorOperation):
     """
     Flip the input image vertically.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Raises:
         RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
@@ -6698,7 +6709,8 @@ class VerticalFlip(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is Ascend, input shape should be limited from [4, 6] to [8192, 4096].
+        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
