@@ -64,6 +64,7 @@ else()
     set(SRC_IN_910B ${SRC_IN_910B}
         "internal/internal_kernel_build.cc"
     )
+    list(REMOVE_ITEM SRC_IN_910B "hccl/hcom_matmul_all_reduce.cc")
 endif()
 list(REMOVE_ITEM SRC_IN_910B ${AICPU_OPS_SRC})
 
