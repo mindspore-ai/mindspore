@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_UTILS_INFO_H_
 
 #include <string>
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -199,17 +200,17 @@ class MS_CORE_API DebugInfo {
   /// \brief Get the id.
   ///
   /// \return The id of the debug info.
-  int64_t get_id() const;
+  size_t get_id() const;
 
   /// \brief Get the unique id.
   ///
   /// \return The unique id.
-  int64_t unique_id() const { return unique_id_; }
+  size_t unique_id() const { return unique_id_; }
 
   /// \brief Get the unique id through copy.
   ///
   /// \return The unique id through copy.
-  int64_t unique_id_through_copy() const;
+  size_t unique_id_through_copy() const;
 
   /// \brief Set the trace info.
   ///
@@ -253,14 +254,14 @@ class MS_CORE_API DebugInfo {
   static DebugInfoPtr UpdateInlineCNodeDebugInfo(const DebugInfoPtr &call_debug_info, const DebugInfoPtr &debug_info);
 
  protected:
-  static int64_t gen_unique_id() {
-    static int64_t cur_unique_id = 0;
+  static size_t gen_unique_id() {
+    static size_t cur_unique_id = 0;
     return cur_unique_id++;
   }
 
-  mutable int64_t id_ = 0;
-  int64_t unique_id_;
-  int64_t through_copy_unique_id_{-1};
+  mutable size_t id_ = 0;
+  size_t unique_id_;
+  size_t through_copy_unique_id_{std::numeric_limits<size_t>::max()};
   TraceInfoPtr trace_info_;
   LocationPtr location_;
   std::string name_;
