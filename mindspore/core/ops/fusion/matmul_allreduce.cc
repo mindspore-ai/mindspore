@@ -40,6 +40,6 @@ bool MatMulAllReduce::get_transpose_b() const {
 }
 
 MIND_API_OPERATOR_IMPL(MatMulAllReduce, BaseOperator);
-REGISTER_PRIMITIVE_C(kMatMulAllReduce, MatMulAllReduce);
+// REGISTER_PRIMITIVE_OP_INFER_IMPL(MatMulAllReduce, prim::kPrimMatMulAllReduce, MatMulInfer, false);
 }  // namespace ops
 }  // namespace mindspore
