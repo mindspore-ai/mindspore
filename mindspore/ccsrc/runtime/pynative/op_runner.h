@@ -55,7 +55,7 @@ class OpRunner {
 class DynamicOpRunner {
  public:
   static void UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compiler_info,
-                                       const std::vector<tensor::BaseTensorPtr> &input_tensors);
+                                       const std::vector<tensor::BaseTensorPtr> &input_tensors, bool is_sync);
   static void RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                const OpCompilerInfoPtr &op_compiler_info,
                                const std::vector<tensor::BaseTensorPtr> &input_tensors);
