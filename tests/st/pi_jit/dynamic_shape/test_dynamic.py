@@ -1,3 +1,4 @@
+from mindspore._c_expression import update_pijit_default_config
 from mindspore.nn import Cell
 from mindspore import ops
 from mindspore import context, jit
@@ -5,7 +6,6 @@ from mindspore.common import dtype
 from mindspore.common import Tensor
 import numpy as np
 import pytest
-from mindspore._c_expression import update_pijit_default_config
 
 update_pijit_default_config(print_after_all=True)
 class DynamicFactory:
