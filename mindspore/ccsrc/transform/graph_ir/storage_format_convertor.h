@@ -21,11 +21,8 @@
 #include <string>
 #include "include/transform/graph_ir/types.h"
 #include "include/common/utils/utils.h"
-#include "ir/manager.h"
 
 namespace mindspore::transform {
-extern AnfNodePtr GetMomentumVarByAccum(const AnfNodePtr &node, const NodeUsersMap &node_users);
-
 class StorageFormatConvertor {
  public:
   static bool SetupStorageFormat(const AnfGraphPtr &anf_graph, const AnfNodePtr &param,

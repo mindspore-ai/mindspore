@@ -22,7 +22,6 @@
 #include <memory>
 #include <string>
 #include "graph/types.h"
-#include "ops/conv_pool_ops.h"
 #include "transform/graph_ir/storage_format_config_factory.h"
 #include "ir/func_graph.h"
 #include "include/common/utils/anfalgo.h"
@@ -31,49 +30,21 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "ops/framework_op_name.h"
 #include "ops/framework_ops.h"
-#include "ops/nn_optimizer_ops.h"
 
 namespace mindspore::transform {
 namespace {
-AnfNodePtr GetUsedOperator(const AnfNodePtr &node, const NodeUsersMap &node_users, const PrimitivePtr &prim) {
-  auto iter = node_users.find(node);
-  if (iter != node_users.end()) {
-    for (const auto &node_user : iter->second) {
-      if (common::AnfAlgo::GetCNodeName(node_user.first) == prim->name()) {
-        return node_user.first;
-      }
-    }
-  }
-  return nullptr;
-}
-
-bool IsUsedByConv2D(const AnfNodePtr &node, const NodeUsersMap &node_users) {
-  auto load = GetUsedOperator(node, node_users, prim::kPrimLoad);
-  if (load == nullptr) {
-    return false;
-  }
-  if (GetUsedOperator(load, node_users, prim::kPrimConv2D) != nullptr) {
-    return true;
-  }
-  auto cast = GetUsedOperator(load, node_users, prim::kPrimCast);
-  if (cast == nullptr) {
-    return false;
-  }
-  return GetUsedOperator(cast, node_users, prim::kPrimConv2D) != nullptr;
-}
-
-bool IsUsedBySwitch(const AnfNodePtr &node, const NodeUsersMap &node_users) {
+bool IsUsedBySwitchOp(const AnfNodePtr &node, const NodeUsersMap &node_users) {
   if (common::AnfAlgo::GetCNodeName(node) != prim::kPrimPartial->name()) {
     return false;
   }
 
-  if (GetUsedOperator(node, node_users, prim::kPrimSwitch) != nullptr) {
-    return true;
-  }
-
-  auto make_tuple = GetUsedOperator(node, node_users, prim::kPrimMakeTuple);
-  if (make_tuple != nullptr && GetUsedOperator(make_tuple, node_users, prim::kPrimSwitchLayer) != nullptr) {
-    return true;
+  auto iter = node_users.find(node);
+  if (iter != node_users.end()) {
+    for (const auto &partial_user : iter->second) {
+      if (common::AnfAlgo::GetCNodeName(partial_user.first) == prim::kPrimSwitch->name()) {
+        return true;
+      }
+    }
   }
 
   return false;
@@ -93,10 +64,8 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipVirtualNode(const Func
   while (!anf_queue.empty()) {
     auto queue_front = anf_queue.front();
     anf_queue.pop();
-    // NOTE fix: do not support trans from NC1HWC0 to ND between parameter and Switch-op/switch_layer-op
-    auto momentum_var = GetMomentumVarByAccum(node, node_users_map);
-    if (IsUsedBySwitch(queue_front.first, node_users_map) && (momentum_var != nullptr) &&
-        !IsUsedByConv2D(momentum_var, node_users_map)) {
+    // NOTE fix: do not support trans from NC1HWC0 to ND between parameter and Switch-op
+    if (IsUsedBySwitchOp(queue_front.first, node_users_map)) {
       return {};
     }
     std::string op_name = common::AnfAlgo::GetCNodeName(queue_front.first);
@@ -115,41 +84,6 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipVirtualNode(const Func
   return res;
 }
 }  // namespace
-
-AnfNodePtr GetMomentumVarByAccum(const AnfNodePtr &node, const NodeUsersMap &node_users) {
-  auto param = node->cast<ParameterPtr>();
-  if (param == nullptr) {
-    return nullptr;
-  }
-
-  auto iter = node_users.find(node);
-  if (iter == node_users.end()) {
-    return nullptr;
-  }
-
-  for (const auto &param_user : iter->second) {
-    auto cnode = param_user.first->cast<CNodePtr>();
-    if (cnode == nullptr) {
-      continue;
-    }
-
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    if (prim == nullptr || prim->name() != prim::kPrimApplyMomentum->name()) {
-      continue;
-    }
-
-    auto accum = cnode->input(2)->cast<ParameterPtr>();
-    if (accum == nullptr) {
-      continue;
-    }
-
-    if (accum->name() == param->name()) {
-      return cnode->input(1);
-    }
-  }
-
-  return nullptr;
-}
 
 bool StorageFormatConvertor::SetupStorageFormat(const AnfGraphPtr &anf_graph, const AnfNodePtr &param,
                                                 const std::shared_ptr<GeTensorDesc> &desc,

@@ -17,8 +17,12 @@
 #include "transform/graph_ir/convert.h"
 
 #include <algorithm>
+#include <cinttypes>
+#include <functional>
+#include <limits>
+#include <stack>
 #include <unordered_set>
-#include <vector>
+#include <queue>
 
 #include "op_proto/inc/array_ops.h"
 #include "op_proto/inc/data_flow_ops.h"
@@ -392,27 +396,6 @@ void SetXDataIndex(const OperatorPtr &op, T idx) {
   MS_EXCEPTION_IF_NULL(op);
   op->SetAttr(kTypeIndex, static_cast<int64_t>(idx));
 }
-
-bool ParamCompare(const std::string &l, const std::string &r, const mindspore::HashMap<std::string, AnfNodePtr> &params,
-                  const NodeUsersMap &node_users) {
-  auto lpram_iter = params.find(l);
-  auto rpram_iter = params.find(r);
-  if (lpram_iter == params.end() && rpram_iter == params.end()) {
-    return l.compare(r) < 0;
-  } else if (lpram_iter == params.end()) {
-    return true;
-  } else if (rpram_iter == params.end()) {
-    return false;
-  }
-
-  bool lused_as_accum = (GetMomentumVarByAccum(lpram_iter->second, node_users) != nullptr);
-  bool rused_as_accum = (GetMomentumVarByAccum(rpram_iter->second, node_users) != nullptr);
-  if (lused_as_accum ^ rused_as_accum) {
-    return rused_as_accum;
-  }
-
-  return l.compare(r) < 0;
-}
 }  // namespace
 
 DfGraphPtr GenExampleGraph(const std::string &name) {
@@ -738,12 +721,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   MS_EXCEPTION_IF_NULL(graph_manager_);
   auto &infer_need_update_parameter_names =
     Singleton<mindspore::device::ascend::InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
-  // The format of Momentum's accum is updated according to format of Momentum's var, so here sort tensors to put
-  // Momentum's accum parameter at last
-  auto cmp = std::bind(ParamCompare, std::placeholders::_1, std::placeholders::_2, std::cref(params_),
-                       graph_manager_->node_users());
-  std::map<std::string, tensor::TensorPtr, decltype(cmp)> ordered_tensors(tensors.begin(), tensors.end(), cmp);
-  for (const auto &it : ordered_tensors) {
+  for (const auto &it : tensors) {
     std::string name = it.first;
     auto node_itor = params_.find(name);
     // if name not in params_, create a node in graph
