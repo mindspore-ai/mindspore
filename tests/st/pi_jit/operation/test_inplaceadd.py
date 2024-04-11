@@ -5,7 +5,6 @@ from ..share.ops.primitive.inplaceadd_ops import InplaceAddFactory
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_p_inplaceadd_input_3d_all():
     """
