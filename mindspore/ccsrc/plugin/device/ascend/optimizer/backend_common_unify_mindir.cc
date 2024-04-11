@@ -60,6 +60,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/add_rms_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/mc2_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/matmul_allreduce_fusion.h"
 
 namespace mindspore {
 namespace opt {
@@ -135,8 +136,12 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiMatmulsFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormFusion>());
+  if (common::GetEnv("ENABLE_MATMUL_ALLREDUCE") == "on") {
+    (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatMulAllReduceFusion>());
+  }
 #endif  // ENABLE_INTERNAL_KERNELS
 }
+
 void AscendUnfoldInputsForSpecialNodes(const KernelGraphPtr &kernel_graph) {
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnfoldInputsForSpecialNodes", 0, 0, 0);
   MS_EXCEPTION_IF_NULL(kernel_graph);
