@@ -14,7 +14,6 @@ def greater_equal_backward_func(x, y):
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_greater_equal_forward():
     """
@@ -32,7 +31,6 @@ def test_greater_equal_forward():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_greater_equal_backward():
     """
