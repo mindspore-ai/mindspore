@@ -43,6 +43,9 @@ from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple,
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
 from mindspore.ops.auto_generate.gen_ops_prim import GroupNorm
+from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
+                                         replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
+                                         constant_pad_nd_op)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 
 abs_ = P.Abs()
@@ -3097,7 +3100,102 @@ def pdist(input, p=2.0):
     return pdist_(input)
 
 
-@_primexpr
+def _circular_pad(input_x, padding):
+    """circular pad"""
+    padding = scalar_to_tensor_(padding, const_arg=True)
+    is_expand = False
+    if padding.shape[0] // 2 + 1 == input_x.ndim:
+        input_x = input_x.expand_dims(0)
+        is_expand = True
+    out = PadV3(mode="circular", paddings_contiguous=True)(input_x, padding, None)
+    if is_expand:
+        out = out.squeeze(0)
+    return out
+
+
+def pad_ext(input, pad, mode='constant', value=None):
+    r"""
+    Pads the input tensor according to the pad.
+
+    Args:
+        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+        pad (tuple[int]): Filling position of pad.
+        mode (str, optional): Pad filling mode, ``'constant'`` , ``'reflect'`` , ``'replicate'``  or ``'circular'`` .
+            Default: ``'constant'`` .
+        value (Union[int, float, None], optional): Valid only in ``'constant'`` mode.
+            Set the pad value in ``'constant'`` mode. If the value is None, 0 is used as the default pad value.
+            Default: ``None`` .
+
+    Returns:
+        Tensor, the tensor after pad.
+
+    Raises:
+        TypeError: If `pad` is not an int of tuple.
+        TypeError: If `input` is not a Tensor.
+        ValueError: If length of `pad` is not even.
+        ValueError: If length of `pad` is greater than 6.
+        ValueError: If `mode` is not ``'constant'`` and `value` not ``None``.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore.mint.nn.functional import pad
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.arange(1 * 2 * 2 * 2).reshape((1, 2, 2, 2)), dtype=ms.float64)
+        >>> output = pad(x, [1, 0, 0, 1], mode='constant', value=6.0)
+        >>> print(output)
+        [[[[6. 0. 1.]
+           [6. 2. 3.]
+           [6. 6. 6.]]
+          [[6. 4. 5.]
+           [6. 6. 7.]
+           [6. 6. 6.]]]]
+        >>> output1 = ops.pad(x, (1, 0, 0, 1), mode='reflect')
+        >>> print(output1)
+        [[[[1. 0. 1.]
+           [3. 2. 3.]
+           [1. 0. 1.]]
+          [[5. 4. 5.]
+           [7. 6. 7.]
+           [5. 4. 5.]]]]
+    """
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'pad', the type of 'input' must be Tensor, but got {type(input)}.")
+    out = input
+    if (isinstance(pad, tuple) and not pad):
+        return out
+    if mode == "constant":
+        value = 0 if value is None else value
+        out = constant_pad_nd_op(input, pad, value)
+    elif mode == "circular":
+        out = _circular_pad(input, pad)
+    else:
+        if len(pad) == 2:
+            if mode == "reflect":
+                out = reflection_pad_1d_op(input, pad)
+            elif mode == "replicate":
+                out = replication_pad_1d_op(input, pad)
+            else:
+                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+        elif len(pad) == 4:
+            if mode == "reflect":
+                out = reflection_pad_2d_op(input, pad)
+            elif mode == "replicate":
+                out = replication_pad_2d_op(input, pad)
+            else:
+                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+        else:
+            if mode == "reflect":
+                out = reflection_pad_3d_op(input, pad)
+            elif mode == "replicate":
+                out = replication_pad_3d_op(input, pad)
+            else:
+                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+    return out
+
+
 def _check_pad_inputs(padding):
     """check the input of pad"""
     if len(padding) % 2 != 0:
@@ -7385,6 +7483,7 @@ __all__ = [
     'softmin',
     'pdist',
     'pad',
+    'pad_ext',
     'prelu',
     'mirror_pad',
     'cross_entropy',

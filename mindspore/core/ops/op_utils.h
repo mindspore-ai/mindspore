@@ -207,6 +207,8 @@ TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract
 abstract::ShapePtr ReduceExtInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 TypePtr ReduceExtInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args);
 
+BaseShapePtr SetPadShape(const ShapeVector &x_shape, const ArrayValue<int64_t> &paddings);
+
 template <typename T>
 api::SharedPtr<T> GetOperator(const AnfNodePtr &node) {
   auto prim = GetValueNode<PrimitivePtr>(node);
