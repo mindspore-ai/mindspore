@@ -864,7 +864,7 @@ REG_BPROP_BUILDER("GroupNorm").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
              {ib->TupleGetItem(dout, 0), x, ib->TupleGetItem(out, 1), ib->TupleGetItem(out, 2), gamma, num_groups,
               ib->Value<bool>(x->need_compute_grad_out()), ib->Value<bool>(gamma->need_compute_grad_out()),
               ib->Value<bool>(beta->need_compute_grad_out())},
-             {{"data_format", MakeValue("NCHW")}});
+             {});
 
   auto d_x = ib->TupleGetItem(result, 0);
   auto d_gamma = ib->TupleGetItem(result, 1);
