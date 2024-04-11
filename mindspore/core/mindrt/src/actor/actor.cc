@@ -124,6 +124,7 @@ void ActorBase::Run() {
         if (msgHandler(msg) == ACTOR_TERMINATED) {
           return;
         }
+        msg.reset(nullptr);
       }
       msgs->clear();
     }

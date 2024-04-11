@@ -34,7 +34,7 @@ from mindspore._c_expression import init_pipeline, update_func_graph_hyper_param
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache
-from mindspore.common.api import _generate_branch_control_input
+from mindspore.common.api import _generate_branch_control_input, _convert_python_data
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import Cast
@@ -125,6 +125,7 @@ class Cell(Cell_):
         self._create_time = int(time.time() * 1e9)
         self.arguments_key = ""
         self.compile_cache = set()
+        self.phase_cache = dict()
         cells_compile_cache[id(self)] = self.compile_cache
         self.parameter_broadcast_done = False
         self._id = 1
@@ -645,6 +646,14 @@ class Cell(Cell_):
         if not self._is_check_and_refresh:
             self.check_names_and_refresh_name()
             self._is_check_and_refresh = True
+            
+    def _predict(self, *args, **kwargs):
+        if (self.phase == "prefill" or self.phase == "increment") and len(self.compile_cache) > 1:
+            new_args = _get_args_for_run(self, args, kwargs,self._compile_args)
+            res = _cell_graph_executor._graph_executor(tuple(new_args), self.phase_cache[self.phase])
+            res = _convert_python_data(res)
+            return True, res
+        return False, None
 
     def __call__(self, *args, **kwargs):
         # Run in Graph mode.
@@ -655,6 +664,11 @@ class Cell(Cell_):
                 args = bound_arguments.args
                 kwargs = bound_arguments.kwargs
             self._check_construct_args(*args)
+            
+            predict_compiled, res = self._predict(*args, **kwargs)
+            if predict_compiled:
+                return res
+            
             if self._hook_fn_registered():
                 logger.warning(f"For 'Cell', it's not support hook function in graph mode. If you want to use hook "
                                f"function, please use context.set_context to set pynative mode.")
