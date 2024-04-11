@@ -1,0 +1,6 @@
+tanh_grad:
+    description: |
+        Computes TanhGrad of input element-wise.
+
+        Returns:
+            Tensor, has the same type as input.

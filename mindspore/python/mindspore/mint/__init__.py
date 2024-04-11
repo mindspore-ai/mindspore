@@ -211,7 +211,7 @@ from mindspore.ops.function.math_func import all
 # 93
 
 # 94
-
+from mindspore.ops.function.math_func import tanh
 # 95
 
 # 96
@@ -350,7 +350,7 @@ __all__ = [
     # 59
 
     # 60
-    'all'
+    'all',
     # 61
 
     # 62
@@ -418,7 +418,7 @@ __all__ = [
     # 93
 
     # 94
-
+    'tanh',
     # 95
 
     # 96
