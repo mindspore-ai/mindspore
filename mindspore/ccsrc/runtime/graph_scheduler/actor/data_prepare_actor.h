@@ -40,9 +40,10 @@ using mindspore::device::DeviceContext;
 class DataPrepareActor : public DebugAwareActor {
  public:
   DataPrepareActor(const std::string &name, const AID &memory_manager_aid, const AID *debug_aid,
-                   const GraphCompilerInfo *graph_compiler_info, const HostQueueDSActorPtr &host_data_source_actor,
-                   const HostTensorQueuePtr &host_tensor_queue)
-      : DebugAwareActor(name, KernelTransformType::kDataPrepareActor, nullptr, memory_manager_aid, debug_aid),
+                   const AID *profiler_aid, const GraphCompilerInfo *graph_compiler_info,
+                   const HostQueueDSActorPtr &host_data_source_actor, const HostTensorQueuePtr &host_tensor_queue)
+      : DebugAwareActor(name, KernelTransformType::kDataPrepareActor, nullptr, memory_manager_aid, debug_aid,
+                        profiler_aid),
         graph_compiler_info_(graph_compiler_info),
         strategy_(GraphExecutionStrategy::kPipeline),
         real_strategy_(GraphExecutionStrategy::kPipeline),
@@ -57,6 +58,7 @@ class DataPrepareActor : public DebugAwareActor {
 
   // The debug related operation interface.
   void SendDebugReq(OpContext<DeviceTensor> *const context) override;
+  void SendProfilerReq(OpContext<DeviceTensor> *const context);
   void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
   // The continuous memory related operation interface.

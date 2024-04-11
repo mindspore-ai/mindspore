@@ -21,6 +21,7 @@
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
+#include "runtime/graph_scheduler/actor/profiler_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/entrance_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
@@ -65,6 +66,11 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
     return;
   }
 
+  if (profiler_aid_ != nullptr) {
+    SendProfilerReq(context);
+    return;
+  }
+
   // Sync device stream.
   if ((strategy_ == GraphExecutionStrategy::kPipeline) && is_need_sync_stream_) {
     ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kStreamSync, GetAID().Name());
@@ -90,6 +96,12 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
 
 void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugOnStepEnd, context, &GetAID(), total_running_count_);
+  OnDebugFinish(context);
+}
+
+void LoopCountActor::SendProfilerReq(OpContext<DeviceTensor> *const context) {
+  ActorDispatcher::SendSync(*profiler_aid_, &ProfilerActor::ProfilerOnStepEnd, context, &GetAID(),
+                            total_running_count_);
   OnDebugFinish(context);
 }
 
