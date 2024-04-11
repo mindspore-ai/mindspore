@@ -24,6 +24,7 @@
 #include "runtime/graph_scheduler/actor/kernel_async_infer_actor.h"
 #include "runtime/graph_scheduler/actor/kernel_async_resize_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
+#include "runtime/graph_scheduler/actor/profiler_actor.h"
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
 #include "runtime/graph_scheduler/optimizer/kernel_infer_resize_actor_insert.h"
@@ -494,6 +495,19 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
     recorder_aid_ = &(recorder_actor->GetAID());
     auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
     (void)actor_manager->Spawn(base_recorder_actor, true);
+  }
+
+  bool profiler_actor_need = false;
+  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
+  if ((profiler != nullptr && profiler->IsInitialized())) {
+    profiler_actor_need = true;
+  }
+  if (profiler_actor_need) {
+    auto profiler_actor = std::make_shared<ProfilerActor>();
+    MS_EXCEPTION_IF_NULL(profiler_actor);
+    profiler_aid_ = &(profiler_actor->GetAID());
+    auto base_profiler_actor = static_cast<ActorReference>(profiler_actor);
+    (void)actor_manager->Spawn(base_profiler_actor, true);
   }
 
   // Create and schedule debug actor.
@@ -1409,7 +1423,7 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
   auto actor_name = graph_compiler_info.name_ + kLoopCountActorNameSuffix;
   auto is_need_sync_stream = GetNeedSyncStream(graph_compiler_info);
   auto loop_count_actor = std::make_shared<LoopCountActor>(
-    actor_name, graph_compiler_info.name_, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_,
+    actor_name, graph_compiler_info.name_, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_, profiler_aid_,
     graph_compiler_info.strategy_, graph_compiler_info.device_contexts_, is_need_sync_stream);
   MS_LOG(INFO) << "Create loop count actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(loop_count_actor);
@@ -1462,8 +1476,8 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
     host_queue_ds_actor = std::dynamic_pointer_cast<HostQueueDataSourceActor>(*iter);
   }
   auto actor_name = graph_compiler_info.name_ + kDataPrepareActorNameSuffix;
-  auto data_prepare_actor = std::make_shared<DataPrepareActor>(actor_name, memory_manager_aid_, debug_aid_,
-                                                               &graph_compiler_info, host_queue_ds_actor, host_queue);
+  auto data_prepare_actor = std::make_shared<DataPrepareActor>(
+    actor_name, memory_manager_aid_, debug_aid_, profiler_aid_, &graph_compiler_info, host_queue_ds_actor, host_queue);
   MS_LOG(INFO) << "Create data prepare actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(data_prepare_actor);
 

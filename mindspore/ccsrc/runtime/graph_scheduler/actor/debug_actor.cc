@@ -160,7 +160,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
     }
   }
   if (backend == "ge") {
-    MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
     datadump::DumpGraphBoundary::GetInstance().InitEnableFlag();
     return;
   }
@@ -222,7 +221,7 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   }
   auto is_kbk = context->IsKByKExecutorMode();
   if (backend == "ge" && !is_kbk) {
-    MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
+    device_ctx_->device_res_manager_->SyncAllStreams();
     datadump::DumpGraphBoundary::GetInstance().DataDrop(device_ctx_);
     return;
   }
