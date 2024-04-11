@@ -37,7 +37,7 @@ class ConditionGatherActor : public KernelActor {
                        GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
                        const std::set<size_t> &modifiable_ref_output_indexes,
                        const KernelTransformType &type = KernelTransformType::kConditionGatherActor);
-  ~ConditionGatherActor() override = default;
+  ~ConditionGatherActor() override;
   // Receive the branch name from condition switch actor.
   void RunBranchName(const std::string &branch_name, OpContext<DeviceTensor> *const context);
 
@@ -58,6 +58,7 @@ class ConditionGatherActor : public KernelActor {
   mindspore::HashMap<std::string, size_t> branch_name_to_id_;
   mindspore::HashMap<std::string, size_t> branch_name_to_input_data_num_;
   mindspore::HashMap<std::string, size_t> branch_name_to_input_control_num_;
+  std::vector<device::DeviceAddressPtr> need_clean_ptr_device_addresses_;
 };
 
 using ConditionGatherActorPtr = std::shared_ptr<ConditionGatherActor>;

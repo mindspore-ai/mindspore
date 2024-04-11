@@ -424,7 +424,6 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
       (void)is_dynamic_shapes.emplace_back(is_dynamic_shape);
       (void)device_contexts.emplace_back(node_with_context.second.second);
     }
-
     const auto &actor_name = kernel_graph_group_info->group_name_ + kExitActorNameSuffix;
     const auto &exit_actor = std::make_shared<ExitActor>(actor_name, memory_manager_aid_, formal_parameters, nullptr);
     MS_EXCEPTION_IF_NULL(exit_actor);
@@ -432,6 +431,13 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
     exit_actor->is_need_dynamic_checks_.swap(is_need_dynamic_checks);
     exit_actor->is_dynamic_shapes_.swap(is_dynamic_shapes);
     exit_actor->device_contexts_.swap(device_contexts);
+    for (const auto &graph : kernel_graph_group_info->graphs_) {
+      MS_EXCEPTION_IF_NULL(graph);
+      std::for_each(graph->GetRefMap().begin(), graph->GetRefMap().end(),
+                    [&exit_actor, &graph](const std::pair<KernelWithIndex, KernelWithIndex> &pair) {
+                      exit_actor->ref_out_in_map_[pair.first] = graph->GetRefNodeRecursive(pair.first);
+                    });
+    }
     (void)exit_actors.emplace_back(exit_actor);
     InsertActor(exit_actor.get());
   }

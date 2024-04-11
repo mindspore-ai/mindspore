@@ -567,9 +567,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimize, 1, 0, 0);
   Optimize(actor_set);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimize, 1, 0, 1);
-  if (graph_compiler_info.control_node_parser_ != nullptr && (!graph_compiler_info.control_node_parser_->IsInited())) {
-    DumpFinalActor(actor_set.get(), graph_compiler_info);
-  }
+  DumpFinalActor(actor_set.get(), graph_compiler_info);
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
 
 #if defined(__linux__) && defined(WITH_BACKEND)
