@@ -1052,6 +1052,22 @@ void SchedulerHelper::DumpFormatActorSet(const ActorSet *actor_set, std::ofstrea
   MS_EXCEPTION_IF_NULL(actor_set);
   try {
     MS_LOG(DEBUG) << "Start dump format actor set:" << actor_set->name_;
+    if (actor_set->control_actors_ != nullptr) {
+      for (const auto &exit_actor : actor_set->control_actors_->exit_actors_) {
+        if (exit_actor->node() != nullptr) {
+          continue;
+        }
+        auto actors = TopoSortForActor(exit_actor.get());
+        ActorInfoMap actor_info;
+        ofs << "\n\nBase Block : "
+            << exit_actor->GetAID().Name().substr(0, exit_actor->GetAID().Name().find(kExitActorNameSuffix)) << "\n\n";
+        for (size_t i = 0; i < actors.size(); ++i) {
+          DumpActorInfo(actors[i], i, &actor_info, ofs);
+        }
+      }
+      return;
+    }
+
     auto actors = TopoSortForActor(actor_set->output_actor_.get());
     ActorInfoMap actor_info;
     for (size_t i = 0; i < actors.size(); ++i) {

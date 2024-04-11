@@ -228,7 +228,11 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
                 << " ref count:" << input_data->data_->ref_count()
                 << " origin ref count:" << input_data->data_->original_ref_count()
                 << " dynamic ref count:" << input_data->data_->dynamic_ref_count()
-                << " from memory pool:" << input_data->data_->from_mem_pool();
+                << " from memory pool:" << input_data->data_->from_mem_pool() << " output node:"
+                << (input_data->data_->GetNodeIndex().first == nullptr
+                      ? "null"
+                      : input_data->data_->GetNodeIndex().first->DebugString())
+                << " index:" << input_data->data_->GetNodeIndex().second;
   auto output_position = IntToSize(input_data->index_);
   if (output_position >= outputs_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");

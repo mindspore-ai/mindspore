@@ -266,10 +266,20 @@ bool ExitActor::IsNeedCopyDeviceAddress(DeviceTensor *const input_device_tensor,
       return false;
     }
     const auto &node = input_device_tensor->GetNodeIndex().first;
-    if (node != nullptr && (!node->isa<CNode>())) {
-      MS_LOG(DEBUG) << "Input device address:" << input_device_tensor << " ptr:" << input_device_tensor->GetPtr()
-                    << " for node:" << node->DebugString() << " is not need replace ptr for actor:" << GetAID();
-      return false;
+    if (node != nullptr) {
+      if (!node->isa<CNode>()) {
+        MS_LOG(DEBUG) << "Input device address:" << input_device_tensor << " ptr:" << input_device_tensor->GetPtr()
+                      << " for node:" << node->DebugString() << " is not need replace ptr for actor:" << GetAID();
+        return false;
+      }
+      const auto &iter = ref_out_in_map_.find(input_device_tensor->GetNodeIndex());
+      if (iter != ref_out_in_map_.end() && iter->second.first != nullptr && (!iter->second.first->isa<CNode>())) {
+        MS_LOG(DEBUG) << "Input device address:" << input_device_tensor << " ptr:" << input_device_tensor->GetPtr()
+                      << " for node:" << node->DebugString()
+                      << " is a ref node of:" << iter->second.first->DebugString()
+                      << " not need replace ptr for actor:" << GetAID();
+        return false;
+      }
     }
   }
   return true;
