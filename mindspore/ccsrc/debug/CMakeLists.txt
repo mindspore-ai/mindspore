@@ -46,6 +46,7 @@ if(NOT ENABLE_SECURITY)
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_json_parser.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_utils.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/data_dumper.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_graph_boundary.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/npy_header.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/utils.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/common/csv_writer.cc"

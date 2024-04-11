@@ -52,6 +52,7 @@
 #include "ops/array_ops.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/compile_cache_context.h"
+#include "debug/data_dump/dump_graph_boundary.h"
 using InputNameAndType = std::vector<std::pair<std::string, bool>>;
 using Data = ::ge::op::Data;
 using RefData = ::ge::op::RefData;
@@ -711,7 +712,9 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
   }
   if (input_names.empty()) {
     MS_LOG(INFO) << "Kernel graph: " << kernel_graph->graph_id() << " input data list is nullptr";
-    input_datas_[kernel_graph.get()] = {ge_inputs, need_update_input};
+    std::vector<DeviceAddress *> device_addr;
+    device_addr.resize(ge_inputs.size());
+    input_datas_[kernel_graph.get()] = {ge_inputs, device_addr, need_update_input};
     return;
   }
   auto parameters = FilterAllParameters(kernel_graph);
@@ -777,7 +780,9 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
     MS_LOG(WARNING) << "Not use all cur inputs, cur_inputs_index: " << cur_inputs_index
                     << ", cur_inputs.size(): " << cur_inputs.size() << ", kernel graph: " << kernel_graph->graph_id();
   }
-  input_datas_[kernel_graph.get()] = {ge_inputs, need_update_input};
+  std::vector<DeviceAddress *> device_addr;
+  device_addr.resize(ge_inputs.size());
+  input_datas_[kernel_graph.get()] = {ge_inputs, device_addr, need_update_input};
   MS_LOG(INFO) << "BuildInputDataGeTensor finish.";
 }
 
@@ -811,7 +816,9 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
   MS_EXCEPTION_IF_CHECK_FAIL(
     ge_outputs.size() == graph_outputs.size(),
     "The size of ge_outputs and graph_outputs check error, kernel graph: " + kernel_graph->ToString());
-  output_datas_[kernel_graph.get()] = {ge_outputs, graph_outputs};
+  std::vector<DeviceAddress *> device_addr;
+  device_addr.resize(ge_outputs.size());
+  output_datas_[kernel_graph.get()] = {ge_outputs, device_addr, graph_outputs};
   MS_LOG(INFO) << "BuildOutputDataGeTensor finish.";
 }
 
@@ -1308,6 +1315,11 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     }
   }
 
+  auto iter_i = input_datas_.find(kg.get());
+  if (iter_i != input_datas_.end()) {
+    datadump::DumpGraphBoundary::GetInstance().HookDumpTask(
+      kg, iter_i->second.ms_input_addrs, iter_i->second.need_update_input, ResManager()->GetStream(), True);
+  }
   {
     // Release GIL before calling into (potentially long-running) C++ code
     GilReleaseWithCheck gil_release;
@@ -1317,6 +1329,12 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     if (ret != transform::Status::SUCCESS) {
       MS_LOG(EXCEPTION) << "Exec graph failed";
     }
+  }
+
+  auto iter_o = output_datas_.find(kg.get());
+  if (iter_o != output_datas_.end()) {
+    datadump::DumpGraphBoundary::GetInstance().HookDumpTask(
+      kg, iter_o->second.ms_output_addrs, iter_o->second.graph_outputs, ResManager()->GetStream(), False);
   }
 
   if (is_dynamic_shape) {
@@ -1451,7 +1469,7 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
   return anf_graph;
 }
 
-std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPtr &kernel_graph) const {
+std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_inputs;
   auto iter = input_datas_.find(kernel_graph.get());
@@ -1504,12 +1522,13 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
         output_addr->GetSize() != ge_inputs[kv.second].GetSize()) {
       (void)ge_inputs[kv.second].SetData(static_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
                                          [](void *) {});
+      iter->second.ms_input_addrs[kv.second] = output_addr.get();
     }
   }
   return ge_inputs;
 }
 
-std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph) const {
+std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_outputs;
   auto iter = output_datas_.find(kernel_graph.get());
@@ -1554,6 +1573,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
         output_device_addr->GetSize() != ge_outputs[idx].GetSize()) {
       ge_outputs[idx].SetData(reinterpret_cast<uint8_t *>(output_device_addr->GetMutablePtr()),
                               output_device_addr->GetSize(), [](void *) {});
+      iter->second.ms_output_addrs[idx] = output_device_addr.get();
     }
     idx++;
   }

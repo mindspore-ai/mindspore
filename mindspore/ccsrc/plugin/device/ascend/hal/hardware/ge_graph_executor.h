@@ -35,11 +35,13 @@ namespace device {
 namespace ascend {
 struct GeInputData {
   std::vector<GeTensor> ge_inputs;
+  std::vector<DeviceAddress *> ms_input_addrs;
   std::vector<std::pair<AnfNodeWeakPtr, size_t>> need_update_input;
 };
 
 struct GeOutputData {
   std::vector<GeTensor> ge_outputs;
+  std::vector<DeviceAddress *> ms_output_addrs;
   std::vector<std::pair<AnfNodeWeakPtr, size_t>> graph_outputs;
 };
 
@@ -67,8 +69,8 @@ class GeGraphExecutor : public GraphExecutor {
   void AllocOutputMemory(const KernelGraphPtr &kernel_graph) const;
   bool CompileGraph(const KernelGraphPtr &graph, const std::map<string, string> &compile_options);
   int64_t CurGraphSinkSize(std::string graph_name);
-  std::vector<GeTensor> GenerateInputGeTensor(const KernelGraphPtr &kernel_graph) const;
-  std::vector<GeTensor> GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph) const;
+  std::vector<GeTensor> GenerateInputGeTensor(const KernelGraphPtr &kernel_graph);
+  std::vector<GeTensor> GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph);
   GeDeviceResManager *ResManager() const;
   void RunInitGraph(const std::string &graph_name);
   void AddRefCorrespondPairs(const KernelGraphPtr &graph,
