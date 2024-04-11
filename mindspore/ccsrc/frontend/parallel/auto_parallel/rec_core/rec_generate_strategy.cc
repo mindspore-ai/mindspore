@@ -26,12 +26,15 @@
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_parse_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
+#include "frontend/parallel/ops_info/flash_attention_score_info.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/strategy.h"
 #include "ir/value.h"
+#include "mindspore/core/ops/ops_func_impl/flash_attention_score.h"
+#include "ops/op_enum.h"
 
 namespace mindspore {
 namespace parallel {
@@ -213,6 +216,126 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   } else {
     propagator.GenerateStrategyV1();
   }
+}
+
+void FillFlashLayoutIndexes(const std::shared_ptr<FlashAttentionScoreInfo> &flashOp, size_t *batch_split_idx,
+                            size_t *n_split_idx, size_t *s_split_idx) {
+  MS_EXCEPTION_IF_NULL(flashOp);
+  MS_EXCEPTION_IF_NULL(batch_split_idx);
+  MS_EXCEPTION_IF_NULL(n_split_idx);
+  MS_EXCEPTION_IF_NULL(s_split_idx);
+
+  size_t tmp_batch_split_idx;
+  size_t tmp_n_split_idx;
+  size_t tmp_s_split_idx;
+
+  using mindspore::ops::FASInputLayoutMode;
+  switch (flashOp->input_layout()) {
+    case FASInputLayoutMode::BSH:
+    case FASInputLayoutMode::BSND:
+      tmp_batch_split_idx = 0;
+      tmp_s_split_idx = 1;
+      tmp_n_split_idx = 2;
+      break;
+    case FASInputLayoutMode::BNSD:
+      tmp_batch_split_idx = 0;
+      tmp_n_split_idx = 1;
+      tmp_s_split_idx = 2;
+      break;
+    case FASInputLayoutMode::SBH:
+      tmp_s_split_idx = 0;
+      tmp_batch_split_idx = 1;
+      tmp_n_split_idx = 2;
+      break;
+    default:
+      MS_LOG(EXCEPTION) << flashOp->name() << "unknown input_layout: " << flashOp->input_layout();
+  }
+
+  *batch_split_idx = tmp_batch_split_idx;
+  *n_split_idx = tmp_n_split_idx;
+  *s_split_idx = tmp_s_split_idx;
+}
+
+Strategies PrepareFlashAttentionScore(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra,
+                                      bool dyn_shape_tmp_fix) {
+  std::shared_ptr<FlashAttentionScoreInfo> flashOp = std::static_pointer_cast<FlashAttentionScoreInfo>(op);
+
+  if (flashOp->InitAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << flashOp->name() << " : InitAttrs failed.";
+  }
+
+  Strategies expect_strategies = Strategies(ops::kFlashAttentionScoreInputsNum);
+  auto is_input_passed = flashOp->is_input_passed();
+
+  size_t batch_idx;
+  size_t n_split_idx;
+  size_t s_split_idx;
+
+  FillFlashLayoutIndexes(flashOp, &batch_idx, &n_split_idx, &s_split_idx);
+
+  int64_t batch_split_num = basic_stra[batch_idx];
+  int64_t s1_split_num = basic_stra[s_split_idx];
+  int64_t n1_split_num = basic_stra[n_split_idx];
+  int64_t n2_split_num = flashOp->kv_split() ? n1_split_num : 1;
+
+  Dimensions q_stra(op->inputs_shape()[ops::kFlashAttentionScoreInputQueryIndex].size(), 1);
+  q_stra[batch_idx] = batch_split_num;
+  q_stra[s_split_idx] = s1_split_num;
+  q_stra[n_split_idx] = n1_split_num;
+
+  Dimensions kv_stra(op->inputs_shape()[ops::kFlashAttentionScoreInputKeyIndex].size(), 1);
+  kv_stra[batch_idx] = batch_split_num;
+  kv_stra[n_split_idx] = n2_split_num;
+
+  expect_strategies[ops::kFlashAttentionScoreInputQueryIndex] = q_stra;
+  expect_strategies[ops::kFlashAttentionScoreInputKeyIndex] = kv_stra;
+  expect_strategies[ops::kFlashAttentionScoreInputValueIndex] = kv_stra;
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputRealShiftIndex]) {
+    int64_t real_shift_s1_split_num = flashOp->real_shift_have_s1_dim() ? s1_split_num : 1;
+    int64_t real_shift_batch_split_num = flashOp->real_shift_have_batch_dim() ? batch_split_num : 1;
+    expect_strategies[ops::kFlashAttentionScoreInputRealShiftIndex] = {real_shift_batch_split_num, n1_split_num,
+                                                                       real_shift_s1_split_num, 1};
+  }
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+    expect_strategies[ops::kFlashAttentionScoreInputDropMaskIndex] = {batch_split_num, n1_split_num, s1_split_num, 1};
+  }
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputPaddingMaskIndex]) {
+    expect_strategies[ops::kFlashAttentionScoreInputPaddingMaskIndex] = {};
+  }
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
+    auto attn_mask_shape =
+      flashOp->inputs_shape().at(flashOp->GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    int64_t s1_split_num_attn_mask = flashOp->is_attn_mask_compressed() ? 1 : s1_split_num;
+    if (attn_mask_shape.size() == kSizeTwo) {
+      // attn_mask_shape: (S1, S2)
+      expect_strategies[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_split_num_attn_mask, 1};
+    } else if (attn_mask_shape.size() == kSizeFour) {
+      // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
+      auto attn_mask_n1_split_num = flashOp->attn_mask_have_n1_dim() ? n1_split_num : 1;
+      auto attn_batch_split_num = flashOp->attn_mask_have_batch_dim() ? batch_split_num : 1;
+      expect_strategies[ops::kFlashAttentionScoreInputAttnMaskIndex] = {attn_batch_split_num, attn_mask_n1_split_num,
+                                                                        s1_split_num_attn_mask, 1};
+    }
+  }
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputPrefixIndex]) {
+    expect_strategies[ops::kFlashAttentionScoreInputPrefixIndex] = {batch_split_num};
+  }
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputActualSeqQlenIndex]) {
+    expect_strategies[ops::kFlashAttentionScoreInputActualSeqQlenIndex] = {NO_SPLIT_STRATEGY};
+  }
+  if (is_input_passed[ops::kFlashAttentionScoreInputActualSeqKVlenIndex]) {
+    expect_strategies[ops::kFlashAttentionScoreInputActualSeqKVlenIndex] = {NO_SPLIT_STRATEGY};
+  }
+
+  expect_strategies.erase(std::remove(expect_strategies.begin(), expect_strategies.end(), Shape{}),
+                          expect_strategies.end());
+  return expect_strategies;
 }
 
 Strategies PrepareFillV2(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix) {
@@ -1559,23 +1682,25 @@ Strategies CheckBroadcast(const std::shared_ptr<OperatorInfo> &op, Dimensions st
 
 void InitializeStrategyMap() {
   if (g_prepare_stra_map.empty()) {
-    g_prepare_stra_map = std::map<std::string, PrepareStraFuncPtr>{{FILLV2, &PrepareFillV2},
-                                                                   {BIAS_ADD, &PrepareBiasAdd},
-                                                                   {STRIDED_SLICE, &PrepareStridedSlice},
-                                                                   {GATHERV2, &PrepareGather},
-                                                                   {ONEHOT, &PrepareOneHot},
-                                                                   {L2_NORMALIZE, &PrepareL2Normalize},
-                                                                   {ADD, &CheckBroadcast},
-                                                                   {SUB, &CheckBroadcast},
-                                                                   {MUL, &CheckBroadcast},
-                                                                   {DIV, &CheckBroadcast},
-                                                                   {SOFTMAX, &PrepareSoftMax},
-                                                                   {LOG_SOFTMAX, &PrepareSoftMax},
-                                                                   {FLATTEN, &PrepareDataParallel},
-                                                                   {GATHERD, &PrepareDataParallel},
-                                                                   {LAYER_NORM, &PrepareLayerNorm},
-                                                                   {BATCH_MATMUL, &PreparePropagateBatchMatMul},
-                                                                   {DROPOUT_DO_MASK, &PrepareDropoutDoMask}};
+    g_prepare_stra_map =
+      std::map<std::string, PrepareStraFuncPtr>{{FILLV2, &PrepareFillV2},
+                                                {BIAS_ADD, &PrepareBiasAdd},
+                                                {STRIDED_SLICE, &PrepareStridedSlice},
+                                                {GATHERV2, &PrepareGather},
+                                                {ONEHOT, &PrepareOneHot},
+                                                {L2_NORMALIZE, &PrepareL2Normalize},
+                                                {ADD, &CheckBroadcast},
+                                                {SUB, &CheckBroadcast},
+                                                {MUL, &CheckBroadcast},
+                                                {DIV, &CheckBroadcast},
+                                                {SOFTMAX, &PrepareSoftMax},
+                                                {LOG_SOFTMAX, &PrepareSoftMax},
+                                                {FLATTEN, &PrepareDataParallel},
+                                                {GATHERD, &PrepareDataParallel},
+                                                {LAYER_NORM, &PrepareLayerNorm},
+                                                {BATCH_MATMUL, &PreparePropagateBatchMatMul},
+                                                {DROPOUT_DO_MASK, &PrepareDropoutDoMask},
+                                                {FLASH_ATTENTION_SCORE, &PrepareFlashAttentionScore}};
   }
 }
 
@@ -1589,7 +1714,8 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
 
   Strategies strategies;
   if (basic_stra.size() == 0) {
-    for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_shape().size(); iter_op_inputs++) {
+    for (size_t iter_op_inputs = 0; iter_op_inputs < static_cast<size_t>(ops[iter_ops]->inputs_shape().size());
+         iter_op_inputs++) {
       strategies.push_back(basic_stra);
     }
     return strategies;

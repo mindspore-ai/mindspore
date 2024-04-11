@@ -46,6 +46,17 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   void ReComputeBatchSplitFlagList() override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
+  int64_t input_layout() { return input_layout_; }
+  bool kv_split() { return kv_split_; }
+  bool real_shift_have_s1_dim() { return real_shift_have_s1_dim_; }
+  bool real_shift_have_batch_dim() { return real_shift_have_batch_dim_; }
+  bool is_attn_mask_compressed() { return is_attn_mask_compressed_; }
+  bool attn_mask_have_n1_dim() { return attn_mask_have_n1_dim_; }
+  bool attn_mask_have_batch_dim() { return attn_mask_have_batch_dim_; }
+  std::vector<bool> is_input_passed() { return is_input_passed_; }
+  size_t GetStrategyRealIndex(size_t index);
+  Status InitAttrs();
+
  protected:
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
@@ -64,7 +75,6 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   Status InitSplittableInputs();
   Status InitExpectedStrategies();
   Status InitQKVHeadAndSeqDimFromInputLayout();
-  size_t GetStrategyRealIndex(size_t index);
   std::vector<int64_t> GetSplitIdAndRank();
   std::tuple<int64_t, int64_t> GetAttentionMaskAttrs(const int64_t split_id, const int64_t split_num);
   void LoadBalanceSplitAlongSeqDim(size_t input_index, GenerateGraph *gen_g, AnfNodePtr *split_node,
