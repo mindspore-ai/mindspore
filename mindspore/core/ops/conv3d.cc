@@ -309,14 +309,14 @@ class Conv3DInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     Conv3dInferCheck(primitive, input_args);
     auto prim_name = primitive->name();
-    const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+    const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
     auto x_dtype = input_args[0]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, primitive->name());
 
     std::map<std::string, TypePtr> types;
     (void)types.emplace("x", input_args[kIndex0]->GetType());
     (void)types.emplace("w", input_args[kIndex1]->GetType());
-    std::set<TypePtr> check_list = {kFloat16, kFloat32};
+    std::set<TypePtr> check_list = {kFloat16, kFloat32, kBFloat16};
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, check_list, prim_name);
     return x_dtype;
   }
