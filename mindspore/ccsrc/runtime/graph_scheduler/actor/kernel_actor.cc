@@ -493,18 +493,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
   // Record mem info, because async send may free device info.
   if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
-    for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-      mem_info_.inputs_[i]->addr = input_device_tensors_[i]->GetMutablePtr();
-      mem_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
-    }
-    for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
-      mem_info_.outputs_[i]->addr = output_device_tensors_[i]->GetMutablePtr();
-      mem_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
-    }
-    for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
-      mem_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetMutablePtr();
-      mem_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
-    }
+    SetMemInfoForDebugAndRdr();
   }
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
@@ -514,6 +503,21 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   }
 
   PostLaunchKernel(context);
+}
+
+void KernelActor::SetMemInfoForDebugAndRdr() {
+  for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
+    mem_info_.inputs_[i]->addr = input_device_tensors_[i]->GetMutablePtr();
+    mem_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
+  }
+  for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
+    mem_info_.outputs_[i]->addr = output_device_tensors_[i]->GetMutablePtr();
+    mem_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
+  }
+  for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
+    mem_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetMutablePtr();
+    mem_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
+  }
 }
 
 void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
@@ -1059,7 +1063,7 @@ void KernelActor::RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const co
 }
 
 void KernelActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
-  if (recorder_aid_ != nullptr) {
+  if (recorder_aid_ != nullptr && !ActorDispatcher::enable_async_launch_kernel()) {
     MS_EXCEPTION_IF_NULL(kernel_);
     ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &mem_info_,
                           device_contexts_[0], context);
