@@ -442,6 +442,8 @@ Status FlashAttentionScoreInfo::InitQKVHeadAndSeqDimFromInputLayout() {
   return SUCCESS;
 }
 
+Status FlashAttentionScoreInfo::InitAttrs() { return GetAttrs(); }
+
 Status FlashAttentionScoreInfo::GetAttrs() {
   InitIsInputPassed();
   head_num_ = GetInputValueFromCNode<int64_t>(cnode_, ops::kFlashAttentionScoreInputHeadNumIndex + 1);
