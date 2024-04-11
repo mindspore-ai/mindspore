@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include "lccl.h"
+#include "lcoc.h"
 #include "runtime/collective/communication_group.h"
 #include "utils/dlopen_macro.h"
 
@@ -43,7 +44,10 @@ class LowlatencyCommunicationGroup : public CommunicationGroup {
 
   void *GenerateRootInfo(size_t *root_info_size) override;
 
+  // Return communicator for collective communcation ops.
   const LcclPtr &lccl_communicator() const;
+  // Return communicator of lcal.
+  const LcalCommPtr &lcal_comm() const;
 
  private:
   // Lcal communicator of this group, but this should be encapsulated by 'Lccl' class to use communication operations.

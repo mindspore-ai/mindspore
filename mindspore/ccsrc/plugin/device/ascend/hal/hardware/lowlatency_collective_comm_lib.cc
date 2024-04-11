@@ -95,6 +95,13 @@ LcclPtr LowlatencyCollectiveCommLib::LcclCommunicator(const std::string &group_n
   CHECK_IF_NULL(group);
   return group->lccl_communicator();
 }
+
+LcalCommPtr LowlatencyCollectiveCommLib::LcalCommunicator(const std::string &group_name) {
+  CHECK_RET((groups_.count(group_name) != 0), true, "The LCCL group " + group_name + " does not existed.");
+  auto group = std::dynamic_pointer_cast<LowlatencyCommunicationGroup>(groups_[group_name]);
+  CHECK_IF_NULL(group);
+  return group->lcal_comm();
+}
 }  // namespace ascend
 
 using LowlatencyCollectiveCommLib = mindspore::device::ascend::LowlatencyCollectiveCommLib;
