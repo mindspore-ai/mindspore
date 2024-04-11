@@ -228,9 +228,10 @@ class TensorData {
 
   std::string GetTypeString() const {
     const std::map<DbgDataType, std::string> kDbgDataTypeToStringMap = {
-      {DT_BOOL, "bool"},     {DT_INT8, "int8"},       {DT_INT16, "int16"},     {DT_INT32, "int32"},
-      {DT_INT64, "int64"},   {DT_UINT8, "uint8"},     {DT_UINT16, "uint16"},   {DT_UINT32, "uint32"},
-      {DT_UINT64, "uint64"}, {DT_FLOAT16, "float16"}, {DT_FLOAT32, "float32"}, {DT_FLOAT64, "float64"}};
+      {DT_BOOL, "bool"},        {DT_INT8, "int8"},       {DT_INT16, "int16"},     {DT_INT32, "int32"},
+      {DT_INT64, "int64"},      {DT_UINT8, "uint8"},     {DT_UINT16, "uint16"},   {DT_UINT32, "uint32"},
+      {DT_UINT64, "uint64"},    {DT_FLOAT16, "float16"}, {DT_FLOAT32, "float32"}, {DT_FLOAT64, "float64"},
+      {DT_BFLOAT16, "bfloat16"}};
     auto iter_type = kDbgDataTypeToStringMap.find(data_type_);
     if (iter_type == kDbgDataTypeToStringMap.end()) {
       return std::string();
