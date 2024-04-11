@@ -4066,7 +4066,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
     if (!allow_fallback_runtime) {
       if (!py::hasattr(obj, "__parameter__")) {
         auto obj_type = obj.attr("__class__").attr("__name__");
-        MS_EXCEPTION(TypeError) << "When JIT_SYNTAX_LEVEL is not set to LAX" << var_name
+        MS_EXCEPTION(TypeError) << "When JIT_SYNTAX_LEVEL is not set to LAX, " << var_name
                                 << " should be initialized as a 'Parameter' in the '__init__' function"
                                 << " to perform assign subscript, but got: " << py::str(obj).cast<std::string>()
                                 << "' with type '" << py::str(obj_type).cast<std::string>() << "'.\n\n"

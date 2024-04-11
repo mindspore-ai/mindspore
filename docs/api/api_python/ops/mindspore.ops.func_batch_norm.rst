@@ -14,6 +14,7 @@ mindspore.ops.batch_norm
 
     .. warning::
         - 对于Atlas 200/300/500推理产品，由于平方根指令，结果精度未能达到1‰。
+        - 在PyNative模式下，输入类型是float16，可能会有精度问题，建议使用float32。
 
     .. note::
         - 如果 `training` 为False，则 `running_mean` 、 `running_var` 、 `weight` 和 `bias` 是Tensor。

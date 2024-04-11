@@ -27,6 +27,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -35,6 +36,36 @@ template <typename T>
 void MultiTimesClone(std::vector<T> *const vec, const T &ori, const size_t times) {
   for (size_t i = 0; i < times; ++i) {
     vec->push_back(ori->Clone());
+  }
+}
+
+static bool IsPynativeMode() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  return ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
+}
+
+void CheckBatchNormInputsHasFloat16(const std::vector<AbstractBasePtr> &input_args) {
+  if (IsPynativeMode()) {
+    bool exist_float16_input = false;
+    // The first input of BatchNorm supports the float16 type.
+    for (size_t index = 1; index < input_args.size(); ++index) {
+      auto arg_type = input_args[index]->GetType();
+      MS_EXCEPTION_IF_NULL(arg_type);
+      if (arg_type->isa<TensorType>()) {
+        auto tensor_type = arg_type->cast<TensorTypePtr>();
+        auto element = tensor_type->element();
+        MS_EXCEPTION_IF_NULL(element);
+        if (element->type_id() == kNumberTypeFloat16) {
+          exist_float16_input = true;
+          break;
+        }
+      }
+    }
+    if (exist_float16_input) {
+      MS_LOG(WARNING) << "When the type of the last four inputs of the BatchNorm operator are float16, the precision"
+                         " may be affected. You are advised to change the input type to float32.";
+    }
   }
 }
 
@@ -137,9 +168,10 @@ TypePtr BatchNormFuncImpl::InferType(const PrimitivePtr &prim, const std::vector
     (void)check_types.emplace("variance", input_args[kInputIndex4]->GetType());
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(check_types, valid_types, prim_name);
-
+  CheckBatchNormInputsHasFloat16(input_args);
   std::vector<TypePtr> out_types{x_type->Clone()};
-  MultiTimesClone<TypePtr>(&out_types, scale_type, 4);
+  constexpr size_t input_num = 4;
+  MultiTimesClone<TypePtr>(&out_types, scale_type, input_num);
   return std::make_shared<Tuple>(std::move(out_types));
 }
 
