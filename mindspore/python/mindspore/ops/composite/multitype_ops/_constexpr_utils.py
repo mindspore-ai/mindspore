@@ -462,6 +462,9 @@ def check_value_elements(types):
     for ele in types:
         if isinstance(ele, mstype.TensorType):
             tensor_number += 1
+        elif isinstance(ele, (list, tuple)):
+            return MIXED
+
     if tensor_number == 0:
         return NO_TENSOR
     if tensor_number == len(types):
