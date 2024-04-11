@@ -504,6 +504,7 @@ from .nn_func import (
     softplus,
     pdist,
     pad,
+    pad_ext,
     prelu,
     mirror_pad,
     nll_loss,

@@ -442,6 +442,20 @@ TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract
   return x_type;
 }
 
+BaseShapePtr SetPadShape(const ShapeVector &x_shape, const ArrayValue<int64_t> &paddings) {
+  auto out_shape = x_shape;
+  auto x_rank = x_shape.size();
+  for (size_t i = 0; i < paddings.size() / 2; i++) {
+    auto pad_idx = i * 2;
+    if (out_shape[x_rank - i - 1] != abstract::Shape::kShapeDimAny) {
+      auto paddings_l = paddings[pad_idx];
+      auto paddings_r = paddings[pad_idx + 1];
+      out_shape[x_rank - i - 1] = out_shape[x_rank - i - 1] + paddings_l + paddings_r;
+    }
+  }
+  return std::make_shared<abstract::Shape>(out_shape);
+}
+
 bool ObscureShapeEqual(const ShapeVector &lhs, const ShapeVector &rhs) {
   if (lhs == rhs) {
     return true;

@@ -1,20 +1,19 @@
-#operator constant_pad_nd
-constant_pad_nd:
+#operator reflection_pad_3d_backward
+reflection_pad_3d_grad:
   args:
+    grad_output:
+      dtype: tensor
     input:
       dtype: tensor
     padding:
       dtype:  tuple[int]
       type_cast: list[int], tensor
-    value:
-      dtype: number
-      default: 0.0
   returns:
     output:
       dtype: tensor
   function:
     disable: True
   class:
-    name: ConstantPadND
+    name: ReflectionPad3DGrad
   dispatch:
     enable: True
