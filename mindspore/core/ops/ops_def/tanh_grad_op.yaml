@@ -1,0 +1,15 @@
+#operator tanh_grad
+tanh_grad:
+  args:
+    y:
+      dtype: tensor
+    dy:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+      disable: True
+  dispatch:
+    enable: True
+    Ascend: TanhGradAscend

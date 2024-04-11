@@ -96,7 +96,6 @@
 #include "ops/stack.h"
 #include "ops/switch.h"
 #include "ops/tan.h"
-#include "ops/tanh.h"
 #include "ops/tensor_list_from_tensor.h"
 #include "ops/tensor_list_get_item.h"
 #include "ops/tensor_list_reserve.h"

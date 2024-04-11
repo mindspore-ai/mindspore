@@ -206,7 +206,7 @@ from mindspore.ops.functional import embedding
 # 93
 from mindspore.ops.function.nn_func import softplus_ext as softplus
 # 94
-
+from mindspore.ops.function.math_func import tanh
 # 95
 
 # 96
@@ -409,7 +409,7 @@ __all__ = [
     # 93
     'softplus',
     # 94
-
+    'tanh',
     # 95
 
     # 96

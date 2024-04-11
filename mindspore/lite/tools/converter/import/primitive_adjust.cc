@@ -61,7 +61,6 @@
 #include "ops/reduce_sum_square.h"
 #include "ops/resize.h"
 #include "ops/stack.h"
-#include "ops/tanh.h"
 #include "ops/softplus.h"
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/grad/resize_grad.h"
