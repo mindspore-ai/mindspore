@@ -3209,7 +3209,7 @@ bool GraphScheduler::EnableRuntimePipeline() {
     return false;
   }
 
-  if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+  if (debug_aid_ != nullptr) {
     return false;
   }
 
