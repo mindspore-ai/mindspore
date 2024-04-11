@@ -153,8 +153,6 @@ void GeDeviceContext::Initialize() {
 
   MS_LOG(DEBUG) << "Start initialize...";
 
-  InitializeAcl();
-
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 
@@ -178,6 +176,7 @@ void GeDeviceContext::Initialize() {
   // set MS_CTX_ENABLE_GE_HETEROGENOUS true according to  heterogeneous mode
   ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   InitGe(ms_context);
+  InitializeAcl();
 
   MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
   GetKernelExecutor(false)->Initialize();
