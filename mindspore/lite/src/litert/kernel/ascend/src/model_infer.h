@@ -55,6 +55,7 @@ class ModelInfer {
 
   bool init_flag_;
   bool load_flag_;
+  int32_t device_id_;
   std::string device_type_;
   aclrtContext context_;
   Buffer om_data_;
