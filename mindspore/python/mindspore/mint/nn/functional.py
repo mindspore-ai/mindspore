@@ -198,7 +198,7 @@ from mindspore.ops.functional import embedding
 # 89
 
 # 90
-
+from mindspore.ops.function.nn_func import avg_pool2d_ext as avg_pool2d
 # 91
 
 # 92
@@ -401,7 +401,7 @@ __all__ = [
     # 89
 
     # 90
-
+    'avg_pool2d',
     # 91
     'grid_sample',
     # 92

@@ -2541,5 +2541,49 @@ REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {
   return {dx, dgamma};
 }));
 
+REG_BPROP_BUILDER("AvgPool2D").SetBody((BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto kernel_size = ib->GetInput(kIndex1);
+  auto stride = ib->GetInput(kIndex2);
+  auto padding = ib->GetInput(kIndex3);
+  auto ceil_mode = ib->GetInput(kIndex4);
+  auto count_include_pad = ib->GetInput(kIndex5);
+  auto divisor_override = ib->GetInput(kIndex6);
+  auto dout = ib->GetInput(kIndex8);
+
+  auto dx = ib->Emit("AvgPool2DGrad",
+                     {dout, input, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override});
+  return {dx,
+          ib->OutZeros(kernel_size),
+          ib->OutZeros(stride),
+          ib->OutZeros(padding),
+          ib->OutZeros(ceil_mode),
+          ib->OutZeros(count_include_pad),
+          ib->OutZeros(divisor_override)};
+}));
+
+REG_BPROP_BUILDER("AvgPool2DGrad").SetBody((BODYFUNC(ib) {
+  auto grad_output = ib->GetInput(kIndex0);
+  auto image = ib->GetInput(kIndex1);
+  auto kernel_size = ib->GetInput(kIndex2);
+  auto stride = ib->GetInput(kIndex3);
+  auto padding = ib->GetInput(kIndex4);
+  auto ceil_mode = ib->GetInput(kIndex5);
+  auto count_include_pad = ib->GetInput(kIndex6);
+  auto divisor_override = ib->GetInput(kIndex7);
+  auto dout = ib->GetInput(kIndex9);
+
+  auto grad_dout =
+    ib->Emit("AvgPool2D", {dout, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override});
+  return {grad_dout,
+          ib->OutZeros(image),
+          ib->OutZeros(kernel_size),
+          ib->OutZeros(stride),
+          ib->OutZeros(padding),
+          ib->OutZeros(ceil_mode),
+          ib->OutZeros(count_include_pad),
+          ib->OutZeros(divisor_override)};
+}));
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

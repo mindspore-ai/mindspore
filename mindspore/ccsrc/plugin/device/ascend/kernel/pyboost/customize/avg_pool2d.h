@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_SOFTMAX_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_SOFTMAX_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_AVG_POOL2D_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_AVG_POOL2D_H_
 
 #include <vector>
 #include <memory>
@@ -27,9 +27,12 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr SoftmaxAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &logits_tensor,
-                                         const ValueTuplePtr &axis);
+tensor::BaseTensorPtr AvgPool2DAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input,
+                                               const ValueTuplePtr &kernel_size, const ValueTuplePtr &stride,
+                                               const ValueTuplePtr &padding, const BoolImmPtr &ceil_mode,
+                                               const BoolImmPtr &count_include_pad,
+                                               const std::optional<Int64ImmPtr> &divisor_override);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_SOFTMAX_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_AVG_POOL2D_H_
