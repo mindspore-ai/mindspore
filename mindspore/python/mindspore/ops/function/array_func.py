@@ -609,7 +609,7 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
 
     Returns:
         Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`,
-            and it has the same data type as `on_value`.
+        and it has the same data type as `on_value`.
 
     Raises:
         TypeError: If `axis` or `depth` is not an int.
