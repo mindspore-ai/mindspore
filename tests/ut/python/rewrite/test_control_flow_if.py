@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import mindspore as ms
 from mindspore.rewrite import SymbolTree as SymbolTreeApi
 from mindspore.rewrite import NodeType, Node
 from mindspore import nn, ops, context
@@ -201,16 +202,24 @@ def test_flatten_if_control_flow():
     assert codes.count("x = self.abs5(x)") == 0
 
 
+def custom_func(x):
+    return x.shape == (2, 2)
+
 class IfNet(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.relu = nn.ReLU()
         self.abs = ops.Abs()
 
     def construct(self, x, y):
+        if isinstance(x, ms.Tensor) and custom_func(x):
+            x = self.abs(x)
+        if isinstance(y, ms.Tensor) and custom_func(y):
+            x = self.abs(x)
         if isinstance(y, ms.Tensor) and y.shape == (2, 2):
-            x = self.relu(x)
-        else:
+            x = self.abs(x)
+        if isinstance(y, ms.Tensor) and y.shape:
+            x = self.abs(x)
+        if isinstance(x, ms.Tensor) and isinstance(y, ms.Tensor) and x.shape and custom_func(x) and custom_func(y):
             x = self.abs(x)
         return x
 
@@ -218,10 +227,37 @@ def test_flatten_if_with_and():
     """
     Feature: Test flatten rewrite if control flow node.
     Description: Test flatten if with and.
-    Expectation: The first node in and is flatten and other nodes are not flatten.
+    Expectation: Success.
     """
     net = IfNet()
     stree = SymbolTreeApi.create(net)
     codes = stree.get_code()
-    assert codes.count("isinstance_var = isinstance(y, ms.Tensor)") == 1
-    assert codes.count("and_var = (isinstance_var and (y.shape == (2, 2)))") == 1
+    assert codes.count("isinstance_var_5 = isinstance(x, ms.Tensor)") == 1
+    assert codes.count("if isinstance_var_5:") == 1
+    assert codes.count("custom_func_var_3 = custom_func(x)") == 1
+    assert codes.count("custom_func_var_3 = False") == 1
+    assert codes.count("isinstance_var_4 = isinstance(y, ms.Tensor)") == 1
+    assert codes.count("if isinstance_var_4:") == 1
+    assert codes.count("custom_func_var_2 = custom_func_1(y)") == 1
+    assert codes.count("custom_func_var_2 = False") == 1
+    assert codes.count("isinstance_var_3 = isinstance(y, ms.Tensor)") == 1
+    assert codes.count("if isinstance_var_3:") == 1
+    assert codes.count("tuple_var_2 = (2, 2)") == 1
+    assert codes.count("compare_var = (y.shape == tuple_var_2)") == 1
+    assert codes.count("compare_var = False") == 1
+    assert codes.count("isinstance_var_2 = isinstance(y, ms.Tensor)") == 1
+    assert codes.count("and_var_3 = (isinstance_var_2 and y.shape)") == 1
+    assert codes.count("isinstance_var = isinstance(x, ms.Tensor)") == 1
+    assert codes.count("if isinstance_var:") == 1
+    assert codes.count("isinstance_var_1 = isinstance(y, ms.Tensor)") == 1
+    assert codes.count("isinstance_var_1 = False") == 1
+    assert codes.count("and_var_2 = (isinstance_var and isinstance_var_1 and x.shape)") == 1
+    assert codes.count("if and_var_2:") == 1
+    assert codes.count("custom_func_var = custom_func_2(x)") == 1
+    assert codes.count("custom_func_var = False") == 1
+    assert codes.count("and_var_1 = (isinstance_var and isinstance_var_1 and x.shape and custom_func_var)") == 1
+    assert codes.count("if and_var_1:") == 1
+    assert codes.count("custom_func_var_1 = custom_func_3(y)") == 1
+    assert codes.count("custom_func_var_1 = False") == 1
+    assert codes.count("and_var = (isinstance_var and isinstance_var_1 and x.shape "
+                       "and custom_func_var and custom_func_var_1)") == 1
