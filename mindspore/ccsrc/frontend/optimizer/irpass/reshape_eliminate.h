@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,13 @@ class ReshapeSameShapeEliminater : public AnfVisitor {
     }
 
     auto src_shape_abs = x_->abstract();
-    if (src_shape_abs == nullptr) {
+    if (src_shape_abs == nullptr || src_shape_abs->isa<abstract::AbstractAny>()) {
       return nullptr;
     }
 
     auto src_shape = src_shape_abs->GetShapeTrack();
     auto tgt_shape_abs = node->abstract();
-    if (tgt_shape_abs == nullptr) {
+    if (tgt_shape_abs == nullptr || tgt_shape_abs->isa<abstract::AbstractAny>()) {
       return nullptr;
     }
     auto tgt_shape = tgt_shape_abs->GetShapeTrack();

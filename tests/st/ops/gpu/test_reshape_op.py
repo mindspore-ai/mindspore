@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
+import mindspore.nn as nn
+import mindspore as ms
 
 def reshape(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -124,3 +126,29 @@ def test_reshape_uint8():
 @pytest.mark.env_onecard
 def test_reshape_bool():
     reshape_bool()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reshape_fallback():
+    """
+    Feature: test Reshape in Fallback.
+    Description: test Reshape in Fallback.
+    Expectation: no exception.
+    """
+    class Network(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.fc = nn.Dense(1024, 512)
+            self.bn = nn.BatchNorm1d(512)
+
+        def construct(self, x):
+            x = ms.ops.expand_dims(Tensor(np.max(x.asnumpy(), axis=2)), -1)
+            return ms.ops.reshape(x, (-1, 1024))
+
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(np.ones((32, 1024, 128)), dtype=ms.float32)
+    net = Network()
+    out_shape = net(x)
+    assert out_shape.shape == (32, 1024)
