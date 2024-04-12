@@ -59,6 +59,12 @@ class MinimumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
                             const int64_t d6, const T *input_x, const T *input_y, T *output);
   template <typename T>
   T MinimumFunc(const T &lhs, const T &rhs) const {
+    if (std::isnan(static_cast<float>(lhs))) {
+      return lhs;
+    }
+    if (std::isnan(static_cast<float>(rhs))) {
+      return rhs;
+    }
     return lhs < rhs ? lhs : rhs;
   }
   template <typename T>
