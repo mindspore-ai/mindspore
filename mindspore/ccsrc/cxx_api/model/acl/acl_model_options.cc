@@ -19,7 +19,7 @@
 #include "utils/log_adapter.h"
 #include "ge/ge_api_types.h"
 #include "cxx_api/acl_utils.h"
-#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {

@@ -63,6 +63,7 @@ aclrtSubscribeReportFunObj aclrtSubscribeReport_ = nullptr;
 aclrtSynchronizeEventFunObj aclrtSynchronizeEvent_ = nullptr;
 aclrtSynchronizeStreamFunObj aclrtSynchronizeStream_ = nullptr;
 aclrtSynchronizeStreamWithTimeoutFunObj aclrtSynchronizeStreamWithTimeout_ = nullptr;
+aclrtGetSocNameFunObj aclrtGetSocName_ = nullptr;
 
 void LoadAclRtApiSymbol(const std::string &ascend_path) {
   std::string aclrt_plugin_path = ascend_path + "lib64/libascendcl.so";
@@ -115,6 +116,7 @@ void LoadAclRtApiSymbol(const std::string &ascend_path) {
   aclrtSynchronizeEvent_ = DlsymAscendFuncObj(aclrtSynchronizeEvent, handler);
   aclrtSynchronizeStream_ = DlsymAscendFuncObj(aclrtSynchronizeStream, handler);
   aclrtSynchronizeStreamWithTimeout_ = DlsymAscendFuncObj(aclrtSynchronizeStreamWithTimeout, handler);
+  aclrtGetSocName_ = DlsymAscendFuncObj(aclrtGetSocName, handler);
   MS_LOG(INFO) << "Load acl rt api success!";
 }
 
