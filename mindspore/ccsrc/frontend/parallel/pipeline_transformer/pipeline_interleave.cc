@@ -819,16 +819,19 @@ void PipelinePostProcess::ModifySendRecvAttr(const std::vector<AnfNodePtr> &all_
   }
 }
 
-static int64_t CalSrTag(int64_t order, int64_t micro) { return order * 1024 + micro; }
+static int64_t CalSrTag(int64_t order, int64_t micro, int64_t interleave_index) {
+  return order * 4096 * 128 + interleave_index * 128 + micro;
+}
 
-AnfNodePtr PipelinePostProcess::GenNewNodeFromOld(const AnfNodePtr &node, const AnfNodePtr &input, int64_t micro) {
+AnfNodePtr PipelinePostProcess::GenNewNodeFromOld(const AnfNodePtr &node, const AnfNodePtr &input, int64_t micro,
+                                                  int64_t index) {
   const auto &old = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(old);
   auto prim = GetCNodePrimitive(node);
   auto cloned_prim = prim->Clone();
   auto attrs = prim->attrs();
   auto order = GetValue<int64_t>(old->GetPrimalAttr(ORDER));
-  auto sr_tag = CalSrTag(order, micro);
+  auto sr_tag = CalSrTag(order, micro, index);
   attrs[SR_TAG] = MakeValue(sr_tag);
   cloned_prim->SetAttrs(attrs);
   std::vector<AnfNodePtr> new_node_input = {NewValueNode(cloned_prim), input};
@@ -838,12 +841,15 @@ AnfNodePtr PipelinePostProcess::GenNewNodeFromOld(const AnfNodePtr &node, const 
     new_node->AddPrimalAttr(PIPELINE_PARAM, MakeValue(0));
   }
   new_node->set_primal_attrs(old->primal_attrs());
+  new_node->AddPrimalAttr(ORDER, MakeValue(sr_tag));
   return new_node;
 }
 
 std::vector<AnfNodePtr> PipelinePostProcess::GenerateMainGraphSend(const std::vector<AnfNodePtr> &nodes,
-                                                                   const AnfNodePtr &node, const ValuePtr &micro) {
+                                                                   const AnfNodePtr &node, const ValuePtr &micro,
+                                                                   const ValuePtr &index) {
   std::vector<AnfNodePtr> sends;
+  auto index_value = GetValue<int64_t>(index);
   for (size_t i = 0; i < nodes.size(); ++i) {
     auto send = nodes[i];
     auto csend = send->cast<CNodePtr>();
@@ -853,13 +859,13 @@ std::vector<AnfNodePtr> PipelinePostProcess::GenerateMainGraphSend(const std::ve
       }
       auto param = csend->cast<CNodePtr>()->user_data<AnfNode>(INPUT_PARAM);
       csend->AddPrimalAttr("send_once", MakeValue(true));
-      auto new_send = GenNewNodeFromOld(send, param, 0);
+      auto new_send = GenNewNodeFromOld(send, param, 0, 0);
       sends.emplace_back(new_send);
       continue;
     }
     auto micro_value = GetValue<int64_t>(micro);
     auto send_input = CreateTupleGetItemNode(main_graph_, node, i);
-    auto new_send = GenNewNodeFromOld(send, send_input, micro_value)->cast<CNodePtr>();
+    auto new_send = GenNewNodeFromOld(send, send_input, micro_value, index_value)->cast<CNodePtr>();
     new_send->AddPrimalAttr(PIPELINE_END, micro);
     new_send->AddPrimalAttr(MICRO, micro);
     sends.emplace_back(new_send);
@@ -875,9 +881,12 @@ AnfNodePtr PipelinePostProcess::GenerateMainGraphRecv(const AnfNodePtr &fg_node,
   if (crecv->HasPrimalAttr(PIPELINE_PARAM)) {
     auto param = crecv->user_data<AnfNode>(INPUT_PARAM);
     MS_EXCEPTION_IF_NULL(param);
-    new_recv = GenNewNodeFromOld(recv, param, 0);
+    new_recv = GenNewNodeFromOld(recv, param, 0, 0);
   } else {
-    new_recv = GenNewNodeFromOld(recv, crecv->input(1), GetValue<int64_t>(cuser->GetPrimalAttr(MICRO)));
+    auto index = cuser->GetPrimalAttr(INDEX);
+    MS_EXCEPTION_IF_NULL(index);
+    auto index_value = GetValue<int64_t>(index);
+    new_recv = GenNewNodeFromOld(recv, crecv->input(1), GetValue<int64_t>(cuser->GetPrimalAttr(MICRO)), index_value);
     new_recv->cast<CNodePtr>()->AddPrimalAttr(PIPELINE_BEGIN, cuser->GetPrimalAttr(MICRO));
   }
   new_recv->cast<CNodePtr>()->AddPrimalAttr(MICRO, cuser->GetPrimalAttr(MICRO));
@@ -956,6 +965,24 @@ void PipelinePostProcess::GetSendsRecvs(const FuncGraphPtr &fg, int64_t chunk, s
   return;
 }
 
+void PipelinePostProcess::LabelInterleaveIndex() {
+  std::vector<int64_t> micro_visited;
+  for (auto &usr : shared_cell_users_) {
+    int64_t index = 0;
+    auto cusr = usr->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cusr);
+    auto micro = cusr->GetPrimalAttr(MICRO);
+    MS_EXCEPTION_IF_NULL(micro);
+    auto micro_value = GetValue<int64_t>(micro);
+    if (!std::count(micro_visited.begin(), micro_visited.end(), micro_value)) {
+      micro_visited.emplace_back(micro_value);
+    } else {
+      index += 1;
+    }
+    cusr->AddPrimalAttr(INDEX, MakeValue(index));
+  }
+}
+
 std::vector<AnfNodePtr> PipelinePostProcess::PartitionChunkGraph(const FuncGraphPtr &fg, int64_t chunk) {
   std::vector<AnfNodePtr> temp;
   std::vector<AnfNodePtr> recvs;
@@ -1004,7 +1031,8 @@ std::vector<AnfNodePtr> PipelinePostProcess::PartitionChunkGraph(const FuncGraph
       new_usr->set_abstract(out->abstract());
     }
     auto micro = cusr->GetPrimalAttr(MICRO);
-    auto temp_sends = GenerateMainGraphSend(sends, new_usr, micro);
+    auto index = cusr->GetPrimalAttr(INDEX);
+    auto temp_sends = GenerateMainGraphSend(sends, new_usr, micro, index);
     if (temp_sends.empty()) {
       if (stage_ != stage_num_ - 1) {
         MS_LOG(EXCEPTION) << "Some wrong with PipelineParallel.";
@@ -1030,6 +1058,7 @@ std::vector<AnfNodePtr> PipelinePostProcess::PartitionChunkGraph(const FuncGraph
 }
 
 void PipelinePostProcess::GraphPartition(const std::vector<AnfNodePtr> &all_nodes) {
+  LabelInterleaveIndex();
   std::vector<AnfNodePtr> send_ops;
   for (size_t i = 0; i < LongToSize(chunk_num_); ++i) {
     auto chunk_fg = shared_cell_;

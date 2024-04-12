@@ -236,7 +236,11 @@ std::pair<Border, Border> PipelineScheduler::SpecifiedBorder(const std::vector<B
   }
   if (candidates.size() > 1) {
     std::sort(candidates.begin(), candidates.end(), SortFuncInsideMicro);
-    ControlOrder(candidates.front(), candidates.back());
+    for (size_t index = 0; index < candidates.size() - 1; ++index) {
+      auto prior = candidates[index];
+      auto last = candidates[index + 1];
+      ControlOrder(prior, last);
+    }
   }
   return std::make_pair(candidates.front(), candidates.back());
 }
