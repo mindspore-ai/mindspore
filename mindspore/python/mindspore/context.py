@@ -34,6 +34,7 @@ from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context
 from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context, \
     _need_reset_device_target_for_ps
 from mindspore.parallel._offload_context import _set_offload_context, _get_offload_context
+from mindspore.hal.device import is_initialized
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'STRICT', 'COMPATIBLE', 'LAX', 'set_context', 'get_context',
            'set_auto_parallel_context', 'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode',
@@ -1092,6 +1093,13 @@ def _check_target_specific_cfgs(device, arg_key):
     return False
 
 
+def _check_ascend_device_context_initialized(device_target):
+    if device_target == 'Ascend' and is_initialized(device_target):
+        logger.warning(f"For 'context.set_context' in Ascend backend, the backend is already initialized, please set "
+                       "it before the definition of any Tensor and Parameter, and the instantiation and execution of "
+                       "any operation and net, otherwise the settings may not take effect.")
+
+
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=(bool, int),
                  save_graphs_path=str, enable_dump=bool, aoe_tune_mode=str, aoe_config=dict,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
@@ -1599,6 +1607,8 @@ def set_context(**kwargs):
     if 'device_target' in kwargs:
         ctx.set_device_target(kwargs['device_target'])
     device = ctx.get_param(ms_ctx_param.device_target)
+    _check_ascend_device_context_initialized(device)
+
     for key, value in kwargs.items():
         if key in ('enable_sparse', 'auto_tune_mode'):
             logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated, "
