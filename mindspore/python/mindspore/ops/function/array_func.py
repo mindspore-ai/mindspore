@@ -612,14 +612,14 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
 
     Returns:
         Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`,
-            and it has the same data type as `on_value`.
+        and it has the same data type as `on_value`.
 
     Raises:
         TypeError: If `axis` or `depth` is not an int.
         TypeError: If dtype of `indices` is not int32 or int64.
         TypeError: If dtype of `on_value` is not int32, int64, float16 or float32.
         TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
-        ValueError: If `axis` is not in range [-1, ndim].
+        ValueError: If `axis` is not in range [-1, ndim]. ndim is the dimension of `indices` .
         ValueError: If `depth` is less than 0.
 
     Supported Platforms:
@@ -1048,12 +1048,16 @@ def unique_consecutive(input, return_idx=False, return_counts=False, axis=None):
             returned. If specified, it must be int32 or int64. Default: ``None`` .
 
     Returns:
-        A tensor or a tuple of tensors containing tensor objects (`output`, `idx`, `counts`). `output` has the
-        same type as `input` and is used to represent the output list of unique scalar elements. If `return_idx` is
-        True, there will be an additional returned tensor, `idx`, which has the same shape as `input` and represents
-        the index of where the element in the original input maps to the position in the output. If `return_counts`
-        is True, there will be an additional returned tensor, `counts`, which represents the number of occurrences
-        for each unique value or tensor.
+        A tensor or a tuple of tensors containing tensor objects (`output`, `idx`, `counts`).
+
+        - `output` has the
+          same type as `input` and is used to represent the output list of unique scalar elements.
+        - If `return_idx` is
+          True, there will be an additional returned tensor, `idx`, which has the same shape as `input` and represents
+          the index of where the element in the original input maps to the position in the output.
+        - If `return_counts`
+          is True, there will be an additional returned tensor, `counts`, which represents the number of occurrences
+          for each unique value or tensor.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -2767,11 +2771,11 @@ def gather_elements(input, dim, index):
 
     .. code-block::
 
-        output[i][j][k] = x[index[i][j][k]][j][k]  # if dim == 0
+        output[i][j][k] = input[index[i][j][k]][j][k]  # if dim == 0
 
-        output[i][j][k] = x[i][index[i][j][k]][k]  # if dim == 1
+        output[i][j][k] = input[i][index[i][j][k]][k]  # if dim == 1
 
-        output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
+        output[i][j][k] = input[i][j][index[i][j][k]]  # if dim == 2
 
     `input` and `index` have the same length of dimensions, and `index.shape[axis] <= input.shape[axis]`
     where axis goes through all dimensions of `input` except `dim`.
@@ -2832,10 +2836,12 @@ def tensor_scatter_add(input_x, indices, updates):
         output\left [indices  \right ] = input\_x + update
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        If some values of the `indices` are out of `input_x` bound:
+
+        - On GPU, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, raising an index error.
+        - On Ascend, out of bound checking is not supported,
           unknown errors may be caused.
 
     Args:
@@ -2890,10 +2896,13 @@ def tensor_scatter_sub(input_x, indices, updates):
         output[indices] = input\_x - update
 
     Note:
-        On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `updates` will not be updated to self tensor. On CPU, if some values of
-        the `indices` are out of bound, raising an index error. On Ascend, out of bound checking is
-        not supported, if some values of the `indices` are out of bound, unknown errors may be caused.
+        If some values of the `indices` are out of `input_x` bound:
+
+        - On GPU, instead of raising an index error,
+          the corresponding `updates` will not be updated to self tensor.
+        - On CPU, raising an index error.
+        - On Ascend, out of bound checking is
+          not supported, unknown errors may be caused.
 
     Args:
         input_x (Tensor): The input tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -2943,10 +2952,12 @@ def tensor_scatter_max(input_x, indices, updates):
         output\left [indices  \right ] = \max(input\_x, update)
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        If some values of the `indices` are out of `input_x` bound:
+
+        - On GPU, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, raising an index error.
+        - On Ascend, out of bound checking is not supported,
           unknown errors may be caused.
 
     Args:
@@ -3004,10 +3015,12 @@ def tensor_scatter_min(input_x, indices, updates):
         output\left [indices  \right ] = \min(input\_x, update)
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        If some values of the `indices` are out of `input_x` bound:
+
+        - On GPU, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, raising an index error.
+        - On Ascend, out of bound checking is not supported,
           unknown errors may be caused.
 
     Args:
@@ -3497,7 +3510,7 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
         ValueError: If rank of `num_rows`, `num_cols` or `padding_value` is not equal to 0.
         ValueError: If size of `k` is not equal to 1 or 2.
         ValueError: If the value of `k` is not in (-num_rows, num_cols).
-        ValueError: If k[1] is not greater equal to k[0] when k[0] != k[1].
+        ValueError: If k[1] is less than k[0] when k[0] != k[1].
         ValueError: If rank of `x` is not greater than or is equal to 1 when k is an integer or k[0] == k[1].
         ValueError: If rank of `x` is not greater than or is equal to 2 when k[0] != k[1].
         ValueError: If x.shape[-2] is not equal to k[1] - k[0] + 1 when k[0] != k[1].
@@ -3561,11 +3574,13 @@ def matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT"):
 
     Returns:
         A Tensor. Has the same type as `x`.
-        Assume `x` has r dimensions :math:`(I, J, ..., M, N)` . Let `max_diag_len` be the maximum length among all
-        diagonals to be extracted, :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
-        Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
-        If :math:`num\_diags == 1`, the output tensor is of rank r - 1 with shape :math:`(I, J, ..., L, max\_diag\_len)`
-        Otherwise, the output tensor has rank r with dimensions :math:`(I, J, ..., L, num\_diags, max\_diag\_len)` .
+
+        - Assume `x` has r dimensions :math:`(I, J, ..., M, N)` . Let `max_diag_len` be the maximum length among all
+          diagonals to be extracted, :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
+        - Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
+          If :math:`num\_diags == 1`, the output tensor is of rank r - 1
+          with shape :math:`(I, J, ..., L, max\_diag\_len)`
+          Otherwise, the output tensor has rank r with dimensions :math:`(I, J, ..., L, num\_diags, max\_diag\_len)` .
 
     Raises:
         TypeError: If `x` is not Tensor.
@@ -3574,9 +3589,9 @@ def matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT"):
         ValueError: If `align` is not a string or not in the valid range.
         ValueError: If rank of `k` is not equal to 0 or 1.
         ValueError: If rank of `padding_value` is not equal to 0.
-        ValueError: If rank of `x` is not greater equal to 2.
+        ValueError: If rank of `x` is less than 2.
         ValueError: If size of `k` is not equal to 1 or 2.
-        ValueError: If k[1] is not greater equal to k[0] in case the size of `k` is 2.
+        ValueError: If k[1] is less than k[0] in case the size of `k` is 2.
         ValueError: If the value of `k` is not in (-x.shape[-2], x.shape[-1]).
 
     Supported Platforms:
@@ -3643,9 +3658,9 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=re
         TypeError: If `k` is not int32 dtype.
         ValueError: If `align` is not a string or not in the valid range.
         ValueError: If rank of `k` is not equal to 0 or 1.
-        ValueError: If rank of `x` is not greater equal to 2.
+        ValueError: If rank of `x` is less than 2.
         ValueError: If size of `k` is not equal to 1 or 2.
-        ValueError: If k[1] is not greater equal to k[0] in case the size of `k` is 2.
+        ValueError: If k[1] is less than k[0] in case the size of `k` is 2.
         ValueError: If the `diagonal` rank size don't match with input `x` rank size.
         ValueError: If the `diagonal` shape value don't match with input `x` shape value.
         ValueError: If the diagonal :math:`shape[-2]` is not equal to num_diags calculated by :math:`k[1]-k[0]+1`.
@@ -4112,7 +4127,7 @@ def is_tensor(obj):
         obj (Object): input object.
 
     Returns:
-        Bool. Return True if `obj` is a Tensor, otherwise, return False.
+        Bool. Return ``True`` if `obj` is a Tensor, otherwise, return ``False``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4238,10 +4253,12 @@ def tensor_scatter_div(input_x, indices, updates):
         output\left [indices  \right ] = input\_x \div update
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        If some values of the `indices` are out of `input_x` bound:
+
+        - On GPU, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, raising an index error.
+        - On Ascend, out of bound checking is not supported,
           unknown errors may be caused.
         - The operator can't handle division by 0 exceptions, so the user needs to make sure
           there is no 0 value in `updates`.
@@ -4669,7 +4686,7 @@ def triu(input, diagonal=0):  # pylint: disable=redefined-outer-name
 
     Args:
         input (Tensor): The input tensor with shape :math:`(M, N, *)` where * means any number of additional dimensions.
-        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
+        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: ``0``,
             indicating the main diagonal.
 
     Returns:
@@ -4867,7 +4884,7 @@ def tensor_split(input, indices_or_sections, axis=0):
         TypeError: If argument `input` is not Tensor.
         TypeError: If argument `axis` is not int.
         ValueError: If argument `axis` is out of range of :math:`[-input.ndim, input.ndim)` .
-        TypeError: If each element in 'indices_or_sections' is not integer.
+        TypeError: If each element in `indices_or_sections` is not integer.
         TypeError: If argument `indices_or_sections` is not int, tuple(int) or list(int).
 
     Supported Platforms:

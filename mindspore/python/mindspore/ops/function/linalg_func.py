@@ -72,7 +72,7 @@ def cond(A, p=None):
 
     Raises:
         TypeError: If `A` is a vector and `p` is a str.
-        ValueError: If `A` is a matrices and `p` is not in valid mode.
+        ValueError: If `A` is a matrix and `p` is not in valid mode.
         ValueError: If `A` is a matrix and `p` is an integer that is not in [1, -1, 2, -2].
 
     Supported Platforms:
@@ -182,7 +182,7 @@ def svd(input, full_matrices=False, compute_uv=True):
 
     Args:
         input (Tensor): Tensor of the matrices to be decomposed. The shape should be :math:`(*, M, N)`,
-          the supported dtype are float32 and float64.
+          the supported dtypes are float32 and float64.
         full_matrices (bool, optional): If true, compute full-sized :math:`U` and :math:`V`. If false, compute
                                         only the leading P singular vectors, with P is the minimum of M and N.
                                         Default: ``False`` .
