@@ -696,7 +696,7 @@ __all__ = [
     "ApplyRotaryPosEmb",
     "RmsNorm",
     "MatmulQkv",
-    "MatmulFfn"
+    "MatmulFfn",
 ]
 
 __custom__ = [
