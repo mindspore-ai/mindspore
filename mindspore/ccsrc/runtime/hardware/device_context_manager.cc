@@ -463,7 +463,7 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
 
 DeviceContextPtr DeviceContextManager::GetDeviceContext(const std::string &device_target) {
   if (backend_to_device_context_.count(device_target) == 0) {
-    MS_LOG(WARNING) << "Device context of device " << device_target << " is not created yet.";
+    MS_LOG(INFO) << "Device context of device " << device_target << " is not created yet.";
     return nullptr;
   }
   return backend_to_device_context_[device_target];
