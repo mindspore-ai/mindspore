@@ -1848,7 +1848,7 @@ REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
 });
 
-REG_BPROP_BUILDER("ArgMaxWithValue").SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ArgMaxWithValue").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto keep_dims = ib->GetInput(kIndex2);
@@ -1858,7 +1858,7 @@ REG_BPROP_BUILDER("ArgMaxWithValue").SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
 });
 
-REG_BPROP_BUILDER("ArgMinWithValue").SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ArgMinWithValue").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto keep_dims = ib->GetInput(kIndex2);
