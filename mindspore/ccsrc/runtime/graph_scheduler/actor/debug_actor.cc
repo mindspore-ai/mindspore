@@ -150,50 +150,6 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
 }
 
 /*
- * Feature group: ascend step start timestamp
- * Target device group: Ascend.
- * Description: Add step start timestamp when profiler is started.
- */
-void DebugActor::AscendStepStart(const std::vector<KernelGraphPtr> &graphs,
-                                 std::vector<DeviceContext *> device_contexts) {
-  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
-  if (profiler == nullptr || !profiler->IsInitialized() || graphs.empty()) {
-    return;
-  }
-  if (profiler->GetEnableFlag() && !graphs[0]->IsDatasetGraph()) {
-    profile_started_ = false;
-    for (size_t i = 0; i < graphs.size(); ++i) {
-      MS_EXCEPTION_IF_NULL(graphs[i]);
-      MS_EXCEPTION_IF_NULL(device_contexts[i]);
-      if (device_contexts[i]->GetDeviceType() == device::DeviceType::kAscend && !profile_started_) {
-        device_ctx_ = device_contexts[i];
-        device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
-        MS_LOG(INFO) << "Dot step start timestamp.";
-        profiler->StepStart(current_step++, device_contexts[i]->device_res_manager_->GetStream());
-        profile_started_ = true;
-      }
-    }
-  }
-}
-
-/*
- * Feature group: ascend step end timestamp
- * Target device group: Ascend.
- * Description: Add step end timestamp when profiler is end.
- */
-void DebugActor::AscendStepEnd() {
-  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
-  if (profile_started_ && profiler != nullptr && profiler->GetEnableFlag()) {
-    MS_EXCEPTION_IF_NULL(device_ctx_);
-    device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
-    device_ctx_->device_res_manager_->SyncAllStreams();
-    MS_LOG(INFO) << "Dot step end timestamp.";
-    profiler->StepStop();
-    profile_started_ = false;
-  }
-}
-
-/*
  * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
  * Runtime category: MindRT.
@@ -218,7 +174,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
     }
   }
   if (backend == "ge") {
-    AscendStepStart(graphs, device_contexts);
+    MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
     return;
   }
   MS_EXCEPTION_IF_NULL(op_context);
@@ -278,8 +234,7 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
     dump_flag = false;
   }
   if (backend == "ge") {
-    AscendStepEnd();
-    MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
+    MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
     return;
   }
   MS_EXCEPTION_IF_NULL(op_context);
