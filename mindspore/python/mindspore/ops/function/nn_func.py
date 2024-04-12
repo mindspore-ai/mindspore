@@ -2768,6 +2768,51 @@ def softplus(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
     return ops.select(input * beta > threshold, input, op_output)
 
 
+def softplus_ext(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
+    r"""
+    Applies softplus function to `input` element-wise.
+
+    The softplus function is shown as follows, x is the element of `input` :
+
+    .. math::
+
+        \text{output} = \frac{1}{beta}\log(1 + \exp(\text{beta * x}))
+
+    When :math:`input * beta > threshold`, the implementation converts to the linear function
+    to ensure numerical stability.
+
+    Args:
+        input (Tensor) - Tensor of any dimension.
+            Supported dtypes:
+
+            - Ascend: float16, float32, bfloat16
+
+        beta (number, optional) - The :math:`\beta` value in softplus function. Default: ``1`` .
+        threshold (number, optional) - When :math:`input * beta > threshold`, converting softplus to a linear function.
+            Default: ``20`` .
+
+    Returns:
+        Tensor, with the same type and shape as the `input` .
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If the dtype of `input` is not float16, float32, bfloat16.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> input = Tensor(np.array([0.1, 0.2, 30, 25]), mindspore.float32)
+        >>> output = mint.softplus(input)
+        >>> print(output)
+        [0.74439657 0.7981388 30. 25.]
+    """
+    return _get_cache_prim(ops.auto_generate.SoftplusExt)()(input, beta, threshold)
+
+
 def selu(input_x):
     r"""
     Activation function SeLU (Scaled exponential Linear Unit).

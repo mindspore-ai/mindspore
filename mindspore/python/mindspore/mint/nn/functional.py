@@ -203,7 +203,7 @@ from mindspore.ops.functional import pad_ext as pad
 # 92
 
 # 93
-
+from mindspore.ops.function.nn_func import softplus_ext as softplus
 # 94
 
 # 95
@@ -406,7 +406,7 @@ __all__ = [
     # 92
 
     # 93
-
+    'softplus',
     # 94
 
     # 95
