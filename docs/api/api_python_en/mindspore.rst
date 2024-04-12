@@ -154,6 +154,7 @@ Serialization
     mindspore.load_distributed_checkpoint
     mindspore.load_mindir
     mindspore.load_param_into_net
+    mindspore.load_segmented_checkpoints
     mindspore.merge_pipeline_strategys
     mindspore.merge_sliced_parameter
     mindspore.obfuscate_model

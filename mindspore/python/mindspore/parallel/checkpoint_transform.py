@@ -425,7 +425,8 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
 def load_segmented_checkpoints(ckpt_file_dir, net=None, strict_load=False, filter_prefix=None,
                                dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None):
     """
-    Load checkpoint info from a specified file.
+    Load checkpoint info from a specified file. If the specified ckpt_file_dir path contains multiple
+    checkpoint files, all checkpoint files will be loaded one by one and the combined dictionary will be return.
 
     Note:
         - `specify_prefix` and `filter_prefix` do not affect each other.
@@ -463,13 +464,11 @@ def load_segmented_checkpoints(ckpt_file_dir, net=None, strict_load=False, filte
         Parameter.
 
     Raises:
+        TypeError: Input ckpt_file_dir is not a string.
+        ValueError: Checkpoint file directory doesn't exist. Or it's not a directory
         ValueError: Checkpoint file's format is incorrect.
         ValueError: Parameter's dict is None after load checkpoint file.
         TypeError: The type of `specify_prefix` or `filter_prefix` is incorrect.
-
-    Tutorial Examples:
-        - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/r2.2/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     if not isinstance(ckpt_file_dir, str):
         raise TypeError("The ckpt_file_dir should be a str.")
