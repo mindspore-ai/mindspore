@@ -1,0 +1,36 @@
+#operator avg_pool2d_grad
+avg_pool2d_grad:
+    args:
+        grad:
+            dtype: tensor
+        image:
+            dtype: tensor
+        kernel_size:
+            dtype: tuple[int]
+            type_cast: int, list[int]
+        stride:
+            dtype: tuple[int]
+            type_cast: int, list[int]
+        padding:
+            dtype: tuple[int]
+            default: 0
+            type_cast: int, list[int]
+        ceil_mode:
+            dtype: bool
+            default: False
+        count_include_pad:
+            dtype: bool
+            default: True
+        divisor_override:
+            dtype: int
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: AvgPool2DGrad
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: AvgPool2DGradAscend

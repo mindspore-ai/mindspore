@@ -1,0 +1,34 @@
+#operator avg_pool2d
+avg_pool2d:
+    args:
+        input:
+            dtype: tensor
+        kernel_size:
+            dtype: tuple[int]
+            type_cast: int, list[int]
+        stride:
+            dtype: tuple[int]
+            type_cast: int, list[int]
+        padding:
+            dtype: tuple[int]
+            default: 0
+            type_cast: int, list[int]
+        ceil_mode:
+            dtype: bool
+            default: False
+        count_include_pad:
+            dtype: bool
+            default: True
+        divisor_override:
+            dtype: int
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: AvgPool2D
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: AvgPool2DAscend
