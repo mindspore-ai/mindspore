@@ -760,6 +760,54 @@ def test_if_in_if():
     assert ret2
 
 
+def test_output_ref_of_parameter():
+    """
+    Feature: Contrtol flow inline.
+    Description: Inline switch node into kernel graph.
+    Expectation: Not throw exception.
+    """
+    param_a = Parameter(Tensor(5, mstype.int32), name='a')
+
+    @jit
+    def foo(x, y, param_a):
+        if x > y:
+            out = ops.addn([x, x, param_a])
+        else:
+            out = ops.assign(param_a, x)
+        return out
+
+    x = Tensor(2, mstype.int32)
+    y = Tensor(1, mstype.int32)
+    ret1 = foo(x, x, param_a)
+    ret2 = foo(x, y, param_a)
+    assert ret1
+    assert ret2
+
+
+def test_gather_switch_gather_output():
+    """
+    Feature: Contrtol flow inline.
+    Description: Inline switch node into kernel graph.
+    Expectation: Not throw exception.
+    """
+    param_a = Parameter(Tensor(5, mstype.int32), name='a')
+
+    @jit
+    def foo(x, y, param_a):
+        if x > y:
+            out = param_a
+        else:
+            out = ops.addn([x, x, x])
+        if x > y:
+            out = ops.assign(param_a, x)
+        return out
+
+    x = Tensor(1, mstype.int32)
+    y = Tensor(1, mstype.int32)
+    ret1 = foo(x, y, param_a)
+    assert ret1
+
+
 def test_if_in_if_directly():
     """
     Feature: Contrtol flow inline.

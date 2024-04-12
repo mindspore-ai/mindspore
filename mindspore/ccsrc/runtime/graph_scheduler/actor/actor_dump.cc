@@ -822,6 +822,8 @@ std::string GetActorSubName(AbstractActor *actor) {
   MS_EXCEPTION_IF_NULL(actor);
   if (actor->type() == KernelTransformType::kCopyActor) {
     return std::string("CopyActor");
+  } else if (actor->type() == KernelTransformType::kEntranceActor) {
+    return std::string("EntranceActor");
   }
   const auto &name = actor->GetAID().Name();
   std::string kernel_graph_name;
@@ -1108,6 +1110,10 @@ void DumpActorInfo(AbstractActor *actor, std::ofstream &ofs) {
     }
   }
 }
+
+bool IsTopActorType(AbstractActor *actor) {
+  return actor->type() != KernelTransformType::kStackActor && actor->type() != KernelTransformType::kEntranceActor;
+}
 }  // namespace
 
 std::vector<AbstractActor *> TopoSortForActor(AbstractActor *root) {
@@ -1122,6 +1128,7 @@ std::vector<AbstractActor *> TopoSortForActor(AbstractActor *root) {
   extra_seen_map[root] = 0;
   while (!todo.empty()) {
     AbstractActor *actor = todo.back();
+
     if (extra_seen_map[actor] == seen) {
       todo.pop_back();
       continue;
@@ -1134,22 +1141,25 @@ std::vector<AbstractActor *> TopoSortForActor(AbstractActor *root) {
     }
     seen_map[actor] = seen;
     std::vector<std::string> input_aids;
-    std::for_each(
-      actor->input_data_arrow_aids().begin(), actor->input_data_arrow_aids().end(),
-      [&input_aids, actor](const auto &pair) {
-        input_aids.emplace_back((actor->type() != KernelTransformType::kFusionActor && pair.second != nullptr &&
-                                 pair.second->to_op_id_.Name().find(kFusionActorNameSuffix) != std::string::npos)
-                                  ? pair.second->to_op_id_.Name()
-                                  : pair.first.Name());
-      });
-    std::for_each(
-      actor->input_control_arrow_aids().begin(), actor->input_control_arrow_aids().end(),
-      [&input_aids, actor](const auto &pair) {
-        input_aids.emplace_back((actor->type() != KernelTransformType::kFusionActor && pair.second != nullptr &&
-                                 pair.second->to_op_id_.Name().find(kFusionActorNameSuffix) != std::string::npos)
-                                  ? pair.second->to_op_id_.Name()
-                                  : pair.first.Name());
-      });
+
+    if (IsTopActorType(actor)) {
+      std::for_each(
+        actor->input_data_arrow_aids().begin(), actor->input_data_arrow_aids().end(),
+        [&input_aids, actor](const auto &pair) {
+          input_aids.emplace_back((actor->type() != KernelTransformType::kFusionActor && pair.second != nullptr &&
+                                   pair.second->to_op_id_.Name().find(kFusionActorNameSuffix) != std::string::npos)
+                                    ? pair.second->to_op_id_.Name()
+                                    : pair.first.Name());
+        });
+      std::for_each(
+        actor->input_control_arrow_aids().begin(), actor->input_control_arrow_aids().end(),
+        [&input_aids, actor](const auto &pair) {
+          input_aids.emplace_back((actor->type() != KernelTransformType::kFusionActor && pair.second != nullptr &&
+                                   pair.second->to_op_id_.Name().find(kFusionActorNameSuffix) != std::string::npos)
+                                    ? pair.second->to_op_id_.Name()
+                                    : pair.first.Name());
+        });
+    }
     for (auto aid : input_aids) {
       const auto &input_actor = FetchActor(aid);
       if (input_actor == nullptr) {

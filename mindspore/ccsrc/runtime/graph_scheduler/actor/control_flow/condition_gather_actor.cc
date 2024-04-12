@@ -28,6 +28,11 @@ ConditionGatherActor::ConditionGatherActor(const std::string &name, const CNodeP
     : KernelActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
                   modifiable_ref_input_indexes, modifiable_ref_output_indexes, type) {}
 
+ConditionGatherActor::~ConditionGatherActor() {
+  for_each(need_clean_ptr_device_addresses_.begin(), need_clean_ptr_device_addresses_.end(),
+           [](const device::DeviceAddressPtr &device_address) { device_address->set_ptr(nullptr); });
+}
+
 void ConditionGatherActor::RunBranchName(const std::string &branch_name, OpContext<DeviceTensor> *const context) {
   MS_LOG(DEBUG) << "Condition gather actor:" << GetAID() << " branch name:" << branch_name;
   current_branch_name_ = branch_name;
@@ -88,6 +93,7 @@ void ConditionGatherActor::Init() {
         MS_EXCEPTION_IF_NULL(somas_info_);
         (void)somas_info_->InsertGraphOutputInfo(output_address.get(), somas_outputs[i].first, somas_outputs[i].second);
         output_address->set_from_mem_pool(true);
+        need_clean_ptr_device_addresses_.emplace_back(output_address);
       } else {
         UpdateRefCount(output_address.get(), true);
       }

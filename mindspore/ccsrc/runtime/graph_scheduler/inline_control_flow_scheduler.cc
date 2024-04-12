@@ -404,7 +404,7 @@ void InlineControlFlowScheduler::FixRefCountForRefNode(const KernelWithIndex &in
   MS_EXCEPTION_IF_NULL(input_with_index.first);
   auto new_branch_name = branch_name;
   if (common::AnfAlgo::CheckPrimitiveType(input_with_index.first, prim::kPrimConditionSwitch)) {
-    MS_LOG(DEBUG) << "Check switch node:" << input_with_index.first->DebugString()
+    MS_LOG(DEBUG) << "Check switch node:" << input_with_index.first->fullname_with_scope()
                   << " index:" << input_with_index.second << " ref count:" << ref_count
                   << " branch name:" << branch_name;
     const auto &actor = FetchActor(input_with_index.first->fullname_with_scope());
@@ -438,8 +438,11 @@ void InlineControlFlowScheduler::FixRefCountForRefNode(const KernelWithIndex &in
     return;
   }
 
-  const auto &ref_value = kernel_graph->GetRefCorrespondOutput(input_with_index);
-  if (ref_value.first != nullptr && kernel_graph->IsInRefOutputMap(ref_value)) {
+  if (kernel_graph->IsInRefOutputMap(input_with_index)) {
+    const auto &ref_value = kernel_graph->GetRefCorrespondOutput(input_with_index);
+    if (ref_value.first == nullptr) {
+      return;
+    }
     MS_LOG(DEBUG) << "Check input node:" << ref_value.first->fullname_with_scope() << " index:" << ref_value.second
                   << " output node:" << input_with_index.first->fullname_with_scope()
                   << " index:" << input_with_index.second;
