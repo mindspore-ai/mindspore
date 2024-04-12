@@ -91,12 +91,13 @@ void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph, int var
   }
 
   // If there is variable argument.
-  if (variable_args_count < 0) {
+  if (variable_args_count + GetDefaultValueCount() < 0) {
     MS_LOG(EXCEPTION) << "For function:" << this->ToString() << ", its argument size: " << pos_args_input_count
-                      << " is less or equal to parameter size: " << GetPositionalArgsCount();
+                      << " is less than parameter size: " << GetPositionalArgsCount();
   }
+  int count_num = variable_args_count < 0 ? pos_args_input_count : GetPositionalArgsCount();
   // Copy other parameters than vararg's firstly.
-  for (size_t i = 0; i < IntToSize(GetPositionalArgsCount()); ++i) {
+  for (size_t i = 0; i < IntToSize(count_num); ++i) {
     specialized_parameter_list->push_back(specialized_graph->parameters()[i]);
   }
   MS_EXCEPTION_IF_NULL(specialized_graph->GetVariableArgParameter());

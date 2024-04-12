@@ -70,7 +70,7 @@ FuncGraphPtr ConvertUnpackToPyInterpretFuncGraph(const AbstractBasePtrList &args
   if (args_abs_list[index]->isa<AbstractTuple>()) {
     auto arg_tuple = args_abs_list[index++]->cast<AbstractTuplePtr>();
     AnfNodePtr para_tuple = res_graph->add_parameter();
-    for (size_t i = 0; i < arg_tuple->size(); i++) {
+    for (size_t i = 0; i < arg_tuple->size(); ++i) {
       const auto param_str = "__input__" + std::to_string(i) + "__";
       script_buffer << param_str << ",";
       (void)local_key_inputs.emplace_back(NewValueNode(param_str));
@@ -120,11 +120,11 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_abs_l
     MS_LOG(INTERNAL_EXCEPTION) << "The UnpackCall operator requires arguments >=2, but got " << arg_length << ".";
   }
 
-  bool existAny = false;
-  std::for_each(args_abs_list.begin() + 1, args_abs_list.end(), [&existAny](const AbstractBasePtr &abs) {
+  bool exist_any = false;
+  std::for_each(args_abs_list.begin() + 1, args_abs_list.end(), [&exist_any](const AbstractBasePtr &abs) {
     MS_EXCEPTION_IF_NULL(abs);
     if (abs->isa<AbstractAny>()) {
-      existAny = true;
+      exist_any = true;
       return;
     }
     if (!abs->isa<AbstractTuple>() && !abs->isa<AbstractList>() && !abs->isa<AbstractDictionary>()) {
@@ -132,7 +132,7 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_abs_l
                                  << abs->ToString();
     }
   });
-  if (existAny) {
+  if (exist_any) {
     MS_LOG(DEBUG) << "The arguments of UnpackCall operator should not be AbstractAny, convert to PyInterpret";
     return ConvertUnpackToPyInterpretFuncGraph(args_abs_list);
   }
@@ -145,7 +145,7 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_abs_l
   AnfNodePtr fn_node = res_graph->add_parameter();
   std::vector<AnfNodePtr> elems;
   elems.push_back(fn_node);
-  for (size_t index = 1; index < arg_length; index++) {
+  for (size_t index = 1; index < arg_length; ++index) {
     MS_EXCEPTION_IF_NULL(args_abs_list[index]);
     if (args_abs_list[index]->isa<AbstractTuple>()) {
       auto arg_tuple = args_abs_list[index]->cast<AbstractTuplePtr>();

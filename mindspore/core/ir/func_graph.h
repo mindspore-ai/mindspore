@@ -180,7 +180,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   }
   void SetDefaultValues(const std::vector<std::string> &name_list, const AnfNodePtrList &value_list);
   void ClearDefaultValues();
-  size_t GetDefaultValueCount();
+  size_t GetDefaultValueCount() const;
   std::map<std::string, AnfNodePtr> &parameter_default_value() { return parameter_default_value_; }
   void set_has_vararg(bool has_) { has_vararg_ = has_; }
   bool has_vararg() const { return has_vararg_; }
