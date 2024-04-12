@@ -28,7 +28,6 @@ from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, St
 from mindspore_lite.model import set_env
 
 
-
 class LLMReq:
     """
     LLMEngine request, used to represent a multi round inference task.
@@ -422,7 +421,7 @@ class LLMClusterInfo:
             raise ValueError(f"address port should in range [0,65535], but got {port}")
         if isinstance(ip, str):
             try:
-                if "." not in ip:   # format ("[0-9]+", xxx)
+                if "." not in ip:  # format ("[0-9]+", xxx)
                     ip = int(ip)
                     return ip, port
             except ValueError:
@@ -441,31 +440,33 @@ class LLMClusterInfo:
 def _handle_llm_status(status, func_name, other_info):
     """Handle LLM error code"""
     status_code = status.StatusCode()
-    error_code_map = {
-        StatusCode.kLiteLLMWaitProcessTimeOut:
-        LLMWaitProcessTimeOut(f"{func_name} failed: Waiting for processing timeout, {other_info}"),
-        StatusCode.kLiteLLMKVCacheNotExist:
-        LLMKVCacheNotExist(f"{func_name} failed: KV Cache not exist, {other_info}."),
-        StatusCode.kLiteLLMRepeatRequest: LLMRepeatRequest(f"{func_name} failed: Repeat request, {other_info}."),
-        StatusCode.kLiteLLMRequestAlreadyCompleted:
-        LLMRequestAlreadyCompleted(f"{func_name} failed: Request has already completed, {other_info}."),
-        StatusCode.kLiteLLMEngineFinalized:
-        LLMEngineFinalized(f"{func_name} failed: LLMEngine has finalized, {other_info}."),
-        StatusCode.kLiteParamInvalid: LLMParamInvalid(f"{func_name} failed: Parameters invalid, {other_info}."),
-        StatusCode.kLiteLLMNotYetLink:
-        LLMNotYetLink(f"{func_name} failed: Decoder cluster is no link with prompt, {other_info}."),
-        StatusCode.kLiteLLMOutOfMemory: LLMOutOfMemory(f"{func_name} failed: Device out of memory, {other_info}."),
-        StatusCode.kLiteLLMPrefixAlreadyExist:
-        LLMPrefixAlreadyExist(f"{func_name} failed: Prefix has already existed, {other_info}."),
-        StatusCode.kLiteLLMPrefixNotExist:
-        LLMPrefixNotExist(f"{func_name} failed: Prefix does not exist, {other_info}."),
-        StatusCode.kLiteLLMSeqLenOverLimit:
-        LLMSeqLenOverLimit(f"{func_name} failed: Sequence length exceed limit, {other_info}."),
-        StatusCode.kLiteLLMNoFreeBlock: LLMNoFreeBlocks(f"{func_name} failed: No free block, {other_info}."),
-        StatusCode.kLiteLLMBlockOutOfMemory:
-        LLMBlockOutOfMemory(f"{func_name} failed: NBlock is out of memory, {other_info}."),
-    }
     if status_code != StatusCode.kSuccess:
+        if not isinstance(other_info, str):
+            other_info = other_info()
+        error_code_map = {
+            StatusCode.kLiteLLMWaitProcessTimeOut:
+                LLMWaitProcessTimeOut(f"{func_name} failed: Waiting for processing timeout, {other_info}"),
+            StatusCode.kLiteLLMKVCacheNotExist:
+                LLMKVCacheNotExist(f"{func_name} failed: KV Cache not exist, {other_info}."),
+            StatusCode.kLiteLLMRepeatRequest: LLMRepeatRequest(f"{func_name} failed: Repeat request, {other_info}."),
+            StatusCode.kLiteLLMRequestAlreadyCompleted:
+                LLMRequestAlreadyCompleted(f"{func_name} failed: Request has already completed, {other_info}."),
+            StatusCode.kLiteLLMEngineFinalized:
+                LLMEngineFinalized(f"{func_name} failed: LLMEngine has finalized, {other_info}."),
+            StatusCode.kLiteParamInvalid: LLMParamInvalid(f"{func_name} failed: Parameters invalid, {other_info}."),
+            StatusCode.kLiteLLMNotYetLink:
+                LLMNotYetLink(f"{func_name} failed: Decoder cluster is no link with prompt, {other_info}."),
+            StatusCode.kLiteLLMOutOfMemory: LLMOutOfMemory(f"{func_name} failed: Device out of memory, {other_info}."),
+            StatusCode.kLiteLLMPrefixAlreadyExist:
+                LLMPrefixAlreadyExist(f"{func_name} failed: Prefix has already existed, {other_info}."),
+            StatusCode.kLiteLLMPrefixNotExist:
+                LLMPrefixNotExist(f"{func_name} failed: Prefix does not exist, {other_info}."),
+            StatusCode.kLiteLLMSeqLenOverLimit:
+                LLMSeqLenOverLimit(f"{func_name} failed: Sequence length exceed limit, {other_info}."),
+            StatusCode.kLiteLLMNoFreeBlock: LLMNoFreeBlocks(f"{func_name} failed: No free block, {other_info}."),
+            StatusCode.kLiteLLMBlockOutOfMemory:
+                LLMBlockOutOfMemory(f"{func_name} failed: NBlock is out of memory, {other_info}."),
+        }
         if status_code in error_code_map:
             raise error_code_map[status_code]
         raise RuntimeError(f"{func_name} failed, {other_info}.")
@@ -559,16 +560,19 @@ class LLMModel:
         else:
             outputs, status = self.model_.predict(llm_req.llm_request_, _inputs)
 
-        if isinstance(llm_req, LLMReq):
-            req_infos = _llm_req_str(llm_req)
-        else:
-            req_infos = [_llm_req_str(llm) for llm in llm_req]
+        def get_info():
+            if isinstance(llm_req, LLMReq):
+                req_infos = _llm_req_str(llm_req)
+            else:
+                req_infos = [_llm_req_str(llm) for llm in llm_req]
 
-        input_infos = [(item.shape, item.dtype) for item in inputs]
-        info = f"llm_req {req_infos}, inputs {input_infos}"
-        _handle_llm_status(status, "predict", info)
+            input_infos = [(item.shape, item.dtype) for item in inputs]
+            info = f"llm_req {req_infos}, inputs {input_infos}"
+            return info
+
+        _handle_llm_status(status, "predict", get_info)
         if not outputs:
-            raise RuntimeError(f"predict failed, {info}.")
+            raise RuntimeError(f"predict failed, {get_info()}.")
         predict_outputs = [Tensor(output) for output in outputs]
         return predict_outputs
 
@@ -862,8 +866,8 @@ class LLMEngine:
         if not self.inited_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         check_isinstance("llm_req", llm_req, LLMReq)
-        status = self.engine_.complete_request(llm_req.llm_request_)
-        return LLMEngineStatus(status)
+        ret = self.engine_.complete_request(llm_req.llm_request_)
+        _handle_llm_status(ret, "complete_request", "llm_req " + _llm_req_str(llm_req))
 
     def finalize(self):
         """
