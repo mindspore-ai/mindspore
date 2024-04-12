@@ -3024,9 +3024,6 @@ def le(input, other):
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
-    Raises:
-        NA.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -5481,8 +5478,8 @@ def sparse_segment_mean(x, indices, segment_ids):
         TypeError: If the dtype of `x` is not one of the following dtype: float16, float32, float64.
         TypeError: If the dtype of `indices` and `segment_ids` are not one of the following dtype: int32, int64.
         TypeError: If the dtype of `indices` and `segment_ids` are not the same.
-        ValueError: If the shape of `x`, 'indices' or `segment_ids` don't meet the parameter description.
-        ValueError: If the size of 'indices' and `segment_ids` are not the same.
+        ValueError: If the shape of `x`, `indices` or `segment_ids` don't meet the parameter description.
+        ValueError: If the size of `indices` and `segment_ids` are not the same.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6615,12 +6612,12 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
         Tensor, has the same data type as input tensor.
 
         - If `axis` is ``None`` , and `keepdims` is ``False`` , the output is a 0-D tensor representing the product of
-            all elements in the input tensor.
+          all elements in the input tensor.
         - If `axis` is int, set as 1, and `keepdims` is ``False`` , the shape of output is :math:`(x_0, x_2, ..., x_R)`.
         - If `axis` is tuple(int), set as (1, 2), and `keepdims` is ``False`` , the shape of output is
-            :math:`(x_0, x_3, ..., x_R)`.
+          :math:`(x_0, x_3, ..., x_R)`.
         - If `axis` is 1-D Tensor, set as [1, 2], and `keepdims` is ``False`` , the shape of output is
-            :math:`(x_0, x_3, ..., x_R)`.
+          :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -7922,7 +7919,7 @@ def matmul(input, other):
 
     Returns:
         Tensor or scalar, the matrix product of the inputs. This is a scalar only
-            when both `input`, `other` are 1-d vectors.
+        when both `input`, `other` are 1-d vectors.
 
     Raises:
         TypeError: If the dtype of `input` and the dtype of `other` are not the same.
@@ -8490,7 +8487,7 @@ def xdivy(x, y):
 
     Raises:
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64, complex64, complex128, bool].
+        TypeError: If dtype of `x` and `y` is not in [float16, float32, float64, complex64, complex128, bool].
         ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
         RuntimeError: If the data type of `x`, `y` conversion of Parameter is given
                       but data type conversion of Parameter is not supported.
