@@ -34,7 +34,7 @@ from mindspore._c_expression import init_pipeline, update_func_graph_hyper_param
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache
-from mindspore.common.api import _generate_branch_control_input, _convert_python_data
+from mindspore.common.api import _generate_branch_control_input, _convert_python_data, _get_args_for_run_predict
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import Cast
@@ -664,10 +664,11 @@ class Cell(Cell_):
         if not self._is_check_and_refresh:
             self.check_names_and_refresh_name()
             self._is_check_and_refresh = True
-            
+
+
     def _predict(self, *args, **kwargs):
-        if (self.phase == "prefill" or self.phase == "increment") and len(self.compile_cache) > 1:
-            new_args = _get_args_for_run(self, args, kwargs,self._compile_args)
+        if (self.phase == "prefill" or self.phase == 'increment') and self.phase in self.phase_cache:
+            new_args = _get_args_for_run_predict(self, args, kwargs, self._compile_args)
             res = _cell_graph_executor._graph_executor(tuple(new_args), self.phase_cache[self.phase])
             res = _convert_python_data(res)
             return True, res
@@ -681,11 +682,11 @@ class Cell(Cell_):
                 bound_arguments.apply_defaults()
                 args = bound_arguments.args
                 kwargs = bound_arguments.kwargs
-            self._check_construct_args(*args)
-            
+
             predict_compiled, res = self._predict(*args, **kwargs)
             if predict_compiled:
                 return res
+            self._check_construct_args(*args)
             
             if self._hook_fn_registered():
                 logger.warning(f"For 'Cell', it's not support hook function in graph mode. If you want to use hook "
