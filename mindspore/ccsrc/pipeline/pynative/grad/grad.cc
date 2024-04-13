@@ -417,6 +417,31 @@ KernelGraphPtr CloneKernelGraph(const FuncGraphPtr &func_graph) {
   PyNativeAlgo::Common::FreeFuncGraphForwardNodes(func_graph);
   return new_graph;
 }
+
+void ClearInputGradInfo(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::BaseTensor>()) {
+    auto tensor_value = value->cast<tensor::BaseTensorPtr>();
+    tensor_value->set_auto_grad_meta_data(nullptr);
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_seq = value->cast<ValueSequencePtr>();
+    for (auto elem : value_seq->value()) {
+      ClearInputGradInfo(elem);
+    }
+  } else if (value->isa<stub::StubNode>()) {
+    auto stub_node = value->cast<stub::StubNodePtr>();
+    MS_EXCEPTION_IF_NULL(stub_node);
+    ClearInputGradInfo(stub_node->WaitValue());
+  }
+}
+
+void ClearInputsGradInfo(const InputArgsInfoPtr &input_args_info) {
+  MS_EXCEPTION_IF_NULL(input_args_info);
+  for (size_t i = 0; i < input_args_info->input_size; ++i) {
+    const auto &v = input_args_info->input_arg_value_vec[i];
+    ClearInputGradInfo(v);
+  }
+}
 }  // namespace
 
 ForwardExecutorPtr GradExecutor::forward() const {
@@ -640,10 +665,16 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   auto resource = std::make_shared<pipeline::Resource>();
   MS_EXCEPTION_IF_NULL(input_args_info);
   const auto &obj_id_with_grad_order = GetAlreadyRunCellId(input_args_info->obj_id);
-  // To fix scene that user calls twice forward network with grad flag, and then call grad() interface.
+  // To fix the scene that user calls twice forward network with grad flag, and then call grad() interface.
   // We need to clear last top cell's parameters grad info to avoid influencing construct bprop graph of current top
   // cell.
   ClearParamGradInfo(top_cell_);
+  // To fix the scene like 1. net(x1) 2. x2 = deepcopy(x1), 3. net(x2) 3. grad_net(x2). 4. grad_net(x1)
+  // x1's auto_grad_meta_data will be copy to x2, x2 grad will use the same auto_grad_meta_data and clear x1's variable
+  // and set x2's variable.
+  // When execute grad_net(x1), x1's variable will not found, so we need clear input's auto_grad_meta_data before
+  // execute.
+  ClearInputsGradInfo(input_args_info);
   top_cell_ = std::make_shared<TopCellInfo>(input_args_info->is_high_order_top_cell, input_args_info->grad_order,
                                             obj_id_with_grad_order, input_args_info->cell_id,
                                             input_args_info->already_run_cell_id, resource, fg,
