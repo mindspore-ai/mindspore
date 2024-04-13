@@ -27,9 +27,21 @@ namespace ops {
 BaseShapePtr FFTInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
+
+  // When input is a dynamic rank, it needs to be processed in the kernel
   if (IsDynamicRank(input_shape)) {
     ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
     return std::make_shared<abstract::TensorShape>(dyn_output);
+  }
+  auto dim_opt = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
+  auto x_rank = SizeToLong(input_shape.size());
+
+  int64_t tmp_pos;
+  if (dim_opt.has_value()) {
+    int64_t dim = dim_opt.value();
+    tmp_pos = dim < 0 ? x_rank + dim : dim;
+  } else {
+    tmp_pos = x_rank - 1;
   }
 
   auto y_shape = input_shape;
@@ -37,58 +49,111 @@ BaseShapePtr FFTInferShape(const PrimitivePtr &primitive, const std::vector<Abst
     auto n_opt = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
     if (n_opt.has_value()) {
       auto n = n_opt.value();
-      auto dim_opt = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
-      auto x_rank = SizeToLong(input_shape.size());
 
-      int64_t tmp_pos;
-      if (dim_opt.has_value()) {
-        int64_t dim = dim_opt.value();
-        tmp_pos = dim < 0 ? x_rank + dim : dim;
-      } else {
-        tmp_pos = x_rank - 1;
-      }
       y_shape[tmp_pos] = n;
+      if (primitive->name() == prim::kPrimRFFT->name()) {
+        y_shape[tmp_pos] = n / 2 + 1;
+      }
+    }
+  } else {
+    if (primitive->name() == prim::kPrimIRFFT->name()) {
+      y_shape[tmp_pos] = (y_shape[tmp_pos] - 1) * 2;
+    } else if (primitive->name() == prim::kPrimRFFT->name()) {
+      y_shape[tmp_pos] = y_shape[tmp_pos] / 2 + 1;
     }
   }
 
   return std::make_shared<abstract::TensorShape>(y_shape);
 }
 
+void FFTNGetAttr(const std::vector<AbstractBasePtr> &input_args, std::vector<int64_t> *s, std::vector<int64_t> *dim) {
+  auto input_shape_ptr = input_args[kIndex0]->GetShape();
+  auto input_shape = input_shape_ptr->GetShapeVector();
+  auto x_rank = input_shape.size();
+
+  bool s_is_none = input_args[kInputIndex1]->GetType()->isa<TypeNone>();
+  bool dim_is_none = input_args[kInputIndex2]->GetType()->isa<TypeNone>();
+
+  if (!s_is_none) {
+    auto s_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]->GetValue());
+    if (s_opt.has_value()) {
+      s->clear();
+      *s = s_opt.value().ToVector();
+    }
+  }
+
+  if (!dim_is_none) {
+    auto dim_opt = GetArrayValue<int64_t>(input_args[kInputIndex2]->GetValue());
+    if (dim_opt.has_value()) {
+      dim->clear();
+      *dim = dim_opt.value().ToVector();
+      for (size_t i = 0; i < dim->size(); i++) {
+        (*dim)[i] = (*dim)[i] < 0 ? x_rank + (*dim)[i] : (*dim)[i];
+      }
+    }
+  }
+
+  if (dim->empty() && !s->empty()) {
+    for (size_t i = 0; i < s->size(); i++) {
+      (void)dim->emplace_back(x_rank - s->size() + i);
+    }
+  }
+  if (s->empty() && !dim->empty()) {
+    for (size_t i = 0; i < dim->size(); i++) {
+      (void)s->emplace_back(input_shape[(*dim)[i]]);
+    }
+  }
+  if (s->empty() && dim->empty()) {
+    for (size_t i = 0; i < x_rank; i++) {
+      (void)dim->emplace_back(i);
+      (void)s->emplace_back(input_shape[i]);
+    }
+  }
+}
+
 BaseShapePtr FFTNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
+
   if (IsDynamicRank(input_shape)) {
     ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
     return std::make_shared<abstract::TensorShape>(dyn_output);
   }
 
+  std::string op_name = primitive->name();
+  static const std::vector<std::string> same_shape_prim = {prim::kPrimFFT2->name(), prim::kPrimFFTN->name(),
+                                                           prim::kPrimIFFT2->name(), prim::kPrimIFFTN->name()};
+
+  bool is_same_shape_prim = std::find(same_shape_prim.begin(), same_shape_prim.end(), op_name) != same_shape_prim.end();
+
+  bool s_is_none = input_args[kInputIndex1]->GetType()->isa<TypeNone>();
+  bool dim_is_none = input_args[kInputIndex2]->GetType()->isa<TypeNone>();
+
   auto y_shape = input_shape;
-  auto x_rank = SizeToLong(input_shape.size());
-  if (input_args[kInputIndex1]->GetType()->isa<TypeNone>()) {
+
+  if (s_is_none && is_same_shape_prim) {
     return std::make_shared<abstract::TensorShape>(y_shape);
   }
 
-  auto s_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]->GetValue());
-  if (!s_opt.has_value()) {
-    return std::make_shared<abstract::TensorShape>(y_shape);
-  }
-  std::vector<int64_t> s = s_opt.value().ToVector();
-
+  std::vector<int64_t> s;
   std::vector<int64_t> dim;
-  if (!input_args[kInputIndex2]->GetType()->isa<TypeNone>()) {
+  if (!s_is_none) {
+    auto s_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]->GetValue());
+    if (!s_opt.has_value()) {
+      ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
+      return std::make_shared<abstract::TensorShape>(dyn_output);
+    }
+  }
+  if (!dim_is_none) {
     auto dim_opt = GetArrayValue<int64_t>(input_args[kInputIndex2]->GetValue());
-    if (dim_opt.has_value()) {
-      dim = dim_opt.value().ToVector();
-      for (size_t i = 0; i < s.size(); i++) {
-        dim[i] = dim[i] < 0 ? SizeToLong(x_rank) + dim[i] : dim[i];
-      }
+    if (!dim_opt.has_value()) {
+      ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
+      return std::make_shared<abstract::TensorShape>(dyn_output);
     }
   }
-  if (dim.empty()) {
-    for (size_t i = 0; i < s.size(); i++) {
-      (void)dim.emplace_back(x_rank - s.size() + i);
-    }
-  }
+
+  FFTNGetAttr(input_args, &s, &dim);
+
   for (size_t i = 0; i < s.size(); i++) {
     y_shape[dim[i]] = s[i];
   }
@@ -98,15 +163,33 @@ BaseShapePtr FFTNInferShape(const PrimitivePtr &primitive, const std::vector<Abs
 TypePtr FFTInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto input_type = input_args[kIndex0]->GetType();
   auto input_type_id = input_type->cast<TensorTypePtr>()->element()->type_id();
+  std::string op_name = primitive->name();
 
   static const std::vector<TypeId> double_type = {kNumberTypeFloat64, kNumberTypeComplex128};
   bool is_double_type = std::any_of(double_type.begin(), double_type.end(),
                                     [&input_type_id](const TypeId &type_id) { return input_type_id == type_id; });
-  if (is_double_type) {
-    return std::make_shared<TensorType>(kComplex128);
-  } else {
-    return std::make_shared<TensorType>(kComplex64);
+
+  static const std::vector<std::string> float_prim = {
+    prim::kPrimIRFFT->name(),
+  };
+
+  bool is_float_prim = std::find(float_prim.begin(), float_prim.end(), op_name) != float_prim.end();
+
+  TypePtr output_type;
+  if (is_double_type && is_float_prim) {
+    output_type = kFloat64;
   }
+  if (is_double_type && !is_float_prim) {
+    output_type = kComplex128;
+  }
+  if (!is_double_type && is_float_prim) {
+    output_type = kFloat32;
+  }
+  if (!is_double_type && !is_float_prim) {
+    output_type = kComplex64;
+  }
+
+  return std::make_shared<TensorType>(output_type);
 }
 
 void FFTCheckInputShape(const PrimitivePtr &primitive, std::vector<int64_t> x_shape_vec, int64_t x_rank) {

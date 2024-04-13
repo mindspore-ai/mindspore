@@ -40,7 +40,7 @@ const char *kFFTShapeCopy = "FFTShapeCopy";
 
 namespace aicpu {
 uint32_t FFTShapeCopyCpuKernel::Compute(CpuKernelContext &ctx) {
-  op_name_ = GetOpName(ctx.GetOpType());
+  op_name_ = GetOpName(ctx);
   CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
                            op_name_.c_str());
   auto x_type = ctx.Input(kIndex0)->GetDataType();

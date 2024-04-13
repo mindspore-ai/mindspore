@@ -20,28 +20,10 @@
 #include "mindspore/core/mindapi/base/types.h"
 #include "utils/fft_helper.h"
 
-#define FFTN_INPUT_DIM_CASE(T1, T2)                                                                        \
-  if (x_rank_ == 1) {                                                                                      \
-    EigenFFTNBase<T1, T2, 1>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape_, dim_); \
-  } else if (x_rank_ == 2) {                                                                               \
-    EigenFFTNBase<T1, T2, 2>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape_, dim_); \
-  } else if (x_rank_ == 3) {                                                                               \
-    EigenFFTNBase<T1, T2, 3>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape_, dim_); \
-  } else if (x_rank_ == 4) {                                                                               \
-    EigenFFTNBase<T1, T2, 4>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape_, dim_); \
-  } else if (x_rank_ == 5) {                                                                               \
-    EigenFFTNBase<T1, T2, 5>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape_, dim_); \
-  } else if (x_rank_ == 6) {                                                                               \
-    EigenFFTNBase<T1, T2, 6>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape_, dim_); \
-  } else if (x_rank_ == 7) {                                                                               \
-    EigenFFTNBase<T1, T2, 7>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape_, dim_); \
-  } else {                                                                                                 \
-    EigenFFTNBase<T1, T2, 8>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape_, dim_); \
-  }
-
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr int kOnesideDivisor = 2;
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
@@ -72,8 +54,6 @@ int FFTNBaseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 
   tensor_shape_ = inputs[kIndex0]->GetShapeVector();
   x_rank_ = SizeToLong(tensor_shape_.size());
-  forward_ = IsForwardOp(kernel_name_);
-  input_element_nums_ = SizeToLong(SizeOf(tensor_shape_));
 
   // Get or set attribute s and dims.
   auto s_opt = inputs[kIndex1]->GetOptionalValueWithCheck<std::vector<int64_t>>();
@@ -110,8 +90,17 @@ int FFTNBaseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
       (void)s_.emplace_back(tensor_shape_[i]);
     }
   }
+  // if (!s_opt.has_value() && (kernel_name_ == prim::kPrimHFFT2->name() || kernel_name_ == prim::kPrimHFFTN->name() ||
+  //                            kernel_name_ == prim::kPrimIRFFT2->name() || kernel_name_ == prim::kPrimIRFFTN->name()))
+  //                            {
+  //   s_.back() = (s_.back() - 1) * kOnesideDivisor;
+  // }
+
+  forward_ = IsForwardOp(kernel_name_);
+  input_element_nums_ = SizeToLong(SizeOf(tensor_shape_));
 
   // Calculate the required memory based on s and dim.
+  calculate_shape_.clear();
   calculate_element_nums_ = GetCalculateElementNum(tensor_shape_, dim_, s_, input_element_nums_);
   for (size_t i = 0; i < tensor_shape_.size(); i++) {
     (void)calculate_shape_.emplace_back(tensor_shape_[i]);
@@ -119,86 +108,238 @@ int FFTNBaseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   for (size_t i = 0; i < dim_.size(); i++) {
     calculate_shape_[dim_[i]] = s_[i];
   }
-  int64_t fft_nums = std::accumulate(s_.begin(), s_.end(), 1, std::multiplies<int64_t>());
-  norm_weight_ = GetNormalized(fft_nums, norm_, forward_);
+
+  fft_nums_ = std::accumulate(s_.begin(), s_.end(), 1, std::multiplies<int64_t>());
+  norm_weight_ = GetNormalized(fft_nums_, norm_, forward_);
   return KRET_OK;
 }
 
-template <typename T_in, typename T_out, int x_rank>
-bool EigenFFTNBase(T_in *input_ptr, T_out *output_ptr, bool forward, double norm_weight,
-                   std::vector<int64_t> calculate_shape, std::vector<int64_t> dim) {
-  Eigen::array<Eigen::DenseIndex, x_rank> calculate_shape_array;
-  for (size_t i = 0; i < x_rank; ++i) {
-    calculate_shape_array[i] = calculate_shape[i];
-  }
-
-  Eigen::TensorMap<Eigen::Tensor<T_in, x_rank, Eigen::RowMajor>, Eigen::RowMajor> in(&input_ptr[0],
-                                                                                     calculate_shape_array);
-  Eigen::Tensor<T_out, x_rank, Eigen::RowMajor> out;
-
-  std::vector<int32_t> eigem_dim;
-  for (size_t i = 0; i < dim.size(); i++) {
-    (void)eigem_dim.emplace_back(static_cast<int32_t>(dim[i]));
-  }
-
-  if (forward) {
-    out = in.template fft<Eigen::BothParts, Eigen::FFT_FORWARD>(eigem_dim);
-  } else {
-    out = in.template fft<Eigen::BothParts, Eigen::FFT_REVERSE>(eigem_dim);
-  }
-
-  T_out *out_ptr = out.data();
-  for (int i = 0; i < out.size(); i++) {
-    T_out temp_value = *(out_ptr + i);
-    temp_value *= norm_weight;
-    *(output_ptr + i) = temp_value;
-  }
-  return true;
-}
-
-template <typename T_in, typename T_mid, typename T_out>
-bool FFTNBaseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
-                                        const std::vector<kernel::KernelTensor *> &outputs) {
+template <typename T_in, typename T_out>
+bool FFTNBaseCpuKernelMod::LaunchKernelC2C(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   auto *input_ptr = reinterpret_cast<T_in *>(inputs[kIndex0]->device_ptr());
-  auto *output_ptr = reinterpret_cast<T_out *>(outputs[kIndex0]->device_ptr());
+  auto *output_ptr = reinterpret_cast<std::complex<T_out> *>(outputs[kIndex0]->device_ptr());
+
+  // Calculate the required memory based on s and dim.
+  T_out fct = static_cast<T_out>(norm_weight_);
 
   // Allocate temporary memory of the required type and size and copy the input into this space.
-  T_mid *calculate_input = static_cast<T_mid *>(malloc(sizeof(T_mid) * calculate_element_nums_));
-  auto ret =
-    memset_s(calculate_input, sizeof(T_mid) * calculate_element_nums_, 0, sizeof(T_mid) * calculate_element_nums_);
+  std::complex<T_out> *calculate_input =
+    static_cast<std::complex<T_out> *>(malloc(sizeof(std::complex<T_out>) * calculate_element_nums_));
+  auto ret = memset_s(calculate_input, sizeof(std::complex<T_out>) * calculate_element_nums_, 0,
+                      sizeof(std::complex<T_out>) * calculate_element_nums_);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
   }
-  ShapeCopy<T_in, T_mid>(input_ptr, calculate_input, tensor_shape_, calculate_shape_);
+
+  ShapeCopy<T_in, std::complex<T_out>>(input_ptr, calculate_input, tensor_shape_, calculate_shape_);
 
   // Run FFT according to parameters
-  FFTN_INPUT_DIM_CASE(T_mid, T_out);
+  PocketFFTC2C<T_out>(calculate_input, output_ptr, forward_, fct, calculate_shape_, dim_);
 
   // Release temporary memory
   free(calculate_input);
   calculate_input = nullptr;
-
   return true;
 }
 
-#define ONE_DIM_CPU_REG(MS_Tin, MS_Tout, T_in, T_mid, T_out) \
-  KernelAttr()                                               \
-    .AddInputAttr(MS_Tin)                   /* input */      \
-    .AddOptionalInputAttr(kNumberTypeInt64) /* s */          \
-    .AddOptionalInputAttr(kNumberTypeInt64) /* dim */        \
-    .AddOptionalInputAttr(kNumberTypeInt64) /* norm */       \
-    .AddOutputAttr(MS_Tout),                                 \
-    &FFTNBaseCpuKernelMod::LaunchKernel<T_in, T_mid, T_out>
+template <typename T_in, typename T_out>
+bool FFTNBaseCpuKernelMod::LaunchKernelR2C(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input_ptr = reinterpret_cast<T_in *>(inputs[kIndex0]->device_ptr());
+  auto *output_ptr = reinterpret_cast<std::complex<T_out> *>(outputs[kIndex0]->device_ptr());
+
+  // Calculate the required memory based on s and dim.
+  T_out fct = static_cast<T_out>(norm_weight_);
+
+  // Allocate temporary memory of the required type and size and copy the input into this space.
+  T_out *calculate_input = static_cast<T_out *>(malloc(sizeof(T_out) * calculate_element_nums_));
+  auto ret =
+    memset_s(calculate_input, sizeof(T_out) * calculate_element_nums_, 0, sizeof(T_out) * calculate_element_nums_);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
+  }
+  ShapeCopy<T_in, T_out>(input_ptr, calculate_input, tensor_shape_, calculate_shape_);
+
+  // Run FFT according to parameters
+  PocketFFTR2C<T_out>(calculate_input, output_ptr, forward_, fct, calculate_shape_, dim_);
+
+  // if (kernel_name_ == prim::kPrimIHFFT2->name() || kernel_name_ == prim::kPrimIHFFTN->name()) {
+  //   std::transform(output_ptr, output_ptr + calculate_element_nums_, output_ptr,
+  //                  [](std::complex<T_out> x) { return std::conj(x); });
+  // }
+  // Release temporary memory
+  free(calculate_input);
+  calculate_input = nullptr;
+  return true;
+}
+
+template <typename T_in, typename T_out>
+bool FFTNBaseCpuKernelMod::LaunchKernelC2R(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input_ptr = reinterpret_cast<T_in *>(inputs[kIndex0]->device_ptr());
+  auto *output_ptr = reinterpret_cast<T_out *>(outputs[kIndex0]->device_ptr());
+
+  // Calculate the required memory based on s and dim.
+  T_out fct = static_cast<T_out>(norm_weight_);
+  // Allocate temporary memory of the required type and size and copy the input into this space.
+  std::complex<T_out> *calculate_input =
+    static_cast<std::complex<T_out> *>(malloc(sizeof(std::complex<T_out>) * calculate_element_nums_));
+  auto ret = memset_s(calculate_input, sizeof(std::complex<T_out>) * calculate_element_nums_, 0,
+                      sizeof(std::complex<T_out>) * calculate_element_nums_);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
+  }
+  ShapeCopy<T_in, std::complex<T_out>>(input_ptr, calculate_input, tensor_shape_, calculate_shape_);
+
+  // if (kernel_name_ == prim::kPrimHFFT2->name() || kernel_name_ == prim::kPrimHFFTN->name()) {
+  //   std::transform(calculate_input, calculate_input + calculate_element_nums_, calculate_input,
+  //                  [](std::complex<T_out> x) { return std::conj(x); });
+  //   forward_ = !forward_;
+  // }
+  // Run FFT according to parameters
+  PocketFFTC2R<T_out>(calculate_input, output_ptr, forward_, fct, calculate_shape_, dim_);
+
+  // Release temporary memory
+  free(calculate_input);
+  calculate_input = nullptr;
+  return true;
+}
+
+template <typename T_in, typename T_out>
+bool FFTNBaseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  // if (kernel_name_ == prim::kPrimHFFT2->name() || kernel_name_ == prim::kPrimHFFTN->name() ||
+  //     kernel_name_ == prim::kPrimIRFFT2->name() || kernel_name_ == prim::kPrimIRFFTN->name()) {
+  //   LaunchKernelC2R<T_in, T_out>(inputs, outputs);
+  // }
+  // if (kernel_name_ == prim::kPrimRFFT2->name() || kernel_name_ == prim::kPrimRFFTN->name()) {
+  //   LaunchKernelR2C<T_in, T_out>(inputs, outputs);
+  // }
+  // if (kernel_name_ == prim::kPrimIHFFT2->name() || kernel_name_ == prim::kPrimIHFFTN->name()) {
+  //   forward_ = !forward_;
+  //   LaunchKernelR2C<T_in, T_out>(inputs, outputs);
+  // }
+  if (kernel_name_ == prim::kPrimFFT2->name() || kernel_name_ == prim::kPrimIFFT2->name() ||
+      kernel_name_ == prim::kPrimFFTN->name() || kernel_name_ == prim::kPrimIFFTN->name()) {
+    LaunchKernelC2C<T_in, T_out>(inputs, outputs);
+  }
+  return true;
+}
 
 std::vector<std::pair<KernelAttr, FFTNBaseCpuKernelMod::FFTNBaseFunc>> FFTNBaseCpuKernelMod::func_list_ = {
-  {ONE_DIM_CPU_REG(kNumberTypeInt16, kNumberTypeComplex64, int16_t, float, complex64)},
-  {ONE_DIM_CPU_REG(kNumberTypeInt32, kNumberTypeComplex64, int32_t, float, complex64)},
-  {ONE_DIM_CPU_REG(kNumberTypeInt64, kNumberTypeComplex64, int64_t, float, complex64)},
-  {ONE_DIM_CPU_REG(kNumberTypeFloat16, kNumberTypeComplex64, Eigen::half, float, complex64)},
-  {ONE_DIM_CPU_REG(kNumberTypeFloat32, kNumberTypeComplex64, float, float, complex64)},
-  {ONE_DIM_CPU_REG(kNumberTypeFloat64, kNumberTypeComplex128, double, double, complex128)},
-  {ONE_DIM_CPU_REG(kNumberTypeComplex64, kNumberTypeComplex64, complex64, complex64, complex64)},
-  {ONE_DIM_CPU_REG(kNumberTypeComplex128, kNumberTypeComplex128, complex128, complex128, complex128)}};
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &FFTNBaseCpuKernelMod::LaunchKernel<int16_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &FFTNBaseCpuKernelMod::LaunchKernel<int32_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &FFTNBaseCpuKernelMod::LaunchKernel<int64_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &FFTNBaseCpuKernelMod::LaunchKernel<Eigen::half, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &FFTNBaseCpuKernelMod::LaunchKernel<float, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &FFTNBaseCpuKernelMod::LaunchKernel<double, double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &FFTNBaseCpuKernelMod::LaunchKernelC2C<complex64, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &FFTNBaseCpuKernelMod::LaunchKernelC2C<complex128, double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &FFTNBaseCpuKernelMod::LaunchKernel<int16_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &FFTNBaseCpuKernelMod::LaunchKernel<int32_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &FFTNBaseCpuKernelMod::LaunchKernel<int64_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &FFTNBaseCpuKernelMod::LaunchKernel<Eigen::half, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &FFTNBaseCpuKernelMod::LaunchKernel<float, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &FFTNBaseCpuKernelMod::LaunchKernel<double, double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &FFTNBaseCpuKernelMod::LaunchKernelC2R<complex64, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &FFTNBaseCpuKernelMod::LaunchKernelC2R<complex128, double>}};
 
 std::vector<KernelAttr> FFTNBaseCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
@@ -211,5 +352,16 @@ MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FFT2, FFTNBaseCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FFTN, FFTNBaseCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IFFT2, FFTNBaseCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IFFTN, FFTNBaseCpuKernelMod);
+
+// MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, HFFT2, FFTNBaseCpuKernelMod);
+// MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, HFFTN, FFTNBaseCpuKernelMod);
+// MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IHFFT2, FFTNBaseCpuKernelMod);
+// MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IHFFTN, FFTNBaseCpuKernelMod);
+
+// MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RFFT2, FFTNBaseCpuKernelMod);
+// MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RFFTN, FFTNBaseCpuKernelMod);
+// MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IRFFT2, FFTNBaseCpuKernelMod);
+// MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IRFFTN, FFTNBaseCpuKernelMod);
+
 }  // namespace kernel
 }  // namespace mindspore

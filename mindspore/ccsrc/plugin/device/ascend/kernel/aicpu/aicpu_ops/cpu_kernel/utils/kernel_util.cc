@@ -83,6 +83,15 @@ std::string FormatToSerialString(CpuKernelContext &ctx, Format format) {
   }
 }
 
+std::string GetOpName(CpuKernelContext &ctx) {
+  const std::string op_prefix = "Cust";
+  auto op_name = ctx.GetOpType();
+  if (!op_name.compare(0, op_prefix.size(), op_prefix)) {
+    op_name.erase(op_name.begin(), op_name.begin() + op_prefix.size());
+  }
+  return op_name;
+}
+
 const std::map<std::string, DataType> dtype_maps{{"DT_FLOAT", DT_FLOAT},
                                                  {"DT_FLOAT16", DT_FLOAT16},
                                                  {"DT_INT8", DT_INT8},

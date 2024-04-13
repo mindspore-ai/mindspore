@@ -17,30 +17,22 @@
 #include <memory>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "ops/ops_func_impl/irfft_grad.h"
+#include "ops/ops_func_impl/irfft_double.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr IRFFTGradFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
-  MS_EXCEPTION_IF_NULL(input_args[kIndex1]->GetType());
-  return input_args[kIndex1]->GetShape()->Clone();
+BaseShapePtr IRFFTDoubleFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                             const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kIndex0]->GetType());
+  return input_args[kIndex0]->GetShape()->Clone();
 }
 
-TypePtr IRFFTGradFuncImpl::InferType(const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args) const {
-  auto input2_type = input_args[kIndex1]->GetType();
-  auto input2_type_id = input2_type->cast<TensorTypePtr>()->element()->type_id();
-
-  static const std::vector<TypeId> double_type = {kNumberTypeFloat64, kNumberTypeComplex128};
-  bool is_double_type = std::any_of(double_type.begin(), double_type.end(),
-                                    [&input2_type_id](const TypeId &type_id) { return input2_type_id == type_id; });
-  if (is_double_type) {
-    return std::make_shared<TensorType>(kComplex128);
-  } else {
-    return std::make_shared<TensorType>(kComplex64);
-  }
+TypePtr IRFFTDoubleFuncImpl::InferType(const PrimitivePtr &primitive,
+                                       const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  MS_EXCEPTION_IF_NULL(input_args[0]->GetType());
+  return input_args[0]->GetType()->Clone();
 }
 
 /*
@@ -49,8 +41,8 @@ Error list:
 2) The value in `dim` is not in the range of "[-`input.ndim`, `input.ndim`)"
 3) The value in `n` is less than or equal to 0.
 */
-int32_t IRFFTGradFuncImpl::CheckValidation(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) const {
+int32_t IRFFTDoubleFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                             const std::vector<AbstractBasePtr> &input_args) const {
   auto check_status = OP_CHECK_SUCCESS;
   const auto &input_x_shape = input_args[kIndex0]->GetShape();
   auto x_shape_vec = input_x_shape->GetShapeVector();
@@ -69,15 +61,15 @@ int32_t IRFFTGradFuncImpl::CheckValidation(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "Unsupported input shape dimension. The shape should not be empty.";
   }
 
-  if (!input_args[kInputIndex2]->GetType()->isa<TypeNone>()) {
-    auto n_opt = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
+  if (!input_args[kInputIndex1]->GetType()->isa<TypeNone>()) {
+    auto n_opt = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
     if (n_opt.has_value()) {
       int64_t n = n_opt.value();
       (void)CheckAndConvertUtils::CheckInteger("n", n, kGreaterThan, 0);
     }
   }
 
-  auto dim_opt = GetScalarValue<int64_t>(input_args[kInputIndex3]->GetValue());
+  auto dim_opt = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
   if (dim_opt.has_value()) {
     int64_t dim = dim_opt.value();
     MS_CHECK_VALUE(dim >= -x_rank && dim < x_rank, CheckAndConvertUtils::FormatCheckInRangeMsg(

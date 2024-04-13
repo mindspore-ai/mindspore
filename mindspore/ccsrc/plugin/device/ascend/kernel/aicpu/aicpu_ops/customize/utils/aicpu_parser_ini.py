@@ -126,6 +126,7 @@ cust_op_lists = [
     "indexput",
     "irfft",
     "irfftgrad",
+    "irfftdouble",
     "isinf",
     "isnan",
     "kldivloss",
