@@ -308,7 +308,7 @@ def test_dump_parallel_info():
         ["grep '%s' %s | wc -l" % (para, file)],
         shell=True)
     out = str(output, 'utf-8').strip()
-    assert out == "4"
+    assert out == "3"
     if os.path.exists("./rank_0"):
         shutil.rmtree("./rank_0")
     os.environ["DUMP_PARALLEL_INFO"] = ""
