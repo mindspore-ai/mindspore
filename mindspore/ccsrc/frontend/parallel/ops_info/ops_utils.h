@@ -229,6 +229,7 @@ constexpr char SRC[] = "src";
 constexpr char CLONE_INFO[] = "clone_info";
 constexpr char CLONED[] = "cloned";
 constexpr char BE_CLONED[] = "be_cloned";
+constexpr char INDEX[] = "index";
 constexpr char CLONED_INDEX[] = "cloned_index";
 constexpr char BE_CLONED_INDEX[] = "be_cloned_index";
 constexpr char GROUP_RANKS[] = "group_ranks";

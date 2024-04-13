@@ -89,14 +89,15 @@ class PipelinePostProcess {
   void HandleSendParam();
 
  private:
+  void LabelInterleaveIndex();
   std::vector<AnfNodePtr> PartitionChunkGraph(const FuncGraphPtr &fg, int64_t chunk);
   void GetSendsRecvs(const FuncGraphPtr &fg, int64_t chunk, std::vector<AnfNodePtr> *recvs,
                      std::vector<AnfNodePtr> *sends, std::vector<AnfNodePtr> *temp);
   void SetNodeAbstract(const std::vector<AnfNodePtr> &nodes);
   AnfNodePtr GetZeroOutputs(const FuncGraphPtr &graph);
-  AnfNodePtr GenNewNodeFromOld(const AnfNodePtr &node, const AnfNodePtr &input, int64_t micro);
+  AnfNodePtr GenNewNodeFromOld(const AnfNodePtr &node, const AnfNodePtr &input, int64_t micro, int64_t index);
   std::vector<AnfNodePtr> GenerateMainGraphSend(const std::vector<AnfNodePtr> &nodes, const AnfNodePtr &node,
-                                                const ValuePtr &micro);
+                                                const ValuePtr &micro, const ValuePtr &index);
   AnfNodePtr GenerateMainGraphRecv(const AnfNodePtr &fg_node, const AnfNodePtr &recv);
   FuncGraphManagerPtr manager_;
   int64_t stage_;
