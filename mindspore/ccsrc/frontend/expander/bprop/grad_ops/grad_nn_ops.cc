@@ -2365,5 +2365,24 @@ REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {
   return {dx, dgamma};
 }));
 
+REG_BPROP_BUILDER("MultiScaleDeformableAttnFunctionV2").SetBody((BODYFUNC(ib) {
+  auto value = ib->GetInput(kIndex0);
+  auto value_spatial_shapes = ib->GetInput(kIndex1);
+  auto value_level_start_index = ib->GetInput(kIndex2);
+  auto sampling_locations = ib->GetInput(kIndex3);
+  auto attention_weights = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  sampling_locations = ib->Transpose(sampling_locations, {0, 1, 2, 3, 5, 4});
+  auto grad = ib->Emit("MultiScaleDeformableAttentionV2Grad", {value, value_spatial_shapes, value_level_start_index,
+                                                               sampling_locations, attention_weights, dout});
+  auto grad_value = ib->TupleGetItem(grad, kIndex0);
+  auto grad_spatial_shapes = ib->ZerosLike(value_spatial_shapes);
+  auto grad_level_start_index = ib->ZerosLike(value_level_start_index);
+  auto grad_sampling_loc = ib->TupleGetItem(grad, kIndex1);
+  auto grad_attn_weight = ib->TupleGetItem(grad, kIndex2);
+  grad_sampling_loc = ib->Transpose(grad_sampling_loc, {0, 1, 2, 3, 5, 4});
+  return {grad_value, grad_spatial_shapes, grad_level_start_index, grad_sampling_loc, grad_attn_weight};
+}));
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
