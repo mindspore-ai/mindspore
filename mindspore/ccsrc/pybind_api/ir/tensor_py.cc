@@ -25,6 +25,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "mindspore/ccsrc/include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #include "pybind_api/ir/tensor_index_py.h"
+#include "pybind_api/ir/hook_py.h"
 #include "include/common/profiler.h"
 
 namespace mindspore {
@@ -896,6 +897,8 @@ void RegMetaTensor(const py::module *m) {
     .def("is_contiguous", &Tensor::is_contiguous)
     .def("stride", &Tensor::stride)
     .def("storage_offset", &Tensor::storage_offset)
+    .def("register_hook", &RegisterHook::RegisterTensorBackwardHook)
+    .def("remove_hook", &RegisterHook::RemoveTensorBackwardHook)
     .def("__str__", &Tensor::ToString)
     .def("__repr__", &Tensor::ToStringRepr)
     .def("_offload", &TensorPy::Offload)

@@ -27,12 +27,13 @@ from mindspore.common.seed import get_seed
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
+from mindspore.common.hook_handle import _TensorHookHandle
 
 from mindspore.common._utils import get_slice_num
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore import _checkparam as validator
-from mindspore._checkparam import check_is_number, is_stub_tensor
+from mindspore._checkparam import check_is_number, is_stub_tensor, check_hook_fn
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common.symbol import Symbol
 
@@ -1225,6 +1226,54 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             0
         """
         return Tensor_.storage_offset(self)
+
+    def register_hook(self, hook_fn):
+        """
+        Registers a backward hook for tensor.
+
+        Note:
+            - The `register_backward_hook(hook_fn)` does not work in graph mode or functions decorated with 'jit'.
+            - The 'hook_fn' must be defined as the following code. `grad` is the gradient passed to the tensor,
+              which may be modified by returning a new output gradient.
+            - The 'hook_fn' should have the following signature:
+              hook_fn(grad) -> New output gradient, but can not return None or not set return value.
+
+        Args:
+            hook_fn (function): Python function. Tensor backward hook function.
+
+        Returns:
+            A handle corresponding to the `hook_fn` . The handle can be used to remove the added `hook_fn` by calling
+            `handle.remove()` .
+
+        Raises:
+            TypeError: If the `hook_fn` is not a function of python.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> ms.set_context(mode=ms.PYNATIVE_MODE)
+            >>> def hook_fn(grad):
+            ...     return grad * 2
+            ...
+            >>> def hook_test(x, y):
+            ...     z = x * y
+            ...     z.register_hook(hook_fn)
+            ...     z = z * y
+            ...    return z
+            ...
+            >>> ms_grad = ms.grad(hook_test, grad_position=(0,1))
+            >>> output = ms_grad(Tensor(1, ms.float32), Tensor(2, ms.float32))
+            >>> print(output)
+            (Tensor(shape=[], dtype=Float32, value=8), Tensor(shape=[], dtype=Float32, value=6))
+        """
+        if not check_hook_fn("register_hook", hook_fn):
+            return _TensorHookHandle()
+        handle = _TensorHookHandle()
+        handle.id = Tensor_.register_hook(self, hook_fn)
+        return handle
 
     def flush_from_cache(self):
         """

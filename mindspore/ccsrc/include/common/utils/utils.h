@@ -695,6 +695,8 @@ enum class InputType {
   kInput,
   // Other op output tensor
   kOpOutput,
+  // Default
+  kUnkown,
 };
 
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
