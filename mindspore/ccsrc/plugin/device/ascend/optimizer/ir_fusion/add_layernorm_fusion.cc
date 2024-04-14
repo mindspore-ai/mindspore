@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 
+#include "mindspore/core/utils/ms_context.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -50,6 +51,7 @@ const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const An
 #include <vector>
 #include <string>
 
+#include "mindspore/core/utils/ms_context.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -95,7 +97,9 @@ const BaseRef AddLayernormFusion::DefinePattern() const {
 
 const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                              const EquivPtr &equiv) const {
-  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") != "on") {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->IsEnableInferBoost()) {
     return nullptr;
   }
 

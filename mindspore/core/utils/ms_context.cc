@@ -566,6 +566,29 @@ void MsContext::SetAscendConfig() {
   set_param<std::string>(MS_CTX_GE_OPTIONS, "");
 }
 
+bool MsContext::IsEnableInferBoost() {
+  if (enalbe_infer_boost_.has_value()) {
+    return enalbe_infer_boost_.value();
+  }
+
+  const auto &jit_config = PhaseManager::GetInstance().jit_config();
+  auto iter = jit_config.find("infer_boost");
+  if (iter != jit_config.end() && iter->second == "on") {
+    enalbe_infer_boost_ = true;
+    MS_LOG(INFO) << "MSContext enable ms infer boost from JitConfig";
+    return enalbe_infer_boost_.value();
+  }
+
+  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on") {
+    enalbe_infer_boost_ = true;
+    MS_LOG(INFO) << "MSContext enable ms infer boost from Env";
+  } else {
+    enalbe_infer_boost_ = false;
+  }
+
+  return enalbe_infer_boost_.value();
+}
+
 template MS_CORE_API void MsContext::CheckReadStatus<bool>(MsCtxParam, const bool &) const;
 template MS_CORE_API void MsContext::CheckReadStatus<uint32_t>(MsCtxParam, const uint32_t &) const;
 template MS_CORE_API void MsContext::CheckReadStatus<int>(MsCtxParam, const int &) const;
