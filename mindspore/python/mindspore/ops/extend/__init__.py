@@ -33,7 +33,7 @@ from . import (
     nn_func,
 )
 
-from .array_func import gather, max, min, one_hot
+from .array_func import gather, max, min, one_hot, narrow
 from .math_func import (
     baddbmm,
     bmm,
