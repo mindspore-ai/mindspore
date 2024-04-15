@@ -19,6 +19,7 @@
 namespace ge {
 AscendString::AscendString(char const *name) {}
 
+Operator::Operator(const string &name, const string &type) {}
 Operator::Operator(const AscendString &name, const AscendString &type) {}
 Operator::Operator(const char *name, const char *type) {}
 Operator::Operator(const std::string &type) {}

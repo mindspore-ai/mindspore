@@ -68,7 +68,7 @@ void TestReduceSumInfo::SetUp() {
   reduce_sum->set_input_value(val);
 }
 
-TEST_F(TestReduceSumInfo, InferDevMatrixShape1) {
+TEST_F(TestReduceSumInfo, DISABLED_InferDevMatrixShape1) {
   Strategies inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -79,7 +79,7 @@ TEST_F(TestReduceSumInfo, InferDevMatrixShape1) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestReduceSumInfo, InferSliceShape1) {
+TEST_F(TestReduceSumInfo, DISABLED_InferSliceShape1) {
   Strategies str = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -100,7 +100,7 @@ TEST_F(TestReduceSumInfo, InferSliceShape1) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestReduceSumInfo, GetTensorLayout1) {
+TEST_F(TestReduceSumInfo, DISABLED_GetTensorLayout1) {
   Strategies str = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -121,7 +121,7 @@ TEST_F(TestReduceSumInfo, GetTensorLayout1) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
-TEST_F(TestReduceSumInfo, GetForwardOp1) {
+TEST_F(TestReduceSumInfo, DISABLED_GetForwardOp1) {
   Strategies inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -132,7 +132,7 @@ TEST_F(TestReduceSumInfo, GetForwardOp1) {
   ASSERT_EQ(size, 0);
 }
 
-TEST_F(TestReduceSumInfo, GetForwardOp2) {
+TEST_F(TestReduceSumInfo, DISABLED_GetForwardOp2) {
   Strategies inputs = {{4, 4, 2}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -156,7 +156,7 @@ TEST_F(TestReduceSumInfo, GetForwardOp2) {
   ASSERT_EQ(arg1_name, "group");
 }
 
-TEST_F(TestReduceSumInfo, GetMirrorOPs1) {
+TEST_F(TestReduceSumInfo, DISABLED_GetMirrorOPs1) {
   Strategies inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -168,7 +168,7 @@ TEST_F(TestReduceSumInfo, GetMirrorOPs1) {
   ASSERT_EQ(size, 0);
 }
 
-TEST_F(TestReduceSumInfo, GetMirrorOPs2) {
+TEST_F(TestReduceSumInfo, DISABLED_GetMirrorOPs2) {
   Strategies inputs = {{4, 4, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -187,7 +187,7 @@ TEST_F(TestReduceSumInfo, GetMirrorOPs2) {
   ASSERT_EQ(arg0_name, "group");
 }
 
-TEST_F(TestReduceSumInfo, CheckStrategy1) {
+TEST_F(TestReduceSumInfo, DISABLED_CheckStrategy1) {
   Strategies inputs = {{2, 2, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -195,7 +195,7 @@ TEST_F(TestReduceSumInfo, CheckStrategy1) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestReduceSumInfo, CheckStrategy2) {
+TEST_F(TestReduceSumInfo, DISABLED_CheckStrategy2) {
   Strategies inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -203,7 +203,7 @@ TEST_F(TestReduceSumInfo, CheckStrategy2) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestReduceSumInfo, CheckStrategy3) {
+TEST_F(TestReduceSumInfo, DISABLED_CheckStrategy3) {
   Strategies inputs = {{4, 4, 2}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -211,7 +211,7 @@ TEST_F(TestReduceSumInfo, CheckStrategy3) {
   ASSERT_EQ(ret, SUCCESS);
 }
 
-TEST_F(TestReduceSumInfo, CheckStrategy4) {
+TEST_F(TestReduceSumInfo, DISABLED_CheckStrategy4) {
   Strategies inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 

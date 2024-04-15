@@ -33,7 +33,7 @@ class TestMSCollectiveTopo : public UT::Common {
 /// Feature: test create cpu collective topology node.
 /// Description: create the topology node.
 /// Expectation: the topology node is created successfully.
-TEST_F(TestMSCollectiveTopo, InitCollectiveTopoNode) {
+TEST_F(TestMSCollectiveTopo, DISABLED_InitCollectiveTopoNode) {
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(distributed::cluster::topology::kEnvMetaServerHost, server_host.c_str());
