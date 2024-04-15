@@ -132,15 +132,14 @@ std::unordered_map<std::string, mindspore::Format> kStr2FormatMap{{"DEFAULT_FORM
                                                                   {"NC8HW8", mindspore::Format::NC8HW8}};
 
 Status PrimitivePyToC(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
-    MS_ASSERT(node != nullptr);
+    MS_EXCEPTION_IF_NULL(node);
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    MS_ASSERT(cnode != nullptr);
+    MS_EXCEPTION_IF_NULL(cnode);
 
     // judge if primitive is PrimitivePy
     auto primpy_ptr = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -215,7 +214,10 @@ ConverterPlugin::ConverterFunc ConverterPlugin::GetConverterFunc() {
 }
 
 ConverterPlugin::ConverterFunc ConverterPlugin::GetConverterFuncInner() {
-#ifndef _WIN32
+#ifdef _WIN32
+  MS_LOG(ERROR) << "Not support libruntime_convert_plugin.so in Windows";
+  return nullptr;
+#else
   if (converter_func_ == nullptr) {
     std::string plugin_path;
     auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, "libruntime_convert_plugin.so", &plugin_path);
@@ -232,9 +234,6 @@ ConverterPlugin::ConverterFunc ConverterPlugin::GetConverterFuncInner() {
     converter_func_ = reinterpret_cast<ConverterPlugin::ConverterFunc>(function);
   }
   return converter_func_;
-#else
-  MS_LOG(ERROR) << "Not support libruntime_convert_plugin.so in Windows";
-  return nullptr;
 #endif
 }
 
@@ -244,7 +243,7 @@ FuncGraphPtr ModelImpl::LoadGraphByBufferImpl(const void *model_buff, size_t mod
                                               const std::shared_ptr<Context> &model_context,
                                               const std::string &model_path) {
   if (model_type != kMindIR) {
-    MS_LOG(ERROR) << "Invalid model type";
+    MS_LOG(ERROR) << "Invalid model type " << model_type;
     return nullptr;
   }
   MS_CHECK_TRUE_MSG(model_context != nullptr, nullptr, "Invalid context pointers.");
@@ -313,7 +312,7 @@ Status ModelImpl::UpdateSharingWorkspaceConfig(const void *model_buff, size_t mo
     MS_LOG(INFO) << "model_sharing_flag: " << model_sharing_flag;
     auto ret = UpdateConfig("inner_common", std::make_pair("inner_sharing_workspace", "true"));
     if (ret != kSuccess) {
-      MS_LOG(ERROR) << "UpdateConfig failed.";
+      MS_LOG(ERROR) << "UpdateConfig failed!ret=" << ret;
       return ret;
     }
   }
@@ -345,8 +344,8 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     return kLiteError;
   }
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_) {
-    MS_LOG(ERROR) << "Model has been called Build";
+  if (session_ != nullptr) {
+    MS_LOG(ERROR) << "Model has been built already!";
     return kLiteModelRebuild;
   }
   if (model_context == nullptr) {
@@ -362,7 +361,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
   UpdateProvider();
   auto status = UpdateSharingWorkspaceConfig(model_buff, model_size, model_path);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "UpdateSharingWorkspaceConfig failed.";
+    MS_LOG(ERROR) << "UpdateSharingWorkspaceConfig failed!ret=" << status;
     return kLiteError;
   }
   auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
@@ -372,14 +371,14 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
   }
   session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Create session failed.";
+    MS_LOG(ERROR) << "Create session failed!";
     return kLiteError;
   }
   Status ret;
   if (model_type == kMindIR_Lite) {
     ret = session_->CompileGraph(model_buff, model_size, &graph_id_);
     if (ret != kSuccess) {
-      MS_LOG(ERROR) << "compile graph failed.";
+      MS_LOG(ERROR) << "compile graph failed!ret=" << ret;
       return ret;
     }
     return kSuccess;
@@ -401,20 +400,20 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     // convert and optimize func graph to infer
     ret = ConvertGraphOnline(func_graph, model_context);
     if (ret != kSuccess) {
-      MS_LOG(ERROR) << "convert graph failed.";
+      MS_LOG(ERROR) << "convert graph failed!ret=" << ret;
       return ret;
     }
   } else {
     // new a func graph contains a custom node, which is the data-flow graph.
     func_graph = CreateFuncGraphFromDataFlow(model_buff, model_size);
     if (func_graph == nullptr) {
-      MS_LOG(ERROR) << "Create func graph failed from data flow graph.";
+      MS_LOG(ERROR) << "Create func graph failed from data flow graph!";
       return kLiteError;
     }
   }
   ret = session_->CompileGraph(func_graph, nullptr, 0, &graph_id_);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "compile graph failed.";
+    MS_LOG(ERROR) << "compile graph failed!";
     return ret;
   }
   std::shared_lock<std::shared_mutex> build_lock(g_model_converter_lock);
@@ -423,8 +422,8 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
 
 Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_) {
-    MS_LOG(ERROR) << "Model has been called Build";
+  if (session_ != nullptr) {
+    MS_LOG(ERROR) << "Model has been built already!";
     return kLiteModelRebuild;
   }
   if (model_context == nullptr) {
@@ -451,13 +450,13 @@ Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Co
   // transfer primitivePy to primitiveC
   auto ret = PrimitivePyToC(func_graph);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "transfer primitivePy to primitiveCfailed.";
+    MS_LOG(ERROR) << "transfer primitivePy to primitiveCfailed!ret=" << ret;
     return ret;
   }
   // convert and optimize func graph to infer
   ret = ConvertGraphOnline(func_graph, model_context);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "convert graph failed.";
+    MS_LOG(ERROR) << "convert graph failed!ret=" << ret;
     return ret;
   }
   ret = session_->CompileGraph(func_graph, nullptr, 0, &graph_id_);
@@ -477,7 +476,7 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &model_context) {
   if (model_path.empty()) {
-    MS_LOG(ERROR) << "Model path cannot be empty";
+    MS_LOG(ERROR) << "Model path is empty!";
     return kLiteError;
   }
   auto buffer = ReadFile(model_path);
@@ -489,7 +488,6 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
 }
 
 Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context) {
-  MS_ASSERT(func_graph != nullptr);
   auto device_list = model_context->MutableDeviceInfo();
   for (const auto &device_info : device_list) {
     if (device_info == nullptr) {
