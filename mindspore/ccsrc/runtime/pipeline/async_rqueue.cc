@@ -103,6 +103,16 @@ void AsyncRQueue::Push(const AsyncTaskPtr &task) {
   if (worker_ == nullptr) {
     worker_ = std::make_unique<std::thread>(&AsyncRQueue::WorkerLoop, this);
   }
+
+  if (current_level_ == kThreadWaitLevel::kLevelUnknown) {
+    // cppcheck-suppress unreadVariable
+    std::unique_lock<std::mutex> lock(level_mutex_);
+    current_level_ = thread_id_to_wait_level_[std::this_thread::get_id()];
+  }
+
+  if (current_level_ >= wait_level_) {
+    MS_LOG(EXCEPTION) << "Cannot push task from thread " << current_level_ << " to queue " << wait_level_;
+  }
   tasks_queue_.Enqueue(task);
 }
 
