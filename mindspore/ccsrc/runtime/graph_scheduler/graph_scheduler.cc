@@ -502,8 +502,7 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
   MS_EXCEPTION_IF_NULL(debugger);
-  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
-  if ((profiler != nullptr && profiler->IsInitialized()) || debugger->DebuggerBackendEnabled()) {
+  if (debugger->DebuggerBackendEnabled()) {
     debugger_actor_need = true;
   }
 #endif
