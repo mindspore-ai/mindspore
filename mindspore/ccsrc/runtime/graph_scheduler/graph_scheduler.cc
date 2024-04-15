@@ -567,9 +567,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimize, 1, 0, 0);
   Optimize(actor_set);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimize, 1, 0, 1);
-  if (graph_compiler_info.control_node_parser_ != nullptr && (!graph_compiler_info.control_node_parser_->IsInited())) {
-    DumpFinalActor(actor_set.get(), graph_compiler_info);
-  }
+  DumpFinalActor(actor_set.get(), graph_compiler_info);
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
 
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -2222,7 +2220,11 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
   // Link the control arrow by the execution order.
   if (execution_order_running_) {
     for (const auto &graph : graph_compiler_info.graphs_) {
-      LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      if (graph->inline_sub_graph_kernels().empty()) {
+        LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      } else {
+        inline_control_flow_scheduler_.LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      }
     }
   }
 
@@ -2498,7 +2500,11 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
   // Using the multi stream to optimize the performance in the future.
   if (!execution_order_running_) {
     for (const auto &graph : graphs) {
-      LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      if (graph->inline_sub_graph_kernels().empty()) {
+        LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      } else {
+        inline_control_flow_scheduler_.LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      }
     }
   }
 }

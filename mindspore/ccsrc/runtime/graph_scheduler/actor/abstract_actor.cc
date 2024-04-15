@@ -291,7 +291,7 @@ bool AbstractActor::IsOutputAddressPersisted(const DeviceTensor *output_device_t
   // Ref node need check the origin node.
   const auto &graph = AnfAlgo::FetchKernelGraph(output_node.first.get());
   if ((graph != nullptr) && graph->IsInRefOutputMap(output_node)) {
-    const auto &origin_node = graph->GetRefCorrespondOutput(output_node).first;
+    const auto &origin_node = graph->GetRefNodeRecursive(output_node).first;
     MS_EXCEPTION_IF_NULL(origin_node);
     if (origin_node->isa<ValueNode>() || origin_node->isa<Parameter>()) {
       return true;

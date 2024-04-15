@@ -96,14 +96,18 @@ void GetBranchNameToCondtionActor(const KernelGraphPtr &graph,
 }
 }  // namespace
 
-void InlineControlFlowScheduler::LinkControlArrowByExecutionOrder(
-  const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,
-  const mindspore::HashMap<std::string, AbstractActor *> &branch_name_to_gather_actor) {
+void InlineControlFlowScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph,
+                                                                  const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(graph);
   const auto &inline_sub_graph_kernels = graph->inline_sub_graph_kernels();
   if (graph->is_graph_run_mode() || graph->is_any_type_input() || inline_sub_graph_kernels.empty()) {
     return;
   }
+
+  mindspore::HashMap<std::string, AbstractActor *> branch_name_to_switch_actor;
+  mindspore::HashMap<std::string, AbstractActor *> branch_name_to_gather_actor;
+  GetBranchNameToCondtionActor(graph, &branch_name_to_switch_actor, &branch_name_to_gather_actor);
+
   MS_LOG(DEBUG) << "Link control arrow for graph:" << graph->ToString();
   // Only link control arrow between kernels in the same graph.
   mindspore::HashMap<std::string, AbstractActor *> branch_last_actor;
@@ -404,7 +408,7 @@ void InlineControlFlowScheduler::FixRefCountForRefNode(const KernelWithIndex &in
   MS_EXCEPTION_IF_NULL(input_with_index.first);
   auto new_branch_name = branch_name;
   if (common::AnfAlgo::CheckPrimitiveType(input_with_index.first, prim::kPrimConditionSwitch)) {
-    MS_LOG(DEBUG) << "Check switch node:" << input_with_index.first->DebugString()
+    MS_LOG(DEBUG) << "Check switch node:" << input_with_index.first->fullname_with_scope()
                   << " index:" << input_with_index.second << " ref count:" << ref_count
                   << " branch name:" << branch_name;
     const auto &actor = FetchActor(input_with_index.first->fullname_with_scope());
@@ -438,8 +442,11 @@ void InlineControlFlowScheduler::FixRefCountForRefNode(const KernelWithIndex &in
     return;
   }
 
-  const auto &ref_value = kernel_graph->GetRefCorrespondOutput(input_with_index);
-  if (ref_value.first != nullptr && kernel_graph->IsInRefOutputMap(ref_value)) {
+  if (kernel_graph->IsInRefOutputMap(input_with_index)) {
+    const auto &ref_value = kernel_graph->GetRefCorrespondOutput(input_with_index);
+    if (ref_value.first == nullptr) {
+      return;
+    }
     MS_LOG(DEBUG) << "Check input node:" << ref_value.first->fullname_with_scope() << " index:" << ref_value.second
                   << " output node:" << input_with_index.first->fullname_with_scope()
                   << " index:" << input_with_index.second;
@@ -735,9 +742,6 @@ void InlineControlFlowScheduler::Link(ActorSet *actor_set, const GraphCompilerIn
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
     GetBranchNameToCondtionActor(graph, &branch_name_to_switch_actor, &branch_name_to_gather_actor);
-    if (execution_order_running) {
-      LinkControlArrowByExecutionOrder(graph, graph_compiler_info, branch_name_to_gather_actor);
-    }
   }
   LinkControlArrowForNoInputOrOutputActor(actor_set, branch_name_to_switch_actor, branch_name_to_gather_actor);
   for (const auto &kernel_actor : actor_set->kernel_actors_) {
