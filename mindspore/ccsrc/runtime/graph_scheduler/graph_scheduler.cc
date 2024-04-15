@@ -2256,7 +2256,11 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
   // Link the control arrow by the execution order.
   if (execution_order_running_) {
     for (const auto &graph : graph_compiler_info.graphs_) {
-      LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      if (graph->inline_sub_graph_kernels().empty()) {
+        LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      } else {
+        inline_control_flow_scheduler_.LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      }
     }
   }
 
@@ -2532,7 +2536,11 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
   // Using the multi stream to optimize the performance in the future.
   if (!execution_order_running_) {
     for (const auto &graph : graphs) {
-      LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      if (graph->inline_sub_graph_kernels().empty()) {
+        LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      } else {
+        inline_control_flow_scheduler_.LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      }
     }
   }
 }
