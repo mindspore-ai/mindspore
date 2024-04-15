@@ -68,7 +68,7 @@
 
 - [BETA] 支持用户设置CANN的options配置项，配置项分为global和session二类，用户可以通过mindspore.set_context(ascend_config={"ge_options": {"global": {"global_option": "option_value"}, "session": {"session_option": "option_value"}}})进行配置。
 
-#### API Change
+#### API变更
 
 - 新增 mindspore.hal接口，开放流、事件以及设备管理能力。
 - 新增 mindspore.multiprocessing 接口，提供了创建多进程的能力。
@@ -77,7 +77,7 @@
 
 - [BETA] mindspore.ops.TopK当前支持第二个输入k为Int32类型的张量。
 
-#### Bug fixes
+### 问题修复
 
 - [#I92H93] 修复了昇腾平台下使用Print算子打印字符串对象时，Print算子报错Launch kernel failed的问题。
 - [#I8S6LY] 修复了昇腾平台图模式动态shape流程下，变长输入算子（如 AddN、Concat）报错RuntimeError: Attribute dyn_input_sizes of Default/AddN-op1 is [const vector]{}, of which size is less than 0的问题。
