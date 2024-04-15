@@ -925,7 +925,10 @@ REG_BPROP_BUILDER("Select").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
   auto dx = x->need_compute_grad_out() ? ib->Select(cond, dout, ib->ZerosLike(x)) : ib->OutZeros(x);
   auto dy = x->need_compute_grad_out() ? ib->Select(cond, ib->ZerosLike(y), dout) : ib->OutZeros(y);
-  return {ib->OutZeros(cond), dx, dy};
+  auto bc_x = BinopGradCommon(ib, cond, x, dout, dx);
+  auto bc_y = BinopGradCommon(ib, cond, y, dout, dy);
+  auto ret = BinopGradCommon(ib, x, y, bc_x[kIndex1], bc_y[kIndex1]);
+  return {ib->OutZeros(cond), ret[kIndex0], ret[kIndex1]};
 });
 
 REG_BPROP_BUILDER("OnesLike").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
