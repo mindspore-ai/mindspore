@@ -71,14 +71,14 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
 
 bool IsNotHcclCommunicationOp(const std::string &op_name) {
   static std::set<std::string> hccl_op = {
-    kAllGatherOpName, kAllReduceOpName,         kBroadcastOpName,       kReduceScatterOpName, kSendOpName,
-    kReceiveOpName,   kAllToAllvOpName,         kMuxReceiveOpName,      kMuxSendOpName,       kReduceOpName,
-    kBarrierOpName,   kCollectiveScatterOpName, kCollectiveGatherOpName};
+    kAllGatherOpName, kAllReduceOpName,         kBroadcastOpName,        kReduceScatterOpName,  kSendOpName,
+    kReceiveOpName,   kAllToAllvOpName,         kMuxReceiveOpName,       kMuxSendOpName,        kReduceOpName,
+    kBarrierOpName,   kCollectiveScatterOpName, kCollectiveGatherOpName, kMatMulAllReduceOpName};
   return hccl_op.find(op_name) == hccl_op.end();
 }
 
 void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
-  static const std::vector<TypeId> kHcclSupportTypes = {kNumberTypeInt8, kNumberTypeInt32, kNumberTypeFloat16,
+  static const std::vector<TypeId> kHcclSupportTypes = {kNumberTypeInt8,    kNumberTypeInt32, kNumberTypeFloat16,
                                                         kNumberTypeFloat32, kNumberTypeInt16, kNumberTypeBFloat16};
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   MS_EXCEPTION_IF_NULL(kernel_node);

@@ -63,6 +63,7 @@ class EXPORT_WRAPPER LowlatencyCollectiveCommLib : public CollectiveCommunicatio
                 const aclrtStream stream);
 
   LcclPtr LcclCommunicator(const std::string &group_name);
+  LcalCommPtr LcalCommunicator(const std::string &group_name);
 
  private:
   LowlatencyCollectiveCommLib();

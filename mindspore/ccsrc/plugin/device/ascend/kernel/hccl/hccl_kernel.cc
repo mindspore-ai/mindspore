@@ -113,7 +113,8 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
     return false;
   }
 
-  if (kernel_name_ == kAllReduceOpName || kernel_name_ == kReduceScatterOpName || kernel_name_ == kReduceOpName) {
+  if (kernel_name_ == kAllReduceOpName || kernel_name_ == kReduceScatterOpName || kernel_name_ == kReduceOpName ||
+      kernel_name_ == kMatMulAllReduceOpName) {
     if (!HcomUtil::GetHcomOperationType(primitive_, &op_type_)) {
       MS_LOG(ERROR) << "GetHcomOperationType fail!";
       return false;
@@ -169,6 +170,10 @@ void HcclKernel::CalLoopSize() {
     loop_size_ *= static_cast<ulong>(rank_size);
   }
   if (kernel_name_ == kReduceScatterOpName && fusion >= 1) {
+    loop_size_ = hccl_kernel_output_shape_list_.size();
+  }
+  // For MatMulAllReduce, output number is 1.
+  if (kernel_name_ == kMatMulAllReduceOpName) {
     loop_size_ = hccl_kernel_output_shape_list_.size();
   }
 }
@@ -298,6 +303,8 @@ void HcclKernel::LoadLcclLibrary() {
   MS_EXCEPTION_IF_NULL(collective_comm_lib_);
   lccl_comm_ = collective_comm_lib_->LcclCommunicator(group_);
   MS_EXCEPTION_IF_NULL(lccl_comm_);
+  lcal_comm_ = collective_comm_lib_->LcalCommunicator(group_);
+  MS_EXCEPTION_IF_NULL(lcal_comm_);
 }
 #endif
 }  // namespace kernel
