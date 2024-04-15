@@ -31,7 +31,7 @@ from mindspore.ops import composite as C
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.operations._inner_ops import TileSize
-from mindspore.ops.auto_generate import Cummin, BatchMatMul, LinSpaceExt
+from mindspore.ops.auto_generate import Cummin, BatchMatMul, LinSpaceExt, Norm
 from mindspore.ops import auto_generate
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
@@ -7091,6 +7091,84 @@ def _compute_vector_norm_inf(x, dim, keepdims, norm_func):
     return ret_norm
 
 
+def norm_ext(A, ord=None, dim=None, keepdim=False, *, dtype=None):
+    r"""
+    Returns the matrix norm or vector norm of a given tensor.
+
+    `ord` is the calculation mode of norm. The following norm modes are supported.
+
+    ====================== ================================ ==========================================
+    `ord`                   norm for matrices               norm for vectors
+    ====================== ================================ ==========================================
+    `None` (default)        Frobenius norm                   `2`-norm (see below)
+    `'fro'`                 Frobenius norm                   -- not supported --
+    `'nuc'`                 nuclear norm                     -- not supported --
+    `inf`                   :math:`max(sum(abs(x), dim=1))`  :math:`max(abs(x))`
+    `-inf`                  :math:`min(sum(abs(x), dim=1))`  :math:`min(abs(x))`
+    `0`                     -- not supported --              :math:`sum(x != 0)`
+    `1`                     :math:`max(sum(abs(x), dim=0))`  as below
+    `-1`                    :math:`min(sum(abs(x), dim=0))`  as below
+    `2`                     largest singular value           as below
+    `-2`                    smallest singular value          as below
+    other `int` or `float`  -- not supported --              :math:`sum(abs(x)^{ord})^{(1 / ord)}`
+    ====================== ================================ ==========================================
+
+    Args:
+        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
+        ord (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. refer to the table above for
+            behavior. Default: ``None`` .
+        dim (Union[int, Tuple(int)], optional): calculate the dimension of vector norm or matrix norm.
+            Default: ``None`` .
+
+            - When `dim` is int, it will be calculated by vector norm.
+
+            - When `dim` is a 2-tuple, it will be calculated by matrix norm.
+
+            - If `dim` is None and `ord` is None, `A` will be flattened to 1D and the 2-norm
+              of the vector will be calculated.
+
+            - If `dim` is None and `ord` is not None, `A` must be 1D or 2D.
+
+        keepdim (bool): whether the output Tensor retains the original dimension. Default: ``False`` .
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): When set, `A` will be converted to the specified type,
+            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
+
+    Returns:
+        Tensor, the result of norm calculation on the specified dimension, `dim`, has the same dtype as `A`.
+
+    Raises:
+        ValueError: If `dim` is out of range.
+        TypeError: If `dim` is neither an int nor a tuple of int.
+        TypeError: If `A` is a vector and `ord` is a str.
+        ValueError: If `A` is a matrices and `ord` is not in valid mode.
+        ValueError: If `A` is a matrices and `ord` is an integer but not in [1, -1, 2, -2].
+        ValueError: If two elements of `dim` is same after normalize.
+        ValueError: If any elements of `dim` is out of range.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Note:
+        Currently, it only support `ops.norm_ext(A)`.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> data_range = ops.arange(-13, 13, dtype=ms.float32)
+        >>> # Exclude 0 from original data for 0 is invalid input when `ord` is negative.
+        >>> x = data_range[data_range != 0]
+        >>> y = x.reshape(5, 5)
+        >>> print(ops.norm_ext(x))
+        38.327538
+        >>> print(ops.norm(x, 0))
+        25.0
+    """
+    norm_ext_op = Norm()
+    return norm_ext_op(A, ord, dim, keepdim, dtype)
+
+
 def vector_norm(x, ord=2, axis=None, keepdims=False, *, dtype=None):
     r"""
     Returns the vector norm of the given tensor on the specified dimensions.
@@ -11359,6 +11437,7 @@ __all__ = [
     'le',
     'lerp',
     'norm',
+    'norm_ext',
     'vector_norm',
     'matrix_norm',
     'tensor_gt',
