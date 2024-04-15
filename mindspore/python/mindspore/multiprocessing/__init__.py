@@ -16,6 +16,7 @@
 mindspore.multiprocessing is a wrapper around the native `multiprocessing` module.
 Some methods are overrode to support fork-based multiprocess.
 """
+import types
 import signal
 import multiprocessing as mp
 from multiprocessing import *
@@ -64,5 +65,8 @@ class Pool(mp.pool.Pool): # pylint: disable=function-redefined, abstract-method
     """
     def Process(self, *args, **kwds):
         if self._ctx.get_start_method() == "fork":
+            # Process() becomes a staticmethod function of Pool with first argument 'ctx' in python 3.8.0 and later
+            if isinstance(super().Process, types.FunctionType):
+                args = args[1:]
             return _MsProcess(*args, **kwds)
         return super().Process(*args, **kwds)
