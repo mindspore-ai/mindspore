@@ -26,6 +26,5 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MatMulAllReduce, MatMul);
-REGISTER_PRIMITIVE_C(kMatMulAllReduce, MatMulAllReduce);
 }  // namespace ops
 }  // namespace mindspore
