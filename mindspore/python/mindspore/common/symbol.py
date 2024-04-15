@@ -22,7 +22,7 @@ class Symbol:
     Symbol is a data structure to indicate the symbolic info of shape.
 
     For dynamic shape networks, compared with only setting the unknown dimensions ( ``None`` ) in `Tensor` , providing
-    more symbolic shape info can help the framework better optimize the computation graph, to improve the performce of
+    more symbolic shape info can help the framework better optimize the computation graph, to improve the performance of
     network execution.
 
     Args:
