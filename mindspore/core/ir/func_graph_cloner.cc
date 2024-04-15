@@ -200,6 +200,10 @@ void Cloner::AddChildGraphs(const FuncGraphPtr &func_graph) {
   if (!clone_all_child_graphs_) {
     return;
   }
+  // The graph marked 'no_child_graph' has no child graph.
+  if (func_graph->has_flag(FUNC_GRAPH_FLAG_NO_CHILD_GRAPH)) {
+    return;
+  }
   auto &scopes = manager_->scopes(func_graph);
   std::set<const FuncGraph *> memo;
   for (auto &graph : scopes) {
