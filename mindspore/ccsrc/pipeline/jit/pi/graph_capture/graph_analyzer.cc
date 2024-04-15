@@ -617,12 +617,7 @@ static std::vector<ValueNode *> CollectGraphOutputs(const mindspore::CompactSet<
 void GraphAnalyzer::CollectCapturedAndInterpret() {
   CollectCapturedInputs();
   int break_bci = graph_->GetStopTraceBci();
-  std::vector<ValueNode *> alive_nodes;
-  if (break_bci != -1) {
-    alive_nodes = graph_->CollectAliveNode(break_bci, &alive_locals_);
-  } else {
-    alive_nodes = {graph_->GetRetVal()};
-  }
+  std::vector<ValueNode *> alive_nodes = graph_->CollectAliveNode(break_bci, &alive_locals_);
 
   GetCaptureInfo().captured_.outputs = CollectGraphOutputs(GetCaptureInfo().interpret_.values, alive_nodes);
   GetCaptureInfo().interpret_.inputs = graph_->GetFrame(0).GetLocals();
