@@ -966,6 +966,7 @@ void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compi
         auto new_device_address =
           DeviceAddressUtils::ConvertContiguousDeviceAddress(device_context, device_address, is_sync);
         input_edge->address_ = new_device_address;
+        input_tensor->set_device_address(new_device_address);
       } else {
         // Always use tensor address as kernel address.
         input_edge->address_ = device_address;
