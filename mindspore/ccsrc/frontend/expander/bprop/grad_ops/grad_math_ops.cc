@@ -2229,6 +2229,18 @@ REG_BPROP_BUILDER("NextAfter").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {ib->Cast(dx1, dout_type), ib->Cast(dx2, dout_type)};
 });
 
+REG_BPROP_BUILDER("Norm").SetUnusedInputs({i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto ord = ib->GetInput(kIndex1);
+  auto dim = ib->GetInput(kIndex2);
+  auto keepdim = ib->GetInput(kIndex3);
+  auto dtype = ib->GetInput(kIndex4);
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+  auto scale_v = ib->RealDiv(dout, out);
+  return {ib->Mul(input, scale_v), ib->OutZeros(ord), ib->OutZeros(dim), ib->OutZeros(keepdim), ib->OutZeros(dtype)};
+});
+
 REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto start = ib->GetInput(kIndex0);
   auto end = ib->GetInput(kIndex1);
