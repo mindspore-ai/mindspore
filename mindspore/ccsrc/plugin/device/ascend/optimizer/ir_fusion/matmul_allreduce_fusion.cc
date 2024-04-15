@@ -25,7 +25,6 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
-#include "ops/fusion/matmul_allreduce.h"
 #include "mindspore/core/ops/all_reduce.h"
 #include "plugin/device/ascend/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
