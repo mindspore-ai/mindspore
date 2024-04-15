@@ -62,7 +62,8 @@ class AscendOPGenerator:
 
         # aicore intermediation type
         self.op_type = self._parse_op_type(self.op_statistic)
-        if not self.op_type.size:
+        if isinstance(self.op_type, np.ndarray) and not self.op_type.size or not isinstance(self.op_type, np.ndarray) \
+                and not self.op_type:
             self.has_statistic_file = False
 
         # aicpu_intermediation
@@ -88,7 +89,7 @@ class AscendOPGenerator:
             output_timeline_data_path : output_timeline_data.txt path
         """
         # aicore intermediation detail
-        if self.op_detail.size and self.op_detail.shape[0] != 0:
+        if isinstance(self.op_detail, np.ndarray) and self.op_detail.size and self.op_detail.shape[0] != 0:
             try:
                 with os.fdopen(os.open(aicore_intermediate_detail_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
@@ -103,7 +104,7 @@ class AscendOPGenerator:
                 os.chmod(aicore_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
 
         # aicore intermediation type
-        if self.op_type.size and self.op_type.shape[0] != 0:
+        if isinstance(self.op_type, np.ndarray) and self.op_type.size and self.op_type.shape[0] != 0:
             try:
                 with os.fdopen(os.open(aicore_intermediate_type_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
@@ -118,7 +119,7 @@ class AscendOPGenerator:
                 os.chmod(aicore_intermediate_type_path, stat.S_IREAD | stat.S_IWRITE)
 
         # aicpu_intermediation
-        if self.aicpu_detail.size and self.aicpu_detail.shape[0] != 0:
+        if isinstance(self.aicpu_detail, np.ndarray) and self.aicpu_detail.size and self.aicpu_detail.shape[0] != 0:
             try:
                 with os.fdopen(os.open(aicpu_intermediate_detail_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
@@ -133,7 +134,7 @@ class AscendOPGenerator:
                 os.chmod(aicpu_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
 
         # framwork_raw
-        if self.framework_raw.size and self.framework_raw.shape[0] != 0:
+        if isinstance(self.framework_raw, np.ndarray) and self.framework_raw.size and self.framework_raw.shape[0] != 0:
             try:
                 with os.fdopen(os.open(framework_raw_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
@@ -148,7 +149,8 @@ class AscendOPGenerator:
                 os.chmod(framework_raw_path, stat.S_IREAD | stat.S_IWRITE)
 
         # output_timeline_data
-        if self.output_timeline_data.size and self.output_timeline_data.shape[0] != 0 and output_timeline_data_path:
+        if isinstance(self.output_timeline_data, np.ndarray) and self.output_timeline_data.size and \
+                self.output_timeline_data.shape[0] != 0 and output_timeline_data_path:
             try:
                 with os.fdopen(os.open(output_timeline_data_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
@@ -190,7 +192,8 @@ class AscendOPGenerator:
         Args:
             op_statistic(DataFrame): op statistic data.
         """
-        if not op_statistic.size:
+        if isinstance(op_statistic, np.ndarray) and not op_statistic.size or not isinstance(op_statistic, np.ndarray) \
+                and not op_statistic:
             return None
         groups, _, inverse, _ = np.unique(op_statistic['Op Type'], return_index=True, return_inverse=True,
                                           return_counts=True)
