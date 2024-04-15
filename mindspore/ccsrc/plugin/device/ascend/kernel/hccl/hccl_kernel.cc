@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel.h"
 
 #include <map>
+#include <set>
 #include "ops/ascend_op_name.h"
 #include "ops/other_op_name.h"
 #include "ops/array_op_name.h"
@@ -113,8 +114,9 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
     return false;
   }
 
-  if (kernel_name_ == kAllReduceOpName || kernel_name_ == kReduceScatterOpName || kernel_name_ == kReduceOpName ||
-      kernel_name_ == kMatMulAllReduceOpName) {
+  std::set<std::string> reduce_op_names = {kAllReduceOpName, kReduceScatterOpName, kReduceOpName,
+                                           kMatMulAllReduceOpName};
+  if (reduce_op_names.count(kernel_name_) != 0) {
     if (!HcomUtil::GetHcomOperationType(primitive_, &op_type_)) {
       MS_LOG(ERROR) << "GetHcomOperationType fail!";
       return false;
