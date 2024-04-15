@@ -46,7 +46,7 @@ mindspore.ops.MatrixSetDiagV3
         - **TypeError** - `k` 的数据类型不为int32。
         - **ValueError** - `align` 取值不在合法值集合内。
         - **ValueError** - `k` 的维度不为0或1。
-        - **ValueError** - `x` 的维度不大于等于2。
+        - **ValueError** - `x` 的维度小于2。
         - **ValueError** - `k` 的大小不为1或2。
         - **ValueError** - 当 `k` 的大小为2时， `k[1]` 小于 `k[0]` 。
         - **ValueError** - 对角线 `diagonal` 的维度与输入 `x` 的维度不匹配。

@@ -899,7 +899,7 @@ def logdet(input):
         the matrix determinant is 0, -inf will be returned.
 
     Raises:
-        TypeError: If dtype of `input` is not float32, float64, Complex64 or Complex128.
+        TypeError: If dtype of `input` is not float32, float64, complex64 or complex128.
 
     Supported Platforms:
         ``CPU``
@@ -2540,7 +2540,7 @@ def linspace(start, end, steps):
         end (Union[Tensor, int, float]): Last value of interval. The tensor data type must be float32 or float64
             and with shape of 0-D.
         steps (Union[Tensor, int]): Number of ticks in the interval, inclusive of start and end.
-            Must be positive int number or 0D int32/int64 Tensor.
+            Must be positive int number or 0-D int32/int64 Tensor.
 
     Returns:
         Tensor, has the same dtype as `start`, and the shape of :math:`(steps)`.
@@ -2549,7 +2549,7 @@ def linspace(start, end, steps):
         TypeError: If `start` or `end` is not a Tensor.
         TypeError: If dtype of `start` or dtype of `end` is not float32 or float64.
         ValueError: If shape of `start` or shape of `end` is not 0-D.
-        TypeError: If `steps` is not int or 0D int32/int64 Tensor.
+        TypeError: If `steps` is not int or 0-D int32/int64 Tensor.
         ValueError: If `steps` is not positive int number.
 
     Supported Platforms:
@@ -3450,7 +3450,7 @@ def nan_to_num(input, nan=0.0, posinf=None, neginf=None):
     Args:
         input (Tensor): The shape of tensor is :math:`(input_1, input_2, ..., input_R)`.
             With float32 or float16 data type.
-        nan (float): The replace value of 'NaN'. Default value is 0.0.
+        nan (float): The replace value of 'NaN'. Default value is ``0.0``.
         posinf (float): the value to replace positive infinity values with. Default: ``None``,
             replacing positive infinity with the maximum value supported by the data type of `input`.
         neginf (float): the value to replace negative infinity values with. Default: ``None``,
@@ -3641,7 +3641,7 @@ def nanmedian(input, axis=-1, keepdims=False):
 
     .. warning::
         `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
-          unless it is unique.
+        unless it is unique.
 
     Args:
         input (Tensor): The input tensor to calculate the median and indices.
@@ -5430,8 +5430,8 @@ def sparse_segment_mean(x, indices, segment_ids):
         TypeError: If the dtype of `x` is not one of the following dtype: float16, float32, float64.
         TypeError: If the dtype of `indices` and `segment_ids` are not one of the following dtype: int32, int64.
         TypeError: If the dtype of `indices` and `segment_ids` are not the same.
-        ValueError: If the shape of `x`, 'indices' or `segment_ids` don't meet the parameter description.
-        ValueError: If the size of 'indices' and `segment_ids` are not the same.
+        ValueError: If the shape of `x`, `indices` or `segment_ids` don't meet the parameter description.
+        ValueError: If the size of `indices` and `segment_ids` are not the same.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -7760,7 +7760,7 @@ def matmul(input, other):
 
     Returns:
         Tensor or scalar, the matrix product of the inputs. This is a scalar only
-            when both `input`, `other` are 1-d vectors.
+        when both `input`, `other` are 1-d vectors.
 
     Raises:
         TypeError: If the dtype of `input` and the dtype of `other` are not the same.
@@ -10373,7 +10373,7 @@ def fft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-o
         TypeError: If the `s` or `dim` is not tuple(int).
         ValueError: If `input` dimension is less than 2.
         ValueError: If the length of `s` and `dim` are not the same.
-        ValueError: If the value in `dim` is not in the range of "[ `-input_dim` , `input_dim-1` ]".
+        ValueError: If the value in `dim` is not in the range of :math:`[-input.ndim, input.ndim)`.
         ValueError: If norm is none of "backward", "forward" or "ortho".
 
     Supported Platforms:
@@ -10416,7 +10416,7 @@ def fftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-outer
         TypeError: If the `s` or `dim` is not tuple(int).
         ValueError: If the length of `s` and `dim` are not the same.
         ValueError: If `input` dimension is less than 1.
-        ValueError: If the value in `dim` is not in the range of "[ `-input_dim` , `input_dim-1` )".
+        ValueError: If the value in `dim` is not in the range of :math:`[-input.ndim, input.ndim)`.
         ValueError: If norm is none of "backward", "forward" or "ortho".
 
     Supported Platforms:
@@ -10457,7 +10457,7 @@ def ifft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-n
             Default: ``None`` that means ``"backward"``.
 
     Returns:
-        Tensor, The result of `ifft()` function.
+        Tensor, the result of `ifft()` function.
 
     Raises:
         TypeError: If the `input` type is not Tensor.
@@ -10465,7 +10465,7 @@ def ifft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-n
         TypeError: If `n` or `dim` type is not int32.
         ValueError: If `input` dimension is less than 1.
         ValueError: If `n` is less than 1.
-        ValueError: If `dim` is not in the range of "[ `-input_dim` , `input_dim-1` ]".
+        ValueError: If `dim` is not in the range of :math:`[-input.ndim, input.ndim)`.
         ValueError: If norm is none of "backward", "forward" or "ortho".
 
     Supported Platforms:
@@ -10545,7 +10545,7 @@ def ifft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-
         TypeError: If the `s` or `dim` is not tuple(int).
         ValueError: If the length of `s` and `dim` are not the same.
         ValueError: If `input` dimension is less than 2.
-        ValueError: If the value in `dim` is not in the range of "[ `-input_dim` , `input_dim-1` )".
+        ValueError: If the value in `dim` is not in the range of :math:`[-input.ndim, input.ndim)`.
         ValueError: If norm is none of "backward", "forward" or "ortho".
 
     Supported Platforms:
@@ -10942,11 +10942,11 @@ def vecdot(x, y, *, axis=-1):
         TypeError: If type of `axis` is not int.
         ValueError: If `axis` is out of range.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     .. note::
         Currently, complex numbers are not supported on GPU.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -11013,7 +11013,7 @@ def dot(input, other):
     Raises:
         TypeError: If type of input and other are not the same.
         TypeError: If dtype of input or other is not float16 or float32.
-        ValueError: If rank of input or other less than 2.
+        ValueError: If rank of input or other is less than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

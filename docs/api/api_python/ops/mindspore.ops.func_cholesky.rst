@@ -15,6 +15,8 @@ mindspore.ops.cholesky
     .. math::
         A = LL^T 
 
+    其中 `A` 是对称正定矩阵。
+
     参数：
         - **input_x** (Tensor) - shape大小为 :math:`(*, N, N)` ，其中 :math:`*` 是零个或多个由对称正定矩阵组成的批处理维，数据类型为float32或float64。
         - **upper** (bool) - 是否返回上三角矩阵还是下三角矩阵的标志。默认值：``False`` 。

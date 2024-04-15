@@ -4503,10 +4503,10 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
     The generated dataset with different `task` setting has different output columns:
 
     - `task` = :py:obj:`Detection` , output columns: :py:obj:`[image, dtype=uint8]` ,
-        :py:obj:`[bbox, dtype=float32]` , :py:obj:`[label, dtype=uint32]` ,
-        :py:obj:`[difficult, dtype=uint32]` , :py:obj:`[truncate, dtype=uint32]` .
+      :py:obj:`[bbox, dtype=float32]` , :py:obj:`[label, dtype=uint32]` ,
+      :py:obj:`[difficult, dtype=uint32]` , :py:obj:`[truncate, dtype=uint32]` .
     - `task` = :py:obj:`Segmentation` , output columns: :py:obj:`[image, dtype=uint8]` ,
-        :py:obj:`[target,dtype=uint8]` .
+      :py:obj:`[target,dtype=uint8]` .
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.

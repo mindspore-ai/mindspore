@@ -29,7 +29,7 @@ rfft:
         TypeError: If the `input` type is not Tensor.
         TypeError: If the `input` data type is not one of: int16, int32, int64, float32, float64.
         TypeError: If `n` or `dim` type is not int.
-        ValueError: If `dim` is not in the range of "[ `-input.ndim` , `input.ndim` )".
+        ValueError: If `dim` is not in the range of :math:`[-input.ndim, -input.ndim)`.
         ValueError: If `n` is less than 1.
         ValueError: If `norm` is none of ``"backward"`` , ``"forward"`` or ``"ortho"``.
     

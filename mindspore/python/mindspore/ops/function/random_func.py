@@ -52,7 +52,7 @@ def random_gamma(shape, alpha, seed=None):
 
     Args:
         shape (Tensor): The shape of random tensor to be generated.
-            Must be one of the following types: int32, int64. 1-D integer tensor.
+            1-D integer tensor.
         alpha (Tensor): The :math:`\alpha` distribution parameter.
             A Tensor. Must be one of the following types: half, float32, float64.
         seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
@@ -190,8 +190,8 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
         x (Tensor): the input tensor containing the cumsum of probabilities, must be 1 or 2
           dimensions. Must be one of the following types: float16, float32, float64.
         seed (int): If seed is set to be -1, and offset is set to be 0, the random number
-          generator is seeded by a random seed. Otherwise, it is seeded by the given seed.
-        offset (int): Offset used to avoid seed collision.
+          generator is seeded by a random seed. Otherwise, it is seeded by the given seed. The supported dtype: int64.
+        offset (int): Offset used to avoid seed collision. The supported dtype: int64.
         numsamples (int): the number of samples to draw.
         replacement (bool, optional): Whether to draw with replacement or not. Default: ``False`` .
 
@@ -1205,13 +1205,13 @@ def multinomial(input, num_samples, replacement=True, seed=None):
     and the resulting sequence is the calculation result of the polynomial distribution, with a length equal to the
     number of samplings.
 
-    In case 1 of the sample code, we perform two non-replacement samplings (`replacement` is `False`).
+    In case 1 of the sample code, we perform two non-replacement samplings (`replacement` is ``False``).
     The calculation result is most likely `[0, 1]`, and less likely `[1, 0]`. Since the probability of selecting
     index 0 is 90% for each sampling, the first result is most likely to be index 0. Since the probability of selecting
     index 2 is 0, index 2 cannot appear in the sampling result. Therefore, the second result must be index 1,
     and the resulting sequence is `[0, 1]`.
 
-    In case 2 of the sample code, we perform 10 replacement samplings (`replacement` is `True`).
+    In case 2 of the sample code, we perform 10 replacement samplings (`replacement` is ``True``).
     As expected, about 90% of the sampling results are index 0.
 
     In case 3 of the sample code, we extend the input to 2 dimensions, and the sampling results
