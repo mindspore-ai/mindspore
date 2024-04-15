@@ -442,7 +442,10 @@ void GraphScheduler::Initialize() {
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
                << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num);
 
-  if (default_actor_thread_num_ <= kAsyncLaunchThreadNum) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (default_actor_thread_num_ <= kAsyncLaunchThreadNum && EnableRuntimePipeline() &&
+      context_ptr->get_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS) == static_cast<uint32_t>(1)) {
     MS_LOG(WARNING)
       << "The number of actor threads is only: " << default_actor_thread_num_
       << ", and pipelined runtime optimization is not enabled, the performance may not reach the optimal level. Please "
