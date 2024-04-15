@@ -91,8 +91,6 @@ def test_ops_ifftn_backward(mode):
     dim = (0,)
     x = generate_random_input((2, 3, 4, 5), np.float32)
     dout = generate_random_input((2, 3, 4, 5), np.complex64)
-    x = np.arange(1, 17).reshape(2, 8)
-    dout = np.ones_like(x).astype(np.complex64)
     net = IFFTNNet()
     grad_net = IFFTNGradNet(net, ms.Tensor(dout))
     grad_net.set_train()
