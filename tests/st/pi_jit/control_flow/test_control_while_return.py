@@ -24,7 +24,7 @@ class CtrlWhileIfReturn(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_if_return_not_relevant_gt():
@@ -62,7 +62,7 @@ class CtrlWhileReturnIn(Cell):
         return s
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_return():
@@ -94,7 +94,7 @@ class CtrlWhileCast(Cell):
         return loop
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_return_cast():
@@ -128,7 +128,7 @@ class CtrlOnceReturn(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_once_return():
@@ -156,14 +156,13 @@ class CtrlWhileReturnInIf(Cell):
         while x < 2:
             x += 1
             if x >= 2:
-                res = x
-                break
+                return x
             elif x == 1:
                 x = self.mul(x, x)
-        return res
+        return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_return_in_if():
@@ -198,7 +197,7 @@ class CtrlWhileReturnInElif(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_return_in_elif():
@@ -235,7 +234,7 @@ class CtrlElifReturnOnce(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_once_elif_return():
@@ -263,18 +262,17 @@ class CtrlIfReturnElse(Cell):
         out = t
         while x + y > 4:
             if x > 1 and y > 1:
-                res = out
-                break
+                return out
             elif x > 4 or y > 2:
                 out += t
             else:
                 out = self.mul(out, t)
             x -= 2
             y += 1
-        return res
+        return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_else_return_in_if():
@@ -308,14 +306,13 @@ class CtrlWhileElseReturnInElif(Cell):
             if not x > 1:
                 out += t
             elif x >= 1 and x < 2:
-                res = out
-                break
+                return out
             else:
                 out = self.mul(out, x)
-        return res
+        return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_else_elif_return():
@@ -347,14 +344,12 @@ class CtrlWhileReturnInIfElif(Cell):
         while x < 5:
             x += 2
             if self.double(x) < 3:
-                res = x
-                break
+                return x
             elif self.sqr(x) < 5:
-                res = x
-                break
+                return x
             else:
                 x -= 1
-        return res
+        return x
 
     def double(self, x):
         return self.add(x, x)
@@ -363,7 +358,7 @@ class CtrlWhileReturnInIfElif(Cell):
         return self.square(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_return_func():
@@ -392,19 +387,17 @@ class CtrlWhileReturnInIfElse(Cell):
         out = x
         while self.param > -5 and x > -5:
             if self.param > 0:
-                res = out
-                break
+                return out
             elif self.param > -3:
                 out = self.add(out, x)
             else:
-                res = out
-                break
+                return out
             self.param -= 1
             x -= 1
-        return res
+        return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_return_in_if_else():
@@ -443,7 +436,7 @@ class CtrlWhileReturnInElifElse(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_return_in_elif_else():
@@ -525,7 +518,7 @@ class CtrlWhile2ElifReturnInElse(Cell):
         return t
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_return_in_else():
@@ -566,7 +559,7 @@ class CtrlWhile2ElifBInIfElif(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_return_in_ifelif():
@@ -608,7 +601,7 @@ class CtrlWhile2ElifReturnIfElif(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_return_in_if_elif_usef():
@@ -648,7 +641,7 @@ class CtrlWhile2ElifReturnInIfElse(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_return_in_if_else():

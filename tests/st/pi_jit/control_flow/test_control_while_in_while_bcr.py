@@ -33,7 +33,7 @@ class CtrlWhileInWhileBC(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_while_in_if_break_continue():
@@ -81,7 +81,7 @@ class CtrlWhileInWhileCB(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_if_continue_break():
@@ -128,7 +128,7 @@ class CtrlWhileInWhileBR(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_while_break_return():
@@ -175,7 +175,7 @@ class CtrlWhileInWhileRB(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_while_return_break():
@@ -220,7 +220,7 @@ class CtrlWhileInWhileCR(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_while_continue_return():

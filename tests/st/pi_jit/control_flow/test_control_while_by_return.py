@@ -23,7 +23,7 @@ class CtrlWhileForReturnOne(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_param_return_in_while():
@@ -57,7 +57,7 @@ class CtrlWhileForReturnAdd(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_return_no_param():
@@ -91,7 +91,7 @@ class CtrlWhileReturnForX(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_return_in_for_x():
@@ -124,7 +124,7 @@ class CtrlWhileReturnFor(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_return_in_for():
@@ -158,7 +158,7 @@ class CtrlWhileReturnForP(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_return_in_for_param():
@@ -192,7 +192,7 @@ class CtrlWhileReturnForN(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_return_in_for_no():

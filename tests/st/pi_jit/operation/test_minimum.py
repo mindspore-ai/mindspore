@@ -6,7 +6,7 @@ from ..share.ops.primitive.minimum_ops import MinimumFactory
 from ..share.ops.primitive.minimum_ops import Minimum
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_input_512x1_512x1():
@@ -35,7 +35,7 @@ def test_p_minimum_input_2x2_2x2():
     MinimumFactory(left_input, right_input, np.float32)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_input_3x3x3x3_3x3x3x3():
@@ -50,7 +50,7 @@ def test_p_minimum_input_3x3x3x3_3x3x3x3():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_input_5d():
@@ -65,7 +65,7 @@ def test_p_minimum_input_5d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_input_6d():
@@ -80,7 +80,7 @@ def test_p_minimum_input_6d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_input_7d():
@@ -95,7 +95,7 @@ def test_p_minimum_input_7d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_input_3dtensor_scalar():
@@ -110,7 +110,7 @@ def test_p_minimum_input_3dtensor_scalar():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_input_scalar_3dtensor():
@@ -125,7 +125,7 @@ def test_p_minimum_input_scalar_3dtensor():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_forward_input_2dtensor_3dtensor_int32():
@@ -141,7 +141,7 @@ def test_p_minimum_forward_input_2dtensor_3dtensor_int32():
         fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_dtype_int64():
@@ -156,7 +156,7 @@ def test_p_minimum_dtype_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_input_bool_tensor_int32():
@@ -173,7 +173,7 @@ def test_p_minimum_input_bool_tensor_int32():
     assert out_me.asnumpy().all() == out_np.all()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_dtype_int8():
@@ -188,7 +188,7 @@ def test_p_minimum_dtype_int8():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_dtype_int16():
@@ -203,7 +203,7 @@ def test_p_minimum_dtype_int16():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_dtype_uint16():
@@ -218,7 +218,7 @@ def test_p_minimum_dtype_uint16():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_dtype_uint8():
@@ -233,7 +233,7 @@ def test_p_minimum_dtype_uint8():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_minimum_dtype_int32_tensor_interface():

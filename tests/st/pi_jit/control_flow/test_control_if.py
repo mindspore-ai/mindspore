@@ -37,14 +37,14 @@ def test_ctrl_if_addn_addn_true():
     input1 = np.random.randn(*input_shape).astype(np.float32)
     input2 = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneIfOneAddnOneAddn.construct, mode="PSJit")
     ps_net = ControlOneIfOneAddnOneAddn()
+    jit(fn=ControlOneIfOneAddnOneAddn.construct, mode="PSJit")(ps_net, x, y, Tensor(input1), Tensor(input2))
     ps_out = ps_net(x, y, Tensor(input1), Tensor(input2))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     ps_grad = grad_net(x, y, Tensor(input1), Tensor(input2))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneIfOneAddnOneAddn.construct, mode="PIJit")
     pi_net = ControlOneIfOneAddnOneAddn()
+    jit(fn=ControlOneIfOneAddnOneAddn.construct, mode="PIJit")(pi_net, x, y, Tensor(input1), Tensor(input2))
     pi_out = pi_net(x, y, Tensor(input1), Tensor(input2))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     pi_grad = grad_net(x, y, Tensor(input1), Tensor(input2))
@@ -68,14 +68,14 @@ def test_ctrl_if_addn_addn_false():
     input1 = np.random.randn(*input_shape).astype(np.float32)
     input2 = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneIfOneAddnOneAddn.construct, mode="PSJit")
     ps_net = ControlOneIfOneAddnOneAddn()
+    jit(fn=ControlOneIfOneAddnOneAddn.construct, mode="PSJit")(ps_net, x, y, Tensor(input1), Tensor(input2))
     ps_out = ps_net(x, y, Tensor(input1), Tensor(input2))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     ps_grad = grad_net(x, y, Tensor(input1), Tensor(input2))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneIfOneAddnOneAddn.construct, mode="PIJit")
     pi_net = ControlOneIfOneAddnOneAddn()
+    jit(fn=ControlOneIfOneAddnOneAddn.construct, mode="PIJit")(pi_net, x, y, Tensor(input1), Tensor(input2))
     pi_out = pi_net(x, y, Tensor(input1), Tensor(input2))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     pi_grad = grad_net(x, y, Tensor(input1), Tensor(input2))
@@ -98,7 +98,7 @@ class ControlOneIfOneAddnOneAddnOneAddn(Cell):
         return out_me
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_addn_addn_addn_true():
@@ -113,14 +113,14 @@ def test_ctrl_if_addn_addn_addn_true():
     input1 = np.random.randn(*input_shape).astype(np.float32)
     input2 = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneIfOneAddnOneAddnOneAddn.construct, mode="PSJit")
     ps_net = ControlOneIfOneAddnOneAddnOneAddn()
+    jit(fn=ControlOneIfOneAddnOneAddnOneAddn.construct, mode="PSJit")(ps_net, x, y, Tensor(input1), Tensor(input2))
     ps_out = ps_net(x, y, Tensor(input1), Tensor(input2))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     ps_grad = grad_net(x, y, Tensor(input1), Tensor(input2))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneIfOneAddnOneAddnOneAddn.construct, mode="PIJit")
     pi_net = ControlOneIfOneAddnOneAddnOneAddn()
+    jit(fn=ControlOneIfOneAddnOneAddnOneAddn.construct, mode="PIJit")(pi_net, x, y, Tensor(input1), Tensor(input2))
     pi_out = pi_net(x, y, Tensor(input1), Tensor(input2))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     pi_grad = grad_net(x, y, Tensor(input1), Tensor(input2))
@@ -129,7 +129,7 @@ def test_ctrl_if_addn_addn_addn_true():
     match_array(ps_grad[3], pi_grad[3])
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_addn_addn_addn_false():
@@ -144,14 +144,14 @@ def test_ctrl_if_addn_addn_addn_false():
     input1 = np.random.randn(*input_shape).astype(np.float32)
     input2 = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneIfOneAddnOneAddnOneAddn.construct, mode="PSJit")
     ps_net = ControlOneIfOneAddnOneAddnOneAddn()
+    jit(fn=ControlOneIfOneAddnOneAddnOneAddn.construct, mode="PSJit")(ps_net, x, y, Tensor(input1), Tensor(input2))
     ps_out = ps_net(x, y, Tensor(input1), Tensor(input2))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     ps_grad = grad_net(x, y, Tensor(input1), Tensor(input2))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneIfOneAddnOneAddnOneAddn.construct, mode="PIJit")
     pi_net = ControlOneIfOneAddnOneAddnOneAddn()
+    jit(fn=ControlOneIfOneAddnOneAddnOneAddn.construct, mode="PIJit")(pi_net, x, y, Tensor(input1), Tensor(input2))
     pi_out = pi_net(x, y, Tensor(input1), Tensor(input2))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     pi_grad = grad_net(x, y, Tensor(input1), Tensor(input2))

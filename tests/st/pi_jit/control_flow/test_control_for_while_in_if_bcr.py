@@ -33,7 +33,7 @@ class CtrlForInIfBC(Cell):
         return out
 
 
-@pytest.mark.level7
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_in_if_continue_break():
@@ -47,12 +47,12 @@ def test_control_flow_for_in_if_continue_break():
     t = Tensor(input_np, ms.int32)
     y = Tensor(input_np, ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForInIfBC.construct, mode="PSJit")
     ps_net = CtrlForInIfBC(t)
+    jit(fn=CtrlForInIfBC.construct, mode="PSJit")(ps_net, x, y)
     ps_out = ps_net(x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForInIfBC.construct, mode="PIJit")
     pi_net = CtrlForInIfBC(t)
+    jit(fn=CtrlForInIfBC.construct, mode="PIJit")(pi_net, x, y)
     pi_out = pi_net(x, y)
     match_array(ps_out, pi_out)
 
@@ -79,7 +79,7 @@ class CtrlForInIfBR(Cell):
         return res
 
 
-@pytest.mark.level7
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_in_if_return_break():
@@ -93,12 +93,12 @@ def test_control_flow_for_in_if_return_break():
     t = Tensor(input_np, ms.int32)
     y = Tensor(input_np, ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForInIfBR.construct, mode="PSJit")
     ps_net = CtrlForInIfBR(t)
+    jit(fn=CtrlForInIfBR.construct, mode="PSJit")(ps_net, x, y)
     ps_out = ps_net(x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForInIfBR.construct, mode="PIJit")
     pi_net = CtrlForInIfBR(t)
+    jit(fn=CtrlForInIfBR.construct, mode="PIJit")(pi_net, x, y)
     pi_out = pi_net(x, y)
     match_array(ps_out, pi_out)
 
@@ -127,7 +127,7 @@ class CtrlForInIfBCR(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_in_if_break_continue_return():
@@ -141,12 +141,12 @@ def test_control_flow_for_in_if_break_continue_return():
     t = Tensor(input_np, ms.int32)
     y = Tensor(input_np, ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForInIfBCR.construct, mode="PSJit")
     ps_net = CtrlForInIfBCR(t)
+    jit(fn=CtrlForInIfBCR.construct, mode="PSJit")(ps_net, x, y)
     ps_out = ps_net(x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForInIfBCR.construct, mode="PIJit")
     pi_net = CtrlForInIfBCR(t)
+    jit(fn=CtrlForInIfBCR.construct, mode="PIJit")(pi_net, x, y)
     pi_out = pi_net(x, y)
     match_array(ps_out, pi_out)
 
@@ -172,7 +172,7 @@ class CtrlWhileInIfCR(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_if_continue_return():
@@ -186,12 +186,12 @@ def test_control_flow_while_in_if_continue_return():
     t = Tensor([8], ms.int32)
     y = Tensor(input_np, ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlWhileInIfCR.construct, mode="PSJit")
     ps_net = CtrlWhileInIfCR(t)
+    jit(fn=CtrlWhileInIfCR.construct, mode="PSJit")(ps_net, x, y)
     ps_out = ps_net(x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlWhileInIfCR.construct, mode="PIJit")
     pi_net = CtrlWhileInIfCR(t)
+    jit(fn=CtrlWhileInIfCR.construct, mode="PIJit")(pi_net, x, y)
     pi_out = pi_net(x, y)
     match_array(ps_out, pi_out)
 
@@ -222,7 +222,7 @@ class CtrlWhileInIfBCR(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_if_break_continue_return():
@@ -236,11 +236,11 @@ def test_control_flow_while_in_if_break_continue_return():
     t = Tensor(input_np, ms.int32)
     y = Tensor(input_np, ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlWhileInIfBCR.construct, mode="PSJit")
     ps_net = CtrlWhileInIfBCR(t)
+    jit(fn=CtrlWhileInIfBCR.construct, mode="PSJit")(ps_net, x, y)
     ps_out = ps_net(x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlWhileInIfBCR.construct, mode="PIJit")
     pi_net = CtrlWhileInIfBCR(t)
+    jit(fn=CtrlWhileInIfBCR.construct, mode="PIJit")(pi_net, x, y)
     pi_out = pi_net(x, y)
     match_array(ps_out, pi_out)

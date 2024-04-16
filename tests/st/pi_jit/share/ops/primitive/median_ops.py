@@ -50,25 +50,25 @@ class MedianFactory():
             self.loss = 1e-5
         else:
             self.loss = 0
+        self.input_ms = Tensor(self.input)
 
     def forward_mindspore_impl(self, net):
-        y, indices = net(Tensor(self.input))
+        y, indices = net(self.input_ms)
         return y.asnumpy(), indices.asnumpy()
 
     def grad_mindspore_impl(self, net):
-        input_x = Tensor(self.input)
         grad_net = GradOfFirstInput(net, sens_param=False)
-        res = grad_net(input_x)
+        res = grad_net(self.input_ms)
         return res.asnumpy()
 
 
     def forward_cmp(self):
         ps_net = Median(self.global_median, self.axis, self.keep_dims)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_ms)
         context.set_context(mode=context.GRAPH_MODE)
         y_psjit, indices_psjit = self.forward_mindspore_impl(ps_net)
         pi_net = Median(self.global_median, self.axis, self.keep_dims)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_ms)
         context.set_context(mode=context.PYNATIVE_MODE)
         y_pijit, indices_pijit = self.forward_mindspore_impl(pi_net)
         if not self.global_median:
@@ -78,11 +78,11 @@ class MedianFactory():
 
     def grad_cmp(self):
         ps_net = Median(self.global_median, self.axis, self.keep_dims)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_ms)
         context.set_context(mode=context.GRAPH_MODE)
         grad_psjit = self.grad_mindspore_impl(ps_net)
         pi_net = Median(self.global_median, self.axis, self.keep_dims)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_ms)
         context.set_context(mode=context.PYNATIVE_MODE)
         grad_pijit = self.grad_mindspore_impl(pi_net)
         self.loss = 0.01

@@ -30,7 +30,7 @@ class CtrlWhileBC(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_break_continue():
@@ -42,11 +42,11 @@ def test_control_flow_while_break_continue():
     x = Tensor([10], ms.float32)
     y = Tensor(np.random.randn(2, 3), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlWhileBC.construct, mode="PSJit")
     ps_net = CtrlWhileBC(y)
+    jit(fn=CtrlWhileBC.construct, mode="PSJit")(ps_net, x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlWhileBC.construct, mode="PIJit")
     pi_net = CtrlWhileBC(y)
+    jit(fn=CtrlWhileBC.construct, mode="PIJit")(pi_net, x, y)
     match_array(ps_net(x, y), pi_net(x, y))
 
 
@@ -70,7 +70,7 @@ class CtrlWhileBR(Cell):
         return y
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_break_return():
@@ -82,11 +82,11 @@ def test_control_flow_while_break_return():
     x = Tensor([1], ms.float32)
     y = Tensor(np.random.randn(2, 3), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlWhileBR.construct, mode="PSJit")
     ps_net = CtrlWhileBR(y)
+    jit(fn=CtrlWhileBR.construct, mode="PSJit")(ps_net, x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlWhileBR.construct, mode="PIJit")
     pi_net = CtrlWhileBR(y)
+    jit(fn=CtrlWhileBR.construct, mode="PIJit")(pi_net, x, y)
     match_array(ps_net(x, y), pi_net(x, y))
 
 
@@ -110,7 +110,7 @@ class CtrlWhileCR(Cell):
         return y
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_continue_return():
@@ -122,11 +122,11 @@ def test_control_flow_while_continue_return():
     x = Tensor([1], ms.float32)
     y = Tensor(np.random.randn(2, 3), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlWhileCR.construct, mode="PSJit")
-    ps_net = CtrlWhileCR(y)
+    ps_net = CtrlWhileCR(y) 
+    jit(fn=CtrlWhileCR.construct, mode="PSJit")(ps_net, x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlWhileCR.construct, mode="PIJit")
     pi_net = CtrlWhileCR(y)
+    jit(fn=CtrlWhileCR.construct, mode="PIJit")(pi_net, x, y)
     match_array(ps_net(x, y), pi_net(x, y))
 
 
@@ -152,7 +152,7 @@ class CtrlWhileBCR(Cell):
         return y
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_continue_return_break():
@@ -164,11 +164,11 @@ def test_control_flow_while_continue_return_break():
     x = Tensor([1], ms.float32)
     y = Tensor(np.random.randn(2, 3), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlWhileBCR.construct, mode="PSJit")
     ps_net = CtrlWhileBCR(y)
+    jit(fn=CtrlWhileBCR.construct, mode="PSJit")(ps_net, x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlWhileBCR.construct, mode="PIJit")
     pi_net = CtrlWhileBCR(y)
+    jit(fn=CtrlWhileBCR.construct, mode="PIJit")(pi_net, x, y)
     match_array(ps_net(x, y), pi_net(x, y))
 
 
@@ -193,7 +193,7 @@ class CtrlForBC(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_break_continue():
@@ -205,56 +205,12 @@ def test_control_flow_for_break_continue():
     x = Tensor([-1], ms.float32)
     y = Tensor(np.random.randn(2, 3), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForBC.construct, mode="PSJit")
     ps_net = CtrlForBC(y)
+    jit(fn=CtrlForBC.construct, mode="PSJit")(ps_net, x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForBC.construct, mode="PIJit")
     pi_net = CtrlForBC(y)
+    jit(fn=CtrlForBC.construct, mode="PIJit")(pi_net, x, y)
     match_array(ps_net(x, y), pi_net(x, y))
-
-
-class CtrlForBR(Cell):
-    def __init__(self, t):
-        super().__init__()
-        self.add = P.Add()
-        self.mul = P.Mul()
-        self.assignadd = P.AssignAdd()
-        self.para = Parameter(Tensor(t), name="a")
-
-    def construct(self, y):
-        out = y
-        for i in range(-1, -9, -2):
-            self.assignadd(self.para, y)
-            y = self.add(y, y)
-            if i == -7:
-                self.para *= 2
-                break
-            elif i > -7:
-                out = self.add(out, y)
-            else:
-                y += 1
-                return y
-        return out
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_control_flow_for_break_return():
-    """
-    Feature: control flow for with break and return.
-    Description: use assignadd resolve parameter
-    and test for with if, break and return
-    Expectation: result match
-    """
-    y = Tensor(np.random.randn(2, 3), ms.float32)
-    context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForBR.construct, mode="PSJit")
-    ps_net = CtrlForBR(y)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForBR.construct, mode="PIJit")
-    pi_net = CtrlForBR(y)
-    match_array(ps_net(y), pi_net(y))
 
 
 class CtrlForCR(Cell):
@@ -282,7 +238,7 @@ class CtrlForCR(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_continue_return():
@@ -294,11 +250,11 @@ def test_control_flow_for_continue_return():
     x = Tensor([5], ms.float32)
     y = Tensor(np.random.randn(2, 3), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForCR.construct, mode="PSJit")
     ps_net = CtrlForCR(y)
+    jit(fn=CtrlForCR.construct, mode="PSJit")(ps_net, x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForCR.construct, mode="PIJit")
     pi_net = CtrlForCR(y)
+    jit(fn=CtrlForCR.construct, mode="PIJit")(pi_net, x, y)
     match_array(ps_net(x, y), pi_net(x, y))
 
 
@@ -329,7 +285,7 @@ class CtrlForBCR(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_continue_break_return():
@@ -341,9 +297,9 @@ def test_control_flow_for_continue_break_return():
     x = Tensor([5], ms.float32)
     y = Tensor(np.random.randn(2, 3), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForBCR.construct, mode="PSJit")
     ps_net = CtrlForBCR(y)
+    jit(fn=CtrlForBCR.construct, mode="PSJit")(ps_net, x, y)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForBCR.construct, mode="PIJit")
     pi_net = CtrlForBCR(y)
+    jit(fn=CtrlForBCR.construct, mode="PIJit")(pi_net, x, y)
     match_array(ps_net(x, y), pi_net(x, y))

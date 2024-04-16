@@ -40,12 +40,12 @@ class InplaceSubDynamicShapeMock():
 
     def forward_dynamic_shape_cmp(self):
         ps_net = DynamicShapeInplaceSub(self.indices)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x, self.input_v, self.select_indices)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_dynamic_shape_impl(ps_net)
 
         pi_net = DynamicShapeInplaceSub(self.indices)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x, self.input_v, self.select_indices)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_dynamic_shape_impl(pi_net)
 

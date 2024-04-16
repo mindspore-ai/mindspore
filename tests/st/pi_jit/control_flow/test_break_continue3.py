@@ -9,7 +9,7 @@ import mindspore.ops.operations as P
 from ..share.utils import match_array
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_for_multi_if_break_nested_002():
@@ -40,15 +40,15 @@ def test_control_for_multi_if_break_nested_002():
     y = Tensor([10], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net18.construct, mode="PSJit")
     ps_net = Net18()
+    jit(fn=Net18.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net18.construct, mode="PIJit")
     pi_net = Net18()
+    jit(fn=Net18.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_for_multi_if_break_nested_003():
@@ -81,15 +81,15 @@ def test_control_for_multi_if_break_nested_003():
     y = Tensor([10], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net19.construct, mode="PSJit")
     ps_net = Net19()
+    jit(fn=Net19.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net19.construct, mode="PIJit")
     pi_net = Net19()
+    jit(fn=Net19.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_for_multi_if_break_concatenation():
@@ -127,15 +127,15 @@ def test_control_for_multi_if_break_concatenation():
     y = Tensor([10], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net20.construct, mode="PSJit")
     ps_net = Net20()
+    jit(fn=Net20.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net20.construct, mode="PIJit")
     pi_net = Net20()
+    jit(fn=Net20.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_for_multi_if_continue_concatenation():
@@ -173,15 +173,15 @@ def test_control_for_multi_if_continue_concatenation():
     y = Tensor([10], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net21.construct, mode="PSJit")
     ps_net = Net21()
+    jit(fn=Net21.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net21.construct, mode="PIJit")
     pi_net = Net21()
+    jit(fn=Net21.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_for_if_combine_break_continue_001():
@@ -221,15 +221,15 @@ def test_control_while_for_if_combine_break_continue_001():
     y = Tensor([16], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net22.construct, mode="PSJit")
     ps_net = Net22()
+    jit(fn=Net22.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net22.construct, mode="PIJit")
     pi_net = Net22()
+    jit(fn=Net22.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_for_if_combine_break_continue_002():
@@ -269,15 +269,15 @@ def test_control_while_for_if_combine_break_continue_002():
     y = Tensor([20], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net23.construct, mode="PSJit")
     ps_net = Net23()
+    jit(fn=Net23.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net23.construct, mode="PIJit")
     pi_net = Net23()
+    jit(fn=Net23.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_for_if_combine_break_continue_003():
@@ -317,15 +317,15 @@ def test_control_while_for_if_combine_break_continue_003():
     y = Tensor([10], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net24.construct, mode="PSJit")
     ps_net = Net24()
+    jit(fn=Net24.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net24.construct, mode="PIJit")
     pi_net = Net24()
+    jit(fn=Net24.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_for_if_combine_break_continue_004():
@@ -367,15 +367,15 @@ def test_control_while_for_if_combine_break_continue_004():
     y = Tensor([20], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net25.construct, mode="PSJit")
     ps_net = Net25()
+    jit(fn=Net25.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net25.construct, mode="PIJit")
     pi_net = Net25()
+    jit(fn=Net25.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_for_if_combine_break_continue_005():
@@ -420,15 +420,15 @@ def test_control_while_for_if_combine_break_continue_005():
     y = Tensor([20], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net26.construct, mode="PSJit")
     ps_net = Net26()
+    jit(fn=Net26.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net26.construct, mode="PIJit")
     pi_net = Net26()
+    jit(fn=Net26.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_for_if_break_return_001():
@@ -462,15 +462,15 @@ def test_control_while_for_if_break_return_001():
     y = Tensor([20], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net27.construct, mode="PSJit")
     ps_net = Net27()
+    jit(fn=Net27.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net27.construct, mode="PIJit")
     pi_net = Net27()
+    jit(fn=Net27.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_for_if_break_return_002():
@@ -505,15 +505,15 @@ def test_control_while_for_if_break_return_002():
     y = Tensor([20], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net28.construct, mode="PSJit")
     ps_net = Net28()
+    jit(fn=Net28.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net28.construct, mode="PIJit")
     pi_net = Net28()
+    jit(fn=Net28.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_for_if_condition_define_in_init():
@@ -541,15 +541,15 @@ def test_control_while_for_if_condition_define_in_init():
             return out
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net29.construct, mode="PSJit")
     ps_net = Net29()
+    jit(fn=Net29.construct, mode="PSJit")(ps_net, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net29.construct, mode="PIJit")
     pi_net = Net29()
+    jit(fn=Net29.construct, mode="PIJit")(pi_net, z)
     match_array(ps_net(z), pi_net(z))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_for_if_break_parameter():
@@ -584,15 +584,15 @@ def test_control_while_for_if_break_parameter():
     y = Tensor([20], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net30.construct, mode="PSJit")
     ps_net = Net30()
+    jit(fn=Net30.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net30.construct, mode="PIJit")
     pi_net = Net30()
+    jit(fn=Net30.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_for_if_break_plus_continue():
@@ -629,9 +629,9 @@ def test_control_while_for_if_break_plus_continue():
     y = Tensor([10], ms.float32)
     z = Tensor(np.random.randn(4, 4, 4), ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=Net31.construct, mode="PSJit")
     ps_net = Net31()
+    jit(fn=Net31.construct, mode="PSJit")(ps_net, x, y, z)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net31.construct, mode="PIJit")
     pi_net = Net31()
+    jit(fn=Net31.construct, mode="PIJit")(pi_net, x, y, z)
     match_array(ps_net(x, y, z), pi_net(x, y, z))

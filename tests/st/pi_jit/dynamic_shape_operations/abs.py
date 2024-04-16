@@ -34,14 +34,14 @@ class AbsDynamicShapeMock():
             self.loss = 1e-5
         else:
             self.loss = 0
+        self.input_ms = Tensor(self.input_np)
+        self.indices_ms = Tensor(self.indices_np)
+        self.input_dyn = Tensor(shape=[None for _ in self.input_ms.shape], dtype=self.input_ms.dtype)
+        self.indices_dyn = Tensor(shape=[None], dtype=self.indices_ms.dtype)
 
     def forward_mindspore_impl(self, ms_net):
-        input_ms = Tensor(self.input_np)
-        indices_ms = Tensor(self.indices_np)
-        input_dyn = Tensor(shape=[None for _ in input_ms.shape], dtype=input_ms.dtype)
-        indices_dyn = Tensor(shape=[None], dtype=indices_ms.dtype)
-        ms_net.set_inputs(input_dyn, indices_dyn)
-        out_ms = ms_net(input_ms, indices_ms)
+        ms_net.set_inputs(self.input_dyn, self.indices_dyn)
+        out_ms = ms_net(self.input_ms, self.indices_ms)
         return out_ms
 
 
@@ -52,34 +52,30 @@ class AbsDynamicShapeMock():
         grad_net = GradOfAllInputs(net)
         grad_net.set_train()
         out_grad_np = Tensor(self.out_grad_np)
-        input_ms = Tensor(self.input_np)
-        indices_ms = Tensor(self.indices_np)
-        indices_dyn = Tensor(shape=[None], dtype=indices_ms.dtype)
-        input_dyn = Tensor(shape=[None for _ in input_ms.shape], dtype=input_ms.dtype)
         out_grad_dyn = Tensor(shape=[None for _ in out_grad_np.shape], dtype=out_grad_np.dtype)
-        grad_net.set_inputs(input_dyn, indices_dyn, out_grad_dyn)
-        input_grad = grad_net(input_ms, indices_ms, out_grad_np)
+        grad_net.set_inputs(self.input_dyn, self.indices_dyn, out_grad_dyn)
+        input_grad = grad_net(self.input_ms, self.indices_ms, out_grad_np)
         return input_grad[0]
 
 
     def forward_cmp(self):
         ps_net = DynamicShapeAbs()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_ms, self.indices_ms)
         context.set_context(mode=context.GRAPH_MODE)
         out_ps = self.forward_mindspore_impl(ps_net)
         pi_net = DynamicShapeAbs()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_ms, self.indices_ms)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pi = self.forward_mindspore_impl(pi_net)
         allclose_nparray(out_pi.asnumpy(), out_ps.asnumpy(), self.loss, self.loss)
 
     def grad_cmp(self):
         ps_net = DynamicShapeAbs()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_ms, self.indices_ms)
         context.set_context(mode=context.GRAPH_MODE)
         out_ps = self.grad_mindspore_impl(ps_net)
         pi_net = DynamicShapeAbs()
-        jit(pi_net.construct, mode="PSJit")
+        jit(pi_net.construct, mode="PSJit")(self.input_ms, self.indices_ms)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pi = self.grad_mindspore_impl(pi_net)
         allclose_nparray(out_pi.asnumpy(), out_ps.asnumpy(), self.loss, self.loss)

@@ -37,10 +37,10 @@ class MedianDynamicRankFactory():
         self.dtype = dtype
         self.loss = loss
         self.output_grad_np = None
+        self.input_x_ms = Tensor(self.input_x_np)
 
     def forward_mindspore_impl(self, net):
-        input_x_ms = Tensor(self.input_x_np)
-        ms_y, ms_indices = net(input_x_ms)
+        ms_y, ms_indices = net(self.input_x_ms)
         return ms_y.asnumpy(), ms_indices.asnumpy()
 
 
@@ -48,12 +48,12 @@ class MedianDynamicRankFactory():
         """正向比较"""
         ps_net = MedianDynamicRankNet(global_median=self.global_median, axis=self.axis,
                                       keep_dims=self.keep_dims)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x_ms)
         context.set_context(mode=context.GRAPH_MODE)
         psjit_y, _ = self.forward_mindspore_impl(ps_net)
         pi_net = MedianDynamicRankNet(global_median=self.global_median, axis=self.axis,
                                       keep_dims=self.keep_dims)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x_ms)
         context.set_context(mode=context.PYNATIVE_MODE)
         pijit_y, _ = self.forward_mindspore_impl(pi_net)
 

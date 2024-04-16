@@ -34,12 +34,12 @@ def test_control_flow_for_range_1_10_3_continue():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForContinueRange1.construct, mode="PSJit")
     ps_net = CtrlForContinueRange1()
+    jit(fn=CtrlForContinueRange1.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForContinueRange1.construct, mode="PIJit")
     pi_net = CtrlForContinueRange1()
+    jit(fn=CtrlForContinueRange1.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -58,7 +58,7 @@ class CtrlForContinueRange2(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_4_n8_n4_continue():
@@ -69,12 +69,12 @@ def test_control_flow_for_range_4_n8_n4_continue():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForContinueRange2.construct, mode="PSJit")
     ps_net = CtrlForContinueRange2()
+    jit(fn=CtrlForContinueRange2.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForContinueRange2.construct, mode="PIJit")
     pi_net = CtrlForContinueRange2()
+    jit(fn=CtrlForContinueRange2.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -93,7 +93,7 @@ class CtrlForContinueRange3(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_n5_5_2_continue():
@@ -104,12 +104,12 @@ def test_control_flow_for_range_n5_5_2_continue():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForContinueRange3.construct, mode="PSJit")
     ps_net = CtrlForContinueRange3()
+    jit(fn=CtrlForContinueRange3.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForContinueRange3.construct, mode="PIJit")
     pi_net = CtrlForContinueRange3()
+    jit(fn=CtrlForContinueRange3.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -128,7 +128,7 @@ class CtrlForContinueRange4(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_n2_n8_n2_continue():
@@ -139,12 +139,12 @@ def test_control_flow_for_range_n2_n8_n2_continue():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForContinueRange4.construct, mode="PSJit")
     ps_net = CtrlForContinueRange4()
+    jit(fn=CtrlForContinueRange4.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForContinueRange4.construct, mode="PIJit")
     pi_net = CtrlForContinueRange4()
+    jit(fn=CtrlForContinueRange4.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -169,7 +169,7 @@ class CtrlForEnumerateIfContinue(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_enumerate_if_continue():
@@ -183,12 +183,12 @@ def test_control_flow_for_enumerate_if_continue():
     t3 = 3
     x = Tensor([4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForEnumerateIfContinue.construct, mode="PSJit")
     ps_net = CtrlForEnumerateIfContinue(t1, t2, t3)
+    jit(fn=CtrlForEnumerateIfContinue.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForEnumerateIfContinue.construct, mode="PIJit")
     pi_net = CtrlForEnumerateIfContinue(t1, t2, t3)
+    jit(fn=CtrlForEnumerateIfContinue.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -216,7 +216,7 @@ class CtrlForContinueElifElse(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_continue_in_elif_else():
@@ -227,11 +227,11 @@ def test_control_flow_for_continue_in_elif_else():
     """
     x = Tensor([0.5], ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForContinueElifElse.construct, mode="PSJit")
     ps_net = CtrlForContinueElifElse()
+    jit(fn=CtrlForContinueElifElse.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForContinueElifElse.construct, mode="PIJit")
     pi_net = CtrlForContinueElifElse()
+    jit(fn=CtrlForContinueElifElse.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)

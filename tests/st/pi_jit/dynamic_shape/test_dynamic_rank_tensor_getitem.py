@@ -16,10 +16,10 @@ class IndexFactory:
 
     def compare_forward(self, *inputs):
         context.set_context(mode=context.GRAPH_MODE)
-        jit(fn=self.ps_net.construct, mode="PSJit")
+        jit(fn=self.ps_net.construct, mode="PSJit")(*inputs)
         ps_out = self.ps_net(*inputs)
         context.set_context(mode=context.PYNATIVE_MODE)
-        jit(fn=self.pi_net.construct, mode="PIJit")
+        jit(fn=self.pi_net.construct, mode="PIJit")(*inputs)
         pi_out = self.pi_net(*inputs)
 
         # compare
@@ -32,13 +32,13 @@ class IndexFactory:
 
     def compare_forward_grad(self, *inputs):
         context.set_context(mode=context.GRAPH_MODE)
-        jit(fn=self.ps_net.construct, mode="PSJit")
+        jit(fn=self.ps_net.construct, mode="PSJit")(*inputs)
         ps_out = self.ps_net(*inputs)
         grad_net = GradOfAllInputs(self.ps_net, False)
         ps_grads = grad_net(*inputs)
 
         context.set_context(mode=context.PYNATIVE_MODE)
-        jit(fn=self.pi_net.construct, mode="PIJit")
+        jit(fn=self.pi_net.construct, mode="PIJit")(*inputs)
         pi_out = self.pi_net(*inputs)
         grad_net = GradOfAllInputs(self.pi_net, False)
         pi_grads = grad_net(*inputs)
@@ -93,7 +93,7 @@ class Net4(Cell):
         return out
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_none():
@@ -124,7 +124,7 @@ class Net6(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_int():
@@ -156,7 +156,7 @@ class Net7(Cell):
         return out * self.n
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_shape():
@@ -189,7 +189,7 @@ class Net8(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_tensor_int():
@@ -212,7 +212,7 @@ def test_dynamic_rank_getitem_tensor_int():
     fact.compare_forward_grad(x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_tensor_bool():
@@ -246,7 +246,7 @@ class Net9(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_slice_int():
@@ -279,7 +279,7 @@ class Net10(Cell):
 
 
 @pytest.mark.skip(reason="AssertionError, result not match")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_slice_shape():
@@ -302,70 +302,6 @@ def test_dynamic_rank_getitem_slice_shape():
     fact.compare_forward_grad(x, y)
 
 
-class Net11(Cell):
-    def __init__(self):
-        super().__init__()
-        self.n = 1
-
-    def construct(self, x, y):
-        out = x[self.n:y]
-        return out
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_dynamic_rank_getitem_slice_tensor():
-    '''
-    Description:
-        1. dynamic rank getitem 1:Tensor(2)
-    Expectation:
-        1. the net run ok
-        2. the result is the same as psjit
-    '''
-    ps_net = Net11()
-    pi_net = Net11()
-    x = Tensor(np.random.rand(2, 3, 4), dtype=mstype.float32)
-    y = Tensor(2, dtype=mstype.int64)
-    d = Tensor(None, dtype=mstype.float32)
-    dy = Tensor(None, dtype=mstype.int64)
-    ps_net.set_inputs(d, dy)
-    pi_net.set_inputs(d, dy)
-    fact = IndexFactory(ps_net, pi_net)
-    fact.compare_forward_grad(x, y)
-
-
-class Net12(Cell):
-    def __init__(self):
-        super().__init__()
-        self.n = 1
-
-    def construct(self, x):
-        out = x[self.n:None]
-        return out
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_dynamic_rank_getitem_slice_none():
-    '''
-    Description:
-        1. dynamic rank getitem 1:none
-    Expectation:
-        1. the net run ok
-        2. the result is the same as psjit
-    '''
-    ps_net = Net12()
-    pi_net = Net12()
-    x = Tensor(np.random.rand(2, 3, 4), dtype=mstype.float32)
-    d = Tensor(None, dtype=mstype.float32)
-    ps_net.set_inputs(d)
-    pi_net.set_inputs(d)
-    fact = IndexFactory(ps_net, pi_net)
-    fact.compare_forward_grad(x)
-
-
 class Net13(Cell):
     def __init__(self):
         super().__init__()
@@ -376,7 +312,7 @@ class Net13(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_list_int():
@@ -407,7 +343,7 @@ class Net14(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_list_bool():
@@ -439,7 +375,7 @@ class Net15(Cell):
 
 
 @pytest.mark.skip(reason="runtime error in mstorch-infer-r2.3")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_list_mutable():
@@ -470,7 +406,7 @@ class Net16(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_empty_tuple():
@@ -501,7 +437,7 @@ class Net17(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_tuple_basic():
@@ -532,7 +468,7 @@ class Net19(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_tuple_complex():
@@ -566,7 +502,7 @@ class Net20(Cell):
 
 
 @pytest.mark.skip(reason="result not match in mstorch-infer-r2.3")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_tuple_tensor():

@@ -26,7 +26,7 @@ class ControlOneWhileOneAddn(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_while_addn_true():
@@ -40,14 +40,14 @@ def test_ctrl_while_addn_true():
     input_shape = (512, 512, 7, 7)
     input_param = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneWhileOneAddn.construct, mode="PSJit")
     ps_net = ControlOneWhileOneAddn()
+    jit(fn=ControlOneWhileOneAddn.construct, mode="PSJit")(ps_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_ps = ps_net(Tensor(x), Tensor(y), Tensor(input_param))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     ps_grad = grad_net(Tensor(x), Tensor(y), Tensor(input_param))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneWhileOneAddn.construct, mode="PIJit")
     pi_net = ControlOneWhileOneAddn()
+    jit(fn=ControlOneWhileOneAddn.construct, mode="PIJit")(pi_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_pi = pi_net(Tensor(x), Tensor(y), Tensor(input_param))
     grad_net = GradOfAllInputs(pi_net, sens_param=False)
     pi_grad = grad_net(Tensor(x), Tensor(y), Tensor(input_param))
@@ -56,7 +56,7 @@ def test_ctrl_while_addn_true():
     match_array(ps_grad[2], pi_grad[2])
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_while_addn_false():
@@ -70,14 +70,14 @@ def test_ctrl_while_addn_false():
     input_shape = (512, 512, 7, 7)
     input_param = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneWhileOneAddn.construct, mode="PSJit")
     ps_net = ControlOneWhileOneAddn()
+    jit(fn=ControlOneWhileOneAddn.construct, mode="PSJit")(ps_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_ps = ps_net(Tensor(x), Tensor(y), Tensor(input_param))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     ps_grad = grad_net(Tensor(x), Tensor(y), Tensor(input_param))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneWhileOneAddn.construct, mode="PIJit")
     pi_net = ControlOneWhileOneAddn()
+    jit(fn=ControlOneWhileOneAddn.construct, mode="PIJit")(pi_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_pi = pi_net(Tensor(x), Tensor(y), Tensor(input_param))
     grad_net = GradOfAllInputs(pi_net, sens_param=False)
     pi_grad = grad_net(Tensor(x), Tensor(y), Tensor(input_param))
@@ -100,7 +100,7 @@ class ControlOneWhileOneAddnOneAddn(Cell):
         return out_me
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_while_addn_addn_true():
@@ -114,14 +114,14 @@ def test_ctrl_while_addn_addn_true():
     input_shape = (512, 512, 7, 7)
     input_param = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneWhileOneAddnOneAddn.construct, mode="PSJit")
     ps_net = ControlOneWhileOneAddnOneAddn()
+    jit(fn=ControlOneWhileOneAddnOneAddn.construct, mode="PSJit")(ps_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_ps = ps_net(Tensor(x), Tensor(y), Tensor(input_param))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     ps_grad = grad_net(Tensor(x), Tensor(y), Tensor(input_param))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneWhileOneAddnOneAddn.construct, mode="PIJit")
     pi_net = ControlOneWhileOneAddnOneAddn()
+    jit(fn=ControlOneWhileOneAddnOneAddn.construct, mode="PIJit")(pi_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_pi = pi_net(Tensor(x), Tensor(y), Tensor(input_param))
     grad_net = GradOfAllInputs(pi_net, sens_param=False)
     pi_grad = grad_net(Tensor(x), Tensor(y), Tensor(input_param))
@@ -130,7 +130,7 @@ def test_ctrl_while_addn_addn_true():
     match_array(ps_grad[2], pi_grad[2])
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_while_addn_addn_false():
@@ -144,14 +144,14 @@ def test_ctrl_while_addn_addn_false():
     input_shape = (512, 512, 7, 7)
     input_param = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneWhileOneAddnOneAddn.construct, mode="PSJit")
     ps_net = ControlOneWhileOneAddnOneAddn()
+    jit(fn=ControlOneWhileOneAddnOneAddn.construct, mode="PSJit")(ps_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_ps = ps_net(Tensor(x), Tensor(y), Tensor(input_param))
     grad_net = GradOfAllInputs(ps_net, sens_param=False)
     ps_grad = grad_net(Tensor(x), Tensor(y), Tensor(input_param))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneWhileOneAddnOneAddn.construct, mode="PIJit")
     pi_net = ControlOneWhileOneAddnOneAddn()
+    jit(fn=ControlOneWhileOneAddnOneAddn.construct, mode="PIJit")(pi_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_pi = pi_net(Tensor(x), Tensor(y), Tensor(input_param))
     grad_net = GradOfAllInputs(pi_net, sens_param=False)
     pi_grad = grad_net(Tensor(x), Tensor(y), Tensor(input_param))
@@ -175,7 +175,7 @@ class ControlOneWhileOnePara(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_while_para_true():
@@ -189,17 +189,17 @@ def test_ctrl_while_para_true():
     input_shape = (512, 512, 7, 7)
     input_param = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneWhileOnePara.construct, mode="PSJit")
     ps_net = ControlOneWhileOnePara(input_shape)
+    jit(fn=ControlOneWhileOnePara.construct, mode="PSJit")(ps_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_ps = ps_net(Tensor(x), Tensor(y), Tensor(input_param))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneWhileOnePara.construct, mode="PIJit")
     pi_net = ControlOneWhileOnePara(input_shape)
+    jit(fn=ControlOneWhileOnePara.construct, mode="PIJit")(pi_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_pi = pi_net(Tensor(x), Tensor(y), Tensor(input_param))
     match_array(out_pi.asnumpy(), out_ps.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_while_para_false():
@@ -213,12 +213,12 @@ def test_ctrl_while_para_false():
     input_shape = (512, 512, 7, 7)
     input_param = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneWhileOnePara.construct, mode="PSJit")
     ps_net = ControlOneWhileOnePara(input_shape)
+    jit(fn=ControlOneWhileOnePara.construct, mode="PSJit")(ps_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_ps = ps_net(Tensor(x), Tensor(y), Tensor(input_param))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneWhileOnePara.construct, mode="PIJit")
     pi_net = ControlOneWhileOnePara(input_shape)
+    jit(fn=ControlOneWhileOnePara.construct, mode="PIJit")(pi_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_pi = pi_net(Tensor(x), Tensor(y), Tensor(input_param))
     match_array(out_pi.asnumpy(), out_ps.asnumpy())
 
@@ -236,7 +236,7 @@ class ControlOneBoolWhileOneAddn(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_bool_while_addn_true():
@@ -250,11 +250,11 @@ def test_ctrl_bool_while_addn_true():
     input_shape = (512, 512, 7, 7)
     input_param = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneBoolWhileOneAddn.construct, mode="PSJit")
     ps_net = ControlOneBoolWhileOneAddn()
+    jit(fn=ControlOneBoolWhileOneAddn.construct, mode="PSJit")(ps_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_ps = ps_net(Tensor(x), Tensor(y), Tensor(input_param))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneBoolWhileOneAddn.construct, mode="PIJit")
     pi_net = ControlOneBoolWhileOneAddn()
+    jit(fn=ControlOneBoolWhileOneAddn.construct, mode="PIJit")(pi_net, Tensor(x), Tensor(y), Tensor(input_param))
     out_pi = pi_net(Tensor(x), Tensor(y), Tensor(input_param))
     match_array(out_pi.asnumpy(), out_ps.asnumpy())

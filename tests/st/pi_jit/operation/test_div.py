@@ -39,7 +39,7 @@ def test_p_div_input_512_256():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_1024x81x4_1024x81x4():
@@ -56,7 +56,7 @@ def test_p_div_input_1024x81x4_1024x81x4():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_32x256x14x14_32x256x14x14():
@@ -73,7 +73,7 @@ def test_p_div_input_32x256x14x14_32x256x14x14():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_5d_7d():
@@ -98,7 +98,7 @@ def test_p_div_input_5d_7d():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_scalar_scalar():
@@ -115,7 +115,7 @@ def test_p_div_input_scalar_scalar():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_1_128x64():
@@ -131,7 +131,7 @@ def test_p_div_input_1_128x64():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_256x256_256x1():
@@ -148,7 +148,7 @@ def test_p_div_input_256x256_256x1():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_32x32x7x7_32x32x1x1():
@@ -165,7 +165,7 @@ def test_p_div_input_32x32x7x7_32x32x1x1():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_4x4x1_3():
@@ -182,7 +182,7 @@ def test_p_div_input_4x4x1_3():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_4x4x4x1_3():
@@ -199,7 +199,7 @@ def test_p_div_input_4x4x4x1_3():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_4x4x2_4x2():
@@ -216,7 +216,7 @@ def test_p_div_input_4x4x2_4x2():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_4x4x4x2_4x2():
@@ -233,7 +233,7 @@ def test_p_div_input_4x4x4x2_4x2():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_32x12x128x128_1():
@@ -251,7 +251,7 @@ def test_p_div_input_32x12x128x128_1():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_forward_input_256x256_int32():
@@ -267,7 +267,7 @@ def test_p_div_forward_input_256x256_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_forward_input_256x256_int64():
@@ -284,7 +284,7 @@ def test_p_div_forward_input_256x256_int64():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_input_1_1024x4096():
@@ -302,7 +302,7 @@ def test_p_div_input_1_1024x4096():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_forward_input_2x2_3x2():
@@ -319,7 +319,7 @@ def test_p_div_forward_input_2x2_3x2():
         fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_abnormal_input_2x2_str_2x2_str32():
@@ -336,7 +336,7 @@ def test_p_div_abnormal_input_2x2_str_2x2_str32():
         fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_normal_input_1_32x64():
@@ -350,13 +350,13 @@ def test_p_div_normal_input_1_32x64():
     """
     fact = DivFactory((1,), (32, 64))
     pi_net = Div()
-    jit(pi_net.construct, mode="PIJit")
+    jit(pi_net.construct, mode="PIJit")(fact.inputx_ms, fact.inputy_ms)
     context.set_context(mode=context.PYNATIVE_MODE)
     out = fact.forward_mindspore_impl(pi_net)
     assert out.shape == (32, 64), out.dtype == np.float32
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_div_abnormal_inputy_zero():

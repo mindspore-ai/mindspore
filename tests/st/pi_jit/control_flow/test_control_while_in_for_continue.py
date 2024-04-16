@@ -61,7 +61,7 @@ class CtrlWhileInForContinue(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_for_continue_in_for():
@@ -97,7 +97,7 @@ class CtrlWhileInForContinueOne(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_in_while_param_continue_in_for():
@@ -135,7 +135,7 @@ class CtrlWhileInForContinueAdd(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_for_continue_in_while_no_param():
@@ -173,7 +173,7 @@ class CtrlWhileContinueInForX(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_for_continue_in_while_x():
@@ -212,7 +212,7 @@ class CtrlWhileContinueInFor(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_in_for_continue_in_while():
