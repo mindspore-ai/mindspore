@@ -552,22 +552,7 @@ void UpdateOutputShape(const std::vector<EdgePtr> &output_edges) {
     MS_EXCEPTION_IF_NULL(device_address);
     const auto &kernel_tensor = device_address->kernel_tensor();
     MS_EXCEPTION_IF_NULL(kernel_tensor);
-    device_address->set_host_shape(kernel_tensor->host_info_exist() ? kernel_tensor->GetShapeVector()
-                                                                    : kernel_tensor->host_shape());
-  }
-}
-
-void FillHostInfoForInputTensor(const std::vector<tensor::BaseTensorPtr> &input_tensors) {
-  MS_LOG(DEBUG) << "Start";
-
-  for (const auto &tensor : input_tensors) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-    if (!device_address->kernel_tensor()->host_info_exist()) {
-      // The tensor from PyBoost output.
-      device_address->kernel_tensor()->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
-                                                   std::make_shared<TensorType>(tensor->Dtype()), nullptr);
-    }
+    device_address->set_host_shape(kernel_tensor->GetShapeVector());
   }
 }
 
@@ -577,9 +562,6 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(DEBUG) << "Start";
-
-  // If node is dynamic, need to fill host info for kernel tensor.
-  bool need_refresh_host_info = true;
 
   // Get device address from OpRuntimeInfo
   const auto &execution_order = graph->execution_order();
@@ -594,12 +576,6 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
 
     if (!MallocForKernelInput(runtime_info, device_context, node)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
-    }
-
-    if (need_refresh_host_info && (is_dynamic_shape || is_dynamic_value)) {
-      // Host info is need when resize.
-      FillHostInfoForInputTensor(input_tensors);
-      need_refresh_host_info = false;
     }
 
     auto inputs = GetInputKernelTensors(runtime_info, node);
@@ -673,8 +649,7 @@ void UpdateOutputDeviceInfo(const std::vector<EdgePtr> &edges, const CNodePtr &k
     MS_EXCEPTION_IF_NULL(device_address);
     const auto &kernel_tensor = device_address->kernel_tensor();
     MS_EXCEPTION_IF_NULL(kernel_tensor);
-    device_address->set_host_shape(kernel_tensor->host_info_exist() ? kernel_tensor->GetShapeVector()
-                                                                    : kernel_tensor->host_shape());
+    device_address->set_host_shape(kernel_tensor->GetShapeVector());
     device_address->SetSize(output_size_list[i]);
   }
 }
@@ -718,10 +693,6 @@ void UpdateAddressInfoByInputTensor(const OpCompilerInfoPtr &op_compiler_info, c
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   auto new_kernel_tensor = kernel_tensor->CloneKernelTensor();
   MS_EXCEPTION_IF_NULL(new_kernel_tensor);
-  if (!new_kernel_tensor->host_info_exist()) {
-    new_kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
-                                   std::make_shared<TensorType>(tensor->Dtype()), nullptr);
-  }
 
   new_kernel_tensor->SetShapeVector(shape);
   new_kernel_tensor->set_device_ptr(nullptr);
@@ -781,6 +752,7 @@ std::vector<tensor::BaseTensorPtr> OpRunner::GetTensorWithoutValueMask(
                       << input_masks.size();
   }
   for (size_t index = 0; index < input_masks.size(); ++index) {
+    runtime::DeviceAddressUtils::CreateKernelTensor(input_values[index]);
     if (input_masks.at(index) != InputType::kConstant) {
       if (!input_values[index]->isa<tensor::BaseTensor>()) {
         MS_LOG(EXCEPTION) << "The " << index << "' input shoulde be a Tensor, but got "
@@ -959,13 +931,6 @@ void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compi
     const auto &input_node = input_edge->node_with_index_.first;
     common::AnfAlgo::SetOutputInferTypeAndShape({input_tensor->data_type()}, {input_tensor->shape()}, input_node.get());
     if (device_address != nullptr) {
-      const auto &kernel_tensor = device_address->kernel_tensor();
-      if (!kernel_tensor->host_info_exist()) {
-        // The tensor from PyBoost output.
-        kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(input_tensor->shape()),
-                                   std::make_shared<TensorType>(input_tensor->Dtype()), nullptr);
-      }
-
       if (device_address->GetTensorStorageInfo() != nullptr) {
         auto new_device_address =
           DeviceAddressUtils::ConvertContiguousDeviceAddress(device_context, device_address, is_sync);

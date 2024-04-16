@@ -52,6 +52,11 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
       : LoadableDeviceAddress(ptr, size, format, type_id, device_name, device_id) {
     SetDevicePtrDeleter();
   }
+  AscendDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector, const std::string &format,
+                      TypeId type_id, const std::string &device_name, uint32_t device_id, uint32_t stream_id)
+      : LoadableDeviceAddress(ptr, size, shape_vector, format, type_id, device_name, device_id, stream_id) {
+    SetDevicePtrDeleter();
+  }
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                                const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
       : LoadableDeviceAddress(ptr, size, format, type_id, node_index, device_name, device_id) {
@@ -62,6 +67,7 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
     SetDevicePtrDeleter();
   }
   ~AscendDeviceAddress() override;
+  void DeviceSynchronizerInit() override;
   bool SyncDeviceToHost(size_t size, void *const host_ptr) const override;
   bool SyncHostToDevice(size_t size, const void *host_ptr) const override;
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;

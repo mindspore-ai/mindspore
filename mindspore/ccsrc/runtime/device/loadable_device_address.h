@@ -47,6 +47,9 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
   LoadableDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                         const std::string &device_name, uint32_t device_id)
       : DeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+  LoadableDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector, const std::string &format,
+                        TypeId type_id, const std::string &device_name, uint32_t device_id, uint32_t stream_id)
+      : DeviceAddress(ptr, size, shape_vector, format, type_id, device_name, device_id, stream_id) {}
   LoadableDeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id)
       : DeviceAddress(ptr, size, device_name, device_id) {}
   LoadableDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,

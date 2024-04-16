@@ -40,6 +40,9 @@ class CPUDeviceResManager : public DeviceResManager {
                                                uint32_t stream_id = kDefaultStreamIndex) const override;
 
   DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
+  DeviceAddressPtr CreateDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector, const string &format,
+                                       TypeId type_id, const std::string &device_name, uint32_t device_id,
+                                       uint32_t stream_id) const override;
 
   bool LoadCollectiveCommLib() override;
 

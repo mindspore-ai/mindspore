@@ -208,7 +208,7 @@ inline aclTensor *ConvertType(const mindspore::kernel::KernelTensor *tensor) {
   }
 
   auto acl_data_type = AclConverter::ConvertType(tensor->dtype_id());
-  auto shape = tensor->GetShapeVector();
+  const auto &shape = tensor->GetShapeVector();
   const auto shape_size = shape.size();
   aclFormat format = ACL_FORMAT_ND;
   switch (shape_size) {
@@ -245,6 +245,58 @@ inline aclTensor *ConvertType(const mindspore::kernel::KernelTensor *tensor) {
     acl_tensor =
       aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), SizeToLong(storage_info->storage_offset),
                       format, storage_shape.data(), storage_shape.size(), tensor->device_ptr());
+  }
+
+  return acl_tensor;
+}
+
+inline aclTensor *ConvertType(const device::DeviceAddressPtr &device_address) {
+  static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
+  if (aclCreateTensor == nullptr) {
+    return nullptr;
+  }
+  if (device_address == nullptr) {
+    return nullptr;
+  }
+
+  auto acl_data_type = AclConverter::ConvertType(device_address->type_id());
+  const auto &shape = device_address->GetShapeVector();
+  const auto shape_size = shape.size();
+  aclFormat format = ACL_FORMAT_ND;
+  switch (shape_size) {
+    case 3:
+      format = ACL_FORMAT_NCL;
+      break;
+    case 4:
+      format = ACL_FORMAT_NCHW;
+      break;
+    case 5:
+      format = ACL_FORMAT_NCDHW;
+      break;
+    default:
+      format = ACL_FORMAT_ND;
+  }
+
+  aclTensor *acl_tensor = nullptr;
+  const auto &storage_info = device_address->address_common()->tensor_storage_info_;
+  if (storage_info == nullptr) {
+    // Create strides.
+    auto strides = shape;
+    if (!strides.empty()) {
+      strides.erase(strides.begin());
+    }
+    strides.push_back(1);
+    for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
+      strides[i] = strides[i] * strides[i + 1];
+    }
+    acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
+                                 shape.size(), device_address->GetMutablePtr());
+  } else {
+    const auto &strides = storage_info->strides;
+    const auto &storage_shape = storage_info->ori_shape;
+    acl_tensor =
+      aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), SizeToLong(storage_info->storage_offset),
+                      format, storage_shape.data(), storage_shape.size(), device_address->GetMutablePtr());
   }
 
   return acl_tensor;

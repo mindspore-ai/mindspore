@@ -45,9 +45,9 @@ std::map<std::pair<TypeId, TypeId>, ContiguousCpuKernel::ContiguousFunc> Contigu
   {std::make_pair(kNumberTypeUInt64, kNumberTypeUInt64), &ContiguousCpuKernel::LaunchContiguousImpl<uint64_t>},
   {std::make_pair(kNumberTypeBFloat16, kNumberTypeBFloat16), &ContiguousCpuKernel::LaunchContiguousImpl<bfloat16>}};
 
-bool ContiguousCpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::KernelTensorPtr &input,
+bool ContiguousCpuKernel::LaunchContiguous(TypeId input_type_id, const device::DeviceAddressPtr &input,
                                            const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
-                                           const kernel::KernelTensorPtr &output) {
+                                           const device::DeviceAddressPtr &output) {
   const auto &iter = func_list_.find(std::make_pair(input_type_id, output_type_id));
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "type_id:" << input_type_id << " is invalid";
@@ -58,12 +58,12 @@ bool ContiguousCpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::K
 }
 
 template <typename T>
-bool ContiguousCpuKernel::LaunchContiguousImpl(const kernel::KernelTensorPtr &input,
+bool ContiguousCpuKernel::LaunchContiguousImpl(const device::DeviceAddressPtr &input,
                                                const TensorStorageInfoPtr &input_storage_info,
-                                               const kernel::KernelTensorPtr &output, const int64_t &type_size) {
+                                               const device::DeviceAddressPtr &output, const int64_t &type_size) {
   MS_EXCEPTION_IF_NULL(input_storage_info);
-  T *input_addr = GetDeviceAddress<T>({input.get()}, 0);
-  T *output_addr = GetDeviceAddress<T>({output.get()}, 0);
+  T *input_addr = reinterpret_cast<T *>(input->GetMutablePtr());
+  T *output_addr = reinterpret_cast<T *>(output->GetMutablePtr());
   MS_EXCEPTION_IF_NULL(input_addr);
   MS_EXCEPTION_IF_NULL(output_addr);
   const auto &output_shape = input_storage_info->shape;
@@ -79,7 +79,7 @@ bool ContiguousCpuKernel::LaunchContiguousImpl(const kernel::KernelTensorPtr &in
     auto ret = memcpy_s(output_addr, output_size * sizeof(T), input_addr + offset, output_size * sizeof(T));
     // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
     if (ret == ERANGE) {
-      device::ConvertSameType(output_addr, input_addr + offset, output_size * sizeof(T), output->dtype_id());
+      device::ConvertSameType(output_addr, input_addr + offset, output_size * sizeof(T), output->type_id());
       return true;
     } else if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For 'Contiguous', memcpy_s error. Error no: " << ret << " ,output_addr:" << output_addr
