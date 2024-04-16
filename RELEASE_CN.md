@@ -2,6 +2,58 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.2.14 Release Notes
+
+### 主要特性及增强
+
+#### Parallel
+
+- [STABLE] 将流水线并行的send/recv算子通信组改为world_group，避免创建冗余通信组，降低通信所需内存。
+- [STABLE] 优化编译缓存，减少加载缓存时图转换过程，提升使用编译缓存性能。
+- [BETA] 流水并行支持Interleave调度，优化micro batch开不大情况下的模型性能。
+- [BETA] 优化流水线并行场景下模型转换速度，支持单个stage单独转换。
+
+#### Profiler
+
+- [BETA] 动态启停profiling，用户可以根据训练情况实时采集profiling数据，减少采集数据量。
+- [BETA] Profiling通信算子耗时矩阵，用户通过分析通信算子耗时矩阵，找出集群通信性能瓶颈。
+
+#### Dump
+
+- [BETA] Dump保存的统计信息记录MD5值，用户可以通过MD5值确定张量值的微小差异。
+- [BETA] Dump支持bfloat16数据类型，支撑用户定位bfloat16类型的算子精度问题。
+
+### 问题修复
+
+- [#I962EV] 修复了在CPU、GPU 环境上，使用cond接口输入为4d、5d、6d、7d、8d时，正向报错的问题。
+- [#I96E5R] 修复Ascend平台PyNative场景下Mul算子输入为NCHW时报错的问题。
+- [#I96I5D] 修复动态shape场景下，Scalar类型计算时输入类型错误的问题。
+- [#I99QAB] 修复了部分场景下asnumpy接口无法正确识别bfloat16类型Tensor的问题。
+- [#I9ADZS] 修复了故障恢复训练场景中，由于dataset恢复效率低导致网络训练出现数据超时的问题。
+- [#I8Y9JT] 修复了nn.SGD优化器在loss_scale较大，weight_decay较小的部分特定场景下由于优化器执行顺序错误导致的部分网络训练不收敛的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+fary86, wanghenchang, haozhang, mengyuanli, emmmmtang, luoyang, zhupuxu, zhangyongxian, liuluobin, LLLRT, TuDouNi, hujiahui8, wangtongyu6, ligan, zhuguodong, yanghaoran, YingtongHu, liyejun, zjun, 徐永飞, chuht, 张树仁, 徐安越, DeshiChen, shenyaxin, liujunzhu, shunyuanhan, yuchaojie, yao_yf, 没有窗户的小巷, yeyunpeng2020, weiyang, KevinYi, hedongdong, zhouyaqiang0, Margaret_wangrui, zhanghaibo, moran, huangziling, 朱家兴, GuoZhibin, 李良灿, jiaxueyu, gaoyong10, Greatpan, 宦晓玲, melody, 俞涵, jiangshanfeng, XinDu, ling, caifubi, zhangyinxia, gengdongjie, Erpim, XianglongZeng, zhangminli, fengyixing, 冯一航, 黄勇, panzhihui, 胡彬, linqingke, wangshaocong
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore Lite 2.2.14 Release Notes
+
+### 问题修复
+
+- [I96PJC] 通过Mindspore Lite Python API加载ms格式的CLIP模型报错。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+wangtongyu6, zhuguodong, 徐永飞, 徐安越, yeyunpeng2020, moran, XinDu, gengdongjie
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.2.13 Release Notes
 
 ### API变更
@@ -29,8 +81,8 @@ ZPaC, limingqi107, lizhenyu, jiangshanfeng
 
 ### 主要特性及增强
 
-- [Stable] 针对网络参数以fp32初始化以及开启优化器并行的场景，降低Cast算子数目。
-- [Stable] 增加对静默故障的检测和处理能力；静默故障会导致训练过程异常，该特性帮助用户避免或大幅降低因静默故障导致的集群停机巡检进行故障定位带来的损失。
+- [STABLE] 针对网络参数以fp32初始化以及开启优化器并行的场景，降低Cast算子数目。
+- [STABLE] 增加对静默故障的检测和处理能力；静默故障会导致训练过程异常，该特性帮助用户避免或大幅降低因静默故障导致的集群停机巡检进行故障定位带来的损失。
 
 ### 问题修复
 
@@ -52,7 +104,7 @@ yao_yf, YijieChen, 冯一航, yuchaojie, 李良灿, YuJianfeng, huangxinjing, Gu
 
 #### scipy
 
-- [Stable] 新增scipy模块API mindspore.scipy.optimize.linear_sum_assignment，用于解决线性和分配问题，它可以基于一个给定的成本矩阵，找到一个成本最低的分配方案。
+- [STABLE] 新增scipy模块API mindspore.scipy.optimize.linear_sum_assignment，用于解决线性和分配问题，它可以基于一个给定的成本矩阵，找到一个成本最低的分配方案。
 
 ### 问题修复
 
