@@ -37,6 +37,7 @@ from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
+from mindspore.ops.operations.math_ops import DivMod
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
 from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, sub, cos, cosh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
@@ -111,7 +112,7 @@ absolute_ = P.Abs()
 cast_ = P.Cast()
 tensor_add = P.Add()
 tensor_ceil = P.Ceil()
-tensor_div = P.RealDiv()
+tensor_div = P.Div()
 tensor_exp = P.Exp()
 tensor_expm1 = P.Expm1()
 tensor_floordiv = P.FloorDiv()
@@ -165,7 +166,6 @@ cumprod_ = P.CumProd()
 cumsum_ = P.CumSum()
 cumulative_logsumexp_ = CumulativeLogsumexp()
 digamma_ = P.Digamma()
-div_ = P.Div()
 dtype_ = P.DType()
 eps_ = P.Eps()
 erf_ = P.Erf()
@@ -692,16 +692,6 @@ def subtract(input, other, *, alpha=1):
     return tensor_sub(input, alpha * other)
 
 
-def true_divide(dividend, divisor):
-    r"""
-    Alias for :func:`mindspore.ops.div` with :math:`rounding\_mode=None`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-    return div(dividend, divisor, rounding_mode=None)
-
-
 def multiply(input, other):
     r"""
     Alias for :func:`mindspore.ops.asinh`.
@@ -767,13 +757,20 @@ def div(input, other, *, rounding_mode=None):
     """
     if rounding_mode is not None and rounding_mode not in ['floor', 'trunc']:
         raise ValueError("For ops.div, rounding_mode value should be None, 'floor' or 'trunc'.")
-
-    if rounding_mode == 'floor':
-        return tensor_floordiv(input, other)
-    output = div_(input, other)
-    if rounding_mode == 'trunc':
-        output = trunc_(output)
+    if rounding_mode:
+        output = DivMod()(input, other, rounding_mode)
+    else:
+        output = P.Div()(input, other)
     return output
+
+def true_divide(dividend, divisor):
+    r"""
+    Alias for :func:`mindspore.ops.div` with :math:`rounding\_mode=None`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return div(dividend, divisor)
 
 
 def divide(input, other, *, rounding_mode=None):

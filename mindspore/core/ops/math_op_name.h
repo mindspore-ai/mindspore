@@ -114,6 +114,7 @@ constexpr auto kCumsumDOpName = "CumsumD";
 constexpr auto kCumSumOpName = "CumSum";
 constexpr auto kDigammaOpName = "Digamma";
 constexpr auto kDivOpName = "Div";
+constexpr auto kDivModOpName = "DivMod";
 constexpr auto kEigOpName = "Eig";
 constexpr auto kEuclideanNormDOpName = "EuclideanNormD";
 constexpr auto kExpm1OpName = "Expm1";

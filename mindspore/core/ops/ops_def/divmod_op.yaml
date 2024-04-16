@@ -1,0 +1,27 @@
+#operator divmod
+divmod:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+        rounding_mode:
+            dtype: int
+            default: None
+            arg_handler: str_to_enum
+    args_signature:
+        dtype_group: (x, y), (rounding_mode)
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: DivMod
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: DivModAscend
+        GPU: DivModGPU
+        CPU: DivModCPU
