@@ -222,7 +222,7 @@ def test_bias_add_ncdhw(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

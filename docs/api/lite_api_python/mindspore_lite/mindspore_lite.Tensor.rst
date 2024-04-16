@@ -9,7 +9,7 @@ mindspore_lite.Tensor
         - **tensor** (Tensor，可选) - 被存储在新Tensor中的数据，数据可以是来自其它Tensor。默认值： ``None`` 。
         - **shape** (list，可选) - Tensor的shape信息。默认值： ``None`` 。
         - **dtype** (DataType，可选) - Tensor的dtype信息。默认值： ``None`` 。
-        - **device** (str，可选) - Tensor的device信息。默认值： ``None`` 。
+        - **device** (str，可选) - Tensor的device信息。取值可以是 ``"ascend"`` 或者 ``"ascend:device_id"`` 或者 ``None`` ，其中 ``device_id`` 指的是卡号，可以是 ``0`` ， ``1`` ， ``2`` ， ``3`` ， ``4`` ， ``5`` ， ``6`` ， ``7``。如果 ``device`` 的取值为 ``None``，则表示在CPU上初始化Tensor。默认值： ``None`` 。
 
     异常：
         - **TypeError** - `tensor` 既不是Tensor类型也不是 ``None`` 。
