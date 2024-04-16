@@ -15,13 +15,19 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/multi_matmuls_fusion.h"
 
+#include "mindspore/core/utils/ms_context.h"
+
 namespace mindspore {
 namespace opt {
 bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
   bool changed = false;
-  if (common::GetEnv("ENABLE_MATMUL_FUSION") != "on") {
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->IsEnableInferBoost() || common::GetEnv("ENABLE_MATMUL_FUSION") != "on") {
     return changed;
   }
+
   auto mng = graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   const auto &node_users_map = mng->node_users();

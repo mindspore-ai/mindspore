@@ -34,8 +34,10 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/mat_mul.h"
+#include "ops/fusion/matmul_allreduce.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "ops/lite_ops.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
@@ -169,5 +171,6 @@ class MatMulInfer : public abstract::OpInferBase {
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(MatMul, prim::kPrimMatMul, MatMulInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MatMulAllReduce, prim::kPrimMatMulAllReduce, MatMulInfer, false);
 }  // namespace ops
 }  // namespace mindspore

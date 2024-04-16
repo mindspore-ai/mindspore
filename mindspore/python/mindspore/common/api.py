@@ -302,12 +302,13 @@ def _handle_arg_predict(obj, arg, compile_arg):
         return None
 
     if isinstance(arg, (list, tuple)):
-        if compile_arg is not None and hasattr(compile_arg, "__ms_mutable__") and getattr(compile_arg, "__ms_mutable__"):
+        if compile_arg is not None and hasattr(compile_arg, "__ms_mutable__") and \
+                getattr(compile_arg, "__ms_mutable__"):
             # mutable([]) will be eliminated by FuncGraphSpecializer, and empty list is not supported by backend.
             if isinstance(arg, list) and not arg:
                 return None
             return arg
-        elif hasattr(obj, "enable_tuple_broaden") and obj.enable_tuple_broaden and isinstance(arg, tuple) and \
+        if hasattr(obj, "enable_tuple_broaden") and obj.enable_tuple_broaden and isinstance(arg, tuple) and \
                 _check_all_tensor(arg):
             return arg
         return None

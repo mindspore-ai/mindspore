@@ -91,10 +91,8 @@ Status PagedAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
 
 Status PagedAttentionInfo::InferDevMatrixShape() {
   auto input_strategies = strategy()->GetInputDim();
-  auto query = input_strategies.at(0);         // (batch, seq_len, hidden_size)
-  auto cache = input_strategies.at(1);         // (block_size, num_blocks, hidden_size)
-  auto block_tables = input_strategies.at(3);  // (batch, max_num_block_per_batch)
-  auto context_lens = input_strategies.at(4);  // (context_lens)
+  auto query = input_strategies.at(0);  // (batch, seq_len, hidden_size)
+  auto cache = input_strategies.at(1);  // (block_size, num_blocks, hidden_size)
 
   // batch   block_size   num_blocks   seq_len   hidden_size
   //  4          3             2          1          0

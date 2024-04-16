@@ -23,6 +23,7 @@
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "kernel/common_utils.h"
+#include "mindspore/core/utils/ms_context.h"
 
 namespace mindspore {
 namespace runtime {
@@ -278,6 +279,8 @@ void HostQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const 
 }
 
 void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   MS_EXCEPTION_IF_NULL(context);
   if (IsRunningFailed(context)) {
     return;
@@ -328,11 +331,20 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
         continue;
       }
 
-
-      if (!device_tensor->AsyncHostToDevice(LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(), 
-            host_tensor->data_ptr()->data())) {
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
+      if (ms_context->IsEnableInferBoost()) {
+        if (!device_tensor->AsyncHostToDevice(LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(),
+                                              host_tensor->data_ptr()->data())) {
+          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
+        }
+      } else {
+        if (!device_tensor->SyncHostToDevice(
+              trans::GetRuntimePaddingShape(data_node_with_indexs_[i].first, data_node_with_indexs_[i].second),
+              LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(),
+              host_tensor->device_info().host_format_, host_tensor->data_ptr())) {
+          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
+        }
       }
+
       if (IsDynamic(device_tensor->host_shape())) {
         device_tensor->set_host_shape(host_tensor->shape());
       }

@@ -17,7 +17,7 @@ if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
             ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/collective/collective_communication_lib.cc
             ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/collective/communication_group.cc)
     set_property(SOURCE ${LOWLATENCY_COLLECTIVE_SRCS} PROPERTY COMPILE_DEFINITIONS
-                 SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+                SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
     add_library(lowlatency_collective SHARED ${LOWLATENCY_COLLECTIVE_SRCS})
     target_link_libraries(lowlatency_collective PRIVATE lcal)
 endif()

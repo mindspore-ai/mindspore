@@ -32,7 +32,7 @@ bool HcomAllReduceScatterKernel::Launch(const std::vector<KernelTensor *> &input
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
 #ifdef ENABLE_INTERNAL_KERNELS
-  if (!common::GetEnv("ENABLE_LCCL").empty()) {
+  if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
     auto lccl_result = lccl_comm_->ReduceScatter(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
                                                  hccl_data_type_list_[0], op_type_, stream_ptr);
     if (lccl_result != Lcal::LCAL_SUCCESS) {
