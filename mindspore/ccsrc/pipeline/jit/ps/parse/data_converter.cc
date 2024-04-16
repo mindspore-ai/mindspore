@@ -1175,7 +1175,15 @@ TensorPtr ConvertTensorValue(const py::object &obj) {
       return py::getattr(obj, stub::PY_ATTR_TENSOR).cast<tensor::TensorPtr>();
     }
     auto value = stub->WaitValue();
-    return value->cast<tensor::TensorPtr>();
+    auto tensor = value->cast<TensorPtr>();
+    if (tensor == nullptr) {
+      // BaseTensor should convert to Tensor for Graph mode
+      auto base_tensor = value->cast<BaseTensorPtr>();
+      auto real_tensor = std::make_shared<Tensor>(*base_tensor);
+      stub->SetValue(real_tensor);
+      return real_tensor;
+    }
+    return tensor;
   }
   if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
     return nullptr;
