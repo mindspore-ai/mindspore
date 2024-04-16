@@ -809,6 +809,18 @@ bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector & /* shape */, siz
   return true;
 }
 
+// Asynchronously copy device memory to host side.
+bool AscendDeviceAddress::AsyncDeviceToHost(void *host_ptr, size_t size, void *stream) const {
+  MS_ERROR_IF_NULL(host_ptr);
+  MS_ERROR_IF_NULL(stream);
+  auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, size, GetDevicePtr(), size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
+    return false;
+  }
+  return true;
+}
+
 bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &shape, size_t size,
                                                            mindspore::TypeId type, const void *host_ptr,
                                                            const tensor::TensorDataPtr &tensor_data) const {

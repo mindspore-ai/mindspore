@@ -31,6 +31,7 @@
 #include "debug/debugger/debugger_utils.h"
 #endif
 #include "debug/data_dump/data_dumper.h"
+#include "debug/data_dump/dump_graph_boundary.h"
 #include "include/common/debug/common.h"
 #include "utils/file_utils.h"
 #include "include/backend/debug/profiler/profiling.h"
@@ -160,6 +161,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
   }
   if (backend == "ge") {
     MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
+    datadump::DumpGraphBoundary::GetInstance().InitEnableFlag();
     return;
   }
   MS_EXCEPTION_IF_NULL(op_context);
@@ -210,7 +212,7 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
   step_count = total_running_count_;
-  if (dump_flag == true) {
+  if (dump_flag) {
     auto registered_dumper = datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
     if (registered_dumper != nullptr) {
       device_ctx_->device_res_manager_->SyncAllStreams();
@@ -220,6 +222,7 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   }
   if (backend == "ge") {
     MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
+    datadump::DumpGraphBoundary::GetInstance().DataDrop(device_ctx_);
     return;
   }
   MS_EXCEPTION_IF_NULL(op_context);
