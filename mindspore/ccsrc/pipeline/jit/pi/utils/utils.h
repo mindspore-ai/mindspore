@@ -170,6 +170,7 @@ bool CheckContainer(PyObject *obj);
 bool IsTensorPyObject(PyObject *obj);
 bool IsMsClass(PyObject *obj);
 bool IsNumpyObject(PyObject *obj);
+const char *GetFuncName(const py::object &handle);
 
 std::string GetTopModule(const py::object &o);
 py::object GetPyCodeObject(const py::object &any, bool exact_func = false);

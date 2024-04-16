@@ -38,88 +38,14 @@ extern AObject *InferFuncResult(const py::object &func, const std::vector<AObjec
 extern AObject *InferFuncResult(const py::object &func, const py::object &args, const py::object &kwargs,
                                 const GraphJitConfig &conf, bool clear_guard);
 
-// ------------------------------builtins functions--------------------------------
-static constexpr const char *kBuiltinNameFunctionOrMethod = "builtin_function_or_method";
-static constexpr const char *kBuiltinNameIsinstance = "isinstance";  // call __instancecheck__
-static constexpr const char *kBuiltinNameIssubclass = "issubclass";  // call __subclasscheck__
-static constexpr const char *kBuiltinNameLen = "len";                // call __len__
-static constexpr const char *kBuiltinNameAbs = "abs";                // call __abs__
-static constexpr const char *kBuiltinNameMax = "max";                // call __max__
-static constexpr const char *kBuiltinNameLog = "log";                // call math.log
-static constexpr const char *kBuiltinNameAll = "all";                // for each value in the iterable. call __bool__
-static constexpr const char *kBuiltinNameAny = "any";                // for each value in the iterable. call __bool__
-static constexpr const char *kBuiltinNameHash = "hash";              // call __hash__
-static constexpr const char *kBuiltinNameId = "id";                  // no side effects
-static constexpr const char *kBuiltinNameOrd = "ord";                // convert char to int. no side effect
-static constexpr const char *kBuiltinNameCallable = "callable";      // no side effects
-static constexpr const char *kBuiltinNameGetattr = "getattr";        // call __getattr__, or __getattribute__
-static constexpr const char *kBuiltinNameHasattr = "hasattr";        // call __getattr__, or __getattribute__
-static constexpr const char *kBuiltinNamePop = "pop";                // pop
-// ------------------------------builtins functions--------------------------------
+constexpr const char *kModuleName = "mindspore._extends.pijit.pijit_func_white_list";
+constexpr const char *kFuncMapName = "_func_map";
+constexpr const char *kSlotCallName = "__call__";
 
-// ------------------------------builtins method--------------------------------
-// static constexpr const char *kBuiltinNameUpdate = "update";  // dict update
-static constexpr const char *kBuiltinNameAppend = "append";  // list update
-// ------------------------------builtins method--------------------------------
-
-// ------------------------------mindspore functions-------------------------------
-static constexpr const char *kMindsporeNameGetCachePrim = "_get_cache_prim";
-static constexpr const char *kMindsporeNameRegistryGet = "get";
-static constexpr const char *kMindsporeNamePrimexpr = "CompileOp";
-static constexpr const char *kMindsporeNameConstexpr = "ProxyOp";
-/**
- * NOTE: mindspore/ops/composite/base.py, after_grad decorated by '_warp_func'
- * code name is 'wrapper', not 'after_grad', it only called by pynative
- */
-static constexpr const char *kMindsporeNameGradFunc = "after_grad";
-static constexpr const char *kMindsporeNameJitFunc = "staging_specialize";  // mindspore.jit
-static constexpr const char *kMindsporeNamePrimitive = "Primitive_";
-static constexpr const char *kMindsporeNameMetaFuncGraph = "MetaFuncGraph_";
-static constexpr const char *kMindsporeNameTensorAsType = "astype";
-static constexpr const char *kMindsporeNameMsCell = "mindspore.nn.Cell";
-/**
- * convert function map
- * refer to convert_object_map in mindspore._extends.parse.resources.py
- */
-static constexpr const char *kMindsporeNameConvertMap = "mindspore._extends.parse.resources.convert_object_map";
-static constexpr const char *kMindsporeNameTensorInitCheck = "_init_check";
-static constexpr const char *kMindsporeNameTensorContiguous = "contiguous";
-// ------------------------------mindspore functions-------------------------------
-
-static constexpr const char *kJitForbidden = ".pijit_forbidden";
-static constexpr const char *kJitConstexpr = ".pijit_constexpr";
-
-static const std::vector<std::string> tensor_module = {"mindspore.common.tensor", "mindtorch.torch.tensor"};
-static const std::vector<std::string> bypass_function_whilelist = {kMindsporeNameTensorInitCheck,
-                                                                   kMindsporeNameTensorContiguous};
-
-static py::object GetGradClass() { return Utils::GetModuleAttr("mindspore._c_expression", "GradOperation_"); }
-
-const char *GetFuncName(const py::object &f) {
-  PyObject *func = f.ptr();
-  if (func == nullptr) {
-    return "";
-  }
-  if (PyMethod_Check(func)) {
-    func = PyMethod_GET_FUNCTION(func);
-  }
-  if (PyCFunction_Check(func)) {
-    return reinterpret_cast<PyCFunctionObject *>(func)->m_ml->ml_name;
-  }
-  PyCodeObject *co = nullptr;
-  if (PyFunction_Check(func)) {
-    co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func));
-  }
-  if (co) {
-    return PyUnicode_AsUTF8(co->co_name);
-  }
-  PyTypeObject *tp = PyType_Check(func) ? reinterpret_cast<PyTypeObject *>(func) : Py_TYPE(func);
-  const char *res = strrchr(tp->tp_name, '.');
-  return res ? res + 1 : tp->tp_name;
-}
+static bool CheckConstexpr(const py::object &func);
 
 template <AObject::Type type>
-bool SetCallResType(CallNode *call_node) {
+static bool SetCallResType(CallNode *call_node) {
   call_node->SetVobj(AObject::MakeAObject(type));
   call_node->SetSubGraph(nullptr);
   return false;
@@ -139,19 +65,22 @@ bool JustCallAndSetRes(CallNode *call_node) {
     return SetCallResType<AObject::kTypeAnyValue>(call_node);
   }
 
+  pi_jit_disable();
   PyObject *value = PyObject_Call(func.ptr(), pair.first.ptr(), pair.second.ptr());
   if (PyErr_Occurred()) {
     MS_LOG(ERROR) << "got an error " << py::error_already_set().what() << " at call the "
                   << std::string(py::str(func.ptr()));
     PyErr_Clear();
   }
+  pi_jit_enable();
+
   call_node->SetVobj(AObject::Convert(value));
   call_node->SetSubGraph(nullptr);
   Py_XDECREF(value);
   return false;
 }
 
-bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value) {
+static bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value) {
   PyObject *cnst = value->GetPyObject().ptr();
   MS_EXCEPTION_IF_NULL(cnst);
 
@@ -204,19 +133,6 @@ bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guar
   return true;
 }
 
-static bool CheckConvertMap(const py::object &func) {
-  if (func.ptr() == nullptr || !PyFunction_Check(func.ptr())) {
-    return false;
-  }
-  py::object tmp = Utils::GetModuleAttr("mindspore._extends.parse.resources", "convert_object_map");
-  auto dict_obj = py::cast<py::dict>(tmp);
-  if (dict_obj.contains(func)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 static bool InferConvertMap(CallNode *call_node) {
   AObject *func_info = call_node->input(0)->GetVobj();
   func_info->SetMsFlag(AObject::kMsFlagStandardFunc);
@@ -266,68 +182,12 @@ static bool InferConvertMap(CallNode *call_node) {
   return false;
 }
 
-bool CheckGetCachePrim_(const py::object &f) {
-  if (!PyFunction_Check(f.ptr())) {
-    return false;
-  }
-  auto func_ptr = reinterpret_cast<PyFunctionObject *>(f.ptr());
-  std::string name = PyUnicode_AsUTF8(func_ptr->func_module);
-  bool is_func = name == "mindspore.ops._primitive_cache";
-  return is_func;
-}
-
-bool InferGetCachePrim_(CallNode *n) {
+static bool InferGetCachePrim(CallNode *n) {
   // just return the first parameter of _get_cache_prim
   Graph *g = n->GetSubGraph();
   n->SetVobj(n->input(1)->GetVobj());
   g->SetRetVal(n->input(1));
   return true;
-}
-
-bool IsTensorModule(const std::string &name) {
-  return std::any_of(tensor_module.begin(), tensor_module.end(), [name](const auto &item) { return item == name; });
-}
-
-bool IsFuncInByPassWhiteList(const std::string &name) {
-  return std::any_of(bypass_function_whilelist.begin(), bypass_function_whilelist.end(),
-                     [name](const auto &item) { return item == name; });
-}
-
-bool CheckTensorBypass(const py::object &f) {
-  if (!PyMethod_Check(f.ptr())) {
-    return false;
-  }
-  auto func_ptr = reinterpret_cast<PyFunctionObject *>(PyMethod_Function(f.ptr()));
-  std::string module = PyUnicode_AsUTF8(func_ptr->func_module);
-  if (IsTensorModule(module)) {
-    std::string func_name = GetFuncName(f);
-    return IsFuncInByPassWhiteList(func_name);
-  }
-  return false;
-}
-
-bool InferTensorBypass(CallNode *n) {
-  if (n->input(0)->GetOpcode() != LOAD_ATTR) {
-    n->SetSubGraph(nullptr);
-    return false;
-  }
-  Graph *g = n->GetSubGraph();
-  n->SetVobj(AObject::Convert(PyMethod_Self(n->input(0)->GetVobj()->GetPyObject().ptr())));
-  g->SetRetVal(n->input(0)->input(0));
-  return true;
-}
-
-static bool CheckRegistryGet(const py::object &func) {
-  PyObject *f = func.ptr();
-  if (PyMethod_Check(f)) {
-    f = PyMethod_GET_FUNCTION(f);
-  }
-  if (!PyFunction_Check(f)) {
-    return false;
-  }
-  std::string name = PyUnicode_AsUTF8(reinterpret_cast<PyFunctionObject *>(f)->func_module);
-  bool is_tensor = name == "mindspore.common._register_for_tensor";
-  return is_tensor;
 }
 
 static bool InferRegistryGet(CallNode *call_node) {
@@ -341,13 +201,7 @@ static bool InferRegistryGet(CallNode *call_node) {
   return false;
 }
 
-bool CheckPrimitive(const py::object &func) {
-  bool isPrimitiveType = AObject::GetPyType(func.ptr()) == AObject::kTypePrimitive;
-  bool isPrimitiveFunction = py::hasattr(func, PYTHON_PRIMITIVE_FUNCTION_FLAG);
-  return isPrimitiveType || isPrimitiveFunction;
-}
-
-bool InferPrimitive(CallNode *call_node) {
+static bool InferPrimitive(CallNode *call_node) {
   static const std::unordered_map<std::string, AObject::Type> not_ret_tensor_prim = {
     {"Prim[_get_grad_op]<constexpr_prim=True>", AObject::kTypeMetaFuncGraph},
     {"Prim[DType]", AObject::kTypeAnyValue},
@@ -359,7 +213,8 @@ bool InferPrimitive(CallNode *call_node) {
   PyObject *prim = call_node->input(0)->GetVobj()->GetPyObject().ptr();
   std::string prim_key = std::string(py::str(prim));
   if (prim_key == "Prim[_get_grad_op]<constexpr_prim=True>") {
-    AbstractType *type = static_cast<AbstractType *>(AObject::Convert(GetGradClass()));
+    py::object grad_class = Utils::GetModuleAttr("mindspore._c_expression", "GradOperation_");
+    AbstractType *type = static_cast<AbstractType *>(AObject::Convert(grad_class));
     AObject *res = type != nullptr ? type->BuildAbstractInstance({}, CALL_FUNCTION)
                                    : AObject::MakeAObject(AObject::kTypeMetaFuncGraph);
     call_node->SetVobj(res);
@@ -420,7 +275,7 @@ bool InferPrimitive(CallNode *call_node) {
   return false;
 }
 
-bool InferGradOperation(CallNode *call_node, AObject::MindsporeFlag f) {
+static bool InferGradOperation(CallNode *call_node, AObject::MindsporeFlag f) {
   call_node->SetSubGraph(nullptr);
   AObject *grad_func = AObject::MakeAObject(AObject::kTypeFunction);
   grad_func->SetMsFlag(f);
@@ -435,12 +290,7 @@ bool InferGradOperation(CallNode *call_node, AObject::MindsporeFlag f) {
   return false;
 }
 
-static bool CheckMetaFunc_(const py::object &o) {
-  PyTypeObject *tp = PyType_Check(o.ptr()) ? reinterpret_cast<PyTypeObject *>(o.ptr()) : Py_TYPE(o.ptr());
-  return IsMetaFuncGraphType<true>(tp);
-}
-
-static bool InferMetaFunc_(CallNode *call_node) {
+static bool InferMetaFunc(CallNode *call_node) {
   call_node->SetSubGraph(nullptr);
   const auto &vo = call_node->input(0)->GetVobj();
   MS_EXCEPTION_IF_CHECK_FAIL(vo->GetType() != AObject::kTypeType, "class call is before ");
@@ -607,15 +457,6 @@ static void HandleGradFunc(CallNode *call_node, const py::object &after_grad, Tr
   HandleGradFuncCall(call_node, AObject::Convert(decorated_func), sens_param);
 }
 
-static bool CheckGradFunc(const py::object &f) {
-  if (!PyFunction_Check(f.ptr())) {
-    return false;
-  }
-  std::string decorated_name = PyUnicode_AsUTF8(reinterpret_cast<PyFunctionObject *>(f.ptr())->func_qualname);
-  return decorated_name == "_Grad.__call__.<locals>.after_grad" ||
-         decorated_name == "GradOperation.__call__.<locals>.after_grad";
-}
-
 static bool InferGradFunc(CallNode *call_node) {
   AObject *vo = call_node->input(0)->GetVobj();
   vo->SetMsFlag(AObject::kMsFlagGradFunc);
@@ -630,110 +471,6 @@ static bool InferGradFunc(CallNode *call_node) {
   return false;
 }
 
-static bool CheckJitFunc(const py::object &o) {
-  static const char except_file[] = "mindspore/common/api.py";
-  static const size_t except_size = sizeof(except_file) - 1;
-  PyObject *func = o.ptr();
-  if (PyMethod_Check(func)) {
-    func = PyMethod_GET_FUNCTION(func);
-  }
-  if (!PyFunction_Check(func)) {
-    return false;
-  }
-  PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func));
-  const char *file = PyUnicode_AsUTF8(co->co_filename);
-  const size_t size = strlen(file);
-  return size > except_size && !strncmp(file + (size - except_size), except_file, except_size);
-}
-
-static bool CheckCell(const py::object &callable_info) {
-  PyTypeObject *cell_type = PyType_Check(callable_info.ptr()) ? reinterpret_cast<PyTypeObject *>(callable_info.ptr())
-                                                              : Py_TYPE(callable_info.ptr());
-  if (!IsCellType<true>(cell_type)) {
-    return false;
-  }
-  py::object tp = py::cast<py::object>(reinterpret_cast<PyObject *>(cell_type));
-  std::string type_str = py::str(tp.ptr());
-  const auto &sets = *kPIJitConfigDefault.getSetConfig(GraphJitConfig::kPSJitStrictCells);
-  if (sets.find(type_str) != sets.end()) {
-    return true;
-  }
-
-  // mindspore cells
-  std::string m = tp.attr("__module__").cast<std::string>();
-  constexpr const char except1[] = "mindspore.";
-  constexpr int except1_size = sizeof(except1) - 1;
-  if (!m.compare(0, except1_size, except1)) {
-    kPIJitConfigDefault.AddPSJitStrictCells(type_str);
-    return true;
-  }
-  return false;
-}
-
-static bool InferCell(CallNode *call_node) {
-  PyTypeObject *cell_type = call_node->input(0)->GetVobj()->GetTypeObject();
-  py::object tp = py::cast<py::object>(reinterpret_cast<PyObject *>(cell_type));
-
-  const auto &conf = call_node->GetGraph()->Config();
-  py::object func = tp.attr("construct");
-
-  std::vector<AObject *> args;
-  std::transform(call_node->getInputs().begin(), call_node->getInputs().end(), std::back_inserter(args),
-                 [](ValueNode *n) { return n->GetVobj(); });
-  AObject *res = InferFuncResult(func, args, call_node->GetOpcode(), conf, true);
-  if (res == nullptr || res->GetType() == AObject::kTypeAnyValue) {
-    res = AObject::MakeAObject(AObject::kTypeTensor);
-  }
-
-  call_node->SetVobj(res);
-  call_node->SetSubGraph(nullptr);
-  return false;
-}
-
-static bool CheckJitForbidden(const py::object &func) {
-  if (func.ptr() == nullptr || PyCFunction_Check(func.ptr())) {
-    return false;
-  }
-  std::string m = GetTopModule(func);
-  const auto &l = *kPIJitConfigDefault.getSetConfig(GraphJitConfig::kAllowedInlineModules);
-  bool allow_inline = l.find(m) != l.end();
-  bool forbidden = !allow_inline || kPIJitConfigDefault.CheckJitForbidden(func);
-
-  PyObject *func_info = func.ptr();
-  if (PyMethod_Check(func_info)) {
-    func_info = PyMethod_GET_FUNCTION(func_info);
-  }
-  if (!PyFunction_Check(func_info) && !PyCFunction_Check(func_info) && !PyType_Check(func_info)) {
-    func_info = reinterpret_cast<PyObject *>(Py_TYPE(func_info));
-  }
-  MS_LOG(DEBUG) << "func " << std::string(py::str(func_info)) << (forbidden ? " is forbidden to" : " will ")
-                << " Analyze, module is " << m;
-  return forbidden;
-}
-
-bool CheckJitConstexpr(const py::object &func) {
-  PyObject *op = func.ptr();
-  if (op == nullptr) {
-    return false;
-  }
-  if (PyMethod_Check(op)) {
-    op = PyMethod_GET_FUNCTION(op);
-  }
-  return kPIJitConfigDefault.CheckJitConstexpr(py::cast<py::object>(op));
-}
-
-bool CheckMSConstexpr(const py::object &func) {
-  std::string tp_name = py::str(reinterpret_cast<PyObject *>(Py_TYPE(func.ptr())));
-  constexpr const char name[] = ".<locals>.decorator.<locals>.ProxyOp'>";
-  constexpr const int size = sizeof(name) - 1;
-  if (tp_name.size() > size && !tp_name.compare(tp_name.size() - size, size, name)) {
-    return true;
-  }
-  constexpr const char name2[] = ".<locals>.deco.<locals>.CompileOp'>";
-  constexpr const int size2 = sizeof(name2) - 1;
-  return tp_name.size() > size ? !tp_name.compare(tp_name.size() - size2, size2, name2) : false;
-}
-
 static bool InferMSConstexpr(CallNode *call_node) {
   Graph *g = call_node->GetSubGraph();
   JustCallAndSetRes(call_node);
@@ -742,15 +479,11 @@ static bool InferMSConstexpr(CallNode *call_node) {
   if (cnst.ptr() == nullptr) {
     return false;
   }
-  if (!GuardConstCallNodeParam(call_node, g, 2)) {
-    return false;
+  bool is_constexpr = CheckConstexpr(call_node->input(0)->GetVobj()->GetPyObject());
+  if (is_constexpr || GuardConstCallNodeParam(call_node, g, 2)) {
+    return CallNodeReturnConst(call_node, g, call_node->GetVobj());
   }
-  if (!CheckConstPyObject(cnst.ptr())) {
-    MS_LOG(DEBUG) << std::string(py::str(cnst.ptr())) << " as const is unsupported";
-    return false;
-  }
-
-  return CallNodeReturnConst(call_node, g, call_node->GetVobj());
+  return false;
 }
 
 static bool GuardBuiltinFunc(CallNode *call_node) {
@@ -777,81 +510,7 @@ static bool GuardIsInstance(CallNode *call_node) {
   return graph->GuardValueNode(call_node);
 }
 
-#define DECLARE_BUILTIN_CFUNCTION(func_name)                 \
-  p = PyDict_GetItemString(PyEval_GetBuiltins(), func_name); \
-  MS_ASSERT(p &&PyCFunction_Check(p));                       \
-  c_function_obj = PyCFunction_GET_FUNCTION(p);              \
-  kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
-
-static const std::set<PyCFunction> &GenCFunctionMap() {
-  static std::set<PyCFunction> kBuiltinFuncOrMethodWhileList = {};
-  if (!kBuiltinFuncOrMethodWhileList.empty()) {
-    return kBuiltinFuncOrMethodWhileList;
-  }
-  PyCFunction c_function_obj = nullptr;
-  PyObject *p = nullptr;
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameIsinstance);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameIssubclass);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameLen);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameAbs);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameMax);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameAll);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameAny);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameHash);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameId);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameOrd);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameCallable);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameGetattr);
-  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameHasattr);
-
-  // math.log
-  py::object math_builtin = Utils::GetModuleAttr("math", kBuiltinNameLog, false, false);
-  c_function_obj = PyCFunction_GET_FUNCTION(math_builtin.ptr());
-  kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
-
-  // python object cfunction without sideeffect
-  std::map<PyObject *, std::vector<std::string>> obj_cfunc_name = {
-    {py::dict().inc_ref().ptr(),
-     {"__contains__", "__getitem__", "__sizeof__", "get", "keys", "items", "values", "fromkeys", "copy", "pop"}},
-    {py::list().inc_ref().ptr(), {"__getitem__", "__sizeof__", "copy", "index", "count"}},
-    {py::tuple().inc_ref().ptr(), {"index", "count"}},
-    {py::set().inc_ref().ptr(), {"__contains__", "copy", "issubset", "__sizeof__"}},
-    {py::str().inc_ref().ptr(),
-     {"find",    "count",        "index",       "rfind",   "rindex",     "startswith", "endswith",  "isascii",
-      "islower", "isupper",      "istitle",     "isspace", "isdecimal",  "isdigit",    "isnumeric", "isalpha",
-      "isalnum", "isidentifier", "isprintable", "format",  "format_map", "__format__", "__sizeof__"}},
-  };
-  for (auto item : obj_cfunc_name) {
-    for (auto meth : item.second) {
-      py::object builtin = py::cast<py::object>(item.first).attr(meth.c_str());
-      c_function_obj = PyCFunction_GET_FUNCTION(builtin.ptr());
-      kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
-    }
-  }
-  for (auto item : obj_cfunc_name) {
-    Py_XDECREF(item.first);
-  }
-  return kBuiltinFuncOrMethodWhileList;
-}
-
-#undef DECLARE_BUILTIN_CFUNCTION
-
-bool CheckBuiltinFuncOrMethod(const py::object &f) {
-  PyObject *func = f.ptr();
-  if (PyMethod_Check(func)) {
-    func = PyMethod_GET_FUNCTION(func);
-  }
-  if (!PyCFunction_Check(func)) {
-    return false;
-  }
-  auto c_function_obj = PyCFunction_GET_FUNCTION(func);
-  if (GenCFunctionMap().find(c_function_obj) == GenCFunctionMap().end()) {
-    return false;
-  }
-  return true;
-}
-
-static bool InferBuiltinFuncOrMethod(CallNode *call_node) {
+bool InferBuiltinFuncOrMethod(CallNode *call_node) {
   Graph *sub_graph = call_node->GetSubGraph();
   (void)JustCallAndSetRes(call_node);
   ConstantInfo::CollectBuiltinFuncConstantInfo(call_node);
@@ -864,7 +523,7 @@ static bool InferBuiltinFuncOrMethod(CallNode *call_node) {
 
   bool guard_success = false;
   std::string name = GetFuncName(call_node->input(0)->GetVobj()->GetPyObject());
-  if (name == kBuiltinNameIsinstance) {
+  if (name == "isinstance") {
     guard_success = GuardIsInstance(call_node);
   } else {
     guard_success = GuardBuiltinFunc(call_node);
@@ -873,23 +532,6 @@ static bool InferBuiltinFuncOrMethod(CallNode *call_node) {
     return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
   }
   return false;
-}
-
-static bool CheckTensorAsType(const py::object &func) {
-  PyObject *op = func.ptr();
-  if (op == nullptr) {
-    return false;
-  }
-  if (PyMethod_Check(op)) {
-    op = PyMethod_GET_FUNCTION(op);
-  }
-  if (!PyFunction_Check(op)) {
-    return false;
-  }
-  auto func_ptr = reinterpret_cast<PyFunctionObject *>(op);
-  std::string name = PyUnicode_AsUTF8(func_ptr->func_module);
-  bool is_func = name == "mindspore.common.tensor";
-  return is_func;
 }
 
 static bool InferTensorAsType(CallNode *call_node) {
@@ -920,25 +562,6 @@ static bool InferTensorAsType(CallNode *call_node) {
   call_node->SetVobj(ret_node->GetVobj());
   call_node->SetInlineReason(InlineReason::kInline);
   return true;
-}
-
-bool CheckListAppend(const py::object &func) {
-  static PyCFunction append = nullptr;
-  if (append == nullptr) {
-    append = PyCFunction_GET_FUNCTION(py::list().attr(kBuiltinNameAppend).ptr());
-  }
-  PyObject *op = func.ptr();
-  if (PyMethod_Check(op)) {
-    op = PyMethod_GET_FUNCTION(op);
-  }
-  /**
-   * this expression "list.append" will get type "method_descriptor"
-   * this expression "[].append" will get type "built-in function"
-   */
-  if (!PyCFunction_Check(op)) {
-    return false;
-  }
-  return PyCFunction_GET_FUNCTION(op) == append;
 }
 
 bool InferListAppend(CallNode *call_node) {
@@ -992,78 +615,251 @@ static bool InferPopAsGet(CallNode *call_node) {
   return false;
 }
 
-// special function list
-// special function that mindspore support and not inline,
-// the return values or type can be infer
-static const std::unordered_map<std::string, SpecialAction> kFuncWhiteListMap = {
-  // fuzzy match
-  {kMindsporeNamePrimitive, {CheckPrimitive, InferPrimitive}},
-  {kMindsporeNameMetaFuncGraph, {CheckMetaFunc_, InferMetaFunc_}},
-  {kMindsporeNameGradFunc, {CheckGradFunc, InferGradFunc}},
-  {kMindsporeNameMsCell, {CheckCell, InferCell}},
-  // name match
-  {kMindsporeNameJitFunc, {CheckJitFunc, SetCallResType<AObject::kTypeTensor>}},
-  {kMindsporeNameGetCachePrim, {CheckGetCachePrim_, InferGetCachePrim_}},
-  {kMindsporeNameRegistryGet, {CheckRegistryGet, InferRegistryGet}},
-  {kMindsporeNameTensorInitCheck, {CheckTensorBypass, InferTensorBypass}},
-  {kMindsporeNameTensorContiguous, {CheckTensorBypass, InferTensorBypass}},
-  // builtin_function_or_method
-  {kBuiltinNameFunctionOrMethod, {CheckBuiltinFuncOrMethod, InferBuiltinFuncOrMethod}},
-  // object convert map
-  {kMindsporeNameConvertMap, {CheckConvertMap, InferConvertMap}},
-  {kJitForbidden, {CheckJitForbidden, SetCallResType<AObject::kTypeAnyValue>}},
-  {kJitConstexpr, {CheckJitConstexpr, JustCallAndSetRes}},
-  {kMindsporeNameConstexpr, {CheckMSConstexpr, InferMSConstexpr}},
-  {kMindsporeNamePrimexpr, {CheckMSConstexpr, InferMSConstexpr}},
-  {kMindsporeNameTensorAsType, {CheckTensorAsType, InferTensorAsType}},
-  {kBuiltinNameAppend, {CheckListAppend, InferListAppend}},
-  {kBuiltinNamePop, {CheckBuiltinFuncOrMethod, InferPopAsGet}},
-};
-
-static const std::vector<std::pair<CheckFunc, std::string>> kFuncWhiteListFuzzyMatcher = {
-  {CheckJitConstexpr, kJitConstexpr},
-  {CheckMetaFunc_, kMindsporeNameMetaFuncGraph},
-  {CheckGradFunc, kMindsporeNameGradFunc},
-  // guard these call by short traces
-  {CheckCell, kMindsporeNameMsCell},
-  {CheckConvertMap, kMindsporeNameConvertMap},
-  // builtin_function_or_method
-  {CheckBuiltinFuncOrMethod, kBuiltinNameFunctionOrMethod},
-  {CheckJitForbidden, kJitForbidden},
-};
-
-static const std::unordered_map<std::string, SpecialAction> kMindFuncWhiteListMap = {
-  {kMindsporeNameJitFunc, {CheckJitFunc, SetCallResType<AObject::kTypeTensor>}},
-  {kMindsporeNameGetCachePrim, {CheckGetCachePrim_, InferGetCachePrim_}},
-  {kMindsporeNameRegistryGet, {CheckRegistryGet, InferRegistryGet}},
-  {kMindsporeNameTensorInitCheck, {CheckTensorBypass, InferTensorBypass}},
-  {kMindsporeNameTensorContiguous, {CheckTensorBypass, InferTensorBypass}},
-  {kBuiltinNameFunctionOrMethod, {CheckBuiltinFuncOrMethod, InferBuiltinFuncOrMethod}},
-  {kJitForbidden, {CheckJitForbidden, SetCallResType<AObject::kTypeAnyValue>}},
-  {kJitConstexpr, {CheckJitConstexpr, JustCallAndSetRes}},
-};
-
-static const std::vector<std::pair<CheckFunc, std::string>> kMindFuncWhiteListFuzzyMatcher = {
-  {CheckJitConstexpr, kJitConstexpr},
-  {CheckBuiltinFuncOrMethod, kBuiltinNameFunctionOrMethod},
-  {CheckJitForbidden, kJitForbidden},
-};
-
-const std::string GetMindsporeNamePrimitive() { return kMindsporeNamePrimitive; }
-
-const std::unordered_map<std::string, SpecialAction> &GetFuncWhiteListMap(bool trace_flag) {
-  if (trace_flag) {
-    return kMindFuncWhiteListMap;
-  } else {
-    return kFuncWhiteListMap;
-  }
+static bool SetForbiddenFuncInfo(CallNode *call_node) {
+  SetCallResType<AObject::kTypeAnyValue>(call_node);
+  call_node->SetInlineReason(InlineReason::kInlineFunc_Type_Unsupported);
+  return false;
 }
-const std::vector<std::pair<CheckFunc, std::string>> &GetFuncWhiteListFuzzyMatcher(bool trace_flag) {
-  if (trace_flag) {
-    return kMindFuncWhiteListFuzzyMatcher;
-  } else {
-    return kFuncWhiteListFuzzyMatcher;
+
+bool InferMsApiFunc(CallNode *call_node) {
+  Graph *sub_graph = call_node->GetSubGraph();
+  SetCallResType<AObject::kTypeAnyValue>(call_node);
+  if (call_node->input(0)->GetVobj() == nullptr || call_node->input(0)->GetVobj()->GetPyObject().ptr() == nullptr) {
+    return false;
   }
+
+  py::object callable_object = call_node->input(0)->GetVobj()->GetPyObject();
+  std::vector<py::object> args;
+  std::transform(call_node->getInputs().begin() + 1, call_node->getInputs().end(), std::back_inserter(args),
+                 [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
+  auto pair = Utils::PackCallStackArgs(args, call_node->GetOpcode());
+  if (pair.first.ptr() == nullptr) {
+    return false;
+  }
+  PyTypeObject *callable_type = Py_TYPE(callable_object.ptr());
+
+  AObject *info;
+
+  bool enable_func_graph_eval = kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kEnableMsApiInfer);
+  if (enable_func_graph_eval) {
+    py::object res = EvalMSAPIValue(callable_object, pair.first, pair.second);
+    info = AObject::Convert(res);
+  } else if (IsPrimitiveType<true>(callable_type) || IsPrimitiveFunctionType<true>(callable_type)) {
+    call_node->SetSubGraph(sub_graph);
+    return InferPrimitive(call_node);
+  } else {
+    info = InferFuncResult(callable_object, pair.first, pair.second, call_node->GetGraph()->Config(), true);
+  }
+
+  call_node->SetVobj(info);
+  if (info->GetPyObject().ptr() != nullptr) {
+    ConstantInfo::CollectBuiltinFuncConstantInfo(call_node);
+    call_node->input(0)->GetVobj()->SetMsFlag(AObject::kMsFlagStandardFunc);
+  }
+  if (call_node->IsConstantValue()) {
+    return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
+  }
+  return false;
 }
+
+enum FuncKey {
+  FUNC_KEY_EMPTY = 0,             // ""
+  FUNC_KEY_PIJIT_CONSTEXPR,       // "pijit.constexpr"
+  FUNC_KEY_PIJIT_FORBIDDEN,       // "pijit.forbidden"
+  FUNC_KEY_BUILTIN_FUNC,          // "builtin.func"
+  FUNC_KEY_LIST_APPEND,           // "list.append"
+  FUNC_KEY_DICT_POP,              // "dict.pop"
+  FUNC_KEY_PRIMITIVE,             // "mindspore._c_expression.Primitive_"
+  FUNC_KEY_META_FUNCG_RAPH,       // "mindspore._c_expression.MetaFuncGraph_"
+  FUNC_KEY_PSJIT_CODE,            // "mindspore.common.api.jit.<locals>.staging_specialize"
+  FUNC_KEY_CONSTEXPR,             // "mindspore.ops.primitive.constexpr"
+  FUNC_KEY_PRIMEXPR,              // "mindspore.ops.primitive._primexpr"
+  FUNC_KEY_GET_CACHE_PRIM,        // "mindspore.ops._primitive_cache._get_cache_prim"
+  FUNC_KEY_REGISTRY_GET,          // "mindspore.common._register_for_tensor.Registry.get"
+  FUNC_KEY_TENSOR_ASTYPE,         // "mindspore.common.tensor.Tensor.astype"
+  FUNC_KEY_GRAD_OPERATIONS_CODE,  // "mindspore.ops.composite.base._Grad.__call__.<locals>.after_grad"
+  FUNC_KEY_PSJIT_CONVERTMAP,      // "mindspore._extends.parse.resources.convert_object_map"
+  FUNC_KEY_GRAPH_CELL,            // "mindspore.nn.cell.GraphCell"
+  FUNC_KEY_MS_API,                // mindspore api
+  FUNC_KEY_COUNT,
+};
+static FuncKey FindFuncKey(const py::object &callable);
+
+static const std::unordered_map<FuncKey, InferFunc> infer_func_map = {
+  {FUNC_KEY_PIJIT_CONSTEXPR, JustCallAndSetRes},
+  {FUNC_KEY_PIJIT_FORBIDDEN, SetForbiddenFuncInfo},
+  {FUNC_KEY_BUILTIN_FUNC, InferBuiltinFuncOrMethod},
+  {FUNC_KEY_LIST_APPEND, InferListAppend},
+  {FUNC_KEY_DICT_POP, InferPopAsGet},
+  {FUNC_KEY_PRIMITIVE, InferPrimitive},
+  {FUNC_KEY_META_FUNCG_RAPH, InferMetaFunc},
+  {FUNC_KEY_PSJIT_CODE, SetCallResType<AObject::kTypeTensor>},
+  {FUNC_KEY_CONSTEXPR, InferMSConstexpr},
+  {FUNC_KEY_PRIMEXPR, InferMSConstexpr},
+  {FUNC_KEY_GET_CACHE_PRIM, InferGetCachePrim},
+  {FUNC_KEY_REGISTRY_GET, InferRegistryGet},
+  {FUNC_KEY_TENSOR_ASTYPE, InferTensorAsType},
+  {FUNC_KEY_GRAD_OPERATIONS_CODE, InferGradFunc},
+  {FUNC_KEY_PSJIT_CONVERTMAP, InferConvertMap},
+  {FUNC_KEY_GRAPH_CELL, SetCallResType<AObject::kTypeTensor>},
+  {FUNC_KEY_MS_API, InferMsApiFunc},
+};
+
+static const std::unordered_map<FuncKey, InferFunc> mind_infer_func_map = {
+  {FUNC_KEY_PIJIT_CONSTEXPR, JustCallAndSetRes},     {FUNC_KEY_PIJIT_FORBIDDEN, SetForbiddenFuncInfo},
+  {FUNC_KEY_BUILTIN_FUNC, InferBuiltinFuncOrMethod}, {FUNC_KEY_PSJIT_CODE, SetCallResType<AObject::kTypeTensor>},
+  {FUNC_KEY_GET_CACHE_PRIM, InferGetCachePrim},      {FUNC_KEY_REGISTRY_GET, InferRegistryGet},
+};
+
+InferFunc FindInferFunc(const py::object &callable, bool trace_flag) {
+  FuncKey k = FindFuncKey(callable);
+  const auto &map = trace_flag ? mind_infer_func_map : infer_func_map;
+  auto iter = map.find(k);
+  if (iter != map.end()) {
+    return iter->second;
+  }
+  return nullptr;
+}
+
+static const std::unordered_map<size_t, FuncKey> &GetFuncKeyMap() {
+  static std::unordered_map<size_t, FuncKey> map = {};
+  if (!map.empty()) {
+    return map;
+  }
+  py::object func_map = Utils::GetModuleAttr(kModuleName, kFuncMapName, true, true);
+  MS_EXCEPTION_IF_CHECK_FAIL(PyDict_CheckExact(func_map.ptr()), "white list func map must be 'dict[int, str]'");
+  PyObject *key;
+  PyObject *value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(func_map.ptr(), &pos, &key, &value)) {
+    MS_EXCEPTION_IF_CHECK_FAIL(PyLong_CheckExact(key), "white list func map key must be 'int'");
+    MS_EXCEPTION_IF_CHECK_FAIL(PyLong_CheckExact(value), "white list func map value must be 'int'");
+    size_t k = (PyLong_AsSize_t(value));
+    MS_EXCEPTION_IF_CHECK_FAIL(k < FUNC_KEY_COUNT, "white list func map got error FuncKey " + std::to_string(k));
+    map[PyLong_AsSize_t(key)] = static_cast<FuncKey>(k);
+  }
+  return map;
+}
+
+static FuncKey KeyFinderFuncId(const py::object &callable) {
+  auto iter = GetFuncKeyMap().find(FunctionId(callable));
+  return iter != GetFuncKeyMap().end() ? iter->second : FUNC_KEY_EMPTY;
+}
+
+static FuncKey KeyFinderFuncCodeId(const py::object &callable) {
+  PyObject *func = callable.ptr();
+  if (PyMethod_Check(func)) {
+    func = PyMethod_GET_FUNCTION(func);
+  }
+  if (PyFunction_Check(func)) {
+    func = PyFunction_GET_CODE(func);
+  }
+  if (!PyCode_Check(func)) {
+    return FUNC_KEY_EMPTY;
+  }
+  auto iter = GetFuncKeyMap().find(reinterpret_cast<size_t>(func));
+  return iter != GetFuncKeyMap().end() ? iter->second : FUNC_KEY_EMPTY;
+}
+
+static FuncKey KeyFinderPrimitive(const py::object &callable) {
+  PyTypeObject *type_object = Py_TYPE(callable.ptr());
+  bool convert_to_prim = IsPrimitiveType<true>(type_object) || IsPrimitiveFunctionType<true>(type_object);
+  if (!convert_to_prim) {
+    return FUNC_KEY_EMPTY;
+  }
+  py::object func = py::getattr(reinterpret_cast<PyObject *>(type_object), kSlotCallName, nullptr);
+  size_t id;
+  if (func.ptr() == nullptr) {
+    // primitive not defined slot __call__, use it self as id
+    id = reinterpret_cast<size_t>(callable.ptr());
+  } else if (PyFunction_Check(func.ptr())) {
+    // primitive defined python function __call__
+    id = reinterpret_cast<size_t>(PyFunction_GET_CODE(func.ptr()));
+  } else {
+    // primitive defined cpp function __call__
+    id = FunctionId(func);
+  }
+  // first, find map to check special primitive.
+  auto iter = GetFuncKeyMap().find(id);
+  return iter != GetFuncKeyMap().end() ? iter->second : FUNC_KEY_PRIMITIVE;
+}
+
+static FuncKey KeyFinderMetaFunc(const py::object &callable) {
+  PyTypeObject *type_object = reinterpret_cast<PyTypeObject *>(callable.ptr());
+  type_object = PyType_CheckExact(type_object) ? type_object : Py_TYPE(type_object);
+  return IsMetaFuncGraphType<true>(type_object) ? FUNC_KEY_META_FUNCG_RAPH : FUNC_KEY_EMPTY;
+}
+
+static FuncKey KeyFinderGraphCell(const py::object &callable) {
+  static size_t id = 0;
+  if (id == 0) {
+    py::object type = Utils::GetModuleAttr("mindspore.nn.cell", "GraphCell", false, true);
+    id = reinterpret_cast<size_t>(type.ptr());
+  }
+  PyTypeObject *type_object = reinterpret_cast<PyTypeObject *>(callable.ptr());
+  type_object = PyType_CheckExact(type_object) ? type_object : Py_TYPE(type_object);
+  size_t cur_id = reinterpret_cast<size_t>(type_object);
+  return cur_id == id ? FUNC_KEY_GRAPH_CELL : FUNC_KEY_EMPTY;
+}
+
+static FuncKey KeyFinderSkipModule(const py::object &callable) {
+  const auto &modules = kPIJitConfigDefault.allowed_inline_modules();
+  std::string mod = GetTopModule(callable);
+  if (modules.find(mod) != modules.end()) {
+    return FUNC_KEY_EMPTY;
+  }
+
+  PyObject *func_info = callable.ptr();
+  if (PyMethod_Check(func_info)) {
+    func_info = PyMethod_GET_FUNCTION(func_info);
+  }
+  if (!PyFunction_Check(func_info) && !PyCFunction_Check(func_info) && !PyType_Check(func_info)) {
+    func_info = reinterpret_cast<PyObject *>(Py_TYPE(func_info));
+  }
+  MS_LOG(DEBUG) << "func " << std::string(py::str(func_info)) << " is forbidden to analyze, module is " << mod;
+  return FUNC_KEY_PIJIT_FORBIDDEN;
+}
+
+static FuncKey FindFuncKey(const py::object &callable) {
+  if (callable.ptr() == nullptr || !PyCallable_Check(callable.ptr())) {
+    return FUNC_KEY_EMPTY;
+  }
+  std::vector<FuncKey (*)(const py::object &callable)> finders = {
+    KeyFinderFuncId,   KeyFinderFuncCodeId, KeyFinderPrimitive,
+    KeyFinderMetaFunc, KeyFinderGraphCell,  KeyFinderSkipModule,  // must be last for check modules
+  };
+  FuncKey res = FUNC_KEY_EMPTY;
+  for (auto iter = finders.begin(), end = finders.end(); iter != end && res == FUNC_KEY_EMPTY; ++iter) {
+    res = (*iter)(callable);
+  }
+  return res;
+}
+
+bool CheckJitConstexpr(const py::object &func) {
+  if (func.ptr() == nullptr) {
+    return false;
+  }
+  FuncKey k = KeyFinderFuncId(func);
+  return k == FUNC_KEY_PIJIT_CONSTEXPR;
+}
+
+static bool CheckConstexpr(const py::object &func) { return KeyFinderPrimitive(func) == FUNC_KEY_CONSTEXPR; }
+
+bool CheckMSConstexpr(const py::object &func) {
+  if (func.ptr() == nullptr) {
+    return false;
+  }
+  FuncKey k = KeyFinderPrimitive(func);
+  return k == FUNC_KEY_CONSTEXPR || k == FUNC_KEY_PRIMEXPR;
+}
+
+bool CheckBuiltinFuncOrMethod(const py::object &func) {
+  if (func.ptr() == nullptr) {
+    return false;
+  }
+  FuncKey k = KeyFinderFuncId(func);
+  return k == FUNC_KEY_BUILTIN_FUNC;
+}
+
 }  // namespace pijit
 }  // namespace mindspore
