@@ -46,6 +46,9 @@ class CPUDeviceResManager : public DeviceResManager {
 
   bool LoadCollectiveCommLib() override;
 
+  void MoveTo(const tensor::TensorPtr &src_tensor, const tensor::TensorPtr &dst_tensor, const std::string &to,
+              bool blocking, bool *return_self) override;
+
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size, uint32_t stream_id = kDefaultStreamIndex) const override;
   void FreeMemory(void *ptr) const override;

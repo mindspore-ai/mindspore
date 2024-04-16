@@ -71,6 +71,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 #include "ops/framework_ops.h"
 #include "kernel/oplib/oplib.h"
+#include "runtime/device/move_to.h"
 
 namespace mindspore {
 namespace device {
@@ -221,6 +222,11 @@ DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *ptr, size_t size
                                                           uint32_t stream_id) const {
   return std::make_shared<CPUDeviceAddress>(ptr, size, shape_vector, format, type_id, device_name, device_id,
                                             stream_id);
+}
+
+void CPUDeviceResManager::MoveTo(const tensor::TensorPtr &src_tensor, const tensor::TensorPtr &dst_tensor,
+                                 const std::string &to, bool blocking, bool *return_self) {
+  device::MoveTo(src_tensor, dst_tensor, to, blocking, return_self);
 }
 
 void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {

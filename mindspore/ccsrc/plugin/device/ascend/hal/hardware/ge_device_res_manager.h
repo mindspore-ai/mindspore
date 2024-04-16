@@ -72,6 +72,8 @@ class GeDeviceResManager : public DeviceResManager {
                                        uint32_t stream_id) const override;
 
   static void CreateSessionAndGraphRunner();
+  void MoveTo(const tensor::TensorPtr &src_tensor, const tensor::TensorPtr &dst_tensor, const std::string &to,
+              bool blocking, bool *return_self) override;
 
   bool LoadCollectiveCommLib() override {
     if (common::GetEnv(kSimulationLevel).empty()) {

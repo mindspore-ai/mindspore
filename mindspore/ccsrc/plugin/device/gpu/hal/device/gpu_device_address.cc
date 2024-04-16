@@ -245,6 +245,52 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, Type
   return GPUDeviceManager::GetInstance().SyncStream(stream);
 }
 
+bool GPUDeviceAddress::AsyncHostToDevice(size_t size, const void *host_ptr) const {
+  MS_ERROR_IF_NULL(host_ptr);
+  if (GetDevicePtr() == host_ptr) {
+    MS_LOG(INFO) << "Dst addr is same with src addr, no need copy data.";
+    return true;
+  }
+  auto device_context = GetDeviceContext();
+  MS_ERROR_IF_NULL(device_context);
+  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+  auto stream = device_context->device_res_manager_->GetStream(stream_id);
+  if (stream == nullptr) {
+    stream = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
+    stream_id = kDefaultStreamIndex;
+  }
+  MS_ERROR_IF_NULL(stream);
+  if (GetDevicePtr() == nullptr) {
+    auto ptr = device_context->device_res_manager_->AllocateMemory(size, stream_id);
+    MS_EXCEPTION_IF_NULL(ptr);
+    SetDevicePtr(ptr);
+  }
+  CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyHostMemToDeviceAsync(GetDevicePtr(), host_ptr, size, stream),
+                              "CopyHostMemToDeviceAsync failed");
+
+  return true;
+}
+
+bool GPUDeviceAddress::AsyncDeviceToHost(size_t size, void *host_ptr) const {
+  MS_ERROR_IF_NULL(host_ptr);
+  MS_ERROR_IF_NULL(GetDevicePtr());
+  if (GetDevicePtr() == host_ptr) {
+    MS_LOG(INFO) << "Dst addr is same with src addr, no need copy data.";
+    return true;
+  }
+  auto device_context = GetDeviceContext();
+  MS_ERROR_IF_NULL(device_context);
+  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+  auto stream = device_context->device_res_manager_->GetStream(stream_id);
+  if (stream == nullptr) {
+    stream = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
+  }
+  MS_ERROR_IF_NULL(stream);
+  CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyDeviceMemToHostAsync(host_ptr, GetDevicePtr(), size, stream),
+                              "CopyHostMemToDeviceAsync failed");
+  return true;
+}
+
 bool GPUDeviceAddress::AsyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr,
                                          size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
