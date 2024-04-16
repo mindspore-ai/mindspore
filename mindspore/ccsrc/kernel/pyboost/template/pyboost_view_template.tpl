@@ -4,7 +4,7 @@
     auto op = get_op();
     // Create device address for input tensors
     PyBoostUtils::PrepareOpInputs(device_context_, op->stream_id(), ${call_tensors});
-    PyBoostUtils::CreateOutputTensor(device_context_, ${input}, storage_info_list[0], &outputs_);
+    PyBoostUtils::CreateOutputTensor(device_context_, ${input}, storage_info_list, &outputs_);
 
     // Async
     PyBoostUtils::DispatchRun(
