@@ -142,7 +142,7 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
                    const DeviceEventPtr &event);
   bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id);
   bool WaitEvent(int64_t task_id_on_stream, uint32_t memory_stream_id);
-  bool WaitAllEvents();
+  bool SyncAllEvents();
 #ifdef WITH_BACKEND
 
  protected:
@@ -208,6 +208,8 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   std::tuple<DynamicMemBlockPtr, DynamicMemBufPtr, MemStatusManagerPtr> FindByKeepAddr(
     const DeviceMemPtr &device_addr) const;
   DynamicMemBufPtr FindMemBufByKeepAddr(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block) const;
+  // Sync all events inner without lock.
+  bool SyncAllEventsInner();
 
 #ifdef __APPLE__
   // There are some problems with using mutex on Mac, use spinlocks instead.
@@ -280,8 +282,8 @@ struct DynamicMemBuf {
   // Indidates if mem buf used by event, return true when no event bind on mem buf.
   bool IsEventNotUsed();
 
-  // Wait all events that bound on mem buf.
-  bool WaitAllEvents();
+  // Sync all events that bound on mem buf.
+  bool SyncAllEvents();
 
   DeviceMemPtr device_addr_;
   DynamicMemBufStatus status_;

@@ -58,9 +58,6 @@ class BACKEND_EXPORT MemoryManager {
   virtual void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false,
                                      uint32_t stream_id = kDefaultStreamIndex);
   virtual size_t GetMaxUsedMemorySize() const { return 0; }
-  virtual uint8_t *MallocCommunicationMemFromMemPool(size_t size, uint32_t stream_id = kDefaultStreamIndex) {
-    return nullptr;
-  }
   virtual void FreeMemFromMemPool(const DeviceAddressPtr address);
   virtual void FreeMemFromMemPool(void *device_ptr);
   virtual bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
@@ -105,12 +102,12 @@ class BACKEND_EXPORT MemoryManager {
     }
     return memory_pool_->WaitEvent(task_id_on_stream, memory_stream_id);
   }
-  bool WaitAllEvents() {
+  bool SyncAllEvents() {
     if (memory_pool_ == nullptr) {
       MS_LOG(WARNING) << "memory_pool_ is nullptr.";
       return false;
     }
-    return memory_pool_->WaitAllEvents();
+    return memory_pool_->SyncAllEvents();
   }
 
  protected:

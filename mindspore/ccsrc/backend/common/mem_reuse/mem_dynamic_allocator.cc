@@ -106,19 +106,8 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   }
 
   if (device_addr == nullptr) {
-    MS_LOG(WARNING) << "Alloc tensor mem failed and try to wait events to release more memory.";
-    // Since address may be duplicate, use set.
-    std::set<DynamicMemBufPtr> carry_event_addresses;
-    for (const auto &stream_pair_address : stream_pair_addresses_) {
-      for (const auto &address : stream_pair_address.second) {
-        (void)carry_event_addresses.emplace(address);
-      }
-    }
-    for (auto &address : carry_event_addresses) {
-      if (address->WaitAllEvents() && address->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
-        FreeTensorMemInner(address->device_addr_);
-      }
-    }
+    MS_LOG(WARNING) << "Alloc tensor mem failed and try to sync all events to release memory.";
+    SyncAllEventsInner();
     device_addr = FindAvailableMemBuf(align_size, from_persistent_mem, stream_id);
   }
 
@@ -1060,24 +1049,30 @@ bool DynamicMemPoolBestFit::WaitEvent(int64_t task_id_on_stream, uint32_t memory
   return true;
 }
 
-bool DynamicMemPoolBestFit::WaitAllEvents() {
+bool DynamicMemPoolBestFit::SyncAllEvents() {
 #ifdef __APPLE__
   std::lock_guard<SpinLock> spin_lock(spin_lock_);
 #else
   std::lock_guard<std::mutex> locker(mutex_);
 #endif
-  MS_LOG(DEBUG) << "Wait events, stream_pair_addresses_ size : " << stream_pair_addresses_.size();
-  for (auto &stream_pair_addresses : stream_pair_addresses_) {
-    auto addresses = stream_pair_addresses.second;
-    MS_LOG(DEBUG) << "addresses size : " << addresses.size();
-    for (const auto &address : addresses) {
-      if (!address->WaitAllEvents()) {
-        continue;
-      }
-      stream_pair_addresses.second.erase(address);
-      if (address->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
-        FreeTensorMemInner(address->device_addr_);
-      }
+  return SyncAllEventsInner();
+}
+
+bool DynamicMemPoolBestFit::SyncAllEventsInner() {
+  MS_LOG(INFO) << "Sync all events, stream_pair_addresses_ size : " << stream_pair_addresses_.size() << ".";
+  if (stream_pair_addresses_.empty()) {
+    return false;
+  }
+
+  std::set<DynamicMemBufPtr> carry_event_addresses;
+  for (const auto &stream_pair_address : stream_pair_addresses_) {
+    for (const auto &address : stream_pair_address.second) {
+      (void)carry_event_addresses.emplace(address);
+    }
+  }
+  for (auto &address : carry_event_addresses) {
+    if (address->SyncAllEvents() && address->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
+      FreeTensorMemInner(address->device_addr_);
     }
   }
 
@@ -1169,8 +1164,8 @@ bool DynamicMemBuf::WaitEvent(uint32_t task_id_on_stream, uint32_t user_stream_i
 
 bool DynamicMemBuf::IsEventNotUsed() { return events_ == nullptr ? true : events_->empty(); }
 
-bool DynamicMemBuf::WaitAllEvents() {
-  MS_LOG(DEBUG) << "Wait all events for address : " << device_addr_ << ".";
+bool DynamicMemBuf::SyncAllEvents() {
+  MS_LOG(INFO) << "Sync all events for address : " << device_addr_ << ".";
   if (IsEventNotUsed()) {
     return false;
   }
@@ -1180,18 +1175,19 @@ bool DynamicMemBuf::WaitAllEvents() {
     MS_EXCEPTION_IF_NULL(event_list);
     for (auto list_iter = event_list->begin(); list_iter != event_list->end();) {
       auto &event = list_iter->second;
-      if (event->QueryEvent()) {
-        // event is completed, erase event in list.
-        list_iter = event_list->erase(list_iter);
-      } else {
-        list_iter++;
+      MS_LOG(DEBUG) << "Query event : " << event << ".";
+      if (!event->QueryEvent()) {
+        // Sync event if event is not arrived.
+        MS_LOG(DEBUG) << "Sync event : " << event << ".";
+        event->SyncEvent();
       }
+      list_iter = event_list->erase(list_iter);
     }
     if (event_list->empty()) {
       // list is empty, erase list in map.
       iter = events_->erase(iter);
     } else {
-      iter++;
+      MS_LOG(INTERNAL_EXCEPTION) << "Event list is not empty.";
     }
   }
   return events_->empty();
