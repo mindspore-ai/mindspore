@@ -232,7 +232,7 @@ TopkExt: 'aclnnTopk'
 # 83
 
 # 84
-
+AdamWeightDecayExt: 'aclnnApplyAdamWV2'
 # 85
 
 # 86
