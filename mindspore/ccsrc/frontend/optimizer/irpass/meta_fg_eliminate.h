@@ -17,8 +17,11 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_META_FG_ELIMINATE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_META_FG_ELIMINATE_H_
 
-#include <vector>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "frontend/optimizer/irpass/vmap_eliminate.h"
@@ -35,16 +38,16 @@ class ExpandMetaFg {
     // Register derived class of `ExpandMetaFgPrim` to `ExpandMetaFg`, note that corresponding modifications
     // need to be made in the `manager.cc` to support `ExpandMetaFgPrim::CheckIfEmbedMetaFgPrim`, analogous
     // to the implementation of `kPrimVmap`.
-    (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandJPrim>());
-    (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandVmapPrim>());
-    (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandTaylorPrim>());
-    (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandShardPrim>());
+    (void)expand_meta_fg_list_.emplace_back("J", std::make_shared<ExpandJPrim>());
+    (void)expand_meta_fg_list_.emplace_back("vmap", std::make_shared<ExpandVmapPrim>());
+    (void)expand_meta_fg_list_.emplace_back("taylor", std::make_shared<ExpandTaylorPrim>());
+    (void)expand_meta_fg_list_.emplace_back("shard", std::make_shared<ExpandShardPrim>());
   }
   virtual ~ExpandMetaFg() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
 
  private:
-  std::vector<ExpandMetaFGPrimPtr> expand_meta_fg_list_;
+  std::vector<std::pair<std::string, ExpandMetaFGPrimPtr>> expand_meta_fg_list_;
 };
 }  // namespace irpass
 }  // namespace opt
