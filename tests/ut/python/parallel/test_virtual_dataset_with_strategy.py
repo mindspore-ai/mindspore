@@ -92,6 +92,35 @@ class Net3(nn.Cell):
         return out
 
 
+class Net4(nn.Cell):
+    def __init__(self, strategy1, strategy2, strategy3):
+        super().__init__()
+        self.virtual_dataset = _VirtualDataset()
+        self.matmul1 = P.MatMul().shard(strategy1)
+        self.matmul2 = P.MatMul().shard(strategy2)
+        self.gelu = P.GeLU().shard(strategy3)
+
+    def construct(self, x, y, b):
+        x, y, b = self.virtual_dataset(x, y, b)
+        out = self.gelu(self.matmul1(x, y[0]))
+        return out
+
+
+class Net5(nn.Cell):
+    def __init__(self, strategy1, strategy2, strategy3):
+        super().__init__()
+        self.virtual_dataset = _VirtualDataset()
+        self.matmul = P.MatMul().shard(strategy1)
+        self.add = P.Add().shard(strategy2)
+        self.gelu = P.GeLU().shard(strategy3)
+
+    def construct(self, x, y, b):
+        out1 = self.matmul(x, y)
+        out2 = self.gelu(b[0])
+        out = self.add(out1, out2)
+        return out
+
+
 def compile_net(net, x, y, b):
     net.set_train()
     _cell_graph_executor.compile(net, x, y, b)
@@ -276,6 +305,43 @@ def test_without_virtual_dataset_model_parallel_auto_parallel():
     x = Tensor(np.ones([128, 32 // 8]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64 // 8]), dtype=ms.float32)
     b = Tensor(np.ones([64, 2048 // 8]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_list_tensor_input_virtual_dataset_full_batch():
+    """
+    Feature: distribute operator virtual_dataset in auto parallel.
+    Description: virtual_dataset/model_parallel/fully shard/repeat in left.
+    Expectation: compile done without error.
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((2, 2), (2, 2))
+    strategy3 = ((2, 4),)
+    net = GradWrap(NetWithLoss(Net4(strategy1, strategy2, strategy3)))
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = [Tensor(np.ones([32, 64]), dtype=ms.float32), Tensor(np.ones([32, 64]), dtype=ms.float32)]
+    b = Tensor(np.ones([64, 2048]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_list_tensor_input_virtual_dataset_without_full_batch():
+    """
+    Feature: distribute operator virtual_dataset in auto parallel.
+    Description: virtual_dataset/model_parallel/fully shard/repeat in left.
+    Expectation: compile done without error.
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((2, 2), (2, 2))
+    strategy3 = ((2, 4),)
+    net = GradWrap(NetWithLoss(Net5(strategy1, strategy2, strategy3)))
+    x = Tensor(np.ones([128, 256]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = [Tensor(np.ones([1024, 64]), dtype=ms.float32)]
     compile_net(net, x, y, b)
 
 

@@ -49,10 +49,15 @@ class VirtualDatasetInfo : public OperatorInfo {
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferTensorMapNew();
   Status GetAttrs() override;
   Status InferAsLossDivisor() override;
   size_t max_size_strategy_dim_ = 0;
   int64_t shard_num_ = 1;
+
+ private:
+  ShapeBasePtr ObtainTensorMap(const ShapeBasePtr &stra, const size_t &slice_dim, const Shape &dev_mat);
+  std::vector<int64_t> max_size_strategy_;
 };
 }  // namespace parallel
 }  // namespace mindspore

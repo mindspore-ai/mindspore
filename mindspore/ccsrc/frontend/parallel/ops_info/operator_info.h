@@ -63,6 +63,53 @@ enum InferStrategyMode {
   INVALID_MODE = 4,
 };
 
+class TensorInfoBase {
+ public:
+  explicit TensorInfoBase(bool is_list) { is_list_ = is_list; }
+  virtual ~TensorInfoBase() = default;
+  bool is_list() const { return is_list_; }
+  virtual std::shared_ptr<TensorInfoBase> GetElement(int64_t idx) = 0;
+  virtual TensorInfo GetValue() = 0;
+  virtual size_t size() = 0;
+
+ private:
+  bool is_list_;
+};
+
+using TensorInfoBasePtr = std::shared_ptr<TensorInfoBase>;
+
+class TensorInfoValue : public TensorInfoBase {
+ public:
+  explicit TensorInfoValue(TensorInfo l) : TensorInfoBase(false), _l(std::move(l)) {}
+  ~TensorInfoValue() override = default;
+  std::shared_ptr<TensorInfoBase> GetElement(int64_t idx) override {
+    MS_LOG(WARNING) << "Can not get element from TensorInfoValue, please use GetValue";
+    return std::make_shared<TensorInfoValue>(_l);
+  }
+  TensorInfo GetValue() override { return _l; }
+  size_t size() override { return 1; }
+
+ private:
+  TensorInfo _l;
+};
+
+class TensorInfoList : public TensorInfoBase {
+ public:
+  explicit TensorInfoList(std::vector<TensorInfoBasePtr> l_list) : TensorInfoBase(true), _l_list(std::move(l_list)) {}
+  ~TensorInfoList() override = default;
+  TensorInfoBasePtr GetElement(int64_t idx) override {
+    if (idx < 0 || static_cast<size_t>(idx) >= _l_list.size()) {
+      MS_LOG(EXCEPTION) << "Index " << idx << " is out of range";
+    }
+    return _l_list[LongToSize(idx)];
+  }
+  TensorInfo GetValue() override { MS_LOG(EXCEPTION) << "Can not get value from TensorInfoList"; }
+  size_t size() override { return _l_list.size(); }
+
+ private:
+  std::vector<TensorInfoBasePtr> _l_list;
+};
+
 class Edge;
 
 inline std::string GetPrimNameFromInfoName(const std::string &info_name);
@@ -119,7 +166,9 @@ class OperatorInfo {
   std::shared_ptr<Strategies> GenerateBatchStrategiesWithCheck();
   void ComputeBatchSplitFlagList();
   Shapes inputs_shape() const { return inputs_shape_; }
+  NewShapes inputs_shape_new() const { return inputs_shape_new_; }
   Shapes outputs_shape() const { return outputs_shape_; }
+  NewShapes outputs_shape_new() const { return outputs_shape_new_; }
   void set_inputs_divisor(const Shapes &in_divisor) { inputs_divisor_ = in_divisor; }
   void set_outputs_divisor(const Shapes &out_divisor) { outputs_divisor_ = out_divisor; }
   void set_dynamic_shape_flag(bool flag) { dynamic_shape_flag_ = flag; }
@@ -149,8 +198,10 @@ class OperatorInfo {
   VirtualDivOp virtual_div_op() const { return virtual_div_op_; }
   Shape dev_matrix_shape() const { return dev_matrix_shape_; }
   std::vector<TensorInfo> inputs_tensor_info() const { return inputs_tensor_info_; }
+  std::vector<TensorInfoBasePtr> inputs_tensor_info_new() const { return inputs_tensor_info_new_; }
   void set_inputs_tensor_info(const std::vector<TensorInfo> &tensor_info) { inputs_tensor_info_ = tensor_info; }
   std::vector<TensorInfo> outputs_tensor_info() const { return outputs_tensor_info_; }
+  std::vector<TensorInfoBasePtr> outputs_tensor_info_new() const { return outputs_tensor_info_new_; }
   std::vector<std::shared_ptr<StrategyWithCost>> strategy_cost() const { return strategy_cost_; }
   const std::string &name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
@@ -202,6 +253,10 @@ class OperatorInfo {
   void set_cnode(const CNodePtr &cnode) {
     cnode_ = cnode;
     cnodes_.push_back(cnode);
+  }
+  void set_new_shape(const std::vector<NewShapes> &shape) {
+    inputs_shape_new_ = shape[0];
+    outputs_shape_new_ = shape[1];
   }
   std::vector<CNodePtr> cnodes();
   CNodePtr cnode() const { return cnode_; }
@@ -290,6 +345,7 @@ class OperatorInfo {
   virtual Status InferDevMatrixShape() = 0;
   virtual Status InferMirrorOps();
   virtual Status InferTensorInfo();
+  virtual Status InferTensorInfoNew();
 
   virtual void InferReplaceOps() {}
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
@@ -338,6 +394,8 @@ class OperatorInfo {
   std::string prim_name_;
   Shapes inputs_shape_;
   Shapes outputs_shape_;
+  NewShapes inputs_shape_new_;
+  NewShapes outputs_shape_new_;
   Shapes inputs_divisor_;   // using for dynamic shape, the size is equal to inputs_shape_
   Shapes outputs_divisor_;  // using for dynamic shape, the size is equal to outputs_shape_
   Shapes inputs_shape_clone_;
@@ -352,12 +410,16 @@ class OperatorInfo {
   StrategyPtr out_strategy_;
   std::vector<TensorInfo> inputs_tensor_info_;
   std::vector<TensorInfo> outputs_tensor_info_;
+  std::vector<TensorInfoBasePtr> inputs_tensor_info_new_;
+  std::vector<TensorInfoBasePtr> outputs_tensor_info_new_;
   Shape dev_matrix_shape_;  // if repeated calculation, it contains the repeated_calc_num_
   Shape out_dev_matrix_shape_;
   int64_t repeated_calc_num_ = 1;
   int64_t as_loss_divisor_ = 1;
   TensorMaps inputs_tensor_map_;
   TensorMaps outputs_tensor_map_;
+  NewTensorMaps inputs_tensor_map_new_;
+  NewTensorMaps outputs_tensor_map_new_;
   ForwardOp forward_op_;
   Ops sub_ops_;
   ForwardOp replace_op_;

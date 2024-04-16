@@ -582,7 +582,7 @@ TEST_F(TestStepParallel, DISABLED_GetTensorInLayout) {
   node1->set_user_data<OperatorInfo>(matmul_info);
   TensorLayout tensorlayout_e;
   Shape array = {64, 64};
-  TensorLayout tensorlayout = GetTensorInLayout(node1, -1);
+  TensorLayout tensorlayout = GetTensorInLayout(node1, {-1});
   Shape tensor_shape_test = tensorlayout.tensor_shape().array();
   ASSERT_EQ(array, tensor_shape_test);
 }
