@@ -161,6 +161,14 @@ class Tensor {
 			type_ = type;
 		}
 		
+		Tensor(const Tensor &t){
+			id_ = t.id_;
+			weight_ = t.weight_;
+			source_ = t.source_;
+			type_ = t.type_;
+			consumers_ = t.consumers_;
+		}
+		
 		~Tensor() { consumers_.clear(); };
 		
 		const size_t& id() const { return id_; }
@@ -176,6 +184,18 @@ using TensorPtr = std::shared_ptr<Tensor>;
 // GPTO Task definitions
 class Task {
  public:
+	struct SortByIdWeak {
+		bool operator()(const std::weak_ptr<Task> &task1, const std::weak_ptr<Task> &task2) const {
+			return task1.lock()->id() < task2.lock()->id();
+		}
+	};
+
+	struct SortByIdShared {
+		bool operator()(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) const {
+			return task1->id() < task2->id();
+		}
+	}; 
+ 
   Task(const TaskId &id, const TaskType &real_type, const TaskType &gpto_type, const std::string &name) {
     id_ = id;
     real_type_ = real_type;
@@ -195,7 +215,40 @@ class Task {
     mem_impact_ = 0;
 		workspace_memory_ = 0;
 		lower_bound_ = 0;
+		subgraph_id_ = SIZE_MAX;
+		condition_switch_ = false;
+		condition_gather_ = false;
   }
+	
+	Task(const Task &t){
+		id_ = t.id_;
+    real_type_ = t.real_type_;
+    gpto_type_ = t.gpto_type_;
+		cnode_ = t.cnode_;
+    weight_ = t.weight_;
+    bottom_level_ = t.bottom_level_;
+    top_level_ = t.top_level_;
+    depth_ = t.depth_;
+    succ_diff_type_ = t.succ_diff_type_;
+    weighted_length_ = t.weighted_length_;
+    start_ = t.start_;
+    end_ = t.end_;
+    pred_comm_ = t.pred_comm_;
+    pred_cube_ = t.pred_cube_;
+    name_ = t.name_;
+    mem_impact_ = t.mem_impact_;
+		workspace_memory_ = t.workspace_memory_;
+		lower_bound_ = t.lower_bound_;
+		subgraph_id_ = t.subgraph_id_;
+		condition_switch_ = t.condition_switch_;
+		condition_gather_ = t.condition_gather_;
+		
+		parents_ = t.parents_;
+		children_ = t.children_;
+		in_tensors_ = t.in_tensors_;
+		out_tensors_ = t.out_tensors_;
+		workspace_tensors_ = t.workspace_tensors_;
+	}
 
   TaskId id() const { return id_; }
   TaskType real_type() const { return real_type_; }
@@ -215,9 +268,13 @@ class Task {
   Memory mem_impact() const { return mem_impact_; }
 	Memory workspace_memory() const { return workspace_memory_; }
 	Time lower_bound() const { return lower_bound_; }
+	size_t subgraph_id() const { return subgraph_id_; }
+	bool condition_switch() const { return condition_switch_; }
+	bool condition_gather() const { return condition_gather_; }
+	size_t original_order() const { return original_order_; }
 
-  std::vector<std::weak_ptr<Task>>& parents() { return parents_; }
-  std::vector<std::shared_ptr<Task>>& children() { return children_; }
+  std::set<std::weak_ptr<Task>,SortByIdWeak>& parents() { return parents_; }
+  std::set<std::shared_ptr<Task>,SortByIdShared>& children() { return children_; }
   std::vector<TensorPtr>& in_tensors() { return in_tensors_; }
   std::vector<TensorPtr>& out_tensors() { return out_tensors_; }
 	std::vector<TensorPtr>& workspace_tensors() { return workspace_tensors_; }
@@ -240,29 +297,31 @@ class Task {
   void set_mem_impact(Memory mem_add) { mem_impact_ = mem_add; }
 	void set_workspace_memory(Memory workspace_memory) { workspace_memory_ = workspace_memory; }
   void set_lower_bound(Time lb) { lower_bound_ = lb; }
+	void set_subgraph_id(size_t id) { subgraph_id_ = id; }
+	void set_condition_switch(bool cond) { condition_switch_ = cond; }
+	void set_condition_gather(bool cond) { condition_gather_ = cond; }
+	void set_original_order(size_t order) { original_order_ = order; }
 
   void AddParent(std::weak_ptr<Task> parent) {
-    auto it = std::find_if(parents_.begin(), parents_.end(), [parent](auto par){ return par.lock()->id() == parent.lock()->id();});
-    if (it == parents_.end())
-      this->parents_.push_back(parent);
+    parents_.insert(parent);
   }
-  void RemoveParent(std::weak_ptr<Task> oldparent) {
-    auto it = std::find_if(parents_.begin(), parents_.end(), [oldparent](auto par){ return par.lock()->id() == oldparent.lock()->id();});
-    if (it != parents_.end())
-      parents_.erase(it);
+  void RemoveParent(std::weak_ptr<Task> parent) {
+    parents_.erase(parent);
   }
-  void ClearParents() { parents_.clear(); }
+  void ClearParents() { 
+		parents_.clear(); 
+	}
+	
   void AddChild(std::shared_ptr<Task> child) {
-    auto it = std::find_if(children_.begin(), children_.end(), [child](auto chi){ return chi->id() == child->id();});
-    if (it == children_.end())
-      this->children_.push_back(child);
-   }
-  void RemoveChild(std::shared_ptr<Task> oldchild){
-    auto it = std::find_if(children_.begin(), children_.end(), [oldchild](auto chi){ return chi->id() == oldchild->id();});
-    if (it != children_.end())
-      children_.erase(it);
+    children_.insert(child);
   }
-  void ClearChildren() { children_.clear(); }
+	 
+  void RemoveChild(std::shared_ptr<Task> child){
+      children_.erase(child);
+  }
+  void ClearChildren() { 
+		children_.clear(); 
+	}
 
   bool HasChild(std::shared_ptr<Task> child) {
     return std::find(children_.begin(), children_.end(), child) != children_.end();
@@ -301,9 +360,14 @@ class Task {
 	Memory mem_impact_;
 	Memory workspace_memory_;
 	Time lower_bound_;
+	
+	size_t subgraph_id_;
+	bool condition_switch_;
+	bool condition_gather_;
+	size_t original_order_;
 
-  std::vector<std::weak_ptr<Task>> parents_;
-  std::vector<std::shared_ptr<Task>> children_;
+  std::set<std::weak_ptr<Task>,SortByIdWeak> parents_;
+  std::set<std::shared_ptr<Task>, SortByIdShared> children_;
   std::vector<std::shared_ptr<Tensor>> in_tensors_;
   std::vector<std::shared_ptr<Tensor>> out_tensors_;
 	std::vector<std::shared_ptr<Tensor>> workspace_tensors_;

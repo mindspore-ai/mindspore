@@ -160,60 +160,98 @@ std::vector<std::pair<TaskId, TaskId>> gpto::ScheduleToDependenciesDifferentType
 
 // Sorting for tasks
 bool SortByWeightMax(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->weight() > task2->weight() || (task1->weight() == task2->weight() && task1->id() < task2->id());
+		return task1->subgraph_id() < task2->subgraph_id() || 
+		(task1->subgraph_id() == task2->subgraph_id() 
+		//&& task1->subgraph_id() == SIZE_MAX
+		&& (task1->weight() > task2->weight() || (task1->weight() == task2->weight() && task1->id() < task2->id())))
+		// ||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order());
+		;
 }
 
 bool SortByWeightMin(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->weight() < task2->weight() || (task1->weight() == task2->weight() && task1->id() < task2->id());
+  return task1->subgraph_id() < task2->subgraph_id() || 
+	(task1->subgraph_id() == task2->subgraph_id() 
+	//&& task1->subgraph_id() == SIZE_MAX 
+	&& (task1->weight() < task2->weight() || (task1->weight() == task2->weight() && task1->id() < task2->id()))) 
+	//||(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order());
+	;
 }
 
 bool SortBySuccDiff(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->succ_diff_type() > task2->succ_diff_type() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id() 
+	//&& task1->subgraph_id() == SIZE_MAX 
+	&&  (task1->succ_diff_type() > task2->succ_diff_type() ||
          (task1->succ_diff_type() == task2->succ_diff_type() && task1->weight() > task2->weight()) ||
          (task1->succ_diff_type() == task2->succ_diff_type() && task1->weight() == task2->weight() &&
-          task1->id() < task2->id());
+          task1->id() < task2->id()))) 
+				//	||(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order());
+				;
 }
 
 bool SortByBottomLevelMax(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->bottom_level() > task2->bottom_level() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id() 
+	//&& task1->subgraph_id() == SIZE_MAX
+	&& (task1->bottom_level() > task2->bottom_level() ||
          (task1->bottom_level() == task2->bottom_level() && task1->weight() > task2->weight()) ||
          (task1->bottom_level() == task2->bottom_level() && task1->weight() == task2->weight() &&
-          task1->id() < task2->id());
+          task1->id() < task2->id())))
+					//||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+					;
 }
 
 bool SortByBottomLevelMin(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->bottom_level() < task2->bottom_level() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id() 
+	//&& task1->subgraph_id() == SIZE_MAX
+	&& (task1->bottom_level() < task2->bottom_level() ||
          (task1->bottom_level() == task2->bottom_level() && task1->weight() > task2->weight()) ||
          (task1->bottom_level() == task2->bottom_level() && task1->weight() == task2->weight() &&
-          task1->id() < task2->id());
+          task1->id() < task2->id())))
+					//||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order());
+					;
 }
 
 bool SortByTopLevelMax(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->top_level() > task2->top_level() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id()
+	//&& task1->subgraph_id() == SIZE_MAX 
+	&& (task1->top_level() > task2->top_level() ||
          (task1->top_level() == task2->top_level() && task1->weight() > task2->weight()) ||
-         (task1->top_level() == task2->top_level() && task1->weight() == task2->weight() && task1->id() < task2->id());
+         (task1->top_level() == task2->top_level() && task1->weight() == task2->weight() && task1->id() < task2->id())))
+				 //||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+				 ;
 }
 
 bool SortByTopLevelMin(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->top_level() < task2->top_level() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id()
+	//&& task1->subgraph_id() == SIZE_MAX 
+	&& (task1->top_level() < task2->top_level() ||
          (task1->top_level() == task2->top_level() && task1->weight() > task2->weight()) ||
-         (task1->top_level() == task2->top_level() && task1->weight() == task2->weight() && task1->id() < task2->id());
+         (task1->top_level() == task2->top_level() && task1->weight() == task2->weight() && task1->id() < task2->id())))
+				 //||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+				 ;
 }
 
 bool SortByBottomTopLevelMaxSum(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->top_level() + task1->bottom_level() > task2->top_level() + task2->bottom_level() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id() 
+	//&& task1->subgraph_id() == SIZE_MAX
+	&& (task1->top_level() + task1->bottom_level() > task2->top_level() + task2->bottom_level() ||
          (task1->top_level() + task1->bottom_level() == task2->top_level() + task2->bottom_level() &&
           task1->weight() > task2->weight()) ||
          (task1->top_level() + task1->bottom_level() == task2->top_level() + task2->bottom_level() &&
-          task1->weight() == task2->weight() && task1->id() < task2->id());
+          task1->weight() == task2->weight() && task1->id() < task2->id())))
+					//||(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+					;
 }
 
 bool SortByBottomTopLevelMinSum(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->top_level() + task1->bottom_level() < task2->top_level() + task2->bottom_level() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id() 
+	//&& task1->subgraph_id() == SIZE_MAX
+	&& (task1->top_level() + task1->bottom_level() < task2->top_level() + task2->bottom_level() ||
          (task1->top_level() + task1->bottom_level() == task2->top_level() + task2->bottom_level() &&
           task1->weight() > task2->weight()) ||
          (task1->top_level() + task1->bottom_level() == task2->top_level() + task2->bottom_level() &&
-          task1->weight() == task2->weight() && task1->id() < task2->id());
+          task1->weight() == task2->weight() && task1->id() < task2->id())))
+					//||(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+					;
 }
 
 // Ishfaq Ahmad, Yu-Kwong Kwok, and Min-You Wu.
@@ -221,60 +259,92 @@ bool SortByBottomTopLevelMinSum(const std::shared_ptr<Task> &task1, const std::s
 // Second  International  Symposium  on Parallel Architectures, Algorithms, and Networks (I-SPAN'96),
 // pages 207-213. IEEE, 1996.
 bool SortByBottomTopLevelComposite(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->bottom_level() - task1->top_level() > task2->bottom_level() - task2->top_level() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id() 
+	//&& task1->subgraph_id() == SIZE_MAX
+	&& (task1->bottom_level() - task1->top_level() > task2->bottom_level() - task2->top_level() ||
          (task1->bottom_level() - task1->top_level() == task2->bottom_level() - task2->top_level() &&
           task1->weight() > task2->weight()) ||
          (task1->bottom_level() - task1->top_level() == task2->bottom_level() - task2->top_level() &&
-          task1->weight() == task2->weight() && task1->id() < task2->id());
+          task1->weight() == task2->weight() && task1->id() < task2->id())))
+					//||(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+					;
 }
 
 // Behrooz Shirazi, Mingfang Wang, and Girish Pathak.
 // Analysis and evaluation of heuristic methods for static task scheduling.
 // Journal of Parallel and Distributed Computing, 10(3):222-232, 1990.
 bool SortByWeightedLength(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->weighted_length() > task2->weighted_length() ||
-         (task1->weighted_length() == task2->weighted_length() && task1->id() < task2->id());
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id()
+	//&& task1->subgraph_id() == SIZE_MAX 
+	&& (task1->weighted_length() > task2->weighted_length() ||
+         (task1->weighted_length() == task2->weighted_length() && task1->id() < task2->id())))
+				 //||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+				 ;
 }
 
 // DFS with weights for tie breaking
 bool SortByDepthMax(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->depth() > task2->depth() || (task1->depth() == task2->depth() && task1->weight() > task2->weight()) ||
-         (task1->depth() == task2->depth() && task1->weight() == task2->weight() && task1->id() < task2->id());
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id()
+	//&& task1->subgraph_id() == SIZE_MAX 
+	&& (task1->depth() > task2->depth() || (task1->depth() == task2->depth() && task1->weight() > task2->weight()) ||
+         (task1->depth() == task2->depth() && task1->weight() == task2->weight() && task1->id() < task2->id())))
+				 //||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+				 ;
 }
 
 // BFS with weights for tie breaking
 bool SortByDepthMin(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->depth() < task2->depth() || (task1->depth() == task2->depth() && task1->weight() > task2->weight()) ||
-         (task1->depth() == task2->depth() && task1->weight() == task2->weight() && task1->id() < task2->id());
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id() 
+	//&& task1->subgraph_id() == SIZE_MAX
+	&& (task1->depth() < task2->depth() || (task1->depth() == task2->depth() && task1->weight() > task2->weight()) ||
+         (task1->depth() == task2->depth() && task1->weight() == task2->weight() && task1->id() < task2->id())))
+				 //||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+				 ;
 }
 
 // Sort by predecessor to comm
 bool SortByPredComm(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->pred_comm() < task2->pred_comm() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id()
+	//&& task1->subgraph_id() == SIZE_MAX 
+	&& (task1->pred_comm() < task2->pred_comm() ||
          (task1->pred_comm() == task2->pred_comm() && task1->bottom_level() > task2->bottom_level()) ||
          (task1->pred_comm() == task2->pred_comm() && task1->bottom_level() == task2->bottom_level() &&
-          task1->id() < task2->id());
+          task1->id() < task2->id())))
+					//||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+					;
 }
 
 // Sort by predecessor to comm + DFS
 bool SortByPredCommDepth(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->pred_comm() < task2->pred_comm() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id() 
+	//&& task1->subgraph_id() == SIZE_MAX
+	&& (task1->pred_comm() < task2->pred_comm() ||
          (task1->pred_comm() == task2->pred_comm() && task1->depth() > task2->depth()) ||
-         (task1->pred_comm() == task2->pred_comm() && task1->depth() == task2->depth() && task1->id() < task2->id());
+         (task1->pred_comm() == task2->pred_comm() && task1->depth() == task2->depth() && task1->id() < task2->id())))
+				 //||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+				 ;
 }
 
 // Sort by predecessor to cube + bottom level
 bool SortByPredCube(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->pred_cube() < task2->pred_cube() ||
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id() 
+	//&& task1->subgraph_id() == SIZE_MAX
+	&& (task1->pred_cube() < task2->pred_cube() ||
          (task1->pred_cube() == task2->pred_cube() && task1->bottom_level() > task2->bottom_level()) ||
          (task1->pred_cube() == task2->pred_cube() && task1->bottom_level() == task2->bottom_level() &&
-          task1->id() < task2->id());
+          task1->id() < task2->id())))
+					//||(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+					;
 }
 
 // Sort by greedy height of memory (maintained dynamically)
 bool SortByGreedyHeight(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
-  return task1->mem_impact() < task2->mem_impact() || (
-         task1->mem_impact() == task2->mem_impact() && SortByBottomLevelMax(task1, task2));
+  return task1->subgraph_id() < task2->subgraph_id() || (task1->subgraph_id() == task2->subgraph_id()
+	//&& task1->subgraph_id() == SIZE_MAX 
+	&& (task1->mem_impact() < task2->mem_impact() || (
+         task1->mem_impact() == task2->mem_impact() && SortByBottomLevelMax(task1, task2))))
+				 //||	(task1->subgraph_id() == task2->subgraph_id() && task1->subgraph_id() < SIZE_MAX && task1->original_order() < task2->original_order())
+				 ;
 }
 
 // Sorting by load for processing elements
@@ -609,7 +679,7 @@ SchedulingOutput gpto::Process(SchedulingInput &input, const size_t graph_id, co
 
   // Preprocessing: values computation for necessary sorting
   ComputeBottomLevelAndWeightedLength(*tasks);
-  ComputeDepthAndTopLevel(*tasks);
+  //ComputeDepthAndTopLevel(*tasks);
   ComputePredComm(*tasks);
   if (common::GetEnv("MS_ENABLE_GPTO_MULTISTREAM") == "1") {
       ComputePredCube(*tasks);
@@ -679,8 +749,9 @@ SchedulingOutput gpto::Process(SchedulingInput &input, const size_t graph_id, co
   //MS_LOG(INFO) << "Start printing output log file";
   //PrintLog(output, dependencies, graph_id, tensors);
   //MS_LOG(INFO) << "End printing output log file";
-  auto lower = std::max(LowerBoundBottomLevel(*tasks), LowerBoundPEs(*tasks, type_to_num_cores_map));
-  PrintLogForILP(input, output, graph_id, graph, lower, tensors);
+  
+	// auto lower = std::max(LowerBoundBottomLevel(*tasks), LowerBoundPEs(*tasks, type_to_num_cores_map));
+  // PrintLogForILP(input, output, graph_id, graph, lower, tensors);
   return output;
 }
 
@@ -745,22 +816,27 @@ SchedulingOutput gpto::ProcessCore(std::vector<std::shared_ptr<Task>> &tasks,
 	output.memory_peak = 0;
 	Memory cur_mem_peak = 0;
 	std::unordered_map<TaskType, Memory> last_workspace_memory; // comp/comm for now -> originally 0 by definition here
+//	size_t last_subgraph_id = SIZE_MAX; //
+//	bool last_candidate_gather = false; //
+  Time last_comm_end = 0;
   while (!candidate_tasks.empty()) {
     // Select task and schedule it (memory-aware), save info for output
     bool flag = false;
 		TaskPtr selected_task;
-		for (auto it = candidate_tasks.begin(); it != candidate_tasks.end(); ++it){
+		for (auto it = candidate_tasks.begin(); it != candidate_tasks.end(); ++it){ 
 			selected_task = *it;
-			if (cur_mem_peak + selected_task->mem_impact() <= SOFT_MEMORY_LIMIT){
+			// if (!last_candidate_gather && last_subgraph_id < SIZE_MAX && selected_task->subgraph_id() != last_subgraph_id) continue;
+			if ((cur_mem_peak + selected_task->mem_impact() <= SOFT_MEMORY_LIMIT) || (selected_task->subgraph_id() < SIZE_MAX)){ // memory violated -> ignore for now if inside a ConditionSwitch/Gather branch
 				flag = true;
 				break;
-			}				
+			}
 		}
 		if (flag == false){
 			selected_task = *(candidate_tasks.begin());
 		}
     const auto &selected_id = selected_task->id();
-		
+//	last_candidate_gather = (selected_task->name().find("ConditionGather") != std::string::npos); // 
+//	last_subgraph_id = selected_task->subgraph_id(); //
 		// Maintain memory peak information
 		cur_mem_peak += selected_task->mem_impact() - last_workspace_memory[selected_task->gpto_type()];
 		last_workspace_memory[selected_task->gpto_type()] = selected_task->workspace_memory();
@@ -811,10 +887,25 @@ SchedulingOutput gpto::ProcessCore(std::vector<std::shared_ptr<Task>> &tasks,
 
     // Update candidate tasks
     candidate_tasks.erase(selected_task);
+		
+		// Update can_start for ConditionalSwitch/Gather case !!!!! IOANNIS -> ok? (or move later to full block contraction option)
+		if (selected_task->condition_gather()){
+			for (const auto &candidate : candidate_tasks){
+				can_start[candidate->id()] = std::max(can_start[candidate->id()], selected_task->end());
+			}
+		}
+		
+		if (common::AnfAlgo::IsCommunicationOp(selected_task->cnode())){
+			last_comm_end = selected_task->end();
+		}
+		
     for (const auto &successor : selected_task->children()) {
       const auto &succ_id = successor->id();
       can_start[succ_id] = std::max(can_start[succ_id], selected_task->end());
-      unprocessed_parents[succ_id] -= 1;
+      if (successor->condition_switch()){
+				can_start[succ_id] = std::max(can_start[succ_id], last_comm_end);
+			}
+			unprocessed_parents[succ_id] -= 1;
       if (unprocessed_parents[succ_id] == 0) {
         candidate_tasks.insert(successor);
       }
@@ -1124,182 +1215,85 @@ size_t GetAlignSize(size_t original_size) {
   return aligned_size;
 }
 
-void ContractUnrealTasks(const std::vector<CNodePtr> &cnode_vec,
-                 std::unordered_map<CNodePtr, TaskPtr> *cnode_to_task_map_ptr) {
+void ContractUnrealTasks(std::unordered_map<CNodePtr, TaskPtr> *cnode_to_task_map_ptr) {
+        MS_LOG(INFO) << "Start ContractUnrealTasks";
+        for (auto it = (*cnode_to_task_map_ptr).begin(); it != (*cnode_to_task_map_ptr).end(); /* no increment */){
 
-  std::unordered_set<CNodePtr> nodes_to_be_removed;
+                if (AnfUtils::IsRealKernel(it->first)){
+                        ++it;
+                        continue;
+                }
 
-  for (const auto &cnode : cnode_vec) {
-    if (AnfUtils::IsRealKernel(cnode)) continue;
+                auto &task_to_remove = it->second;
+                auto &task_parents = task_to_remove->parents();
+                auto &task_children = task_to_remove->children();
 
-    auto &task_to_remove = (*cnode_to_task_map_ptr)[cnode];
-    auto &task_parents = task_to_remove->parents();
-    auto &task_children = task_to_remove->children();
-
-    // Case:  void --> Load --> Add     ==>     void --> Add
-    if (task_parents.empty()){
-      for (auto &task_child : task_children) {
-        task_child->RemoveParent(task_to_remove);
-      }
-      task_to_remove->ClearChildren();
-      //TEST
-      nodes_to_be_removed.insert(cnode);
-      // (*cnode_to_task_map_ptr).erase(cnode);
-      //TEST
-      continue;
-    }
-
-    // Case: Add --> MakeTuple --> Return --> void     ==>     Add --> void
-    if (task_children.empty()){
-        MS_LOG(INFO) << "Current task doesn't have any children, process parents instead";
-        for (auto &task_parent: task_parents) {
-            task_parent.lock()->RemoveChild(task_to_remove);
+                if (task_parents.empty()){         // Case no parents:  void --> Load --> Add     ==>     void --> Add
+                        for (auto &task_child : task_children) {
+                                task_child->RemoveParent(task_to_remove);
+                        }
+                        task_to_remove->ClearChildren();
+                } else if (task_children.empty()){      // Case no children: Add --> MakeTuple --> Return --> void     ==>     Add --> void
+                        for (auto &task_parent: task_parents) {
+                                task_parent.lock()->RemoveChild(task_to_remove);
+                        }
+                        task_to_remove->ClearParents();
+                } else {
+                        for (auto &task_parent : task_parents){
+                                task_parent.lock()->RemoveChild(task_to_remove);
+                                for (auto &task_child : task_children) {
+                                        task_parent.lock()->AddChild(task_child);
+                                        task_child->AddParent(task_parent);
+                                        task_child->RemoveParent(static_cast<std::weak_ptr<Task>>(task_to_remove));
+                                }
+                        }
+                        task_to_remove->ClearParents();
+                        task_to_remove->ClearChildren();
+                }
+                it = (*cnode_to_task_map_ptr).erase(it);
         }
-        task_to_remove->ClearParents();
-        //TEST
-        nodes_to_be_removed.insert(cnode);
-        // (*cnode_to_task_map_ptr).erase(cnode);
-        //TEST
-        continue;
-    }
-
-    for (auto &task_parent : task_parents) {
-      task_parent.lock()->RemoveChild(task_to_remove);
-      for (auto &task_child : task_children) {
-        task_parent.lock()->AddChild(task_child);
-        task_child->AddParent(task_parent);
-        task_child->RemoveParent(static_cast<std::weak_ptr<Task>>(task_to_remove));
-        MS_LOG(INFO) << "Contraction (id): " << task_parent.lock()->id() << " - " << task_child->id();
-      }
-    }
-    task_to_remove->ClearParents();
-    task_to_remove->ClearChildren();
-
-    //TEST
-    nodes_to_be_removed.insert(cnode);
-    //(*cnode_to_task_map_ptr).erase(cnode);
-    //TEST
-
-
-  }
-
-  for (const auto &cnode : cnode_vec) {
-
-    //TEST
-    if (nodes_to_be_removed.find(cnode) != nodes_to_be_removed.end()) {
-       cnode_to_task_map_ptr->erase(cnode);
-       continue;
-    }
-    //TEST
-
-    auto &to_remove_task  = (*cnode_to_task_map_ptr)[cnode];
-    auto &task_parents = to_remove_task->parents();
-    auto &task_children = to_remove_task->children();
-
-    MS_LOG(INFO) << "END Processing task " << to_remove_task->id() << ", cnode name " << cnode->UniqueName() << " with " << task_parents.size() << " parents and " << task_children.size() << " children";
-    for (auto &task_parent: task_parents) { MS_LOG(INFO) << "Parent: " << task_parent.lock()->id();}
-    for (auto &task_child: task_children) { MS_LOG(INFO) << "Child: " << task_child->id();}
-  }
+        MS_LOG(INFO) << "End ContractUnrealTasks";
 }
 
-// To-Do: Review the function later
-void ContractionEtienne(const std::vector<CNodePtr> &cnode_vec,
-                 std::unordered_map<CNodePtr, TaskPtr> *cnode_to_task_map_ptr) {
+/*
+void ContractUnrealTasks(std::unordered_map<CNodePtr, TaskPtr> *cnode_to_task_map_ptr) {
+	MS_LOG(INFO) << "Start ContractUnrealTasks";
+	for (auto it = (*cnode_to_task_map_ptr).begin(); it != (*cnode_to_task_map_ptr).end(); ){
+    if (!AnfUtils::IsRealKernel(it->first)){
+			auto &task_to_remove = it->second; // (*cnode_to_task_map_ptr)[cnode];
+			auto &task_parents = task_to_remove->parents();
+			auto &task_children = task_to_remove->children();
 
-  std::unordered_map<TaskPtr, CNodePtr> task_to_cnode_map_ptr;
-  for (auto& it: *cnode_to_task_map_ptr) {
-    task_to_cnode_map_ptr[it.second] = it.first;
-  }
-
-  for (const auto &cnode : cnode_vec) {
-    auto &to_remove_task  = (*cnode_to_task_map_ptr)[cnode];
-    auto &task_parents = to_remove_task->parents();
-    auto &task_children = to_remove_task->children();
-
-    MS_LOG(INFO) << "Processing task " << to_remove_task->id() << ", cnode name " << cnode->UniqueName() << " with " << task_parents.size() << " parents and " << task_children.size() << " children";
-
-    if (AnfUtils::IsRealKernel(cnode)){
-      MS_LOG(INFO) << "Task skipped as IsRealKernel";
-      continue;
-    }
-    MS_LOG(INFO) << "Task is processing as not IsRealKernel";
-
-    // Case:  void --> Load --> Add     ==>     void --> Add
-    if (task_parents.empty()){
-      MS_LOG(INFO) << "Current task doesn't have any parents, process children instead";
-      for (auto &task_child : task_children) {
-        MS_LOG(INFO) << "Process deletion of current kernel from child: " << task_to_cnode_map_ptr[task_child]->UniqueName();
-        task_child->RemoveParent(to_remove_task);
-      }
-      to_remove_task->ClearChildren();
-      continue;
-    }
-
-    // Case: Add --> MakeTuple --> Return --> void     ==>     Add --> Return --> void
-    if (task_children.empty()){
-        MS_LOG(INFO) << "Current task doesn't have any children, process parents instead";
-        for (auto &task_parent: task_parents) {
-            if (AnfUtils::IsRealKernel(task_to_cnode_map_ptr[task_parent.lock()])){continue;}
-            MS_LOG(INFO) << "Process deletion of current kernel from parent: " << task_to_cnode_map_ptr[task_parent.lock()]->UniqueName();
-            task_parent.lock()->RemoveChild(to_remove_task);
-            to_remove_task->RemoveParent(task_parent.lock());
-        }
-        continue;
-    }
-
-    // Case: Complex case with parents and children for Non Real Kernel
-    std::vector<TaskPtr> real_kernel_children;
-    std::vector<TaskPtr> kernel_to_visit;
-    std::vector<TaskPtr> kernel_visited;
-    kernel_to_visit.insert(kernel_to_visit.begin(),task_children.begin(),task_children.end());
-    auto cur_child = kernel_to_visit.back();
-    while(cur_child != NULL){
-			if (std::find(kernel_visited.begin(), kernel_visited.end(), cur_child) == kernel_visited.end()){
-					if(AnfUtils::IsRealKernel(task_to_cnode_map_ptr[cur_child]) || IsPrimitiveCNode(task_to_cnode_map_ptr[cur_child], prim::kPrimReturn)){ // If real kernel, need to flag it and continue to visit the remaining kernel
-							real_kernel_children.push_back(cur_child);
-					} else { // Add all children of current child to visit
-							kernel_to_visit.insert(kernel_to_visit.begin(),cur_child->children().begin(),cur_child->children().end());
+			if (task_parents.empty()){	   // Case no parents:  void --> Load --> Add     ==>     void --> Add
+				for (auto &task_child : task_children) {
+					task_child->RemoveParent(task_to_remove);
+				}
+				task_to_remove->ClearChildren();
+			} else if (task_children.empty()){	// Case no children: Add --> MakeTuple --> Return --> void     ==>     Add --> void
+					for (auto &task_parent: task_parents) {
+						task_parent.lock()->RemoveChild(task_to_remove);
 					}
-					kernel_visited.push_back(cur_child);
-			}
-
-			// Get the next kernel, C++ error if back() an empty vector
-			if (!kernel_to_visit.empty()) {
-					cur_child = kernel_to_visit.back();
-					kernel_to_visit.pop_back();
+					task_to_remove->ClearParents();
 			} else {
-					cur_child = NULL;
+				for (auto &task_parent : task_parents){
+					task_parent.lock()->RemoveChild(task_to_remove);
+					for (auto &task_child : task_children) {
+						task_parent.lock()->AddChild(task_child);
+						task_child->AddParent(task_parent);
+						task_child->RemoveParent(static_cast<std::weak_ptr<Task>>(task_to_remove));
+					}
+				}
+				task_to_remove->ClearParents();
+				task_to_remove->ClearChildren();
 			}
-    }
-
-    for (auto &task_parent: task_parents) {
-      MS_LOG(INFO) << "Remove parents -> to_remove_task relationship: " << task_parent.lock()->id();
-      task_parent.lock()->RemoveChild(to_remove_task);
-      //to_remove_task->ClearParents();
-      if(!AnfUtils::IsRealKernel(task_to_cnode_map_ptr[task_parent.lock()])){
-        continue;
-      }
-      for (auto &task_child : real_kernel_children) {
-        MS_LOG(INFO) << "Contraction - New link - Task " << task_parent.lock()->id() << " - " << task_child->id();
-        task_parent.lock()->AddChild(task_child);
-        task_child->AddParent(task_parent);
-        task_child->RemoveParent(static_cast<std::weak_ptr<Task>>(to_remove_task));
-      }
-    }
-    to_remove_task->ClearParents();
-    to_remove_task->ClearChildren();
+			it = (*cnode_to_task_map_ptr).erase(it);
+		} else {
+			++it;
+		}
   }
-
-  for (const auto &cnode : cnode_vec) {
-    auto &to_remove_task  = (*cnode_to_task_map_ptr)[cnode];
-    auto &task_parents = to_remove_task->parents();
-    auto &task_children = to_remove_task->children();
-
-    MS_LOG(INFO) << "END Processing task " << to_remove_task->id() << ", cnode name " << cnode->UniqueName() << " with " << task_parents.size() << " parents and " << task_children.size() << " children";
-    for (auto &task_parent: task_parents) { MS_LOG(INFO) << "Parent: " << task_parent.lock()->id();}
-    for (auto &task_child: task_children) { MS_LOG(INFO) << "Child: " << task_child->id();}
-  }
+	MS_LOG(INFO) << "End ContractUnrealTasks";
 }
+*/
 
 KernelWithIndex GetVisitKernelWithReturnType(const AnfNodePtr &ori_node, size_t ori_index, std::unordered_map<CNodePtr, TaskPtr> *cnode_to_task_map_ptr) {
   auto prenode = common::AnfAlgo::VisitKernelWithReturnType(ori_node, ori_index, false);
@@ -1667,7 +1661,8 @@ void gpto::PrintLogBaseline(const SchedulingInput &input,
 SchedulingInput gpto::ExtractSchedulingInput(const std::vector<CNodePtr> &cnode_vec, std::unordered_map<CNodePtr, TaskPtr> *cnode_to_task_map_ptr, 
                                        std::set<std::shared_ptr<Tensor>> &tensors) {
   SchedulingInput scheduling_input;  // to fill in and return
-
+	std::unordered_map<TaskPtr, std::pair<size_t, size_t>> switch_attribute_ids, gather_attribute_ids;
+	
   // Create a task per node
   for (size_t i = 0; i < cnode_vec.size(); ++i) {
     const auto &cnode = cnode_vec[i];
@@ -1677,7 +1672,7 @@ SchedulingInput gpto::ExtractSchedulingInput(const std::vector<CNodePtr> &cnode_
     if (common::GetEnv("MS_ENABLE_GPTO_PROF_FILE") != ""){    
       weight = CalculateProfilingCost(cnode);
     } else {
-      if (!AnfUtils::IsRealKernel(cnode)){	// CASE 1: not real kernel node
+      if (!AnfUtils::IsRealKernel(cnode)){			// CASE 1: not real kernel node
         weight = 1;
       } else if(task->real_type() == kComp){    // CASE 2: comp node of type Vector
         weight = CalculateVectorCost(cnode);
@@ -1688,9 +1683,28 @@ SchedulingInput gpto::ExtractSchedulingInput(const std::vector<CNodePtr> &cnode_
       }
     }
 
-    //std::shared_ptr<Task> task = std::make_shared<Task>(i, GetRealTaskTypeFromCNode(cnode), GetGPTOTaskTypeFromCNode(cnode), cnode->fullname_with_scope());
     task->AssignWeight(weight);
     task->set_cnode(cnode);
+		
+		// Start Step 1 ConditionSwitch/Gather for inline: save attributes 
+		task->set_original_order(i);
+		if (cnode->HasAttr(kInlineSubGraphName)){ // ConditionSwitch
+			task->set_condition_switch(true);
+			std::string s = cnode->GetAttr(kInlineSubGraphName)->ToString(); 
+			std::string s1 = s.substr(s.find('(') + 1, s.find(',') - 1);
+			std::string s2 = s.substr(s.find(',') + 1, s.find(')') - 1);
+			switch_attribute_ids[task] = std::make_pair(std::stoll(s1.substr(s1.find("kernel_graph") + 12)), std::stoll(s2.substr(s2.find("kernel_graph") + 12)));
+			MS_LOG(INFO) << "Task ConditionSwitch " << task->id() << " with attribute kInlineSubGraphName" << s;
+		} else if (cnode->HasAttr(kAttrBranchGraphName)){	// ConditionGather
+		  task->set_condition_gather(true);
+			std::string s = cnode->GetAttr(kAttrBranchGraphName)->ToString(); 
+			std::string s1 = s.substr(s.find('(') + 1, s.find(',') - 1);
+			std::string s2 = s.substr(s.find(',') + 1, s.find(')') - 1);
+			gather_attribute_ids[task] = std::make_pair(std::stoll(s2.substr(s2.find("kernel_graph") + 12)), std::stoll(s1.substr(s1.find("kernel_graph") + 12)));
+			MS_LOG(INFO) << "Task ConditionGather " << task->id() << " with attribute kAttrBranchGraphName" << s;
+		}
+		// End Step 1 ConditionSwitch/Gather for inline
+		
     (*cnode_to_task_map_ptr)[cnode] = task;
 
     MS_LOG(INFO) << "Task " << task->id() << " with name " << cnode->UniqueName() << " and CNodePtr " << cnode
@@ -1702,9 +1716,107 @@ SchedulingInput gpto::ExtractSchedulingInput(const std::vector<CNodePtr> &cnode_
   }
 
   InsertEdges(cnode_vec, cnode_to_task_map_ptr);
-  //ContractionEtienne(cnode_vec, cnode_to_task_map_ptr);
-  ContractUnrealTasks(cnode_vec, cnode_to_task_map_ptr);
+  ContractUnrealTasks(cnode_to_task_map_ptr);
   ExtractRealTensors(scheduling_input, cnode_to_task_map_ptr, tensors);
+	
+	// IOANNIS: for conditional inline (nested if-else supported)
+	// Start Step 2 ConditionSwitch/Gather for inline: identify matching switch/gather pairs
+	
+	ComputeDepthAndTopLevel(scheduling_input.tasks);	// if we keep here, don't call again later
+	struct Comp {
+		bool operator() (const TaskPtr t1, const TaskPtr t2) const {
+			return t1->depth() < t2->depth() || (t1->depth() == t2->depth() && t1->id() < t2->id());
+			// return t1->id() < t2->id();
+			// return t1 < t2;
+		}
+	};
+	std::map<TaskPtr, TaskPtr, Comp> switch_gather;
+	
+	//std::unordered_map<TaskPtr, TaskPtr> switch_gather;
+  for (auto &switch_it : switch_attribute_ids){
+		const auto &switch_task = switch_it.first;
+		auto switch_pair = switch_it.second;
+		
+		std::unordered_map<TaskPtr, std::pair<size_t, size_t>>::iterator gather_it;
+		for (gather_it = gather_attribute_ids.begin(); gather_it != gather_attribute_ids.end(); ++gather_it){
+			if (gather_it->second == switch_pair){
+				break;
+			}
+		}
+		if (gather_it == gather_attribute_ids.end()){
+			MS_LOG(INTERNAL_EXCEPTION) << "Could not find matching ConditionGather for a given ConditionSwitch " << switch_pair;
+		}
+		const auto &gather_task = gather_it->first;
+		switch_gather[switch_task] = gather_task;
+		MS_LOG(INFO) << "Mapped ConditionSwitch task " << switch_task->id() << " to ConditionGather task " << gather_task->id();
+	}
+	// End Step 2 ConditionSwitch/Gather for inline
+
+	// Start Step 3 ConditionSwitch/Gather for inline: traverse each Condition/Switch gather block to assign proper ids for scheduling
+	// Assumption 1: switch and nodes before gather have no predecessors/descendants outside the block
+	// Assumption 2: conditional switch does not have conditional gather as a child
+  size_t count_condition = SIZE_MAX - 1;
+	std::unordered_map<size_t, size_t> unprocessed_parents;
+	std::queue<TaskPtr> tasks_to_visit;
+	
+	for (const auto &key_val : *cnode_to_task_map_ptr) {
+    auto &task = key_val.second;
+    unprocessed_parents[task->id()] = task->parents().size();
+  }
+		
+	for (auto &it : switch_gather){
+		const auto &switch_task = it.first;
+		const auto &gather_task = it.second;
+		MS_LOG(INFO) << "Assign subgraph id " << count_condition << " to tasks under ConditionSwitch task " << switch_task->id() << " name " << switch_task->name() << " up to (and including) ConditionGather task " << gather_task->id() << " name " << gather_task->name();
+		
+		for (auto child : switch_task->children()) {
+			if (child == gather_task) {
+				child->set_subgraph_id(count_condition);
+				MS_LOG(INFO) << "Assign subgraph id " << count_condition << " to task " << gather_task->id() << " name " << gather_task->name();
+			} else {
+				tasks_to_visit.push(child);
+			}
+		}
+		
+		while (!tasks_to_visit.empty()) {
+			const auto &selected_task = tasks_to_visit.front();
+			selected_task->set_subgraph_id(count_condition);
+			MS_LOG(INFO) << "Assign subgraph id " << count_condition << " to task " << selected_task->id() << " name " << selected_task->name();
+			if (selected_task->name().find("ConditionSwitch") != std::string::npos){
+				for (auto gather_child : switch_gather[selected_task]->children()){
+					unprocessed_parents[gather_child->id()] -= 1;
+					if (unprocessed_parents[gather_child->id()] == 0){
+						if (gather_child != gather_task) {
+							tasks_to_visit.push(gather_child);
+						} else {
+							if (gather_task->subgraph_id() != count_condition){
+								gather_task->set_subgraph_id(count_condition);
+								MS_LOG(INFO) << "Assign subgraph id " << count_condition << " to task " << gather_task->id() << " name " << gather_task->name();
+							}
+						}
+					}
+				}
+			} else {
+				for (auto &child : selected_task->children()) {
+					unprocessed_parents[child->id()] -= 1;
+					if (unprocessed_parents[child->id()] == 0){
+						if (child != gather_task) {
+							tasks_to_visit.push(child);
+						} else {
+							if (gather_task->subgraph_id() != count_condition){
+								gather_task->set_subgraph_id(count_condition);
+								MS_LOG(INFO) << "Assign subgraph id " << count_condition << " to task " << gather_task->id() << " name " << gather_task->name();
+							}
+						}
+					}
+				}
+			}
+			tasks_to_visit.pop();
+		}
+		count_condition--;
+	}
+	// End Step 3 ConditionSwitch/Gather for inline
+	
   return scheduling_input;
 }
 
@@ -1836,6 +1948,7 @@ std::vector<std::pair<CNodePtr,CNodePtr>> GPTO(const FuncGraphPtr &graph) {
   std::unordered_map<CNodePtr, TaskPtr> cnode_to_task;
   std::set<std::shared_ptr<Tensor>> tensors;	// TODO: remove this data structure eventually, and only use out_tensors/in_tensors within tasks
   SchedulingInput scheduling_input = gpto::ExtractSchedulingInput(cnode_vec, &cnode_to_task, tensors);
+	// size_t num_original_tasks = scheduling_input.tasks.size();
   MS_LOG(INFO) << "End ExtractSchedulingInput";
   if (scheduling_input.tasks.size() == 0){
     MS_LOG(WARNING) << "Scheduling input doesn't have tasks to continue... skip";
@@ -1844,10 +1957,99 @@ std::vector<std::pair<CNodePtr,CNodePtr>> GPTO(const FuncGraphPtr &graph) {
     MS_LOG(WARNING) << "Etienne PrintGraphExecuteOrder end";
     return events;  
   }
+	
+	//
+	// IOANNIS: START GENERALIZING FOR RESTRICTED SWITCH-GATHER ORDER
+	/*
+	std::unordered_map<std::string, SchedulingInput> sub_input;
+	std::unordered_map<std::string, SchedulingOutput> sub_output;
+	std::unordered_map<std::string, std::vector<std::pair<TaskId, TaskId>>> sub_deps;
+	std::unordered_map<std::string, std::vector<std::pair<CNodePtr, CNodePtr>>> sub_events;
+	std::unordered_map<std::string, std::vector<CNodePtr>> sub_order;
+	std::unordered_map<std::string, std::shared_ptr<Task>> sub_switch, sub_gather;
+	
+	// Step 1: retrieve subgraphs based on graph attributes
+	std::unordered_map<TaskId, size_t> unprocessed_parents;
+  std::queue<std::shared_ptr<Task>> tasks_to_visit;
+	const auto &tasks = scheduling_input.tasks;
+  // Initialization loop
+  std::vector<std::shared_ptr<Task>>::iterator it = tasks.begin();
+	while (it != tasks.end()) {
+		const auto &task = *it;
+    const auto &id = task->id();
+		const auto &cnode = task->cnode();
+		
+		if (cnode->HasAttr(kInlineSubGraphName)){ // ConditionSwitch
+			std::string s = cnode->GetAttr(kInlineSubGraphName)->ToString(); 
+			MS_LOG(INFO) << "Assign task ConditionSwitch " << task->id() << " with attribute kInlineSubGraphName" << s << " parsing " << s.substr(s.find(',') + 1, s.find(')') - 1);
+			std::shared_ptr<Task> new_condition_switch = std::make_shared<Task>(*task);
+			new_condition_switch->ClearParents();
+			new_condition_switch->in_tensors().clear();
+			sub_input[s.substr(s.find(',') + 1, s.find(')') - 1)].tasks.push_back(new_condition_switch);
+			sub_switch[s.substr(s.find(',') + 1, s.find(')') - 1)] = task;
+			it = tasks.erase(it);
+		} else if (cnode->HasAttr(kAttrBranchGraphName)){	// ConditionGather
+			std::string s = cnode->GetAttr(kAttrBranchGraphName)->ToString(); 
+			MS_LOG(INFO) << "Assign task ConditionGather " << task->id() << " with attribute kAttrBranchGraphName" << s << " parsing " << s.substr(s.find('(') + 1, s.find(',') - 1);
+			std::shared_ptr<Task> new_condition_gather = std::make_shared<Task>(*task);
+			new_condition_gather->ClearChildren();
+			new_condition_gather->out_tensors().clear();
+			sub_input[s.substr(s.find('(') + 1, s.find(',') - 1)].tasks.push_back(new_condition_gather);
+			sub_gather[s.substr(s.find('(') + 1, s.find(',') - 1)] = task;
+			it = tasks.erase(it);
+		} else if (cnode->HasAttr(kAttrPreKernelGraph)){ // Between ConditionSwitch and ConditionGather
+			MS_LOG(INFO) << "Assign task " << task->id() << " to subgraph " << cnode->GetAttr(kAttrPreKernelGraph)->ToString();
+			sub_input[cnode->GetAttr(kAttrPreKernelGraph)->ToString()].tasks.push_back(task);
+			it = tasks.erase(it);
+		} else {
+			++it;
+		}
+  }
+	
+	// Step 2: schedule each subgraph
+	for (auto &[name, sched_input] : sub_input){
+		MS_LOG(INFO) << "Scheduling conditional branch " << name;
+		sub_output[name] = gpto::Process(sched_input, stoll(name.substr(name.find("kernel_graph") + 12)), nullptr, tensors);
+		sub_deps[name] = gpto::ScheduleToDependenciesDifferentTypes(sub_output[name]);
+    
+		std::vector<Interval> task_times = sub_output[name].task_times;
+    std::sort(task_times.begin(), task_times.end(), [](Interval x, Interval y) {
+      return x.start < y.start || (x.start == y.start && x.end < y.end);
+    });
+    for (auto interval : task_times){
+      sub_order[name].push_back(cnode_vec[interval.id]);
+    }
+    for (auto dep : sub_deps[name]){
+      sub_events[name].push_back(std::make_pair(cnode_vec[dep.first], cnode_vec[dep.second]));
+    }
+  }
+	*/
+	// IOANNIS: END GENERALIZING FOR RESTRICTED SWITCH-GATHER ORDER
+	// 
 
   MS_LOG(INFO) << "Start Baseline Greedy Scheduling";
   gpto::PrintLogBaseline(scheduling_input, kernel_graph->execution_order(), &cnode_to_task, graph, graph_id);
   MS_LOG(INFO) << "End Baseline Greedy Scheduling";
+
+	// 
+	// IOANNIS: START CONTRACTING IF-ELSE BLOCKS
+	/*
+	size_t count_tasks = num_original_tasks;
+	size_t count_tensors = tensors.size();
+	for (auto &[name, cond_switch] : sub_switch){
+		std::shared_ptr<Task> task = std::make_shared<Task>(count_tasks++, kComp, kComp, name);	//
+		task->AssignWeight(sub_output[name].makespan);
+		std::shared_ptr<Tensor> new_tensor = std::make_shared<Tensor>(count_tensors++, sub_output[name].memory_peak, task, kWorkspace);	//
+		task->workspace_tensors().push_back(new_tensor);
+		scheduling_input.tasks.push_back(task);
+		 // copies of tensors + rearrange edges correctly
+		for (auto t : cond_switch->in_tensors()){
+			task->in_tensors.push_back(t);
+		}
+	}
+	*/
+	// IOANNIS: END CONTRACTING IF-ELSE BLOCKS
+	//
 
   auto scheduling_output = gpto::Process(scheduling_input, graph_id, graph, tensors);
 
