@@ -26,7 +26,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateNLLLossParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "NLLLoss primitive is nullptr!");
   Reduction reduction;
   if (primitive->value_type() == PrimitiveType_NLLLoss) {
     auto value = primitive->value_as_NLLLoss();

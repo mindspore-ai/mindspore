@@ -127,7 +127,7 @@ OpParameter *PopulateAvgPoolParameter(const void *primitive) {
 
 OpParameter *PopulateMaxPoolParameter(const void *primitive) {
   auto pooling_prim = static_cast<const schema::Primitive *>(primitive);
-  MS_ASSERT(pooling_prim != nullptr);
+  MS_CHECK_TRUE_MSG(pooling_prim != nullptr, nullptr, "MaxPool primitive is nullptr!");
   auto value = pooling_prim->value_as_MaxPoolFusion();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";

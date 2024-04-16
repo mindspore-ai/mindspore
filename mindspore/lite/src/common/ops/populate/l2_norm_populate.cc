@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateL2NormParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "L2Norm primitive is nullptr!");
   auto value = primitive->value_as_L2NormalizeFusion();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";

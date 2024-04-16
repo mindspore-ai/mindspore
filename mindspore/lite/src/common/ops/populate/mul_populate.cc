@@ -22,7 +22,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateMulParameter(const void *prim) {
   auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "Mul primitive is nullptr!");
   auto mul_param = primitive->value_as_MulFusion();
   if (mul_param == nullptr) {
     MS_LOG(ERROR) << "MulFusion param is nullptr!";
