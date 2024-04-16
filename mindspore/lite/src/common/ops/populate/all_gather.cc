@@ -24,7 +24,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateAllGatherParameter(const void *prim) {
   auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "AllGather primitive is nullptr!");
   auto value = primitive->value_as_AllGather();
   if (value == nullptr) {
     MS_LOG(ERROR) << "cast all_gather_primitive to value failed";

@@ -20,11 +20,11 @@ using mindspore::schema::PrimitiveType_PReLUFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulatePReLUParameter(const void *prim) {
-  MS_ASSERT(prim != nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "PReLU primitive is nullptr!");
   auto value = primitive->value_as_PReLUFusion();
   if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
+    MS_LOG(ERROR) << "value is nullptr!";
     return nullptr;
   }
 

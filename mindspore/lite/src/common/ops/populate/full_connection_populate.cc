@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateFullconnectionParameter(const void *prim) {
   auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "Fullconnection primitive is nullptr!");
   auto value = primitive->value_as_FullConnection();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";
