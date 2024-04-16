@@ -913,9 +913,18 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
   auto tensor_size = LongToSize(tensor->data().nbytes());
-  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), device_address->format(),
-                                        tensor->data_ptr())) {
-    MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
+  if (device_address->GetDeviceType() == device::DeviceType::kAscend) {
+    OpExecutor::DispatchLaunchTask([=]() {
+      if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), device_address->format(),
+                                            tensor->data_ptr())) {
+        MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
+      }
+    });
+  } else {
+    if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), device_address->format(),
+                                          tensor->data_ptr())) {
+      MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
+    }
   }
 }
 
