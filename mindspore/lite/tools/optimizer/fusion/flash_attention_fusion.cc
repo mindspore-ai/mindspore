@@ -54,7 +54,7 @@ constexpr size_t kNumDimSize4 = 4;
 constexpr size_t kNumShapeSize2 = 2;
 constexpr size_t kNumShapeSize3 = 3;
 constexpr size_t kNumShapeSize4 = 4;
-constexpr int64_t kNumMaxBatchLenSize = 50;
+constexpr int64_t kNumMaxBatchLenSize = 128;
 constexpr int64_t kNumMaxNextTokenSize = 65535;
 constexpr int kNumMultiple32 = 32;
 constexpr int kNumMultiple16 = 16;
@@ -217,6 +217,36 @@ bool IpAdapterPattern(const CNodePtr q_input, const CNodePtr k_input) {
   return CheckIpAdapterInput(q_input) && CheckIpAdapterInput(k_input);
 }
 
+const CNodePtr PD2DecoderPattern(const CNodePtr &q_trans_BNSD) {
+  auto q_reshape_BSND = q_trans_BNSD->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(q_reshape_BSND != nullptr && q_reshape_BSND->inputs().size() == kNumShapeSize3, nullptr);
+  if (!CheckPrimitiveType(q_reshape_BSND, prim::kPrimReshape)) {
+    MS_LOG(INFO) << "node is not check op type: " << q_reshape_BSND->fullname_with_scope();
+    return nullptr;
+  }
+
+  auto q_trans_BSH = q_reshape_BSND->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(q_trans_BSH != nullptr && q_trans_BSH->inputs().size() == kNumShapeSize3, nullptr);
+  if (!CheckPrimitiveType(q_trans_BSH, prim::kPrimTranspose)) {
+    MS_LOG(INFO) << "node is not check op type: " << q_trans_BSH->fullname_with_scope();
+    return nullptr;
+  }
+
+  auto q_reshape_BSH = q_trans_BSH->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(q_reshape_BSH != nullptr && q_reshape_BSH->inputs().size() == kNumShapeSize3, nullptr);
+  if (!CheckPrimitiveType(q_reshape_BSH, prim::kPrimReshape)) {
+    MS_LOG(INFO) << "node is not check op type: " << q_reshape_BSH->fullname_with_scope();
+    return nullptr;
+  }
+
+  auto q_conv = q_reshape_BSH->input(kNumIndex1)->cast<CNodePtr>();
+  if (!CheckPrimitiveType(q_conv, prim::kPrimConv2DFusion)) {
+    MS_LOG(INFO) << "node is not check op type: " << q_conv->fullname_with_scope();
+    return nullptr;
+  }
+  return q_conv;
+}
+
 std::vector<int64_t> GetTensorShape(CNodePtr cnode, size_t input_index) {
   auto abstract = GetCNodeInputAbstract(cnode, input_index);
   if (abstract == nullptr) {
@@ -229,6 +259,32 @@ std::vector<int64_t> GetTensorShape(CNodePtr cnode, size_t input_index) {
     return {};
   }
   return shape;
+}
+
+bool GetParamForIpAdapterPattern(const CNodePtr &q_trans_BNSD, const CNodePtr &k_trans_BNDS, int64_t *num_head,
+                                 int64_t *d_value) {
+  auto q_reshape_BSND = q_trans_BNSD->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(q_reshape_BSND != nullptr, false);
+  auto q_top_matmul = q_reshape_BSND->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(q_top_matmul != nullptr, false);
+  auto q_matmul_input_2_shape = GetTensorShape(q_top_matmul, kNumIndex2);
+  auto k_reshape_BSND = k_trans_BNDS->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(k_reshape_BSND != nullptr, false);
+  auto k_top_matmul = k_reshape_BSND->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(k_top_matmul != nullptr, false);
+  auto k_matmul_input_2_shape = GetTensorShape(k_top_matmul, kNumIndex2);
+  MS_LOG(INFO) << "q_top_matmul name: " << q_top_matmul->fullname_with_scope()
+               << ", k_top_matmul name: " << k_top_matmul->fullname_with_scope()
+               << ", q matmul input2 shape: " << q_matmul_input_2_shape
+               << " ,k matmul input2 shape: " << k_matmul_input_2_shape;
+  if (q_matmul_input_2_shape.size() != kNumShapeSize2 || k_matmul_input_2_shape.size() != kNumShapeSize2) {
+    MS_LOG(INFO) << "Matmul input 2 shape is not 2D, can not fusion FA.";
+    return false;
+  }
+  auto num_h = q_matmul_input_2_shape[kNumIndex1];
+  *num_head = GetNumHeadForSD(q_reshape_BSND);
+  *d_value = num_h / *num_head;
+  return true;
 }
 }  // namespace
 
@@ -2068,44 +2124,32 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDPreMul(
   int64_t next_tokens = kNumMaxNextTokenSize;
   int64_t d_value = 0;
   if (input_tensor_q_shape.size() != kNumShapeSize4 || input_tensor_k_shape.size() != kNumShapeSize4) {
+    auto pd2_q_conv = PD2DecoderPattern(q_trans_BNSD);
     if (IpAdapterPattern(q_trans_BNSD, k_trans_BNDS)) {
-      auto q_reshape_BSND = q_trans_BNSD->input(kNumIndex1)->cast<CNodePtr>();
-      MS_CHECK_TRUE_RET(q_reshape_BSND != nullptr, nullptr);
-      auto q_top_matmul = q_reshape_BSND->input(kNumIndex1)->cast<CNodePtr>();
-      MS_CHECK_TRUE_RET(q_top_matmul != nullptr, nullptr);
-      auto q_matmul_input_2_shape = GetTensorShape(q_top_matmul, kNumIndex2);
-      auto k_reshape_BSND = k_trans_BNDS->input(kNumIndex1)->cast<CNodePtr>();
-      MS_CHECK_TRUE_RET(k_reshape_BSND != nullptr, nullptr);
-      auto k_top_matmul = k_reshape_BSND->input(kNumIndex1)->cast<CNodePtr>();
-      MS_CHECK_TRUE_RET(k_top_matmul != nullptr, nullptr);
-      auto k_matmul_input_2_shape = GetTensorShape(k_top_matmul, kNumIndex2);
-      MS_LOG(INFO) << "q_top_matmul name: " << q_top_matmul->fullname_with_scope()
-                   << ", k_top_matmul name: " << k_top_matmul->fullname_with_scope()
-                   << ", q matmul input2 shape: " << q_matmul_input_2_shape
-                   << " ,k matmul input2 shape: " << k_matmul_input_2_shape;
-      if (q_matmul_input_2_shape.size() != kNumShapeSize2 || k_matmul_input_2_shape.size() != kNumShapeSize2) {
-        MS_LOG(INFO) << "Matmul input 2 shape is not 2D, can not fusion FA.";
+      if (!GetParamForIpAdapterPattern(q_trans_BNSD, k_trans_BNDS, &num_head, &d_value)) {
+        MS_LOG(INFO) << "Get parameter for IpAdapterPattern failed";
         return nullptr;
       }
-      auto num_h = q_matmul_input_2_shape[kNumIndex1];
-      num_head = GetNumHeadForSD(q_reshape_BSND);
-      d_value = num_h / num_head;
-      scale_value = 1 / (pow(d_value, kNumPowerHalf));
       std::vector<int32_t> new_shape = {0, 0, -1};
       auto shape_node = BuildIntVecParameterNode(func_graph, new_shape, node->fullname_with_scope() + "_new_shape");
       MS_CHECK_TRUE_RET(shape_node != nullptr, nullptr);
       output_reshape->set_input(kNumIndex2, shape_node);
+    } else if (pd2_q_conv != nullptr) {
+      MS_LOG(INFO) << "Dynamic shape pattern: PD2DecoderPattern";
+      auto pd2_q_conv_input2_shape = GetTensorShape(pd2_q_conv, kNumIndex2);
+      d_value = pd2_q_conv_input2_shape[0];
+      num_head = GetNumHeadForSD(q_trans_BNSD->input(kNumIndex1)->cast<CNodePtr>());
     } else {
       MS_LOG(INFO) << "Dynamic shape is not supported. Can not fusion FA.";
       return nullptr;
     }
   } else {
     MS_LOG(INFO) << "get flash attention param for static shape.";
-    scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], kNumPowerHalf));
     num_head = input_tensor_q_shape[kNumIndex1];
     d_value = input_tensor_q_shape[kNumIndex3];
     std::swap(input_tensor_k_shape[kNumIndex2], input_tensor_k_shape[kNumIndex3]);
   }
+  scale_value = 1 / (pow(d_value, kNumPowerHalf));
   CNodePtr fa_node = nullptr;
   if (!PFACheckShape(scale_value, input_tensor_q_shape, input_tensor_k_shape, input_tensor_v_shape,
                      fa_parm->seq_threshold)) {

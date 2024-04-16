@@ -109,8 +109,8 @@ constexpr auto kOpsTransPose = "Transpose";
 /* 1. For compatibility reasons (on MindIRs with old primitives), ResizeBilinear op still needs to be processed.
    2. ResizeBilinear in core/ops is deprecated, avoid using name string defined in core/ops. */
 constexpr auto kNameResizeBilinear = "ResizeBilinear";
-const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B2C", "Ascend910B3",
-                                                       "Ascend910B4"};
+const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B2C",
+                                                       "Ascend910B3", "Ascend910B4", "Ascend310P3"};
 
 STATUS ModifyCNodeFormat(const FuncGraphPtr &func_graph, Format format) {
   MS_ASSERT(func_graph != nullptr);
@@ -577,6 +577,26 @@ STATUS AclPassImpl::MakeListToMakeTuple(const FuncGraphPtr &func_graph) {
   return lite::RET_OK;
 }
 
+STATUS FlashAttentionFusion(const FuncGraphPtr &func_graph) {
+  MS_LOG(INFO) << "using FlashAttention";
+  auto soc_version = AclModelOptions::GetSocName();
+  MS_LOG(INFO) << "soc_version: " << soc_version;
+  MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusion;
+  if (kSocVersionForAscendCFA.find(soc_version) != kSocVersionForAscendCFA.end()) {
+    if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusion})) {
+      MS_LOG(ERROR) << kCustomOpFlashAttentionFusion << " op pass failed.";
+      return lite::RET_ERROR;
+    }
+  } else {
+    MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusionForCustom;
+    if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusionForCustom})) {
+      MS_LOG(ERROR) << kCustomOpFlashAttentionFusionForCustom << " op pass failed.";
+      return lite::RET_ERROR;
+    }
+  }
+  return lite::RET_OK;
+}
+
 STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
   if (CommonPass(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Common pass failed.";
@@ -603,43 +623,39 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
     MS_LOG(INFO) << "plugin_custom_ops: " << plugin_custom_ops;
     if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
         find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "FlashAttention") != plugin_custom_ops.end()) {
-      MS_LOG(INFO) << "using FlashAttention";
-      auto soc_version = AclModelOptions::GetSocName();
-      MS_LOG(INFO) << "soc_version: " << soc_version;
-      MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusion;
-      if (kSocVersionForAscendCFA.find(soc_version) != kSocVersionForAscendCFA.end()) {
-        if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusion})) {
-          MS_LOG(ERROR) << kCustomOpFlashAttentionFusion << " op pass failed.";
-          return lite::RET_ERROR;
-        }
-      } else {
-        MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusionForCustom;
-        if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusionForCustom})) {
-          MS_LOG(ERROR) << kCustomOpFlashAttentionFusionForCustom << " op pass failed.";
-          return lite::RET_ERROR;
-        }
+      if (FlashAttentionFusion(func_graph) == lite::RET_ERROR) {
+        return lite::RET_ERROR;
       }
     }
     if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "FFN") != plugin_custom_ops.end()) {
       MS_LOG(INFO) << "using FFN";
-      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpFFNFusion}), lite::RET_ERROR,
-                        "FFN op pass failed.");
+      if (!lite::RunOptimizerPass(func_graph, {kCustomOpFFNFusion})) {
+        MS_LOG(ERROR) << kCustomOpFFNFusion << " op pass failed.";
+        return lite::RET_ERROR;
+      }
     }
     if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "AddLayerNorm") != plugin_custom_ops.end()) {
       MS_LOG(INFO) << "run " << kAddLayerNormFusion << " and " << kFuseAddAndLayernorm;
-      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kAddLayerNormFusion, kFuseAddAndLayernorm}),
-                        lite::RET_ERROR, "AddLayerNorm op pass failed.");
+      if (!lite::RunOptimizerPass(func_graph, {kAddLayerNormFusion, kFuseAddAndLayernorm})) {
+        MS_LOG(ERROR) << "AddLayerNorm op pass failed.";
+        return lite::RET_ERROR;
+      }
     }
-    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GeGluV2") != plugin_custom_ops.end()) {
-      MS_LOG(INFO) << "Using GeGluV2";
-      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpGeGluV2Fusion}), lite::RET_ERROR,
-                        "GeGluV2 op pass failed.");
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
+        find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GeGluV2") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "using GeGluV2";
+      if (!lite::RunOptimizerPass(func_graph, {kCustomOpGeGluV2Fusion})) {
+        MS_LOG(ERROR) << "GeGluV2 op pass failed.";
+        return lite::RET_ERROR;
+      }
     }
     if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
         find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GroupNormSilu") != plugin_custom_ops.end()) {
       MS_LOG(INFO) << "using GroupNormSilu";
-      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpGroupNormSiluFusion}), lite::RET_ERROR,
-                        "GroupNormSilu op pass failed.");
+      if (!lite::RunOptimizerPass(func_graph, {kCustomOpGroupNormSiluFusion})) {
+        MS_LOG(ERROR) << "GroupNormSilu op pass failed.";
+        return lite::RET_ERROR;
+      }
     }
   }
   MS_LOG(DEBUG) << "Pre proc graph success.";
