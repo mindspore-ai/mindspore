@@ -59,8 +59,8 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    nonzero, flip, transpose, tril, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
-    strided_slice, ones, zeros, max_, min_, select
+    nonzero, flip, transpose, tril, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, \
+    broadcast_to, strided_slice, ones, zeros, max_, min_, select
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = ArgMaxWithValue()
@@ -4533,67 +4533,6 @@ def split(tensor, split_size_or_sections, axis=0):
         raise TypeError(f"Type of Argument `split_size_or_sections` should be integer, tuple(int) or list(int), " \
                         f"but got {type(split_size_or_sections)}")
     return tuple(res)
-
-
-def triu(input, diagonal=0):  # pylint: disable=redefined-outer-name
-    r"""
-    Returns the upper triangle part of 'input' (elements that contain the diagonal and below),
-    and set the other elements to zeros.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        input (Tensor): The input tensor with shape :math:`(M, N, *)` where * means any number of additional dimensions.
-        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
-            indicating the main diagonal.
-
-    Returns:
-        Tensor, a tensor has the same shape and data type as input.
-
-    Raises:
-        TypeError: If `diagonal` is not an int.
-        TypeError: If `input` is not a Tensor.
-        ValueError: If the dimension of `input` is less than 2.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> result = ops.triu(x)
-        >>> print(result)
-        [[ 1  2  3  4]
-         [ 0  6  7  8]
-         [ 0  0 12 13]
-         [ 0  0  0 17]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> result = ops.triu(x, diagonal=1)
-        >>> print(result)
-        [[ 0  2  3  4]
-         [ 0  0  7  8]
-         [ 0  0  0 13]
-         [ 0  0  0  0]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> result = ops.triu(x, diagonal=-1)
-        >>> print(result)
-        [[ 1  2  3  4]
-         [ 5  6  7  8]
-         [ 0 11 12 13]
-         [ 0  0 16 17]]
-    """
-    return _get_cache_prim(P.Triu)(diagonal)(input)
 
 
 @_primexpr

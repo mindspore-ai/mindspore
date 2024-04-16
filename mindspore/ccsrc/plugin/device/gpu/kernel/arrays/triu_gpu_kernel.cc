@@ -20,6 +20,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kColindex = 1;
 constexpr size_t kRowindex = 2;
+constexpr size_t kDiagonalIndex = 1;
 bool TriuGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
@@ -33,7 +34,6 @@ bool TriuGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  diagonal_ = GetValue<int64_t>(primitive_->GetAttr("diagonal"));
   auto attr_dtype = kernel_attr.GetInputAttr(kIndex0);
   unit_size_ = abstract::TypeIdSize(attr_dtype.dtype);
   return true;
@@ -42,6 +42,7 @@ bool TriuGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
 int TriuGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
+  diagonal_ = inputs[kDiagonalIndex]->GetValueWithCheck<int64_t>();
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -93,27 +94,66 @@ bool TriuGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
 }
 
 std::vector<std::pair<KernelAttr, TriuGpuKernelMod::TriuFunc>> TriuGpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
    &TriuGpuKernelMod::LaunchKernel<uint8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
    &TriuGpuKernelMod::LaunchKernel<uint16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
    &TriuGpuKernelMod::LaunchKernel<uint32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
    &TriuGpuKernelMod::LaunchKernel<uint64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), &TriuGpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   &TriuGpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
    &TriuGpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &TriuGpuKernelMod::LaunchKernel<int>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   &TriuGpuKernelMod::LaunchKernel<int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &TriuGpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
    &TriuGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
    &TriuGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
    &TriuGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), &TriuGpuKernelMod::LaunchKernel<bool>}};
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   &TriuGpuKernelMod::LaunchKernel<bool>}};
 
 std::vector<KernelAttr> TriuGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

@@ -1899,11 +1899,11 @@ REG_BPROP_BUILDER("ConjugateTranspose").SetUnusedInputs({i0, i2}).SetBody(BODYFU
   return {ib->Emit("ConjugateTranspose", {dout, ib->Value<ShapeVector>(res_perm)}), ib->OutZeros(perm)};
 });
 
-REG_BPROP_BUILDER("Triu").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto diagonal = GetValue<int64_t>(ib->GetAttr("diagonal"));
+REG_BPROP_BUILDER("Triu").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
+  auto diagonal = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("Triu", {dout}, {{"diagonal", MakeValue(diagonal)}});
-  return {dx};
+  auto dx = ib->Emit("Triu", {dout, diagonal});
+  return {dx, ib->OutZeros(diagonal)};
 });
 
 REG_BPROP_BUILDER("CheckNumerics").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
