@@ -43,6 +43,6 @@ void InternalTile::SetInOutIdx() {
   outputsIdxMap_[kIndex0] = kIndex0;
 }
 
-MS_INTERNAL_KERNEL_FACTORY_REG(Tile, InternalTile);
+// MS_INTERNAL_KERNEL_FACTORY_REG(Tile, InternalTile);
 }  // namespace kernel
 }  // namespace mindspore
