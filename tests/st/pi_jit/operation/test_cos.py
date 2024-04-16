@@ -20,7 +20,7 @@ def test_p_cos_input_64x3125():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_cos_input_shape():
@@ -47,7 +47,7 @@ def test_p_cos_input_shape():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_cos_input_shape_6d():
@@ -62,7 +62,7 @@ def test_p_cos_input_shape_6d():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_cos_input_float32():
@@ -77,7 +77,7 @@ def test_dynamic_shape_p_cos_input_float32():
     fact.forward_dynamic_shape_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_cos_input_float16():
@@ -92,7 +92,7 @@ def test_dynamic_shape_p_cos_input_float16():
     fact.forward_dynamic_shape_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_cos_float32():
@@ -108,7 +108,7 @@ def test_dynamic_shape_p_cos_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_cos_float16():

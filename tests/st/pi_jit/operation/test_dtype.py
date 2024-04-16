@@ -2,7 +2,7 @@ from ..share.ops.primitive.dtype_ops import DTypeFactory
 from ..share.ops.primitive.dtype_ops import DType
 import numpy as np
 import pytest
-from mindspore import jit, context
+from mindspore import jit, context, Tensor
 
 
 @pytest.mark.level0
@@ -20,13 +20,14 @@ def test_p_dtype_input_1x12x1x1_dtype_fp32():
     input_shape = (1, 12, 1, 1)
     fact = DTypeFactory(input_shape, dtype=np.float32)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=np.float32)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1_dtype_bool():
@@ -42,13 +43,14 @@ def test_p_dtype_input_1x12x1x1_dtype_bool():
     dtype = np.bool_
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1_dtype_fp32():
@@ -64,13 +66,14 @@ def test_p_dtype_input_1x12x1_dtype_fp32():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12_dtype_fp32():
@@ -86,13 +89,14 @@ def test_p_dtype_input_1x12_dtype_fp32():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_12_dtype_fp32():
@@ -108,13 +112,14 @@ def test_p_dtype_input_12_dtype_fp32():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_5x1x2x5x1x2x8_dtype_fp32():
@@ -130,13 +135,14 @@ def test_p_dtype_input_5x1x2x5x1x2x8_dtype_fp32():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1x2x3_dtype_fp16():
@@ -152,13 +158,14 @@ def test_p_dtype_input_1x12x1x1x2x3_dtype_fp16():
     dtype = np.float16
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1x2_dtype_fp64():
@@ -174,13 +181,14 @@ def test_p_dtype_input_1x12x1x1x2_dtype_fp64():
     dtype = np.float64
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1_dtype_int8():
@@ -196,13 +204,14 @@ def test_p_dtype_input_1x12x1x1_dtype_int8():
     dtype = np.int8
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_forward_input_1x12x1x1_dtype_int16():
@@ -218,13 +227,14 @@ def test_p_dtype_forward_input_1x12x1x1_dtype_int16():
     dtype = np.int16
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1_dtype_int32():
@@ -240,13 +250,14 @@ def test_p_dtype_input_1x12x1x1_dtype_int32():
     dtype = np.int32
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1_dtype_int64():
@@ -262,13 +273,14 @@ def test_p_dtype_input_1x12x1x1_dtype_int64():
     dtype = np.int64
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1_dtype_uint8():
@@ -284,13 +296,14 @@ def test_p_dtype_input_1x12x1x1_dtype_uint8():
     dtype = np.uint8
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1_dtype_uint16():
@@ -306,13 +319,14 @@ def test_p_dtype_input_1x12x1x1_dtype_uint16():
     dtype = np.uint16
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1_dtype_uint32():
@@ -328,13 +342,14 @@ def test_p_dtype_input_1x12x1x1_dtype_uint32():
     dtype = np.uint32
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1_dtype_uint64():
@@ -350,7 +365,8 @@ def test_p_dtype_input_1x12x1x1_dtype_uint64():
     dtype = np.uint64
     fact = DTypeFactory(input_shape, dtype=dtype)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    input_np = np.random.randn(*input_shape).astype(dtype=dtype)
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
@@ -373,7 +389,7 @@ def test_p_dtype_input_scalar():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
@@ -396,7 +412,7 @@ def test_p_dtype_input_int():
     dtype = np.int64
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
@@ -419,7 +435,7 @@ def test_p_dtype_input_float():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
@@ -443,13 +459,13 @@ def test_p_dtype_input_1x12x1x1_contains_none():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1_contains_nan():
@@ -467,13 +483,13 @@ def test_p_dtype_input_1x12x1x1_contains_nan():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_1x12x1x1_contains_inf():
@@ -491,7 +507,7 @@ def test_p_dtype_input_1x12x1x1_contains_inf():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
@@ -514,13 +530,13 @@ def test_p_dtype_input_tuple_int():
     dtype = np.int64
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_tuple_bool():
@@ -537,13 +553,13 @@ def test_p_dtype_input_tuple_bool():
     dtype = np.bool_
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_tuple_float():
@@ -560,7 +576,7 @@ def test_p_dtype_input_tuple_float():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
@@ -583,13 +599,13 @@ def test_p_dtype_input_tuple_int_float():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_tuple_int_bool():
@@ -606,13 +622,13 @@ def test_p_dtype_input_tuple_int_bool():
     dtype = np.int64
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_tuple_float_bool():
@@ -629,13 +645,13 @@ def test_p_dtype_input_tuple_float_bool():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_tuple_int_nan():
@@ -652,13 +668,13 @@ def test_p_dtype_input_tuple_int_nan():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_tuple_int_inf():
@@ -675,13 +691,13 @@ def test_p_dtype_input_tuple_int_inf():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_list_int():
@@ -698,13 +714,13 @@ def test_p_dtype_input_list_int():
     dtype = np.int64
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_list_bool():
@@ -721,13 +737,13 @@ def test_p_dtype_input_list_bool():
     dtype = np.bool_
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_list_float():
@@ -744,13 +760,13 @@ def test_p_dtype_input_list_float():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_list_int_float():
@@ -767,13 +783,13 @@ def test_p_dtype_input_list_int_float():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_list_int_bool():
@@ -790,13 +806,13 @@ def test_p_dtype_input_list_int_bool():
     dtype = np.int64
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_list_float_bool():
@@ -813,13 +829,13 @@ def test_p_dtype_input_list_float_bool():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_list_int_nan():
@@ -836,13 +852,13 @@ def test_p_dtype_input_list_int_nan():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_list_int_inf():
@@ -859,13 +875,13 @@ def test_p_dtype_input_list_int_inf():
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dtype_input_bool():
@@ -882,7 +898,7 @@ def test_p_dtype_input_bool():
     dtype = np.bool_
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
     fact.grad_cmp(net)

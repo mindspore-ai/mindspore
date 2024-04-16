@@ -36,11 +36,11 @@ class EqualFactory():
             self.loss = 1e-5
         else:
             self.loss = 0
+        self.left_input = Tensor(self.left_input_np)
+        self.right_input = Tensor(self.right_input_np)
 
     def forward_mindspore_impl(self, net):
-        left_input = Tensor(self.left_input_np)
-        right_input = Tensor(self.right_input_np)
-        out = net(left_input, right_input)
+        out = net(self.left_input, self.right_input)
         return out.asnumpy()
 
 
@@ -49,33 +49,31 @@ class EqualFactory():
         return out
 
     def grad_mindspore_impl(self, net):
-        left_input = Tensor(self.left_input_np)
-        right_input = Tensor(self.right_input_np)
         out_grad = Tensor(self.out_grad_np)
         grad_net = GradOfAllInputs(net)
         grad_net.set_train()
-        input_grad = grad_net(left_input, right_input, out_grad)
+        input_grad = grad_net(self.left_input, self.right_input, out_grad)
         return input_grad[0].asnumpy(), input_grad[1].asnumpy()
 
 
     def forward_cmp(self):
         ps_net = Equal()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.left_input, self.right_input)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_impl(ps_net)
         pi_net = Equal()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.left_input, self.right_input)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_impl(ps_net)
         allclose_nparray(out_pijit, out_psjit, self.loss, self.loss)
 
     def grad_cmp(self):
         ps_net = Equal()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.left_input, self.right_input)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.grad_mindspore_impl(ps_net)
         pi_net = Equal()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.left_input, self.right_input)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.grad_mindspore_impl(pi_net)
         allclose_nparray(out_pijit, out_psjit, self.loss, self.loss)

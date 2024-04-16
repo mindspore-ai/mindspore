@@ -53,12 +53,12 @@ class CosMock():
 
     def forward_cmp(self):
         ps_net = Cos()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_impl(ps_net)
 
         pi_net = Cos()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_impl(pi_net)
 
@@ -73,12 +73,12 @@ class CosMock():
 
     def forward_dynamic_shape_cmp(self):
         ps_net = Cos()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_dynamic_shape_impl(ps_net)
 
         pi_net = Cos()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_dynamic_shape_impl(pi_net)
 
@@ -98,12 +98,12 @@ class CosMock():
 
     def grad_dynamic_shape_cmp(self):
         ps_net = Cos()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x)
         context.set_context(mode=context.GRAPH_MODE)
         input_grad_psjit = self.grad_mindspore_dynamic_shape_impl(ps_net)
 
         pi_net = Cos()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x)
         context.set_context(mode=context.PYNATIVE_MODE)
         input_grad_pijit = self.grad_mindspore_dynamic_shape_impl(pi_net)
 

@@ -85,7 +85,7 @@ class CtrlWhileCast(Cell):
         return loop
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_break_cast():
@@ -114,7 +114,7 @@ class CtrlOnceBreak(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_once_break():
@@ -143,7 +143,7 @@ class CtrlWhileBreakInIf(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_break_in_if():
@@ -173,7 +173,7 @@ class CtrlWhileBreakInElif(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_break_in_elif():
@@ -204,7 +204,7 @@ class CtrlElifTwoBreak(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_elif_two_break():
@@ -236,7 +236,7 @@ class CtrlElifBreakOnce(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_once_elif_break():
@@ -269,7 +269,7 @@ class CtrlIfBreakElse(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_else_break_in_if():
@@ -304,7 +304,7 @@ class CtrlWhileElseBreakInElif(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_else_elif_break():
@@ -344,7 +344,7 @@ class CtrlWhileBreakInIfElif(Cell):
         return self.square(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_break_func():
@@ -379,7 +379,7 @@ class CtrlWhile2ElifBreakInElif(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_break_func2():
@@ -415,7 +415,7 @@ class CtrlWhile2ElifBreakInElse(Cell):
         return t
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_break_in_else():
@@ -452,7 +452,7 @@ class CtrlWhile2ElifBInIfElif(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_break_in_ifelif():
@@ -488,7 +488,7 @@ class CtrlWhile2ElifBreakIfElif(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_break_in_if_elif_usef():
@@ -524,7 +524,7 @@ class CtrlWhile2ElifBreakInIfElse(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_break_in_if_else():
@@ -533,10 +533,11 @@ def test_control_flow_while_2elif_break_in_if_else():
     break in if and else, assign parameter
     Expectation: No exception.
     '''
+    t = 4
     x = -4
     fact = CtrlFactory(x)
-    ps_net = CtrlWhile2ElifBreakInIfElse()
-    pi_net = CtrlWhile2ElifBreakInIfElse()
+    ps_net = CtrlWhile2ElifBreakInIfElse(t)
+    pi_net = CtrlWhile2ElifBreakInIfElse(t)
     fact.compare(ps_net, pi_net)
 
 
@@ -559,7 +560,7 @@ class CtrlWhile2ElifBreakInElifElse(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_break_in_if_else2():

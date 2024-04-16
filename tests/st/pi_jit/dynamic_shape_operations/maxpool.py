@@ -35,23 +35,23 @@ class DynamicRankMaxPoolMock():
         self.pad_mode = pad_mode
         self.loss = loss
         self.out_grad_np = None
+        self.input_me_x = Tensor(self.input_x)
+        self.input_me_indices = Tensor(self.indices, mindspore.int64)
 
     def forward_mindspore_impl(self, net):
-        input_me_x = Tensor(self.input_x)
-        input_me_indices = Tensor(self.indices, mindspore.int64)
-        tmp_input = Tensor(shape=[None for _ in input_me_x.shape], dtype=input_me_x.dtype)
-        net.set_inputs(tmp_input, input_me_indices)
-        out = net(input_me_x, input_me_indices)
+        tmp_input = Tensor(shape=[None for _ in self.input_me_x.shape], dtype=self.input_me_x.dtype)
+        net.set_inputs(tmp_input, self.input_me_indices)
+        out = net(self.input_me_x, self.input_me_indices)
         return out.asnumpy()
 
 
     def forward_cmp(self):
         ps_net = DynamicRankMaxPoolNet(self.pad_mode, self.ksize, self.stride, self.data_format)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_me_x, self.input_me_indices)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_impl(ps_net)
         pi_net = DynamicRankMaxPoolNet(self.pad_mode, self.ksize, self.stride, self.data_format)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_me_x, self.input_me_indices)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_impl(pi_net)
         allclose_nparray(out_pijit, out_psjit, self.loss, self.loss)
@@ -61,23 +61,21 @@ class DynamicRankMaxPoolMock():
             self.out_grad_np = self.out_grad_np.transpose(0, 3, 1, 2)
         grad_net = GradOfFirstInput(net)
         grad_net.set_train()
-        input_me_x = Tensor(self.input_x)
-        input_me_indices = Tensor(self.indices, mindspore.int32)
-        grad_input0 = Tensor(shape=[None for _ in input_me_x.shape], dtype=input_me_x.dtype)
+        grad_input0 = Tensor(shape=[None for _ in self.input_me_x.shape], dtype=self.input_me_x.dtype)
         grad_input1 = Tensor(shape=[None for _ in Tensor(self.out_grad_np).shape],
                              dtype=input_me_x.dtype)
-        grad_net.set_inputs(grad_input0, input_me_indices, grad_input1)
-        input_grad = grad_net(input_me_x, input_me_indices, Tensor(self.out_grad_np))
+        grad_net.set_inputs(grad_input0, self.input_me_indices, grad_input1)
+        input_grad = grad_net(self.input_me_x, self.input_me_indices, Tensor(self.out_grad_np))
         return input_grad.asnumpy()
 
 
     def grad_cmp(self):
         ps_net = DynamicRankMaxPoolNet(self.pad_mode, self.ksize, self.stride, self.data_format)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_me_x, self.input_me_indices)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.grad_mindspore_impl(ps_net)
         pi_net = DynamicRankMaxPoolNet(self.pad_mode, self.ksize, self.stride, self.data_format)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_me_x, self.input_me_indices)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.grad_mindspore_impl(pi_net)
 

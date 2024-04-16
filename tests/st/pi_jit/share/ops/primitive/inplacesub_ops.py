@@ -30,26 +30,24 @@ class InplaceSubFactory():
             self.loss = 1e-5
         else:
             self.loss = 0
+        self.input_x_me = Tensor(self.input_x_np)
+        self.input_v_me = Tensor(self.input_v_np)
 
     def forward_mindspore_impl(self, net):
-        input_x_np = Tensor(self.input_x_np)
-        input_v_np = Tensor(self.input_v_np)
-        out = net(input_x_np, input_v_np)
+        out = net(self.input_x_me, self.input_v_me)
         return out.asnumpy()
 
     def forward_mindspore_func_impl(self):
-        input_x_me = Tensor(self.input_x_np)
-        input_v_me = Tensor(self.input_v_np)
-        out = ops.inplace_sub(input_x_me, input_v_me, self.indices)
+        out = ops.inplace_sub(self.input_x_me, self.input_v_me, self.indices)
         return out.asnumpy()
 
     def forward_cmp(self):
         ps_net = InplaceSub(self.indices)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x_me, self.input_v_me)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_impl(ps_net)
         pi_net = InplaceSub(self.indices)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x_me, self.input_v_me)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_impl(pi_net)
 
@@ -64,16 +62,16 @@ class InplaceSubFactory():
         input_x_dyn = Tensor(shape=[None for _ in self.input_x_np.shape], dtype=Tensor(self.input_x_np).dtype)
         input_v_dyn = Tensor(shape=[None for _ in self.input_v_np.shape], dtype=Tensor(self.input_v_np).dtype)
         net.set_inputs(input_x_dyn, input_v_dyn)
-        out = net(Tensor(self.input_x_np), Tensor(self.input_v_np))
+        out = net(self.input_x_me, self.input_v_me)
         return out.asnumpy()
 
     def forward_dynamic_shape_cmp(self):
         ps_net = InplaceSub(self.indices)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x_me, self.input_v_me)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_dynamic_shape_impl(ps_net)
         pi_net = InplaceSub(self.indices)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x_me, self.input_v_me)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_dynamic_shape_impl(pi_net)
 

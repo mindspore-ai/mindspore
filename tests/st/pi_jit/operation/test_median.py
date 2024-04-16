@@ -20,7 +20,7 @@ def test_p_median_input_1d_fp32():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_input_4d_int16():
@@ -35,7 +35,7 @@ def test_p_median_input_4d_int16():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_input_3d_int32():
@@ -50,7 +50,7 @@ def test_p_median_input_3d_int32():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_input_5d_int64():
@@ -65,7 +65,7 @@ def test_p_median_input_5d_int64():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_input_6d_fp32():
@@ -80,7 +80,7 @@ def test_p_median_input_6d_fp32():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_input_7d_fp64():
@@ -95,7 +95,7 @@ def test_p_median_input_7d_fp64():
     fact.grad_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_abnormal_axis_left_out_bound():
@@ -110,7 +110,7 @@ def test_p_median_abnormal_axis_left_out_bound():
         fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_abnormal_axis_right_out_bound():
@@ -126,7 +126,7 @@ def test_p_median_abnormal_axis_right_out_bound():
         fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_abnormal_axis_float():
@@ -142,7 +142,7 @@ def test_p_median_abnormal_axis_float():
         fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_abnormal_keepdims_not_bool():
@@ -158,7 +158,7 @@ def test_p_median_abnormal_keepdims_not_bool():
         fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_globalmedian_true_axis_default():
@@ -173,7 +173,7 @@ def test_p_median_globalmedian_true_axis_default():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_median_input_same_value():
@@ -184,11 +184,11 @@ def test_p_median_input_same_value():
     """
     x = np.array([[2, 2, 2, 2], [2, 2, 2, 2]]).astype(np.float32)
     ps_net = Median(global_median=False, axis=1, keep_dims=True)
-    jit(ps_net.construct, mode="PSJit")
+    jit(ps_net.construct, mode="PSJit")(Tensor(x))
     context.set_context(mode=context.GRAPH_MODE)
     y_psjit, _ = ps_net(Tensor(x))
     pi_net = Median(global_median=False, axis=1, keep_dims=True)
-    jit(ps_net.construct, mode="PIJit")
+    jit(ps_net.construct, mode="PIJit")(Tensor(x))
     context.set_context(mode=context.PYNATIVE_MODE)
     y_pijit, _ = pi_net(Tensor(x))
     assert np.allclose(y_psjit.asnumpy(), y_pijit.asnumpy(), 0.0001, 0.0001)

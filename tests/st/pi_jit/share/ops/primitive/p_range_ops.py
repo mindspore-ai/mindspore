@@ -31,22 +31,22 @@ class OpsRangeFactory():
             self.loss = 1e-5
         else:
             self.loss = 0
+        self.start_ms = Tensor(self.start, self.input_dtype)
+        self.limit_ms = Tensor(self.limit, self.input_dtype)
+        self.delta_ms = Tensor(self.delta, self.input_dtype)
 
     def forward_mindspore_impl(self, net):
-        start = Tensor(self.start, self.input_dtype)
-        limit = Tensor(self.limit, self.input_dtype)
-        delta = Tensor(self.delta, self.input_dtype)
-        out = net(start, limit, delta)
+        out = net(self.start_ms, self.limit_ms, self.delta_ms)
         return out.asnumpy()
 
 
     def forward_cmp(self):
         ps_net = Range0(self.maxlen)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.start_ms, self.limit_ms, self.delta_ms)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_impl(ps_net)
         pi_net = Range0(self.maxlen)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.start_ms, self.limit_ms, self.delta_ms)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_impl(pi_net)
         allclose_nparray(out_pijit, out_psjit, self.loss, self.loss)
@@ -56,13 +56,10 @@ class OpsRangeFactory():
         if self.out_grad_np is None:
             out = self.forward_mindspore_impl(net)
             self.out_grad_np = np.random.randn(*list(out.shape)).astype(out.dtype)
-        start = Tensor(self.start, self.input_dtype)
-        limit = Tensor(self.limit, self.input_dtype)
-        delta = Tensor(self.delta, self.input_dtype)
         net = Range0(self.maxlen)
         grad_net = GradOfAllInputs(net)
         grad_net.set_train()
-        input_grad = grad_net(start, limit, delta, Tensor(self.out_grad_np))
+        input_grad = grad_net(self.start_ms, self.limit_ms, self.delta_ms, Tensor(self.out_grad_np))
         return input_grad[0].asnumpy()
 
 

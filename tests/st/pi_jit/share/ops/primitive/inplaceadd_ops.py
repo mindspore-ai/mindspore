@@ -28,20 +28,20 @@ class InplaceAddFactory():
             self.loss = 1e-5
         else:
             self.loss = 0
+        self.input_x_me = Tensor(self.input_x_np)
+        self.input_v_me = Tensor(self.input_v_np)
 
     def forward_mindspore_impl(self, net):
-        input_x_me = Tensor(self.input_x_np)
-        input_v_me = Tensor(self.input_v_np)
-        out = net(input_x_me, input_v_me)
+        out = net(self.input_x_me, self.input_v_me)
         return out.asnumpy()
 
     def forward_cmp(self):
         ps_net = InplaceAdd(self.indices)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x_me, self.input_v_me)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_impl(ps_net)
         pi_net = InplaceAdd(self.indices)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x_me, self.input_v_me)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_impl(pi_net)
 

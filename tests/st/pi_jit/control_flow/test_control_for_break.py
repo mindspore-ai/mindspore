@@ -23,7 +23,7 @@ class CtrlForBreakRange1(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_1_10_3_break():
@@ -34,12 +34,12 @@ def test_control_flow_for_range_1_10_3_break():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForBreakRange1.construct, mode="PSJit")
     ps_net = CtrlForBreakRange1()
+    jit(fn=CtrlForBreakRange1.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForBreakRange1.construct, mode="PIJit")
     pi_net = CtrlForBreakRange1()
+    jit(fn=CtrlForBreakRange1.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -58,7 +58,7 @@ class CtrlForBreakRange2(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_4_n8_n4_break():
@@ -69,12 +69,12 @@ def test_control_flow_for_range_4_n8_n4_break():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForBreakRange2.construct, mode="PSJit")
     ps_net = CtrlForBreakRange2()
+    jit(fn=CtrlForBreakRange2.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForBreakRange2.construct, mode="PIJit")
     pi_net = CtrlForBreakRange2()
+    jit(fn=CtrlForBreakRange2.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -93,7 +93,7 @@ class CtrlForBreakRange3(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_n5_5_2_break():
@@ -104,12 +104,12 @@ def test_control_flow_for_range_n5_5_2_break():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForBreakRange3.construct, mode="PSJit")
     ps_net = CtrlForBreakRange3()
+    jit(fn=CtrlForBreakRange3.construct, mode="PSJit")(ps_net, x) 
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForBreakRange3.construct, mode="PIJit")
     pi_net = CtrlForBreakRange3()
+    jit(fn=CtrlForBreakRange3.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -128,7 +128,7 @@ class CtrlForBreakRange4(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_n2_n8_n2_break():
@@ -139,12 +139,12 @@ def test_control_flow_for_range_n2_n8_n2_break():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForBreakRange4.construct, mode="PSJit")
     ps_net = CtrlForBreakRange4()
+    jit(fn=CtrlForBreakRange4.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForBreakRange4.construct, mode="PIJit")
     pi_net = CtrlForBreakRange4()
+    jit(fn=CtrlForBreakRange4.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -168,7 +168,7 @@ class CtrlForEnumerateIfBreak(Cell):
         return out
 
 
-@pytest.mark.level7
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_enumerate_if_break():
@@ -182,12 +182,12 @@ def test_control_flow_for_enumerate_if_break():
     t3 = 3
     x = Tensor([4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForBreakRange4.construct, mode="PSJit")
     ps_net = CtrlForEnumerateIfBreak(t1, t2, t3)
+    jit(fn=CtrlForBreakRange4.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForEnumerateIfBreak.construct, mode="PIJit")
     pi_net = CtrlForEnumerateIfBreak(t1, t2, t3)
+    jit(fn=CtrlForEnumerateIfBreak.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -215,7 +215,7 @@ class CtrlForBreakElifElse(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_break_in_elif_else():
@@ -226,11 +226,11 @@ def test_control_flow_for_break_in_elif_else():
     """
     x = Tensor([0.5], ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForBreakElifElse.construct, mode="PSJit")
     ps_net = CtrlForBreakElifElse()
+    jit(fn=CtrlForBreakElifElse.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForBreakElifElse.construct, mode="PIJit")
     pi_net = CtrlForBreakElifElse()
+    jit(fn=CtrlForBreakElifElse.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)

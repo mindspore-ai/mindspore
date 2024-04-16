@@ -34,7 +34,7 @@ class AbsFactory():
 
     def forward_mindspore_impl(self):
         pi_net = Abs()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input)
         context.set_context(mode=context.PYNATIVE_MODE)
         pi_out = pi_net(self.input)
         return pi_out.asnumpy()
@@ -42,7 +42,7 @@ class AbsFactory():
     def forward_mindspore_dynamic_shape_impl(self):
         input_ms = Tensor(self.input_np)
         pi_net = Abs()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input)
         context.set_context(mode=context.PYNATIVE_MODE)
         input_dyn = Tensor(shape=[None for _ in input_ms.shape], dtype=input_ms.dtype)
         pi_net.set_inputs(input_dyn)
@@ -86,22 +86,22 @@ class AbsFactory():
 
     def grad_cmp(self):
         ps_net = Abs()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input)
         context.set_context(mode=context.GRAPH_MODE)
         input_grad_psjit = self.grad_mindspore_impl(ps_net)
         pi_net = Abs()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input)
         context.set_context(mode=context.PYNATIVE_MODE)
         input_grad_pijit = self.grad_mindspore_impl(pi_net)
         allclose_nparray(input_grad_pijit, input_grad_psjit, self.loss, self.loss)
 
     def grad_dynamic_shape_cmp(self):
         ps_net = Abs()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input)
         context.set_context(mode=context.GRAPH_MODE)
         input_grad_psjit = self.grad_mindspore_dynamic_shape_impl(ps_net)
         pi_net = Abs()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input)
         context.set_context(mode=context.PYNATIVE_MODE)
         input_grad_pijit = self.grad_mindspore_dynamic_shape_impl(pi_net)
         allclose_nparray(input_grad_pijit, input_grad_psjit, self.loss, self.loss)

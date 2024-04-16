@@ -46,11 +46,11 @@ class CosDynamicShapeFactory():
 
     def forward_cmp(self):
         ps_net = CosDynamicShapeNetMS()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x, self.indices)
         context.set_context(mode=context.GRAPH_MODE)
         out_ps = self.forward_mindspore_impl(ps_net)
         pi_net = CosDynamicShapeNetMS()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x, self.indices)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pi = self.forward_mindspore_impl(pi_net)
         allclose_nparray(out_pi, out_ps, self.loss, self.loss)
@@ -69,11 +69,11 @@ class CosDynamicShapeFactory():
 
     def grad_cmp(self):
         ps_net = CosDynamicShapeNetMS()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x, self.indices)
         context.set_context(mode=context.GRAPH_MODE)
         out_ps = self.grad_mindspore_impl(ps_net)
         pi_net = CosDynamicShapeNetMS()
-        jit(pi_net.construct, mode="PSJit")
+        jit(pi_net.construct, mode="PSJit")(self.input_x, self.indices)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pi = self.grad_mindspore_impl(pi_net)
         allclose_nparray(out_pi.asnumpy(), out_ps.asnumpy(), self.loss, self.loss)

@@ -25,7 +25,7 @@ class CtrlWhileIfContinue(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_if_continue_not_relevant_gt():
@@ -115,7 +115,7 @@ class CtrlWhileContinueInIf(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_continue_in_if():
@@ -145,7 +145,7 @@ class CtrlWhileContinueInElif(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_continue_in_elif():
@@ -181,7 +181,7 @@ class CtrlElifTwoContinue(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_elif_two_continue():
@@ -213,7 +213,7 @@ class CtrlElifContinueOnce(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_once_elif_continue():
@@ -281,7 +281,7 @@ class CtrlWhileElseContinueInElif(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_else_elif_continue():
@@ -318,7 +318,7 @@ class CtrlWhileContinueInIfElse(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_continue_in_if_else():
@@ -353,7 +353,7 @@ class CtrlWhileContinueInElifElse(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_continue_in_elif_else():
@@ -390,7 +390,7 @@ class CtrlWhile2ElifContinueInElif(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_continue_in_elif_else2():
@@ -427,7 +427,7 @@ class CtrlWhile2ElifContinueInElse(Cell):
         return t
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_continue_in_else():
@@ -464,7 +464,7 @@ class CtrlWhile2ElifBInIfElif(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_continue_in_ifelif():
@@ -502,7 +502,7 @@ class CtrlWhile2ElifContinueIfElif(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_continue_in_if_elif_usef():
@@ -537,7 +537,7 @@ class CtrlWhile2ElifContinueInElifElse(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2elif_continue_in_elif_else():
@@ -575,7 +575,7 @@ class CtrlWhile2IfContinueTwo(Cell):
 
 
 @pytest.mark.skip(reason="ata_expected = array(4, data_me = array(2.6165862), result match error")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_2if_continue_second():

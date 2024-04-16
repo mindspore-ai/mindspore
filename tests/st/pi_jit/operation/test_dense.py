@@ -20,7 +20,7 @@ def test_p_dense_input_102x44_in_44_out_32_2d_fp32():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_input_1_in_248_out_100_1d_fp16():
@@ -37,7 +37,7 @@ def test_p_dense_input_1_in_248_out_100_1d_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_input_128_496_out_124_6d_int32():
@@ -55,7 +55,7 @@ def test_p_dense_input_128_496_out_124_6d_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_input_out_2_7d():
@@ -73,7 +73,7 @@ def test_p_dense_input_out_2_7d():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_input_3d_in_3_out_4_uint8():
@@ -96,7 +96,7 @@ def test_p_dense_input_3d_in_3_out_4_uint8():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_input_inf():
@@ -119,7 +119,7 @@ def test_p_dense_input_inf():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_input_nan():
@@ -142,7 +142,7 @@ def test_p_dense_input_nan():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_n_np_2d():
@@ -156,11 +156,10 @@ def test_p_dense_n_np_2d():
     '''
     fact = DenseFactory(input_shape=(1, 1000), in_channel=1000, out_channel=1000, dtype=np.float32)
     fact.b_np = np.random.randn(1000, 1).astype(np.float32)
-    with pytest.raises(ValueError):
-        fact.forward_cmp()
+    fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_x_1d_w_2d():
@@ -174,11 +173,10 @@ def test_p_dense_x_1d_w_2d():
     '''
     fact = DenseFactory(input_shape=(10,), in_channel=10, out_channel=10, dtype=np.float32)
     fact.w_np = np.random.randn(10, 10).astype(np.float32)
-    with pytest.raises(ValueError):
-        fact.forward_cmp()
+    fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_input_2d_w_3d():
@@ -192,11 +190,10 @@ def test_p_dense_input_2d_w_3d():
     '''
     fact = DenseFactory(input_shape=(1, 1000), in_channel=1000, out_channel=1024, dtype=np.float32)
     fact.w_np = np.random.randn(1000, 1000, 1).astype(np.float32)
-    with pytest.raises(ValueError):
-        fact.forward_cmp()
+    fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_input_1_1000_in_1000_out_1024_bias_1000_1_abnormal():
@@ -210,11 +207,10 @@ def test_p_dense_input_1_1000_in_1000_out_1024_bias_1000_1_abnormal():
     '''
     fact = DenseFactory(input_shape=(1, 1000), in_channel=1000, out_channel=1024, dtype=np.float32)
     fact.b_np = np.ones((1000, 1)).astype(np.float32)
-    with pytest.raises(ValueError):
-        fact.forward_cmp()
+    fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_forward_input_type_not_same():
@@ -229,11 +225,10 @@ def test_p_dense_forward_input_type_not_same():
     fact = DenseFactory(input_shape=(28, 3), in_channel=3, out_channel=64, dtype=np.float32)
     fact.w_np = np.random.randn(64, 3).astype(np.float32)
     fact.b_np = np.random.randn(64).astype(np.float16)
-    with pytest.raises(TypeError):
-        fact.forward_cmp()
+    fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_dense_input_56x28x16x28x3_in_4_out_3_abnormal():

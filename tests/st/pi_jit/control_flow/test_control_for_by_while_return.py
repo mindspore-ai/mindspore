@@ -37,12 +37,12 @@ def test_control_flow_for_while_return_in_for_x():
     """
     x = Tensor([7], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForReturnWhileX.construct, mode="PSJit")
     ps_net = CtrlForReturnWhileX()
+    jit(fn=CtrlForReturnWhileX.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForReturnWhileX.construct, mode="PIJit")
     pi_net = CtrlForReturnWhileX()
+    jit(fn=CtrlForReturnWhileX.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -75,12 +75,12 @@ def test_control_flow_for_while_return_in_for():
     """
     x = Tensor([3], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForReturnWhile.construct, mode="PSJit")
     ps_net = CtrlForReturnWhile()
+    jit(fn=CtrlForReturnWhile.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForReturnWhile.construct, mode="PIJit")
     pi_net = CtrlForReturnWhile()
+    jit(fn=CtrlForReturnWhile.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -102,7 +102,7 @@ class CtrlForWhileReturnOne(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_param_return_in_for():
@@ -114,12 +114,12 @@ def test_control_flow_while_for_param_return_in_for():
     t = 2
     x = Tensor([-2], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileReturnOne.construct, mode="PSJit")
     ps_net = CtrlForWhileReturnOne(t)
+    jit(fn=CtrlForWhileReturnOne.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileReturnOne.construct, mode="PIJit")
     pi_net = CtrlForWhileReturnOne(t)
+    jit(fn=CtrlForWhileReturnOne.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -142,7 +142,7 @@ class CtrlForWhileReturnAdd(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_by_while_return_no_param():
@@ -153,12 +153,12 @@ def test_control_flow_for_by_while_return_no_param():
     """
     x = Tensor([-2], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileReturnAdd.construct, mode="PSJit")
     ps_net = CtrlForWhileReturnAdd()
+    jit(fn=CtrlForWhileReturnAdd.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileReturnAdd.construct, mode="PIJit")
     pi_net = CtrlForWhileReturnAdd()
+    jit(fn=CtrlForWhileReturnAdd.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -181,7 +181,7 @@ class CtrlForWhileReturnX(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_by_while_return_in_while_x():
@@ -192,12 +192,12 @@ def test_control_flow_for_by_while_return_in_while_x():
     """
     x = Tensor([3], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileReturnX.construct, mode="PSJit")
     ps_net = CtrlForWhileReturnX()
+    jit(fn=CtrlForWhileReturnX.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileReturnX.construct, mode="PIJit")
     pi_net = CtrlForWhileReturnX()
+    jit(fn=CtrlForWhileReturnX.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -219,7 +219,7 @@ class CtrlForWhileReturn(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_while_return_in_while():
@@ -230,12 +230,12 @@ def test_control_flow_for_while_return_in_while():
     """
     x = Tensor([5], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileReturn.construct, mode="PSJit")
     ps_net = CtrlForWhileReturn()
+    jit(fn=CtrlForWhileReturn.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileReturn.construct, mode="PIJit")
     pi_net = CtrlForWhileReturn()
+    jit(fn=CtrlForWhileReturn.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -258,7 +258,7 @@ class CtrlForWhileReturnP(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_while_return_in_while_param():
@@ -270,12 +270,12 @@ def test_control_flow_for_while_return_in_while_param():
     x = Tensor([1], ms.int32)
     t = -4
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileReturnP.construct, mode="PSJit")
     ps_net = CtrlForWhileReturnP(t)
+    jit(fn=CtrlForWhileReturnP.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileReturnP.construct, mode="PIJit")
     pi_net = CtrlForWhileReturnP(t)
+    jit(fn=CtrlForWhileReturnP.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -297,7 +297,7 @@ class CtrlForWhileReturnN(Cell):
         return x
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_while_return_in_while_no():
@@ -308,11 +308,11 @@ def test_control_flow_for_while_return_in_while_no():
     """
     x = Tensor([-3], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileReturnN.construct, mode="PSJit")
     ps_net = CtrlForWhileReturnN()
+    jit(fn=CtrlForWhileReturnN.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileReturnN.construct, mode="PIJit")
     pi_net = CtrlForWhileReturnN()
+    jit(fn=CtrlForWhileReturnN.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)

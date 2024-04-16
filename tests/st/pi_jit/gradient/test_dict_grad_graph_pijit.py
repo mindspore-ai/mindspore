@@ -23,7 +23,7 @@ from mindspore import Tensor, jit
 from mindspore import dtype as mstype
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_backward_return_dict():
@@ -64,7 +64,7 @@ def test_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_forward_contain_make_dict_and_dict_getitem():
@@ -105,7 +105,7 @@ def test_forward_contain_make_dict_and_dict_getitem():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_forward_return_dict():
@@ -145,7 +145,7 @@ def test_forward_return_dict():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_forward_return_dict_backward_return_dict():
@@ -187,7 +187,7 @@ def test_forward_return_dict_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
@@ -230,7 +230,7 @@ def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict1():
@@ -274,7 +274,7 @@ def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict1():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict2():

@@ -16,7 +16,7 @@ def test_p_range_input_start_1_limit_5_delta_2_max_50_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_limit_100_delta_2_max_200_fp32():
@@ -29,7 +29,7 @@ def test_p_range_input_limit_100_delta_2_max_200_fp32():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_start_320_limit_1000_delta_032_max_2500_fp32():
@@ -42,7 +42,7 @@ def test_p_range_input_start_320_limit_1000_delta_032_max_2500_fp32():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_start_neg_int32():
@@ -55,7 +55,7 @@ def test_p_range_input_start_neg_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_start_neg_fp32():
@@ -68,7 +68,7 @@ def test_p_range_input_start_neg_fp32():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_limit_neg_int32():
@@ -81,7 +81,7 @@ def test_p_range_input_limit_neg_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_maxlen_10000000_int32():
@@ -94,7 +94,7 @@ def test_p_range_input_maxlen_10000000_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_maxlen_10000000_float32():
@@ -107,7 +107,7 @@ def test_p_range_input_maxlen_10000000_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_limit_0_int32():
@@ -120,7 +120,7 @@ def test_p_range_input_limit_0_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_start_1_limit_5_delta_2_max_50_int64():
@@ -133,7 +133,7 @@ def test_p_range_input_start_1_limit_5_delta_2_max_50_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_limit_100_delta_2_max_200_fp64():
@@ -146,7 +146,7 @@ def test_p_range_input_limit_100_delta_2_max_200_fp64():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_start_320_limit_1000_delta_032_max_2500_fp64():
@@ -159,7 +159,7 @@ def test_p_range_input_start_320_limit_1000_delta_032_max_2500_fp64():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_start_neg_int64():
@@ -172,7 +172,7 @@ def test_p_range_input_start_neg_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_start_neg_fp64():
@@ -185,7 +185,7 @@ def test_p_range_input_start_neg_fp64():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_limit_neg_int64():
@@ -198,7 +198,7 @@ def test_p_range_input_limit_neg_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_maxlen_10000000_int64():
@@ -211,7 +211,7 @@ def test_p_range_input_maxlen_10000000_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_range_input_maxlen_10000000_float64():

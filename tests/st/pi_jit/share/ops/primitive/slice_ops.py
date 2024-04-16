@@ -45,38 +45,37 @@ class SliceFactory():
         self.begin = begin
         self.size = size
         self.output_grad_np = None
+        self.input_ms = Tensor(self.input_np)
 
     def forward_mindspore_impl(self, net):
-        input_me = Tensor(self.input_np)
-        out = net(input_me)
+        out = net(self.input_ms)
         return out.asnumpy()
 
     def forward_mindspore_dynamic_shape_impl(self, ms_net):
-        input_ms = Tensor(self.input_np)
-        input_dyn = Tensor(shape=[None for _ in input_ms.shape], dtype=input_ms.dtype)
+        input_dyn = Tensor(shape=[None for _ in self.input_ms.shape], dtype=self.input_ms.dtype)
         ms_net.set_inputs(input_dyn)
-        out_ms = ms_net(input_ms)
+        out_ms = ms_net(self.input_ms)
 
         return out_ms.asnumpy()
 
     def forward_cmp(self):
         ps_net = Slice(self.begin, self.size)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_ms)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_impl(ps_net)
         pi_net = Slice(self.begin, self.size)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_ms)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_impl(pi_net)
         allclose_nparray(out_pijit, out_psjit, self.loss, self.loss)
 
     def forward_dynamic_shape_cmp(self):
         ps_net = Slice(self.begin, self.size)
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_ms)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_dynamic_shape_impl(ps_net)
         pi_net = Slice(self.begin, self.size)
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_ms)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_dynamic_shape_impl(pi_net)
         allclose_nparray(out_pijit, out_psjit, self.loss, self.loss)

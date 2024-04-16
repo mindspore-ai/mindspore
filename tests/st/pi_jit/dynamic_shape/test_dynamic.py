@@ -7,14 +7,14 @@ from mindspore.common import Tensor
 import numpy as np
 import pytest
 
-update_pijit_default_config(print_after_all=True)
+
 class DynamicFactory:
     def __init__(self, ps_net):
         self.ps_net = ps_net
 
     def forward_cmp(self, inputs):
-        context.set_context(mode=context.PYNATIVE_MODE, save_graphs=True, save_graphs_path="./ir")
-        jit(fn=self.ps_net.construct, mode="PIJit")
+        context.set_context(mode=context.PYNATIVE_MODE)
+        jit(fn=self.ps_net.construct, mode="PIJit")(inputs)
         self.ps_net(inputs)
 
 class Net7(Cell):
