@@ -2066,7 +2066,7 @@ std::vector<std::pair<CNodePtr,CNodePtr>> GPTO(const FuncGraphPtr &graph) {
 	MS_LOG(INFO) << "End Memory Lower Bound";
 
   std::vector<std::pair<TaskId, TaskId>> dependencies;
-  if (common::GetEnv("MS_ENABLE_GPTO_EVENTS") != "1") {
+  if (common::GetEnv("MS_ENABLE_GPTO") != "1") {
     dependencies = gpto::ScheduleToDependencies(scheduling_output);
     gpto::AddRealDependencies(manager, cnode_vec, dependencies, &cnode_to_task);
     graph->cast<KernelGraphPtr>()->SetExecOrderByDefault();
