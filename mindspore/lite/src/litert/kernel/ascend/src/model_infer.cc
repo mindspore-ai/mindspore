@@ -51,15 +51,15 @@ STATUS ModelInfer::Init() {
     MS_LOG(ERROR) << "Acl init failed.";
     return lite::RET_ERROR;
   }
-  int32_t device_id = options_.device_id;
-  aclError ret = CALL_ASCEND_API(aclrtSetDevice, device_id);
+  device_id_ = options_.device_id;
+  aclError ret = CALL_ASCEND_API(aclrtSetDevice, device_id_);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Acl open device " << device_id << " failed, ret " << ret;
+    MS_LOG(ERROR) << "Acl open device " << device_id_ << " failed, ret " << ret;
     return lite::RET_ERROR;
   }
-  MS_LOG(INFO) << "Open device " << device_id << " success.";
+  MS_LOG(INFO) << "Open device " << device_id_ << " success.";
 
-  ret = CALL_ASCEND_API(aclrtCreateContext, &context_, device_id);
+  ret = CALL_ASCEND_API(aclrtCreateContext, &context_, device_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl create context failed, ret " << ret;
     return lite::RET_ERROR;
