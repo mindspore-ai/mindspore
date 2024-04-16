@@ -28,6 +28,9 @@ class DenseFactory():
         else:
             self.w_np = np.random.randn(self.x_np.shape[0]).astype(dtype)
             self.b_np = np.array(np.random.randn()).astype(dtype)
+        self.x_ms = Tensor(self.x_np)
+        self.w_ms = Tensor(self.w_np)
+        self.b_ms = Tensor(self.b_np) if self.b_np is not None else None
         self.output_grad_np = None
         if self.dtype == np.float16:
             self.loss = 1e-3
@@ -39,16 +42,10 @@ class DenseFactory():
             self.loss = 0
 
     def forward_mindspore_impl(self, net):
-        x_ms = Tensor(self.x_np)
-        w_ms = Tensor(self.w_np)
-        b_ms = Tensor(self.b_np) if self.b_np is not None else None
-        out = net(x_ms, w_ms, b_ms)
+        out = net(self.x_ms, self.w_ms, self.b_ms)
         return out.asnumpy()
 
     def grad_mindspore_impl(self, net):
-        x_ms = Tensor(self.x_np)
-        w_ms = Tensor(self.w_np)
-        b_ms = Tensor(self.b_np) if self.b_np is not None else None
         if self.output_grad_np is None:
             out = self.forward_mindspore_impl(net)
             sens = np.random.randn(*list(out.shape))
@@ -56,9 +53,9 @@ class DenseFactory():
         output_grad = Tensor(self.output_grad_np.astype(dtype=self.dtype))
         grad_net = GradOfAllInputsAndParams(net)
         grad_net.set_train()
-        input_grad = grad_net(x_ms, w_ms, b_ms, output_grad)
+        input_grad = grad_net(self.x_ms, self.w_ms, self.b_ms, output_grad)
 
-        if b_ms is not None:
+        if self.b_ms is not None:
             return input_grad[0][0].asnumpy(), input_grad[0][1].asnumpy(), input_grad[0][2].asnumpy()
         return input_grad[0][0].asnumpy(), input_grad[0][1].asnumpy()
 
@@ -68,22 +65,22 @@ class DenseFactory():
         elif self.dtype == np.float32:
             self.loss *= 10  # 累加次数达到200000+，ccb结论放宽精度标准
         ps_net = Dense()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.x_ms, self.w_ms, self.b_ms)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_impl(ps_net)
         pi_net = Dense()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.x_ms, self.w_ms, self.b_ms)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_impl(pi_net)
         allclose_nparray(out_pijit, out_psjit, self.loss, self.loss)
 
     def grad_cmp(self):
         ps_net = Dense()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.x_ms, self.w_ms, self.b_ms)
         context.set_context(mode=context.GRAPH_MODE)
         input_grad_psjit = self.grad_mindspore_impl(ps_net)
         pi_net = Dense()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.x_ms, self.w_ms, self.b_ms)
         context.set_context(mode=context.PYNATIVE_MODE)
         input_grad_pijit = self.grad_mindspore_impl(pi_net)
         allclose_nparray(input_grad_pijit[0], input_grad_psjit[0], self.loss, self.loss)

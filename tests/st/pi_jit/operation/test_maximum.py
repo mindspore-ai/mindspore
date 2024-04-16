@@ -6,7 +6,7 @@ from ..share.ops.primitive.maximum_ops import Maximum
 from mindspore import Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_input_512x1_512x1():
@@ -21,7 +21,7 @@ def test_p_maximum_input_512x1_512x1():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_input_2x2_2x2():
@@ -36,7 +36,7 @@ def test_p_maximum_input_2x2_2x2():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_input_3x3x3x3_3x3x3x3():
@@ -51,7 +51,7 @@ def test_p_maximum_input_3x3x3x3_3x3x3x3():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_input_5d():
@@ -66,7 +66,7 @@ def test_p_maximum_input_5d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_input_6d():
@@ -81,7 +81,7 @@ def test_p_maximum_input_6d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_input_3dtensor_scalar_scalar():
@@ -96,7 +96,7 @@ def test_p_maximum_input_3dtensor_scalar_scalar():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_input_scalar_3dtensor_scalar():
@@ -111,7 +111,7 @@ def test_p_maximum_input_scalar_3dtensor_scalar():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_forward_input_1dtensor_2dtensor():
@@ -127,7 +127,7 @@ def test_p_maximum_forward_input_1dtensor_2dtensor():
         fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_forward_input_32x128x1024_1():
@@ -142,7 +142,7 @@ def test_p_maximum_forward_input_32x128x1024_1():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_input_tensor_bool_tensor_int32():
@@ -159,7 +159,7 @@ def test_p_maximum_input_tensor_bool_tensor_int32():
     assert out_me.asnumpy().all() == out_np.all()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_input_randn_512x1_512x1_int32():
@@ -174,7 +174,7 @@ def test_p_maximum_input_randn_512x1_512x1_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maximum_input_randint_8x1_8x1_int32():

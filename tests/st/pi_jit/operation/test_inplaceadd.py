@@ -18,7 +18,7 @@ def test_p_inplaceadd_input_3d_all():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_inplaceadd_input_3d_indices_int():
@@ -32,7 +32,7 @@ def test_p_inplaceadd_input_3d_indices_int():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_inplaceadd_input_4d_indices_all():
@@ -47,7 +47,7 @@ def test_p_inplaceadd_input_4d_indices_all():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_inplaceadd_input_5d_7d():
@@ -69,7 +69,7 @@ def test_p_inplaceadd_input_5d_7d():
                              dtype1=np.float64, dtype2=np.float64)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_inplaceadd_input_1d():
@@ -83,7 +83,7 @@ def test_p_inplaceadd_input_1d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_inplaceadd_indices_repeat():

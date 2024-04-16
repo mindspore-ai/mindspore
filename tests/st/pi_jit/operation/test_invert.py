@@ -31,7 +31,7 @@ def test_p_invert_input_256x256():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_128x8x1():
@@ -45,7 +45,7 @@ def test_p_invert_input_128x8x1():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_32x16x8x4():
@@ -59,7 +59,7 @@ def test_p_invert_input_32x16x8x4():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_32x8x16x8x32():
@@ -73,7 +73,7 @@ def test_p_invert_input_32x8x16x8x32():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_8x8x16x32x8x16():
@@ -87,7 +87,7 @@ def test_p_invert_input_8x8x16x32x8x16():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_8x2x4x128x1x16x7():
@@ -101,7 +101,7 @@ def test_p_invert_input_8x2x4x128x1x16x7():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_8x2x4x128x1x16x7_int8():
@@ -115,7 +115,7 @@ def test_p_invert_input_8x2x4x128x1x16x7_int8():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_8x8x16x32x8x16_uint8():
@@ -129,7 +129,7 @@ def test_p_invert_input_8x8x16x32x8x16_uint8():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_8x2x4x128x1x16x7_int64():
@@ -143,7 +143,7 @@ def test_p_invert_input_8x2x4x128x1x16x7_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_8x8x16x32x8x16_uint64():
@@ -157,7 +157,7 @@ def test_p_invert_input_8x8x16x32x8x16_uint64():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_2x2_int32():
@@ -171,7 +171,7 @@ def test_p_invert_input_2x2_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_invert_input_2x2_uint32():

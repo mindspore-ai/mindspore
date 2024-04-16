@@ -67,7 +67,7 @@ class InlineMulADD(nn.Cell):
         return self.mul_add(x, y) + x + self.param * y
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_inline_mul_add():
@@ -484,7 +484,7 @@ def test_forward_with_parameter():
     assert np.allclose(out[1].asnumpy(), expect_dy)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_forward_with_parameter_in_sub_cell():
@@ -656,7 +656,7 @@ def test_pynative_forward_with_parameter():
     assert np.allclose(out[1].asnumpy(), expect_dy)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pynative_forward_with_parameter_in_sub_cell():
@@ -779,7 +779,7 @@ def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
 
 
 @pytest.mark.skip
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dde_self_define_cell_output_not_use():
@@ -823,7 +823,7 @@ def test_dde_self_define_cell_output_not_use():
     assert out[0] == ms.Tensor([3])
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_bprop_defined_in_cell_attr_register():

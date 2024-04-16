@@ -22,7 +22,7 @@ def test_p_floor_input_1d_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floor_input_2d_fp32():
@@ -39,7 +39,7 @@ def test_p_floor_input_2d_fp32():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floor_input_3d_fp16():
@@ -56,7 +56,7 @@ def test_p_floor_input_3d_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floor_input_4d_fp32():
@@ -73,7 +73,7 @@ def test_p_floor_input_4d_fp32():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floor_input_5d_fp16():
@@ -90,7 +90,7 @@ def test_p_floor_input_5d_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floor_input_6d_fp32():
@@ -107,7 +107,7 @@ def test_p_floor_input_6d_fp32():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floor_input_7d_fp16():
@@ -124,7 +124,7 @@ def test_p_floor_input_7d_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floor_input_512_512_fp16():

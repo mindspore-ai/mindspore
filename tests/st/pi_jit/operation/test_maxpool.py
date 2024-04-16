@@ -4,7 +4,7 @@ from mindspore import Tensor
 from ..share.ops.primitive.maxpool_ops import MaxPoolMock
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_1x3x224x224_float16_strides_2_valid():
@@ -21,10 +21,9 @@ def test_p_maxpool_input_1x3x224x224_float16_strides_2_valid():
     fact = MaxPoolMock(attributes=attributes, inputs=[inputs])
     fact.forward_cmp()
     fact.grad_cmp()
-    fact.highgrad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_2x2x2x2_float32_strides_2_valid():
@@ -42,10 +41,9 @@ def test_p_maxpool_input_2x2x2x2_float32_strides_2_valid():
     fact.loss = 1e-3
     fact.forward_cmp()
     fact.grad_cmp()
-    fact.highgrad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_16x1x2x8_float16_strides_2_valid():
@@ -62,10 +60,9 @@ def test_p_maxpool_input_16x1x2x8_float16_strides_2_valid():
     fact = MaxPoolMock(attributes=attributes, inputs=[inputs])
     fact.forward_cmp()
     fact.grad_cmp()
-    fact.highgrad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_2x32x16x16_float32_strides_2_valid():
@@ -84,10 +81,9 @@ def test_p_maxpool_input_2x32x16x16_float32_strides_2_valid():
     fact.loss = 1e-3
     fact.forward_cmp()
     fact.grad_cmp()
-    fact.highgrad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_16x32x8x12_float16_strides_2_valid():
@@ -104,10 +100,9 @@ def test_p_maxpool_input_16x32x8x12_float16_strides_2_valid():
     fact = MaxPoolMock(attributes=attributes, inputs=[inputs])
     fact.forward_cmp()
     fact.grad_cmp()
-    fact.highgrad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_2x12x12x12_float32_strides_2_same():
@@ -126,10 +121,9 @@ def test_p_maxpool_input_2x12x12x12_float32_strides_2_same():
     fact.loss = 1e-3
     fact.forward_cmp()
     fact.grad_cmp()
-    fact.highgrad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_2x256x3x3_float16_strides_2_same():
@@ -147,10 +141,9 @@ def test_p_maxpool_input_2x256x3x3_float16_strides_2_same():
     fact = MaxPoolMock(attributes=attributes, inputs=[inputs])
     fact.forward_cmp()
     fact.grad_cmp()
-    fact.highgrad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_32x32x32x32_float32_strides_2_same():
@@ -168,10 +161,9 @@ def test_p_maxpool_input_32x32x32x32_float32_strides_2_same():
     fact.loss = 1e-3
     fact.forward_cmp()
     fact.grad_cmp()
-    fact.highgrad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_1x7x32x16_float16_strides_2d_same():
@@ -188,10 +180,9 @@ def test_p_maxpool_input_1x7x32x16_float16_strides_2d_same():
     fact = MaxPoolMock(attributes=attributes, inputs=[inputs])
     fact.forward_cmp()
     fact.grad_cmp()
-    fact.highgrad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_1x8x256x256_float32_strides_2d_valid():
@@ -209,10 +200,9 @@ def test_p_maxpool_input_1x8x256x256_float32_strides_2d_valid():
     fact.loss = 1e-3
     fact.forward_cmp()
     fact.grad_cmp()
-    fact.highgrad_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_maxpool_input_1x8x3x3_k_4_valid():

@@ -41,11 +41,11 @@ class FloorDivDynamicShapeFactory():
 
     def forward_cmp(self):
         ps_net = FloorDivDynamicShapeNetMS()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x, self.input_y, self.indices)
         context.set_context(mode=context.GRAPH_MODE)
         out_ps = self.forward_mindspore_impl(ps_net)
         pi_net = FloorDivDynamicShapeNetMS()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x, self.input_y, self.indices)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pi = self.forward_mindspore_impl(pi_net)
         allclose_nparray(out_pi, out_ps, self.loss, self.loss)
@@ -53,11 +53,11 @@ class FloorDivDynamicShapeFactory():
 
     def grad_cmp(self):
         ps_net = FloorDivDynamicShapeNetMS()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(self.input_x, self.input_y, self.indices)
         context.set_context(mode=context.GRAPH_MODE)
         input_grad_psjit = self.grad_mindspore_impl(ps_net)
         pi_net = CosDynamicShapeNetMS()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(self.input_x, self.input_y, self.indices)
         context.set_context(mode=context.PYNATIVE_MODE)
         input_grad_pijit = self.grad_mindspore_impl(pi_net)
         allclose_nparray(input_grad_pijit[0], input_grad_psjit[0], self.loss, self.loss)

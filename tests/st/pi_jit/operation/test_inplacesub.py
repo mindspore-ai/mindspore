@@ -17,7 +17,7 @@ def test_p_inplacesub_input_1d():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_inplacesub_indices_repeat():
@@ -32,7 +32,7 @@ def test_p_inplacesub_indices_repeat():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_inplacesub_input_32_8_128_ind_28_float32():
@@ -47,7 +47,7 @@ def test_p_inplacesub_input_32_8_128_ind_28_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_inplacesub_input_1d_float16():
@@ -62,7 +62,7 @@ def test_dynamic_shape_p_inplacesub_input_1d_float16():
     fact.forward_dynamic_shape_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_inplacesub_input_2d_float32():
@@ -76,7 +76,7 @@ def test_dynamic_shape_p_inplacesub_input_2d_float32():
     fact.forward_dynamic_shape_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_inplacesub_input_3d_float64():

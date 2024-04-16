@@ -23,7 +23,7 @@ class CtrlForReturnRange1(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_1_10_3_return():
@@ -34,12 +34,12 @@ def test_control_flow_for_range_1_10_3_return():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForReturnRange1.construct, mode="PSJit")
     ps_net = CtrlForReturnRange1()
+    jit(fn=CtrlForReturnRange1.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForReturnRange1.construct, mode="PIJit")
     pi_net = CtrlForReturnRange1()
+    jit(fn=CtrlForReturnRange1.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -58,7 +58,7 @@ class CtrlForReturnRange2(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_4_n8_n4_return():
@@ -69,12 +69,12 @@ def test_control_flow_for_range_4_n8_n4_return():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForReturnRange2.construct, mode="PSJit")
     ps_net = CtrlForReturnRange2()
+    jit(fn=CtrlForReturnRange2.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForReturnRange2.construct, mode="PIJit")
     pi_net = CtrlForReturnRange2()
+    jit(fn=CtrlForReturnRange2.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -93,7 +93,7 @@ class CtrlForReturnRange3(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_n5_5_2_return():
@@ -104,12 +104,12 @@ def test_control_flow_for_range_n5_5_2_return():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForReturnRange3.construct, mode="PSJit")
     ps_net = CtrlForReturnRange3()
+    jit(fn=CtrlForReturnRange3.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForReturnRange3.construct, mode="PIJit")
     pi_net = CtrlForReturnRange3()
+    jit(fn=CtrlForReturnRange3.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -128,7 +128,7 @@ class CtrlForReturnRange4(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_range_n2_n8_n2_return():
@@ -139,12 +139,12 @@ def test_control_flow_for_range_n2_n8_n2_return():
     """
     x = Tensor([2, 3, 4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForReturnRange4.construct, mode="PSJit")
     ps_net = CtrlForReturnRange4()
+    jit(fn=CtrlForReturnRange4.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForReturnRange4.construct, mode="PIJit")
     pi_net = CtrlForReturnRange4()
+    jit(fn=CtrlForReturnRange4.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -183,12 +183,12 @@ def test_control_flow_for_return_in_elif_else():
     """
     x = Tensor([0.5], ms.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForReturnElifElse.construct, mode="PSJit")
     ps_net = CtrlForReturnElifElse()
+    jit(fn=CtrlForReturnElifElse.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForReturnElifElse.construct, mode="PIJit")
     pi_net = CtrlForReturnElifElse()
+    jit(fn=CtrlForReturnElifElse.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -215,7 +215,7 @@ class CtrlFor2ElifReturnInIf(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_2elif_return_in_if():
@@ -228,8 +228,8 @@ def test_control_flow_for_2elif_return_in_if():
     t2 = 2
     x = Tensor([-3], ms.int32)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlFor2ElifReturnInIf.construct, mode="PIJit")
     pi_net = CtrlFor2ElifReturnInIf(t1, t2)
+    jit(fn=CtrlFor2ElifReturnInIf.construct, mode="PIJit")(pi_net, x)
     pi_net(x)
 
 
@@ -249,7 +249,7 @@ class CtrlForReturnAll(Cell):
         return res
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_return_fib():
@@ -260,11 +260,11 @@ def test_control_flow_for_return_fib():
     """
     x = Tensor([4], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForReturnAll.construct, mode="PSJit")
     ps_net = CtrlForReturnAll()
+    jit(fn=CtrlForReturnAll.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForReturnAll.construct, mode="PIJit")
     pi_net = CtrlForReturnAll()
+    jit(fn=CtrlForReturnAll.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)

@@ -44,7 +44,7 @@ def test_p_equal_forward_input_n():
             fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_input():
@@ -64,7 +64,7 @@ def test_p_equal_forward_input():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_normal_outshape_sameas_first_input():
@@ -78,13 +78,13 @@ def test_p_equal_normal_outshape_sameas_first_input():
     """
     fact = EqualFactory(input_shape=(256, 1), dtype=np.float32)
     net = Equal()
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(fact.left_input, fact.right_input)
     context.set_context(mode=context.PYNATIVE_MODE)
     out = fact.forward_mindspore_impl(net)
     assert out.shape == (256, 1), out.dtype == ms.bool_
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_float16_0d():
@@ -105,7 +105,7 @@ def test_p_equal_forward_dtype_float16_0d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_float64_1d():
@@ -121,7 +121,7 @@ def test_p_equal_forward_dtype_float64_1d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_float16_2d():
@@ -138,7 +138,7 @@ def test_p_equal_forward_dtype_float16_2d():
 
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_float32_3d():
@@ -154,7 +154,7 @@ def test_p_equal_forward_dtype_float32_3d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_int8_4d():
@@ -170,7 +170,7 @@ def test_p_equal_forward_dtype_int8_4d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_int16_4d():
@@ -186,7 +186,7 @@ def test_p_equal_forward_dtype_int16_4d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_int32_5d():
@@ -202,7 +202,7 @@ def test_p_equal_forward_dtype_int32_5d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_int64_6d():
@@ -218,7 +218,7 @@ def test_p_equal_forward_dtype_int64_6d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_uint8_7d():
@@ -234,7 +234,7 @@ def test_p_equal_forward_dtype_uint8_7d():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_int64():
@@ -250,7 +250,7 @@ def test_p_equal_forward_dtype_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_input_num():
@@ -265,13 +265,13 @@ def test_p_equal_forward_input_num():
     input_1 = Tensor(np.array([1]), ms.float32)
     input_2 = 1.0
     net = op.Equal()
-    jit(net, mode="PIJit")
+    jit(net, mode="PIJit")(input_1, input_2)
     context.set_context(mode=context.PYNATIVE_MODE)
     out = net(input_1, input_2)
     assert out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_input_uint32():
@@ -287,7 +287,7 @@ def test_p_equal_forward_input_uint32():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_input_bool_for_gpu():
@@ -302,19 +302,19 @@ def test_p_equal_forward_input_bool_for_gpu():
     input_1 = np.array([1]).astype(np.bool)
     input_2 = True
     ps_net = op.Equal()
-    jit(ps_net, mode="PIJit")
+    jit(ps_net, mode="PIJit")(Tensor(input_1), input_2)
     context.set_context(mode=context.PYNATIVE_MODE)
     out1 = ps_net(Tensor(input_1), input_2)
 
     pi_net = op.Equal()
-    jit(pi_net, mode="PIJit")
+    jit(pi_net, mode="PIJit")(Tensor(input_1), input_2)
     context.set_context(mode=context.PYNATIVE_MODE)
     out2 = pi_net(Tensor(input_1), input_2)
 
     allclose_nparray(out2[0].numpy(), out1[0].asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_input_type_float64_for_gpu():
@@ -330,7 +330,7 @@ def test_p_equal_forward_input_type_float64_for_gpu():
     fact.forward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_forward_dtype_bool_for_gpu():
@@ -346,7 +346,7 @@ def test_p_equal_forward_dtype_bool_for_gpu():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_input_dtype_string():
@@ -367,7 +367,7 @@ def test_p_equal_input_dtype_string():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_input_dtype_bool():
@@ -388,7 +388,7 @@ def test_p_equal_input_dtype_bool():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_equal_input_dtype_bool2():

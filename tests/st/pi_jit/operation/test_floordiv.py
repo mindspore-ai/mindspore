@@ -26,7 +26,7 @@ def test_p_floordiv_forward_input_128x1024_fp32():
     fact.grad_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_forward_input_3d_fp16():
@@ -43,7 +43,7 @@ def test_p_floordiv_forward_input_3d_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_forward_input_shape_dtype_int8():
@@ -60,7 +60,7 @@ def test_p_floordiv_forward_input_shape_dtype_int8():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_forward_input_shape_dtype_int16():
@@ -79,7 +79,7 @@ def test_p_floordiv_forward_input_shape_dtype_int16():
     fact.grad_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_forward_input_shape_dtype_int64():
@@ -96,7 +96,7 @@ def test_p_floordiv_forward_input_shape_dtype_int64():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_forward_input_shape_dtype_fp64():
@@ -113,7 +113,7 @@ def test_p_floordiv_forward_input_shape_dtype_fp64():
     fact.grad_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_forward_input_shape_dtype_int32():
@@ -130,7 +130,7 @@ def test_p_floordiv_forward_input_shape_dtype_int32():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_forward_input_shape_dtype_uint16():
@@ -147,7 +147,7 @@ def test_p_floordiv_forward_input_shape_dtype_uint16():
     fact.grad_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_forward_input_shape_dtype_uint8():
@@ -164,7 +164,7 @@ def test_p_floordiv_forward_input_shape_dtype_uint8():
     fact.grad_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_forward_right_input_int():
@@ -183,7 +183,7 @@ def test_p_floordiv_forward_right_input_int():
     assert "float32" in str(out.dtype).lower()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_forward_left_input_bool():
@@ -201,7 +201,7 @@ def test_p_floordiv_forward_left_input_bool():
     assert "float16" in str(out.dtype).lower()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_empty_tensor():
@@ -219,7 +219,7 @@ def test_p_floordiv_empty_tensor():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_floordiv_input_3d_int16():
@@ -240,7 +240,7 @@ def test_p_floordiv_input_3d_int16():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_floordiv_input_2d_fp16():
@@ -261,7 +261,7 @@ def test_dynamic_shape_p_floordiv_input_2d_fp16():
     fact.grad_dynamic_shape_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_floordiv_input_1d_fp32():
@@ -282,7 +282,7 @@ def test_dynamic_shape_p_floordiv_input_1d_fp32():
     fact.grad_dynamic_shape_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_floordiv_params_double_2d():
@@ -300,7 +300,7 @@ def test_dynamic_shape_p_floordiv_params_double_2d():
     fact = FloorDivDynamicShapeFactory([input_x, input_y, indices])
     fact.forward_cmp()
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_floordiv_params_float32_2d():

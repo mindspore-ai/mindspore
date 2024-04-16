@@ -40,7 +40,7 @@ def const_branch(y):
     return 2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_const_branch():
@@ -59,7 +59,7 @@ def test_const_branch():
     assert "join" in str(exc.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net():

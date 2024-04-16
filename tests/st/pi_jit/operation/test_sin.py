@@ -5,7 +5,7 @@ from ..share.ops.primitive.sin_ops import SinMock
 from ..dynamic_shape_operations.sin import SinDynamicShapeFactory
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_32x1024x1269():
@@ -20,7 +20,7 @@ def test_p_sin_32x1024x1269():
     fact.grad_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_x1269():
@@ -50,7 +50,7 @@ def test_p_sin_2x4x8():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_2x4x8x16():
@@ -65,7 +65,7 @@ def test_p_sin_2x4x8x16():
     fact.grad_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_2x4x8x16_fp64():
@@ -80,7 +80,7 @@ def test_p_sin_2x4x8x16_fp64():
     fact.grad_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_1x2x4x8x16():
@@ -95,7 +95,7 @@ def test_p_sin_1x2x4x8x16():
     fact.grad_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_2x4x8x16x1x16():
@@ -110,7 +110,7 @@ def test_p_sin_2x4x8x16x1x16():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_input_4d_cp64():
@@ -128,7 +128,7 @@ def test_p_sin_input_4d_cp64():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_input_5d_cp128():
@@ -146,7 +146,7 @@ def test_p_sin_input_5d_cp128():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_input_2d_cp128():
@@ -164,7 +164,7 @@ def test_p_sin_input_2d_cp128():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_input_7d_cp64():
@@ -182,7 +182,7 @@ def test_p_sin_input_7d_cp64():
     fact.grad_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_sin_input_type_not_support():
@@ -208,7 +208,7 @@ def test_p_sin_input_type_not_support():
         fact3.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_sin_input_float32():
@@ -223,7 +223,7 @@ def test_dynamic_shape_p_sin_input_float32():
     fact.grad_dynamic_shape_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_sin_float32():
@@ -238,7 +238,7 @@ def test_dynamic_shape_p_sin_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_sin_float16():
@@ -253,7 +253,7 @@ def test_dynamic_shape_p_sin_float16():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_sin():

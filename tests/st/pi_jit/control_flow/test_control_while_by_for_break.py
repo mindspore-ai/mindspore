@@ -23,7 +23,7 @@ class CtrlWhileForBreakOne(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_param_break_in_while():
@@ -57,7 +57,7 @@ class CtrlWhileForBreakAdd(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_break_no_param():
@@ -91,7 +91,7 @@ class CtrlWhileBreakForX(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_break_in_for_x():
@@ -124,7 +124,7 @@ class CtrlWhileBreakFor(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_break_in_for():
@@ -158,7 +158,7 @@ class CtrlWhileBreakForP(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_break_in_for_param():
@@ -192,7 +192,7 @@ class CtrlWhileBreakForN(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_break_in_for_no():

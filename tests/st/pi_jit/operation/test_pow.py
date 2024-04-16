@@ -24,7 +24,7 @@ def test_p_pow_input_25x51():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_nx512():
@@ -40,7 +40,7 @@ def test_p_pow_input_nx512():
         fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_256_512():
@@ -55,7 +55,7 @@ def test_p_pow_input_256_512():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_512_256():
@@ -70,7 +70,7 @@ def test_p_pow_input_512_256():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_scalar_exp_scalar_invalid():
@@ -85,7 +85,7 @@ def test_p_pow_input_scalar_exp_scalar_invalid():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_3x5x2x2_exp_tensor():
@@ -100,7 +100,7 @@ def test_p_pow_input_3x5x2x2_exp_tensor():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_3x5x2x2x12_exp_2():
@@ -114,7 +114,7 @@ def test_p_pow_input_3x5x2x2x12_exp_2():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_3x5x2x2x1x1_exp_bool():
@@ -128,7 +128,7 @@ def test_p_pow_input_3x5x2x2x1x1_exp_bool():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_3x5x2x2x12x2x32_exp_tensor():
@@ -145,7 +145,7 @@ def test_p_pow_input_3x5x2x2x12x2x32_exp_tensor():
     fact.grad_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_exp_not_broadcastable():
@@ -160,7 +160,7 @@ def test_p_pow_input_exp_not_broadcastable():
         fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_1_scalar():
@@ -177,7 +177,7 @@ def test_p_pow_input_1_scalar():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_1_1():
@@ -194,7 +194,7 @@ def test_p_pow_input_1_1():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_scalar_negative_exp_scalar_positive_2():
@@ -209,7 +209,7 @@ def test_p_pow_input_scalar_negative_exp_scalar_positive_2():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_scalar_negative_exp_scalar_positive():
@@ -224,7 +224,7 @@ def test_p_pow_input_scalar_negative_exp_scalar_positive():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_exp_broadcastable_2d():
@@ -241,7 +241,7 @@ def test_p_pow_input_exp_broadcastable_2d():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_num_exp_tensor():
@@ -263,19 +263,19 @@ def test_p_pow_input_num_exp_tensor():
     input_np = 3.0
     exp = Tensor(2, dtype=ms.float32)
     pow_net = Net(input_np)
-    jit(pow_net.construct, mode="PSJit")
+    jit(pow_net.construct, mode="PSJit")(exp)
     context.set_context(mode=context.GRAPH_MODE)
     psjit_out = pow_net(exp)
 
     pow_net = Net(input_np)
-    jit(pow_net.construct, mode="PIJit")
+    jit(pow_net.construct, mode="PIJit")(exp)
     context.set_context(mode=context.PYNATIVE_MODE)
     pijit_out = pow_net(exp)
 
     allclose_nparray(pijit_out.asnumpy(), psjit_out.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_float_exp_tensor():
@@ -308,7 +308,7 @@ def test_p_pow_input_float_exp_tensor():
     allclose_nparray(pijit_out.asnumpy(), psjit_out.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_bool_exp_tensor():
@@ -329,18 +329,18 @@ def test_p_pow_input_bool_exp_tensor():
     input_np = True
     exp = Tensor(2, dtype=ms.float32)
     net = Net(input_np)
-    jit(net.construct, mode="PSJit")
+    jit(net.construct, mode="PSJit")(exp)
     context.set_context(mode=context.GRAPH_MODE)
     psjit_out = net(exp)
     net = Net(input_np)
-    jit(net.construct, mode="PIJit")
+    jit(net.construct, mode="PIJit")(exp)
     context.set_context(mode=context.PYNATIVE_MODE)
     pijit_out = net(exp)
 
     allclose_nparray(pijit_out.asnumpy(), psjit_out.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_exp_tensor_bool():
@@ -358,7 +358,7 @@ def test_p_pow_input_exp_tensor_bool():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_pow_input_exp_bool():
