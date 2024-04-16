@@ -30,7 +30,8 @@ def test_lccl_allreduce():
     os.environ['MS_ENABLE_LCCL'] = str(1)
     os.environ['GRAPH_OP_RUN'] = str(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    return_code = os.system("msrun --worker_num=8 --local_worker_num=8 --join=True pytest -s test_lccl_allreduce.py")
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --join=True pytest -s test_lccl_allreduce.py")
     assert return_code == 0
 
 
@@ -47,7 +48,8 @@ def test_lccl_allgather():
     os.environ['MS_ENABLE_LCCL'] = str(1)
     os.environ['GRAPH_OP_RUN'] = str(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    return_code = os.system("msrun --worker_num=8 --local_worker_num=8 --join=True pytest -s test_lccl_allgather.py")
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --join=True pytest -s test_lccl_allgather.py")
     assert return_code == 0
 
 
@@ -82,5 +84,22 @@ def test_lccl_broadcast():
     os.environ['MS_ENABLE_LCCL'] = str(1)
     os.environ['GRAPH_OP_RUN'] = str(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    return_code = os.system("msrun --worker_num=8 --local_worker_num=8 --join=True pytest -s test_lccl_broadcast.py")
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --join=True pytest -s test_lccl_broadcast.py")
+    assert return_code == 0
+
+
+@pytest.mark.level2
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_single
+def test_lccl_matmul_allreduce():
+    """
+    Feature: lccl MatMulAllReduce fustion operator test.
+    Description: lccl MatMulAllReduce 8P case.
+    Expectation: success
+    """
+    os.environ['MS_ENABLE_LCCL'] = str(1)
+    os.environ['GRAPH_OP_RUN'] = str(1)
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --join=True pytest -s test_lccl_matmul_allreduce.py")
     assert return_code == 0
