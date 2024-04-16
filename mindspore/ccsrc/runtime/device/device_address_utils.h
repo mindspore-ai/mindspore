@@ -38,6 +38,9 @@ namespace runtime {
 // Extract the methods related to DeviceAddress in GraphCompiler to the DeviceAddressUtils class.
 class BACKEND_EXPORT DeviceAddressUtils {
  public:
+  static void CreateKernelTensor(const device::DeviceAddressPtr &device_address, const tensor::BaseTensorPtr &tensor);
+  static void CreateKernelTensor(const device::DeviceAddressPtr &device_address, const AbstractBasePtr &abs);
+  static void CreateKernelTensor(const ValuePtr &input_value);
   static void CopyNoneTensorDataToDevice(const device::DeviceContext *device_context,
                                          const device::DeviceAddressPtr &device_address, const ShapeVector &shape = {});
   static void CreateParameterDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
@@ -122,6 +125,8 @@ class BACKEND_EXPORT DeviceAddressUtils {
 
   static void CreateOutputTensorAddress(const DeviceContext *device_context, size_t stream_id,
                                         const std::vector<tensor::BaseTensorPtr> &outputs);
+  static void CreateOutputTensorAddress(const DeviceContext *device_context, size_t stream_id,
+                                        const tensor::BaseTensorPtr &output_tensor, size_t size);
 
   static void MallocForOutputs(const DeviceContext *device_context, const std::vector<tensor::BaseTensorPtr> &outputs);
 
@@ -162,9 +167,6 @@ class BACKEND_EXPORT DeviceAddressUtils {
   }
 
  private:
-  static void UpdateKernelTensorHostInfoByNode(const kernel::KernelTensorPtr &kernel_tensor, const AnfNodePtr &node,
-                                               size_t output_idx);
-
   // Whether device address of anf node is valid and device address type
   // is consistent with device type, for example, device address type
   // DeviceType::kGPU should be used on GPU device

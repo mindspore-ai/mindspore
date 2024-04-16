@@ -31,6 +31,7 @@
 #include "abstract/utils.h"
 #include "include/common/utils/utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
@@ -79,6 +80,10 @@ bool IsOpNeedTransFormat(const std::string &format) {
     kOpFormat_NHWC,    kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z,   kOpFormat_C1HWNCoC0,
     kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
   return op_need_trans_format.find(format) != op_need_trans_format.end();
+}
+
+void AscendDeviceAddress::DeviceSynchronizerInit() {
+  set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
 }
 
 void AscendDeviceAddress::SyncHostMemoryToDeviceWithCopySrc(void *dst, const void *src, uint64_t size,
@@ -230,22 +235,22 @@ bool AscendDeviceAddress::SyncDeviceToHostAndFloatToFloat64(void *dst, size_t ds
 }
 
 void AscendDeviceAddress::SetDevicePtrDeleter() {
-  const auto &kernel_tensor = this->kernel_tensor();
-  if (!kernel_tensor) {
+  if (!address_common_) {
     return;
   }
 
-  kernel_tensor->set_deleter([communication_ptr = this->communication_ptr_](void *ptr, bool from_mem_pool) {
-    if (ptr == nullptr || !from_mem_pool) {
-      return;
-    }
+  address_common_->pointer_ref_count_->set_deleter(
+    [communication_ptr = this->communication_ptr_](void *ptr, bool from_mem_pool) {
+      if (ptr == nullptr || !from_mem_pool) {
+        return;
+      }
 
-    if (communication_ptr != nullptr) {
-      AscendMemoryPool::GetInstance().FreeTensorMem(communication_ptr);
-    } else {
-      AscendMemoryPool::GetInstance().FreeTensorMem(ptr);
-    }
-  });
+      if (communication_ptr != nullptr) {
+        AscendMemoryPool::GetInstance().FreeTensorMem(communication_ptr);
+      } else {
+        AscendMemoryPool::GetInstance().FreeTensorMem(ptr);
+      }
+    });
 }
 
 void AscendDeviceAddress::BindDevice() const {

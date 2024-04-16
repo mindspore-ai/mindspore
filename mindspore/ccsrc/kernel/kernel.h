@@ -245,56 +245,11 @@ using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
 
 class KernelAttr;
 
-// Used to encapsulate device-side related data structures in KernelTensor.
-struct KernelDeviceInfo {
-  KernelDeviceInfo();
-  KernelDeviceInfo(void *device_ptr, size_t size, Format format, TypeId dtype_id, const string &device_name,
-                   uint32_t device_id);
-
-  KernelDeviceInfo(const KernelDeviceInfo &other);
-
-  // The pointer to the device side and reference count that corresponds to KernelTensor, used in runtime.
-  PointerRefCountPtr ptr_ref_cnt_{nullptr};
-
-  // The memory size in byte of the KernelTensor.
-  size_t size_{0};
-
-  // The data format of the KernelTensor.
-  mindspore::Format format_{Format::DEFAULT_FORMAT};
-
-  // The data enum type id of the KernelTensor.
-  TypeId dtype_id_{kTypeUnknown};
-
-  // The device target name, such as "GPU","Ascend".
-  std::string device_name_;
-
-  // Represents the device card id associated with the KernelTensor.
-  uint32_t device_id_{0};
-
-  // The stream index in all stream array managed by Framework, starting from 0.
-  uint32_t stream_id_{0};
-
-  // The launch index on stream managed by framework.
-  std::shared_ptr<int64_t> task_id_on_stream_{nullptr};
-
-  bool managed_by_somas_{false};
-};
-
 // Used to encapsulate host-side related data structures in KernelTensor.
 struct KernelHostInfo {
   KernelHostInfo() = default;
 
   KernelHostInfo(const KernelHostInfo &other);
-
-  // The origin flatten shape vector for Tensor/Scalar/Tuple/List.
-  // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is {8, 16}.
-  // 2. For Scalar type, shape_vector_ is an empty ShapeVector, i.e. {}.
-  // 3. For Tuple/List (all elements must be Tensor with same shape or Scalar) type, the shape_vector_
-  // consists of the element number and the shape of element in Tuple/List. For example, if a Tuple of the structure
-  // ((8,16), (8,16)) contains two Tensors of shape (8, 16), then shape_vector_ is {2, 8, 16}, 2 means elements
-  // number in Tuple/List. A Tuple with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of
-  // this Tuple is {2}.
-  ShapeVector shape_vector_{};
 
   // The shape vector transformed according `shape_vector_` and `format_` is generally used on the operator side.
   // Operators on different platforms may require different format and shape information.
@@ -331,6 +286,60 @@ struct IsValidContainer {
   static constexpr bool value = ValidContainerChecker<std::decay_t<T>>::value;
 };
 
+struct AddressCommon {
+  AddressCommon() { pointer_ref_count_ = std::make_shared<PointerRefCount>(); }
+  AddressCommon(void *device_ptr, size_t size)
+      : pointer_ref_count_(std::make_shared<PointerRefCount>(device_ptr)), size_(size) {}
+  AddressCommon(void *device_ptr, size_t size, const ShapeVector &shape_vector, const Format &format, TypeId dtype_id,
+                const std::string &device_name, uint32_t device_id, uint32_t stream_id = 0)
+      : pointer_ref_count_(std::make_shared<PointerRefCount>(device_ptr)),
+        stream_id_(stream_id),
+        size_(size),
+        format_(format),
+        dtype_id_(dtype_id),
+        device_name_(device_name),
+        device_id_(device_id),
+        shape_vector_(shape_vector) {}
+  AddressCommon(const AddressCommon &other) {
+    pointer_ref_count_ =
+      other.pointer_ref_count_ != nullptr
+        ? std::make_shared<PointerRefCount>(other.pointer_ref_count_->ptr(), other.pointer_ref_count_->deleter())
+        : std::make_shared<PointerRefCount>();
+    tensor_storage_info_ = other.tensor_storage_info_;
+    stream_id_ = other.stream_id_;
+    size_ = other.size_;
+    format_ = other.format_;
+    dtype_id_ = other.dtype_id_;
+    device_id_ = other.device_id_;
+    device_name_ = other.device_name_;
+    dtype_id_ = other.dtype_id_;
+    shape_vector_ = other.shape_vector_;
+    managed_by_somas_ = other.managed_by_somas_;
+  }
+  PointerRefCountPtr pointer_ref_count_;
+  TensorStorageInfoPtr tensor_storage_info_{nullptr};
+  uint32_t stream_id_{0};
+  size_t size_{0};
+  Format format_{Format::DEFAULT_FORMAT};
+  // The data enum type id of the KernelTensor.
+  TypeId dtype_id_{kTypeUnknown};
+  // The device target name, such as "GPU","Ascend".
+  std::string device_name_;
+  // Represents the device card id associated with the KernelTensor.
+  uint32_t device_id_{0};
+  // The origin flatten shape vector for Tensor/Scalar/Tuple/List.
+  // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is {8, 16}.
+  // 2. For Scalar type, shape_vector_ is an empty ShapeVector, i.e. {}.
+  // 3. For Tuple/List (all elements must be Tensor with same shape or Scalar) type, the shape_vector_
+  // consists of the element number and the shape of element in Tuple/List. For example, if a Tuple of the structure
+  // ((8,16), (8,16)) contains two Tensors of shape (8, 16), then shape_vector_ is {2, 8, 16}, 2 means elements
+  // number in Tuple/List. A Tuple with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of
+  // this Tuple is {2}.
+  ShapeVector shape_vector_{};
+  bool managed_by_somas_{false};
+};
+using AddressCommonPtr = std::shared_ptr<AddressCommon>;
+
 // KernelTensor is used to express input and output parameters of kernels.
 // KernelTensor is a generalized Tensor semantics, which can represent not only Tensor, but also the meta-information
 // of Scalar, Tuple, List and other data structures. It saves the shape, type, value and format information required by
@@ -341,6 +350,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   KernelTensor();
   ~KernelTensor() = default;
+  explicit KernelTensor(const AddressCommonPtr &address_common) : address_common_(address_common) {}
 
   // Constructor of KernelTensor by shape, type, value.
   KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value);
@@ -354,6 +364,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
                size_t size, const std::string &format, TypeId dtype_id, const ShapeVector &host_shape,
                const string &device_name, uint32_t device_id, const UserDataPtr &user_data = nullptr);
 
+  // Constructor of KernelTensor by shape, type, value and device info.
+  KernelTensor(const AddressCommonPtr &address_common, const abstract::BaseShapePtr &shape, const TypePtr &type,
+               const ValuePtr &value, const ShapeVector &host_shape, const UserDataPtr &user_data = nullptr);
+
   KernelTensor(const KernelTensor &other);
 
   MS_DECLARE_PARENT(KernelTensor, AbstractBase);
@@ -366,10 +380,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void SetShape(const abstract::BaseShapePtr &shape);
 
   // Get the shape vector for Tensor/Sequence/Scalar.
-  const ShapeVector &GetShapeVector() const {
-    MS_EXCEPTION_IF_NULL(host_info_);
-    return host_info_->shape_vector_;
-  }
+  const ShapeVector &GetShapeVector() const { return address_common_->shape_vector_; }
 
   // Set the shape vector for Tensor/Sequence/Scalar.
   void SetShapeVector(const ShapeVector &shape_vector);
@@ -405,10 +416,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   }
 
   // Get the data enum type id of the KernelTensor.
-  TypeId dtype_id() const { return device_info_->dtype_id_; }
+  TypeId dtype_id() const { return address_common_->dtype_id_; }
 
   // Set the data enum type id of the KernelTensor.
-  void set_dtype_id(TypeId dtype_id) { device_info_->dtype_id_ = dtype_id; }
+  void set_dtype_id(TypeId dtype_id) { address_common_->dtype_id_ = dtype_id; }
 
   // Set the value for the KernelTensor.
   void SetValue(const ValuePtr &value) { value_ = value; }
@@ -444,7 +455,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(host_info_->value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (device_info_->dtype_id_ == kMetaTypeNone) {
+    if (address_common_->dtype_id_ == kMetaTypeNone) {
       MS_LOG(DEBUG) << "None type has no valid scalar value.";
       return std::nullopt;
     } else if (value_ && !value_->isa<ValueAny>()) {
@@ -481,7 +492,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(host_info_->value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (device_info_->dtype_id_ == kMetaTypeNone) {
+    if (address_common_->dtype_id_ == kMetaTypeNone) {
       MS_LOG(DEBUG) << "None type has no valid value for vector or string.";
       return std::nullopt;
     } else if (value_ && !value_->isa<ValueAny>()) {
@@ -513,7 +524,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   template <typename T, typename std::enable_if<!IsValidContainer<T>::value && !std::is_pointer_v<T> &&
                                                 !std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
   std::optional<T> GetValue() {
-    if (device_info_->dtype_id_ == kMetaTypeNone) {
+    if (address_common_->dtype_id_ == kMetaTypeNone) {
       MS_LOG(DEBUG) << "None type has no valid value.";
       return std::nullopt;
     }
@@ -533,10 +544,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   }
 
   // Get the data format.
-  mindspore::Format format() const { return device_info_->format_; }
+  mindspore::Format format() const { return address_common_->format_; }
 
   // Set the data format.
-  void set_format(mindspore::Format format) { device_info_->format_ = format; }
+  void set_format(mindspore::Format format) { address_common_->format_ = format; }
 
   // Get the data format of string type.
   std::string GetStringFormat() const;
@@ -545,59 +556,61 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void SetStringFormat(const std::string &format);
 
   // Get pointer and reference count.
-  const PointerRefCountPtr &pointer_ref_count() const { return device_info_->ptr_ref_cnt_; }
+  const PointerRefCountPtr &pointer_ref_count() const { return address_common_->pointer_ref_count_; }
 
   // Set pointer and reference count.
-  void set_pointer_ref_count(const PointerRefCountPtr &ptr_ref_cnt) { device_info_->ptr_ref_cnt_ = ptr_ref_cnt; }
+  void set_pointer_ref_count(const PointerRefCountPtr &ptr_ref_cnt) {
+    address_common_->pointer_ref_count_ = ptr_ref_cnt;
+  }
 
   //  Set the pointer and reference count to nullptr, resource reclaiming of the device pointer is automatically
   //  released.
-  void ReleaseDeviceRes() { device_info_->ptr_ref_cnt_ = nullptr; }
+  void ReleaseDeviceRes() { address_common_->pointer_ref_count_ = nullptr; }
 
   // Set pointer resource destructor.
-  void set_deleter(const Deleter &deleter) { device_info_->ptr_ref_cnt_->set_deleter(deleter); }
+  void set_deleter(const Deleter &deleter) { address_common_->pointer_ref_count_->set_deleter(deleter); }
 
   // Get pointer to the device side that corresponds to KernelTensor, used in runtime.
-  void *device_ptr() const { return device_info_->ptr_ref_cnt_->ptr(); }
+  void *device_ptr() const { return address_common_->pointer_ref_count_->ptr(); }
 
   // Set pointer to the device side that corresponds to KernelTensor, used in runtime.
-  void set_device_ptr(void *ptr) { device_info_->ptr_ref_cnt_->set_ptr(ptr); }
+  void set_device_ptr(void *ptr) { address_common_->pointer_ref_count_->set_ptr(ptr); }
 
   // Get the memory size in byte of the KernelTensor.
-  size_t size() const { return device_info_->size_; }
+  size_t size() const { return address_common_->size_; }
 
   // Set the memory size in byte of the KernelTensor.
-  void set_size(size_t size) { device_info_->size_ = size; }
+  void set_size(size_t size) { address_common_->size_ = size; }
 
   // Get device target name, such "GPU","Ascend".
-  const std::string &device_name() const { return device_info_->device_name_; }
+  const std::string &device_name() const { return address_common_->device_name_; }
 
   // Set device target name, such "GPU","Ascend".
-  void set_device_name(const std::string &device_name) { device_info_->device_name_ = device_name; }
+  void set_device_name(const std::string &device_name) { address_common_->device_name_ = device_name; }
 
   // Get device id.
-  uint32_t device_id() const { return device_info_->device_id_; }
+  uint32_t device_id() const { return address_common_->device_id_; }
 
   // Set device id.
-  void set_device_id(uint32_t device_id) { device_info_->device_id_ = device_id; }
+  void set_device_id(uint32_t device_id) { address_common_->device_id_ = device_id; }
 
   // Get logical stream id.
-  uint32_t stream_id() const { return device_info_->stream_id_; }
+  uint32_t stream_id() const { return address_common_->stream_id_; }
 
   // Set logical stream id.
-  void set_stream_id(uint32_t stream_id) { device_info_->stream_id_ = stream_id; }
+  void set_stream_id(uint32_t stream_id) { address_common_->stream_id_ = stream_id; }
 
   // Get task id on stream.
-  std::shared_ptr<int64_t> task_id_on_stream() const { return device_info_->task_id_on_stream_; }
+  std::shared_ptr<int64_t> task_id_on_stream() const { return task_id_on_stream_; }
 
   // Set task id on stream.
   void set_task_id_on_stream(const std::shared_ptr<int64_t> &task_id_on_stream) {
-    device_info_->task_id_on_stream_ = task_id_on_stream;
+    task_id_on_stream_ = task_id_on_stream;
   }
 
-  bool managed_by_somas() const { return device_info_->managed_by_somas_; }
+  bool managed_by_somas() const { return address_common_->managed_by_somas_; }
 
-  void set_managed_by_somas(bool managed_by_somas) { device_info_->managed_by_somas_ = managed_by_somas; }
+  void set_managed_by_somas(bool managed_by_somas) { address_common_->managed_by_somas_ = managed_by_somas; }
 
   // Get user data maintained by the KernelTensor.
   const UserDataPtr &user_data() const { return user_data_; }
@@ -632,8 +645,13 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // max shape is only used in compute-depended ops
   ShapeVector GetMaxShape() const;
 
-  const TensorStorageInfoPtr tensor_storage_info() const { return tensor_storage_info_; }
-  void set_tensor_storage_info(const TensorStorageInfoPtr &storage_info) { tensor_storage_info_ = storage_info; }
+  const TensorStorageInfoPtr tensor_storage_info() const { return address_common_->tensor_storage_info_; }
+  void set_tensor_storage_info(const TensorStorageInfoPtr &storage_info) {
+    address_common_->tensor_storage_info_ = storage_info;
+  }
+
+  const AddressCommonPtr address_common() const { return address_common_; }
+  void set_address_common(const AddressCommonPtr &address_common) { address_common_ = address_common; }
 
  private:
   // This is a deprecated function in base class.
@@ -672,10 +690,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // If host info is not initialized in the constructor, it can be initialized when it is needed.
   std::unique_ptr<KernelHostInfo> host_info_{nullptr};
 
-  // The device-side related data in KernelTensor.
-  // Note: device info should be create in constructor, its value is not allowed to be a null pointer during the
-  // lifetime of the KernelTensor.
-  std::unique_ptr<KernelDeviceInfo> device_info_{nullptr};
+  // The launch index on stream managed by framework.
+  std::shared_ptr<int64_t> task_id_on_stream_{nullptr};
 
   // The flatten shape(maybe after padding) vector.
   // Note: the 'host_shape_' will be repalced by 'shape_vector_' in the future.
@@ -693,8 +709,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Host data address.
   AddressPtr host_data_{nullptr};
 
-  // kernel tensor storage info for view node
-  TensorStorageInfoPtr tensor_storage_info_;
+  // address basic info
+  AddressCommonPtr address_common_{nullptr};
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 

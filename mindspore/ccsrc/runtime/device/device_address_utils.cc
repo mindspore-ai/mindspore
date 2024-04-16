@@ -37,6 +37,7 @@
 #ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/debugger/debugger.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/device_type.h"
 #endif
 
 namespace mindspore {
@@ -100,10 +101,9 @@ bool DeviceAddressUtils::NodeDeviceAddressExist(const DeviceContext *device_cont
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   if (AnfAlgo::OutputAddrExist(node, index)) {
-    const auto &address = AnfAlgo::GetOutputAddr(node, index, false);
+    const auto address = AnfAlgo::GetMutableOutputAddr(node, index, false);
     MS_EXCEPTION_IF_NULL(address);
-    // Fill host info if device address exist.
-    UpdateKernelTensorHostInfoByNode(address->kernel_tensor(), node, index);
+    CreateKernelTensor(address, session::AnfRuntimeAlgorithm::GetNodeAbstractByIndex(node, index));
     return address->GetDeviceType() == device_context->GetDeviceType();
   }
   return false;
@@ -268,28 +268,7 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
 void DeviceAddressUtils::UpdateDeviceAddressHostInfoByNode(const device::DeviceAddressPtr &addr, const AnfNodePtr &node,
                                                            size_t output_idx) {
   MS_EXCEPTION_IF_NULL(addr);
-  UpdateKernelTensorHostInfoByNode(addr->kernel_tensor(), node, output_idx);
-}
-
-void DeviceAddressUtils::UpdateKernelTensorHostInfoByNode(const kernel::KernelTensorPtr &kernel_tensor,
-                                                          const AnfNodePtr &node, size_t output_idx) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(kernel_tensor);
-  if (!kernel_tensor->host_info_exist()) {
-    if (AnfAlgo::ExistOutputKernelTensor(node, output_idx)) {
-      const auto &kernel_tensor_in_node = AnfAlgo::GetOutputKernelTensor(node, output_idx);
-      MS_EXCEPTION_IF_NULL(kernel_tensor_in_node);
-      if (kernel_tensor_in_node->host_info_exist()) {
-        // Set host info by kernel tensor
-        kernel_tensor->SetHostInfo(kernel_tensor_in_node->GetShape(), kernel_tensor_in_node->GetType(), nullptr);
-        return;
-      }
-    }
-
-    // Set host info by node
-    auto [shape, type, value] = AnfAlgo::GetAbstractInfo(node, output_idx);
-    kernel_tensor->SetHostInfo(shape, type, value);
-  }
+  CreateKernelTensor(addr, session::AnfRuntimeAlgorithm::GetNodeAbstractByIndex(node, output_idx));
 }
 
 device::DeviceAddressPtrList DeviceAddressUtils::CreateDeviceAddressForTensorValue(const DeviceContext *device_context,
@@ -869,6 +848,10 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
   auto addr = tensor->device_address();
   if (addr != nullptr) {
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(addr);
+    if (device_address->GetDeviceType() != device::DeviceType::kAscend) {
+      // CPU or GPU View CreateDeviceAddress without KernelTensor
+      CreateKernelTensor(device_address, tensor);
+    }
     if (device_address->GetDeviceType() == device_context->GetDeviceType()) {
       MS_LOG(DEBUG) << "Already have device address of tensor " << tensor->id();
       return;
@@ -878,23 +861,22 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
     tensor->data_sync();
     tensor->set_device_address(nullptr);
   }
-
-  const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
   auto tensor_size = LongToSize(tensor->data().nbytes());
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()), nullptr,
-    nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
-    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, tensor_size, tensor->shape(), format, tensor->data_type(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
+  if (device_address->GetDeviceType() != device::DeviceType::kAscend) {
+    // CPU or GPU need KernelTensor to LaunchKernel
+    CreateKernelTensor(device_address, tensor);
+  }
 
-  MS_EXCEPTION_IF_NULL(kernel_tensor);
-  kernel_tensor->set_stream_id(stream_id);
-  device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(device_address);
   device_address->set_from_persistent_mem(tensor->is_parameter());
   tensor->set_device_address(device_address);
   MS_LOG(DEBUG) << "Create input tensor device address " << device_address << " for " << index
-                << "th input, Shape: " << tensor->shape()
-                << ", Type: " << TypeIdToType(tensor->data_type())->ToString();
+                << "th input, Shape: " << tensor->shape() << ", Type: " << TypeIdToType(tensor->data_type())->ToString()
+                << ", Size:" << tensor_size;
 }
 
 void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, const tensor::BaseTensorPtr &tensor) {
@@ -942,6 +924,49 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
   CreateInputTensorAddress(device_context, stream_id, index, val.value());
 }
 
+void DeviceAddressUtils::CreateKernelTensor(const device::DeviceAddressPtr &device_address,
+                                            const tensor::BaseTensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(device_address);
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (device_address->kernel_tensor() != nullptr) {
+    return;
+  }
+  const auto &address_common = device_address->address_common();
+  MS_EXCEPTION_IF_NULL(address_common);
+  auto real_kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    address_common, std::make_shared<abstract::TensorShape>(tensor->shape()),
+    std::make_shared<TensorType>(TypeIdToType(tensor->data_type())), nullptr, tensor->shape());
+  device_address->set_kernel_tensor(real_kernel_tensor);
+  device_address->DeviceSynchronizerInit();
+}
+
+void DeviceAddressUtils::CreateKernelTensor(const ValuePtr &input_value) {
+  if (input_value->isa<tensor::BaseTensor>()) {
+    auto tensor = input_value->cast<tensor::BaseTensorPtr>();
+    if (tensor->device_address() != nullptr) {
+      auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+      MS_EXCEPTION_IF_NULL(device_address);
+      CreateKernelTensor(device_address, tensor);
+    }
+  }
+}
+
+void DeviceAddressUtils::CreateKernelTensor(const device::DeviceAddressPtr &device_address,
+                                            const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (device_address->kernel_tensor() != nullptr) {
+    return;
+  }
+  const auto address_common = device_address->address_common();
+  MS_EXCEPTION_IF_NULL(address_common);
+  const auto &shape = abs->GetShape();
+  const auto &type = abs->GetType();
+  auto real_kernel_tensor =
+    std::make_shared<kernel::KernelTensor>(address_common, shape, type, nullptr, shape->GetShapeVector());
+  device_address->set_kernel_tensor(real_kernel_tensor);
+  device_address->DeviceSynchronizerInit();
+}
+
 device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                                 const abstract::AbstractBasePtr &abs, size_t index,
                                                                 const tensor::BaseTensorPtr &tensor) {
@@ -949,7 +974,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
   MS_EXCEPTION_IF_NULL(tensor);
   auto addr = tensor->device_address();
   if (addr != nullptr) {
-    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(addr);
+    auto device_address = std::static_pointer_cast<device::DeviceAddress>(addr);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetPtr() != nullptr) {
       MS_LOG(DEBUG) << "Input tensor already have address " << device_address.get() << " and device Ptr "
@@ -1085,19 +1110,38 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
     MS_EXCEPTION_IF_NULL(tensor);
     auto tensor_size = LongToSize(tensor->data().nbytes());
     const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
-    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()), nullptr,
-      nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-
-    MS_EXCEPTION_IF_NULL(kernel_tensor);
-    kernel_tensor->set_stream_id(stream_id);
-    device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+      nullptr, tensor_size, tensor->shape(), format, tensor->data_type(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
+    if (device_address->GetDeviceType() != device::DeviceType::kAscend) {
+      // CPU or GPU need KernelTensor to LaunchKernel
+      CreateKernelTensor(device_address, tensor);
+    }
+    MS_EXCEPTION_IF_NULL(device_address);
     tensor->set_device_address(device_address);
     MS_LOG(DEBUG) << "Create output tensor device address " << device_address << " for " << i
                   << "th output, Shape: " << tensor->shape()
-                  << ", Type: " << TypeIdToType(tensor->data_type())->ToString();
+                  << ", Type: " << TypeIdToType(tensor->data_type())->ToString() << ", Size:" << tensor_size;
   }
+}
+
+void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context, size_t stream_id,
+                                                   const tensor::BaseTensorPtr &output_tensor, size_t size) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(output_tensor);
+  const auto &format = GetFormatByTensorShape(device_context, output_tensor->shape());
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, size, output_tensor->shape(), format, output_tensor->data_type(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
+  if (device_address->GetDeviceType() != device::DeviceType::kAscend) {
+    // CPU or GPU need KernelTensor to LaunchKernel
+    CreateKernelTensor(device_address, output_tensor);
+  }
+  MS_EXCEPTION_IF_NULL(device_address);
+  output_tensor->set_device_address(device_address);
+  MS_LOG(DEBUG) << "Create output tensor device address " << device_address << "the output, Shape: "
+                << static_cast<int64_t>(size / GetTypeByte(TypeIdToType(output_tensor->data_type())))
+                << ", Type: " << TypeIdToType(output_tensor->data_type())->ToString() << ", Size:" << size;
 }
 
 device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(const DeviceContext *device_context,

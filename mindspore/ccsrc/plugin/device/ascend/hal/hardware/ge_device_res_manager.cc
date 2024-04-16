@@ -220,6 +220,19 @@ DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &
   }
 }
 
+DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector,
+                                                         const Format &format, TypeId type_id,
+                                                         const std::string &device_name, uint32_t device_id,
+                                                         uint32_t stream_id) const {
+  if (!is_use_cpu_memory_) {
+    return std::make_shared<AscendDeviceAddress>(ptr, size, shape_vector, format, type_id, device_name, device_id,
+                                                 stream_id);
+  } else {
+    return std::make_shared<cpu::CPUDeviceAddress>(ptr, size, shape_vector, format, type_id, kCPUDevice, device_id,
+                                                   stream_id);
+  }
+}
+
 void GeDeviceResManager::GeSetContextOptions(const std::shared_ptr<MsContext> &ms_context_ptr,
                                              transform::SessionOptions *options) {
   MS_EXCEPTION_IF_NULL(options);
