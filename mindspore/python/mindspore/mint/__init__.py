@@ -18,7 +18,7 @@ from mindspore.ops.extend import *
 from mindspore.ops.extend import array_func, math_func, nn_func
 from mindspore.mint.nn.functional import *
 from mindspore.mint.nn import functional
-from mindspore.ops import erf, where
+from mindspore.ops import erf, where, tril
 from mindspore.ops.function.math_func import linspace_ext as linspace
 from mindspore.ops.function.array_func import full_ext as full
 from mindspore.ops.function.array_func import ones_like_ext as ones_like
@@ -429,6 +429,9 @@ __all__ = [
     # 99
 
     # 100
+
+    # 304
+    'tril',
 ]
 __all__.extend(array_func.__all__)
 __all__.extend(math_func.__all__)

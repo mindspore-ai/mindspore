@@ -182,7 +182,7 @@
 #include "ops/encoder_layer.h"
 #include "ops/scatter_elements.h"
 #include "ops/triu.h"
-#include "ops/tril.h"
+#include "ops/ops_func_impl/tril.h"
 
 namespace mindspore::lite::ops {
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP) std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op);
