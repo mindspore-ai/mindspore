@@ -26,9 +26,9 @@
 namespace mindspore::device::ascend {
 class LaunchTransData {
  public:
-  LaunchTransData(void *stream, TypeId dtype, size_t total_size, std::string src_format, std::string dst_format,
+  LaunchTransData(uint32_t stream_id, TypeId dtype, size_t total_size, std::string src_format, std::string dst_format,
                   ShapeVector host_shape, int64_t groups)
-      : stream_(stream),
+      : stream_id_(stream_id),
         dtype_(dtype),
         total_size_(total_size),
         src_format_(std::move(src_format)),
@@ -48,7 +48,7 @@ class LaunchTransData {
   void SetKernelBuildInfo();
   uint8_t *AllocDeviceMem(size_t size);
   void CreateOutputAddr(const std::vector<size_t> &outputs_list, std::vector<kernel::KernelTensorPtr> *kernel_tensors);
-  void *stream_;
+  uint32_t stream_id_;
   TypeId dtype_;
   size_t total_size_;
   std::string src_format_;

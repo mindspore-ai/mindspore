@@ -30,7 +30,7 @@ namespace kernel {
 namespace pyboost {
 // Common call for copy op in cpu and gpu.
 tensor::BaseTensorPtr BACKEND_EXPORT CopyCustomizeCall(const std::shared_ptr<OpRunner> &op,
-                                                       const BaseTensorPtr &input_tensor, void *stream);
+                                                       const BaseTensorPtr &input_tensor);
 // If the tensor is continuous, return the cloned tensor and set the op info. If the tensor is not continuous,
 // return nullptr and do nothing.
 tensor::BaseTensorPtr BACKEND_EXPORT ContiguousTensorOpProcess(const std::shared_ptr<OpRunner> &op,

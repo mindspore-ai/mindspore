@@ -25,8 +25,7 @@ namespace kernel {
 namespace pyboost {
 tensor::BaseTensorPtr IdentityGPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor) {
   MS_LOG(DEBUG) << "Identity call start";
-  auto stream = device::gpu::GPUDeviceManager::GetInstance().GetStream(op->stream_id());
-  IdentityCustomize(op, x_tensor, stream);
+  IdentityCustomize(op, x_tensor);
   static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
   if (sync && !op->device_context()->device_res_manager_->SyncAllStreams()) {
     MS_LOG(EXCEPTION) << "SyncStream failed for op Identity.";

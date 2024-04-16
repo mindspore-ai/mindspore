@@ -24,8 +24,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::BaseTensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
-                                        void *stream) {
+tensor::BaseTensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
   MS_EXCEPTION_IF_NULL(input_tensor);
 
@@ -70,7 +69,7 @@ tensor::BaseTensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, con
     if (output_device_address->GetSize() != 0) {
       // Call kPrimTensorMove if input device address size if not 0.
       PyBoostUtils::LaunchKernel(op->primitive(), op->device_context(), input_address_info, output_address_info,
-                                 stream);
+                                 op->stream_id());
     }
   } else {
     const auto &input_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());

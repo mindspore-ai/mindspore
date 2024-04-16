@@ -1243,5 +1243,38 @@ device::DeviceAddressPtr DeviceAddressUtils::ConvertContiguousDeviceAddress(
   return new_device_address;
 }
 
+void DeviceAddressUtils::GetCrossStreamAddressInfoFromInput(
+  size_t op_stream_id, std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
+  const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->device_address() == nullptr) {
+    return;
+  }
+
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (op_stream_id != device_address->stream_id()) {
+    // Device address is cross stream.
+    (void)cross_stream_addresses->emplace_back(device_address->stream_id(), device_address->GetMutablePtr());
+  }
+}
+
+void DeviceAddressUtils::GetCrossStreamAddressInfoFromInput(
+  size_t op_stream_id, std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
+  const mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (op_stream_id != tensor->stream_id()) {
+    (void)cross_stream_addresses->emplace_back(tensor->stream_id(), tensor->device_ptr());
+  }
+}
+
+void DeviceAddressUtils::GetCrossStreamAddressInfoFromInput(
+  size_t op_stream_id, std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
+  const device::DeviceAddressPtr &device_address) {
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (op_stream_id != device_address->stream_id()) {
+    (void)cross_stream_addresses->emplace_back(device_address->stream_id(), device_address->GetMutablePtr());
+  }
+}
 }  // namespace runtime
 }  // namespace mindspore

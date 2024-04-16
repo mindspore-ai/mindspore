@@ -82,6 +82,9 @@ bool MultiStreamController::RecordEvent(const DeviceContext *device_context, int
   }
 
   auto event = device_context->device_res_manager_->CreateRuntimeEvent(false, true);
+  if (event == nullptr) {
+    return true;
+  }
   event->RecordEvent(user_stream_id);
   // Record event on mem buf.
   return mem_manager->RecordEvent(task_id_on_stream, user_stream_id, memory_stream_addresses, event);
@@ -99,6 +102,17 @@ bool MultiStreamController::WaitEvent(const DeviceContext *device_context, int64
     return false;
   }
   return mem_manager->WaitEvent(task_id_on_stream, user_stream_id, memory_stream_id);
+}
+
+bool MultiStreamController::SyncEvent(const DeviceContext *device_context, int64_t task_id_on_stream,
+                                      uint32_t user_stream_id) {
+  auto mem_manager = device_context->device_res_manager_->mem_manager();
+  if (mem_manager == nullptr) {
+    MS_LOG(WARNING) << "mem_manager_ is nullptr.";
+    return false;
+  }
+
+  return mem_manager->WaitEvent(task_id_on_stream, user_stream_id);
 }
 
 bool MultiStreamController::DispatchRecordWaitEvent(const DeviceContext *device_context, uint32_t user_stream_id,

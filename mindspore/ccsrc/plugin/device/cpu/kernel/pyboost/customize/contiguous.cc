@@ -28,7 +28,7 @@ tensor::BaseTensorPtr ContiguousCPUCustomize(const std::shared_ptr<OpRunner> &op
     return output_tensor;
   }
 
-  return CopyCustomizeCall(op, input_tensor, nullptr);
+  return CopyCustomizeCall(op, input_tensor);
 }
 }  // namespace pyboost
 }  // namespace kernel
