@@ -52,7 +52,7 @@ class ProfilerInfoParser:
     def get_local_time(cls, syscnt: int) -> Decimal:
         """Convert syscnt to local time."""
         if not cls._loaded_frequency:
-            localtime_stamp = c_expression.get_clock_time()
+            localtime_stamp = int(c_expression.get_clock_time() * 1e3)  # us cast to ns
             syscnt_stamp = c_expression.get_clock_syscnt()
             outs, _ = cls.__run_cmd(['which', cls._msprof_cmd])
             if not outs:
