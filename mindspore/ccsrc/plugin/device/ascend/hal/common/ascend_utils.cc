@@ -160,7 +160,10 @@ void *callback_thread_func(void *data) {
   auto callback_thread = reinterpret_cast<CallbackThread *>(data);
   while (callback_thread->flag_.load()) {
     try {
-      CALL_ASCEND_API(aclrtProcessReport, callback_thread->default_timeout_);
+      auto ret = CALL_ASCEND_API(aclrtProcessReport, callback_thread->default_timeout_);
+      if (ret && ret != ACL_ERROR_WAIT_CALLBACK_TIMEOUT && ret != ACL_ERROR_RT_REPORT_TIMEOUT) {
+        MS_LOG(DEBUG) << "aclrtProcessReport err : " << ret << ".";
+      }
     } catch (const std::exception &ex) {
       MS_LOG(ERROR) << "aclrtProcessReport exception : " << ex.what() << ".";
       break;
