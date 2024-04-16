@@ -69,6 +69,9 @@ class BACKEND_EXPORT PyBoostUtils {
   // Create output tensors
   static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::BaseTensorPtr> *outputs);
   static void CreateOutputTensor(const DeviceContext *device_context, const tensor::BaseTensorPtr &input,
+                                 const TensorStorageInfoPtrList &storage_info_list,
+                                 std::vector<tensor::BaseTensorPtr> *outputs);
+  static void CreateOutputTensor(const DeviceContext *device_context, const tensor::BaseTensorPtr &input,
                                  const TensorStorageInfoPtr &storage_info, std::vector<tensor::BaseTensorPtr> *outputs);
   static void CreateOutputTensor(const ValueSimpleInfoPtr &output_value_simple_info,
                                  std::vector<tensor::BaseTensorPtr> *outputs);
