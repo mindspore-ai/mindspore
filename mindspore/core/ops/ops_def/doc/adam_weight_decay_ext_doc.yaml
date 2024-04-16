@@ -1,0 +1,73 @@
+adam_weight_decay_ext:
+    description: |
+        Implements Adam Weight Decay algorithm.
+
+            .. math::
+                \begin{aligned}
+                    &\textbf{input}      : \gamma \text{(lr)}, \: \beta_1, \beta_2
+                        \text{(betas)}, \: \theta_0 \text{(params)}, \: f(\theta) \text{(objective)},
+                        \: \epsilon \text{ (epsilon)}                                                    \\
+                    &\hspace{13mm}      \lambda \text{(weight decay)},  \: \textit{amsgrad},
+                        \: \textit{maximize}                                                             \\
+                    &\textbf{initialize} : m_0 \leftarrow 0 \text{ (first moment)}, v_0 \leftarrow 0
+                        \text{ ( second moment)}, \: \widehat{v_0}^{max}\leftarrow 0              \\[-1.ex]
+                    &\textbf{for} \: t=1 \: \textbf{to} \: \ldots \: \textbf{do}                         \\
+                    &\hspace{5mm}\textbf{if} \: \textit{maximize}:                                       \\
+                    &\hspace{10mm}g_t           \leftarrow   -\nabla_{\theta} f_t (\theta_{t-1})          \\
+                    &\hspace{5mm}\textbf{else}                                                           \\
+                    &\hspace{10mm}g_t           \leftarrow   \nabla_{\theta} f_t (\theta_{t-1})           \\
+                    &\hspace{5mm} \theta_t \leftarrow \theta_{t-1} - \gamma \lambda \theta_{t-1}         \\
+                    &\hspace{5mm}m_t           \leftarrow   \beta_1 m_{t-1} + (1 - \beta_1) g_t          \\
+                    &\hspace{5mm}v_t           \leftarrow   \beta_2 v_{t-1} + (1-\beta_2) g^2_t          \\
+                    &\hspace{5mm}\widehat{m_t} \leftarrow   m_t/\big(1-\beta_1^t \big)                   \\
+                    &\hspace{5mm}\widehat{v_t} \leftarrow   v_t/\big(1-\beta_2^t \big)                   \\
+                    &\hspace{5mm}\textbf{if} \: amsgrad                                                  \\
+                    &\hspace{10mm}\widehat{v_t}^{max} \leftarrow \mathrm{max}(\widehat{v_t}^{max},
+                        \widehat{v_t})                                                                   \\
+                    &\hspace{10mm}\theta_t \leftarrow \theta_t - \gamma \widehat{m_t}/
+                        \big(\sqrt{\widehat{v_t}^{max}} + \epsilon \big)                                 \\
+                    &\hspace{5mm}\textbf{else}                                                           \\
+                    &\hspace{10mm}\theta_t \leftarrow \theta_t - \gamma \widehat{m_t}/
+                        \big(\sqrt{\widehat{v_t}} + \epsilon \big)                                       \\
+                    &\bf{return} \:  \theta_t                                                     \\[-1.ex]
+              \end{aligned}
+
+            .. warning::
+                This is an experimental optimizer API that is subject to change.
+                This module must be used with lr scheduler module in `LRScheduler Class
+                <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
+
+            Inputs:
+                - **var** (Parameter) - Weights to be updated. The shape is :math:`(N, *)` where :math:`*` means,
+                  any number of additional dimensions. The data type can be float16 or float32.
+                - **m** (Parameter) - The 1st moment vector in the updating formula,
+                  it should have the the shape as `var`. The data type can be float16 or float32.
+                - **v** (Parameter) - The 2nd moment vector in the updating formula,
+                  it should have the same shape as `m`.
+                - **max_v** (Parameter) - The 2nd moment vector in the updating formula,
+                  it should have the same shape as `m`.
+                - **gradient** (Tensor) - Gradient, has the same shape as `var`
+                - **step** (float, int) - step
+                - **lr** (float) - :math:`lr` in the updating formula. The paper suggested value is :math:`10^{-8}`,
+                  the data type should be float32.
+                - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
+                  the data type should be float32. The paper suggested value is :math:`0.9`
+                - **beta2** (float) - The exponential decay rate for the 2nd moment estimations,
+                  the data type should be float32. The paper suggested value is :math:`0.999`
+                - **decay** (float) - weight decay (L2 penalty), must be a scalar tensor with float32 data type.
+                - **eps** (float) - Term added to the denominator to improve numerical stability,
+                  the data type should be float32.
+                - **amsgrad** (bool) - whether to use the AMSGrad algorithm. Default: ``False``.
+                - **maximize** (bool) - maximize the params based on the objective, instead of minimizing.
+                  Default: ``False``.
+                .
+
+            Outputs:
+                Tuple of 3 Tensor, the updated parameters.
+
+                - **var** (Tensor) - The same shape and data type as `var`.
+                - **m** (Tensor) - The same shape and data type as `m`.
+                - **v** (Tensor) - The same shape and data type as `v`.
+
+            Supported Platforms:
+                ``Ascend``

@@ -1,0 +1,55 @@
+#operator adam_weight_decay_ext
+adam_weight_decay_ext:
+  args:
+    var:
+      dtype: tensor
+    m:
+      dtype: tensor
+    v:
+      dtype: tensor
+    max_v:
+      dtype: tensor
+    gradient:
+      dtype: tensor
+    step:
+      dtype: tensor
+    lr:
+      dtype: float
+      type_cast: tensor
+    beta1:
+      dtype: float
+      type_cast: tensor
+    beta2:
+      dtype: float
+      type_cast: tensor
+    decay:
+      dtype: float
+      type_cast: tensor
+    eps:
+      dtype: float
+      type_cast: tensor
+    amsgrad:
+      dtype: bool
+      default: False
+    maximize:
+      dtype: bool
+      default: False
+  args_signature:
+    rw_write: var, m, v
+    dtype_group: (m, v, max_v), (lr, beta1, beta2, eps, decay), (var, gradient)
+  labels:
+    side_effect_mem: True
+  function:
+    disable: True
+  returns:
+    var:
+      dtype: tensor
+    m:
+      dtype: tensor
+    v:
+      dtype: tensor
+  class:
+    name: AdamWeightDecayExt
+  dispatch:
+    enable: True
+    Ascend: AdamWeightDecayExtAscend
