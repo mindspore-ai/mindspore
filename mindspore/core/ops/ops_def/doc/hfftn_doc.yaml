@@ -1,11 +1,11 @@
-ifftn:
+hfftn:
     description: |
-      Computes the N dimensional inverse discrete Fourier transform of `input`.
+      Calculates the N dimensional discrete Fourier transform of of a Hermitian symmetric `input`.
 
       Note:
-          - `ifftn` is currently only used in `mindscience` scientific computing scenarios and
+          - `hfftn` is currently only used in `mindscience` scientific computing scenarios and
             dose not support other usage scenarios.
-          - `ifftn` is not supported on Windows platform yet.
+          - `hfftn` is not supported on Windows platform yet.
 
       Args:
           input (Tensor): The input tensor.
@@ -14,20 +14,21 @@ ifftn:
               - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
 
           s (tuple[int], optional): Length of the transformed `dim` of the result.
-              If given, the size of the `dim[i]` axis will be zero-padded or truncated to `s[i]` before calculating `ifftn`.
+              If given, the size of the `dim[i]` axis will be zero-padded or truncated to `s[i]` before calculating `hfftn`.
               Default: ``None`` , which does not need to process `input`.
-          dim (tuple[int], optional): The dimension along which to take the one dimensional `ifftn`.
-              Default: ``None`` , which means transform the all dimension of `input`, or the last `len(s)` dimensions if s is given.
+          dim (tuple[int], optional): The dimension along which to take the one dimensional `hfftn`.
+              Default: ``(-2, -1)`` , which means transform the last two dimension of `input`.
           norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
               Three modes are defined as,
 
-              - ``"backward"`` (normalize by :math:`1*n`).
-              - ``"forward"`` (no normalization).
-              - ``"ortho"`` (normalize by :math:`1*\sqrt{n}`).
+              - ``"backward"`` (no normalization).
+              - ``"forward"`` (normalize by :math:`1/n`).
+              - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
 
       Returns:
-          Tensor, The result of `ifftn()` function. The default is the same shape as `input`.
-          If `s` is given, the size of the `dim[i]` axis is changed to `s[i]`.
+          Tensor, The result of `hfftn()` function.
+          If `s` is given, result.shape[dim[i]] is s[i], and for the last transformed dim, 
+          result.shape[dim[-1]] is :math:`(s[-1] - 1) * 2`, otherwise :math:`(input.shape[dim[-1]] - 1) * 2`.
           When the input is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
           When the input is float64 or complex128, the return value type is complex128.
 
@@ -47,10 +48,10 @@ ifftn:
       Examples:
           >>> import mindspore
           >>> from mindspore import Tensor, ops
-          >>> input = ops.ones((2, 2, 2))
-          >>> out = ops.ifftn(input, s=(2, 2, 2), dim=(0, 1, 2), norm="backward")
+          >>> input = ops.ones((4, 4))
+          >>> out = ops.hfftn(input, s=(4, 4), dim=(0, 1), norm="backward")
           >>> print(out)
-          [[[1.+0.j 0.+0.j]
-            [0.+0.j 0.+0.j]]
-            [[0.+0.j 0.+0.j]
-            [0.+0.j 0.+0.j]]]
+          [[16.  0.  0.  0.]
+           [ 0.  0.  0.  0.]
+           [ 0.  0.  0.  0.]
+           [ 0.  0.  0.  0.]]

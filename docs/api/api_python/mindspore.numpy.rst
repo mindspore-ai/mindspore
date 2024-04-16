@@ -578,12 +578,18 @@ Array操作
     mindspore.numpy.fft.fft2
     mindspore.numpy.fft.fftn
     mindspore.numpy.fft.fftshift
-    mindspore.numpy.fft.rfft
+    mindspore.numpy.fft.hfft
     mindspore.numpy.fft.ifft
     mindspore.numpy.fft.ifft2
     mindspore.numpy.fft.ifftn
     mindspore.numpy.fft.ifftshift
+    mindspore.numpy.fft.ihfft
     mindspore.numpy.fft.irfft
+    mindspore.numpy.fft.irfft2
+    mindspore.numpy.fft.irfftn
+    mindspore.numpy.fft.rfft
+    mindspore.numpy.fft.rfft2
+    mindspore.numpy.fft.rfftn
 
 MindSpore Numpy与MindSpore特性结合
 -----------------------------------------

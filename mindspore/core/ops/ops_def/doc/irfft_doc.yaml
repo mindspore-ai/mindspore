@@ -40,7 +40,6 @@ irfft:
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> input = Tensor([1, 2, 3, 4])
-        >>> y = ops.irfft(input)
+        >>> y = ops.irfft(input, n=6, dim=-1, norm='backward')
         >>> print(y)
-        [ 2.5000000e+00 -6.6666669e-01  1.2590267e-15 -1.6666667e-01
-        4.2470195e-16 -6.6666669e-01]
+        [ 2.5        -0.6666667   0.         -0.16666667  0.         -0.6666667 ]
