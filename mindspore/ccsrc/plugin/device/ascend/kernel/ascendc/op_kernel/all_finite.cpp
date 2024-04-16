@@ -227,9 +227,7 @@ class KernelAllFinite {
     float result = half_comp_t.GetValue(0);
     if (result != 0) {
       ui16_t.SetValue(0, 1);
-      AscendC::SetAtomicAdd<half>();
       DataCopy(yGm[0], half_comp_t, OUT_MIN_LEN);
-      AscendC::SetAtomicNone();
       *loop = count;
     }
   }
