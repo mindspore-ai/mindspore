@@ -19,12 +19,16 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "param/elewise_param.h"
 
 namespace mindspore {
 namespace kernel {
 internal::OpParamPtr ElewiseUnary::CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &outputs) {
-  internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
+  auto elewise_param = std::make_shared<internal::ElewiseBinaryParam>();
+  elewise_param->dtype_ = InternalKernelUtils::ToInternalDType(inputs[kIndex0]->dtype_id());
+
+  auto param_ptr = std::static_pointer_cast<internal::OpParam>(elewise_param);
   SetComputeType(param_ptr);
   return param_ptr;
 }
