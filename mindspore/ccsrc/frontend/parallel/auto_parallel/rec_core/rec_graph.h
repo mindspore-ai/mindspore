@@ -64,7 +64,8 @@ enum OperatorType {
   kRecBatchParallel,
   kRecPadV3,
   kRecVirtual,
-  kFlashAttentionScore
+  kFlashAttentionScore,
+  kRecRmsNorm
 };
 
 enum InfoType { kApplication, kConstant };
