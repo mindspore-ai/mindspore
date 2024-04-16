@@ -82,7 +82,7 @@ struct CallbackThread {
 
   pthread_t thread_;
   std::atomic_bool flag_{true};
-  int32_t default_timeout_{100};
+  int32_t default_timeout_{500};
 };
 using CallbackThreadPtr = std::shared_ptr<CallbackThread>;
 
