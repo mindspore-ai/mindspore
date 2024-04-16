@@ -7,7 +7,7 @@ mindspore.ops.extend.min
 
     参数：
         - **input** (Tensor) - 输入任意维度的Tensor。不支持复数类型。
-        - **dim** (int, 可选) - 指定计算维度。若要为 `dim` 参数赋值，请赋值int类型，不支持直接传入 ``None`` 。默认值： ``None`` 。
+        - **dim** (int, 可选) - 指定计算维度。默认值： ``None`` 。
         - **keepdim** (bool, 可选) - 表示是否减少维度，如果为 ``True`` ，输出将与输入保持相同的维度；如果为 ``False`` ，输出将减少维度。默认值： ``False`` 。
 
     返回：
