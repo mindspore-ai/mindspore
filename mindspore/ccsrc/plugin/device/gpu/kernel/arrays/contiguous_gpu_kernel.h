@@ -20,6 +20,7 @@
 #include <utility>
 #include "ir/tensor_storage_info.h"
 #include "kernel/kernel.h"
+#include "include/backend/device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,21 +29,21 @@ class ContiguousGpuKernel {
   ContiguousGpuKernel() = default;
   ~ContiguousGpuKernel() = default;
 
-  bool LaunchContiguous(TypeId input_type_id, const kernel::KernelTensorPtr &inputs,
+  bool LaunchContiguous(TypeId input_type_id, const device::DeviceAddressPtr &inputs,
                         const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
-                        const kernel::KernelTensorPtr &outputs, const kernel::KernelTensorPtr &shape_addr,
-                        const kernel::KernelTensorPtr &strides_addr, void *stream_ptr);
+                        const device::DeviceAddressPtr &outputs, const device::DeviceAddressPtr &shape_addr,
+                        const device::DeviceAddressPtr &strides_addr, void *stream_ptr);
 
  private:
   using ContiguousFunc =
-    std::function<bool(ContiguousGpuKernel *, const kernel::KernelTensorPtr &, const TensorStorageInfoPtr &,
-                       const kernel::KernelTensorPtr &, const kernel::KernelTensorPtr &,
-                       const kernel::KernelTensorPtr &, const int64_t &, void *)>;
+    std::function<bool(ContiguousGpuKernel *, const device::DeviceAddressPtr &, const TensorStorageInfoPtr &,
+                       const device::DeviceAddressPtr &, const device::DeviceAddressPtr &,
+                       const device::DeviceAddressPtr &, const int64_t &, void *)>;
 
   template <typename T>
-  bool LaunchContiguousImpl(const kernel::KernelTensorPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
-                            const kernel::KernelTensorPtr &outputs, const kernel::KernelTensorPtr &shape_addr,
-                            const kernel::KernelTensorPtr &strides_addr, const int64_t &type_size, void *stream_ptr);
+  bool LaunchContiguousImpl(const device::DeviceAddressPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
+                            const device::DeviceAddressPtr &outputs, const device::DeviceAddressPtr &shape_addr,
+                            const device::DeviceAddressPtr &strides_addr, const int64_t &type_size, void *stream_ptr);
   static std::map<std::pair<TypeId, TypeId>, ContiguousFunc> func_list_;
 };
 }  // namespace kernel

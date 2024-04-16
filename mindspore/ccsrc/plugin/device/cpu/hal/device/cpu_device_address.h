@@ -49,7 +49,14 @@ class BACKEND_EXPORT CPUDeviceAddress : public DeviceAddress {
     SetDevicePtrDeleter();
   }
 
+  CPUDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector, const Format &format, TypeId type_id,
+                   const std::string &device_name, uint32_t device_id, uint32_t stream_id)
+      : DeviceAddress(ptr, size, shape_vector, format, type_id, device_name, device_id, stream_id) {
+    SetDevicePtrDeleter();
+  }
+
   ~CPUDeviceAddress() override = default;
+  void DeviceSynchronizerInit() override;
 
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;
   bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,

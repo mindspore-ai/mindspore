@@ -140,6 +140,9 @@ void MemoryTrackerEnabled::AddCompileTimeMemInfo(const std::string &task_name, s
 
 void MemoryTrackerEnabled::BindDevicePtr(const DeviceAddress *device_address, DeviceMemPtr device_ptr,
                                          const std::string &file_name, size_t line_num) {
+  if (kernel_tensor == nullptr) {
+    return;
+  }
   std::lock_guard lock(mutex_);
   if (device_address->GetDeviceType() == DeviceType::kCPU) {
     return;

@@ -997,10 +997,6 @@ const KernelTensorPtr &AnfRuntimeAlgorithm::GetOrCreateOutputKernelTensor(const 
   // Get output kernel tensor in device address if exists.
   if (kernel_info->OutputAddrExist(output_idx)) {
     const auto &kt = kernel_info->GetOutputAddr(output_idx)->kernel_tensor();
-    if (!kt->host_info_exist()) {
-      auto [shape, type, value] = GetAbstractInfo(node, output_idx);
-      kt->SetHostInfo(shape, type, value);
-    }
     return kt;
   }
 

@@ -30,9 +30,9 @@ class ContiguousCpuKernel : public NativeCpuKernelMod {
  public:
   ContiguousCpuKernel() = default;
   ~ContiguousCpuKernel() = default;
-  bool LaunchContiguous(TypeId input_type_id, const kernel::KernelTensorPtr &inputs,
+  bool LaunchContiguous(TypeId input_type_id, const device::DeviceAddressPtr &inputs,
                         const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
-                        const kernel::KernelTensorPtr &outputs);
+                        const device::DeviceAddressPtr &outputs);
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override {
     MS_LOG(EXCEPTION) << "This api is not external";
@@ -40,12 +40,12 @@ class ContiguousCpuKernel : public NativeCpuKernelMod {
 
  private:
   using ContiguousFunc =
-    std::function<bool(ContiguousCpuKernel *, const kernel::KernelTensorPtr &, const TensorStorageInfoPtr &,
-                       const kernel::KernelTensorPtr &, const int64_t &)>;
+    std::function<bool(ContiguousCpuKernel *, const device::DeviceAddressPtr &, const TensorStorageInfoPtr &,
+                       const device::DeviceAddressPtr &, const int64_t &)>;
 
   template <typename T>
-  bool LaunchContiguousImpl(const kernel::KernelTensorPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
-                            const kernel::KernelTensorPtr &outputs, const int64_t &type_size);
+  bool LaunchContiguousImpl(const device::DeviceAddressPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
+                            const device::DeviceAddressPtr &outputs, const int64_t &type_size);
   static std::map<std::pair<TypeId, TypeId>, ContiguousFunc> func_list_;
 };
 }  // namespace kernel
