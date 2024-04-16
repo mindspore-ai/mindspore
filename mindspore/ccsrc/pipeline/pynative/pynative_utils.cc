@@ -668,6 +668,7 @@ void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
       op_run_info->op_grad_info->input_value[i] =
         ConvertToContiguousValue(op_run_info->op_grad_info->input_value[i], op_run_info->requires_grad);
     }
+    runtime::DeviceAddressUtils::CreateKernelTensor(op_run_info->op_grad_info->input_value[i]);
   }
 }
 
@@ -1668,10 +1669,17 @@ void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op, ValuePtrList &&
     // If execution mode is Graph Mode in MsContext, the tensor will be the input of graph which will execute in Graph
     // Mode, if the graph contain no CNode after optimization, the tensor need sync to host.
     for (const auto &output : op->outputs()) {
+      auto device_address = std::static_pointer_cast<device::DeviceAddress>(output->device_address());
+      runtime::DeviceAddressUtils::CreateKernelTensor(device_address, output);
       output->data_sync(true);
       output->set_abstract(std::weak_ptr<abstract::AbstractBase>());
     }
     for (const auto &input : op_inputs) {
+      if (input->isa<tensor::BaseTensor>()) {
+        auto tensor = input->cast<tensor::BaseTensorPtr>();
+        auto device_address = std::static_pointer_cast<device::DeviceAddress>(tensor->device_address());
+        runtime::DeviceAddressUtils::CreateKernelTensor(device_address, tensor);
+      }
       UnsetValueAbstractCache(input);
     }
   }

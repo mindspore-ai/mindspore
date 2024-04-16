@@ -181,18 +181,14 @@ DeviceSyncPtr PyBoostUtils::ContiguousByDeviceAddress(const DeviceSyncPtr &devic
     {old_device_address->device_name(), old_device_address->device_id()});
   MS_EXCEPTION_IF_NULL(device_context);
 
+  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
   auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(storage_info->shape);
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, address_size, Format::DEFAULT_FORMAT, old_device_address->type_id(), storage_info->shape,
-    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_device_address->type_id())));
-  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(storage_info->shape));
-  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, address_size, storage_info->shape, DEFAULT_FORMAT, old_device_address->type_id(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
   new_device_address->set_device_shape(storage_info->shape);
   new_device_address->set_original_ref_count(SIZE_MAX);
   new_device_address->ResetRefCount();
-  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
-  kernel_tensor->set_stream_id(stream_id);
 
   if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
         runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
@@ -222,7 +218,6 @@ void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const
                                      runtime::ProfilerRecorder::kNoName, false);
   auto output_tensor = std::make_shared<tensor::BaseTensor>(input->data_type(), storage_info->shape);
   output_tensor->set_need_pipeline_sync(true);
-  output_tensor->set_device_address(input->device_address());
   output_tensor->set_contiguous_callback(
     [](const DeviceSyncPtr &device_address) -> DeviceSyncPtr { return ContiguousByDeviceAddress(device_address); });
 
@@ -231,22 +226,12 @@ void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const
   input_device_address->set_is_view(true);
 
   // Create view output address
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, input_device_address->GetSize(), Format::DEFAULT_FORMAT, output_tensor->data_type(),
-    output_tensor->shape(), device_context->device_context_key().device_name_,
-    device_context->device_context_key().device_id_);
-  if (input_device_address->GetDeviceType() != device::DeviceType::kAscend) {
-    // Not transmitting host shape information under Ascend for better performance.
-    kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(output_tensor->data_type())));
-    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(output_tensor->shape()));
-  }
-  kernel_tensor->set_tensor_storage_info(storage_info);
-  kernel_tensor->set_size(input_device_address->GetSize());
-  kernel_tensor->set_stream_id(input_device_address->stream_id());
-
-  auto output_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  auto output_device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, input_device_address->GetSize(), output_tensor->shape(), DEFAULT_FORMAT, output_tensor->data_type(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_,
+    input_device_address->stream_id());
   MS_EXCEPTION_IF_NULL(output_device_address);
-
+  output_device_address->set_tensor_storage_info(storage_info);
   output_device_address->set_pointer_ref_count(input_device_address->pointer_ref_count());
   output_tensor->set_device_address(output_device_address);
   (void)outputs->emplace_back(output_tensor);
@@ -320,6 +305,7 @@ void PyBoostUtils::GetKernelTensor(const DeviceContext *device_context, size_t s
   MS_EXCEPTION_IF_NULL(device_address);
   (void)device_address_list->emplace_back(device_address);
   const auto &kernel_tensor = device_address->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
   (void)kernel_tensor_list->emplace_back(kernel_tensor.get());
 }
 

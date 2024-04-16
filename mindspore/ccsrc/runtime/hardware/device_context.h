@@ -204,6 +204,12 @@ class BACKEND_EXPORT DeviceResManager {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
 
+  virtual DeviceAddressPtr CreateDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector,
+                                               const Format &format, TypeId type_id, const std::string &device_name,
+                                               uint32_t device_id, uint32_t stream_id) const {
+    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+  }
+
   // Create a stream with assigning a stream id, the assigned stream id will be written to the parameter '*stream_id'.
   virtual bool CreateStream(size_t *stream_id) const {
     MS_LOG(WARNING) << "Unimplemented interface: 'CreateStream'.";

@@ -97,15 +97,6 @@ void UpdatePreTensorInfo(const tensor::BaseTensorPtr &new_tensor, const tensor::
   if (device_address == nullptr) {
     return;
   }
-
-  auto kernel_tensor = device_address->kernel_tensor();
-  MS_EXCEPTION_IF_NULL(kernel_tensor);
-  if (!kernel_tensor->host_info_exist()) {
-    // The tensor from PyBoost output.
-    kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(new_tensor->shape()),
-                               std::make_shared<TensorType>(new_tensor->Dtype()), nullptr);
-  }
-
   auto forward = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor();
   if (forward->device_target() != kCPUDevice && device_address->GetDeviceType() != device::DeviceType::kCPU) {
     old_tensor->set_device_address(device_address);

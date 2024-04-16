@@ -66,6 +66,8 @@ class RuntimeUtils;
 namespace mindspore {
 namespace device {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
+using kernel::AddressCommon;
+using kernel::AddressCommonPtr;
 using kernel::KernelTensor;
 using kernel::KernelTensorPtr;
 
@@ -99,66 +101,75 @@ constexpr size_t kDeviceAddressFlagIgnoreDevicePtr = 4;
 
 class DeviceAddress : public mindspore::DeviceSync {
  public:
-  explicit DeviceAddress(const KernelTensorPtr &kernel_tensor) : kernel_tensor_(kernel_tensor) {}
+  explicit DeviceAddress(const KernelTensorPtr &kernel_tensor)
+      : kernel_tensor_(kernel_tensor), address_common_(kernel_tensor_->address_common()) {}
 
   explicit DeviceAddress(void *ptr, size_t size) {
+    address_common_ = std::make_shared<AddressCommon>(ptr, size);
     kernel_tensor_ = std::make_shared<KernelTensor>();
-    kernel_tensor_->set_device_ptr(ptr);
-    kernel_tensor_->set_size(size);
   }
   explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id) {
     kernel_tensor_ = std::make_shared<KernelTensor>();
-    kernel_tensor_->set_device_ptr(ptr);
-    kernel_tensor_->set_size(size);
+    address_common_ = kernel_tensor_->address_common();
+    address_common_->pointer_ref_count_->set_ptr(ptr);
+    address_common_->size_ = size;
+    address_common_->dtype_id_ = type_id;
     kernel_tensor_->SetStringFormat(format);
-    kernel_tensor_->set_dtype_id(type_id);
   }
   explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                          const KernelWithIndex &node_index)
       : node_index_(node_index) {
     kernel_tensor_ = std::make_shared<KernelTensor>();
-    kernel_tensor_->set_device_ptr(ptr);
-    kernel_tensor_->set_size(size);
+    address_common_ = kernel_tensor_->address_common();
+    address_common_->pointer_ref_count_->set_ptr(ptr);
+    address_common_->size_ = size;
+    address_common_->dtype_id_ = type_id;
     kernel_tensor_->SetStringFormat(format);
-    kernel_tensor_->set_dtype_id(type_id);
   }
 
   explicit DeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id) {
     kernel_tensor_ = std::make_shared<KernelTensor>();
-    kernel_tensor_->set_device_ptr(ptr);
-    kernel_tensor_->set_size(size);
-    kernel_tensor_->set_device_name(device_name);
+    address_common_ = kernel_tensor_->address_common();
+    address_common_->pointer_ref_count_->set_ptr(ptr);
+    address_common_->size_ = size;
+    address_common_->device_name_ = device_name;
     kernel_tensor_->set_device_id(device_id);
   }
   explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id, const std::string &device_name,
                          uint32_t device_id) {
     kernel_tensor_ = std::make_shared<KernelTensor>();
-    kernel_tensor_->set_device_ptr(ptr);
-    kernel_tensor_->set_size(size);
+    address_common_ = kernel_tensor_->address_common();
+    address_common_->pointer_ref_count_->set_ptr(ptr);
+    address_common_->size_ = size;
+    address_common_->device_name_ = device_name;
+    address_common_->dtype_id_ = type_id;
     kernel_tensor_->SetStringFormat(format);
-    kernel_tensor_->set_dtype_id(type_id);
-    kernel_tensor_->set_device_name(device_name);
     kernel_tensor_->set_device_id(device_id);
+  }
+  explicit DeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector, const Format &format, TypeId type_id,
+                         const std::string &device_name, uint32_t device_id, uint32_t stream_id) {
+    address_common_ =
+      std::make_shared<AddressCommon>(ptr, size, shape_vector, format, type_id, device_name, device_id, stream_id);
   }
   explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                          const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
       : node_index_(node_index) {
     kernel_tensor_ = std::make_shared<KernelTensor>();
-    kernel_tensor_->set_device_ptr(ptr);
-    kernel_tensor_->set_size(size);
+    address_common_ = kernel_tensor_->address_common();
+    address_common_->pointer_ref_count_->set_ptr(ptr);
+    address_common_->size_ = size;
+    address_common_->device_name_ = device_name;
+    address_common_->dtype_id_ = type_id;
     kernel_tensor_->SetStringFormat(format);
-    kernel_tensor_->set_dtype_id(type_id);
-    kernel_tensor_->set_device_name(device_name);
     kernel_tensor_->set_device_id(device_id);
   }
 
-  explicit DeviceAddress(KernelTensorPtr &kernel_tensor) : kernel_tensor_(kernel_tensor) {}
   virtual ~DeviceAddress() {
     if (!from_mem_pool() && deleter_ && GetDevicePtr() != nullptr) {
       deleter_(static_cast<uint8_t *>(GetDevicePtr()));
       SetDevicePtr(nullptr);
     } else {
-      kernel_tensor_->ReleaseDeviceRes();
+      address_common_->pointer_ref_count_ = nullptr;
     }
   }
   virtual bool AsyncHostToDevice(size_t size, TypeId /* type */, const void *host_ptr) const { return true; }
@@ -178,11 +189,17 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
   virtual bool CopyDeviceToHost(void *dst, const void *src, const size_t &size) const { return true; }
   virtual bool CopyHostToDevice(void *dst, const void *src, const size_t &size) const { return true; }
+  virtual void DeviceSynchronizerInit() { MS_LOG(EXCEPTION) << "Not implemented."; }
 
   // Get kernel tensor pointer.
   const KernelTensorPtr &kernel_tensor() const { return kernel_tensor_; }
+  void set_kernel_tensor(const KernelTensorPtr &kernel_tensor) {
+    kernel_tensor_ = kernel_tensor;
+    address_common_ = kernel_tensor_->address_common();
+  }
 
   void set_device_synchronizer(const DeviceSynchronizerPtr &device_synchronizer) {
+    MS_EXCEPTION_IF_NULL(kernel_tensor_);
     kernel_tensor_->set_device_synchronizer(device_synchronizer);
   }
 
@@ -192,7 +209,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
   void set_ptr(void *ptr) {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-    kernel_tensor_->set_device_ptr(ptr);
+    address_common_->pointer_ref_count_->set_ptr(ptr);
     if (ptr != nullptr) {
       const auto &storage_info = GetStorageInfo();
       if (storage_info.host_ptr_ == nullptr && storage_info.file_name_.empty()) {
@@ -201,17 +218,17 @@ class DeviceAddress : public mindspore::DeviceSync {
     }
   }
   size_t GetSize() const { return size(); }
-  void SetSize(size_t size) { kernel_tensor_->set_size(size); }
+  void SetSize(size_t size) { address_common_->size_ = size; }
 
-  std::string format() const { return kernel_tensor_->GetStringFormat(); }
-  void set_format(const std::string &format) { kernel_tensor_->SetStringFormat(format); }
+  std::string format() const { return kernel::GetFormatFromEnumToStr(address_common_->format_); }
+  void set_format(const std::string &format) { address_common_->format_ = kernel::GetFormatFromStrToEnum(format); }
   const std::string &padding_type() const { return padding_type_; }
   void set_padding_type(const std::string &padding_type) { padding_type_ = padding_type; }
-  TypeId type_id() const { return kernel_tensor_->dtype_id(); }
-  void set_type_id(TypeId type_id) { kernel_tensor_->set_dtype_id(type_id); }
-  bool from_mem_pool() const { return kernel_tensor_->pointer_ref_count()->from_mem_pool(); }
+  TypeId type_id() const { return address_common_->dtype_id_; }
+  void set_type_id(TypeId type_id) { address_common_->dtype_id_ = type_id; }
+  bool from_mem_pool() const { return address_common_->pointer_ref_count_->from_mem_pool(); }
   void set_from_mem_pool(bool from_mem_pool) const {
-    kernel_tensor_->pointer_ref_count()->set_from_mem_pool(from_mem_pool);
+    address_common_->pointer_ref_count_->set_from_mem_pool(from_mem_pool);
   }
   virtual void set_communication_ptr(uint8_t *communication_ptr) { MS_LOG(EXCEPTION) << "Not implemented error."; }
   bool is_ptr_persisted() const { return is_ptr_persisted_; }
@@ -232,20 +249,25 @@ class DeviceAddress : public mindspore::DeviceSync {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     return GetDevicePtr();
   }
+  // Get the shape vector for Tensor/Sequence/Scalar.
+  const ShapeVector &GetShapeVector() const { return address_common_->shape_vector_; }
 
   const TensorStorageInfoPtr GetTensorStorageInfo() const override {
-    if (kernel_tensor_ == nullptr) {
+    if (address_common_ == nullptr) {
       return nullptr;
     }
 
-    return kernel_tensor_->tensor_storage_info();
+    return address_common_->tensor_storage_info_;
+  }
+  void set_tensor_storage_info(const TensorStorageInfoPtr &tensor_storage_info) {
+    address_common_->tensor_storage_info_ = tensor_storage_info;
   }
 
-  const std::string &device_name() const { return kernel_tensor_->device_name(); }
-  uint32_t device_id() const { return kernel_tensor_->device_id(); }
+  const std::string &device_name() const { return address_common_->device_name_; }
+  uint32_t device_id() const { return address_common_->device_id_; }
 
-  void set_stream_id(uint32_t stream_id) { kernel_tensor_->set_stream_id(stream_id); }
-  const uint32_t stream_id() const { return kernel_tensor_->stream_id(); }
+  void set_stream_id(uint32_t stream_id) { address_common_->stream_id_ = stream_id; }
+  const uint32_t stream_id() const { return address_common_->stream_id_; }
 
   void AddHeldByNode(const std::weak_ptr<ValueNode> &value_node) { (void)held_by_nodes_.emplace_back(value_node); }
   std::vector<std::weak_ptr<ValueNode>> held_by_nodes() const { return held_by_nodes_; }
@@ -257,41 +279,41 @@ class DeviceAddress : public mindspore::DeviceSync {
                                        : KernelWithIndex{node_index_.first.lock(), node_index_.second};
   }
 
-  size_t IncreaseCounter() { return kernel_tensor_->pointer_ref_count()->IncreaseCounter(); }
-  size_t DecreaseCounter() { return kernel_tensor_->pointer_ref_count()->DecreaseCounter(); }
+  size_t IncreaseCounter() { return address_common_->pointer_ref_count_->IncreaseCounter(); }
+  size_t DecreaseCounter() { return address_common_->pointer_ref_count_->DecreaseCounter(); }
 
   // The related interface of reference count operation.
   void set_original_ref_count(size_t original_ref_count) const override {
-    kernel_tensor_->pointer_ref_count()->set_original_ref_count(original_ref_count);
+    address_common_->pointer_ref_count_->set_original_ref_count(original_ref_count);
   }
-  size_t original_ref_count() const override { return kernel_tensor_->pointer_ref_count()->original_ref_count(); }
-  void set_ref_count(size_t ref_count) const override { kernel_tensor_->pointer_ref_count()->set_ref_count(ref_count); }
-  size_t ref_count() const override { return kernel_tensor_->pointer_ref_count()->ref_count(); }
-  void ResetRefCount() override { kernel_tensor_->pointer_ref_count()->ResetRefCount(); }
+  size_t original_ref_count() const override { return address_common_->pointer_ref_count_->original_ref_count(); }
+  void set_ref_count(size_t ref_count) const override { address_common_->pointer_ref_count_->set_ref_count(ref_count); }
+  size_t ref_count() const override { return address_common_->pointer_ref_count_->ref_count(); }
+  void ResetRefCount() override { address_common_->pointer_ref_count_->ResetRefCount(); }
 
   void IncreaseOriginalRefCount() {
     if (original_ref_count() < SIZE_MAX) {
-      kernel_tensor_->pointer_ref_count()->IncreaseOriginalRefCount();
+      address_common_->pointer_ref_count_->IncreaseOriginalRefCount();
     }
   }
   void DecreaseOriginalRefCount() {
     if ((original_ref_count() < SIZE_MAX) && (original_ref_count() > 0)) {
-      kernel_tensor_->pointer_ref_count()->DecreaseOriginalRefCount();
+      address_common_->pointer_ref_count_->DecreaseOriginalRefCount();
     }
   }
-  size_t DecreaseRefCount() { return kernel_tensor_->pointer_ref_count()->DecreaseRefCount(); }
+  size_t DecreaseRefCount() { return address_common_->pointer_ref_count_->DecreaseRefCount(); }
 
   // The related interface of dynamic reference count operation.
   void set_dynamic_ref_count(int32_t dynamic_ref_count) {
-    kernel_tensor_->pointer_ref_count()->set_dynamic_ref_count(dynamic_ref_count);
+    address_common_->pointer_ref_count_->set_dynamic_ref_count(dynamic_ref_count);
   }
 
-  int32_t dynamic_ref_count() const { return kernel_tensor_->pointer_ref_count()->dynamic_ref_count(); }
+  int32_t dynamic_ref_count() const { return address_common_->pointer_ref_count_->dynamic_ref_count(); }
   void IncreaseDynamicRefCount(const std::string &op_object) {
-    kernel_tensor_->pointer_ref_count()->IncreaseDynamicRefCount(op_object);
+    address_common_->pointer_ref_count_->IncreaseDynamicRefCount(op_object);
   }
   int32_t DecreaseDynamicRefCount(const std::string &op_object) {
-    return kernel_tensor_->pointer_ref_count()->DecreaseDynamicRefCount(op_object);
+    return address_common_->pointer_ref_count_->DecreaseDynamicRefCount(op_object);
   }
 
   virtual bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
@@ -397,23 +419,26 @@ class DeviceAddress : public mindspore::DeviceSync {
   bool need_sync_user_data() { return need_sync_user_data_; }
   void set_need_sync_user_data(bool need_sync_user_data) { need_sync_user_data_ = need_sync_user_data; }
 
-  const PointerRefCountPtr &pointer_ref_count() const { return kernel_tensor_->pointer_ref_count(); }
+  const PointerRefCountPtr &pointer_ref_count() const { return address_common_->pointer_ref_count_; }
   void set_pointer_ref_count(const PointerRefCountPtr &ptr_ref_cnt) {
     MS_EXCEPTION_IF_NULL(ptr_ref_cnt);
-    kernel_tensor_->set_pointer_ref_count(ptr_ref_cnt);
+    address_common_->pointer_ref_count_ = ptr_ref_cnt;
   }
 
   void set_is_view(bool is_view) { is_view_ = is_view; }
   bool is_view() const { return is_view_; }
+  AddressCommonPtr address_common() const { return address_common_; }
 
  protected:
-  KernelTensorPtr kernel_tensor_;
-  size_t size() const { return kernel_tensor_->size(); }
+  KernelTensorPtr kernel_tensor_{nullptr};
+  // address basic info
+  AddressCommonPtr address_common_{nullptr};
+  size_t size() const { return address_common_->size_; }
 
-  void *GetDevicePtr() const { return kernel_tensor_->device_ptr(); }
-  void SetDevicePtr(void *ptr) const { kernel_tensor_->set_device_ptr(ptr); }
+  void *GetDevicePtr() const { return address_common_->pointer_ref_count_->ptr(); }
+  void SetDevicePtr(void *ptr) const { address_common_->pointer_ref_count_->set_ptr(ptr); }
 
-  void SetTypeId(TypeId type) const { return kernel_tensor_->set_dtype_id(type); }
+  void SetTypeId(TypeId type) const { address_common_->dtype_id_ = type; }
 
   ShapeVector device_shape_{};
   // {node, out_index}
