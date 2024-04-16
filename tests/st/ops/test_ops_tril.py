@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technoreluies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,30 +16,30 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor
-from mindspore.ops import relu
+from mindspore.ops import tril
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
 
-def generate_expect_forward_output(x, dtype):
-    return np.maximum(x, 0).astype(dtype)
+def generate_expect_forward_output(x, k, dtype):
+    return np.tril(x, k=k).astype(dtype)
 
-def generate_expect_backward_output(x, dtype):
-    return np.where(x > 0, 1, 0).astype(dtype)
-
-@test_utils.run_with_cell
-def relu_forward_func(x):
-    return relu(x)
+def generate_expect_backward_output(x, k, dtype):
+    return np.tril(x, k=k).astype(dtype)
 
 @test_utils.run_with_cell
-def relu_backward_func(x):
-    return ms.ops.grad(relu_forward_func, (0))(x)
+def tril_forward_func(x, k):
+    return tril(x, k)
 
 @test_utils.run_with_cell
-def relu_vmap_func(x):
-    return ms.ops.vmap(relu_forward_func, in_axes=0, out_axes=0)(x)
+def tril_backward_func(x, k):
+    return ms.ops.grad(tril_forward_func, (0))(x, k)
+
+@test_utils.run_with_cell
+def tril_vmap_func(x, k):
+    return ms.ops.vmap(tril_forward_func, in_axes=(0, None), out_axes=(0,))(x, k)
 
 
 @pytest.mark.level0
@@ -48,26 +48,29 @@ def relu_vmap_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_relu_normal(mode):
+@pytest.mark.parametrize("k", [0, 1, -1])
+def test_tril_normal(mode, k):
     """
-    Feature: test relu operator
-    Description: test relu run by pyboost
+    Feature: test tril operator
+    Description: test tril run by pyboostf
     Expectation: success
     """
     context.set_context(mode=mode)
 
     ## forward
-    np_array = np.random.rand(2, 3, 4)
+    np_array = np.random.rand(7, 4, 6, 2)
     x = Tensor(np_array, ms.float32)
-    output = relu_forward_func(x)
-    expect = generate_expect_forward_output(np_array, np.float32)
+    k = k
+    output = tril_forward_func(x, k)
+    expect = generate_expect_forward_output(np_array, k, np.float32)
     assert np.allclose(output.asnumpy(), expect)
 
     ## backward
+    context.set_context(mode=mode)
     np_array = np.random.rand(2, 3, 4).astype(np.float32)
     x = Tensor(np_array, ms.float32)
-    output = relu_backward_func(x)
-    expect = generate_expect_backward_output(np_array, np.float32)
+    output = tril_backward_func(x, k)
+    expect = generate_expect_backward_output(np_array, k, np.float32)
     assert np.allclose(output.asnumpy(), expect)
 
 
@@ -77,16 +80,18 @@ def test_relu_normal(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_relu_vmap(mode):
+@pytest.mark.parametrize("k", [0, 1, -1])
+def test_ops_tril_vmap(mode, k):
     """
     Feature: pyboost function.
-    Description: test function relu vmap feature.
+    Description: test function tril vmap feature.
     Expectation: expect correct result.
     """
     context.set_context(mode=mode)
     x = generate_random_input((2, 3, 4, 5), np.float32)
-    output = relu_vmap_func(Tensor(x))
-    expect = generate_expect_forward_output(x, np.float32)
+    k = k
+    output = tril_vmap_func(Tensor(x), k)
+    expect = generate_expect_forward_output(x, k, np.float32)
     np.testing.assert_allclose(output.asnumpy(), expect)
 
 
@@ -94,18 +99,19 @@ def test_ops_relu_vmap(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_relu_bfloat16(mode):
+def test_tril_bfloat16(mode):
     """
-    Feature: test relu operator
-    Description: test relu run by pyboost
+    Feature: test tril operator
+    Description: test tril run by pyboost
     Expectation: success
     """
     context.set_context(mode=mode)
     np_array = np.random.rand(2, 3, 4)
     x = Tensor(np_array, ms.bfloat16)
-    output = relu_forward_func(x)
-    expect = generate_expect_forward_output(np_array, np.float32)
-    assert np.allclose(output.float().asnumpy(), expect, rtol=2e-3, atol=2e-3)
+    k = 0
+    output = tril_forward_func(x, k)
+    expect = generate_expect_forward_output(np_array, k, np.float32)
+    assert np.allclose(output.float().asnumpy(), expect, rtol=4e-3, atol=4e-3)
 
 
 @pytest.mark.level1
@@ -114,12 +120,12 @@ def test_relu_bfloat16(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_relu_dynamic(mode):
+def test_tril_dynamic(mode):
     """
     Feature: test dynamic by TEST_OP.
-    Description: test ops.relu dynamic shape feature.
+    Description: test ops.tril dynamic shape feature.
     Expectation: expect correct result.
     """
     input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
     input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))
-    TEST_OP(relu_forward_func, [[input_case1], [input_case2]], mode=mode, grad=True)
+    TEST_OP(tril_forward_func, [[input_case1, 0], [input_case2, 1]], mode=mode, grad=True)

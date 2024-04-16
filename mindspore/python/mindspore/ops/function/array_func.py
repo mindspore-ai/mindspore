@@ -48,7 +48,6 @@ from mindspore.ops.operations.array_ops import (
     Expand,
     Lstsq,
     Mvlgamma,
-    Tril,
     ArgMaxWithValue,
     ArgMinWithValue
 )
@@ -60,7 +59,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    nonzero, flip, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
+    nonzero, flip, transpose, tril, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
     strided_slice, ones, zeros, max_, min_, select
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
@@ -4534,67 +4533,6 @@ def split(tensor, split_size_or_sections, axis=0):
         raise TypeError(f"Type of Argument `split_size_or_sections` should be integer, tuple(int) or list(int), " \
                         f"but got {type(split_size_or_sections)}")
     return tuple(res)
-
-
-def tril(input, diagonal=0):  # pylint: disable=redefined-outer-name
-    """
-    Returns the lower triangle part of 'input' (elements that contain the diagonal and below),
-    and set the other elements to zeros.
-
-    Args:
-        input (Tensor): A Tensor with shape :math:`(x_1, x_2, ..., x_R)`. The rank must be at least 2.
-          Supporting all number types including bool.
-        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
-            indicating the main diagonal.
-
-    Returns:
-        Tensor, the same shape and data type as the input `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If `diagonal` is not an int.
-        TypeError: If the type of `x` is neither number nor bool.
-        ValueError: If the rank of `x` is less than 2.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> result = ops.tril(x)
-        >>> print(result)
-        [[ 1  0  0  0]
-         [ 5  6  0  0]
-         [10 11 12  0]
-         [14 15 16 17]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> result = ops.tril(x, diagonal=1)
-        >>> print(result)
-        [[ 1  2  0  0]
-         [ 5  6  7  0]
-         [10 11 12 13]
-         [14 15 16 17]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> result = ops.tril(x, diagonal=-1)
-        >>> print(result)
-        [[ 0  0  0  0]
-         [ 5  0  0  0]
-         [10 11  0  0]
-         [14 15 16  0]]
-    """
-    tril_ = Tril(diagonal)
-    return tril_(input)
 
 
 def triu(input, diagonal=0):  # pylint: disable=redefined-outer-name
