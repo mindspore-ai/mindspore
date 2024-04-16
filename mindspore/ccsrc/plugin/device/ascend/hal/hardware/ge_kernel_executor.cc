@@ -952,7 +952,7 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   }
 
   auto sched_events = opt::GPTO(graph);
-  DoSomas(NOT_NULL(graph));
+  DoSomas(NOT_NULL(graph), sched_events);
 
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 1);
 }

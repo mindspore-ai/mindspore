@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph, const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) const {
+void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph, const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) {
   auto kernels = kernel_graph->execution_order();
   if (kernels.empty()) {
     return;
@@ -367,7 +367,7 @@ void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kern
   MS_LOG(DEBUG) << "Finish GenEventsForParallelOp.";
 }
 
-void AclStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph, const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) const {
+void AclStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph, const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) {
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_send;
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_recv;
   AnfAlgo::SetStreamId(kDefaultStreamIndex, kernel_graph->output().get());
