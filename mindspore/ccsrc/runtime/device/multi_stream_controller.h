@@ -117,7 +117,7 @@ class BACKEND_EXPORT MultiStreamController {
                    const std::vector<std::pair<uint32_t, DeviceMemPtr>> &memory_stream_addresses);
   bool WaitEvent(const DeviceContext *device_context, int64_t task_id_on_stream, uint32_t user_stream_id,
                  uint32_t memory_stream_id);
-  bool SyncEvent(const DeviceContext *device_context, int64_t task_id_on_stream, uint32_t user_stream_id);
+  bool WaitEvent(const DeviceContext *device_context, int64_t task_id_on_stream, uint32_t user_stream_id);
   bool DispatchRecordWaitEvent(const DeviceContext *device_context, uint32_t user_stream_id, uint32_t memory_stream_id);
 
   bool SyncStream(const DeviceContext *device_context, size_t stream_id);
