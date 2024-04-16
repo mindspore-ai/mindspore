@@ -26,7 +26,6 @@ namespace kernel {
 constexpr uint32_t kMatMulAllReduceInputNum = 2;
 constexpr uint32_t kMatMulAllReduceOutputNum = 1;
 constexpr char kAttrNameTransposeA[] = "transpose_a";
-;
 constexpr char kAttrNameTransposeB[] = "transpose_b";
 
 class HcomMatMulAllReduceKernel : public HcclKernel {

@@ -211,8 +211,6 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
     return RunGraphKernelByKernel(context);
   }
 
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", graph_->ToString());
-
   if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Invalid device context for super kernel actor:" + GetAID().Name());
   }

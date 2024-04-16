@@ -727,7 +727,14 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
   // 2. Launch kernel if need.
   device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
   if (!IsSkippedLaunch(kernel_, nullptr) && !LaunchKernel(context)) {
-    MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope()
+                      << trace::DumpSourceLines(kernel_);
+  }
+
+  if (recorder_aid_ != nullptr) {
+    SetMemInfoForDebugAndRdr();
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &mem_info_,
+                          device_contexts_[0], context);
   }
 
   if (ActorDispatcher::enable_multi_stream()) {

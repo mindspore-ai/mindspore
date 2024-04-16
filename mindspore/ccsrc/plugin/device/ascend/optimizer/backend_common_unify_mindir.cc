@@ -136,13 +136,9 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
 #ifdef ENABLE_INTERNAL_KERNELS
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiMatmulsFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());
-  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on") {
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
-  }
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormFusion>());
-  if (common::GetEnv("ENABLE_MATMUL_ALLREDUCE") == "on") {
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatMulAllReduceFusion>());
-  }
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatMulAllReduceFusion>());
 #endif  // ENABLE_INTERNAL_KERNELS
 }
 

@@ -135,7 +135,7 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
 
   if (common::GetEnv(kSimulationLevel).empty() && !common::IsNeedProfileMemory()) {
 #ifdef ENABLE_INTERNAL_KERNELS
-    if (!common::GetEnv("ENABLE_LCCL").empty()) {
+    if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
       LoadLcclLibrary();
     } else {
       LoadHcclLibrary();

@@ -44,7 +44,7 @@ class LowlatencyCommunicationGroup : public CommunicationGroup {
 
   void *GenerateRootInfo(size_t *root_info_size) override;
 
-  // Return communicator for collective communcation ops.
+  // Return communicator for collective communication ops.
   const LcclPtr &lccl_communicator() const;
   // Return communicator of lcal.
   const LcalCommPtr &lcal_comm() const;

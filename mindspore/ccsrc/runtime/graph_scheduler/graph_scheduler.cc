@@ -661,14 +661,14 @@ void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThr
   }
 
   // If enable runtime multi pipeline, async launch kernel will be enabled.
-<<<<<<< HEAD
-  ActorDispatcher::set_enable_runtime_multi_pipeline(EnableRuntimePipeline() && actor_set->has_dynamic_shape_ &&
-                                                     !actor_set->kernel_actors_.empty() &&
-                                                     default_actor_thread_num_ > kMultiPipelineThreadNum);
->>>>>>> 80d1685cc13... lzy: Support run graph without kernel actor for kbyk mode
+  ActorDispatcher::set_enable_runtime_multi_pipeline(
+    enable_runtime_pipeline && actor_set->has_dynamic_shape_ &&
+    (EnableKbkSubGraphExecute() || !actor_set->kernel_actors_.empty()) &&
+    default_actor_thread_num_ > kMultiPipelineThreadNum);
   if (ActorDispatcher::enable_runtime_multi_pipeline() && !already_spawn_kernel_async_infer_resize_actor_) {
     size_t current_actor_thread_num = thread_pool->GetActorThreadNum();
     MS_LOG(INFO) << "Enable runtime multi pipeline, default actor thread num: " << default_actor_thread_num_
+                 << ", current actor thread num: " << current_actor_thread_num;
     if (current_actor_thread_num != default_actor_thread_num_) {
       thread_pool->SetActorThreadNum(default_actor_thread_num_);
       MS_LOG(DEBUG) << "Reset actor thread number to: " << default_actor_thread_num_;

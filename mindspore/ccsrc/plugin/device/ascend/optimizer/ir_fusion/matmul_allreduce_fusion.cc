@@ -15,11 +15,13 @@
  */
 
 #include "plugin/device/ascend/optimizer/ir_fusion/matmul_allreduce_fusion.h"
+#include <set>
 #include <vector>
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/utils/ms_context.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -101,6 +103,16 @@ AnfNodePtr MatMulAllReduceFusion::CreateMatMulAllReduceNode(const FuncGraphPtr &
 const AnfNodePtr MatMulAllReduceFusion::Process(const mindspore::FuncGraphPtr &func_graph,
                                                 const mindspore::AnfNodePtr &node,
                                                 const mindspore::EquivPtr &equiv) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->IsEnableInferBoost()) {
+    return nullptr;
+  }
+
+  if (common::GetEnv("DISABLE_MATMULALLREDUCE_FUSION") == "True") {
+    return nullptr;
+  }
+
   if (func_graph == nullptr || node == nullptr) {
     return nullptr;
   }

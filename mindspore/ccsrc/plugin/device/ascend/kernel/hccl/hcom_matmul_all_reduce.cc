@@ -62,7 +62,7 @@ int HcomMatMulAllReduceKernel::Resize(const std::vector<KernelTensor *> &inputs,
   // The dimensions of left and right matrices.
   matmul_info_.m = hccl_kernel_input_shape_list_[0][0];
   matmul_info_.k = hccl_kernel_input_shape_list_[0][1];
-  matmul_info_.n = hccl_kernel_input_shape_list_[1][0];
+  matmul_info_.n = hccl_kernel_input_shape_list_[1][1];
   matmul_info_.transA = transpose_a_;
   matmul_info_.transB = transpose_b_;
 
