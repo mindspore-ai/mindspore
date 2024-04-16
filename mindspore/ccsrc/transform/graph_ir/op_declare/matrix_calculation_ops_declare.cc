@@ -231,8 +231,9 @@ OUTPUT_MAP(TensorScatterMax) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(TensorScatterMax, kNameTensorScatterMax, ADPT_DESC(TensorScatterMax))
 
 // Triu
-INPUT_MAP(Triu) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Triu) = {{"diagonal", ATTR_DESC(diagonal, AnyTraits<int64_t>())}};
+INPUT_MAP(Triu) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(Triu) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Triu) = {{kIndex2, ATTR_DESC(diagonal, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Triu) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Triu, kNameTriu, ADPT_DESC(Triu))
 

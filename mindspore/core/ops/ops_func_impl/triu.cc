@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/ops_func_impl/tril.h"
+#include "ops/ops_func_impl/triu.h"
 #include <memory>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr TrilFuncImpl::InferShape(const PrimitivePtr &primitive,
+BaseShapePtr TriuFuncImpl::InferShape(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape_vec = input_args[0]->GetShape()->GetShapeVector();
   if (MS_UNLIKELY(IsDynamicRank(input_shape_vec))) {
@@ -34,7 +34,7 @@ BaseShapePtr TrilFuncImpl::InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(input_shape_vec);
 }
 
-TypePtr TrilFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr TriuFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto input_type = input_args[0]->GetType();

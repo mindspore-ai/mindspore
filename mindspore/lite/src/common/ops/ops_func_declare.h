@@ -181,7 +181,7 @@
 #include "ops/decoder_layer.h"
 #include "ops/encoder_layer.h"
 #include "ops/scatter_elements.h"
-#include "ops/triu.h"
+#include "ops/ops_func_impl/triu.h"
 #include "ops/ops_func_impl/tril.h"
 
 namespace mindspore::lite::ops {
