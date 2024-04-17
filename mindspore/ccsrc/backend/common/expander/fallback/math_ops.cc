@@ -19,6 +19,7 @@
 #include "utils/shape_utils.h"
 #include "ops/ops_func_impl/matmul_ext.h"
 #include "ops/op_utils.h"
+#include "ops/op_enum.h"
 
 namespace mindspore {
 namespace expander {
@@ -288,5 +289,29 @@ NodePtr BuilderForMaxorMin(FallbackIRBuilder *ib, const std::string &emit_op) {
 REG_FALLBACK_BUILDER("Max").SetBody(BODYFUNC(ib) { return {BuilderForMaxorMin(ib, "ReduceMax")}; });
 
 REG_FALLBACK_BUILDER("Min").SetBody(BODYFUNC(ib) { return {BuilderForMaxorMin(ib, "ReduceMin")}; });
+
+REG_FALLBACK_BUILDER("DivMod").SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto input_y = ib->GetInput(kIndex1);
+  auto rounding_mode = ib->GetInput(kIndex2);
+
+  auto mode_type = rounding_mode->abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(mode_type);
+  if (mode_type->isa<TypeNone>()) {
+    return {ib->Div(input_x, input_y)};
+  }
+
+  auto mode_value_ptr = rounding_mode->BuildValue();
+  auto mode_opt = mindspore::ops::GetScalarValue<int64_t>(mode_value_ptr);
+
+  if (mode_opt.value() == ops::RoundingMode::FLOOR) {
+    return {ib->Emit("FloorDiv", {input_x, input_y})};
+  } else if (mode_opt.value() == ops::RoundingMode::TRUNC) {
+    auto div_out = ib->Cast(ib->Div(input_x, input_y), ib->GetDtype(input_x)->type_id());
+    return {ib->Emit("Trunc", {div_out})};
+  } else {
+    MS_LOG(EXCEPTION) << "DivMod abstract failed.";
+  }
+});
 }  // namespace expander
 }  // namespace mindspore

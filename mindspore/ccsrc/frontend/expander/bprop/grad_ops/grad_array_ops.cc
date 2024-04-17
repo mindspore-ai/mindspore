@@ -185,7 +185,7 @@ NodePtrList SegmentMinOrMaxGrad(BpropBuilder *ib) {
   const int64_t max_len = 1000000;
   auto num_selected =
     ib->Emit("SegmentSum", {ib->Cast(is_selected, kFloat32), segment_ids}, {{"max_length", MakeValue(max_len)}});
-  auto weighted_grads = ib->Div(dout, num_selected);
+  auto weighted_grads = ib->Cast(ib->Div(dout, num_selected), ib->GetDtype(dout));
   auto gathered_grads = ib->Gather(weighted_grads, segment_ids, zero_value);
   auto dx = ib->Select(is_selected, gathered_grads, ib->ZerosLike(input_x));
   if (input_x_type->type_id() != kNumberTypeFloat32) {

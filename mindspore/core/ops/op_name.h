@@ -222,6 +222,7 @@ constexpr auto kReduction = "reduction";
 constexpr auto kRho = "rho";
 constexpr auto kRootRank = "root_rank";
 constexpr auto kRoundMode = "round_mode";
+constexpr auto kRoundingMode = "rounding_mode";
 constexpr auto kRtol = "rtol";
 constexpr auto kSame = "same";
 constexpr auto kScale = "scale";

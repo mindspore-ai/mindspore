@@ -104,7 +104,7 @@ NodePtrList MinimumMaximumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr
   if (!x->need_compute_grad_out() && !y->need_compute_grad_out()) {
     return {grad_x, grad_y};
   }
-  auto half_dout = ib->Div(dout, ib->Tensor(2, ib->GetDtype(dout)));
+  auto half_dout = ib->Cast(ib->Div(dout, ib->Tensor(2, ib->GetDtype(dout))), ib->GetDtype(x));
   auto equal_mask = ib->Equal(x, y);
   auto zeros = ib->Tensor(0, ib->GetDtype(dout));
   auto is_less = ib->Less(x, y);
@@ -163,11 +163,11 @@ NodePtrList BpropAddcCommon(BpropBuilder *ib, const std::string &op_name, const 
   NodePtr dvalue = nullptr;
   if (op_name == "Addcdiv") {
     constexpr int64_t const_val = -2;
-    inner_out = ib->Add((ib->Mul(value, ib->Div(x1, x2))), input_data);
+    inner_out = ib->Add((ib->Mul(value, ib->Cast(ib->Div(x1, x2), ib->GetDtype(x1)))), input_data);
     dx2 =
       ib->Neg(ib->Mul(ib->Mul(ib->Mul(x1, value), ib->Pow(x2, ib->Tensor(const_val, ib->GetDtype(x2)))), dinput_data));
-    dx1 = ib->Mul(dinput_data, ib->Div(value, x2));
-    dvalue = ib->Mul(dinput_data, ib->Div(x1, x2));
+    dx1 = ib->Mul(dinput_data, ib->Cast(ib->Div(value, x2), ib->GetDtype(value)));
+    dvalue = ib->Mul(dinput_data, ib->Cast(ib->Div(x1, x2), ib->GetDtype(x1)));
   } else {
     dx1 = ib->Mul(dout, ib->Mul(value, x2));
     dx2 = ib->Mul(dout, ib->Mul(value, x1));
@@ -796,6 +796,42 @@ REG_BPROP_BUILDER("Div").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
     result[kIndex1] = y->need_compute_grad_out() ? ib->Conj(result[kIndex1]) : ib->OutZeros(y);
   }
   return result;
+});
+
+REG_BPROP_BUILDER("DivMod").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto rounding_mode = ib->GetInput(kIndex2);
+
+  auto mode_value_ptr = rounding_mode->BuildValue();
+  auto mode_opt = mindspore::ops::GetScalarValue<int64_t>(mode_value_ptr);
+  if (mode_opt.has_value()) {
+    return {ib->OutZeros(x), ib->OutZeros(y), ib->OutZeros(rounding_mode)};
+  }
+
+  auto mode_type = rounding_mode->abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(mode_type);
+  if (mode_type->isa<TypeNone>()) {
+    auto out = ib->GetInput(kIndex3);
+    auto dout = ib->GetInput(kIndex4);
+    NodePtr bc_dx = nullptr;
+    NodePtr bc_dy = nullptr;
+    auto x_dtype_id = ib->GetDtypeId(x);
+    bc_dx = ib->Div(dout, y);
+    if (y->need_compute_grad_out()) {
+      bc_dy = -(bc_dx * out);
+    }
+    std::vector<NodePtr> result = BinopGradCommon(ib, x, y, bc_dx, bc_dy);
+    bool is_complex = (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128);
+    if (is_complex) {
+      result[kIndex0] = ib->Conj(result[kIndex0]);
+      result[kIndex1] = y->need_compute_grad_out() ? ib->Conj(result[kIndex1]) : ib->OutZeros(y);
+    }
+    result.emplace_back(ib->OutZeros(rounding_mode));
+    return result;
+  } else {
+    MS_LOG(EXCEPTION) << "DivMod abstract failed.";
+  }
 });
 
 REG_BPROP_BUILDER("BitwiseAnd").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
@@ -2477,27 +2513,28 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
 
   auto dx = ib->Sub(x, mean);
   dx = ib->Mul(dx, std_d);
-  dx = ib->Div(dx, std);
+  auto dx_type = ib->GetDtype(dx);
+  dx = ib->Cast(ib->Div(dx, std), dx_type);
 
   auto unbiased_value = unbiased->BuildValue();
   auto unbiased_opt = ops::GetScalarValue<bool>(unbiased_value);
   if (unbiased_opt.has_value()) {
     if (unbiased_opt.value()) {
-      dx = ib->Div(dx, ib->Cast(res[1], ib->GetDtype(dx)));
+      dx = ib->Cast(ib->Div(dx, ib->Cast(res[1], ib->GetDtype(dx))), dx_type);
     } else {
-      dx = ib->Div(dx, ib->Cast(res[2], ib->GetDtype(dx)));
+      dx = ib->Cast(ib->Div(dx, ib->Cast(res[2], ib->GetDtype(dx))), dx_type);
     }
   } else {
     auto unbiased_true_branch = [&dx, &res](Emitter *e) -> NodePtrList {
-      return {e->Div(dx, e->Cast(res[1], dx->dtype()))};
+      return {e->Cast(e->Div(dx, e->Cast(res[1], dx->dtype())), dx->dtype())};
     };
     auto unbiased_false_branch = [&dx, &res](Emitter *e) -> NodePtrList {
-      return {e->Div(dx, e->Cast(res[2], dx->dtype()))};
+      return {e->Cast(e->Div(dx, e->Cast(res[2], dx->dtype())), dx->dtype())};
     };
     auto unbiased_cond = ib->Equal(unbiased, ib->Value<bool>(true));
     dx = ib->Conditional(unbiased_cond, unbiased_true_branch, unbiased_false_branch);
   }
-  auto temp = ib->Div(mean_d, ib->Cast(res[2], ib->GetDtype(mean_d)));
+  auto temp = ib->Cast(ib->Div(mean_d, ib->Cast(res[2], ib->GetDtype(mean_d))), ib->GetDtype(mean_d));
   dx = ib->Add(dx, temp);
   return {dx, ib->OutZeros(axis), ib->OutZeros(unbiased), ib->OutZeros(keep_dims)};
 });

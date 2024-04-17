@@ -39,7 +39,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              LogicalXor, Cos, ACos, Sin, Asin, Abs, Round, Atan, Atanh, Atan2,
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
-                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd,
+                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, DivMod, CumProd,
                              CumSum, Less, LessEqual, AssignAdd, IsFinite)
 
 
