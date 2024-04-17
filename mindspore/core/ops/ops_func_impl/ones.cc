@@ -60,7 +60,7 @@ TypePtr OnesFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector
   }
   auto val = GetValue<int64_t>(dtype_ptr);
   auto output_type = TypeIdToType(static_cast<TypeId>(val));
-  return output_type;
+  return std::make_shared<TensorType>(output_type);
 }
 }  // namespace ops
 }  // namespace mindspore

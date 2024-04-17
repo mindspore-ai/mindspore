@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "ops/ops_func_impl/zeros.h"
+#include "ops/ops_func_impl/fill.h"
 #include <memory>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr ZerosFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args) const {
+BaseShapePtr FillFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args) const {
   auto shape_v = GetArrayValue<int64_t>(input_args[kInputIndex0]);
   if (!shape_v.has_value()) {
     ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
@@ -46,15 +46,13 @@ BaseShapePtr ZerosFuncImpl::InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::TensorShape>(output_shape);
 }
 
-TypePtr ZerosFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr FillFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   auto prim_name = primitive->name();
-  auto dtype_type = input_args[kInputIndex1]->GetType();
-  MS_EXCEPTION_IF_NULL(dtype_type);
+  auto dtype_type = input_args[kInputIndex2]->GetType();
   if (dtype_type->isa<TypeNone>()) {
-    return kFloat32;
+    return input_args[kInputIndex1]->GetType()->Clone();
   }
-  // check
-  auto dtype_ptr = input_args[kInputIndex1]->GetValue();
+  auto dtype_ptr = input_args[kInputIndex2]->GetValue();
   if (!dtype_ptr->isa<Int64Imm>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
                             << "', 'dtype' must be a TypeId, but got an invalid type: " << dtype_ptr->ToString() << ".";

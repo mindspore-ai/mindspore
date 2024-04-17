@@ -31,7 +31,7 @@ from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
-
+from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
     SearchSorted,
@@ -82,7 +82,6 @@ lstsq_ = Lstsq()
 masked_select_ = P.MaskedSelect()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
 ones_ = P.Ones()
-ones_like_ = P.OnesLike()
 population_count_ = P.PopulationCount()
 range_ = P.Range()
 rank_ = P.Rank()
@@ -118,7 +117,12 @@ unsorted_segment_max_ = P.UnsortedSegmentMax()
 unsorted_segment_min_ = P.UnsortedSegmentMin()
 unsorted_segment_prod_ = P.UnsortedSegmentProd()
 unsorted_segment_sum_ = P.UnsortedSegmentSum()
+ones_like_ = P.OnesLike()
 zeros_like_ = P.ZerosLike()
+ones_like_ext_ = OnesLikeExt()
+zeros_like_ext_ = ZerosLikeExt()
+fill_scalar_ = FillScalar()
+fill_tensor_ = FillTensor()
 
 
 @_primexpr
@@ -713,6 +717,45 @@ def full(size, fill_value, *, dtype=None):  # pylint: disable=redefined-outer-na
     return ops.fill(dtype, size, fill_value)
 
 
+def full_ext(size, fill_value, *, dtype=None):  # pylint: disable=redefined-outer-name
+    """
+    Create a Tensor of the specified shape and fill it with the specified value.
+
+    Args:
+        size (Union(tuple[int], list[int])): The specified shape of output tensor.
+        fill_value (number.Number): Value to fill the returned tensor. Complex numbers are not supported for now.
+
+    Keyword Args:
+        dtype (mindspore.dtype): The specified type of output tensor. `bool_` and `number` are supported, for details,
+            please refer to :class:`mindspore.dtype` . Default: ``None`` .
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If `size` is not a tuple or list.
+        ValueError: The element in `size` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import ops
+        >>> output = ops.full((2, 2), 1)
+        >>> print(output)
+        [[1. 1.]
+         [1. 1.]]
+        >>> output = ops.full((3, 3), 0)
+        >>> print(output)
+        [[0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]]
+    """
+    if isinstance(fill_value, Tensor):
+        return fill_tensor_(size, fill_value, dtype)
+    return fill_scalar_(size, fill_value, dtype)
+
+
 def full_like(input, fill_value, *, dtype=None):
     """
     Return a Tensor of the same shape as `input` and filled with `fill_value`.
@@ -913,6 +956,73 @@ def zeros_like(input, *, dtype=None):
     output = zeros_like_(input)
     output = cast_(output, _dtype)
     return output
+
+
+def ones_like_ext(input, *, dtype=None):
+    """
+    Returns a Tensor with a value of 1 and its shape is the same as the input.
+
+    Args:
+        input (Tensor): Tensor of any dimension.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype` is ``None`` ,
+            the dtype of the input tensor will be used. Default: ``None`` .
+
+    Returns:
+        Tensor, has the same shape as `input` but filled with ones.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
+        >>> output = ops.mint.ones_like(x)
+        >>> print(output)
+        [[1 1]
+         [1 1]]
+    """
+    return ones_like_ext_(input, dtype)
+
+
+def zeros_like_ext(input, *, dtype=None):
+    r"""
+    Creates a tensor filled with 0, with the same size as input, and the given dtype.
+
+    If `dtype = None`, the tensor will have the same dtype as input `input`.
+
+    Args:
+        input (Tensor): Tensor of any dimension.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype` is ``None`` ,
+            the dtype of the input tensor will be used. Default: ``None`` .
+
+    Returns:
+        Tensor, filled with 0.
+
+    Raises:
+        TypeError: If dtype is not a MindSpore dtype.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.arange(4).reshape(2, 2))
+        >>> output = ops.mint.zeros_like(x, dtype=mindspore.float32)
+        >>> print(output)
+        [[0. 0.]
+         [0. 0.]]
+    """
+    return zeros_like_ext_(input, dtype)
 
 
 ##############################
@@ -6152,8 +6262,10 @@ __all__ = [
     'ger',
     'ones',
     'ones_like',
+    'ones_like_ext',
     'zeros',
     'zeros_like',
+    'zeros_like_ext',
     'shape',
     'shape_',
     'reverse',
@@ -6161,6 +6273,7 @@ __all__ = [
     'hamming_window',
     'chunk',
     'full',
+    'full_ext',
     'full_like',
     'dyn_shape',
     'rank',

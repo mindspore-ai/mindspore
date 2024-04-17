@@ -113,6 +113,34 @@ REG_BPROP_BUILDER("FillV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   return {ib->OutZeros(shape), ib->Cast(dvalue, dout_typeptr)};
 });
 
+REG_BPROP_BUILDER("FillScalar").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto size = ib->GetInput(kIndex0);
+  auto type = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dvalue = ib->ReduceSum(dout);
+  return {ib->OutZeros(size), dvalue, ib->OutZeros(type)};
+});
+
+REG_BPROP_BUILDER("FillTensor").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto size = ib->GetInput(kIndex0);
+  auto value = ib->GetInput(kIndex1);
+  auto type = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dout_shape = dout->shape();
+  auto dvalue = ib->Emit("SumExt", {dout, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
+  if (IsDynamicRank(dout_shape)) {
+    auto value_shape = ib->Shape(value);
+    auto input_dtype = ib->GetDtype(value)->type_id();
+    auto value_dtype = ib->Value(static_cast<int64_t>(input_dtype));
+    auto dvalue_out = ib->Emit("FillTensor", {value_shape, dvalue, value_dtype});
+    return {ib->OutZeros(size), dvalue_out, ib->OutZeros(type)};
+  }
+  if (!value->shape().empty()) {
+    return {ib->OutZeros(size), ib->Reshape(dvalue, {1}), ib->OutZeros(type)};
+  }
+  return {ib->OutZeros(size), dvalue, ib->OutZeros(type)};
+});
+
 REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto update = ib->GetInput(kIndex1);
