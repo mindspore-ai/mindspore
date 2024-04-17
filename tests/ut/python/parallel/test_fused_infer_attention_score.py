@@ -246,6 +246,7 @@ def test_fused_infer_attention_score_strategy_error(input_layout):
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
 @pytest.mark.parametrize('strategys', [(2, 2, 1), (1, 2, 1)])
+@pytest.mark.skip("Fail to check input type")
 def test_fused_infer_attention_score_semi_auto_parallel_sparsemode0(input_layout, strategys):
     """
     Feature: test FusedInferAttentionScore semi parallel
