@@ -123,8 +123,7 @@ def max(input, dim=None, keepdim=False):
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        dim (int, optional): The dimension to reduce. When assigning a value to the `dim` parameter, please
-            assign the int type, and it does not support assignment to ``None`` . Default: ``None`` .
+        dim (int, optional): The dimension to reduce. Default: ``None`` .
         keepdim (bool, optional): Whether to reduce dimension, if true, the output will keep same dimension
             with the input, the output will reduce dimension if false. Default: ``False`` .
 
@@ -173,8 +172,7 @@ def min(input, dim=None, keepdim=False):
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        dim (int, optional): The dimension to reduce. When assigning a value to the `dim` parameter, please
-            assign the int type, and it does not support assignment to ``None`` . Default: ``None`` .
+        dim (int, optional): The dimension to reduce. Default: ``None`` .
         keepdim (bool, optional): Whether to reduce dimension, if true, the output will keep same dimension
             with the input, the output will reduce dimension if false. Default: ``False`` .
 
