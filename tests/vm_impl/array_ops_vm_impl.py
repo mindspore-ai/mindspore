@@ -17,6 +17,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.auto_generate import SumExt
 from mindspore._c_expression import typing
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
@@ -371,5 +372,23 @@ def vm_impl_fillv2(self):
         out = np.empty(x).astype(y.dtype)
         out.fill(y)
         return Tensor(out)
+
+    return vm_impl
+
+
+@vm_impl_getters.register(SumExt)
+def vm_impl_sum_ext(self):
+    """Generate vm_impl function for SumExt"""
+
+    def vm_impl(x, axis, keep_dims, dtype):
+        x = x.asnumpy()
+        nptype = None
+        if dtype is not None:
+            nptype = mstype.dtype_to_nptype(typing.type_id_to_type(dtype))
+        if axis is None or axis == ():
+            out = np.sum(x, keepdims=keep_dims, dtype=nptype)
+        else:
+            out = np.sum(x, axis=axis, keepdims=keep_dims, dtype=nptype)
+        return Tensor(np.array(out))
 
     return vm_impl
