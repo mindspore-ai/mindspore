@@ -9,7 +9,7 @@ mindspore.ops.extend.one_hot
 
     参数：
         - **tensor** (Tensor) - 输入索引，shape为 :math:`(X_0, \ldots, X_n)` 的Tensor。数据类型必须为int32或int64。
-        - **num_classes** (Union[int, Tensor]) - 输入的Scalar，定义one-hot的深度。
+        - **num_classes** (int) - 输入的Scalar，定义one-hot的深度。
 
     返回：
         Tensor，one-hot类型的Tensor。
