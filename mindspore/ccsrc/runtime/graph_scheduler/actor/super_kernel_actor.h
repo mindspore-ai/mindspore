@@ -91,6 +91,8 @@ class SuperKernelActor : public DebugAwareActor {
                                     const DeviceTensorPtr &node_device_tensor, size_t i);
   void RunGraphKernelByKernel(OpContext<DeviceTensor> *const context);
 
+  void FetchPersistentDeviceTensor();
+
   friend class GraphScheduler;
   KernelGraphPtr graph_;
 
@@ -116,6 +118,7 @@ class SuperKernelActor : public DebugAwareActor {
 
   // Kernel by kernel sub graph execute mode need not send actor message.
   bool enable_kbk_sub_graph_execute_;
+  bool already_fetch_persistent_device_tensor_{false};
   std::vector<KernelActorPtr> kernel_actors_;
   mindspore::HashMap<AnfNode *, std::vector<std::pair<size_t, size_t>>> kernel_input_to_graph_input_indices_;
   SomasInfo *somas_info_;
