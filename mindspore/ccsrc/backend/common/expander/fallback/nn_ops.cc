@@ -418,5 +418,56 @@ REG_FALLBACK_BUILDER("Embedding").SetBody(BODYFUNC(ib) {
   auto out = ib->Emit(ops::kNameGather, {weight, input, ib->Value((int64_t)0), ib->Value((int64_t)0)});
   return {out};
 });
+
+REG_FALLBACK_BUILDER("OnesLikeExt").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto dtype = ib->GetInput(kIndex1);
+  auto org_out = ib->Emit("OnesLike", {input});
+  if (ib->GetDtype(dtype)->isa<TypeNone>()) {
+    auto input_type = ib->GetDtype(input)->type_id();
+    dtype = ib->Value(static_cast<int64_t>(input_type));
+  }
+  auto out = ib->Emit("Cast", {org_out, dtype});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("ZerosLikeExt").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto dtype = ib->GetInput(kIndex1);
+  auto org_out = ib->Emit("ZerosLike", {input});
+  if (ib->GetDtype(dtype)->isa<TypeNone>()) {
+    auto input_type = ib->GetDtype(input)->type_id();
+    dtype = ib->Value(static_cast<int64_t>(input_type));
+  }
+  auto out = ib->Emit("Cast", {org_out, dtype});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("FillScalar").SetBody(BODYFUNC(ib) {
+  auto size = ib->GetInput(kIndex0);
+  auto fill_value = ib->GetInput(kIndex1);
+  auto dtype = ib->GetInput(kIndex2);
+  auto value = ib->ScalarToTensor(fill_value);
+  auto org_out = ib->Emit("FillV2", {size, value});
+  if (ib->GetDtype(dtype)->isa<TypeNone>()) {
+    auto input_type = ib->GetDtype(fill_value)->type_id();
+    dtype = ib->Value(static_cast<int64_t>(input_type));
+  }
+  auto out = ib->Emit("Cast", {org_out, dtype});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("FillTensor").SetBody(BODYFUNC(ib) {
+  auto size = ib->GetInput(kIndex0);
+  auto fill_value = ib->GetInput(kIndex1);
+  auto dtype = ib->GetInput(kIndex2);
+  auto org_out = ib->Emit("FillV2", {size, fill_value});
+  if (ib->GetDtype(dtype)->isa<TypeNone>()) {
+    auto input_type = ib->GetDtype(fill_value)->type_id();
+    dtype = ib->Value(static_cast<int64_t>(input_type));
+  }
+  auto out = ib->Emit("Cast", {org_out, dtype});
+  return {out};
+});
 }  // namespace expander
 }  // namespace mindspore
