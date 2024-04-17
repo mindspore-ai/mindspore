@@ -38,8 +38,8 @@ namespace profiler {
 namespace ascend {
 constexpr uint32_t kDefaultRingBuffer = 1024;
 constexpr uint32_t kBatchMaxLen = 5 * 1024 * 1024;  // 5 MB
-constexpr uint32_t kMaxWaitTimeUs = 1024;
-constexpr uint32_t kNotifyInterval = 2;
+constexpr uint32_t kMaxWaitTimeUs = 1000 * 1000;
+constexpr uint32_t kNotifyInterval = 1000;
 
 class Utils {
  public:

@@ -43,7 +43,7 @@ class AscendProfiler : public Profiler {
   void StepStop() override;
   void StepProfilingEnable(const bool enable_flag) override;
   void OpDataProducerEnd() override { return; }
-  uint64_t GetOptionsMask() const;
+  uint64_t GetOptionsMask(aclprofAicoreMetrics aic_metrics) const;
   void MsprofInitProfiler() const;
   void MsprofStopProfiler() const;
   aclprofAicoreMetrics GetAicMetrics() const;
