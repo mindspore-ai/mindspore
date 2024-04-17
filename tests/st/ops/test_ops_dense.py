@@ -1,5 +1,8 @@
+import os
+
 import numpy as np
 import pytest
+
 from mindspore.ops import Dense
 from mindspore.ops.composite.base import GradOperation
 
@@ -24,8 +27,6 @@ def get_bias_shape(shape_w):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize(
     "shape_x, shape_w, has_bias, e_shape, e_grad_x_shape, e_grad_w_shape, e_grad_b_shape",
@@ -60,7 +61,6 @@ def test_static(mode, dynamic, shape_x, shape_w, has_bias, e_shape, e_grad_x_sha
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize(
     "shape_x, shape_w, has_bias, e_shape, e_grad_x_shape, e_grad_w_shape, e_grad_b_shape",
@@ -96,6 +96,7 @@ def test_dynamic(mode, dynamic, shape_x, shape_w, has_bias, e_shape, e_grad_x_sh
 
 
 def dense_case(dynamic, e_grad_b_shape, e_grad_w_shape, e_grad_x_shape, e_shape, has_bias, mode, shape_w, shape_x):
+    os.environ["GRAPH_OP_RUN"] = "1"
     dense_cell = DenseCell()
     mindspore.context.set_context(mode=mode)
     x = random_input(shape_x)
@@ -155,6 +156,7 @@ def dense_case(dynamic, e_grad_b_shape, e_grad_w_shape, e_grad_x_shape, e_shape,
     assert actual_grad_w.shape == e_grad_w_shape
     if has_bias:
         assert actual_grad_b.shape == e_grad_b_shape
+    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1

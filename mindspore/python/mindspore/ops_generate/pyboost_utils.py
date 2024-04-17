@@ -211,7 +211,7 @@ def get_input_dtype(dtype: str, optional):
 
 
 def is_cube(class_name):
-    cube_set = {'Bmm', 'Baddbmm', 'MatMulExt'}
+    cube_set = {'Bmm', 'Baddbmm', 'MatMulExt', 'Mv'}
     if class_name in cube_set:
         return True
     return False

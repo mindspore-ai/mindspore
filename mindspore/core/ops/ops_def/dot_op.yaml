@@ -1,0 +1,12 @@
+#operator dot
+dot:
+  args:
+    input:
+      dtype: tensor
+    other:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
