@@ -40,6 +40,7 @@
 #include "pybind_api/gil_scoped_long_running.h"
 #include "frontend/optimizer/fallback_rewriter.h"
 #include "runtime/pynative/op_function/pyboost_grad_functions.h"
+#include "runtime/pynative/op_executor.h"
 
 namespace mindspore {
 namespace pynative {
@@ -953,6 +954,8 @@ TopCellInfoPtr GradExecutor::GetAlreadyRunTopCell(const std::string &already_run
 
 py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                                  const py::object &grad_position, const py::args &args) {
+  // Wait forward task finish.
+  runtime::OpExecutor::GetInstance().WaitAll();
   GetPreRunTopCell(grad, obj, args);
   SetSensValue(grad, top_input_args_info_, args, !top_cell()->jit_out_has_dict());
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
