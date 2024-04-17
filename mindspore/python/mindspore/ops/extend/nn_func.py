@@ -19,7 +19,7 @@ NN Operators with better performance
 
 """
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.auto_generate.gen_ops_prim import Convolution, ConstantPadNd
+from mindspore.ops.auto_generate.gen_ops_prim import Convolution, ConstantPadNd, MaxPoolWithIndices, MaxPoolWithMask
 from mindspore import _checkparam as validator
 
 
@@ -217,4 +217,87 @@ def conv2d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
                     f"or a string, but got {type(padding)}")
 
 
-__all__ = ['conv2d']
+def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, return_indices=False, ceil_mode=False):
+    r"""
+    Performs a 2D max pooling on the input Tensor.
+
+    Typically, the input is a Tensor with shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, outputs
+    regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given `kernel_size`
+    :math:`ks = (h_{ker}, w_{ker})` and `stride` :math:`s = (s_0, s_1)`, the operation is as follows:
+
+    .. math::
+        \text{output}(N_i, C_j, h, w) =
+        \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
+
+    Args:
+        input (Tensor): Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of float32
+            in Ascend.
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg
+            value, is an int number that represents height and width of the kernel, or a tuple of
+            two int numbers that represent height and width respectively.
+        stride (Union[int, tuple[int], None]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both stride, or a tuple of two int numbers that
+            represent height and width of movement respectively.
+            Default: ``None`` , which indicates the moving step is `kernel_size` .
+        padding (Union[int, tuple[int]]): An int number that represents the height and width of movement are both
+            strides, or a tuple of two int numbers that represent height and width of movement respectively.
+            Default: ``0`` .
+        dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: ``1`` .
+        return_indices (bool): Whether to output the indices of max value. Default: ``False`` .
+        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
+
+    Returns:
+        If `return_indices` is ``False`` , return a Tensor `output`, else return a tuple (`output`, `argmax`).
+
+        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})`.
+          It has the same data type as `input`.
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} + 2 * \text{padding[0]} - \text{dilation[0]}
+                \times (\text{kernel_size[0]} - 1) - 1}{\text{stride[0]}} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in} + 2 * \text{padding[1]} - \text{dilation[1]}
+                \times (\text{kernel_size[1]} - 1) - 1}{\text{stride[1]}} + 1\right\rfloor
+
+        - **argmax** (Tensor) - Index corresponding to the maximum value. In Ascend, data type is int32.
+          It will be return only when `return_indices` is True.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        ValueError: If length of shape of `input` is not equal to 4.
+        TypeError: If `kernel_size` , `stride` , `padding` or `dilation` is not int or tuple.
+        ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `dilation` is not all 1.
+        ValueError: If `padding` is less than 0.
+        ValueError: If `padding` is more than half of `kernel_size`.
+        TypeError: If `ceil_mode` is not bool.
+
+    Supported Platforms:
+        ``Ascend910B``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mindspore.float32)
+        >>> output_tensor, argmax = ops.max_pool2d_ext(input, kernel_size=(3, 2), stride=(2, 1), return_indices=True)
+        >>> print(output_tensor.shape)
+        (20, 16, 24, 31)
+        >>> print(argmax.shape)
+        (20, 16, 24, 31)
+    """
+    strides = stride if (stride is not None) else kernel_size
+    if return_indices:
+        max_pool_func_ = _get_cache_prim(MaxPoolWithIndices)(kernel_size, strides, padding, dilation, ceil_mode)
+        out, indices = max_pool_func_(input)
+    else:
+        max_pool_func_ = _get_cache_prim(MaxPoolWithMask)(kernel_size, strides, padding, dilation, ceil_mode)
+        out, indices = max_pool_func_(input)
+    if return_indices:
+        return out, indices
+    return out
+
+
+__all__ = ['conv2d', 'max_pool2d_ext']
