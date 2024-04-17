@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,8 +212,15 @@ Status CheckValidInfo::InferDevMatrixShape() {
 
 void CheckValidInfo::ReComputeBatchSplitFlagList() { split_flag_list_[0] = true; }
 
+void SolveTriangularInfo::ReComputeBatchSplitFlagList() {
+  for (size_t i = 0; i < inputs_shape_.size(); i++) {
+    split_flag_list_[i] = true;
+  }
+}
+
 REGISTER(BatchParallelInfo);
 REGISTER(SparseSoftmaxCrossEntropyWithLogitsInfo);
 REGISTER(CheckValidInfo);  // has not bprop
+REGISTER(SolveTriangularInfo);
 }  // namespace parallel
 }  // namespace mindspore

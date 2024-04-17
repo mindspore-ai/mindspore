@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,15 @@ class CheckValidInfo : public BatchParallelInfo {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferDevMatrixShape() override;
+};
+
+class SolveTriangularInfo : public BatchParallelInfo {
+ public:
+  SolveTriangularInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                      const PrimitiveAttrs &attrs)
+      : BatchParallelInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()) {}
+  ~SolveTriangularInfo() override = default;
+  void ReComputeBatchSplitFlagList() override;
 };
 }  // namespace parallel
 }  // namespace mindspore
