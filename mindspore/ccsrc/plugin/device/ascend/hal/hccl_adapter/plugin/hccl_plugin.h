@@ -20,7 +20,7 @@
 #include <memory>
 #include <map>
 #include <functional>
-#include "external/ge/ge_api_types.h"
+#include "ge/ge_api_types.h"
 #include "hccl/hccl.h"
 #include "hccl/hcom.h"
 #include "utils/dlopen_macro.h"

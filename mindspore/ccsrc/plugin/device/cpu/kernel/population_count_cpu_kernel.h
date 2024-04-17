@@ -30,10 +30,9 @@ class PopulationCountCpuKernelMod : public NativeCpuKernelMod {
   PopulationCountCpuKernelMod() = default;
   ~PopulationCountCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -41,9 +40,10 @@ class PopulationCountCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using PopCntKernel = std::function<bool(PopulationCountCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using PopCntKernel = std::function<bool(PopulationCountCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &)>;
   PopCntKernel kernel_func_;
 
   TypeId dtype_{kTypeUnknown};

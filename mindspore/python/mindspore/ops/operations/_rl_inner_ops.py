@@ -341,7 +341,7 @@ class LSTMV2(Primitive):
         - **h** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
         - **c** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
         - **w** (Tensor) - The input tensor which states for weights.
-        - **seq_lengths** (Tensor) - The Tensor[Int32] of shape (batch_size, ),
+        - **seq_lengths** (Tensor) - The Tensor[int32] of shape (batch_size, ),
           indicates the seq_length of each batch dim.
 
     Outputs:

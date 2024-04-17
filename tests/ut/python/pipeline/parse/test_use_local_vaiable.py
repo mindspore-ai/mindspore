@@ -178,6 +178,70 @@ def test_use_local_variable_in_if_with_nested_for():
     assert "return y" in str(err.value)
 
 
+def test_use_local_variable_in_for_if():
+    """
+    Feature: use undefined variables in while with defined function.
+    Description: local variable 'y' referenced before assignment.
+    Expectation: Raises UnboundLocalError.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            y = 0
+            for _ in range(3):
+                if True: # pylint: disable=using-constant-test
+                    a = 1
+                y += a
+            return y
+
+    net = Net()
+    with pytest.raises(UnboundLocalError) as err:
+        net(Tensor([1], mstype.float32))
+    assert "The local variable 'a' is not defined in false branch, " \
+           "but defined in true branch." in str(err.value)
+    assert "a = 1" in str(err.value)
+
+
+def test_use_local_variable_by_assigned_parameter():
+    """
+    Feature: use undefined variables in if.
+    Description: local variable 'y' referenced before assignment.
+    Expectation: Raises UnboundLocalError.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            if x < 0:
+                y = x
+            return y
+
+    net = Net()
+    with pytest.raises(UnboundLocalError) as err:
+        net(Tensor([1], mstype.float32))
+    assert "The local variable 'y' is not defined in false branch, " \
+           "but defined in true branch." in str(err.value)
+    assert "def construct(self, x):" in str(err.value)
+
+
+def test_use_local_variable_by_assigned_parameter_for_if():
+    """
+    Feature: use undefined variables in for if.
+    Description: local variable 'y' referenced before assignment.
+    Expectation: Raises UnboundLocalError.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            for _ in range(3):
+                if x < 0:
+                    y = x
+            return y
+
+    net = Net()
+    with pytest.raises(UnboundLocalError) as err:
+        net(Tensor([1], mstype.float32))
+    assert "The local variable 'y' defined in the 'for' loop body " \
+           "cannot be used outside of the loop body." in str(err.value)
+    assert "y = x" in str(err.value)
+
+
 def test_function_args_same_name():
     """
     Feature: Parse function.

@@ -37,9 +37,8 @@ class ROIAlignGradInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
     std::vector<int64_t> output_shape;
-    auto feature_shape =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto feature_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+    auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     if (!IsDynamicRank(feature_shape)) {
       constexpr int64_t kROIGradFeatureShapeSize = 4;
       (void)CheckAndConvertUtils::CheckInteger("rank of feature shape", SizeToLong(feature_shape.size()), kLessEqual,
@@ -79,11 +78,11 @@ class ROIAlignGradInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("ydiff", input_args[kInputIndex0]->BuildType(), valid_types,
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("ydiff", input_args[kInputIndex0]->GetType(), valid_types,
                                                      prim->name());
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[kInputIndex1]->BuildType(), valid_types,
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[kInputIndex1]->GetType(), valid_types,
                                                      prim->name());
-    return input_args[kInputIndex0]->BuildType();
+    return input_args[kInputIndex0]->GetType();
   }
 
   std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }

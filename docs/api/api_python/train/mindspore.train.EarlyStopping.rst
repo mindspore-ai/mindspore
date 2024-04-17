@@ -13,7 +13,7 @@ mindspore.train.EarlyStopping
         - **patience** (int) - `moniter` 相对历史最优值变好超过 `min_delta` 视为当前epoch的模型效果有所改善，`patience` 为等待的无改善epoch的数量，当内部等待的epoch数 `self.wait` 大于等于 `patience` 时，训练停止。默认值： ``0`` 。
         - **verbose** (bool) - 是否打印相关信息。默认值： ``False`` 。
         - **mode** (str) - `{'auto', 'min', 'max'}` 中的一种，'min'模式下将在指标不再减小时执行早停，'max'模式下将在指标不再增大时执行早停，'auto'模式将根据当前 `monitor` 指标的特点自动设置。默认值： ``'auto'`` 。
-        - **baseline** (float) - 模型效果的基线，当前 `moniter` 相对历史最优值变好且好于 `baseline` 时，内部的等待epoch计数器被清零。默认值： ``None`` 。
+        - **baseline** (float) - 模型效果的基线，当前 `monitor` 相对历史最优值变好且好于 `baseline` 时，内部的等待epoch计数器被清零。默认值： ``None`` 。
         - **restore_best_weights** (bool) - 是否自动保存最优模型的权重。默认值： ``False`` 。
 
     异常：

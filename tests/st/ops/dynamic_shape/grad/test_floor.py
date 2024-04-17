@@ -34,7 +34,7 @@ def floor_test(is_dyn_rank):
     tester.test_dynamic_grad_net([x], is_dyn_rank)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -50,7 +50,7 @@ def test_floor_dyn_shape():
     floor_test(False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -27,10 +27,10 @@
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/grad/jit/jit_grad.h"
-#include "runtime/pynative/async/async_queue.h"
-#include "runtime/pynative/async/async_hqueue.h"
+#include "runtime/pipeline/async_hqueue.h"
 #include "pipeline/pynative/grad/bprop_task.h"
-#include "pipeline/pynative/grad/dynamic_shape.h"
+#include "pipeline/pynative/grad/ir/dynamic_shape.h"
+#include "pipeline/pynative/grad/variable.h"
 #include "pipeline/jit/ps/resource.h"
 namespace mindspore {
 namespace pynative {
@@ -47,8 +47,8 @@ class GradExecutor {
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
         jit_(std::make_shared<Jit>()),
         dynamic_shape_(std::make_shared<DynamicShape>()),
-        bprop_queue_(std::make_shared<AsyncHqueue>("bprop_queue")),
-        assist_queue_(std::make_shared<AsyncHqueue>("assist_queue")) {}
+        bprop_queue_(std::make_shared<runtime::AsyncHqueue>("bprop_queue")),
+        assist_queue_(std::make_shared<runtime::AsyncHqueue>("assist_queue")) {}
 
   void Init();
   std::function<void(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {
@@ -59,13 +59,13 @@ class GradExecutor {
                                                                                                    auto &&PH3) {
     EndGraphInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3));
   };
-  std::function<void(const prim::GradOperationPtr &, const py::object &, const py::object &, const py::object &,
-                     const py::args &)>
-    GradGraph = [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4, auto &&PH5) {
-      GradNetInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3),
-                   std::forward<decltype(PH4)>(PH4), std::forward<decltype(PH5)>(PH5));
+  std::function<py::object(const prim::GradOperationPtr &, const py::object &, const py::object &, const py::object &,
+                           const py::args &)>
+    Run = [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4, auto &&PH5) {
+      return RunGrad(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2),
+                     std::forward<decltype(PH3)>(PH3), std::forward<decltype(PH4)>(PH4),
+                     std::forward<decltype(PH5)>(PH5));
     };
-  std::function<py::object(void)> RunGraph = [this]() { return RunGradGraph(); };
   inline TopCellInfoPtr top_cell() const {
     MS_EXCEPTION_IF_NULL(top_cell_);
     return top_cell_;
@@ -92,11 +92,13 @@ class GradExecutor {
   inline bool RequiresGrad() const { return enable_grad() && grad_flag(); }
   // Construct grad graph for jit
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
-  inline AsyncHqueuePtr bprop_queue() const { return bprop_queue_; }
+  inline runtime::AsyncHqueuePtr bprop_queue() const { return bprop_queue_; }
   mindspore::OrderedMap<std::string, TopCellInfoPtr> &already_run_top_cell() { return already_run_top_cell_; }
   void SetHookChanged(const py::object &cell) const;
-  void GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
-                    const py::object &grad_position, const py::args &args);
+  py::object RunGrad(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
+                     const py::object &grad_position, const py::args &args);
+  py::object RunBackward(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+                         const std::vector<size_t> &p_args);
   py::object RunGradGraph();
   CNodePtr ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
   void RecordForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
@@ -116,7 +118,8 @@ class GradExecutor {
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
   AnfNodePtr GetParamInput(const ValuePtr &v, const std::string &id) const;
-  void UpdateTopCellForwardTensorInfoInBpropGraph(const string &op_info, const ValuePtr &v) const;
+  void UpdateTopCellForwardTensorInfoInBpropGraph(const string &op_info, const ValuePtr &v,
+                                                  const size_t &stream_id) const;
   void ClearRes();
   void AsyncClearTopCell();
   void AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell);
@@ -149,6 +152,7 @@ class GradExecutor {
   void DispatchAssistQueueTask(std::function<void(void)> task) const;
 
   inline bool is_high_order_top_cell() const { return top_cell_ != nullptr && top_cell_->is_high_order_top_cell(); }
+  void ChildAfterFork();
 
  private:
   ForwardExecutorPtr forward() const;
@@ -158,7 +162,6 @@ class GradExecutor {
   void SaveOutputNodeMap(const std::string &obj_id, const FrontendOpRunInfoPtr &op_run_info,
                          const CNodePtr &cnode) const;
   void DoOpGrad(const FrontendOpRunInfoPtr &op_run_info) const;
-  void DoGraphGrad(const FrontendOpRunInfoPtr &op_run_info) const;
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) const;
   void SetBpropGraphJitLevel(const py::object &obj) const;
   void ClearGlobalRes() const;
@@ -188,6 +191,7 @@ class GradExecutor {
   void PushInputArgsInfoStack(const InputArgsInfoPtr &input_args_info);
   void PopInputArgsInfoStack();
   void HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_info, bool is_bprop_top);
+  bool IsNewCellId();
   void InitResourceAndDfBuilder(const InputArgsInfoPtr &cell_info);
   void MakeNewTopGraph(const InputArgsInfoPtr &input_args_info);
 
@@ -245,8 +249,8 @@ class GradExecutor {
   ForwardExecutorWeakPtr forward_executor_;
   JitPtr jit_;
   DynamicShapePtr dynamic_shape_{nullptr};
-  AsyncHqueuePtr bprop_queue_;
-  AsyncHqueuePtr assist_queue_;
+  runtime::AsyncHqueuePtr bprop_queue_;
+  runtime::AsyncHqueuePtr assist_queue_;
   std::set<std::string> dynamic_inputs_cells_;
   std::vector<TopCellInfoPtr> need_gc_top_cell_list_;
   bool forward_use_dynamic_shape_process_{false};

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
-
-#include <algorithm>
-#include <memory>
-#include <random>
-#include <utility>
-#include <vector>
 
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/util/random.h"

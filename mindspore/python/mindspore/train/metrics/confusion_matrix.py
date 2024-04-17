@@ -33,10 +33,10 @@ class ConfusionMatrix(Metric):
         num_classes (int): Number of classes in the dataset.
         normalize (str): Normalization mode for confusion matrix. Default: ``"no_norm"`` . Choose from:
 
-            - **"no_norm"** (None) - No Normalization is used. Default: ``None``.
-            - **"target"** (str) - Normalization based on target value.
-            - **"prediction"** (str) - Normalization based on predicted value.
-            - **"all"** (str) - Normalization over the whole matrix.
+            - ``"no_norm"`` : No Normalization is used. Default: ``None``.
+            - ``"target"`` : Normalization based on target value.
+            - ``"prediction"`` : Normalization based on predicted value.
+            - ``"all"`` : Normalization over the whole matrix.
 
         threshold (float): The threshold used to compare with the input tensor. Default: ``0.5`` .
 
@@ -224,8 +224,10 @@ class ConfusionMatrixMetric(Metric):
 
                 - y_pred (ndarray): The batch data shape is :math:`(N, C, ...)`
                   or :math:`(N, ...)`, representing onehot format
-                  or category index format respectively. As for classification tasks, y_pred should have the shape [BN]
-                  where N is larger than 1. As for segmentation tasks, the shape should be [BNHW] or [BNHWD].
+                  or category index format respectively. As for classification tasks,
+                  y_pred should have the shape :math:`(B, N)`
+                  where N is larger than 1. As for segmentation tasks,
+                  the shape should be :math:`(B, N, H, W)` or :math:`(B, N, H, W, D)`.
                 - y (ndarray): It must be one-hot format. The batch data shape is :math:`(N, C, ...)`.
 
         Raises:

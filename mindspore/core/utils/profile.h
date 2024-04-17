@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CORE_UTILS_PROFILE_H_
 #define MINDSPORE_CORE_UTILS_PROFILE_H_
 
+#include <utility>
 #include <map>
 #include <string>
 #include <vector>
@@ -24,8 +25,28 @@
 #include <iomanip>
 #include <sstream>
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
+inline bool *EnabledProfilePtr() {
+  static auto enabled_profile = common::GetCompileConfig("COMPILE_PROFILE") == "1";
+  return &enabled_profile;
+}
+
+inline void SetEnabledProfile(bool enabled) {
+  if (EnabledProfilePtr() != nullptr) {
+    *EnabledProfilePtr() = enabled;
+  }
+}
+
+inline bool EnabledProfile() {
+#ifdef ENABLE_PROFILE
+  return true;
+#else
+  return *EnabledProfilePtr();
+#endif
+}
+
 struct TimeInfo;
 using TimeInfoMap = std::map<std::string, const TimeInfo *>;
 
@@ -61,11 +82,16 @@ class MS_CORE_API ProfContext {
   void Insert(const std::string &name, const TimeInfo *time) noexcept;
   bool IsTopContext() const noexcept;
 
+  // Used for Execute break.
+  void set_start_time(double start_time) { start_time_ = start_time; }
+  double start_time() { return start_time_; }
+
  private:
   std::string name_;
   ProfileBase *prof_;
   ProfContext *parent_;
   TimeInfo *time_info_;
+  double start_time_{-1.0};  // Used for Execute break.
 };
 
 class MS_CORE_API ProfileBase {
@@ -76,10 +102,10 @@ class MS_CORE_API ProfileBase {
   ProfileBase();
   virtual ~ProfileBase();
 
-  virtual void Print(void) {}
+  virtual void Print() {}
   virtual ProfContext *Step(const std::string &) { return nullptr; }
   virtual ProfContext *Lap(int) { return nullptr; }
-  virtual void Pop(void) {}
+  virtual void Pop() {}
 
   // top level profile context
   ProfContext context_;
@@ -94,28 +120,33 @@ class MS_CORE_API Profile : public ProfileBase {
   Profile(const Profile &) = delete;
   Profile &operator=(const Profile &) = delete;
 
-  void Print(void) override;
+  void Print() override;
   ProfContext *Step(const std::string &name) override;
   ProfContext *Lap(int count) override;
-  void Pop(void) noexcept override;
+  void Pop() noexcept override;
 };
 
 class MS_CORE_API ProfTransaction {
  public:
   explicit ProfTransaction(const ProfileBase *prof);
-  explicit ProfTransaction(ProfContext *const ctx) : ctx_(ctx) {}
+  explicit ProfTransaction(ProfContext *const ctx);
   ProfTransaction(const ProfTransaction &) = delete;
   ProfTransaction &operator=(const ProfTransaction &) = delete;
   ~ProfTransaction();
 
   template <class Function>
   void Execute(const Function &func) {
+    if (ctx_ == nullptr) {
+      func();
+      return;
+    }
+
     double start_time = GetTime();
+    // Set for Execute break.
+    ctx_->set_start_time(start_time);
     func();
     double end_time = GetTime();
-    if (ctx_ != nullptr) {
-      ctx_->SetTime(end_time - start_time);
-    }
+    ctx_->SetTime(end_time - start_time);
   }
 
  private:
@@ -136,17 +167,9 @@ class NoProfTransaction {
 
 class MS_CORE_API DumpTime {
  public:
-  ~DumpTime() {
-    try {
-      Save();
-    } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "Cannot save file by profile::DumpTime::save";
-    } catch (...) {
-      MS_LOG(ERROR) << "Uncaught exception";
-    }
-  }
   DumpTime(const DumpTime &) = delete;
   DumpTime &operator=(const DumpTime &) = delete;
+  ~DumpTime();
   static DumpTime &GetInstance();
   void set_file_path(const std::string &save_path) { file_path_ = save_path; }
   void Record(const std::string &step_name, const double time, const bool is_start);
@@ -180,43 +203,80 @@ struct TimeStat {
 
 class MS_CORE_API MsProfile {
  public:
-  ~MsProfile() { Clear(); }
+  ~MsProfile();
 
-  static void Reset() { GetSingleton().Clear(); }
-
-  static ProfileBase *GetProfile() {
-    MsProfile &ms_prof = GetSingleton();
-    if (ms_prof.profile_ == nullptr) {
-#ifdef ENABLE_PROFILE
-      ms_prof.profile_ = new Profile();
-#else
-      ms_prof.profile_ = new ProfileBase();
-#endif
-    }
-    return ms_prof.profile_;
-  }
-  static void StatTime(const std::string &id, double time) { GetSingleton().time_stat_[id] += time; }
-
+  static void Reset();
+  static ProfileBase *GetProfile();
+  static void StatTime(const std::string &id, double time);
   static void Print();
 
  private:
   MsProfile() = default;
 
-  static MsProfile &GetSingleton() {
-    static MsProfile profile;
-    return profile;
-  }
+  static MsProfile &GetSingleton();
 
-  void Clear() {
-    time_stat_.clear();
-    if (profile_ != nullptr) {
-      delete profile_;
-      profile_ = nullptr;
-    }
-  }
+  void Clear();
 
   std::map<std::string, TimeStat> time_stat_;  // record time and count info from some activity
   ProfileBase *profile_ = nullptr;             // record hierarchical profile info
+};
+
+template <typename Function>
+void ProfileExecute(ProfileBase *profile, const Function &func) {
+  if (EnabledProfile()) {
+    ProfTransaction(profile).Execute(func);
+  } else {
+    NoProfTransaction(profile).Execute(func);
+  }
+}
+
+inline void ProfileExecuteBreak(ProfileBase *profile) {
+  if (!EnabledProfile()) {
+    return;
+  }
+
+  auto ctx = profile->ctx_ptr_;
+  if (ctx != nullptr && ctx->start_time() != -1.0) {
+    double end_time = GetTime();
+    ctx->SetTime(end_time - ctx->start_time());
+  }
+}
+
+template <typename Function>
+void ProfileExecute(ProfContext *profile_ctx, const Function &func) {
+  if (EnabledProfile()) {
+    ProfTransaction(profile_ctx).Execute(func);
+  } else {
+    NoProfTransaction(profile_ctx).Execute(func);
+  }
+}
+class MsProfileStatGuard {
+ public:
+  explicit MsProfileStatGuard(std::string &&state_name) {
+    if (!EnabledProfile()) {
+      return;
+    }
+    start_ = GetTime();
+    state_name_ = std::move(state_name);
+  }
+
+  ~MsProfileStatGuard() {
+    if (!EnabledProfile()) {
+      return;
+    }
+    if (interrupted_) {
+      return;
+    }
+    auto end = GetTime();
+    MsProfile::StatTime(state_name_, end - start_);
+  }
+
+  void Interrupt() { interrupted_ = true; }
+
+ private:
+  std::string state_name_;
+  double start_;
+  bool interrupted_{false};
 };
 
 struct MemoryInfo {
@@ -248,22 +308,5 @@ class MS_CORE_API ProcessStatus {
   std::vector<MemoryInfo> memory_used_;
 };
 
-#ifdef ENABLE_PROFILE
-using ImplementationProfTransaction = ProfTransaction;
-#else
-using ImplementationProfTransaction = NoProfTransaction;
-#endif
-
-template <typename Function>
-void ProfileExecute(ProfileBase *profile, const Function &func) {
-  auto prof_transaction = ImplementationProfTransaction(profile);
-  prof_transaction.Execute(func);
-}
-
-template <typename Function>
-void ProfileExecute(ProfContext *profile_ctx, const Function &func) {
-  auto prof_transaction = ImplementationProfTransaction(profile_ctx);
-  prof_transaction.Execute(func);
-}
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_PROFILE_H_

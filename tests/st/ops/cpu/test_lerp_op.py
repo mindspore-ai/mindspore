@@ -144,7 +144,7 @@ def test_lerp(data_shape, data_type):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
@@ -175,7 +175,7 @@ def test_lerp_dy_shape(data_type):
     np.testing.assert_allclose(np_result, ms_result.asnumpy(), rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_lerp_vmap_cpu():

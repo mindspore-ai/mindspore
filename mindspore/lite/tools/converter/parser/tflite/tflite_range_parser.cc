@@ -17,7 +17,7 @@
 #include "tools/converter/parser/tflite/tflite_range_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/range.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -29,7 +29,7 @@ PrimitiveCPtr TfliteRangeParser::Parse(const std::unique_ptr<tflite::OperatorT> 
   auto prim = std::make_unique<ops::Range>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
-  prim->set_d_type(0);
+  (void)prim->AddAttr("d_type", api::MakeValue(0));
 
   std::vector<int64_t> limit;
   std::vector<int64_t> delta;
@@ -46,8 +46,8 @@ PrimitiveCPtr TfliteRangeParser::Parse(const std::unique_ptr<tflite::OperatorT> 
     }
   }
   if (ret == RET_OK) {
-    prim->set_limit(limit.front());
-    prim->set_delta(delta.front());
+    (void)prim->AddAttr("limit", api::MakeValue(limit.front()));
+    (void)prim->AddAttr("delta", api::MakeValue(delta.front()));
   }
 
   return prim->GetPrim();

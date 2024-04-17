@@ -89,6 +89,10 @@ bool OpDesc::CheckOutputs() {
       outputs[i]->format != outputs_info_[i].format;
 #else
     bool format_check_condition = outputs[i]->format != outputs_info_[i].format;
+    if ((outputs[i]->format == kOpFormat_DEFAULT && outputs_info_[i].format == kOpFormat_NCHW) ||
+        (outputs[i]->format == kOpFormat_NCHW && outputs_info_[i].format == kOpFormat_DEFAULT)) {
+      format_check_condition = false;
+    }
 #endif
     if (format_check_condition) {
       MS_LOG(INFO) << "Op " << this->name_ << "'s output format [" << outputs[i]->format << "] is wrong, expect: ["

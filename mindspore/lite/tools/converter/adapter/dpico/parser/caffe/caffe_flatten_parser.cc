@@ -17,7 +17,7 @@
 #include "parser/caffe/caffe_flatten_parser.h"
 #include <memory>
 #include "common/op_attr.h"
-#include "ops/flatten.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {

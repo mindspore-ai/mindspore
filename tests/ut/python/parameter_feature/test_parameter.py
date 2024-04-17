@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -233,17 +233,15 @@ def test_mixed_precision_const_parameter():
         def __init__(self):
             super(NetLoss, self).__init__()
             self.shape = P.Shape()
-            self.up_sample1 = P.ResizeBilinear((14, 14))
-            self.up_sample2 = P.ResizeBilinear((28, 28))
-            self.up_sample3 = P.ResizeBilinear((36, 36))
+            self.up_sample = P.ResizeBilinearV2()
 
         def construct(self, x, y, z, *args):
             ret = 0
             if args[0] == self.shape(z)[2]:
                 if args[0] == 14:
-                    ret = self.up_sample1(y) + x
+                    ret = self.up_sample(y, (14, 14)) + x
                 elif args[0] == 28:
-                    ret = self.up_sample2(y) - x
+                    ret = self.up_sample(y, (28, 28)) - x
                 else:
                     ret = x / y
             else:
@@ -295,26 +293,6 @@ def test_pass_args_by_key_ward_way():
     grad_net = GradNet(net)
     sens = Tensor(np.ones((3, 3, 4), np.float32))
     grad_net(x, y=y, z=z, sens=sens)
-
-
-def test_none_input():
-    """
-    Feature: Net's inputs
-    Description: Support none input for the outermost net
-    Expectation: no error
-    """
-
-    class Net(Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.op = nn.ResizeBilinear()
-
-        def construct(self, a, b, c, d):
-            return self.op(a, b, c, d)
-
-    x = Tensor(np.array([1, 2, 3, 4]).astype(np.float32).reshape((1, 1, 2, 2,)))
-    net = Net()
-    net(x, (4, 4), None, True)
 
 
 def test_args_kwarg_not_used():
@@ -975,3 +953,30 @@ def test_jit_mixed_arguments():
     assert func(1, 2, 3, b=4, c=5, d=6) == 5
     assert func(1, 2, 3, b=4, d=6) == 5
     assert func(1, 2, 3, 4, b=5, c=6, d=7) == 6
+
+
+def test_unexpected_keyword_argument():
+    """
+    Feature: Support kwargs.
+    Description: Pass an unexpected keyword argument to a function.
+    Expectation: Throw an exception.
+    """
+
+    class SubNet(nn.Cell):
+        def construct(self, a=1, b=2):
+            return a + b
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.subnet = SubNet()
+
+        def construct(self, a, b):
+            x = self.subnet(aa=a, bb=b)
+            return x
+
+    context.set_context(mode=context.GRAPH_MODE)
+    try:
+        Net()(1, 2)
+    except RuntimeError as e:
+        assert "Got an unexpected keyword argument" in str(e)

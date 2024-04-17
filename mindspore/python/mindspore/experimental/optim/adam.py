@@ -20,30 +20,30 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.experimental.optim.optimizer import Optimizer
+from mindspore.common.api import jit
 
 _adam_opt = C.MultitypeFuncGraph("adam_opt")
+adam_op = P.Adam(False, False)
 
 
-@_adam_opt.register("Function", "Tensor", "Tensor", "Float", "Float", "Float", "Tensor",
+@_adam_opt.register("Tensor", "Tensor", "Float", "Float", "Float", "Tensor",
                     "Tensor", "Tensor", "Tensor", "Tensor")
-def _run_adam_opt(opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, param, moment1, moment2):
+def _run_adam_opt(beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, param, moment1, moment2):
     """Apply adam optimizer to the weight parameter."""
-    success = True
-    success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2, eps, gradient))
-    return success
+    adam_op(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2, eps, gradient)
+    return True
 
 
-@_adam_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _run_adam_with_amsgrad_opt(opt, beta1_power, beta2_power, lr, gradient, param, moment1, moment2, vhat):
+@_adam_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+def _run_adam_with_amsgrad_opt(beta1_power, beta2_power, lr, gradient, param, moment1, moment2, vhat):
     """Apply adam optimizer to the weight parameter with amsgrad."""
-    success = True
-    success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power, lr, gradient))
-    return success
+    adam_op(param, moment1, moment2, vhat, beta1_power, beta2_power, lr, gradient)
+    return True
 
 
 class Adam(Optimizer):
     r"""
-    Implements Adam algorithm..
+    Implements Adam algorithm.
 
     The updating formulas are as follows:
 
@@ -80,7 +80,7 @@ class Adam(Optimizer):
     .. warning::
         This is an experimental optimizer API that is subject to change.
         This module must be used with lr scheduler module in `LRScheduler Class
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#learningrateschedule-class>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_ .
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
@@ -90,7 +90,7 @@ class Adam(Optimizer):
             Default: ``(0.9, 0.999)``.
         eps (float, optional): term added to the denominator to improve
             numerical stability. Default: ``1e-8``.
-        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0``.
+        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
         amsgrad (bool, optional): whether to use the AMSGrad algorithm. Default: ``False``.
 
     Keyword Args:
@@ -104,7 +104,7 @@ class Adam(Optimizer):
         ValueError: If the `lr` is not int, float or Tensor.
         ValueError: If the `lr` is less than 0.
         ValueError: If the `eps` is less than 0.0.
-        ValueError: If the `betas` not in the range of 0-1.
+        ValueError: If the `betas` not in the range of [0, 1).
         ValueError: If the `weight_decay` is less than 0.
 
     Supported Platforms:
@@ -115,7 +115,7 @@ class Adam(Optimizer):
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optimizer = optim.Adam(net.trainable_params(), lr=0.1)
@@ -129,8 +129,9 @@ class Adam(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
+
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
-                 weight_decay=0, amsgrad=False, *, maximize=False):
+                 weight_decay=0.0, amsgrad=False, *, maximize=False):
         if lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
         if eps < 0.0:
@@ -159,34 +160,34 @@ class Adam(Optimizer):
         self.adam_opt = P.Adam(False, False)
         self.op_cast = P.Cast()
 
+    @jit
+    def implementation(self, beta1, beta2, eps, lr, start_id, end_id, gradients, maximize, weight_decay):
+        """Extract the common computing part for acceleration"""
+        beta1_power = self.op_pow(beta1, self.state_step)
+        beta2_power = self.op_pow(beta2, self.state_step)
+        params = self.parameters[start_id: end_id]
+        grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
+        grads = self._decay_weight(weight_decay, params, grads)
+        self.hyper_map(F.partial(_adam_opt, beta1_power, beta2_power, beta1, beta2, eps, lr),
+                       grads, params,
+                       self.exp_avg[start_id: end_id], self.exp_avg_sq[start_id: end_id])
+        return True
+
     def construct(self, gradients):
         self.assignadd(self.state_step, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
             start_id = self.group_start_id[group_id]
-            end_id = self.group_start_id[group_id+1]
+            end_id = self.group_start_id[group_id + 1]
 
-            lr = group.get("lr")
+            lr = self.lrs[group_id]
             weight_decay = group.get("weight_decay")
             beta1, beta2 = group.get("betas")
             maximize = group.get("maximize")
             eps = group.get("eps")
 
-            beta1_power = self.op_pow(beta1, self.state_step)
-            beta2_power = self.op_pow(beta2, self.state_step)
-            adam_with_amsgrad_opt = P.ApplyAdamWithAmsgrad(beta1, beta2, eps, False)
-            params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id]
-            grads = grads if not maximize else -grads
-            grads = self._decay_weight(weight_decay, params, grads)
-            if isinstance(lr, float):
+            if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
-            if group.get("amsgrad"):
-                self.hyper_map(F.partial(_adam_opt, adam_with_amsgrad_opt, beta1_power, beta2_power, lr),
-                               grads, params,
-                               self.exp_avg[start_id: end_id], self.exp_avg_sq[start_id: end_id],
-                               self.max_exp_avg_sq[start_id: end_id])
-            else:
-                self.hyper_map(F.partial(_adam_opt, self.adam_opt, beta1_power, beta2_power, beta1, beta2, eps, lr),
-                               grads, params,
-                               self.exp_avg[start_id: end_id], self.exp_avg_sq[start_id: end_id])
+
+            self.implementation(beta1, beta2, eps, lr, start_id, end_id, gradients, maximize, weight_decay)
+
         return True

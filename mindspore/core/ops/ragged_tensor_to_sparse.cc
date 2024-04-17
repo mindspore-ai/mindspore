@@ -50,14 +50,19 @@ constexpr size_t kRttsInputValuesStart = 1;
 abstract::TupleShapePtr RaggedTensorToSparseInferShape(const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto inputs_splits = input_args[kRttsFirstInput]->isa<abstract::AbstractTuple>()
-                         ? input_args[kRttsFirstInput]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kRttsFirstInput]->cast<abstract::AbstractListPtr>()->elements();
+  abstract::BaseShapePtrList inputs_splits;
+  if (input_args[kRttsFirstInput]->GetType()->object_type() == kObjectTypeTuple) {
+    inputs_splits = input_args[kRttsFirstInput]->GetShape()->cast<abstract::TupleShapePtr>()->shape();
+  } else if (input_args[kRttsFirstInput]->GetType()->object_type() == kObjectTypeList) {
+    inputs_splits = input_args[kRttsFirstInput]->GetShape()->cast<abstract::ListShapePtr>()->shape();
+  } else {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                            << "', the input data type must be list or tuple of tensors.";
+  }
 
-  auto rt_dense_values_shape = input_args[kRttsInputValuesStart]->BuildShape();
+  auto rt_dense_values_shape = input_args[kRttsInputValuesStart]->GetShape();
   auto in_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(rt_dense_values_shape)[kShape];
-  auto inputs_splits_element0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_splits[0]->BuildShape())[kShape];
+  auto inputs_splits_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_splits[0])[kShape];
   if (IsDynamic(inputs_splits_element0_shape) || IsDynamic(in_values_shape)) {
     abstract::ShapePtr out_indices =
       std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny}));
@@ -89,19 +94,19 @@ TuplePtr RaggedTensorToSparseInferType(const PrimitivePtr &primitive, const std:
   const std::set<TypePtr> valid_types = {kBool,  kInt8,   kInt16,   kInt32,   kInt64,
                                          kUInt8, kUInt16, kFloat16, kFloat32, kFloat64};
   auto sparse_values_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("rt_dense_values", input_args[1]->BuildType(), valid_types, op_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("rt_dense_values", input_args[1]->GetType(), valid_types, op_name);
   auto t_splits_type = GetValue<TypePtr>(primitive->GetAttr("Tsplits"));
   (void)CheckAndConvertUtils::CheckTypeValid("Tsplits", t_splits_type, {kInt64, kInt32}, op_name);
-  auto tensors_arg = input_args[kRttsInputSplitsStart];
-  if (!tensors_arg->isa<abstract::AbstractTuple>() && !tensors_arg->isa<abstract::AbstractList>()) {
+  TypePtrList tensors;
+  if (input_args[kRttsInputSplitsStart]->GetType()->object_type() == kObjectTypeTuple) {
+    tensors = input_args[kRttsInputSplitsStart]->GetType()->cast<TuplePtr>()->elements();
+  } else if (input_args[kRttsInputSplitsStart]->GetType()->object_type() == kObjectTypeList) {
+    tensors = input_args[kRttsInputSplitsStart]->GetType()->cast<ListPtr>()->elements();
+  } else {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the rt_nested_splits must be list or tuple of tensors.";
   }
-  auto tensors = tensors_arg->isa<abstract::AbstractTuple>()
-                   ? tensors_arg->cast<abstract::AbstractTuplePtr>()->elements()
-                   : tensors_arg->cast<abstract::AbstractListPtr>()->elements();
   for (size_t i = 0; i < tensors.size(); ++i) {
-    auto input_dtype = tensors[i]->BuildType();
-    (void)CheckAndConvertUtils::CheckTypeValid("rt_nested_splits", input_dtype, {t_splits_type}, op_name);
+    (void)CheckAndConvertUtils::CheckTypeValid("rt_nested_splits", tensors[i], {t_splits_type}, op_name);
   }
   auto sparse_indices_type = kInt64;
   auto sparse_dense_shape_type = kInt64;

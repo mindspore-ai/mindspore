@@ -1,0 +1,12 @@
+# operator shape
+shape:
+    args:
+        input_x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tuple[int]
+    class:
+        disable: true
+    function:
+        disable: true

@@ -22,6 +22,7 @@
 
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/graph_utils.h"
@@ -41,11 +42,19 @@ void AddAttrTraining(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     return;
   }
   auto prim = GetCNodePrimitive(cnode);
+
+  ValuePtr is_train = MakeValue(false);
   if (prim->HasAttr(kAttrIsTraining)) {
-    cnode->AddAttr(kAttrIsTraining, prim->GetAttr(kAttrIsTraining));
+    is_train = prim->GetAttr(kAttrIsTraining);
   } else {
-    cnode->AddAttr(kAttrIsTraining, MakeValue(false));
+    size_t is_train_idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), kAttrIsTraining);
+    if (is_train_idx != SIZE_MAX) {
+      auto is_train_node = common::AnfAlgo::GetInputNode(cnode, is_train_idx);
+      is_train =
+        utils::isa<ValueNodePtr>(is_train_node) ? is_train_node->cast<ValueNodePtr>()->value() : MakeValue(false);
+    }
   }
+  cnode->AddAttr(kAttrIsTraining, is_train);
 }
 }  // namespace
 

@@ -201,6 +201,5 @@ std::vector<StrategyPtr> MaxPoolInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 REGISTER(MaxPoolInfo);
-REGISTER(AvgPoolInfo);
 }  // namespace parallel
 }  // namespace mindspore

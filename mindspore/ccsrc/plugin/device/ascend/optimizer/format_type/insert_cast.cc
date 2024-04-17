@@ -19,6 +19,7 @@
 #include <vector>
 #include <utility>
 #include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "plugin/device/ascend/optimizer/format_type/utils.h"
 
 namespace mindspore {

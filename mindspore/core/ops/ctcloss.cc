@@ -81,14 +81,14 @@ abstract::TupleShapePtr CTCLossInferShape(const PrimitivePtr &primitive,
   const int64_t input_num = 4;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            op_name);
-  auto inputs = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  auto labels_indices = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
-  auto labels_values = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 2);
-  auto sequence_length = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 3);
-  auto inputs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs->BuildShape())[kShape];
-  auto labels_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(labels_indices->BuildShape())[kShape];
-  auto labels_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(labels_values->BuildShape())[kShape];
-  auto sequence_length_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(sequence_length->BuildShape())[kShape];
+  auto inputs = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+  auto labels_indices = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 1, kObjectTypeTensorType);
+  auto labels_values = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 2, kObjectTypeTensorType);
+  auto sequence_length = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 3, kObjectTypeTensorType);
+  auto inputs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs->GetShape())[kShape];
+  auto labels_indices_shape = labels_indices->GetShape()->GetShapeVector();
+  auto labels_values_shape = labels_values->GetShape()->GetShapeVector();
+  auto sequence_length_shape = sequence_length->GetShape()->GetShapeVector();
   if (IsDynamicRank(inputs_shape) || IsDynamicRank(labels_indices_shape) || IsDynamicRank(labels_values_shape) ||
       IsDynamicRank(sequence_length_shape)) {
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
@@ -107,15 +107,15 @@ abstract::TupleShapePtr CTCLossInferShape(const PrimitivePtr &primitive,
 
 TuplePtr CTCLossInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels_indices", input_args[kInputIndex1]->BuildType(), {kInt64},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels_indices", input_args[kInputIndex1]->GetType(), {kInt64},
                                                    op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels_values", input_args[kInputIndex2]->BuildType(), {kInt32},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels_values", input_args[kInputIndex2]->GetType(), {kInt32},
                                                    op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("sequence_length", input_args[kInputIndex3]->BuildType(), {kInt32},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("sequence_length", input_args[kInputIndex3]->GetType(), {kInt32},
                                                    op_name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   auto type =
-    CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[kInputIndex0]->BuildType(), valid_types, op_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[kInputIndex0]->GetType(), valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
 }
 }  // namespace

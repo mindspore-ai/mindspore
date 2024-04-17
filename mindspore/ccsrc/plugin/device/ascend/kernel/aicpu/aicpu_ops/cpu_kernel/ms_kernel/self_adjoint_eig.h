@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_SELFADJOINTEIG_H_
 
 #include <iostream>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "Eigen/Eigenvalues"
 
 namespace aicpu {
@@ -31,7 +31,7 @@ class SelfAdjointEigCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t SelfAdjointEigCompute(const CpuKernelContext &ctx);
+  uint32_t SelfAdjointEigCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_H_

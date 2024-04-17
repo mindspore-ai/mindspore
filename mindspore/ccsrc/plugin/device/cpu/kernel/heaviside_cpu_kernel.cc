@@ -34,14 +34,12 @@ const size_t kHeavisideInputsNum = 2;
 const size_t kHeavisideOutputsNum = 1;
 }  // namespace
 
-bool HeavisideCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool HeavisideCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHeavisideInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHeavisideOutputsNum, kernel_name_);
-  input0_dtype_ = inputs[0]->GetDtype();
-  input1_dtype_ = inputs[1]->GetDtype();
+  input0_dtype_ = inputs[0]->dtype_id();
+  input1_dtype_ = inputs[1]->dtype_id();
   if (input0_dtype_ != input1_dtype_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', 'x' and 'values' should have the same data "
@@ -59,10 +57,9 @@ bool HeavisideCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int HeavisideCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int HeavisideCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input0_shape = inputs[0]->GetShapeVector();
@@ -72,12 +69,12 @@ int HeavisideCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool HeavisideCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+bool HeavisideCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   BroadcastIterator base_iter(input0_shape, input1_shape, output_shape);
-  const T *input0 = static_cast<const T *>(inputs[0]->addr);
-  const T *input1 = static_cast<const T *>(inputs[1]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+  const T *input0 = static_cast<const T *>(inputs[0]->device_ptr());
+  const T *input1 = static_cast<const T *>(inputs[1]->device_ptr());
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   auto task = [this, &input0, &input1, &output, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);

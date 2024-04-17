@@ -133,7 +133,7 @@ def test_mutable_dynamic_tuple():
     os.remove(verify_name)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -162,6 +162,5 @@ def test_mindir_raise_export_and_load():
 
     graph = load(mindir_file_name)
 
-    with pytest.raises(RuntimeError):
-        load_cell = nn.GraphCell(graph)
-        load_cell(data)
+    load_cell = nn.GraphCell(graph)
+    load_cell(data)

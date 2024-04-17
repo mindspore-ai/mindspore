@@ -34,7 +34,7 @@ class MIND_API SpaceToDepth : public BaseOperator {
   /// \brief Constructor.
   SpaceToDepth() : BaseOperator(kNameSpaceToDepth) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.SpaceToDepth for the inputs.
-  void Init(const int64_t block_size, const Format &format = NCHW);
+  void Init(const int64_t block_size, const Format &format = Format::NCHW);
   /// \brief Set block_size.
   void set_block_size(const int64_t block_size);
   /// \brief Get block_size.

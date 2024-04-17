@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
     ListClear_, ListReverse_, ListExtend_, DictClear_, DictHasKey_, DictUpdate_, DictFromKeys_, \
     ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_, ListAdd_, DictSetItem_, \
-    HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_, HandleScalarTensorIndex_
+    HandleBoolTensor_, PreSetitemByTuple_, StarredGetItem_,\
+    StarredUnpack_, StarredUnpackMerge_, IterConverter_, HasNext_, Next_, MSContext
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit, _pynative_executor, _wrap_func
 from mindspore.common.api import _add_flags, _core
@@ -39,7 +40,7 @@ from mindspore.ops import signature as sig
 
 __all__ = [TupleAdd_, ListAdd_, UnpackCall_, TupleGetItemTensor_, SequenceSliceGetItem_,
            ListSliceSetItem_, ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_,
-           HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_, HandleScalarTensorIndex_]
+           HandleBoolTensor_, PreSetitemByTuple_]
 
 
 def add_flags(fn=None, **flags):
@@ -201,7 +202,7 @@ class GradOperation(GradOperation_):
             If sens_param is ``False`` , a 'ones_like(outputs)' sensitivity will be attached automatically.
             Default: ``False`` .
             If the sensor_param is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
-            through the location parameter or key-value pair parameter. If the value is transferred through
+            through the positional parameter or key-value pair parameter. If the value is transferred through
             the key-value pair parameter, the key must be sens.
 
     Returns:
@@ -374,11 +375,11 @@ class GradOperation(GradOperation_):
             @_wrap_func
             def after_grad(*args, **kwargs):
                 self._pynative_forward_run(fn, grad_, weights, args, kwargs)
-                _pynative_executor.grad(fn, grad_, weights, self.grad_position, *args, **kwargs)
-                out = _pynative_executor()
+                out = _pynative_executor.grad(fn, grad_, weights, self.grad_position, *args, **kwargs)
                 out = _grads_divided_by_device_num_if_recomputation(out)
                 return out
         else:
+            MSContext.get_instance()._set_not_convert_jit(True)
             grad_.pynative_ = True
             if not _pynative_executor.enable_grad():
                 raise RuntimeError("In no_grad context, you can not calculate gradient")
@@ -598,8 +599,7 @@ class _Grad(GradOperation_):
             @_wrap_func
             def after_grad(*args, **kwargs):
                 res = self._pynative_forward_run(fn, grad_, weights, args, kwargs)
-                _pynative_executor.grad(fn, grad_, weights, grad_position, *args, **kwargs)
-                out = _pynative_executor()
+                out = _pynative_executor.grad(fn, grad_, weights, grad_position, *args, **kwargs)
                 out = _grads_divided_by_device_num_if_recomputation(out)
                 if self.return_ids and out:
                     out = _combine_with_ids(grad_position, weights, out)
@@ -609,6 +609,7 @@ class _Grad(GradOperation_):
                     return out, res[1:]
                 return out
         else:
+            MSContext.get_instance()._set_not_convert_jit(True)
             if not _pynative_executor.enable_grad():
                 raise RuntimeError("In no_grad context, you can not calculate gradient")
             grad_.pynative_ = True
@@ -738,11 +739,14 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         """Initialize MultitypeFuncGraph."""
         MultitypeFuncGraph_.__init__(self, name)
         self.entries = list()
+        self.default_func = None
         if read_value:
             self.set_signatures((
                 sig.make_sig('args', sig.sig_rw.RW_READ, sig.sig_kind.KIND_VAR_POSITIONAL),))
 
     def __call__(self, *args):
+        if callable(self.default_func):
+            return self.default_func(*args)
         for arg in args:
             if isinstance(arg, np.ndarray):
                 raise TypeError("For 'MultitypeFuncGraph', the input can not be numpy.ndarray")
@@ -788,6 +792,13 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
 
         return deco
 
+    def register_default(self):
+        def deco(fn):
+            self.default_func = fn
+            return fn
+
+        return deco
+
     # pylint: disable=missing-docstring
     def set_doc_url(self, doc_url):
         self.set_doc_url_(doc_url)
@@ -804,11 +815,11 @@ class HyperMap(HyperMap_):
     from `mindspore.ops.Map`, the `HyperMap` supports to apply on nested structure.
 
     Args:
-        ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
+        ops (Union[MultitypeFuncGraph, None], optional): `ops` is the operation to apply. If `ops` is `None`,
             the operations should be put in the first input of the instance. Default is None.
-        reverse (bool): The optimizer needs to be inverted in some scenarios to improve parallel performance,
-          general users please ignore. `reverse` is the flag to decide if apply the operation reversely.
-          Only supported in graph mode. Default is False.
+        reverse (bool, optional): The optimizer needs to be inverted in some scenarios to improve parallel
+            performance, general users please ignore. `reverse` is the flag to decide if apply
+            the operation reversely. Only supported in graph mode. Default is False.
 
     Inputs:
         - **args** (Tuple[sequence]) -
@@ -822,10 +833,10 @@ class HyperMap(HyperMap_):
 
     Outputs:
         Sequence or nested sequence, the sequence of output after applying the function.
-        e.g. `operation(args[0][i], args[1][i])`.
+        e.g. `operation(args[0][i], args[1][i])`, `operation` is the function assigned by `ops`.
 
     Raises:
-        TypeError: If `ops` is neither MultitypeFuncGraph nor None.
+        TypeError: If `ops` is neither :class:`mindspore.ops.MultitypeFuncGraph` nor None.
         TypeError: If `args` is not a Tuple.
 
     Supported Platforms:
@@ -887,15 +898,15 @@ class Map(Map_):
         ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
             the operations should be put in the first input of the instance. Default: ``None`` .
         reverse (bool): The optimizer needs to be inverted in some scenarios to improve parallel performance,
-          general users please ignore. `Reverse` is the flag to decide if apply the operation reversely.
-          Only supported in graph mode. Default is ``False`` .
+            general users please ignore. `Reverse` is the flag to decide if apply the operation reversely.
+            Only supported in graph mode. Default is ``False`` .
 
     Inputs:
         - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be the same length sequences,
           and each row of the sequences. e.g. If the length of args is 2, and for `i` in length of each sequence
           `(args[0][i], args[1][i])` will be the input of the operation.
 
-          If `ops` is `None`, the first input is the operation, and the other is inputs.
+          If `ops` is `None`, the first input is the operation, and the other is the sequence.
 
     Outputs:
         Sequence, the sequence of output after applying the ops function. e.g. `ops(args[0][i], args[1][i])`.
@@ -1181,3 +1192,93 @@ class _ZipOperation(ZipOperation_):
 
 zip_operation = _ZipOperation('zip_operation')
 """`zip_operation` will generate a tuple of zip iterations of inputs."""
+
+
+class _StarredGetItem(StarredGetItem_):
+    """Generates a list of starred get_item for inputs."""
+
+    def __init__(self, name):
+        """Initialize _StarredGetItem."""
+        StarredGetItem_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+starred_get_item = _StarredGetItem('starred_get_item')
+"""`starred_get_item` will generate a list of starred get_item for inputs."""
+
+
+class _StarredUnpack(StarredUnpack_):
+    """Generates a tuple of starred unpack for inputs."""
+
+    def __init__(self, name):
+        """Initialize _StarredUnpack."""
+        StarredUnpack_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+starred_unpack = _StarredUnpack('starred_unpack')
+"""`starred_unpack` will generate a tuple of starred unpack for inputs."""
+
+
+class _StarredUnpackMerge(StarredUnpackMerge_):
+    """Generates a tuple of starred unpack merge for inputs."""
+
+    def __init__(self, name):
+        """Initialize _StarredUnpackMerge."""
+        StarredUnpackMerge_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+starred_unpack_merge = _StarredUnpackMerge('starred_unpack_merge')
+"""`starred_unpack_merge` will generate a tuple of starred unpack merge for inputs."""
+
+
+class _IterConverter(IterConverter_):
+    """Convert input to interable object"""
+
+    def __init__(self, name):
+        """Initialize _IterConverter."""
+        IterConverter_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+iter_converter = _IterConverter('iter_converter')
+"""`iter_converter` will convert input to ietrable object"""
+
+
+class _HasNext(HasNext_):
+    """Check whether the input has next value"""
+
+    def __init__(self, name):
+        """Initialize _HasNext."""
+        HasNext_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+ms_hasnext = _HasNext('has_next')
+"""`ms_hasnext` will check whether the input has next value"""
+
+
+class _Next(Next_):
+    """Get next element and res elements for input"""
+
+    def __init__(self, name):
+        """Initialize _Next."""
+        Next_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+ms_next = _Next('next')
+"""`ms_next` will get next element and res elements for input"""

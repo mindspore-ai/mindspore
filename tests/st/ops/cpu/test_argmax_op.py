@@ -77,7 +77,7 @@ def test_argmax_2d():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argmax_high_dims():
@@ -115,7 +115,7 @@ def test_argmax_float32_functional():
     adaptive_argmax_functional(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argmax_dynamic_shape():

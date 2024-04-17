@@ -22,11 +22,7 @@ ForkUtils &ForkUtils::GetInstance() noexcept {
 }
 
 // Function called in parent process before fork.
-void ForkUtilsBeforeFork() {
-  std::string enable_flag = common::GetEnv("MS_ENABLE_FORK_UTILS");
-  if (enable_flag.empty() || enable_flag == "0") {
-    return;
-  }
+void ForkUtils::BeforeFork() {
   FORK_UTILS_LOG("Fork event occurred, function called in parent process before fork.");
   for (auto &iter : ForkUtils::GetInstance().GetCallbacks()) {
     iter.before_fork_func();
@@ -34,11 +30,7 @@ void ForkUtilsBeforeFork() {
 }
 
 // Function called in parent process after fork.
-void ForkUtilsParentAtFork() {
-  std::string enable_flag = common::GetEnv("MS_ENABLE_FORK_UTILS");
-  if (enable_flag.empty() || enable_flag == "0") {
-    return;
-  }
+void ForkUtils::ParentAtFork() {
   FORK_UTILS_LOG("Fork event occurred, function called in parent process after fork.");
   for (auto &iter : ForkUtils::GetInstance().GetCallbacks()) {
     iter.parent_atfork_func();
@@ -46,11 +38,7 @@ void ForkUtilsParentAtFork() {
 }
 
 // Function called in child process after fork.
-void ForkUtilsChildAtFork() {
-  std::string enable_flag = common::GetEnv("MS_ENABLE_FORK_UTILS");
-  if (enable_flag.empty() || enable_flag == "0") {
-    return;
-  }
+void ForkUtils::ChildAtFork() {
   FORK_UTILS_LOG("Fork event occurred, function called in child process after fork.");
   for (auto &iter : ForkUtils::GetInstance().GetCallbacks()) {
     iter.child_atfork_func();

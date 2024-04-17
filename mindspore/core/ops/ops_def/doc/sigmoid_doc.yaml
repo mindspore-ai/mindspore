@@ -1,0 +1,38 @@
+sigmoid:
+    description: |
+        Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
+
+        .. math::
+
+            \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
+
+        where :math:`x_i` is an element of `x`.
+        
+        Sigmoid Function Graph:
+
+        .. image:: ../images/Sigmoid.png
+            :align: center
+
+        Args:
+            input (Tensor): `input` is :math:`x` in the preceding formula. Tensor of any dimension,
+                the data type is float16, float32, float64, complex64 or complex128.
+
+        Returns:
+            Tensor, with the same type and shape as the input.
+
+        Raises:
+            TypeError: If dtype of `input` is not float16, float32, float64, complex64 or complex128.
+            TypeError: If `input` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+            >>> output = ops.sigmoid(input)
+            >>> print(output)
+            [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]
+    

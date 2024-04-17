@@ -41,16 +41,18 @@ struct BinaryFunc<BinaryOpType::kBitwiseXor, T, T, T> {
 REGISTER_BINARY_OP_CUDA_FUNC_BOOL_TYPE(BinaryOpType::kBitwiseXor);
 REGISTER_BINARY_OP_CUDA_FUNC_INT_TYPE(BinaryOpType::kBitwiseXor);
 
-template <>
-struct BinaryFunc<BinaryOpType::kLogicalAnd, bool, bool, bool> {
+template <typename T>
+struct BinaryFunc<BinaryOpType::kLogicalAnd, T, T, bool> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __host__ __forceinline__ bool operator()(const bool &lhs, const bool &rhs) const { return lhs && rhs; }
+  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) const { return lhs && rhs; }
 };
-REGISTER_BINARY_OP_CUDA_FUNC_BOOL_TYPE(BinaryOpType::kLogicalAnd);
+REGISTER_BINARY_OP_CUDA_FUNC_COMPARE_TYPE(BinaryOpType::kLogicalAnd);
+REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_BOOL_TYPE(BinaryOpType::kLogicalAnd);
 
-template <>
-struct BinaryFunc<BinaryOpType::kLogicalOr, bool, bool, bool> {
+template <typename T>
+struct BinaryFunc<BinaryOpType::kLogicalOr, T, T, bool> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __host__ __forceinline__ bool operator()(const bool &lhs, const bool &rhs) const { return lhs || rhs; }
+  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) const { return lhs || rhs; }
 };
-REGISTER_BINARY_OP_CUDA_FUNC_BOOL_TYPE(BinaryOpType::kLogicalOr);
+REGISTER_BINARY_OP_CUDA_FUNC_COMPARE_TYPE(BinaryOpType::kLogicalOr);
+REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_BOOL_TYPE(BinaryOpType::kLogicalOr);

@@ -31,19 +31,6 @@
 
 namespace mindspore {
 namespace ops {
-static std::map<std::string, int64_t> pad_map = {
-  {"CALCULATED", PadMode::PAD},
-  {"PAD", PadMode::PAD},
-  {"SAME", PadMode::SAME},
-  {"VALID", PadMode::VALID},
-};
-
-static std::map<std::string, int64_t> dataformat_map = {
-  {"NCHW", Format::NCHW},
-  {"NHWC", Format::NHWC},
-  {"NCDHW", Format::NCDHW},
-  {"NDHWC", Format::NDHWC},
-};
 
 MIND_API_OPERATOR_IMPL(PoolGrad, BaseOperator);
 std::vector<int64_t> PoolGrad::_grad_check_vector(const std::string &arg_name, std::vector<int64_t> arg_val,

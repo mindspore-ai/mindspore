@@ -107,7 +107,7 @@ bool IsAxisEmptySequence(const AnfNodePtr &node) {
   }
   const auto &cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() <= kAxisIndex) {
+  if (cnode->size() <= kAxisIndex) {
     return false;
   }
   const auto &axis_node = cnode->input(kAxisIndex);

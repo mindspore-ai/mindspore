@@ -1,0 +1,13 @@
+#operator sequence_concat
+sequence_concat:
+    args:
+        x:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+        axis:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor

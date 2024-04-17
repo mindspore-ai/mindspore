@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "include/common/utils/compile_cache_context.h"
 #include "ir/dtype.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "pipeline/jit/ps/debug/trace.h"
@@ -56,7 +57,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__or__", prim::kPrimBoolOr},       // P.bool_or
        {"__eq__", prim::kPrimBoolEq},       // P.bool_eq
        {"__ne__", std::string("bool_ne")},  // C.bool_ne
-       {"__bool__", prim::kPrimIdentity}    // P.identity
+       {"__bool__", prim::kPrimidentity}    // P.identity
      }},
     {kNumberTypeInt,
      {
@@ -67,16 +68,16 @@ BuiltInTypeMap &GetMethodMap() {
        {"__truediv__", std::string("int_truediv")},    // C.int_truediv
        {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod
        {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow
-       {"__floor__", prim::kPrimIdentity},             // P.identity
-       {"__trunc__", prim::kPrimIdentity},             // P.identity
+       {"__floor__", prim::kPrimidentity},             // P.identity
+       {"__trunc__", prim::kPrimidentity},             // P.identity
        {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd
        {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub
-       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq
+       {"__eq__", prim::kPrimScalarEq},                // P.ScalarEq
        {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne
-       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt
-       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt
-       {"__le__", prim::kPrimScalarLe},                // P.scalar_le
-       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge
+       {"__lt__", prim::kPrimScalarLt},                // P.ScalarLt
+       {"__gt__", prim::kPrimScalarGt},                // P.ScalarGt
+       {"__le__", prim::kPrimScalarLe},                // P.ScalarLe
+       {"__ge__", prim::kPrimScalarGe},                // P.ScalarGe
        {"__bool__", std::string("int_bool")},          // C.int_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
      }},
@@ -89,16 +90,16 @@ BuiltInTypeMap &GetMethodMap() {
        {"__truediv__", std::string("int_truediv")},    // C.int_truediv
        {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod,
        {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow,
-       {"__floor__", prim::kPrimIdentity},             // P.identity,
-       {"__trunc__", prim::kPrimIdentity},             // P.identity,
+       {"__floor__", prim::kPrimidentity},             // P.identity,
+       {"__trunc__", prim::kPrimidentity},             // P.identity,
        {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd,
        {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq,
+       {"__eq__", prim::kPrimScalarEq},                // P.ScalarEq,
        {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},                // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge,
+       {"__lt__", prim::kPrimScalarLt},                // P.ScalarLt,
+       {"__gt__", prim::kPrimScalarGt},                // P.ScalarGt,
+       {"__le__", prim::kPrimScalarLe},                // P.ScalarLe,
+       {"__ge__", prim::kPrimScalarGe},                // P.ScalarGe,
        {"__bool__", std::string("int_bool")},          // C.int_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
      }},
@@ -115,56 +116,50 @@ BuiltInTypeMap &GetMethodMap() {
        {"__trunc__", prim::kPrimScalarTrunc},            // P.scalar_trunc,
        {"__pos__", prim::kPrimScalarUadd},               // P.scalar_uadd,
        {"__neg__", prim::kPrimScalarUsub},               // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},                  // P.scalar_eq,
+       {"__eq__", prim::kPrimScalarEq},                  // P.ScalarEq,
        {"__ne__", prim::kPrimScalarNe},                  // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},                  // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},                  // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},                  // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,
+       {"__lt__", prim::kPrimScalarLt},                  // P.ScalarLt,
+       {"__gt__", prim::kPrimScalarGt},                  // P.ScalarGt,
+       {"__le__", prim::kPrimScalarLe},                  // P.ScalarLe,
+       {"__ge__", prim::kPrimScalarGe},                  // P.ScalarGe,
        {"__bool__", std::string("float_bool")},          // C.float_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},    // P.scalar_to_array,
      }},
     {kObjectTypeTuple,
      {
-       {"__len__", prim::kPrimSequenceLen},               // P.sequence_len,
-       {"__getitem__", prim::kPrimTupleGetItem},          // P.tuple_getitem,
-       {"__setitem__", prim::kPrimTupleSetItem},          // P.tuple_setitem,
-       {"__ms_next__", std::string("tuple_next")},        // C.tuple_next,
-       {"__ms_hasnext__", std::string("tuple_hasnext")},  // C.tuple_hasnext
-       {"count", prim::kPrimSequenceCount},               // P.sequence_count
-       {"index", std::string("sequence_index")},          // C.sequence_index
+       {"__len__", prim::kPrimSequenceLen},       // P.sequence_len,
+       {"__getitem__", std::string("_getitem")},  // C.getitem,
+       {"__setitem__", std::string("_setitem")},  // C.setitem,
+       {"count", prim::kPrimSequenceCount},       // P.sequence_count
+       {"index", std::string("sequence_index")},  // C.sequence_index
      }},
     {kObjectTypeList,
      {
-       {"__len__", prim::kPrimSequenceLen},              // P.sequence_len,
-       {"__getitem__", prim::kPrimListGetItem},          // P.list_getitem,
-       {"__setitem__", prim::kPrimListSetItem},          // P.list_setitem,
-       {"__ms_next__", std::string("list_next")},        // C.list_next
-       {"append", std::string("list_append")},           // C.list_append
-       {"__ms_hasnext__", std::string("list_hasnext")},  // C.list_hasnext
-       {"insert", std::string("list_insert")},           // C.list_insert
-       {"pop", std::string("list_pop")},                 // C.list_pop
-       {"clear", std::string("list_clear")},             // C.list_clear
-       {"reverse", std::string("list_reverse")},         // C.list_reverse
-       {"extend", std::string("list_extend")},           // C.list_extend
-       {"count", prim::kPrimSequenceCount},              // P.sequence_count
-       {"index", std::string("sequence_index")},         // C.sequence_index
+       {"__len__", prim::kPrimSequenceLen},       // P.sequence_len,
+       {"__getitem__", std::string("_getitem")},  // C.getitem,
+       {"__setitem__", std::string("_setitem")},  // C.setitem,
+       {"append", std::string("list_append")},    // C.list_append
+       {"insert", std::string("list_insert")},    // C.list_insert
+       {"pop", std::string("list_pop")},          // C.list_pop
+       {"clear", std::string("list_clear")},      // C.list_clear
+       {"reverse", std::string("list_reverse")},  // C.list_reverse
+       {"extend", std::string("list_extend")},    // C.list_extend
+       {"count", prim::kPrimSequenceCount},       // P.sequence_count
+       {"index", std::string("sequence_index")},  // C.sequence_index
      }},
     {kObjectTypeDictionary,
      {
-       {"__len__", prim::kPrimDictLen},                  // P.dict_len
-       {"__getitem__", prim::kPrimDictGetItem},          // P.dict_getitem
-       {"__setitem__", std::string("dict_setitem")},     // C.dict_setitem,
-       {"__ms_hasnext__", std::string("dict_hasnext")},  // C.array_hasnext
-       {"__ms_next__", std::string("dict_next")},        // C.array_next
-       {"keys", prim::kPrimDictGetKeys},                 // P.dict_getkeys,
-       {"values", prim::kPrimDictGetValues},             // P.dict_getvalues,
-       {"items", prim::kPrimDictItems},                  // P.dict_items
-       {"get", std::string("dict_get")},                 // C.dict_get
-       {"has_key", std::string("dict_haskey")},          // C.dict_haskey
-       {"clear", std::string("dict_clear")},             // C.dict_clear
-       {"update", std::string("dict_update")},           // C.dict_update
-       {"fromkeys", std::string("dict_fromkeys")}        // C.dict_fromkeys
+       {"__len__", prim::kPrimDictLen},            // P.dict_len
+       {"__getitem__", std::string("_getitem")},   // C.getitem,
+       {"__setitem__", std::string("_setitem")},   // C.setitem,
+       {"keys", prim::kPrimDictGetKeys},           // P.dict_getkeys,
+       {"values", prim::kPrimDictGetValues},       // P.dict_getvalues,
+       {"items", prim::kPrimDictItems},            // P.dict_items
+       {"get", std::string("dict_get")},           // C.dict_get
+       {"has_key", std::string("dict_haskey")},    // C.dict_haskey
+       {"clear", std::string("dict_clear")},       // C.dict_clear
+       {"update", std::string("dict_update")},     // C.dict_update
+       {"fromkeys", std::string("dict_fromkeys")}  // C.dict_fromkeys
      }},
     {kObjectTypeTensorType,
      {
@@ -176,6 +171,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"any", std::string("any_")},                                       // C.reduce_any
        {"bincount", std::string("bincount")},                              // bincount
        {"chunk", std::string("chunk")},                                    // chunk
+       {"contiguous", prim::kPrimidentity},                                // contiguous
        {"slogdet", std::string("slogdet")},                                // slogdet
        {"trace", std::string("trace")},                                    // trace
        {"tril", std::string("tril")},                                      // tril
@@ -192,7 +188,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__floordiv__", std::string("floordiv")},                          // C.floordiv
        {"__mod__", std::string("mod")},                                    // C.mod
        {"__pow__", std::string("pow_")},                                   // C.pow
-       {"__floor__", std::string("array_floor")},                          // C.array_floor
+       {"__floor__", std::string("floor")},                                // P.floor
        {"__trunc__", std::string("array_trunc")},                          // C.array_trunc
        {"__pos__", std::string("array_uadd")},                             // C.array_uadd
        {"__neg__", std::string("array_usub")},                             // C.array_usub
@@ -209,11 +205,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"view", std::string("view")},                                      // C.view
        {"view_as", std::string("view_as")},                                // view_as()
        {"__len__", prim::kPrimArrayLen},                                   // P.array_len,
-       {"__getitem__", prim::kPrimArrayGetItem},                           // P.array_getitem,
-       {"__setitem__", prim::kPrimArraySetItem},                           // P.array_setitem,
-       {"__ms_hasnext__", std::string("array_hasnext")},                   // C.array_hasnext
-       {"__ms_next__", std::string("array_next")},                         // C.array_next
-       {"__ms_to_array__", prim::kPrimIdentity},                           // P.identity,
+       {"__getitem__", std::string("_getitem")},                           // C.getitem,
+       {"__setitem__", std::string("_setitem")},                           // C.setitem,
+       {"__ms_to_array__", prim::kPrimidentity},                           // P.identity,
        {"gather_elements", std::string("gather_elements")},                // P.GatherD
        {"item", std::string("item")},                                      // P.item,
        {"itemset", std::string("itemset")},                                // P.itemset,
@@ -510,6 +504,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"nanquantile", std::string("nanquantile")},                        // nanquantile()
        {"orgqr", std::string("orgqr")},                                    // orgqr()
        {"outer", std::string("outer")},                                    // outer()
+       {"softmax", std::string("softmax")},                                // softmax()
      }},
     {kObjectTypeRowTensorType,
      {
@@ -555,10 +550,6 @@ BuiltInTypeMap &GetMethodMap() {
 
 BuiltInTypeMap &GetAttrMap() {
   static BuiltInTypeMap attr_map = {
-    {kObjectTypeString, {{"__ms_iter__", prim::kPrimIdentity}}},
-    {kObjectTypeTuple, {{"__ms_iter__", prim::kPrimIdentity}}},
-    {kObjectTypeList, {{"__ms_iter__", prim::kPrimIdentity}}},
-    {kObjectTypeDictionary, {{"__ms_iter__", prim::kPrimDictGetKeys}}},
     {kObjectTypeTensorType,
      {
        {"shape", prim::kPrimShape},             // C.shape_
@@ -572,7 +563,6 @@ BuiltInTypeMap &GetAttrMap() {
        {"strides", std::string("strides_")},    // C.strides_
        {"mH", std::string("adjoint")},          // C.adjoint
        {"mT", std::string("mT")},               // C.mT_
-       {"__ms_iter__", prim::kPrimIdentity},    // C.array_iter
      }},
     {kObjectTypeRowTensorType,
      {
@@ -689,16 +679,26 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
                                        bool *compile_cache_consistent) {
   compile_cache_manager_ = std::make_shared<CompileCacheManager>(compile_cache_id);
   compile_cache_manager_->InitParallelGroupCkptSaveFile();
-  MS_EXCEPTION_IF_NULL(compile_cache_consistent);
-  if (!*compile_cache_consistent) {
-    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
-    return;
-  }
-  compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
-  *compile_cache_consistent = compile_cache_manager_->CheckDepFilesHashConsistency();
-  if (!*compile_cache_consistent) {
-    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
-    return;
+  const bool force_use_compile_cache = (common::GetEnv("MS_DEV_FORCE_USE_COMPILE_CACHE") == "1");
+  auto &context = CompileCacheContext::GetInstance();
+  if (force_use_compile_cache) {
+    context.set_init_compile_cache(true);
+    MS_LOG(WARNING)
+      << "The env MS_DEV_FORCE_USE_COMPILE_CACHE has been set. It will force to use the compile cache without "
+         "checking whether the network has been changed. Please note the correctness.";
+  } else {
+    MS_EXCEPTION_IF_NULL(compile_cache_consistent);
+    if (!*compile_cache_consistent) {
+      MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
+      return;
+    }
+    context.set_init_compile_cache(true);
+    compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
+    *compile_cache_consistent = compile_cache_manager_->CheckDepFilesHashConsistency();
+    if (!*compile_cache_consistent) {
+      MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
+      return;
+    }
   }
   func_graph_ = compile_cache_manager_->GetCachedFuncGraph(manager_, weights, queue_name);
   layout_map_ = compile_cache_manager_->layout_map();

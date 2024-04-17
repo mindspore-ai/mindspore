@@ -1,0 +1,37 @@
+reshape_and_cache:
+    description: |
+        The ReshapeAndCache is used for updating the block-wise KVCache of transformer network.
+
+        Args:
+            key (Tensor): The key tensor with data type of float16.
+              :math:`(num\_tokens, num\_head, head\_dim)`.
+            value (Tensor): The value tensor with data type of float16.
+              :math:`(num\_tokens, num\_head, head\_dim)`.
+            key_cache (Tensor): The cache tensor with data type of float16.
+              :math:`(num\_blocks, block\_size, num\_head, head\_dim)`.
+            value_cache (Tensor): The cache tensor with data type of float16.
+              :math:`(num\_blocks, block\_size, num\_head, head\_dim)`.
+            slot_mapping (Tensor): The slot mapping tensor with data type of int32.
+              :math:`(num\_tokens,)`.
+                        
+        Outputs:
+            With same data type and same shape as `key` tensor.
+
+        Notes:
+            No backend implementation in MindSpore, only use to export MindIr and run in MindSpore Lite.
+
+        Examples:
+            >>> from mindspore.ops.operations import _inner_ops
+            >>> num_tokens =  = 4
+            >>> num_head = 40
+            >>> head_dim = 128
+            >>> block_size = 16
+            >>> num_blocks = 128
+            >>> key = Tensor(np.random.randn(num_tokens, num_head, head_dim).astype(np.float16))
+            >>> value = Tensor(np.random.randn(num_tokens, num_head, head_dim).astype(np.float16))
+            >>> key_cache = Parameter(default_input=Tensor(np.random.randn(num_blocks, block_size, num_head, head_dim).astype(np.float16)))
+            >>> value_cache = Parameter(default_input=Tensor(np.random.randn(num_blocks, block_size, num_head, head_dim).astype(np.float16)))
+            >>> slot_mapping = Tensor(np.random.shuffle(np.arange(num_tokens, dtype=np.int32)))
+            >>> reshape_and_cache = _inner_ops.ReshapAndCache()
+            >>> output = reshape_and_cache(key, value, key_cache, value_cache, slot_mapping)
+            >>> print(key_cache)

@@ -37,6 +37,6 @@ mindspore.ops.CropAndResize
         - **ValueError** - `boxes` 的第二维不是4。
         - **ValueError** - `box_index` 的维度不是一维。
         - **ValueError** - `box_index` 的第一维与 `boxes` 的第一维不相等。
-        - **ValueError** - `box_index` 存在元素不在 `[0, batch)` 的范围内.
-        - **ValueError** - `crop_size` 的数据不是正整数.
+        - **ValueError** - `box_index` 存在元素不在 `[0, batch)` 的范围内。
+        - **ValueError** - `crop_size` 的数据不是正整数。
         - **ValueError** - `method` 不是 "bilinear"、"nearest"、"bilinear_v2"之一。

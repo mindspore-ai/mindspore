@@ -25,23 +25,20 @@
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/core/ops/bias_add.h"
+#include "mindspore/core/ops/ops_func_impl/bias_add.h"
 
 namespace mindspore {
 namespace kernel {
-using OpsBiasAddPtr = std::shared_ptr<ops::BiasAdd>;
 
 class BiasAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<BiasAddCpuKernelMod> {
  public:
   BiasAddCpuKernelMod() = default;
   ~BiasAddCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   template <typename T>
   std::pair<KernelAttr, BiasAddCpuKernelMod::KernelRunFunc> MakeKernelFunc(TypeId type_id) const;
@@ -55,13 +52,12 @@ class BiasAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   template <typename T>
   bool ComputeNCHW(const T *src_addr, const T *bias_addr, T *output_addr, size_t num_value, size_t num_bias);
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-  size_t data_shape_{0};
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
+
   std::vector<size_t> input_shape_;
   std::vector<size_t> bias_shape_;
-  OpsBiasAddPtr deformable_kernel_operator_;
-  std::string data_format_ = "NCHW";
+  int64_t data_format_ = Format::NCHW;
 };
 }  // namespace kernel
 }  // namespace mindspore

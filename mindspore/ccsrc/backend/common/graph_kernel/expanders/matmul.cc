@@ -87,7 +87,7 @@ class MatMul : public OpDesc {
       auto dtype = attrs_["dst_type"]->cast<TypePtr>();
       if (dtype != nullptr) {
         if (dtype != TypeIdToType(result->type)) {
-          result = gb.Emit("Cast", {result}, {{"dst_type", dtype}});
+          result = gb.Cast(result, dtype->type_id());
         }
       }
     }

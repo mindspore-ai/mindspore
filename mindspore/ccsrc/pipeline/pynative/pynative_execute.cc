@@ -16,6 +16,7 @@
 
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/pynative/pynative_utils.h"
+#include "pipeline/pynative/grad/ir/ir_bprop.h"
 #include "pipeline/pynative/predict_out_type_map.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "pybind_api/pybind_patch.h"
@@ -26,6 +27,7 @@
 #include "pipeline/jit/ps/pass.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/pynative/op_compiler.h"
+#include "runtime/pynative/op_runner.h"
 #include "include/common/profiler.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "ir/cell.h"
@@ -35,6 +37,9 @@
 #include "frontend/operator/ops_front_infer_function.h"
 #include "backend/operator/ops_backend_infer_function.h"
 #include "include/common/utils/python_fallback_running.h"
+#include "kernel/kernel_mod_cache.h"
+#include "runtime/pipeline/pipeline.h"
+#include "kernel/pyboost/pyboost_utils.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
@@ -73,20 +78,20 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
 }
 
 // Tensor may be used before the execution of the asynchronous task.
-void SetCallbackForInputTensor(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info);
-  for (auto &input : op_run_info->op_grad_info->input_value) {
+void SetCallbackForInputTensor(const std::vector<ValuePtr> &input_values) {
+  for (auto &input : input_values) {
     MS_EXCEPTION_IF_NULL(input);
     if (input->isa<tensor::Tensor>()) {
       auto tensor = input->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
-      tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+      tensor->set_need_pipeline_sync(true);
     }
   }
 }
 }  // namespace
 
 void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const {
+  // Pure function running or cell not set mix precision
   op_run_info->async_status.disable_mix_precision =
     (forward_executor()->IsFirstCell() || forward_executor()->CellNotSetMixedPrecision(op_run_info));
   op_run_info->async_status.is_jit_compiling = forward_executor()->is_jit_compiling();
@@ -96,7 +101,7 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
 py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
-  SetCallbackForInputTensor(op_run_info);
+  SetCallbackForInputTensor(op_run_info->op_grad_info->input_value);
 
   StoreAsyncStatus(op_run_info);
   const auto &op_name = op_run_info->base_op_run_info.op_name;
@@ -106,7 +111,6 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   if (!forward_executor()->EnablePipeline(op_name)) {
     // Wait for async task finish
     forward_executor()->WaitForwardTask();
-    PyNativeAlgo::Common::StubNodeToValue(op_run_info);
     // RunOp sync
     PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
     return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->real_out);
@@ -125,15 +129,7 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
 py::object PyNativeExecutor::RunSliceOpStub(const std::vector<ValuePtr> &input_values,
                                             const std::vector<SliceOpInfoPtr> &slice_op_infos) const {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
-  for (auto &input : input_values) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (input->isa<tensor::Tensor>()) {
-      auto tensor = input->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
-      tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
-    }
-  }
-
+  SetCallbackForInputTensor(input_values);
   auto requires_grad = grad_executor()->RequiresGrad();
   if (!forward_executor()->EnablePipeline("")) {
     forward_executor()->WaitForwardTask();
@@ -186,7 +182,8 @@ void PyNativeExecutor::ClearRes() const {
   runtime::OpExecutor::GetInstance().Wait();
   // Clear forward tasks before clear op graphs cache.
   pynative::OpCompiler::GetInstance().ClearAllCache();
-  pynative::autograd::ClearPyNativeAutoGradStaticRes();
+  kernel::KernelModCache::GetInstance().ClearAllCache();
+  pynative::autograd::ClearAutoGradCache();
 
   // Maybe exit in runop step
   auto ms_context = MsContext::GetInstance();
@@ -266,16 +263,11 @@ void PyNativeExecutor::EndGraph(const py::object &obj, const py::object &out, co
   forward_executor()->ProcessAfterEndGraph(obj, is_cell);
 }
 
-py::object PyNativeExecutor::Run() const {
-  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunGradGraph);
-  const auto &ret = PyNativeExecutorTry(grad_executor()->RunGraph);
-  return ret;
-}
-
-void PyNativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
-                               const py::object &grad_position, const py::args &args) const {
-  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kCompileGradGraph);
-  PyNativeExecutorTry(grad_executor()->GradGraph, grad, cell, weights, grad_position, args);
+py::object PyNativeExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::object &cell,
+                                     const py::object &weights, const py::object &grad_position,
+                                     const py::args &args) const {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunGrad);
+  return PyNativeExecutorTry(grad_executor()->Run, grad, cell, weights, grad_position, args);
 }
 
 py::object PyNativeExecutor::GradJit(const py::object &out, const py::args &args) const {
@@ -287,7 +279,7 @@ bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstC
 
 void PyNativeExecutor::WorkerJoin() {
   GilReleaseWithCheck release_gil;
-  forward_executor_->WorkerJoin();
+  runtime::Pipeline::Get().frontend_stage()->WorkerJoin();
 }
 
 void PyNativeExecutor::SetJitCompileStatus(bool is_compiling, const std::string &phase) const {
@@ -303,48 +295,43 @@ void PyNativeExecutor::SetDynamicInput(const py::object &obj, const py::args &ar
 }
 
 py::object PyNativeExecutor::GetDynamicInput(const py::object &actual_input) const {
-  MS_LOG(DEBUG) << "Get dynamic shape for jit";
   if (grad_executor()->dynamic_shape()->enable_unknown_shape()) {
+    MS_LOG(DEBUG) << "Get dynamic shape for jit";
     return grad_executor()->dynamic_shape()->GetDynamicInput(actual_input);
   }
   return actual_input;
 }
 
-void PyNativeExecutor::WaitBeforeFork() {
-  MS_LOG(INFO) << "fork event detected in main process, PyNativeExecutor will wait for async task finish.";
+void PyNativeExecutor::ParentBeforeFork() {
+  MS_LOG(DEBUG) << "PyNativeExecutor prepare before fork.";
+  MS_LOG(DEBUG) << "Wait for OpExecutor.";
   runtime::OpExecutor::GetInstance().WaitAll();
+  MS_LOG(DEBUG) << "Wait for grad_executor_.";
   grad_executor_->bprop_queue()->Wait();
-  MS_LOG(INFO) << "PyNativeExecutor waits for async task finish done.";
-  // If the forked thread does not hold the gil lock, we need to manually acquire the gil lock before forking,
-  // otherwise the child process will block when acquiring the gil lock.
-  ForkUtils::GetInstance().set_gil_hold_before_fork(PyGILState_Check());
-  if (!ForkUtils::GetInstance().is_gil_hold_before_fork()) {
-    ForkUtils::GetInstance().set_gil_state(static_cast<int>(PyGILState_Ensure()));
-  }
+  MS_LOG(DEBUG) << "PyNativeExecutor prepare before fork done.";
 }
 
-void PyNativeExecutor::ParentAfterFork() {
-  // Release the gil lock that was acquired manually before forking.
-  if (!ForkUtils::GetInstance().is_gil_hold_before_fork()) {
-    PyGILState_Release(static_cast<PyGILState_STATE>(ForkUtils::GetInstance().get_gil_state()));
+void PyNativeExecutor::ChildAfterFork() {
+  MS_LOG(DEBUG) << "PyNativeExecutor reinitialize after fork.";
+  MS_LOG(DEBUG) << "Clear OpCompiler Cache.";
+  pynative::OpCompiler::GetInstance().ClearAllCache();
+  if (forward_executor_ != nullptr) {
+    MS_LOG(DEBUG) << "Clear forward_executor_ resources.";
+    forward_executor_->ClearRes();
+    // Call ForwardExecutor::ReInit() to update device_target_
+    forward_executor_->ReInit();
+    MS_LOG(DEBUG) << "Reinitialize forward_executor_.";
+    forward_executor_->ChildAfterFork();
   }
-}
-
-void PyNativeExecutor::ReinitAfterFork() {
-  MS_LOG(INFO) << "fork event detected in child process, PyNativeExecutor resources will be reinitialized.";
-  // Release the gil lock that was acquired manually before forking.
-  if (!ForkUtils::GetInstance().is_gil_hold_before_fork()) {
-    PyGILState_Release(static_cast<PyGILState_STATE>(ForkUtils::GetInstance().get_gil_state()));
+  // Reset PyNativeExecutor resources
+  if (grad_executor_ != nullptr) {
+    MS_LOG(DEBUG) << "Clear grad_executor_ resources.";
+    grad_executor_->ClearRes();
+    MS_LOG(DEBUG) << "Reinitialize grad_executor_.";
+    grad_executor_->ChildAfterFork();
   }
-  // reset ms context after fork
-  MsContext::GetInstance()->ResetContext();
-  // clear op cache after fork
-  OpCompiler::GetInstance().ClearAllCache();
-  // Reset ForwardExecuteor resources
-  forward_executor_->ClearRes();
-  // Reinit ForwardExecuteor
-  forward_executor_->ReInit();
-  MS_LOG(INFO) << "PyNativeExecutor resources reinitializing done.";
+  runtime::OpRunner::ChildAfterFork();
+  MS_LOG(DEBUG) << "PyNativeExecutor reinitialize after fork done.";
 }
 
 void RegPyNativeExecutor(const py::module *m) {
@@ -357,10 +344,9 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("end_graph", &PyNativeExecutor::EndGraph, "pynative end a graph.")
     .def("check_run", &PyNativeExecutor::CheckAlreadyRun, "pynative check graph run before.")
     .def("grad_jit", &PyNativeExecutor::GradJit, "pynative grad for jit.")
-    .def("grad_net", &PyNativeExecutor::GradNet, "pynative grad graph.")
     .def("clear_res", &PyNativeExecutor::ClearRes, "pynative clear exception res.")
     .def("sync", &PyNativeExecutor::Sync, "pynative sync stream.")
-    .def("__call__", &PyNativeExecutor::Run, "pynative executor run grad graph.")
+    .def("grad", &PyNativeExecutor::RunGrad, "pynative executor run grad.")
     .def("grad_flag", &PyNativeExecutor::grad_flag, "pynative grad flag")
     .def("enable_grad", &PyNativeExecutor::enable_grad, "pynative enable grad, used for with no_grad")
     .def("set_hook_changed", &PyNativeExecutor::SetHookChanged, "set pynative hook changed")

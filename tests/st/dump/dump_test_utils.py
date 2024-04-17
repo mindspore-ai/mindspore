@@ -18,10 +18,10 @@ Utils for testing dump feature.
 
 import json
 import os
+import time
 import glob
 import csv
 import numpy as np
-
 
 async_dump_dict = {
     "common_dump_settings": {
@@ -103,6 +103,18 @@ async_dump_dict_3 = {
     }
 }
 
+async_dump_dict_acl = {
+    "common_dump_settings": {
+        "dump_mode": 0,
+        "path": "",
+        "net_name": "Net",
+        "iteration": "0",
+        "input_output": 0,
+        "kernels": [],
+        "support_device": [0, 1, 2, 3, 4, 5, 6, 7],
+        "op_debug_mode": 0
+    }
+}
 
 def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
     """
@@ -140,6 +152,9 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
         data = async_dump_dict_2
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["file_format"] = "npy"
+    elif test_key == "test_acl_dump":
+        data = async_dump_dict_acl
+        data["common_dump_settings"]["path"] = dump_path
     else:
         raise ValueError(
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")
@@ -269,21 +284,27 @@ def check_statistic_dump(dump_file_path):
     with open(real_path) as f:
         reader = csv.DictReader(f)
         stats = list(reader)
+
         def get_add_node(statistic):
             return statistic['Op Type'] == 'Add'
+
         add_statistics = list(filter(get_add_node, stats))
         num_tensors = len(add_statistics)
         assert num_tensors == 3
         for tensor in add_statistics:
-            if tensor['IO'] == 'input' and tensor['Slot'] == 0:
+            if tensor['IO'] == 'input' and tensor['Slot'] == '0':
                 assert tensor['Min Value'] == '1'
                 assert tensor['Max Value'] == '6'
-            elif tensor['IO'] == 'input' and tensor['Slot'] == 1:
+                assert tensor['MD5'] == 'fa85978152c7dfb5f1322082915cb050'
+            elif tensor['IO'] == 'input' and tensor['Slot'] == '1':
                 assert tensor['Min Value'] == '7'
                 assert tensor['Max Value'] == '12'
-            elif tensor['IO'] == 'output' and tensor['Slot'] == 0:
+                assert tensor['MD5'] == '9fd3b07ba2cfea7833f1da3a2960aadd'
+            elif tensor['IO'] == 'output' and tensor['Slot'] == '0':
                 assert tensor['Min Value'] == '8'
                 assert tensor['Max Value'] == '18'
+                assert tensor['MD5'] == '72bb57525231b5c8d3176bc5497f8aa0'
+
 
 def check_data_dump(dump_file_path, is_ge=False):
     output_name = "Add.Add-op*.output.0.*.npy"
@@ -294,3 +315,74 @@ def check_data_dump(dump_file_path, is_ge=False):
     output = np.load(real_path)
     expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
     assert np.array_equal(output, expect)
+
+
+def check_saved_data(iteration_path, saved_data):
+    if not saved_data:
+        return
+    if saved_data in ('statistic', 'full'):
+        check_statistic_dump(iteration_path)
+    if saved_data in ('tensor', 'full'):
+        check_data_dump(iteration_path, True)
+    if saved_data == 'statistic':
+        # assert only file is statistic.csv, tensor data is not saved
+        assert len(os.listdir(iteration_path)) == 1
+    elif saved_data == 'tensor':
+        # assert only tensor data is saved, not statistics
+        stat_path = os.path.join(iteration_path, 'statistic.csv')
+        assert not os.path.isfile(stat_path)
+
+
+def check_overflow_file(iteration_path, overflow_num, need_check):
+    if not need_check:
+        return overflow_num
+    overflow_files = glob.glob(os.path.join(iteration_path, "Opdebug.Node_OpDebug.*.*.*"))
+    overflow_num += len(overflow_files)
+    return overflow_num
+
+
+def check_iteration(iteration_id, num_iteration):
+    if iteration_id.isdigit():
+        assert int(iteration_id) < num_iteration
+
+
+def check_ge_dump_structure(dump_path, num_iteration, device_num=1, check_overflow=False, saved_data=None,
+                            check_data=True):
+    overflow_num = 0
+    for _ in range(3):
+        if not os.listdir(dump_path):
+            time.sleep(2)
+    sub_paths = os.listdir(dump_path)
+    assert sub_paths
+    device_path_num = 0
+    for sub_path in sub_paths:
+        # on GE, the whole dump directory of one training is saved within a time path, like '20230822120819'
+        if not (sub_path.isdigit() and len(sub_path) == 14):
+            continue
+        time_path = os.path.join(dump_path, sub_path)
+        assert os.path.isdir(time_path)
+        device_paths = os.listdir(time_path)
+        device_path_num += len(device_paths)
+        for device_path in device_paths:
+            assert device_path.isdigit()
+            abs_device_path = os.path.join(time_path, device_path)
+            assert os.path.isdir(abs_device_path)
+            model_names = os.listdir(abs_device_path)
+            for model_name in model_names:
+                model_path = os.path.join(abs_device_path, model_name)
+                assert os.path.isdir(model_path)
+                model_ids = os.listdir(model_path)
+                for model_id in model_ids:
+                    model_id_path = os.path.join(model_path, model_id)
+                    assert os.path.isdir(model_id_path)
+                    iteration_ids = os.listdir(model_id_path)
+                    for iteration_id in iteration_ids:
+                        check_iteration(iteration_id, num_iteration)
+                        iteration_path = os.path.join(model_id_path, iteration_id)
+                        assert os.path.isdir(iteration_path)
+                        if check_data:
+                            check_saved_data(iteration_path, saved_data)
+                        overflow_num = check_overflow_file(iteration_path, overflow_num, check_overflow)
+    assert device_path_num == device_num
+    if check_overflow:
+        assert overflow_num

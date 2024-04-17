@@ -34,10 +34,7 @@ const size_t kLcmInputsNum = 2;
 const size_t kLcmOutputsNum = 1;
 }  // namespace
 
-bool LcmCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool LcmCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLcmInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLcmOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -50,10 +47,8 @@ bool LcmCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   return true;
 }
 
-int LcmCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int LcmCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   x1_shape_ = inputs[0]->GetShapeVector();
@@ -63,11 +58,11 @@ int LcmCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool LcmCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  const T *x1 = reinterpret_cast<const T *>(inputs[0]->addr);
-  const T *x2 = static_cast<const T *>(inputs[1]->addr);
-  T *y = reinterpret_cast<T *>(outputs[0]->addr);
+bool LcmCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  const T *x1 = reinterpret_cast<const T *>(inputs[0]->device_ptr());
+  const T *x2 = static_cast<const T *>(inputs[1]->device_ptr());
+  T *y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   if (y_shape_.size() == 0) {
     (void)y_shape_.insert(y_shape_.begin(), 1);
   }

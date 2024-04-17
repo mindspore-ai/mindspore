@@ -45,9 +45,9 @@ namespace {
 abstract::TupleShapePtr LuUnpackGradInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto L_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto U_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto LU_data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto L_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto U_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto LU_data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
 
   auto LU_data_ouput = std::make_shared<abstract::Shape>(LU_data_shape);
   if (IsDynamic(LU_data_shape) || IsDynamic(L_shape) || IsDynamic(U_shape)) {
@@ -85,7 +85,7 @@ abstract::TupleShapePtr LuUnpackGradInferShape(const PrimitivePtr &primitive,
 TuplePtr LuUnpackGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16, kInt64, kInt32, kInt16, kInt8, kUInt8};
-  auto LU_type = input_args[2]->BuildType();
+  auto LU_type = input_args[2]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("LU_data", LU_type, valid_types, primitive->name());
   return std::make_shared<Tuple>(std::vector<TypePtr>{LU_type, LU_type});
 }

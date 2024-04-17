@@ -42,8 +42,8 @@ class WKVGradInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
                                              kInuputNumber, prim_name);
-    auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndexK]->BuildShape())[kShape];
-    auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndexV]->BuildShape())[kShape];
+    auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndexK]->GetShape())[kShape];
+    auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndexV]->GetShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("k shape size", SizeToLong(k_shape.size()), kEqual, kTotalShapeSize,
                                              prim_name);
     (void)CheckAndConvertUtils::CheckInteger("v shape size", SizeToLong(v_shape.size()), kEqual, kTotalShapeSize,
@@ -67,7 +67,7 @@ class WKVGradInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInuputNumber,
                                              prim_name);
     MS_EXCEPTION_IF_NULL(input_args[kIndexK]);
-    auto k_type = input_args[kIndexK]->BuildType();
+    auto k_type = input_args[kIndexK]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input_k", k_type, common_valid_types, prim_name);
     std::vector<TypePtr> types(kOutputNumber, k_type);
     return std::make_shared<Tuple>(types);

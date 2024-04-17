@@ -1,0 +1,53 @@
+apply_came_part2:
+    description: |
+        Computes Part 2 of the CAME Optimizer.
+
+        Args:
+            - **grad** (Tensor) - The shape = 2D :math:`(..., n, m)`.
+              A Tensor of types: float16, float32, bfloat16.
+            - **sum_grad_r** (Tensor) - The shape = 1D :math:`(..., n)`.
+              A Tensor of types: float32.
+            - **sum_grad_c** (Tensor) - The shape = 1D :math:`(..., m)`.
+              A Tensor of types: float32.
+            - **sum_grad_rc** (Tensor) - The shape = 1D :math:`(...)`.
+              A Tensor of types: float32.
+            - **r** (Tensor) - The shape = 1D :math:`(..., n)`.
+              The Tensor has the same data type as `grad`.
+            - **c** (Tensor) - The shape = 1D :math:`(..., m)`.
+              The Tensor has the same data type as `grad`.
+            - **beta2** (float) - data type must be float.
+            - **sum_r** (Tensor) - The shape = 1D :math:`(..., 1)`.
+              'None' is currently supported. A Tensor of types: float32.
+            - **global_shape** (Tensor) - the shape = 1D :math:`(2)`.
+              'None' is currently supported. A Tensor of types: int64.
+
+        Returns:
+            - **r** (Tensor) - A Tensor of shape :math:`(..., n)`
+            - **c** (Tensor) - A Tensor of shape :math:`(..., m)`
+            - **u** (Tensor) - A Tensor of of shape:math:`(..., n, m)`
+            - **sum_square_u** (Tensor) - A Tensor of of shape:math:`(1)`
+
+        Raises:
+            TypeError: If `grad` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` 
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore.ops.operations import _inner_ops as P
+            >>> apply_came_part2 = P.ApplyCamePart2()
+            >>> grad = Tensor(np.ones([1024, 64]), dtype=ms.float32)
+            >>> sum_grad_r = Tensor(np.ones([1024]), dtype=ms.float32)
+            >>> sum_grad_c = Tensor(np.ones([64]), dtype=ms.float32)
+            >>> sum_grad_rc = Tensor(np.array([64]), dtype=ms.float32)
+            >>> r = Tensor(np.ones([1024]), dtype=ms.float32)
+            >>> c = Tensor(np.ones([64]), dtype=ms.float32)
+            >>> beta2 = 0.5
+            >>> sum_r = Tensor(np.array([128]), dtype=ms.float32)
+            >>> global_shape = (1024, 64)
+            >>> output = apply_came_part2(grad, sum_grad_r, sum_grad_c, sum_grad_rc, r, c, beta2, sum_r, global_shape)
+            >>> print(output[0].shape)
+            (1024,)

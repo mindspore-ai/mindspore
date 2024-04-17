@@ -31,6 +31,7 @@ namespace mindspore::graphkernel {
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
 constexpr auto kAllTarget = "ALL";
 constexpr auto kOutputsFormat = "outputs_format";
+constexpr auto kAttrToPrim = "to_prim";
 
 using OpWithLevel = std::tuple<std::string, unsigned int, PrimitivePtr>;
 
@@ -141,6 +142,8 @@ class GkUtils {
    * @brief Get all graphkernel's nodes in topo order.
    */
   static AnfNodePtrList GetGraphKernelNodes(const FuncGraphPtr &func_graph);
+
+  static bool UseAkgCceLib(const AnfNodePtr &node);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_UTILS_H_

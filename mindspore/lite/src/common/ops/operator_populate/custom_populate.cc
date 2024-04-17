@@ -112,6 +112,16 @@ OpParameter *PopulateCustomOpParameter(const BaseOperatorPtr &base_operator) {
     memset(param, 0, sizeof(OpParameter));
     param->type_ = PrimType_Inner_EncoderLayer;
     return reinterpret_cast<OpParameter *>(param);
+  } else if (type == "ACL") {
+    auto param = static_cast<CustomParameter *>(malloc(sizeof(CustomParameter)));
+    if (param == nullptr) {
+      MS_LOG(ERROR) << "malloc CustomParameter failed.";
+      return nullptr;
+    }
+    memset(param, 0, sizeof(CustomParameter));
+    // NNACL does not need to solve ACl Custom op, add this is just return a parameter object
+    param->op_parameter_.type_ = PrimType_Inner_AclCustomOp;
+    return reinterpret_cast<OpParameter *>(param);
   } else {
     MS_LOG(ERROR) << "Unsupported custom type: " << type;
   }

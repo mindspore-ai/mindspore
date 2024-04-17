@@ -1,0 +1,21 @@
+layer_norm_grad_v3:
+  description: |
+    Applies the layer Normalization to the input array.
+
+    This operator will calculate the input gradients of LayerNormV3.
+
+    Inputs:
+        x (Tensor): The inputs of layer norm operator.
+        dy (Tensor): The gradient of outputs of layer norm operator.
+        rstd (Tensor): The rstd of x.
+        mean (Tensor): The mean of x.
+        gamma (Tensor): The weights of normalized elements.
+        begin_norm_axis (int): The begin axis for the input to apply LayerNormV3. Default: 1.
+        begin_params_axis (int): The begin axis for the parameter input to apply LayerNormV3. Default: 1.
+
+    Outputs:
+        tuple[int], tuple of 3 values (the gradients of LayerNormV3 input,  gamma, beta).
+
+        pd_x (Tensor): the gradients of LayerNormV3 input x.
+        pd_gamma (Tensor): the gradients of gamma.
+        pd_beta (Tensor): the gradients of beta.

@@ -1,0 +1,12 @@
+#operator gcd
+gcd:
+    args:
+        input:
+            dtype: tensor
+        other:
+            dtype: tensor
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output: 
+            dtype: tensor

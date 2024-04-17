@@ -29,10 +29,8 @@ constexpr size_t kRankWithBatch = 3;
 constexpr size_t kZero = 0;
 constexpr size_t kOne = 1;
 constexpr size_t kTwo = 2;
-bool SparseTensorToCSRSparseMatrixGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseTensorToCSRSparseMatrixGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimSparseTensorToCSRSparseMatrix->name()) {
     MS_LOG(ERROR) << "For 'SparseTensorToCSRSparseMatrixGpuKernelMod',"
                      "the kernel name must be 'SparseTensorToCSRSparseMatrix', but got "
@@ -55,31 +53,26 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::Init(const BaseOperatorPtr &base
   return true;
 }
 
-int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                      const std::vector<KernelTensorPtr> &inputs,
-                                                      const std::vector<KernelTensorPtr> &outputs,
-                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
   bapt = 0;
   elements[kZero] = 0;
   elements[kOne] = 0;
   elements[kTwo] = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   for (size_t i = 0; i < inputs.size(); i++) {
-    std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(i)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(i)->GetDeviceShapeAdaptively().end());
+    std::vector<int64_t> input_shape =
+      std::vector<int64_t>(inputs.at(i)->GetDeviceShapeVector().begin(), inputs.at(i)->GetDeviceShapeVector().end());
     size_t input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
     elements[i] = input_elements_;
-    size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(i).dtype);
-    input_size_list_.push_back(input_elements_ * unit_size_);
   }
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).dtype);
   workspace_size_list_.push_back(elements[kOne] * unit_size_);
   for (size_t i = 0; i < outputs.size(); i++) {
-    std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(i)->GetDeviceShapeAdaptively().begin(),
-                                                             outputs.at(i)->GetDeviceShapeAdaptively().end());
+    std::vector<int64_t> output_shape =
+      std::vector<int64_t>(outputs.at(i)->GetDeviceShapeVector().begin(), outputs.at(i)->GetDeviceShapeVector().end());
     size_t output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
     size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(i).dtype);
     output_size_list_.push_back(output_elements_ * unit_size_);
@@ -91,9 +84,9 @@ int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const BaseOperatorPtr &bas
 }
 
 template <typename IndiceType, typename DataType>
-bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &workspace,
-                                                             const std::vector<AddressPtr> &outputs) {
+bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &workspace,
+                                                             const std::vector<KernelTensor *> &outputs) {
   IndiceType *x_indices_ptr = GetDeviceAddress<IndiceType>(inputs, kIndex0);
   DataType *x_value_ptr = GetDeviceAddress<DataType>(inputs, kIndex1);
   IndiceType *x_dense_shape_ptr = GetDeviceAddress<IndiceType>(inputs, kIndex2);
@@ -107,7 +100,7 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<A
   std::vector<IndiceType> y_batch_pointers_ptr_test(bapt);
   std::vector<IndiceType> x_dense_shape_ptr_test(elements[kTwo]);
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(y_batch_pointers_ptr, 0, outputs[kIndex1]->size, stream_),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(y_batch_pointers_ptr, 0, outputs[kIndex1]->size(), stream_),
                                      "For 'SparseTensorToCSRSparseMatrix', cudaMemsetAsync y_batch_pointers failed");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(x_dense_shape_ptr_test.data(), x_dense_shape_ptr, elements[kTwo] * sizeof(IndiceType),

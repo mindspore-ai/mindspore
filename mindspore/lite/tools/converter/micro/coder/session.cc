@@ -75,7 +75,10 @@ int CoderSession::PassArgsToContext(const std::string &model_name) {
   context_->set_total_buffer_size(final_total_size);
   context_->set_graph_inputs(coder_graph_->input_tensors());
   context_->set_graph_outputs(coder_graph_->output_tensors());
-  if (Configurator::GetInstance()->debug_mode()) {
+  context_->set_shape_info_container(&shape_info_container_);
+  context_->set_dynamic_mem_manager(&dynamic_mem_manager_);
+  Configurator *config = Configurator::GetInstance();
+  if (config->debug_mode()) {
     std::vector<std::string> blocks;
     blocks = AddDumpDataInfo(context_->code_blocks(), op_coders_);
     if (blocks.size() == 0) {
@@ -100,7 +103,16 @@ int CoderSession::Preprocess() {
                                Configurator::GetInstance()->changeable_weights_name());
   MS_CHECK_RET_CODE(ret, "assign memory failed");
 
-  // prepare, init model parameters
+  if (dynamic_) {
+    auto config = Configurator::GetInstance();
+    MS_CHECK_TRUE_MSG(config != nullptr, RET_NULL_PTR, "Config is a nullptr.");
+    ret = shape_info_container_.Init(op_coders_, graph_inputs_shape_infos_);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "Init ShapeInfoContainer failed.");
+    auto outputs = coder_graph_->output_tensors();
+    ret = dynamic_mem_manager_.AllocDynamicMem(op_coders_, inputs, outputs, &shape_info_container_);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "DynamicMemManager AllocDynamicMem failed.");
+  }
+  // 2. prepare, init model parameters
   for (const auto &op_coder : op_coders_) {
     MS_CHECK_PTR(op_coder);
     MS_LOG(DEBUG) << "prepare: " << op_coder->name();
@@ -133,7 +145,7 @@ int CoderSession::Run(const std::string &model_name) {
   ret = PassArgsToContext(model_name);
   MS_CHECK_RET_CODE(ret, "PassArgsToContext failed");
   MS_LOG(INFO) << "run opcoders success";
-  return RET_OK;
+  return ret;
 }
 
 int CoderSession::GenerateCode() {
@@ -161,6 +173,9 @@ int CoderSession::Init(const void *content, int size, const int model_index, boo
   context_ = std::make_unique<CoderContext>(model_index);
   context_->set_end_flag(end_flag);
   enable_fp16_ = enable_fp16;
+  Configurator *config = Configurator::GetInstance();
+  MS_CHECK_TRUE_MSG(config != nullptr, RET_NULL_PTR, "Config is a nullptr.");
+  dynamic_ = !config->graph_inputs_shape_infos().empty();
   MS_LOG(INFO) << "CoderSession::Init done";
   return RET_OK;
 }
@@ -227,6 +242,7 @@ int CoderSession::InitTensorsRef() {
       }
     }
     tensor->set_ref_count(refcount);
+    tensor->set_init_ref_count(refcount);
   }
   return RET_OK;
 }
@@ -325,6 +341,7 @@ int CoderSession::CreateOpCoders() {
                                                 .input_indices(input_indices)
                                                 .output_indices(output_indices)
                                                 .is_builtin_custom(is_built_in_custom_op)
+                                                .is_dynamic(dynamic_)
                                                 .build(schema_version_);
     if (op_coder == nullptr) {
       coder_graph_->DumpUnSupportLayer(code_target);
@@ -351,6 +368,20 @@ int CoderSession::CompileGraph() {
   MS_CHECK_RET_CODE(InitCodeGraph(), "InitGraphInOutTensors failed");
   MS_CHECK_RET_CODE(CreateOpCoders(), "CreateOpCoders failed!");
   MS_CHECK_RET_CODE(InitTensorsRef(), "InitTensorsRefcount failed!");
+  if (dynamic_) {
+    Configurator::GetInstance()->set_dynamic_shape(true);
+    std::vector<lite::Tensor *> inputs = coder_graph_->input_tensors();
+    auto &graph_inputs_shape_infos = Configurator::GetInstance()->graph_inputs_shape_infos();
+    MS_CHECK_TRUE_MSG(inputs.size() == graph_inputs_shape_infos.size(), RET_ERROR,
+                      "Config graph_inputs_shape's num cannot match.");
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      graph_inputs_shape_infos_[inputs[i]] = graph_inputs_shape_infos[i];
+    }
+  }
+  for (auto &op_coder : op_coders_) {
+    op_coder->set_shape_info_container(&shape_info_container_);
+    op_coder->set_dynamic_mem_manager(&dynamic_mem_manager_);
+  }
   return RET_OK;
 }
 CoderSession::~CoderSession() { allocator_->Free(); }

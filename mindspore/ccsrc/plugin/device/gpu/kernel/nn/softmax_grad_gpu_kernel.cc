@@ -15,23 +15,17 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/softmax_grad_gpu_kernel.h"
-#include "mindspore/core/ops/grad/log_softmax_grad.h"
 #include "mindspore/core/ops/grad/softmax_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUM = 2;
-constexpr size_t OUTPUT_NUM = 1;
 
-bool SoftmaxGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool SoftmaxGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&y_desc_),
                                       kernel_name_ + "create input_descriptor failed");
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -39,43 +33,34 @@ bool SoftmaxGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto input_data_type = inputs.at(kIndex0)->GetDtype();
+  auto input_data_type = inputs[kIndex0]->dtype_id();
   type_id_size_ = abstract::TypeIdSize(input_data_type);
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(input_data_type));
   return true;
 }
 
-int SoftmaxGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SoftmaxGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ResetResource();
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   shape_size_ = input_shape.size();
-  if (kernel_name_ == "LogSoftmaxGrad") {
-    algo_ = CUDNN_SOFTMAX_LOG;
-    auto log_soft_max_grad_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(base_operator);
-    auto axis = LongToInt(log_soft_max_grad_ptr->get_axis());
-    InitSizeByAxis(input_shape, axis);
-  } else {
-    algo_ = CUDNN_SOFTMAX_ACCURATE;
-    std::vector<int> axis;
-    auto soft_max_grad_ptr = std::dynamic_pointer_cast<ops::SoftmaxGrad>(base_operator);
-    auto axis_me = soft_max_grad_ptr->get_axis();
-    (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
-                         [](const int64_t &value) { return LongToInt(value); });
-    if (axis.size() < 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be equal to 0, but got "
-                        << axis.size();
-    }
-    if (axis.size() > 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be greater than 1, but got "
-                        << axis.size();
-    }
-    InitSizeByAxis(input_shape, axis[0]);
+  algo_ = CUDNN_SOFTMAX_ACCURATE;
+  std::vector<int> axis;
+  auto axis_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("axis"));
+  (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
+                       [](const int64_t &value) { return LongToInt(value); });
+  if (axis.size() < 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be equal to 0, but got "
+                      << axis.size();
   }
+  if (axis.size() > 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be greater than 1, but got "
+                      << axis.size();
+  }
+  InitSizeByAxis(input_shape, axis[0]);
   use_workspace_ = (axis_ != static_cast<int>(input_shape_.size()) - 1);
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensor4dDescriptor(y_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(batch_size_),
@@ -86,9 +71,9 @@ int SoftmaxGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool SoftmaxGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SoftmaxGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *y_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *dy_addr = GetDeviceAddress<T>(inputs, kIndex1);
   T *dx_addr = GetDeviceAddress<T>(outputs, kIndex0);
@@ -147,6 +132,5 @@ std::vector<KernelAttr> SoftmaxGradGpuKernelMod::GetOpSupport() {
 }
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, SoftmaxGrad, SoftmaxGradGpuKernelMod);
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, LogSoftmaxGrad, SoftmaxGradGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

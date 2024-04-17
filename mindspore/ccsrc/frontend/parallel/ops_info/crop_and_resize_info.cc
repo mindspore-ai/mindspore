@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,17 @@ Status CropAndResizeInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (boxes_strategy[0] != index_strategy[0]) {
     MS_LOG(ERROR) << name_ << ": The value of inputs_strategy[1][0] and inputs[2][0] must be equal, "
                   << "but got strategy " << StrategyToString(strategies);
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status CropAndResizeInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  Strategies strategies = strategy->GetInputDim();
+  auto x_strategy = strategies[0];
+  if (x_strategy[0] != 1 && inputs_shape_[0][0] == -1) {
+    MS_LOG(ERROR) << name_ << ": the dim 0 of first input can not be split if it's dynamic shape, the strategy is "
+                  << ShapesToString(strategies) << ", the inputs' shape: " << ShapesToString(inputs_shape_);
     return FAILED;
   }
   return SUCCESS;
@@ -152,7 +163,8 @@ Status CropAndResizeInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), minimum, sub});
-  auto cast_equal = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, CreateTypeFloat(32)});
+  auto cast_equal =
+    gen_g.PushBack({gen_g.NewOpInst(CAST), equal, CreatInt64Imm(static_cast<int64_t>(kNumberTypeFloat32))});
   auto crop_and_resize = gen_g.PushBack({gen_g.NewOpInst(CROP_AND_RESIZE), gen_g.virtual_input_node(),
                                          gen_g.virtual_input_node(), minimum, gen_g.virtual_input_node()});
   auto expand_dims_0 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), cast_equal, CreatInt64Imm(-1)});

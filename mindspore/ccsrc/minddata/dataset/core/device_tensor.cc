@@ -25,9 +25,6 @@ const int kYuvDefaultChannels = 4;
 
 DeviceTensor::DeviceTensor(const TensorShape &shape, const DataType &type)
     : Tensor(shape, type), device_data_(nullptr), size_(0) {
-  // grab the mem pool from global context and create the allocator for char data area
-  std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
-  data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
   device_data_type_ = type;
   host_data_tensor_ = nullptr;
 }
@@ -36,8 +33,7 @@ Status DeviceTensor::CreateEmpty(const TensorShape &shape, const DataType &type,
   CHECK_FAIL_RETURN_UNEXPECTED(shape.known(), "Invalid shape.");
   CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN, "Invalid data type.");
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Invalid nullptr pointer.");
-  const DeviceTensorAlloc *alloc = GlobalContext::Instance()->device_tensor_allocator();
-  *out = std::allocate_shared<DeviceTensor>(*alloc, shape, type);
+  *out = std::make_shared<DeviceTensor>(shape, type);
   // if it's a string tensor and it has no elements, Just initialize the shape and type.
   if (!type.IsNumeric() && shape.NumOfElements() == 0) {
     return Status::OK();
@@ -63,8 +59,7 @@ Status DeviceTensor::CreateFromDeviceMemory(const TensorShape &shape, const Data
   CHECK_FAIL_RETURN_UNEXPECTED(dataSize > 0, "Invalid data size");
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Out pointer is NULL");
 
-  const DeviceTensorAlloc *alloc = GlobalContext::Instance()->device_tensor_allocator();
-  *out = std::allocate_shared<DeviceTensor>(*alloc, shape, type);
+  *out = std::make_shared<DeviceTensor>(shape, type);
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
 
   // if it's a string tensor and it has no elements, Just initialize the shape and type.

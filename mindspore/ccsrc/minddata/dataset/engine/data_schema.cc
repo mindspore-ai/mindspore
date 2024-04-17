@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -473,6 +473,18 @@ Status DataSchema::GetColumnNameMap(std::unordered_map<std::string, int32_t> *ou
     (*out_column_name_map)[col_descs_[i].Name()] = i;
   }
 
+  return Status::OK();
+}
+
+Status DataSchema::GetColumnName(std::vector<std::string> *column_names) const {
+  RETURN_UNEXPECTED_IF_NULL(column_names);
+  column_names->clear();
+  for (const auto &col_desc : col_descs_) {
+    if (col_desc.Name().empty()) {
+      RETURN_STATUS_UNEXPECTED("Found empty column name in schema.");
+    }
+    column_names->emplace_back(col_desc.Name());
+  }
   return Status::OK();
 }
 }  // namespace dataset

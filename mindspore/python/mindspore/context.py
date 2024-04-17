@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,6 +49,10 @@ K_CONTEXT = None
 STRICT = 0
 COMPATIBLE = 1
 LAX = 2
+
+# Enumerate for the property 'debug_level'.
+RELEASE = 0
+DEBUG = 1
 
 
 def _make_directory(path):
@@ -161,6 +165,7 @@ class _Context:
         self._context_switches = _ContextSwitchInfo(False)
         self._context_handle = MSContext.get_instance()
         self._support_binary = False
+        self._mode = PYNATIVE_MODE
 
     def __getattribute__(self, attr):
         value = object.__getattribute__(self, attr)
@@ -176,7 +181,7 @@ class _Context:
 
     def get_mode(self):
         """Get current mode."""
-        return self.get_param(ms_ctx_param.mode)
+        return self._mode
 
     def set_mode(self, mode):
         """
@@ -204,6 +209,7 @@ class _Context:
             raise ValueError(f"For 'context.set_context', the argument 'mode' should be context.GRAPH_MODE (0) "
                              f"or context.PYNATIVE_MODE (1), but got {mode}.")
         self.set_param(ms_ctx_param.mode, mode)
+        self._mode = mode
 
     def set_jit_syntax_level(self, level):
         """"Set the JIT syntax level for graph compiling"""
@@ -211,6 +217,14 @@ class _Context:
             raise ValueError(f"For 'context.set_jit_syntax_level', the argument 'level' should be context.STRICT "
                              f"or context.LAX, but got {level}.")
         self.set_param(ms_ctx_param.jit_syntax_level, level)
+
+    def set_debug_level(self, level):
+        """"Set the debug level for graph compiling"""
+        if level != RELEASE and level != DEBUG:
+            raise ValueError(f"For 'context.set_debug_level', the argument 'level' should be context.RELEASE "
+                             f"or context.DEBUG, but got {level}.")
+        self.set_param(ms_ctx_param.debug_level, level)
+
 
     def set_memory_optimize_level(self, memory_optimize_level):
         """
@@ -268,9 +282,13 @@ class _Context:
                             "allow_mix_precision_fp16" and "allow_mix_precision_bf16".
                 - jit_compile (bool): ``False`` and ``True``.
                 - atomic_clean_policy (int): ``0`` and ``1``. Default: ``1`` .
-                - op_precision_mode (str): config file path.
+                - op_precision_mode (str): precision mode config file path.
+                - ge_options (dict): Global or session CANN options.
+                - exception_dump (str): Enable exception dump for Ascend operators. ``"0"`` , ``"1"`` and ``"2"``.
+                  Default: ``"2"`` .
                 - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file.
                   If its value is None or '', it does not take effect. Default None.
+                - host_scheduling_max_threshold(int): The host scheduling max threshold.
         """
         ascend_cfg_modes = {
             'precision_mode': ["force_fp16", "allow_fp32_to_fp16", "allow_mix_precision", "must_keep_origin_dtype",
@@ -280,8 +298,12 @@ class _Context:
             'atomic_clean_policy': [0, 1],
             'matmul_allow_hf32': [True, False],
             'conv_allow_hf32': [True, False],
+            'exception_dump': ["0", "1", "2"],
             'op_precision_mode': (str,),
-            'parallel_speed_up_json_path': (str, None)
+            'ge_options': (dict,),
+            'parallel_speed_up_json_path': (str, None),
+            'host_scheduling_max_threshold': (int,),
+            'topo_order': (dict,)
         }
         ascend_cfg_setters = {
             'precision_mode': self._get_ascend_config_setter('precision_mode'),
@@ -289,8 +311,12 @@ class _Context:
             'atomic_clean_policy': self._get_ascend_config_setter('atomic_clean_policy', str),
             'matmul_allow_hf32': self._get_ascend_config_setter('matmul_allow_hf32', lambda v: "1" if v else "0"),
             'conv_allow_hf32': self._get_ascend_config_setter('conv_allow_hf32', lambda v: "1" if v else "0"),
+            'exception_dump': self._get_ascend_config_setter('exception_dump'),
             'op_precision_mode': self._set_op_precision_mode,
-            'parallel_speed_up_json_path': self._set_speedup_config_path
+            'ge_options': self._set_ge_options,
+            'parallel_speed_up_json_path': self._set_speedup_config_path,
+            'host_scheduling_max_threshold': self._get_ascend_config_setter('host_scheduling_max_threshold', str),
+            'topo_order': self._set_topo_order
         }
         ascend_cfg_set = tuple(ascend_cfg_modes.keys())
         for ascend_key, ascend_value in ascend_config.items():
@@ -469,9 +495,10 @@ class _Context:
 
     def set_mempool_block_size(self, mempool_block_size):
         """Set the block size of memory pool."""
-        if _get_mode() == GRAPH_MODE:
+        is_force_kbk = os.getenv("GRAPH_OP_RUN")
+        if _get_mode() == GRAPH_MODE and is_force_kbk != "1":
             logger.warning("Graph mode doesn't support to set parameter 'mempool_block_size' of context currently, "
-                           "you can use context.set_context to set pynative mode.")
+                           "you can use context.set_context to set pynative mode or set env GRAPH_OP_RUN=1.")
             return
         if not Validator.check_str_by_regular(mempool_block_size, _RE_PATTERN):
             raise ValueError("For 'context.set_context', the argument 'mempool_block_size' should be in "
@@ -557,6 +584,7 @@ class _Context:
         'deterministic': set_deterministic,
         'ascend_config': set_ascend_config,
         'jit_syntax_level': set_jit_syntax_level,
+        'debug_level': set_debug_level,
         'gpu_config': set_gpu_config,
         'aoe_config': set_aoe_config,
     }
@@ -614,6 +642,50 @@ class _Context:
                              f"got '{op_precision_path}'.")
         self.set_param(ms_ctx_param.op_precision_mode, ascend_value)
 
+    def _set_ge_options(self, ge_options):
+        """Set ge options."""
+        for level, options in ge_options.items():
+            if level not in ['global', 'session']:
+                raise ValueError(f"For 'ascend_config', the key of ge_options must be one of "
+                                 f"('global', 'session'), but got {level}.")
+
+            if not isinstance(options, dict):
+                raise TypeError(f"For 'ge_options', the type of {level} options must be dict, "
+                                f"but got {type(options)}. The error options: {options}.")
+
+            for key, value in options.items():
+                if not isinstance(key, str):
+                    raise TypeError(f"For 'ge_options', the type of key and value must be str, "
+                                    f"but got {type(key)}. The error key is {key}.")
+                if not isinstance(value, str):
+                    raise TypeError(f"For 'ge_options', the type of key and value must be str, "
+                                    f"but got {type(value)}. The error value is {value}")
+
+        options_str = json.dumps(ge_options)
+        self.set_param(ms_ctx_param.ge_options, options_str)
+
+    def _set_topo_order(self, topo_order):
+        """
+        Set topo order.
+
+        Args:
+            topo_order (dict):
+                key: str, the name of the graph.
+                value: str, the topo order of the graph, should be one of 'dfs', 'bfs', 'rdfs'.
+        """
+        valid_order = {'dfs', 'bfs', 'rdfs'}
+        if not isinstance(topo_order, dict):
+            raise TypeError(f"For 'ascend_config', the 'topo_order' should be a dict, "
+                            f"got '{type(topo_order)}'.")
+        for k, v in topo_order.items():
+            if not isinstance(k, str):
+                raise TypeError("key {} is not a str".format(k))
+            if v not in valid_order:
+                raise ValueError("value {} should be one of {}.".format(v, valid_order))
+
+        options_str = json.dumps(topo_order)
+        self.set_param(ms_ctx_param.topo_order, options_str)
+
     def _set_speedup_config_path(self, speedup_config_path):
         """"Check and set speedup config for auto parallel."""
         if speedup_config_path is None or speedup_config_path == "":
@@ -624,22 +696,31 @@ class _Context:
                              f"{speedup_config_real_path} does not exist, please check whether the "
                              f"'parallel_speed_up_json_path' is correct.")
         try:
-            valid_option = {"recompute_comm_overlap": ms_ctx_param.recompute_comm_overlap,
-                            "matmul_grad_comm_overlap": ms_ctx_param.matmul_grad_comm_overlap,
-                            "enable_task_opt": ms_ctx_param.enable_task_opt,
-                            "enable_grad_comm_opt": ms_ctx_param.enable_grad_comm_opt,
-                            "interleaved_matmul_comm": ms_ctx_param.interleaved_matmul_comm,
-                            "interleaved_layernorm_comm": ms_ctx_param.interleaved_layernorm_comm}
+            valid_option = {"recompute_comm_overlap": (ms_ctx_param.recompute_comm_overlap, bool),
+                            "matmul_grad_comm_overlap": (ms_ctx_param.matmul_grad_comm_overlap, bool),
+                            "enable_task_opt": (ms_ctx_param.enable_task_opt, bool),
+                            "enable_grad_comm_opt": (ms_ctx_param.enable_grad_comm_opt, bool),
+                            "interleaved_matmul_comm": (ms_ctx_param.interleaved_matmul_comm, bool),
+                            "enable_opt_shard_comm_opt": (ms_ctx_param.enable_opt_shard_comm_opt, bool),
+                            "enable_begin_end_inline_opt": (ms_ctx_param.enable_begin_end_inline_opt, bool),
+                            "enable_concat_eliminate_opt": (ms_ctx_param.enable_concat_eliminate_opt, bool),
+                            "interleaved_layernorm_comm": (ms_ctx_param.interleaved_layernorm_comm, bool),
+                            "compute_communicate_fusion_level":
+                                (ms_ctx_param.compute_communicate_fusion_level, int),
+                            "enable_flash_attention_load_balance":
+                                (ms_ctx_param.enable_flash_attention_load_balance, bool)}
             with open(speedup_config_real_path, 'r') as f:
                 speedup_config = json.load(f)
-                for k, v in speedup_config.items():
-                    if not isinstance(k, str):
-                        raise TypeError("key {} is not a str".format(k))
-                    if k not in valid_option:
-                        raise ValueError("key {} should be one of {}.".format(k, valid_option.keys()))
-                    if not isinstance(v, bool):
-                        raise TypeError("value {} is not a bool".format(v))
-                    self.set_param(valid_option.get(k), v)
+                for key, value in speedup_config.items():
+                    if not isinstance(key, str):
+                        raise TypeError("key {} is not a str".format(key))
+                    if key not in valid_option:
+                        raise ValueError("key {} should be one of {}.".format(key, valid_option.keys()))
+                    set_func, valid_type = valid_option.get(key)
+                    if not isinstance(value, valid_type):
+                        raise TypeError(f"The value type of {key} must be {valid_type}, "
+                                        f"but got value is {value} and type is {type(value)}.")
+                    self.set_param(set_func, value)
         except (TypeError, ValueError) as exo:
             raise ValueError(str(exo) + "\nFor 'context.set_context', "
                                         "open or load the 'speedup_config_path' file {} "
@@ -676,7 +757,7 @@ def _context():
                  auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool, enable_alltoall=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, pipeline_segments=int,
-                 parallel_optimizer_config=dict,
+                 pipeline_result_broadcast=bool, parallel_optimizer_config=dict,
                  comm_fusion=dict, strategy_ckpt_config=dict)
 def set_auto_parallel_context(**kwargs):
     r"""
@@ -701,11 +782,14 @@ def set_auto_parallel_context(**kwargs):
     parallel_mode                parameter_broadcast
     all_reduce_fusion_config     strategy_ckpt_load_file
     enable_parallel_optimizer    strategy_ckpt_save_file
-    parallel_optimizer_config    dataset_strategy
-    enable_alltoall              pipeline_stages
+    parallel_optimizer_config    full_batch
+    enable_alltoall              dataset_strategy
+               \                 pipeline_stages
+               \                 pipeline_result_broadcast
                \                 auto_parallel_search_mode
                \                 comm_fusion
                \                 strategy_ckpt_config
+               \                 group_ckpt_save_file
     ===========================  ===========================
 
     Args:
@@ -715,6 +799,8 @@ def set_auto_parallel_context(**kwargs):
                      "stand_alone" do not support gradients_mean. Default: ``False`` .
         gradient_fp32_sync (bool): Run allreduce of gradients in fp32. "stand_alone", "data_parallel"
                      and "hybrid_parallel" do not support gradient_fp32_sync. Default: ``True`` .
+        loss_repeated_mean (bool) - Indicates whether the mean operator is executed backwards when the
+                     calculation is repeated. Default: ``True`` .
         parallel_mode (str): There are five kinds of parallel modes, ``"stand_alone"`` , ``"data_parallel"`` ,
                      ``"hybrid_parallel"`` , ``"semi_auto_parallel"`` and ``"auto_parallel"`` . Note the pynative mode
                      only supports the ``"stand_alone"`` and ``"data_parallel"`` mode. Default: ``"stand_alone"`` .
@@ -729,15 +815,16 @@ def set_auto_parallel_context(**kwargs):
 
                      - auto_parallel: Achieving parallelism automatically.
         search_mode (str): There are three kinds of shard strategy search modes: ``"recursive_programming"`` ,
-                     ``"dynamic_programming"`` and ``"sharding_propagation"`` . Default: ``"recursive_programming"`` .
+                     ``"sharding_propagation"`` and ``"dynamic_programming"`` (Not recommended).
+                     Default: ``"recursive_programming"`` .
 
                      - recursive_programming: Recursive programming search mode. In order to obtain optimal performance,
                        it is recommended that users set the batch size to be greater than or equal to the product of
                        the number of devices and the number of multi-copy parallelism.
 
-                     - dynamic_programming: Dynamic programming search mode.
-
                      - sharding_propagation: Propagate shardings from configured ops to non-configured ops.
+
+                     - dynamic_programming: Dynamic programming search mode.
         auto_parallel_search_mode (str): This is the old version of 'search_mode'. Here, remaining this attribute is
                      for forward compatibility, and this attribute will be deleted in a future MindSpore version.
         parameter_broadcast (bool): Whether to broadcast parameters before training. Before training, in order to have
@@ -772,6 +859,8 @@ def set_auto_parallel_context(**kwargs):
                         distributed alone in the pipeline. The total devices will be divided into 'pipeline_stags'
                         stages.
                         Default: ``1`` .
+        pipeline_result_broadcast (bool): A switch that broadcast the last stage result to all other stage in pipeline
+                        parallel inference. Default: ``False`` .
         parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
                         configure. The configure provides more detailed behavior control about parallel training
                         when parallel optimizer is enabled. The configure will be effective when we use
@@ -831,14 +920,15 @@ def set_auto_parallel_context(**kwargs):
                         - load_file (str): The path to load parallel strategy checkpoint. If the file name extension is
                           `.json`, the file is loaded in JSON format. Otherwise, the file is loaded in ProtoBuf
                           format.
-                          Default: ''
+                          Default: ``''``
 
                         - save_file (str): The path to save parallel strategy checkpoint. If the file name extension is
                           `.json`, the file is saved in JSON format. Otherwise, the file is saved in ProtoBuf format.
-                          Default: ''
+                          Default: ``''``
 
                         - only_trainable_params (bool): Only save/load the strategy information for trainable parameter.
                           Default: ``True`` .
+        group_ckpt_save_file (str): The path to save parallel group checkpoint.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -850,8 +940,8 @@ def set_auto_parallel_context(**kwargs):
         >>> ms.set_auto_parallel_context(gradients_mean=True)
         >>> ms.set_auto_parallel_context(gradient_fp32_sync=False)
         >>> ms.set_auto_parallel_context(parallel_mode="auto_parallel")
-        >>> ms.set_auto_parallel_context(search_mode="dynamic_programming")
-        >>> ms.set_auto_parallel_context(auto_parallel_search_mode="dynamic_programming")
+        >>> ms.set_auto_parallel_context(search_mode="recursive_programming")
+        >>> ms.set_auto_parallel_context(auto_parallel_search_mode="recursive_programming")
         >>> ms.set_auto_parallel_context(parameter_broadcast=False)
         >>> ms.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
         >>> ms.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
@@ -860,6 +950,7 @@ def set_auto_parallel_context(**kwargs):
         >>> ms.set_auto_parallel_context(enable_alltoall=False)
         >>> ms.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
         >>> ms.set_auto_parallel_context(pipeline_stages=2)
+        >>> ms.set_auto_parallel_context(pipeline_stages=2, pipeline_result_broadcast=True)
         >>> parallel_config = {"gradient_accumulation_shard": True, "parallel_optimizer_threshold": 24,
         ...                    "optimizer_weight_shard_size": 2}
         >>> ms.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
@@ -910,6 +1001,7 @@ def reset_auto_parallel_context():
     - enable_parallel_optimizer: False.
     - enable_alltoall: False.
     - pipeline_stages: 1.
+    - pipeline_result_broadcast: False.
     - fusion_threshold: 64.
 
     Examples:
@@ -1008,7 +1100,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
-                 op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int,
+                 op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int, debug_level=int,
                  jit_enable_inplace_ops=bool, gpu_config=dict)
 def set_context(**kwargs):
     """
@@ -1058,6 +1150,8 @@ def set_context(**kwargs):
     |                         |  reserve_class_name_in_scope |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  pynative_synchronize        |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  debug_level                 |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
     | Executive Control       |   mode                       |   CPU/GPU/Ascend           |
     |                         +------------------------------+----------------------------+
@@ -1110,12 +1204,16 @@ def set_context(**kwargs):
             and max_device_memory. 'max_device_memory' should be set before the program runs.
         variable_memory_max_size (str): This parameter is deprecated, and will be removed in a future version.
             Please use parameter 'max_device_memory' instead.
-        mempool_block_size (str): Set the size of the memory pool block in PyNative mode for devices.
+        mempool_block_size (str): Set the size of the memory pool block in PyNative mode or GRAPH_OP_RUN=1 for devices.
             The format is "xxGB". Default: ``"1GB"`` . Minimum size is "1G". The actual used memory block size is the
             minimum of the available memory of the device and mempool_block_size.
         op_timeout (int): Set the maximum duration of executing an operator in seconds.
-            If the execution time exceeds this value, system will terminate the task. 0 means endless wait.
-            Default: ``1900`` .
+            If the execution time exceeds this value, system will terminate the task.
+            0 means endless wait. The defaults for AI Core and AICPU operators vary on different hardware.
+            For more information,
+            please refer to `Ascend Community
+            <https://www.hiascend.com/>`_.
+            Default: ``900`` .
         save_graphs (bool or int): Whether to save intermediate compilation graphs. Default: ``0`` .
             Available values are:
 
@@ -1127,7 +1225,7 @@ def set_context(**kwargs):
             When the `save_graphs` attribute is set as ``True`` , ``1`` , ``2`` or ``3`` , attribute of
             `save_graphs_path` is used to set the intermediate compilation graph storage path. By default, the graphs
             are saved in the current directory.
-        save_graphs_path (str): Path to save graphs. Default: ".".
+        save_graphs_path (str): Path to save graphs. Default: ``"."``.
             If the specified directory does not exist, the system will automatically create the directory.
             During distributed training, graphs will be saved to the directory of
             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
@@ -1191,7 +1289,7 @@ def set_context(**kwargs):
             If enable_graph_kernel is set to ``True`` , acceleration can be enabled.
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
-            <https://www.mindspore.cn/tutorials/experts/en/master/optimize/graph_fusion_engine.html>`_.
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/optimize/graph_fusion_engine.html>`_.
         graph_kernel_flags (str):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
@@ -1247,7 +1345,7 @@ def set_context(**kwargs):
             the compile cache is loaded. Note that only limited automatic detection for the changes of
             python scripts is supported by now, which means that there is a correctness risk. Default: ``False`` .
             This is an experimental prototype that is subject to change and/or deletion.
-        compile_cache_path (str): Path to save the compile cache. Default: ".".
+        compile_cache_path (str): Path to save the compile cache. Default: ``"."``.
             If the specified directory does not exist, the system will automatically create the directory.
             The cache will be saved to the directory of `compile_cache_path/rank_${rank_id}/`. The `rank_id` is
             the ID of the current device in the cluster.
@@ -1264,16 +1362,18 @@ def set_context(**kwargs):
             of the interfaces would be compiled by MindSpore to the interfaces definition .py file that should be
             guaranteed to be writable. Then compile the .py file to the .pyc or .so file, and could run in Graph mode.
         memory_optimize_level (str): The memory optimize level.
-            Default: O0. The value must be in ['O0', 'O1'].
+            On Ascend hardware platform, default: ``O1``, on other hardware platforms, default: ``O0``.
+            The value must be in ['O0', 'O1'].
 
-            - O0: priority performance option, disable SOMAS (Safe Optimized Memory Allocation Solver).
-            - O1: priority memory option, enable SOMAS.
+            - O0: priority performance option, disable SOMAS (Safe Optimized Memory Allocation Solver)
+              and some other memory optimizations.
+            - O1: priority memory option, enable SOMAS and some other memory optimizations.
         memory_offload (str): Whether to enable the memory offload function. When it is enabled, the idle data will be
             temporarily copied to the host side in the case of insufficient device memory. The value must be in the
             range of ['ON', 'OFF'], and the default value is ``'OFF'`` .
 
             - ON: Enable the memory Offload function. On Ascend hardware platform, this parameter does not take effect
-              when the environment variable "GRAPH_OP_RUN=1" is not set; This parameter does not take effect when
+              when jit_level of JitConfig is not set 'O0'; This parameter does not take effect when
               memory_optimize_level is set 'O1'.
             - OFF: Turn off the memory Offload function.
         ascend_config (dict): Set the parameters specific to Ascend hardware platform. It is not set by default.
@@ -1299,7 +1399,10 @@ def set_context(**kwargs):
               - allow_mix_precision_bf16: Automatic mixing precision, facing the whole network operator, according to
                 the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
 
-            - jit_compile (bool): Whether to select online compilation. the default value is based on CANN.
+            - jit_compile (bool): Whether to select online compilation. When set to 'True', online compilation is
+              prioritized. When set to 'False', compiled operator binary files are prioritized to improve compilation
+              performance. The default settings are online compilation for static shape, and compiled operator binary
+              files for dynamic shape.
             - atomic_clean_policy (int): The policy for cleaning memory occupied by atomic operators in the network.
               Default: ``1`` .
 
@@ -1313,22 +1416,56 @@ def set_context(**kwargs):
             - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default value: ``True``.
               This is an experimental prototype that is subject to change and/or deletion.
               For detailed information, please refer to `Ascend community <https://www.hiascend.com/>`_ .
+            - exception_dump (str): Enable exception dump for Ascend operators, providing the input and output data for
+              failing Ascend operators. The value can be ``"0"`` , ``"1"`` and ``"2"``. For ``"0"`` , exception dump is
+              turned off; for ``"1"``, all inputs and outputs will be dumped for AICore and AICPU exception operators;
+              for ``"2"``, inputs will be dumped for AICore exception operators. Default: ``"2"`` .
             - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
               to `Ascend community <https://www.hiascend.com/>`_ .
+            - ge_options (dict): Set options for CANN. The options are divided into two categories: global and session.
+              This is an experimental prototype that is subject to change and/or deletion.
+              For detailed information, please refer to `Ascend community <https://www.hiascend.com/document/detail/zh/canncommercial/70RC1/inferapplicationdev/graphdevg/atlasgeapi_07_0119.html>`_ .
+              The configuration options in `ge_options` may be duplicated with the options in `ascend_config`. If the
+              same configuration options are set in both `ascend_config` and `ge_options`, the one set in `ge_options`
+              shall prevail.
+
+              - global (dict): Set global options.
+              - session (dict): Set session options.
+
             - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file, configuration
               can refer to `parallel_speed_up.json
-              <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
+              <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/config/parallel_speed_up.json>`_ .
               If its value is None or '', it does not take effect. Default None.
 
               - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if True.
                 Default: False.
-              - matmul_grad_comm_overlap (bool): Enable overlap between grad ops and communication ops if True.
-                Default: False.
+              - matmul_grad_comm_overlap (bool): Enable overlap between dw matmul and
+                tensor parallel communication ops if True. Default: False.
               - enable_task_opt (bool): Enable the optimization of the number of tasks for each communication if True.
                 Default: False.
-              - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if True. Default: False.
-              - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.
+              - enable_grad_comm_opt (bool): Enable overlap between dx ops and data parallel communication ops if True.
+                Currently, do not support
+                `LazyInline <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore/mindspore.lazy_inline.html>`
                 Default: False.
+              - enable_opt_shard_comm_opt (bool): Enable overlap between forward ops
+                and optimizer parallel allgather communication if True. Currently, do not support
+                `LazyInline <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore/mindspore.lazy_inline.html>`
+                Default: False.
+              - compute_communicate_fusion_level (int): Enable the fusion between compute and communicate.
+                Default: ``0``.
+
+                - 0: Disable fusion.
+
+                - 1: Apply fusion to forward nodes.
+
+                - 2: Apply fusion to backward nodes.
+
+                - 3: Apply fusion to all nodes.
+            - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
+              used when run the static graph, the default value is 0. When the number of operations in the static graph
+              is less than the max threshold, this graph will be executed in dynamic shape process. In large model
+              scenarios, this approach can save stream resources. If the number of operations in the static graph is
+              greater than the maximum threshold, this graph will be executed in original static process.
 
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
             The value must be ``STRICT`` or ``LAX`` . Default: ``LAX`` . All levels support all backends.
@@ -1338,6 +1475,12 @@ def set_context(**kwargs):
             - ``LAX`` : Compatible with all Python syntax as much as possible. However, execution performance may be
               affected and not optimal. Cannot be used for MindIR load and export due to some syntax that may not be
               able to be exported.
+
+        debug_level (int): Set config for debugging. Default value: ``RELEASE``.
+
+            - ``RELEASE``: Used for normally running, and some debug information will be discard to get a better
+              compiling performance.
+            - ``DEBUG``: Used for debugging when errors occur, more information will be record in compiling process.
 
         gpu_config (dict): Set the parameters specific to gpu hardware platform. It is not set by default.
             Currently, only setting `conv_fprop_algo` and `conv_dgrad_algo` and `conv_wgrad_algo` and `conv_allow_tf32`
@@ -1443,8 +1586,11 @@ def set_context(**kwargs):
         >>> ms.set_context(memory_offload='ON')
         >>> ms.set_context(deterministic='ON')
         >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "jit_compile": True,
-        ...                "atomic_clean_policy": 1, "op_precision_mode": "./op_precision_config_file"})
+        ...                "atomic_clean_policy": 1, "op_precision_mode": "./op_precision_config_file",
+        ...                "ge_options": {"global": {"ge.opSelectImplmode": "high_precision"},
+        ...                               "session": {"ge.exec.atomicCleanPolicy": "0"}}})
         >>> ms.set_context(jit_syntax_level=ms.STRICT)
+        >>> ms.set_context(debug_level=ms.DEBUG)
         >>> ms.set_context(gpu_config={"conv_fprop_algo": "performance", "conv_allow_tf32": True,
         ...                "matmul_allow_tf32": True})
     """
@@ -1463,7 +1609,7 @@ def set_context(**kwargs):
                            "For details, please see the interface parameter API comments")
             continue
         if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32', 'conv_allow_hf32',
-                   'op_precision_mode'):
+                   'op_precision_mode', 'host_scheduling_max_threshold', 'ge_options'):
             raise ValueError(f"Please set '{key}' through parameter ascend_config")
         if key == 'save_graphs':
             if value is True:
@@ -1475,6 +1621,9 @@ def set_context(**kwargs):
         if key == 'jit_syntax_level' and value not in (STRICT, COMPATIBLE, LAX):
             raise ValueError(f"For 'jit_syntax_level', the value should be context.STRICT"
                              f" or context.LAX, but got {value}.")
+        if key == 'debug_level' and value not in (RELEASE, DEBUG):
+            raise ValueError(f"For 'debug_level', the value should be context.DEBUG"
+                             f" or context.RELEASE, but got {value}.")
         if not _check_target_specific_cfgs(device, key):
             continue
         if hasattr(ctx, key):
@@ -1629,9 +1778,7 @@ def get_ps_context(attr_key):
 
 def reset_ps_context():
     """
-    Reset parameter server training mode context attributes to the default values:
-
-    - enable_ps: False.
+    Reset parameter server training mode context attributes to the default values.
 
     Meaning of each field and its default value refer to :func:`mindspore.set_ps_context`.
 

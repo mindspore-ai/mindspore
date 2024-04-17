@@ -1,0 +1,12 @@
+#operator next_after
+next_after:
+    args:
+        input:
+            dtype: tensor
+        other:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    function:
+        name: nextafter

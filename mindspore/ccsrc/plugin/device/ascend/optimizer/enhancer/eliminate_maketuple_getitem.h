@@ -24,18 +24,14 @@
 #include "ir/anf.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/optimizer/optimizer.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {
 class EliminateMaketupleGetitem : public Pass {
  public:
-  EliminateMaketupleGetitem() : Pass("eliminate_maketuple_getitem"), kernel_select_(std::make_shared<KernelSelect>()) {}
+  EliminateMaketupleGetitem() : Pass("eliminate_maketuple_getitem") {}
   ~EliminateMaketupleGetitem() override = default;
   bool Run(const FuncGraphPtr &graph) override;
-
- private:
-  KernelSelectPtr kernel_select_;
 };
 }  // namespace opt
 }  // namespace mindspore

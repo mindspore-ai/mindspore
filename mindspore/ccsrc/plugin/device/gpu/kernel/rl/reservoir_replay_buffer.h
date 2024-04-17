@@ -34,13 +34,13 @@ class ReservoirReplayBuffer {
   ~ReservoirReplayBuffer();
 
   // Push an experience transition to the buffer which will be given the highest reservoir.
-  bool Push(const std::vector<AddressPtr> &transition, cudaStream_t stream);
+  bool Push(const std::vector<KernelTensor *> &transition, cudaStream_t stream);
 
   // Sample a batch transitions with indices and bias correction weights.
-  bool Sample(const size_t &batch_size, const std::vector<AddressPtr> &transition, cudaStream_t stream);
+  bool Sample(const size_t &batch_size, const std::vector<KernelTensor *> &transition, cudaStream_t stream);
 
  private:
-  bool Insert(const size_t &pos, const std::vector<AddressPtr> &transition, cudaStream_t stream);
+  bool Insert(const size_t &pos, const std::vector<KernelTensor *> &transition, cudaStream_t stream);
 
   // Random generator
   std::default_random_engine generator_;

@@ -18,12 +18,11 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_LAYER_NORM_GRAD_GRAD_GPU_KERNEL_H_
 
 #include <map>
-#include <vector>
 #include <utility>
+#include <vector>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batch_norm_grad_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batch_norm_grad_grad_impl.cuh"
-#include "ops/grad/batch_norm_grad_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,23 +31,25 @@ class BatchNormGradGradGpuKernelMod : public NativeGpuKernelMod {
   BatchNormGradGradGpuKernelMod() = default;
   ~BatchNormGradGradGpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
+    return execute_func_(this, inputs, workspace, outputs, stream_ptr);
+  }
 
  protected:
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost);
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using ExecuteFunc = std::function<bool(BatchNormGradGradGpuKernelMod *, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  bool Execute(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  using ExecuteFunc =
+    std::function<bool(BatchNormGradGradGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   float epsilon_{0.00005};
   bool is_training_{false};
   ShapeInfo shape_info_{0, 0, 0, 0};

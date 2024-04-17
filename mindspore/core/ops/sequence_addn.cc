@@ -33,6 +33,25 @@
 namespace mindspore {
 namespace ops {
 namespace {
+
+BaseShapePtr SequenceAddNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto queue_shape = input_args[kIndex0]->GetShape()->cast<abstract::SequenceShapePtr>();
+  MS_EXCEPTION_IF_NULL(queue_shape);
+  return queue_shape->shape()[kIndex0]->Clone();
+}
+
+TypePtr SequenceAddNInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  if (CheckAndConvertUtils::IsTuple(input_args[kIndex0])) {
+    auto queue_type = input_args[kIndex0]->GetType()->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(queue_type);
+    return queue_type->elements()[kIndex0]->Clone();
+  } else {
+    auto queue_type = input_args[kIndex0]->GetType()->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(queue_type);
+    return queue_type->elements()[kIndex0]->Clone();
+  }
+}
+
 AbstractBasePtr SequenceAddNInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
@@ -59,11 +78,11 @@ class SequenceAddNInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceAddNInferInner(primitive, input_args)->BuildShape();
+    return SequenceAddNInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceAddNInferInner(prim, input_args)->BuildType();
+    return SequenceAddNInferType(prim, input_args);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

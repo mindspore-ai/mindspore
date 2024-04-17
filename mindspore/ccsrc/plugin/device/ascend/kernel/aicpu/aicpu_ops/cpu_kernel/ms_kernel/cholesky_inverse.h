@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_CHOLESKYINVERSE_H_
 #define AICPU_KERNELS_NORMALIZED_CHOLESKYINVERSE_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 
@@ -29,7 +29,7 @@ class CholeskyInverseCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  static uint32_t CholeskyInverseCompute(const CpuKernelContext &ctx);
+  static uint32_t CholeskyInverseCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

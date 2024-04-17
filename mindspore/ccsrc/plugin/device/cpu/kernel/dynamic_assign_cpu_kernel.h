@@ -26,26 +26,33 @@
 
 namespace mindspore {
 namespace kernel {
-class DynamicAssignCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class DynamicAssignCpuKernelMod : public NativeCpuKernelMod {
  public:
   DynamicAssignCpuKernelMod() = default;
   ~DynamicAssignCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
+
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &);
 
   size_t batch_size_{1};
   TypeId input_x_dtype_{kTypeUnknown};
   size_t input_x_dtype_size_{4};
-  CNodeWeakPtr node_wpt_;
 };
 }  // namespace kernel
 }  // namespace mindspore

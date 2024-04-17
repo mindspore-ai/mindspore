@@ -25,7 +25,7 @@
 #include "ops/custom_normalize.h"
 #include "ops/custom_predict.h"
 #include "ops/detection_post_process.h"
-#include "ops/identity.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fft_real.h"
 #include "ops/fft_imag.h"
 #include "ops/mfcc.h"

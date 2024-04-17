@@ -18,7 +18,10 @@ import numpy as np
 
 import mindspore as ms
 from mindspore import nn
-from mindspore import Tensor, mutable
+from mindspore import Tensor, mutable, jit, ops
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from . import utils
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -50,7 +53,7 @@ def test_fallback_add_meta():
     assert ret == (1, 2, 3, 4, 5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -78,7 +81,7 @@ def test_fallback_add_meta_2():
     assert ret == 7
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -135,7 +138,7 @@ def test_fallback_add_meta_3():
     assert np.allclose(ret.asnumpy(), Tensor([5, 6, 7]).asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -163,7 +166,7 @@ def test_fallback_add_meta_4():
     assert np.allclose(ret.asnumpy(), Tensor([-3, -2, -1]).asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -217,7 +220,7 @@ def test_fallback_mul_meta():
     assert np.all(ret.asnumpy() == np.array([10, 20, 30]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -244,7 +247,7 @@ def test_fallback_negative_meta():
     assert ret == -100
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -271,7 +274,7 @@ def test_fallback_negative_meta_2():
     assert np.allclose(ret.asnumpy(), Tensor([-11, -12, -13]).asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -299,7 +302,7 @@ def test_fallback_compare_meta():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -361,7 +364,7 @@ def test_fallback_getitem_meta():
     assert ret == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -389,7 +392,7 @@ def test_fallback_getitem_meta_2():
     assert ret == (2, 3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -420,7 +423,7 @@ def test_fallback_in_meta():
     assert ret == (True, True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -458,7 +461,7 @@ def test_fallback_meta_fg_not_support_type_in_2():
     assert not net()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -477,7 +480,7 @@ def test_fallback_meta_fg_not_support_type_in_3():
     assert net()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -523,7 +526,7 @@ def test_fallback_meta_fg_not_support_type_bitwise_and():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -569,7 +572,7 @@ def test_fallback_meta_fg_not_support_type_bitwise_xor():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -592,7 +595,7 @@ def test_fallback_meta_fg_not_support_type_div():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -657,7 +660,7 @@ def test_fallback_meta_fg_not_support_type_greater_equal_1():
     net = InnerClass()
     with pytest.raises(TypeError) as err:
         net()
-    assert "'>=' not supported between instances of 'list' and 'tuple'." in str(err.value)
+    assert "'>=' not supported between instances of 'list' and 'tuple'" in str(err.value)
 
 
 @pytest.mark.level1
@@ -683,7 +686,7 @@ def test_fallback_meta_fg_not_support_type_greater_equal_2():
     assert "'>=' not supported between" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -727,10 +730,10 @@ def test_fallback_meta_fg_not_support_type_aug_assign():
     net = InnerClass()
     with pytest.raises(TypeError) as err:
         net()
-    assert "For 'Sub', the 2th input var can not be implicitly converted" in str(err.value)
+    assert "Failed calling Sub with" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -753,7 +756,7 @@ def test_fallback_meta_fg_not_support_type_less():
     assert "'<' not supported between" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -821,7 +824,7 @@ def test_fallback_meta_fg_not_support_type_pow():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -844,7 +847,7 @@ def test_fallback_meta_fg_not_support_type_right_shift():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -867,7 +870,7 @@ def test_fallback_meta_fg_not_support_type_sub():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -890,7 +893,7 @@ def test_fallback_meta_fg_not_support_type_uadd():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -933,7 +936,7 @@ def test_fallback_meta_fg_not_support_type_and():
     assert res == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -956,7 +959,7 @@ def test_fallback_meta_fg_not_support_type_not_equal():
 
 
 @pytest.mark.skip(reason="do not support inplace operation yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -986,7 +989,7 @@ def test_fallback_setitem_meta():
 
 
 @pytest.mark.skip(reason="do not support inplace operation yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1040,3 +1043,273 @@ def test_shift_operator_error_list_input():
     with pytest.raises(TypeError) as err:
         net()
     assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_user_made_meta_fg():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    class Inner:
+        def __init__(self):
+            self.number = 2
+
+
+    class Net(nn.Cell):
+        def __init__(self, inner):
+            super().__init__()
+            self.inner = inner
+
+        def construct(self, input2):
+            x1_1 = utils.add(self.inner.number, input2)
+            return x1_1
+
+    input2 = 1
+    net = Net(Inner())
+    res = net(input2)
+    assert res == 3
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_user_made_meta_fg_with_error():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    class Inner:
+        def __init__(self):
+            self.number = Tensor(2)
+
+    class Net(nn.Cell):
+        def __init__(self, inner):
+            super().__init__()
+            self.inner = inner
+
+        def construct(self, input2):
+            x1_1 = utils.add(self.inner.number, input2)
+            return x1_1
+
+    input2 = 1
+    net = Net(Inner())
+    with pytest.raises(ValueError) as err:
+        net(input2)
+    assert "cannot find fn match given args." in str(err.value)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_user_made_meta_fg_with_hyper_map():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    class Inner:
+        def __init__(self):
+            self.number = 2
+
+    class Net(nn.Cell):
+        def __init__(self, inner):
+            super().__init__()
+            self.inner = inner
+            self.common_map = C.HyperMap()
+
+        def construct(self, input2):
+            x1_1 = self.common_map(F.partial(utils.add, self.inner.number), input2)
+            return x1_1
+
+    input2 = 1
+    net = Net(Inner())
+    res = net(input2)
+    assert res == 3
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_getitem_with_no_script():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    class Inner:
+        def __init__(self):
+            self.list = (1, 2)
+
+    @jit
+    def run(z):
+        x, y = z.list
+        return (x, y)
+    res = run(Inner())
+    assert res == (1, 2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_with_cache():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    @jit
+    def foo(x):
+        a = 2 * x
+        a = a.asnumpy()
+        b = 2 * a
+        return Tensor(b)
+
+    ret = foo(Tensor([1, 2, 3], dtype=ms.float32))
+    assert np.allclose(ret.asnumpy(), np.array([4.0, 8.0, 12.0]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_as_input_hyper_map():
+    """
+    Feature: user made multitypefuncgraph
+    Description: test user made multitypefuncgraph as input of hypermap
+    Expectation: throw RuntimeError
+    """
+
+    class ConcatNet(nn.Cell):
+        def __init__(self, mtfg):
+            super().__init__()
+            self.hyper_map = ops.HyperMap(mtfg)
+
+        def construct(self, x):
+            out = self.hyper_map([x, x], [x, x])
+            return out
+
+    x = Tensor([1, 2, 3])
+    net = ConcatNet(utils.c)
+    with pytest.raises((RuntimeError, TypeError)):
+        net(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_generated_by_inner_method_1():
+    """
+    Feature: multitype_generated_by_inner_method
+    Description: test multitype_generated_by_inner_method
+    Expectation: throw RuntimeError
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            out = x[::2]
+            return out
+
+    x = [0, 1, 0, 1]
+    net = Net()
+    res = net(x)
+    assert res == [0, 0]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_generated_by_inner_method_2():
+    """
+    Feature: multitype_generated_by_inner_method
+    Description: test multitype_generated_by_inner_method
+    Expectation: throw RuntimeError
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            out = x[:, 0]
+            return out
+
+    x = Tensor([[0, 1], [1, 0], [2, 0], [2, 2]])
+    net = Net()
+    res = net(x)
+    assert np.allclose(res.asnumpy(), np.array([0, 1, 2, 2]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_funcgraph_with_slice_in_tuple():
+    """
+    Feature: multitype_funcgraph_with_slice_in_tuple
+    Description: test multitype funcgraph with slice in tuple
+    Expectation: throw RuntimeError
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.a = 3
+
+        def construct(self, x):
+            self.a = 0
+            res = x[:, (self.a)]
+            return res
+
+    x = Tensor([[0, 1], [1, 0], [2, 0], [2, 2]])
+    net = Net()
+    res = net(x)
+    assert np.allclose(res.asnumpy(), np.array([0, 1, 2, 2]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_setitem_meta_dict():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def __init__(self, x):
+            super(InnerClass, self).__init__()
+            self.dict = x
+
+        def construct(self):
+            self.dict['country'] = 'china'
+            return self.dict
+
+    input_dict = {'Name': 'a', 'Age': 7}
+    net = InnerClass(input_dict)
+    ret = net()
+    assert ret == {'Name': 'a', 'Age': 7, 'country': 'china'}

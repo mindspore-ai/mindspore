@@ -176,6 +176,13 @@ static bool GreaterSizeSmallerIndex(const BlockTensor &t1, const BlockTensor &t2
   return t1.m_size_ > t2.m_size_ ||
          (t1.m_size_ == t2.m_size_ && t1.m_start_tensor_->index_ < t2.m_start_tensor_->index_);
 }
+static bool SmallerReusePeakMemGreaterSizeSmallerIndex(const BlockTensor &t1, const BlockTensor &t2) {
+  if (t1.m_start_tensor_->can_reuse_peak_mem_ != t2.m_start_tensor_->can_reuse_peak_mem_) {
+    return t1.m_start_tensor_->can_reuse_peak_mem_ < t2.m_start_tensor_->can_reuse_peak_mem_;
+  }
+  return t1.m_size_ > t2.m_size_ ||
+         (t1.m_size_ == t2.m_size_ && t1.m_start_tensor_->index_ < t2.m_start_tensor_->index_);
+}
 #ifdef SOMAS_DEBUG
 static bool GreaterSizeGreaterIndex(const BlockTensor &t1, const BlockTensor &t2) {
   return t1.m_size_ > t2.m_size_ ||
@@ -212,6 +219,7 @@ void SomasSolverCore::SortTensors() {  // need to sort the tensors for Fast Heur
   typedef bool (*SortingFunction)(const BlockTensor &, const BlockTensor &);
   mindspore::HashMap<SortingType, SortingFunction> sort_map;
   sort_map[kGreaterSizeSmallerIndex] = &GreaterSizeSmallerIndex;
+  sort_map[kSmallerReusePeakMemGreaterSizeSmallerIndex] = &SmallerReusePeakMemGreaterSizeSmallerIndex;
 #ifdef SOMAS_DEBUG
   sort_map[kGreaterSizeGreaterIndex] = &GreaterSizeGreaterIndex;
   sort_map[kGreaterSizeSmallerConstraintsSmallerIndex] = &GreaterSizeSmallerConstraintsSmallerIndex;

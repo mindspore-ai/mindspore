@@ -34,7 +34,7 @@ class Net(nn.Cell):
         return self.population_count(x0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test16_net():
@@ -46,7 +46,7 @@ def test16_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test8_net():
@@ -58,7 +58,7 @@ def test8_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_population_count():

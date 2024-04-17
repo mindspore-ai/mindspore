@@ -58,9 +58,9 @@ abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto logits_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto logits_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto logits_shape = logits_shape_map[kShape];
-  auto label_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto label_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto label_shape = label_shape_map[kShape];
   if (IsDynamicRank(logits_shape) || IsDynamicRank(label_shape)) {
     auto ds_shape = std::vector<int64_t>{abstract::Shape::kShapeRankAny};
@@ -69,9 +69,9 @@ abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
   if (!ObscureShapeEqual(logits_shape, label_shape) && !(IsDynamicRank(logits_shape) || IsDynamicRank(label_shape))) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', the two input 'logits' and 'label' shape are not equal.";
   }
-  auto weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());
+  auto weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape());
   auto weight_shape_shape = weight_shape_map[kShape];
-  auto pos_weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape());
+  auto pos_weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape());
   auto pos_weight_shape = pos_weight_shape_map[kShape];
 
   auto value_ptr = primitive->GetAttr(kReduction);
@@ -106,13 +106,13 @@ TypePtr BCEWithLogitsLossInferType(const PrimitivePtr &prim, const std::vector<A
   for (size_t index = kInputIndex1; index < input_args.size(); ++index) {
     auto input_item = input_args.at(index);
     MS_EXCEPTION_IF_NULL(input_item);
-    TypePtr input_type = input_item->BuildType();
+    TypePtr input_type = input_item->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid(input_args_name.at(index), input_type, data_type_check_list,
                                                      op_name);
   }
   auto logits_input_item = input_args.at(kInputIndex0);
   MS_EXCEPTION_IF_NULL(logits_input_item);
-  TypePtr logits_input_type = logits_input_item->BuildType();
+  TypePtr logits_input_type = logits_input_item->GetType();
   auto logits_input_name = input_args_name.at(kInputIndex0);
   return CheckAndConvertUtils::CheckTensorTypeValid(logits_input_name, logits_input_type, data_type_check_list,
                                                     op_name);

@@ -25,18 +25,23 @@ using mindspore::device::cpu::CPUTensorArray;
 using mindspore::device::cpu::CPUTensorArrayPtr;
 TensorArrayCreateCpuKernelMod::TensorArrayCreateCpuKernelMod() : is_dynamic_(true), size_(0), type_(nullptr) {}
 
-void TensorArrayCreateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  shapes_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
-  type_ = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
-  size_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "size");
-  is_dynamic_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "dynamic_size");
-  name_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "name");
+int TensorArrayCreateCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  shapes_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("element_shape"));
+  type_ = GetValue<TypePtr>(primitive_->GetAttr("dtype"));
+  size_ = GetValue<int64_t>(primitive_->GetAttr("size"));
+  is_dynamic_ = GetValue<bool>(primitive_->GetAttr("dynamic_size"));
+  name_ = GetValue<std::string>(primitive_->GetAttr("name"));
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-bool TensorArrayCreateCpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool TensorArrayCreateCpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
   // Create a tensorarray, and generate an unique handle.
   int64_t tensor_array_handle = TensorArrayMgr::GetInstance().GetHandleCount();
   auto name = "CPUTensorArray_" + name_ + "_" + std::to_string(tensor_array_handle);

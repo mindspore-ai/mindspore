@@ -26,10 +26,7 @@ constexpr size_t kDimNum = 2;
 
 int64_t get_element_num(const std::vector<int64_t> &shape) { return SizeToLong(SizeOf(shape)); }
 
-bool LuSolveCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool LuSolveCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   size_t output_num = outputs.size();
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputNum, kernel_name_);
@@ -48,24 +45,22 @@ bool LuSolveCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int LuSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LuSolveCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
 template <typename T1, typename T2>
-void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &outputs, T1 *b_working_ptr, T1 *lu_working_ptr,
-                                  int32_t *pivots_working_ptr, size_t b_stride, size_t a) {
-  auto output_y = reinterpret_cast<T2 *>(outputs[0]->addr);
+void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &outputs, T1 *b_working_ptr,
+                                  T1 *lu_working_ptr, int32_t *pivots_working_ptr, size_t b_stride, size_t a) {
+  auto output_y = reinterpret_cast<T2 *>(outputs[0]->device_ptr());
   size_t lu_dims = input_1_shape_.size();
   size_t lu_maxtrix_sizes = LongToSize(input_1_shape_[lu_dims - 2]);
   size_t b_dim = input_0_shape_.size();
@@ -89,11 +84,11 @@ void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T1, typename T2>
-bool LuSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x0 = reinterpret_cast<T2 *>(inputs[0]->addr);
-  auto input_x1 = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto input_x2 = reinterpret_cast<int32_t *>(inputs[2]->addr);
+bool LuSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_x0 = reinterpret_cast<T2 *>(inputs[0]->device_ptr());
+  auto input_x1 = reinterpret_cast<T2 *>(inputs[1]->device_ptr());
+  auto input_x2 = reinterpret_cast<int32_t *>(inputs[2]->device_ptr());
   auto input0_element_num = SizeOf(input_0_shape_);
   auto input1_element_num = SizeOf(input_1_shape_);
   auto output_element_num = SizeOf(output_shape_);

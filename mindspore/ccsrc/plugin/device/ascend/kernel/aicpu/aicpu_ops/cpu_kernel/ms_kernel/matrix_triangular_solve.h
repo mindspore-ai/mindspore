@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MATRIXTRIANGULARSOLVE_H_
 #define AICPU_KERNELS_NORMALIZED_MATRIXTRIANGULARSOLVE_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "Eigen/Core"
 
 namespace aicpu {
@@ -34,9 +34,9 @@ class MatrixTriangularSolveCpuKernel : public CpuKernel {
   bool adjoint;
 
   template <typename T>
-  static uint32_t MatrixTriangularSolveCompute(const CpuKernelContext &ctx);
+  static uint32_t MatrixTriangularSolveCompute(CpuKernelContext &ctx);
 
-  static uint32_t MatrixTriangularSolveCheck(const CpuKernelContext &ctx);
+  static uint32_t MatrixTriangularSolveCheck(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

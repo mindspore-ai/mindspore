@@ -10,11 +10,13 @@ mindspore.ops.relu
     .. math::
         ReLU(input) = (input)^+ = \max(0, input)
 
-    .. note::
-        一般来说，与 `ReLUV2` 相比，此算子更常用。且 `ReLUV2` 会多输出一个掩码。
+    ReLU激活函数图：
+
+    .. image:: ../images/ReLU.png
+        :align: center
 
     参数：
-        - **input** (Tensor) - 输入Tensor，其数据类型为数值型。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
         Tensor，其shape和数据类型与输入一致。

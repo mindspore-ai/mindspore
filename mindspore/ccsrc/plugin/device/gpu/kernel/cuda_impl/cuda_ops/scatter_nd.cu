@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/scatter_nd.cuh"
+#include <complex>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename T, typename S>
@@ -236,3 +238,27 @@ template CUDA_LIB_EXPORT cudaError_t ScatterNd<bool, int64_t>(int64_t *indices, 
                                                               const size_t &output_size, const size_t &indices_dim_0,
                                                               const size_t &indices_dim_1,
                                                               const ScatterNdInfo<int64_t> &info, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterNd<Complex<float>, int16_t>(
+  int16_t *indices, Complex<float> *update, Complex<float> *output, const size_t &block_size, const size_t &input_size,
+  const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
+  const ScatterNdInfo<int16_t> &info, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t
+ScatterNd<Complex<float>, int>(int *indices, Complex<float> *update, Complex<float> *output, const size_t &block_size,
+                               const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0,
+                               const size_t &indices_dim_1, const ScatterNdInfo<int> &info, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterNd<Complex<float>, int64_t>(
+  int64_t *indices, Complex<float> *update, Complex<float> *output, const size_t &block_size, const size_t &input_size,
+  const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
+  const ScatterNdInfo<int64_t> &info, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterNd<Complex<double>, int16_t>(
+  int16_t *indices, Complex<double> *update, Complex<double> *output, const size_t &block_size,
+  const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
+  const ScatterNdInfo<int16_t> &info, cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterNd<Complex<double>, int>(
+  int *indices, Complex<double> *update, Complex<double> *output, const size_t &block_size, const size_t &input_size,
+  const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1, const ScatterNdInfo<int> &info,
+  cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t ScatterNd<Complex<double>, int64_t>(
+  int64_t *indices, Complex<double> *update, Complex<double> *output, const size_t &block_size,
+  const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
+  const ScatterNdInfo<int64_t> &info, cudaStream_t stream);

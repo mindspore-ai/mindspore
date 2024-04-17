@@ -14,8 +14,10 @@
 # ============================================================================
 
 """Inner operators."""
+# pylint: disable=unused-import
 from types import FunctionType, MethodType
 from collections.abc import Iterable
+import os
 import numpy as np
 
 from mindspore.common import Tensor
@@ -26,17 +28,19 @@ from mindspore.ops.operations._scalar_ops import bit_or, bit_and
 from mindspore.ops.operations.comm_ops import ReduceOp
 from mindspore.ops import signature as sig
 from mindspore.ops.operations.math_ops import _infer_shape_reduce
-from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive,\
+from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, \
     _run_op, _check_contains_variable
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import typing
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
-from mindspore.communication.management import GlobalComm, get_rank
+from mindspore.communication.management import GlobalComm, get_rank, _get_group, get_group_size
 from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
+from ..auto_generate import TensorCopySlices, SiLU, Cummin, ExtractImagePatches, DecoderKVCache, PromptKVCache, \
+    ApplyCamePart1, ApplyCamePart2, ApplyCamePart3, ApplyCamePart4
 
 # Bit operation
 bit_and = bit_and()
@@ -55,75 +59,6 @@ string_mul = Primitive("string_mul")
 string_getitem = Primitive("string_getitem")
 
 
-class ExtractImagePatches(Primitive):
-    r"""
-    Extracts patches from images.
-    The input tensor must be a 4-D tensor and the data format is NCHW.
-
-    Args:
-        ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
-            and the format is [1, 1, ksize_row, ksize_col].
-        strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
-            must be a tuple or list of int, and the format is [1, 1, stride_row, stride_col].
-        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
-            pixel positions, must be a tuple or a list of integers, and the format is [1, 1, rate_row, rate_col].
-        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
-            not case sensitive. Default: "valid".
-
-            - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
-
-            - valid: Means that the taken patch area must be completely covered in the original image.
-
-    Inputs:
-        - **input_x** (Tensor) - A 4-D tensor whose shape is :math:`(in\_batch, in\_depth, in\_row, in\_col)`.
-
-    Outputs:
-        Tensor, a 4-D tensor whose data type is same as 'input_x', and the shape
-        is :math:`(out\_batch, out\_depth, out\_row, out\_col)`,where the out_batch is the same as the in_batch
-        and
-
-        .. math::
-            out_depth=ksize\_row * ksize\_col * in\_depth
-
-        and
-        if 'padding' is "valid":
-
-        .. math::
-            out\_row=floor((in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) / stride\_row) + 1
-            out\_col=floor((in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) / stride\_col) + 1
-
-        if 'padding' is "same":
-
-        .. math::
-            out\_row=floor((in\_row - 1) / stride\_row) + 1
-            out\_col=floor((in\_col - 1) / stride\_col) + 1
-
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, ksizes, strides, rates, padding="valid"):
-        """init"""
-
-        def _check_tuple_or_list(arg_name, arg_val, prim_name):
-            validator.check_value_type(f"{arg_name}s", arg_val, [tuple, list], self.name)
-            if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[1] != 1:
-                raise ValueError(f"For \'{prim_name}\' the format of {arg_name}s must be [1, {arg_name}_row, "
-                                 f"{arg_name}_col, 1], but got {arg_val}.")
-            if not isinstance(arg_val[2], int) or not isinstance(arg_val[3], int) or arg_val[2] < 1 or arg_val[3] < 1:
-                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s must be "
-                                 f"an positive integer number, but got {arg_name}_row is {arg_val[2]}, "
-                                 f"{arg_name}_col is {arg_val[3]}")
-
-        _check_tuple_or_list("ksize", ksizes, self.name)
-        _check_tuple_or_list("stride", strides, self.name)
-        _check_tuple_or_list("rate", rates, self.name)
-        validator.check_value_type('padding', padding, [str], self.name)
-        self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
-        self.add_prim_attr("padding", self.padding)
-
-
 class Quant(PrimitiveWithInfer):
     r"""
     Returns the quantized value of input_x.
@@ -139,7 +74,7 @@ class Quant(PrimitiveWithInfer):
         y = round(scale * x * scale + offset)
 
     Note:
-        This operation only support Ascend 310 inference environment.
+        This operation only support Atlas 200/300/500 inference product.
 
     Args:
         scale (float) : Specifies the scaling ratio.
@@ -167,6 +102,7 @@ class Quant(PrimitiveWithInfer):
         self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
         self.round_mode = validator.check_string(round_mode, ["Round", "Floor", "Ceil", "Trunc"],
                                                  "round_mode", self.name)
+        self.add_prim_attr("dst_type", mstype.int8)
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -174,7 +110,7 @@ class Quant(PrimitiveWithInfer):
     def infer_dtype(self, x_type):
         validator.check_subclass("input_x", x_type, mstype.tensor_type, self.name)
         validator.check_type_name("input_x", x_type, [mstype.float16, mstype.float32], self.name)
-        return mstype.int8
+        return self.get_attr_dict()['dst_type']
 
 
 class Lamb(PrimitiveWithInfer):
@@ -251,7 +187,7 @@ class Dequant(PrimitiveWithInfer):
         y = x * deq\_scale * deq\_scale
 
     Note:
-        This operation only support Ascend 310 inference environment.
+        This operation only support Atlas 200/300/500 inference product.
 
     Args:
         sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: ``False``.
@@ -272,10 +208,10 @@ class Dequant(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, sqrt_mode=False, relu_flag=False):
+    def __init__(self, sqrt_mode=False, relu_flag=False, dtype=mstype.float16):
         self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
         self.relu_flag = validator.check_value_type("relu_flag", relu_flag, [bool], self.name)
-        self.add_prim_attr("dtype", mstype.float16)
+        self.dtype = dtype
 
     def infer_shape(self, x_shape, deq_scale_shape):
         return x_shape
@@ -285,6 +221,53 @@ class Dequant(PrimitiveWithInfer):
         validator.check_type_name("x", x_type, [mstype.int32], self.name)
         validator.check_type_name("deq_scale", deq_scale_type, [mstype.float16, mstype.uint64], self.name)
         return mstype.float16
+
+
+class AntiQuant(Primitive):
+    r"""
+    Returns the antiquantized value of input_x.
+
+    If `sqrt_mode` is False:
+
+    .. math::
+        y = scale * (x + offset)
+
+    If `sqrt_mode` is True:
+
+    .. math::
+        y = scale * scale * (x + offset)
+
+    Note:
+        This operation only support Atlas 200/300/500 inference product.
+
+    Args:
+        scale (float) : Specifies the scaling ratio.
+        offset (float): Specifies the offset.
+        sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: ``False``.
+
+    Inputs:
+        - **input_x** (Tensor) : Input tensor. Must be mindspore.int8.
+
+    Outputs:
+        - Tensor: The antiquantized output tensor of type mindspore.float32.
+
+    Examples:
+        >>> from mindspore.ops.operations._inner_ops import AntiQuant
+        >>> input_x = Tensor([50.0, 20.0], mstype.int8)
+        >>> antiquant = AntiQuant(2.0, 1.0, False)
+        >>> y = antiquant(input_x)
+        >>> print(y)
+        [102. 42.]
+    """
+
+    @prim_attr_register
+    def __init__(self, sqrt_mode=False, dtype=mstype.float16):
+        super().__init__("AntiQuant")
+        self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
+        self.dtype = dtype
+
+        self.init_prim_io_names(inputs=['x', 'scale', 'offset'],
+                                outputs=['y'])
 
 
 class MatrixDiag(PrimitiveWithInfer):
@@ -491,7 +474,9 @@ class Receive(PrimitiveWithInfer):
         self.dtype = dtype
         self.group = group
         self.add_prim_attr("no_eliminate", True)
-        valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
+        valid_type = [mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16,
+                      mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                      mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
         args = {"dtype": dtype}
         validator.check_scalar_or_tensor_types_same(args, valid_type, self.name)
 
@@ -1007,7 +992,7 @@ class Centralization(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The data type mast be float16 or float32.
-        - **axis** (Union[Int, Tuple(Int), List(Int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+        - **axis** (Union[int, Tuple(int), List(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
 
     Outputs:
@@ -1327,45 +1312,6 @@ class DynamicBroadcastGradientArgs(Primitive):
         """Init BroadcastGradientArgs"""
 
 
-class TensorCopySlices(Primitive):
-    """
-    Copy continues memory.
-
-    Inputs:
-        - **x** (Tensor) - The target Tensor.
-        - **value** (Tensor) - The tensor to update x.
-        - **begin** (tuple[int]) - A tuple which represents the location where to start. Only
-          constant value is allowed.
-        - **end** (tuple[int]) - A tuple or which represents the maximum location where to end.
-          Only constant value is allowed.
-        - **strides** (tuple[int]) - A tuple which represents the stride is continuously added
-          before reaching the maximum location. Only constant value is allowed.
-
-    Outputs:
-        - **y** (Tensor), has the same shape and data type of x.
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore.ops.operations import _inner_ops
-        >>> copy_slices = _inner_ops.TensorCopySlices()
-        >>> out = copy_slices(Tensor(np.zeros((5, 5))), Tensor(np.ones((2, 5))), (3, 0), (5, 5), (1, 1))
-        >>> print(out)
-            [[1., 1., 1., 1., 1.],
-             [1., 1., 1., 1., 1.],
-             [1., 1., 1., 1., 1.],
-             [0., 0., 0., 0., 0.],
-             [0., 0., 0., 0., 0.]]
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize TensorScatterUpdate"""
-        self.init_prim_io_names(inputs=['x', 'value', 'begin', 'end', 'strides'], outputs=['y'])
-
-
 class DSDMatmul(PrimitiveWithInfer):
     """
     The definition of the CusSquare primitive.
@@ -1588,46 +1534,6 @@ class DynamicBroadcastTo(Primitive):
     def __init__(self):
         """Initialize DynamicBroadcastTo"""
         self.init_prim_io_names(inputs=['x', 'shape'], outputs=['y'])
-
-
-class Cummin(Primitive):
-    r"""
-    Returns the cumulative minimum of elements and the index.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.cummin` for more detail.
-
-    Args:
-        axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
-
-    Inputs:
-        - **input** (Tensor) - The input tensor.
-
-    Outputs:
-        A tuple of 2 Tensors(values, indices), containing the cumulative minimum of elements and the index,
-        The shape of each output tensor is the same as input `input`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> import mindspore
-        >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
-        >>> func = ops.Cummin(axis=0)
-        >>> output = func(a)
-        >>> print(output[0])
-        [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
-        >>> print(output[1])
-        [0 1 1 1 4 4]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis):
-        """Initialize Cummin"""
-        validator.check_value_type('axis', axis, [int], self.name)
 
 
 class DynamicResizeNearestNeighbor(Primitive):
@@ -1946,7 +1852,6 @@ class Format(PrimitiveWithInfer):
     def __init__(self):
         self.init_prim_io_names(inputs=['string', 'args'], outputs=['string'])
 
-
     def __infer__(self, str_, *var):
         def check_variable(str_, var):
             if _check_contains_variable(str_['dtype'], str_['value']):
@@ -1957,10 +1862,8 @@ class Format(PrimitiveWithInfer):
                     return True
             return False
 
-
         if check_variable(str_, var):
             return {'dtype': mstype.string, 'shape': [], 'value': None}
-
 
         str_value = str_['value']
         kwargs = dict()
@@ -2245,7 +2148,8 @@ class MixedPrecisionCast(Primitive):
 
     def __call__(self, dst_dtype, x):
         def cast_inner(data):
-            if isinstance(data, Tensor) and data.dtype in (mstype.float16, mstype.float32, mstype.float64):
+            if isinstance(data, Tensor) and data.dtype in (mstype.float16, mstype.float32,
+                                                           mstype.float64, mstype.bfloat16):
                 return self.cast(data, dst_dtype)
             return data
 
@@ -2556,7 +2460,7 @@ class ConvertToMsTensor(Primitive):
         """Run in PyNative mode"""
         if isinstance(x, StubTensor):
             return StubTensor(stub=x.stub, tensor=x.tensor)
-        return ops.deepcopy(x)
+        return ops.auto_generate.deepcopy(x)
 
 
 convert_to_ms_tensor = ConvertToMsTensor()
@@ -2616,28 +2520,6 @@ class IsParameter(PrimitiveWithInfer):
         return {'shape': [],
                 'dtype': mstype.bool_,
                 'value': isinstance(x['dtype'], mstype.RefType)}
-
-
-class SiLU(Primitive):
-    r"""
-    Computes SiLU (Sigmoid Linear Unit activation function) of input tensors element-wise.
-
-    Refer to :func:`mindspore.ops.silu` for more details.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-        >>> output = ops.SiLU(x)
-        >>> print(output)
-        [-0.269  1.762  -0.1423  1.762  -0.269]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize SiLU"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
 class TileSize(Primitive):
@@ -2723,33 +2605,36 @@ class CopyWithSlice(Primitive):
     r"""
         Copy data to discontinuous tensor
     """
+
     @prim_attr_register
     def __init__(self):
         self.add_prim_attr('side_effect_mem', True)
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['x'])
 
 
-class MoeFFN(Primitive):
+class FFN(Primitive):
     r"""
-    The MoeFFN computation is similar to Feed-Forward Network, it contains matmul + gelu + matmul.
+    The FFN computation is similar to Feed-Forward Network, it contains matmul + gelu + matmul.
 
     Args:
         activation (string): The activation type, set to 'fastgelu' or 'gelu'.
-        Only support 'fastgelu' for now. Default: "fastgelu".
+            Only support 'fastgelu' for now. Default: "fastgelu".
+        inner_precise (int): The precise mode, set to 0 for high precision or 1 for high performance.
+            Only support 1 for now. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input tensor with data type of int8, float16.
           Input tensor of shape :math:`(batch\_size * seq\_length, hidden\_size)`.
+        - **weight1** (Tensor) - The weight1 tensor with data type of float16.
+          Weight1 tensor of shape :math:`(expert\_num, hidden\_size, ffn\_hidden\_size)`.
+        - **weight2** (Tensor) - The weight2 tensor with data type of float16.
+          Weight2 tensor of shape :math:`(expert\_num, ffn\_hidden\_size, hidden\_size)`.
         - **expert_tokens** (Tensor]) - The expert tokens tensor with data type of int64.
           Expert tokens tensor of shape :math:`(16,)`. For example, `(2, 1, 0, .., 9)`
           indicate that the 0th expert deals with 2 tokens, the 1th expert deals with 1 tokens,
           the 2th expert do noting and so on.
-        - **weight1** (Tensor) - The weight1 tensor with data type of float16.
-          Weight1 tensor of shape :math:`(expert\_num, hidden\_size, ffn\_hidden\_size)`.
         - **bias1** (Tensor) - The bias1 tensor with data type of float16.
           Bias1 tensor of shape :math:`(expert\_num, ffn\_hidden\_size)`.
-        - **weight2** (Tensor) - The weight2 tensor with data type of float16.
-          Weight2 tensor of shape :math:`(expert\_num, ffn\_hidden\_size, hidden\_size)`.
         - **bias2** (Tensor) - The bias2 tensor with data type of float16.
           Bias2 tensor of shape :math:`(expert\_num, hidden\_size)`.
         - **scale** (Tensor) - The scale tensor with data type of float16. Not enable now.
@@ -2771,21 +2656,215 @@ class MoeFFN(Primitive):
         >>> h_f = 4 * h
         >>> e = 16
         >>> x = Tensor(np.random.randn(b * s, h).astype(np.float16))
-        >>> expert_tokens = Tensor(np.random.randn(e).astype(np.int64))
         >>> w1 = Tensor(np.random.randn(e, h, h_f).astype(np.float16))
-        >>> bias1 = Tensor(np.random.randn(e, h_f).astype(np.float16))
         >>> w2 = Tensor(np.random.randn(e, h_f, h).astype(np.float16))
+        >>> expert_tokens = Tensor(np.random.randn(e).astype(np.int64))
+        >>> bias1 = Tensor(np.random.randn(e, h_f).astype(np.float16))
         >>> bias2 = Tensor(np.random.randn(e, h).astype(np.float16))
-        >>> moe_ffn = _inner_ops.MoeFFN("fastgelu")
-        >>> output = moe_ffn(x, w1, bias1, w2, bias2)
+        >>> ffn = _inner_ops.FFN("fastgelu", 1)
+        >>> output = ffn(x, w1, w2, expert_tokens, bias1, bias2)
         >>> print(output)
     """
 
     @prim_attr_register
-    def __init__(self, activation):
-        """Initialize MoeFFN."""
-        self.init_prim_io_names(inputs=["x", "expert_tokens", "weight1", "bias1",
-                                        "weight2", "bias2", "scale", "offset", "deq_scale1"
-                                        "deq_scale2"],
+    def __init__(self, activation, inner_precise):
+        """Initialize FFN."""
+        self.init_prim_io_names(inputs=["x", "weight1", "weight2", "expert_tokens", "bias1",
+                                        "bias2", "scale", "offset", "deq_scale1", "deq_scale2"],
                                 outputs=["y"])
-        self.activation = activation
+        cls_name = self.name
+        validator.check_value_type("activation", activation, [str], cls_name)
+        validator.check_value_type("inner_precise", inner_precise, [int], cls_name)
+
+
+class CollectiveScatter(Primitive):
+    """
+    Scatter tensor across the processes in the specified communication group.
+
+    Note:
+        Collect communication domain scatter operation interface.
+        Distribute the tensors of the specified rank evenly to each rank.
+
+    Args:
+        src_rank (int): Specifies the rank of the process that send the tensor.
+        group (str, optional): The communication group to work on.
+            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.communication.management import init, get_rank
+        >>> from mindspore.ops.operations import _inner_ops as inner_p
+        >>> # Launch 4 processes.
+        >>> init()
+        >>> class CollectiveScatterNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(self).__init__()
+        >>>         self.collective_scatter = inner_p.CollectiveScatter(src_rank=0)
+        >>>
+        >>>     def construct(self, x):
+        >>>         out = self.collective_scatter(x)
+        >>>         return out
+        >>> input = Tensor(np.ones([8, 8]).astype(np.float32))
+        >>> net = CollectiveScatterNet()
+        >>> output = net(input)
+        >>> print(output)
+        Process with all rank : [[1. 1. 1. 1. 1. 1. 1. 1.]
+                                [1. 1. 1. 1. 1. 1. 1. 1.]],
+    """
+
+    @prim_attr_register
+    def __init__(self, src_rank=0, group=GlobalComm.WORLD_COMM_GROUP):
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.rank_size = get_group_size(_get_group(group))
+        self.src_rank = src_rank
+
+        self.add_prim_attr('src_rank', self.src_rank)
+        self.add_prim_attr('rank_size', self.rank_size)
+        self.add_prim_attr('group', _get_group(group))
+
+
+class _MirrorSilentCheck(PrimitiveWithInfer):
+    """
+    The operator _MirrorSilentCheck implements accuracy-sensitive detection on the tensor input in backpropagator.
+    Call _MirrorSilentCheck in method __call__ of derived class to implement accuracy-sensitive detection.
+
+    Inputs:
+        - **input** (Tensor) : The tensor used for detection.
+          Its data type must be mindspore.float16, mindspore.float32 or mindspore.bfloat16.
+        - **pre_val** (Parameter(Tensor)) : Support parameter in accuracy-sensitive detection.
+          Please only generated by method generate_params() of ASDBase.
+        - **min_val** (Parameter(Tensor)) : Support parameter in accuracy-sensitive detection.
+          Please only generated by method generate_params() of ASDBase.
+        - **max_val** (Parameter(Tensor)) : Support parameter in accuracy-sensitive detection.
+          Please only generated by method generate_params() of ASDBase.
+        - **cnt** (Parameter(Tensor)) : Support parameter in accuracy-sensitive detection.
+          Please only generated by method generate_params() of ASDBase.
+          After each invocation of _MirrorSilentCheck, increment the value of cnt by one.
+
+    Outputs:
+        - **output** (Tensor) - Same shape, type and value as `input`.
+    """
+    @prim_attr_register
+    def __init__(self, min_steps=8):
+        upper_thresh, sigma_thresh = self.get_thresh()
+        self.min_steps = min_steps
+        self.thresh_l1 = upper_thresh[0]
+        self.coeff_l1 = sigma_thresh[0]
+        self.thresh_l2 = upper_thresh[1]
+        self.coeff_l2 = sigma_thresh[1]
+        self.add_prim_attr('side_effect_mem', True)
+
+    def parse_thresh(self, env_var_name, default_value, min_value):
+        env_var = os.environ.get(env_var_name, default=default_value)
+        thresh = [value.strip() for value in env_var.split(",")]
+        if len(thresh) != 2 or not all(value.isdigit() for value in thresh):
+            thresh = default_value.split(",")
+        thresh = [float(max(int(value), min_value)) for value in thresh]
+        if thresh[0] <= thresh[1]:
+            thresh = [float(value) for value in default_value.split(",")]
+
+        return thresh
+
+    def get_thresh(self):
+        upper_thresh = self.parse_thresh("NPU_ASD_UPPER_THRESH", "1000000,10000", 3)
+        sigma_thresh = self.parse_thresh("NPU_ASD_SIGMA_THRESH", "100000,5000", 3)
+        return upper_thresh, sigma_thresh
+
+    def infer_shape(self, x_shape, pre_shape, min_shape, max_shape, n_step, loss_scale_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype, pre_dtype, min_dtype, max_dtype, n_dtype, loss_scale_dtype):
+        return x_dtype
+
+
+class CollectiveGather(Primitive):
+    """
+    Gathers tensors from the specified communication group.
+
+    Note:
+        Implement the gatherer operation interface.
+        Combine all tensors of the rank in order of rank, and then send the results to the target rank.
+
+    Args:
+        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+            means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor. If the number of devices in the group is N,
+        then the shape of output is :math:`(N, x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `group` is not a str.
+        ValueError: If the local rank id of the calling process in the group
+                    is larger than the group's rank size.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
+
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
+
+            This example should be run with 4 devices.
+
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import _inner_ops as inner_p
+        >>>
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
+        >>> init()
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.collective_gather = inner_p.CollectiveGather(dest_rank=0)
+        ...
+        ...     def construct(self, x):
+        ...         return self.collective_gather(x)
+        ...
+        >>> input_x = Tensor(np.ones([1, 8]).astype(np.float32))
+        >>> net = Net()
+        >>> output = net(input_x)
+        >>> print(output)
+        [[1. 1. 1. 1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1. 1. 1. 1.]]
+    """
+
+    @prim_attr_register
+    def __init__(self, dest_rank, group=GlobalComm.WORLD_COMM_GROUP):
+        """Initialize Gather."""
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.rank_id = get_rank(_get_group(group))
+        self.dest_rank = dest_rank
+        self.rank_size = get_group_size(_get_group(group))
+        validator.check('rank', self.rank_id, 'rank_size', self.rank_size, validator.LT, self.name)
+        self.add_prim_attr('rank_size', self.rank_size)
+        self.add_prim_attr('group', _get_group(group))
+        self.add_prim_attr('dest_rank', self.dest_rank)
+        self.add_prim_attr('rank_id', self.rank_id)

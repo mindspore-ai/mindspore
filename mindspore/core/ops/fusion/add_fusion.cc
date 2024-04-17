@@ -35,7 +35,7 @@ ActivationType AddFusion::get_activation_type() const {
 }
 void AddFusion::Init(const ActivationType activation_type) { this->set_activation_type(activation_type); }
 
-MIND_API_OPERATOR_IMPL(AddFusion, Add);
+MIND_API_OPERATOR_IMPL(AddFusion, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameAddFusion, AddFusion);
 }  // namespace ops
 }  // namespace mindspore

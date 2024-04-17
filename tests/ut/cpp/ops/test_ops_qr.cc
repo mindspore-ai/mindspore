@@ -13,58 +13,92 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
 #include <memory>
+#include <vector>
+#include <tuple>
 #include "common/common_test.h"
-#include "ops/qr.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
 #include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
+#include "abstract/dshape.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/dtype/number.h"
+#include "ir/primitive.h"
+#include "ir/primal_attr.h"
+#include "mindapi/base/shape_vector.h"
+#include "test_value_utils.h"
 #include "ops/test_ops.h"
-#include "include/backend/optimizer/helper.h"
+#include "ops/ops_func_impl/qr.h"
 
 namespace mindspore {
 namespace ops {
-struct QRParams {
+struct QrShape {
   ShapeVector x_shape;
-  TypePtr x_type;
-  bool full_matrices;
+  ValuePtr full_matrices;
   ShapeVector q_shape;
-  TypePtr q_type;
   ShapeVector r_shape;
+};
+
+struct QrType {
+  TypePtr x_type;
+  TypePtr q_type;
   TypePtr r_type;
 };
 
-class TestQR : public TestOps, public testing::WithParamInterface<QRParams> {};
+class TestQR : public TestOps, public testing::WithParamInterface<std::tuple<QrShape, QrType>> {};
 
 TEST_P(TestQR, dyn_shape) {
-  const auto &param = GetParam();
-  auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-  auto q = std::make_shared<abstract::AbstractTensor>(param.q_type, param.q_shape);
-  auto r = std::make_shared<abstract::AbstractTensor>(param.r_type, param.r_shape);
-  AbstractBasePtrList abstract_list{q, r};
-  auto expect = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  // prepare
+  const auto &shape_param = std::get<0>(GetParam());
+  const auto &type_param = std::get<1>(GetParam());
+
+  // input
+  QrFuncImpl qr_func_impl;
+  auto primitive = std::make_shared<Primitive>("Qr");
+  ASSERT_NE(primitive, nullptr);
+  auto x = std::make_shared<abstract::AbstractTensor>(type_param.x_type, shape_param.x_shape);
   ASSERT_NE(x, nullptr);
-  ASSERT_NE(expect, nullptr);
-  auto prim = std::make_shared<Primitive>(kNameQr);
-  prim->set_attr("full_matrices", MakeValue<bool>(param.full_matrices));
-  auto out_abstract = opt::CppInferShapeAndType(prim, {x});
-  ASSERT_NE(out_abstract, nullptr);
-  ASSERT_TRUE(*out_abstract == *expect);
+  auto full_matrices = shape_param.full_matrices->ToAbstract();
+  std::vector<AbstractBasePtr> input_args = {x, full_matrices};
+
+  // expect output
+  std::vector<BaseShapePtr> shapes_list = {std::make_shared<abstract::Shape>(shape_param.q_shape),
+                                           std::make_shared<abstract::Shape>(shape_param.r_shape)};
+  auto expect_shape = std::make_shared<abstract::TupleShape>(shapes_list);
+  ASSERT_NE(expect_shape, nullptr);
+  std::vector<TypePtr> types_list = {std::make_shared<TensorType>(type_param.q_type),
+                                     std::make_shared<TensorType>(type_param.r_type)};
+  auto expect_dtype = std::make_shared<Tuple>(types_list);
+  ASSERT_NE(expect_dtype, nullptr);
+
+  // execute
+  auto out_shape = qr_func_impl.InferShape(primitive, input_args);
+  auto out_dtype = qr_func_impl.InferType(primitive, input_args);
+
+  // verify output
+  ASSERT_NE(out_shape, nullptr);
+  ASSERT_TRUE(*out_shape == *expect_shape);
+  ASSERT_NE(out_dtype, nullptr);
+  ASSERT_TRUE(*out_dtype == *expect_dtype);
 }
 
-INSTANTIATE_TEST_CASE_P(
-  TestQRGroup, TestQR,
-  testing::Values(
-    QRParams{{5, 4}, kFloat32, true, {5, 5}, kFloat32, {5, 4}, kFloat32},
-    QRParams{{5, 4}, kFloat32, false, {5, 4}, kFloat32, {4, 4}, kFloat32},
-    QRParams{{-1, -1 , -1}, kFloat32, true, {-1, -1 , -1}, kFloat32, {-1, -1 , -1}, kFloat32},
-    QRParams{{-1, -1 , -1}, kFloat32, false, {-1, -1 , -1}, kFloat32, {-1, -1 , -1}, kFloat32},
-    QRParams{{-2}, kFloat32, true, {-2}, kFloat32, {-2}, kFloat32},
-    QRParams{{-2}, kFloat32, false, {-2}, kFloat32, {-2}, kFloat32}));
-}  // namespace opsout_shape
-}  // namespace mindsporeclear
+auto qr_shape_cases = testing::Values(
+  QrShape{{5, 4}, CreateScalar(true), {5, 5}, {5, 4}},
+  QrShape{{5, 4}, CreateScalar(false), {5, 4}, {4, 4}},
+  QrShape{{-1, -1, -1}, CreateScalar(true), {-1, -1, -1}, {-1, -1, -1}},
+  QrShape{{-1, -1, -1}, CreateScalar(false), {-1, -1, -1}, {-1, -1, -1}},
+  QrShape{{-2}, CreateScalar(true), {-2}, {-2}},
+  QrShape{{-2}, CreateScalar(false), {-2}, {-2},
+});
 
+auto qr_type_cases = testing::ValuesIn({
+  QrType{kFloat16, kFloat16, kFloat16},
+  QrType{kFloat32, kFloat32, kFloat32},
+  QrType{kFloat64, kFloat64, kFloat64},
+  QrType{kComplex64, kComplex64, kComplex64},
+  QrType{kComplex128, kComplex128, kComplex128},
+});
+
+INSTANTIATE_TEST_CASE_P(TestOpsFuncImpl, TestQR, testing::Combine(qr_shape_cases, qr_type_cases));
+
+}  // namespace ops
+}  // namespace mindspore

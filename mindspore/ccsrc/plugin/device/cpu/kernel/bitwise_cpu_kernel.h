@@ -41,18 +41,14 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   explicit BitwiseCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~BitwiseCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -60,8 +56,8 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   void InitFunc();
@@ -69,16 +65,18 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   using BitwiseParallelFunc = std::function<void(BitwiseCpuKernelMod *, const CTask &task)>;
   BitwiseParallelFunc bitwise_parallel_func_;
 
-  using BitwiseLaunchFunc = std::function<bool(BitwiseCpuKernelMod *, const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs)>;
+  using BitwiseLaunchFunc = std::function<bool(BitwiseCpuKernelMod *, const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs)>;
   BitwiseLaunchFunc bitwise_launch_func_;
   void BitwiseParallelSearch(const CTask &task);
   void BitwiseParallelMaxThread(const CTask &task);
 
   template <typename T, typename BitwiseFunT>
-  bool LaunchBroadcast(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchBroadcast(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T, typename BitwiseFunT>
-  bool LaunchNoBroadcast(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchNoBroadcast(const std::vector<kernel::KernelTensor *> &inputs,
+                         const std::vector<kernel::KernelTensor *> &outputs);
 
   std::string kernel_type_{"Unknown"};
   TypeId input_type_1_{kTypeUnknown};

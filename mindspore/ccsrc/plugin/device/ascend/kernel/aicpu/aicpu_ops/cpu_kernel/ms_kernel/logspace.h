@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LOG1P_H_
 #define AICPU_KERNELS_NORMALIZED_LOG1P_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class LogSpaceCpuKernel : public CpuKernel {
@@ -28,10 +28,10 @@ class LogSpaceCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t LogSpaceCheck(const CpuKernelContext &ctx);
+  uint32_t LogSpaceCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t LogSpaceCompute(const CpuKernelContext &ctx);
+  uint32_t LogSpaceCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

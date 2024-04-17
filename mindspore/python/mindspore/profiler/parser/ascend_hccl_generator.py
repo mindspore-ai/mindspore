@@ -15,78 +15,27 @@
 """hccl analyse model"""
 import copy
 import csv
-import fnmatch
 import json
 import logging
 import os
 import stat
+import glob
 
 import numpy as np
 from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException
-
-
-def find_files(directory, pattern):
-    """Find files with feature 'pattern' from the directory"""
-    file_list = []
-    for root, _, files in os.walk(directory):
-        files.sort(key=lambda x: os.path.getctime(os.path.join(directory, x)))
-        for basename in files:
-            if fnmatch.fnmatch(basename, pattern):
-                filename = os.path.join(root, basename)
-                file_list.append(filename)
-    return file_list
-
-
-def calculate_average(data):
-    """Calculate hccl data average"""
-    result = data
-    if isinstance(data, dict):
-        result = {}
-        for key, value in data.items():
-            result[key] = calculate_average(value)
-    elif isinstance(data, list):
-        if all(isinstance(item, (dict, list)) for item in data):
-            if isinstance(data[0], dict):
-                result_dict = {}
-                keys = set()
-                for item in data:
-                    keys.update(item.keys())
-                for key in keys:
-                    values = []
-                    for item in data:
-                        values.append(item.get(key))
-                    result_dict[key] = calculate_average(values)
-                result = result_dict
-            elif isinstance(data[0], list):
-                transposed_list = np.array(data).T.tolist()
-                result = [calculate_average(sub_list) for sub_list in transposed_list]
-    return result
-
-
-def count_average(data):
-    """Count average"""
-    result = data
-    if isinstance(data, list):
-        if all(isinstance(x, (int, float)) for x in data):
-            if data:
-                result = sum(data) / len(data)
-            else:
-                result = 0
-        else:
-            result = [count_average(x) for x in data]
-    elif isinstance(data, dict):
-        result = {key: count_average(value) for key, value in data.items()}
-    return result
+from mindspore.profiler.common.util import get_newest_file
 
 
 class AscendHCCLGenerator:
     """Generate ascend hccl data from files."""
 
-    def __init__(self, source_path):
-        self.root_path = source_path
+    def __init__(self, mindstudio_profiler_output, steptrace):
+        self.mindstudio_profiler_output = mindstudio_profiler_output
+        self.steptrace = steptrace
         self.hccl_raw = []
         self.hccl_data_df = np.dtype(
-            [('name', object), ('pid', int), ('tid', int), ('ts', float), ('te', float), ('dur', float), ('ph', object),
+            [('model_id', int), ('iteration_id', int), ('name', object), ('pid', int), ('tid', int), ('ts', float),
+             ('te', float), ('dur', float), ('ph', object),
              ('task_type', object), ('link_info', object), ('transport_type', object), ('size', int), ('tag', object)])
 
     @staticmethod
@@ -139,20 +88,38 @@ class AscendHCCLGenerator:
 
     def parse(self):
         """Analyse the original hccl data generator hccl data."""
-        file_list = find_files(self.root_path, "hccl_*.json")
 
-        for hccl_file in file_list:
-            _, relative_path = os.path.split(hccl_file)
-            iteration_id = int(relative_path.split('_')[3])
-            with open(hccl_file) as f:
-                _, hccl_detail_data = self._original_data_analyse(json.load(f))
-                raw = self._iteration_analyse(hccl_detail_data, iteration_id)
-                self.hccl_raw.append(raw)
+        raw_data = []
+        msprof_name = fr'{self.mindstudio_profiler_output}/msprof_*.json'
+        for msprof_file in get_newest_file(glob.glob(msprof_name)):
+            with open(msprof_file) as fr:
+                raw_data.extend(json.load(fr))
+
+        hccl_data = self._original_data_analyse(raw_data)
+
+        for model_id in np.unique(hccl_data['model_id']):
+            hccl_data_model = hccl_data[hccl_data['model_id'] == model_id]
+            for iteration_id in np.unique(hccl_data_model['iteration_id']):
+                hccl_data_model_iteration = hccl_data_model[hccl_data_model['iteration_id'] == iteration_id]
+
+                hccl_abstract_data = hccl_data_model_iteration[hccl_data_model_iteration['task_type'] == '']
+                hccl_detail_data = hccl_data_model_iteration[hccl_data_model_iteration['task_type'] != '']
+                hccl_abstract_data = np.sort(hccl_abstract_data, order='ts')
+                hccl_detail_data = np.sort(hccl_detail_data, order='ts')
+
+                tag = np.searchsorted(hccl_abstract_data['ts'], hccl_detail_data['ts'], side='right') - 1
+
+                hccl_detail_data['tag'] = [x[-1] for x in
+                                           np.char.split(hccl_abstract_data[tag]['name'].astype(str), sep='/')]
+
+                self.hccl_raw.append(self._iteration_analyse(hccl_detail_data, iteration_id))
+
         self.hccl_raw = sorted(self.hccl_raw, key=lambda x: x[0])
-        self.hccl_raw.append(copy.deepcopy(self.hccl_raw[-1]))
-        self.hccl_raw[-1][0] = '-'
-        for _, value in self.hccl_raw[-1][4].items():
-            value[0] = '-'
+        if self.hccl_raw:
+            self.hccl_raw.append(copy.deepcopy(self.hccl_raw[-1]))
+            self.hccl_raw[-1][0] = '-'
+            for _, value in self.hccl_raw[-1][4].items():
+                value[0] = '-'
 
     def write(self, hccl_raw_path):
         """
@@ -180,14 +147,26 @@ class AscendHCCLGenerator:
 
     def _original_data_analyse(self, original_data):
         """analyse original data"""
+
+        groups_steptrace = {model_id: np.sort(self.steptrace[self.steptrace['Model ID'] == model_id],
+                                              order='Iteration ID')
+                            for model_id in np.unique(self.steptrace['Model ID'])}
+
+        hccl_pid = None
+        for row in original_data:
+            if row.get('ph') == 'M' and row.get('name') == 'process_name' and row.get('args', {}).get('name') == 'HCCL':
+                hccl_pid = row.get('pid')
+                break
+
         target_data = []
         for row in original_data:
-            if row.get('ph') == 'X':
+            model_id = row.get('args', {}).get('model id')
+            pid = row.get('pid')
+            if hccl_pid == pid and row.get('ph') == 'X' and model_id is not None:
                 name = row.get('name')
-                pid = row.get('pid')
                 tid = row.get('tid')
-                ts = row.get('ts')
-                dur = row.get('dur')
+                ts = float(row.get('ts'))
+                dur = float(row.get('dur'))
                 te = ts + dur
                 ph = row.get('ph')
                 task_type = row.get('args', {}).get('task type', '')
@@ -203,19 +182,20 @@ class AscendHCCLGenerator:
                 link_info = str(src_rank) + '-' + str(dst_rank)
                 size = row.get('args', {}).get('size(Byte)', 0)
                 size = size if isinstance(size, int) else int(size, 16)
+                steptrace = groups_steptrace.get(model_id, None)
+                if steptrace is None:
+                    logging.warning('Could not find model: %s in hccl json, skip.', model_id)
+                    continue
+                tag = np.searchsorted(steptrace['Iteration End'], te * 1e-3, side='left')
+                iteration_id = steptrace[tag]['Iteration ID']
                 target_data.append(
-                    tuple([name, pid, tid, ts, te, dur, ph, task_type, link_info, transport_type, size, -1]))
+                    tuple([model_id, iteration_id, name, pid, tid,
+                           ts, te, dur, ph, task_type,
+                           link_info, transport_type, size, -1]))
+
         hccl_data = np.array(target_data, dtype=self.hccl_data_df)
 
-        hccl_abstract_data = hccl_data[hccl_data['task_type'] == '']
-        hccl_detail_data = hccl_data[hccl_data['task_type'] != '']
-
-        hccl_abstract_data = hccl_abstract_data[np.argsort(hccl_abstract_data['ts'])]
-        hccl_detail_data = hccl_detail_data[np.argsort(hccl_detail_data['ts'])]
-        hccl_detail_data['ts'] = hccl_detail_data['ts']
-        tag = np.searchsorted(hccl_abstract_data['ts'], hccl_detail_data['ts'], side='right') - 1
-        hccl_detail_data['tag'] = [x[-1] for x in np.char.split(hccl_abstract_data[tag]['name'].astype(str), sep='/')]
-        return hccl_abstract_data, hccl_detail_data
+        return hccl_data
 
     def _iteration_analyse(self, hccl_detail_data, iteration):
         """analyse data by iteration """

@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,14 +35,11 @@ from mindspore.ops.operations._sequence_ops import TensorToList
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
     SearchSorted,
-    NonZero,
     MatrixDiagV3,
     MatrixDiagPartV3,
     MatrixSetDiagV3,
     Fills,
     Col2Im,
-    ArgMaxWithValue,
-    ArgMinWithValue,
     ScatterNdMax,
     ScatterNdMul,
     IndexFill,
@@ -52,7 +49,9 @@ from mindspore.ops.operations.array_ops import (
     Lstsq,
     Mvlgamma,
     Tril,
-    Argmax
+    Argmax,
+    ArgMaxWithValue,
+    ArgMinWithValue
 )
 from mindspore.ops.operations.array_ops import TensorScatterElements
 from mindspore.common import Tensor
@@ -61,53 +60,66 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
-tuple_to_tensor_ = TupleToTensor()
+from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
+    nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
+    strided_slice
+from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
+
+arg_max_with_value_ = ArgMaxWithValue()
+batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
+cast_ = P.Cast()
+diag_ = P.Diag()
+dynamic_broadcast_to_ = DynamicBroadcastTo()
 eye_ = P.Eye()
 fills_ = Fills()
-ones_ = P.Ones()
-ones_like_ = P.OnesLike()
-tile_ = P.Tile()
-unique_with_pad_ = P.UniqueWithPad()
-size_ = P.Size()
-shape_ = P.Shape()
-rank_ = P.Rank()
-tensor_shape_ = P.TensorShape()
-reshape_ = P.Reshape()
-tensor_slice = P.Slice()
-expand_dims_ = P.ExpandDims()
-transpose_ = P.Transpose()
-scatter_add_ = P.ScatterAdd()
-scatter_max_ = P.ScatterMax()
-scatter_min_ = P.ScatterMin()
-scatter_mul_ = P.ScatterMul()
-scatter_div_ = P.ScatterDiv()
-scatter_nd_ = P.ScatterNd()
+fillv2_ = P.FillV2()
+flatten_ = P.Flatten()
 gather_ = P.Gather()
 gather_d_ = P.GatherD()
 gather_nd_ = P.GatherNd()
-nonzero_ = NonZero()
-scalar_cast_ = P.ScalarCast()
-tensor_scatter_add_ = P.TensorScatterAdd()
-tensor_scatter_sub_ = P.TensorScatterSub()
-tensor_scatter_mul_ = P.TensorScatterMul()
-tensor_scatter_div_ = P.TensorScatterDiv()
-tensor_scatter_min_ = P.TensorScatterMin()
-tensor_scatter_max_ = P.TensorScatterMax()
-scalar_to_tensor_ = P.ScalarToTensor()
-tuple_to_array_ = P.TupleToArray()
+ger_ = P.Ger()
+index_fill_ = IndexFill()
+lstsq_ = Lstsq()
 masked_select_ = P.MaskedSelect()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
-ger_ = P.Ger()
-diag_ = P.Diag()
-range_ = P.Range()
-zeros_like_ = P.ZerosLike()
-cast_ = P.Cast()
-tensor_select_ = P.Select()
-index_fill_ = IndexFill()
-unsorted_segment_sum_ = P.UnsortedSegmentSum()
+ones_ = P.Ones()
+ones_like_ = P.OnesLike()
 population_count_ = P.PopulationCount()
-reduce_max = P.ReduceMax()
-reduce_min = P.ReduceMin()
+range_ = P.Range()
+rank_ = P.Rank()
+reduce_max_ = P.ReduceMax()
+reduce_min_ = P.ReduceMin()
+reshape_ = P.Reshape()
+scalar_to_tensor_ = P.ScalarToTensor()
+scatter_add_ = P.ScatterAdd()
+scatter_div_ = P.ScatterDiv()
+scatter_max_ = P.ScatterMax()
+scatter_min_ = P.ScatterMin()
+scatter_mul_ = P.ScatterMul()
+scatter_nd_ = P.ScatterNd()
+scatter_update_ = P.ScatterUpdate()
+shape_ = P.Shape()
+size_ = P.Size()
+tensor_scatter_add_ = P.TensorScatterAdd()
+tensor_scatter_div_ = P.TensorScatterDiv()
+tensor_scatter_max_ = P.TensorScatterMax()
+tensor_scatter_min_ = P.TensorScatterMin()
+tensor_scatter_mul_ = P.TensorScatterMul()
+tensor_scatter_sub_ = P.TensorScatterSub()
+tensor_select_ = P.Select()
+tensor_shape_ = P.TensorShape()
+tensor_slice = P.Slice()
+tile_ = P.Tile()
+transpose_ = P.Transpose()
+tuple_to_array_ = P.TupleToArray()
+tuple_to_tensor_ = TupleToTensor()
+unique_ = P.Unique()
+unique_with_pad_ = P.UniqueWithPad()
+unsorted_segment_max_ = P.UnsortedSegmentMax()
+unsorted_segment_min_ = P.UnsortedSegmentMin()
+unsorted_segment_prod_ = P.UnsortedSegmentProd()
+unsorted_segment_sum_ = P.UnsortedSegmentSum()
+zeros_like_ = P.ZerosLike()
 
 
 @_primexpr
@@ -187,8 +199,11 @@ def arange(start=0, end=None, step=1, *, dtype=None):
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The required data type of returned Tensor. Default: ``None`` .
-            If the value is not specified or is ``None`` , the type with the highest precision in the
-            `start`, `end`, and `step` parameters is inferred.
+            When `dtype` is not specified or ``None``:
+
+            If `start`, `end`, and `step` are all integers, the dtype of output is int64,
+
+            If `start`, `end`, and `step` contain at least one floating-point number, the dtype of output is float32.
 
     Returns:
         A 1-D Tensor, with the same type as the inputs.
@@ -225,7 +240,7 @@ def arange(start=0, end=None, step=1, *, dtype=None):
         >>> print(output)
         [12. 11. 10.  9.  8.  7.  6.  5.  4.  3.]
         >>> print(output.dtype)
-        Float64
+        Float32
     """
     if end is None:
         start, end = 0, start
@@ -237,66 +252,24 @@ def arange(start=0, end=None, step=1, *, dtype=None):
     if start.shape != () or end.shape != () or step.shape != ():
         raise ValueError(f"For arange, the input args must be a TensorScalar,"
                          f" but got start shape:{start.shape}, end shape:{end.shape}, step shape:{step.shape}")
-    range_op = _get_cache_prim(P.Range)()
-    data = range_op(start, end, step)
+    data = range_(start, end, step)
     if dtype is not None:
         data = cast_(data, dtype)
     return data
 
 
-def cat(tensors, axis=0):
-    r"""
-    Connect input tensors along with the given axis.
-
-    The input data is a tuple or a list of tensors. These tensors have the same rank :math:`R`.
-    Set the given axis as :math:`m`, and :math:`0 \le m < R`. Set the number of input tensors as :math:`N`.
-    For the :math:`i`-th tensor :math:`t_i`, it has the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`.
-    :math:`x_{mi}` is the :math:`m`-th dimension of the :math:`t_i`. Then, the shape of the output tensor is
-
-    .. math::
-
-        (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
-
-    Args:
-        tensors (Union[tuple, list]): A tuple or a list of input tensors.
-            Suppose there are two tensors in this tuple or list, namely t1 and t2.
-            To perform `concat` in the axis 0 direction, except for the :math:`0`-th axis,
-            all other dimensions should be equal, that is,
-            :math:`t1.shape[1] = t2.shape[1], t1.shape[2] = t2.shape[2], ..., t1.shape[R-1] = t2.shape[R-1]`,
-            where :math:`R` represents the rank of tensor.
-        axis (int): The specified axis, whose value is in range :math:`[-R, R)`. Default: ``0`` .
-
-    Returns:
-        Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-            The data type is the same with `tensors`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        ValueError: If `tensors` have different dimension of tensor.
-        ValueError: If `axis` not in range :math:`[-R, R)`.
-        RuntimeError: If tensor's shape in `tensors` except for `axis` are different.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> output = ops.cat((input_x1, input_x2))
-        >>> print(output)
-        [[0. 1.]
-         [2. 1.]
-         [0. 1.]
-         [2. 1.]]
-        >>> output = ops.cat((input_x1, input_x2), 1)
-        >>> print(output)
-        [[0. 1. 0. 1.]
-         [2. 1. 2. 1.]]
+def concat(tensors, axis=0):
     """
-    return concat(tensors, axis)
+    Alias for :func:`mindspore.ops.cat()`.
+
+    Tutorial Examples:
+        - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/tensor.html#tensor-operation>`_
+        - `Vision Transformer Image Classification - Building ViT as a whole
+          <https://mindspore.cn/tutorials/application/en/r2.3.q1/cv/vit.html#building-vit-as-a-whole>`_
+        - `Sentiment Classification Implemented by RNN - Dense
+          <https://mindspore.cn/tutorials/application/en/r2.3.q1/nlp/sentiment_analysis.html#dense>`_
+    """
+    return cat(tensors, axis)
 
 
 def eye(n, m=None, dtype=None):
@@ -304,14 +277,14 @@ def eye(n, m=None, dtype=None):
     Creates a tensor with ones on the diagonal and zeros in the rest.
 
     Note:
-        Combines ReverseV2 operator to get an anti-diagonal Tensor,
-        but ReverseV2 only supports Ascend and GPU platforms currently.
+        The data type of returned tensor can be float16, float32, int8, int16, int32, int64, uint8
+        or bool on Ascend platforms.
 
     Args:
         n (int): The number of rows of returned tensor. Constant value only.
-        m (int): The number of columns of returned tensor. Constant value only.
+        m (int, optional): The number of columns of returned tensor. Constant value only.
             Default: ``None`` , if ``None`` , the number of columns is as the same as n.
-        dtype (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
+        dtype (mindspore.dtype, optional): MindSpore's dtype, the data type of the returned tensor.
             The data type can be bool or Number.
             Default: ``None`` , the data type of the returned tensor is mindspore.float32.
 
@@ -335,11 +308,11 @@ def eye(n, m=None, dtype=None):
          [0 1]]
         >>> print(output.dtype)
         Int32
-        >>> output = ops.eye(1, 2, mindspore.float64)
+        >>> output = ops.eye(1, 2, mindspore.float32)
         >>> print(output)
         [[1. 0.]]
         >>> print(output.dtype)
-        Float64
+        Float32
         >>> output = ops.eye(2, dtype=mindspore.int32)
         >>> print(output)
         [[1 0]
@@ -471,48 +444,7 @@ def where(condition, x, y):
     condition = broadcast_to(condition, output_shape)
     x = broadcast_to(x, output_shape)
     y = broadcast_to(y, output_shape)
-    _select = P.Select()
-    return _select(condition, x, y)
-
-
-def reverse(x, axis):
-    """
-    Reverses specific dimensions of a tensor.
-
-    .. warning::
-        The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
-
-    Args:
-        x (Tensor): The target tensor.
-            The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[tuple(int), list(int)]): The indices of the dimensions to reverse.
-
-    Outputs:
-        Tensor, has the same shape and type as `x`.
-
-    Raises:
-        TypeError: If `axis` is neither list nor tuple.
-        TypeError: If element of `axis` is not an int.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
-        >>> output = ops.reverse(input_x, axis=[1])
-        >>> print(output)
-        [[4 3 2 1]
-         [8 7 6 5]]
-        >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
-        >>> output = ops.reverse(input_x, axis=[1, 0])
-        >>> print(output)
-        [[8 7 6 5]
-         [4 3 2 1]]
-    """
-    return P.ReverseV2(axis)(x)
+    return tensor_select_(condition, x, y)
 
 
 def ravel(input):
@@ -658,15 +590,16 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
     other locations take value `off_value`.
 
     Note:
-        If the input indices is rank `N`, the output will have rank `N+1`. The new axis is created at dimension `axis`.
+        If the input `indices` has rank `N`, the output will have rank `N+1`.
+        The new axis is created at dimension `axis`. On Ascend, if `on_value` is int64 dtype, `indices` must be
+        int64 dtype, and the value for `on_value` and `off_value` can only be 1 and 0.
 
     Args:
         indices(Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
             Data type must be int32 or int64.
         depth(int): A scalar defining the depth of the one-hot dimension.
         on_value(Union[Tensor, int, float], optional): A value to fill in output when `indices[j] = i`.
-            Support uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64,
-            bool, complex64, complex128. Default: ``1`` .
+            Data type must be int32, int64, float16 or float32. Default: ``1`` .
         off_value(Union[Tensor, int, float], optional): A value to fill in output when `indices[j] != i`.
             Has the same data type as `on_value`. Default: ``0`` .
         axis(int, optional): Position to insert the value. e.g. If shape of `self` is :math:`(N, C)`, and `axis` is -1,
@@ -675,11 +608,13 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
             Default: ``-1`` .
 
     Returns:
-        Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
+        Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`,
+        and it has the same data type as `on_value`.
 
     Raises:
         TypeError: If `axis` or `depth` is not an int.
         TypeError: If dtype of `indices` is not int32 or int64.
+        TypeError: If dtype of `on_value` is not int32, int64, float16 or float32.
         TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
         ValueError: If `axis` is not in range [-1, ndim].
         ValueError: If `depth` is less than 0.
@@ -713,8 +648,8 @@ def fill(type, shape, value):  # pylint: disable=redefined-outer-name
 
     Args:
         type (mindspore.dtype): The specified type of output tensor. The data type only supports
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+            `bool_ <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ and
+            `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ .
         shape (Union(Tensor, tuple[int])): The specified shape of output tensor.
         value (Union(Tensor, number.Number, bool)): Value to fill the returned tensor.
 
@@ -741,7 +676,7 @@ def fill(type, shape, value):  # pylint: disable=redefined-outer-name
          [0. 0. 0.]]
     """
     value = cast_(value, type)
-    return _get_cache_prim(P.FillV2)()(shape, value)
+    return fillv2_(shape, value)
 
 
 def full(size, fill_value, *, dtype=None):  # pylint: disable=redefined-outer-name
@@ -881,21 +816,21 @@ def chunk(input, chunks, axis=0):
     length_along_dim = arr_shape[arr_axis]
 
     if chunks > length_along_dim:
-        res = P.Split(arr_axis, length_along_dim)(input)
+        res = _get_cache_prim(P.Split)(arr_axis, length_along_dim)(input)
     elif length_along_dim % chunks == 0:
-        res = P.Split(arr_axis, chunks)(input)
+        res = _get_cache_prim(P.Split)(arr_axis, chunks)(input)
     else:
         block_size = int(np.ceil(length_along_dim / chunks))
         true_chunks = int(length_along_dim // block_size)
         length1 = true_chunks * block_size
         length2 = length_along_dim - length1
-        start1 = _list_comprehensions(rank(input), 0, True)
+        start1 = _list_comprehensions(rank_(input), 0, True)
         size1 = _tuple_setitem(arr_shape, arr_axis, length1)
         start2 = _tuple_setitem(start1, arr_axis, length1)
         size2 = _tuple_setitem(arr_shape, arr_axis, length2)
-        res = P.Split(arr_axis, true_chunks)(tensor_slice(input, start1, size1))
+        res = _get_cache_prim(P.Split)(arr_axis, true_chunks)(tensor_slice(input, start1, size1))
         if length2:
-            res += P.Split(arr_axis, 1)(tensor_slice(input, start2, size2))
+            res += _get_cache_prim(P.Split)(arr_axis, 1)(tensor_slice(input, start2, size2))
     return res
 
 
@@ -950,15 +885,17 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
          [1. 1.]]
     """
     _dtype = mstype.float32 if dtype is None else dtype
-    ones_op = _get_cache_prim(P.FillV2)()
     value = Tensor(1, _dtype)
     if isinstance(shape, int):
         shape = tuple([shape])
     elif isinstance(shape, list):
-        shape = Tensor(shape, dtype=mstype.int64)
+        if not shape:
+            shape = Tensor_(shape, dtype=mstype.int64)
+        else:
+            shape = Tensor(shape, dtype=mstype.int64)
     elif isinstance(shape, Tensor) and shape.ndim == 0 and shape.size == 1:
         shape = shape.reshape(1)
-    output = ones_op(shape, value)
+    output = fillv2_(shape, value)
     return output
 
 
@@ -991,8 +928,7 @@ def ones_like(input, *, dtype=None):
         [[1 1]
          [1 1]]
     """
-    ones_like_op = _get_cache_prim(P.OnesLike)()
-    output = ones_like_op(input)
+    output = ones_like_(input)
     _dtype = input.dtype if dtype is None else dtype
     output = cast_(output, _dtype)
     return output
@@ -1026,22 +962,24 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
         [[0. 0.]
          [0. 0.]]
     """
-    zero_op = _get_cache_prim(P.FillV2)()
     _dtype = mstype.float32 if dtype is None else dtype
     value = Tensor(0, _dtype)
     if isinstance(size, int):
         size = tuple([size])
     elif isinstance(size, list):
-        size = Tensor(size, dtype=mstype.int64)
+        if not size:
+            size = Tensor_(size, dtype=mstype.int64)
+        else:
+            size = Tensor(size, dtype=mstype.int64)
     elif isinstance(size, Tensor) and size.ndim == 0 and size.size == 1:
         size = size.reshape(1)
-    output = zero_op(size, value)
+    output = fillv2_(size, value)
     return output
 
 
 def zeros_like(input, *, dtype=None):
     r"""
-    Creates a tensor filled with 0, with the same size as x, and the given dtype.
+    Creates a tensor filled with 0, with the same size as input, and the given dtype.
 
     If `dtype = None`, the tensor will have the same dtype as input `input`.
 
@@ -1072,125 +1010,9 @@ def zeros_like(input, *, dtype=None):
          [0. 0.]]
     """
     _dtype = input.dtype if dtype is None else dtype
-    _zeros_like = _get_cache_prim(P.ZerosLike)()
-    _cast = _get_cache_prim(P.Cast)()
-    output = _zeros_like(input)
-    output = _cast(output, _dtype)
+    output = zeros_like_(input)
+    output = cast_(output, _dtype)
     return output
-
-
-def tile(input, multiples):
-    r"""
-    Replicates an input tensor with given multiples times.
-
-    Creates a new tensor by replicating `input` `multiples` times. The i'th dimension of
-    output tensor has `input.shape[i] * multiples[i]` elements, and the values of `input`
-    are replicated `multiples[i]` times along the i'th dimension.
-
-    Note:
-        The length of `multiples` must be greater or equal to the length of dimension in `input`.
-
-    Args:
-        input (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
-            :math:`(x_1, x_2, ..., x_S)` .
-
-        multiples (tuple[int]): The parameter that specifies the number of replications,
-            the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-            The length of `multiples` cannot be smaller than the length of the shape of `input`.
-            Only constant value is allowed.
-
-    Returns:
-        Tensor, has the same data type as the `input`. Suppose the length of `multiples` is `d`,
-        the dimension of `input` is `input.dim`, and the shape of `input` is :math:`(x_1, x_2, ..., x_S)`.
-
-        - If `input.dim = d`, then the shape of their corresponding positions can be multiplied, and
-          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
-        - If `input.dim < d`, fill in multiple 1 in the length of the shape of `input` until their
-          lengths are consistent. Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
-          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
-          :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
-
-    Raises:
-        TypeError: If `multiples` is not a tuple or its elements are not all int.
-        ValueError: If the elements of `multiples` are not all greater than 0.
-        ValueError: If the length of `multiples` are smaller than the length of dimension in `input`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
-        >>> multiples = (2, 3)
-        >>> output = ops.tile(input, multiples)
-        >>> print(output)
-        [[1.  2.  1.  2.  1.  2.]
-         [3.  4.  3.  4.  3.  4.]
-         [1.  2.  1.  2.  1.  2.]
-         [3.  4.  3.  4.  3.  4.]]
-        >>> multiples = (2, 3, 2)
-        >>> output = ops.tile(input, multiples)
-        >>> print(output)
-        [[[1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]]
-         [[1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]]]
-    """
-    tile_op = _get_cache_prim(P.Tile)()
-    return tile_op(input, multiples)
-
-
-def range(start, end, step):
-    r"""
-    Creates a sequence of numbers that begins at `start` and extends by increments of
-    `limit` up to but not including `end`.
-
-    The types of all 3 inputs must be the same. The type of the resulting tensor is
-    the same as the type of the inputs.
-
-    Args:
-        start (Tensor): A scalar Tensor. The first number in the sequence. Must have
-          type: int32 ,int64, float32 or float64.
-        end (Tensor): A scalar Tensor. Upper limit of the sequence, exclusive. Must
-          have type: int32 ,int64, float32 or float64.
-        step (Tensor): A scalar Tensor. Number that increments `start`. Must have
-          type: int32 ,int64, float32 or float64.
-
-    Returns:
-        A 1-D Tensor, with the same type as the inputs.
-
-    Raises:
-        TypeError: If `start`, `end` or `step` is not scalar Tensor.
-        TypeError: If datatype of `start`, `end` or `step` is not same.
-        TypeError: If datatype of `start`, `end` or `step` is not supported.
-        ValueError: If `step` = 0.
-        ValueError: If `start` >= `end` when `step` > 0.
-        ValueError: If `start` <= `end` when `step` < 0.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> start = Tensor(0, mstype.int32)
-        >>> end = Tensor(10, mstype.int32)
-        >>> step = Tensor(4, mstype.int32)
-        >>> output = ops.range(start, end, step)
-        >>> print(output)
-        [0 4 8]
-    """
-    return range_(start, end, step)
 
 
 ##############################
@@ -1244,15 +1066,11 @@ def unique(input):
         >>> print(idx)
         [0 1 2 1]
     """
-
-    unique_op = _get_cache_prim(P.Unique)()
-    reshape_op = _get_cache_prim(P.Reshape)()
-
     shape_x = input.shape
     length_x = get_x_shape(shape_x)
-    input = reshape_op(input, length_x)
-    y, idx = unique_op(input)
-    idx = reshape_op(idx, shape_x)
+    input = reshape_(input, length_x)
+    y, idx = unique_(input)
+    idx = reshape_(idx, shape_x)
     return y, idx
 
 
@@ -1379,7 +1197,7 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
 
     Returns:
         Tensor containing the indices from the innermost dimension of `sorted_sequence` such that,
-        if insert the corresponding value in the `values` tensor, the order of `sorted_sequence` would be preserved,
+        if insert the corresponding value in the `values` Tensor, the order of `sorted_sequence` would be preserved,
         whose datatype is int32 if out_int32 is ``True`` , otherwise int64, and shape is the same as the shape of
         `values`.
 
@@ -1455,7 +1273,7 @@ def size(input_x):
 
     Args:
         input_x (Tensor): Input parameters, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
 
     Returns:
         int. A scalar representing the elements' size of `input_x`, tensor is the number of elements
@@ -1536,76 +1354,6 @@ def dyn_shape(input_x):
     return tensor_shape_(input_x)
 
 
-def rank(input_x):
-    """
-    Returns the rank of a tensor.
-
-    Returns a 0-D int32 Tensor representing the rank of input; the rank of a tensor
-    is the number of indices required to uniquely select each element of the tensor.
-
-    Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
-
-    Returns:
-        Tensor. 0-D int32 Tensor representing the rank of input, i.e., :math:`R`. The data type is an int.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> output = ops.rank(input_tensor)
-        >>> print(output)
-        2
-        >>> print(type(output))
-        <class 'int'>
-    """
-    return rank_(input_x)
-
-
-def reshape(input, shape):
-    """
-    Rearranges the input Tensor based on the given shape.
-
-    The 'shape' can only have one -1 at most, in which case it's inferred from the remaining dimensions and
-    the number of elements in the input.
-
-    Args:
-        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        shape (Union[tuple[int], Tensor[int]]): Constructed by multiple
-            integers, i.e., :math:`(y_1, y_2, ..., y_S)`. Only constant value is allowed.
-
-    Returns:
-        Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-
-    Raises:
-        ValueError: Given a shape tuple, if it has several -1; or if the product
-            of its elements is less than or equal to 0 or cannot be divided by the product
-            of the input tensor shape; or if it does not match the input's array size.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> output = ops.reshape(input, (3, 2))
-        >>> print(output)
-        [[-0.1  0.3]
-         [ 3.6  0.4]
-         [ 0.5 -3.2]]
-    """
-    return reshape_(input, shape)
-
-
 def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
     r"""
     Reverses variable length slices.
@@ -1670,7 +1418,7 @@ def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
         [[4. 3. 2. 1.]
          [8. 7. 6. 5.]]
     """
-    return P.ReverseSequence(seq_dim=seq_dim, batch_dim=batch_dim)(x, seq_lengths)
+    return _get_cache_prim(P.ReverseSequence)(seq_dim=seq_dim, batch_dim=batch_dim)(x, seq_lengths)
 
 
 def flatten(input, order='C', *, start_dim=1, end_dim=-1):
@@ -1694,7 +1442,7 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     Raises:
         TypeError: If `input` is not a Tensor.
         TypeError: If `order` is not string type.
-        ValueError: If `order` is string type, but not 'C' or 'F'.
+        ValueError: If `order` is string type, but not ``'C'`` or ``'F'``.
         TypeError: If `start_dim` or `end_dim` is not int.
         ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
         ValueError: If `start_dim` or `end_dim` is not in range of [-input.dim, input.dim-1].
@@ -1733,9 +1481,13 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
         raise TypeError(f"For 'flatten', both 'start_dim' and 'end_dim' must be int.")
     check_flatten_order_const(order)
     if order == 'F':
-        perm = ops.make_range(0, ops.rank(input))
+        x_rank = rank_(input)
+        # If input is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
+        if x_rank in (0, 1):
+            return reshape_(input, (-1,))
+        perm = ops.make_range(0, x_rank)
         new_order = ops.tuple_reversed(perm)
-        input = _get_cache_prim(P.Transpose)()(input, new_order)
+        input = transpose_(input, new_order)
 
     # Handle the default case.
     x_shape = shape_(input)
@@ -1743,7 +1495,7 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     if start_dim == 1 and end_dim == -1:
         if x_rank in (0, 1):
             return reshape_(input, (-1,))
-        return _get_cache_prim(P.Flatten)()(input)
+        return flatten_(input)
 
     # Check axis.
     start_dim = canonicalize_axis(start_dim, x_rank)
@@ -1930,176 +1682,6 @@ def select(cond, x, y):
     return tensor_select_(cond, input_x, input_y)
 
 
-def strided_slice(input_x,
-                  begin,
-                  end,
-                  strides,
-                  begin_mask=0,
-                  end_mask=0,
-                  ellipsis_mask=0,
-                  new_axis_mask=0,
-                  shrink_axis_mask=0):
-    r"""
-    Extracts a strided slice of a Tensor based on `begin/end` index and `strides`.
-
-    This operation extracts a fragment of size (end-begin)/strides from the given 'input_tensor'.
-    Starting from the beginning position, the fragment continues adding strides to the index until
-    all dimensions are not less than the ending position.
-
-    Note:
-        - `begin` , `end` and `strides` must have the same shape.
-        - `begin` , `end` and `strides` are all 1-D Tensor,  and their shape size
-          must not greater than the dim of `input_x`.
-
-    During the slicing process, the fragment (end-begin)/strides are extracted from each dimension.
-
-    Example: For Tensor `input_x` with shape :math:`(5, 6, 7)`,
-    set `begin`, `end` and `strides` to (1, 3, 2), (3, 5, 6),
-    (1, 1, 2) respectively, then elements from index 1 to 3 are extrected for dim 0, index 3 to 5
-    are extrected for dim 1 and index 2 to 6 with a `stirded` of 2 are extrected for dim 2, this
-    process is equivalent to a pythonic slice `input_x[1:3, 3:5, 2:6:2]`.
-
-    If the length of `begin` 、 `end` and `strides` is smaller than the dim of `input_x`,
-    then all elements are extracted from the missing dims, it behaves like all the
-    missing dims are filled with zeros, size of that missing dim and ones.
-
-    Example: For Tensor `input_x` with shape :math:`(5, 6, 7)`,
-    set `begin`, `end` and `strides` to (1, 3),
-    (3, 5), (1, 1) respectively, then elements from index 1 to 3 are extrected
-    for dim 0, index 3 to 5 are extrected for dim 1 and index 3 to 5 are extrected
-    for dim 2, this process is equivalent to a pythonic slice `input_x[1:3, 3:5, 0:7]`.
-
-    Here's how a mask works:
-    For each specific mask, it will be converted to a binary representation internally, and then
-    reverse the result to start the calculation. For Tensor `input_x` with
-    shape :math:`(5, 6, 7)`. Given mask value of 3 which
-    can be represented as 0b011. Reverse that we get 0b110, which implies the first and second dim of the
-    original Tensor will be effected by this mask. See examples below, for simplicity all mask mentioned
-    below are all in their reverted binary form:
-
-    - `begin_mask` and `end_mask`
-
-      If the ith bit of `begin_mask` is 1, `begin[i]` is ignored and the fullest
-      possible range in that dimension is used instead. `end_mask` is analogous,
-      except with the end range. For Tensor `input_x` with shape :math:`(5, 6, 7, 8)`,  if `begin_mask`
-      is 0b110, `end_mask` is 0b011, the slice `input_x[0:3, 0:6, 2:7:2]` is produced.
-
-    - `ellipsis_mask`
-
-      If the ith bit of `ellipsis_mask` is 1, as many unspecified dimensions as needed
-      will be inserted between other dimensions. Only one non-zero bit is allowed
-      in `ellipsis_mask`. For Tensor `input_x` with shape :math:`(5, 6, 7, 8)`,  `input_x[2:,...,:6]`
-      is equivalent to `input_x[2:5,:,:,0:6]` ,  `input_x[2:,...]` is equivalent
-      to `input_x[2:5,:,:,:]`.
-
-    - `new_axis_mask`
-
-      If the ith bit of `new_axis_mask` is 1, `begin`, `end` and `strides` are
-      ignored and a new length 1 dimension is added at the specified position
-      in the output Tensor. For Tensor `input_x` with shape :math:`(5, 6, 7)`, if `new_axis_mask`
-      is 0b110,  a new dim is added to the second dim, which will produce
-      a Tensor with shape :math:`(5, 1, 6, 7)`.
-
-    - `shrink_axis_mask`
-
-      If the ith bit of `shrink_axis_mask` is 1, `begin`, `end` and `strides`
-      are ignored and dimension i will be shrunk to 0.
-      For Tensor `input_x` with shape :math:`(5, 6, 7)`,
-      if `shrink_axis_mask` is 0b010, it is equivalent to slice `x[:, 5, :]`
-      and results in an output shape of :math:`(5, 7)`.
-
-    Note:
-        `new_axis_mask` and  `shrink_axis_mask` are not recommended to
-        use at the same time, it might incur unexpected result.
-
-    Args:
-        input_x (Tensor): The input Tensor to be extracted from.
-        begin (tuple[int]): A tuple which represents the location where to start.
-        end (tuple[int]): A tuple or which represents the maximum location where to end.
-        strides (tuple[int]): A tuple which represents the strides is continuously added
-            before reaching the maximum location. Only int is allowed, it can be negative
-            which results in reversed slicing.
-        begin_mask (int, optional): Starting index of the slice. Default: ``0`` .
-        end_mask (int, optional): Ending index of the slice. Default: ``0`` .
-        ellipsis_mask (int, optional): An int mask, ignore slicing operation when set to 1. Default: ``0`` .
-        new_axis_mask (int, optional): An int mask for adding new dims. Default: ``0`` .
-        shrink_axis_mask (int, optional): An int mask for shrinking dims. Default: ``0`` .
-
-    Returns:
-        Tensor, return the extracts a strided slice of a Tensor based on `begin/end` index and `strides`.
-
-    Raises:
-        TypeError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or
-            `shrink_axis_mask` is not an int.
-        TypeError: If `begin`, `end` or `strides` is not tuple[int].
-        ValueError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or
-            `shrink_axis_mask` is less than 0.
-        ValueError: If `begin`, `end` and `strides` have different shapes.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
-        ...                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
-        >>> output = ops.strided_slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1))
-        >>> # Take this " output = strided_slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1)) " as an example,
-        >>> # start = [1, 0, 2] , end = [3, 1, 3], strides = [1, 1, 1], Find a segment of (start, end),
-        >>> # note that end is an open interval
-        >>> # To facilitate understanding, this operator can be divided into three steps:
-        >>> # Step 1: Calculation of the first dimension:
-        >>> # start = 1, end = 3, strides = 1, So can take 1st, 2nd rows, and then gets the final output at this time.
-        >>> # output_1th =
-        >>> # [
-        >>> #     [
-        >>> #         [3,3,3]
-        >>> #         [4,4,4]
-        >>> #     ]
-        >>> #     [
-        >>> #         [5,5,5]
-        >>> #         [6,6,6]
-        >>> #     ]
-        >>> # ]
-        >>> # Step 2: Calculation of the second dimension
-        >>> # 2nd dimension, start = 0, end = 1, strides = 1. So only 0th rows
-        >>> # can be taken, and the output at this time.
-        >>> # output_2nd =
-        >>> # [
-        >>> #     [
-        >>> #         [3,3,3]
-        >>> #     ]
-        >>> #     [
-        >>> #         [5,5,5]
-        >>> #     ]
-        >>> # ]
-        >>> # Step 3: Calculation of the third dimension
-        >>> # 3nd dimension,start = 2, end = 3, strides = 1, So can take 2th cols,
-        >>> # and you get the final output at this time.
-        >>> # output_3ed =
-        >>> # [
-        >>> #     [
-        >>> #         [3]
-        >>> #     ]
-        >>> #     [
-        >>> #         [5]
-        >>> #     ]
-        >>> # ]
-        >>> # The final output after finishing is:
-        >>> print(output)
-        [[[3.]]
-         [[5.]]]
-        >>> # another example like :
-        >>> output = strided_slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
-        >>> print(output)
-        [[[3. 3. 3.]]]
-    """
-    strided_slice_ = _get_cache_prim(P.StridedSlice)(
-        begin_mask, end_mask, ellipsis_mask, new_axis_mask, shrink_axis_mask)
-    return strided_slice_(input_x, begin, end, strides)
-
-
 def slice(input_x, begin, size):
     r"""
     Slices a tensor in the specified shape.
@@ -2152,23 +1734,6 @@ def slice(input_x, begin, size):
         [[[3 3]]]
     """
     return tensor_slice(input_x, begin, size)
-
-
-def concat(tensors, axis=0):
-    """
-    Alias for :func:`mindspore.ops.cat()`.
-
-    Tutorial Examples:
-        - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/master/beginner/tensor.html#tensor-operation>`_
-        - `FGSM Network Adversarial Attack - Implementing FGSM
-          <https://mindspore.cn/tutorials/application/en/master/cv/fgsm.html#implementing-fgsm>`_
-        - `Vision Transformer Image Classification - Building ViT as a whole
-          <https://mindspore.cn/tutorials/application/en/master/cv/vit.html#building-vit-as-a-whole>`_
-        - `Sentiment Classification Implemented by RNN - Dense
-          <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html#dense>`_
-    """
-    _concat = _get_cache_prim(P.Concat)(axis)
-    return _concat(tensors)
 
 
 def stack(tensors, axis=0):
@@ -2281,45 +1846,6 @@ def unbind(input, dim=0):
     return _unstack(input)
 
 
-def expand_dims(input_x, axis):
-    """
-    Adds an additional dimension to `input_x` at the given axis, the dimension
-    of `input_x` should be greater than or equal to 1.
-
-    Note:
-        If the specified axis is a negative number, the index is counted
-        backward from the end and starts at 1.
-
-    Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        axis (int): Specifies the dimension index at which to expand
-            the shape of `input_x`. The value of axis must be in the range
-            `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
-
-    Returns:
-        Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
-        value of `axis` is 0. It has the same data type as `input_x`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        ValueError: If `axis` is not in the valid range :math:`[-a.ndim-1, a.ndim]`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> output = ops.expand_dims(input_tensor, 0)
-        >>> print(output)
-        [[[2. 2.]
-          [2. 2.]]]
-    """
-    return expand_dims_(input_x, axis)
-
-
 def unsqueeze(input, dim):
     """
     Adds an additional dimension to `input` at the given dim.
@@ -2351,7 +1877,7 @@ def unsqueeze(input, dim):
         [[[2. 2.]
           [2. 2.]]]
     """
-    return expand_dims_(input, dim)
+    return expand_dims(input, dim)
 
 
 def squeeze(input, axis=None):
@@ -2406,57 +1932,6 @@ def squeeze(input, axis=None):
         axis = tuple(axis)
     squeeze_ = _get_cache_prim(P.Squeeze)(axis)
     return squeeze_(input)
-
-
-def transpose(input, input_perm):
-    """
-    Permutes the dimensions of the input tensor according to input permutation.
-
-    For a 1-D array this has no effect, as a transposed vector is simply the same vector.
-    To convert a 1-D array into a 2D column vector please refer the class: mindspore.ops.ExpandDims.
-    For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
-    their order indicates how the axes are permuted (see Examples).
-    If axes are not provided and a.shape is :math:`(i[0], i[1], ... i[n-2], i[n-1])`,
-    then a.transpose().shape is :math:`(i[n-1], i[n-2], ... i[1], i[0])`.
-
-    Note:
-        On GPU and CPU, if the value of `input_perm` is negative, its actual value is `input_perm[i] + rank(input)`.
-        Negative value of `input_perm` is not supported on Ascend.
-
-    Args:
-        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        input_perm (tuple[int]): The permutation to be converted. The elements in `input_perm` are composed of
-            the indexes of each dimension of `input`. The length of `input_perm` and the shape of `input` must be
-            the same. Only constant value is allowed. Must be in the range [-rank(input), rank(input)).
-
-    Returns:
-        Tensor, the type of output tensor is the same as `input` and the shape of output tensor is decided by the
-        shape of `input` and the value of `input_perm`.
-
-    Raises:
-        TypeError: If `input_perm` is not a tuple.
-        ValueError: If length of shape of `input` is not equal to length of shape of `input_perm`.
-        ValueError: If the same element exists in `input_perm`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
-        >>> input_perm = (0, 2, 1)
-        >>> output = ops.transpose(input, input_perm)
-        >>> print(output)
-        [[[ 1.  4.]
-          [ 2.  5.]
-          [ 3.  6.]]
-         [[ 7. 10.]
-          [ 8. 11.]
-          [ 9. 12.]]]
-    """
-    return transpose_(input, input_perm)
 
 
 def scatter_mul(input_x, indices, updates):
@@ -2789,111 +2264,6 @@ def scatter_div(input_x, indices, updates):
     return scatter_div_(input_x, indices, updates)
 
 
-def scatter_nd(indices, updates, shape):
-    r"""
-    Scatters a tensor into a new tensor depending on the specified indices.
-
-    Creates an empty tensor with the given `shape`, and set values by scattering the update tensor
-    depending on indices. The empty tensor has rank :math:`P` and `indices` has rank :math:`Q`.
-
-    The `shape` is :math:`(s_0, s_1, ..., s_{P-1})`, where :math:`P \ge 1`.
-
-    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)`, where :math:`Q \ge 2` and :math:`N \le P`.
-
-    The last dimension of `indices` (with length :math:`N` ) indicates slices along the :math:`N` th dimension of the
-    empty tensor.
-
-    `updates` is a tensor of rank :math:`Q-1+P-N`, and
-    its shape is :math:`(i_0, i_1, ..., i_{Q-2}, s_N, s_{N+1}, ..., s_{P-1})`.
-
-    If `indices` contains duplicates, the duplicate `updates` are summed.
-
-    The following figure shows the calculation process of inserting two new value matrices into the first dimension
-    with rank-3:
-
-    .. image:: ScatterNd.png
-
-    Args:
-        indices (Tensor): Define the index of scattering in the new tensor with int32 or int64 data type.
-            The rank of `indices` must be at least 2 and `indices.shape[-1] <= len(shape)`.
-        updates (Tensor): Define the source Tensor to be updated.
-            It has shape `indices.shape[:-1] + shape[indices.shape[-1]:]`.
-        shape (tuple[int]): Define the shape of the output tensor, has the same data type as indices.
-            `shape` can not be empty, and the elements in `shape` must be greater than or equal to 1.
-
-    Returns:
-        Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
-
-    Raises:
-        TypeError: If `shape` is not a tuple.
-        ValueError: If any element of `shape` is less than 1.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2],
-        ...                             [3, 3, 3, 3], [4, 4, 4, 4]],
-        ...                            [[1, 1, 1, 1], [2, 2, 2, 2],
-        ...                             [3, 3, 3, 3], [4, 4, 4, 4]]]), mindspore.float32)
-        >>> shape = (4, 4, 4)
-        >>> output = ops.scatter_nd(indices, updates, shape)
-        >>> print(output)
-        [[[1. 1. 1. 1.]
-          [2. 2. 2. 2.]
-          [3. 3. 3. 3.]
-          [4. 4. 4. 4.]]
-         [[0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]]
-         [[1. 1. 1. 1.]
-          [2. 2. 2. 2.]
-          [3. 3. 3. 3.]
-          [4. 4. 4. 4.]]
-         [[0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]]]
-        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
-        >>> updates = Tensor(np.array([3.2, 1.1]), mindspore.float32)
-        >>> shape = (3, 3)
-        >>> output = ops.scatter_nd(indices, updates, shape)
-        >>> # In order to facilitate understanding, explain the operator pseudo-operation process step by step:
-        >>> # Step 1: Generate an empty Tensor of the specified shape according to the shape
-        >>> # [
-        >>> #     [0. 0. 0.]
-        >>> #     [0. 0. 0.]
-        >>> #     [0. 0. 0.]
-        >>> # ]
-        >>> # Step 2: Modify the data at the specified location according to the indicators
-        >>> # 0th row of indices is [0, 1], 0th row of updates is 3.2.
-        >>> # means that the empty tensor in the 0th row and 1st col set to 3.2
-        >>> # [
-        >>> #     [0. 3.2. 0.]
-        >>> #     [0. 0.   0.]
-        >>> #     [0. 0.   0.]
-        >>> # ]
-        >>> # 1th row of indices is [1, 1], 1th row of updates is 1.1.
-        >>> # means that the empty tensor in the 1th row and 1st col set to 1.1
-        >>> # [
-        >>> #     [0. 3.2. 0.]
-        >>> #     [0. 1.1  0.]
-        >>> #     [0. 0.   0.]
-        >>> # ]
-        >>> # The final result is as follows:
-        >>> print(output)
-        [[0. 3.2 0.]
-         [0. 1.1 0.]
-         [0. 0.  0.]]
-    """
-    return scatter_nd_(indices, updates, shape)
-
-
 def scatter_update(input_x, indices, updates):
     r"""
     Updates tensor values by using input indices and value.
@@ -2943,8 +2313,7 @@ def scatter_update(input_x, indices, updates):
         [[2. 1.2  1.]
          [3. 1.2  1.]]
     """
-    scatter_update_inner = _get_cache_prim(P.ScatterUpdate)()
-    return scatter_update_inner(input_x, indices, updates)
+    return scatter_update_(input_x, indices, updates)
 
 
 def scatter_nd_add(input_x, indices, updates, use_locking=False):
@@ -3411,8 +2780,8 @@ def sort(input_x, axis=-1, descending=False):
             are sorted in descending order, or else sorted in ascending order. Default: ``False`` .
 
     .. warning::
-        Currently, the data types of Float16, UInt8, Int8, Int16, Int32, Int64 are well supported.
-        If use Float32, it may cause loss of accuracy.
+        Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
+        If use float32, it may cause loss of accuracy.
 
     Returns:
 
@@ -3482,115 +2851,6 @@ def argsort(input, axis=-1, descending=False):
     return arg_sort
 
 
-def gather(input_params, input_indices, axis, batch_dims=0):
-    r"""
-    Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
-
-    The following figure shows the calculation process of Gather commonly:
-
-    .. image:: Gather.png
-
-    where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
-
-    .. note::
-        1. The value of input_indices must be in the range of `[0, input_param.shape[axis])`.
-           On CPU and GPU, an error is raised if an out of bound indice is found. On Ascend, the results may be
-           undefined.
-
-        2. The data type of input_params cannot be
-           `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
-           platform currently.
-
-    Args:
-        input_params (Tensor): The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        input_indices (Tensor): Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-            Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
-        axis (Union(int, Tensor[int])): Specifies the dimension index to gather indices.
-                                        It must be greater than or equal to `batch_dims`.
-                                        When `axis` is a Tensor, the size must be 1.
-        batch_dims (int): Specifies the number of batch dimensions. It must be less than or euqal to the rank
-                          of `input_indices`. Default: ``0`` .
-
-    Returns:
-        Tensor, the shape of tensor is
-        :math:`input\_params.shape[:axis] + input\_indices.shape[batch\_dims:] + input\_params.shape[axis + 1:]`.
-
-    Raises:
-        TypeError:  If `axis` is not an int or Tensor.
-        ValueError: If `axis` is a Tensor and its size is not 1.
-        TypeError:  If `input_params` is not a tensor.
-        TypeError:  If `input_indices` is not a tensor of type int.
-        RuntimeError: If `input_indices` is out of range `[0, input_param.shape[axis])` on CPU or GPU.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> # case1: input_indices is a Tensor with shape (5, ).
-        >>> input_params = Tensor(np.array([1, 2, 3, 4, 5, 6, 7]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([0, 2, 4, 2, 6]), mindspore.int32)
-        >>> axis = 0
-        >>> output = ops.gather(input_params, input_indices, axis)
-        >>> print(output)
-        [1. 3. 5. 3. 7.]
-        >>> # case2: input_indices is a Tensor with shape (2, 2). When the input_params has one dimension,
-        >>> # the output shape is equal to the input_indices shape.
-        >>> input_indices = Tensor(np.array([[0, 2], [2, 6]]), mindspore.int32)
-        >>> axis = 0
-        >>> output = ops.gather(input_params, input_indices, axis)
-        >>> print(output)
-        [[1. 3.]
-         [3. 7.]]
-        >>> # case3: input_indices is a Tensor with shape (2, ) and
-        >>> # input_params is a Tensor with shape (3, 4) and axis is 0.
-        >>> input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([0, 2]), mindspore.int32)
-        >>> axis = 0
-        >>> output = ops.gather(input_params, input_indices, axis)
-        >>> print(output)
-        [[ 1.  2.  3.  4.]
-         [ 9. 10. 11. 12.]]
-        >>> # case4: input_indices is a Tensor with shape (2, ) and
-        >>> # input_params is a Tensor with shape (3, 4) and axis is 1, batch_dims is 1.
-        >>> input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([0, 2, 1]), mindspore.int32)
-        >>> axis = 1
-        >>> batch_dims = 1
-        >>> output = ops.gather(input_params, input_indices, axis, batch_dims)
-        >>> print(output)
-        [ 1.  7. 10.]
-    """
-    _gather = _get_cache_prim(P.Gather)(batch_dims)
-    return _gather(input_params, input_indices, axis)
-
-
-def gather_d(x, dim, index):
-    """
-    Gathers elements along an axis specified by dim.
-
-    Refer to :func:`mindspore.ops.gather_elements` for more detail.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
-        >>> index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
-        >>> dim = 1
-        >>> output = ops.gather_d(x, dim, index)
-        >>> print(output)
-        [[1 1]
-         [4 3]]
-    """
-    return gather_d_(x, dim, index)
-
-
 def gather_elements(input, dim, index):
     """
     Gathers elements along an axis specified by dim.
@@ -3605,26 +2865,29 @@ def gather_elements(input, dim, index):
 
         output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
 
-    `input` and `index` have the same length of dimensions, and all dimensions except `dim` have the same size.
-    If `dim` = i, `input` is an n-D tensor with shape :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})`,
-    the `index` must be an n-D tensor with shape :math:`(z_0, z_1, ..., y, ..., z_{n-1})`
-    where `y`>=1 and the output will have the same shape with `index`.
+    `input` and `index` have the same length of dimensions, and `index.shape[axis] <= input.shape[axis]`
+    where axis goes through all dimensions of `input` except `dim`.
+
+    .. warning::
+        On Ascend, the behavior is unpredictable in the following cases:
+
+        - the value of `index` is not in the range `[-input.shape[dim], input.shape[dim])` in forward;
+        - the value of `index` is not in the range `[0, input.shape[dim])` in backward.
 
     Args:
         input (Tensor): The input tensor.
-        dim (int): The axis along which to index. It must be int32 or int64. The value range is [-input.ndim,
-            input.ndim).
+        dim (int): The axis along which to index. It must be int32 or int64. The value range is `[-input.ndim,
+            input.ndim)`.
         index (Tensor): The indices of elements to gather. It can be one of the following data types:
-            int32, int64. The value range of each index element is [-input.shape(dim), input.shape(dim)).
+            int32, int64. The value range of each index element is `[-input.shape(dim), input.shape(dim))`.
 
     Returns:
-        Tensor, has the same shape as index tensor, the shape of tensor is :math:`(z_0, z_1, ..., y, ..., z_{n-1})`,
-        and has the same data type with `input`.
+        Tensor, has the same shape as `index` tensor and has the same data type with `input`.
 
     Raises:
         TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
         ValueError: If length of shape of `input` is not equal to length of shape of `index`.
-        ValueError: If the size of the dimension except `dim` is not equal between `input` and `index`.
+        ValueError: If the size of the dimension except `dim` in `input` is less than size in `index`.
         ValueError: If the value of `dim` is not in the expected range.
 
     Supported Platforms:
@@ -3645,48 +2908,6 @@ def gather_elements(input, dim, index):
     return gather_d_(input, dim, index)
 
 
-def gather_nd(input_x, indices):
-    r"""
-    Gathers slices from a tensor by indices.
-
-    Using given indices to gather slices from a tensor with a specified shape.
-
-    `indices` is an K-dimensional integer tensor. Supposes it as a (K-1)-dimensional tensor and each element of it
-    defines a slice of `input_x`:
-
-    .. math::
-        output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
-
-    The last dimension of `indices` can not more than the rank of `input_x`:
-    :math:`indices.shape[-1] <= input\_x.rank`.
-
-    Args:
-        input_x (Tensor): The target tensor to gather values.
-        indices (Tensor): The index tensor, with int32 or int64 data type.
-
-    Returns:
-        Tensor, has the same type as `input_x` and the shape is
-        :math:`indices\_shape[:-1] + input\_x\_shape[indices\_shape[-1]:]`.
-
-    Raises:
-        ValueError: If length of shape of `input_x` is less than the last dimension of `indices`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> output = ops.gather_nd(input_x, indices)
-        >>> print(output)
-        [-0.1  0.5]
-    """
-    return gather_nd_(input_x, indices)
-
-
 def tensor_scatter_add(input_x, indices, updates):
     r"""
     Creates a new tensor by adding the values from the positions in `input_x` indicated by
@@ -3697,7 +2918,7 @@ def tensor_scatter_add(input_x, indices, updates):
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of `input_x[indices]`. For more details, see use cases.
+    equal to the shape of `input_x[indices]`. For more details, see Examples.
 
     .. math::
         output\left [indices  \right ] = input\_x + update
@@ -3755,7 +2976,7 @@ def tensor_scatter_sub(input_x, indices, updates):
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of `input_x[indices]`. For more details, see use cases.
+    equal to the shape of `input_x[indices]`. For more details, see Examples.
 
     .. math::
         output[indices] = input\_x - update
@@ -3940,13 +3161,11 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
           nondeterministic.
         - On Ascend, the reduction only support set to "none" for now.
         - On Ascend, the data type of `input_x` must be float16 or float32.
+        - This is an experimental API that is subject to change or deletion.
 
     Note:
         If some values of the `indices` exceed the upper or lower bounds of the index of `input_x`, instead of raising
         an index error, the corresponding `updates` will not be updated to `input_x`.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
 
     Args:
         input_x (Tensor): The target tensor. The rank must be at least 1.
@@ -4071,7 +3290,7 @@ def _get_slice_scatter_const(x_shape, axis, start, end, step):
     start = start if start is not None else 0
     start = start if start >= 0 else start + x_rank
     end = end if end is not None else x_shape[axis]
-    end = end if end >= 0 else end + x_rank
+    end = end if end >= 0 else end + x_shape[axis]
     end = end if end < x_shape[axis] else x_shape[axis]
     index = list(builtins.range(start, end, step))
     return x_rank, index, axis
@@ -4118,6 +3337,8 @@ def slice_scatter(input, src, axis=0, start=None, end=None, step=1):
          [1. 0. 1. 0. 1. 0.]
          [1. 0. 1. 0. 1. 0.]]
     """
+    _check_is_tensor("input", input, "slice_scatter")
+    _check_is_tensor("src", src, "slice_scatter")
     input_shape = input.shape
     input_rank, index, axis = _get_slice_scatter_const(input_shape, axis, start, end, step)
 
@@ -4133,6 +3354,8 @@ def slice_scatter(input, src, axis=0, start=None, end=None, step=1):
     for _ in builtins.range(input_rank - axis - 1):
         index_tensor = index_tensor.expand_dims(-1)
     index_tensor = index_tensor.broadcast_to(src.shape)
+    if index_tensor.dtype not in mstype.int_type:
+        index_tensor = index_tensor.astype(mstype.int64)
     return tensor_scatter_elements(input, axis=axis, indices=index_tensor, updates=src)
 
 
@@ -4171,10 +3394,12 @@ def select_scatter(input, src, axis, index):
           [1. 1. 1.]
           [0. 0. 0.]]]
     """
+    _check_is_tensor("input", input, "select_scatter")
+    _check_is_tensor("src", src, "select_scatter")
     src = src.expand_dims(axis=axis)
     x_rank = input.ndim
     axis = axis if axis >= 0 else axis + x_rank
-    index = index if index >= 0 else index + x_rank
+    index = index if index >= 0 else index + input.shape[axis]
     return slice_scatter(input, src, axis, start=index, end=index + 1)
 
 
@@ -4225,6 +3450,7 @@ def space_to_batch_nd(input_x, block_size, paddings):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> block_size = [2, 2]
         >>> paddings = [[0, 0], [0, 0]]
@@ -4299,47 +3525,9 @@ def batch_to_space_nd(input_x, block_shape, crops):
            [3.  4.]]]]
     """
     if isinstance(block_shape, Tensor):
-        _batch_to_space_ndv2 = _get_cache_prim(P.BatchToSpaceNDV2)()
-        return _batch_to_space_ndv2(input_x, block_shape, crops)
+        return batch_to_space_nd_v2_(input_x, block_shape, crops)
     _batch_to_space_nd = _get_cache_prim(P.BatchToSpaceND)(block_shape, crops)
     return _batch_to_space_nd(input_x)
-
-
-def nonzero(input):
-    """
-    Return a Tensor of the positions of all non-zero values.
-
-    Args:
-        input (Tensor): The input Tensor, its rank should be greater than or eaqual to 1.
-
-    Returns:
-        Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
-
-    Raises:
-        TypeError: If `input` is not Tensor.
-        ValueError: If dim of `x` equals to 0.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
-        >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
-        >>> output = ops.nonzero(x)
-        >>> print(output)
-        [[0 0 0]
-         [0 1 0]]
-        >>> x = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
-        >>> output = ops.nonzero(x)
-        >>> print(output)
-        [[0]
-         [2]
-         [4]]
-    """
-    return nonzero_(input)
 
 
 def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_LEFT"):
@@ -4601,18 +3789,19 @@ def meshgrid(*inputs, indexing='xy'):
 
     Keyword Args:
         indexing (str, optional): Cartesian ('xy', default) or
-            matrix ('ij') indexing of output. Valid options: xy' or 'ij'. In the 2-D case with
+            matrix ('ij') indexing of output. Valid options: xy' or ``'ij'``. In the 2-D case with
             inputs of length `M` and `N`, the outputs are of shape :math:`(N, M)`
-            for 'xy' indexing and :math:`(M, N)` for 'ij' indexing. In the 3-D
+            for ``'xy'`` indexing and :math:`(M, N)` for ``'ij'`` indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape
-            :math:`(N, M, P)` for 'xy' indexing and :math:`(M, N, P)` for 'ij' indexing. Default: ``'xy'`` .
+            :math:`(N, M, P)` for ``'xy'`` indexing and :math:`(M, N, P)` for ``'ij'`` indexing.
+            Default: ``'xy'`` .
 
     Returns:
         Tensors, a Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
 
     Raises:
         TypeError: If `indexing` is not a str or `inputs` is not a tuple.
-        ValueError: If `indexing` is neither 'xy' nor 'ij'.
+        ValueError: If `indexing` is neither ``'xy'`` nor ``'ij'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4719,87 +3908,6 @@ def affine_grid(theta, size, align_corners=False):
     return affine_grid_op(theta, size)
 
 
-def broadcast_to(input, shape):  # pylint: disable=redefined-outer-name
-    """
-    Broadcasts input tensor to a given shape. The dim of input shape must be smaller
-    than or equal to that of target shape. Suppose input shape is :math:`(x_1, x_2, ..., x_m)`,
-    target shape is :math:`(*, y_1, y_2, ..., y_m)`, where :math:`*` means any additional dimension.
-    The broadcast rules are as follows:
-
-    Compare the value of :math:`x_m` and :math:`y_m`, :math:`x_{m-1}` and :math:`y_{m-1}`, ...,
-    :math:`x_1` and :math:`y_1` consecutively and
-    decide whether these shapes are broadcastable and what the broadcast result is.
-
-    If the value pairs at a specific dim are equal, then that value goes right into that dim of output shape.
-    With an input shape :math:`(2, 3)`, target shape :math:`(2, 3)` , the inferred output shape is :math:`(2, 3)`.
-
-    If the value pairs are unequal, there are three cases:
-
-    Case 1: If the value of the target shape in the dimension is -1, the value of the
-    output shape in the dimension is the value of the corresponding input shape in the dimension.
-    With an input shape :math:`(3, 3)`, target
-    shape :math:`(-1, 3)`, the output shape is :math:`(3, 3)`.
-
-    Case 2: If the value of target shape in the dimension is not -1, but the corresponding
-    value in the input shape is 1, then the corresponding value of the output shape
-    is that of the target shape. With an input shape :math:`(1, 3)`, target
-    shape :math:`(8, 3)`, the output shape is :math:`(8, 3)`.
-
-    Case 3: If the corresponding values of the two shapes do not satisfy the above cases,
-    it means that broadcasting from the input shape to the target shape is not supported.
-
-    So far we got the last m dims of the outshape, now focus on the first :math:`*` dims, there are
-    two cases:
-
-    If the first :math:`*` dims of output shape does not have -1 in it, then fill the input
-    shape with ones until their length are the same, and then refer to
-    Case 2 mentioned above to calculate the output shape. With target shape :math:`(3, 1, 4, 1, 5, 9)`,
-    input shape :math:`(1, 5, 9)`, the filled input shape will be :math:`(1, 1, 1, 1, 5, 9)` and thus the
-    output shape is :math:`(3, 1, 4, 1, 5, 9)`.
-
-    If the first :math:`*` dims of output shape have -1 in it, it implies this -1 is corresponding to
-    a non-existing dim so they're not broadcastable. With target shape :math:`(3, -1, 4, 1, 5, 9)`,
-    input shape :math:`(1, 5, 9)`, instead of operating the dim-filling process first, it raises errors directly.
-
-    Args:
-        input (Tensor): The input Tensor.
-        shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
-                       where it will be substituted by the input tensor's shape in that position, see example.
-
-    Returns:
-        Tensor, with the given `shape` and the same data type as `input`.
-
-    Raises:
-        TypeError: If `shape` is not a tuple.
-        ValueError: If the target and input shapes are incompatible, or if a - 1 in the target shape is in an invalid
-                    location.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> shape = (2, 3)
-        >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-        >>> output = ops.broadcast_to(x, shape)
-        >>> print(output)
-        [[1. 2. 3.]
-         [1. 2. 3.]]
-        >>> shape = (-1, 2)
-        >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
-        >>> output = ops.broadcast_to(x, shape)
-        >>> print(output)
-        [[1. 1.]
-         [2. 2.]]
-    """
-    if isinstance(shape, Tensor) or ops.is_sequence_value_unknown(shape):
-        _dyn_broadcast_to = _get_cache_prim(DynamicBroadcastTo)()
-        return _dyn_broadcast_to(input, shape)
-    _broadcast_to = _get_cache_prim(P.BroadcastTo)(shape)
-    return _broadcast_to(input)
-
-
 def unsorted_segment_min(x, segment_ids, num_segments):
     r"""
     Computes the minimum of a tensor along segments.
@@ -4823,14 +3931,13 @@ def unsorted_segment_min(x, segment_ids, num_segments):
         x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`. With float16, float32 or int32 data type.
         segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
             Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        num_segments (int): The value specifies the number of distinct `segment_ids`.
+        num_segments (Union[int, Tensor], optional): Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Returns:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Raises:
         TypeError: If `num_segments` is not an int.
-        ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4847,7 +3954,6 @@ def unsorted_segment_min(x, segment_ids, num_segments):
         [[1. 2. 3.]
          [4. 2. 1.]]
     """
-    unsorted_segment_min_ = P.UnsortedSegmentMin()
     return unsorted_segment_min_(x, segment_ids, num_segments)
 
 
@@ -4874,14 +3980,13 @@ def unsorted_segment_max(x, segment_ids, num_segments):
         x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`. With float16, float32 or int32 data type.
         segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
             Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        num_segments (int): The value specifies the number of distinct `segment_ids`.
+        num_segments (Union[int, Tensor], optional): Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Returns:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Raises:
         TypeError: If `num_segments` is not an int.
-        ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4898,7 +4003,6 @@ def unsorted_segment_max(x, segment_ids, num_segments):
         [[1. 2. 3.]
          [4. 5. 6.]]
     """
-    unsorted_segment_max_ = P.UnsortedSegmentMax()
     return unsorted_segment_max_(x, segment_ids, num_segments)
 
 
@@ -4916,16 +4020,15 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
 
     Args:
         x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`. With float16, float32 or int32 data type.
-        segment_ids (Tensor): A `1-D` tensor whose shape is :math:`(x_1)`,
-                              the value must be non-negative tensor. The data type must be int32.
-        num_segments (int): The value specifies the number of distinct `segment_ids`.
+        segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
+            Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R. The data type must be int32.
+        num_segments (Union[int, Tensor], optional): Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Returns:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Raises:
         TypeError: If `num_segments` is not an int.
-        ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4942,7 +4045,6 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
         [[4. 4. 3.]
          [4. 5. 6.]]
     """
-    unsorted_segment_prod_ = P.UnsortedSegmentProd()
     return unsorted_segment_prod_(x, segment_ids, num_segments)
 
 
@@ -5154,33 +4256,6 @@ def is_nonzero(input):
     return bool(out)
 
 
-def scalar_cast(input_x, input_y):
-    """
-    Casts the input scalar to another type.
-
-    Args:
-        input_x (scalar): The input scalar. Only constant value is allowed.
-        input_y (mindspore.dtype): The type to be cast. Only constant value is allowed.
-
-    Returns:
-        Scalar. The type is the same as the python type corresponding to `input_y`.
-
-    Raises:
-        TypeError: If neither `input_x` nor `input_y` is a constant value.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> output = ops.scalar_cast(255.0, mindspore.int32)
-        >>> print(output)
-        255
-    """
-    return scalar_cast_(input_x, input_y)
-
-
 def tensor_scatter_mul(input_x, indices, updates):
     r"""
     Creates a new tensor by multiplying the values from the positions in `input_x` indicated by
@@ -5190,10 +4265,10 @@ def tensor_scatter_mul(input_x, indices, updates):
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of `input_x[indices]`. For more details, see use cases.
+    equal to the shape of `input_x[indices]`. For more details, see Examples.
 
     .. math::
-        output[indices] = input\_x \times update
+        output\left [indices  \right ] = input\_x\times  update
 
     Note:
         - If some values of the `indices` are out of bound, instead of raising an index error,
@@ -5250,7 +4325,7 @@ def tensor_scatter_div(input_x, indices, updates):
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of `input_x[indices]`. For more details, see use cases.
+    equal to the shape of `input_x[indices]`. For more details, see Examples.
 
     .. math::
         output\left [indices  \right ] = input\_x \div update
@@ -5392,8 +4467,8 @@ def masked_select(input, mask):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
         >>> mask = Tensor(np.array([1, 0, 1, 0]), mindspore.bool_)
         >>> output = ops.masked_select(x, mask)
@@ -5401,83 +4476,6 @@ def masked_select(input, mask):
         [1 3]
     """
     return masked_select_(input, mask)
-
-
-def masked_fill(input_x, mask, value):
-    """
-    Fills elements of Tensor with value where mask is True.
-    The shapes of `input_x` and `mask` need to be the same or broadcastable.
-
-    Args:
-        input_x (Tensor): The source Tensor whose data type is one of bool, uint8, int8, int16, int32,
-                    int64, float16, float32, float64, complex64, complex128.
-        mask (Tensor[bool]): The boolean mask.
-        value (Union[float, Tensor]): The value to fill in with, which dtype is the same as `input_x`.
-
-    Returns:
-        Tensor, has the same type and shape as `input_x`.
-
-    Raises:
-        TypeError: If dtype of `mask` is not bool.
-        TypeError: If `input_x` or `mask` is not a Tensor.
-        ValueError: If the shapes of `input_x` and `mask` could not be broadcast.
-        TypeError: If dtype of `input_x` or `value` is not one of bool, uint8, int8, int16, int32,
-                   int64, float16, float32, float64, complex64, complex128.
-        TypeError: If dtype of `value` is different from that of `input_x`.
-        TypeError: If `value` is neither float number nor Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
-        >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
-        >>> output = ops.masked_fill(input_x, mask, 0.5)
-        >>> print(output)
-        [0.5 0.5 3.  0.5]
-    """
-    if isinstance(value, (float, int)) and isinstance(input_x, Tensor):
-        value = scalar_to_tensor_(value, input_x.dtype)
-    masked_fill_ = _get_cache_prim(P.MaskedFill)()
-    return masked_fill_(input_x, mask, value)
-
-
-def diag(input):
-    r"""
-    Constructs a diagonal tensor with a given diagonal values.
-
-    Assume `input` has dimensions :math:`(D_1,... D_k)` , the output is a tensor of
-    rank 2k with dimensions :math:`(D_1,..., D_k, D_1,..., D_k)` where:
-    :math:`output[i_1,..., i_k, i_1,..., i_k] = input[i_1,..., i_k]` and 0 everywhere else.
-
-    Args:
-        input (Tensor): The input tensor.
-
-    Returns:
-        Tensor, has the same dtype as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        ValueError: If rank of `input` is less than 1.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
-        >>> input_x = Tensor([1, 2, 3, 4]).astype('int32')
-        >>> output = ops.diag(input_x)
-        >>> print(output)
-        [[1 0 0 0]
-         [0 2 0 0]
-         [0 0 3 0]
-         [0 0 0 4]]
-    """
-    return diag_(input)
 
 
 def diagflat(input, offset=0):
@@ -5538,7 +4536,7 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
     Combines an array of sliding local blocks into a large containing tensor.
 
     Args:
-        input_x (Tensor): 4D tensor with data type float16 or float.
+        input_x (Tensor): 4D tensor with data type float16 or float32.
         output_size (Tensor): 1D tensor with 2 elements of data type int.
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
@@ -5594,7 +4592,7 @@ def _split_int(x, split_size_or_sections, axis):
         num_sections = length_along_dim // split_size_or_sections
         length1 = num_sections * split_size_or_sections
         length2 = length_along_dim - length1
-        start1 = _list_comprehensions(rank(x), 0, True)
+        start1 = _list_comprehensions(rank_(x), 0, True)
         size1 = _tuple_setitem(arr_shape, axis, length1)
         start2 = _tuple_setitem(start1, axis, length1)
         size2 = _tuple_setitem(arr_shape, axis, length2)
@@ -5646,9 +4644,9 @@ def split(tensor, split_size_or_sections, axis=0):
         TypeError: If argument `tensor` is not Tensor.
         TypeError: If argument `axis` is not Tensor.
         ValueError: If argument `axis` is out of range of :math:`[-tensor.ndim, tensor.ndim)` .
-        TypeError: If each element in 'split_size_or_sections' is not integer.
-        TypeError: If argument `indices_or_sections` is not int, tuple(int) or list(int).
-        ValueError: The sum of 'split_size_or_sections' is not equal to x.shape[axis].
+        TypeError: If each element in `split_size_or_sections` is not integer.
+        TypeError: If argument `split_size_or_sections` is not int, tuple(int) or list(int).
+        ValueError: The sum of `split_size_or_sections` is not equal to x.shape[axis].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5914,24 +4912,24 @@ def _tensor_split_sub_int(x, indices_or_sections, axis):
     arr_shape = x.shape
     length_along_dim = arr_shape[axis]
     if indices_or_sections > length_along_dim:
-        res = P.Split(axis, length_along_dim)(x)
+        res = _get_cache_prim(P.Split)(axis, length_along_dim)(x)
         indices_or_sections_n = [length_along_dim, length_along_dim + 1]
         res2 = _tensor_split_sub_tensors(x, indices_or_sections_n, axis)
         for _ in np.arange(length_along_dim, indices_or_sections):
             res += tuple(res2)[1:]
     elif length_along_dim % indices_or_sections == 0:
-        res = P.Split(axis, indices_or_sections)(x)
+        res = _get_cache_prim(P.Split)(axis, indices_or_sections)(x)
     else:
         num_long_tensor = length_along_dim % indices_or_sections
         num_short_tensor = indices_or_sections - num_long_tensor
         length1 = num_long_tensor * (length_along_dim // indices_or_sections + 1)
         length2 = length_along_dim - length1
-        start1 = _list_comprehensions(rank(x), 0, True)
+        start1 = _list_comprehensions(rank_(x), 0, True)
         size1 = _tuple_setitem(arr_shape, axis, length1)
         start2 = _tuple_setitem(start1, axis, length1)
         size2 = _tuple_setitem(arr_shape, axis, length2)
-        res = P.Split(axis, num_long_tensor)(tensor_slice(x, start1, size1)) + \
-              P.Split(axis, num_short_tensor)(tensor_slice(x, start2, size2))
+        res = _get_cache_prim(P.Split)(axis, num_long_tensor)(tensor_slice(x, start1, size1)) + \
+              _get_cache_prim(P.Split)(axis, num_short_tensor)(tensor_slice(x, start2, size2))
     return res
 
 
@@ -5945,11 +4943,11 @@ def tensor_split(input, indices_or_sections, axis=0):
 
             - If `indices_or_sections` is an integer n, input tensor will be split into n sections.
 
-              - If :math:`input.shape(axis)` can be divisible by n, sub-sections will have equal size
-                :math:`input.shape(axis) / n` .
-              - If :math:`input.shape(axis)` is not divisible by n, the first :math:`input.shape(axis) % n` sections
-                will have size :math:`input.shape(axis) // n + 1` , and the rest will have
-                size :math:`input.shape(axis) // n` .
+              - If :math:`input.shape[axis]` can be divisible by n, sub-sections will have equal size
+                :math:`input.shape[axis] / n` .
+              - If :math:`input.shape[axis]` is not divisible by n, the first :math:`input.shape[axis] \bmod n` sections
+                will have size :math:`input.shape[axis] // n + 1` , and the rest will have
+                size :math:`input.shape[axis] // n` .
             - If `indices_or_sections` is of type tuple(int) or list(int), the input tensor will be split at the
               indices in the list or tuple. For example, given parameters :math:`indices\_or\_sections=[1, 4]`
               and :math:`axis=0` , the input tensor will be split into sections :math:`input[:1]` ,
@@ -6162,7 +5160,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         tensor.
 
         - values (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
-        - index (Tensor) - The index for the maximum value of the input tensor, with dtype int32. If `keepdims`
+        - index (Tensor) - The index for the maximum value of the input tensor, with dtype int64. If `keepdims`
           is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
           ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
           ..., input_N)` .
@@ -6191,16 +5189,15 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         [[3.2 0.4 0.4 2.9 4. ]] [[1 1 0 1 1]]
     """
     if not input.shape:
-        return (input, Tensor(0, dtype=mstype.int32))
+        return (input, Tensor(0, dtype=mstype.int64))
     if axis is None:
-        reduce_max_op = _get_cache_prim(P.ReduceMax)()
-        return (reduce_max_op(input), Tensor(0, dtype=mstype.int32))
+        return (reduce_max_(input), Tensor(0, dtype=mstype.int64))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'max', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
         raise TypeError(f"For 'max', 'axis' must be int, but got {type(axis)}")
     input = _init_and_select_elem(input, initial, where, ops.maximum)
-    argmax_with_value_op = ArgMaxWithValue(axis, keepdims)
+    argmax_with_value_op = _get_cache_prim(ArgMaxWithValue)(axis, keepdims)
     indices, values = argmax_with_value_op(input)
     return values, indices
 
@@ -6246,7 +5243,7 @@ def argmax(input, dim=None, keepdim=False):
         is_dim_none = True
     out = _get_cache_prim(Argmax)(dim, mstype.int64)(input)
     if keepdim and not is_dim_none:
-        out = expand_dims_(out, dim)
+        out = expand_dims(out, dim)
     return out
 
 
@@ -6308,16 +5305,16 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         0.0 0
     """
     if not input.shape:
-        return (input, Tensor(0, dtype=mstype.int32))
+        return (input, Tensor(0, dtype=mstype.int64))
     if axis is None:
-        return (reduce_min(input), Tensor(0, dtype=mstype.int32))
+        return (reduce_min_(input), Tensor(0, dtype=mstype.int64))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'min', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
         raise TypeError(f"For 'min', 'axis' must be int, but got {type(axis)}")
     input = _init_and_select_elem(input, initial, where, ops.minimum)
-    argmin_with_value_ = ArgMinWithValue(axis=axis, keep_dims=keepdims)
-    indices, values = argmin_with_value_(input)
+    argmin_with_value_op = _get_cache_prim(ArgMinWithValue)(axis, keepdims)
+    indices, values = argmin_with_value_op(input)
     return values, indices
 
 
@@ -6375,8 +5372,8 @@ def aminmax(input, *, axis=0, keepdims=False):
             output0 = ops.reshape(output0, [1] * input.ndim)
             output1 = ops.reshape(output1, [1] * input.ndim)
         return output0, output1
-    argmin_with_value_op = P.ArgMinWithValue(axis, keepdims)
-    argmax_with_value_op = P.ArgMaxWithValue(axis, keepdims)
+    argmin_with_value_op = _get_cache_prim(ArgMinWithValue)(axis, keepdims)
+    argmax_with_value_op = _get_cache_prim(ArgMaxWithValue)(axis, keepdims)
     _, output0 = argmin_with_value_op(input)
     _, output1 = argmax_with_value_op(input)
     if keepdims is True and input.ndim == 0:
@@ -6431,66 +5428,7 @@ def narrow(input, axis, start, length):
     begins[axis] = start
     sizes = list(input.shape)
     sizes[axis] = length
-    return P.Slice()(input, begins, sizes)
-
-
-def unsorted_segment_sum(input_x, segment_ids, num_segments):
-    r"""
-    Computes the sum of a tensor along segments.
-
-    Calculates a tensor such that :math:`\text{output}[i] = \sum_{segment\_ids[j] == i} \text{data}[j, \ldots]`, where
-    :math:`j,...` is a tuple describing the index of element in data.
-    `segment_ids` selects which elements in data to sum
-    up. Segment_ids does not need to be sorted, and it does not need to cover all values in the entire valid value
-    range.
-
-    The following figure shows the calculation process of unsorted_segment_sum:
-
-    .. image:: UnsortedSegmentSum.png
-
-    Note:
-        - If the segment_id i is absent in the segment_ids, then output[i] will be filled with 0.
-        - On Ascend, if the value of segment_id is less than 0 or greater than the length of the input data shape, an
-          execution error will occur.
-
-    If the sum of the given segment_ids :math:`i` is empty, then :math:`\text{output}[i] = 0`. If the given segment_ids
-    is negative, the value will be ignored. 'num_segments' must be equal to the number of different segment_ids.
-
-    Args:
-        input_x (Tensor): Input Tensor contains the data to be summed.
-          The shape is :math:`(x_1, x_2, ..., x_R)`.
-        segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
-            Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        num_segments (Union[int, Tensor], optional): Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
-
-    Returns:
-        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
-
-    Raises:
-        TypeError: If `num_segments` is not an int or 0-D Tensor.
-        ValueError: If length of shape of `segment_ids` is less than 1.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor
-        >>> from mindspore import ops
-        >>> import mindspore
-        >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
-        >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
-        >>> num_segments = 4
-        >>> output = ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
-        >>> print(output)
-        [3. 3. 4. 0.]
-        >>> input_x = Tensor([1, 2, 3, 4, 2, 5], mindspore.float32)
-        >>> segment_ids = Tensor([0, 0, 1, 2, 3, 4], mindspore.int32)
-        >>> num_segments = 6
-        >>> output = ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
-        >>> print(output)
-        [3. 3. 4. 2. 5. 0.]
-    """
-    return unsorted_segment_sum_(input_x, segment_ids, num_segments)
+    return tensor_slice(input, begins, sizes)
 
 
 def topk(input, k, dim=None, largest=True, sorted=True):
@@ -6724,9 +5662,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     .. warning::
         - The output is a 3-dimensional Tensor whose shape is
           :math:`(N, C \times \prod(\text{kernel_size}), L)` .
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): 4-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.
@@ -6735,10 +5671,11 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         dilation (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: ``1`` .
         padding (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be
-            a tuple/list of one or two `int` for height and width.
-            If one int, pad_height = pad_width.
-            If two int, pad_height = padding[0], pad_width = padding[1].
-            Default: ``0`` .
+            a tuple/list of one or two `int` for height and width. Default: ``0`` .
+
+            - If one int, pad_height = pad_width.
+            - If two int, pad_height = padding[0], pad_width = padding[1].
+
         stride (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: ``1`` .
 
@@ -6785,98 +5722,6 @@ def _check_diagonal_axes(dim1, dim2, x_ndim):
     return axes
 
 
-def diagonal(input, offset=0, dim1=0, dim2=1):
-    """
-    Returns specified diagonals of `input`.
-
-    If `input` is 2-D, returns the diagonal of `input` with the given offset.
-    If `input` has more than two
-    dimensions, then the axes specified by `dim1` and `dim2` are used to determine
-    the 2-D sub-array whose diagonal is returned. In this case, remove the `dim1` and `dim2` dimensions of `input`
-    and insert the last dimension of `input` by the diagonal elements determined by `dim1` and `dim2`.
-
-    Args:
-        input (Tensor): Array from which the diagonals are taken.
-        offset (int, optional): Offset of the diagonal from the main diagonal.
-            Can be positive or negative. Default: ``0`` .
-        dim1 (int, optional): Axis to be used as the first axis of the 2-D
-            sub-arrays from which the diagonals should be taken. Defaults to
-            first axis (0). Default: ``0`` .
-        dim2 (int, optional): Axis to be used as the second axis of the 2-D
-            sub-arrays from which the diagonals should be taken. Defaults to
-            second axis (1). Default: ``1`` .
-
-    Returns:
-        Tensor, if `input` is 2-D, then `input` 1-D array containing the diagonal. If
-        ``input.ndim > 2``, then the dimensions specified by `dim1` and `dim2` are removed,
-        and a new axis inserted at the end corresponding to the diagonal.
-
-    Raises:
-        TypeError: if `dim1` or `dim2` are not an int.
-        ValueError: if the input tensor has less than two dimensions.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor([[0, 1], [2, 3]], mstype.float32)
-        >>> output = ops.diagonal(x)
-        >>> print(output)
-        [0 3]
-    """
-    x_ndim = input.ndim
-    if x_ndim < 2:
-        raise ValueError(f"For 'ops.diagonal', the original tensor requires at least two dimensions, but got {x_ndim}")
-    _check_attr_dtype("dim1", dim1, [int], "diagonal")
-    _check_attr_dtype("dim2", dim2, [int], "diagonal")
-    dtype = input.dtype
-
-    axes = _check_diagonal_axes(dim1, dim2, x_ndim)
-    perm = ()
-    for i in ms_arrange(x_ndim):
-        if i not in axes:
-            perm += (i,)
-    perm += axes
-    input = input.transpose(perm)
-
-    x_shape = input.shape
-    n, m = x_shape[-2:]
-
-    e = ops.eye(n, m, dtype)
-    if offset >= m or offset <= -n:
-        zero_shape = x_shape[:-2] + (0,)
-        return ops.zeros(zero_shape, dtype)
-    if offset != 0:
-        e = e.astype(mstype.float32)
-        if offset > 0:
-            e_left = ops.fill(mstype.float32, (n, offset), 0)
-            e_right = e[..., 0:m - offset:1]
-            e = ops.cat((e_left, e_right), 1).astype(dtype)
-        elif offset < 0:
-            e_upper = ops.fill(mstype.float32, (-offset, m), 0)
-            e_lower = e[0:n + offset:1, ...]
-            e = ops.cat((e_upper, e_lower), 0).astype(dtype)
-    e = ops.broadcast_to(e, x_shape)
-
-    prod_val = ops.mul(input, e)
-    res = ops.ReduceSum()(prod_val.astype(mstype.float32), -1)
-
-    begin = ()
-    for _ in ms_arrange(x_ndim - 2):
-        begin += (0,)
-    last_dim_begin = builtins.max(0, -offset)
-    begin += (last_dim_begin,)
-    res_size = res.shape[:-1]
-    last_dim_end = builtins.min(x_shape[-2], builtins.max(0, x_shape[-1] - offset)) - last_dim_begin
-    if last_dim_end <= 0:
-        return Tensor([])
-    res_size += (last_dim_end,)
-    res = ops.slice(res, begin, res_size)
-    return res.astype(dtype)
-
-
 def _check_is_tensor(param_name, input, cls_name):
     """Returns True if input is Tensor."""
     if not isinstance(input, Tensor):
@@ -6895,6 +5740,9 @@ def diagonal_scatter(input, src, offset=0, dim1=0, dim2=1):
     `dim1` and `dim2` specify the two dimensions of `input`,
     the elements in these two dimensions will be treated as elements of a matrix,
     and `src` is embedded on the diagonal of the matrix.
+
+    Note:
+        Currently, ``inf`` value of elements in `input` or `src` is not supported.
 
     Args:
         input (Tensor): Input Tensor, whose dimension is larger than 1.
@@ -6932,16 +5780,39 @@ def diagonal_scatter(input, src, offset=0, dim1=0, dim2=1):
     """
     _check_is_tensor("input", input, "diagonal_scatter")
     _check_is_tensor("src", src, "diagonal_scatter")
-    _check_is_int(offset, "offset", "diagonal_scatter")
-    _check_is_int(dim1, "dim1", "diagonal_scatter")
-    _check_is_int(dim2, "dim2", "diagonal_scatter")
     input_diag = input.diagonal(offset, dim1, dim2)
     _check_diagonal_scatter_shape(input_diag.shape, src.shape)
-    embed = ones_like(src)
-    embed = ops.diag_embed(embed, offset, dim1, dim2)
-    embed = input * embed
+    input_shape = input.shape
+    zeros_shape = list(input_shape)
+    m, n = input_shape[dim1], input_shape[dim2]
+    if m == n:
+        src = src - input_diag
+        src = ops.diag_embed(src, offset, dim1, dim2)
+        return input + src
+    if m > n:
+        axis = dim2
+        zeros_shape[axis] = m - n
+    else:
+        axis = dim1
+        zeros_shape[axis] = n - m
+    zeros_tensor = zeros(zeros_shape, dtype=input.dtype)
+    input = concat((input, zeros_tensor), axis)
+    input_diag = input.diagonal(offset, dim1, dim2)
+    if src.shape != input_diag.shape:
+        zeros_shape = []
+        for i, ax in enumerate(src.shape):
+            if ax == input_diag.shape[i]:
+                zeros_shape.append(ax)
+            else:
+                axis = i
+                zeros_shape.append(input_diag.shape[i] - ax)
+        zeros_tensor = zeros(zeros_shape, dtype=src.dtype)
+        src = concat((src, zeros_tensor), axis)
+    src = src - input_diag
     src = ops.diag_embed(src, offset, dim1, dim2)
-    return input + src - embed
+    input = input + src
+    begin = (0,) * input.ndim
+    return slice(input, begin, input_shape)
 
 
 def lstsq(input, A):
@@ -7000,8 +5871,7 @@ def lstsq(input, A):
          [-6.5000005 -4.500001 ]
          [-3.500002  -2.5000017]]
     """
-    lstsq_op = _get_cache_prim(Lstsq)()
-    return lstsq_op(input, A)
+    return lstsq_(input, A)
 
 
 def mvlgamma(input, p):
@@ -7076,7 +5946,7 @@ def argwhere(input):
         [[0 0 0]
          [0 1 0]]
     """
-    return nonzero_(input)
+    return nonzero(input)
 
 
 def column_stack(tensors):
@@ -7113,14 +5983,13 @@ def column_stack(tensors):
         raise TypeError(f"For column_stack, the input must be list or tuple of tensors, but got {type(tensors)}.")
 
     trans_x = ()
-    _expand_dims = _get_cache_prim(P.ExpandDims)()
     for tensor in tensors:
         if not isinstance(tensor, Tensor):
             raise TypeError(f"For column_stack, the input element must be tensor, but got {type(tensor)}.")
         if tensor.ndim < 1:
-            tensor = _expand_dims(tensor, 0)
+            tensor = expand_dims(tensor, 0)
         if tensor.ndim == 1:
-            tensor = _expand_dims(tensor, 1)
+            tensor = expand_dims(tensor, 1)
         trans_x += (tensor,)
     if not trans_x:
         raise ValueError(f"For column_stack, the input must have at least 1 tensor, but got 0.")
@@ -7166,7 +6035,7 @@ def hstack(tensors):
         if not isinstance(tensor, Tensor):
             raise TypeError(f"For hstack, the input element must be tensor, but got {type(tensor)}.")
         if tensor.ndim < 1:
-            tensor = expand_dims_(tensor, 0)
+            tensor = expand_dims(tensor, 0)
         tuple_of_tensor += (tensor,)
     if not tuple_of_tensor:
         raise ValueError("For hstack, the input must have at least 1 tensor, but got 0.")
@@ -7266,7 +6135,7 @@ def movedim(x, source, destination):
             f"For `source` and `destination` arguments, the number of elements must be the same, but got 'source':"
             f" {len(source)} and 'destination': {len(destination)}.")
     perm = _get_moved_perm(ndim, source, destination)
-    return _get_cache_prim(P.Transpose)()(x, perm)
+    return transpose_(x, perm)
 
 
 def moveaxis(x, source, destination):
@@ -7341,7 +6210,7 @@ def swapaxes(input, axis0, axis1):
         new_perm = perm[0:axis0] + perm[axis1:axis1 + 1] + \
                    perm[axis0 + 1:axis1] + perm[axis0:axis0 + 1]
 
-    return _get_cache_prim(P.Transpose)()(input, new_perm)
+    return transpose_(input, new_perm)
 
 
 def swapdims(input, dim0, dim1):
@@ -7451,7 +6320,7 @@ def repeat_interleave(input, repeats, axis=None):
 
 def repeat_elements(x, rep, axis=0):
     """
-    Repeat elements of a tensor along an axis, like `np.repeat` .
+    Repeat elements of a tensor along an axis, like `numpy.repeat` .
 
     Args:
         x (Tensor): The tensor to repeat values for. Must be of type: float16,
@@ -7489,32 +6358,17 @@ def repeat_elements(x, rep, axis=0):
     const_utils.check_type_valid(ops.dtype(x), mstype.number_type, 'input x')
     rep = _check_positive_int(rep, "rep", "repeat_elements")
     axis = _check_is_int(axis, "axis", "repeat_elements")
-    shape_op = P.Shape()
-    rank_op = P.Rank()
-    tile_op = P.Tile()
-    expand_dims_op = P.ExpandDims()
-    reshape_op = P.Reshape()
-    x_rank = rank_op(x)
+    x_rank = rank_(x)
     axis = _check_axis_range(axis, x_rank, "axis", "repeat_elements")
+    axis = axis + x.ndim if axis < 0 else axis
     expand_axis = axis + 1
-    x_expand = expand_dims_op(x, expand_axis)
+    x_expand = expand_dims(x, expand_axis)
     rep_dims = _cal_repeat_dims(x_rank, rep, expand_axis)
-    x_expand = tile_op(x_expand, rep_dims)
-    x_shape = shape_op(x)
+    x_expand = tile_(x_expand, rep_dims)
+    x_shape = shape_(x)
     x_reshape = _cal_reshape(x_shape, rep, axis)
-    x_rep = reshape_op(x_expand, x_reshape)
+    x_rep = reshape_(x_expand, x_reshape)
     return x_rep
-
-
-@_primexpr
-def _check_sequence_mask_input_len(input_shape, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if not input_shape:
-        raise ValueError(f"{msg_prefix} input_shape must be greater than 0, but got {input_shape}.")
-    # broadcast only supports 7d shape
-    shape_size = len(input_shape)
-    if shape_size >= 7:
-        raise ValueError(f"{msg_prefix} dimension of input_shape must be less than 7, but got {shape_size}d.")
 
 
 def sequence_mask(lengths, maxlen=None):
@@ -7569,29 +6423,19 @@ def sequence_mask(lengths, maxlen=None):
          [[ True  True False False ]
           [ True  True  True  True ]]]
     """
-
-    argmax_op = P.ArgMaxWithValue()
-    reshape_op = P.Reshape()
-    range_op = P.Range()
-    expand_op = P.ExpandDims()
-    cast_op = P.Cast()
-    to_tensor_op = P.ScalarToTensor()
-    shape_op = P.Shape()
-
     const_utils.check_type_valid(ops.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
-    _check_sequence_mask_input_len(shape_op(lengths), "sequence_mask")
 
     if maxlen is None:
-        flatten_data = reshape_op(lengths, (-1,))
-        flatten_data = cast_op(flatten_data, mstype.float32)
-        _, value = argmax_op(flatten_data)
-        maxlen = cast_op(value, mstype.int32)
+        flatten_data = reshape_(lengths, (-1,))
+        flatten_data = cast_(flatten_data, mstype.float32)
+        _, value = arg_max_with_value_(flatten_data)
+        maxlen = cast_(value, mstype.int32)
     else:
         maxlen = _check_positive_int(maxlen, "maxlen", "sequence_mask")
-        maxlen = to_tensor_op(maxlen, mstype.int32)
+        maxlen = scalar_to_tensor_(maxlen, mstype.int32)
 
-    range_vector = range_op(to_tensor_op(0, mstype.int32), maxlen, to_tensor_op(1, mstype.int32))
-    mask = expand_op(lengths, -1)
+    range_vector = range_(scalar_to_tensor_(0, mstype.int32), maxlen, scalar_to_tensor_(1, mstype.int32))
+    mask = expand_dims(lengths, -1)
     result = range_vector < mask
     return result
 
@@ -7602,35 +6446,6 @@ def top_k(input_x, k, sorted=True):
     """
     top_k_ = _get_cache_prim(P.TopK)(sorted)
     return top_k_(input_x, k)
-
-
-def deepcopy(input_x):
-    """
-    Returns a deepcopy of input tensor.
-
-    Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Returns:
-        Tensor, a deepcopy of `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor([[0, 1], [2, 1]], dtype=mindspore.int32)
-        >>> output = ops.deepcopy(input)
-        >>> print(output)
-        [[0 1]
-         [2 1]]
-    """
-    _deepcopy = _get_cache_prim(P.Identity)()
-    return _deepcopy(input_x)
 
 
 __all__ = [
@@ -7659,8 +6474,8 @@ __all__ = [
     'full_like',
     'dyn_shape',
     'rank',
-    'range',
     'arange',
+    'range',
     'reshape',
     'reshape_',
     'flatten',

@@ -24,12 +24,26 @@
 namespace mindspore::graphkernel {
 using AnfNodePtrToAnfNodePtrMap = std::unordered_map<AnfNodePtr, AnfNodePtr>;
 
-std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(const AnfNodePtrList &nodes);
-std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNodes(const AnfNodePtrList &nodes);
-AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg, const AnfNodePtrList &inputs);
-AnfNodePtr ReplaceNodesWithGraphKernelNode(const AnfNodePtrList &nodes, const FuncGraphPtr &main_graph,
-                                           const std::string &postfix = "");
+struct ClusterConfig {
+  bool inline_sub_func_graph{true};
+  bool only_output_basenode{false};
+  bool sort_parameter{false};
+  AnfNodePtr base_node{nullptr};
+};
+
+std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(
+  const AnfNodePtrList &nodes, const ClusterConfig &config = ClusterConfig{});
+std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNodes(
+  const AnfNodePtrList &nodes, const ClusterConfig &config = ClusterConfig());
+CNodePtr CreateNewFuseCNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg, const AnfNodePtrList &inputs);
+CNodePtr ReplaceNodesWithGraphKernelNode(const AnfNodePtrList &nodes, const FuncGraphPtr &main_graph,
+                                         const std::string &postfix = "",
+                                         const ClusterConfig &config = ClusterConfig{});
+CNodePtr ReplaceNodesWithGraphKernelFuncGraph(const FuncGraphPtr &main_graph, const FuncGraphPtr &sub_graph,
+                                              const AnfNodePtrList &inputs, const AnfNodePtrList &outputs);
 bool ConvertTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr);
+/// \brief Put Monads at end of parameters
+bool SortParameters(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr);
 bool EliminateMaketupleGetitem(const FuncGraphPtr &fg);
 void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
 }  // namespace mindspore::graphkernel

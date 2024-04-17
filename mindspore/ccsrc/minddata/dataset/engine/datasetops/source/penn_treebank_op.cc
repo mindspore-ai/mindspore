@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,6 @@
  */
 
 #include "minddata/dataset/engine/datasetops/source/penn_treebank_op.h"
-
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <utility>
 
 #include "include/common/debug/common.h"
 #include "minddata/dataset/core/config_manager.h"

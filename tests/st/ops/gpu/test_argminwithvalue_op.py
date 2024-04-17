@@ -112,7 +112,7 @@ def argminwithvalue_tensor(context_mode, np_type):
     return x.argmin_with_value(axis=-1)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argminwithvalue_base_float32():
@@ -157,7 +157,7 @@ def test_argminwithvalue_3d_big_float32():
     argminwithvalue_3d(np.float32, shape_x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argminwithvalue_functional():
@@ -179,7 +179,7 @@ def test_argminwithvalue_functional():
     assert (output.asnumpy() == expect_output).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argminwithvalue_tensor():

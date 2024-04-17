@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,16 @@ class BiasAddInfo : public OperatorInfo {
   void ReComputeBatchSplitFlagList() override;
 
  protected:
+  Status InferMirrorOps() override;
   Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputTensorInfo() override;
+  Status InferForwardCommunicationByLayout() override { return SUCCESS; }
 };
 }  // namespace parallel
 }  // namespace mindspore

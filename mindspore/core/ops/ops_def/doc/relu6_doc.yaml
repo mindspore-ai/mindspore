@@ -1,0 +1,38 @@
+relu6:
+    description: |
+        Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
+    
+        .. math::
+        
+            \text{ReLU6}(x) = \min(\max(0,x), 6)
+    
+        It returns :math:`\min(\max(0,x), 6)` element-wise.
+    
+        ReLU6 Activation Function Graph:
+    
+        .. image:: ../images/ReLU6.png
+            :align: center
+    
+        Args:
+            x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means any number of additional dimensions.
+                Data type must be float16, float32.
+
+        Returns:
+            Tensor, with the same dtype and shape as the `x`.
+    
+        Raises:
+            TypeError: If dtype of `x` is neither float16 nor float32.
+            TypeError: If `x` is not a Tensor.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+            >>> result = ops.relu6(x)
+            >>> print(result)
+            [[0. 4. 0.]
+             [2. 0. 6.]]

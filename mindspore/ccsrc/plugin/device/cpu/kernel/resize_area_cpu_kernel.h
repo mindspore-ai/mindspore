@@ -41,32 +41,30 @@ class ResizeAreaCPUKernelMod : public NativeCpuKernelMod {
   ResizeAreaCPUKernelMod() = default;
   ~ResizeAreaCPUKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs, x_interps_);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                     const std::vector<ResizeAreaCachedInterpolation> &x_interps) const;
   template <bool NeedsXBounding, typename T>
   void ComputePatchSum(float scale, const std::vector<const T *> &y_ptrs, const std::vector<float> &y_scales,
                        const ResizeAreaCachedInterpolation &x_interp, float *output_patch_ptr) const;
   float ResizeAreaScaling(size_t in_size, size_t out_size, bool align_corners);
 
-  using ResizeAreaLaunchFunc =
-    std::function<bool(ResizeAreaCPUKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<ResizeAreaCachedInterpolation> &)>;
+  using ResizeAreaLaunchFunc = std::function<bool(ResizeAreaCPUKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                                  const std::vector<kernel::KernelTensor *> &,
+                                                  const std::vector<ResizeAreaCachedInterpolation> &)>;
 
   ResizeAreaLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, ResizeAreaLaunchFunc>> func_list_;

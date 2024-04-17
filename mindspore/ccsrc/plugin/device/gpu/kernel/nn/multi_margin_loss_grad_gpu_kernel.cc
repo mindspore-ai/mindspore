@@ -21,28 +21,22 @@
 #include <algorithm>
 #include <memory>
 #include "include/curand.h"
+#include "ir/dtype/empty.h"
 #include "mindspore/core/ops/grad/multi_margin_loss_grad.h"
 #include "abstract/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/multi_margin_loss_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-bool MultiMarginLossGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MultiMarginLossGrad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  p_ = kernel_ptr->get_p();
+bool MultiMarginLossGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  p_ = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
   if (p_ != p_num_1 && p_ != p_num_2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' p should be 1 or 2, but got " << p_;
     return false;
   }
-  margin_ = kernel_ptr->get_margin();
-  string reduction = kernel_ptr->get_reduction();
+  margin_ = GetValue<float>(primitive_->GetAttr(ops::kMargin));
+  string reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   reduction_ = 1;
   if (reduction == "mean") {
     reduction_ = reduction_num_1;
@@ -66,24 +60,19 @@ bool MultiMarginLossGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MultiMarginLossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &) {
+int MultiMarginLossGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   input_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
-  int inputs_size = 0;
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    inputs_size += 1;
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  auto input_shape = inputs.at(kIndex1)->GetShapeVector();
+  auto input_shape = inputs[kIndex1]->GetShapeVector();
   input_elements_ = SizeOf(input_shape);
   if (input_elements_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be greater than zero.";
@@ -91,21 +80,18 @@ int MultiMarginLossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   }
   nframe_ = input_shape.at(0);
   dim_ = input_shape.at(1);
-  if (inputs_size == has_weight_inputs_size) {
-    has_weight_ = true;
-  } else {
-    has_weight_ = false;
-  }
+
+  auto type = inputs[kIndex3]->GetType();
+  has_weight_ = !type->isa<TypeNone>();
   size_t input_size = input_elements_ * unit_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(input_size);
   return KRET_OK;
 }
 
 template <typename T>
-bool MultiMarginLossGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs) {
+bool MultiMarginLossGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs) {
   T *output_grad = GetDeviceAddress<T>(inputs, kIndex0);
   T *input = GetDeviceAddress<T>(inputs, kIndex1);
   int64_t *target = GetDeviceAddress<int64_t>(inputs, kIndex2);
@@ -125,39 +111,21 @@ std::vector<std::pair<KernelAttr, MultiMarginLossGradGpuKernelMod::MultiMarginLo
                                                     .AddInputAttr(kNumberTypeFloat16)
                                                     .AddInputAttr(kNumberTypeFloat16)
                                                     .AddInputAttr(kNumberTypeInt64)
-                                                    .AddInputAttr(kNumberTypeFloat16)
+                                                    .AddOptionalInputAttr(kNumberTypeFloat16)
                                                     .AddOutputAttr(kNumberTypeFloat16),
                                                   &MultiMarginLossGradGpuKernelMod::LaunchKernel<half>},
                                                  {KernelAttr()
                                                     .AddInputAttr(kNumberTypeFloat64)
                                                     .AddInputAttr(kNumberTypeFloat64)
                                                     .AddInputAttr(kNumberTypeInt64)
-                                                    .AddInputAttr(kNumberTypeFloat64)
+                                                    .AddOptionalInputAttr(kNumberTypeFloat64)
                                                     .AddOutputAttr(kNumberTypeFloat64),
                                                   &MultiMarginLossGradGpuKernelMod::LaunchKernel<double>},
                                                  {KernelAttr()
                                                     .AddInputAttr(kNumberTypeFloat32)
                                                     .AddInputAttr(kNumberTypeFloat32)
                                                     .AddInputAttr(kNumberTypeInt64)
-                                                    .AddInputAttr(kNumberTypeFloat32)
-                                                    .AddOutputAttr(kNumberTypeFloat32),
-                                                  &MultiMarginLossGradGpuKernelMod::LaunchKernel<float>},
-                                                 {KernelAttr()
-                                                    .AddInputAttr(kNumberTypeFloat16)
-                                                    .AddInputAttr(kNumberTypeFloat16)
-                                                    .AddInputAttr(kNumberTypeInt64)
-                                                    .AddOutputAttr(kNumberTypeFloat16),
-                                                  &MultiMarginLossGradGpuKernelMod::LaunchKernel<half>},
-                                                 {KernelAttr()
-                                                    .AddInputAttr(kNumberTypeFloat64)
-                                                    .AddInputAttr(kNumberTypeFloat64)
-                                                    .AddInputAttr(kNumberTypeInt64)
-                                                    .AddOutputAttr(kNumberTypeFloat64),
-                                                  &MultiMarginLossGradGpuKernelMod::LaunchKernel<double>},
-                                                 {KernelAttr()
-                                                    .AddInputAttr(kNumberTypeFloat32)
-                                                    .AddInputAttr(kNumberTypeFloat32)
-                                                    .AddInputAttr(kNumberTypeInt64)
+                                                    .AddOptionalInputAttr(kNumberTypeFloat32)
                                                     .AddOutputAttr(kNumberTypeFloat32),
                                                   &MultiMarginLossGradGpuKernelMod::LaunchKernel<float>}};
 

@@ -30,9 +30,9 @@ class TensorsQueueCreateKernelMod : public TensorsQueueBaseMod {
   TensorsQueueCreateKernelMod();
   ~TensorsQueueCreateKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   std::string name_;
@@ -47,9 +47,9 @@ class TensorsQueuePutKernelMod : public TensorsQueueBaseMod {
   TensorsQueuePutKernelMod();
   ~TensorsQueuePutKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   int64_t elements_num_;
@@ -61,9 +61,9 @@ class TensorsQueueGetKernelMod : public TensorsQueueBaseMod {
   TensorsQueueGetKernelMod();
   ~TensorsQueueGetKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   int64_t elements_num_;
@@ -75,9 +75,9 @@ class TensorsQueueClearKernelMod : public TensorsQueueBaseMod {
   TensorsQueueClearKernelMod();
   ~TensorsQueueClearKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 };
 
 class TensorsQueueCloseKernelMod : public TensorsQueueBaseMod {
@@ -85,9 +85,9 @@ class TensorsQueueCloseKernelMod : public TensorsQueueBaseMod {
   TensorsQueueCloseKernelMod();
   ~TensorsQueueCloseKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 };
 
 class TensorsQueueSizeKernelMod : public TensorsQueueBaseMod {
@@ -95,9 +95,9 @@ class TensorsQueueSizeKernelMod : public TensorsQueueBaseMod {
   TensorsQueueSizeKernelMod();
   ~TensorsQueueSizeKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 };
 
 MS_REG_GPU_KERNEL(TensorsQueueCreate, TensorsQueueCreateKernelMod)

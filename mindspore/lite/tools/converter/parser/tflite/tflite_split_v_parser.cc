@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include "ops/split.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -42,7 +42,7 @@ PrimitiveCPtr TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT>
     MS_LOG(ERROR) << "get spliteV -> sizeSplits failed";
     return nullptr;
   }
-  prim->set_size_splits(size_splits);
+  prim->AddAttr("size_splits", api::MakeValue(size_splits));
 
   const auto &tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(FIRST_INPUT));
   if (tensor == nullptr) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,10 +70,13 @@ const char kPipelineSplit[] = "pipeline_split";
 const char kOptimize[] = "optimize";
 const char kAutoMonadReorder[] = "auto_monad_reorder";
 const char kGetJitBpropGraph[] = "get_jit_bprop_graph";
+const char kRewriterAfterJitBprop[] = "rewriter_after_jit_bprop_graph";
 const char kEliminateSpecialOpNode[] = "eliminate_special_op_node";
 const char kValidate[] = "validate";
 const char kLoadMindir[] = "load_mindir";
-const char kDistribtuedSplit[] = "distribtued_split";
+const char kInferMindir[] = "infer_mindir";
+const char kModifyMindirGraph[] = "modify_mindir_graph";
+const char kDistributedSplit[] = "distribtued_split";
 const char kTaskEmit[] = "task_emit";
 const char kExecute[] = "execute";
 const char kAbstractAnalyze[] = "AbstractAnalyze";

@@ -34,7 +34,8 @@ constexpr char kPadOperation[] = "Pad";
 
 class PadOperation : public TensorOperation {
  public:
-  PadOperation(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value, BorderType padding_mode);
+  PadOperation(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value, BorderType padding_mode,
+               const std::string &device_target = "CPU");
 
   ~PadOperation() override;
 
@@ -48,10 +49,13 @@ class PadOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   std::vector<int32_t> padding_;
   std::vector<uint8_t> fill_value_;
   BorderType padding_mode_;
+  std::string device_target_;
 };
 }  // namespace vision
 }  // namespace dataset

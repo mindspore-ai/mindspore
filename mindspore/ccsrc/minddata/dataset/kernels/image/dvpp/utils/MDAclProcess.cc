@@ -26,6 +26,8 @@
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace {
 const int BUFFER_SIZE = 2048;
@@ -116,7 +118,7 @@ APP_ERROR MDAclProcess::Release() {
 
   // Release stream
   if (stream_ != nullptr) {
-    ret = aclrtDestroyStream(stream_);
+    ret = CALL_ASCEND_API(aclrtDestroyStream, stream_);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to destroy stream, ret = " << ret;
       stream_ = nullptr;
@@ -154,7 +156,7 @@ APP_ERROR MDAclProcess::InitModule() {
  * @return: aclError which is error code of ACL API
  */
 APP_ERROR MDAclProcess::InitResource() {
-  APP_ERROR ret = aclrtSetCurrentContext(context_);
+  APP_ERROR ret = CALL_ASCEND_API(aclrtSetCurrentContext, context_);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get ACL context, ret = " << ret;
     return ret;
@@ -186,7 +188,7 @@ aclrtStream MDAclProcess::GetStream() { return stream_; }
 APP_ERROR MDAclProcess::H2D_Sink(const std::shared_ptr<mindspore::dataset::Tensor> &input,
                                  std::shared_ptr<mindspore::dataset::DeviceTensor> &device_input) {
   // Recall the context created in InitResource()
-  APP_ERROR ret = aclrtSetCurrentContext(context_);
+  APP_ERROR ret = CALL_ASCEND_API(aclrtSetCurrentContext, context_);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get ACL context, ret = " << ret;
     return ret;
@@ -231,7 +233,7 @@ APP_ERROR MDAclProcess::H2D_Sink(const std::shared_ptr<mindspore::dataset::Tenso
 APP_ERROR MDAclProcess::D2H_Pop(const std::shared_ptr<mindspore::dataset::DeviceTensor> &device_output,
                                 std::shared_ptr<mindspore::dataset::Tensor> &output) {
   void *resHostBuf = nullptr;
-  APP_ERROR ret = aclrtMallocHost(&resHostBuf, device_output->DeviceDataSize());
+  APP_ERROR ret = CALL_ASCEND_API(aclrtMallocHost, &resHostBuf, device_output->DeviceDataSize());
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to allocate memory from host ret = " << ret;
     return ret;
@@ -239,8 +241,8 @@ APP_ERROR MDAclProcess::D2H_Pop(const std::shared_ptr<mindspore::dataset::Device
   std::shared_ptr<void> outBuf(resHostBuf, aclrtFreeHost);
   processedInfo_ = outBuf;
   // Memcpy the output data from device to host
-  ret = aclrtMemcpy(outBuf.get(), device_output->DeviceDataSize(), device_output->GetDeviceBuffer(),
-                    device_output->DeviceDataSize(), ACL_MEMCPY_DEVICE_TO_HOST);
+  ret = CALL_ASCEND_API(aclrtMemcpy, outBuf.get(), device_output->DeviceDataSize(), device_output->GetDeviceBuffer(),
+                        device_output->DeviceDataSize(), ACL_MEMCPY_DEVICE_TO_HOST);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
     return ret;
@@ -298,7 +300,7 @@ APP_ERROR MDAclProcess::JPEG_D(const RawData &ImageInfo) {
 
   // Alloc host memory for the inference output according to the size of output
   void *resHostBuf = nullptr;
-  ret = aclrtMallocHost(&resHostBuf, DecodeOutData->dataSize);
+  ret = CALL_ASCEND_API(aclrtMallocHost, &resHostBuf, DecodeOutData->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to allocate memory from host ret = " << ret;
     return ret;
@@ -306,8 +308,8 @@ APP_ERROR MDAclProcess::JPEG_D(const RawData &ImageInfo) {
   std::shared_ptr<void> outBuf(resHostBuf, aclrtFreeHost);
   processedInfo_ = outBuf;
   // Memcpy the output data from device to host
-  ret = aclrtMemcpy(outBuf.get(), DecodeOutData->dataSize, DecodeOutData->data, DecodeOutData->dataSize,
-                    ACL_MEMCPY_DEVICE_TO_HOST);
+  ret = CALL_ASCEND_API(aclrtMemcpy, outBuf.get(), DecodeOutData->dataSize, DecodeOutData->data,
+                        DecodeOutData->dataSize, ACL_MEMCPY_DEVICE_TO_HOST);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
     return ret;
@@ -385,7 +387,7 @@ APP_ERROR MDAclProcess::JPEG_R(const DvppDataInfo &ImageInfo) {
   }
   // Alloc host memory for the inference output according to the size of output
   void *resHostBuf = nullptr;
-  ret = aclrtMallocHost(&resHostBuf, ResizeOutData->dataSize);
+  ret = CALL_ASCEND_API(aclrtMallocHost, &resHostBuf, ResizeOutData->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to allocate memory from host ret = " << ret;
     return ret;
@@ -393,8 +395,8 @@ APP_ERROR MDAclProcess::JPEG_R(const DvppDataInfo &ImageInfo) {
   std::shared_ptr<void> outBuf(resHostBuf, aclrtFreeHost);
   processedInfo_ = outBuf;
   // Memcpy the output data from device to host
-  ret = aclrtMemcpy(outBuf.get(), ResizeOutData->dataSize, ResizeOutData->data, ResizeOutData->dataSize,
-                    ACL_MEMCPY_DEVICE_TO_HOST);
+  ret = CALL_ASCEND_API(aclrtMemcpy, outBuf.get(), ResizeOutData->dataSize, ResizeOutData->data,
+                        ResizeOutData->dataSize, ACL_MEMCPY_DEVICE_TO_HOST);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
     return ret;
@@ -503,7 +505,7 @@ APP_ERROR MDAclProcess::JPEG_C(const DvppDataInfo &ImageInfo) {
   }
   // Alloc host memory for the inference output according to the size of output
   void *resHostBuf = nullptr;
-  ret = aclrtMallocHost(&resHostBuf, CropOutData->dataSize);
+  ret = CALL_ASCEND_API(aclrtMallocHost, &resHostBuf, CropOutData->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to allocate memory from host ret = " << ret;
     return ret;
@@ -511,8 +513,8 @@ APP_ERROR MDAclProcess::JPEG_C(const DvppDataInfo &ImageInfo) {
   std::shared_ptr<void> outBuf(resHostBuf, aclrtFreeHost);
   processedInfo_ = outBuf;
   // Memcpy the output data from device to host
-  ret = aclrtMemcpy(outBuf.get(), CropOutData->dataSize, CropOutData->data, CropOutData->dataSize,
-                    ACL_MEMCPY_DEVICE_TO_HOST);
+  ret = CALL_ASCEND_API(aclrtMemcpy, outBuf.get(), CropOutData->dataSize, CropOutData->data, CropOutData->dataSize,
+                        ACL_MEMCPY_DEVICE_TO_HOST);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
     return ret;
@@ -636,7 +638,7 @@ APP_ERROR MDAclProcess::PNG_D(const RawData &ImageInfo) {
   }
   // Alloc host memory for the inference output according to the size of output
   void *resHostBuf = nullptr;
-  ret = aclrtMallocHost(&resHostBuf, DecodeOutData->dataSize);
+  ret = CALL_ASCEND_API(aclrtMallocHost, &resHostBuf, DecodeOutData->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to allocate memory from host ret = " << ret;
     return ret;
@@ -644,8 +646,8 @@ APP_ERROR MDAclProcess::PNG_D(const RawData &ImageInfo) {
   std::shared_ptr<void> outBuf(resHostBuf, aclrtFreeHost);
   processedInfo_ = outBuf;
   // Memcpy the output data from device to host
-  ret = aclrtMemcpy(outBuf.get(), DecodeOutData->dataSize, DecodeOutData->data, DecodeOutData->dataSize,
-                    ACL_MEMCPY_DEVICE_TO_HOST);
+  ret = CALL_ASCEND_API(aclrtMemcpy, outBuf.get(), DecodeOutData->dataSize, DecodeOutData->data,
+                        DecodeOutData->dataSize, ACL_MEMCPY_DEVICE_TO_HOST);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
     return ret;
@@ -728,7 +730,7 @@ APP_ERROR MDAclProcess::JPEG_DRC(const RawData &ImageInfo) {
   }
   // Alloc host memory for the inference output according to the size of output
   void *resHostBuf = nullptr;
-  ret = aclrtMallocHost(&resHostBuf, CropOutData->dataSize);
+  ret = CALL_ASCEND_API(aclrtMallocHost, &resHostBuf, CropOutData->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to allocate memory from host ret = " << ret;
     return ret;
@@ -736,8 +738,8 @@ APP_ERROR MDAclProcess::JPEG_DRC(const RawData &ImageInfo) {
   std::shared_ptr<void> outBuf(resHostBuf, aclrtFreeHost);
   processedInfo_ = outBuf;
   // Memcpy the output data from device to host
-  ret = aclrtMemcpy(outBuf.get(), CropOutData->dataSize, CropOutData->data, CropOutData->dataSize,
-                    ACL_MEMCPY_DEVICE_TO_HOST);
+  ret = CALL_ASCEND_API(aclrtMemcpy, outBuf.get(), CropOutData->dataSize, CropOutData->data, CropOutData->dataSize,
+                        ACL_MEMCPY_DEVICE_TO_HOST);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
     return ret;
@@ -866,7 +868,7 @@ APP_ERROR MDAclProcess::JPEG_DR(const RawData &ImageInfo) {
   }
   // Alloc host memory for the inference output according to the size of output
   void *resHostBuf = nullptr;
-  ret = aclrtMallocHost(&resHostBuf, ResizeOutData->dataSize);
+  ret = CALL_ASCEND_API(aclrtMallocHost, &resHostBuf, ResizeOutData->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to allocate memory from host ret = " << ret;
     return ret;
@@ -874,8 +876,8 @@ APP_ERROR MDAclProcess::JPEG_DR(const RawData &ImageInfo) {
   std::shared_ptr<void> outBuf(resHostBuf, aclrtFreeHost);
   processedInfo_ = outBuf;
   // Memcpy the output data from device to host
-  ret = aclrtMemcpy(outBuf.get(), ResizeOutData->dataSize, ResizeOutData->data, ResizeOutData->dataSize,
-                    ACL_MEMCPY_DEVICE_TO_HOST);
+  ret = CALL_ASCEND_API(aclrtMemcpy, outBuf.get(), ResizeOutData->dataSize, ResizeOutData->data,
+                        ResizeOutData->dataSize, ACL_MEMCPY_DEVICE_TO_HOST);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
     return ret;

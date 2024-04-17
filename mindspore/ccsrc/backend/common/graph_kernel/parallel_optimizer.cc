@@ -69,7 +69,7 @@ bool CanParallel(const mindspore::HashSet<AnfNodePtr> &opts_set, const FuncGraph
 
   for (auto &opt : opts_set) {
     auto this_opt = opt->cast<CNodePtr>();
-    for (size_t i = 1; i < this_opt->inputs().size(); i++) {
+    for (size_t i = 1; i < this_opt->size(); i++) {
       if (auto inp = this_opt->input(i); inp->isa<Parameter>()) {
         auto joint_opts = dfs(inp);
         if (joint_opts.size() != 1 || joint_opts.find(this_opt) == joint_opts.end()) {
@@ -83,27 +83,27 @@ bool CanParallel(const mindspore::HashSet<AnfNodePtr> &opts_set, const FuncGraph
 
 AnfNodePtr DoParallel(const std::vector<std::pair<AnfNodePtr, AnfNodePtr>> &updatestate_opts,
                       const AnfNodePtr &first_updatestate) {
-  std::vector<AnfNodePtr> additional_inputs;
+  AnfNodeWeakPtrList additional_inputs;
   for (size_t i = 0; i < updatestate_opts.size(); i++) {
     auto opt_cnode = updatestate_opts[i].second->cast<CNodePtr>();
-    opt_cnode->set_input(opt_cnode->inputs().size() - 1, first_updatestate);
+    opt_cnode->set_input(opt_cnode->size() - 1, first_updatestate);
     if (i < updatestate_opts.size() - 1) {
       auto ups_cnode = updatestate_opts[i].first->cast<CNodePtr>();
-      (void)additional_inputs.insert(additional_inputs.cend(), ups_cnode->inputs().cbegin() + REAL_NODE_START_POS,
-                                     ups_cnode->inputs().cend());
+      (void)additional_inputs.insert(additional_inputs.cend(), ups_cnode->weak_inputs().cbegin() + REAL_NODE_START_POS,
+                                     ups_cnode->weak_inputs().cend());
     }
   }
   auto last_updatestate = updatestate_opts.back().first->cast<CNodePtr>();
   last_updatestate->set_input(UMONAD_POS, first_updatestate);
-  std::vector<AnfNodePtr> final_inputs = last_updatestate->inputs();
+  AnfNodeWeakPtrList final_inputs = last_updatestate->weak_inputs();
   (void)final_inputs.insert(final_inputs.cend(), additional_inputs.cbegin(), additional_inputs.cend());
-  last_updatestate->set_inputs(final_inputs);
+  last_updatestate->set_weak_inputs(final_inputs);
   return last_updatestate;
 }
 
 int64_t MemoryCost(const CNodePtr &cnode) {
   int64_t total = 0;
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     if (cnode->input(i)->isa<CNode>()) {
       auto shape = common::AnfAlgo::GetOutputInferShape(cnode->input(i), 0);
       int64_t input_memory = 1;

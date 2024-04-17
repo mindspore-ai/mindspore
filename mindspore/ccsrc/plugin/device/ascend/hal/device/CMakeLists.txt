@@ -19,14 +19,6 @@ if(ENABLE_MPI AND ENABLE_D)
     target_link_libraries(_ascend_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
 endif()
 
-list(REMOVE_ITEM DEVICE_SRC_LIST "profiling/profiling_callback_register.cc")
-
-if(ENABLE_SECURITY)
-    list(REMOVE_ITEM DEVICE_SRC_LIST "profiling/profiling_callback_register.cc")
-    list(REMOVE_ITEM DEVICE_SRC_LIST "profiling/profiling_manager.cc")
-    list(REMOVE_ITEM DEVICE_SRC_LIST "profiling/profiling_utils.cc")
-endif()
-
 set_property(SOURCE ${DEVICE_SRC_LIST}}
     PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
 
@@ -36,7 +28,6 @@ file(GLOB_RECURSE UNUSED_SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ge_runtime/*.cc"
         "./tasksink/*.cc"
         "./kernel_build_ascend.cc"
-        "./kernel_select_ascend.cc"
         "./kernel_select_graph_kernel.cc"
         "./ascend_label_assign.cc"
         "./ascend_launch_mul.cc"
@@ -44,18 +35,13 @@ file(GLOB_RECURSE UNUSED_SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ascend_launch_kernel.cc"
         "./ascend_runtime_core.cc"
         "./lic_manager.cc"
+        "./ascend_host_queue.cc"
         )
 list(REMOVE_ITEM MS_DEVICE_910B ${UNUSED_SRC_IN_910B})
 set_property(SOURCE ${MS_DEVICE_910B} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
 
 if(ENABLE_D)
-    add_library(_mindspore_plugin_device_ascend_hal_device_obj OBJECT ${DEVICE_SRC_LIST})
     add_library(_mindspore_plugin_device_ascend_hal_device_910b_obj OBJECT ${MS_DEVICE_910B})
-
-    file(GLOB_RECURSE GE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ge_runtime/*.cc")
-    set_property(SOURCE ${GE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_GE)
-    target_include_directories(_mindspore_plugin_device_ascend_hal_device_obj PRIVATE ${CMAKE_BINARY_DIR}/proto/ge)
-    add_dependencies(_mindspore_plugin_device_ascend_hal_device_obj graph)
     target_include_directories(_mindspore_plugin_device_ascend_hal_device_910b_obj PRIVATE ${CMAKE_BINARY_DIR}/proto/ge)
     add_dependencies(_mindspore_plugin_device_ascend_hal_device_910b_obj graph)
     if(ENABLE_MPI)

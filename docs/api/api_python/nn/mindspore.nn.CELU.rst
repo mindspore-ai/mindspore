@@ -14,7 +14,7 @@ mindspore.nn.CELU
 
     CELU函数图：
 
-    .. image:: images/CELU.png
+    .. image:: ../images/CELU.png
         :align: center
 
     参数：

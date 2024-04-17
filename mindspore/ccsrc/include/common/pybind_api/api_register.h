@@ -31,17 +31,28 @@ void RegFuncGraph(const py::module *m);
 void RegUpdateFuncGraphHyperParams(py::module *m);
 void RegParamInfo(const py::module *m);
 void RegPrimitive(const py::module *m);
+void RegPrimitiveFunction(const py::module *m);
 void RegSignatureEnumRW(const py::module *m);
 void RegValues(const py::module *m);
 void RegMsContext(const py::module *m);
 void RegSecurity(py::module *m);
+void RegForkUtils(py::module *m);
 
+namespace hal {
+void RegStream(py::module *m);
+void RegEvent(py::module *m);
+}  // namespace hal
 namespace initializer {
 void RegRandomNormal(py::module *m);
 }
 
 namespace pynative {
 void RegPyNativeExecutor(const py::module *m);
+void RegisterPyBoostFunction(py::module *m);
+}  // namespace pynative
+
+namespace pijit {
+void RegPIJitInterface(py::module *m);
 }
 
 namespace tensor {
@@ -67,6 +78,10 @@ namespace abstract {
 void RegPrimitiveFrontEval();
 }
 #endif
+
+namespace ops {
+void RegOpEnum(py::module *m);
+}  // namespace ops
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_PYBIND_API_API_REGISTER_H_

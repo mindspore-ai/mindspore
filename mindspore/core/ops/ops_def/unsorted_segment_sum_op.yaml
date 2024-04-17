@@ -1,0 +1,13 @@
+#operator unsorted_segment_sum
+unsorted_segment_sum:
+  args:
+    input_x:
+      dtype: tensor
+    segment_ids:
+      dtype: tensor
+    num_segments:
+      dtype: int
+      type_cast: tensor
+  returns:
+    y:
+      dtype: tensor

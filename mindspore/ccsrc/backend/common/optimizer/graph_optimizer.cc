@@ -49,7 +49,10 @@ FuncGraphPtr GraphOptimizer::Optimize(const FuncGraphPtr &func_graph, bool run_o
   std::vector<FuncGraphPtr> func_graphs;
   func_graphs.push_back(func_graph);
   (void)TopoSort(func_graph->get_return());
-  auto func_graph_index = manager->func_graph_index(func_graph);
+  if (!func_graph->has_user_data<FuncGraphPassIndex>()) {
+    func_graph->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = func_graph->user_data<FuncGraphPassIndex>();
   MS_EXCEPTION_IF_NULL(func_graph_index);
   func_graph_index->set_has_gen_index(false);
 

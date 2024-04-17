@@ -1,0 +1,3 @@
+rank:
+    description: |
+        Please refer to `rank` in `mindspore.python.mindspore.ops.operations.manually_defined.ops_def`.

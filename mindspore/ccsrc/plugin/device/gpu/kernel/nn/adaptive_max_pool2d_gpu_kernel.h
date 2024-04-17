@@ -43,9 +43,8 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
         kernel_name_("AdaptiveMaxPool2D") {}
   ~AdaptiveMaxPool2DKernelMod() override = default;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    if (!InitSize(base_operator, inputs, outputs)) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (!InitSize(inputs, outputs)) {
       return KRET_RESIZE_FAILED;
     }
     return KRET_OK;
@@ -62,8 +61,8 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
     return support_list;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     int64_t *indices_addr = nullptr;
@@ -75,29 +74,14 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(base_operator);
-    if (kernel_ptr == nullptr) {
-      MS_EXCEPTION(ValueError)
-        << "For primitive[AdaptiveMaxPool2D], cast op from BaseOperator to AdaptiveMaxPool2D failed.";
-      return false;
-    }
-    kernel_name_ = kernel_ptr->name();
-    return InitSize(base_operator, inputs, outputs);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return InitSize(inputs, outputs);
   }
 
-  bool InitSize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  bool InitSize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
-    }
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(base_operator);
-    if (kernel_ptr == nullptr) {
-      MS_EXCEPTION(ValueError)
-        << "For primitive[AdaptiveMaxPool2D], cast op from BaseOperator to AdaptiveMaxPool2D failed.";
-      return false;
     }
 
     // Check the parameters valid.
@@ -127,7 +111,7 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
       input_size_ *= input_shape[i];
     }
 
-    auto output_size = kernel_ptr->output_size();
+    auto output_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr("output_size"));
     if (output_size.size() == ops::kOutputSizeAttrSize) {
       // If the output size is none, the output shapes should be same as the input.
       output_height_ = (output_size[0] != ops::kPyValueNone ? static_cast<size_t>(output_size[0]) : input_height_);

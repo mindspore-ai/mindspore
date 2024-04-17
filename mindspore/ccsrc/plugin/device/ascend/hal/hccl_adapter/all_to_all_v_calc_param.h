@@ -19,14 +19,17 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "mindspore/core/ir/anf.h"
+#include "mindspore/core/ir/primitive.h"
+#include "kernel/kernel.h"
 
 namespace mindspore::hccl {
+using mindspore::kernel::KernelTensor;
+
 class AllToAllvCalcParam {
  public:
-  AllToAllvCalcParam(const CNodeWeakPtr &cnode, uint32_t rank_size);
+  AllToAllvCalcParam(const PrimitivePtr &prim, uint32_t rank_size);
   ~AllToAllvCalcParam() = default;
-  void CalcOpParam();
+  void CalcOpParam(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   const std::vector<int64_t> &GetSendCounts() const { return send_counts_; }
   const std::vector<int64_t> &GetSendDispls() const { return sdispls_; }
@@ -36,7 +39,7 @@ class AllToAllvCalcParam {
  private:
   void CalcMemOffset(const std::vector<size_t> &mem_sizes, const std::vector<size_t> &real_sizes,
                      const std::string &rank_ids_attr, std::vector<int64_t> *counts, std::vector<int64_t> *displs);
-  CNodeWeakPtr node_;
+  PrimitivePtr prim_;
   uint32_t rank_size_;
   std::vector<int64_t> send_counts_;
   std::vector<int64_t> sdispls_;

@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/fractional_avg_pool_grad_cpu_kernel.h"
 #include <map>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -30,11 +31,9 @@ constexpr size_t kShapeIndexW = 2;
 constexpr size_t kShapeIndexC = 3;
 }  // namespace
 
-bool FractionalAvgPoolGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  overlapping_ = GetValue<bool>(base_operator->GetAttr("overlapping"));
+bool FractionalAvgPoolGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  overlapping_ = GetValue<bool>(primitive_->GetAttr("overlapping"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -45,35 +44,33 @@ bool FractionalAvgPoolGradCpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int FractionalAvgPoolGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FractionalAvgPoolGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  orig_input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  out_backprop_shape_ = inputs[1]->GetDeviceShapeAdaptively();
+  orig_input_shape_ = inputs[0]->GetDeviceShapeVector();
+  out_backprop_shape_ = inputs[1]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
 template <typename T>
-bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::vector<AddressPtr> &inputs,
-                                                                    const std::vector<AddressPtr> &outputs) {
+bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::vector<KernelTensor *> &inputs,
+                                                                    const std::vector<KernelTensor *> &outputs) {
   typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> ConstEigenMatrixMap;
   typedef Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> EigenDoubleMatrixMap;
-  int64_t *orig_input_tensor_shape = reinterpret_cast<int64_t *>(inputs[0]->addr);
+  int64_t *orig_input_tensor_shape = reinterpret_cast<int64_t *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(orig_input_tensor_shape);
-  T *out_backprop = reinterpret_cast<T *>(inputs[1]->addr);
+  T *out_backprop = reinterpret_cast<T *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(out_backprop);
-  int64_t *row_seq = reinterpret_cast<int64_t *>(inputs[2]->addr);
+  int64_t *row_seq = reinterpret_cast<int64_t *>(inputs[2]->device_ptr());
   MS_EXCEPTION_IF_NULL(row_seq);
-  int64_t *col_seq = reinterpret_cast<int64_t *>(inputs[3]->addr);
+  int64_t *col_seq = reinterpret_cast<int64_t *>(inputs[3]->device_ptr());
   MS_EXCEPTION_IF_NULL(col_seq);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output);
-  size_t orig_input_shape_num = inputs[0]->size / sizeof(int64_t);
+  size_t orig_input_shape_num = inputs[0]->size() / sizeof(int64_t);
   if (orig_input_shape_.size() != 1 || orig_input_shape_num != tensor_in_and_out_dims) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the input 'orig_input_tensor_shape' must be 1-dimensional and 4 elements.";
@@ -82,8 +79,8 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
   const int64_t out_rows = out_backprop_shape_[kShapeIndexH];
   const int64_t out_cols = out_backprop_shape_[kShapeIndexW];
   const int64_t out_depth = out_backprop_shape_[kShapeIndexC];
-  int64_t row_seq_nums = SizeToLong(inputs[2]->size / sizeof(int64_t));
-  int64_t col_seq_nums = SizeToLong(inputs[3]->size / sizeof(int64_t));
+  int64_t row_seq_nums = SizeToLong(inputs[2]->size() / sizeof(int64_t));
+  int64_t col_seq_nums = SizeToLong(inputs[3]->size() / sizeof(int64_t));
   if (row_seq_nums <= out_rows) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', given 'out_backprop' shape [" << out_batch << ","
                              << out_rows << "," << out_cols << "," << out_depth
@@ -142,7 +139,12 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
   return true;
 }
 
-void FractionalAvgPoolGradCpuKernelMod::SyncOutputShape() { outputs_[kIndex0]->SetShapeVector(out_shape_); }
+void FractionalAvgPoolGradCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                 const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(out_shape_);
+  outputs[kIndex0]->set_size(LongToSize(std::accumulate(
+    out_shape_.begin(), out_shape_.end(), UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
+}
 
 template <typename T>
 void FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradCompute(

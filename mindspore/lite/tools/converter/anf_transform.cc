@@ -75,6 +75,7 @@
 #include "tools/optimizer/fusion/mul_activation_fusion.h"
 #include "tools/optimizer/fusion/activation_fusion.h"
 #include "tools/optimizer/fusion/reshape_reduce_fusion.h"
+#include "tools/optimizer/fusion/add_layernorm_fusion.h"
 #include "tools/optimizer/graph/add_tensor_array.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
@@ -137,8 +138,11 @@
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/fusion/tile_matmul_fusion.h"
 #include "tools/optimizer/fusion/flash_attention_fusion_for_custom.h"
+#include "tools/optimizer/fusion/gegluv2_fusion.h"
+#include "tools/optimizer/fusion/ffn_fusion.h"
 #include "tools/optimizer/graph/make_list_pass.h"
 #include "tools/optimizer/fusion/flash_attention_fusion.h"
+#include "tools/optimizer/fusion/groupnormsilu_fusion.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -199,7 +203,7 @@ AnfTransform::AnfTransform() = default;
 AnfTransform::~AnfTransform() = default;
 
 STATUS AnfTransform::MarkTrainInputOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     if (!utils::isa<CNodePtr>(input_node)) {
       continue;
@@ -229,8 +233,8 @@ STATUS AnfTransform::MarkTrainWeightSharingOp(const FuncGraphPtr &func_graph, co
       MS_LOG(DEBUG) << "Primitive is nullptr.";
       continue;
     }
-    for (size_t i = 1; i < graph_cnode->inputs().size(); i++) {
-      for (size_t j = 1; j < cnode->inputs().size(); j++) {
+    for (size_t i = 1; i < graph_cnode->size(); i++) {
+      for (size_t j = 1; j < cnode->size(); j++) {
         if ((graph_cnode->input(i) == cnode->input(j)) && utils::isa<Parameter>(cnode->input(j))) {
           (void)graph_prim->AddAttr("trainOp", MakeValue(true));
         }
@@ -554,7 +558,7 @@ int RunDecreaseTransposePass(const FuncGraphPtr &old_graph, const std::shared_pt
   CHECK_NULL_RETURN(decrease_trans_pm);
   std::vector<opt::PassPtr> fusions = {std::make_shared<opt::ReshapeTransposeFusion>(),
                                        std::make_shared<opt::TransposeFusion>()};
-  std::for_each(fusions.begin(), fusions.end(), [&decrease_trans_pm, &param](opt::PassPtr fusion) {
+  (void)std::for_each(fusions.begin(), fusions.end(), [&decrease_trans_pm, &param](opt::PassPtr fusion) {
     if (fusion != nullptr && param->fusion_blacklists.find(fusion->name()) == param->fusion_blacklists.end()) {
       decrease_trans_pm->AddPass(fusion);
     }
@@ -817,7 +821,13 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
                                                           param->aclModelOptionCfgParam.disable_custom_fusion_pattern),
      false},
     {"MakeListPass", std::make_shared<opt::MakeListPass>(), true},
-    {"FlashAttentionFusion", std::make_shared<opt::FlashAttentionFusion>(), false}};
+    {"FlashAttentionFusion", std::make_shared<opt::FlashAttentionFusion>(param->aclModelOptionCfgParam.op_attrs_map),
+     false},
+    {"GroupNormSiluFusion", std::make_shared<opt::GroupNormSiluFusion>(), false},
+    {"GeGluV2Fusion", std::make_shared<opt::GeGluV2Fusion>(), false},
+    {"AddLayerNormFusion", std::make_shared<opt::AddLayerNormFusion>(), false},
+    {"FFNFusion", std::make_shared<opt::FFNFusion>(), false},
+  };
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));

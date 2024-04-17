@@ -30,14 +30,12 @@ class AdaptiveAvgPool3DCPUKernelMod : public NativeCpuKernelMod {
   AdaptiveAvgPool3DCPUKernelMod() = default;
   ~AdaptiveAvgPool3DCPUKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -46,9 +44,9 @@ class AdaptiveAvgPool3DCPUKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename SCALAR_T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   using AdaptiveAvgPool3DLaunchFunc = std::function<bool(
-    AdaptiveAvgPool3DCPUKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+    AdaptiveAvgPool3DCPUKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, AdaptiveAvgPool3DLaunchFunc>> func_list_;
   AdaptiveAvgPool3DLaunchFunc kernel_func_;
 

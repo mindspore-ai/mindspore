@@ -6,7 +6,7 @@ mindspore.dataset.vision.RandomAutoContrast
     以给定的概率自动调整图像的对比度。
 
     参数：
-        - **cutoff** (float, 可选) - 输入图像直方图中最亮和最暗像素的百分比。该值必须在 [0.0, 50.0) 范围内。默认值： ``0.0`` 。
+        - **cutoff** (float, 可选) - 输入图像直方图中需要剔除的最亮和最暗像素的百分比。该值必须在 [0.0, 50.0) 范围内。默认值： ``0.0`` 。
         - **ignore** (Union[int, sequence], 可选) - 要忽略的背景像素值，该值必须在 [0, 255] 范围内。默认值： ``None`` 。
         - **prob** (float, 可选) - 图像被调整对比度的概率，取值范围：[0.0, 1.0]。默认值： ``0.5`` 。
 
@@ -21,4 +21,4 @@ mindspore.dataset.vision.RandomAutoContrast
 
     教程样例：
         - `视觉变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_

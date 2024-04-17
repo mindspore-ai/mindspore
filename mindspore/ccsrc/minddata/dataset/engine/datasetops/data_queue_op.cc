@@ -700,7 +700,7 @@ Status DataQueueOp::SendRowToTdt(TensorRow curr_row, bool is_profiling_enable, i
     DATA_INFO data_info;
     (void)std::transform(curr_row.begin(), curr_row.end(), std::back_inserter(data_info),
                          [](const std::shared_ptr<Tensor> &ts) { return std::make_pair(ts->type(), ts->shape()); });
-    RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(data_info));
+    RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(std::move(data_info)));
   }
   return Status::OK();
 }
@@ -743,6 +743,17 @@ Status DataQueueOp::GetDataInfo(DATA_INFO *data_info) {
     }
   }
   RETURN_IF_NOT_OK(data_info_queue_ptr_->PopFront(data_info));
+#endif
+  return Status::OK();
+}
+
+Status DataQueueOp::GetMbufQueueSize(size_t *queue_size) {
+#ifdef WITH_BACKEND
+  if (device_type_ == DeviceType::Ascend) {
+    *queue_size = ascend_data_queue_->QueryQueueSize();
+  } else {
+    *queue_size = 1;
+  }
 #endif
   return Status::OK();
 }
@@ -1151,11 +1162,13 @@ Status DataQueueOp::DetectFirstBatch() {
       break;
     } else if (temp_end_time - temp_start_time > kTimeOutMilliSeconds) {
       count_num++;
-      MS_LOG(WARNING) << "Bad performance attention, it waits more than 25 seconds and unable to fetch first Batch of "
-                         "data from dataset pipeline, which might result `GetNext` timeout problem. You may test "
-                         "dataset processing performance (with creating dataset iterator) and optimize it. Notes: "
-                         "shuffle operation is turn on for loading Dataset in default, which may effect first batch "
-                         "loading time.";
+      MS_LOG(WARNING) << "Bad performance attention, it waits more than " +
+                           std::to_string(kTimeOutMilliSeconds / 1000) +
+                           " seconds and unable to fetch first Batch of "
+                           "data from dataset pipeline, which might result `GetNext` timeout problem. You may test "
+                           "dataset processing performance (with creating dataset iterator) and optimize it. Notes: "
+                           "shuffle operation is turn on for loading Dataset in default, which may effect first batch "
+                           "loading time.";
     }
   }
   return Status::OK();
@@ -1167,9 +1180,10 @@ void DataQueueOp::DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_t
   constexpr auto kTimeMilliSeconds = 1000.;
   send_summary_.back().record_data(interval / kTimeMilliSeconds);
   if (interval > kTimeOutMilliSeconds) {
-    MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to fetch a batch of data from dataset "
-                       "pipeline, which might result `GetNext` timeout problem. You may test dataset processing"
-                       " performance(with creating dataset iterator) and optimize it.";
+    MS_LOG(WARNING) << "Bad performance attention, it takes more than " + std::to_string(kTimeOutMilliSeconds / 1000) +
+                         " seconds to fetch a batch of data from dataset "
+                         "pipeline, which might result `GetNext` timeout problem. You may test dataset processing"
+                         " performance(with creating dataset iterator) and optimize it.";
   }
 }
 #endif

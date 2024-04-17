@@ -10,8 +10,8 @@ include(${CMAKE_SOURCE_DIR}/cmake/graphengine_variables.cmake)
 
 set(SERVER_FLATBUFFER_OUTPUT "${CMAKE_BINARY_DIR}/schema")
 
-## Function for setting NVCC flag
-function(set_nvcc_flag CUDA_NVCC_FLAGS)
+## Function for setting NVCC flag and cuda arch list
+function(set_nvcc_flag CUDA_NVCC_FLAGS CUDA_ARCH_LIST)
     # Detect gpu archs by cudaGetDeviceProperties.
     message("Detect gpu arch on this device.")
     set(cu_file "${CMAKE_SOURCE_DIR}/build/mindspore/ccsrc/get_device_compute_capabilities.cu")
@@ -59,6 +59,7 @@ function(set_nvcc_flag CUDA_NVCC_FLAGS)
     else()
         message("Failed to detect gpu arch automatically, build a base arch 6.0.")
         list(APPEND CUDA_NVCC_FLAGS -arch=sm_60)
+        list(APPEND CUDA_ARCH_LIST sm_60)
     endif()
     # Get build flag from env to choose common/auto build.
     set(NVCC_ARCH_FLAG_FROM_ENV $ENV{CUDA_ARCH})
@@ -67,14 +68,17 @@ function(set_nvcc_flag CUDA_NVCC_FLAGS)
         list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_60,code=sm_60
                                     -gencode=arch=compute_61,code=sm_61
                                     -gencode=arch=compute_70,code=sm_70)
+        list(APPEND CUDA_ARCH_LIST sm_60 sm_61 sm_70)
         if(${CUDA_VERSION} VERSION_GREATER "9.5")
             list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_75,code=sm_75)
+            list(APPEND CUDA_ARCH_LIST sm_75)
             if(${CUDA_VERSION} VERSION_LESS "11.0")
                 list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_75,code=compute_75)
             endif()
         endif()
         if(${CUDA_VERSION} VERSION_GREATER "10.5")
             list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_80,code=sm_80)
+            list(APPEND CUDA_ARCH_LIST sm_80)
             if(${CUDA_VERSION} VERSION_LESS "11.1")
                 list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_80,code=compute_80)
             endif()
@@ -88,16 +92,19 @@ function(set_nvcc_flag CUDA_NVCC_FLAGS)
         string(REGEX MATCHALL "[0-9()]+" cuda_archs_bin "${cuda_archs_bin}")
         foreach(arch ${cuda_archs_bin})
             list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_${arch},code=sm_${arch})
+            list(APPEND CUDA_ARCH_LIST sm_${arch})
         endforeach()
         # For auto build, it only generate the code for indeed arch, so add sm_60 as a default arch
         # to avoid error in different archs. It may increase the compilation time.
         list(APPEND CUDA_NVCC_FLAGS -arch=sm_60)
+        list(APPEND CUDA_ARCH_LIST sm_60)
     else()
         message("Only build ptx to speed up compiling cuda ops.")
         set(CUDA_NVCC_FLAGS "CUDA_NVCC_FLAGS")
         list(APPEND CUDA_NVCC_FLAGS -arch=compute_60 -code=compute_60)
     endif()
     list(REMOVE_DUPLICATES CUDA_NVCC_FLAGS)
+    list(REMOVE_DUPLICATES CUDA_ARCH_LIST)
     message("Final CUDA_NVCC_FLASG " ${CUDA_NVCC_FLAGS})
 
     list(APPEND CUDA_NVCC_FLAGS --expt-relaxed-constexpr)
@@ -105,6 +112,7 @@ function(set_nvcc_flag CUDA_NVCC_FLAGS)
         list(APPEND CUDA_NVCC_FLAGS -t0)
     endif()
     set(${CUDA_NVCC_FLAGS} ${${CUDA_NVCC_FLAGS}} PARENT_SCOPE)
+    set(${CUDA_ARCH_LIST} ${${CUDA_ARCH_LIST}} PARENT_SCOPE)
 endfunction()
 
 if(ENABLE_GPU AND GPU_BACKEND_CUDA)
@@ -176,9 +184,10 @@ if(ENABLE_GPU AND GPU_BACKEND_CUDA)
     message("CUBLAS_LIBRARY_PATH: ${CUBLAS_LIBRARY_PATH}")
     message("CUPTI_INCLUDE_DIRS: ${CUPTI_INCLUDE_DIRS}")
     include_directories(${CUDNN_INCLUDE_PATH} ${CUDA_PATH} ${CUDA_INCLUDE_DIRS} ${CUPTI_INCLUDE_DIRS})
-    ## set NVCC ARCH FLAG
+    ## set NVCC ARCH FLAG and CUDA ARCH LIST
     set(CUDA_NVCC_FLAGS)
-    set_nvcc_flag(CUDA_NVCC_FLAGS)
+    set(CUDA_ARCH_LIST)
+    set_nvcc_flag(CUDA_NVCC_FLAGS CUDA_ARCH_LIST)
     if(NOT MSVC)
     add_definitions(-Wno-unknown-pragmas) # Avoid compilation warnings from cuda/thrust
     endif()
@@ -189,6 +198,12 @@ if(ENABLE_GPU AND GPU_BACKEND_CUDA)
     set(NVCC_TMP_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     set(CMAKE_CXX_FLAGS ${NVCC_TMP_CMAKE_CXX_FLAGS})
     add_compile_definitions(ENABLE_GPU)
+
+    foreach(arch ${CUDA_ARCH_LIST})
+        string(APPEND CUDA_ARCH_LIST_STR "${arch} ")
+    endforeach()
+    message("Final CUDA_ARCH_LIST " ${CUDA_ARCH_LIST})
+    add_compile_definitions(CUDA_ARCH_LIST=${CUDA_ARCH_LIST_STR})
 endif()
 
 if(ENABLE_CPU)
@@ -268,7 +283,12 @@ if(ENABLE_DEBUGGER)
     ms_protobuf_generate(DEBUGGER_PROTO_SRCS DEBUGGER_PROTO_HDRS ${DEBUGGER_PROTO_LIST})
     file(GLOB_RECURSE DEBUGGER_GRPC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "debug/debugger/debug_grpc.proto")
     ms_grpc_generate(DEBUGGER_GRPC_SRCS DEBUGGER_GRPC_HDRS ${DEBUGGER_GRPC_LIST})
-    file(GLOB_RECURSE DUMP_DATA_PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "debug/debugger/dump_data.proto")
+    file(GLOB_RECURSE DUMP_DATA_PROTO_LIST FOLLOW_SYMLINKS "${ASCEND_PATH}/latest/include/proto/dump_data.proto")
+    list(LENGTH DUMP_DATA_PROTO_LIST PROTO_LEN)
+    if(PROTO_LEN EQUAL 0)
+        message("Can't find dump_data.proto in path: ${ASCEND_PATH}/latest/include/proto, use proto in mindspore path.")
+        file(GLOB_RECURSE DUMP_DATA_PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "debug/debugger/dump_data.proto")
+    endif()
     ms_protobuf_generate(DUMP_DATA_PROTO_SRCS DUMP_DATA_PROTO_HDRS ${DUMP_DATA_PROTO_LIST})
     list(APPEND MINDSPORE_PROTO_LIST ${DEBUGGER_PROTO_SRCS})
     list(APPEND MINDSPORE_PROTO_LIST ${DEBUGGER_GRPC_SRCS})
@@ -340,6 +360,7 @@ set(SUB_COMP
         frontend/operator
         frontend/expander
         pipeline/jit/ps
+        pipeline/jit/pi
         pipeline/pynative
         pybind_api
 )
@@ -365,6 +386,7 @@ set(COMMON_SUB_COMP
         common
         common/debug
         common/expander
+        common/symbol_engine
         )
 
 foreach(_comp ${COMMON_SUB_COMP})
@@ -405,7 +427,6 @@ set(BACKEND_SUB_COMP
         backend/common/somas
         backend/common/graph_kernel
         backend/common/expander
-        backend/common/op_evaluator
         backend/graph_compiler
         backend/operator
         runtime/collective
@@ -413,6 +434,7 @@ set(BACKEND_SUB_COMP
         runtime/graph_scheduler
         runtime/hardware
         runtime/pynative
+        runtime/pipeline
         runtime/data_queue
         plugin/device/cpu/hal/device
         plugin/device/cpu/hal/hardware
@@ -633,6 +655,7 @@ if(NOT ENABLE_TESTCASES AND NOT (ENABLE_D OR ENABLE_CPU OR ENABLE_GPU))
 endif()
 add_subdirectory(transform/graph_ir)
 add_subdirectory(transform/acl_ir)
+add_subdirectory(transform/symbol)
 add_subdirectory(cxx_api)
 enable_directory_when_only_build_plugins(cxx_api)
 add_subdirectory(c_api)

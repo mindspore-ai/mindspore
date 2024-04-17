@@ -19,11 +19,17 @@
 #include <map>
 #include <string>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "mindapi/base/types.h"
 
 enum class ReductionMode { kNone, kMean, kSum };
 
 static std::map<std::string, ReductionMode> kReductionModeMap{
   {"none", ReductionMode::kNone}, {"mean", ReductionMode::kMean}, {"sum", ReductionMode::kSum}};
+
+static std::map<int64_t, ReductionMode> kEnumReductionModeMap{
+  {static_cast<int64_t>(mindspore::Reduction::NONE), ReductionMode::kNone},
+  {static_cast<int64_t>(mindspore::Reduction::MEAN), ReductionMode::kMean},
+  {static_cast<int64_t>(mindspore::Reduction::REDUCTION_SUM), ReductionMode::kSum}};
 
 template <typename T>
 CUDA_LIB_EXPORT cudaError_t BinaryCrossEntropyLoss(const int &input_size, const ReductionMode &reduction,

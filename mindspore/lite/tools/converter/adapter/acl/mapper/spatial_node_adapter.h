@@ -22,7 +22,8 @@
 
 namespace mindspore {
 namespace lite {
-STATUS AdapteSpatialNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
+STATUS AdapteMuitiInputNode(const FuncGraphPtr &func_graph);
+STATUS AdapteMuitiOutputNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
 }  // namespace lite
 }  // namespace mindspore
 

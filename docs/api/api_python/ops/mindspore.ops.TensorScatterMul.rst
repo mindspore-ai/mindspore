@@ -5,10 +5,10 @@ mindspore.ops.TensorScatterMul
 
     根据指定的更新值 `updates` 和输入索引 `indices` ，使用乘法运算更新输入Tensor的值。当同一索引有不同更新值时，更新的结果将是累积乘法的结果。此操作与 :class:`mindspore.ops.ScatterNdMul` 类似，但更新后的结果是返回一个新的输出Tensor，而不是直接更新 `input_x` 。
 
-    更多参考相见 :func:`mindspore.ops.tensor_scatter_mul`。
-
     .. math::
         output\left [indices  \right ] = input\_x\times  update
+
+    更多参考相见 :func:`mindspore.ops.tensor_scatter_mul`。
 
     输入：
         - **input_x** (Tensor) - 输入Tensor。 `input_x` 的维度必须大于等于indices.shape[-1]。

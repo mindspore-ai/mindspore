@@ -145,7 +145,9 @@ class Parameter(Tensor_):
     Args:
         default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data,
             to initialize the parameter data.
-        name (str): Name of the parameter. Default: ``None`` .
+        name (str): Name of the parameter. Default: ``None`` . If two or more `Parameter`
+            objects with the same name exist in a network,
+            you will be prompted to set a unique name when defining them.
 
             1) If the parameter is not given a name, the default name is its variable name. For example, the name of
             param_a below is name_a, and the name of param_b is the variable name param_b.
@@ -330,7 +332,10 @@ class Parameter(Tensor_):
                     return (Tensor, data)
                 # make a copy of Tensor to init the parameter.
                 if data.dtype == mstype.bfloat16:
-                    return (Tensor, data.float().asnumpy(), mstype.bfloat16)
+                    from mindspore.ops.operations import Cast
+                    cpu_cast = Cast().set_device("CPU")
+                    data = cpu_cast(data, mstype.float32)
+                    return (Tensor, data.asnumpy(), mstype.bfloat16)
                 return (Tensor, data.asnumpy())
 
             not_init_data = _is_role_sched() or (_is_role_pserver() and _cache_enable()) or _is_in_parallel_mode()
@@ -359,7 +364,7 @@ class Parameter(Tensor_):
 
         Tutorial Examples:
             - `Parameter Server Mode
-              <https://www.mindspore.cn/tutorials/experts/en/master/parallel/parameter_server_training.html>`_
+              <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/parameter_server_training.html>`_
         """
         if not _is_ps_mode() or not (_is_role_worker() or _is_role_pserver() or _is_role_sched()):
             raise RuntimeError("Must complete following two steps before calling set_param_ps: \n"
@@ -782,7 +787,17 @@ class Parameter(Tensor_):
         return new_param
 
     @_LogActionOnce(logger=logger, key='add_pipeline_stage')
+    @deprecated("2.3", "add_pipeline_stage")
     def add_pipeline_stage(self, stage):
+        """
+        Add a pipeline stage to the parameter.
+
+        Args:
+            stage(int): The pipeline stage to be added.
+
+        Raise:
+            TypeError: If `stage` is not a positive number or not int type.
+        """
         logger.warning(f"This interface may be deleted in the future.")
         if not isinstance(stage, int) or stage < 0:
             raise TypeError("`stage` must be a positive number of int type")
@@ -1008,7 +1023,7 @@ class ParameterTuple(tuple):
 
         Tutorial Examples:
             - `Cell and Parameter - Parameter Tuple
-              <https://mindspore.cn/tutorials/en/master/advanced/modules/layer.html#parameter-tuple>`_
+              <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/modules/layer.html#parameter-tuple>`_
         """
         Validator.check_str_by_regular(prefix)
         new = []

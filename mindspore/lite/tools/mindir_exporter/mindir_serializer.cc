@@ -20,6 +20,7 @@
 #include <fstream>
 #include <set>
 #include <algorithm>
+#include <map>
 #include "utils/crypto.h"
 #include "mindspore/ccsrc/include/common/debug/dump_proto.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
@@ -28,6 +29,8 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/common/graph_util.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "mindspore/core/utils/compile_config.h"
+#include "mindspore/core/utils/label.h"
 #include "mindspore/core/ir/quantization_param.h"
 #include "mindspore/lite/tools/converter/quantizer/quant_params.h"
 #include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
@@ -64,7 +67,7 @@ bool DeleteDirRecursively(const std::string &dir_name) {
 }
 }  // namespace
 
-int MindIRSerializer::RemoveQuantParameterHolder(FuncGraphPtr func_graph) {
+int MindIRSerializer::HandlePrimAttr(FuncGraphPtr func_graph) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(func_graph, &all_func_graphs);
   for (auto &graph : all_func_graphs) {
@@ -97,7 +100,10 @@ int MindIRSerializer::RemoveQuantParameterHolder(FuncGraphPtr func_graph) {
           return lite::RET_ERROR;
         }
       }
+      // delete unused quant_params attr
       primitive->EraseAttr("quant_params");
+      // set primitive_function for dynamic shape
+      primitive->AddAttr("primitive_function", MakeValue(false));
     }
   }
   return RET_OK;
@@ -145,7 +151,7 @@ int MindIRSerializer::PreProcSaveTogether(const FuncGraphPtr &func_graph) {
     return ret;
   }
 
-  ret = RemoveQuantParameterHolder(func_graph);
+  ret = HandlePrimAttr(func_graph);
   if (ret != RET_OK && ret != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "remove quant parameter holder failed.";
     return ret;
@@ -195,7 +201,8 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
   }
 
   // Serialize to protobuf using unique parameter name label.
-  common::SetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID", "1", 0);
+  common::SetCompileConfig("TRACE_LABEL_WITH_UNIQUE_ID", "1", true);
+  trace::SetWithUniqueId(true);
 
   // Do preprocess on func_graph and check conditions for saving together.
   ret = PreProcSaveTogether(func_graph);
@@ -306,7 +313,7 @@ int MindIRSerializer::ConvertParameterNode(const CNodePtr &cnode, const Paramete
   auto input_quant_params = quant_params_holder->get_input_quant_params();
   CHECK_NULL_RETURN(parameter_ptr);
   if (!parameter_ptr->has_default()) {
-    MS_LOG(WARNING) << input->fullname_with_scope() << " is parameter but don't have default.";
+    MS_LOG(WARNING) << input->fullname_with_scope() << " is parameter but don't have a default.";
     return RET_NO_CHANGE;
   }
   CHECK_NULL_RETURN(parameter_ptr->default_param());
@@ -532,9 +539,15 @@ int MindIRSerializer::SplitSave(const std::shared_ptr<ConverterPara> &param) {
     MS_LOG(ERROR) << "change parameter data file failed.";
     return ret;
   }
-
+  // Sort by parameter name to ensure split data order
+  std::map<std::string, mind_ir::TensorProto *> proto_map;
   for (auto &param_proto : *(model_proto_.mutable_graph()->mutable_parameter())) {
     std::string proto_name = param_proto.name();
+    proto_map.insert({proto_name, &param_proto});
+  }
+  for (const auto &proto : proto_map) {
+    std::string proto_name = proto.first;
+    auto param_proto = proto.second;
     auto para = GetFgParaAccordingToProtoName(proto_name);
     if (para == nullptr) {
       return RET_ERROR;
@@ -562,11 +575,12 @@ int MindIRSerializer::SplitSave(const std::shared_ptr<ConverterPara> &param) {
       parameter_size = OFFSET / PARA_ROUND;
     }
     std::string external_local_data = model_name_ + "_variables/" + external_local;
-    *(param_proto.mutable_external_data()->mutable_location()) = external_local_data;
-    param_proto.mutable_external_data()->set_length(data_length);
-    param_proto.mutable_external_data()->set_offset(offset);
+    *(param_proto->mutable_external_data()->mutable_location()) = external_local_data;
+    param_proto->mutable_external_data()->set_length(data_length);
+    param_proto->mutable_external_data()->set_offset(offset);
+    MS_LOG(INFO) << "The proto " << proto_name << " data_length:" << data_length << " offset:" << offset;
     data_fs_->write(static_cast<const char *>(data->data_c()), data_length);
-    auto append_data = new char[append_size];
+    auto append_data = new char[append_size]();
     if (append_data == nullptr) {
       return RET_NULL_PTR;
     }

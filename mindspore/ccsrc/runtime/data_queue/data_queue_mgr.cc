@@ -274,6 +274,20 @@ void UpdateGetNextWithDataQueueItems(const AnfNodePtr &data_kernel, const std::v
   common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, data_kernel.get());
 }
 
+void UpdateGetNextWithDataQueueItems(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs,
+                                     const std::vector<device::DataQueueItem> &data,
+                                     std::vector<size_t> *output_size_list) {
+  MS_EXCEPTION_IF_CHECK_FAIL(data.size() == outputs.size(),
+                             "The number of data tensor popped from dynamic queue is not correct");
+  output_size_list->clear();
+  for (size_t i = 0; i < data.size(); ++i) {
+    outputs[i]->set_size(data[i].data_len);
+    outputs[i]->SetShapeVector(data[i].shapes);
+    output_size_list->push_back(data[i].data_len);
+  }
+}
+
 void RetryPeakItemFromDataQueue(const AnfNodePtr &data_kernel, const std::shared_ptr<BlockingQueue> &data_queue,
                                 std::vector<device::DataQueueItem> *data) {
   auto front_ret = DataQueueStatus::TIMEOUT;
@@ -301,6 +315,18 @@ void UpdateGetNextNode(const AnfNodePtr &data_kernel) {
   std::vector<device::DataQueueItem> data;
   RetryPeakItemFromDataQueue(data_kernel, data_queue, &data);
   UpdateGetNextWithDataQueueItems(data_kernel, data);
+}
+
+void UpdateGetNextNode(const PrimitivePtr &primitive, const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs, std::vector<size_t> *output_size_list) {
+  auto queue_name = GetValue<std::string>(primitive->GetAttr("shared_name"));
+  device::DataQueueMgr &buf_mgr = device::DataQueueMgr::GetInstance();
+  auto ret = buf_mgr.Open(queue_name);
+  MS_EXCEPTION_IF_CHECK_FAIL(ret == device::DataQueueStatus::SUCCESS, "Open dynamic data queue failed");
+  auto data_queue = buf_mgr.GetDataQueue(queue_name);
+  std::vector<device::DataQueueItem> data;
+  RetryPeakItemFromDataQueue(nullptr, data_queue, &data);
+  UpdateGetNextWithDataQueueItems(inputs, outputs, data, output_size_list);
 }
 
 #endif

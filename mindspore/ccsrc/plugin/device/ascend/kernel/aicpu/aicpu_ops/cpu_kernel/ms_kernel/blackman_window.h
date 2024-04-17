@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_BLACKMAN_WINDOW_H_
 #define AICPU_KERNELS_NORMALIZED_BLACKMAN_WINDOW_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class BlackmanWindowCpuKernel : public CpuKernel {
@@ -28,9 +28,9 @@ class BlackmanWindowCpuKernel : public CpuKernel {
 
  private:
   template <typename T, typename T2>
-  uint32_t BlackmanWindowCompute(const CpuKernelContext &ctx);
+  uint32_t BlackmanWindowCompute(CpuKernelContext &ctx);
   template <typename T, typename T2>
-  uint32_t BlackmanWindowCompute2(const CpuKernelContext &ctx);
+  uint32_t BlackmanWindowCompute2(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

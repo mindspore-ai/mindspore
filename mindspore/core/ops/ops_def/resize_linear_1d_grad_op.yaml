@@ -1,0 +1,19 @@
+#operator resize_linear_1d_grad
+resize_linear_1d_grad:
+  args:
+    grads:
+      dtype: tensor
+    x:
+      dtype: tensor
+    coordinate_transformation_mode:
+      dtype: int
+      default: "'align_corners'"
+      prim_init: True
+      arg_handler: str_to_enum
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ResizeLinear1DGrad
+  function:
+    disable: True

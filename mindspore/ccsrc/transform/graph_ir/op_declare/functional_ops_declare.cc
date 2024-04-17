@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ DYN_SUBGRAPH_MAP(Case) = {{0, DYN_SUBGRAPH_DESC(branches)}};
 REG_ADPT_DESC(Case, kNameCase, ADPT_DESC(Case));
 
 // While
+INPUT_MAP(While) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(While) = {{1, DYN_INPUT_DESC(input)}};
 ATTR_MAP(While) = {{"parallel_iterations", ATTR_DESC(parallel_iterations, AnyTraits<int32_t>())}};
 DYN_OUTPUT_MAP(While) = {{0, DYN_OUTPUT_DESC(output)}};

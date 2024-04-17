@@ -28,6 +28,7 @@
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/ps/resource.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace parallel {
@@ -80,6 +81,7 @@ Status ScatterNdOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
+  do_replace_graph_ = false;
   for (size_t i = 0; i < gather_dims_size_; ++i) {
     if (stra[0][i] > 1) {
       do_replace_graph_ = true;
@@ -87,6 +89,25 @@ Status ScatterNdOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
+  return SUCCESS;
+}
+
+Status ScatterNdOpsInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  if (inputs_shape_[1].back() == -1) {
+    MS_LOG(ERROR) << name_
+                  << ": it does not support the last dim of second input is dynamic shape now, the inputs shape:"
+                  << ShapesToString(inputs_shape_);
+    return FAILED;
+  }
+
+  if (do_replace_graph_) {
+    Strategies strategies = strategy->GetInputDim();
+    MS_LOG(ERROR) << name_ << ": the first " << gather_dims_size_
+                  << " dimension of first input is split, it need to replace graph, now it do not support dynamic "
+                     "shape, the inputs shape: "
+                  << ShapesToString(inputs_shape_) << ", the strategy: " << ShapesToString(strategies);
+    return FAILED;
+  }
   return SUCCESS;
 }
 
@@ -289,13 +310,16 @@ std::vector<AnfNodePtr> ScatterNdOpsInfo::PrepareReplaceGraph() {
   auto rank_mul = gen_g_.PushBack({gen_g_.NewOpInst(MUL), div, reshape_accum_value});
   auto indices_mul = gen_g_.PushBack({gen_g_.NewOpInst(MUL), div, reshape_indices_slice});
   auto indices_sub = gen_g_.PushBack({gen_g_.NewOpInst(SUB), gen_g_.virtual_input_node(), indices_mul});
-  auto reduce_sum = gen_g_.PushBack({gen_g_.NewOpInst(REDUCE_SUM), rank_mul, CreateInt32Tensor(-1)});
+  auto reduce_sum = gen_g_.PushBack(
+    {gen_g_.NewOpInst(REDUCE_SUM), rank_mul, CreateTuple({-1}), CreateBoolImm(false), CreateBoolImm(false)});
   auto sub = gen_g_.PushBack({gen_g_.NewOpInst(SUB), CreateInt32Tensor(rank_in_stage), reduce_sum});
   auto relu = gen_g_.PushBack({gen_g_.NewOpInst(RELU), sub});
   auto minimum = gen_g_.PushBack({gen_g_.NewOpInst(MINIMUM), relu, CreateInt32Tensor(delta_value)});
   auto equal = gen_g_.PushBack({gen_g_.NewOpInst(EQUAL), sub, minimum});
   auto dtype = gen_g_.PushBack({gen_g_.NewOpInst(DTYPE), gen_g_.virtual_input_node()});
-  auto cast = gen_g_.PushBack({gen_g_.NewOpInst(CAST), equal, dtype});
+  auto dtype_id =
+    gen_g_.PushBack({gen_g_.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast = gen_g_.PushBack({gen_g_.NewOpInst(CAST), equal, dtype_id});
   Shape update_shapes(inputs_shape_[2]);
   for (size_t i = inputs_shape_[1].size() - 1; i < update_shapes.size(); ++i) {
     update_shapes[i] = 1;
@@ -320,6 +344,10 @@ std::vector<StrategyPtr> ScatterNdOpsInfo::GenerateOpStrategies(int64_t stage_id
   Shape input_split(inputs_shape_[0].size(), 1);
   Shapes splittable_input = {input_split};
   Shapes tmp_inputs_shape = {inputs_shape_[0]};
+  if (inputs_shape_.size() > 1) {
+    auto indices_shape = inputs_shape_[1];
+    gather_dims_size_ = LongToSize(indices_shape.back());
+  }
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {

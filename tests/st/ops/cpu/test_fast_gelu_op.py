@@ -80,7 +80,7 @@ def test_fast_gelu_cpu(shape, dtype):
     assert np_all_close_with_loss(y_np_cpu, y_nn.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])

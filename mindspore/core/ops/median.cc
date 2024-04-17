@@ -89,7 +89,7 @@ namespace {
 abstract::TupleShapePtr MedianInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     return std::make_shared<abstract::TupleShape>(
@@ -132,9 +132,8 @@ TuplePtr MedianInferType(const PrimitivePtr &primitive, const std::vector<Abstra
     MS_LOG(EXCEPTION) << "nullptr";
   }
   const std::set<TypePtr> valid_types = {kInt16, kInt32, kInt64, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, primitive->name());
-  return std::make_shared<Tuple>(
-    std::vector<TypePtr>{input_args[0]->BuildType(), std::make_shared<TensorType>(kInt64)});
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, primitive->name());
+  return std::make_shared<Tuple>(std::vector<TypePtr>{input_args[0]->GetType(), std::make_shared<TensorType>(kInt64)});
 }
 }  // namespace
 

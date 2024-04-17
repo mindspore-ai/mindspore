@@ -54,8 +54,9 @@ const std::vector<std::pair<KernelAttr, CoalescePtrCreatorFunc>> kernel_attr = {
                                                                                  CreateCoalesceKernelPtr<double>}};
 }  // namespace
 
-bool CoalesceGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CoalesceGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -76,21 +77,18 @@ bool CoalesceGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
   return true;
 }
 
-bool CoalesceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
+bool CoalesceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;
   }
   helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 
-int CoalesceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int CoalesceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   std::vector<std::vector<int64_t>> input_shapes;
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
@@ -111,21 +109,48 @@ int CoalesceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;
 }
 
-void CoalesceGpuKernelMod::SyncOutputShape() {
+void CoalesceGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "Coalesce cudaStreamSynchronized failed");
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
-  size_t output_num = outputs_.size();
-  for (size_t i = 0; i < output_num; ++i) {
-    std::vector<int64_t> shape = outputs_[i]->GetShapeVector();
-    std::replace(std::begin(shape), std::end(shape), -1, dyn_out.shapes[0][0]);
-    outputs_[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+  size_t output_num = outputs.size();
+  constexpr auto expect_out_num = 3;
+  if (output_num != expect_out_num) {
+    MS_LOG(EXCEPTION) << "Unexpected output num: " << output_num;
   }
+
+  // update output0
+  auto out0_shape = outputs[0]->GetShapeVector();
+  constexpr auto kOut0Rank = 2;
+  if (out0_shape.size() < kOut0Rank) {
+    MS_LOG(EXCEPTION) << "Unexpected output0 shape size: " << out0_shape.size()
+                      << ", shape: " << mindspore::ToString(out0_shape);
+  }
+  outputs[0]->set_size(LongToSize(std::accumulate(
+    out0_shape.begin(), out0_shape.end(), UnitSizeInBytes(outputs[0]->dtype_id()), std::multiplies<int64_t>())));
+  out0_shape[1] = dyn_out.shapes[0][0];
+  outputs[0]->SetShapeVector(out0_shape);
+
+  // update output1
+  auto out1_shape = outputs[1]->GetShapeVector();
+  if (out1_shape.empty()) {
+    MS_LOG(EXCEPTION) << "Unexpected output1 shape size: " << out1_shape.size()
+                      << ", shape: " << mindspore::ToString(out1_shape);
+  }
+  out1_shape[0] = dyn_out.shapes[0][0];
+  outputs[1]->set_size(LongToSize(std::accumulate(
+    out1_shape.begin(), out1_shape.end(), UnitSizeInBytes(outputs[1]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[1]->SetShapeVector(out1_shape);
+
+  // cal output3 size
+  auto out2_shape = outputs[2]->GetShapeVector();
+  outputs[2]->set_size(LongToSize(std::accumulate(
+    out2_shape.begin(), out2_shape.end(), UnitSizeInBytes(outputs[2]->dtype_id()), std::multiplies<int64_t>())));
 }
 
 std::vector<KernelAttr> CoalesceGpuKernelMod::GetOpSupport() {

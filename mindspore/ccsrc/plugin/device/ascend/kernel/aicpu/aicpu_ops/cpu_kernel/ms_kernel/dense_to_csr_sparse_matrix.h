@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_DENSE_TO_CSR_SPARSE_MATRIX_H_
 #define AICPU_KERNELS_NORMALIZED_DENSE_TO_CSR_SPARSE_MATRIX_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 
@@ -29,7 +29,7 @@ class DenseToCSRSparseMatrixCpuKernel : public CpuKernel {
 
  private:
   template <typename indiceT, typename valueT>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx);
+  uint32_t ComputeKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

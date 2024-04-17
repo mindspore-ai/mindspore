@@ -40,7 +40,6 @@ class PoolingGradCPUKernel : public LiteKernel {
   int DoExecute(int task_id);
 
  private:
-  int thread_num_ = 1;
   PoolingComputeParam compute_;
 };
 

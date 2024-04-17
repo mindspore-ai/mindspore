@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@
 #include <utility>
 #include <string>
 #include "include/common/utils/parallel_context.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
+#include "frontend/parallel/graph_util//graph_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -186,7 +188,7 @@ std::vector<std::pair<std::string, std::vector<int64_t>>> TensorTransform::Trans
   }
   auto operators_vector = redistribution_oplist_ptr->first;
   std::vector<std::pair<std::string, std::vector<int64_t>>> transform_op_list;
-  for (auto op_pair : operators_vector) {
+  for (const auto &op_pair : operators_vector) {
     auto op_name = op_pair.first;
     auto it = transform_operator_.find(op_name);
     if (it == transform_operator_.end()) {
@@ -201,17 +203,27 @@ std::vector<std::pair<std::string, std::vector<int64_t>>> TensorTransform::Trans
 }
 
 Shape TensorTransform::InferReshapeOp(const Shape &ori_shape, const std::vector<int64_t> &op) const {
+  if (std::find(op.begin(), op.end(), -1) != op.end()) {
+    MS_LOG(DEBUG) << "It's dynamic shape. Reshape to " << op;
+    return op;
+  }
+  if (std::find(ori_shape.begin(), ori_shape.end(), -1) != ori_shape.end()) {
+    return op;
+  }
   if (std::accumulate(ori_shape.begin(), ori_shape.end(), 1, std::multiplies<int64_t>()) !=
       std::accumulate(op.begin(), op.end(), 1, std::multiplies<int64_t>())) {
     MS_LOG(EXCEPTION) << "Infer redistribution error, cannot convert shape: " << ori_shape << " to shape:" << op;
   }
+  MS_LOG(DEBUG) << "It's static shape. Reshape to " << op;
   return op;
 }
 
 Shape TensorTransform::InferAllGatherOp(const Shape &ori_shape, const std::vector<int64_t> &op) const {
   auto new_shape = ori_shape;
   auto axis = op.back();
-  new_shape[LongToSize(axis)] = new_shape[LongToSize(axis)] * (op.size() - 1);
+  if (new_shape[LongToSize(axis)] != -1) {
+    new_shape[LongToSize(axis)] = new_shape[LongToSize(axis)] * (op.size() - 1);
+  }
   return new_shape;
 }
 
@@ -255,6 +267,7 @@ Operator ConstructReshapeOp(const std::vector<int64_t> &shape) {
 
 RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorList(
   const RedistributionOpListPtr &redistribution_op_list, const Shape &input_shape) {
+  MS_LOG(DEBUG) << "Do optimization for tensor redistributions.";
   // 1 operators_vector to transform_op_list
   // 2 allgather->split->concat to allconcat
   MS_EXCEPTION_IF_NULL(redistribution_op_list);
@@ -263,11 +276,11 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
   }
   auto operators_vector = redistribution_op_list->first;
   std::vector<std::pair<std::string, std::vector<int64_t>>> transform_op_list;
-  for (auto op_pair : operators_vector) {
+  for (const auto &op_pair : operators_vector) {
     auto op_name = op_pair.first;
     auto it = transform_operator_.find(op_name);
-    if (it == transform_operator_.end()) {
-      MS_LOG(WARNING) << "The op:" << op_name << " would not be optimized.";
+    if (it == transform_operator_.end() || IsToBeInsertedSplitOp(op_pair)) {
+      MS_LOG(INFO) << "The op:" << op_name << " would not be optimized.";
       return redistribution_op_list;
     }
     transform_op_list.push_back(it->second(op_pair));
@@ -286,13 +299,17 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
     }
     auto axis = transform_op_list[i].second.back();
     if (axis == 0) {
+      current_allgather_pos_in_origin_list += kSize3;
       continue;
     }
     if (i == transform_op_list.size() - 1 || transform_op_list[i + 1].first != RESHAPE) {
+      current_allgather_pos_in_origin_list += kSize3;
       continue;
     }
     auto src_shape = shape_list[i];
-    src_shape[LongToSize(axis)] = src_shape[LongToSize(axis)] / (transform_op_list[i].second.size() - 1);
+    if (src_shape[LongToSize(axis)] > 0 && transform_op_list[i].second.size() - 1 > 0) {
+      src_shape[LongToSize(axis)] = src_shape[LongToSize(axis)] / (SizeToLong(transform_op_list[i].second.size()) - 1);
+    }
     auto new_axis = axis;
     auto new_src_shape = src_shape;
     for (int32_t j = axis - 1; j >= 0; --j) {
@@ -305,6 +322,7 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
     MS_LOG(INFO) << "src_shape:" << src_shape << ", new_src_shape:" << new_src_shape << ", axis:" << axis
                  << ", new_axis:" << new_axis;
     if (new_axis != 0) {
+      current_allgather_pos_in_origin_list += kSize3;
       continue;
     }
     left_reshape_op_list[current_allgather_pos_in_origin_list] = new_src_shape;

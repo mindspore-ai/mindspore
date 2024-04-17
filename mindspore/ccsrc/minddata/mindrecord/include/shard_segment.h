@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SEGMENT_H_
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_SEGMENT_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -29,6 +30,8 @@ namespace mindrecord {
 using CATEGORY_INFO = std::vector<std::tuple<int, std::string, int>>;
 using PAGES = std::vector<std::tuple<std::vector<uint8_t>, json>>;
 using PAGES_LOAD = std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>;
+using PAGES_WITH_BLOBS = std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, json>>;
+using PAGES_LOAD_WITH_BLOBS = std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, pybind11::object>>;
 
 class MINDRECORD_API ShardSegment : public ShardReader {
  public:
@@ -74,10 +77,10 @@ class MINDRECORD_API ShardSegment : public ShardReader {
                           std::shared_ptr<std::vector<std::vector<uint8_t>>> *pages_ptr);
 
   Status ReadAllAtPageById(int64_t category_id, int64_t page_no, int64_t n_rows_of_page,
-                           std::shared_ptr<PAGES> *pages_ptr);
+                           std::shared_ptr<PAGES_WITH_BLOBS> *pages_ptr);
 
   Status ReadAllAtPageByName(std::string category_name, int64_t page_no, int64_t n_rows_of_page,
-                             std::shared_ptr<PAGES> *pages_ptr);
+                             std::shared_ptr<PAGES_WITH_BLOBS> *pages_ptr);
 
   std::pair<ShardType, std::vector<std::string>> GetBlobFields();
 

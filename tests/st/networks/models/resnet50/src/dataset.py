@@ -15,11 +15,11 @@
 
 """create train or eval dataset."""
 
-import os
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.vision as C
 import mindspore.dataset.transforms as C2
+from mindspore.communication.management import get_rank, get_group_size
 
 
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
@@ -36,8 +36,8 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
         dataset
     """
 
-    device_num = int(os.getenv("RANK_SIZE"))
-    rank_id = int(os.getenv("RANK_ID"))
+    rank_id = get_rank()
+    device_num = get_group_size()
     if do_train:
         if device_num == 1:
             data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=16, shuffle=True)

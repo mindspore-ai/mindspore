@@ -9,7 +9,7 @@ mindspore.ops.expm1
         out_i = e^{x_i} - 1
 
     参数：
-        - **input** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入Tensor。上述公式中的 :math:`x` 。
 
     返回：
         Tensor，shape与 `input` 相同。

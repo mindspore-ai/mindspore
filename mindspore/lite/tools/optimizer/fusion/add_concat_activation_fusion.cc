@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include <memory>
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/array_ops.h"
-#include "ops/concat.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/activation.h"
 #include "ops/fusion/add_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"

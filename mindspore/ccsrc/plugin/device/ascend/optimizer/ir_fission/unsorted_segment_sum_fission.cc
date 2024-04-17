@@ -46,7 +46,8 @@ CNodePtr UnsortedSegmentSumFission::CreateConcatD(const FuncGraphPtr &graph, con
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(sum, 0)}, {shape},
                                               concat.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(shape.size() - 1)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(pad_dim_size)}), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes,
+                               MakeValue(std::vector<int64_t>{SizeToLong(pad_dim_size), (int64_t)-1}), concat);
   return concat;
 }
 

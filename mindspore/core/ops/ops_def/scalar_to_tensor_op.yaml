@@ -1,0 +1,14 @@
+#operator scalar_to_tensor
+scalar_to_tensor:
+    args:
+        input_x:
+            dtype: number
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    class:
+        disable: True

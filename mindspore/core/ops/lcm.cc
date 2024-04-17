@@ -43,7 +43,7 @@ abstract::ShapePtr LcmInferShape(const PrimitivePtr &primitive, const std::vecto
 
 TypePtr LcmInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> lcm_valid_types = {kInt32, kInt64};
-  TypePtr x1_type = input_args[0]->BuildType();
+  TypePtr x1_type = input_args[0]->GetType();
   auto inferred_type = CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_type, lcm_valid_types, prim->name());
   return inferred_type;
 }
@@ -54,8 +54,8 @@ AbstractBasePtr LcmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t lcm_input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, lcm_input_num, primitive->name());
-  auto shape = LcmInferShape(primitive, input_args);
   auto type = LcmInferType(primitive, input_args);
+  auto shape = LcmInferShape(primitive, input_args);
   return abstract::MakeAbstractTensor(shape, type);
 }
 MIND_API_OPERATOR_IMPL(Lcm, BaseOperator);

@@ -17,8 +17,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_CHOLESKY_SOLVE_H_
 #define AICPU_KERNELS_NORMALIZED_CHOLESKY_SOLVE_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -32,7 +32,7 @@ class CholeskySolveCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx, const bool &upper);
+  uint32_t ComputeKernel(CpuKernelContext &ctx, const bool &upper);
 };
 }  // namespace aicpu
 #endif

@@ -33,7 +33,7 @@ AnfNodePtr KVCacheMgrConcatFusion::GetBatchValidLength(CNodePtr concat_cnode) {
   auto make_tuple_cnode = make_tuple_node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(make_tuple_cnode != nullptr, nullptr);
   const size_t kMakeTupleInputNum = 3;
-  if (make_tuple_cnode->inputs().size() != kMakeTupleInputNum) {
+  if (make_tuple_cnode->size() != kMakeTupleInputNum) {
     return nullptr;
   }
 
@@ -77,7 +77,6 @@ bool KVCacheMgrConcatFusion::Run(const FuncGraphPtr &func_graph) {
       func_graph->set_manager(manager);
     }
     MS_CHECK_TRUE_RET(manager != nullptr, false);
-    kv_cache_cnode->set_input(kInputIndexThree, first_concat_cnode);
 
     (void)manager->Replace(concat_cnode, first_concat_cnode);
   }

@@ -36,6 +36,7 @@ static const std::map<int32_t, int32_t> kMsProtoDataTypeMap = {
   {mindspore::TypeId::kNumberTypeFloat, mindspore::DataType::MS_FLOAT32},
   {mindspore::TypeId::kNumberTypeFloat32, mindspore::DataType::MS_FLOAT32},
   {mindspore::TypeId::kNumberTypeFloat64, mindspore::DataType::MS_FLOAT64},
+  {mindspore::TypeId::kNumberTypeBFloat16, mindspore::DataType::MS_BFLOAT16},
   {mindspore::TypeId::kNumberTypeComplex64, mindspore::DataType::MS_COMPLEX64},
   {mindspore::TypeId::kNumberTypeComplex128, mindspore::DataType::MS_COMPLEX128},
   {mindspore::TypeId::kObjectTypeString, mindspore::DataType::MS_STRING}};
@@ -54,6 +55,7 @@ static const std::map<int32_t, int32_t> kProtoDataTypeToMsDataTypeMap = {
   {mindspore::DataType::MS_FLOAT16, mindspore::TypeId::kNumberTypeFloat16},
   {mindspore::DataType::MS_FLOAT32, mindspore::TypeId::kNumberTypeFloat32},
   {mindspore::DataType::MS_FLOAT64, mindspore::TypeId::kNumberTypeFloat64},
+  {mindspore::DataType::MS_BFLOAT16, mindspore::TypeId::kNumberTypeBFloat16},
   {mindspore::DataType::MS_COMPLEX64, mindspore::TypeId::kNumberTypeComplex64},
   {mindspore::DataType::MS_COMPLEX128, mindspore::TypeId::kNumberTypeComplex128},
 };

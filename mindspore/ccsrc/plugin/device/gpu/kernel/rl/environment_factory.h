@@ -34,13 +34,13 @@ namespace kernel {
 class Environment {
  public:
   // Initialize Environment.
-  virtual bool Init(const CNodePtr &cnode, void *stream_ptr) = 0;
+  virtual bool Init(const mindspore::PrimitivePtr &prim, void *stream_ptr) = 0;
   // Reset Environment.
-  virtual bool Reset(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                     const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
+  virtual bool Reset(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) = 0;
   // Run one timestep.
-  virtual bool Step(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
+  virtual bool Step(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) = 0;
 
   // Return Environment specification and the framework will malloc device memory for it.
   virtual size_t ActionSizeInBytes() = 0;

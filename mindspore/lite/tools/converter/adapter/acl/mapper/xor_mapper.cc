@@ -59,13 +59,13 @@ STATUS XorMapper::Mapper(const CNodePtr &cnode) {
   dst_prim->SetAttrs(src_prim->attrs());
   auto input1 = cnode->inputs()[kInput1Idx];
   auto input2 = cnode->inputs()[kInput2Idx];
-  auto cast_node_1 = NewCNode(cnode, prim::kPrimCast, {input1, NewValueNode(TypeIdToType(kNumberTypeInt8))},
+  auto cast_node_1 = NewCNode(cnode, prim::kPrimCast, {input1, NewValueNode(static_cast<int64_t>(kNumberTypeInt8))},
                               cnode->abstract()->Clone(), cnode->fullname_with_scope() + "_1_Cast");
   if (cast_node_1 == nullptr) {
     MS_LOG(ERROR) << "Failed to create Cast node for node " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  auto cast_node_2 = NewCNode(cnode, prim::kPrimCast, {input2, NewValueNode(TypeIdToType(kNumberTypeInt8))},
+  auto cast_node_2 = NewCNode(cnode, prim::kPrimCast, {input2, NewValueNode(static_cast<int64_t>(kNumberTypeInt8))},
                               cnode->abstract()->Clone(), cnode->fullname_with_scope() + "_2_Cast");
   if (cast_node_2 == nullptr) {
     MS_LOG(ERROR) << "Failed to create Cast node for node " << cnode->fullname_with_scope();
@@ -84,7 +84,7 @@ STATUS XorMapper::Mapper(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   auto cast_node_3 =
-    NewCNode(cnode, prim::kPrimCast, {new_bitwisexor_node, NewValueNode(TypeIdToType(kNumberTypeBool))},
+    NewCNode(cnode, prim::kPrimCast, {new_bitwisexor_node, NewValueNode(static_cast<int64_t>(kNumberTypeBool))},
              cnode->abstract()->Clone(), cnode->fullname_with_scope() + "_3_Cast");
   if (cast_node_3 == nullptr) {
     MS_LOG(ERROR) << "Failed to create Cast node for node " << cnode->fullname_with_scope();

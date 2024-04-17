@@ -1,0 +1,30 @@
+#operator layer_norm
+layer_norm:
+  args:
+    input_x:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    beta:
+      dtype: tensor
+    begin_norm_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    begin_params_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    epsilon:
+      dtype: float
+      default: 1e-7
+      prim_init: True
+  returns:
+    output_x:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    variance:
+      dtype: tensor
+  function:
+    disable: True

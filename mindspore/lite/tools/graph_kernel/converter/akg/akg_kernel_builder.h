@@ -27,6 +27,8 @@
 namespace mindspore::graphkernel {
 class AkgKernelBuilder {
  public:
+  AkgKernelBuilder() = default;
+  virtual ~AkgKernelBuilder() = default;
   virtual bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) = 0;
   virtual AnfNodePtr CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) = 0;
   virtual bool GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &custom_node,

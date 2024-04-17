@@ -15,3 +15,7 @@ mindspore.Tensor.repeat
     异常：
         - **ValueError** - 维度超出范围。
         - **TypeError** - 参数类型不匹配。
+
+    其他API参考：
+        - :func:`mindspore.Tensor.reshape` ：为Tensor指定新的shape，不更改Tensor的数据。
+        - :func:`mindspore.Tensor.resize` ：就地改变Tensor的shape和size。

@@ -16,8 +16,8 @@
 
 #include "diagonal.h"
 
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
+#include "context/inc/cpu_kernel_utils.h"
+#include "inc/kernel_log.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #define N2 2
@@ -156,7 +156,8 @@ uint32_t DiagonalCpuKernel::DoComputeType(CpuKernelContext &ctx) {
       };
       if (max_core_num != 0) {
         int64_t per_unit = task_num / max_core_num;
-        KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, task_num, per_unit, sharder_diagonal), "Diagonal failed.");
+        CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, task_num, per_unit, sharder_diagonal),
+                                 "Diagonal failed.");
       }
     } else {
       for (int64_t j = 0; j < task_num; j++) {
@@ -176,15 +177,51 @@ uint32_t DiagonalCpuKernel::DoComputeType(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
+uint32_t DiagonalCpuKernel::ComputeWithType(CpuKernelContext &ctx) {
+  Tensor *input_x = ctx.Input(0);
+  auto data_type = input_x->GetDataType();
+  switch (data_type) {
+    case DT_FLOAT:
+      return DoComputeType<float>(ctx);
+    case DT_DOUBLE:
+      return DoComputeType<double>(ctx);
+    case DT_BOOL:
+      return DoComputeType<bool>(ctx);
+    case DT_INT8:
+      return DoComputeType<std::int8_t>(ctx);
+    case DT_INT16:
+      return DoComputeType<std::int16_t>(ctx);
+    case DT_INT32:
+      return DoComputeType<std::int32_t>(ctx);
+    case DT_INT64:
+      return DoComputeType<std::int64_t>(ctx);
+    case DT_UINT8:
+      return DoComputeType<std::uint8_t>(ctx);
+    case DT_UINT16:
+      return DoComputeType<std::uint16_t>(ctx);
+    case DT_UINT32:
+      return DoComputeType<std::uint32_t>(ctx);
+    case DT_UINT64:
+      return DoComputeType<std::uint64_t>(ctx);
+    case DT_FLOAT16:
+      return DoComputeType<Eigen::half>(ctx);
+    default:
+      CUST_KERNEL_LOG_ERROR(ctx, "[Diagonal]: Diagonal kernel data type [%s] not support.",
+                            DTypeStr(data_type).c_str());
+      return KERNEL_STATUS_PARAM_INVALID;
+  }
+}
+
 uint32_t DiagonalCpuKernel::Compute(CpuKernelContext &ctx) {
   // Check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Diagonal check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Diagonal check input and output number failed.");
   // Get the inuput
   Tensor *input_x = ctx.Input(0);
   auto input_size = input_x->GetTensorShape()->GetDims();
   // Check the input dims
   if (input_size < N2) {
-    KERNEL_LOG_ERROR("[Diagonal]: the input tensor must is at least 2-dimensional.");
+    CUST_KERNEL_LOG_ERROR(ctx, "[Diagonal]: the input tensor must is at least 2-dimensional.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // Get the attr
@@ -198,31 +235,22 @@ uint32_t DiagonalCpuKernel::Compute(CpuKernelContext &ctx) {
   int64_t max_d = input_size - 1;
   // Check the attr
   if (dim1_ < min_d || dim1_ > max_d || dim2_ < min_d || dim2_ > max_d) {
-    KERNEL_LOG_ERROR(
-      "[Diagonal]: Dimension out of range (expected to be in range of [%d, "
-      "%d]).",
-      min_d, max_d);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "[Diagonal]: Dimension out of range (expected to be in range of [%d, "
+                          "%d]).",
+                          min_d, max_d);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // Represent the dim in uniform standard form and Check the dim
   dim1_ = maybe_wrap_dim(dim1_, input_size);
   dim2_ = maybe_wrap_dim(dim2_, input_size);
   if (dim1_ == dim2_) {
-    KERNEL_LOG_ERROR("[Diagonal]:Diagonal dimensions cannot be identical.");
+    CUST_KERNEL_LOG_ERROR(ctx, "[Diagonal]:Diagonal dimensions cannot be identical.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
-  auto data_type = input_x->GetDataType();
-  switch (data_type) {
-    case DT_FLOAT:
-      return DoComputeType<float>(ctx);
-    case DT_DOUBLE:
-      return DoComputeType<double>(ctx);
-    default:
-      KERNEL_LOG_ERROR("[Diagonal]: Diagonal kernel data type [%s] not support.", DTypeStr(data_type).c_str());
-      return KERNEL_STATUS_PARAM_INVALID;
-  }
+  return ComputeWithType(ctx);
 }
 
-REGISTER_CPU_KERNEL(kDiagonal, DiagonalCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDiagonal, DiagonalCpuKernel);
 }  // namespace aicpu

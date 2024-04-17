@@ -51,10 +51,8 @@ constexpr uint32_t kOutputNum = 1;
 // clang-format on
 }  // namespace
 
-bool MultinomialCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MultinomialCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -66,21 +64,20 @@ bool MultinomialCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  output_dtype_ = outputs[0]->GetDtype();
-  input0_dtype_ = inputs[0]->GetDtype();
-  input1_dtype_ = inputs[1]->GetDtype();
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  output_dtype_ = outputs[0]->dtype_id();
+  input0_dtype_ = inputs[0]->dtype_id();
+  input1_dtype_ = inputs[1]->dtype_id();
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);
   rng_.seed(init_seed);
   return true;
 }
 
-int MultinomialCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MultinomialCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs);
+  int ret = NativeCpuKernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -92,15 +89,14 @@ int MultinomialCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 void MultinomialCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 template <typename T_in, typename T_out>
-bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kWorkspaceNum, kernel_name_);
@@ -110,10 +106,10 @@ bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   MS_EXCEPTION_IF_NULL(workspace[0]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
 
-  auto *input_tensor = reinterpret_cast<T_in *>(inputs[0]->addr);
-  int num_sample = reinterpret_cast<int *>(inputs[1]->addr)[0];
-  auto *output = reinterpret_cast<T_out *>(outputs[0]->addr);
-  auto *cumulative_value = reinterpret_cast<T_in *>(workspace[0]->addr);
+  auto *input_tensor = reinterpret_cast<T_in *>(inputs[0]->device_ptr());
+  int num_sample = reinterpret_cast<int *>(inputs[1]->device_ptr())[0];
+  auto *output = reinterpret_cast<T_out *>(outputs[0]->device_ptr());
+  auto *cumulative_value = reinterpret_cast<T_in *>(workspace[0]->device_ptr());
 
   // check num_samples nonnegative
   if (num_sample < 0.0) {

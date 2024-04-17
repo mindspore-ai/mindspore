@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "pybind11/pybind11.h"
 #include "utils/convert_utils_base.h"
@@ -42,6 +43,7 @@ COMMON_EXPORT std::pair<ShapeVector, TypePtr> GetStubTensorInfo(const py::handle
 COMMON_EXPORT bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                                      const std::shared_ptr<py::object> &ret_val);
 COMMON_EXPORT ValuePtr ShallowCopyTensorValue(const ValuePtr &value);
+COMMON_EXPORT void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors);
 bool IsStubTensor(const py::handle &obj);
 tensor::TensorPtr ConvertStubTensor(const py::handle &obj);
 }  // namespace mindspore

@@ -17,9 +17,10 @@
 #include <set>
 #include <memory>
 #include "utils/log_adapter.h"
-#include "external/ge/ge_api_types.h"
-#include "acl/acl_base.h"
+#include "ge/ge_api_types.h"
 #include "cxx_api/acl_utils.h"
+#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 static const std::map<enum DataType, std::string> kSupportedDtypeOptionMap = {{DataType::kNumberTypeFloat16, "FP16"},
@@ -61,7 +62,7 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   if (!ascend_info->GetInputShape().empty()) {
     input_shape_ = ascend_info->GetInputShape();
   }
-  const char *soc_name = aclrtGetSocName();
+  const char *soc_name = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name == nullptr) {
     MS_LOG(WARNING) << "Get soc version failed.";
     return;
@@ -70,7 +71,7 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
 }
 
 std::string AclModelOptions::GetSocName() {
-  const char *soc_name = aclrtGetSocName();
+  const char *soc_name = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name == nullptr) {
     MS_LOG(WARNING) << "Get soc version failed.";
     return "";
@@ -131,7 +132,7 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
       continue;
     }
     MS_LOG(INFO) << "Option " << acl_option_key << " : " << *ms_option;
-    init_options.emplace(acl_option_key, *ms_option);
+    (void)init_options.emplace(acl_option_key, *ms_option);
   }
 
   for (auto [ms_option, acl_option_key] : build_options_map) {
@@ -139,7 +140,7 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
       continue;
     }
     MS_LOG(INFO) << "Option " << acl_option_key << " : " << *ms_option;
-    build_options.emplace(acl_option_key, *ms_option);
+    (void)build_options.emplace(acl_option_key, *ms_option);
   }
 
   // init by config file param
@@ -159,7 +160,7 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
                       << "] have been set through the API and do not need to be repeated.";
       continue;
     }
-    init_options.emplace(item.first, item.second);
+    (void)init_options.emplace(item.first, item.second);
   }
 
   for (auto item : build_options_map_) {
@@ -169,18 +170,18 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
                       << "] have been set through the API and do not need to be repeated.";
       continue;
     }
-    build_options.emplace(item.first, item.second);
+    (void)build_options.emplace(item.first, item.second);
   }
 
   // first_graph_flag has value means being multi graph mode
   if (first_graph_flag_.has_value()) {
     for (const auto &option : multi_graph_unsupported_options) {
-      build_options.erase(option);
+      (void)build_options.erase(option);
     }
     // non-input graph
     if (!first_graph_flag_) {
       for (const auto &option : first_graph_options) {
-        build_options.erase(option);
+        (void)build_options.erase(option);
       }
     }
   }

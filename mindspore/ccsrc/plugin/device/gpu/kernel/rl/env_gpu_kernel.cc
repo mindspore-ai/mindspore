@@ -22,19 +22,21 @@ constexpr auto kEnvTypeName = "name";
 constexpr auto kHandleAttrName = "handle";
 }  // namespace
 
-bool EnvCreateKernelMod::Init(const CNodePtr &cnode) {
-  const auto &name = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kEnvTypeName);
+bool EnvCreateKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  const auto &name = GetValue<std::string>(primitive_->GetAttr(kEnvTypeName));
   std::tie(handle_, env_) = EnvironmentFactory::GetInstance().Create(name);
   MS_EXCEPTION_IF_NULL(env_);
-  env_->Init(cnode, nullptr);
-  InitSizeLists();
+  env_->Init(primitive_, nullptr);
   return true;
 }
+int EnvCreateKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
+  output_size_list_.push_back(sizeof(handle_));
+  return KRET_OK;
+}
 
-void EnvCreateKernelMod::InitSizeLists() { output_size_list_.push_back(sizeof(handle_)); }
-
-bool EnvCreateKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &outputs, void *stream) {
+bool EnvCreateKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                const std::vector<KernelTensor *> &outputs, void *stream) {
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(handle, &handle_, sizeof(handle_), cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream)),
@@ -42,43 +44,43 @@ bool EnvCreateKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
   return true;
 }
 
-bool EnvResetKernelMod::Init(const CNodePtr &cnode) {
-  handle_ = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
-  kernel_node_ = cnode;
+bool EnvResetKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  handle_ = GetValue<int64_t>(primitive_->GetAttr(kHandleAttrName));
   env_ = EnvironmentFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(env_);
-  InitSizeLists();
   return true;
 }
-
-void EnvResetKernelMod::InitSizeLists() {
+int EnvResetKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
+  workspace_size_list_.clear();
   output_size_list_.push_back(env_->StateSizeInBytes());
   workspace_size_list_.push_back(env_->WorkspaceSizeInBytes());
+  return KRET_OK;
 }
 
-bool EnvResetKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs, void *stream) {
+bool EnvResetKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs, void *stream) {
   return env_->Reset(inputs, workspace, outputs, stream);
 }
 
-bool EnvStepKernelMod::Init(const CNodePtr &cnode) {
-  handle_ = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
+bool EnvStepKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  handle_ = GetValue<int64_t>(primitive_->GetAttr(kHandleAttrName));
   env_ = EnvironmentFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(env_);
-  InitSizeLists();
   return true;
 }
-
-void EnvStepKernelMod::InitSizeLists() {
-  input_size_list_.push_back(env_->ActionSizeInBytes());
+int EnvStepKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
+  workspace_size_list_.clear();
   output_size_list_.push_back(env_->StateSizeInBytes());
   output_size_list_.push_back(env_->RewardSizeInBytes());
   output_size_list_.push_back(env_->DoneSizeInBytes());
   workspace_size_list_.push_back(env_->WorkspaceSizeInBytes());
+  return KRET_OK;
 }
 
-bool EnvStepKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                              const std::vector<AddressPtr> &outputs, void *stream) {
+bool EnvStepKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                              const std::vector<KernelTensor *> &outputs, void *stream) {
   return env_->Step(inputs, workspace, outputs, stream);
 }
 }  // namespace kernel

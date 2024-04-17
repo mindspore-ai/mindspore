@@ -52,6 +52,7 @@ MS_CORE_API const std::string &TypeIdLabel(const TypeId &v);
 MS_CORE_API TypeId NormalizeTypeId(const TypeId type_id);
 bool IsSameObjectType(const Type &lhs, const Type &rhs);
 MS_CORE_API size_t GetTypeByte(const TypePtr &type_ptr);
+MS_CORE_API int64_t GetTypeId(const TypeId &type_id);
 
 enum class BitsNum : int {
   eBits8 = 8,

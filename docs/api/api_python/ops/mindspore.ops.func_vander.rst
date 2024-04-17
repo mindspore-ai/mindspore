@@ -4,7 +4,7 @@ mindspore.ops.vander
 .. py:function:: mindspore.ops.vander(x, N=None)
 
     生成一个范德蒙矩阵。
-    返回矩阵的各列是入参的幂。第 i 个输出列是输入向量元素的幂，其幂为 :math:`N-i-1`。
+    返回矩阵的各列是入参的幂。第 i 个输出列是输入向量元素的幂，其幂为 :math:`N - i - 1`。
 
     参数：
         - **x** (Tensor) - 1-D 输入阵列。

@@ -19,15 +19,18 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "kernel/kernel.h"
 
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
-using mindspore::kernel::KernelLaunchInfo;
+using mindspore::kernel::KernelLaunchAddr;
+using mindspore::kernel::KernelTensor;
 
 // The recorder actor is used to record kernel info.
 class RecorderActor : public ActorBase {
@@ -36,7 +39,7 @@ class RecorderActor : public ActorBase {
   ~RecorderActor() override = default;
 
   // The memory recorder of each node.
-  void RecordInfo(const std::string op_name, const KernelLaunchInfo *launch_info_, const DeviceContext *device_context,
+  void RecordInfo(const std::string op_name, const KernelLaunchAddr *launch_info, const DeviceContext *device_context,
                   OpContext<DeviceTensor> *const op_context);
 
   // Clear memory recorder at the step end.

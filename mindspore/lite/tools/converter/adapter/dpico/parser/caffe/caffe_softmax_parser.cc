@@ -16,7 +16,7 @@
 
 #include "parser/caffe/caffe_softmax_parser.h"
 #include <memory>
-#include "ops/softmax.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <vector>
 #include <unordered_set>
+#include "mindspore/core/ops/op_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "ops/nn_op_name.h"
 #include "ops/conv_pool_op_name.h"
@@ -69,136 +70,27 @@ void CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &graph, const Devi
   DeviceAddressUtils::UpdateDeviceAddressForRefNode(graph);
 }
 
-device::DeviceAddressPtr GetGraphMapToCacheAddress(
-  const std::map<KernelWithIndex, device::DeviceAddressPtr> &graph_map_to_cache,
-  const KernelWithIndex &kernel_with_index) {
-  auto iter = graph_map_to_cache.find(kernel_with_index);
-  if (iter != graph_map_to_cache.end()) {
-    return iter->second;
-  }
-  return nullptr;
-}
+void SetIgnoreSyncHostToDeviceList(const SimpleGraphPtr &simple_graph) {
+  const auto &single_ops = simple_graph->single_ops_;
+  for (const auto &single_op : single_ops) {
+    const auto &kernel = single_op->kernel_;
+    const auto &edges = single_op->inputs_;
 
-void CacheForGraphInputs(const OpCompilerInfoPtr &op_compiler_info,
-                         std::map<KernelWithIndex, device::DeviceAddressPtr> *graph_map_cache) {
-  MS_EXCEPTION_IF_NULL(graph_map_cache);
-  auto &graph = op_compiler_info->graph_;
-  MS_EXCEPTION_IF_NULL(graph);
-  auto device_context = op_compiler_info->device_context_;
-  const auto &inputs = graph->inputs();
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto &input = inputs[i];
-    MS_EXCEPTION_IF_NULL(input);
-    auto node_address = AnfAlgo::GetMutableOutputAddr(input, 0);
-    MS_EXCEPTION_IF_NULL(node_address);
-    auto kernel_with_index = std::make_pair(input, 0);
-    auto cached_address = GetGraphMapToCacheAddress(*graph_map_cache, kernel_with_index);
-    if (cached_address == nullptr) {
-      cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
-      (*graph_map_cache)[kernel_with_index] = cached_address;
-    }
-    (void)op_compiler_info->inputs_.emplace_back(cached_address);
-  }
-}
-
-void CacheForGraphOutputs(const OpCompilerInfoPtr &op_compiler_info,
-                          std::map<KernelWithIndex, device::DeviceAddressPtr> *graph_map_cache) {
-  MS_EXCEPTION_IF_NULL(graph_map_cache);
-  auto &graph = op_compiler_info->graph_;
-  MS_EXCEPTION_IF_NULL(graph);
-  auto device_context = op_compiler_info->device_context_;
-  const auto &output_nodes = op_compiler_info->graph_output_nodes_;
-  for (auto &item_with_index : output_nodes) {
-    MS_EXCEPTION_IF_NULL(item_with_index.first);
-    if (AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
-      continue;
-    }
-    auto node_address = AnfAlgo::GetMutableOutputAddr(item_with_index.first, item_with_index.second, false);
-    auto cached_address = GetGraphMapToCacheAddress(*graph_map_cache, item_with_index);
-    if (cached_address == nullptr) {
-      cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
-      (*graph_map_cache)[item_with_index] = cached_address;
-    }
-    (void)op_compiler_info->outputs_.emplace_back(cached_address);
-  }
-}
-
-void CacheForGraphValueNodes(const OpCompilerInfoPtr &op_compiler_info,
-                             std::map<KernelWithIndex, device::DeviceAddressPtr> *graph_map_cache) {
-  MS_EXCEPTION_IF_NULL(graph_map_cache);
-  auto &graph = op_compiler_info->graph_;
-  MS_EXCEPTION_IF_NULL(graph);
-  const auto &value_nodes = graph->graph_value_nodes();
-  for (auto &value_node : value_nodes) {
-    MS_EXCEPTION_IF_NULL(value_node);
-    if (!AnfAlgo::OutputAddrExist(value_node, 0, false)) {
-      continue;
-    }
-    auto node_address = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
-    (*graph_map_cache)[std::make_pair(value_node, 0)] = node_address;
-
-    const auto &node_value = value_node->value();
-    MS_EXCEPTION_IF_NULL(node_value);
-    if (node_value->isa<tensor::Tensor>()) {
-      auto tensor = node_value->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
-      op_compiler_info->value_map_to_tensor_[node_address] = tensor;
-    } else {
-      op_compiler_info->value_map_to_tensor_[node_address] = nullptr;
-    }
-  }
-}
-
-void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
-                              std::map<KernelWithIndex, device::DeviceAddressPtr> *graph_map_cache) {
-  MS_EXCEPTION_IF_NULL(graph_map_cache);
-  MS_EXCEPTION_IF_NULL(op_compiler_info);
-  auto &graph = op_compiler_info->graph_;
-  MS_EXCEPTION_IF_NULL(graph);
-  auto device_context = op_compiler_info->device_context_;
-  const auto &nodes = graph->execution_order();
-  for (auto const &node : nodes) {
-    MS_EXCEPTION_IF_NULL(node);
-    ExecuteKernelInfo exe_kernel_info;
-    exe_kernel_info.kernel_ = node;
-
-    auto &inputs = node->inputs();
-    if (inputs.empty()) {
-      MS_LOG(EXCEPTION) << "Invalid inputs.";
-    }
-    exe_kernel_info.primitive_ = common::AnfAlgo::GetCNodePrimitive(node);
-
-    // Save inputs
-    auto input_num = common::AnfAlgo::GetInputTensorNum(node);
-    for (size_t i = 0; i < input_num; ++i) {
-      if (common::AnfAlgo::IsNoneInput(node, i)) {
-        (void)exe_kernel_info.inputs_device_address_.emplace_back(nullptr);
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    std::vector<size_t> ignore_input_index_list = kernel_mod->GetLaunchIgnoredInputAddressIdx();
+    for (size_t index : ignore_input_index_list) {
+      // Some input may be converted to attribute or input size is wrong.
+      // This behavior is incorrect, but it does exist in the current kernel
+      // and needs to be rectified by the operators who develop this kernel.
+      if (index >= edges.size()) {
+        MS_LOG(INFO) << simple_graph->name_ << " ignore input index is " << index << ", but total input num is "
+                     << edges.size();
         continue;
       }
-      session::KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
-      auto node_address = AnfAlgo::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, false);
-      auto cached_address = GetGraphMapToCacheAddress(*graph_map_cache, kernel_with_index);
-      if (cached_address == nullptr) {
-        cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
-        (*graph_map_cache)[kernel_with_index] = cached_address;
-      }
-      (void)exe_kernel_info.inputs_device_address_.emplace_back(cached_address);
+      edges[index]->ignore_h2d_ = true;
+      MS_LOG(INFO) << "For graph " << simple_graph->name_ << " ignore input host to device " << index;
     }
-
-    // Save outputs
-    auto output_num = AnfAlgo::GetOutputTensorNum(node);
-    for (size_t i = 0; i < output_num; ++i) {
-      auto node_address = AnfAlgo::GetMutableOutputAddr(node, i, false);
-      auto kernel_with_index = std::make_pair(node, i);
-      auto cached_address = GetGraphMapToCacheAddress(*graph_map_cache, kernel_with_index);
-      if (cached_address == nullptr) {
-        cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
-        (*graph_map_cache)[kernel_with_index] = cached_address;
-      }
-      (void)exe_kernel_info.outputs_device_address_.emplace_back(cached_address);
-    }
-
-    (void)op_compiler_info->execute_kernel_list_.emplace_back(exe_kernel_info);
   }
 }
 }  // namespace
@@ -215,8 +107,19 @@ OpCompiler &OpCompiler::GetInstance() {
   return instance;
 }
 
+void OpCompilerInfo::UpdateStatus(bool ready) { ready_.store(ready, std::memory_order_release); }
+
+void OpCompilerInfo::WaitReady() const {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kWaitTaskFinish,
+                                     graph_info_, true);
+  while (!ready_.load(std::memory_order_acquire)) {
+    std::this_thread::yield();
+  }
+}
+
 bool OpCompiler::IsInvalidInferResultOp(const std::string &op_name) const {
-  static const std::unordered_set<std::string> kInvalidInferResultOp = {kDropoutOpName, kMaxPoolWithArgmaxOpName};
+  static const std::unordered_set<std::string> kInvalidInferResultOp = {kDropoutOpName, kMaxPoolWithArgmaxOpName,
+                                                                        kLSTMOpName};
   return kInvalidInferResultOp.find(op_name) != kInvalidInferResultOp.end();
 }
 
@@ -226,42 +129,24 @@ KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPt
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
   KernelGraphPtr graph;
-  if (op_run_info->op_prim->name() == "PackFunc") {
-    auto recent_graph = op_run_info->op_prim->GetAttr("recent_graph");
-    MS_EXCEPTION_IF_NULL(recent_graph);
-    auto func_graph = recent_graph->cast<FuncGraphPtr>();
-    std::vector<KernelGraphPtr> all_out_graph;
-    graph = session_->ConstructPackKernelGraph(func_graph, &all_out_graph, device_context->GetDeviceType());
-    graph->set_attr(kAttrPackFunction, MakeValue(True));
-  } else {
-    graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.input_tensor,
-                                             op_run_info->base_op_run_info.input_mask,
-                                             device_context->GetDeviceType() == device::DeviceType::kAscend);
-  }
+  graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.expanded_input_values,
+                                           op_run_info->base_op_run_info.input_types);
   graph->set_is_from_single_op(true);
   return graph;
 }
 
-void OpCompiler::ConvertGraphToExecuteInfo(const OpCompilerInfoPtr &op_compiler_info) const {
-  MS_LOG(DEBUG) << "ConvertGraphToExecuteInfo";
-  MS_EXCEPTION_IF_NULL(op_compiler_info);
-  op_compiler_info->inputs_.clear();
-  op_compiler_info->outputs_.clear();
-  op_compiler_info->execute_kernel_list_.clear();
+void OpCompiler::AssignStreamIdForSingleOpGraph(const KernelGraphPtr &graph, uint32_t stream_id) {
+  MS_EXCEPTION_IF_NULL(graph);
 
-  std::map<KernelWithIndex, device::DeviceAddressPtr> graph_map_to_cache;
-
-  // Save all value nodes
-  CacheForGraphValueNodes(op_compiler_info, &graph_map_to_cache);
-
-  // Save all inputs
-  CacheForGraphInputs(op_compiler_info, &graph_map_to_cache);
-
-  // Save all outputs
-  CacheForGraphOutputs(op_compiler_info, &graph_map_to_cache);
-
-  // Save all kernels
-  CacheForGraphExecuteList(op_compiler_info, &graph_map_to_cache);
+  for (const auto &cnode : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    AnfAlgo::SetStreamId(stream_id, cnode.get());
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+    for (size_t index = 0; index < input_num; ++index) {
+      const auto &input_node = common::AnfAlgo::GetInputNode(cnode, index);
+      AnfAlgo::SetStreamId(stream_id, input_node.get());
+    }
+  }
 }
 
 OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run_info, bool *single_op_cache_hit,
@@ -270,12 +155,8 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   const auto &graph_info = GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
   const auto &iter = op_compiler_infos_.find(graph_info);
   // Check if the graph cache exists.
-  auto &op_executor = runtime::OpExecutor::GetInstance();
   if (iter != op_compiler_infos_.end()) {
     MS_EXCEPTION_IF_NULL(iter->second);
-    if (op_executor.BuildInQueue(iter->second->graph_id_)) {
-      op_executor.Wait();
-    }
     const auto &op_compiler_info = iter->second;
     MS_EXCEPTION_IF_NULL(op_compiler_info);
     *single_op_cache_hit = true;
@@ -310,7 +191,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   kernel_executor->OptimizeGraph(graph);
 
   UpdateRefInfoBeforeCreateKernel(op_run_info, graph);
-
+  AssignStreamIdForSingleOpGraph(graph, op_run_info->base_op_run_info.stream_id);
   // Create device address for all anf nodes of graph.
   CreateDeviceAddressWithoutWorkspace(graph, device_context, op_run_info->is_gradient_out);
 
@@ -339,19 +220,21 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
     }
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
+  UpdateRefNodeOutputDeviceAddress(graph);
+  auto simple_graph = IrConverter::Convert(op_run_info->base_op_run_info.op_name, graph, device_context);
+  MS_LOG(DEBUG) << "DEBUG generate new IR " << simple_graph->DebugInfo().dump();
 
   auto op_compiler_info = std::make_shared<OpCompilerInfo>(
     graph_info, graph->graph_id(), graph, device_context, op_run_info->base_op_run_info.need_earse_cache,
-    need_refresh_abstract, outputs_with_index, outputs_tensor_num, outputs_padding_type);
+    need_refresh_abstract, outputs_with_index, outputs_tensor_num, outputs_padding_type, std::move(simple_graph));
 
   graph->set_graph_info(graph_info);
-  ConvertGraphToExecuteInfo(op_compiler_info);
   op_compiler_infos_[graph_info] = op_compiler_info;
   return op_compiler_info;
 }
 
-void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context,
-                            bool is_dynamic) const {
+void OpCompiler::KernelBuild(const OpCompilerInfoPtr &op_compiler_info, const DeviceContext *device_context,
+                             bool is_dynamic) const {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   // The compilation task may be in a child thread that has not yet set rt_context,
@@ -360,22 +243,21 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
     MS_LOG(EXCEPTION) << "Bind device failed";
   }
   std::vector<CNodePtr> node_to_build;
-  for (const auto &graph : graphs) {
-    MS_EXCEPTION_IF_NULL(graph);
-    const auto &nodes = graph->execution_order();
-    (void)std::copy(nodes.begin(), nodes.end(), std::back_inserter(node_to_build));
-  }
+  const auto &graph = op_compiler_info->graph_;
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &nodes = graph->execution_order();
+  (void)std::copy(nodes.begin(), nodes.end(), std::back_inserter(node_to_build));
   // Kernel build
   auto kernel_executor = device_context->GetKernelExecutor(is_dynamic);
   MS_EXCEPTION_IF_NULL(kernel_executor);
   kernel_executor->CreateKernel(node_to_build);
+  kernel_executor->PreprocessBeforeRun(graph);
+  DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(device_context, graph);
+  // Need to execute after PreprocessBeforeRunSingleOpGraph
+  runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);
 
-  for (const auto &graph : graphs) {
-    kernel_executor->PreprocessBeforeRun(graph);
-    DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(device_context, graph);
-    // Need to execute after PreprocessBeforeRunSingleOpGraph
-    runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);
-  }
+  // After kernel generated.
+  SetIgnoreSyncHostToDeviceList(op_compiler_info->simple_graph_);
 }
 
 #ifdef ENABLE_D
@@ -390,52 +272,78 @@ std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info,
       transform::AclAdapterManager::GetInstance().CheckAclAdapter(op_name)) {
     auto acl_info = transform::AclAdapterManager::GetInstance().GetOpInfo(op_name);
     if (!acl_info.input_selector().empty() || acl_info.output_selector() != nullptr) {
-      if (op_info.input_tensor.size() == 0) {
+      if (op_info.expanded_input_values.size() == 0) {
         return ascend_special_info;
       }
+      TypeId first_dtype = TypeId::kTypeUnknown;
       std::vector<ShapeVector> input_shapes;
-      (void)std::transform(op_info.input_tensor.begin(), op_info.input_tensor.end(), std::back_inserter(input_shapes),
-                           [](const auto &tensor) {
-                             MS_EXCEPTION_IF_NULL(tensor);
-                             return tensor->shape();
+      (void)std::transform(op_info.expanded_input_values.begin(), op_info.expanded_input_values.end(),
+                           std::back_inserter(input_shapes), [&first_dtype](const ValuePtr &value) -> ShapeVector {
+                             auto tensor = value->cast<tensor::TensorPtr>();
+                             if (tensor != nullptr) {
+                               if (first_dtype == TypeId::kTypeUnknown) {
+                                 first_dtype = tensor->data_type();
+                               }
+                               return tensor->shape();
+                             }
+                             return {};
                            });
 
       auto in_func_map = acl_info.input_selector();
       for (auto [index, in_func] : in_func_map) {
         MS_EXCEPTION_IF_NULL(in_func);
-        ascend_special_info += in_func(op_info.input_tensor[index]->data_type(), input_shapes);
+        auto tensor = op_info.expanded_input_values[index]->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        ascend_special_info += in_func(tensor->data_type(), input_shapes);
       }
 
       auto out_func = acl_info.output_selector();
       if (out_func != nullptr) {
-        auto out_format = out_func(op_info.input_tensor[0]->data_type(), input_shapes);
+        auto tensor = op_info.expanded_input_values[0]->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        auto out_format = out_func(tensor->data_type(), input_shapes);
         ascend_special_info += out_format;
       }
+      MS_EXCEPTION_IF_NULL(out_func);
+      auto tensor = op_info.expanded_input_values[0]->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto out_format = out_func(tensor->data_type(), input_shapes);
+      ascend_special_info += out_format;
     }
   }
   return ascend_special_info;
 }
 #endif
 
-std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
-  std::set<int64_t> depend_list;
-  auto op_infer_opt = abstract::GetPrimitiveInferImpl(op_prim);
-  if (op_infer_opt.has_value()) {
-    auto op_infer = op_infer_opt.value().Get();
-    MS_EXCEPTION_IF_NULL(op_infer);
-    if (op_infer != nullptr) {
-      depend_list = op_infer->GetValueDependArgIndices();
+inline std::set<int64_t> GetDependList(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim) {
+  auto depend_list = mindspore::ops::GetInputDependValueList(op_prim);
+  if (!op_info.dyn_input_sizes.empty()) {
+    auto list_tmp = depend_list;
+    depend_list.clear();
+    for (const auto item : list_tmp) {
+      int64_t bias = 0;
+      for (int64_t i = 0; i < item; i++) {
+        auto idx = static_cast<size_t>(i);
+        if (op_info.dyn_input_sizes[idx] == -1) {
+          bias += 1;
+        } else {
+          bias += op_info.dyn_input_sizes[idx];
+        }
+      }
+      (void)depend_list.emplace(bias);
+      MS_LOG(DEBUG) << "Adjust depend list from " << item << " to " << bias << " for op: " << op_prim->name();
     }
   }
+
   return depend_list;
 }
 
 std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info,
                                              const PrimitivePtr &op_prim) const {
   MS_EXCEPTION_IF_NULL(op_prim);
-  if (op_info.input_tensor.size() != op_info.input_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << op_info.input_tensor.size()
-                      << " should be equal to tensors mask size " << op_info.input_mask.size();
+  if (op_info.expanded_input_values.size() != op_info.input_types.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << op_info.expanded_input_values.size()
+                      << " should be equal to tensors mask size " << op_info.input_types.size();
   }
   std::string graph_info = op_info.device_target;
 
@@ -463,16 +371,19 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
       graph_info.append(element.second->ToString());
     });
   }
-  for (size_t index = 0; index < op_info.input_tensor.size(); ++index) {
-    const auto &input_tensor = op_info.input_tensor[index];
-    MS_EXCEPTION_IF_NULL(input_tensor);
-    if (op_info.use_dynamic_shape_process) {
-      graph_info += GetNumString(static_cast<int>(input_tensor->shape().size()));
-    } else {
-      if (input_tensor->base_shape_ptr() != nullptr) {
-        graph_info += input_tensor->base_shape_ptr()->ToString();
+
+  const auto &depend_list = GetDependList(op_info, op_prim);
+  for (size_t index = 0; index < op_info.expanded_input_values.size(); ++index) {
+    auto const &value = op_info.expanded_input_values[index];
+    if (value->isa<tensor::Tensor>()) {
+      const auto &input_tensor = value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(input_tensor);
+      if (op_info.use_dynamic_shape_process) {
+        graph_info += GetNumString(static_cast<int>(input_tensor->shape().size()));
       } else {
-        if (!input_tensor->shape().empty()) {
+        if (input_tensor->base_shape_ptr() != nullptr) {
+          graph_info += input_tensor->base_shape_ptr()->ToString();
+        } else if (!input_tensor->shape().empty()) {
           const auto &shape_str =
             std::accumulate(std::next(input_tensor->shape().begin()), input_tensor->shape().end(),
                             std::to_string(input_tensor->shape()[0]),
@@ -480,25 +391,28 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
           graph_info += shape_str;
         }
       }
+
+      graph_info += GetNumString(input_tensor->data_type());
+      // In the case of the same shape, but dtype and format are inconsistent
+      auto tensor_addr = input_tensor->device_address();
+      if (tensor_addr != nullptr && !has_hidden_side_effect) {
+        auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
+        MS_EXCEPTION_IF_NULL(p_address);
+        graph_info += p_address->format();
+        graph_info += p_address->padding_type();
+      }
+
+      if (op_info.input_types[index] == InputType::kConstant || depend_list.find(index) != depend_list.end()) {
+        graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
+      }
+    } else {
+      graph_info += value->ToString();
     }
 
-    graph_info += GetNumString(input_tensor->data_type());
-    // In the case of the same shape, but dtype and format are inconsistent
-    auto tensor_addr = input_tensor->device_address();
-    if (tensor_addr != nullptr && !has_hidden_side_effect) {
-      auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
-      MS_EXCEPTION_IF_NULL(p_address);
-      graph_info += p_address->format();
-      graph_info += p_address->padding_type();
-    }
-    // For constant input or op depend input value
-    const auto &depend_list = GetInputDependValueList(op_prim);
-    if (op_info.input_mask[index] == kValueNodeTensorMask ||
-        (!depend_list.empty() && depend_list.find(index) != depend_list.end())) {
-      graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
-    }
     graph_info += "_";
   }
+
+  graph_info += std::to_string(op_info.stream_id);
 
   // Operator with hidden side effect.
   if (has_hidden_side_effect) {
@@ -516,5 +430,22 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
 void OpCompiler::ClearOpCache(const GraphInfo &graph_info) { (void)op_compiler_infos_.erase(graph_info); }
 
 void OpCompiler::ClearAllCache() { op_compiler_infos_.clear(); }
+
+void OpCompiler::UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto ref_node_map = graph->GetRefMap();
+  for (const auto &[output_pair, input_pair] : ref_node_map) {
+    const auto &[ref_node, output_index] = output_pair;
+    const auto &[input_node, input_node_output_index] = input_pair;
+    if (!AnfAlgo::OutputAddrExist(input_node, input_node_output_index, false)) {
+      MS_EXCEPTION_IF_NULL(input_node);
+      MS_LOG(WARNING) << "Output address not exist, node " << input_node->fullname_with_scope() << " index "
+                      << input_node_output_index;
+      continue;
+    }
+    auto input_addr = AnfAlgo::GetMutableOutputAddr(input_node, input_node_output_index, false);
+    AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node.get());
+  }
+}
 }  // namespace pynative
 }  // namespace mindspore

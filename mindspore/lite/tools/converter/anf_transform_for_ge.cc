@@ -42,10 +42,37 @@
 #include "tools/optimizer/fusion/kv_cache_mgr_load_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_assign_fusion.h"
 #include "tools/optimizer/fusion/flash_attention_fusion.h"
+#include "tools/optimizer/fusion/matmul_allreduce_fusion.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/graph/make_list_pass.h"
+#include "tools/optimizer/graph/kvcache_quant_pass.h"
+#include "tools/optimizer/fusion/flash_attention_antiquant_fusion.h"
+#include "tools/optimizer/graph/concat_op_pass.h"
+#include "tools/optimizer/graph/quant_fusion_x_offset_to_bias_pass.h"
+#include "tools/optimizer/graph/padv3_ge_pass.h"
 
 namespace mindspore::lite {
+void EnableKVCacheFusion(std::vector<opt::PassPtr> *fusions, const std::shared_ptr<ConverterPara> &param) {
+  fusions->push_back(std::make_shared<opt::KVCacheMgrOneBranchFusion>());
+  fusions->push_back(std::make_shared<opt::KVCacheMgrConcatFusion>());
+  fusions->push_back(std::make_shared<opt::KVCacheMgrLoadFusion>());
+  fusions->push_back(std::make_shared<opt::KVCacheMgrAssignFusion>());
+}
+
+void EnableMatMulAllReduceFusion(std::vector<opt::PassPtr> *fusions, const std::shared_ptr<ConverterPara> &param) {
+  fusions->push_back(std::make_shared<opt::MatMulAllReduceFusion>());
+  fusions->push_back(std::make_shared<opt::QuantFusionXOffsetToBias>());
+}
+
+void EnableFlashAttentionFusion(std::vector<opt::PassPtr> *fusions, const std::shared_ptr<ConverterPara> &param) {
+  fusions->push_back(std::make_shared<opt::FlashAttentionFusion>(param->ascendGeOptionCfg.op_attrs_map));
+}
+
+void EnableFlashAttentionAntiquantFusion(std::vector<opt::PassPtr> *fusions,
+                                         const std::shared_ptr<ConverterPara> &param) {
+  fusions->push_back(std::make_shared<opt::FlashAttentionAntiquantFusion>());
+}
+
 AnfTransformForGe::AnfTransformForGe() = default;
 
 AnfTransformForGe::~AnfTransformForGe() = default;
@@ -56,25 +83,50 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
   auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
   CHECK_NULL_RETURN(fusion_pm);
 
-  std::vector<opt::PassPtr> fusions{std::make_shared<opt::MakeListPass>(), std::make_shared<opt::ScalarOpPass>()};
+  std::vector<opt::PassPtr> fusions{std::make_shared<opt::MakeListPass>(), std::make_shared<opt::ScalarOpPass>(),
+                                    std::make_shared<opt::PadV3GePass>()};
+  std::map<std::string, std::function<void(std::vector<opt::PassPtr> *, const std::shared_ptr<ConverterPara> &)>>
+    fusion_mappings = {
+      {kFusionNameMatMulAllReduce,
+       std::function<void(std::vector<opt::PassPtr> *, const std::shared_ptr<ConverterPara> &)>(
+         EnableMatMulAllReduceFusion)},
+      {kFusionNameKVCache,
+       std::function<void(std::vector<opt::PassPtr> *, const std::shared_ptr<ConverterPara> &)>(EnableKVCacheFusion)},
+      {kFusionNameFlashAttention,
+       std::function<void(std::vector<opt::PassPtr> *, const std::shared_ptr<ConverterPara> &)>(
+         EnableFlashAttentionFusion)},
+      {kFusionNameFlashAttentionAntiquant,
+       std::function<void(std::vector<opt::PassPtr> *, const std::shared_ptr<ConverterPara> &)>(
+         EnableFlashAttentionAntiquantFusion)}};
+
   auto plugin_custom_ops = param->ascendGeOptionCfg.plugin_custom_ops;
   MS_LOG(INFO) << "plugin_custom_ops: " << plugin_custom_ops;
-  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
-      find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "FlashAttention") != plugin_custom_ops.end()) {
-    MS_LOG(INFO) << "using FlashAttention";
-    fusions.push_back(std::make_shared<opt::FlashAttentionFusion>());
-  }
-  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
-      find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "KVCache") != plugin_custom_ops.end()) {
-    MS_LOG(INFO) << "using KVCache";
-    fusions.push_back(std::make_shared<opt::KVCacheMgrOneBranchFusion>());
-    fusions.push_back(std::make_shared<opt::KVCacheMgrConcatFusion>());
-    fusions.push_back(std::make_shared<opt::KVCacheMgrLoadFusion>());
-    fusions.push_back(std::make_shared<opt::KVCacheMgrAssignFusion>());
+  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end()) {
+    MS_LOG(INFO) << "using all fusion";
+    EnableFlashAttentionFusion(&fusions, param);
+    EnableKVCacheFusion(&fusions, param);
+    EnableFlashAttentionAntiquantFusion(&fusions, param);
+    // MatMulAllReduce has performance degradation in incremental inference scenarios,
+    // and is not controlled by "All" temporarily.
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), kFusionNameMatMulAllReduce) !=
+        plugin_custom_ops.end()) {
+      EnableMatMulAllReduceFusion(&fusions, param);
+    }
   } else {
-    MS_LOG(INFO) << "custom op fusion not used.";
+    for (uint i = 0; i < plugin_custom_ops.size(); i++) {
+      auto plugin_name = plugin_custom_ops[i];
+      auto plugin_func = fusion_mappings[plugin_name];
+      if (plugin_func != nullptr) {
+        MS_LOG(INFO) << "using " << plugin_name;
+        plugin_func(&fusions, param);
+      }
+    }
   }
-
+  if (param->chip_name == "910b") {
+    fusions.push_back(std::make_shared<opt::KVCacheQuantPass>());
+  }
+  // concat_op_pass must be executed after kvcache pass, because some pass will create concat node
+  fusions.push_back(std::make_shared<opt::ConcatOpPass>());
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);
     MS_CHECK_TRUE_RET(pass_ptr != nullptr, RET_ERROR);

@@ -19,8 +19,10 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "ir/anf.h"
+#include "ir/functor.h"
 #include "utils/ms_utils.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/optimizer/helper.h"
@@ -28,12 +30,18 @@
 #include "kernel/framework_utils.h"
 
 namespace mindspore::opt::dynamic_shape {
+BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+
+void UpdateKernelTensorShape(const BaseShapePtr &base_shape,
+                             const std::vector<kernel::KernelTensor *> &output_kernel_tensors);
+
+abstract::AbstractBasePtr InferShapeAndType(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args);
+
+void UpdateKernelTensorType(const TypePtr &type, const std::vector<kernel::KernelTensor *> &output_kernel_tensors);
+
 bool IsRealCNode(const BaseRef &n);
 void InferOp(const CNodePtr &node, void *args = nullptr);
-kernel::KernelArgs InferOp(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
-                           const std::vector<tensor::TensorPtr> &input_tensors);
-kernel::KernelArgs SetOpArgs(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
-                             const std::vector<tensor::TensorPtr> &input_tensors);
 AnfNodePtr GenInferNode(const AnfNodePtr &node);
 AnfNodePtr GenInitNode(const AnfNodePtr &node);
 
@@ -65,7 +73,29 @@ class CustomActorNodeManager {
   OrderedMap<AnfNodePtr, RelatedCustomActorNode> custom_nodes_map_;
 };
 
-extern InfPyHandler cpp_infer_py_handler_;
-void set_cpp_infer_py_handler(const InfPyHandler &infer_handler);
+/// \brief The class to implement an InferShape function, which is decoupled from the mindspore/core.
+class InferShapeFunctor : public Functor {
+ public:
+  /// \brief Constructor of InferShapeFunctor.
+  explicit InferShapeFunctor(const std::string &name) : Functor(name) {}
+
+  /// \brief Destructor of InferShapeFunctor.
+  ~InferShapeFunctor() override = default;
+  MS_DECLARE_PARENT(InferShapeFunctor, Functor)
+
+  /// \brief Infer output shape.
+  /// \param[in] args AbstractBasePtrList of the inputs.
+  /// \return Result BaseShapePtr.
+  virtual BaseShapePtr InferShape(const AbstractBasePtrList &args) = 0;
+
+  /// \brief Pack functor name to a Value
+  /// \return The name of this infershape functor.
+  ValuePtr ToValue() const override { return MakeValue(name_); };
+
+  /// \brief Rename the functor.
+  void FromValue(const ValuePtr &value) override { name_ = GetValue<std::string>(value); };
+};
+using InferShapeFunctorPtr = std::shared_ptr<InferShapeFunctor>;
+constexpr auto kAttrInferShapeFunctor = "infer_shape_functor";
 }  // namespace mindspore::opt::dynamic_shape
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_DYNAMIC_SHAPE_HELPER_H

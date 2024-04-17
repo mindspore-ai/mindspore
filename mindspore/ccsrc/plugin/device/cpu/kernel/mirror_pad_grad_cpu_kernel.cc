@@ -30,15 +30,11 @@ constexpr size_t kMirrorPadGradOutputsNum = 1;
 constexpr size_t kPadMaxSupportDim = 5;
 }  // namespace
 
-bool MirrorPadGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  std::string mode = GetValue<std::string>(prim->GetAttr("mode"));
-  dtype_ = inputs[0]->GetDtype();
-  pad_dtype_ = inputs[1]->GetDtype();
+bool MirrorPadGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  std::string mode = GetValue<std::string>(primitive_->GetAttr("mode"));
+  dtype_ = inputs[0]->dtype_id();
+  pad_dtype_ = inputs[1]->dtype_id();
   if (mode == "REFLECT") {
     mode_ = 1;
   } else if (mode == "SYMMETRIC") {
@@ -50,10 +46,9 @@ bool MirrorPadGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int MirrorPadGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int MirrorPadGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -82,8 +77,8 @@ int MirrorPadGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-void MirrorPadGradCpuKernelMod::paddings_type(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
+void MirrorPadGradCpuKernelMod::paddings_type(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   if (pad_dtype_ == kNumberTypeInt32) {
     LaunchKernel<T, int32_t>(inputs, outputs);
   } else if (pad_dtype_ == kNumberTypeInt64) {
@@ -94,9 +89,9 @@ void MirrorPadGradCpuKernelMod::paddings_type(const std::vector<AddressPtr> &inp
   }
 }
 
-bool MirrorPadGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool MirrorPadGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMirrorPadGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMirrorPadGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -133,8 +128,8 @@ bool MirrorPadGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 template <typename T>
 void MirrorPadGradCpuKernelMod::slice(std::vector<int64_t> extents, std::vector<int64_t> rhs_offsets,
                                       std::vector<int64_t> input_strides, std::vector<T> inputs,
-                                      const std::vector<AddressPtr> &outputs) {
-  auto *outputs_addr = static_cast<T *>(outputs[0]->addr);
+                                      const std::vector<KernelTensor *> &outputs) {
+  auto *outputs_addr = static_cast<T *>(outputs[0]->device_ptr());
   auto inputs_addr = reinterpret_cast<T *>(inputs.data());
   size_t index = LongToSize(dims_ - 1);
   auto copy_size = sizeof(T) * LongToSize(extents[index]);
@@ -170,10 +165,10 @@ std::vector<std::pair<int64_t, int64_t>> MirrorPadGradCpuKernelMod::extract_padd
 }
 
 template <typename T1, typename T2>
-void MirrorPadGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto *inputs_data = static_cast<T1 *>(inputs[0]->addr);
-  auto *paddings_arg = static_cast<T2 *>(inputs[1]->addr);
+void MirrorPadGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto *inputs_data = static_cast<T1 *>(inputs[0]->device_ptr());
+  auto *paddings_arg = static_cast<T2 *>(inputs[1]->device_ptr());
   int64_t block_num = 1;
 
   std::vector<T1> inputs_addr;

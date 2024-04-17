@@ -15,17 +15,32 @@
  */
 
 #include "mindspore/ccsrc/debug/summary/summary.h"
-#include <set>
-#include <utility>
-#include <memory>
-#include "utils/ms_context.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "utils/ms_context.h"
 #include "utils/trace_base.h"
 
 namespace mindspore::debug {
 constexpr int kSummaryGetItem = 2;
+
+namespace {
+string GetSummaryNameWithTag(CNodePtr cnode) {
+  std::string tag = GetValue<std::string>(GetValueNode(cnode->input(1)));
+  std::string name;
+  if (cnode->IsApply(prim::kPrimScalarSummary)) {
+    name = tag + "[:Scalar]";
+  } else if (cnode->IsApply(prim::kPrimImageSummary)) {
+    name = tag + "[:Image]";
+  } else if (cnode->IsApply(prim::kPrimHistogramSummary)) {
+    name = tag + "[:Histogram]";
+  } else {
+    name = tag + "[:Tensor]";
+  }
+  return name;
+}
+}  // namespace
 
 Summary &Summary::GetInstance() {
   static Summary instance;
@@ -33,8 +48,15 @@ Summary &Summary::GetInstance() {
 }
 
 void Summary::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
-  MS_LOG(INFO) << "Recurse set summary nodes for all graphs in graph: " << graph->graph_id() << " start";
   MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Recurse set summary nodes for all graphs in graph: " << graph->graph_id() << " start";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->backend_policy();
+  if (backend == "ge") {
+    MS_LOG(INFO) << "This function should be skipped on GE backend.";
+    return;
+  }
   SetSummaryNodes(graph);
   auto &summary_nodes = graph->summary_nodes();
   std::map<std::string, std::pair<AnfNodePtr, int>> summary;
@@ -51,9 +73,12 @@ void Summary::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
 }
 
 void Summary::SummaryTensor(KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
   if (backend == "ge") {
+    MS_LOG(INFO) << "This function should be skipped on GE backend.";
     return;
   }
 
@@ -66,7 +91,6 @@ void Summary::SummaryTensor(KernelGraph *graph) {
     return;
   }
 
-  SetSummaryNodes(graph);
   auto summary_outputs = graph->summary_nodes();
   std::map<std::string, tensor::TensorPtr> params_list;
   // fetch outputs apply kernel in session & run callback functions
@@ -74,8 +98,9 @@ void Summary::SummaryTensor(KernelGraph *graph) {
     auto node = output_item.second.first;
     size_t index = IntToSize(output_item.second.second);
     auto address = AnfAlgo::GetOutputAddr(node, index, false);
-    auto shape = common::AnfAlgo::GetOutputInferShape(node, index);
-    TypeId type_id = common::AnfAlgo::GetOutputInferDataType(node, index);
+    auto kt = AnfAlgo::GetOutputKernelTensor(node, index);
+    auto shape = kt->GetShapeVector();
+    TypeId type_id = kt->dtype_id();
     tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
     MS_EXCEPTION_IF_NULL(address);
     if (!address->GetPtr()) {
@@ -97,6 +122,13 @@ void Summary::RegisterSummaryCallBackFunc(const CallBackFunc &callback) { summar
 void Summary::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary Start";
   MS_EXCEPTION_IF_NULL(graph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->backend_policy();
+  if (backend == "ge") {
+    MS_LOG(INFO) << "This function should be skipped on GE backend.";
+    return;
+  }
   if (!graph->summary_node_exist()) {
     return;
   }
@@ -107,9 +139,9 @@ void Summary::SetSummaryNodes(KernelGraph *graph) {
     if (AnfAlgo::IsSummaryNode(n)) {
       auto cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      if (cnode->inputs().size() <= kSummaryGetItem) {
-        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least, but got " << (cnode->inputs().size() - 1)
-                          << "." << trace::DumpSourceLines(cnode);
+      if (cnode->size() <= kSummaryGetItem) {
+        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least, but got " << (cnode->size() - 1) << "."
+                          << trace::DumpSourceLines(cnode);
       }
       auto node = cnode->input(kSummaryGetItem);
       MS_EXCEPTION_IF_NULL(node);
@@ -118,7 +150,7 @@ void Summary::SetSummaryNodes(KernelGraph *graph) {
       if (!AnfUtils::IsRealKernel(item_with_index.first)) {
         MS_LOG(EXCEPTION) << "Unexpected node:" << item_with_index.first->DebugString();
       }
-      summary[n->fullname_with_scope()] = item_with_index;
+      summary[GetSummaryNameWithTag(cnode)] = item_with_index;
     }
   }
   graph->set_summary_nodes(summary);

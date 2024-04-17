@@ -120,7 +120,7 @@ void MindIREngine::Init(const AbstractBasePtrList &args) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       (void)todo_.insert(node);
-      node_input_depends_[node] = SizeToInt(cnode->inputs().size());
+      node_input_depends_[node] = SizeToInt(cnode->size());
     } else if (node->isa<Parameter>()) {
       auto param = node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(param);
@@ -161,6 +161,14 @@ AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim,
   MS_EXCEPTION_IF_NULL(prim);
   try {
     MS_LOG_TRY_CATCH_SCOPE;
+    // For Lite, the op is with old format, it will fail in new infer function, so skip it.
+#ifndef BUILD_LITE
+    auto abstract_optional = abstract::InferAbstractByFuncImpl(prim, args_abs_list);
+    if (abstract_optional.has_value()) {
+      return abstract_optional.value();
+    }
+#endif
+
     auto found = abstract::GetPrimitiveInferImpl(prim);
     if (found.has_value()) {
       auto infer = found.value();
@@ -168,6 +176,7 @@ AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim,
         return infer.InferShapeAndType(nullptr, prim, args_abs_list);
       }
     }
+
     if (raise_exception_) {
       MS_LOG(INTERNAL_EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()
                                  << " primitive type:" << prim->type_name()
@@ -215,13 +224,19 @@ void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr 
   if (result == nullptr) {
     MS_LOG(INFO) << node->ToString()
                  << " can't be inferred shape. It will keep the previous value with danger. Prim: " << prim->ToString();
-    result = node->abstract();
+    if (node->abstract() == nullptr) {
+      MS_LOG(WARNING) << "The abstract of the node: " << node->ToString()
+                      << " is nullptr. And it can't be inferred shape. Prim: " << prim->ToString();
+    } else {
+      result = node->abstract()->Clone();
+    }
   }
   SaveNodeInferResult(node, result);
 }
 
 void MindIREngine::EvalReturnPrimitive(const CNodePtr &node) {
-  if (node->inputs().size() < 2) {
+  constexpr auto min_size = 2;
+  if (node->size() < min_size) {
     MS_LOG(INTERNAL_EXCEPTION) << node->DebugString() << " input size < 2";
   }
   auto result = infer_result_[node->inputs()[1]];
@@ -263,7 +278,7 @@ void MindIREngine::EvalPartialPrimitive(const CNodePtr &node, const AbstractBase
   }
   // Not Resolved.
   constexpr size_t kSizeTwo = 2;
-  if (node->inputs().size() < kSizeTwo) {
+  if (node->size() < kSizeTwo) {
     MS_LOG(INTERNAL_EXCEPTION) << node->DebugString() << " input size < " << kSizeTwo;
   }
   auto &func = infer_result_[node->inputs()[1]];
@@ -346,7 +361,9 @@ void MindIREngine::EvalPrimitiveAbastract(const abstract::PrimitiveAbstractClosu
 
 bool MindIREngine::CheckCNodeNotReady(const CNodePtr &node) {
   int depend = 0;
-  for (const auto &input : node->inputs()) {
+  for (auto &weak_input : node->weak_inputs()) {
+    auto input = weak_input.lock();
+    MS_EXCEPTION_IF_NULL(input);
     depend += infer_result_.find(input) != infer_result_.end() ? 0 : 1;
   }
   this->node_input_depends_[node] = depend;
@@ -549,23 +566,21 @@ bool ValidMindir(const FuncGraphPtr &root) {
     manager = MakeManager();
     manager->AddFuncGraph(root, true);
   }
+  MS_LOG(DEBUG) << "Success to valid the mindir. " << root->ToString() << " : " << root.get();
+  return true;
+}
+
+void InferFuncGraphLoaded(const FuncGraphPtr &root) {
   abstract::AbstractBasePtrList func_args;
-  const auto inputs = root->get_inputs();
+  const auto &inputs = root->get_inputs();
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(func_args),
                        [](const AnfNodePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
                          if (arg->abstract() == nullptr) {
-                           MS_LOG(ERROR) << "The parameter's abstract is null:" << arg->DebugString();
+                           MS_LOG(EXCEPTION) << "The parameter's abstract is null:" << arg->DebugString();
                          }
-                         MS_EXCEPTION_IF_NULL(arg->abstract());
                          return arg->abstract();
                        });
-  auto valid = InferMindir(root, func_args);
-  if (!valid) {
-    MS_LOG(ERROR) << "There is some wrong in the mindir. " << root->ToString() << " : " << root.get();
-    return false;
-  }
-  MS_LOG(DEBUG) << "Success to valid the mindir. " << root->ToString() << " : " << root.get();
-  return true;
+  (void)InferMindir(root, func_args);
 }
 }  // namespace mindspore

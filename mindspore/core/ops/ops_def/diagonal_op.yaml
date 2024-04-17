@@ -1,0 +1,20 @@
+#operator diagonal
+diagonal:
+  args:
+    input:
+      dtype: tensor
+    offset:
+      dtype: int
+      default: 0
+      prim_init: True
+    dim1:
+      dtype: int
+      default: 0
+      prim_init: True
+    dim2:
+      dtype: int
+      default: 1
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor

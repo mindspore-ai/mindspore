@@ -23,7 +23,7 @@
 #include "nnacl/op_base.h"
 #include "ops/affine_grid.h"
 #include "ops/histogram.h"
-#include "ops/logical_not.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/xlogy.h"
 #include "ops/op_name.h"
 
@@ -129,19 +129,11 @@ PrimitiveCPtr OnnxRandomUniformLikeParser::Parse(const onnx::GraphProto &onnx_gr
   return prim;
 }
 
-PrimitiveCPtr OnnxBlendFaceBgPartOneParser::Parse(const onnx::GraphProto &onnx_graph,
-                                                  const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_shared<BlendFaceBgPartOne>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim;
-}
-
 OnnxNodeRegistrar g_onnxAffineGridParser("affine_grid", new OnnxAffineGridParser());
 OnnxNodeRegistrar g_onnxHistogramParser("histc", new OnnxHistogramParser());
 OnnxNodeRegistrar g_onnxLogicalNotParser("logical_not", new OnnxLogicalNotParser());
 OnnxNodeRegistrar g_onnxRot90Parser("rot90", new OnnxRot90Parser());
 OnnxNodeRegistrar g_onnxXlogyParser("xlogy", new OnnxXlogyParser());
 OnnxNodeRegistrar g_onnxRandomUniformLikeParser("RandomUniformLike", new OnnxRandomUniformLikeParser());
-OnnxNodeRegistrar g_onnxBlendFaceBgPartOneParser("BlendFaceBgPartOne", new OnnxBlendFaceBgPartOneParser());
 }  // namespace lite
 }  // namespace mindspore

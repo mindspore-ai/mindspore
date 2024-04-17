@@ -19,13 +19,14 @@ from __future__ import absolute_import
 import os
 import logging
 from enum import Enum
-import numpy
+import numpy as np
 
 from mindspore_lite._checkparam import check_isinstance
 from mindspore_lite.context import Context
 from mindspore_lite.lib import _c_lite_wrapper
 from mindspore_lite.tensor import Tensor
 from mindspore_lite.base_model import BaseModel
+from mindspore_lite._parse_update_weights_name import _parse_update_weight_config_name, _rename_variable_weight
 
 __all__ = ['ModelType', 'Model', 'ModelParallelRunner', 'ModelGroup']
 
@@ -80,7 +81,7 @@ model_type_cxx_py_map = {
 def set_env(func):
     """set env for Ascend custom opp"""
 
-    def warpper(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         current_path = os.path.dirname(os.path.abspath(__file__))
         mslite_ascend_ascendc_custom_kernel_path = os.path.join(current_path,
                                                                 "custom_kernels",
@@ -109,7 +110,7 @@ def set_env(func):
             logging.warning("mslite ascendc custom kernel path not found")
         return func(*args, **kwargs)
 
-    return warpper
+    return wrapper
 
 
 class Model(BaseModel):
@@ -154,8 +155,8 @@ class Model(BaseModel):
                   .. code-block::
 
                       [execution_plan]
-                      [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
-                      [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
+                      [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as float16)
+                      [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as float32)
 
                 - Usage 2: When GPU inference, set the configuration of TensorRT. The content and description of the
                   configuration file are as follows:
@@ -234,6 +235,12 @@ class Model(BaseModel):
             if not ret.IsOk():
                 raise RuntimeError(
                     f"load configuration failed! Error is {ret.ToString()}")
+            update_names = _parse_update_weight_config_name(config_path)
+            if update_names is not None:
+                if config_dict is None:
+                    config_dict = {"ascend_context": {"variable_weights_list": update_names}}
+                else:
+                    config_dict['ascend_context']["variable_weights_list"] = update_names
 
         if config_dict:
             check_isinstance("config_dict", config_dict, dict)
@@ -280,6 +287,28 @@ class Model(BaseModel):
         """
         # pylint: disable=useless-super-delegation
         return super(Model, self).get_inputs()
+
+    def update_weights(self, weights):
+        """
+        Update constant weight of the model node.
+
+        Args:
+            weights (list[list[Tensor]]): A list that includes all update weight Tensors.
+
+        Raises:
+            RuntimeError: `weights` is not a list(list).
+            RuntimeError: `weights` is a list, but the elements are not Tensor.
+            RuntimeError: update weight failed.
+
+        Tutorial Examples:
+            - `Dynamic Weight Update
+              <https://www.mindspore.cn/lite/docs/en/r2.3/use/cloud_infer/runtime_python.html#dynamic-weight-update>`_
+        """
+        for weight in weights:
+            for tensor in weight:
+                name = _rename_variable_weight(tensor.name)
+                tensor.name = name
+        return super(Model, self).update_weights(weights)
 
     def predict(self, inputs, outputs=None):
         """
@@ -365,7 +394,7 @@ class Model(BaseModel):
             raise RuntimeError(f"inputs size is wrong.")
         inputs_tensor = []
         for i, in_tensor in enumerate(inputs):
-            if isinstance(in_tensor, numpy.ndarray):
+            if isinstance(in_tensor, np.ndarray):
                 model_input_tensors[i].set_data_from_numpy(in_tensor)
                 inputs_tensor.append(model_input_tensors[i])
             elif isinstance(in_tensor, Tensor):
@@ -733,7 +762,8 @@ class ModelGroup:
            TypeError: `models` is a list or tuple, but the elements are not all str or Model.
            RuntimeError: Failed to add model grouping information.
         """
-        check_isinstance("models", models, (list, tuple))
+        if not isinstance(models, (list, tuple)):
+            raise TypeError(f"models must be list/tuple, but got {type(models)}")
         if not models:
             raise RuntimeError(f"models cannot be empty")
         model0 = models[0]

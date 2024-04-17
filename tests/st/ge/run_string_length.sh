@@ -17,7 +17,6 @@ set -e
 BASE_PATH=$(cd "$(dirname $0)"; pwd)
 rm -rf ${BASE_PATH}/string_length
 mkdir ${BASE_PATH}/string_length
-export MS_ENABLE_GE=1
 unset SLOG_PRINT_TO_STDOUT
 cd ${BASE_PATH}/string_length
 echo "start test string length with ge backend"
@@ -25,7 +24,6 @@ env > env.log
 python ../run_string_length.py > test_string_length.log 2>&1 &
 process_pid=`echo $!`
 wait ${process_pid}
-unset MS_ENABLE_GE
 status=`echo $?`
 if [ "${status}" != "0" ]; then
     echo "[ERROR] test string length with ge backend failed. status: ${status}"

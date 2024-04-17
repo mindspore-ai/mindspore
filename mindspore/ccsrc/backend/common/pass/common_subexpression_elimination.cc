@@ -41,7 +41,7 @@ bool CheckIgnoreCase(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   bool need_ignore = true;
-  auto input_size = cnode->inputs().size() - 1;
+  auto input_size = cnode->size() - 1;
   for (size_t k = 0; k < input_size; ++k) {
     auto input = common::AnfAlgo::VisitKernelWithReturnType(common::AnfAlgo::GetInputNode(cnode, k), 0).first;
     if (input != nullptr && input->isa<CNode>()) {

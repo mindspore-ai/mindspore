@@ -58,12 +58,12 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr Abs(const NodePtr &input) const { return Emit("Abs", {input}); }
   NodePtr Log(const NodePtr &input) const { return Emit("Log", {input}); }
   NodePtr Sqrt(const NodePtr &input) const { return Emit("Sqrt", {input}); }
-  NodePtr Tanh(const NodePtr &input) const { return Emit("Tanh", {input}); }
   NodePtr IsInf(const NodePtr &input) const { return Emit("IsInf", {input}); }
   NodePtr IsNan(const NodePtr &input) const { return Emit("IsNan", {input}); }
+  NodePtr Reciprocal(const NodePtr &input) const { return Emit("Reciprocal", {input}); }
   NodePtr StridedSlice(const NodePtr &input, const std::vector<int64_t> &begin, const std::vector<int64_t> &end,
                        const std::vector<int64_t> &strides) const;
-
+  NodePtr Tanh(const NodePtr &input) const;
   NodePtr TensorScatterAdd(const NodePtr &input, const NodePtr &indices, const NodePtr &update) const {
     return Emit("TensorScatterAdd", {input, indices, update});
   }
@@ -122,6 +122,7 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
       case kNumberTypeFloat16:
       case kNumberTypeFloat32:
       case kNumberTypeFloat64:
+      case kNumberTypeBFloat16:
         const_tensor = std::make_shared<tensor::Tensor>(static_cast<double>(input), TypeIdToType(type_id));
         break;
       default:

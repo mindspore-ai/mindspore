@@ -25,10 +25,6 @@ from mindspore import log as logger
 from ..filewriter import FileWriter
 from ..shardutils import check_filename, ExceptionThread, SUCCESS, FAILED
 
-try:
-    cv_import = import_module("cv2")
-except ModuleNotFoundError:
-    cv_import = None
 
 __all__ = ['MnistToMR']
 
@@ -54,10 +50,12 @@ class MnistToMR:
         >>> mnist_dir = "/path/to/mnist"
         >>> mindrecord_file = "/path/to/mindrecord/file"
         >>> mnist_to_mr = MnistToMR(mnist_dir, mindrecord_file)
-        >>> status = mnist_to_mr.transform()
+        >>> mnist_to_mr.transform()
     """
 
     def __init__(self, source, destination, partition_number=1):
+        self.cv_import = import_module("cv2")
+
         self.image_size = 28
         self.num_channels = 1
 
@@ -89,9 +87,6 @@ class MnistToMR:
 
     # pylint: disable=missing-docstring
     def run(self):
-        if not cv_import:
-            raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
-
         if self._transform_train() == FAILED:
             return FAILED
         if self._transform_test() == FAILED:
@@ -105,9 +100,6 @@ class MnistToMR:
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.MnistToMR` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -123,7 +115,6 @@ class MnistToMR:
         t.join()
         if t.exitcode != 0:
             raise t.exception
-        return t.res
 
     def _extract_images(self, filename):
         """Extract the images into a 4D tensor [image index, y, x, channels]."""
@@ -154,7 +145,7 @@ class MnistToMR:
         train_data = self._extract_images(self.train_data_filename_)
         train_labels = self._extract_labels(self.train_labels_filename_)
         for data, label in zip(train_data, train_labels):
-            _, img = cv_import.imencode(".jpeg", data)
+            _, img = self.cv_import.imencode(".jpeg", data)
             yield {"label": int(label), "data": img.tobytes()}
 
     def _mnist_test_iterator(self):
@@ -167,7 +158,7 @@ class MnistToMR:
         test_data = self._extract_images(self.test_data_filename_)
         test_labels = self._extract_labels(self.test_labels_filename_)
         for data, label in zip(test_data, test_labels):
-            _, img = cv_import.imencode(".jpeg", data)
+            _, img = self.cv_import.imencode(".jpeg", data)
             yield {"label": int(label), "data": img.tobytes()}
 
     def _transform_train(self):
@@ -175,7 +166,7 @@ class MnistToMR:
         Execute transformation from Mnist train part to MindRecord.
 
         Returns:
-            MSRStatus, whether successfully written into MindRecord.
+            SUCCESS or FAILED.
         """
         t0_total = time.time()
 
@@ -209,21 +200,21 @@ class MnistToMR:
                     logger.info("transformed {} record...".format(transform_count))
                 break
 
-        ret = self.writer_train.commit()
+        self.writer_train.commit()
 
         t1_total = time.time()
         logger.info("--------------------------------------------")
         logger.info("Total time [train]: {}".format(t1_total - t0_total))
         logger.info("--------------------------------------------")
 
-        return ret
+        return 0
 
     def _transform_test(self):
         """
         Execute transformation from Mnist test part to MindRecord.
 
         Returns:
-            MSRStatus, whether Mnist is successfully transformed to MindRecord.
+            SUCCESS or FAILED.
         """
         t0_total = time.time()
 
@@ -258,11 +249,11 @@ class MnistToMR:
                     logger.info("transformed {} record...".format(transform_count))
                 break
 
-        ret = self.writer_test.commit()
+        self.writer_test.commit()
 
         t1_total = time.time()
         logger.info("--------------------------------------------")
         logger.info("Total time [test]: {}".format(t1_total - t0_total))
         logger.info("--------------------------------------------")
 
-        return ret
+        return 0

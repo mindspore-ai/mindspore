@@ -20,7 +20,7 @@
         - **mask** (Tensor) - 应用于 `x` 的掩码。
         
           - 在GPU和CPU上， `mask` 具有与 `x` 相同的shape和数据类型。
-          - 在Ascend上，为了获得更好的性能，它被表示为一个具有Uint8数据类型的一维Tensor。其shape为 :math:`(byte\_counts, )` ， 其中 :math:`byte\_counts` 为覆盖 `x` 的shape所需的字节数。通过下面的公式计算其大小：
+          - 在Ascend上，为了获得更好的性能，它被表示为一个具有Uint8数据类型的一维Tensor。其shape为 :math:`(byte\_counts, )` ， 其中 :math:`byte\_counts` 为覆盖 `x` 的shape所需的字节数。通过下面的公式计算 :math:`byte\_counts` 大小：
 
             .. math::
 

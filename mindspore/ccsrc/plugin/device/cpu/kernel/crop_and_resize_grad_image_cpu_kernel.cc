@@ -46,11 +46,8 @@ constexpr float kNumImage = 0.5;
 
 namespace mindspore {
 namespace kernel {
-bool CropAndResizeGradImageCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CropAndResizeGradImageCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNumsImage, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutNumImage, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -60,20 +57,13 @@ bool CropAndResizeGradImageCpuKernelMod::Init(const BaseOperatorPtr &base_operat
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto crop_and_resize_ptr = std::dynamic_pointer_cast<ops::CropAndResizeGradImage>(base_operator);
-  MS_EXCEPTION_IF_NULL(crop_and_resize_ptr);
-  // suppose use kernel_ptr->get_method(), but the definition in lite is enumeration, not std::string. So we use this
-  // for the moment to support dynamic shape.
-  attr_method_ = GetValue<std::string>(crop_and_resize_ptr->GetAttr("method"));
+  attr_method_ = GetValue<std::string>(primitive_->GetAttr("method"));
   return true;
 }
 
-int CropAndResizeGradImageCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CropAndResizeGradImageCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   //  input grads
@@ -130,12 +120,12 @@ int CropAndResizeGradImageCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
 }
 
 template <typename T>
-bool CropAndResizeGradImageCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
-  auto *grads = static_cast<float *>(inputs[kGradsImage]->addr);
-  auto *image_size = static_cast<int *>(inputs[kImageSizeImage]->addr);
-  auto *boxes = static_cast<float *>(inputs[kBoxesImage]->addr);
-  auto *box_ind = static_cast<int *>(inputs[kBoxIndexImage]->addr);
+bool CropAndResizeGradImageCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *grads = static_cast<float *>(inputs[kGradsImage]->device_ptr());
+  auto *image_size = static_cast<int *>(inputs[kImageSizeImage]->device_ptr());
+  auto *boxes = static_cast<float *>(inputs[kBoxesImage]->device_ptr());
+  auto *box_ind = static_cast<int *>(inputs[kBoxIndexImage]->device_ptr());
 
   const int64_t image_batch = *(image_size + kBatchImage);
   const int64_t image_height = *(image_size + kHeightImage);
@@ -151,7 +141,7 @@ bool CropAndResizeGradImageCpuKernelMod::LaunchKernel(const std::vector<kernel::
   }
 
   const int64_t num_image1 = image_batch * image_height * image_width * image_depth;
-  auto *output_data = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_data = reinterpret_cast<T *>(outputs[0]->device_ptr());
   // set the output data to 0.
   T temp = static_cast<T>(0.0);
   for (int64_t i = 0; i < num_image1; i++) {

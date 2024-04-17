@@ -222,8 +222,8 @@ cudaError_t CalPDistGrad(const size_t x_size, const size_t y_size, const size_t 
     return GetCudaStatus();
   }
 
-  const int block_x = 8;
-  const int block_y = 128;
+  const int block_x = CUDA_BLOCKS_MAXSIZE(device_id, 8);
+  const int block_y = CUDA_BLOCKS_MAXSIZE(device_id, 128);
   const int grid_x = (y_size + block_x - 1) / block_x;
   const int grid_y = (m + block_y * 8 - 1) / (block_y * 8);
   const dim3 grid(grid_x, grid_y);

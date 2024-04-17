@@ -41,7 +41,7 @@ def get_bprop_all_reduce(self):
 
     all_reduce_grad = AllReduce(ReduceOp.SUM, self.group)
     all_gather = AllGather(group=self.group)
-    if self.instance_name:
+    if hasattr(self, "instance_name") and self.instance_name:
         instance_name = "grad" + self.instance_name
         all_reduce_grad.set_prim_instance_name(instance_name)
     equal = P.Equal()
@@ -106,6 +106,7 @@ def get_bprop_send(self):
 def get_bprop_receive(self):
     """Generate bprop for Receive."""
     receive_grad = Send(self.tag, self.rank, self.group_back)
+    receive_grad.add_prim_attr("shape", self.shape)
     depend = P.Depend()
     cast = P.Cast()
     out_tensor = Tensor(0.0, mstype.float16)
@@ -242,7 +243,7 @@ def get_bprop_all_gather(self):
     """Generate bprop for AllGather"""
     fusion = self.get_attr_dict()["fusion"]
     reduce_scatter = ReduceScatter(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
-    if self.instance_name:
+    if hasattr(self, "instance_name") and self.instance_name:
         instance_name = "grad_" + self.instance_name
         reduce_scatter.set_prim_instance_name(instance_name)
     mean_flag = self.get_attr_dict()["mean_flag"]
@@ -270,7 +271,7 @@ def get_bprop_mini_step_all_gather(self):
     scale = 1 / self.rank_size
     all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
     assign_add = P.AssignAdd()
-    if self.instance_name:
+    if hasattr(self, "instance_name") and self.instance_name:
         instance_name = "grad_" + self.instance_name
         all_reduce.set_prim_instance_name(instance_name)
     rank = get_rank(self.group)
@@ -312,15 +313,12 @@ def get_bprop_micro_step_all_gather(self):
         do_mirror = self.get_attr_dict()["do_mirror"]
     if do_mirror:
         scale = 1.0 / self.rank_size
-        all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
+        reduce_scatter = ReduceScatter(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
         if "segment" in self.get_attr_dict():
-            all_reduce.add_prim_attr("segment", self.get_attr_dict()["segment"])
-        rank = get_rank(self.group)
-        dev_num = get_group_size(self.group)
-        split = P.Split(output_num=dev_num)
+            reduce_scatter.add_prim_attr("segment", self.get_attr_dict()["segment"])
         if self.instance_name:
             instance_name = "grad_" + self.instance_name
-            all_reduce.set_prim_instance_name(instance_name)
+            reduce_scatter.set_prim_instance_name(instance_name)
     cast = P.Cast()
     dtype = P.DType()
     out_tensor = Tensor(1.0, mstype.float16)
@@ -330,16 +328,14 @@ def get_bprop_micro_step_all_gather(self):
         if with_mirror_operator:
             if not do_mirror:
                 return (dout, cast(out_tensor, dtype(z)))
-            real_grad = all_reduce(dout)
-            real_grad = split(real_grad)[rank]
+            real_grad = reduce_scatter(dout)
             if mean_flag:
                 real_grad = F.tensor_mul(real_grad, scale)
             return (real_grad, cast(out_tensor, dtype(z)))
         z = F.depend(z, dout)
         if not do_mirror:
             return (z, cast(out_tensor, dtype(z)))
-        real_grad = all_reduce(z)
-        real_grad = split(real_grad)[rank]
+        real_grad = reduce_scatter(z)
         if mean_flag:
             real_grad = F.tensor_mul(real_grad, scale)
         return (real_grad, cast(out_tensor, dtype(z)))
@@ -351,7 +347,7 @@ def get_bprop_micro_step_all_gather(self):
 def get_bprop_host_all_gather(self):
     """Generate bprop for _HostAllGather"""
     host_all_gather_grad = _HostReduceScatter(ReduceOp.SUM, self.group)
-    if self.instance_name:
+    if hasattr(self, "instance_name") and self.instance_name:
         instance_name = "grad" + self.instance_name
         host_all_gather_grad.set_prim_instance_name(instance_name)
 
@@ -366,7 +362,7 @@ def get_bprop_host_all_gather(self):
 def get_bprop_reduce_scatter(self):
     """Generate bprop for ReduceScatter"""
     reduce_scatter_grad = AllGather(self.group)
-    if self.instance_name:
+    if hasattr(self, "instance_name") and self.instance_name:
         instance_name = "grad" + self.instance_name
         reduce_scatter_grad.set_prim_instance_name(instance_name)
 
@@ -384,7 +380,7 @@ def get_bprop_reduce_scatter(self):
 def get_bprop_allswap(self):
     """Generate bprop for _AllSwap."""
     all_swap_grad = _AllSwap(self.group)
-    if self.instance_name:
+    if hasattr(self, "instance_name") and self.instance_name:
         instance_name = "grad" + self.instance_name
         all_swap_grad.set_prim_instance_name(instance_name)
 
@@ -399,7 +395,7 @@ def get_bprop_allswap(self):
 def get_bprop_host_reduce_scatter(self):
     """Generate bprop for _HostReduceScatter"""
     host_reduce_scatter_grad = _HostAllGather(self.group)
-    if self.instance_name:
+    if hasattr(self, "instance_name") and self.instance_name:
         instance_name = "grad" + self.instance_name
         host_reduce_scatter_grad.set_prim_instance_name(instance_name)
 
@@ -434,7 +430,7 @@ def get_bprop_neighborexchange(self):
 def get_bprop_all_to_all(self):
     """Generate bprop for AlltoAll."""
     all_to_all_grad = AlltoAll(self.split_count, self.concat_dim, self.split_dim, self.group)
-    if self.instance_name:
+    if hasattr(self, "instance_name") and self.instance_name:
         instance_name = "grad" + self.instance_name
         all_to_all_grad.set_prim_instance_name(instance_name)
 

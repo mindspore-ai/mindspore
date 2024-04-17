@@ -23,7 +23,7 @@
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
 
-#if !defined(_MSC_VER) && !defined(_WIN32)
+#if !defined(_MSC_VER) && !defined(_WIN32) && defined(ENABLE_OPENSSL)
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -67,7 +67,7 @@ bool IsCipherFile(const Byte *model_data) {
   auto flag = ByteToInt(int_buf.data(), int_buf.size());
   return static_cast<unsigned int>(flag) == GCM_MAGIC_NUM || static_cast<unsigned int>(flag) == CBC_MAGIC_NUM;
 }
-#if defined(_MSC_VER) || defined(_WIN32)
+#if defined(_MSC_VER) || defined(_WIN32) || !defined(ENABLE_OPENSSL)
 std::unique_ptr<Byte[]> Encrypt(size_t *, const Byte *, size_t, const Byte *, size_t, const std::string &) {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
   return nullptr;

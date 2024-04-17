@@ -19,7 +19,7 @@
 #define EIGEN_USE_THREADS
 #define EIGEN_USE_SIMPLE_THREAD_POOL
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 #include "utils/bcast.h"
 
@@ -36,7 +36,8 @@ class DivNoNanCpuKernel : public CpuKernel {
   uint32_t DivNoNanParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *input1, const T *input2, T *output);
+  uint32_t SpecialCompute(CpuKernelContext &ctx, BcastShapeType type, int64_t start, int64_t end, const T *input1,
+                          const T *input2, T *output);
 
   template <typename T>
   uint32_t NoBcastCompute(CpuKernelContext &ctx);

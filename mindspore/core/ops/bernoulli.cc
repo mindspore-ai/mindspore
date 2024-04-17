@@ -29,8 +29,8 @@ namespace ops {
 namespace {
 abstract::ShapePtr BernoulliInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto p_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto p_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (!IsDynamic(x_shape) && !IsDynamic(p_shape)) {
     if (SizeOf(p_shape) != 1 && p_shape != x_shape) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', "
@@ -43,10 +43,10 @@ abstract::ShapePtr BernoulliInferShape(const PrimitivePtr &primitive, const std:
 TypePtr BernoulliInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   const std::set valid_types = {kInt8, kUInt8, kInt16, kInt32, kInt64, kBool, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
-  auto p_type = input_args[1]->BuildType();
+  auto p_type = input_args[1]->GetType();
   const std::set p_valid_types = {kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTypeValid("p", p_type, p_valid_types, prim_name);
   return x_type;

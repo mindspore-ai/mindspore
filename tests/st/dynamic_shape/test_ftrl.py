@@ -37,8 +37,6 @@ class NetWithSparseGatherV2(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ftrl_net():
     indices = Tensor(np.array([0, 0, 1]).astype(np.int32))

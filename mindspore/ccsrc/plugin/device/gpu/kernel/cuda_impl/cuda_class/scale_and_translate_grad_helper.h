@@ -53,16 +53,11 @@ class ScaleAndTranslateGradHelperGpuKernel : public GpuKernelHelperBase {
   virtual ~ScaleAndTranslateGradHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
-    constexpr size_t INPUT_NUM = 4;
     constexpr size_t OUTPUT_NUM = 1;
     ResetResource();
     input_grad_shape_ = input_shapes[0];
     origin_shape_ = input_shapes[1];
     output_shape_ = output_shapes[0];
-    int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
     output_shape_ = output_shapes[0];
     batch_ = input_grad_shape_[0];
     input_grad_height_ = input_grad_shape_[1];
@@ -75,7 +70,7 @@ class ScaleAndTranslateGradHelperGpuKernel : public GpuKernelHelperBase {
     if (out_flag == -1) {
       return out_flag;
     }
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     // input_shape_
     size_t input_shape_size = (kIndex4) * sizeof(int64_t);
     work_size_list_.emplace_back(input_shape_size);

@@ -69,20 +69,8 @@ std::string GetIfstreamString(const std::ifstream &ifstream) {
 }
 
 bool DumpJsonParser::IsDumpEnabled() {
-  auto single_op = common::GetEnv(kGraphOpRun);
   auto config_path = common::GetEnv(kMindsporeDumpConfig);
   if (config_path.empty()) {
-    return false;
-  }
-  // Dump is supported with Ascend kernel-by-kernel mode (mindRT) when kGraphOpRun is set.
-  if (!single_op.empty() && single_op == "1" && !MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    if (!dump_enabled_warning_printed_) {
-      MS_LOG(WARNING) << "Dump is not supported when task is not sink. Please set env GRAPH_OP_RUN to 0 to enable task "
-                         "sink, so that the data can be dumped.";
-      // Only print the warning once.
-      dump_enabled_warning_printed_ = true;
-    }
-
     return false;
   }
   MS_LOG(INFO) << "Dump config path is " << config_path;
@@ -318,6 +306,7 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   if (need_map) {
     std::string origin_name_str = origin_name.value();
     std::string mapped_name_str = mapped_name.value();
+    std::lock_guard<std::mutex> guard(lock_);
     auto mapping_file = Common::CreatePrefixPath(prefix_path.value() + "/mapping.csv");
     if (!mapping_file.has_value()) {
       MS_LOG(ERROR) << "CreatePrefixPath for mapping.csv failed.";
@@ -354,7 +343,9 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
     if (fd.bad()) {
       fd.close();
-      MS_LOG(EXCEPTION) << "Write mem to file " << file_path_str << " failed.";
+      MS_LOG(EXCEPTION)
+        << "Write mem to file " << file_path_str
+        << " failed. This error may be caused by insufficient disk space. Please check the available disk space.";
     }
     fd.close();
     ChangeFileMode(file_path_str, S_IRUSR);
@@ -621,6 +612,7 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
     MS_LOG(INFO) << "Dump config field <" << kKernels << "> is not used as the dump mode is not 1.";
     return;
   }
+  kernels_json_ = content;
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
@@ -668,9 +660,25 @@ bool DumpJsonParser::ParseEnable(const nlohmann::json &content) const {
 void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kOpDebugMode);
   op_debug_mode_ = content;
-  const size_t max_mode = 3;
-  if (op_debug_mode_ > max_mode) {
-    MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
+  switch (op_debug_mode_) {
+    case static_cast<uint32_t>(DUMP_WHOLE):
+      break;
+    case static_cast<uint32_t>(DUMP_AICORE_OVERFLOW):
+    case static_cast<uint32_t>(DUMP_ATOMIC_OVERFLOW):
+    case static_cast<uint32_t>(DUMP_BOTH_OVERFLOW):
+      break;
+    case static_cast<uint32_t>(DUMP_LITE_EXCEPTION):
+      if (IsAclDump()) {
+        break;
+      } else {
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
+      }
+    default:
+      if (IsAclDump()) {
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4";
+      } else {
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
+      }
   }
 }
 
@@ -910,5 +918,15 @@ bool DumpJsonParser::IsHCCLKernelInput(const std::string &kernel_name) const {
     return true;
   }
   return false;
+}
+
+bool DumpJsonParser::IsAclDump() {
+  bool is_acl_dump = false;
+  auto env_enable_kbk = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
+  auto dump_enable_kbk = common::GetEnv("MINDSPORE_DUMP_CONFIG");
+  if (!env_enable_kbk.empty() && env_enable_kbk == dump_enable_kbk) {
+    is_acl_dump = true;
+  }
+  return is_acl_dump;
 }
 }  // namespace mindspore

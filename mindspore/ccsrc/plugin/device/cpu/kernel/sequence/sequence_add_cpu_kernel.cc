@@ -27,10 +27,8 @@ constexpr size_t kSequenceAddInputNum = 2;
 constexpr size_t kSequenceAddOutputNum = 1;
 }  // namespace
 
-bool SequenceAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SequenceAddCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match || index >= func_list_.size()) {
@@ -41,10 +39,9 @@ bool SequenceAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int SequenceAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SequenceAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -52,17 +49,15 @@ int SequenceAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool SequenceAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool SequenceAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
   T *input_0_addr = GetDeviceAddress<T>(inputs, 0);
   T *input_1_addr = GetDeviceAddress<T>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
-  MS_EXCEPTION_IF_NULL(input_0_addr);
-  MS_EXCEPTION_IF_NULL(input_1_addr);
-  MS_EXCEPTION_IF_NULL(output_addr);
-  auto input_0_size = inputs[0]->size;
-  auto input_1_size = inputs[1]->size;
-  auto output_size = outputs[0]->size;
+  auto input_0_size = inputs[0]->size();
+  auto input_1_size = inputs[1]->size();
+  auto output_size = outputs[0]->size();
   if (input_0_size + input_1_size != output_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_0 + input_1': {"
                       << input_0_size + input_1_size << "} is not equal to the size of output: {" << output_size << "}";
@@ -82,8 +77,9 @@ bool SequenceAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   return true;
 }
 
-bool SequenceAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool SequenceAddCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSequenceAddInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSequenceAddOutputNum, kernel_name_);
   return kernel_func_(this, inputs, workspace, outputs);

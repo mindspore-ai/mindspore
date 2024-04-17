@@ -94,7 +94,7 @@ def test_joinedstr_basic_variable_2():
     assert str(out) == "[1 2 3 4 5]"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -116,7 +116,7 @@ def test_joinedstr_out_tensor():
 
 @pytest.mark.skip("the print output when I6WM9U has been resolved."
                   "otherwise the print may cause sync stream error because the data has not been sync to device")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -148,3 +148,23 @@ def test_joinedstr_dynamic_shape_scalar():
     net = Net()
     out = net(input_np, indices_np)
     print("out:", out)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_joinedstr_with_nested_pyinterpret():
+    """
+    Feature: Support joinedstr.
+    Description: Support joinedstr.
+    Expectation: No exception.
+    """
+    @jit
+    def joined_net(x):
+        return f"{type(x).__name__}"
+
+    input_x = Tensor([1, 2, 3])
+    out = joined_net(input_x)
+    assert str(out) == "Tensor"

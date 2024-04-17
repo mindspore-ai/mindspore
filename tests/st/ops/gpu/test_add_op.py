@@ -234,28 +234,28 @@ def test_add_dynamic_float64():
     add_dynamic(np.float64)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_dynamic_float32():
     add_dynamic(np.float32)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_dynamic_float16():
     add_dynamic(np.float16)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_dynamic_int64():
     add_dynamic(np.int64)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_dynamic_int32():

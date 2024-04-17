@@ -24,12 +24,14 @@
 #include <sstream>
 #include <typeindex>
 #include <memory>
+#include <utility>
 #include <algorithm>
 
 #include "utils/hashing.h"
 #include "utils/log_adapter.h"
 #include "base/base.h"
 #include "mindapi/base/shape_vector.h"
+#include "mindspore/core/symbolic_shape/symbol.h"
 
 namespace mindspore {
 namespace abstract {
@@ -87,6 +89,28 @@ class MS_CORE_API BaseShape : public Base {
 
   /// \brief Broaden the shape.
   virtual void Broaden() {}
+
+  /// \brief Get shape dimensions of BaseShape object.
+  ///
+  /// \return Shape dimensions.
+  virtual const ShapeVector &GetShapeVector() const {
+    MS_LOG(EXCEPTION) << "The method 'GetShapeVector()' doesn't implement";
+  }
+
+  /// \brief Set shape dimensions of BaseShape object.
+  ///
+  /// \param[in] shape Dimensions of shape.
+  virtual void SetShapeVector(const ShapeVector &shape) {
+    MS_LOG(EXCEPTION) << "The method 'SetShapeVector()' doesn't implement";
+  }
+
+  /// \brief Build symbolic shape according to the digital shape.
+  /// Constant symbols are generated for static dims, and variable symbols are generated for dynamic dims.
+  ///
+  /// \return Symbolic Shape.
+  virtual ListSymbolPtr BuildSymbolicShape() const {
+    MS_LOG(EXCEPTION) << "The method 'BuildSymbolicShape()' doesn't implement";
+  }
 };
 
 /// \brief NoShape defines an invalid shape.
@@ -106,6 +130,8 @@ class MS_CORE_API NoShape final : public BaseShape {
   bool IsDimZero() const override { return true; };
 
   bool IsDimUnknown() const override { return false; }
+
+  ListSymbolPtr BuildSymbolicShape() const override { return ListSymbol::Make({}); }
 };
 
 GVAR_DEF(std::shared_ptr<NoShape>, kNoShape, std::make_shared<NoShape>());
@@ -131,7 +157,12 @@ class MS_CORE_API TensorShape final : public BaseShape {
   /// \param[in] list Initial shape dimensions.
   explicit TensorShape(const ShapeVector &list) : shape_(list) {}
 
-  /// \brief Constructor of TensorShape.
+  /// \brief Constructor of TensorShape with rvalue input.
+  ///
+  /// \param[in] list Initial shape dimensions.
+  explicit TensorShape(ShapeVector &&list) : shape_(std::move(list)) {}
+
+  /// \brief Constructor of Shape.
   ///
   /// \param[in] list Initial shape dimensions.
   /// \param[in] max_shape Maximum shape dimensions of dynamic shape.
@@ -164,7 +195,7 @@ class MS_CORE_API TensorShape final : public BaseShape {
 
   bool operator==(const BaseShape &other) const override;
 
-  BaseShapePtr Clone() const override { return std::make_shared<TensorShape>(shape_, max_shape_); }
+  BaseShapePtr Clone() const override { return std::make_shared<TensorShape>(shape_); }
 
   void Broaden() override;
 
@@ -183,6 +214,16 @@ class MS_CORE_API TensorShape final : public BaseShape {
   /// \return Maximum shape dimensions.
   const ShapeVector &max_shape() const { return max_shape_; }
 
+  /// \brief Get shape dimensions of a tensor shape.
+  ///
+  /// \return Shape dimensions.
+  const ShapeVector &GetShapeVector() const override { return shape_; }
+
+  /// \brief Set shape dimensions of TensorShape object.
+  ///
+  /// \param[in] shape Dimensions of shape.
+  void SetShapeVector(const ShapeVector &shape) override { shape_ = shape; }
+
   bool IsDynamic() const override;
 
   bool IsDimZero() const override { return shape_.empty(); };
@@ -190,6 +231,8 @@ class MS_CORE_API TensorShape final : public BaseShape {
   bool IsDimUnknown() const override {
     return std::any_of(shape_.begin(), shape_.end(), [](ShapeValueDType s) { return s < -1; });
   }
+
+  ListSymbolPtr BuildSymbolicShape() const override;
 
  private:
   ShapeVector shape_;      // use kShapeDimAny to implement the any shape in python
@@ -235,7 +278,14 @@ class MS_CORE_API DynamicSequenceShape : public BaseShape {
   /// \return True if any element shape of DynamicSequenceShape is dynamic shape.
   bool IsDimUnknown() const override;
 
-  BaseShapePtr Clone() const override { return std::make_shared<DynamicSequenceShape>(element_shape_->Clone()); }
+  ListSymbolPtr BuildSymbolicShape() const override { return ListSymbol::Make(); }
+
+  BaseShapePtr Clone() const override {
+    if (element_shape_ == nullptr) {
+      return std::make_shared<DynamicSequenceShape>(nullptr);
+    }
+    return std::make_shared<DynamicSequenceShape>(element_shape_->Clone());
+  }
 
   bool operator==(const BaseShape &other) const override;
 
@@ -263,6 +313,11 @@ class MS_CORE_API SequenceShape : public BaseShape {
   ///
   /// \param[in]  shapes All element-shapes.
   explicit SequenceShape(const BaseShapePtrList &shapes) : p_shapes_(shapes) {}
+
+  /// \brief Constructor of SequenceShape with rvalue inputs.
+  ///
+  /// \param[in] shapes All element-shapes.
+  explicit SequenceShape(BaseShapePtrList &&shapes) : p_shapes_(std::move(shapes)) {}
 
   /// \brief Destructor of SequenceShape.
   ~SequenceShape() override = default;
@@ -338,6 +393,8 @@ class MS_CORE_API SequenceShape : public BaseShape {
     return std::any_of(p_shapes_.begin(), p_shapes_.end(), [](const BaseShapePtr &bs) { return bs->IsDimUnknown(); });
   }
 
+  ListSymbolPtr BuildSymbolicShape() const override;
+
  protected:
   BaseShapePtrList p_shapes_;  // shape list of each elements
 };
@@ -353,6 +410,11 @@ class MS_CORE_API TupleShape final : public SequenceShape {
   ///
   /// \param[in] shapes Element-shapes of TupleShape.
   explicit TupleShape(const BaseShapePtrList &shapes) : SequenceShape(shapes) {}
+
+  /// \brief Constructor of TupleShape with rvalue input.
+  ///
+  /// \param[in] shapes Element-shapes of TupleShape.
+  explicit TupleShape(BaseShapePtrList &&shapes) : SequenceShape(std::move(shapes)) {}
 
   /// \brief Destructor of TupleShape.
   ~TupleShape() override = default;
@@ -375,6 +437,11 @@ class MS_CORE_API ListShape final : public SequenceShape {
   ///
   /// \param[in] shapes Element-shapes of ListShape.
   explicit ListShape(const BaseShapePtrList &shapes) : SequenceShape(shapes) {}
+
+  /// \brief Constructor of ListShape with rvalue input.
+  ///
+  /// \param[in] shapes Element-shapes of ListShape.
+  explicit ListShape(BaseShapePtrList &&shapes) : SequenceShape(std::move(shapes)) {}
 
   /// \brief Destructor of ListShape.
   ~ListShape() override = default;

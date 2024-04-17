@@ -16,8 +16,19 @@
 
 #include "backend/common/graph_kernel/expander/mindir_adapter/anf_node_holder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore::graphkernel::expander {
+ValuePtr AnfNodeHolder::GetValue() {
+  auto v = node_->cast<ValueNodePtr>();
+  if (v == nullptr) {
+    auto abstract = node_->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    return abstract->BuildValue();
+  }
+  return v->value();
+}
+
 // todo, supports multi-output nodes
 BaseShapePtr AnfNodeHolderWithDeviceInfo::GetShapePtr() { return nullptr; }
 ShapeVector AnfNodeHolderWithDeviceInfo::GetShape() { return Callback::Instance()->GetOutputShape(node_, 0); }

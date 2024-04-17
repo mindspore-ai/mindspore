@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kInputsNum = 1;
+constexpr size_t kInputsNum = 2;
 constexpr size_t kInputIndex = 0;
 constexpr size_t kOutputsNum = 1;
 constexpr size_t kOutputIndex = 0;
@@ -53,10 +53,8 @@ void CholeskyCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape, size
   outer_batch_ /= ((*row) * (*col));
 }
 
-bool CholeskyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  dtype_ = inputs[kIndex0]->GetDtype();
+bool CholeskyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[kIndex0]->dtype_id();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -66,27 +64,19 @@ bool CholeskyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  if (base_operator->HasAttr("upper")) {
-    flag_ = false;
-    upper_ = GetValue<bool>(base_operator->GetAttr("upper"));
-  }
   // If clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
-  if (base_operator->HasAttr(CLEAN)) {
-    clean_ = GetValue<bool>(base_operator->GetAttr(CLEAN));
-  }
-  if (base_operator->HasAttr(LOWER)) {
-    lower_ = GetValue<bool>(base_operator->GetAttr(LOWER));
+  if (primitive_->HasAttr(CLEAN)) {
+    clean_ = GetValue<bool>(primitive_->GetAttr(CLEAN));
   }
   return true;
 }
 
-int CholeskyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CholeskyCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-
+  upper_ = inputs[kIndex1]->GetValueWithCheck<bool>();
   auto input_shape = LongVecToSizeVec(inputs[kInputIndex]->GetShapeVector());
   InitMatrixInfo(input_shape, &input_row_, &input_col_);
   auto output_shape = LongVecToSizeVec(inputs[kOutputIndex]->GetShapeVector());
@@ -95,10 +85,10 @@ int CholeskyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool CholeskyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
-  T *batch_input_value = reinterpret_cast<T *>(inputs[kInputIndex]->addr);
-  T *batch_output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
+bool CholeskyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs) {
+  T *batch_input_value = reinterpret_cast<T *>(inputs[kInputIndex]->device_ptr());
+  T *batch_output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->device_ptr());
   Eigen::LLT<Matrix<T, RowMajor>> llt;
   for (size_t batch = 0; batch < outer_batch_; ++batch) {
     T *input_value = batch_input_value + batch * input_row_ * input_col_;
@@ -106,38 +96,28 @@ bool CholeskyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     Map<Matrix<T, RowMajor>> input(input_value, input_row_, input_col_);
     Map<Matrix<T, RowMajor>> output(output_value, output_row_, output_col_);
     (void)llt.compute(input);
-    if (flag_) {
-      if (clean_) {
-        if (lower_) {
-          output = llt.matrixL();
-        } else {
-          output = llt.matrixU();
-        }
-      } else {
-        if (lower_) {
-          output = llt.matrixLLT();
-        } else {
-          output = llt.matrixLLT().transpose();
-        }
-      }
+    if (!input.isApprox(input.transpose()) || llt.info() == Eigen::NumericalIssue) {
+      MS_LOG_EXCEPTION << "Cholesky expects symmetric positive definite matrices as inputs.";
+    }
+    if (!upper_) {
+      output = llt.matrixL();
     } else {
-      if (!input.isApprox(input.transpose()) || llt.info() == Eigen::NumericalIssue) {
-        MS_LOG_EXCEPTION << "Cholesky expects symmetric positive definite matrices as inputs.";
-      }
-      if (!upper_) {
-        output = llt.matrixL();
-      } else {
-        output = llt.matrixU();
-      }
+      output = llt.matrixU();
     }
   }
   return true;
 }
 
 std::vector<std::pair<KernelAttr, CholeskyCpuKernelMod::CholeskyFunc>> CholeskyCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32),
    &CholeskyCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64),
    &CholeskyCpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> CholeskyCpuKernelMod::GetOpSupport() {

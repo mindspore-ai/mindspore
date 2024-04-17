@@ -49,7 +49,7 @@ def test_list_append1():
     assert res == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -73,7 +73,7 @@ def test_list_append2():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -115,6 +115,6 @@ def test_list_append_grad():
     net_ms = Net()
     seq = mutable((1, 2, 3, 4, 5, 6), True)
     value = 1
-    dout = mutable((1, 2, 3, 4, 5, 6, 1), True)
+    dout = (1, 2, 3, 4, 5, 6, 1)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out1 = ", grad_func(seq, value, dout))

@@ -15,7 +15,6 @@
  */
 
 #include "coder/opcoders/nnacl/int8/convolution_depthwise_int8_coder.h"
-#include <string>
 #include "coder/log.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/parallel.h"

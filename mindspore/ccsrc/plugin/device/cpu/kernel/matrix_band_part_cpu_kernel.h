@@ -28,14 +28,12 @@ class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixBandPartCpuKernelMod() = default;
   ~MatrixBandPartCpuKernelMod() override = default;
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     if (is_null_input_) {
       return true;
     }
@@ -46,15 +44,17 @@ class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T, typename LU>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T, typename LU>
   bool LaunchKernelNotBroadcast(const T *x_ptr, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr);
   template <typename T, typename LU>
   bool LaunchKernelBroadcast(const T *x_ptr, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr);
   void BroadcastShape(const ShapeVector &x_shape, const ShapeVector &lower_shape, const ShapeVector &upper_shape,
                       const ShapeVector &output_shape);
-  using MatrixBandPartFunc = std::function<bool(MatrixBandPartCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &)>;
+  using MatrixBandPartFunc =
+    std::function<bool(MatrixBandPartCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, MatrixBandPartFunc>> func_list_;
   MatrixBandPartFunc kernel_func_;
   bool is_null_input_{false};

@@ -240,3 +240,42 @@ def test_list_pop_no_return():
     out = net(data1)
     assert out == [2, 4, 3, 3, 4]
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
+
+
+def test_list_pop_annassign():
+    """
+    Feature: list pop.
+    Description: support list pop.
+    Expectation: No exception.
+    """
+    @jit
+    def list_pop():
+        x = [1, 2, 3, 4]
+        y: int = x.pop()
+        return x, y
+
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
+    res_x, res_y = list_pop()
+    assert np.all(res_x == [1, 2, 3])
+    assert res_y == 4
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
+
+
+def test_list_pop_augassign():
+    """
+    Feature: list pop.
+    Description: support list pop.
+    Expectation: No exception.
+    """
+    @jit
+    def list_pop():
+        y = 2
+        x = [1, 2, 3, 4]
+        y += x.pop()
+        return x, y
+
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
+    res_x, res_y = list_pop()
+    assert np.all(res_x == [1, 2, 3])
+    assert res_y == 6
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

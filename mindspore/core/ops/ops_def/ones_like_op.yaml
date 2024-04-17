@@ -1,0 +1,10 @@
+#operator ones_like
+ones_like:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True

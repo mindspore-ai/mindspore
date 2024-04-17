@@ -17,8 +17,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MATRIX_BAND_PART_H_
 #define AICPU_KERNELS_NORMALIZED_MATRIX_BAND_PART_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 
 namespace aicpu {
 class MatrixBandPartCpuKernel : public CpuKernel {
@@ -32,7 +32,7 @@ class MatrixBandPartCpuKernel : public CpuKernel {
 
   template <typename T>
   static uint32_t BandCompute(Tensor *x, int64_t lower, int64_t upper, Tensor *y, int64_t rows, int64_t cols,
-                              const CpuKernelContext &ctx);
+                              CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

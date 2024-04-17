@@ -19,7 +19,7 @@
 
 #include <random>
 #include <stdint.h>
-#include "cpu_kernel/common/status.h"
+#include "context/common/status.h"
 
 namespace aicpu {
 namespace random {

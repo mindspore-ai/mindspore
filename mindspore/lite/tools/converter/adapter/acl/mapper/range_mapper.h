@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RANGE_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/range.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 using mindspore::ops::kNameRange;
 

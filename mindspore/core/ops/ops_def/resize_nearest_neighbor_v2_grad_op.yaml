@@ -1,0 +1,21 @@
+#operator resize_nearest_neighbor_v2_grad
+resize_nearest_neighbor_v2_grad:
+  args:
+    grads:
+      dtype: tensor
+    size:
+      dtype: tuple[int]
+      type_cast: tensor
+    align_corners:
+      dtype: bool
+      default: False
+      prim_init: True
+    half_pixel_centers:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

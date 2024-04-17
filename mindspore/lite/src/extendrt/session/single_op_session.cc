@@ -134,35 +134,35 @@ void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr 
   }
 }
 
-std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::BuildCustomAscendKernelImpl(
+std::tuple<kernel::KernelModPtr, LiteKernelArgs> SingleOpInferSession::BuildCustomAscendKernelImpl(
   const CNodePtr &cnode) {
   auto kernel_name = lite::kNameCustomAscend;
   std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
   if (kernel_mod == nullptr) {
     MS_LOG(ERROR) << "Kernel mod is nullptr, kernel name: " << kernel_name;
-    return std::make_tuple(nullptr, kernel::KernelArgs{});
+    return std::make_tuple(nullptr, LiteKernelArgs{});
   }
   MS_LOG(INFO) << "SingleOpInferSession::Kernels " << kernel_name;
   kernel_mod->SetDevicedId(device_id_);
 
   auto make_kernel_tensor = [](TypeId type_id, const ShapeVector &shape) {
-    auto kernel_tensor = std::make_shared<kernel::KernelTensor>();
-    auto base = std::make_shared<mindspore::abstract::AbstractTensor>(TypeIdToType(type_id),
-                                                                      std::make_shared<abstract::Shape>(shape));
-    kernel::TensorInfo tensor_info;
-    tensor_info.base_ = base;
-    kernel_tensor->SetTensorInfo(tensor_info);
+    auto kernel_tensor = new (std::nothrow) kernel::KernelTensor();
+    if (kernel_tensor == nullptr) {
+      return kernel_tensor;
+    }
+    kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(type_id)));
+    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(shape));
     return kernel_tensor;
   };
 
-  kernel::KernelArgs args;
+  LiteKernelArgs args;
   BaseOperatorPtr op;
   if (!FuncGraphUtils::GetCNodeOperator(cnode, &op)) {
     MS_LOG(ERROR) << "Failed to create operator for cnode " << cnode->fullname_with_scope();
-    return std::make_tuple(nullptr, kernel::KernelArgs{});
+    return std::make_tuple(nullptr, LiteKernelArgs{});
   }
   std::vector<tensor::TensorPtr> tensor_cache;
-  std::map<AnfWithOutIndex, kernel::KernelTensorPtr> kernel_tensor_map;
+  std::map<AnfWithOutIndex, kernel::KernelTensor *> kernel_tensor_map;
   std::vector<AnfWithOutIndex> inputs;
   std::vector<AnfWithOutIndex> outputs;
   FuncGraphUtils::GetCNodeInputsOutputs(cnode, &inputs, &outputs);
@@ -181,7 +181,7 @@ std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::Build
   }
   for (size_t i = 0; i < outputs.size(); i++) {
     auto &output = outputs[i];
-    kernel::KernelTensorPtr kernel_tensor;
+    auto kernel_tensor = new (std::nothrow) kernel::KernelTensor();
     auto it = kernel_tensor_map.find(output);
     if (it != kernel_tensor_map.end()) {  // use input as output
       kernel_tensor = it->second;
@@ -193,25 +193,25 @@ std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::Build
     args.outputs.push_back(kernel_tensor);
   }
   SetCustomAscendOpAttrs(op);
-  auto ret = kernel_mod->Init_(op, args.inputs, args.outputs);
+  auto ret = kernel_mod->Init(op->GetPrim(), args.inputs, args.outputs);
   MS_LOG(INFO) << "SingleOpInferSession::Kernels ret " << ret;
   if (!ret) {
     MS_LOG(ERROR) << "kernel init failed " << kernel_name;
-    return std::make_tuple(nullptr, kernel::KernelArgs{});
+    return std::make_tuple(nullptr, LiteKernelArgs{});
   }
   if (is_multi_model_sharing_mem_prepare_) {
     MS_LOG(INFO) << "is multi model sharing mem prepare";
-    return std::make_tuple(nullptr, kernel::KernelArgs{});
+    return std::make_tuple(nullptr, LiteKernelArgs{});
   }
-  // remove const input, OM graph data input
-  args.inputs = kernel_mod->GetInputs();
-  args.outputs = kernel_mod->GetOutputs();
+  if (args.inputs.size() > 0) {
+    args.inputs.pop_back();
+  }
   return std::make_tuple(kernel_mod, args);
 }
 
 Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
   kernel::KernelModPtr kernel_mod;
-  kernel::KernelArgs args;
+  LiteKernelArgs args;
   std::tie(kernel_mod, args) = BuildCustomAscendKernelImpl(cnode);
   if (is_multi_model_sharing_mem_prepare_) {
     MS_LOG(INFO) << "using ascend workspace sharing.";
@@ -246,7 +246,7 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
     auto &kernel_tensor = kernel_args_.inputs[i];
     MS_CHECK_TRUE_RET(kernel_tensor != nullptr, kLiteNullptr);
     auto tensor_name = FuncGraphUtils::GetTensorName(tensor);
-    auto data_type = static_cast<DataType>(kernel_tensor->GetDtype());
+    auto data_type = static_cast<DataType>(kernel_tensor->dtype_id());
     auto shape = kernel_tensor->GetShapeVector();
     // when input shape is NOT dynamic, the sizes are known and memory can be pre-alloced (thus set is_acl_host to true)
     bool is_acl_host = IsDynamicShape(shape) ? false : true;
@@ -254,13 +254,13 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
     MS_CHECK_TRUE_RET(input != nullptr, kLiteNullptr);
     inputs_.push_back(input);
     input_names_.push_back(FuncGraphUtils::GetTensorName(tensor));
-    malloced_data_size_.insert(std::make_pair(input, input->DataSize()));
+    (void)malloced_data_size_.insert(std::make_pair(input, input->DataSize()));
   }
   for (size_t i = 0; i < output_tensors.size(); i++) {
     auto &tensor = output_tensors[i];
     auto &kernel_tensor = kernel_args_.outputs[i];
     auto tensor_name = FuncGraphUtils::GetTensorName(tensor);
-    auto data_type = static_cast<DataType>(kernel_tensor->GetDtype());
+    auto data_type = static_cast<DataType>(kernel_tensor->dtype_id());
     auto shape = kernel_tensor->GetShapeVector();
     if (dyn_outshape_.size() < output_tensors.size()) {
       dyn_outshape_.push_back(false);
@@ -334,12 +334,14 @@ void SingleOpInferSession::SetBackOutputIfDynamic(std::vector<tensor::Tensor> *o
       kernel::AddressPtr host_addr = kernel_args_.outputs[i]->GetHostData();
       kernel::AddressPtr device_addr = kernel_args_.outputs[i]->GetData();
       if (device_addr != nullptr) {
-        TypeId out_type = kernel_args_.outputs[i]->GetDtype();
+        TypeId out_type = kernel_args_.outputs[i]->dtype_id();
         (*outputs)[i] = tensor::Tensor(out_type, shape, nullptr, device_addr->size);
         (*outputs)[i].set_device_address(std::make_shared<LiteDeviceAddress>(device_addr->addr, device_addr->size));
       } else if (host_addr != nullptr) {
-        TypeId out_type = kernel_args_.outputs[i]->GetDtype();
-        auto elem_num = kernel_args_.outputs[i]->GetSizeInBytes() / abstract::TypeIdSize(out_type);
+        TypeId out_type = kernel_args_.outputs[i]->dtype_id();
+        auto type_size = abstract::TypeIdSize(out_type);
+        MS_CHECK_TRUE_RET_VOID(type_size != 0);
+        auto elem_num = kernel_args_.outputs[i]->size() / type_size;
         auto acl_mem_deleter = [](uint8_t *data_buf_ptr) {
           kernel::AscendAllocatorPlugin::GetInstance().FreeHost(static_cast<void *>(data_buf_ptr));
         };
@@ -363,9 +365,9 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
     auto &input = inputs[i];
     auto &kernel_input = kernel_args_.inputs[i];
     MS_CHECK_TRUE_RET(kernel_input != nullptr, kLiteError);
-    if (input.Size() != kernel_input->GetSizeInBytes()) {
+    if (input.Size() != kernel_input->size()) {
       MS_LOG(ERROR) << "Byte size of input " << i << " != the size expected, given size " << input.Size()
-                    << ", expected size " << kernel_input->GetSizeInBytes()
+                    << ", expected size " << kernel_input->size()
                     << ", input shape: " << kernel_input->GetShapeVector();
       return kLiteError;
     }
@@ -378,11 +380,11 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
       kernel_args_.inputs[i]->SetHostData(std::make_shared<kernel::Address>(input.data_c(), input.Size()));
       kernel_args_.inputs[i]->SetData(nullptr);
     }
-    kernel_args_.inputs[i]->SetDeviceId(input.device_info().device_id_);
+    kernel_args_.inputs[i]->set_device_id(input.device_info().device_id_);
   }
   if (outputs->empty()) {
     std::transform(kernel_args_.outputs.begin(), kernel_args_.outputs.end(), std::back_inserter(*outputs),
-                   [](auto &item) { return tensor::Tensor(item->GetDtype(), item->GetShapeVector()); });
+                   [](auto &item) { return tensor::Tensor(item->dtype_id(), item->GetShapeVector()); });
   }
   if (outputs->size() != kernel_args_.outputs.size()) {
     MS_LOG(ERROR) << "Given outputs size " << outputs->size() << " != graph inputs size "
@@ -392,9 +394,9 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
   for (size_t i = 0; i < outputs->size(); i++) {
     auto &output = (*outputs)[i];
     auto &kernel_output = kernel_args_.outputs[i];
-    if (!dyn_outshape_[i] && output.Size() != kernel_output->GetSizeInBytes()) {
+    if (!dyn_outshape_[i] && output.Size() != kernel_output->size()) {
       MS_LOG(ERROR) << "Byte size of output " << i << " != the size expected, given size " << output.Size()
-                    << ", expected size " << kernel_output->GetSizeInBytes()
+                    << ", expected size " << kernel_output->size()
                     << ", output shape: " << kernel_output->GetShapeVector();
       return kLiteError;
     }
@@ -411,7 +413,7 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
       }
       kernel_args_.outputs[i]->SetData(nullptr);
     }
-    kernel_args_.outputs[i]->SetDeviceId(output.device_info().device_id_);
+    kernel_args_.outputs[i]->set_device_id(output.device_info().device_id_);
   }
   return kSuccess;
 }
@@ -438,7 +440,7 @@ Status SingleOpInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor
     return ret;
   }
   try {
-    std::vector<kernel::AddressPtr> ignore_datas;
+    std::vector<kernel::KernelTensor *> ignore_datas;
     if (!kernel_mod_->Launch(ignore_datas, ignore_datas, ignore_datas, nullptr)) {
       MS_LOG(ERROR) << "Failed to launch kernel";
       return kLiteError;
@@ -537,6 +539,16 @@ MutableTensorImplPtr SingleOpInferSession::GetInputByTensorName(uint32_t, const 
   }
   MS_LOG(ERROR) << "Can't found tensor name " << tensor_name;
   return nullptr;
+}
+
+void SingleOpInferSession::AscendFinalize() {
+  auto kernel_name = lite::kNameCustomAscend;
+  std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
+  if (kernel_mod == nullptr) {
+    MS_LOG(INFO) << "Create kernel mod failed: " << kernel_name;
+    return;
+  }
+  (void)kernel_mod->Finalize();
 }
 
 static std::shared_ptr<InferSession> SingleOpSessionCreator(const std::shared_ptr<Context> &ctx,

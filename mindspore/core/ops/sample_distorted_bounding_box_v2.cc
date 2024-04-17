@@ -57,15 +57,14 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
 
-  auto image_size_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto image_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto image_size_dim = SizeToLong(image_size_shape.size());
 
-  auto bboxes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto bboxes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto bboxes_dim = SizeToLong(bboxes_shape.size());
 
   auto min_object_covered_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto min_object_covered_dim = SizeToLong(min_object_covered_shape.size());
 
   std::vector<ShapeVector> check_shapes = {image_size_shape, bboxes_shape, min_object_covered_shape};
@@ -139,9 +138,9 @@ TuplePtr SampleDistortedBoundingBoxV2InferType(const PrimitivePtr &prim,
 
   const std::set<TypePtr> valid_types1 = {kUInt8, kInt8, kInt16, kInt32, kInt64};
   const std::set<TypePtr> valid_types2 = {kFloat32};
-  auto image_size_type = input_args[kInputIndex0]->BuildType();
-  auto bboxes_type = input_args[kInputIndex1]->BuildType();
-  auto min_object_type = input_args[kInputIndex2]->BuildType();
+  auto image_size_type = input_args[kInputIndex0]->GetType();
+  auto bboxes_type = input_args[kInputIndex1]->GetType();
+  auto min_object_type = input_args[kInputIndex2]->GetType();
 
   (void)CheckAndConvertUtils::CheckTensorTypeValid("image_size", image_size_type, valid_types1, name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("bounding_boxes", bboxes_type, valid_types2, name);

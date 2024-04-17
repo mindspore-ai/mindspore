@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,43 +21,61 @@
 namespace mindspore::expander::bprop {
 REG_BPROP_BUILDERS_BEGIN(GradScipyOps)
 REG_BPROP_BUILDER("SolveTriangular").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
-  auto reverse_perm = [](const ShapeVector &shape) -> ShapeVector {
-    ShapeVector perm;
-    for (int64_t i = SizeToLong(shape.size()) - 1; i >= 0; --i) {
-      perm.push_back(i);
-    }
-    return perm;
-  };
-  auto lower = ib->GetAttr("lower");
-  auto unit_diagonal = ib->GetAttr("unit_diagonal");
   auto a = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
-  auto trans = GetValue<std::string>(ib->GetAttr("trans"));
-  std::string bp_trans = trans == "T" || trans == "C" ? "N" : "T";
-  auto grad_b = ib->Emit("SolveTriangular", {a, dout},
-                         {{"lower", lower}, {"unit_diagonal", unit_diagonal}, {"trans", MakeValue(bp_trans)}});
-  auto a_shape = ib->GetShape(a);
-  auto row_size = a_shape[a_shape.size() - 2];
-  auto grad_b_align = ib->Reshape(grad_b, {row_size, -1});
-  auto x_align = ib->Reshape(out, {row_size, -1});
-  NodePtr grad_a;
-  if (bp_trans.compare("T") == 0) {
-    auto conj = ib->Conj(x_align);
-    grad_a = ib->MatMul(grad_b_align, ib->Transpose(conj, reverse_perm(ib->GetShape(conj))));
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+  auto trans = ib->GetInput(kIndex2);
+  auto lower = ib->GetInput(kIndex3);
+  auto unit_diagonal = ib->GetInput(kIndex4);
+  auto target = ib->GetTargetFromContext();
+  if (target == "GPU") {
+    constexpr int64_t KTransN = 0;
+    constexpr int64_t KTransT = 1;
+    constexpr int64_t KTransC = 2;
+    auto reverse_perm = [](const ShapeVector &shape) -> ShapeVector {
+      ShapeVector perm;
+      for (int64_t i = SizeToLong(shape.size()) - 1; i >= 0; --i) {
+        perm.push_back(i);
+      }
+      return perm;
+    };
+    auto trans_value_ptr = trans->BuildValue();
+    auto lower_value_ptr = lower->BuildValue();
+    auto unit_diagonal_value_ptr = unit_diagonal->BuildValue();
+
+    int64_t trans_value = GetValue<int64_t>(trans_value_ptr);
+    bool lower_value = GetValue<bool>(lower_value_ptr);
+    bool unit_diagonal_value = GetValue<bool>(unit_diagonal_value_ptr);
+    int64_t bp_trans = trans_value == KTransT || trans_value == KTransC ? KTransN : KTransT;
+    auto grad_b = ib->Emit("SolveTriangular", {a, dout, ib->Value<int64_t>(bp_trans), ib->Value<bool>(lower_value),
+                                               ib->Value<bool>(unit_diagonal_value)});
+    auto a_shape = a->shape();
+    auto row_size = a_shape[a_shape.size() - 2];
+    auto grad_b_align = ib->Reshape(grad_b, {row_size, -1});
+    auto x_align = ib->Reshape(out, {row_size, -1});
+    NodePtr grad_a;
+    if (bp_trans == KTransT) {
+      auto conj = ib->Conj(x_align);
+      grad_a = ib->MatMul(grad_b_align, ib->Transpose(conj, reverse_perm(conj->shape())));
+    } else {
+      auto conj = ib->Conj(grad_b_align);
+      grad_a = ib->MatMul(x_align, ib->Transpose(conj, reverse_perm(conj->shape())));
+    }
+    int is_lower = static_cast<int>(lower_value);
+    grad_a = ib->Neg(ib->Emit("MatrixBandPart", {grad_a, ib->Value(-is_lower), ib->Value(is_lower - 1)}));
+    if (unit_diagonal_value) {
+      auto fill_value = ib->Tensor(0, grad_a->dtype());
+      auto fill = ib->Emit("FillV2", {ib->Value<ShapeVector>(ShapeVector(1, row_size)), fill_value});
+      grad_a =
+        ib->MatrixSetDiagV3(grad_a, fill, ib->Fill(int64_t(0), {2}, TypeId::kNumberTypeInt32), MakeValue("RIGHT_LEFT"));
+    }
+    return {grad_a, grad_b, ib->OutZeros(trans), ib->OutZeros(lower), ib->OutZeros(unit_diagonal)};
   } else {
-    auto conj = ib->Conj(grad_b_align);
-    grad_a = ib->MatMul(x_align, ib->Transpose(conj, reverse_perm(ib->GetShape(conj))));
+    auto grads = ib->Emit("SolveTriangularGrad", {a, out, dout, trans, lower, unit_diagonal});
+    auto grad_a = ib->TupleGetItem(grads, 0);
+    auto grad_b = ib->TupleGetItem(grads, 1);
+    return {grad_a, grad_b, ib->OutZeros(trans), ib->OutZeros(lower), ib->OutZeros(unit_diagonal)};
   }
-  int is_lower = static_cast<int>(GetValue<bool>(lower));
-  grad_a = ib->Neg(ib->Emit("MatrixBandPart", {grad_a, ib->Value(-is_lower), ib->Value(is_lower - 1)}));
-  if (GetValue<bool>(unit_diagonal)) {
-    auto fill = ib->Emit("Fill", {ib->EmitValue(ib->GetDtype(grad_a)), ib->Value<ShapeVector>(ShapeVector(1, row_size)),
-                                  ib->Tensor(0, ib->GetDtype(grad_a))});
-    grad_a =
-      ib->MatrixSetDiagV3(grad_a, fill, ib->Fill(int64_t(0), {2}, TypeId::kNumberTypeInt32), MakeValue("RIGHT_LEFT"));
-  }
-  return {grad_a, grad_b};
 });
 
 REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
@@ -69,7 +87,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
 
   // helper functions
-  auto Adjoint = [](BpropIRBuilder *ib, const NodePtr &x) -> NodePtr {
+  auto Adjoint = [](BpropBuilder *ib, const NodePtr &x) -> NodePtr {
     auto conj = ib->Conj(x);
     auto shape = ib->GetShape(conj);
     ShapeVector perm;
@@ -79,7 +97,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
     return ib->Transpose(conj, perm);
   };
 
-  auto EyeTensor = [](BpropIRBuilder *ib, int m, int n) -> NodePtr {
+  auto EyeTensor = [](BpropBuilder *ib, int m, int n) -> NodePtr {
     ShapeVector eye_shape{m, n};
     std::vector<int32_t> eyes_value;
     for (auto i = 0; i < m; ++i) {
@@ -105,7 +123,8 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
 
   if (!is_compute_v) {
     // _, v equal eigh(a)
-    auto v = ib->TupleGetItem(ib->Emit("Eigh", {a}, {{"compute_eigenvectors", MakeValue(true)}}), 1);
+    auto v = ib->TupleGetItem(
+      ib->Emit("Eigh", {a}, {{"compute_eigenvectors", MakeValue(true)}, {"lower", MakeValue(true)}}), 1);
     // grad_a is _matmul(v * F.expand_dims(dout, -2), _adjoint(v))
     grad_a = ib->MatMul(ib->Mul(v, ib->Emit("ExpandDims", {dout, kValueNeg2})), Adjoint(ib, v), false, false);
 
@@ -150,7 +169,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
   auto grad_a_shape = ib->GetShape(grad_a);
   auto eye_node_for_diag =
     EyeTensor(ib, LongToInt(grad_a_shape[grad_a_shape.size() - kDim2]), LongToInt(grad_a_shape.back()));
-  auto eye_tensor_broadcast = ib->Emit("BroadcastTo", {eye_node_for_diag}, {{"shape", MakeValue(grad_a_shape)}});
+  auto eye_tensor_broadcast = ib->Emit("BroadcastTo", {eye_node_for_diag, ib->Shape(grad_a)});
 
   auto prod = ib->Mul(grad_a, ib->Cast(eye_tensor_broadcast, ib->GetDtype(grad_a)));
   auto res = ib->ReduceSum(ib->Cast(prod, kFloat32), {-1}, false);

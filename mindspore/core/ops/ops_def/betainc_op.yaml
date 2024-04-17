@@ -1,0 +1,14 @@
+#operator betainc
+betainc:
+    args:
+        a:
+            dtype: tensor
+        b:
+            dtype: tensor
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
@@ -47,37 +48,52 @@ class Net(Cell):
 
 
 _x = Tensor(np.ones([128, 64]), dtype=ms.float32)
-_w1 = Tensor(np.ones([128, 64]), dtype=ms.float32)
+_w1 = Tensor(np.ones([64]), dtype=ms.float32)
 _b = Tensor(np.ones([128, 64]), dtype=ms.float32)
 
 
-def compile_net(net):
+def compile_net(net, x=_x, b=_b):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_train()
-    _cell_graph_executor.compile(train_net, _x, _b)
+    _cell_graph_executor.compile(train_net, x, b)
     context.reset_auto_parallel_context()
 
 
 def test_dropout_do_mask_data_parallel():
+    """
+    Feature: test data parallel
+    Description: data parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((16, 1), (16, 1))
+    strategy1 = ((16, 1), (1,))
     strategy2 = ((16, 1),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net)
 
 
 def test_dropout_do_mask_model_parallel():
+    """
+    Feature: test model parallel
+    Description: model parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((1, 16), (1, 16))
+    strategy1 = ((1, 16), (16,))
     strategy2 = ((1, 16),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net)
 
 
 def test_dropout_do_mask_hybrid_parallel():
+    """
+    Feature: test hybrid parallel
+    Description: hybrid parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((4, 4), (4, 4))
+    strategy1 = ((4, 4), (4,))
     strategy2 = ((4, 4),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net)
@@ -96,8 +112,28 @@ def test_dropout_do_mask_auto_parallel():
 
 
 def test_dropout_do_mask_repeat_calc():
+    """
+    Feature: test repeat calc
+    Description: repeat calc
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((4, 4), (4, 4))
+    strategy1 = ((4, 4), (4,))
     strategy2 = ((2, 4),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net)
+
+
+def test_dropout_do_mask_dynamic_shape_constraint():
+    """
+    Feature: test dynamic shape
+    Description:
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    strategy1 = ((4, 4), (4,))
+    strategy2 = ((2, 4),)
+    net = Net(_w1, strategy1, strategy2)
+    dynamic_x = Tensor(shape=[None, 64], dtype=ms.float32)
+    with pytest.raises(RuntimeError):
+        compile_net(net, x=dynamic_x)

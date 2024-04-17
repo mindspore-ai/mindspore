@@ -37,7 +37,7 @@ const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName, kPoissonOpNa
 template <typename T>
 tensor::TensorPtr CreateTensor(T seed) {
   // 1 create seed tensor
-  std::vector<int64_t> indices_shape = {1};
+  const std::vector<int64_t> &indices_shape = {1};
   auto type = std::is_same<T, int64_t>::value ? kInt64 : kUInt64;
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kInt64);
   MS_EXCEPTION_IF_NULL(tensor_type);
@@ -114,7 +114,7 @@ const BaseRef SeedAdapter::DefinePattern() const {
   return VectorRef({V, Xs});
 }
 
-// This pass in ordr to convert attr seed to value node
+// This pass in order to convert attr seed to value node
 // exp: DropoutGenMask
 //     |input0   |input1                   |input0     |input1     |s0      |s1
 //  DropoutGenMask(seed0/seed1)      --->    DropoutGenMask(seed0/seed1)

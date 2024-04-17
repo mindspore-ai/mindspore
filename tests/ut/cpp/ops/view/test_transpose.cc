@@ -29,16 +29,16 @@ class TestViewTranspose : public TestView {
 /// Expectation: success
 TEST_F(TestViewTranspose, View) {
   auto prim = std::make_shared<Primitive>("Transpose");
-  std::vector<int64_t> tensor_data = {1, 2, 3, 4};
+  std::vector<int64_t> tensor_data = {1, 2, 3, 4, 5, 6};
   auto input_tensor = std::make_shared<tensor::Tensor>(tensor_data, kInt64);
-  input_tensor->set_shape({1, 4});
+  input_tensor->set_shape({2, 3});
   std::vector<int64_t> input_perm_data({1, 0});
   auto input_perm = MakeValue(input_perm_data);
   std::vector<ValuePtr> inputs_a;
   inputs_a.emplace_back(input_tensor);
   inputs_a.emplace_back(input_perm);
   auto storage_info = TransposeCalc(prim, inputs_a);
-  std::vector<int64_t> expect_out({4, 1});
+  std::vector<int64_t> expect_out({3, 2});
   ASSERT_FALSE(storage_info.empty());
   ASSERT_FALSE(storage_info[0]->is_contiguous);
   ASSERT_TRUE(storage_info[0]->shape == expect_out);

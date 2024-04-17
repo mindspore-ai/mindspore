@@ -97,5 +97,5 @@ def test_signature_error_info():
         net(Tensor(np.random.randint(1, size=(5, 8, 2)).astype(np.int32)),
             Tensor(np.random.randint(1, 256, size=(5, 8, 2, 3)).astype(np.float32)))
     assert "Data type conversion of \'Parameter\' is not supported, " \
-           "the argument[x]'s data type of primitive[ScatterDiv] is int8, " \
-           "which cannot be converted to data type float32 automatically." in str(ex.value)
+           "the argument[x]'s data type of primitive[ScatterDiv] is Int8, " \
+           "which cannot be converted to data type Float32 automatically." in str(ex.value)

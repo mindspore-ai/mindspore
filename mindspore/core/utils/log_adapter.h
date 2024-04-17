@@ -35,8 +35,6 @@
 #define google mindspore_private
 #include "glog/logging.h"
 #undef google
-#else
-#include "toolchain/slog.h"
 #endif
 
 #undef SM_DEBUG
@@ -65,6 +63,7 @@ enum ExceptionType {
   IndexError,
   ValueError,
   TypeError,
+  ShapeError,
   KeyError,
   AttributeError,
   NameError,
@@ -188,6 +187,7 @@ enum SubModuleId : int {
   SM_VM,                 // VM
   SM_PROFILER,           // profiler
   SM_PS,                 // Parameter Server
+  SM_PI,                 // PIJIT
   SM_FL,                 // Federated Learning
   SM_DISTRIBUTED,        // Distributed
   SM_LITE,               // LITE
@@ -196,6 +196,7 @@ enum SubModuleId : int {
   SM_RUNTIME_FRAMEWORK,  // Runtime framework
   SM_GE,                 // GraphEngine
   SM_API,                // MindAPI
+  SM_SYMBOLIC_SHAPE,     // symbolic shape
   NUM_SUBMODUES          // number of submodules
 };
 
@@ -318,10 +319,11 @@ class MS_CORE_API LogWriter {
                        SUBMODULE_ID, excp_type, is_internal_exception) ^                                  \
     mindspore::LogStream()
 
-inline bool IS_OUTPUT_ON(enum MsLogLevel level) noexcept(true) {
-  return (static_cast<int>(level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID] &&
-          static_cast<int>(level) <= static_cast<int>(mindspore::this_thread_max_log_level));
-}
+#define MATCH_LEVEL(level)                                                         \
+  static_cast<int>(level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID] && \
+    static_cast<int>(level) <= static_cast<int>(mindspore::this_thread_max_log_level)
+
+#define IS_OUTPUT_ON(level) (MATCH_LEVEL(level))
 
 #define MS_LOG(level) MS_LOG_##level
 
@@ -393,7 +395,7 @@ inline bool IS_OUTPUT_ON(enum MsLogLevel level) noexcept(true) {
     if (!(condition)) {            \
       return false;                \
     }                              \
-  } while (false)
+  } while (0)
 
 #define RETURN_IF_FALSE_WITH_LOG(condition, message) \
   do {                                               \
@@ -401,7 +403,7 @@ inline bool IS_OUTPUT_ON(enum MsLogLevel level) noexcept(true) {
       MS_LOG(ERROR) << message;                      \
       return false;                                  \
     }                                                \
-  } while (false)
+  } while (0)
 
 #ifdef DEBUG
 #include <cassert>

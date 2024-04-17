@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_FILL_DIAGONAL_H_
 #define AICPU_KERNELS_NORMALIZED_FILL_DIAGONAL_H_
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class FillDiagonalCpuKernel : public CpuKernel {
@@ -28,7 +28,7 @@ class FillDiagonalCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t FillDiag(int64_t input_dims, int64_t stride, int64_t height, int64_t width, const CpuKernelContext &ctx);
+  uint32_t FillDiag(int64_t input_dims, int64_t stride, int64_t height, int64_t width, CpuKernelContext &ctx);
   float fill_value_;
 };
 }  // namespace aicpu

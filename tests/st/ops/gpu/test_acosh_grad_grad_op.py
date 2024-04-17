@@ -76,7 +76,7 @@ def test_acosh_grad_grad_float16():
     acosh_grad_grad_base(np.float16, 2e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acosh_grad_grad_float32():

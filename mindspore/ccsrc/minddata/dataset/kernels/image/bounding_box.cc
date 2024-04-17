@@ -25,6 +25,7 @@
 namespace mindspore {
 namespace dataset {
 const uint8_t kNumOfCols = 4;
+const float kEpsilon = 1e-5;
 
 BoundingBox::BoundingBox(bbox_float x, bbox_float y, bbox_float width, bbox_float height)
     : x_(x), y_(y), width_(width), height_(height) {}
@@ -73,15 +74,16 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
   int64_t img_h = image_and_bbox[0]->shape()[0];
   int64_t img_w = image_and_bbox[0]->shape()[1];
   for (auto &bbox : bbox_list) {
-    if (static_cast<int64_t>(ceil(bbox->x() + bbox->width())) > img_w ||
-        static_cast<int64_t>(ceil(bbox->y() + bbox->height())) > img_h) {
+    // fix: 100.000008 > 100  or 30.000002 > 30
+    if (bbox->x() + bbox->width() - img_w > kEpsilon || bbox->y() + bbox->height() - img_h > kEpsilon) {
       RETURN_STATUS_ERROR(
         StatusCode::kMDBoundingBoxOutOfBounds,
         "BoundingBox: bounding boxes is out of bounds of the image, as image width: " + std::to_string(img_w) +
           ", bbox width coordinate: " + std::to_string(bbox->x() + bbox->width()) + ", and image height: " +
           std::to_string(img_h) + ", bbox height coordinate: " + std::to_string(bbox->y() + bbox->height()));
     }
-    if (bbox->x() < 0.0 || bbox->y() < 0.0) {
+    // fix: -0.000001 < 0.0
+    if (bbox->x() < -kEpsilon || bbox->y() < -kEpsilon) {
       RETURN_STATUS_ERROR(StatusCode::kMDBoundingBoxOutOfBounds,
                           "BoundingBox: the coordinates of the bounding boxes has negative value, got: (" +
                             std::to_string(bbox->x()) + "," + std::to_string(bbox->y()) + ").");

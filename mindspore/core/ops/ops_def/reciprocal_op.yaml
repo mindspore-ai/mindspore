@@ -1,0 +1,12 @@
+#operator reciprocal
+reciprocal:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True

@@ -3,9 +3,7 @@ mindspore.nn.Tanhshrink
 
 .. py:class:: mindspore.nn.Tanhshrink
 
-    Tanhshrink激活函数。
-
-    按元素计算Tanhshrink函数，返回一个新的Tensor。
+    逐元素计算Tanhshrink激活函数，返回一个新的Tensor。
 
     Tanhshrink函数定义为：
 

@@ -32,7 +32,7 @@ class UnsortedSegmentMaxNet(nn.Cell):
         return self.unsorted_segment_max(data, ids, self.num_segments)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -51,7 +51,7 @@ def test_dynamic_shape_unsorted_segment_max():
     test_dynamic.test_dynamic_grad_net([input_x, segment_ids], False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,16 @@
 #endif
 #include <fstream>
 #include <iomanip>
+#include <nlohmann/json.hpp>
 #include "mindspore/core/ops/structure_ops.h"
 #include "utils/label.h"
 #include "utils/hash_map.h"
 #include "utils/symbolic.h"
+#include "utils/compile_config.h"
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
+#include "ir/value.h"
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/anfalgo.h"
@@ -41,6 +44,17 @@
 using MetaFuncGraph = mindspore::MetaFuncGraph;
 using MetaFuncGraphPtr = std::shared_ptr<MetaFuncGraph>;
 namespace mindspore {
+
+enum FormatLevel : int {
+  // When setting to basic level, ir will only contains operator and operands of nodes and title of subgraph with
+  // its debuginfo
+  kBasicLevel = 0,
+  // When setting to advanced level, ir will contains all the info except scope and debug info of nodes.
+  kAdvancedLevel,
+  // When setting to advanced level, ir will contains all the info.
+  kFullyLevel,
+};
+
 std::string GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr &mt_func_graph) {
   auto py_funcs = mt_func_graph->GetPyFunctions();
   if (py_funcs.empty()) {
@@ -81,7 +95,10 @@ inline bool Skip(const MetaFuncGraphPtr &meta_func_graph) {
          meta_func_graph->isa<prim::VmapMatchOutAxis>() || meta_func_graph->isa<prim::VmapGeneralPreprocess>() ||
          meta_func_graph->isa<prim::GradAux>() || meta_func_graph->isa<prim::PyExecuteGradient>() ||
          meta_func_graph->isa<prim::MutableGradient>() || meta_func_graph->isa<prim::ZerosLike>() ||
-         meta_func_graph->isa<prim::ListAdd>();
+         meta_func_graph->isa<prim::ListAdd>() || meta_func_graph->isa<prim::StarredGetItem>() ||
+         meta_func_graph->isa<prim::StarredUnpack>() || meta_func_graph->isa<prim::StarredUnpackMerge>() ||
+         meta_func_graph->isa<prim::IterConverter>() || meta_func_graph->isa<prim::HasNext>() ||
+         meta_func_graph->isa<prim::Next>();
 }
 
 std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph) {
@@ -185,6 +202,7 @@ std::string GetSequenceText(const ValuePtr &value, const std::shared_ptr<SubGrap
 
 std::string GetDictText(const ValuePtr &value, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   std::ostringstream oss;
+  MS_EXCEPTION_IF_NULL(value);
   ValueDictionaryPtr dict = value->cast<ValueDictionaryPtr>();
   oss << "{";
   bool first_flag = true;
@@ -289,7 +307,7 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
       buffer << ", value=...";
     }
     if (ref_key != nullptr) {
-      buffer << ", ref_key=:" << ref_key->value();
+      buffer << ", ref_key=" << ref_key->value();
     }
     PrintTupleNodeUsedFlags(buffer, sequence_abs);
     buffer << ">";
@@ -299,7 +317,7 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
       buffer << ", value=...";
     }
     if (ref_key != nullptr) {
-      buffer << ", ref_key=:" << ref_key->value();
+      buffer << ", ref_key=" << ref_key->value();
     }
     PrintTupleNodeUsedFlags(buffer, sequence_abs);
     buffer << ">";
@@ -327,6 +345,77 @@ void PrintNodeInputType(std::ostringstream &buffer, const AnfNodePtr &node) {
   }
 }
 
+void PrintNodeOutputSymbolicInfo(std::ostringstream &buffer, const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return;
+  }
+  auto abstract = node->abstract();
+  if (abstract == nullptr) {
+    buffer << "<null>";
+    return;
+  }
+  auto shape = abstract->GetSymbolicShape();
+  auto value = abstract->GetSymbolicValue();
+  if (shape != nullptr || value != nullptr) {
+    if (shape != nullptr) {
+      buffer << "S:" << shape->ToString();
+    }
+    if (value != nullptr) {
+      buffer << "V:" << value->ToString();
+    }
+  } else {
+    buffer << "<null>";
+  }
+}
+
+void PrintNodeInputSymbolicInfo(std::ostringstream &buffer, const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return;
+  }
+  const auto &inputs = GetInputs(node);
+  if (inputs.size() <= 1) {
+    return;
+  }
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    if (i != 1) {
+      buffer << ", ";
+    }
+    PrintNodeOutputSymbolicInfo(buffer, inputs[i]);
+  }
+}
+
+void DumpSymbolicInfo(const AnfNodePtr &node, const FuncGraphPtr &fg, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  if (node == nullptr || fg == nullptr || gsub == nullptr || fg->symbol_engine() == nullptr) {
+    return;
+  }
+  if (node != fg->get_return()) {
+    gsub->buffer << "      : (";
+    PrintNodeInputSymbolicInfo(gsub->buffer, node);
+    gsub->buffer << ") -> (";
+    PrintNodeOutputSymbolicInfo(gsub->buffer, node);
+    gsub->buffer << ")";
+  } else {
+    gsub->buffer << "      : (";
+    PrintNodeInputSymbolicInfo(gsub->buffer, node);
+    gsub->buffer << ")";
+  }
+  gsub->buffer << std::endl;
+}
+
+void PrintParamSymbolicShape(std::ostringstream &buffer, const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return;
+  }
+  auto abstract = node->abstract();
+  if (abstract == nullptr) {
+    return;
+  }
+  SymbolPtr shape = abstract->GetSymbolicShape();
+  if (shape != nullptr) {
+    buffer << " : " << shape->ToString();
+  }
+}
+
 void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &node) {
   buffer << "      : (";
   PrintNodeInputType(buffer, node);
@@ -347,7 +436,7 @@ void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer, 
   if (!graph->attrs().empty()) {
     buffer << "# Attrs:" << std::endl;
     for (const auto &attr : graph->attrs()) {
-      buffer << attr.first << " : ";
+      buffer << attr.first << ": ";
       if (attr.second->isa<BoolImm>()) {
         buffer << GetValue<bool>(attr.second);
       } else if (attr.second->isa<StringImm>()) {
@@ -412,9 +501,10 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
     if (parameter_ptr == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "param cannot cast to ParameterPtr";
     }
-    buffer << "%para" << para_num << "_" << parameter_ptr->name() << " : ";
+    buffer << "%para" << para_num << "_" << parameter_ptr->name() << ": ";
     // Print parameters' type and shape
     PrintNodeOutputType(buffer, param);
+    PrintParamSymbolicShape(buffer, param);
     if (parameter_ptr->has_default()) {
       buffer << "  :  has_default";
     }
@@ -787,6 +877,30 @@ void DumpDebugInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &
       }
     }
   }
+
+  // Dump side effect info.
+  auto effect_info = node->GetEffectInfo();
+  if (effect_info.HasEffect()) {
+    gsub->buffer << "      # " << effect_info.ToString() << '\n';
+  }
+}
+
+void DumpParameters(const FuncGraphPtr &func_graph, std::ostringstream &oss) {
+  std::vector<AnfNodePtr> parameters = func_graph->parameters();
+  oss << "# Parameters: " << parameters.size() << ", (";
+  if (parameters.size() == 1) {
+    MS_EXCEPTION_IF_NULL(parameters[0]);
+    PrintNodeOutputType(oss, parameters[0]);
+  } else if (parameters.size() > 1) {
+    for (size_t idx = 0; idx < parameters.size() - 1; idx++) {
+      MS_EXCEPTION_IF_NULL(parameters[idx]);
+      PrintNodeOutputType(oss, parameters[idx]);
+      oss << ", ";
+    }
+    MS_EXCEPTION_IF_NULL(parameters[parameters.size() - 1]);
+    PrintNodeOutputType(oss, parameters[parameters.size() - 1]);
+  }
+  oss << ")\n";
 }
 
 void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const OrderedMap<AnfNodePtr, int32_t> &para_map,
@@ -803,7 +917,7 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const Ordere
     gsub->buffer << "  ";
   }
 
-  if (node->inputs().empty()) {
+  if (node->weak_inputs().empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Input of CNode is empty";
   }
 
@@ -813,33 +927,44 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const Ordere
   // Print operands
   DumpOperands(node, para_map, gsub);
 
-  // Print operator attrs
-  AnfNodePtr op = node->input(0);
-  DumpOperateAttrs(op, gsub);
+  if (gsub->format_level > kBasicLevel) {
+    // Print operator attrs
+    AnfNodePtr op = node->input(0);
+    DumpOperateAttrs(op, gsub);
 
-  // Print cnode attrs
-  DumpCNodeAttrs(node, gsub);
+    // Print cnode attrs
+    DumpCNodeAttrs(node, gsub);
 
-  // Print cnode primal attrs
-  DumpCNodePrimalAttrs(node, gsub);
+    // Print cnode primal attrs
+    DumpCNodePrimalAttrs(node, gsub);
 
-  // Print parallel info
-  DumpParallelInfo(node, gsub);
-
-  // Print shape info
-  DumpShape(node, sub_graph, gsub);
-
-  // Print kernel info
-  DumpKernelInfo(node, gsub);
-
-  if (dump_full_name) {
-    gsub->buffer << "      # Fullname with scope: (" << node->fullname_with_scope() << ")" << std::endl;
-  } else {
-    gsub->buffer << "      # Scope: (" << node->scope()->name() << ")" << std::endl;
+    // Print parallel info
+    DumpParallelInfo(node, gsub);
   }
 
-  // Print debug info
-  DumpDebugInfo(node, gsub, dump_location);
+  if (gsub->format_level > kBasicLevel || node == sub_graph->get_return()) {
+    // Print shape info
+    DumpShape(node, sub_graph, gsub);
+
+    // Print symbolic shape or symbolic value
+    DumpSymbolicInfo(node, sub_graph, gsub);
+
+    // Print kernel info
+    DumpKernelInfo(node, gsub);
+  } else {
+    gsub->buffer << std::endl;
+  }
+
+  // Use environment variables to control extra info.
+  if (gsub->format_level > kAdvancedLevel) {
+    if (dump_full_name) {
+      gsub->buffer << "      # Fullname with scope: (" << node->fullname_with_scope() << ")" << std::endl;
+    } else {
+      gsub->buffer << "      # Scope: (" << node->scope()->name() << ")" << std::endl;
+    }
+    // Print debug info
+    DumpDebugInfo(node, gsub, dump_location);
+  }
 }
 
 void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss) {
@@ -850,16 +975,49 @@ void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss) {
   constexpr int width = 4;
   oss << "# Order:\n";
   int i = 1;
-  for (auto &node : order_list) {
-    MS_EXCEPTION_IF_NULL(node);
-    oss << '#' << std::setw(width) << i << ": " << node->DebugString() << '\n';
+  for (auto &weak_node : order_list) {
+    const auto &node = weak_node.lock();
+    if (node != nullptr) {
+      oss << '#' << std::setw(width) << i << ": " << node->DebugString() << '\n';
+    }
     ++i;
   }
 }
 
+void DumpSymbolEngine(const FuncGraphPtr &sub_graph, std::ostringstream &oss, int format_level) {
+  if (format_level <= kAdvancedLevel) {
+    return;
+  }
+  if (sub_graph->symbol_engine() != nullptr && sub_graph->symbol_engine()->func_graph() == sub_graph) {
+    oss << "\nsymbol engine details:\n";
+    oss << sub_graph->symbol_engine()->DumpText();
+  }
+}
+
+int GetDumpFormatLevel() {
+  static std::string format = common::GetEnv("MS_DEV_DUMP_IR_FORMAT");
+  int format_level = 2;
+  if (format.size() == 1) {
+    try {
+      format_level = std::stoi(format);
+    } catch (const std::invalid_argument &ia) {
+      MS_LOG(EXCEPTION) << "Invalid argument: " << ia.what() << " when parse " << format
+                        << ". Please set this env variable to number 0-2.";
+    }
+  } else if (format.size() > 1) {
+    MS_LOG(EXCEPTION) << "MS_DEV_DUMP_IR_FORMAT should be a single number with one digit.";
+  }
+
+  if (format_level < 0 || format_level > 2) {
+    MS_LOG(EXCEPTION) << "Format level can only be from 0 to 2";
+  }
+
+  return format_level;
+}
+
 void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePtr, int32_t> *para_map,
                       OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> *const sub_graphs, int32_t total_para,
-                      bool dump_full_name = false, LocDumpMode dump_location = kOff) {
+                      bool dump_full_name, LocDumpMode dump_location) {
   if (para_map == nullptr || sub_graphs == nullptr) {
     return;
   }
@@ -875,6 +1033,7 @@ void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePt
     if (gsub == nullptr) {
       gsub = std::make_shared<SubGraphIRInfo>();
       gsub->local_var = 0;
+      gsub->format_level = GetDumpFormatLevel();
       (*sub_graphs)[sub_graph] = gsub;
     }
     std::vector<AnfNodePtr> parameters = sub_graph->parameters();
@@ -902,22 +1061,39 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
   if (sub_graphs == nullptr || graph == nullptr) {
     return;
   }
+  int format_level = GetDumpFormatLevel();
   for (const auto &sg : *sub_graphs) {
     MS_EXCEPTION_IF_NULL(sg.first);
     if (*(sg.first->indirect())) {
       oss << "indirect: " << *(sg.first->indirect()) << "\n";
     }
-    oss << "subgraph attr:" << std::endl;
-    for (const auto &attr : sg.first->attrs()) {
-      oss << attr.first << " : ";
-      if (attr.second->isa<BoolImm>()) {
-        oss << GetValue<bool>(attr.second);
-      } else if (attr.second->isa<StringImm>()) {
-        oss << (GetValue<std::string>(attr.second));
+    if (format_level > kBasicLevel) {
+      oss << "subgraph attr:" << std::endl;
+      for (const auto &attr : sg.first->attrs()) {
+        oss << attr.first << ": ";
+        if (attr.second->isa<BoolImm>()) {
+          oss << GetValue<bool>(attr.second);
+        } else if (attr.second->isa<StringImm>()) {
+          oss << (GetValue<std::string>(attr.second));
+        }
+        oss << std::endl;
       }
-      oss << std::endl;
+      if (sg.first->symbol_engine() != nullptr) {
+        oss << "subgraph symbol engine: " << sg.first->symbol_engine()->ToString() << " : "
+            << sg.first->symbol_engine().get() << std::endl;
+      }
+      oss << "subgraph instance: " << sg.first->ToString() << " : " << sg.first.get() << std::endl;
+
+      // Dump side effect info.
+      auto effect_info = sg.first->GetEffectInfo();
+      if (effect_info.HasEffect()) {
+        oss << "# " << effect_info.ToString() << '\n';
+      }
+      // Dump parameters info.
+      if (sg.first != graph) {
+        DumpParameters(sg.first, oss);
+      }
     }
-    oss << "subgraph instance: " << sg.first->ToString() << " : " << sg.first.get() << std::endl;
     if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
       oss << trace::GetDebugInfoStr(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "#"
           << trace::Label(sg.first->debug_info()) << "\n";
@@ -950,6 +1126,7 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
     oss << sg.second->buffer.str();
     oss << "}" << std::endl;
     OutputOrderList(sg.first, oss);
+    DumpSymbolEngine(sg.first, oss, format_level);
     oss << std::endl;
     oss << std::endl;
   }
@@ -1039,7 +1216,7 @@ DumpConfig GetDumpConfig() {
   }
   parsed = true;
   // Start parse config.
-  std::string str(common::GetEnv("MS_DEV_DUMP_IR_CONFIG"));
+  std::string str(common::GetCompileConfig("DUMP_IR_CONFIG"));
   auto constexpr max_string_len = 100;
   if (str.size() > max_string_len) {
     MS_LOG(WARNING) << "Dump ir config length exceed max length: " << max_string_len;
@@ -1073,6 +1250,10 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
     return;
   }
   auto path = GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
+  bool need_dump = Common::CheckIfPrintIrPass(filename);
+  if (!need_dump) {
+    return;
+  }
   if (!target_file.empty()) {
     path = target_file;
   }
@@ -1116,7 +1297,116 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   ChangeFileMode(realpath.value(), S_IRUSR);
 }
 
+nlohmann::ordered_json ToJson(const CNodePtr &para_node, const int64_t global_rank_id,
+                              std::unordered_map<std::string, std::vector<uint32_t>> group_map) {
+  nlohmann::ordered_json args;
+  MS_EXCEPTION_IF_NULL(para_node);
+  auto abs = para_node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  auto prim = GetCNodePrimitive(para_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  args["op_name"] = para_node->UniqueName();
+  args["op_type"] = prim->name();
+  args["shape"] = abs->BuildShape()->ToString();
+  args["data_type"] = abs->BuildType()->ToString();
+  args["global_rank_id"] = std::to_string(global_rank_id);
+  std::string group_name = "";
+  std::string group = "group";
+  if (prim->HasAttr(group)) {
+    group_name = GetValue<std::string>(prim->GetAttr(group));
+  }
+  args["comm_group_name"] = group_name;
+  if (prim->HasAttr(kAttrGroupRankIds)) {
+    auto value_ptr = prim->GetAttr(kAttrGroupRankIds);
+    args["comm_group_rank_ids"] = value_ptr->ToString();
+    if (group_map.find(group_name) != group_map.end()) {
+      std::ostringstream oss;
+      oss << "(";
+      const std::vector<uint32_t> group_ranks = group_map[group_name];
+      (void)std::copy(group_ranks.begin(), group_ranks.end() - 1, std::ostream_iterator<int>(oss, ","));
+      oss << group_ranks.back() << ")";
+      args["comm_group_rank_ids"] = oss.str();
+    }
+  }
+  if (prim->HasAttr(kAttrSrcRank) && prim->HasAttr(kAttrSrTag)) {
+    args["src_rank"] = std::to_string(GetValue<int64_t>(prim->GetAttr(kAttrSrcRank)));
+    args["sr_tag"] = std::to_string(GetValue<int64_t>(prim->GetAttr(kAttrSrTag)));
+  }
+  if (prim->HasAttr(kAttrDestRank) && prim->HasAttr(kAttrSrTag)) {
+    args["dest_rank"] = std::to_string(GetValue<int64_t>(prim->GetAttr(kAttrDestRank)));
+    args["sr_tag"] = std::to_string(GetValue<int64_t>(prim->GetAttr(kAttrSrTag)));
+  }
+  return args;
+}
+
+void DumpParallelInfo(const FuncGraphPtr &graph, size_t *op_id, nlohmann::ordered_json *args,
+                      const int64_t global_rank_id,
+                      const std::unordered_map<std::string, std::vector<uint32_t>> &group_map) {
+  MS_EXCEPTION_IF_NULL(graph);
+  std::list<CNodePtr> graph_orders = graph->GetOrderedCnodes();
+  for (auto &node : graph_orders) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (IsValueNode<FuncGraph>(node->input(0))) {
+      FuncGraphPtr sub_graph = node->input(0)->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>();
+      DumpParallelInfo(sub_graph, op_id, args, global_rank_id, group_map);
+    } else if (common::AnfAlgo::IsCommunicationOp(node)) {
+      (*args)[std::to_string(*op_id)] = ToJson(node, global_rank_id, group_map);
+      *op_id = *op_id + 1;
+    } else if (node->input(0)->isa<CNode>() && node->input(0)->abstract() != nullptr) {
+      auto abs = node->input(0)->abstract();
+      if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
+        const auto &abstract_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+        MS_EXCEPTION_IF_NULL(abstract_func_graph->func_graph());
+        DumpParallelInfo(abstract_func_graph->func_graph(), op_id, args, global_rank_id, group_map);
+      } else if (abs->isa<abstract::PartialAbstractClosure>()) {
+        const auto &abstract_partial_func = abs->cast<abstract::PartialAbstractClosurePtr>();
+        const auto &abstract_fn = abstract_partial_func->fn();
+        if (abstract_fn->isa<abstract::FuncGraphAbstractClosure>()) {
+          const auto &abstract_func_graph = abstract_fn->cast<abstract::FuncGraphAbstractClosurePtr>();
+          MS_EXCEPTION_IF_NULL(abstract_func_graph->func_graph());
+          DumpParallelInfo(abstract_func_graph->func_graph(), op_id, args, global_rank_id, group_map);
+        }
+      }
+    }
+  }
+}
+
+void DumpParallelJson(const std::string &filename, const FuncGraphPtr &graph, const int64_t global_rank_id,
+                      const std::unordered_map<std::string, std::vector<uint32_t>> &group_map) {
+  if (graph == nullptr) {
+    return;
+  }
+  std::string save_path = "";
+  if (!common::GetEnv("MA_LOG_DIR").empty()) {
+    save_path = common::GetEnv("MA_LOG_DIR");
+  }
+  auto path = GetSaveGraphsPathName(filename, save_path);
+  auto realpath = Common::CreatePrefixPath(path);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << path;
+    return;
+  }
+
+  ChangeFileMode(realpath.value(), S_IWUSR);
+  std::ofstream fout(realpath.value());
+  if (!fout.is_open()) {
+    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
+    return;
+  }
+  size_t op_id = 0;
+  nlohmann::ordered_json args;
+  args["hccl_algo"] = common::GetEnv("HCCL_ALGO");
+  DumpParallelInfo(graph, &op_id, &args, global_rank_id, group_map);
+  constexpr size_t json_dump_mode = 2;
+  fout << args.dump(json_dump_mode);
+
+  fout.close();
+  // Set file mode to read only by user
+  ChangeFileMode(realpath.value(), S_IRUSR);
+}
+
 void DumpIRHead(const FuncGraphPtr &top_func, std::ostringstream &ofs) {
+  MS_EXCEPTION_IF_NULL(top_func);
   auto sub_graphs = top_func->func_graphs_used_total();
   DumpGlobalInfoEntry(top_func, ofs, sub_graphs.size());
   OrderedMap<AnfNodePtr, int32_t> para_map;
@@ -1155,6 +1445,10 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
     return;
   }
   auto path = Common::AddId(filename, ".ir");
+  bool need_dump = Common::CheckIfPrintIrPass(filename);
+  if (!need_dump) {
+    return;
+  }
   auto realpath = Common::CreatePrefixPath(path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. path=" << path;
@@ -1220,6 +1514,207 @@ void DumpIRForRDR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode) 
   already_printed = true;
   MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
                   << "please recompile source to enable it. See help of building script.";
+}
+#endif
+
+void AnfExporter::OuputIrStyleCNodes(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
+                                     int32_t total_para, std::ostringstream &oss,
+                                     OrderedMap<AnfNodePtr, int32_t> *para_map) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto &parameters = func_graph->parameters();
+  std::shared_ptr<SubGraphIRInfo> gsub = std::make_shared<SubGraphIRInfo>();
+  ParamIndexMap param_map;
+  exported_[func_graph] = param_map;
+  gsub->local_var = 0;
+  gsub->format_level = GetDumpFormatLevel();
+  for (size_t idx = 0; idx < parameters.size(); idx++) {
+    MS_EXCEPTION_IF_NULL(parameters[idx]);
+    if ((*para_map).count(parameters[idx]) == 0) {
+      (*para_map)[parameters[idx]] = total_para++;
+    }
+  }
+  for (const AnfNodePtr &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto &inputs = cnode->inputs();
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      if (IsValueNode<FuncGraph>(inputs[i])) {
+        FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(inputs[i]);
+        if (!func_graph_set_.contains(fg) && exported_.find(fg) == exported_.end() && export_used_) {
+          func_graph_set_.add(fg);
+        }
+      }
+    }
+    DumpCNode(cnode, func_graph, *para_map, gsub);
+    if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
+      gsub->buffer << trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
+                   << trace::Label(cnode->debug_info()) << "\n";
+    } else {
+      std::string dgi = trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard);
+      if (dgi != "") {
+        gsub->buffer << trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
+      }
+    }
+  }
+  if (!is_top_graph_) {
+    if (parameters.size() == 1) {
+      MS_EXCEPTION_IF_NULL(parameters[0]);
+      oss << "%para" << (*para_map)[parameters[0]] << "_" << parameters[0]->ToString();
+    } else if (parameters.size() > 1) {
+      for (size_t idx = 0; idx < parameters.size() - 1; idx++) {
+        MS_EXCEPTION_IF_NULL(parameters[idx]);
+        oss << "%para" << (*para_map)[parameters[idx]] << "_" << parameters[idx]->ToString();
+        oss << ", ";
+      }
+      MS_EXCEPTION_IF_NULL(parameters[parameters.size() - 1]);
+      oss << "%para" << (*para_map)[parameters[parameters.size() - 1]] << "_"
+          << parameters[parameters.size() - 1]->ToString();
+    }
+  } else {
+    is_top_graph_ = false;
+  }
+  oss << ") {\n";
+  oss << gsub->buffer.str();
+}
+
+void AnfExporter::ExportOneFuncGraph(const FuncGraphPtr &func_graph, const TaggedNodeMap &tagged_cnodes_map,
+                                     std::ostringstream &oss, int32_t total_para,
+                                     OrderedMap<AnfNodePtr, int32_t> *para_map) {
+  if (func_graph == nullptr) {
+    return;
+  }
+
+  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
+
+  if (*(func_graph->indirect())) {
+    oss << "indirect: " << *(func_graph->indirect()) << "\n";
+  }
+  oss << "subgraph attr:" << std::endl;
+  for (const auto &attr : func_graph->attrs()) {
+    oss << attr.first << ": ";
+    MS_EXCEPTION_IF_NULL(attr.second);
+    if (attr.second->isa<BoolImm>()) {
+      oss << GetValue<bool>(attr.second);
+    } else if (attr.second->isa<StringImm>()) {
+      oss << (GetValue<std::string>(attr.second));
+    }
+    oss << std::endl;
+  }
+  oss << "subgraph instance: " << func_graph->ToString() << " : " << func_graph.get() << std::endl;
+  // Dump side effect info.
+  auto effect_info = func_graph->GetEffectInfo();
+  if (effect_info.HasEffect()) {
+    oss << "# " << effect_info.ToString() << '\n';
+  }
+  // Dump parameters info.
+  DumpParameters(func_graph, oss);
+  if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
+    oss << trace::GetDebugInfoStr(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "#"
+        << trace::Label(func_graph->debug_info()) << "\n";
+  } else {
+    oss << trace::GetDebugInfoStr(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
+  }
+  oss << "subgraph @" << func_graph->ToString();
+  if (func_graph->parent() != nullptr) {
+    oss << " parent: [subgraph @" << func_graph->parent()->ToString() << "]";
+  }
+  oss << "(";
+  OuputIrStyleCNodes(func_graph, nodes, total_para, oss, para_map);
+
+  oss << "}\n";
+
+  OutputOrderList(func_graph, oss);
+}
+
+void ExportGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer, int graph_size) {
+  if (graph == nullptr) {
+    return;
+  }
+
+  buffer << "# IR entry: @" << graph->ToString() << std::endl;
+  buffer << "# Total subgraph: " << graph_size;
+  buffer << std::endl;
+  buffer << std::endl;
+  buffer << "# attrs: " << std::endl;
+  for (const auto &attr : graph->attrs()) {
+    buffer << attr.first << ": ";
+    MS_EXCEPTION_IF_NULL(attr.second);
+    if (attr.second->isa<BoolImm>()) {
+      buffer << GetValue<bool>(attr.second);
+    } else if (attr.second->isa<StringImm>()) {
+      buffer << (GetValue<std::string>(attr.second));
+    }
+    buffer << std::endl;
+  }
+}
+
+void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph) {
+  if (func_graph == nullptr) {
+    return;
+  }
+
+  std::ofstream ofs(filename);
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file '" << filename << "' failed!" << ErrnoToString(errno);
+    return;
+  }
+
+  param_index_ = 1;
+  int graph_size = 0;
+  std::ostringstream oss;
+  std::ostringstream paramoss;
+  TaggedNodeMap tagged_cnodes_map;
+  OrderedMap<AnfNodePtr, int32_t> para_map;
+  int32_t total_para = DumpParams(func_graph, paramoss, &para_map);
+  func_graph_set_.add(func_graph);
+  is_top_graph_ = true;
+  while (!func_graph_set_.empty()) {
+    FuncGraphPtr fg = *func_graph_set_.cbegin();
+    ExportOneFuncGraph(fg, tagged_cnodes_map, oss, total_para, &para_map);
+    oss << "\n\n";
+    (void)func_graph_set_.erase(fg);
+    graph_size++;
+  }
+  std::ostringstream buffer;
+  ExportGlobalInfoEntry(func_graph, buffer, graph_size);
+  ofs << buffer.str() << paramoss.str() << "\n" << oss.str();
+  ofs.close();
+}
+
+#ifdef ENABLE_DUMP_IR
+void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph) {
+  bool need_dump = Common::CheckIfPrintIrPass(filename);
+  if (func_graph == nullptr) {
+    return;
+  }
+  if (!need_dump) {
+    return;
+  }
+
+  auto filepath = GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
+  auto real_filepath = Common::CreatePrefixPath(filepath);
+  if (!real_filepath.has_value()) {
+    MS_LOG(ERROR) << "The export ir path: " << filepath << " is not illegal.";
+    return;
+  }
+  ChangeFileMode(real_filepath.value(), S_IWUSR);
+  AnfExporter exporter;
+  exporter.ExportFuncGraph(real_filepath.value(), func_graph);
+  // Set file mode to read only by user
+  ChangeFileMode(real_filepath.value(), S_IRUSR);
+}
+#else
+void ExportIR(const std::string &, const FuncGraphPtr &) {
+  static bool already_printed = false;
+  if (already_printed) {
+    return;
+  }
+  already_printed = true;
+  MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
+                  << "please recompile to enable it. See help of building script.";
 }
 #endif
 }  // namespace mindspore

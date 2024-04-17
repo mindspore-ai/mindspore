@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,16 @@ using Complex = mindspore::utils::Complex<T>;
     ADD_UNARY_SAME_TYPE(Op, kNumberTypeFloat64, double)                                                        \
   }
 
-#define REGISTER_UNARY_ALL_INT_TYPE(Op)                                                                               \
-  {ADD_UNARY_SAME_TYPE(Op, kNumberTypeBool, bool)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt8, int8_t)},               \
-    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt16, int16_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt32, int32_t)},       \
-    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt64, int64_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt8, uint8_t)},       \
-    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt16, uint16_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt32, uint32_t)}, { \
-    ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt64, uint64_t)                                                              \
+#define REGISTER_UNARY_ALL_INT_TYPE(Op)                                                                           \
+  {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt8, int8_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt16, int16_t)},       \
+    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt32, int32_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt64, int64_t)},   \
+    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt8, uint8_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt16, uint16_t)}, \
+    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt32, uint32_t)}, {                                                     \
+    ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt64, uint64_t)                                                          \
   }
+
+#define REGISTER_UNARY_BOOL_TYPE(Op) \
+  { ADD_UNARY_SAME_TYPE(Op, kNumberTypeBool, bool) }
 
 #define REGISTER_UNARY_COMPLEX_TYPE(Op)                              \
   {ADD_UNARY_SAME_TYPE(Op, kNumberTypeComplex64, Complex<float>)}, { \
@@ -85,11 +88,20 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
     {"Erfc", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kErfc)}},
     {"Abs",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kAbs), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kAbs),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kAbs)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kAbs), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kAbs)}},
     {"Sqrt",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kSqrt), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kSqrt),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSqrt)}},
-    {"Invert", {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kInvert)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSqrt), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kSqrt),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kSqrt, kNumberTypeInt64, kNumberTypeFloat32, int64_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kSqrt, kNumberTypeInt32, kNumberTypeFloat32, int, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kSqrt, kNumberTypeInt16, kNumberTypeFloat32, int16_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kSqrt, kNumberTypeInt8, kNumberTypeFloat32, int8_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kSqrt, kNumberTypeUInt8, kNumberTypeFloat32, uint8_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kSqrt, kNumberTypeUInt16, kNumberTypeFloat32, uint16_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kSqrt, kNumberTypeUInt32, kNumberTypeFloat32, uint32_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kSqrt, kNumberTypeUInt64, kNumberTypeFloat32, uint64_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kSqrt, kNumberTypeBool, kNumberTypeFloat32, bool, float)}},
+    {"Invert", {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kInvert), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kInvert)}},
     {"Rsqrt", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kRsqrt), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kRsqrt)}},
     {"Sign",
      {{ADD_UNARY_SAME_TYPE(ElwiseOpType::kSign, kNumberTypeInt32, int32_t)},
@@ -98,13 +110,24 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
       REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSign)}},
     {"Square",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kSquare), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kSquare),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSquare)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSquare), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kSquare)}},
     {"Exp",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kExp), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kExp),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kExp)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kExp), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kExp),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kExp, kNumberTypeInt64, kNumberTypeFloat32, int64_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kExp, kNumberTypeInt32, kNumberTypeFloat32, int, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kExp, kNumberTypeInt16, kNumberTypeFloat32, int16_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kExp, kNumberTypeInt8, kNumberTypeFloat32, int8_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kExp, kNumberTypeUInt8, kNumberTypeFloat32, uint8_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kExp, kNumberTypeUInt16, kNumberTypeFloat32, uint16_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kExp, kNumberTypeUInt32, kNumberTypeFloat32, uint32_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kExp, kNumberTypeUInt64, kNumberTypeFloat32, uint64_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kExp, kNumberTypeBool, kNumberTypeFloat32, bool, float)}},
     {"Sigmoid",
      {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kSigmoid), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSigmoid)}},
-    {"ReLU", {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReLU), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReLU)}},
+    {"ReLU",
+     {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReLU), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReLU),
+      REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kReLU)}},
     {"Log", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kLog), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kLog)}},
     {"Log1p", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kLog1p), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kLog1p)}},
     {"Neg",
@@ -112,14 +135,25 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
       REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kNeg)}},
     {"Reciprocal",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReciprocal), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReciprocal),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kReciprocal)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kReciprocal), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kReciprocal),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeInt64, kNumberTypeFloat32, int64_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeInt32, kNumberTypeFloat32, int, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeInt16, kNumberTypeFloat32, int16_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeInt8, kNumberTypeFloat32, int8_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeUInt8, kNumberTypeFloat32, uint8_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeUInt16, kNumberTypeFloat32, uint16_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeUInt32, kNumberTypeFloat32, uint32_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeUInt64, kNumberTypeFloat32, uint64_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeBool, kNumberTypeFloat32, bool, float)}},
     {"Inv",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReciprocal), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReciprocal),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kReciprocal)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kReciprocal), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kReciprocal)}},
     {"Expm1", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kExpm1), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kExpm1)}},
     {"Mish", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kMish)}},
     {"Softsign", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kSoftsign)}},
-    {"Trunc", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kTrunc), REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kTrunc)}},
+    {"Trunc",
+     {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kTrunc), REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kTrunc),
+      REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kTrunc)}},
     {"Floor", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kFloor)}},
     {"Ceil", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kCeil)}},
     {"Round",
@@ -128,18 +162,35 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
       {ADD_UNARY_SAME_TYPE(ElwiseOpType::kRound, kNumberTypeInt64, int64_t)}}},
     {"OnesLike",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kOnesLike), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kOnesLike),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kOnesLike)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kOnesLike), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kOnesLike)}},
     {"Rint", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kRint)}},
-    {"LogicalNot", {{ADD_UNARY_SAME_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeBool, bool)}}},
+    {"LogicalNot",
+     {ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeInt64, kNumberTypeBool, int64_t, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeInt32, kNumberTypeBool, int, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeInt16, kNumberTypeBool, int16_t, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeInt8, kNumberTypeBool, int8_t, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeUInt8, kNumberTypeBool, uint8_t, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeUInt16, kNumberTypeBool, uint16_t, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeUInt32, kNumberTypeBool, uint32_t, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeUInt64, kNumberTypeBool, uint64_t, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeBool, kNumberTypeBool, bool, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeFloat16, kNumberTypeBool, half, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeFloat32, kNumberTypeBool, float, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeFloat64, kNumberTypeBool, double, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeComplex64, kNumberTypeBool, Complex<float>, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeComplex128, kNumberTypeBool, Complex<double>, bool),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeBool, kNumberTypeBool, bool, bool)}},
     {"Conj",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kConj), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kConj),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kConj)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kConj), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kConj)}},
     {"Imag",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kImag), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kImag),
+      REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kImag),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kImag, kNumberTypeComplex64, kNumberTypeFloat32, Complex<float>, float),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kImag, kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)}},
     {"Real",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReal), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReal),
+      REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kReal),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReal, kNumberTypeComplex64, kNumberTypeFloat32, Complex<float>, float),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReal, kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)}},
     {"ComplexAbs",
@@ -177,14 +228,12 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
     {"SiLUGrad",
      {REGISTER_BINARY_FLOAT_TYPE(ElwiseOpType::kSiLUGrad), REGISTER_BINARY_COMPLEX_TYPE(ElwiseOpType::kSiLUGrad)}},
 };
-bool ElementwiseOpsGpuKernel::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
+bool ElementwiseOpsGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
     MS_LOG(ERROR) << "For 'elementwise op', the kernel name must be in "
@@ -196,17 +245,17 @@ bool ElementwiseOpsGpuKernel::Init(const BaseOperatorPtr &base_operator, const s
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_
+                            << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = iter->second[index].second;
   return true;
 }
 
-int ElementwiseOpsGpuKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ElementwiseOpsGpuKernel::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ele_num_ = SizeOf(inputs.at(kIndex0)->GetShapeVector());
@@ -232,10 +281,10 @@ std::vector<KernelAttr> ElementwiseOpsGpuKernel::GetOpSupport() {
   return support_list;
 }
 template <ElwiseOpType Op, typename Inp_t, typename Out_t>
-bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_ptr = GetDeviceAddress<Inp_t>(inputs, kIndex0);
-  auto output_ptr = GetDeviceAddress<Out_t>(outputs, kIndex0);
+bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_ptr = reinterpret_cast<Inp_t *>(inputs.at(kIndex0)->device_ptr());
+  auto output_ptr = reinterpret_cast<Out_t *>(outputs.at(kIndex0)->device_ptr());
   MS_EXCEPTION_IF_NULL(input_ptr);
   MS_EXCEPTION_IF_NULL(output_ptr);
   auto ret =
@@ -244,11 +293,11 @@ bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::Addres
   return true;
 }
 template <ElwiseOpType Op, typename In0_t, typename In1_t, typename Out_t>
-bool ElementwiseOpsGpuKernel::BinaryLaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto in0_ptr = GetDeviceAddress<In0_t>(inputs, kIndex0);
-  auto in1_ptr = GetDeviceAddress<In1_t>(inputs, kIndex1);
-  auto out_ptr = GetDeviceAddress<Out_t>(outputs, kIndex0);
+bool ElementwiseOpsGpuKernel::BinaryLaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  auto in0_ptr = reinterpret_cast<In0_t *>(inputs.at(kIndex0)->device_ptr());
+  auto in1_ptr = reinterpret_cast<In1_t *>(inputs.at(kIndex1)->device_ptr());
+  auto out_ptr = reinterpret_cast<Out_t *>(outputs.at(kIndex0)->device_ptr());
   MS_EXCEPTION_IF_NULL(in0_ptr);
   MS_EXCEPTION_IF_NULL(in1_ptr);
   MS_EXCEPTION_IF_NULL(out_ptr);

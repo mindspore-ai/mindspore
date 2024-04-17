@@ -16,7 +16,7 @@
 
 #include "tools/converter/parser/onnx/onnx_gather_nd_parser.h"
 #include <memory>
-#include "ops/gather_nd.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

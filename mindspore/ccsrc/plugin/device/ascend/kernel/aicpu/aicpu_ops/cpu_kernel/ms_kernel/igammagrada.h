@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_IGAMMAGRADA_H_
 #define AICPU_KERNELS_NORMALIZED_IGAMMAGRADA_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -34,7 +34,7 @@ class IgammaGradACpuKernel : public CpuKernel {
   static uint32_t IgammaGradACheckAndBroadCast(CpuKernelContext &ctx, BCalcInfo *calc_info);
 
   template <typename T>
-  static uint32_t IgammaGradACompute(const CpuKernelContext &ctx, const BCalcInfo &calc_info);
+  static uint32_t IgammaGradACompute(CpuKernelContext &ctx, const BCalcInfo &calc_info);
 };
 }  // namespace aicpu
 #endif

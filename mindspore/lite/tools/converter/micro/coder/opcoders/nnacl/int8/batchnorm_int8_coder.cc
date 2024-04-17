@@ -15,7 +15,6 @@
  */
 
 #include "coder/opcoders/nnacl/int8/batchnorm_int8_coder.h"
-#include <string>
 #include "coder/log.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "coder/opcoders/file_collector.h"

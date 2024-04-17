@@ -1,0 +1,36 @@
+#operator layer_norm_grad_grad
+layer_norm_grad_grad:
+  args:
+    x:
+      dtype: tensor
+    dy:
+      dtype: tensor
+    variance:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    d_dx:
+      dtype: tensor
+    d_dg:
+     dtype: tensor
+    d_db:
+     dtype: tensor
+    begin_norm_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    begin_params_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+  returns:
+    sopd_x:
+      dtype: tensor
+    sopd_dy:
+      dtype: tensor
+    sopd_gamma:
+      dtype: tensor
+  function:
+    disable: True

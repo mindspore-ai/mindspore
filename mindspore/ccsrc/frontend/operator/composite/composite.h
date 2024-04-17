@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@
 #include "frontend/operator/composite/do_signature.h"
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
+#include "frontend/operator/composite/starred_operation.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "utils/misc.h"
 #include "utils/any.h"
@@ -69,6 +70,7 @@ class HyperMap : public MetaFuncGraph {
   abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_abs_list) const override;
   FuncGraphPtr GenerateFromTypes(const TypePtrList &args_abs_list) override;
   MetaFuncGraphPtr GetFnLeaf() { return fn_leaf_; }
+  void SetObjectForFnLeaf(const py::object &leaf_object);
 
  private:
   AnfNodePtr FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) const;
@@ -89,8 +91,10 @@ using HyperMapPtr = std::shared_ptr<HyperMap>;
 
 class HyperMapPy : public HyperMap {
  public:
-  explicit HyperMapPy(bool reverse = false, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr)
-      : HyperMap(reverse, fn_leaf) {}
+  explicit HyperMapPy(bool reverse = false, const py::object &fn_leaf = py::none())
+      : HyperMap(reverse, fn_leaf.cast<prim::MultitypeFuncGraphPtr>()) {
+    SetObjectForFnLeaf(fn_leaf);
+  }
   ~HyperMapPy() override = default;
   MS_DECLARE_PARENT(HyperMapPy, HyperMap)
 };
@@ -359,6 +363,36 @@ class ZerosLike : public MetaFuncGraph {
   MultitypeFuncGraphPtr fn_leaf_;
 };
 using ZerosLikePtr = std::shared_ptr<ZerosLike>;
+
+class IterConverter : public MetaFuncGraph {
+ public:
+  explicit IterConverter(const std::string &name) : MetaFuncGraph(name) {}
+  ~IterConverter() override = default;
+  MS_DECLARE_PARENT(IterConverter, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
+  friend bool operator==(const IterConverter &lhs, const IterConverter &rhs) { return lhs.name_ == rhs.name_; }
+};
+using IterConverterPtr = std::shared_ptr<IterConverter>;
+
+class HasNext : public MetaFuncGraph {
+ public:
+  explicit HasNext(const std::string &name) : MetaFuncGraph(name) {}
+  ~HasNext() override = default;
+  MS_DECLARE_PARENT(HasNext, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
+  friend bool operator==(const HasNext &lhs, const HasNext &rhs) { return lhs.name_ == rhs.name_; }
+};
+using HasNextPtr = std::shared_ptr<HasNext>;
+
+class Next : public MetaFuncGraph {
+ public:
+  explicit Next(const std::string &name) : MetaFuncGraph(name) {}
+  ~Next() override = default;
+  MS_DECLARE_PARENT(Next, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
+  friend bool operator==(const Next &lhs, const Next &rhs) { return lhs.name_ == rhs.name_; }
+};
+using NextPtr = std::shared_ptr<Next>;
 }  // namespace prim
 }  // namespace mindspore
 

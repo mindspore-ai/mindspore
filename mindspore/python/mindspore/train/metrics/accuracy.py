@@ -32,9 +32,9 @@ class Accuracy(EvaluationBase):
         {\text{true_positive} + \text{true_negative} + \text{false_positive} + \text{false_negative}}
 
     Args:
-        eval_type (str): The metric to calculate the accuracy over a dataset. Supports 'classification' and
-          'multilabel'. 'classification' means the dataset label is single. 'multilabel' means the dataset has multiple
-          labels. Default: ``'classification'`` .
+        eval_type (str): The metric to calculate the accuracy over a dataset. Supports ``'classification'`` and
+          ``'multilabel'``. ``'classification'`` means the dataset label is single.
+          ``'multilabel'`` means the dataset has multiple labels. Default: ``'classification'`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -67,19 +67,19 @@ class Accuracy(EvaluationBase):
     @rearrange_inputs
     def update(self, *inputs):
         """
-        Updates the local variables. For 'classification', if the index of the maximum of the predict value
-        matches the label, the predict result is correct. For 'multilabel', the predict value match the label,
+        Updates the local variables. For ``'classification'``, if the index of the maximum of the predict value
+        matches the label, the predict result is correct. For ``'multilabel'``, the predict value match the label,
         the predict result is correct.
 
         Args:
             inputs: Logits and labels. `y_pred` stands for logits, `y` stands for labels. `y_pred` and `y` must be a
                 `Tensor`, a list or an array.
 
-                - For the 'classification' evaluation type, `y_pred` is a list of floating numbers in range
+                - For the ``'classification'`` evaluation type, `y_pred` is a list of floating numbers in range
                   :math:`[0, 1]` and the shape is :math:`(N, C)` in most cases (not strictly), where :math:`N`
                   is the number of cases and :math:`C` is the number of categories. `y` must be in one-hot format
                   that shape is :math:`(N, C)`, or can be transformed to one-hot format that shape is :math:`(N,)`.
-                - For 'multilabel' evaluation type, the value of `y_pred` and `y` can only be 0 or 1, indices with 1
+                - For ``'multilabel'`` evaluation type, the value of `y_pred` and `y` can only be 0 or 1, indices with 1
                   indicate the positive category. The shape of `y_pred` and `y` are both :math:`(N, C)`.
 
         Raises:

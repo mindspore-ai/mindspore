@@ -35,8 +35,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     ms_protobuf_generate(RPC_PROTO_SRCS RPC_PROTO_HDRS ${RPC_PROTO})
     list(APPEND MSLITE_PROTO_SRC ${RPC_PROTO_SRCS})
 
-    include_directories(${TOP_DIR}/graphengine/910/inc/external/hccl)
-
     add_library(mindspore-lite-proto STATIC ${MSLITE_PROTO_SRC})
 
     set(ANF_ALG_SRC
@@ -75,14 +73,13 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
             ${CCSRC_DIR}/kernel/kernel_build_info.cc
             ${CCSRC_DIR}/kernel/ops_utils.cc
             ${CCSRC_DIR}/kernel/common_utils.cc
+            ${CCSRC_DIR}/kernel/format_utils.cc
             ${CCSRC_DIR}/kernel/framework_utils.cc
             ${CCSRC_DIR}/kernel/philox_random.cc
             ${CCSRC_DIR}/kernel/kernel_factory.cc
             ${CCSRC_DIR}/kernel/kernel.cc
-            ${CCSRC_DIR}/kernel/kernel_get_value.cc
             ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
             ${CCSRC_DIR}/kernel/oplib/oplib.cc
-            ${CCSRC_DIR}/kernel/oplib/super_bar.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/mock/anf_ir_dump.cc
             ${CCSRC_DIR}/common/debug/common.cc
             ${CCSRC_DIR}/common/debug/env_config_parser.cc

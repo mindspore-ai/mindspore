@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -77,12 +77,11 @@ class SummaryCollector(Callback):
     SummaryCollector also enables the summary operator to collect data to summary files.
 
     Note:
-        1. When using SummaryCollector, you need to run the code in `if __name__ == "__main__"` .
-        2. Multiple SummaryCollector instances in callback list are not allowed.
-        3. Not all information is collected at the training phase or at the eval phase.
-        4. SummaryCollector always record the data collected by the summary operator.
-        5. SummaryCollector only supports Linux systems.
-        6. The Summary is not supported when compile source with `-s on` option.
+        1. Multiple SummaryCollector instances in callback list are not allowed.
+        2. Not all information is collected at the training phase or at the eval phase.
+        3. SummaryCollector always record the data collected by the summary operator.
+        4. SummaryCollector only supports Linux systems.
+        5. The Summary is not supported when compile source with `-s on` option.
 
     Args:
         summary_dir (str): The collected data will be persisted to this directory.
@@ -135,7 +134,7 @@ class SummaryCollector(Callback):
                 Optional: epoch/step.
               - create_landscape (dict): Select how to create loss landscape.
                 Training process loss landscape(train) and training result loss landscape(result).
-                Default: {"train": True, "result": True}. Optional: ``True`` / ``False`` .
+                Default: ``{"train": True, "result": True}``. Optional: ``True`` / ``False`` .
               - num_samples (int): The size of the dataset used to create the loss landscape.
                 For example, in image dataset, You can set num_samples is 128,
                 which means that 128 images are used to create loss landscape.
@@ -191,10 +190,10 @@ class SummaryCollector(Callback):
         ...     ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
         ...     ds_train = create_dataset()
         ...     # Define the network structure of LeNet5. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         ...     network = LeNet5(10)
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)

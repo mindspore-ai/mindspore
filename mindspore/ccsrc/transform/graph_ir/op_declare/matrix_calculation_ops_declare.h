@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATRIX_CALCULATION_OPS_DECLARE_H_
 
 #include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "inc/ops/matrix_calculation_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_math_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_matrix_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -113,6 +113,15 @@ DECLARE_OP_USE_OUTPUT(MatrixSetDiagV3)
 DECLARE_OP_ADAPTER(TensorScatterAdd)
 DECLARE_OP_USE_OUTPUT(TensorScatterAdd)
 
+DECLARE_OP_ADAPTER(TensorScatterSub)
+DECLARE_OP_USE_OUTPUT(TensorScatterSub)
+
+DECLARE_OP_ADAPTER(TensorScatterMin)
+DECLARE_OP_USE_OUTPUT(TensorScatterMin)
+
+DECLARE_OP_ADAPTER(TensorScatterMax)
+DECLARE_OP_USE_OUTPUT(TensorScatterMax)
+
 DECLARE_OP_ADAPTER(Triu)
 DECLARE_OP_USE_OUTPUT(Triu)
 
@@ -133,4 +142,20 @@ DECLARE_OP_USE_OUTPUT(Trace)
 
 DECLARE_CUST_OP_ADAPTER(TraceGrad)
 DECLARE_CUST_OP_USE_OUTPUT(TraceGrad)
+
+DECLARE_OP_ADAPTER(SwinAttentionFFN)
+DECLARE_OP_USE_OUTPUT(SwinAttentionFFN)
+
+DECLARE_OP_ADAPTER(SwinTransformerLnQKV)
+DECLARE_OP_USE_OUTPUT(SwinTransformerLnQKV)
+
+DECLARE_OP_ADAPTER(SwinAttentionScore)
+DECLARE_OP_USE_OUTPUT(SwinAttentionScore)
+
+DECLARE_OP_ADAPTER(SparseTensorDenseMatMul)
+DECLARE_OP_USE_OUTPUT(SparseTensorDenseMatMul)
+
+DECLARE_CUST_OP_ADAPTER(IndexPut)
+DECLARE_CUST_OP_USE_DYN_INPUT(IndexPut)
+DECLARE_CUST_OP_USE_OUTPUT(IndexPut)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATRIX_CALCULATION_OPS_DECLARE_H_

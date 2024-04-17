@@ -44,7 +44,6 @@ constexpr auto kEnvironDestroyAllOpName = "EnvironDestroyAll";
 constexpr auto kMutableOpName = "mutable";
 constexpr auto kGetGradOpName = "GetGrad";
 constexpr auto kSetSizeOpName = "SetSize";
-constexpr auto kPackFuncOpName = "PackFunc";
 constexpr auto kIsInstanceOpName = "isinstance";
 constexpr auto kStringUpperOpName = "StringUpper";
 constexpr auto kStringLowerOpName = "StringLower";
@@ -73,6 +72,8 @@ constexpr auto kSendOpName = "Send";
 constexpr auto kReceiveOpName = "Receive";
 constexpr auto kStreamSendOpName = "StreamSend";
 constexpr auto kStreamRecvOpName = "StreamRecv";
+constexpr auto kRaiseOpName = "raise";
+constexpr auto kFormatOpName = "Format";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_FRAMEWORK_OP_NAME_H_

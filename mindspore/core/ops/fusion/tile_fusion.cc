@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(TileFusion, Tile);
+MIND_API_OPERATOR_IMPL(TileFusion, BaseOperator);
 void TileFusion::Init(const std::vector<int64_t> &dims) { this->set_dims(dims); }
 
 void TileFusion::set_dims(const std::vector<int64_t> &dims) { (void)this->AddAttr(kDims, api::MakeValue(dims)); }

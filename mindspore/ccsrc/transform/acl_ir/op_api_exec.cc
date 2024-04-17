@@ -23,6 +23,10 @@ using UnInitHugeMemThreadLocalCast = void (*)(void *, bool);
 using ReleaseHugeMemCast = void (*)(void *, bool);
 }  // namespace
 
+static std::mutex init_mutex;
+static bool aclnn_init = false;
+HashMap<void *, std::string> opapi_lib_handle;
+
 OpApiDefaultResource &OpApiDefaultResource::GetInstance() {
   static OpApiDefaultResource instance;
   return instance;
@@ -64,23 +68,6 @@ ReleaseHugeMem OpApiDefaultResource::release_mem_func() {
   return release_mem_func_;
 }
 
-void RunOpApi(const std::string &aclnn_api, const aclrtStream acl_stream, void *workspace_addr, uint64_t workspace_size,
-              aclOpExecutor *executor, const ReleaseCallBack &release_func) {
-  static const auto op_api_func = GetOpApiFunc(aclnn_api.c_str());
-  if (op_api_func == nullptr) {
-    MS_LOG(EXCEPTION) << aclnn_api << " not in " << GetOpApiLibName() << ", please check!";
-  }
-  using RunApiFunc = int (*)(void *, uint64_t, aclOpExecutor *, const aclrtStream);
-  auto run_api_func = reinterpret_cast<RunApiFunc>(op_api_func);
-  auto ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "call " << aclnn_api << " failed, detail:" << aclGetRecentErrMsg();
-  }
-  if (release_func != nullptr) {
-    release_func();
-  }
-}
-
 ShapeVector UpdateOutputShape(const aclTensor *tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   static const auto op_api_func = GetOpApiFunc("aclGetViewShape");
@@ -99,5 +86,86 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor) {
   delete view_dims;
   view_dims = nullptr;
   return output_shape;
+}
+
+void LoadOpApiLib() {
+  auto cust_paths = common::GetEnv("ASCEND_CUSTOM_OPP_PATH");
+  std::vector<std::string> cust_path_vec;
+  if (!cust_paths.empty()) {
+    std::regex re{":"};
+    std::vector<std::string> split_path_vec(std::sregex_token_iterator(cust_paths.begin(), cust_paths.end(), re, -1),
+                                            std::sregex_token_iterator());
+    for (const auto &cust_path : split_path_vec) {
+      if (cust_path.empty()) {
+        continue;
+      }
+      auto lib_path = cust_path + GetCustOpApiLibName();
+      auto ret = access(lib_path.c_str(), F_OK);
+      if (ret == 0) {
+        cust_path_vec.push_back(lib_path);
+      }
+    }
+  }
+
+  for (const auto &cust_lib_path : cust_path_vec) {
+    auto cust_handler = GetOpApiLibHandler(cust_lib_path);
+    if (cust_handler != nullptr) {
+      MS_LOG(DEBUG) << "Load cust open api lib " << cust_lib_path << " success";
+      opapi_lib_handle[cust_handler] = cust_lib_path;
+    }
+  }
+
+  auto ascend_path = mindspore::transform::GetAscendPath();
+  const std::vector<std::string> depend_libs = {"libdummy_tls.so", "libnnopbase.so"};
+  for (const auto &dep_lib : depend_libs) {
+    (void)GetOpApiLibHandler(ascend_path + "lib64/" + dep_lib);
+  }
+
+  auto lib_path = ascend_path + GetOpApiLibName();
+  auto handle = GetOpApiLibHandler(lib_path);
+  if (handle != nullptr) {
+    MS_LOG(DEBUG) << "Load open api lib " << lib_path << " success";
+    opapi_lib_handle[handle] = lib_path;
+  }
+  MS_LOG(DEBUG) << "Load all open api lib success";
+}
+
+void AclnnInit() {
+  std::lock_guard<std::mutex> lock(init_mutex);
+  if (aclnn_init) {
+    return;
+  }
+  static const auto aclnn_init_func = GetOpApiFunc("aclnnInit");
+  if (aclnn_init_func == nullptr) {
+    MS_LOG(EXCEPTION) << "aclnnInit not in " << GetOpApiLibName() << ", please check!";
+  }
+  using aclnnInitFunc = int (*)(const char *);
+  auto aclnnInit = reinterpret_cast<aclnnInitFunc>(aclnn_init_func);
+
+  auto ret = aclnnInit(nullptr);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "aclnnInit failed!";
+  }
+  aclnn_init = true;
+  MS_LOG(DEBUG) << "aclnn init success!";
+}
+
+void AclnnFinalize() {
+  if (!aclnn_init) {
+    return;
+  }
+  static const auto aclnn_finalize_func = GetOpApiFunc("aclnnFinalize");
+  if (aclnn_finalize_func == nullptr) {
+    MS_LOG(EXCEPTION) << "aclnnFinalize not in " << GetOpApiLibName() << ", please check!";
+  }
+  using aclnnFinalizeFunc = int (*)();
+  auto aclnnFinalize = reinterpret_cast<aclnnFinalizeFunc>(aclnn_finalize_func);
+
+  auto ret = aclnnFinalize();
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "aclnnFinalize failed!";
+  }
+  aclnn_init = false;
+  MS_LOG(DEBUG) << "aclnn finalize success!";
 }
 }  // namespace mindspore::transform

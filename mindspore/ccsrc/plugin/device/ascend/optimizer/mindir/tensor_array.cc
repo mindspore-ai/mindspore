@@ -117,7 +117,7 @@ const AnfNodePtr GeTensorArrayCastIndex::Process(const FuncGraphPtr &graph, cons
   prim = std::make_shared<Primitive>(prim->AddAttr("SrcT", src_attr_value));
 
   // Insert cast
-  auto type_node = NewValueNode(dst_type);
+  auto type_node = NewValueNode(std::make_shared<Int64Imm>(dst_type->type_id()));
   MS_EXCEPTION_IF_NULL(type_node);
   type_node->set_abstract(dst_type->ToAbstract());
 
@@ -127,6 +127,7 @@ const AnfNodePtr GeTensorArrayCastIndex::Process(const FuncGraphPtr &graph, cons
   MS_EXCEPTION_IF_NULL(new_node);
   cast_abstract->set_type(dst_type);
   new_node->set_abstract(cast_abstract);
+  new_node->set_scope(node->scope());
 
   auto input_names = std::vector<std::string>{"x", "dst_type"};
   auto output_names = std::vector<std::string>{"output"};

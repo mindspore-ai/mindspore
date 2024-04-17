@@ -19,10 +19,9 @@
 
 namespace mindspore {
 namespace kernel {
-int UniqueWithPadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int UniqueWithPadCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniqueWithPadInputsNum, kernel_name_);
@@ -49,9 +48,9 @@ int UniqueWithPadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return KRET_OK;
 }
 
-bool UniqueWithPadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool UniqueWithPadCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniqueWithPadInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniqueWithPadOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
@@ -72,13 +71,14 @@ bool UniqueWithPadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void UniqueWithPadCpuKernelMod::PadOutput(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+void UniqueWithPadCpuKernelMod::PadOutput(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs,
                                           const std::vector<size_t> &start) {
   if (inputs.size() < kUniqueWithPadInputsNum || outputs.size() < kUniqueWithPadOutputsNum) {
     return;
   }
-  auto pad_num_p = static_cast<T *>(inputs[1]->addr);
-  auto *out = static_cast<T *>(outputs[0]->addr);
+  auto pad_num_p = static_cast<T *>(inputs[1]->device_ptr());
+  auto *out = static_cast<T *>(outputs[0]->device_ptr());
   for (size_t batch_i = 0; batch_i < batch_size_; batch_i++) {
     T pad_num = *pad_num_p;
     for (size_t i = start[batch_i]; i < input_size_; ++i) {

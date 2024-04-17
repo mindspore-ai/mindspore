@@ -121,12 +121,12 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   std::vector<int> b_offset_;
 
   int pack_b_stride_ = 0;
-  const float *pack_b_src_;
-  float *pack_b_dst_;
+  const float *pack_b_src_ = nullptr;
+  float *pack_b_dst_ = nullptr;
   int col_tile_ = 0;
   int row_tile_ = 0;
   int batch_stride_ = 0;
-  int row_num_;
+  int row_num_{0};
   int row_min_unit_{1};
   int col_min_unit_{1};
   float *output_data_ = nullptr;

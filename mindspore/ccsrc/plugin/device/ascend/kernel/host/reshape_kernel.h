@@ -25,14 +25,8 @@ class ReshapeKernelMod : public HostKernelMod {
  public:
   ReshapeKernelMod() = default;
   ~ReshapeKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
-
- private:
-  void Execute() const;
-  void Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, void *stream_ptr) const;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 };
 MS_HOST_REG_KERNEL(Reshape, ReshapeKernelMod);
 }  // namespace kernel

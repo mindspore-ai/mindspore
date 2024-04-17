@@ -31,14 +31,16 @@ class NetGatherD(nn.Cell):
         return self.op(x, dim, index)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_gatherd_dynamic_shape():
     """
     Feature: GatherD Grad DynamicShape.
-    Description: Test case of dynamic shape for GatherD grad operator on GPU.
+    Description: Test case of dynamic shape for GatherD grad operator.
     Expectation: success.
     """
     test_dynamic = TestDynamicGrad(NetGatherD(), skip_convert_out_ids=[0])
@@ -47,7 +49,7 @@ def test_gatherd_dynamic_shape():
                          [465, 904, 521, 824, 607, 669],
                          [156, 539, 56, 159, 916, 566],
                          [122, 676, 714, 261, 19, 936]]), mindspore.int32)
-    dim = Tensor([0], mindspore.int64)
+    dim = 0
     index = Tensor(np.array([[0, 1, 0, 1, 0, -4],
                              [0, 2, 0, 2, 0, -3],
                              [0, 0, 0, 3, 3, -2],
@@ -57,7 +59,7 @@ def test_gatherd_dynamic_shape():
     test_dynamic.test_dynamic_grad_net(inputs, False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -73,7 +75,7 @@ def test_gatherd_dynamic_rank():
                          [465, 904, 521, 824, 607, 669],
                          [156, 539, 56, 159, 916, 566],
                          [122, 676, 714, 261, 19, 936]]), mindspore.int64)
-    dim = Tensor([1], mindspore.int64)
+    dim = 1
     index = Tensor(np.array([[0, 1, 0, 1, 0, -4],
                              [0, 2, 0, 2, 0, -3],
                              [0, 0, 0, 3, 3, -2],
@@ -83,7 +85,7 @@ def test_gatherd_dynamic_rank():
     test_dynamic.test_dynamic_grad_net(inputs, True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

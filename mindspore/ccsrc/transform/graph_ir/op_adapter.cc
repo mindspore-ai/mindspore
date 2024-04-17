@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 #include "transform/graph_ir/op_adapter.h"
+
 #include <algorithm>
-#include <utility>
 #include <map>
 #include <string>
 #include <unordered_set>
 #include "utils/check_convert_utils.h"
-#include "ops/split_combination_ops.h"
-#include "graph/operator_factory_impl.h"
+#include "op_proto/inc/split_combination_ops.h"
+#include "graph/operator_factory.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/anf_utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace transform {
@@ -94,7 +95,7 @@ std::vector<std::string> GetCustomOpKernelAttrs(const PrimitivePtr &prim) {
 
 void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, const std::vector<std::string> &attr_names,
                       bool is_akg) {
-  if (ge::OperatorFactoryImpl::IsExistOp(op_type)) {
+  if (ge::OperatorFactory::IsExistOp(op_type)) {
     return;
   }
   MS_EXCEPTION_IF_NULL(prim);
@@ -105,7 +106,7 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
   MS_EXCEPTION_IF_NULL(output_names_v);
   auto output_names = GetValue<std::vector<std::string>>(output_names_v);
   // Register op create function, which describes how to create a custom op
-  (void)ge::OperatorFactoryImpl::RegisterOperatorCreator(
+  ::ge::OperatorCreatorRegister op_create_reg(
     op_type, [op_type, input_names, output_names, attr_names, is_akg](const std::string &name) {
       auto op = ge::CustomOperator(name, op_type);
       for (const auto &in_name : input_names) {
@@ -126,10 +127,35 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
     });
   // Register op infer shape function
   if (is_akg) {
-    (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomAkgOpInferFunc);
+    ::ge::InferShapeFuncRegister infer(op_type, CustomAkgOpInferFunc);
   } else {
-    (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomTbeAicpuOpInferFunc);
+    ::ge::InferShapeFuncRegister infer(op_type, CustomTbeAicpuOpInferFunc);
   }
+}
+
+static std::vector<int64_t> GetRealInputIndices(const CNodePtr &cnode) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
+    return std::vector<int64_t>{};
+  }
+  std::vector<int64_t> real_input_indices =
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+  int64_t count = 0;
+  // construct real input indices based on attribute kAttrDynInputSizes
+  for (size_t i = 0; i < real_input_indices.size(); ++i) {
+    int64_t num_folded_inputs = (real_input_indices[i] < 0 ? 1 : real_input_indices[i]);
+    real_input_indices[i] = count;
+    count += num_folded_inputs;
+  }
+  return real_input_indices;
+}
+
+static inline size_t GetRealAnfInputIndex(const std::vector<int64_t> &real_input_indices, size_t anf_input_index) {
+  // NOTE: anf_input_index start with 1, index 0 corresponding to primitive value node
+  size_t input_index = anf_input_index - 1;
+  size_t real_index =
+    input_index < real_input_indices.size() ? static_cast<size_t>(real_input_indices[input_index]) : input_index;
+  // at last convert `input_index` to anf node input index
+  return real_index + 1;
 }
 
 bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) const {
@@ -227,6 +253,7 @@ OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) {
   MS_EXCEPTION_IF_NULL(prim);
   auto op_type = GetCustomOpType(prim);
   auto op = std::make_shared<::ge::CustomOperator>(node->fullname_with_scope() + op_type, op_type);
+  MS_EXCEPTION_IF_NULL(op);
   if (GenerateCustomOpInputMap(op, prim) != SUCCESS) {
     MS_LOG(WARNING) << "Custom op node has no input_names, op[" << prim->name() << "].";
   }
@@ -578,10 +605,21 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
     auto tuple_type = dyn_cast<Tuple>(type);
     MS_EXCEPTION_IF_NULL(tuple_type);
     TypePtr type_elem = tuple_type->elements()[i];
+    if (type_elem == nullptr) {
+      MS_LOG(ERROR) << "Type ptr is nullptr";
+      return FAILED;
+    }
+    TypeId me_type = type_elem->type_id();
+    if (kObjectTypeTensorType == me_type) {
+      me_type = dyn_cast<TensorType>(type_elem)->element()->type_id();
+    }
+    if (me_type == kMetaTypeNone) {
+      continue;
+    }
 
     auto desc = CreateOutputDesc(dyn_cast<abstract::Shape>(tuple_shp->shape()[i]), type_elem, format);
     if (desc == nullptr) {
-      MS_LOG(ERROR) << "Create output descriptor failed!";
+      MS_LOG(WARNING) << "Create op: " << op->GetName() << " output descriptor failed!";
       return FAILED;
     }
 
@@ -638,10 +676,35 @@ void OpAdapterImpl::UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNode
     return;
   }
   MS_EXCEPTION_IF_NULL(node);
+  std::map<size_t, size_t> real_input_map;
+  if (!dyn_input_map_.empty() && common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, node->cast<CNodePtr>())) {
+    std::vector<int64_t> dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrDynInputSizes);
+    if (!dyn_input_sizes.empty()) {
+      size_t input_index = kIndex1;
+      for (size_t i = 0; i < dyn_input_sizes.size(); ++i) {
+        int64_t dyn_input_size = dyn_input_sizes[i];
+        if (dyn_input_size < 0) {
+          real_input_map[input_index] = i + kIndex1;
+          input_index += 1;
+        } else {
+          input_index += dyn_input_size;
+        }
+      }
+    }
+  }
 
   auto inputs = node->cast<CNodePtr>()->inputs();
   for (size_t i = 1; i < inputs.size(); ++i) {
-    auto it = input_map_.find(i);
+    size_t real_input_index = i;
+    if (!real_input_map.empty()) {
+      auto iter = real_input_map.find(i);
+      if (iter != real_input_map.end()) {
+        real_input_index = iter->second;
+      } else {
+        continue;
+      }
+    }
+    auto it = input_map_.find(real_input_index);
     if (it != input_map_.end()) {
       auto desc = CreateNodeDesc(inputs[i], format);
       if (desc == nullptr) {
@@ -852,18 +915,12 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetOpAttrList(const OperatorPtr &
 std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const OperatorPtr &op,
                                                                    const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
+  if (!node->isa<CNode>() || node->cast<CNodePtr>() == nullptr) {
     return {};
   }
   auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return {};
-  }
   auto &inputs = cnode->inputs();
-  if (inputs.empty()) {
-    return {};
-  }
-  if (!IsValueNode<Primitive>(inputs[0])) {
+  if (inputs.empty() || !IsValueNode<Primitive>(inputs[0])) {
     return {};
   }
 
@@ -882,13 +939,15 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const Operato
     }
   }
 
+  auto real_input_indices = GetRealInputIndices(cnode);
   // set attr from const input
   for (auto &it : input_attr_map_) {
-    if (inputs.size() <= it.first || !inputs[it.first]->isa<ValueNode>()) {
+    size_t cur_idx = GetRealAnfInputIndex(real_input_indices, it.first);
+    if (inputs.size() <= cur_idx || !inputs[cur_idx]->isa<ValueNode>()) {
       continue;
     }
-    auto const_value = GetValueNode(inputs[it.first]);
-    MS_LOG(DEBUG) << "Get input attr: input_" << it.first << "(" << it.second.name
+    auto const_value = GetValueNode(inputs[cur_idx]);
+    MS_LOG(DEBUG) << "Get input attr: input_" << cur_idx << "(" << it.second.name
                   << "), value: " << const_value->ToString();
     if (const_value->isa<None>()) {
       continue;
@@ -962,15 +1021,11 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const PrimitivePtr &prim) {
 int OpAdapterImpl::setAttr(const OperatorPtr &op, const AnfNodePtr &node) {
   // no attribute for lonely node
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
+  if (!node->isa<CNode>() || node->cast<CNodePtr>() == nullptr) {
     return 0;
   }
 
   auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return 0;
-  }
-
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
     return 0;
@@ -1001,14 +1056,16 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const AnfNodePtr &node) {
     }
   }
 
+  auto real_input_indices = GetRealInputIndices(cnode);
   // set attr from const input
   for (auto &it : input_attr_map_) {
-    if (inputs.size() <= it.first || !inputs[it.first]->isa<ValueNode>()) {
+    size_t cur_idx = GetRealAnfInputIndex(real_input_indices, it.first);
+    if (inputs.size() <= cur_idx || !inputs[cur_idx]->isa<ValueNode>()) {
       continue;
     }
 
-    auto const_value = GetValueNode(inputs[it.first]);
-    MS_LOG(INFO) << "Set attr: input_" << it.first << "(" << it.second.name << "), value: " << const_value->ToString();
+    auto const_value = GetValueNode(inputs[cur_idx]);
+    MS_LOG(INFO) << "Set attr: input_" << cur_idx << "(" << it.second.name << "), value: " << const_value->ToString();
     if (const_value->isa<None>()) {
       continue;
     }

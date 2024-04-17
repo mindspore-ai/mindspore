@@ -40,7 +40,7 @@ namespace {
 abstract::ShapePtr MaxPoolGradInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto shape = std::make_shared<abstract::Shape>(shape_map[kShape]);
   return shape;
 }
@@ -50,7 +50,7 @@ TypePtr MaxPoolGradInferType(const PrimitivePtr &primitive, const std::vector<Ab
                       << ", the input args used for infer shape and type is necessary, but missing it.";
   }
 
-  return input_args[0]->BuildType();
+  return input_args[0]->GetType();
 }
 }  // namespace
 MIND_API_OPERATOR_IMPL(MaxPoolGrad, PoolGrad);

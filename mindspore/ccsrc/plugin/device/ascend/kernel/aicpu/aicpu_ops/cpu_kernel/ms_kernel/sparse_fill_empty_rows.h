@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_SPARSE_FILL_EMPTY_ROWS_H_
 
 #include <set>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/sparse_group.h"
 #include "utils/sparse_tensor.h"
 
@@ -49,10 +49,10 @@ class SparseFillEmptyRowsCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &calc_info);
+  uint32_t NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &calc_info);
 
   template <typename T>
-  uint32_t ComputeSparseFillEmptyRows(DataBank &databank);
+  uint32_t ComputeSparseFillEmptyRows(CpuKernelContext &ctx, DataBank &databank);
 };
 }  // namespace aicpu
 #endif

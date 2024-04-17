@@ -33,7 +33,7 @@ REG_CUST_OP(EnvironDestroyAll)
 REG_CUST_OP(EnvironSet)
   .REQUIRED_ATTR(value_type, Int)
   .INPUT(env, TensorType({DT_INT64}))
-  .INPUT(key, TensorType({DT_BOOL}))
+  .INPUT(key, TensorType({DT_INT64}))
   .INPUT(value, TensorType({DT_BOOL, DT_INT16, DT_INT32, DT_INT64,
                             DT_UINT8, DT_UINT32, DT_UINT64, DT_FLOAT16, DT_FLOAT}))
   .OUTPUT(env, TensorType({DT_BOOL}))
@@ -42,7 +42,7 @@ REG_CUST_OP(EnvironSet)
 REG_CUST_OP(EnvironGet)
   .REQUIRED_ATTR(value_type, Int)
   .INPUT(env, TensorType({DT_INT64}))
-  .INPUT(key, TensorType({DT_BOOL}))
+  .INPUT(key, TensorType({DT_INT64}))
   .INPUT(default, TensorType({DT_BOOL, DT_INT16, DT_INT32, DT_INT64,
                               DT_UINT8, DT_UINT32, DT_UINT64, DT_FLOAT16, DT_FLOAT}))
   .OUTPUT(value, TensorType({DT_BOOL, DT_INT16, DT_INT32, DT_INT64,

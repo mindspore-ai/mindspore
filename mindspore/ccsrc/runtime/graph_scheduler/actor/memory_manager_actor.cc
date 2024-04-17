@@ -33,13 +33,6 @@ void OnMemoryAllocFinish(const AID &from_aid, OpContext<DeviceTensor> *const op_
 void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc_list,
                                         const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
                                         const AID &from_aid) {
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
-
-  MS_EXCEPTION_IF_NULL(alloc_list);
-  MS_EXCEPTION_IF_NULL(device_context);
-  MS_EXCEPTION_IF_NULL(op_context);
-
   for (auto &device_tensor : *alloc_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
     // Unused device address need skip to reduce memory use.
@@ -66,15 +59,11 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
                       << ", device address addr: " << device_tensor->GetPtr();
     }
   }
-
-  // Call back to the from actor to process after memory allocation finished.
-  OnMemoryAllocFinish(from_aid, op_context);
-
-  PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kMemoryAlloc, from_aid.Name(), false);
 }
 
 void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<DeviceTensorPtr>> *alloc_list_list,
                                                   const std::vector<std::vector<size_t>> *size_list_list,
+                                                  const std::vector<uint32_t> *stream_id_list,
                                                   const std::vector<size_t> *total_size_list,
                                                   const std::vector<const DeviceContext *> *device_contexts,
                                                   OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
@@ -87,15 +76,18 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
   MS_EXCEPTION_IF_NULL(device_contexts);
   MS_EXCEPTION_IF_NULL(op_context);
   if (((*alloc_list_list).size() != (*size_list_list).size()) ||
-      ((*size_list_list).size() != (*total_size_list).size()) ||
+      ((*size_list_list).size() != (*stream_id_list).size()) ||
+      ((*stream_id_list).size() != (*total_size_list).size()) ||
       ((*total_size_list).size() != (*device_contexts).size())) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(
-      (*op_context), "The size of alloc_list_list, size_list_list, total_size_list and device_contexts are not equal.");
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context),
+                                      "The size of alloc_list_list, size_list_list, stream_id_list, total_size_list "
+                                      "and device_contexts are not equal.");
   }
 
   for (size_t i = 0; i < (*alloc_list_list).size(); ++i) {
     auto &alloc_list = (*alloc_list_list)[i];
     auto &size_list = (*size_list_list)[i];
+    auto stream_id = (*stream_id_list)[i];
     auto &device_context = (*device_contexts)[i];
     MS_EXCEPTION_IF_NULL(device_context);
     // If the address of continuous tensor has already been allocated, skip the tensor.
@@ -106,7 +98,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
     }
     // Allocate memory through the device context.
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
-    auto dev_ptr_list = device_context->device_res_manager_->AllocateContinuousMemory(size_list);
+    auto dev_ptr_list = device_context->device_res_manager_->AllocateContinuousMemory(size_list, stream_id);
     if (dev_ptr_list.empty() || dev_ptr_list.size() != alloc_list.size()) {
       MS_LOG(ERROR) << "Allocate continuous memory failed, device ptr list size: " << dev_ptr_list.size()
                     << ", address list size:" << alloc_list.size();
@@ -125,8 +117,13 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
           MS_LOG(EXCEPTION) << "Device size of old device address is larger than new device address, " << old_size
                             << " vs " << size_list[index];
         }
-        auto new_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(
-          dev_ptr_list[index], old_size, old_dev_addr->format(), old_dev_addr->type_id(), old_dev_addr->host_shape());
+
+        auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+          dev_ptr_list[index], old_size, kernel::GetFormatFromStrToEnum(old_dev_addr->format()),
+          old_dev_addr->type_id(), old_dev_addr->host_shape(), device_context->device_context_key().device_name_,
+          device_context->device_context_key().device_id_);
+        kernel_tensor->set_stream_id(old_dev_addr->stream_id());
+        auto new_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
         MS_LOG(DEBUG) << "Create device tensor:" << new_dev_addr << " type:" << new_dev_addr->type_id();
         (void)new_dev_addr->SyncDeviceToDevice(old_dev_addr.get());
         device_context->device_res_manager_->FreeMemory(old_dev_addr.get());
@@ -205,9 +202,9 @@ void MemoryManagerActor::AllocateSomasMemory(SomasInfo *const somas_info, const 
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
     auto device_ptr = device_context->device_res_manager_->AllocateMemory(somas_info->whole_block_size_);
     if (device_ptr == nullptr) {
-      MS_LOG(WARNING) << from_aid.Name()
-                      << " allocate somas whole block memory failed, alloc size: " << somas_info->whole_block_size_
-                      << ". Try to allocate the merged blocks memory.";
+      MS_LOG(INFO) << from_aid.Name()
+                   << " allocate somas whole block memory failed, alloc size: " << somas_info->whole_block_size_
+                   << ". Try to allocate the merged blocks memory.";
     } else {
       somas_info->base_address_ = device_ptr;
       return;
@@ -239,7 +236,7 @@ void MemoryManagerActor::AllocateSomasMemory(SomasInfo *const somas_info, const 
     SetOpContextMemoryAllocFail(from_aid.Name(), device_context, somas_info->whole_block_size_, op_context);
     return;
   }
-  MS_LOG(WARNING) << from_aid.Name() << " allocate somas merged blocks memory succeeded and continue running.";
+  MS_LOG(INFO) << from_aid.Name() << " allocate somas merged blocks memory succeeded and continue running.";
 
   // Call back to the from actor to process after memory allocation finished.
   OnMemoryAllocFinish(from_aid, op_context);
@@ -249,15 +246,9 @@ void MemoryManagerActor::AllocateSomasMemory(SomasInfo *const somas_info, const 
 
 void MemoryManagerActor::FreeMemory(const std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
                                     OpContext<DeviceTensor> *, const AID &from_aid) {
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
-
-  MS_EXCEPTION_IF_NULL(free_list);
   for (auto &device_tensor : *free_list) {
     FreeMemoryByRefCount(device_tensor, device_context, from_aid.Name());
   }
-
-  PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kMemoryFree, from_aid.Name(), false);
 }
 
 void MemoryManagerActor::FreeBatchMemory(const std::vector<DeviceTensor *> *free_list,
@@ -293,9 +284,19 @@ void MemoryManagerActor::FreeSomasMemory(SomasInfo *const somas_info, const Devi
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   MS_EXCEPTION_IF_NULL(op_context);
 
+  std::vector<void *> keep_addrs;
+  for (auto &output_address : somas_info->graph_output_device_addresses_) {
+    MS_EXCEPTION_IF_NULL(output_address);
+    MS_LOG(DEBUG) << "Keep address:" << output_address << " ptr:" << output_address->GetPtr()
+                  << " size:" << output_address->GetSize() << " for actor:" << from_aid;
+    (void)keep_addrs.emplace_back(output_address->GetMutablePtr());
+  }
+
+  device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kGraphOutput);
   // Free the whole block memory.
   if (somas_info->base_address_ != nullptr) {
-    device_context->device_res_manager_->FreeMemory(somas_info->base_address_);
+    device_context->device_res_manager_->FreePartMemorys({somas_info->base_address_}, keep_addrs,
+                                                         somas_info->graph_output_address_sizes_);
     somas_info->base_address_ = nullptr;
 
     for (auto &merged_base_address : somas_info->merged_base_addresses_) {
@@ -304,17 +305,25 @@ void MemoryManagerActor::FreeSomasMemory(SomasInfo *const somas_info, const Devi
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
       }
     }
-    return;
+  } else {
+    // Free the merged blocks memory.
+    std::vector<void *> free_addrs;
+    for (auto &merged_base_address : somas_info->merged_base_addresses_) {
+      if (merged_base_address.second == nullptr) {
+        std::string error_info = " There should have megred block base address for " + from_aid.Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+      }
+      (void)free_addrs.emplace_back(merged_base_address.second);
+      merged_base_address.second = nullptr;
+    }
+    device_context->device_res_manager_->FreePartMemorys(free_addrs, keep_addrs,
+                                                         somas_info->graph_output_address_sizes_);
   }
 
-  // Free the merged blocks memory.
-  for (auto &merged_base_address : somas_info->merged_base_addresses_) {
-    if (merged_base_address.second == nullptr) {
-      std::string error_info = " There should have megred block base address for " + from_aid.Name();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
-    }
-    device_context->device_res_manager_->FreeMemory(merged_base_address.second);
-    merged_base_address.second = nullptr;
+  // Somas decrease the ref count.
+  for (auto &output_address : somas_info->graph_output_device_addresses_) {
+    output_address->set_from_mem_pool(true);
+    FreeMemoryByRefCount(output_address, device_context, from_aid.Name());
   }
 
   PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kMemoryFree, from_aid.Name(), false);
@@ -328,17 +337,11 @@ void MemoryManagerActor::Wait(OpContext<DeviceTensor> *const op_context, const A
 // Only one of the static and dynamic reference counts will take effect.
 void MemoryManagerActor::FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
                                               const std::string &op_name) {
-  // May be the ignored input address that is not used in the kernel launch.
-  if (device_tensor == nullptr) {
-    return;
-  }
-
-  std::lock_guard<std::mutex> locker(mem_free_mutex_);
+  MS_EXCEPTION_IF_NULL(device_tensor);
   if (device_tensor->original_ref_count() != SIZE_MAX) {
     // The static reference count is decremented to zero to free memory, and reset to the original count.
-    device_tensor->DecreaseRefCount();
-    if (device_tensor->ref_count() == 0) {
-      MS_LOG(DEBUG) << "ref count for device address:" << device_tensor << " to zero, free memory by actor:" << op_name;
+    size_t ref_count = device_tensor->DecreaseRefCount();
+    if (ref_count == 0) {
       device_tensor->ResetRefCount();
       device_tensor->ClearUserData();
       if (device_tensor->GetPtr() != nullptr) {
@@ -352,10 +355,9 @@ void MemoryManagerActor::FreeMemoryByRefCount(DeviceTensor *const device_tensor,
     }
   } else if (device_tensor->dynamic_ref_count() != INT32_MAX) {
     // The dynamic reference count is decremented to zero to free memory.
-    device_tensor->DecreaseDynamicRefCount(op_name);
-    if ((device_tensor->dynamic_ref_count() == 0) && (device_tensor->GetPtr() != nullptr)) {
+    if ((device_tensor->DecreaseDynamicRefCount(op_name) == 0) && (device_tensor->GetPtr() != nullptr)) {
       device_tensor->ClearUserData();
-      MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr();
+      MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr() << ".";
       FreeMemoryByDeviceContext(device_tensor, device_context);
     }
   }

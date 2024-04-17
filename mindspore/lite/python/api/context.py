@@ -20,6 +20,7 @@ import os
 
 from mindspore_lite._checkparam import check_isinstance, check_list_of_element
 from mindspore_lite.lib import _c_lite_wrapper
+from mindspore_lite._check_ascend import AscendEnvChecker
 
 __all__ = ['Context']
 
@@ -52,8 +53,8 @@ class Context:
             .. code-block::
 
                 [execution_plan]
-                [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
-                [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
+                [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as float16)
+                [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as float32)
 
           - Usage 2: When GPU inference, set the configuration of TensorRT. The content and description of the
             configuration file are as follows:
@@ -267,6 +268,9 @@ class Context:
         need_cpu_backup = False
         for ele in target:
             if ele.lower() == "ascend":
+                ascend_checker = AscendEnvChecker()
+                ascend_checker.check_env()
+
                 self._context.append_device_info(self.ascend)
                 need_cpu_backup = True
             elif ele.lower() == "gpu":
@@ -277,6 +281,35 @@ class Context:
         if need_cpu_backup:
             self._context.append_device_info(self.cpu)
         self._target = target
+
+    @property
+    def group_info_file(self):
+        """Get or set communication group info file for distributed inference.
+
+        In the pipeline parallel scenario, different stage device nodes are in different communication groups. When
+        exporting the model, set the `group_ckpt_save_file` parameter in interface
+        [mindspore.set_auto_parallel_context](https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore/mindspore.set_auto_parallel_context.html)
+        to export the group file information. In addition, in non pipeline parallel scenarios, if there
+        are communication operators involving local communication groups, the group file information also needs to be
+        exported through the 'group_ckpt_save_file' parameter.
+
+        Examples:
+            >>> # export communication group information file when export mindir
+            >>> import mindspore
+            >>> mindspore.set_auto_parallel_context(group_ckpt_save_file=f"{export_dir}/group_config_{rank_id}.pb")
+            >>>
+            >>> # use communication group information file when load mindir
+            >>> import mindspore_lite as mslite
+            >>> context = mslite.Context()
+            >>> context.group_info_file = f"{export_dir}/group_config_{rank_id}.pb"
+        """
+        return self._context.group_info_file
+
+    @group_info_file.setter
+    def group_info_file(self, group_info_file):
+        """Set communication group information for distributed inference."""
+        check_isinstance("group_info_file", group_info_file, str)
+        self._context.group_info_file = group_info_file
 
 
 class _InnerContext:
@@ -344,6 +377,17 @@ class _InnerContext:
         """Append one user-defined target device info to the context."""
         check_isinstance("target", target, _Target)
         self._inner_context.append_device_info(target._device_info)
+
+    @property
+    def group_info_file(self):
+        """Get communication group info file for distributed inference."""
+        return self._inner_context.get_group_info_file()
+
+    @group_info_file.setter
+    def group_info_file(self, group_info_file):
+        """Set communication group info file for distributed inference."""
+        check_isinstance("group_info_file", group_info_file, str)
+        self._inner_context.set_group_info_file(group_info_file)
 
 
 class _Target:
@@ -823,8 +867,8 @@ class _Parallel:
                   .. code-block::
 
                       [execution_plan]
-                      [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
-                      [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
+                      [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as float16)
+                      [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as float32)
 
                 - Usage 2: When GPU inference, set the configuration of TensorRT. The content and description of the
                   configuration file are as follows:

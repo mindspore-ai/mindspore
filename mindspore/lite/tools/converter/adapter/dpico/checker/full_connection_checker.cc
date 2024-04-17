@@ -29,8 +29,8 @@ bool FullConnectionChecker::Check(api::CNodePtr op, int32_t output_num, mindspor
     return false;
   }
 
-  if (op->inputs().size() < kInputIndex3) {
-    MS_LOG(ERROR) << "FullConnection should have 2 inputs at least, but is " << (op->inputs().size() - 1);
+  if (op->size() < kInputIndex3) {
+    MS_LOG(ERROR) << "FullConnection should have 2 inputs at least, but is " << (op->size() - 1);
     return false;
   }
   std::vector<int64_t> weight_shape;

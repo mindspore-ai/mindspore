@@ -1,0 +1,34 @@
+#operator avg_pool_grad
+avg_pool_grad:
+    args:
+        x:
+            dtype: tensor
+        out:
+            dtype: tensor
+        dout:
+            dtype: tensor
+        kernel_size:
+            dtype: tuple[int]
+            default: 1
+            prim_init: True
+            arg_handler: to_kernel_size
+        strides:
+            dtype: tuple[int]
+            default: 1
+            prim_init: True
+            arg_handler: to_strides
+        pad_mode:
+            dtype: int
+            default: "'VALID'"
+            prim_init: True
+            arg_handler: str_to_enum
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True

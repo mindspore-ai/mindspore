@@ -1,0 +1,14 @@
+#operator ifftshift
+ifftshift:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IFFTShift

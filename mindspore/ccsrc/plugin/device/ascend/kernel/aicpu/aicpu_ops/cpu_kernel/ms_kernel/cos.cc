@@ -21,10 +21,10 @@
 
 #include <algorithm>
 
-#include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
-#include "common/kernel_log.h"
-#include "common/status.h"
+#include "context/inc/cpu_kernel_utils.h"
+#include "cpu_types.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -47,7 +47,7 @@ inline Eigen::half ScalarCos(Eigen::half x) {
   return Eigen::half_impl::isnan(val) ? Eigen::half{0.0f} : val;
 }
 
-inline std::uint32_t ParallelForCos(const CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
+inline std::uint32_t ParallelForCos(CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
                                     const std::function<void(std::int64_t, std::int64_t)> &work) {
   if (total > kCosParallelNum)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
@@ -57,7 +57,7 @@ inline std::uint32_t ParallelForCos(const CpuKernelContext &ctx, std::int64_t to
 }
 
 template <typename T>
-inline std::uint32_t ComputeCosKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeCosKernel(CpuKernelContext &ctx) {
   T *input0{static_cast<T *>(ctx.Input(0)->GetData())};
   T *output{static_cast<T *>(ctx.Output(0)->GetData())};
   std::int64_t total{ctx.Input(0)->NumElements()};
@@ -69,31 +69,32 @@ inline std::uint32_t ComputeCosKernel(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-inline std::uint32_t ComputeCos(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeCos(CpuKernelContext &ctx) {
   std::uint32_t result{ComputeCosKernel<T>(ctx)};
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Cos compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Cos compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t ExtraCheckCos(const CpuKernelContext &ctx) {
+inline std::uint32_t ExtraCheckCos(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t ComputeCos(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeCos(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_FLOAT16:
@@ -107,7 +108,7 @@ inline std::uint32_t ComputeCos(const CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return ComputeCos<std::complex<std::double_t>>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -120,5 +121,5 @@ std::uint32_t CosCpuKernel::Compute(CpuKernelContext &ctx) {
   return check ? KERNEL_STATUS_PARAM_INVALID : detail::ComputeCos(ctx);
 }
 
-REGISTER_CPU_KERNEL(kCos, CosCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCos, CosCpuKernel);
 }  // namespace aicpu

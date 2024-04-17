@@ -76,7 +76,7 @@ TypePtr LuInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr>
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   const std::set<TypePtr> lu_types = {kFloat32, kFloat64, kComplex64, kComplex128};
-  auto input_type = input_args[kInputIndex0]->BuildType();
+  auto input_type = input_args[kInputIndex0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input type", input_type, lu_types, prim->name());
   const std::set<TypePtr> out_valid_types = {kInt32, kInt64};
   ValuePtr out_type_value = prim->GetAttr("output_idx_type");

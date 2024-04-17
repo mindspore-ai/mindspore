@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,5 +15,6 @@
 """Optimize submodule"""
 from .minimize import minimize
 from .line_search import line_search
+from .linear_sum_assignment import linear_sum_assignment
 
-__all__ = ["minimize", "line_search"]
+__all__ = ["minimize", "line_search", "linear_sum_assignment"]

@@ -37,7 +37,7 @@ class MaxPoolWithArgmaxV2Net(Cell):
         return output, argmax
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool_with_argmax_v2_vmap():

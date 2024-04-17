@@ -25,7 +25,7 @@ mindspore.ops.grid_sample
           - ``'trilinear'``：三线性插值。这是双线性插值在三维数据上的扩展。它在两个空间维度上执行双线性插值，并沿第三个维度进行线性插值。通常用于体积或三维图像插值。
 
         - **padding_mode** (str) - 填充方法。可选方法为 ``'zeros'``，``'border'`` 和 ``'reflection'``。默认值： ``'zeros'`` 。
-        - **align_corners** (bool) - 布尔值。如果设置成 `True`，-1和1被视为引用输入角像素的中心点。如果设置为 `False`，将被视为引用到输入角像素的角点，使采样更不受分辨率影响。默认值为 `False`。
+        - **align_corners** (bool) - 如果设置成 `True`，-1和1被视为引用输入角像素的中心点。如果设置为 `False`，将被视为引用到输入角像素的角点，使采样更不受分辨率影响。默认值为 `False`。
 
     返回：
         Tensor，数据类型与 `input` 相同，4-D场景下，shape为 :math:`(N, C, H_{out}, W_{out})`，5-D场景下，shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})`。

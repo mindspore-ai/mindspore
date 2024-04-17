@@ -122,7 +122,7 @@ std::vector<std::string> ShapeInfoContainer::GetTemplateShape(const Tensor *tens
 
 std::vector<int> ShapeInfoContainer::GetRealNums(const std::string &shape_var) const {
   if (IsNumber(shape_var)) {
-    return {std::stoi(shape_var.c_str())};
+    return {std::stoi(shape_var)};
   }
   if (shape_to_nums_.find(shape_var) == shape_to_nums_.end()) {
     return {};

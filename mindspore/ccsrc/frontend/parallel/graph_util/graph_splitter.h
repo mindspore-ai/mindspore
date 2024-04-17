@@ -41,7 +41,7 @@
 namespace mindspore {
 namespace parallel {
 using distributed::cluster::ClusterContext;
-using AnfNodePtrSet = std::set<AnfNodePtr>;
+using AnfNodePtrSet = CompactSet<AnfNodePtr>;
 
 constexpr char kEnvNeedFusion[] = "fusion";
 

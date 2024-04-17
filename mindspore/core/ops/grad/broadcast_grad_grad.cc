@@ -19,7 +19,6 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
-#include "ops/grad/maximum_grad_grad.h"
 #include "ops/grad/minimum_grad_grad.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -37,10 +36,10 @@ abstract::TupleShapePtr BroadcastGradGradInferShape(const PrimitivePtr &primitiv
     MS_EXCEPTION_IF_NULL(item);
   }
   auto broadcast = BroadCastInferShape(prim_name, {input_args[kInputIndex0], input_args[kInputIndex1]});
-  auto x1 = input_args[kInputIndex0]->BuildShape();
-  auto x2 = input_args[kInputIndex1]->BuildShape();
-  auto dx1 = input_args[kInputIndex2]->BuildShape();
-  auto dx2 = input_args[kInputIndex3]->BuildShape();
+  auto x1 = input_args[kInputIndex0]->GetShape();
+  auto x2 = input_args[kInputIndex1]->GetShape();
+  auto dx1 = input_args[kInputIndex2]->GetShape();
+  auto dx2 = input_args[kInputIndex3]->GetShape();
   auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1)[kShape];
   auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2)[kShape];
   auto dx1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dx1)[kShape];
@@ -65,14 +64,14 @@ TuplePtr BroadcastGradGradInferType(const PrimitivePtr &primitive, const std::ve
   auto prim_name = primitive->name();
   constexpr int64_t input_num = 4;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  auto x1 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto x2 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  auto dy1 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
-  auto dy2 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex3);
+  auto x1 = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto x2 = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+  auto dy1 = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
+  auto dy2 = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex3, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim_name, x1, x2);
   (void)abstract::CheckDtypeSame(prim_name, dy1, dy2);
   (void)abstract::CheckDtypeSame(prim_name, x1, dy1);
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   const std::set<TypePtr> broadcast_grad_grad_valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, broadcast_grad_grad_valid_types, prim_name);
@@ -82,33 +81,12 @@ TuplePtr BroadcastGradGradInferType(const PrimitivePtr &primitive, const std::ve
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(MinimumGradGrad, BaseOperator);
-MIND_API_OPERATOR_IMPL(MaximumGradGrad, BaseOperator);
 abstract::AbstractBasePtr BroadcastGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                  const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto infer_type = BroadcastGradGradInferType(primitive, input_args);
   auto infer_shape = BroadcastGradGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
-}
-void MaximumGradGrad::Init(const bool grad_x, const bool grad_y) {
-  set_grad_x(grad_x);
-  set_grad_y(grad_y);
-}
-
-void MaximumGradGrad::set_grad_x(const bool grad_x) { (void)this->AddAttr(kGradX, api::MakeValue(grad_x)); }
-
-void MaximumGradGrad::set_grad_y(const bool grad_y) { (void)this->AddAttr(kGradY, api::MakeValue(grad_y)); }
-
-bool MaximumGradGrad::get_grad_x() const {
-  auto value_ptr = GetAttr(kGradX);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  return GetValue<bool>(value_ptr);
-}
-
-bool MaximumGradGrad::get_grad_y() const {
-  auto value_ptr = GetAttr(kGradY);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  return GetValue<bool>(value_ptr);
 }
 
 void MinimumGradGrad::set_grad_x(const bool grad_x) { (void)this->AddAttr(kGradX, api::MakeValue(grad_x)); }
@@ -144,7 +122,6 @@ class MIND_API AGBroadcastGradGradInfer : public abstract::OpInferBase {
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(MaximumGradGrad, prim::kPrimMaximumGradGrad, AGBroadcastGradGradInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(MinimumGradGrad, prim::kPrimMinimumGradGrad, AGBroadcastGradGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

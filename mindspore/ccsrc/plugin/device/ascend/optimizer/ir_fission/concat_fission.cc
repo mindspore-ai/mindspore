@@ -29,7 +29,7 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
   MS_EXCEPTION_IF_NULL(origin_concat_cnode);
   std::vector<AnfNodePtr> new_concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()))};
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
-    new_concat_inputs.emplace_back(origin_concat_cnode->input(i));
+    (void)new_concat_inputs.emplace_back(origin_concat_cnode->input(i));
   }
   CNodePtr new_concat = NewCNode(new_concat_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_concat);
@@ -43,7 +43,7 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
   }
   common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(offset)), new_concat);
   common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(offset)), new_concat);
-  std::vector<int64_t> dyn_input_sizes{SizeToLong(offset)};
+  std::vector<int64_t> dyn_input_sizes{SizeToLong(offset), (int64_t)-1};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_concat);
   // infer shape
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_concat_cnode, 0);
@@ -104,11 +104,11 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
     size_t cur_input_index = 1;
     // Divide the inputs of concat by inputs_divisor_.
     while (origin_input_size - cur_input_index + 1 >= inputs_divisor_) {
-      base_concat_inputs.push_back(CreateNewConcat(func_graph, new_cnode, cur_input_index, inputs_divisor_));
+      (void)base_concat_inputs.push_back(CreateNewConcat(func_graph, new_cnode, cur_input_index, inputs_divisor_));
       cur_input_index += inputs_divisor_;
     }
     for (size_t i = cur_input_index; i <= origin_input_size; i++) {
-      base_concat_inputs.emplace_back(new_cnode->input(i));
+      (void)base_concat_inputs.emplace_back(new_cnode->input(i));
     }
     CNodePtr base_concat = NewCNode(base_concat_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(base_concat);
@@ -124,7 +124,7 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
 
     common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(base_concat_inputs.size() - 1)), base_concat);
     common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(base_concat_inputs.size() - 1)), base_concat);
-    std::vector<int64_t> dyn_input_sizes{SizeToLong(base_concat_inputs.size() - 1)};
+    std::vector<int64_t> dyn_input_sizes{SizeToLong(base_concat_inputs.size() - 1), (int64_t)-1};
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), base_concat);
 
     new_cnode = base_concat;

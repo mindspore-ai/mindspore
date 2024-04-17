@@ -36,10 +36,10 @@ class UniqueWithPadCpuKernelTest : public UT::Common {
     outputs_.clear();
   }
 
-  AddressPtr CreateKernelAddress(void *addr, size_t size) {
-    auto kernel_addr = std::make_shared<Address>();
-    kernel_addr->addr = addr;
-    kernel_addr->size = size;
+  KernelTensor *CreateKernelAddress(void *addr, size_t size) {
+    auto kernel_addr = new KernelTensor();
+    kernel_addr->set_device_ptr(addr);
+    kernel_addr->set_size(size);
     return kernel_addr;
   }
 
@@ -58,9 +58,9 @@ class UniqueWithPadCpuKernelTest : public UT::Common {
   std::vector<int64_t> out_;
   std::vector<int64_t> idx_;
   std::vector<int64_t> workspace_idx_;
-  std::vector<AddressPtr> inputs_;
-  std::vector<AddressPtr> workspace_;
-  std::vector<AddressPtr> outputs_;
+  std::vector<KernelTensor *> inputs_;
+  std::vector<KernelTensor *> workspace_;
+  std::vector<KernelTensor *> outputs_;
   std::shared_ptr<UniqueWithPadCpuKernelMod> unique_with_pad_;
 };
 

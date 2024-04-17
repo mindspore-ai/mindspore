@@ -44,7 +44,19 @@ class Net(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level0
+def get_standard_loss(data_type):
+    if data_type == np.float16:
+        loss = 1e-3
+    elif data_type in (np.float32, np.complex64):
+        loss = 1e-4
+    elif data_type in (np.float64, np.complex128):
+        loss = 1e-5
+    else:
+        loss = 0
+    return loss
+
+
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
@@ -56,13 +68,14 @@ def test_net(data_type):
     """
     x = np.random.randn(2, 3, 3, 4).astype(data_type)
     y_expect = np.tanh(x)
+    loss = get_standard_loss(data_type)
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     net = Net()
     out = net(Tensor(x))
 
     assert out.shape == y_expect.shape
-    np.allclose(out.asnumpy(), y_expect)
+    assert np.allclose(out.asnumpy(), y_expect, rtol=loss, atol=loss)
 
     sens = np.random.randn(2, 3, 3, 4).astype(data_type)
     backword_net = Grad(Net())
@@ -83,20 +96,21 @@ def test_func(data_type):
     """
     x = np.random.randn(2, 3, 3, 4).astype(data_type)
     y_expect = np.tanh(x)
+    loss = get_standard_loss(data_type)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     tensor = Tensor(x)
     out = F.tanh(tensor)
 
     assert out.shape == y_expect.shape
-    np.allclose(out.asnumpy(), y_expect)
+    assert np.allclose(out.asnumpy(), y_expect, rtol=loss, atol=loss)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     tensor = Tensor(x)
     out = F.tanh(tensor)
 
     assert out.shape == y_expect.shape
-    np.allclose(out.asnumpy(), y_expect)
+    assert np.allclose(out.asnumpy(), y_expect, rtol=loss, atol=loss)
 
 
 @pytest.mark.level0
@@ -111,6 +125,7 @@ def test_tensor(data_type):
     """
     x = np.random.randn(2, 3, 3, 4).astype(data_type)
     y_expect = np.tanh(x)
+    loss = get_standard_loss(data_type)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -118,7 +133,7 @@ def test_tensor(data_type):
     out = tensor.tanh()
 
     assert out.shape == y_expect.shape
-    np.allclose(out.asnumpy(), y_expect)
+    assert np.allclose(out.asnumpy(), y_expect, rtol=loss, atol=loss)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
 
@@ -126,4 +141,21 @@ def test_tensor(data_type):
     out = tensor.tanh()
 
     assert out.shape == y_expect.shape
-    np.allclose(out.asnumpy(), y_expect)
+    assert np.allclose(out.asnumpy(), y_expect, rtol=loss, atol=loss)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tanh_with_abnormal_input():
+    """
+    Feature: Tanh
+    Description: test cases for Tanh with abnormal value
+    Expectation: the result match to numpy
+    """
+    x = np.random.choice([np.nan, np.inf, -np.inf], size=(3, 10)).astype(np.float32)
+    y_expect = np.tanh(x)
+
+    tensor = Tensor(x)
+    out = F.tanh(tensor)
+    assert np.allclose(out.asnumpy(), y_expect, equal_nan=True)

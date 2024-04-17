@@ -25,7 +25,7 @@ from mindspore import dtype as mstype
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -66,7 +66,7 @@ def test_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -107,7 +107,7 @@ def test_forward_contain_make_dict_and_dict_getitem():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -147,7 +147,7 @@ def test_forward_return_dict():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -189,7 +189,7 @@ def test_forward_return_dict_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -232,7 +232,7 @@ def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

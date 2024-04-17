@@ -27,18 +27,23 @@
 
 namespace mindspore {
 namespace kernel {
-class BufferCPUSampleKernelMod : public DeprecatedNativeCpuKernelMod {
+class BufferCPUSampleKernelMod : public NativeCpuKernelMod {
  public:
   BufferCPUSampleKernelMod() : element_nums_(0), capacity_(0), batch_size_(0), seed_(0), unique_(false) {}
 
   ~BufferCPUSampleKernelMod() override = default;
-  void Init(const CNodePtr &kernel_node) {
-    auto shapes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
-    auto types = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
-    capacity_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "capacity");
-    seed_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed");
-    unique_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "unique");
-    batch_size_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "batch_size"));
+
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto shapes = GetValue<std::vector<int64_t>>(primitive_->GetAttr("buffer_elements"));
+    auto types = GetValue<std::vector<TypePtr>>(primitive_->GetAttr("buffer_dtype"));
+    capacity_ = GetValue<int64_t>(primitive_->GetAttr("capacity"));
+    seed_ = GetValue<int64_t>(primitive_->GetAttr("seed"));
+    unique_ = GetValue<bool>(primitive_->GetAttr("unique"));
+    batch_size_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr("batch_size")));
     element_nums_ = shapes.size();
     for (size_t i = 0; i < element_nums_; i++) {
       exp_element_list.push_back(LongToSize(shapes[i]) * UnitSizeInBytes(types[i]->type_id()));
@@ -51,20 +56,19 @@ class BufferCPUSampleKernelMod : public DeprecatedNativeCpuKernelMod {
       std::srand(UlongToUint(LongToUlong(seed_)));
       generator_.seed(LongToUlong(seed_));
     }
-    // buffer size
+    output_size_list_.clear();
     for (auto i : exp_element_list) {
-      input_size_list_.push_back(i * LongToSize(capacity_));
       output_size_list_.push_back(i * batch_size_);
     }
-    // count and head
-    input_size_list_.push_back(sizeof(int));
-    input_size_list_.push_back(sizeof(int));
+    return KRET_OK;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     auto count_addr = GetDeviceAddress<int>(inputs, element_nums_);
     auto head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
+    MS_EXCEPTION_IF_NULL(count_addr);
+    MS_EXCEPTION_IF_NULL(head_addr);
     if ((head_addr[0] > 0 && SizeToLong(batch_size_) > capacity_) ||
         (head_addr[0] == 0 && SizeToLong(batch_size_) > count_addr[0])) {
       MS_LOG(ERROR) << "The batch size " << batch_size_ << " is larger than total buffer size "
@@ -97,6 +101,8 @@ class BufferCPUSampleKernelMod : public DeprecatedNativeCpuKernelMod {
         for (size_t i = 0; i < element_nums_; i++) {
           auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
           auto output_addr = GetDeviceAddress<unsigned char>(outputs, i);
+          MS_EXCEPTION_IF_NULL(buffer_addr);
+          MS_EXCEPTION_IF_NULL(output_addr);
           auto one_exp_len = exp_element_list[i];
           size_t dist_len = one_exp_len;
           if (memcpy_s(output_addr + j * one_exp_len, one_exp_len, buffer_addr + index * one_exp_len, dist_len) !=
@@ -109,8 +115,6 @@ class BufferCPUSampleKernelMod : public DeprecatedNativeCpuKernelMod {
     ParallelLaunchAutoSearch(task, batch_size_, this, &parallel_search_info_);
     return true;
   }
-
-  void InitKernel(const CNodePtr &) { return; }
 
  private:
   size_t element_nums_;

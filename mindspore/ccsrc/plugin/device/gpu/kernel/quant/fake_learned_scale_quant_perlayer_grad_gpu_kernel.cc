@@ -22,51 +22,37 @@ namespace kernel {
 FakeLearnedScaleQuantPerLayerGradGpuKernelMod::FakeLearnedScaleQuantPerLayerGradGpuKernelMod()
     : input_size_(0), workspace_size_(0), quant_num_(1), quant_delay_(0), global_step_(0), neg_trunc_(false) {}
 
-bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  kernel_node_ = kernel_node;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != kSize4) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
-  }
-
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != kSize2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
-  }
-
-  quant_delay_ =
-    static_cast<int>(GetValue<int64_t>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("quant_delay")));
+bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
+  quant_delay_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("quant_delay")));
   if (quant_delay_ < 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of quant_delay_ cannot be less than 0, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of quant_delay_ cannot be less than 0, but got "
                       << quant_delay_;
   }
-
-  neg_trunc_ = GetValue<bool>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("neg_trunc"));
-
-  // init size
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
-  auto size = SizeOf(input_shape);
-  quant_num_ = SizeToInt(size);
-  input_size_ = sizeof(float) * size;
-  InitSizeLists();
+  neg_trunc_ = GetValue<bool>(primitive_->GetAttr("neg_trunc"));
   return true;
 }
 
-void FakeLearnedScaleQuantPerLayerGradGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_size_);      // gradient
-  input_size_list_.push_back(input_size_);      // input
-  input_size_list_.push_back(sizeof(float));    // alpha
-  input_size_list_.push_back(sizeof(float));    // quant_max
+int FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+  // init size
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  auto size = SizeOf(input_shape);
+  quant_num_ = SizeToInt(size);
+  input_size_ = sizeof(float) * size;
   output_size_list_.push_back(input_size_);     //  grad_input
   output_size_list_.push_back(sizeof(float));   // grad_alpha
   workspace_size_list_.push_back(input_size_);  // input_div_alpha
   workspace_size_list_.push_back(input_size_);  // input_quant
+  return KRET_OK;
 }
 
-bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                           const std::vector<AddressPtr> &workspace,
-                                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &workspace,
+                                                           const std::vector<KernelTensor *> &outputs,
+                                                           void *stream_ptr) {
   float *grad_input = GetDeviceAddress<float>(outputs, kIndex0);
   float *grad_alpha = GetDeviceAddress<float>(outputs, kIndex1);
   float *gradient = GetDeviceAddress<float>(inputs, kIndex0);
@@ -87,10 +73,9 @@ bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Launch(const std::vector<Add
 
   const float alpha_no_grad[1] = {0.f};
   if (global_step_ >= quant_delay_) {
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(grad_alpha, alpha_no_grad, sizeof(float), cudaMemcpyHostToDevice,
-                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "Copy gpu memory failed");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(grad_alpha, alpha_no_grad, sizeof(float), cudaMemcpyHostToDevice,
+                                                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                      "Copy gpu memory failed");
     auto status = CalLSQNudgePerLayer(input, quant_num_, input_alpha, input_quant_max, input_div_alpha, input_quant,
                                       neg_trunc_, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);
@@ -98,14 +83,12 @@ bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Launch(const std::vector<Add
                                                   input_quant, neg_trunc_, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(grad_alpha, alpha_no_grad, sizeof(float), cudaMemcpyHostToDevice,
-                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "Copy gpu memory failed");
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(grad_input, gradient, input_size_, cudaMemcpyDeviceToDevice,
-                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "Copy gpu memory failed");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(grad_alpha, alpha_no_grad, sizeof(float), cudaMemcpyHostToDevice,
+                                                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                      "Copy gpu memory failed");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(grad_input, gradient, input_size_, cudaMemcpyDeviceToDevice,
+                                                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                      "Copy gpu memory failed");
   }
   global_step_++;
   return true;

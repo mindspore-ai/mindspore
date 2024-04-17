@@ -16,7 +16,6 @@
 
 #include "include/common/expander/core/infer.h"
 
-#include <algorithm>
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
@@ -41,8 +40,10 @@ void CppInfer::InferAnfnode(const AnfNodePtr &anfnode) const {
   MS_EXCEPTION_IF_NULL(prim);
   AbstractBasePtrList abs_list;
   abs_list.reserve(cnode->size());
-  (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(abs_list),
-                       [](const AnfNodePtr &node) {
+  (void)std::transform(cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend(), std::back_inserter(abs_list),
+                       [](const AnfNodeWeakPtr &weak_node) {
+                         AnfNodePtr node = weak_node.lock();
+                         MS_EXCEPTION_IF_NULL(node);
                          const auto &abs = node->abstract();
                          if (abs == nullptr) {
                            MS_EXCEPTION_IF_CHECK_FAIL(node->isa<ValueNode>(), node->ToString() + " has no abstract");
@@ -50,6 +51,13 @@ void CppInfer::InferAnfnode(const AnfNodePtr &anfnode) const {
                          }
                          return abs;
                        });
+
+  auto abstract_optional = abstract::InferAbstractByFuncImpl(prim, abs_list);
+  if (abstract_optional.has_value()) {
+    cnode->set_abstract(abstract_optional.value());
+    return;
+  }
+
   auto &infer_impl = CppInfer::infer_impl_cache()[prim];
   if (infer_impl.Get() == nullptr) {
     auto found = abstract::GetPrimitiveInferImpl(prim);

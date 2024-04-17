@@ -56,7 +56,7 @@ PriorityReplayBuffer::PriorityReplayBuffer(uint32_t seed, float alpha, size_t ca
   priority_tree_ = std::make_unique<PriorityTree>(capacity);
 }
 
-bool PriorityReplayBuffer::Push(const std::vector<AddressPtr> &items) {
+bool PriorityReplayBuffer::Push(const std::vector<KernelTensor *> &items) {
   (void)fifo_replay_buffer_->Push(items);
   auto idx = fifo_replay_buffer_->head();
 

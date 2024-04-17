@@ -5,9 +5,9 @@ mindspore.nn
 
 用于构建神经网络中的预定义构建块或计算单元。
 
-动态shape的支持情况详见 `nn接口动态shape支持情况 <https://mindspore.cn/docs/zh-CN/master/note/dynamic_shape_nn.html>`_ 。
+动态shape的支持情况详见 `nn接口动态shape支持情况 <https://mindspore.cn/docs/zh-CN/r2.3.q1/note/dynamic_shape_nn.html>`_ 。
 
-MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.nn API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_cn.md>`_ 。
+MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.nn API接口变更 <https://gitee.com/mindspore/docs/blob/r2.3.q1/resource/api_updates/nn_api_updates_cn.md>`_ 。
 
 基本构成单元
 ------------
@@ -47,9 +47,11 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.FixedLossScaleUpdateCell
     mindspore.nn.ForwardValueAndGrad
     mindspore.nn.GetNextSingleOp
+    mindspore.nn.GradAccumulationCell
     mindspore.nn.MicroBatchInterleaved
     mindspore.nn.ParameterUpdate
     mindspore.nn.PipelineCell
+    mindspore.nn.PipelineGradReducer
     mindspore.nn.TimeDistributed
     mindspore.nn.TrainOneStepCell
     mindspore.nn.TrainOneStepWithLossScaleCell
@@ -263,6 +265,7 @@ Dropout层
     mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss
     mindspore.nn.MarginRankingLoss
+    mindspore.nn.MAELoss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
     mindspore.nn.MultilabelMarginLoss
@@ -380,7 +383,6 @@ Dynamic LR函数
 
     mindspore.nn.PixelShuffle
     mindspore.nn.PixelUnshuffle
-    mindspore.nn.ResizeBilinear
     mindspore.nn.Upsample
 
 工具

@@ -189,6 +189,7 @@ class MS_API WeightDecoder {
     }
     auto shapes = input_tensor->shape();
     auto channels = quant_param.size();
+    MS_CHECK_LT(static_cast<size_t>(preferred_dim), shapes.size(), nullptr);
     if (channels != static_cast<size_t>(shapes.at(preferred_dim))) {
       MS_LOG(ERROR) << input_tensor->tensor_name() << " shapes at preferred_dim " << preferred_dim << " is "
                     << shapes.at(preferred_dim) << " != channels " << channels;

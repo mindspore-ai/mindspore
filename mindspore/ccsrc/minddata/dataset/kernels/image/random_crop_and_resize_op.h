@@ -27,19 +27,10 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomCropAndResizeOp : public TensorOp {
+class RandomCropAndResizeOp : public RandomTensorOp {
  public:
-  // Default values, also used by python_bindings.cc
-  static const float kDefScaleLb;
-  static const float kDefScaleUb;
-  static const float kDefAspectLb;
-  static const float kDefAspectUb;
-  static const InterpolationMode kDefInterpolation;
-  static const int32_t kDefMaxIter;
-
-  RandomCropAndResizeOp(int32_t target_height, int32_t target_width, float scale_lb = kDefScaleLb,
-                        float scale_ub = kDefScaleUb, float aspect_lb = kDefAspectLb, float aspect_ub = kDefAspectUb,
-                        InterpolationMode interpolation = kDefInterpolation, int32_t max_attempts = kDefMaxIter);
+  RandomCropAndResizeOp(int32_t target_height, int32_t target_width, float scale_lb, float scale_ub, float aspect_lb,
+                        float aspect_ub, InterpolationMode interpolation, int32_t max_attempts);
 
   RandomCropAndResizeOp() = default;
 
@@ -72,7 +63,6 @@ class RandomCropAndResizeOp : public TensorOp {
   int32_t target_width_;
   std::uniform_real_distribution<float> rnd_scale_;
   std::uniform_real_distribution<float> rnd_aspect_;
-  std::mt19937 rnd_;
   InterpolationMode interpolation_;
   int32_t max_iter_;
   double aspect_lb_;

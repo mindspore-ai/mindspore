@@ -32,7 +32,7 @@ class MatrixDiagPartV3Net(nn.Cell):
         return self.matrix_diag_dart_v3(x, k, padding_value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -56,7 +56,7 @@ def test_dynamic_shape_matrix_diag_partv3():
     test_dynamic.test_dynamic_grad_net([input_x, k, padding_value], False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

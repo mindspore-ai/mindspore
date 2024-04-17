@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,10 +25,17 @@ from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_util
 from mindspore.common import dtype as mstype
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
-from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask, RandpermV2
-from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
 from mindspore.common.api import _function_forbid_reuse
+from mindspore.ops.auto_generate import randperm
 
+
+cast_ = P.Cast()
+log_ = P.Log()
+real_div_ = P.RealDiv()
+reshape_ = P.Reshape()
+shape_ = P.Shape()
+top_k_ = P.TopK()
 
 @constexpr
 def _set_prim_op_user_data(prim, key, value):
@@ -374,11 +381,11 @@ def uniform_candidate_sampler(true_classes,
 
     Returns:
         - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.
-          Shape: :math:`(num\_sampled, )` .
+          shape: :math:`(num\_sampled, )` .
         - **true_expected_count** (Tensor) - The expected counts under the sampling distribution of each
-          of true_classes. Shape: :math:`(batch\_size, num\_true)` .
+          of true_classes. shape: :math:`(batch\_size, num\_true)` .
         - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
-          each of sampled_candidates. Shape: :math:`(num\_sampled, )` .
+          each of sampled_candidates. shape: :math:`(num\_sampled, )` .
 
     Raises:
         TypeError: If neither `num_true` nor `num_sampled` is an int.
@@ -623,58 +630,6 @@ def is_cpu_backend():
 
 
 @_function_forbid_reuse
-def randperm(n, seed=0, offset=0, dtype=mstype.int64):
-    r"""
-    Generates random permutation of integers from 0 to n-1.
-
-    Returns the tensor with the determined shape inferred by n, the random numbers in it drawn from the data range
-    that a given type can represent.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        n (Union[Tensor, int]): The input n Tensor with shape: () or (1,) and with data type of int64.
-            The value of `n` must be greater than zero.
-        seed (int, optional): Random seed. Default: ``0`` . When seed is -1(only negative value), offset is 0,
-            it's determined by time.
-        offset (int, optional): Offset to generate random numbers. Priority is higher than random seed.
-            Default: ``0`` . It must be non-negative.
-        dtype (mindspore.dtype, optional): The type of output.
-            Its value must be one of the following types: int32, int16, int8,
-            uint8, int64, float64, float32, float16. Default: mstype.int64.
-
-    Returns:
-        Tensor. Its shape is specified by the required args `n`. Its type is specified by `dtype`.
-        Otherwise is default.
-
-    Raises:
-        TypeError: If `dtype` is not allowed.
-        ValueError: If `n` is a negative or 0 element.
-        ValueError: If `seed` is a negative element.
-        ValueError: If `n` is larger than the maximal data of the set dtype.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> from mindspore import ops
-        >>> from mindspore import dtype as mstype
-        >>> n = 4
-        >>> seed = 0
-        >>> offset = 0
-        >>> output = ops.randperm(n, seed, offset, dtype=mstype.int64)
-        >>> print(output)
-        [1 0 2 3]
-    """
-    if not isinstance(n, Tensor):
-        n = Tensor(n)
-    randperm_ = RandpermV2(dtype=dtype)
-    randperm_ = _set_prim_op_user_data(randperm_, "random_cache", False)
-    return randperm_(n, seed, offset)
-
-
-@_function_forbid_reuse
 def normal(shape, mean, stddev, seed=None):
     """
     Generates random numbers according to the Normal (or Gaussian) random number distribution.
@@ -795,8 +750,8 @@ def gamma(shape, alpha, beta, seed=None):
         shape (tuple): The shape of random tensor to be generated.
         alpha (Tensor): The :math:`\alpha` distribution parameter. It should be greater than 0 with float32 data type.
         beta (Tensor): The :math:`\beta` distribution parameter. It should be greater than 0 with float32 data type.
-        seed (int): Seed is used as entropy source for the random number engines to generate
-          pseudo-random numbers, must be non-negative. Default: ``None`` , which will be treated as ``0`` .
+        seed (int, optional): Seed is used as entropy source for the random number engines to generate
+            pseudo-random numbers, must be non-negative. Default: ``None`` , which will be treated as ``0`` .
 
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
@@ -924,7 +879,6 @@ def rand(*size, dtype=None, seed=None):
     elif dtype not in mstype.float_type:
         raise ValueError(f"For 'rand', the 'dtype' must be a float type, but got {dtype}.")
     shape = _generate_shapes(size)
-    cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'rand')
     rand_op = P.UniformReal(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
@@ -972,7 +926,6 @@ def rand_like(input, seed=None, *, dtype=None):
     if dtype not in mstype.float_type:
         raise ValueError(f"For 'rand_like', the 'dtype' must be a float type, but got {dtype}.")
     shape = input.shape
-    cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'rand_like')
     rand_op = P.UniformReal(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
@@ -1017,7 +970,6 @@ def randn(*size, dtype=None, seed=None):
     elif dtype not in mstype.float_type:
         raise ValueError(f"For 'randn', the 'dtype' must be a float type, but got {dtype}.")
     shape = _generate_shapes(size)
-    cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'randn')
     rand_op = P.StandardNormal(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
@@ -1065,7 +1017,6 @@ def randn_like(input, seed=None, *, dtype=None):
     if dtype not in mstype.float_type:
         raise ValueError(f"For 'randn_like', the 'dtype' must be a float type, but got {dtype}.")
     shape = input.shape
-    cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'randn_like')
     rand_op = P.StandardNormal(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
@@ -1119,7 +1070,6 @@ def randint(low, high, size, seed=None, *, dtype=None):
     if not isinstance(high, int) or isinstance(high, bool):
         raise TypeError(f"For 'randint_like', 'high' must be an int, but got {type(high)}.")
     seed1, seed2 = _get_seed(seed, 'randint')
-    cast_ = P.Cast()
     rand_op = P.UniformInt(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
     low_ = Tensor(low, mstype.int32)
@@ -1177,10 +1127,10 @@ def randint_like(input, low, high, seed=None, *, dtype=None):
     seed1, seed2 = _get_seed(seed, 'randint_like')
     rand_op = P.UniformInt(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
-    cast_ = P.Cast()
     low_ = Tensor(low, mstype.int32)
     high_ = Tensor(high, mstype.int32)
-    output = rand_op(size, low_, high_)
+    size_ = Tensor(size, mstype.int32)
+    output = rand_op(size_, low_, high_)
     return cast_(output, dtype)
 
 
@@ -1328,35 +1278,30 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         >>> # [[0 0 0 0 0 0 0 0 1 0]
         >>> #  [1 1 1 1 1 0 1 1 1 1]]
     """
-    shape = _get_cache_prim(P.Shape)()
-    reshape = _get_cache_prim(P.Reshape)()
-
     def _check_valid_dim(dim, name):
         if dim not in (1, 2):
             raise ValueError(f"For '{name}', the dimension of inputs must be 1d or 2d, but got {dim}.")
 
-    _check_valid_dim(len(shape(input)), "multinomial")
+    _check_valid_dim(len(shape_(input)), "multinomial")
     seed1, seed2 = _get_seed(seed, "multinomial")
     if not replacement:
-        if shape(input)[-1] < num_samples:
+        if shape_(input)[-1] < num_samples:
             const_utils.raise_value_error(f"For 'multinomial', the 'num_samples' must be less than "
                                           f"the last dimension of input without 'replacement', "
                                           f"but got 'num_samples': {num_samples} and "
                                           f"'replacement': {replacement}")
         n_dist = 1
-        if len(shape(input)) > 1:
-            n_dist = shape(input)[-2]
+        if len(shape_(input)) > 1:
+            n_dist = shape_(input)[-2]
         random_uniform_real = P.UniformReal(seed1, seed2)
         random_cache_op = _set_prim_op_user_data(random_uniform_real, "random_cache", False)
-        random_uniform = random_cache_op((n_dist * shape(input)[-1],))
+        random_uniform = random_cache_op((n_dist * shape_(input)[-1],))
         if n_dist != 1:
-            random_uniform = reshape(random_uniform, (n_dist, shape(input)[-1]))
-        real_div = _get_cache_prim(P.RealDiv)()
-        log = _get_cache_prim(P.Log)()
-        top_k = _get_cache_prim(P.TopK)()
+            random_uniform = reshape_(random_uniform, (n_dist, shape_(input)[-1]))
 
-        vals = real_div(log(random_uniform), input + 1e-6)
-        _, indices = top_k(vals, num_samples)
+
+        vals = real_div_(log_(random_uniform), input + 1e-6)
+        _, indices = top_k_(vals, num_samples)
         return indices
     random_nomial = P.Multinomial(seed1, seed2)
     random_nomial = _set_prim_op_user_data(random_nomial, "random_cache", False)

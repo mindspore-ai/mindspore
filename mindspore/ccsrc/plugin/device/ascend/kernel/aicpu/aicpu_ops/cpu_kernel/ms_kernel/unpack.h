@@ -22,29 +22,24 @@
 #include "utils/bcast.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "securec.h"
-#include "cpu_ops_kernel.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 
 namespace aicpu {
 class UnpackCpuKernel : public CpuKernel {
  public:
-  UnpackCpuKernel() : data_type(DT_DOUBLE), unpack_axis(0), unpack_num(0), value_num(0) {
-    output_ptr_vec.clear();
-    value_shape_vec.clear();
-  }
-  ~UnpackCpuKernel() = default;
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
   uint32_t CheckAndInitParams(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t UnpackWithOneOutput(T *input_data_ptr, std::vector<T *> output_data_vec);
+  uint32_t UnpackWithOneOutput(CpuKernelContext &ctx, T *input_data_ptr, std::vector<T *> output_data_vec);
 
   template <typename T>
-  uint32_t UnpackWithDimZero(T *input_data_ptr, std::vector<T *> output_data_vec);
+  uint32_t UnpackWithDimZero(CpuKernelContext &ctx, T *input_data_ptr, std::vector<T *> output_data_vec);
 
   template <typename T>
   uint32_t UnpackCompute(T *input_data_ptr, std::vector<T *> output_data_vec, CpuKernelContext &ctx);

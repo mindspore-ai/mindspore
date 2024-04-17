@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include "abstract/dshape.h"
 #include "utils/shape_utils.h"
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore {
 namespace abstract {
@@ -90,12 +91,23 @@ void TensorShape::Broaden() {
   }
 }
 
-bool DynamicSequenceShape::IsDynamic() const {
-  if (element_shape_ == nullptr) {
-    return false;
+ListSymbolPtr TensorShape::BuildSymbolicShape() const {
+  if (mindspore::IsDynamicRank(shape_)) {
+    return ListSymbol::Make();
   }
-  return element_shape_->IsDynamic();
+  symshape::SymbolPtrList symlist(shape_.size());
+  (void)std::transform(shape_.begin(), shape_.end(), symlist.begin(), [](int64_t s) {
+    if (s == abstract::Shape::kShapeDimAny) {
+      auto ints = IntSymbol::Make();
+      ints->SetRangeMin(1);
+      return ints;
+    }
+    return IntSymbol::Make(s);
+  });
+  return ListSymbol::Make(std::move(symlist));
 }
+
+bool DynamicSequenceShape::IsDynamic() const { return true; }
 
 bool DynamicSequenceShape::IsDimZero() const {
   if (element_shape_ == nullptr) {
@@ -122,7 +134,13 @@ bool DynamicSequenceShape::operator==(const BaseShape &other) const {
     return false;
   }
   const auto &other_shape = dynamic_cast<const DynamicSequenceShape &>(other);
-  return element_shape_ == other_shape.element_shape_;
+  if (element_shape_ == nullptr && other_shape.element_shape_ == nullptr) {
+    return true;
+  }
+  if (element_shape_ == nullptr || other_shape.element_shape_ == nullptr) {
+    return false;
+  }
+  return *element_shape_ == *other_shape.element_shape_;
 }
 
 std::string SequenceShape::ToString() const {
@@ -147,6 +165,13 @@ BaseShapePtrList SequenceShape::ElementsClone() const {
     ele_list.push_back(p_shp->Clone());
   }
   return ele_list;
+}
+
+ListSymbolPtr SequenceShape::BuildSymbolicShape() const {
+  symshape::SymbolPtrList symlist(p_shapes_.size());
+  (void)std::transform(p_shapes_.begin(), p_shapes_.end(), symlist.begin(),
+                       [](const BaseShapePtr &s) { return s->BuildSymbolicShape(); });
+  return ListSymbol::Make(std::move(symlist));
 }
 
 template bool SequenceShape::SequenceEqual<TupleShape>(const BaseShape &) const;

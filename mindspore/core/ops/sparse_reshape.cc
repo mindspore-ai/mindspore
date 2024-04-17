@@ -43,9 +43,9 @@ abstract::TupleShapePtr SparseReshapeInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto indices = input_args[0]->BuildShape();
-  auto shape = input_args[1]->BuildShape();
-  auto new_shape = input_args[2]->BuildShape();
+  auto indices = input_args[0]->GetShape();
+  auto shape = input_args[1]->GetShape();
+  auto new_shape = input_args[2]->GetShape();
   auto in0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices)[kShape];
   auto in1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape)[kShape];
   auto in2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(new_shape)[kShape];
@@ -86,10 +86,9 @@ abstract::TupleShapePtr SparseReshapeInferShape(const PrimitivePtr &primitive,
 
 TuplePtr SparseReshapeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex0]->BuildType(), {kInt64}, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[kInputIndex1]->BuildType(), {kInt64}, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("new_shape", input_args[kInputIndex2]->BuildType(), {kInt64},
-                                                   op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex0]->GetType(), {kInt64}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[kInputIndex1]->GetType(), {kInt64}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("new_shape", input_args[kInputIndex2]->GetType(), {kInt64}, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, kInt64});
 }
 }  // namespace

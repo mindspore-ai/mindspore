@@ -190,18 +190,13 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::GenerateRandomCrop(int ms_origina
   return true;
 }
 
-bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                    const std::vector<KernelTensorPtr> &inputs,
-                                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::SampleDistortedBoundingBoxV2>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  seed_ = op_prim->get_seed();
-  seed2_ = op_prim->get_seed2();
-  aspect_ratio_range_ = op_prim->get_aspect_ratio_range();
+  seed_ = GetValue<int64_t>(primitive_->GetAttr("seed"));
+  seed2_ = GetValue<int64_t>(primitive_->GetAttr("seed2"));
+  aspect_ratio_range_ = GetValue<std::vector<float>>(primitive_->GetAttr("aspect_ratio_range"));
   if (aspect_ratio_range_.size() != kShapeSize2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', aspect_ratio_range field must specify 2 dimensions.";
     return false;
@@ -211,7 +206,7 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const BaseOperatorPtr &base_
                   << aspect_ratio_range_[kIndex0] << "], [" << aspect_ratio_range_[kIndex1] << "].";
     return false;
   }
-  area_range_ = op_prim->get_area_range();
+  area_range_ = GetValue<std::vector<float>>(primitive_->GetAttr("area_range"));
   if (area_range_.size() != kShapeSize2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range field must specify 2 dimensions.";
     return false;
@@ -226,12 +221,12 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const BaseOperatorPtr &base_
                   << area_range_[kIndex0] << "], [" << area_range_[kIndex1] << "].";
     return false;
   }
-  max_attempts_ = op_prim->get_max_attempts();
+  max_attempts_ = GetValue<int64_t>(primitive_->GetAttr("max_attempts"));
   if (max_attempts_ <= SizeToLong(kNumber0)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', max_attempts must be positive: [" << max_attempts_ << "].";
     return false;
   }
-  use_image_if_no_bounding_boxes_ = op_prim->get_use_image();
+  use_image_if_no_bounding_boxes_ = GetValue<bool>(primitive_->GetAttr("use_image_if_no_bounding_boxes"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match.first) {
@@ -242,17 +237,15 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const BaseOperatorPtr &base_
   return true;
 }
 
-int SampleDistortedBoundingBoxV2CPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs,
-                                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SampleDistortedBoundingBoxV2CPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
-  auto shape_image_size = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  auto shape_bounding_boxes = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  dtype_ = inputs[kIndex0]->dtype_id();
+  auto shape_image_size = inputs[kIndex0]->GetDeviceShapeVector();
+  auto shape_bounding_boxes = inputs[kIndex1]->GetDeviceShapeVector();
   size_t shape_dim_image_size = shape_image_size.size();
   size_t shape_dim_bounding_boxes = shape_bounding_boxes.size();
 
@@ -279,9 +272,9 @@ int SampleDistortedBoundingBoxV2CPUKernelMod::Resize(const BaseOperatorPtr &base
   return KRET_OK;
 }
 
-bool SampleDistortedBoundingBoxV2CPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> & /* workspace */,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool SampleDistortedBoundingBoxV2CPUKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
@@ -318,14 +311,14 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::CheckSDBBExt2(T *inputs0, float *
 }
 
 template <typename T>
-void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<AddressPtr> &inputs,
-                                                              const std::vector<AddressPtr> &outputs) {
-  auto image_size = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto bounding_boxes = reinterpret_cast<float *>(inputs[kIndex1]->addr);
-  auto min_object_covered = reinterpret_cast<float *>(inputs[kIndex2]->addr);
-  auto begin = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto size = reinterpret_cast<T *>(outputs[kIndex1]->addr);
-  auto bboxes = reinterpret_cast<float *>(outputs[kIndex2]->addr);
+void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<KernelTensor *> &inputs,
+                                                              const std::vector<KernelTensor *> &outputs) {
+  auto image_size = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto bounding_boxes = reinterpret_cast<float *>(inputs[kIndex1]->device_ptr());
+  auto min_object_covered = reinterpret_cast<float *>(inputs[kIndex2]->device_ptr());
+  auto begin = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto size = reinterpret_cast<T *>(outputs[kIndex1]->device_ptr());
+  auto bboxes = reinterpret_cast<float *>(outputs[kIndex2]->device_ptr());
   CheckSDBBExt2(image_size, bounding_boxes, min_object_covered, begin, size, bboxes);
 
   const int32_t height = static_cast<int32_t>(image_size[kIndex0]);
@@ -343,7 +336,7 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<
   }
 
   std::vector<Region> boxes;
-  size_t size_bounding_boxes = inputs[kIndex1]->size / sizeof(float);
+  size_t size_bounding_boxes = inputs[kIndex1]->size() / sizeof(float);
   for (size_t b = 0; b < size_bounding_boxes / kShapeSize4; ++b) {
     for (size_t i = 0; i < kShapeSize4; ++i) {
       if (bounding_boxes[b * kShapeSize4 + i] < 0.0 || bounding_boxes[b * kShapeSize4 + i] > 1.0) {

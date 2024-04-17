@@ -50,17 +50,15 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
  public:
   ReduceCpuKernelFunc() = default;
   ~ReduceCpuKernelFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
-  void ChooseFunc(const std::string &kernel_name_);
+  void ChooseFunc();
   void HandleInputAxis();
   void SpecialExcute();
   void CalAxesAndStride(std::vector<size_t> *axes, size_t *stride);
@@ -239,6 +237,11 @@ void ReduceCpuKernelFunc<T>::SpecialExcute() {
 template <typename T>
 void ReduceCpuKernelFunc<T>::HandleInputAxis() {
   int64_t dimension = SizeToLong(input_shape_.size());
+  if (axis_.empty()) {
+    for (int64_t i = 0; i < dimension; i++) {
+      axis_.push_back(i);
+    }
+  }
   (void)std::for_each(axis_.begin(), axis_.end(), [dimension](auto &a) {
     if (dimension == 0) {
       if (a != -1 && a != 0) {
@@ -264,12 +267,11 @@ void ReduceCpuKernelFunc<T>::HandleInputAxis() {
 }
 
 template <typename T>
-int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &axis_, false)) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get axis input! ";
+int ReduceCpuKernelFunc<T>::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &) {
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  axis_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  if (kernel_name_ == kReduceSum) {
+    skip_mode_ = inputs[kIndex3]->GetValueWithCheck<bool>();
   }
   if (inputs.size() > kAxisIndex_ &&
       AnfAlgo::IsDynamicShapeSkipExecute(skip_mode_, inputs[kAxisIndex_]->GetShapeVector())) {
@@ -282,7 +284,7 @@ int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
+void ReduceCpuKernelFunc<T>::ChooseFunc() {
   if constexpr (std::is_same<T, bool>::value) {
     if (kernel_name_ == kReduceAll) {
       reduce_type_ = ReduceFuncType::kReduceAllType;
@@ -335,13 +337,10 @@ void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
 }
 
 template <typename T>
-void ReduceCpuKernelFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-                                      const std::vector<KernelTensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  ChooseFunc(kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
-  skip_mode_ = kernel_ptr->get_skip_mode();
+void ReduceCpuKernelFunc<T>::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &) {
+  kernel_name_ = primitive->name();
+  ChooseFunc();
 }
 
 template <typename T>
@@ -365,15 +364,15 @@ void ReduceCpuKernelFunc<T>::CalAxesAndStride(std::vector<size_t> *axes, size_t 
 }
 
 template <typename T>
-bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceOutputsNum, kernel_name_);
-  size_t input_size = inputs[0]->size / sizeof(T);
-  auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  size_t input_size = inputs[0]->size() / sizeof(T);
+  auto *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   if (need_skip_execute_) {
-    auto ret = memcpy_s(output_addr, outputs[0]->size, input_addr, inputs[0]->size);
+    auto ret = memcpy_s(output_addr, outputs[0]->size(), input_addr, inputs[0]->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
     }
@@ -397,7 +396,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
     std::vector<size_t> axes(input_shape_.size());
     CalAxesAndStride(&axes, &stride);
 
-    size_t output_size = outputs[0]->size / sizeof(T);
+    size_t output_size = outputs[0]->size() / sizeof(T);
     if constexpr (std::is_same<T, float>::value) {
       if (simple_execute_) {
         if (axis_[0] == 1) {
@@ -478,66 +477,75 @@ template <typename T>
 std::shared_ptr<CpuKernelFunc> SpecializeReduceFunc() {
   return std::make_shared<ReduceCpuKernelFunc<T>>();
 }
+
 using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
-#define REDUCE_CPU_REG(MS_T, MS_S, T) \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_T), SpecializeReduceFunc<T>
+
+#define REDUCE_CPU_REG(MS_T, MS_S, T)                 \
+  KernelAttr()                                        \
+    .AddInputAttr(MS_T)                               \
+    .AddInputAttr(kObjectTypeTuple, MS_S)             \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddOutputAttr(MS_T),                             \
+    SpecializeReduceFunc<T>
+
+#define REDUCE_SUM_CPU_REG(MS_T, MS_S, T)             \
+  KernelAttr()                                        \
+    .AddInputAttr(MS_T)                               \
+    .AddInputAttr(kObjectTypeTuple, MS_S)             \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddOutputAttr(MS_T),                             \
+    SpecializeReduceFunc<T>
+
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_all_any_list = {
-  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool)}, {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)}};
+  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)}};
+
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_max_min_list = {
-  {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
   {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
   {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
   {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
   {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)}};
-static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_sum_prod_mean_list = {
-  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool)},
+
+static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_prod_mean_list = {
   {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)},
-  {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
   {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
   {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
   {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
   {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
-  {REDUCE_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32, complex64)},
   {REDUCE_CPU_REG(kNumberTypeComplex64, kNumberTypeInt64, complex64)},
-  {REDUCE_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32, complex128)},
   {REDUCE_CPU_REG(kNumberTypeComplex128, kNumberTypeInt64, complex128)}};
+
+static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_sum_list = {
+  {REDUCE_SUM_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeComplex64, kNumberTypeInt64, complex64)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeComplex128, kNumberTypeInt64, complex128)}};
+
 static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>>> kernel_attr_list = {
-  {prim::kPrimReduceSum->name(), kernel_sum_prod_mean_list},
-  {prim::kPrimReduceMean->name(), kernel_sum_prod_mean_list},
-  {prim::kPrimReduceProd->name(), kernel_sum_prod_mean_list},
-  {prim::kPrimReduceMax->name(), kernel_max_min_list},
-  {prim::kPrimReduceMin->name(), kernel_max_min_list},
-  {prim::kPrimReduceAll->name(), kernel_all_any_list},
+  {prim::kPrimReduceSum->name(), kernel_sum_list},        {prim::kPrimReduceMean->name(), kernel_prod_mean_list},
+  {prim::kPrimReduceProd->name(), kernel_prod_mean_list}, {prim::kPrimReduceMax->name(), kernel_max_min_list},
+  {prim::kPrimReduceMin->name(), kernel_max_min_list},    {prim::kPrimReduceAll->name(), kernel_all_any_list},
   {prim::kPrimReduceAny->name(), kernel_all_any_list}};
 }  // namespace
 
@@ -553,9 +561,7 @@ std::vector<KernelAttr> ReduceCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool ReduceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ReduceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
   }
@@ -576,18 +582,16 @@ bool ReduceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   }
 
   func_obj_ = kernel_attr_list[kernel_type_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int ReduceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ReduceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  ret = func_obj_->Resize(base_operator, inputs, outputs, inputsOnHost);
+  ret = func_obj_->Resize(inputs, outputs);
 
   return ret;
 }

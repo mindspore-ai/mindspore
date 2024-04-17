@@ -25,4 +25,31 @@ REG_EXPANDER_FUNC("Sigmoid").SetBody(BODYFUNC(ib) {
   auto result = ib->Div(const_one, add_exp);
   return {result};
 });
+
+REG_EXPANDER_FUNC("SoftmaxBackward").SetBody(BODYFUNC(ib) {
+  auto dout = ib->input(kIndex0);
+  auto out = ib->input(kIndex1);
+  auto dim = ib->input(kIndex2);
+  auto dim_value_ptr = dim->GetValue();
+  if (dim_value_ptr == nullptr || dim_value_ptr->isa<ValueAny>() || dim_value_ptr->isa<None>()) {
+    MS_LOG(INFO) << "dim is not const value";
+    return {};
+  }
+  auto dim_value = GetValue<int64_t>(dim_value_ptr);
+  auto shp = out->GetShape();
+  bool is_last_axis = true;
+  if (IsDynamicRank(shp)) {
+    is_last_axis = (dim_value == -1);
+  } else {
+    auto nd = SizeToLong(shp.size());
+    is_last_axis = dim_value < 0 ? (dim_value == -1) : (dim_value == nd - 1);
+  }
+  if (!is_last_axis) {
+    MS_LOG(INFO) << "dim is not last axis";
+    return {};
+  }
+  ShapeVector axis{-1};
+  auto result = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ib->Value(axis), ib->Value(true))));
+  return {result};
+});
 }  // namespace mindspore::graphkernel::expander

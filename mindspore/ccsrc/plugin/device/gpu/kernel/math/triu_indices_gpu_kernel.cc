@@ -18,12 +18,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool TriuIndicesGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::TriuIndices>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr_);
-  kernel_name_ = kernel_ptr_->name();
+bool TriuIndicesGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty outputs, which is invalid.";
     return false;
@@ -36,20 +32,19 @@ bool TriuIndicesGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  row_ = kernel_ptr_->get_row();
-  col_ = kernel_ptr_->get_col();
-  offset_ = kernel_ptr_->get_offset();
+  row_ = GetValue<int64_t>(primitive_->GetAttr("row"));
+  col_ = GetValue<int64_t>(primitive_->GetAttr("col"));
+  offset_ = GetValue<int64_t>(primitive_->GetAttr("offset"));
   return true;
 }
 
-int TriuIndicesGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+int TriuIndicesGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   ResetResource();
   auto ret = KRET_OK;
   size_t tensor_size = 0;
-  size_t type_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->GetDtype()));
+  size_t type_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->dtype_id()));
   auto shape = outputs.at(kIndex0)->GetShapeVector();
   if (!IsValidShape(shape)) {
     ret = KRET_UNKNOWN_OUT_SHAPE;
@@ -64,16 +59,15 @@ int TriuIndicesGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
 void TriuIndicesGpuKernelMod::ResetResource() noexcept {
   triu_size_ = 0;
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 }
 
 template <typename T>
-bool TriuIndicesGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
-  auto output = GetDeviceAddress<T>(outputs, kIndex0);
+bool TriuIndicesGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
+  T *output = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output);
   if (triu_size_ > 0) {
     auto m_first_row = offset_ > 0 ? std::max<int64_t>(col_ - offset_, 0) : col_;

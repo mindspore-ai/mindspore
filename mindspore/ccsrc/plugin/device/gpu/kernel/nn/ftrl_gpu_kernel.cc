@@ -21,9 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool FtrlGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool FtrlGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 8;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -39,8 +37,9 @@ bool FtrlGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool FtrlGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FtrlGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -53,7 +52,7 @@ bool FtrlGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   T *l2_regularization = GetDeviceAddress<T>(inputs, 6);
   T *learning_rate_power = GetDeviceAddress<T>(inputs, 7);
   auto status =
-    ApplyFtrl(inputs[0]->size / sizeof(T), gradient, learning_rate, l1_regularization, l2_regularization,
+    ApplyFtrl(inputs[0]->size() / sizeof(T), gradient, learning_rate, l1_regularization, l2_regularization,
               learning_rate_power, variable, accumulation, linear, reinterpret_cast<cudaStream_t>(stream_ptr));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

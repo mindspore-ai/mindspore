@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace dataset {
 
-class FrequencyMaskingOp : public TensorOp {
+class FrequencyMaskingOp : public RandomTensorOp {
  public:
   FrequencyMaskingOp(bool iid_masks = false, int32_t frequency_mask_param = 0, int32_t mask_start = 0,
                      float mask_value_ = 0.0);
@@ -46,7 +46,6 @@ class FrequencyMaskingOp : public TensorOp {
   int32_t frequency_mask_param_;
   int32_t mask_start_;
   float mask_value_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

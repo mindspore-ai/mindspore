@@ -37,8 +37,8 @@ class AttentionNet(Cell):
     def construct(self, x):
         out = self.matmul(x, self.weight)
         out = self.add(out, self.bias)
-        bs = P.Shape()(out)[0]
-        out = self.reshape(out, (bs // 2, 2, 16, 4))
+        s = P.Shape()(out)[1]
+        out = self.reshape(out, (-1, 1, s // 4, 4))
         out = self.transpose(out, (0, 2, 1, 3))
         out = self.realdiv(out, 1.0)
         out = self.reduce_sum(out)  # now do not support split sens for dynamic shape, so using reduce_sum to avoid it
@@ -62,6 +62,7 @@ def test_dynamic_bs_data_parallel():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    context.set_context(save_graphs=True)
     strategy1 = ((8, 1), (1, 1))
     strategy2 = ((8, 1), (1,))
     strategy3 = ((8, 1, 1, 1),)

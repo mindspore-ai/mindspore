@@ -22,8 +22,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool BroadcastOptGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
+bool BroadcastOptGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -45,10 +45,9 @@ bool BroadcastOptGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int BroadcastOptGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int BroadcastOptGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto in0_shape = inputs[kIndex0]->GetShapeVector();
@@ -82,8 +81,8 @@ int BroadcastOptGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <BinaryOpType op, typename In0_t, typename In1_t, typename Out_t>
-bool BroadcastOptGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs) {
+bool BroadcastOptGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   auto lhs = GetDeviceAddress<In0_t>(inputs, kIndex0);
   auto rhs = GetDeviceAddress<In1_t>(inputs, kIndex1);
   auto out = GetDeviceAddress<Out_t>(outputs, kIndex0);
@@ -248,8 +247,14 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastOptGpuKernelMod
     {"GreaterEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kGreaterEqual)}},
     {"LessEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLessEqual)}},
     {"NotEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kNotEqual)}},
-    {"LogicalAnd", {MS_REG_BROADCAST_OP_BOOL_TYPE(BinaryOpType::kLogicalAnd)}},
-    {"LogicalOr", {MS_REG_BROADCAST_OP_BOOL_TYPE(BinaryOpType::kLogicalOr)}},
+    {"LogicalAnd",
+     {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLogicalAnd),
+      MS_REG_BROADCAST_COMP_OP_TYPE(BinaryOpType::kLogicalAnd, kNumberTypeComplex64, Complex<float>),
+      MS_REG_BROADCAST_COMP_OP_TYPE(BinaryOpType::kLogicalAnd, kNumberTypeComplex128, Complex<double>)}},
+    {"LogicalOr",
+     {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLogicalOr),
+      MS_REG_BROADCAST_COMP_OP_TYPE(BinaryOpType::kLogicalOr, kNumberTypeComplex64, Complex<float>),
+      MS_REG_BROADCAST_COMP_OP_TYPE(BinaryOpType::kLogicalOr, kNumberTypeComplex128, Complex<double>)}},
 };
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Add,

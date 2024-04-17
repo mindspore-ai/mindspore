@@ -19,29 +19,60 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighbor,
-                      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat32),
                       ResizeNearestNeighborGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighbor,
-                      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat16),
                       ResizeNearestNeighborGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighbor,
-                      KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeInt32),
                       ResizeNearestNeighborGpuKernelMod, int)
-MS_REG_GPU_KERNEL_ONE(
-  ResizeNearestNeighborV2,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  ResizeNearestNeighborGpuKernelMod, double)
-MS_REG_GPU_KERNEL_ONE(
-  ResizeNearestNeighborV2,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  ResizeNearestNeighborGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(
-  ResizeNearestNeighborV2,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  ResizeNearestNeighborGpuKernelMod, half)
-MS_REG_GPU_KERNEL_ONE(
-  ResizeNearestNeighborV2,
-  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-  ResizeNearestNeighborGpuKernelMod, uint8_t)
+MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighborV2,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      ResizeNearestNeighborGpuKernelMod, double)
+MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighborV2,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      ResizeNearestNeighborGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighborV2,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      ResizeNearestNeighborGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighborV2,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt8)
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeUInt8),
+                      ResizeNearestNeighborGpuKernelMod, uint8_t)
 }  // namespace kernel
 }  // namespace mindspore

@@ -40,10 +40,7 @@ int NormalizeBeginPos(int begin_pos, int dim_len) {
   return std::min(begin_pos, dim_len - 1);
 }
 
-bool SliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SliceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   static const std::unordered_map<TypeId, int> type_size_map = {{kNumberTypeBool, sizeof(bool)},
                                                                 {kNumberTypeInt8, sizeof(int8_t)},
                                                                 {kNumberTypeInt16, sizeof(int16_t)},
@@ -64,16 +61,16 @@ bool SliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "input size should be " << kSliceInputsNum;
   }
 
-  TypeId dtype = inputs[0]->GetDtype();
+  TypeId dtype = inputs[0]->dtype_id();
   auto size_pair = type_size_map.find(dtype);
   if (size_pair == type_size_map.end()) {
     MS_LOG(EXCEPTION) << "Slice supports type in type_size_map, but got " << TypeIdToType(dtype)->ToString();
   }
   data_size_ = size_pair->second;
 
-  MS_EXCEPTION_IF_CHECK_FAIL(inputs.at(1)->GetDtype() == inputs[kSliceInputIndex2]->GetDtype(),
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.at(1)->dtype_id() == inputs[kSliceInputIndex2]->dtype_id(),
                              "Begin and size dtype should be same.");
-  param_dtype_ = inputs.at(1)->GetDtype();
+  param_dtype_ = inputs.at(1)->dtype_id();
 
   return true;
 }
@@ -110,11 +107,9 @@ void SliceCpuKernelMod::InitSliceParam(const ShapeVector &input_shape, const std
   slice_param_.param_length_ = DIMENSION_8D;
 }
 
-int SliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
+int SliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   is_got_value_ = false;
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -138,9 +133,24 @@ int SliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 
   std::vector<int64_t> begin;
   std::vector<int64_t> size;
-  auto got_begin = TryGetIntValue(inputs, 1, kernel_name_, &begin, false);
-  auto got_size = TryGetIntValue(inputs, kSliceInputIndex2, kernel_name_, &size, false);
-  if (got_begin && got_size) {
+  if (param_dtype_ == kNumberTypeInt32) {
+    auto begin_int32 = inputs[kIndex1]->GetValueWithCheck<std::vector<int32_t>>();
+    auto size_int32 = inputs[kIndex2]->GetValueWithCheck<std::vector<int32_t>>();
+    if (begin_int32.size() == input_shape.size() && size_int32.size() == input_shape.size()) {
+      for (size_t i = 0; i < input_shape.size(); i++) {
+        begin.push_back(begin_int32.at(i));
+        size.push_back(size_int32.at(i));
+      }
+    }
+  } else if (param_dtype_ == kNumberTypeInt64) {
+    begin = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+    size = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+  } else {
+    MS_LOG(ERROR) << "Invalid dtype: " << TypeIdLabel(param_dtype_);
+    return false;
+  }
+
+  if (!begin.empty() && !size.empty()) {
     if (begin.size() != input_shape.size() || size.size() != input_shape.size()) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the lengths of 'begin' and 'size' must be equal to "
@@ -172,8 +182,9 @@ void SliceSimpleDim2(const int8_t *input, int8_t *output, const SliceStruct *par
   }
 }
 
-bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool SliceCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kSliceInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kSliceInputsNum
                       << ", but got " << inputs.size() << " input(s).";
@@ -229,8 +240,8 @@ bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
     InitSliceParam(input_shape, begin, size);
   }
 
-  auto input_addr = inputs[0]->addr;
-  auto output_addr = outputs[0]->addr;
+  auto input_addr = inputs[0]->device_ptr();
+  auto output_addr = outputs[0]->device_ptr();
   if (origin_dim_size_ == kSliceTwoDims) {
     auto task = [this, &input_addr, &output_addr](size_t start, size_t end) {
       auto src = static_cast<int8_t *>(input_addr) +

@@ -35,12 +35,12 @@ namespace device {
 namespace ascend {
 struct GeInputData {
   std::vector<GeTensor> ge_inputs;
-  std::vector<std::pair<AnfNodePtr, size_t>> need_update_input;
+  std::vector<std::pair<AnfNodeWeakPtr, size_t>> need_update_input;
 };
 
 struct GeOutputData {
   std::vector<GeTensor> ge_outputs;
-  std::vector<std::pair<AnfNodePtr, size_t>> graph_outputs;
+  std::vector<std::pair<AnfNodeWeakPtr, size_t>> graph_outputs;
 };
 
 class GeGraphExecutor : public GraphExecutor {
@@ -56,7 +56,7 @@ class GeGraphExecutor : public GraphExecutor {
   size_t GetGraphFeatureMemory(const FuncGraphPtr &graph) const override;
 
  private:
-  bool RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) const;
+  bool RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs);
   void AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const;
   void AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) const;
   void AllocConstMemory(const transform::RunOptions &options, const KernelGraphPtr &graph, size_t memory_size) const;
@@ -66,13 +66,22 @@ class GeGraphExecutor : public GraphExecutor {
   void BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph);
   void AllocOutputMemory(const KernelGraphPtr &kernel_graph) const;
   bool CompileGraph(const KernelGraphPtr &graph, const std::map<string, string> &compile_options);
+  int64_t CurGraphSinkSize(std::string graph_name);
   std::vector<GeTensor> GenerateInputGeTensor(const KernelGraphPtr &kernel_graph) const;
   std::vector<GeTensor> GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph) const;
   GeDeviceResManager *ResManager() const;
-  void RunInitGraph(const std::string &graph_name) const;
-
-  mindspore::HashMap<KernelGraphPtr, GeInputData> input_datas_;
-  mindspore::HashMap<KernelGraphPtr, GeOutputData> output_datas_;
+  void RunInitGraph(const std::string &graph_name);
+  void AddRefCorrespondPairs(const KernelGraphPtr &graph,
+                             const std::vector<std::pair<uint32_t, uint32_t>> &io_indexes) const;
+  bool BuildGraph(const KernelGraphPtr &graph, const transform::TensorOrderMap &tensor_order_map);
+  DeviceAddressPtr CreateOutputDeviceAddress(const KernelGraphPtr &kernel_graph,
+                                             const KernelWithIndex &output_with_index,
+                                             size_t need_alloc_output_cnt) const;
+  void AllocMemory(const KernelGraphPtr &graph);
+  mindspore::HashMap<session::KernelGraph *, GeInputData> input_datas_;
+  mindspore::HashMap<session::KernelGraph *, GeOutputData> output_datas_;
+  std::map<std::string, int64_t> graph_sink_size_;
+  int64_t pre_sink_size_{-1};
 };
 }  // namespace ascend
 }  // namespace device

@@ -43,8 +43,8 @@ namespace {
 abstract::ShapePtr DataFormatVecPermuteInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto x_shape_ptr = input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   if (IsDynamic(x_shape)) {
     return x_shape_ptr;
   }
@@ -59,7 +59,7 @@ abstract::ShapePtr DataFormatVecPermuteInferShape(const PrimitivePtr &primitive,
 
 TypePtr DataFormatVecPermuteInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   const std::set<TypePtr> valid_types = {kInt32, kInt64};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
 }

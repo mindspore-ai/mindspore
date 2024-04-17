@@ -70,11 +70,11 @@ mindspore.ops.GradOperation
 
     参数：
         - **get_all** (bool) - 计算梯度，如果等于 ``False`` ，获得第一个输入的梯度，如果等于 ``True`` ，获得所有输入的梯度。默认值： ``False`` 。
-        - **get_by_list** (bool) - 如果 `get_all` 和 `get_by_list` 都等于False，则得到第一个输入的梯度。如果等于 ``True`` ，获得所有Parameter自由变量的梯度。如果 `get_all` 和 `get_by_list` 都等于 ``True`` ，则同时得到输入和Parameter自由变量的梯度，输出形式为（“所有输入的梯度”，“所有Parameter自由变量的梯度”）。默认值： ``False`` 。
-        - **sens_param** (bool) - 是否在输入中配置灵敏度（关于输出的梯度）。如果sens_param等于 ``False`` ，自动添加一个 `ones_like(output)` 灵敏度。如果sensor_param等于 ``True`` ，灵敏度（输出的梯度），必须通过location参数或key-value pair参数来传递，如果是通过key-value pair参数传递value，那么key必须为sens。默认值： ``False`` 。
+        - **get_by_list** (bool) - 如果 `get_all` 和 `get_by_list` 都等于 ``False`` ，则得到第一个输入的梯度。如果等于 ``True`` ，获得所有Parameter自由变量的梯度。如果 `get_all` 和 `get_by_list` 都等于 ``True`` ，则同时得到输入和Parameter自由变量的梯度，输出形式为（“所有输入的梯度”，“所有Parameter自由变量的梯度”）。默认值： ``False`` 。
+        - **sens_param** (bool) - 是否在输入中配置灵敏度（关于输出的梯度）。如果 `sens_param` 等于 ``False`` ，自动添加一个 `ones_like(output)` 灵敏度。如果 `sensor_param` 等于 ``True`` ，灵敏度（输出的梯度），必须通过位置参数或键值对参数来传递，如果是通过键值对参数传递value，那么key必须为sens。默认值： ``False`` 。
 
     返回：
         将一个函数作为参数，并返回梯度函数的高阶函数。
 
     异常：
-        - **TypeError** - 如果 `get_all` 、`get_by_list` 或者 `sens_params` 不是bool。
+        - **TypeError** - 如果 `get_all` 、 `get_by_list` 或者 `sens_param` 不是bool。

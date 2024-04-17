@@ -28,10 +28,9 @@
 namespace mindspore {
 namespace dataset {
 
-class TimeMaskingOp : public TensorOp {
+class TimeMaskingOp : public RandomTensorOp {
  public:
-  explicit TimeMaskingOp(bool iid_masks = false, int32_t time_mask_param = 0, int32_t mask_start = 0,
-                         float mask_value_ = 0.0);
+  TimeMaskingOp(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value);
 
   ~TimeMaskingOp() override = default;
 
@@ -46,7 +45,6 @@ class TimeMaskingOp : public TensorOp {
   int32_t time_mask_param_;
   int32_t mask_start_;
   float mask_value_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

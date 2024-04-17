@@ -1,0 +1,12 @@
+#operator complex
+complex:
+  args:
+    real:
+      dtype: tensor
+    imag:
+      dtype: tensor    
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

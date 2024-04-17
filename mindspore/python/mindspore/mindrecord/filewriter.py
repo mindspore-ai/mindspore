@@ -19,6 +19,7 @@ import os
 import platform
 import queue
 import re
+import shutil
 import stat
 import time
 import multiprocessing as mp
@@ -31,6 +32,8 @@ from .shardindexgenerator import ShardIndexGenerator
 from .shardutils import MIN_SHARD_COUNT, MAX_SHARD_COUNT, VALID_ATTRIBUTES, VALID_ARRAY_ATTRIBUTES, \
     check_filename, VALUE_TYPE_MAP, SUCCESS
 from .common.exceptions import ParamValueError, ParamTypeError, MRMInvalidSchemaError, MRMDefineIndexError
+from .config import _get_enc_key, _get_enc_mode, _get_dec_mode, _get_hash_mode, encrypt, decrypt, append_hash_to_file, \
+    verify_file_hash
 
 __all__ = ['FileWriter']
 
@@ -57,14 +60,14 @@ class FileWriter:
         >>>
         >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
         >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
-        >>> schema_id = writer.add_schema(schema_json, "test_schema")
+        >>> writer.add_schema(schema_json, "test_schema")
         >>> indexes = ["file_name", "label"]
-        >>> status = writer.add_index(indexes)
+        >>> writer.add_index(indexes)
         >>> for i in range(10):
         ...     data = [{"file_name": str(i) + ".jpg", "label": i,
         ...              "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
-        ...     status = writer.write_raw_data(data)
-        >>> status = writer.commit()
+        ...     writer.write_raw_data(data)
+        >>> writer.commit()
     """
 
     def __init__(self, file_name, shard_num=1, overwrite=False):
@@ -93,6 +96,9 @@ class FileWriter:
         if self._shard_num == 1:
             self._paths = [self._file_name]
         else:
+            if _get_enc_key() is not None or _get_hash_mode() is not None:
+                raise RuntimeError("When encode mode or hash check is enabled, " +
+                                   "the automatic sharding function is unavailable.")
             self._paths = ["{}{}".format(self._file_name,
                                          str(x).rjust(suffix_shard_size, '0'))
                            for x in range(self._shard_num)]
@@ -135,20 +141,34 @@ class FileWriter:
             ...          "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
             >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
-            >>> schema_id = writer.add_schema(schema_json, "test_schema")
-            >>> status = writer.write_raw_data(data)
-            >>> status = writer.commit()
+            >>> writer.add_schema(schema_json, "test_schema")
+            >>> writer.write_raw_data(data)
+            >>> writer.commit()
             >>>
             >>> write_append = FileWriter.open_for_append("test.mindrecord")
             >>> for i in range(9):
             ...     data = [{"file_name": str(i+1) + ".jpg", "label": i,
             ...              "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
-            ...     status = write_append.write_raw_data(data)
-            >>> status = write_append.commit()
+            ...     write_append.write_raw_data(data)
+            >>> write_append.commit()
         """
         if platform.system().lower() == "windows":
             file_name = file_name.replace("\\", "/")
         check_filename(file_name)
+
+        # decrypt the data file and index file
+        index_file_name = file_name + ".db"
+        decrypt_filename = decrypt(file_name, _get_enc_key(), _get_dec_mode())
+        decrypt_index_filename = decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+
+        # verify integrity check
+        verify_file_hash(decrypt_filename)
+        verify_file_hash(decrypt_index_filename)
+
+        # move after decrypt and hash check all success
+        if decrypt_filename != file_name:
+            shutil.move(decrypt_filename, file_name)
+            shutil.move(decrypt_index_filename, index_file_name)
 
         # construct ShardHeader
         reader = ShardReader()
@@ -160,6 +180,7 @@ class FileWriter:
         instance.init_append(file_name, header)
         return instance
 
+    # pylint: disable=missing-docstring
     def init_append(self, file_name, header):
         self._append = True
 
@@ -170,6 +191,7 @@ class FileWriter:
 
         self._header = header
         self._writer.open_for_append(self._file_name)
+        self._paths = [self._file_name]
 
     def add_schema(self, content, desc=None):
         """
@@ -220,9 +242,6 @@ class FileWriter:
             content (dict): Dictionary of schema content.
             desc (str, optional): String of schema description, Default: ``None`` .
 
-        Returns:
-            int, schema id.
-
         Raises:
             MRMInvalidSchemaError: If schema is invalid.
             MRMBuildSchemaError: If failed to build schema.
@@ -238,7 +257,7 @@ class FileWriter:
         if ret is False:
             raise MRMInvalidSchemaError(error_msg)
         schema = self._header.build_schema(content, desc)
-        return self._header.add_schema(schema)
+        self._header.add_schema(schema)
 
     def add_index(self, index_fields):
         """
@@ -255,9 +274,6 @@ class FileWriter:
         Args:
             index_fields (list[str]): fields from schema.
 
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-
         Raises:
             ParamTypeError: If index field is invalid.
             MRMDefineIndexError: If index field is not primitive type.
@@ -272,16 +288,7 @@ class FileWriter:
                 raise MRMDefineIndexError("Failed to set field {} since it's not primitive type.".format(field))
             if not isinstance(field, str):
                 raise ParamTypeError('index field', 'str')
-        return self._header.add_index_fields(index_fields)
-
-    def open_and_set_header(self):
-        logger.warning("This interface will be deleted or invisible in the future.")
-
-        if not self._writer.is_open:
-            ret = self._writer.open(self._paths, self._overwrite)
-        if not self._writer.get_shard_header():
-            return self._writer.set_shard_header(self._header)
-        return ret
+        self._header.add_index_fields(index_fields)
 
     def write_raw_data(self, raw_data, parallel_writer=False):
         """
@@ -294,9 +301,6 @@ class FileWriter:
         Args:
            raw_data (list[dict]): List of raw data.
            parallel_writer (bool, optional): Write raw data in parallel if it equals to True. Default: ``False`` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -329,7 +333,8 @@ class FileWriter:
                 if not isinstance(each_raw, dict):
                     raise ParamTypeError('raw_data item', 'dict')
             self._verify_based_on_schema(raw_data)
-            return self._writer.write_raw_data(raw_data, True, parallel_writer)
+            self._writer.write_raw_data(raw_data, True, parallel_writer)
+            return
 
         ## parallel write mode
         # init the _writers and launch the workers
@@ -369,7 +374,7 @@ class FileWriter:
                         raise RuntimeError("Worker process(pid:{}) has stopped abnormally. Please check " \
                                            "the above log".format(self._workers[i].pid))
                 continue
-            return SUCCESS
+            return
 
     def set_header_size(self, header_size):
         """
@@ -379,11 +384,8 @@ class FileWriter:
         the default size (16MB), users need to call the API to set a proper size.
 
         Args:
-            header_size (int): Size of header, between 16*1024(16KB) and
+            header_size (int): Size of header, in bytes, which between 16*1024(16KB) and
                 128*1024*1024(128MB).
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             MRMInvalidHeaderSizeError: If failed to set header size.
@@ -391,9 +393,9 @@ class FileWriter:
         Examples:
             >>> from mindspore.mindrecord import FileWriter
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
-            >>> status = writer.set_header_size(1 << 25) # 32MB
+            >>> writer.set_header_size(1 << 25) # 32MB
         """
-        return self._writer.set_header_size(header_size)
+        self._writer.set_header_size(header_size)
 
     def set_page_size(self, page_size):
         """
@@ -404,11 +406,8 @@ class FileWriter:
         to set a proper size.
 
         Args:
-           page_size (int): Size of page, between 32*1024(32KB) and
+           page_size (int): Size of page, in bytes, which between 32*1024(32KB) and
                256*1024*1024(256MB).
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             MRMInvalidPageSizeError: If failed to set page size.
@@ -416,9 +415,9 @@ class FileWriter:
         Examples:
             >>> from mindspore.mindrecord import FileWriter
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
-            >>> status = writer.set_page_size(1 << 26)  # 64MB
+            >>> writer.set_page_size(1 << 26)  # 64MB
         """
-        return self._writer.set_page_size(page_size)
+        self._writer.set_page_size(page_size)
 
     def commit(self):  # pylint: disable=W0212
         """
@@ -426,9 +425,6 @@ class FileWriter:
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.FileWriter` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             MRMOpenError: If failed to open MindRecord file.
@@ -464,7 +460,7 @@ class FileWriter:
 
             self._parallel_commit()
 
-        # change the file mode to 600
+        # change file mode first, because encrypt / hash check may failed
         mindrecord_files = []
         index_files = []
         for item in self._paths:
@@ -476,10 +472,20 @@ class FileWriter:
                 os.chmod(index_file, stat.S_IRUSR | stat.S_IWUSR)
                 index_files.append(index_file)
 
+        for item in self._paths:
+            if os.path.exists(item):
+                # add the integrity check string
+                if _get_hash_mode() is not None:
+                    append_hash_to_file(item)
+                    append_hash_to_file(item + ".db")
+
+                # encrypt the mindrecord file
+                if _get_enc_key() is not None:
+                    encrypt(item, _get_enc_key(), _get_enc_mode())
+                    encrypt(item + ".db", _get_enc_key(), _get_enc_mode())
+
         logger.info("The list of mindrecord files created are: {}, and the list of index files are: {}".format(
             mindrecord_files, index_files))
-
-        return SUCCESS
 
     def _index_worker(self, i):
         """The worker do the index generator"""
@@ -495,15 +501,18 @@ class FileWriter:
             if self._workers[i].is_alive():
                 alive_count += 1
         if alive_count != len(self._paths):
-            raise RuntimeError("Parallel write worker error, please check the log file.")
+            raise RuntimeError("Parallel write worker error, please check the above log.")
 
         # send EOF to worker process
-        for _ in range(len(self._paths)):
+        for i in range(len(self._paths)):
             while True:
                 try:
                     self._queue.put("EOF", block=False)
                 except queue.Full:
                     time.sleep(1)
+                    if not self._workers[i].is_alive():
+                        raise RuntimeError("Worker process(pid:{}) has stopped abnormally. Please check " \
+                                           "the above log".format(self._workers[i].pid))
                     continue
                 break
 
@@ -591,29 +600,38 @@ class FileWriter:
 
                 if field not in v:
                     error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                        "there is not '{}' object in the raw data.".format(i, field)
+                                        "there is not field: '{}' in the raw data.".format(i, field)
                     continue
                 field_type = type(v[field]).__name__
                 if field_type not in VALUE_TYPE_MAP:
                     error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                        "data type for '{}' is not matched.".format(i, field)
+                                        "data type: '{}' for field: '{}' is not matched.".format(i, field_type, field)
                     continue
 
                 if schema_content[field]["type"] not in VALUE_TYPE_MAP[field_type]:
                     error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                        "data type for '{}' is not matched.".format(i, field)
+                                        "data type: '{}' for field: '{}' is not matched." \
+                                        .format(i, schema_content[field]["type"], field)
                     continue
 
                 if field_type == 'ndarray':
                     if 'shape' not in schema_content[field]:
                         error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                            "data type for '{}' is not matched.".format(i, field)
+                                            "data shape for field: '{}' is not specified.".format(i, field)
+                    elif 'type' not in schema_content[field]:
+                        error_data_dic[i] = "for schema, {} th data is wrong, " \
+                                            "data type for field: '{}' is not specified.".format(i, field)
+                    elif schema_content[field]['type'] != str(v[field].dtype):
+                        error_data_dic[i] = "for schema, {} th data is wrong, " \
+                                            "data type: '{}' for field: '{}' is not matched." \
+                                            .format(i, str(v[field].dtype), field)
                     else:
                         try:
                             np.reshape(v[field], schema_content[field]['shape'])
                         except ValueError:
                             error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                                "data type for '{}' is not matched.".format(i, field)
+                                                "data shape: '{}' for field: '{}' is not matched." \
+                                                .format(i, str(v[field].shape), field)
         error_data_dic = sorted(error_data_dic.items(), reverse=True)
         for i, v in error_data_dic:
             raw_data.pop(i)

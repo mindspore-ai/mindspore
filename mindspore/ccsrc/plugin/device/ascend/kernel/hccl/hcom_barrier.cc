@@ -19,8 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomBarrierKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool HcomBarrierKernel::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                               const std::vector<KernelTensor *> &, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclBarrier(stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
@@ -32,9 +32,8 @@ bool HcomBarrierKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
 
 const std::vector<size_t> &HcomBarrierKernel::GetOutputSizeList() const {
   // Operators must have output, so give Barrier a dummy output.
-  size_t size = kDim1 * sizeof(float);
-  mutable_output_size_list_.push_back(size);
-  return mutable_output_size_list_;
+  static const std::vector<size_t> dummy_output_size_list{kDim1 * sizeof(float)};
+  return dummy_output_size_list;
 }
 }  // namespace kernel
 }  // namespace mindspore

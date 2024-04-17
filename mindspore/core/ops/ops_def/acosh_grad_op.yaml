@@ -1,0 +1,12 @@
+#operator acosh_grad
+acosh_grad:
+  args:
+    out:
+      dtype: tensor
+    dout:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True

@@ -84,7 +84,7 @@ def add_conv_before_flatten(stree: SymbolTree):
 def add_my_cell_after_x_12(stree: SymbolTree):
     for node in stree.nodes():
         targets = node.get_targets()
-        if targets is None:
+        if not targets:
             continue
         assert targets[0].type == ValueType.NamingValue
         target = str(targets[0])
@@ -103,13 +103,13 @@ def add_my_cell_after_x_12(stree: SymbolTree):
 def erase_node_x_11(stree: SymbolTree):
     return_node = None
     for node in stree.nodes():
-        if node.get_targets() is None:
+        if not node.get_targets():
             return_node = node
             break
     assert return_node is not None
     for node in stree.nodes():
         targets = node.get_targets()
-        if targets is None:
+        if not targets:
             continue
         assert targets[0].type == ValueType.NamingValue
         target = str(targets[0])

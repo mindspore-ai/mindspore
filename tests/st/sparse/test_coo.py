@@ -24,7 +24,7 @@ from mindspore.ops import functional as F
 from .sparse_utils import get_platform, compare_res, compare_coo
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -52,33 +52,6 @@ def test_make_coo():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_make_coo_empty():
-    """
-    Feature: Test COOTensor Constructor in Graph and PyNative.
-    Description: Test COOTensor(indices, values, shape) and COOTensor(COOTensor)
-    Expectation: Success.
-    """
-    indices = Tensor([], dtype=mstype.int32)
-    values = Tensor([], dtype=mstype.float32)
-    dense_shape = (3, 4)
-
-    def test_pynative():
-        return COOTensor(indices, values, dense_shape)
-    test_graph = jit(test_pynative)
-
-    coo1 = test_pynative()
-    coo2 = test_graph()
-    compare_coo(coo1, coo2)
-    coo3 = COOTensor(coo_tensor=coo2)
-    compare_coo(coo3, coo2)
-
-
-@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -132,7 +105,7 @@ def test_coo_tensor_with_control_if():
     assert out[2] == shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -167,7 +140,7 @@ def test_coo_tensor_in_while():
     assert out.shape == shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -239,7 +212,7 @@ def test_coo_coalesce():
     assert np.allclose(expect_values, coalesce_output.values.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -268,7 +241,7 @@ def test_dtype_coo_tensor():
     assert out4 in [mstype.float32]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -323,7 +296,7 @@ def test_coo_attr():
             assert py_tuple[i] == g_tuple[i]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

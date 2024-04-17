@@ -46,6 +46,7 @@ class MS_API AscendAllocatorPlugin {
   void Free(void *device_data, int device_id);
   void *MallocHost(size_t size);
   void FreeHost(void *host_data);
+  void Clear();
   Status CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size, int device_id);
   Status CopyHostDataToDevice(void *host_data, void *device_data, size_t data_size);
   Status CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t src_data_size, size_t dst_data_size,

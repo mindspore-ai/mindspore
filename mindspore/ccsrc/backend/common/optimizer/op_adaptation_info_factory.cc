@@ -15,7 +15,6 @@
  */
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
 
-#include <memory>
 #include "kernel/oplib/oplib.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/anfalgo.h"
@@ -129,6 +128,7 @@ CNodePtr OpAdaptationInfoRegister::CreateTargetOp(const CNodePtr &origin_op,
   std::vector<AnfNodePtr> target_inputs;
   auto inputs = origin_op->inputs();
   target_inputs.push_back(inputs[0]);
+  auto graph = origin_op->func_graph();
   bool ir_change = false;
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
@@ -152,6 +152,9 @@ CNodePtr OpAdaptationInfoRegister::CreateTargetOp(const CNodePtr &origin_op,
         MS_LOG(INFO) << "Convert " << origin_op->fullname_with_scope() << "'s input " << i << " to attr failed.";
         return nullptr;
       }
+      auto kernel_graph = graph->cast<KernelGraphPtr>();
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      (void)kernel_graph->RemoveValueNodeFromGraph(input_node->cast<ValueNodePtr>());
       ir_change = true;
     } else {
       target_inputs.push_back(inputs[i + 1]);
@@ -160,7 +163,6 @@ CNodePtr OpAdaptationInfoRegister::CreateTargetOp(const CNodePtr &origin_op,
 
   // Update target_op's inputs
   target_inputs[0] = NewValueNode(target_primitive);
-  auto graph = origin_op->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
   auto target_op = opt::NewCNode(target_inputs, graph, {origin_op});
   MS_EXCEPTION_IF_NULL(target_op);
@@ -190,6 +192,9 @@ bool OpAdaptationInfoRegister::ConvertInputToAttr(const CNodePtr &origin_op, siz
                                                   const std::shared_ptr<AnfNode> &input_node,
                                                   const std::string &attr_data_type,
                                                   const std::shared_ptr<Primitive> &target_primitive) {
+  MS_EXCEPTION_IF_NULL(origin_op);
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(target_primitive);
   auto value_node = input_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
   MS_LOG(DEBUG) << "start erase input[" << i
@@ -197,6 +202,7 @@ bool OpAdaptationInfoRegister::ConvertInputToAttr(const CNodePtr &origin_op, siz
                 << ", Type:" << value_node->type_name();
 
   auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<tensor::TensorPtr>();
     if (tensor->data().const_data() == nullptr && !tensor->has_user_data(kTensorValueIsEmpty)) {

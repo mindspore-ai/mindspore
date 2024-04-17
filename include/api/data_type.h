@@ -38,8 +38,8 @@ enum class DataType : int {
   kNumberTypeFloat16 = 42,
   kNumberTypeFloat32 = 43,
   kNumberTypeFloat64 = 44,
-  kNumberTypeBFloat16 = 46,
-  kNumberTypeEnd = 53,
+  kNumberTypeBFloat16 = 45,
+  kNumberTypeEnd = 52,
   // add new enum here
   kInvalidType = INT32_MAX,
 };

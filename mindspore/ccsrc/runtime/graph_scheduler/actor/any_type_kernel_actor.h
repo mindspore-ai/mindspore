@@ -77,9 +77,9 @@ class AnyTypeKernelActor : public SuperKernelActor {
   // Receive graph outputs:
   // 1. find the corresponding arrow according to the current type key, and send the outputs.
   void RunForGraphOutput(OpContext<DeviceTensor> *const context);
+  void CheckParams(OpContext<DeviceTensor> *const context);
   void FetchGraphOutput(OpContext<DeviceTensor> *const context);
   void EraseGraphOutput(OpContext<DeviceTensor> *const context);
-  void UpdataDynamicShapeParameterForGraphOutput(OpContext<DeviceTensor> *const context);
   void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
                         const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) override;
 

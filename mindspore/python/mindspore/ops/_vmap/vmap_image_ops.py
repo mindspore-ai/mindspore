@@ -27,18 +27,20 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
 
 
 @vmap_rules_getters.register(IMG.ResizeBilinearV2)
-@vmap_rules_getters.register(IMG.ResizeLinear1D)
-def get_resize_dynamic_input_rule(prim, axis_size):
-    """VmapRule for `Resize` operation."""
+def get_resize_bilinear_v2_vmap_rule(prim, axis_size):
+    """VmapRule for `ResizeBilinearV2` operation."""
     prim_name = prim.name
 
-    def vmap_rule(x_bdim, size_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, size_bdim)
+    def vmap_rule(x_bdim, size_bdim, align_corners_bdim, half_pixel_centers_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, size_bdim,
+                                                      align_corners_bdim, half_pixel_centers_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
         size, size_dim = size_bdim
+        align_corners, _ = align_corners_bdim
+        half_pixel_centers, _ = half_pixel_centers_bdim
         if size_dim is not None:
             _raise_value_error("The source axis of `size` in `{}` must be None, "
                                "but got {}.".format(prim_name, size_dim))
@@ -46,11 +48,39 @@ def get_resize_dynamic_input_rule(prim, axis_size):
         x = _bdim_at_front(x, x_dim, axis_size)
         x_shape = F.shape(x)
         # (b, n, c, i_h, i_w) -> (b*n, c, i_h, i_w) for 4-D input
-        # (b, n, c, i_w) -> (b*n, c, i_w) for 3-D input
         x = F.reshape(x, (-1,) + x_shape[2:])
-        out = prim(x, size)
+        out = prim(x, size, align_corners, half_pixel_centers)
         out_shape = F.shape(out)
         # (b*n, c, o_h, o_w) -> (b, n, c, o_h, o_w) for 4-D input
+        out = F.reshape(out, x_shape[:2] + out_shape[1:])
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(IMG.ResizeLinear1D)
+def get_resize_linear_1d_vmap_rule(prim, axis_size):
+    """VmapRule for `ResizeLinear1D` operation."""
+    prim_name = prim.name
+
+    def vmap_rule(x_bdim, size_bdim, coordinate_transformation_mode_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, size_bdim, coordinate_transformation_mode_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        size, size_dim = size_bdim
+        coordinate_transformation_mode, _ = coordinate_transformation_mode_bdim
+        if size_dim is not None:
+            _raise_value_error("The source axis of `size` in `{}` must be None, "
+                               "but got {}.".format(prim_name, size_dim))
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_shape = F.shape(x)
+        # (b, n, c, i_w) -> (b*n, c, i_w) for 3-D input
+        x = F.reshape(x, (-1,) + x_shape[2:])
+        out = prim(x, size, coordinate_transformation_mode)
+        out_shape = F.shape(out)
         # (b*n, c, o_w) -> (b, n, c, o_w) for 3-D input
         out = F.reshape(out, x_shape[:2] + out_shape[1:])
         return out, 0
@@ -59,28 +89,55 @@ def get_resize_dynamic_input_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(G.ResizeBilinearGrad)
-@vmap_rules_getters.register(G.ResizeLinear1DGrad)
-def get_resize_grad_dynamic_rule(prim, axis_size):
-    """VmapRule for `ResizeGrad` operation."""
+def get_resize_bilinear_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `ResizeBilinearGrad` operation."""
 
-    def vmap_rule(grad_bdim, img_bdim):
-        is_all_none, result = vmap_general_preprocess(grad_bdim, img_bdim)
+    def vmap_rule(grad_bdim, img_bdim, align_corners_bdim, half_pixel_centers_bdim):
+        is_all_none, result = vmap_general_preprocess(grad_bdim, img_bdim, align_corners_bdim, half_pixel_centers_bdim)
         if is_all_none:
             return result
 
         grad, grad_dim = grad_bdim
         img, img_dim = img_bdim
+        align_corners, _ = align_corners_bdim
+        half_pixel_centers, _ = half_pixel_centers_bdim
 
         grad = _bdim_at_front(grad, grad_dim, axis_size)
         grad_shape = F.shape(grad)
         img = _bdim_at_front(img, img_dim, axis_size)
         img_shape = F.shape(img)
         # (b, n, c, i_h, i_w) -> (b*n, c, i_h, i_w) for 4-D input
+        grad = F.reshape(grad, (-1,) + grad_shape[2:])
+        img = F.reshape(img, (-1,) + img_shape[2:])
+        out = prim(grad, img, align_corners, half_pixel_centers)
+        # (b*n, c, o_h, o_w) -> (b, n, c, o_h, o_w) for 4-D input
+        out = F.reshape(out, img_shape)
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.ResizeLinear1DGrad)
+def get_resize_linear_1d_grad_vmap_rule(prim, axis_size, coordinate_transformation_mode_bdim):
+    """VmapRule for `ResizeLinear1DGrad` operation."""
+
+    def vmap_rule(grad_bdim, img_bdim):
+        is_all_none, result = vmap_general_preprocess(grad_bdim, img_bdim, coordinate_transformation_mode_bdim)
+        if is_all_none:
+            return result
+
+        grad, grad_dim = grad_bdim
+        img, img_dim = img_bdim
+        coordinate_transformation_mode, _ = coordinate_transformation_mode_bdim
+
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        grad_shape = F.shape(grad)
+        img = _bdim_at_front(img, img_dim, axis_size)
+        img_shape = F.shape(img)
         # (b, n, c, i_w) -> (b*n, c, i_w) for 3-D input
         grad = F.reshape(grad, (-1,) + grad_shape[2:])
         img = F.reshape(img, (-1,) + img_shape[2:])
-        out = prim(grad, img)
-        # (b*n, c, o_h, o_w) -> (b, n, c, o_h, o_w) for 4-D input
+        out = prim(grad, img, coordinate_transformation_mode)
         # (b*n, c, o_w) -> (b, n, c, o_w) for 3-D input
         out = F.reshape(out, img_shape)
         return out, 0

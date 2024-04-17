@@ -89,8 +89,8 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
         log_beta_b(nullptr) {}
   ~CtcLossGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -100,16 +100,12 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCTCLossInputsNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCTCLossOutputsNum, kernel_name_);
 
-    MS_EXCEPTION_IF_NULL(base_operator);
-    PrimitivePtr prim = base_operator->GetPrim();
+    PrimitivePtr prim = primitive_;
     MS_EXCEPTION_IF_NULL(prim);
-    kernel_name_ = prim->name();
 
     preprocess_collapse_repeated_ = GetValue<bool>(prim->GetAttr("preprocess_collapse_repeated"));
     ctc_merge_repeated_ = GetValue<bool>(prim->GetAttr("ctc_merge_repeated"));
@@ -118,11 +114,8 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     auto shape_signed = inputs[kPrevOutput0th]->GetShapeVector();
@@ -164,8 +157,8 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void LaunchInit(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                  const std::vector<AddressPtr> &outputs) {
+  void LaunchInit(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                  const std::vector<KernelTensor *> &outputs) {
     probs = GetDeviceAddress<T>(inputs, kInputIdxForProbs);
     label_indices = GetDeviceAddress<int64_t>(inputs, kInputIdxForLabelIndices);
     label_values = GetDeviceAddress<int>(inputs, kInputIdxForLabelValues);
@@ -191,8 +184,8 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
     log_beta_b = nullptr;
   }
 
-  void LaunchFirstHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  void LaunchFirstHalf(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     cudaError_t status = cudaErrorNotReady;
     status = CalculateMaxSequence(sequence_length, max_labels_length, batch, stream);
@@ -233,8 +226,8 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
   }
 
-  void LaunchSecondHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  void LaunchSecondHalf(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     const int SOffSet = 2 * max_labels_length_host + 1;
     int log_prob_size = batch * SOffSet * max_time;
@@ -272,14 +265,8 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeLists() {
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
-    input_size_list_.push_back(probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
-                               probs_dims_[kProbDimsIdxForNumClass] * sizeof(T));
-    input_size_list_.push_back(label_indice_size_);
-    input_size_list_.push_back(label_size_);
-    input_size_list_.push_back(sequence_lengths_size_);
     workspace_size_list_.push_back(probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
                                    probs_dims_[kProbDimsIdxForNumClass] * sizeof(T));
     workspace_size_list_.push_back(sequence_lengths_size_);

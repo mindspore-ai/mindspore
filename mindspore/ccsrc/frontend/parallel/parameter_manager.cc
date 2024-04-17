@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <deque>
+#include <functional>
 
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
@@ -352,6 +354,22 @@ void HandleSymbolicKeyInstance(const FuncGraphPtr &root, const std::vector<AnfNo
   }
 }
 
+bool IsStrategySaved(const AnfNodePtr &parameter_node) {
+  MS_EXCEPTION_IF_NULL(parameter_node);
+  auto cloned_parameter = parameter_node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(cloned_parameter);
+
+  // find the clone parameter
+  if (!cloned_parameter->has_default()) {
+    return false;
+  }
+  auto param_value = cloned_parameter->param_info();
+  if (param_value == nullptr) {
+    return false;
+  }
+  return param_value->strategy_ckpt_saved();
+}
+
 bool ParameterIsCloned(const AnfNodePtr &parameter_node) {
   MS_EXCEPTION_IF_NULL(parameter_node);
   auto cloned_parameter = parameter_node->cast<ParameterPtr>();
@@ -442,6 +460,17 @@ py::object GetPyParameterObj(const ParamInfoPtr &param_info, const std::string &
   return python_adapter::GetPyObjAttr(py_obj, obj);
 }
 
+static bool IsAccuGradObj(const py::object &py_obj) {
+  auto name = python_adapter::GetPyObjAttr(py_obj, PARAM_NAME);
+  if (py::isinstance<py::none>(name)) {
+    return false;
+  }
+  if (py::cast<std::string>(name).find(ACCU_GRADS) == 0) {
+    return true;
+  }
+  return false;
+}
+
 void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &tensor_layout) {
   auto param_info = parameter->param_info();
   if (param_info == nullptr) {
@@ -464,20 +493,22 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
   // create python layout obj
   const auto &device_arrangement = tensor_layout->device_arrangement().array();
   const auto &tensor_map = tensor_layout->tensor_map().array();
-  auto slice_shape = tensor_layout->slice_shape().array();
+  auto slice_shape = tensor_layout->base_slice_shape().array();
   int64_t field_size = tensor_layout->get_field_size();
   bool uniform_split = tensor_layout->uniform_split();
   std::string opt_shard_group = tensor_layout->opt_shard_group();
   if (!opt_shard_group.empty()) {
     slice_shape = tensor_layout->opt_shard_slice_shape();
   }
+  auto full_shape = tensor_layout->tensor_shape().array();
   py::tuple layout =
-    py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group);
+    py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group, full_shape);
 
   // Call Python _slice_parameter Fn to slice python parameter obj
   (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, py_obj, py::str(phase), layout);
 
   // handle cloned parameter, like accu_grad and optimizer param
+  auto grad_accumulation_shard = ParallelContext::GetInstance()->grad_accumulation_shard();
   auto cloned_py_obj = GetPyParameterObj(param_info, CLONED_OBJ);
   if (!py::isinstance<py::none>(cloned_py_obj)) {
     if (!py::isinstance<py::list>(cloned_py_obj)) {
@@ -486,8 +517,16 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
     auto obj_list = py::cast<py::list>(cloned_py_obj);
     for (size_t i = 0; i < obj_list.size(); ++i) {
       py::object each_cloned_obj = obj_list[i];
+      auto cloned_param_slice_shape = tensor_layout->slice_shape().array();
+      if (!opt_shard_group.empty()) {
+        if (!IsAccuGradObj(each_cloned_obj) || grad_accumulation_shard) {
+          cloned_param_slice_shape = tensor_layout->opt_shard_slice_shape();
+        }
+      }
+      py::tuple cloned_param_layout = py::make_tuple(device_arrangement, tensor_map, cloned_param_slice_shape,
+                                                     field_size, uniform_split, opt_shard_group, full_shape);
       (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, each_cloned_obj, py::str(phase),
-                                     layout);
+                                     cloned_param_layout);
     }
   }
 }
@@ -742,16 +781,20 @@ static bool AdafactorStateIsOptShard(const std::string &opt_shard_group, size_t 
   std::string exp_row_name = EXP_AVG_SQ_ROW + param_name;
   std::string exp_col_name = EXP_AVG_SQ_COL + param_name;
   std::string exp_avg_name = EXP_AVG_SQ + param_name;
+  std::string exp_insta_row_name = EXP_AVG_INSTA_ROW + param_name;
+  std::string exp_insta_col_name = EXP_AVG_INSTA_COL + param_name;
 
   if (shape_size > 2 && state_name == exp_avg_name) {
     return false;
   }
 
-  if (shape_size == 2 && (state_name == exp_col_name || state_name == exp_avg_name)) {
+  if (shape_size == 2 &&
+      (state_name == exp_col_name || state_name == exp_avg_name || state_name == exp_insta_col_name)) {
     return false;
   }
 
-  if (shape_size == 1 && (state_name == exp_row_name || state_name == exp_col_name)) {
+  if (shape_size == 1 &&
+      (state_name == exp_row_name || state_name == exp_col_name || state_name == exp_insta_row_name)) {
     return false;
   }
 
@@ -815,7 +858,8 @@ AnfNodePtr RefParameterToActualParameter(const AnfNodePtr &node) {
     auto cnode_input = cnode->input(curr_param_index + 1);
     auto new_cnode = GetInputNodeWithFilter(cnode_input, [&](const CNodePtr &cnode) {
       bool filter = IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather) ||
-                    IsPrimitiveCNode(cnode, prim::kPrimLoad) || IsPrimitiveCNode(cnode, prim::kPrimDepend);
+                    IsPrimitiveCNode(cnode, prim::kPrimLoad) || IsPrimitiveCNode(cnode, prim::kPrimDepend) ||
+                    IsPrimitiveCNode(cnode, prim::kPrimCast);
       return std::make_pair(filter, 1);
     });
     return RefParameterToActualParameter(new_cnode);
@@ -853,17 +897,10 @@ static std::pair<AnfNodePtr, bool> FindParameterByFuncGraph(const AnfNodePtr &no
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(fg);
-  auto fg_parameters = fg->parameters();
 
   auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr).first;
-  auto pre_cnode = pre_node->cast<CNodePtr>();
-  for (size_t index = 1; index < pre_cnode->inputs().size(); ++index) {
-    auto res = FindParameter(pre_cnode->input(index), pre_cnode->func_graph());
-    if (!res.first) {
-      continue;
-    }
-    return res;
+  if (pre_node) {
+    return FindParameter(pre_node, pre_node->func_graph());
   }
   return std::make_pair(nullptr, false);
 }
@@ -887,7 +924,7 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
     return FindParameterByFuncGraph(node);
   }
   if (!IsValueNode<Primitive>(cnode->input(0))) {
-    for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+    for (size_t index = 0; index < cnode->size(); ++index) {
       auto res = FindParameter(cnode->input(index), func_graph);
       if (!res.first) {
         continue;
@@ -903,7 +940,7 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
   }
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(prim_anf_node);
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+  for (size_t index = 0; index < cnode->size(); ++index) {
     PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(prim);
     if ((prim->name() == DEPEND || prim->name() == LOAD || IsInAllGatherNodeList(cnode)) && index != 1) {
@@ -935,7 +972,7 @@ std::pair<AnfNodePtr, bool> FindParameterWithAllgather(const AnfNodePtr &node, c
 
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+  for (size_t index = 0; index < cnode->size(); ++index) {
     if (index != 1) {
       continue;
     }
@@ -972,11 +1009,11 @@ Shape ValueSequeueScaleToShape(const ValuePtr &value_seq, const Shape &scale, si
   if (TransValueSequeueToVector(value_seq, &origin_value_vector) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Transform value_seq to vector failed";
   }
-  if (origin_value_vector.size() != scale.size()) {
-    MS_LOG(EXCEPTION) << "Shape not equal, cannot scale, value_seq size is: " << origin_value_vector.size()
-                      << " scale size is: " << scale.size();
+  if (origin_value_vector.size() > scale.size()) {
+    MS_LOG(EXCEPTION) << "Cannot scale, the size of value_seq is: " << origin_value_vector.size()
+                      << ", which should be less_equal than scale's size which is: " << scale.size();
   }
-  for (size_t i = 0; i < scale.size(); ++i) {
+  for (size_t i = 0; i < origin_value_vector.size(); ++i) {
     origin_value_vector[i] = origin_value_vector[i] / scale[i];
     if (i == 0) {
       origin_value_vector[i] = origin_value_vector[i] * SizeToLong(expand_ratio);
@@ -1369,8 +1406,21 @@ void HandleMirrorInAdaSum(
   }
 }
 
-void HandleAdaFactorOpt(const FuncGraphPtr &root) {
+void SetParamInfoSaveStrategy(ParameterPtr row_col_param) {
+  if (!row_col_param) {
+    return;
+  }
+  auto param_info = row_col_param->param_info();
+  if (param_info) {
+    param_info->set_strategy_ckpt_saved(true);
+  }
+}
+
+void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
+                               const FuncGraphManagerPtr &manager) {
+  MS_LOG(INFO) << "Adafactor or Came optimizer process start";
   MS_EXCEPTION_IF_NULL(root);
+  std::set<AnfNodePtr> origin_params;
   for (auto &param_node : root->parameters()) {
     MS_EXCEPTION_IF_NULL(param_node);
     auto param = param_node->cast<ParameterPtr>();
@@ -1383,7 +1433,8 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root) {
     int64_t row_col_count = 0;
     int64_t exp_avg_sq_count = 0;
     for (auto &row_col_node : root->parameters()) {
-      if (row_col_count == 2 && exp_avg_sq_count == 1) {
+      bool is_all_param_collected = (row_col_count == 4) && (exp_avg_sq_count == 1);
+      if (is_all_param_collected) {
         break;
       }
 
@@ -1394,13 +1445,16 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root) {
       std::string param_name = param->name();
       std::string exp_row_name = EXP_AVG_SQ_ROW + param_name;
       std::string exp_col_name = EXP_AVG_SQ_COL + param_name;
+      std::string exp_insta_row_name = EXP_AVG_INSTA_ROW + param_name;
+      std::string exp_insta_col_name = EXP_AVG_INSTA_COL + param_name;
       std::string exp_avg_name = EXP_AVG_SQ + param_name;
+      std::set<std::string> came_param_set = {exp_row_name, exp_col_name, exp_insta_row_name, exp_insta_col_name,
+                                              exp_avg_name};
 
-      if ((row_col_param_name != exp_row_name) && (row_col_param_name != exp_col_name) &&
-          (row_col_param_name != exp_avg_name)) {
+      if (came_param_set.find(row_col_param_name) == came_param_set.end()) {
         continue;
       }
-
+      origin_params.insert(param_node);
       auto tensor_layout = param->user_data<TensorLayout>();
       MS_EXCEPTION_IF_NULL(tensor_layout);
       auto slice_shape = tensor_layout->slice_shape().array();
@@ -1410,7 +1464,7 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root) {
       }
 
       auto shape_size = slice_shape.size();
-      bool is_row_or_col_param = (row_col_param_name == exp_row_name) || (row_col_param_name == exp_col_name);
+      bool is_row_or_col_param = row_col_param_name != exp_avg_name;
       if (is_row_or_col_param && shape_size <= 1) {
         row_col_count++;
         continue;
@@ -1425,12 +1479,12 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root) {
       auto dev_mat = tensor_layout->device_arrangement().array();
       auto tensor_map = tensor_layout->tensor_map().array();
 
-      if (row_col_param_name == exp_row_name) {
+      if (row_col_param_name == exp_row_name || row_col_param_name == exp_insta_row_name) {
         opt_shard_slice_shape.pop_back();
         origin_shape.pop_back();
         tensor_map.pop_back();
         row_col_count++;
-      } else if (row_col_param_name == exp_col_name) {
+      } else if (row_col_param_name == exp_col_name || row_col_param_name == exp_insta_col_name) {
         (void)opt_shard_slice_shape.erase(opt_shard_slice_shape.cbegin() +
                                           static_cast<different_type>(SECOND_FROM_END(shape_size)));
         (void)origin_shape.erase(origin_shape.cbegin() + static_cast<different_type>(SECOND_FROM_END(shape_size)));
@@ -1447,8 +1501,9 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root) {
 
       if (AdafactorStateIsOptShard(tensor_layout->opt_shard_group(), shape_size, param_name, row_col_param_name)) {
         new_tensor_layout.set_opt_shard_group(tensor_layout->opt_shard_group());
+        new_tensor_layout.set_opt_shard_slice_shape(opt_shard_slice_shape);
       }
-
+      SetParamInfoSaveStrategy(row_col_param);
       auto cloned_abstract = row_col_node->abstract()->Clone();
       MS_EXCEPTION_IF_NULL(cloned_abstract);
       std::shared_ptr<abstract::BaseShape> parallel_shape = std::make_shared<abstract::Shape>(opt_shard_slice_shape);
@@ -1456,9 +1511,12 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root) {
       cloned_abstract->set_shape(parallel_shape);
       row_col_param->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(new_tensor_layout));
       row_col_node->set_abstract(cloned_abstract);
-      MS_LOG(INFO) << "Set the slice shape for " << row_col_param_name << ", origin shape is " << origin_shape
-                   << ", new slice shape is " << opt_shard_slice_shape;
     }
+  }
+
+  for (const auto &origin_param_node : origin_params) {
+    auto inserter = CameCommHandler(origin_param_node->cast<ParameterPtr>(), root->parameters(), manager->node_users());
+    inserter.Process();
   }
 }
 

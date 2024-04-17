@@ -66,7 +66,7 @@ class ActivationGradInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kSize2,
                                              prim->name());
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    return input_args[0]->BuildType();
+    return input_args[0]->GetType();
   }
 };
 

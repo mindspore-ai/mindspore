@@ -24,6 +24,7 @@ REG_CUST_OP(BlackmanWindow)
   .INPUT(window_length, TensorType({DT_INT32, DT_INT64}))
   .OUTPUT(y, TensorType({DT_FLOAT, DT_DOUBLE, DT_FLOAT16}))
   .ATTR(periodic, Bool, true)
+  .ATTR(dtype, Int, 0)
   .CUST_OP_END_FACTORY_REG(BlackmanWindow)
 }
 #endif

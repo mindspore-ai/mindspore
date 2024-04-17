@@ -47,8 +47,8 @@ constexpr int64_t kDeformableOffsetsGradInputSize = 3;
 
 std::vector<abstract::BaseShapePtr> DeformableOffsetsGradInferShape(const PrimitivePtr &,
                                                                     const std::vector<AbstractBasePtr> &input_args) {
-  auto dx_shape = input_args[kDeformableOffsetsGradInputInputIndex]->BuildShape();
-  auto d_offset_mask_shape = input_args[kDeformableOffsetsGradInputOffsetsIndex]->BuildShape();
+  auto dx_shape = input_args[kDeformableOffsetsGradInputInputIndex]->GetShape();
+  auto d_offset_mask_shape = input_args[kDeformableOffsetsGradInputOffsetsIndex]->GetShape();
   return {dx_shape, d_offset_mask_shape};
 }
 
@@ -59,9 +59,9 @@ std::vector<TypePtr> DeformableOffsetsGradInferType(const PrimitivePtr &prim,
   // check inputs num.
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kDeformableOffsetsGradInputSize, prim_name);
 
-  auto dout_type = input_args[kDeformableOffsetsGradInputDoutIndex]->BuildType();
-  auto x_type = input_args[kDeformableOffsetsGradInputInputIndex]->BuildType();
-  auto offsets_type = input_args[kDeformableOffsetsGradInputOffsetsIndex]->BuildType();
+  auto dout_type = input_args[kDeformableOffsetsGradInputDoutIndex]->GetType();
+  auto x_type = input_args[kDeformableOffsetsGradInputInputIndex]->GetType();
+  auto offsets_type = input_args[kDeformableOffsetsGradInputOffsetsIndex]->GetType();
 
   std::set<TypePtr> valid_type = {kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTypeValid("dout", dout_type, valid_type, prim_name);

@@ -27,23 +27,19 @@
 
 namespace mindspore {
 namespace kernel {
-bool SliceToIndicesCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SliceToIndicesCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SliceToIndices>(base_operator);
-  index_axis_ = IntToSize(GetValue<int64_t>(kernel_ptr->GetAttr(kAttrTupleIndexAxis)));
-  tuple_index_types_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrTupleIndexTypes));
-  expand_dims_mask_ = GetValue<int64_t>(kernel_ptr->GetAttr(kAttrExpandDimsMask));
-  init_by_none_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrInitByNone));
+  index_axis_ = IntToSize(GetValue<int64_t>(primitive_->GetAttr(kAttrTupleIndexAxis)));
+  tuple_index_types_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
+  expand_dims_mask_ = GetValue<int64_t>(primitive_->GetAttr(kAttrExpandDimsMask));
+  init_by_none_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrInitByNone));
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 
@@ -59,10 +55,9 @@ static inline void CheckCopy(void *dest, size_t destMax, const void *src, size_t
   }
 }
 
-int SliceToIndicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &others) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SliceToIndicesCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
@@ -79,70 +74,23 @@ int SliceToIndicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return 0;
 }
 
-static std::vector<int64_t> GetSlicedIndices(int64_t start, int64_t stop, int64_t step) {
-  std::vector<int64_t> indices;
-  if ((start - stop) * step < 0) {
-    if (step > 0) {
-      for (int64_t i = start; i < stop; i += step) {
-        (void)indices.emplace_back(i);
-      }
-    } else {
-      for (int64_t i = start; i > stop; i += step) {
-        (void)indices.emplace_back(i);
-      }
-    }
-  }
-  return indices;
-}
+bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  const auto start_addr = static_cast<int64_t *>(inputs[kIndex1]->device_ptr());
+  const auto stop_addr = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  const auto step_addr = static_cast<int64_t *>(inputs[kIndex3]->device_ptr());
+  auto indices_attr = static_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto value_shape_attr = static_cast<int64_t *>(outputs[kIndex1]->device_ptr());
+  auto output_start_attr = static_cast<int64_t *>(outputs[kIndex2]->device_ptr());
+  auto output_stop_attr = static_cast<int64_t *>(outputs[kIndex3]->device_ptr());
+  auto output_step_attr = static_cast<int64_t *>(outputs[kIndex4]->device_ptr());
+  auto output_empty_attr = static_cast<int64_t *>(outputs[kIndex5]->device_ptr());
 
-bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
-  const auto start_addr = static_cast<int64_t *>(inputs[kIndex1]->addr);
-  const auto stop_addr = static_cast<int64_t *>(inputs[kIndex2]->addr);
-  const auto step_addr = static_cast<int64_t *>(inputs[kIndex3]->addr);
-  auto indices_attr = static_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto value_shape_attr = static_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto output_start_attr = static_cast<int64_t *>(outputs[kIndex2]->addr);
-  auto output_stop_attr = static_cast<int64_t *>(outputs[kIndex3]->addr);
-  auto output_step_attr = static_cast<int64_t *>(outputs[kIndex4]->addr);
-  auto output_empty_attr = static_cast<int64_t *>(outputs[kIndex5]->addr);
-
-  int64_t dim_size = data_shape_[0];
-  if (!tuple_index_types_.empty()) {
-    auto new_index_axis_ = ops::NormalizeDimIndex::ConstNormalizeDimIndex(data_shape_.size(), index_axis_,
-                                                                          tuple_index_types_, expand_dims_mask_);
-    dim_size = data_shape_[new_index_axis_];
-  }
-
-  bool start_by_none_init = init_by_none_[0] == 1;
-  bool stop_by_none_init = init_by_none_[1] == 1;
-  bool step_by_none_init = init_by_none_[2] == 1;
-
-  int64_t start = start_addr[0];
-  int64_t stop = stop_addr[0];
-  int64_t step = step_by_none_init ? 1 : step_addr[0];
-  if (step == 0) {
-    MS_LOG(EXCEPTION) << "For 'slice', 'strides' cannot contain 0";
-  }
-
-  if (start_by_none_init) {
-    start = 0;
-  } else if (start < 0) {
-    start = start < -dim_size ? 0 : (dim_size + (start % dim_size)) % dim_size;
-  } else if (start > 0) {
-    start = start < dim_size ? start : dim_size;
-  }
-
-  if (stop_by_none_init) {
-    stop = dim_size;
-  } else if (stop < 0) {
-    stop = stop < -dim_size ? 0 : (dim_size + (stop % dim_size)) % dim_size;
-  } else if (stop > 0) {
-    stop = stop < dim_size ? stop : dim_size;
-  }
-
-  std::vector<int64_t> indices = GetSlicedIndices(start, stop, step);
-
+  auto start = start_addr[0];
+  auto stop = stop_addr[0];
+  auto step = step_addr[0];
+  auto indices = ops::CalSliceToIndices(data_shape_, index_axis_, expand_dims_mask_, tuple_index_types_, init_by_none_,
+                                        &start, &stop, &step);
   auto value_shape = data_shape_;
   value_shape[0] = SizeToLong(indices.size());
 
@@ -156,22 +104,11 @@ bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   CheckCopy(output_stop_attr, output_arg_size, &stop, output_arg_size, kernel_name_);
   CheckCopy(output_step_attr, output_arg_size, &step, output_arg_size, kernel_name_);
   CheckCopy(output_empty_attr, sizeof(int64_t), &empty_slice, sizeof(int64_t), kernel_name_);
-  out_shapes_.clear();
-  if (tuple_index_types_.empty()) {
-    out_shapes_.emplace_back(ShapeVector({SizeToLong(indices.size()), 1}));
-  } else {
-    out_shapes_.emplace_back(ShapeVector({SizeToLong(indices.size())}));
-  }
-  out_shapes_.emplace_back(ShapeVector{SizeToLong(value_shape.size())});
-  out_shapes_.emplace_back(ShapeVector{1});
-  out_shapes_.emplace_back(ShapeVector{1});
-  out_shapes_.emplace_back(ShapeVector{1});
-  out_shapes_.emplace_back(ShapeVector{});
   return true;
 }
 
-bool SliceToIndicesCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
+bool SliceToIndicesCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, outputs);
 }
 
@@ -189,15 +126,15 @@ std::vector<KernelAttr> SliceToIndicesCpuKernelMod::GetOpSupport() {
                  [](TypeId data_type_id) -> std::pair<KernelAttr, SliceToIndicesFunc> {
                    return {KernelAttr()
                              .AddInputAttr(data_type_id)
-                             .AddInputAttr(kNumberTypeInt64)
-                             .AddInputAttr(kNumberTypeInt64)
-                             .AddInputAttr(kNumberTypeInt64)
+                             .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                             .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                             .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                              .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64),
+                             .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                             .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                             .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                             .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                             .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
                            &SliceToIndicesCpuKernelMod::LaunchKernel};
                  });
 

@@ -28,19 +28,34 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(RpcSend, BaseOperator);
-AbstractBasePtr RpcSendInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
-                             const std::vector<AbstractBasePtr> &input_args) {
-  if (input_args.empty()) {
-    MS_LOG(EXCEPTION) << "The input size of RpcSend is 0.";
+class MIND_API AGRpcSendInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
+    if (input_args.size() == static_cast<size_t>(kDim1)) {
+      return input_args[kInputIndex0]->GetShape();
+    } else {
+      std::vector<abstract::BaseShapePtr> input_shapes;
+      std::transform(input_args.cbegin(), input_args.cend(), std::back_inserter(input_shapes),
+                     [](const AbstractBasePtr &input) { return input->GetShape(); });
+      return std::make_shared<abstract::TupleShape>(input_shapes);
+    }
   }
-  if (input_args.size() == static_cast<size_t>(kDim1)) {
-    return input_args[kInputIndex0];
-  } else {
-    abstract::AbstractTuplePtr rpc_send_abs = std::make_shared<abstract::AbstractTuple>(input_args);
-    MS_EXCEPTION_IF_NULL(rpc_send_abs);
-    return rpc_send_abs;
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    if (input_args.empty()) {
+      MS_LOG(EXCEPTION) << "The input size of RpcRecv is 0.";
+    }
+    if (input_args.size() == static_cast<size_t>(kDim1)) {
+      return input_args[kInputIndex0]->GetType();
+    } else {
+      std::vector<TypePtr> input_types;
+      std::transform(input_args.cbegin(), input_args.cend(), std::back_inserter(input_types),
+                     [](const AbstractBasePtr &input) { return input->GetType(); });
+      return std::make_shared<Tuple>(input_types);
+    }
   }
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(RpcSend, prim::kPrimRpcSend, RpcSendInfer, nullptr, true);
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(RpcSend, prim::kPrimRpcSend, AGRpcSendInfer, false);
 }  // namespace ops
 }  // namespace mindspore

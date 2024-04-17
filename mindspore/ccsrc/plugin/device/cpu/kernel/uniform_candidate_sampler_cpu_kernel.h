@@ -44,16 +44,14 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
 
   ~UniformCandidateSamplerCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspaces, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -61,7 +59,7 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
 
  private:
   void CheckAttribute();
-  void CheckInputsAndOutputs(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
+  void CheckInputsAndOutputs(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
   int64_t Sampling(T *sampled_candidates, const size_t length);
@@ -70,8 +68,8 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
   void ExpectedLanuch(const int64_t counter, S *true_expected_count, S *sampled_expected_count);
 
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+                    const std::vector<KernelTensor *> &outputs);
 
   int64_t batch_rank_{0};
   int64_t batch_size_{1};

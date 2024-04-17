@@ -245,24 +245,94 @@ void BenchmarkFlags::InitInputDataList() {
     std::sregex_token_iterator(in_data_file_.begin(), in_data_file_.end(), re, -1), std::sregex_token_iterator()};
 }
 
-void BenchmarkFlags::InitResizeDimsList() {
-  std::string content = this->resize_dims_in_;
-  if (content.empty()) {
-    return;
-  }
-  std::vector<int> shape;
-  auto shape_strs = StrSplit(content, std::string(DELIM_COLON));
-  for (const auto &shape_str : shape_strs) {
-    shape.clear();
-    auto dim_strs = StrSplit(shape_str, std::string(DELIM_COMMA));
-    std::cout << "Resize Dims: ";
-    for (const auto &dim_str : dim_strs) {
-      std::cout << dim_str << " ";
-      shape.emplace_back(static_cast<int>(std::stoi(dim_str)));
+bool ParseResizeDimsStringV2(const std::string &input_string,
+                             std::map<std::string, std::vector<int64_t>> *graph_input_shape_map) {
+  // define regex pattern that matches "inTensor1:1,32,32,32;inTensor2:1,1,32,32,4"
+  std::regex pattern("^(\\w+:\\d+(?:,\\d+)*)(?:;(\\w+:\\d+(?:,\\d+)*))*;?$");
+  std::vector<int64_t> shape;
+  if (std::regex_match(input_string, pattern)) {
+    auto group_splits = lite::StrSplit(input_string, std::string(";"));
+    for (auto group : group_splits) {
+      if (group.empty()) {
+        continue;
+      }
+      shape.clear();
+      auto string_split = lite::StrSplit(group, std::string(":"));
+      auto name = string_split[0];
+      for (size_t i = 1; i < string_split.size() - 1; ++i) {
+        name += ":" + string_split[i];
+      }
+      auto dim_strs = string_split[string_split.size() - 1];
+      auto dims = lite::StrSplit(dim_strs, std::string(","));
+      for (const auto &dim : dims) {
+        int64_t dim_value;
+        try {
+          dim_value = std::stoi(dim);
+        } catch (const std::exception &e) {
+          MS_LOG(ERROR) << "Get dim failed: " << e.what();
+          return false;
+        }
+        shape.push_back(dim_value);
+      }
+      if ((*graph_input_shape_map).find(name) != (*graph_input_shape_map).end()) {
+        MS_LOG(ERROR) << "The input shape string is not valid, found duplicate name [" << name << "].";
+        return false;
+      }
+      (*graph_input_shape_map)[name] = shape;
     }
-    std::cout << std::endl;
-    this->resize_dims_.emplace_back(shape);
+  } else {
+    MS_LOG(ERROR) << "The input shape string is not valid, please specify input names followed by their shapes. Wrap "
+                     "the whole string in "
+                     "double-quotes(\"\"). e.g. "
+                     "\"inTensor1:1,32,32,32;inTensor2:1,1,32,32,4\"";
+    return false;
   }
+  return !(*graph_input_shape_map).empty();
+}
+
+int BenchmarkFlags::InitResizeDimsList() {
+  std::string content = this->resize_dims_in_;
+  std::string content_v2 = this->resize_dims_in_v2_;
+  if (!content_v2.empty()) {  // use newer flag "--inputShape" first
+    std::map<std::string, std::vector<int64_t>> graph_input_shape_map;
+    bool success = ParseResizeDimsStringV2(content_v2, &graph_input_shape_map);
+    if (!success) {
+      MS_LOG(ERROR) << "Parse inputShape string \"" << content_v2 << "\" failed, please check input.";
+      return RET_PARAM_INVALID;
+    }
+    this->graph_input_shape_map_ = graph_input_shape_map;
+    std::vector<int> shape;
+    for (const auto &group : graph_input_shape_map) {
+      shape.clear();
+      std::cout << "Resize Dims: ";
+      for (int number : group.second) {
+        std::cout << number << " ";
+        shape.emplace_back(number);
+      }
+      std::cout << std::endl;
+      this->resize_dims_.emplace_back(shape);
+    }
+  } else {
+    if (content.empty()) {
+      return RET_OK;
+    }
+    MS_LOG(WARNING) << "The --inputShapes flag has been deprecated, the replacement flag is --inputShape. Please "
+                       "update your command line usage.";
+    std::vector<int> shape;
+    auto shape_strs = StrSplit(content, std::string(DELIM_COLON));
+    for (const auto &shape_str : shape_strs) {
+      shape.clear();
+      auto dim_strs = StrSplit(shape_str, std::string(DELIM_COMMA));
+      std::cout << "Resize Dims: ";
+      for (const auto &dim_str : dim_strs) {
+        std::cout << dim_str << " ";
+        shape.emplace_back(static_cast<int>(std::stoi(dim_str)));
+      }
+      std::cout << std::endl;
+      this->resize_dims_.emplace_back(shape);
+    }
+  }
+  return RET_OK;
 }
 
 void BenchmarkFlags::InitCoreList() {
@@ -486,7 +556,7 @@ int BenchmarkBase::Init() {
 
   flags_->InitInputDataList();
   flags_->InitCoreList();
-  flags_->InitResizeDimsList();
+  MS_CHECK_FALSE_MSG(flags_->InitResizeDimsList() != RET_OK, RET_ERROR, "init resize dims failed.");
   if (!flags_->resize_dims_.empty() && !flags_->input_data_list_.empty() &&
       flags_->resize_dims_.size() != flags_->input_data_list_.size()) {
     MS_LOG(ERROR) << "Size of input resizeDims should be equal to size of input inDataPath";

@@ -1,0 +1,23 @@
+ones_like:
+    description: |
+        Returns a Tensor with a value of 1 and its shape and data type is the same as the input.
+
+        Refer to :func:`mindspore.ops.ones_like` for more details.
+
+        Inputs:
+            - **input_x** (Tensor) - Tensor of any dimension.
+
+        Outputs:
+            Tensor, has the same shape and type as `input_x` but filled with ones.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
+            >>> output = ops.OnesLike()(input_x)
+            >>> print(output)
+            [[1 1]
+            [1 1]]

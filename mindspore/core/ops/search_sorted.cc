@@ -48,9 +48,9 @@ namespace {
 abstract::ShapePtr SearchSortedInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto sequence_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto sequence_shape_ptr = input_args[kInputIndex0]->GetShape();
   ShapeVector sequence_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(sequence_shape_ptr)[kShape];
-  auto values_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto values_shape_ptr = input_args[kInputIndex1]->GetShape();
   ShapeVector values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   ShapeVector sequence_shape_c = sequence_shape;
   ShapeVector values_shape_c = values_shape;
@@ -78,8 +78,8 @@ abstract::ShapePtr SearchSortedInferShape(const PrimitivePtr &primitive,
                              << "', the shape of input sequence_shape contains 0, is not permitted. "
                              << "The shape is: " << sequence_shape;
   }
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
   MS_EXCEPTION_IF_NULL(values_shape_ptr);
   auto shape_element = values_shape_ptr->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
@@ -91,8 +91,8 @@ TypePtr SearchSortedInferType(const PrimitivePtr &primitive, const std::vector<A
   auto dtype = primitive->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype);
   auto infer_type = dtype->cast<TypePtr>();
-  auto sequence_type = input_args[kInputIndex0]->BuildType();
-  auto values_type = input_args[kInputIndex1]->BuildType();
+  auto sequence_type = input_args[kInputIndex0]->GetType();
+  auto values_type = input_args[kInputIndex1]->GetType();
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("sorted_sequence", sequence_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("values", values_type, valid_types, prim_name);

@@ -92,7 +92,7 @@ class LARS(Optimizer):
         coefficient (float): Trust coefficient for calculating the local learning rate. Default: ``0.001`` .
         use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: ``False`` .
         lars_filter (Function): A function to determine which of the network parameters to use LARS algorithm. Default:
-                                lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
+                                ``lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name``.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params` in the optimizer, the shape is the
@@ -109,7 +109,7 @@ class LARS(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> opt = nn.Momentum(net.trainable_params(), 0.1, 0.9)

@@ -47,8 +47,8 @@ class MuxSendGpuKernel : public MuxBaseGpuKernel {
     }
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     // Refresh the current destination rank id.
     int dest_rank = -1;
     // If the dest_rank attribute is set to a valid value, then the destination rank is fixed and immutable.
@@ -78,57 +78,48 @@ class MuxSendGpuKernel : public MuxBaseGpuKernel {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     // Init the cluster component used for the address synchronization.
     cgn_ = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
       distributed::cluster::ClusterContext::instance()->node_base());
     MS_EXCEPTION_IF_NULL(cgn_);
 
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_node);
+    SelectCollectiveHandle();
+    return true;
+  }
 
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     src_rank_ = cgn_->rank_id();
-    dest_rank_ = GetValue<int64_t>(prim->GetAttr("dest_rank"));
+    dest_rank_ = GetValue<int64_t>(primitive_->GetAttr("dest_rank"));
 
-    nccl_data_type_ = nccl_dtype(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
-    group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
-
+    nccl_data_type_ = nccl_dtype(inputs[0]->dtype_id());
+    group_name_ = GetValue<std::string>(primitive_->GetAttr(kAttrGroup));
     total_size_ = 0;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = inputs.size();
     for (size_t i = 0; i < input_num; ++i) {
-      auto shape_signed = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+      auto shape_signed = inputs[i]->GetDeviceShapeVector();
       if (IsDynamic(shape_signed)) {
         return true;
       }
       auto input_shape = Convert2SizeTClipNeg(shape_signed);
 
-      is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+      is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
       if (is_null_input_) {
-        InitSizeLists();
         return true;
       }
 
       size_t data_size = 0;
-      auto type = AnfAlgo::GetInputDeviceDataType(kernel_node, i);
+      auto type = inputs[i]->dtype_id();
       if (type == kNumberTypeFloat32) {
         data_size = sizeof(T);
       }
       size_t input_size = std::accumulate(input_shape.begin(), input_shape.end(), data_size, std::multiplies<size_t>());
-      input_size_list_.push_back(input_size);
       // Framework memory allocation ensures memory alignment.
       total_size_ += device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(input_size);
     }
     output_size_list_.push_back(0);
-
-    SelectCollectiveHandle();
-    return true;
+    return KRET_OK;
   }
-
- protected:
-  void InitSizeLists() override {}
 
  private:
   // Handshake with the mux recv kernel.

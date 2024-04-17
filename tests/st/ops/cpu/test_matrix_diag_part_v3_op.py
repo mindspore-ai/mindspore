@@ -30,7 +30,7 @@ class MatrixDiagPartV3Net(nn.Cell):
         return self.matrix_diag_dart_v3(x, k, padding_value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_matrix_diag_part_v3_function():
@@ -63,7 +63,7 @@ def test_matrix_diag_part_v3_function():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_matrix_diag_part_v3_function_int_k():
@@ -89,7 +89,7 @@ def test_matrix_diag_part_v3_function_int_k():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_matrix_diag_part_v3_pynative():
@@ -122,7 +122,7 @@ def test_matrix_diag_part_v3_pynative():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_matrix_diag_part_v3_graph():
@@ -155,7 +155,7 @@ def test_matrix_diag_part_v3_graph():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_matrix_diag_part_v3_primitive_negative_k():
@@ -183,7 +183,7 @@ def test_matrix_diag_part_v3_primitive_negative_k():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_matrix_diag_part_v3_vmap():
@@ -216,7 +216,7 @@ def test_matrix_diag_part_v3_vmap():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_matrix_diag_part_v3_dynamic_shape():

@@ -29,19 +29,21 @@ class IsFiniteCpuKernelMod : public NativeCpuKernelMod {
   IsFiniteCpuKernelMod() = default;
   ~IsFiniteCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  private:
   template <typename T>
-  void LaunchKernelFloat(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) const;
+  void LaunchKernelFloat(const std::vector<KernelTensor *> &inputs,
+                         const std::vector<kernel::KernelTensor *> &outputs) const;
 
-  void LaunchKernelOther(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) const;
+  void LaunchKernelOther(const std::vector<KernelTensor *> &inputs,
+                         const std::vector<kernel::KernelTensor *> &outputs) const;
 
-  void LaunchKernelFloat16(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) const;
+  void LaunchKernelFloat16(const std::vector<KernelTensor *> &inputs,
+                           const std::vector<kernel::KernelTensor *> &outputs) const;
 
   std::map<TypeId, size_t> dtype_map_ = {{kNumberTypeBool, sizeof(bool)},       {kNumberTypeInt8, sizeof(int8_t)},
                                          {kNumberTypeInt16, sizeof(int16_t)},   {kNumberTypeInt32, sizeof(int32_t)},

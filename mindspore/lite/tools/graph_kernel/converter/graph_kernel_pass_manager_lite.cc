@@ -26,7 +26,6 @@
 #include "utils/file_utils.h"
 #include "src/common/utils.h"
 #include "utils/anf_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
 #include "tools/graph_kernel/common/utils.h"
 
 namespace mindspore::graphkernel {

@@ -32,14 +32,12 @@ class Conv3DTransposeCpuKernelMod : public MKLCpuKernelMod {
   explicit Conv3DTransposeCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~Conv3DTransposeCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -47,7 +45,7 @@ class Conv3DTransposeCpuKernelMod : public MKLCpuKernelMod {
  private:
   size_t group{0};
   std::string format;
-  std::string pad_mode;
+  mindspore::PadMode pad_mode;
   std::vector<int64_t> strides_include_nc;
   std::vector<int64_t> dilation_include_nc;
   std::string kernel_type_;

@@ -1,0 +1,29 @@
+logit:
+    description: |
+        Calculate the logit of a tensor element-wise. Element in `x` is clamped to [eps, 1-eps].
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        Refer to :func:`mindspore.ops.logit` for more details.
+
+        Args:
+            eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: ``-1.0`` .
+
+        Inputs:
+            - **x** (Tensor) - The input tensor of type float16, float32 or float64.
+
+        Outputs:
+            Tensor, with the same shape and dtype as the `x`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
+            >>> op = ops.Logit(eps=1e-5)
+            >>> output = op(x)
+            >>> print(output)
+            [-2.1972246 -1.3862944 -0.8472978]

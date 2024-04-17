@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -287,6 +287,171 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar) {
   }
 }
 
+template <typename T>
+std::vector<T> ConvertValueListToVector(const ValuePtrList &seq_values) {
+  size_t element_num = seq_values.size();
+  std::vector<T> array_data(element_num);
+  for (size_t i = 0; i < element_num; i++) {
+    const auto &element = seq_values[i];
+    MS_EXCEPTION_IF_NULL(element);
+    array_data[i] = GetValue<T>(element);
+  }
+  return array_data;
+}
+
+tensor::TensorPtr SequenceToTensor(const ValueSequencePtr &sequence) {
+  MS_EXCEPTION_IF_NULL(sequence);
+  const auto &element_values = sequence->value();
+  if (element_values.empty()) {
+    std::vector<int32_t> array_data;
+    MS_LOG(WARNING) << "The value sequence is empty.";
+    return std::make_shared<tensor::Tensor>(std::move(array_data), TypeIdToType(kNumberTypeInt32));
+  }
+
+  const auto &first_element = element_values[0];
+  if (!first_element->isa<Scalar>()) {
+    MS_LOG(EXCEPTION) << "For sequence value, only sequence of scalar can convert to TensorValue, but got: "
+                      << sequence->ToString();
+  }
+
+  TypePtr data_type = first_element->type();
+  MS_EXCEPTION_IF_NULL(data_type);
+  TypeId type_id = data_type->type_id();
+  switch (type_id) {
+    case kNumberTypeInt32:
+      return std::make_shared<tensor::Tensor>(ConvertValueListToVector<int32_t>(element_values), data_type);
+    case kNumberTypeInt64:
+      return std::make_shared<tensor::Tensor>(ConvertValueListToVector<int64_t>(element_values), data_type);
+    case kNumberTypeFloat64:
+      return std::make_shared<tensor::Tensor>(ConvertValueListToVector<double>(element_values), data_type);
+    default:
+      MS_LOG(EXCEPTION) << "When convert sequence to tensor, the sequence type: " << data_type << " is invalid.";
+  }
+}
+
+namespace {
+KernelTensorValuePtr ConvertScalarToKernelTensorValue(const ValuePtr &scalar) {
+  MS_EXCEPTION_IF_NULL(scalar);
+  TypePtr data_type = scalar->type();
+  MS_EXCEPTION_IF_NULL(data_type);
+  TypeId type_id = data_type->type_id();
+  switch (type_id) {
+    case kNumberTypeBool:
+      return std::make_shared<KernelTensorValue>(GetValue<bool>(scalar), data_type);
+    case kNumberTypeInt8:
+      return std::make_shared<KernelTensorValue>(GetValue<int8_t>(scalar), data_type);
+    case kNumberTypeInt16:
+      return std::make_shared<KernelTensorValue>(GetValue<int16_t>(scalar), data_type);
+    case kNumberTypeInt32:
+      return std::make_shared<KernelTensorValue>(GetValue<int32_t>(scalar), data_type);
+    case kNumberTypeInt64:
+      return std::make_shared<KernelTensorValue>(GetValue<int64_t>(scalar), data_type);
+    case kNumberTypeUInt8:
+      return std::make_shared<KernelTensorValue>(GetValue<uint8_t>(scalar), data_type);
+    case kNumberTypeUInt16:
+      return std::make_shared<KernelTensorValue>(GetValue<uint16_t>(scalar), data_type);
+    case kNumberTypeUInt32:
+      return std::make_shared<KernelTensorValue>(GetValue<uint32_t>(scalar), data_type);
+    case kNumberTypeUInt64:
+      return std::make_shared<KernelTensorValue>(GetValue<uint64_t>(scalar), data_type);
+    case kNumberTypeFloat32:
+      return std::make_shared<KernelTensorValue>(GetValue<float>(scalar), data_type);
+    case kNumberTypeFloat64:
+      return std::make_shared<KernelTensorValue>(GetValue<double>(scalar), data_type);
+    default:
+      MS_LOG(EXCEPTION) << "When convert scalar to KernelTensorValue, the scalar type: " << data_type->ToString()
+                        << " is invalid.";
+  }
+}
+
+template <typename T>
+KernelTensorValuePtr ConvertValueListToKernelTensorValue(const ValuePtrList &seq_values, const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
+  size_t element_num = seq_values.size();
+  std::vector<uint8_t> array_data(element_num * sizeof(T));
+  T *array_data_ptr = reinterpret_cast<T *>(array_data.data());
+  MS_EXCEPTION_IF_NULL(array_data_ptr);
+
+  for (size_t i = 0; i < element_num; i++) {
+    const auto &element = seq_values[i];
+    MS_EXCEPTION_IF_NULL(element);
+    array_data_ptr[i] = GetValue<T>(element);
+  }
+  return std::make_shared<KernelTensorValue>(std::move(array_data), type);
+}
+
+KernelTensorValuePtr ConvertSequenceToKernelTensorValue(const ValueSequencePtr &value_seq) {
+  MS_EXCEPTION_IF_NULL(value_seq);
+  const auto &element_values = value_seq->value();
+  std::vector<uint8_t> array_data;
+  if (element_values.empty()) {
+    MS_LOG(INFO) << "The value sequence is empty.";
+    return std::make_shared<KernelTensorValue>(std::move(array_data), value_seq->type());
+  }
+
+  const auto &first_element = element_values[0];
+  if (!first_element->isa<Scalar>()) {
+    MS_LOG(EXCEPTION) << "For sequence value, only sequence of scalar can convert to KernelTensorValue, but got: "
+                      << value_seq->ToString();
+  }
+
+  TypePtr data_type = first_element->type();
+  MS_EXCEPTION_IF_NULL(data_type);
+  TypeId type_id = data_type->type_id();
+
+  switch (type_id) {
+    case kNumberTypeBool:
+      return ConvertValueListToKernelTensorValue<bool>(element_values, value_seq->type());
+    case kNumberTypeInt8:
+      return ConvertValueListToKernelTensorValue<int8_t>(element_values, value_seq->type());
+    case kNumberTypeInt16:
+      return ConvertValueListToKernelTensorValue<int16_t>(element_values, value_seq->type());
+    case kNumberTypeInt32:
+      return ConvertValueListToKernelTensorValue<int32_t>(element_values, value_seq->type());
+    case kNumberTypeInt64:
+      return ConvertValueListToKernelTensorValue<int64_t>(element_values, value_seq->type());
+    case kNumberTypeUInt8:
+      return ConvertValueListToKernelTensorValue<uint8_t>(element_values, value_seq->type());
+    case kNumberTypeUInt16:
+      return ConvertValueListToKernelTensorValue<uint16_t>(element_values, value_seq->type());
+    case kNumberTypeUInt32:
+      return ConvertValueListToKernelTensorValue<uint32_t>(element_values, value_seq->type());
+    case kNumberTypeUInt64:
+      return ConvertValueListToKernelTensorValue<uint64_t>(element_values, value_seq->type());
+    case kNumberTypeFloat32:
+      return ConvertValueListToKernelTensorValue<float>(element_values, value_seq->type());
+    case kNumberTypeFloat64:
+      return ConvertValueListToKernelTensorValue<double>(element_values, value_seq->type());
+    default:
+      MS_LOG(EXCEPTION) << "When convert sequence to KernelTensorValue, the element type: " << data_type->ToString()
+                        << " is invalid.";
+  }
+}
+}  // namespace
+
+KernelTensorValuePtr ConvertValueToKernelTensorValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<Scalar>()) {
+    return ConvertScalarToKernelTensorValue(value);
+  } else if (value->isa<ValueSequence>()) {
+    auto value_seq = value->cast<ValueSequencePtr>();
+    return ConvertSequenceToKernelTensorValue(value_seq);
+  } else if (value->isa<tensor::Tensor>()) {
+    auto tensor_ptr = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
+    return std::make_shared<KernelTensorValue>(tensor_ptr->data_ptr(), tensor_ptr->type());
+  } else if (value->isa<StringImm>()) {
+    auto string_ptr = value->cast<StringImmPtr>();
+    MS_EXCEPTION_IF_NULL(string_ptr);
+    return std::make_shared<KernelTensorValue>(string_ptr, string_ptr->type());
+  } else if (value->isa<Type>()) {
+    return nullptr;
+  } else {
+    MS_LOG(WARNING) << "KernelTensorValue not support the value type: " << value->ToString();
+    return nullptr;
+  }
+}
+
 template <typename T, typename Scalar>
 ValuePtr GetTensorValue(const tensor::TensorPtr &tensor) {
   ValuePtr ret;
@@ -321,6 +486,11 @@ ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(data_type);
   TypeId type_id = data_type->type_id();
   switch (type_id) {
+    case kNumberTypeBool: {
+      ret = GetTensorValue<bool, BoolImm>(tensor);
+      break;
+    }
+
     case kNumberTypeInt8: {
       ret = GetTensorValue<int8_t, Int8Imm>(tensor);
       break;
@@ -402,9 +572,7 @@ size_t CountValueNum(const ValueSequencePtr &value_sequence) {
   size_t cnt = 0;
   const auto &value_list = value_sequence->value();
   for (const auto &value : value_list) {
-    if (value->isa<None>()) {
-      continue;
-    } else if (value->isa<ValueSequence>()) {
+    if (value->isa<ValueSequence>()) {
       cnt += CountValueNum(value->cast<ValueSequencePtr>());
     } else {
       cnt++;
@@ -521,5 +689,186 @@ ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &att
     }
   }
   return ret;
+}
+
+namespace {
+static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_map = {
+  // Bool
+  {std::make_pair(kNumberTypeBool, kNumberTypeBool), kNumberTypeBool},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt8), kNumberTypeInt8},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt16), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt8), kNumberTypeUInt8},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt16), kNumberTypeUInt16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt32), kNumberTypeUInt32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt64), kNumberTypeUInt64},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
+  // Int8
+  {std::make_pair(kNumberTypeInt8, kNumberTypeInt8), kNumberTypeInt8},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeInt16), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeUInt8), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeFloat64), kNumberTypeFloat64},
+  // Int16
+  {std::make_pair(kNumberTypeInt16, kNumberTypeInt16), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeUInt8), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeFloat64), kNumberTypeFloat64},
+  // Int32
+  {std::make_pair(kNumberTypeInt32, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeUInt8), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeFloat64), kNumberTypeFloat64},
+  // Int64
+  {std::make_pair(kNumberTypeInt64, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeUInt8), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
+  // UInt8
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeUInt8), kNumberTypeUInt8},
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat64), kNumberTypeFloat64},
+  // UInt16
+  {std::make_pair(kNumberTypeUInt16, kNumberTypeUInt16), kNumberTypeUInt16},
+  // UInt32
+  {std::make_pair(kNumberTypeUInt32, kNumberTypeUInt32), kNumberTypeUInt32},
+  // UInt64
+  {std::make_pair(kNumberTypeUInt64, kNumberTypeUInt64), kNumberTypeUInt64},
+  // Float16
+  {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeFloat16, kNumberTypeBFloat16), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
+  // BFloat16
+  {std::make_pair(kNumberTypeBFloat16, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeBFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeBFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
+  // Float32
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
+  // Float64
+  {std::make_pair(kNumberTypeFloat64, kNumberTypeFloat64), kNumberTypeFloat64},
+};
+
+static const std::map<std::pair<TypeId, TypeId>, TypeId> scalar_tensor_convert_map = {
+  // Scalar is bool.
+  {std::make_pair(kNumberTypeBool, kNumberTypeBool), kNumberTypeBool},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt8), kNumberTypeInt8},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt16), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt8), kNumberTypeUInt8},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt16), kNumberTypeUInt16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt32), kNumberTypeUInt32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt64), kNumberTypeUInt64},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
+  // Scalar is int.
+  {std::make_pair(kNumberTypeInt64, kNumberTypeBool), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeInt8), kNumberTypeInt8},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeInt16), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeUInt8), kNumberTypeUInt8},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
+  // Scalar is float.
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeBool), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt8), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt16), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt64), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeUInt8), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
+};
+
+TypeId ConvertTypeForTensorsOrScalars(const TypeId &current, const TypeId &other) {
+  auto iter = tensor_tensor_convert_map.find(std::make_pair(current, other));
+  if (iter != tensor_tensor_convert_map.end()) {
+    return iter->second;
+  }
+  auto iter_reverse = tensor_tensor_convert_map.find(std::make_pair(other, current));
+  if (iter_reverse != tensor_tensor_convert_map.end()) {
+    return iter_reverse->second;
+  }
+  MS_EXCEPTION(TypeError) << "Type implicit conversion between " << TypeIdToString(current) << " and "
+                          << TypeIdToString(other) << " is not supported.";
+}
+
+TypeId ConvertTypeBetweenTensorAndScalar(const TypeId &tensor_type_id, const TypeId &scalar_type_id) {
+  auto iter = scalar_tensor_convert_map.find(std::make_pair(scalar_type_id, tensor_type_id));
+  if (iter != scalar_tensor_convert_map.end()) {
+    return iter->second;
+  }
+  MS_EXCEPTION(TypeError) << "Type implicit conversion between Tensor[" << TypeIdToString(tensor_type_id) << "] and "
+                          << TypeIdToString(scalar_type_id) << " is not supported.";
+}
+
+TypeId GetConversionType(const TypeId &current, const TypeId &saved_type_id, bool arg_is_tensor, bool has_tensor) {
+  if (current == saved_type_id) {
+    return current;
+  }
+  if (current == kTypeUnknown || saved_type_id == kTypeUnknown || current == kNumberTypeComplex64 ||
+      current == kNumberTypeComplex128 || saved_type_id == kNumberTypeComplex64 ||
+      saved_type_id == kNumberTypeComplex128) {
+    return kTypeUnknown;
+  }
+  // Tensor + Scalar
+  if (arg_is_tensor && !has_tensor) {
+    return ConvertTypeBetweenTensorAndScalar(current, saved_type_id);
+  }
+  // Scalar + Tensor
+  if (!arg_is_tensor && has_tensor) {
+    return ConvertTypeBetweenTensorAndScalar(saved_type_id, current);
+  }
+  // Tensor + Tensor, Scalar + Scalar
+  return ConvertTypeForTensorsOrScalars(current, saved_type_id);
+}
+}  // namespace
+
+std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(const std::vector<SignatureEnumDType> &dtypes,
+                                                                          const std::vector<TypeId> &args_type_id,
+                                                                          const std::vector<bool> &args_is_tensor) {
+  // {T0: (target_type_id=Int32, has_tensor=true), T1: (target_type_id=Float32, has_tensor=false), ...}
+  std::map<SignatureEnumDType, std::pair<TypeId, bool>> sig_type_map;
+  size_t args_size = args_type_id.size();
+  for (size_t i = 0; i < args_size; ++i) {
+    const auto &it = sig_type_map.find(dtypes[i]);
+    if (it == sig_type_map.end()) {
+      (void)sig_type_map.insert(std::make_pair(dtypes[i], std::make_pair(args_type_id[i], args_is_tensor[i])));
+    } else {
+      TypeId saved_type_id = (it->second).first;
+      bool has_tensor = (it->second).second;
+      TypeId target_type_id = GetConversionType(args_type_id[i], saved_type_id, args_is_tensor[i], has_tensor);
+      it->second = std::make_pair(target_type_id, args_is_tensor[i] || has_tensor);
+    }
+  }
+  return sig_type_map;
 }
 }  // namespace mindspore

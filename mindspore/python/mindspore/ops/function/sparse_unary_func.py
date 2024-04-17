@@ -28,7 +28,7 @@ def csr_cos(x: CSRTensor) -> CSRTensor:
         out_i = \cos(x_i)
 
     .. warning::
-        Currently support data types float16 and float32. If use Float64, there may be a problem of missing precision.
+        Currently support data types float16 and float32. If use float64, there may be a problem of missing precision.
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -69,7 +69,7 @@ def coo_cos(x: COOTensor) -> COOTensor:
         out_i = \cos(x_i)
 
     .. warning::
-        If use Float64, there may be a problem of missing precision.
+        If use float64, there may be a problem of missing precision.
 
     Args:
         x (COOTensor): Input COOTensor.
@@ -102,7 +102,7 @@ def coo_cos(x: COOTensor) -> COOTensor:
 
 
 def csr_tan(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes tangent of `x` element-wise.
 
     .. math::
@@ -139,7 +139,7 @@ def csr_tan(x: CSRTensor) -> CSRTensor:
 
 
 def coo_tan(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Computes tangent of `x` element-wise.
 
     .. math::
@@ -331,10 +331,6 @@ def csr_relu(x: CSRTensor) -> CSRTensor:
 
         ReLU(x) = (x)^+ = \max(0, x)
 
-    Note:
-        In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
-        output one more Mask.
-
     Args:
         x (CSRTensor): Input CSRTensor.
 
@@ -376,14 +372,10 @@ def coo_relu(x: COOTensor) -> COOTensor:
 
         ReLU(x) = (x)^+ = \max(0, x)
 
-    Note:
-        In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
-        output one more Mask.
-
     Args:
         x (COOTensor): Input COOTensor with shape :math:`(N, *)`, where :math:`*`
             means any number of additional dimensions. Its dtype is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
 
     Returns:
         COOTensor, has the same shape and dtype as the `x`.
@@ -1034,7 +1026,7 @@ def coo_floor(x: COOTensor) -> COOTensor:
 
 
 def csr_atan(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes the trigonometric inverse tangent of the input element-wise.
 
     .. math::
@@ -1565,7 +1557,7 @@ def coo_softsign(x: COOTensor) -> COOTensor:
 
 
 def csr_log1p(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Returns the natural logarithm of one plus the input CSRTensor element-wise.
 
     .. math::
@@ -1603,7 +1595,7 @@ def csr_log1p(x: CSRTensor) -> CSRTensor:
 
 
 def coo_log1p(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Returns the natural logarithm of one plus the input COOTensor element-wise.
 
     .. math::
@@ -1800,7 +1792,7 @@ def csr_asinh(x: CSRTensor) -> CSRTensor:
         out_i = \sinh^{-1}(input_i)
 
     Args:
-        x (CSRTensor): The input CSRTensor of inverse hyperbolic sine function.
+        x (CSRTensor): The input CSRTensor of inverse hyperbolic sine function, i.e. :math:`input_i`.
 
     Returns:
         CSRTensor, has the same shape and type as `x`.
@@ -1946,7 +1938,8 @@ def csr_acosh(x: CSRTensor) -> CSRTensor:
         out_i = \cosh^{-1}(input_i)
 
     Args:
-        x (CSRTensor): The input CSRTensor of inverse hyperbolic cosine function, its element must be in range [1, inf].
+        x (CSRTensor): The input CSRTensor of inverse hyperbolic cosine function, i.e. :math:`input_i`,
+            its element must be in range [1, inf].
 
     Returns:
         CSRTensor, has the same shape and type as `x`.

@@ -84,7 +84,7 @@ class GlobalContext {
 #endif
   // Getter method
   // @return the mem pool
-  std::shared_ptr<MemoryPool> mem_pool() const { return mem_pool_; }
+  const std::shared_ptr<MemoryPool> &mem_pool() const { return mem_pool_; }
 
   // Getter method
   // @return the tensor allocator as raw pointer

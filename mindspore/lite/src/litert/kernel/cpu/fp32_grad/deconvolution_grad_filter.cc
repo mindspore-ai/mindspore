@@ -56,12 +56,12 @@ int DeConvolutionGradFilterCPUKernel::Prepare() {
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
-  ws_size = chunk * conv_param->input_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->output_channel_ /
-            conv_param->group_;
+  ws_size = static_cast<size_t>(chunk * conv_param->input_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ *
+                                conv_param->output_channel_ / conv_param->group_);
 
   int m = conv_param->input_channel_ / conv_param->group_;
   int n = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->output_channel_ / conv_param->group_;
-  size_t mat_alloc = MatSizeTotal(n, m, chunk * conv_param->input_w_, conv_param->input_channel_);
+  size_t mat_alloc = static_cast<size_t>(MatSizeTotal(n, m, chunk * conv_param->input_w_, conv_param->input_channel_));
 
   set_workspace_size((ws_size + mat_alloc) * sizeof(float));
 

@@ -80,8 +80,8 @@ abstract::ShapePtr ZetaInferShape(const PrimitivePtr &primitive, const std::vect
 }
 TypePtr ZetaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
-  auto input_x = input_args[0]->BuildType();
-  auto input_q = input_args[1]->BuildType();
+  auto input_x = input_args[0]->GetType();
+  auto input_q = input_args[1]->GetType();
   std::map<std::string, TypePtr> args_type;
   (void)args_type.insert(std::make_pair("x", input_x));
   (void)args_type.insert(std::make_pair("q", input_q));

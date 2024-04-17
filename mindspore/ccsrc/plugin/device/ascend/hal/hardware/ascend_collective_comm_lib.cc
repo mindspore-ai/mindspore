@@ -88,8 +88,14 @@ bool AscendCollectiveCommLib::InitializeHccl() {
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
 
   auto mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  bool ret = hccl::HcclAdapter::GetInstance().InitHccl(
-    device_id, rank_id_str, full_path, mode == kGraphMode ? hccl::HcclMode::kGraph : hccl::HcclMode::kPynative);
+  hccl::HcclMode hccl_mode = hccl::HcclMode::kGraph;
+  if (mode == kPynativeMode) {
+    hccl_mode = hccl::HcclMode::kPynative;
+  } else if (ms_context->IsKByKExecutorMode()) {
+    hccl_mode = hccl::HcclMode::kKernelByKernel;
+  }
+
+  bool ret = hccl::HcclAdapter::GetInstance().InitHccl(device_id, rank_id_str, full_path, hccl_mode);
   free(full_path);
   if (!ret) {
     MS_LOG(ERROR) << "Hcom init failed.";
@@ -112,9 +118,15 @@ bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
   MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
   (void)device_context->GetDeprecatedInterface()->OpenTsd(ms_context);
   try {
-    if (!common::UseHostCollective()) {
+    if (!common::GetEnv(kSimulationLevel).empty()) {
+      std::string rank_id_str = std::to_string(0);
+      (void)hccl::HcclAdapter::GetInstance().InitHccl(local_rank_id, rank_id_str);
+    } else if (!common::UseHostCollective()) {
       // Use rank table to launch distribtued job.
-      MS_LOG(INFO) << "Launch Ascend distributed job using rank table.";
+      MS_LOG(WARNING)
+        << "Launch Ascend distributed job in RankTable manner. This manner will be deprecated in later version of "
+           "MindSpore. \n Please switch to 'msrun' or 'mpirun'. You can refer to this link about how to use these "
+           "commands: https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3/parallel/startup_method.html.";
       return InitializeHccl();
     } else {
       if (hccl::HcclAdapter::GetInstance().UseHcclCM()) {
@@ -219,6 +231,16 @@ HcclComm AscendCollectiveCommLib::HcclCommunicator(const std::string &group_name
   auto group = std::dynamic_pointer_cast<AscendCommunicationGroup>(groups_[group_name]);
   CHECK_IF_NULL(group);
   return group->hccl_communicator();
+}
+
+std::string AscendCollectiveCommLib::HcclInnerCommName(const std::string &group_name) {
+  if (!common::UseHostCollective() || hccl::HcclAdapter::GetInstance().UseHcclCM()) {
+    return "";
+  }
+  CHECK_RET((groups_.count(group_name) != 0), true, "The HCCL group " + group_name + " does not existed.");
+  auto group = std::dynamic_pointer_cast<AscendCommunicationGroup>(groups_[group_name]);
+  CHECK_IF_NULL(group);
+  return group->inner_comm_name();
 }
 
 uint32_t AscendCollectiveCommLib::GetRankId(const std::string &group_name) {

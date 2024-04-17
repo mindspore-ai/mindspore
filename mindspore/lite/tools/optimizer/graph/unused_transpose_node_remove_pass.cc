@@ -20,7 +20,7 @@
 #include <memory>
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/array_ops.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
@@ -38,7 +38,7 @@ std::vector<int> GetTransposePerm(const CNodePtr &node) {
   if (!CheckPrimitiveType(node, prim::kPrimTranspose)) {
     return perm;
   }
-  if (node->inputs().size() != kTransposeInputNum) {
+  if (node->size() != kTransposeInputNum) {
     return perm;
   }
   auto perm_node = node->input(2);
@@ -81,7 +81,7 @@ bool RemoveUnusedTransposeOpPass::Run(const FuncGraphPtr &func_graph) {
       if (!CheckPrimitiveType(transpose_cnode->input(kTransposeInput), prim::kPrimConv2DFusion)) {
         continue;
       }
-      if (transpose_cnode->inputs().size() != kTransposeInputNum) {
+      if (transpose_cnode->size() != kTransposeInputNum) {
         MS_LOG(ERROR) << "transpose node need have 2 inputs.";
         return false;
       }

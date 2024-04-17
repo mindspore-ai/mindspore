@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_REDUCEPROD_H_
 #define AICPU_KERNELS_NORMALIZED_REDUCEPROD_H_
 
-#include "inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class ReduceProdCpuKernel : public CpuKernel {
@@ -32,10 +32,10 @@ class ReduceProdCpuKernel : public CpuKernel {
   static T ComputeMul(T num_1, T num_2);
 
   template <typename T1, typename T2>
-  static uint32_t ReduceProdCompute(const CpuKernelContext &ctx);
+  static uint32_t ReduceProdCompute(CpuKernelContext &ctx);
 
   template <typename T1, typename T2>
-  static uint32_t ReduceProdCompute_Complex(const CpuKernelContext &ctx);
+  static uint32_t ReduceProdCompute_Complex(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

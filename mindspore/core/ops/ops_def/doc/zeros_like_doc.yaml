@@ -1,0 +1,25 @@
+zeros_like:
+    description: |
+        Returns a Tensor with a value of 0 and its shape and data type is the same as the input.
+
+        Inputs:
+            - **input_x** (Tensor) - Input Tensor of any dimension.
+    
+        Outputs:
+            Tensor, has the same shape and data type as `input_x` but filled with zeros.
+    
+        Raises:
+            TypeError: If `input_x` is not a Tensor.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> zeroslike = ops.ZerosLike()
+            >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+            >>> output = zeroslike(input_x)
+            >>> print(output)
+            [[0. 0.]
+             [0. 0.]]

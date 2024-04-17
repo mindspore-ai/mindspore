@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,10 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "tools/optimizer/common/helper.h"
-#include "ops/concat.h"
 #include "ops/gru.h"
-#include "ops/split.h"
 #include "ops/squeeze.h"
 #include "ops/stack.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
 #include "include/common/utils/utils.h"

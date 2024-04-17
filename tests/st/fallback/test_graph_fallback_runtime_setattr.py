@@ -25,7 +25,7 @@ from mindspore import Tensor, Parameter, jit, jit_class
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -51,7 +51,7 @@ def test_setattr_self_non_param():
     assert test_net.data == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -77,11 +77,12 @@ def test_setattr_self_non_param_in_strict():
         ret = test_net()
         assert ret == 2
         assert test_net.data == 2
-    assert "In JIT strict mode, if need to modify a member attribute of a class with" in str(error_info.value)
+    assert "In JIT strict mode, if need to modify a member attribute of a class with" in str(
+        error_info.value)
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -107,7 +108,7 @@ def test_setattr_self_non_param_2():
     assert test_net.data == [1, 2, 3, 4]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -133,7 +134,7 @@ def test_setattr_self_non_param_3():
     assert np.all(test_net.data == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -162,7 +163,7 @@ def test_setattr_self_repeat():
     assert test_net.data == 3
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -188,7 +189,7 @@ def test_setattr_self_non_param_not_used():
     assert test_net.data == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -214,10 +215,10 @@ def test_setattr_self_non_param_used_in_operator():
     assert np.all(test_net.data.asnumpy() == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setattr_self_non_param_used_in_operator_2():
     """
@@ -232,7 +233,7 @@ def test_setattr_self_non_param_used_in_operator_2():
 
         def construct(self, x):
             self.data = Tensor([1, 2, 3, 4])
-            return ops.add(self.data, x)  # @jit.typing: () -> tensor_type[int64]
+            return ops.add(self.data, x)
 
     test_net = TestNet(1)
     ret = test_net(Tensor([1, 1, 1, 1]))
@@ -245,7 +246,7 @@ class AssignTarget:
         self.x = 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -379,7 +380,7 @@ def test_setattr_global_obj_nested_attr2():
 
 
 @pytest.mark.skip(reason="Return value of x.shape is not changed because of the way InterpretNode generate.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -460,7 +461,7 @@ def test_setattr_run_multiple_times_2():
     assert np.all(ret3.asnumpy() == np.array([4, 5, 6]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -549,7 +550,7 @@ def test_setattr_in_control_flow():
     assert ret == -2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -578,7 +579,7 @@ def test_setattr_in_control_flow_2():
     assert ret == 4
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -604,7 +605,7 @@ def test_setattr_for_parameter():
     assert "Do not support to set attribute for a parameter" in str(ex.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -632,11 +633,13 @@ def test_global_getattr_after_setattr_1():
     assert obj.x == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="offline this testcase for tensor redistribution temporarily, "
+                         "online after can tracing ir.")
 def test_global_getattr_after_setattr_2():
     """
     Feature: Feature setattr. Make sure setattr getting correct attr.
@@ -668,7 +671,7 @@ def test_global_getattr_after_setattr_2():
     assert obj2.x == 5
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -700,7 +703,7 @@ def test_global_getattr_after_setattr_3():
     assert obj.x == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -732,7 +735,7 @@ def test_global_getattr_before_setattr():
     assert obj.x == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -751,7 +754,7 @@ def test_global_setattr_in_control_flow():
     @jit
     def foo():
         while obj.x > 0:
-            obj.x = obj.x -2
+            obj.x = obj.x - 2
         return obj.x
 
     obj = SetattrNet()
@@ -759,7 +762,7 @@ def test_global_setattr_in_control_flow():
     assert ret == -1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -788,7 +791,7 @@ def test_global_setattr_in_control_flow_2():
     assert ret == 4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -810,7 +813,7 @@ def test_setattr_for_attribute_no_exist():
     assert net.x == 4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -836,7 +839,7 @@ def test_setattr_for_attribute_no_exist_2():
     assert obj.y == 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -928,7 +931,7 @@ def test_getattr_assign(class_type_choice):
     assert res2 == 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -953,3 +956,35 @@ def test_setattr_in_loop():
     obj = Inner()
     res = foo()
     assert res == 6
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_type_of_getattr_after_setattr():
+    """
+    Feature: Feature setattr. Make sure setattr getting correct attr.
+    Description: convert getattrs after setattr into interpret node and infer as the as abstract as setattr's value
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+
+        def __init__(self):
+            super(Net, self).__init__()
+            self.proxy_combination = Tensor(np.ones([2, 2]), dtype=ms.float32)
+
+        def construct(self):
+            self.proxy_combination = Tensor(
+                np.array([[1, 2, 3, 4, 5]]), ms.float32)
+            src = Tensor(np.array([[8, 8]]), dtype=ms.float32)
+            index = Tensor(np.array([[2, 4]]), dtype=ms.int64)
+            self.proxy_combination = self.proxy_combination.scatter(
+                axis=1, index=index, src=src)
+            out = self.proxy_combination
+            return out
+
+    net = Net()
+    res = net()
+    assert np.all(res.asnumpy() == np.array([[1, 2, 8, 4, 8]]))

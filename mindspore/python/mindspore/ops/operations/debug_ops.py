@@ -13,8 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """debug_ops"""
+import os
+import stat
 from types import FunctionType, MethodType
 
+import numpy as np
 from mindspore import log as logger
 from mindspore._c_expression import security
 from mindspore._c_expression import Tensor as Tensor_
@@ -26,6 +29,7 @@ from mindspore.ops.primitive import prim_attr_register, Primitive, PrimitiveWith
 
 
 SUMMARY_TENSOR_CACHE = []
+TENSORDUMP_ID = 0
 
 
 def _cache_summary_data(op_name, define_name, tensor):
@@ -55,8 +59,9 @@ SUMMARY_RETURN_VALUE = {'dtype': mstype.int32, 'shape': [1], 'value': None}
 
 class ScalarSummary(Primitive):
     """
-    This operator will put a scalar to a summary file with protocol buffer format. It must be used with SummaryRecord
-    or SummaryCollector, which specify the directory of the summary file. The summary file can
+    This operator will put a scalar to a summary file with protocol buffer format.
+    It must be used with :class:`mindspore.SummaryRecord` or :class:`mindspore.SummaryCollector`,
+    which specify the directory of the summary file. The summary file can
     be loaded and shown by MindInsight, see `MindInsight documents <https://www.mindspore.cn/
     mindinsight/docs/en/master/index.html>`_ for details.
 
@@ -105,12 +110,13 @@ class ScalarSummary(Primitive):
 
         self.add_prim_attr("side_effect_io", True)
         self.add_prim_attr("channel_name", "ms_scalar_summary")
+        self.add_prim_attr("dyn_input_sizes", [-1, 1])
 
     def __call__(self, *args):
         _cache_summary_data(self.name, args[0], args[1])
 
 
-class ImageSummary(PrimitiveWithInfer):
+class ImageSummary(Primitive):
     """
     This operator will put an image tensor to a summary file with protocol buffer format. It must be used with
     SummaryRecord or SummaryCollector, which specify the directory of the summary file. The summary file can
@@ -155,18 +161,7 @@ class ImageSummary(PrimitiveWithInfer):
 
         self.add_prim_attr("side_effect_io", True)
         self.add_prim_attr("channel_name", "ms_image_summary")
-
-    def __infer__(self, name, value):
-        _check_summary_param(name, value, self.__class__.__name__)
-
-        # The shape dim of image should be 4.
-        v_shape = value['shape']
-        image_dim = 4
-        if len(v_shape) != image_dim:
-            raise ValueError(f"For '{self.name}', the dimension of 'value' must be {image_dim},"
-                             f" but got {len(v_shape)}.")
-
-        return SUMMARY_RETURN_VALUE
+        self.add_prim_attr("dyn_input_sizes", [-1, 1])
 
     def __call__(self, *args):
         _cache_summary_data(self.name, args[0], args[1])
@@ -229,7 +224,91 @@ class TensorSummary(Primitive):
         _cache_summary_data(self.name, args[0], args[1])
 
 
-class HistogramSummary(PrimitiveWithInfer):
+class TensorDump(Primitive):
+    """
+    Save the Tensor as an npy file in numpy format.
+
+    The file name will automatically have a prefix added based on the execution order. For example, if `file` is `a`,
+    the first saved file will be named `0_a.npy`, and the second one will be named `1_a.npy`, and so on.
+
+    .. warning::
+        - If a large amount of data is stored within a short period, it may lead to memory overflow on the device side.
+          Consider slicing the data to reduce the data scale.
+        - Since data saving is processed asynchronously, when the amount of data is too large or the main process exits
+          too quickly, data loss may occur. You need to actively control the destruction time of the main process,
+          such as using sleep.
+
+    Inputs:
+        - **file** (str) - The path of the file to be saved.
+        - **input_x** (Tensor) - Input Tensor of any dimension.
+
+    Raises:
+        TypeError: If `file` is not a str.
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import time
+        >>> from mindspore import nn, Tensor, ops
+        >>> ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.dump = ops.TensorDump()
+        ...
+        ...     def construct(self, x):
+        ...         x += 1.
+        ...         self.dump('add', x)
+        ...         x /= 2.
+        ...         self.dump('div', x)
+        ...         x *= 5.
+        ...         self.dump('mul', x)
+        ...         return x
+        ...
+        >>> x = np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float32)
+        >>> input_x = Tensor(x)
+        >>> net = Net()
+        >>> out = net(input_x)
+        >>> time.sleep(0.5)
+        >>> add = np.load('0_add.npy')
+        >>> print(add)
+        [[2. 3. 4. 5.]
+         [6. 7. 8. 9.]]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize TensorDump."""
+        if security.enable_security():
+            raise ValueError('The TensorDump is not supported, please without `-s on` and recompile source.')
+        self.add_prim_attr("side_effect_io", True)
+        self.add_prim_attr("channel_name", "ms_tensor_dump")
+
+    def __call__(self, file, input_x):
+        validator.check_value_type('file', file, [str], self.__class__.__name__)
+        if not file:
+            raise ValueError("For 'TensorDump', the input argument[file] cannot be an empty string.")
+        validator.check_value_type('input_x', input_x, [Tensor], self.__class__.__name__)
+        global TENSORDUMP_ID
+        npy_suffix = ".npy"
+        directory, filename = os.path.split(file)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, mode=0o700, exist_ok=True)
+        new_filename = f"{TENSORDUMP_ID}_{filename}"
+        new_file = os.path.join(directory, new_filename)
+        if not new_file.endswith(npy_suffix):
+            new_file += npy_suffix
+        if os.path.exists(new_file):
+            os.chmod(new_file, stat.S_IWUSR)
+        np.save(new_file, input_x.asnumpy())
+        os.chmod(new_file, stat.S_IRUSR)
+        TENSORDUMP_ID += 1
+
+
+class HistogramSummary(Primitive):
     """
     This operator will calculate the histogram of a tensor and put it to a summary file with protocol buffer format.
     It must be used with SummaryRecord or SummaryCollector, which specify the directory of the summary file.
@@ -280,17 +359,7 @@ class HistogramSummary(PrimitiveWithInfer):
 
         self.add_prim_attr("side_effect_io", True)
         self.add_prim_attr("channel_name", "ms_histogram_summary")
-
-    def __infer__(self, name, value):
-        _check_summary_param(name, value, self.__class__.__name__)
-
-        v_shape = value['shape']
-        # In the summary, the histogram value should be a tensor whose shape is not [].
-        if not v_shape:
-            raise ValueError(f"For '{self.name}', the type of 'value' must be tensor, "
-                             f"its shape should not be [], but got {v_shape}.")
-
-        return SUMMARY_RETURN_VALUE
+        self.add_prim_attr("dyn_input_sizes", [-1, 1])
 
     def __call__(self, *args):
         _cache_summary_data(self.name, args[0], args[1])
@@ -472,7 +541,7 @@ class Print(Primitive):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn
+        >>> from mindspore import Tensor, nn, ops
         >>> class PrintDemo(nn.Cell):
         ...     def __init__(self):
         ...         super(PrintDemo, self).__init__()

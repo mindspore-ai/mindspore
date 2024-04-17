@@ -50,7 +50,7 @@ constexpr int64_t kFormatNHWCIndexW = 2;
 constexpr int64_t kFormatNHWCIndexC = 3;
 abstract::ShapePtr MaxPoolV1InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
   const int64_t x_rank = 4;
   const int64_t attr_size = 4;
@@ -125,7 +125,7 @@ TypePtr MaxPoolV1InferType(const PrimitivePtr &prim, const std::vector<AbstractB
   auto name = prim->name();
   const std::set<TypePtr> maxpoolv1_valid_types = {kInt8,   kInt16,   kInt32,   kInt64,  kUInt8,
                                                    kUInt16, kFloat16, kFloat32, kFloat64};
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   auto inferred_type = CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, maxpoolv1_valid_types, name);
   return inferred_type;
 }

@@ -54,8 +54,8 @@ int ReverseSequenceCpuKernelMod::CalcCountAfterAxis(const std::vector<int64_t> &
 }
 
 template <typename T>
-void ReverseSequenceCpuKernelMod::ResizeKernel(const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
+void ReverseSequenceCpuKernelMod::ResizeKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   input0_shape_ = inputs[kIndex0]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   ndim_ = static_cast<int64_t>(input0_shape_.size());
@@ -83,10 +83,10 @@ void ReverseSequenceCpuKernelMod::ResizeKernel(const std::vector<KernelTensorPtr
 }
 
 template <typename T, typename S>
-void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto input0 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto input1 = reinterpret_cast<S *>(inputs[kIndex1]->addr);
+void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input0 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto input1 = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
 
   // check sequence length
   int64_t max_seq_length = input0_shape_[seq_dim_];
@@ -98,7 +98,7 @@ void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     }
   }
 
-  auto output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   auto ret = memcpy_s(output, IntToSize(total_data_size_), input0, IntToSize(total_data_size_));
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed. Error no: " << ret;
@@ -130,14 +130,10 @@ void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   ParallelLaunchAutoSearch(task, outer_count_, this, &parallel_search_info_, pool_);
 }
 
-bool ReverseSequenceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = base_operator->name();
-  seq_dim_ = GetValue<int64_t>(prim->GetAttr(kSeqDim));
-  batch_dim_ = GetValue<int64_t>(prim->GetAttr(kBatchDim));
+bool ReverseSequenceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  seq_dim_ = GetValue<int64_t>(primitive_->GetAttr(kSeqDim));
+  batch_dim_ = GetValue<int64_t>(primitive_->GetAttr(kBatchDim));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -150,20 +146,18 @@ bool ReverseSequenceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int ReverseSequenceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ReverseSequenceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   resize_func_(this, inputs, outputs);
   return KRET_OK;
 }
 
-bool ReverseSequenceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool ReverseSequenceCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);
 

@@ -30,7 +30,7 @@ class SchedulerHelperTest : public UT::Common {
 /// Description: Test the common interface.
 /// Expectation: As expected.
 TEST_F(SchedulerHelperTest, AddDependency) {
-  auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
+  auto &memory_manager_actor = MemoryManagerActor::GetInstance();
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
   auto kernel_graph = std::make_shared<KernelGraph>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -65,7 +65,7 @@ TEST_F(SchedulerHelperTest, AddDependency) {
 /// Description: Test the common interface of AddSomasInfo.
 /// Expectation: As expected.
 TEST_F(SchedulerHelperTest, AddSomasInfo) {
-  auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
+  auto &memory_manager_actor = MemoryManagerActor::GetInstance();
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
   auto kernel_graph = std::make_shared<KernelGraph>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -94,7 +94,7 @@ TEST_F(SchedulerHelperTest, AddSomasInfo) {
 /// Description: Test the common interface of AddMemoryAllocSign.
 /// Expectation: As expected.
 TEST_F(SchedulerHelperTest, AddMemoryAllocSign) {
-  auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
+  auto &memory_manager_actor = MemoryManagerActor::GetInstance();
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
   auto to_graph = std::make_shared<KernelGraph>();
   MS_EXCEPTION_IF_NULL(to_graph);
@@ -129,7 +129,7 @@ TEST_F(SchedulerHelperTest, AddMemoryAllocSign) {
 /// Description: Test the common interface of AddMemoryFreeSign.
 /// Expectation: As expected.
 TEST_F(SchedulerHelperTest, AddMemoryFreeSign) {
-  auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
+  auto &memory_manager_actor = MemoryManagerActor::GetInstance();
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
   auto from_graph = std::make_shared<KernelGraph>();
   MS_EXCEPTION_IF_NULL(from_graph);

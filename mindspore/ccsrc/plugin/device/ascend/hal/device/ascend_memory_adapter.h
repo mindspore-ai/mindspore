@@ -49,7 +49,6 @@ class AscendMemAdapter {
   void UpdateActualPeakMemory(int64_t memory) { actual_peak_memory_ = std::max(actual_peak_memory_, memory); }
 
   static size_t GetRoundUpAlignSize(size_t input_size);
-  static bool IsMemoryPoolRecycle();
 
   [[nodiscard]] uint64_t FreeDevMemSize() const { return std::max(static_mem_offset_ - max_dynamic_mem_offset_, 0L); }
   [[nodiscard]] uint64_t MaxHbmSizeForMs() const { return max_available_ms_hbm_size_; }

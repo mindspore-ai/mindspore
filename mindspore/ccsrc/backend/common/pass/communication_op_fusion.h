@@ -34,6 +34,7 @@ struct CommunicationOpInfo {
   std::vector<CNodePtr> communication_op_nodes;
   std::vector<float> input_grad_size;
   std::vector<float> input_grad_time;
+  std::string group_name;
 };
 
 class BACKEND_EXPORT CommunicationOpFusion : public Pass {

@@ -1,0 +1,14 @@
+#operator floor_mod
+floor_mod:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (x, y)
+    returns:
+        output:
+            dtype: tensor

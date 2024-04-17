@@ -26,10 +26,7 @@ namespace {
 constexpr size_t kEpsInputsNum = 1;
 constexpr size_t kEpsOnputsNum = 1;
 }  // namespace
-bool EpsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool EpsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEpsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEpsOnputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -55,14 +52,14 @@ T getEpsilon() {
 }
 
 template <typename T>
-bool EpsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  auto input = GetDeviceAddress<T>(inputs, kIndex0);
-  auto output = GetDeviceAddress<T>(outputs, kIndex0);
+bool EpsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(output);
-  size_t output_size = outputs[0]->size / sizeof(T);
+  size_t output_size = outputs[0]->size() / sizeof(T);
   T min_val = getEpsilon<T>();
   auto task = [this, output, input, min_val](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

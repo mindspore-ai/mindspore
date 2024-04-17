@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include "ops/array_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -46,7 +47,7 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
 
-  for (size_t index = 0; index < cnode->inputs().size(); index++) {
+  for (size_t index = 0; index < cnode->size(); index++) {
     if (index == kInputIndex1 || index == kInputIndex2) {
       AnfNodePtr new_node = nullptr;
       AnfNodePtr new_transdata_node = nullptr;

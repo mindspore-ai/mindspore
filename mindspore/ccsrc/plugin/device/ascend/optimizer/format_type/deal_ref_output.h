@@ -21,7 +21,6 @@
 #include "ir/anf.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/optimizer/pattern_engine.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {

@@ -403,6 +403,7 @@ void EmbeddingCacheTableManager::WarmUpHostCacheItem(const std::shared_ptr<Embed
                                                      const size_t value_len) {
   // Value type is float, bit num is 2
   const int shift_bit_num = 2;
+  MS_EXCEPTION_IF_NULL(hash_table_info_ptr);
   if (hash_table_info_ptr->embedding_size != (value_len >> shift_bit_num)) {
     MS_LOG(WARNING) << "Hash table info embedding_size : " << hash_table_info_ptr->embedding_size
                     << " is not equal to value_len : " << value_len << ".";
@@ -410,6 +411,7 @@ void EmbeddingCacheTableManager::WarmUpHostCacheItem(const std::shared_ptr<Embed
   }
 
   auto key_ptr = std::get<0>(entry.second);
+  MS_EXCEPTION_IF_NULL(key_ptr);
   auto key_data_ptr = key_ptr->data_ptr();
   for (ssize_t i = start; i != end; i++) {
     auto key_data_type = key_ptr->data_type();

@@ -28,6 +28,8 @@ extern "C" {
 #endif
 
 int ElementAdd(const float *in0, const float *in1, float *out, int size);
+int ElementAddExt(const float *in0, const float *in1, const float alpha, float *out, int size);
+int ElementOptAddExt(const float *in0, const float *in1, const float alpha, float *out, int size, bool first_scalar);
 int ElementAddRelu(const float *in0, const float *in1, float *out, int size);
 int ElementAddRelu6(const float *in0, const float *in1, float *out, int size);
 int ElementAddInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size);

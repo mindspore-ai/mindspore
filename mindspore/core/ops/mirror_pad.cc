@@ -121,23 +121,22 @@ class MirrorPadInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto input_x_shape_ptr = input_args[0]->BuildShape();
-    MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-    auto input_x_shape = input_x_shape_ptr->cast<abstract::ShapePtr>();
+    auto input_x_shape = input_args[0]->GetShape()->GetShapeVector();
     // Dynamic rank process.
-    if (IsDynamicRank(input_x_shape->shape())) {
+    if (IsDynamicRank(input_x_shape)) {
       return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }
-    auto paddings = input_args[1]->BuildValue();
+    auto paddings = input_args[1]->GetValue();
     MS_EXCEPTION_IF_NULL(paddings);
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-    auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+    auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
     CheckPaddingParam(paddings_shape, x_shape, prim_name);
     // if shape of x is determined and padding value is unknown, return a all -1 shape
-    if (paddings->isa<ValueAny>() || paddings->isa<None>()) {
+    if (paddings->ContainsValueAny() || paddings->isa<None>()) {
       return std::make_shared<abstract::Shape>(ShapeVector(x_shape.size(), abstract::Shape::kShapeDimAny));
     }
-    auto paddings_arg = CheckAndConvertUtils::CheckTensorIntValue(kPaddings, paddings, prim_name);
+    auto paddings_arg =
+      CheckAndConvertUtils::CheckTensorIntValue(kPaddings, paddings, prim_name, input_args[1]->GetType());
     std::vector<std::pair<int64_t, int64_t>> paddings_attr;
 
     auto mode = GetValue<std::string>(primitive->GetAttr(kMode));
@@ -164,10 +163,10 @@ class MirrorPadInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("paddings", input_args[1]->BuildType(), {kInt32, kInt64},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("paddings", input_args[1]->GetType(), {kInt32, kInt64},
                                                      prim->name());
     return CheckAndConvertUtils::CheckTensorTypeValid(
-      "input_x", input_args[0]->BuildType(),
+      "input_x", input_args[0]->GetType(),
       {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool},
       prim->name());
   }

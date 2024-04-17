@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/source/fake_image_op.h"
 
-#include <iomanip>
-#include <set>
-
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -31,11 +28,13 @@ FakeImageOp::FakeImageOp(int32_t num_images, const std::vector<int32_t> &image_s
                          std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
     : MappableLeafOp(num_workers, op_connector_size, std::move(sampler)),
       num_images_(num_images),
+      base_seed_(base_seed),
       image_size_(image_size),
       num_classes_(num_classes),
-      base_seed_(base_seed),
-      image_tensor_({}),
-      data_schema_(std::move(data_schema)) {}
+      data_schema_(std::move(data_schema)),
+      image_total_size_(0),
+      label_list_({}),
+      image_tensor_({}) {}
 
 // Load 1 TensorRow (image, label) using 1 trow.
 Status FakeImageOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {

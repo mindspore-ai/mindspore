@@ -34,7 +34,7 @@ abstract::TupleShapePtr SelfAdjointEigInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kNumber = 2;
-  auto x = input_args[0]->BuildShape();
+  auto x = input_args[0]->GetShape();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x)[kShape];
   auto input_rank = SizeToLong(input_shape.size());
 
@@ -68,7 +68,7 @@ abstract::TupleShapePtr SelfAdjointEigInferShape(const PrimitivePtr &primitive,
 
 TuplePtr SelfAdjointEigInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());

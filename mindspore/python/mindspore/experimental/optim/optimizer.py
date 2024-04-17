@@ -36,20 +36,13 @@ class Optimizer(Cell):
     .. warning::
         This is an experimental optimizer API that is subject to change.
         This module must be used with lr scheduler module in `LRScheduler Class
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
 
     Args:
         params (Union[list(Parameter), list(dict)]): an iterable of :class:`mindspore.Parameter` or
             dict. Specifies what Tensors should be optimized.
         defaults (dict): a dict containing default values of optimization
             options (used when a parameter group doesn't specify them).
-
-    Raises:
-        TypeError: If `learning_rate` is not one of int, float, Tensor.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
-        TypeError: If `weight_decay` is neither float nor int.
-        ValueError: If `weight_decay` is less than 0.
-        ValueError: If `learning_rate` is a Tensor, but the dimension of tensor is greater than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -104,6 +97,7 @@ class Optimizer(Cell):
         self.state = defaultdict(dict)
         self.param_groups = []
         self.parameters = []
+        self.lrs = []
         self.map_ = C.Map()
         self.group_start_id = [0]
         if not isinstance(param_groups[0], dict):
@@ -146,6 +140,7 @@ class Optimizer(Cell):
 
         lr = self._build_single_lr(param_group.get("lr"), 'learning_rate_group_' + str(group_id))
         weight_decay = self._preprocess_weight_decay(param_group.get("weight_decay", 0.0))
+        self.lrs.append(lr)
         param_group["lr"] = lr
         param_group["weight_decay"] = weight_decay
         self.param_groups.append(param_group)
@@ -250,3 +245,15 @@ def _tensor_apply_decay_with_sparse(weight_decay, weight, gradient):
 def _tensor_apply_decay(weight_decay, weight, gradient):
     """Get grad with weight_decay."""
     return op_add((op_mul(weight, F.cast(weight_decay, F.dtype(weight))), gradient))
+
+
+def check_not_less_than(arg_value, arg_name, prim, value=0.0):
+    if arg_value < value:
+        raise ValueError("For {}, the {} must be greater than or equal to {}, "
+                         "but got {}.".format(prim, arg_name, value, arg_value))
+
+
+def check_not_less_than_without_equal(arg_value, arg_name, prim, value=0.0):
+    if arg_value <= value:
+        raise ValueError("For {}, the {} must be greater than {}, "
+                         "but got {}.".format(prim, arg_name, value, arg_value))

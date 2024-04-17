@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,6 +57,10 @@ class AscendClusterGenerator:
         """
         self.read_msprof()
 
+        if (not isinstance(self.msprof_data, np.ndarray) or self.msprof_data.shape[0] == 0
+                or not self.msprof_data.tolist()):
+            return
+
         self.step_trace_time['Computing'] = np.sum(self.msprof_data[self.msprof_data['name'] == 'Computing']['dur'])
         self.step_trace_time['comunNotOverlp'] = np.sum(
             self.msprof_data[self.msprof_data['name'] == 'Communication(Not Overlapped)']['dur'])
@@ -81,9 +85,11 @@ class AscendClusterGenerator:
         for file in find_files(self.root_path, "msprof_*.json"):
             with open(file) as jsonfile:
                 for row in json.load(jsonfile):
+                    name = row.get('name', '')
+                    if name is None:
+                        name = ''
                     if row.get('name') in ['Computing', 'Communication', 'Communication(Not Overlapped)',
-                                           'Free'] or row.get('name').find('/Receive-op'):
-                        name = row.get('name', '')
+                                           'Free'] or name.find('/Receive-op'):
                         ts = row.get('ts', 0)
                         dur = row.get('dur', 0)
                         msprof_data.append(tuple([name, ts, dur]))

@@ -18,7 +18,8 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_BROADCAST_TO_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/broadcast_to.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 using mindspore::ops::kNameBroadcastTo;
 

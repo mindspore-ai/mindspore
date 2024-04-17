@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ARGMAX_H_
 #define AICPU_KERNELS_NORMALIZED_ARGMAX_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class ArgMaxCpuKernel : public CpuKernel {
@@ -29,7 +29,7 @@ class ArgMaxCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2, typename T3>
-  static uint32_t ArgMaxCompute(const CpuKernelContext &ctx);
+  static uint32_t ArgMaxCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

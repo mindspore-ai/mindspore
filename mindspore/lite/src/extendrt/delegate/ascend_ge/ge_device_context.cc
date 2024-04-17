@@ -24,12 +24,13 @@
 #include "include/backend/device_type.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/transform/graph_ir/utils.h"
-#include "external/ge/ge_api.h"
-#include "runtime/config.h"
+#include "ge/ge_api.h"
 #include "common/config_infos.h"
 #include "common/common.h"
 #include "extendrt/delegate/comm_group_info.h"
 #include "backend/common/session/executor.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 constexpr auto kHcclPluginFileName = "libhccl.so";
@@ -191,6 +192,23 @@ std::shared_ptr<AscendDeviceInfo> GeDeviceContext::GetGeAscendDeviceInfo(const s
 
 Status GeDeviceContext::Initialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MsContext::GetInstance()->set_backend_policy("ge");
+  std::string overflow_mode = common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE");
+  transform::LoadAscendApiSymbols();
+  if (overflow_mode == "INFNAN_MODE") {
+    auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
+    auto ret = CALL_ASCEND_API(aclrtSetDeviceSatMode, mode);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Set INFNAN mode failed";
+      return kLiteError;
+    }
+  } else if (overflow_mode == "SATURATION_MODE") {
+    auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION;
+    auto ret = CALL_ASCEND_API(aclrtSetDeviceSatMode, mode);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Set SATURATION mode failed";
+      return kLiteError;
+    }
+  }
   auto status = InitGe(MsContext::GetInstance(), context, config_info);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "Failed to Init GE";
@@ -266,9 +284,7 @@ Status GeDeviceContext::InitHccl(const std::shared_ptr<Context> &context, const 
 Status GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context, const std::shared_ptr<Context> &context,
                                const ConfigInfos &config_info) {
   MS_EXCEPTION_IF_NULL(inst_context);
-  int32_t is_heterogeneous = 0;
-  (void)rtGetIsHeterogenous(&is_heterogeneous);
-  inst_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogeneous == 1);
+  inst_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   if (inst_context->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
     return kSuccess;
   }

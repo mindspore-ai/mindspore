@@ -35,7 +35,6 @@ GVAR_DEF(PrimitivePtr, kPrimArrayGetItem, std::make_shared<Primitive>("array_get
 GVAR_DEF(PrimitivePtr, kPrimArraySetItem, std::make_shared<Primitive>("array_setitem"));
 
 // Real tuple and list ops.
-GVAR_DEF(PrimitivePtr, kPrimTupleToTensor, std::make_shared<Primitive>(kTupleToTensorOpName));
 GVAR_DEF(PrimitivePtr, kPrimRealMakeTuple, std::make_shared<Primitive>(kRealMakeTupleOpName));
 
 // Dict
@@ -119,7 +118,6 @@ GVAR_DEF(PrimitivePtr, kPrimSequenceMax, std::make_shared<Primitive>(kSequenceMa
 GVAR_DEF(PrimitivePtr, kPrimSequenceMin, std::make_shared<Primitive>(kSequenceMinOpName));
 GVAR_DEF(PrimitivePtr, kPrimInSequence, std::make_shared<Primitive>(kInSequenceOpName));
 GVAR_DEF(PrimitivePtr, kPrimSequenceAddN, std::make_shared<Primitive>(kSequenceAddNOpName));
-GVAR_DEF(PrimitivePtr, kPrimSequenceConcat, std::make_shared<Primitive>(kSequenceConcatOpName));
 GVAR_DEF(PrimitivePtr, kPrimSequenceStack, std::make_shared<Primitive>(kSequenceStackOpName));
 GVAR_DEF(PrimitivePtr, kPrimSequenceUnstack, std::make_shared<Primitive>(kSequenceUnstackOpName));
 }  // namespace prim

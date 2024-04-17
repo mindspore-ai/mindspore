@@ -18,8 +18,8 @@
 #define AICPU_KERNELS_NORMALIZED_SCATTERNDUPDATE_H_
 
 #include <string.h>
-#include "inc/cpu_ops_kernel.h"
-#include "inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -31,10 +31,10 @@ class ScatterNdUpdateCpuKernel : public CpuKernel {
 
  private:
   template <typename var_type>
-  uint32_t DTYPE_CHOOSE(const CpuKernelContext &ctx);
+  uint32_t DTYPE_CHOOSE(CpuKernelContext &ctx);
 
   template <typename var_type, typename indices_type>
-  uint32_t ScatterNdUpdateComputeRealKernel(const CpuKernelContext &ctx);
+  uint32_t ScatterNdUpdateComputeRealKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

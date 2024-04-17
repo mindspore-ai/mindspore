@@ -57,12 +57,12 @@ CUST_IMPLEMT_VERIFIER(Coalesce, CoalesceVerify) {
             x_indices_shape.GetDim(0), x_shape_shape.GetDim(0));
     return GRAPH_FAILED;
   }
-  if (x_values_type != DT_FLOAT && x_values_type != DT_FLOAT16) {
-    OP_LOGE(TbeGetName(op).c_str(), "the data type of x_values should be DT_FLOAT or DT_FLOAT16.");
+  if (x_values_type != DT_DOUBLE && x_values_type != DT_FLOAT && x_values_type != DT_FLOAT16) {
+    OP_LOGE(TbeGetName(op).c_str(), "the data type of x_values should be double, float or float16.");
     return GRAPH_FAILED;
   }
   if (x_indices_type != DT_INT64 || x_shape_type != DT_INT64) {
-    OP_LOGE(TbeGetName(op).c_str(), "the data types of x_indices and x_shape should be DT_INT64.");
+    OP_LOGE(TbeGetName(op).c_str(), "the data types of x_indices and x_shape should be int64.");
     return GRAPH_FAILED;
   }
   return GRAPH_SUCCESS;

@@ -40,7 +40,7 @@ std::string GetPyExe() {
   return env;
 }
 
-bool KernelBuildClient::CompilerStart(int process_num, int wait_time) {
+bool KernelBuildClient::CompilerStart(int process_num, int wait_time, const std::string &platform) {
   // Start compiling..
   auto res = SendRequest(kCompilerStart);
   if (res != kAck) {
@@ -57,6 +57,11 @@ bool KernelBuildClient::CompilerStart(int process_num, int wait_time) {
   res = SendRequest(wait_time_str);
   if (res != kAck) {
     MS_LOG(ERROR) << "AKG/START(wait_time) responds failed, res: " << res;
+    return false;
+  }
+  res = SendRequest(platform);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "AKG/START(platform) responds failed, res: " << res;
     return false;
   }
   return true;
@@ -100,20 +105,6 @@ bool KernelBuildClient::CompilerWait() {
     return false;
   }
   return true;
-}
-
-std::string AscendKernelBuildClient::DispatchToServer(const std::string &job_json_str) {
-  auto res = SendRequest(job_json_str);
-  if (res == kFailed) {
-    MS_LOG(ERROR) << "Send TBE job json failed, res: " << res;
-    return "";
-  }
-  return res;
-}
-
-AscendKernelBuildClient &AscendKernelBuildClient::Instance() {
-  static AscendKernelBuildClient instance{};
-  return instance;
 }
 
 AkgKernelBuildClient &AkgKernelBuildClient::Instance() {

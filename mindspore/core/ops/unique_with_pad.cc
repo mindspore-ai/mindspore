@@ -69,8 +69,8 @@ abstract::TupleShapePtr UniqueWithPadInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto pad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto pad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto is_dynamic = IsDynamic(x_shape) || IsDynamic(pad_shape);
 
   UniqueWithPadCheckEmptyTensor(prim_name, {x_shape, pad_shape});
@@ -100,7 +100,7 @@ abstract::TupleShapePtr UniqueWithPadInferShape(const PrimitivePtr &primitive,
 TuplePtr UniqueWithPadInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
 
   std::set<TypePtr> valid_types = {kInt32, kInt64, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
@@ -108,10 +108,10 @@ TuplePtr UniqueWithPadInferType(const PrimitivePtr &primitive, const std::vector
   TypePtr y_type = x_type;
   TypePtr idx_type = kInt32;
 
-  abstract::AbstractTensorPtr x_ptr = input_args.at(kInputIndex0)->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(x_ptr->element());
-  MS_EXCEPTION_IF_NULL(x_ptr->element()->GetTypeTrack());
-  if (x_ptr->element()->GetTypeTrack()->type_id() == TypeId::kNumberTypeInt64) {
+  auto x_tensor_type = x_type->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor_type);
+  MS_EXCEPTION_IF_NULL(x_tensor_type->element());
+  if (x_tensor_type->element()->type_id() == TypeId::kNumberTypeInt64) {
     idx_type = kInt64;
   }
 

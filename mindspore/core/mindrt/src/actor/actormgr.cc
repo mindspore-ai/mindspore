@@ -18,6 +18,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "actor/actormgr.h"
 #include "actor/iomgr.h"
@@ -49,12 +50,17 @@ ActorMgr::~ActorMgr() {
   }
 }
 
-int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t max_thread_num, size_t actor_queue_size) {
-  bool expected = false;
-  if (!initialized_.compare_exchange_strong(expected, true)) {
+int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t max_thread_num, size_t actor_queue_size,
+                         const std::vector<int> &core_list) {
+  MS_LOG(DEBUG) << "ActorMgr Initialize, use_inner_pool : " << use_inner_pool
+                << ", actor_thread_num : " << actor_thread_num << ", max_thread_num : " << max_thread_num
+                << ", actor_queue_size : " << actor_queue_size << ", core_list size : " << core_list.size();
+  std::unique_lock lock(actorsMutex);
+  if (initialized_) {
     MS_LOG(DEBUG) << "Actor Manager has been initialized before";
     return MINDRT_OK;
   }
+  initialized_ = true;
   // create inner thread pool only when specified use_inner_pool
   if (use_inner_pool) {
     ActorThreadPool::set_actor_queue_size(actor_queue_size);
@@ -65,7 +71,13 @@ int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t ma
         return MINDRT_ERROR;
       }
     } else {
-      inner_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num, max_thread_num, {});
+      // Reverse core list to avoid bind cpu 0.
+      std::vector<int> bind_list;
+      for (size_t i = 0; i < core_list.size(); i++) {
+        bind_list.push_back(core_list[core_list.size() - 1 - i]);
+      }
+      auto bind_mode = !bind_list.empty() ? BindMode::Power_Higher : BindMode::Power_NoBind;
+      inner_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num, max_thread_num, bind_list, bind_mode);
       if (inner_pool_ == nullptr) {
         MS_LOG(ERROR) << "ActorMgr CreateThreadPool failed";
         return MINDRT_ERROR;
@@ -266,6 +278,17 @@ AID ActorMgr::Spawn(const ActorReference &actor, bool shareThread) {
   return actor->GetAID();
 }
 
+void ActorMgr::ResetActorAfterFork(const ActorReference &actor) {
+  if (actor) {
+    actor->Quit();
+    if (actor->mailbox != nullptr) {
+      (void)actor->mailbox.release();
+    }
+
+    RemoveActor(actor->GetAID().Name());
+  }
+}
+
 void ActorMgr::Terminate(const AID &id) {
   auto actor = GetActor(id);
   if (actor != nullptr) {
@@ -282,4 +305,12 @@ void ActorMgr::Wait(const AID &id) {
     actor->Await();
   }
 }
+
+void ActorMgr::ChildAfterFork() {
+  if (inner_pool_) {
+    MS_LOG(DEBUG) << "ActorMgr reinitialize inner_pool_ after fork.";
+    inner_pool_->ChildAfterFork();
+  }
+}
+
 };  // end of namespace mindspore

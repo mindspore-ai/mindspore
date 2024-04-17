@@ -29,10 +29,7 @@ constexpr size_t kInputNum = 1;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
-bool BoolNotCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool BoolNotCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For kernel '" << kernel_name_ << "' input_num must be 1, but got " << inputs.size();
   }
@@ -46,10 +43,8 @@ bool BoolNotCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int BoolNotCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int BoolNotCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -57,8 +52,8 @@ int BoolNotCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool BoolNotCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &outputs) {
+bool BoolNotCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   T *input_x = GetDeviceAddress<T>(inputs, 0);
@@ -86,6 +81,6 @@ std::vector<KernelAttr> BoolNotCpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, BoolNotFunc> &item) { return item.first; });
   return support_list;
 }
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, bool_not, BoolNotCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BoolNot, BoolNotCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -20,14 +20,14 @@ mindspore.ops.cond
     ``-1``                :math:`min(sum(abs(x), dim=0))`    参考最下方公式
     ``2``                 最大奇异值                           参考最下方公式
     ``-2``                最小奇异值                           参考最下方公式
-    其余int或float值       不支持                              :math:`sum(abs(x)^{ord})^{(1 / ord)}`
+    其余int或float值       不支持                              :math:`sum(abs(x)^{p})^{(1 / p)}`
     =================   ================================== ==============================================
 
     .. note::
         当前暂不支持复数。
 
     参数：
-        - **A** (Tensor) - shape为 :math:`(*, n)` 或者 :math:`(*, m, n)` 的Tensor，其中*是零个或多个batch维度。
+        - **A** (Tensor) - shape为 :math:`(*, n)` 或者 :math:`(*, m, n)` 的Tensor，其中 :math:`*` 是零个或多个batch维度。
         - **p** (Union[int, float, inf, -inf, 'fro', 'nuc'], 可选) - norm的模式。行为参考上表。默认值： ``None`` 。
 
     返回：

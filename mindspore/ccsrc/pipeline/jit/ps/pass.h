@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,13 +42,14 @@ bool OptPassAGroup(const ResourcePtr &resource);
 bool CconvPass(const ResourcePtr &resource);
 bool PipelineSplitPass(const ResourcePtr &resource);
 bool AutoParallelPass(const ResourcePtr &resource);
+bool AutoParallelSymbolPassWithReNormalize(const ResourcePtr &resource);
+bool ParallelVirtualDatasetPass(const ResourcePtr &resource);
 bool PynativeShardPass(const ResourcePtr &resource);
 bool ValidatePass(const ResourcePtr &resource);
 bool ConvertPrepareAdapt(const ResourcePtr &resource);
 bool AddCacheEmbeddingPass(const ResourcePtr &resource);
 bool MetaUnpackPreparePass(const ResourcePtr &resource);
 bool GradPartialTransformPass(const ResourcePtr &resource);
-bool PackExpandPass(const ResourcePtr &resource);
 void ReclaimOptimizer();
 bool PynativeOptPass(const ResourcePtr &resource);
 bool EliminateSpecialOpOptPass(const ResourcePtr &resource);
@@ -58,6 +59,7 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
                                 const std::vector<bool> &need_grad_flags);
 FuncGraphPtr JitBpropGraphPass(const ResourcePtr &resource, bool need_renormalize);
 FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource, bool has_control_flow);
+void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource);
 }  // namespace pipeline
 }  // namespace mindspore
 

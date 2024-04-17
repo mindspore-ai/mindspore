@@ -44,10 +44,8 @@ using KernelRunFunc = SparseApplyCenteredRMSPropCpuKernelMod::KernelRunFunc;
     .AddOutputAttr(kNumberType##t11)
 }  // namespace
 
-bool SparseApplyCenteredRMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseApplyCenteredRMSPropCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -62,14 +60,13 @@ bool SparseApplyCenteredRMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_op
                   << ", but got " << outputs.size();
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
 void SparseApplyCenteredRMSPropCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
@@ -78,12 +75,10 @@ void SparseApplyCenteredRMSPropCpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyCenteredRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                   const std::vector<KernelTensorPtr> &inputs,
-                                                   const std::vector<KernelTensorPtr> &outputs,
-                                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyCenteredRMSPropCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -158,23 +153,23 @@ int SparseApplyCenteredRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_o
 }
 
 template <typename I, typename T>
-bool SparseApplyCenteredRMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &,
-                                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseApplyCenteredRMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                          const std::vector<kernel::KernelTensor *> &,
+                                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyCenteredRMSPropInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyCenteredRMSPropOutputsNum, kernel_name_);
 
-  auto var = reinterpret_cast<T *>(inputs[0]->addr);
-  auto mg = reinterpret_cast<T *>(inputs[1]->addr);
-  auto ms = reinterpret_cast<T *>(inputs[2]->addr);
-  auto mom = reinterpret_cast<T *>(inputs[3]->addr);
-  auto lr_scalar = reinterpret_cast<T *>(inputs[4]->addr)[0];
-  auto rho_scalar = reinterpret_cast<T *>(inputs[5]->addr)[0];
-  auto momentum_scalar = reinterpret_cast<T *>(inputs[6]->addr)[0];
-  auto epsilon_scalar = reinterpret_cast<T *>(inputs[7]->addr)[0];
-  auto grad = reinterpret_cast<T *>(inputs[8]->addr);
-  auto indices = reinterpret_cast<I *>(inputs[9]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto var = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto mg = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto ms = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto mom = reinterpret_cast<T *>(inputs[3]->device_ptr());
+  auto lr_scalar = reinterpret_cast<T *>(inputs[4]->device_ptr())[0];
+  auto rho_scalar = reinterpret_cast<T *>(inputs[5]->device_ptr())[0];
+  auto momentum_scalar = reinterpret_cast<T *>(inputs[6]->device_ptr())[0];
+  auto epsilon_scalar = reinterpret_cast<T *>(inputs[7]->device_ptr())[0];
+  auto grad = reinterpret_cast<T *>(inputs[8]->device_ptr());
+  auto indices = reinterpret_cast<I *>(inputs[9]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   for (size_t i = 0; i < indices_size_; ++i) {
     I index = indices[i];
     if (index < 0 || LongToSize(index) >= var_first_dim_size_) {

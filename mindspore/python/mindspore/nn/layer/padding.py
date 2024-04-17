@@ -208,24 +208,11 @@ class _ConstantPadNd(Cell):
             raise TypeError(msg)
 
         self.value = value
-        self.padding = _swap_to_ms_padding_order(padding)
-        self._name = name
+        self.padding = padding
 
     def construct(self, x):
         """Construct the pad net."""
-        input_shape = x.shape
-        padding = _check(input_shape, self.padding, self._name)
-        new_padding, start, end = _get_new_padding(padding)
-        mask = ops.OnesLike()(x)
-        output = ops.Pad(new_padding)(x)
-        mask = ops.Pad(new_padding)(mask)
-        ones = ops.OnesLike()(output)
-        value = ops.fill(output.dtype, output.shape, self.value)
-        output = ops.Add()(ops.Mul()(mask, output), ops.Mul()(ops.Sub()(ones, mask), value))
-        slice_op = ops.Slice()
-        begin, size = _get_begin_size(output.shape, start, end)
-        output = slice_op(output, begin, size)
-        return output
+        return ops.pad(x, padding=self.padding, mode='constant', value=self.value)
 
 
 class ConstantPad1d(_ConstantPadNd):
@@ -238,7 +225,12 @@ class ConstantPad1d(_ConstantPadNd):
             If a 2-tuple, uses (padding_0, padding_1) to pad. If the input is `x`, the size of last
             dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`. The remaining dimensions
             of the output are consistent with those of the input.
+            Only support non-negative value while running in Ascend.
         value (Union[int, float]): Padding value.
+
+    Inputs:
+        - **x** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+          It is not supported that the size of dimensions is greater than 5 while running on Ascend.
 
     Returns:
         Tensor, the tensor after padding.
@@ -248,6 +240,8 @@ class ConstantPad1d(_ConstantPadNd):
         TypeError: If `value` is not int or float.
         ValueError: If the length of `padding` with tuple type is not equal to 2.
         ValueError: If the output shape after padding is not positive.
+        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
+        ValueError: If `padding` contains negative value while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -316,7 +310,12 @@ class ConstantPad2d(_ConstantPadNd):
             If the input is `x`, the size of last dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`.
             The size of penultimate dimension of output is :math:`padding\_2 + x.shape[-2] + padding\_3`.
             The remaining dimensions of the output are consistent with those of the input.
+            Only support non-negative value while running in Ascend.
         value (Union[int, float]): Padding value.
+
+    Inputs:
+        - **x** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+          It is not supported that the size of dimensions is greater than 5 while running on Ascend.
 
     Returns:
         Tensor, the tensor after padding.
@@ -326,6 +325,8 @@ class ConstantPad2d(_ConstantPadNd):
         TypeError: If `value` is not int or float.
         ValueError: If the length of `padding` is more than 4 or not a multiple of 2.
         ValueError: If the output shape after padding is not positive.
+        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
+        ValueError: If `padding` contains negative value while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -369,7 +370,12 @@ class ConstantPad3d(_ConstantPadNd):
             The size of penultimate dimension of output is :math:`padding\_2 + x.shape[-2] + padding\_3`.
             The size of 3rd to last dimension of output is :math:`padding\_4 + x.shape[-3] + padding\_5`.
             The remaining dimensions of the output are consistent with those of the input.
+            Only support non-negative value while running in Ascend.
         value (Union[int, float]): Padding value.
+
+    Inputs:
+        - **x** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+          It is not supported that the size of dimensions is greater than 5 while running on Ascend.
 
     Returns:
         Tensor, the tensor after padding.
@@ -379,6 +385,8 @@ class ConstantPad3d(_ConstantPadNd):
         TypeError: If `value` is not int or float.
         ValueError: If the length of `padding` is more than 6 or not a multiple of 2.
         ValueError: If the output shape after padding is not positive.
+        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
+        ValueError: If `padding` contains negative value while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -620,6 +628,7 @@ class ZeroPad2d(_ConstantPadNd):
             If the input is `x`, the size of last dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`.
             The size of penultimate dimension of output is :math:`padding\_2 + x.shape[-2] + padding\_3`.
             The remaining dimensions of the output are consistent with those of the input.
+            Only support non-negative value while running in Ascend.
 
     Returns:
         Tensor, the tensor after padding.
@@ -628,6 +637,8 @@ class ZeroPad2d(_ConstantPadNd):
         TypeError: If `padding` is not a tuple or int.
         ValueError: If the length of `padding` is more than 4 or not a multiple of 2.
         ValueError: If the output shape after padding is not positive.
+        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
+        ValueError: If `padding` contains negative value while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -680,17 +691,11 @@ class _ReplicationPadNd(Cell):
         self.padv3 = nn_ops.PadV3(mode="edge")
 
     @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        raise NotImplementedError
-
-    @staticmethod
     @constexpr
     def _need_expend_dim(x):
         raise NotImplementedError
 
     def construct(self, x):
-        self._check_input_dim(x.shape, self.name)
         need_expend_dims = self._need_expend_dim(x)
         if need_expend_dims:
             x = x.expand_dims(0)
@@ -750,12 +755,6 @@ class ReplicationPad1d(_ReplicationPadNd):
         if isinstance(padding, int):
             padding = (padding, padding)
         super(ReplicationPad1d, self).__init__(padding, name="ReplicationPad1d")
-
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        _check_dim(dim, 2, 3, cls_name)
 
     def _need_expend_dim(self, x):
         input_shape = x.shape
@@ -821,12 +820,6 @@ class ReplicationPad2d(_ReplicationPadNd):
             padding = (padding, padding, padding, padding)
         super(ReplicationPad2d, self).__init__(padding, name="ReplicationPad2d")
 
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        _check_dim(dim, 3, 4, cls_name)
-
     def _need_expend_dim(self, x):
         input_shape = x.shape
         return 1 if len(input_shape) == 3 else 0
@@ -891,12 +884,6 @@ class ReplicationPad3d(_ReplicationPadNd):
         if isinstance(padding, int):
             padding = (padding, padding, padding, padding, padding, padding)
         super(ReplicationPad3d, self).__init__(padding, name="ReplicationPad3d")
-
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        _check_dim(dim, 4, 5, cls_name)
 
     def _need_expend_dim(self, x):
         input_shape = x.shape

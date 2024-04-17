@@ -1,0 +1,18 @@
+#operator pow
+pow:
+    args:
+        input:
+            dtype: tensor
+            type_cast: number
+        exponent:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (input, exponent)
+    returns:
+        y:
+            dtype: tensor
+    dispatch:
+        enable: False
+
+

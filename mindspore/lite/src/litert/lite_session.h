@@ -167,7 +167,7 @@ class MS_API LiteSession {
   static void FreePackOpWeight(const std::vector<kernel::KernelExec *> &kernels);
   static void MarkSharedWeight(const std::vector<kernel::KernelExec *> &kernels);
   std::string ParseWeightPath();
-  bool IsMmapEnable();
+  bool IsMmapEnable() const;
 
  private:
   int PreCheck(Model *model);

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 """Categorical Distribution"""
 import numpy as np
 from mindspore import context
-from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
@@ -328,10 +327,9 @@ class Categorical(Distribution):
         value_clipped = self.clip_by_value(value, 0.0, num_classes - 1)
         value_clipped = self.cast(value_clipped, self.index_type)
         # create index from 0 ... NumOfLabels
-        start = Tensor(0, self.index_type)
-        end = self.cast(self.shape(value)[0], self.index_type)
-        delta = Tensor(1, self.index_type)
-        index = self.reshape(ops.range(start, end, delta), (-1, 1))
+        index = self.reshape(
+            ops.arange(0, self.shape(value)[0], 1, dtype=self.index_type), (-1, 1)
+        )
         index = self.concat((index, value_clipped))
 
         # index into logit_pmf, fill in out_of_bound places with -inf

@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -105,11 +105,11 @@ class _AutoParallelContext:
             device_num (int): The device number.
 
         Raises:
-            ValueError: If the device num is not in [1, 4096].
+            ValueError: If the device num is not a positive integer.
         """
         self.check_context_handle()
-        if device_num < 1 or device_num > 4096:
-            raise ValueError("The context configuration parameter 'device_num' must be in [1, 4096], "
+        if device_num < 1:
+            raise ValueError("The context configuration parameter 'device_num' must be a positive integer, "
                              "but got the value of device_num : {}.".format(device_num))
         from mindspore.communication._comm_helper import _HCCL_TEST_AVAILABLE
         self._context_handle.set_hccl_test_avaible(_HCCL_TEST_AVAILABLE)
@@ -228,6 +228,25 @@ class _AutoParallelContext:
         """Get the stages of the pipeline"""
         self.check_context_handle()
         return self._context_handle.get_pipeline_stage_split_num()
+
+    def set_pipeline_result_broadcast(self, pipeline_result_broadcast):
+        """
+        Set the value of enabling pipeline result broadcast. Default: ``False``.
+
+        Args:
+            pipeline_result_broadcast (bool): Enable/disable broadcast the last stage result to all other stages.
+        """
+        self.check_context_handle()
+        if not isinstance(pipeline_result_broadcast, bool):
+            raise TypeError("For 'set_auto_parallel_context().set_pipeline_result_broadcast', the argument "
+                            "'pipeline_result_broadcast' must be bool, but got the type : {}."
+                            .format(type(pipeline_result_broadcast)))
+        self._context_handle.set_pipeline_result_broadcast(pipeline_result_broadcast)
+
+    def get_pipeline_result_broadcast(self):
+        """Get the value of enabling pipeline result broadcast"""
+        self.check_context_handle()
+        return self._context_handle.get_pipeline_result_broadcast()
 
     def set_pipeline_segments(self, segments):
         """Set the segments of the pipeline"""
@@ -1114,6 +1133,7 @@ _set_auto_parallel_context_func_map = {
     "gradient_fp32_sync": auto_parallel_context().set_gradient_fp32_sync,
     "loss_repeated_mean": auto_parallel_context().set_loss_repeated_mean,
     "pipeline_stages": auto_parallel_context().set_pipeline_stages,
+    "pipeline_result_broadcast": auto_parallel_context().set_pipeline_result_broadcast,
     "pipeline_segments": auto_parallel_context().set_pipeline_segments,
     "parallel_mode": auto_parallel_context().set_parallel_mode,
     "search_mode": auto_parallel_context().set_strategy_search_mode,
@@ -1143,6 +1163,7 @@ _get_auto_parallel_context_func_map = {
     "gradient_fp32_sync": auto_parallel_context().get_gradient_fp32_sync,
     "loss_repeated_mean": auto_parallel_context().get_loss_repeated_mean,
     "pipeline_stages": auto_parallel_context().get_pipeline_stages,
+    "pipeline_result_broadcast": auto_parallel_context().get_pipeline_result_broadcast,
     "parallel_mode": auto_parallel_context().get_parallel_mode,
     "search_mode": auto_parallel_context().get_strategy_search_mode,
     "auto_parallel_search_mode": auto_parallel_context().get_auto_parallel_search_mode,
@@ -1224,6 +1245,8 @@ def _set_auto_parallel_context(**kwargs):
                         the devices are distributed alone the pipeline. The total devices will be divided into
                         'pipeline_stags' stages. This currently could only be used when
                         parallel mode semi_auto_parallel is enabled. Default: 0
+        pipeline_result_broadcast (bool): A switch that broadcast the last stage result to all other stage in pipeline
+                        parallel inference. Default: ``False`` .
         communi_parallel_mode (str): There are tree kinds of communication parallel modes, "all_group_parallel",
                      "same_server_group_parallel" and "no_group_parallel". Default: "all_group_parallel".
 
@@ -1311,6 +1334,7 @@ def _reset_auto_parallel_context():
     - auto_parallel_search_mode: 'recursive_programming
     - sharding_propagation: False
     - pipeline_stages: 0
+    - pipeline_result_broadcast: False
     - gradient_accumulation_shard: True
     - fusion_threshold: 64
     """

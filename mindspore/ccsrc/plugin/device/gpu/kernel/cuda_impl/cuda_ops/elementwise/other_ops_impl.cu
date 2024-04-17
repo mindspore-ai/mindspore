@@ -128,11 +128,77 @@ struct UnaryFunc<ElwiseOpType::kReciprocal, Type, Type> {
     return std::numeric_limits<Type>::max() + Type(1);
   }
 };
+
+template <>
+struct UnaryFunc<ElwiseOpType::kReciprocal, half, half> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE half operator()(const half val) const {
+    return half(1.0) / val;
+  }
+};
+
+template <>
+struct UnaryFunc<ElwiseOpType::kReciprocal, float, float> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE float operator()(const float val) const {
+    return static_cast<float>(1.0) / val;
+  }
+};
+
+template <>
+struct UnaryFunc<ElwiseOpType::kReciprocal, double, double> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE double operator()(const double val) const {
+    return static_cast<double>(1.0) / val;
+  }
+};
+
+template <>
+struct UnaryFunc<ElwiseOpType::kReciprocal, Complex<float>, Complex<float>> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE Complex<float> operator()(const Complex<float> val) const {
+    return Complex<float>(1.0) / val;
+  }
+};
+
+template <>
+struct UnaryFunc<ElwiseOpType::kReciprocal, Complex<double>, Complex<double>> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE Complex<double> operator()(const Complex<double> val) const {
+    return Complex<double>(1.0) / val;
+  }
+};
 REGISTER_UNARY_OP_CUDA_FUNC_BOOL_TYPE(ElwiseOpType::kReciprocal);
 REGISTER_UNARY_OP_CUDA_FUNC_INT_TYPE(ElwiseOpType::kReciprocal);
 REGISTER_UNARY_OP_CUDA_FUNC_UINT_TYPE(ElwiseOpType::kReciprocal);
 REGISTER_UNARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kReciprocal);
 REGISTER_UNARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kReciprocal);
+
+template <typename TypeIn, typename TypeOut>
+struct UnaryFunc<ElwiseOpType::kReciprocal, TypeIn, TypeOut> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE TypeOut operator()(const TypeIn val) const {
+    return TypeOut(1.0) / val;
+  }
+};
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, int64_t, float>(const size_t num,
+    const int64_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, int, float>(const size_t num,
+    const int *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, int16_t, float>(const size_t num,
+    const int16_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, int8_t, float>(const size_t num,
+    const int8_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, uint8_t, float>(const size_t num,
+    const uint8_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, uint16_t, float>(const size_t num,
+    const uint16_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, uint32_t, float>(const size_t num,
+    const uint32_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, uint64_t, float>(const size_t num,
+    const uint64_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, bool, float>(const size_t num,
+    const bool *inp, float *out, cudaStream_t cuda_stream);
 
 template <typename Type>
 struct UnaryFunc<ElwiseOpType::kExpm1, Type, Type> {
@@ -166,12 +232,39 @@ REGISTER_UNARY_OP_CUDA_FUNC_INT_TYPE(ElwiseOpType::kOnesLike);
 REGISTER_UNARY_OP_CUDA_FUNC_UINT_TYPE(ElwiseOpType::kOnesLike);
 REGISTER_UNARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kOnesLike);
 REGISTER_UNARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kOnesLike);
-template <>
-struct UnaryFunc<ElwiseOpType::kLogicalNot, bool, bool> {
+template <typename Type>
+struct UnaryFunc<ElwiseOpType::kLogicalNot, Type, bool> {
   DEVICE_HOST UnaryFunc() {}
-  DEVICE bool operator()(const bool val) const { return !val; }
+  DEVICE bool operator()(const Type val) const { return !val; }
 };
-REGISTER_UNARY_OP_CUDA_FUNC_BOOL_TYPE(ElwiseOpType::kLogicalNot);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, bool, bool>(const size_t num,
+  const bool *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, int64_t, bool>(const size_t num,
+  const int64_t *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, int, bool>(const size_t num,
+  const int *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, int16_t, bool>(const size_t num,
+  const int16_t *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, int8_t, bool>(const size_t num,
+  const int8_t *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, uint8_t, bool>(const size_t num,
+  const uint8_t *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, uint16_t, bool>(const size_t num,
+  const uint16_t *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, uint32_t, bool>(const size_t num,
+  const uint32_t *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, uint64_t, bool>(const size_t num,
+  const uint64_t *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, half, bool>(const size_t num,
+  const half *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, float, bool>(const size_t num,
+  const float *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, double, bool>(const size_t num,
+  const double *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, Complex<float>, bool>(
+  const size_t num, const Complex<float> *inp, bool *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kLogicalNot, Complex<double>, bool>(
+  const size_t num, const Complex<double> *inp, bool *out, cudaStream_t cuda_stream);
 
 template <typename In0_t, typename In1_t, typename Out_t>
 struct BinaryFunc<ElwiseOpType::kZeta, In0_t, In1_t, Out_t> {

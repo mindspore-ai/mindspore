@@ -26,11 +26,9 @@ constexpr size_t kCheckNumericsInputsNum = 1;
 constexpr size_t kCheckNumericsOutputsNum = 1;
 }  // namespace
 
-bool CheckNumericsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  input_dtype_ = inputs.at(kIndex0)->GetDtype();
+bool CheckNumericsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  input_dtype_ = inputs.at(kIndex0)->dtype_id();
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of 'x' should be float16, float32 or float64, but got: " << input_dtype_;
@@ -38,9 +36,9 @@ bool CheckNumericsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-bool CheckNumericsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool CheckNumericsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCheckNumericsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCheckNumericsOutputsNum, kernel_name_);
   if (input_dtype_ == kNumberTypeFloat16) {
@@ -63,11 +61,11 @@ void CheckNumericsCpuKernelMod::CheckNanOrInf(T value) const {
 }
 
 template <typename T>
-void CheckNumericsCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t elem_num = inputs[0]->size / sizeof(T);
+void CheckNumericsCpuKernelMod::LaunchKernelFloat(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t elem_num = inputs[0]->size() / sizeof(T);
 
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

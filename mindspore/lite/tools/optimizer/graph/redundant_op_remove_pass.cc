@@ -255,8 +255,8 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
   }
   auto cnode = anf_node->cast<CNodePtr>();
   MS_ASSERT(cnode != nullptr);
-  if (cnode->inputs().size() != kInputSizeThree) {
-    MS_LOG(ERROR) << "TupleGetItem should have 3 inputs, got " << cnode->inputs().size();
+  if (cnode->size() != kInputSizeThree) {
+    MS_LOG(ERROR) << "TupleGetItem should have 3 inputs, got " << cnode->size();
     return RET_ERROR;
   }
   if (!CheckPrimitiveType(cnode->input(1), kPrimIdentity)) {
@@ -270,7 +270,7 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
   }
   MS_CHECK_TRUE_MSG(!CastToInt(index_vnode->cast<ValueNodePtr>()->value()).empty(), RET_ERROR, "value is empty");
   int index = CastToInt(index_vnode->cast<ValueNodePtr>()->value()).front();
-  int input_cnode_inputs_size = static_cast<int>(get_item_input_cnode->inputs().size());
+  int input_cnode_inputs_size = static_cast<int>(get_item_input_cnode->size());
   if ((index + 1) >= input_cnode_inputs_size) {
     MS_LOG(ERROR) << "value node index is out of range.";
     return lite::RET_ERROR;

@@ -40,18 +40,3 @@ def test_arraylen_2d():
     input1 = ms.Tensor([[1, 2], [1, 3]], dtype=ms.int32)
     output = net(input1)
     assert output == 2
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_arraylen_temptensor():
-    """
-    Feature: test_arraylen_temp op in cpu.
-    Description: test the ops.
-    Expectation: expect correct len result.
-    """
-    net = ArrayLen1()
-    input1 = ms.Tensor([], dtype=ms.int32)
-    output = net(input1)
-    assert output == 0

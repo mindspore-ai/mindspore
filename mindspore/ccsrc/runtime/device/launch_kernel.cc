@@ -14,57 +14,59 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include "runtime/device/launch_kernel.h"
-
+#include "include/backend/anf_runtime_algorithm.h"
 namespace mindspore::device {
-std::vector<kernel::AddressPtr> LaunchKernel::ObtainKernelAddress(const std::vector<size_t> &list,
-                                                                  std::vector<uint8_t *> *addr) {
+std::vector<kernel::KernelTensor *> LaunchKernel::ObtainKernelAddress(const std::vector<size_t> &list,
+                                                                      std::vector<uint8_t *> *addr) {
   MS_EXCEPTION_IF_NULL(addr);
-  std::vector<kernel::AddressPtr> kernel_address;
+  std::vector<kernel::KernelTensor *> kernel_tensors;
   if (addr->size() < list.size()) {
     MS_LOG_EXCEPTION << "Error addr size!";
   }
   for (size_t i = 0; i < list.size(); ++i) {
     auto size = AlignSizeForLaunchKernel(list[i]);
     (*addr)[i] = AllocDeviceMem(size);
-    auto address = std::make_shared<kernel::Address>();
-    MS_EXCEPTION_IF_NULL(address);
-    address->addr = (*addr)[i];
-    MS_EXCEPTION_IF_NULL(address->addr);
-    address->size = size;
-    kernel_address.push_back(address);
+    MS_EXCEPTION_IF_NULL((*addr)[i]);
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>();
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    kernel_tensor->set_device_ptr((*addr)[i]);
+    kernel_tensor->set_size(size);
+    kernel_tensors.push_back(kernel_tensor.get());
   }
-  return kernel_address;
+  return kernel_tensors;
 }
 
-std::vector<kernel::AddressPtr> LaunchKernel::ObtainKernelInputs(const std::vector<size_t> &inputs_list,
-                                                                 const std::vector<uint8_t *> &inputs_addr) {
-  std::vector<kernel::AddressPtr> kernel_inputs;
+std::vector<kernel::KernelTensor *> LaunchKernel::ObtainKernelInputs(const std::vector<size_t> &inputs_list,
+                                                                     const std::vector<uint8_t *> &inputs_addr) {
+  std::vector<kernel::KernelTensor *> kernel_inputs;
   if (inputs_list.size() != inputs_addr.size()) {
     MS_LOG(ERROR) << "input_list size should equal to input_addr_ size, input_list size: " << inputs_list.size()
                   << ", input_addr_ size: " << inputs_addr.size();
   }
   for (size_t i = 0; i < inputs_list.size(); ++i) {
     auto input_size = AlignSizeForLaunchKernel(inputs_list[i]);
-    auto input = std::make_shared<kernel::Address>();
+    auto input = std::make_shared<kernel::KernelTensor>();
     MS_EXCEPTION_IF_NULL(input);
-    input->addr = inputs_addr[i];
-    MS_EXCEPTION_IF_NULL(input->addr);
-    input->size = input_size;
-    kernel_inputs.push_back(input);
+    auto addr = inputs_addr[i];
+    MS_EXCEPTION_IF_NULL(addr);
+    input->set_device_ptr(addr);
+    input->set_size(input_size);
+    kernel_inputs.push_back(input.get());
   }
   return kernel_inputs;
 }
 
-std::vector<kernel::AddressPtr> LaunchKernel::ObtainKernelOutputs(const std::vector<size_t> &outputs_list) {
+std::vector<kernel::KernelTensor *> LaunchKernel::ObtainKernelOutputs(const std::vector<size_t> &outputs_list) {
   // init output_addr_
   outputs_addr_ = std::vector<uint8_t *>(outputs_list.size(), nullptr);
   auto kernel_outputs = ObtainKernelAddress(outputs_list, &outputs_addr_);
   return kernel_outputs;
 }
 
-std::vector<kernel::AddressPtr> LaunchKernel::ObtainKernelWorkspaces(const std::vector<size_t> &workspaces_list) {
-  std::vector<kernel::AddressPtr> kernel_workspace;
+std::vector<kernel::KernelTensor *> LaunchKernel::ObtainKernelWorkspaces(const std::vector<size_t> &workspaces_list) {
+  std::vector<kernel::KernelTensor *> kernel_workspace;
   if (workspaces_list.empty()) {
     return kernel_workspace;
   }
@@ -74,10 +76,14 @@ std::vector<kernel::AddressPtr> LaunchKernel::ObtainKernelWorkspaces(const std::
   return kernel_workspace;
 }
 
-void LaunchKernel::LaunchSingleKernel(const std::vector<uint8_t *> &inputs_addr) {
+void LaunchKernel::LaunchSingleKernel(const AnfNodePtr &node, const std::vector<uint8_t *> &inputs_addr) {
   MS_EXCEPTION_IF_NULL(kernel_mod_);
   // obtain kernel inputs
-  auto kernel_inputs = ObtainKernelInputs(kernel_mod_->GetInputSizeList(), inputs_addr);
+  auto inputs = session::AnfRuntimeAlgorithm::GetOrCreateAllInputKernelTensors(node);
+  std::vector<size_t> input_size_list;
+  std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_size_list),
+                 [](auto input) { return input->size(); });
+  auto kernel_inputs = ObtainKernelInputs(input_size_list, inputs_addr);
   // obtain kernel outputs
   auto kernel_outputs = ObtainKernelOutputs(kernel_mod_->GetOutputSizeList());
   // obtain kernel workspace

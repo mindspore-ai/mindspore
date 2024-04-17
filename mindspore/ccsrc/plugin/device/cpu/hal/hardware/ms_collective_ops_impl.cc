@@ -15,7 +15,6 @@
  */
 
 #include <numeric>
-#include <functional>
 
 #include "plugin/device/cpu/hal/hardware/ms_collective_ops_impl.h"
 #include "utils/ms_context.h"

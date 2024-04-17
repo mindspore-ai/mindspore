@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,37 +18,14 @@
 #include "include/registry/register_kernel_interface.h"
 #include "include/registry/register_kernel.h"
 #include "src/litert/cxx_api/kernel_executor/kernel_executor.h"
-#include "ops/add.h"
-#include "ops/transpose.h"
-#include "ops/arg_max.h"
-#include "ops/batch_norm.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/conv2d.h"
 #include "ops/mat_mul.h"
 #include "ops/topk.h"
-#include "ops/arg_min.h"
-#include "ops/avg_pool.h"
-#include "ops/ceil.h"
-#include "ops/concat.h"
 #include "ops/conv2d_transpose.h"
-#include "ops/flatten.h"
-#include "ops/gather.h"
-#include "ops/gather_nd.h"
-#include "ops/maximum.h"
 #include "ops/max_pool.h"
-#include "ops/minimum.h"
-#include "ops/mul.h"
 #include "ops/pad.h"
-#include "ops/prelu.h"
-#include "ops/reshape.h"
-#include "ops/softmax.h"
-#include "ops/strided_slice.h"
-#include "ops/abs.h"
-#include "ops/div.h"
-#include "ops/equal.h"
-#include "ops/relu.h"
 #include "ops/base_operator.h"
-#include "ops/sigmoid.h"
-#include "ops/addn.h"
 
 namespace mindspore {
 class KernelExecutorTest : public mindspore::CommonTest {
@@ -271,7 +248,7 @@ TEST_F(KernelExecutorTest, TestAdd) {
 
 TEST_F(KernelExecutorTest, TestArgMax) {
   auto op = std::make_shared<ops::Argmax>();
-  op->Init(-1);
+  op->set_axis(-1);
   std::vector<float> argmax_data{1, 20, 5, 67, 8, 9, 130, 24, 15};
   std::vector<mindspore::MSTensor> inputs;
   std::vector<mindspore::MSTensor> outputs;
@@ -287,8 +264,8 @@ TEST_F(KernelExecutorTest, TestArgMax) {
 }
 
 TEST_F(KernelExecutorTest, TestArgMin) {
-  auto op = std::make_shared<ops::ArgMin>();
-  op->Init();
+  auto op = std::make_shared<ops::Argmin>();
+  op->set_axis(-1);
   std::vector<float> input_data{2.0, 3.1, 1.2};
   std::vector<mindspore::MSTensor> inputs;
   std::vector<mindspore::MSTensor> outputs;
@@ -305,7 +282,8 @@ TEST_F(KernelExecutorTest, TestArgMin) {
 
 TEST_F(KernelExecutorTest, TestAvgPool) {
   auto op = std::make_shared<ops::AvgPool>();
-  op->Init({2, 2}, {1, 1});
+  op->set_kernel_size({2, 2});
+  op->set_strides({1, 1});
   std::vector<float> input_data{0, 12, 24, 1, 13, 25, 2, 14, 26, 3, 15, 27, 4,  16, 28, 5,  17, 29,
                                 6, 18, 30, 7, 19, 31, 8, 20, 32, 9, 21, 33, 10, 22, 34, 11, 23, 35};
   std::vector<mindspore::MSTensor> inputs;
@@ -325,7 +303,7 @@ TEST_F(KernelExecutorTest, TestAvgPool) {
 
 TEST_F(KernelExecutorTest, TestBatchNorm) {
   auto op = std::make_shared<ops::BatchNorm>();
-  op->Init(true);
+  op->set_is_training(true);
   std::vector<float> input_data{1, 1, 1, 1};
   std::vector<mindspore::MSTensor> inputs;
   std::vector<mindspore::MSTensor> outputs;
@@ -370,7 +348,7 @@ TEST_F(KernelExecutorTest, TestCeil) {
 
 TEST_F(KernelExecutorTest, TestConcat) {
   auto op = std::make_shared<ops::Concat>();
-  op->Init(1);
+  op->set_axis(1);
   std::vector<float> input_data{0, 1, 2, 1};
   std::vector<mindspore::MSTensor> inputs;
   std::vector<mindspore::MSTensor> outputs;
@@ -388,14 +366,25 @@ TEST_F(KernelExecutorTest, TestConcat) {
 
 TEST_F(KernelExecutorTest, TestConv2D) {
   auto op = std::make_shared<ops::Conv2D>();
-  op->Init(32, {3, 3});
-  std::vector<float> input_data(10 * 32 * 32 * 32, 1);
+  const int batch = 10;
+  const int in_hw = 32;
+  const int out_hw = 30;
+  const int channel = 32;
+  const int kernel_size = 3;
+  op->set_out_channel(channel);
+  op->set_kernel_size({kernel_size, kernel_size});
+  op->set_stride({1, 1});
+  op->set_dilation({1, 1});
+  op->set_group(1);
+  std::vector<float> input_data(batch * in_hw * in_hw * channel, 1);
   std::vector<mindspore::MSTensor> inputs;
   std::vector<mindspore::MSTensor> outputs;
-  mindspore::MSTensor input("input", mindspore::DataType::kNumberTypeFloat32, {10, 32, 32, 32},
-                            reinterpret_cast<void *>(input_data.data()), 10 * 32 * 32 * 32 * sizeof(float));
-  mindspore::MSTensor weight("input", mindspore::DataType::kNumberTypeFloat32, {32, 3, 3, 32},
-                             reinterpret_cast<void *>(input_data.data()), 32 * 3 * 3 * 32 * sizeof(float));
+  mindspore::MSTensor input("input", mindspore::DataType::kNumberTypeFloat32, {batch, in_hw, in_hw, channel},
+                            reinterpret_cast<void *>(input_data.data()),
+                            batch * in_hw * in_hw * channel * sizeof(float));
+  mindspore::MSTensor weight("input", mindspore::DataType::kNumberTypeFloat32,
+                             {channel, kernel_size, kernel_size, channel}, reinterpret_cast<void *>(input_data.data()),
+                             channel * kernel_size * kernel_size * channel * sizeof(float));
   input.SetFormat(mindspore::Format::NHWC);
   weight.SetFormat(mindspore::Format::NHWC);
   inputs.emplace_back(input);
@@ -403,20 +392,32 @@ TEST_F(KernelExecutorTest, TestConv2D) {
 
   ASSERT_EQ(kernel_executor_->Build(op, inputs, context_), mindspore::kSuccess);
   ASSERT_EQ(kernel_executor_->Execute(inputs, &outputs), mindspore::kSuccess);
-  std::vector<int64_t> shape{10, 30, 30, 32};
+  std::vector<int64_t> shape{batch, out_hw, out_hw, channel};
   ASSERT_EQ(outputs[0].Shape(), shape);
 }
 
 TEST_F(KernelExecutorTest, TestConv2DTranspose) {
   auto op = std::make_shared<ops::Conv2DTranspose>();
-  op->Init(32, 32, {3, 3});
-  std::vector<float> input_data(10 * 32 * 32 * 32, 1);
+  const int batch = 10;
+  const int in_hw = 30;
+  const int out_hw = 32;
+  const int channel = 32;
+  const int kernel_size = 3;
+  op->set_in_channel(channel);
+  op->set_out_channel(channel);
+  op->set_kernel_size({kernel_size, kernel_size});
+  op->set_stride({1, 1});
+  op->set_dilation({1, 1});
+  op->set_group(1);
+  std::vector<float> input_data(batch * in_hw * in_hw * channel, 1);
   std::vector<mindspore::MSTensor> inputs;
   std::vector<mindspore::MSTensor> outputs;
-  mindspore::MSTensor input("input", mindspore::DataType::kNumberTypeFloat32, {10, 30, 30, 32},
-                            reinterpret_cast<void *>(input_data.data()), 10 * 30 * 30 * 32 * sizeof(float));
-  mindspore::MSTensor weight("input", mindspore::DataType::kNumberTypeFloat32, {32, 3, 3, 32},
-                             reinterpret_cast<void *>(input_data.data()), 32 * 3 * 3 * 32 * sizeof(float));
+  mindspore::MSTensor input("input", mindspore::DataType::kNumberTypeFloat32, {batch, in_hw, in_hw, channel},
+                            reinterpret_cast<void *>(input_data.data()),
+                            batch * in_hw * in_hw * channel * sizeof(float));
+  mindspore::MSTensor weight("input", mindspore::DataType::kNumberTypeFloat32,
+                             {channel, kernel_size, kernel_size, channel}, reinterpret_cast<void *>(input_data.data()),
+                             channel * kernel_size * kernel_size * channel * sizeof(float));
   input.SetFormat(mindspore::Format::NHWC);
   weight.SetFormat(mindspore::Format::NHWC);
   inputs.emplace_back(input);
@@ -424,7 +425,7 @@ TEST_F(KernelExecutorTest, TestConv2DTranspose) {
 
   ASSERT_EQ(kernel_executor_->Build(op, inputs, context_), mindspore::kSuccess);
   ASSERT_EQ(kernel_executor_->Execute(inputs, &outputs), mindspore::kSuccess);
-  std::vector<int64_t> shape{10, 32, 32, 32};
+  std::vector<int64_t> shape{batch, out_hw, out_hw, channel};
   ASSERT_EQ(outputs[0].Shape(), shape);
 }
 
@@ -564,7 +565,8 @@ TEST_F(KernelExecutorTest, TestMaximum) {
 
 TEST_F(KernelExecutorTest, TestMaxPool) {
   auto op = std::make_shared<ops::MaxPool>();
-  op->Init({2, 2}, {1, 1});
+  op->set_kernel_size({2, 2});
+  op->set_strides({1, 1});
   std::vector<float> input_data{0, 12, 24, 1, 13, 25, 2, 14, 26, 3, 15, 27, 4,  16, 28, 5,  17, 29,
                                 6, 18, 30, 7, 19, 31, 8, 20, 32, 9, 21, 33, 10, 22, 34, 11, 23, 35};
   std::vector<mindspore::MSTensor> inputs;
@@ -687,7 +689,7 @@ TEST_F(KernelExecutorTest, TestReshape) {
 
 TEST_F(KernelExecutorTest, TestSoftmax) {
   auto op = std::make_shared<ops::Softmax>();
-  op->Init();
+  op->set_axis({-1});
   std::vector<float> input_data{1, 2, 3, 4, 5};
   std::vector<mindspore::MSTensor> inputs;
   std::vector<mindspore::MSTensor> outputs;
@@ -732,7 +734,7 @@ TEST_F(KernelExecutorTest, TestStridedSlice) {
 
 TEST_F(KernelExecutorTest, TestTopK) {
   auto op = std::make_shared<ops::TopK>();
-  op->Init(true);
+  op->set_sorted(true);
   std::vector<float> input_data{1, 2, 3, 4, 5};
   std::vector<int32_t> input_data2{3};
   std::vector<mindspore::MSTensor> inputs;

@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "ops/tuple_equal.h"
 #include "utils/check_convert_utils.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace ops {
@@ -34,28 +35,49 @@ AbstractBasePtr SequenceEqualInferInner(const PrimitivePtr &primitive, const std
   constexpr size_t y_index = 1;
   auto x_abs = input_args[x_index];
   auto y_abs = input_args[y_index];
-  if ((!x_abs->isa<abstract::AbstractSequence>()) || (!y_abs->isa<abstract::AbstractSequence>())) {
+  if (!CheckAndConvertUtils::IsSequence(x_abs) || !CheckAndConvertUtils::IsSequence(y_abs)) {
     MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input must be a list or tuple, "
                             << "but got: " << x_abs->ToString() << " and " << y_abs->ToString();
   }
-  auto seqx_abs = x_abs->cast<abstract::AbstractSequencePtr>();
-  auto seqy_abs = y_abs->cast<abstract::AbstractSequencePtr>();
-  if (seqx_abs->dynamic_len() || seqy_abs->dynamic_len() || seqx_abs->BuildValue() == kValueAny ||
-      seqy_abs->BuildValue() == kValueAny) {
+  if (CheckAndConvertUtils::IsDynamicSequence(x_abs) || CheckAndConvertUtils::IsDynamicSequence(y_abs) ||
+      x_abs->GetValue()->ContainsValueAny() || y_abs->GetValue()->ContainsValueAny()) {
     return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
   }
-  return std::make_shared<abstract::AbstractScalar>(*seqx_abs->BuildValue() == *seqy_abs->BuildValue());
+  auto x_ptr = x_abs->GetValue();
+  auto y_ptr = y_abs->GetValue();
+  if (x_ptr->isa<ValueSequence>() && y_ptr->isa<ValueSequence>()) {
+    auto x_sequence = x_ptr->cast<ValueSequencePtr>()->value();
+    auto y_sequence = y_ptr->cast<ValueSequencePtr>()->value();
+    if (x_sequence.size() != y_sequence.size()) {
+      return std::make_shared<abstract::AbstractScalar>(false);
+    }
+    for (size_t i = 0; i < x_sequence.size(); i++) {
+      MS_EXCEPTION_IF_NULL(x_sequence[i]);
+      MS_EXCEPTION_IF_NULL(y_sequence[i]);
+      if (x_sequence[i]->isa<tensor::Tensor>() && y_sequence[i]->isa<tensor::Tensor>()) {
+        if (!x_sequence[i]->cast<tensor::TensorPtr>()->ValueEqual(*y_sequence[i]->cast<tensor::TensorPtr>())) {
+          return std::make_shared<abstract::AbstractScalar>(false);
+        }
+      } else {
+        if (!(*x_sequence[i] == *y_sequence[i])) {
+          return std::make_shared<abstract::AbstractScalar>(false);
+        }
+      }
+    }
+    return std::make_shared<abstract::AbstractScalar>(true);
+  }
+  return std::make_shared<abstract::AbstractScalar>(false);
 }
 
 class SequenceEqualInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceEqualInferInner(primitive, input_args)->BuildShape();
+    return SequenceEqualInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceEqualInferInner(prim, input_args)->BuildType();
+    return SequenceEqualInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

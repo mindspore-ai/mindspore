@@ -1,0 +1,32 @@
+cummin:
+    description: |
+        Returns the cumulative minimum of elements and the index.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        Refer to :func:`mindspore.ops.cummin` for more detail.
+        
+        Args:
+            axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
+        
+        Inputs:
+            - **input** (Tensor) - The input tensor.
+
+        Outputs:
+            A tuple of 2 Tensors(values, indices), containing the cumulative minimum of elements and the index,
+            the shape of each output tensor is the same as input `input`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor, ops
+            >>> import mindspore
+            >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
+            >>> axis = 0
+            >>> output = ops.Cummin(axis)(a)
+            >>> print(output[0])
+            [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
+            >>> print(output[1])
+            [0 1 1 1 4 4]

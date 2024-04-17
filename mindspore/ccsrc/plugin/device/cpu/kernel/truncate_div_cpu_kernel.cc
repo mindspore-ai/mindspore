@@ -33,11 +33,8 @@ constexpr size_t kTruncateDivInputsNum = 2;
 constexpr size_t kTruncateDivOutputsNum = 1;
 }  // namespace
 
-bool TruncateDivCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool TruncateDivCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
 
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -48,10 +45,9 @@ bool TruncateDivCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int TruncateDivCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int TruncateDivCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -63,15 +59,15 @@ int TruncateDivCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool TruncateDivCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool TruncateDivCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTruncateDivInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTruncateDivOutputsNum, kernel_name_);
-  auto *input_addr_a = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto *input_addr_b = reinterpret_cast<T *>(inputs[kOne]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
-  size_t output_size = outputs[0]->size / sizeof(T);
+  auto *input_addr_a = reinterpret_cast<T *>(inputs[kZero]->device_ptr());
+  auto *input_addr_b = reinterpret_cast<T *>(inputs[kOne]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[kZero]->device_ptr());
+  size_t output_size = outputs[0]->size() / sizeof(T);
 
   if (input_shape_1_ == input_shape_2_) {
     auto task = [output_addr, input_addr_a, input_addr_b](size_t start, size_t end) {

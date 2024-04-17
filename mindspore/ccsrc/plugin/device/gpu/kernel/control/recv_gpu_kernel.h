@@ -30,18 +30,15 @@ class RecvGpuKernelMod : public NativeGpuKernelMod {
   RecvGpuKernelMod() {}
   ~RecvGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &, void *stream_ptr) override {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamWaitEvent(reinterpret_cast<cudaStream_t>(stream_ptr), wait_event_, 0),
                                        "Waiting cuda event failed.");
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-            const std::vector<KernelTensorPtr> &) override {
-    MS_ERROR_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
-    auto prim = base_operator->GetPrim();
+  bool Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) override {
+    auto prim = primitive_;
     MS_ERROR_IF_NULL(prim);
     wait_event_ = reinterpret_cast<cudaEvent_t>(GetValue<uintptr_t>(prim->GetAttr(kAttrWaitEvent)));
     return true;

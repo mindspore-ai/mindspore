@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import copy
 from collections import defaultdict
 import numpy as np
 import mindspore as ms
+from mindspore.common import dtype as mstype
+from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from mindspore.parallel._parallel_serialization import _rank_list_for_transform_parallel_checkpoint, \
     _transform_parallel_checkpoint, _get_device_num_from_strategy, _make_dir, \
     _extract_layout_map, _extract_src_dst_layout_map, _parameter_not_in_local_stage, _extract_pipeline_stage_num, \
@@ -28,28 +30,28 @@ from mindspore.parallel._parallel_serialization import _rank_list_for_transform_
 
 
 __all__ = ["merge_pipeline_strategys", "rank_list_for_transform", "transform_checkpoint_by_rank",
-           "transform_checkpoints"]
+           "transform_checkpoints", "sync_pipeline_shared_parameters"]
 
 
 def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
     """
     Merge parallel strategy between all pipeline stages in pipeline parallel mode.
     For more details about converting distributed Checkpoint, please refer to
-    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/master/parallel/model_transformation.html>`_.
+    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/model_transformation.html>`_.
 
     Note:
         Strategy file of each pipeline stage should be included in src_strategy_dirs.
 
     Args:
         src_strategy_dirs (str): The directory of strategy files including all pipeline stage which is saved by
-                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'
+                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
         dst_strategy_file (str): The file merged strategy to save.
 
     Raises:
         NotADirectoryError: `src_strategy_dirs` is not a directory.
 
     Examples:
-        >>> import mindspore ms
+        >>> import mindspore as ms
         >>> # src_strategy_dir/stra0.ckpt, src_strategy_dir/stra1.ckpt ... src_strategy_dir/stra127.ckpt
         >>> ms.merge_pipeline_strategys("./src_strategy_dir", "./dst_strategy.ckpt")
 
@@ -73,28 +75,29 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
 
 def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=None):
     """
-    List of original distributed checkpoint rank index for obtaining the target checkpoint of a rank_id
-    during the distributed checkpoint conversion. For more details about converting distributed Checkpoint,
-    please refer to `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/master/parallel/model_transformation.html>`_.
+    List of original distributed checkpoint rank index for obtaining the target checkpoint of a rank_id during the
+    distributed checkpoint conversion. For more details about converting distributed Checkpoint, please refer to
+    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/model_transformation.html>`_.
 
     Args:
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
         src_strategy_file (str): Name of source sharding strategy file which saved by
                                  `mindspore.set_auto_parallel_context(strategy_ckpt_save_file)`.
-                                 when the 'src_strategy_file' is None, it means that the source sharding strategy is
-                                 without any sharing for each parameter. Default:None.
+                                 when the `src_strategy_file` is ``None``, it means that the source sharding strategy is
+                                 without any sharing for each parameter. Default: ``None``.
         dst_strategy_file (str): Name of destination sharding strategy file which saved by
                                  `mindspore.set_auto_parallel_context(strategy_ckpt_save_file)`.
-                                 when the 'dst_strategy_file' is None, it means that the destination sharding strategy
-                                 is without any sharing for each parameter. Default:None.
+                                 when the `dst_strategy_file` is ``None``,
+                                 it means that the destination sharding strategy
+                                 is without any sharing for each parameter. Default: ``None``.
 
     Returns:
         List, the rank list required for converting the distributed checkpoint of rank_id.
 
     Raises:
-        ValueError: `src_strategy_file` or dst_strategy_file is incorrect.
-        TypeError: `src_strategy_file` or dst_strategy_file is not a string.
-        TypeError: `rank_id` is not a int.
+        ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
+        TypeError: `src_strategy_file` or `dst_strategy_file` is not a string.
+        TypeError: `rank_id` is not an int.
 
     Examples:
         >>> import mindspore as ms
@@ -137,7 +140,7 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
     """
     Transform distributed checkpoint from source sharding strategy to destination sharding strategy by rank
     for a network. For more details about converting distributed Checkpoint, please refer to
-    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/master/parallel/model_transformation.html>`_.
+    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/model_transformation.html>`_.
 
     Args:
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
@@ -146,12 +149,13 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
         save_checkpoint_file_name (str): The file name to save the converted checkpoint.
         src_strategy_file (str): Name of source sharding strategy file which saved by
                                  'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
-                                 when the 'src_strategy_file' is None, it means that the source sharding strategy is
-                                 without any sharing for each parameter. Default:None.
+                                 when the `src_strategy_file` is None, it means that the source sharding strategy is
+                                 without any sharing for each parameter. Default: ``None``.
         dst_strategy_file (str): Name of destination sharding strategy file which saved by
                                  'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
-                                 when the 'dst_strategy_file' is None, it means that the destination sharding strategy
-                                 is without any sharing for each parameter. Default:None.
+                                 when the `dst_strategy_file` is ``None``,
+                                 it means that the destination sharding strategy
+                                 is without any sharing for each parameter. Default: ``None``.
 
     Raises:
         ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
@@ -159,7 +163,7 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
         ValueError: `save_checkpoint_file_name` is not end with ".ckpt".
         TypeError: `checkpoint_files_map` is not a dict.
         TypeError: `src_strategy_file` or `dst_strategy_file` is not a string.
-        TypeError: `rank_id` is not a int.
+        TypeError: `rank_id` is not an int.
         TypeError: `save_checkpoint_file_name` is not a string.
 
     Examples:
@@ -192,6 +196,7 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
             raise ValueError("Checkpoint file {} in rank {} not exits: ".format(local_file, rank))
     param_total_dict = defaultdict(dict)
     param_attr_dict = defaultdict(dict)
+    param_type_dict = defaultdict(dict)
     src_strategy_list, dst_strategy_list = _extract_src_dst_layout_map(rank_id, src_strategy_file, dst_strategy_file)
     # src rank => local rank inside pipeline stage
     src_stage_device_num = np.prod(src_strategy_list.get(list(src_strategy_list.keys())[0])[0]) if src_strategy_list \
@@ -208,11 +213,15 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
                     and _parameter_not_in_local_stage(param_name, origin_dst_strategy_list, dst_strategy_list):
                 continue
             src_rank = rank % src_stage_device_num
+            param_type_dict[param_name][src_rank] = str(param.data.dtype)
+            if param.data.dtype == mstype.bfloat16:
+                param.set_dtype(mstype.float32)
             param_total_dict[param_name][src_rank] = param.data.asnumpy()
             param_attr_dict[param_name][src_rank] = (param.requires_grad, param.layerwise_parallel)
     local_rank_id = rank_id % dst_stage_device_num
     transform_param_list = _transform_parallel_checkpoint(local_rank_id, param_total_dict,
-                                                          param_attr_dict, src_strategy_list, dst_strategy_list)
+                                                          param_attr_dict, src_strategy_list, dst_strategy_list,
+                                                          param_type_dict)
     ms.save_checkpoint(transform_param_list, save_checkpoint_file_name)
 
 
@@ -221,7 +230,7 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
     """
     Transform distributed checkpoint from source sharding strategy to destination sharding strategy for a rank.
     For more details about converting distributed Checkpoint, please refer to
-    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/master/parallel/model_transformation.html>`_.
+    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/model_transformation.html>`_.
 
     Note:
         The `src_checkpoints_dir` directory structure should be organized like "src_checkpoints_dir/rank_0/a.ckpt", the
@@ -234,12 +243,13 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         ckpt_prefix (str): The destination checkpoint name prefix.
         src_strategy_file (str): Name of source sharding strategy file which saved by
                                  'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
-                                 when the 'src_strategy_file' is None, it means that the source sharding strategy is
-                                 without any sharing for each parameter. Default:None.
+                                 when the `src_strategy_file` is ``None``, it means that the source sharding strategy is
+                                 without any sharing for each parameter. Default: ``None``.
         dst_strategy_file (str): Name of destination sharding strategy file which saved by
                                  'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
-                                 when the 'dst_strategy_file' is None, it means that the destination sharding strategy
-                                 is without any sharing for each parameter. Default:None.
+                                 when the `dst_strategy_file` is ``None``,
+                                 it means that the destination sharding strategy
+                                 is without any sharing for each parameter. Default: ``None``.
 
     Raises:
         ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
@@ -297,11 +307,15 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
     for needed_rank_list_key, transform_rank_list in needed_rank_list_map.items():
         param_total_dict = defaultdict(dict)
         param_attr_dict = defaultdict(dict)
+        param_type_dict = defaultdict(dict)
         needed_rank_list = needed_rank_list_key.split("-")
         for needed_rank in needed_rank_list:
             ckpt_dict = ms.load_checkpoint(all_checkpoint_files_map.get(int(needed_rank)))
             for param_name, param in ckpt_dict.items():
                 src_rank = int(needed_rank) % src_stage_device_num
+                param_type_dict[param_name][src_rank] = str(param.data.dtype)
+                if param.data.dtype == mstype.bfloat16:
+                    param.set_dtype(mstype.float32)
                 param_total_dict[param_name][src_rank] = param.data.asnumpy()
                 param_attr_dict[param_name][src_rank] = (param.requires_grad, param.layerwise_parallel)
         for transform_rank in transform_rank_list:
@@ -316,7 +330,8 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
 
             local_rank_id = transform_rank % dst_stage_device_num
             transform_param_list = _transform_parallel_checkpoint(local_rank_id, param_total_dict_copy,
-                                                                  param_attr_dict, src_strategy_list, dst_strategy_list)
+                                                                  param_attr_dict, src_strategy_list, dst_strategy_list,
+                                                                  param_type_dict)
             save_checkpoint_file = "{}{}.ckpt".format(ckpt_prefix, transform_rank)
             save_checkpoint_file_dir = os.path.join(dst_checkpoints_dir, "rank_{}".format(transform_rank))
             if not os.path.exists(save_checkpoint_file_dir):
@@ -325,3 +340,129 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
             ms.save_checkpoint(transform_param_list, save_checkpoint_file_name)
             del param_total_dict_copy
         del param_total_dict
+
+
+def _sync_params(name, param, layout):
+    """synchronize single parameter"""
+    if len(layout) < 10:
+        ms.log.warning("The layout dict does not contain the pipeline_shared_param info %s", name)
+        return
+
+    pipeline_shared = layout[8]
+    if not pipeline_shared:
+        return
+
+    is_send = layout[9]
+    peer_rank = layout[10]
+    sr_tag = layout[11]
+
+    class SharedParameterSyncCell(ms.nn.Cell):
+        """synchronize cell"""
+        def __init__(self, param, is_send, peer_rank, sr_tag):
+            super().__init__()
+            self.param = param
+            self.is_send = is_send
+            self.ret = ms.Tensor([0])
+
+            from mindspore.ops.operations._inner_ops import Send, Receive
+            if self.is_send:
+                self.send = Send(sr_tag=sr_tag, dest_rank=peer_rank)
+            else:
+                self.receive = Receive(sr_tag=sr_tag, src_rank=peer_rank, shape=param.shape, dtype=param.dtype)
+
+        def construct(self):
+            if self.is_send:
+                out = self.send(self.param)
+                return ms.ops.functional.depend(self.ret, out)
+
+            self.param = self.receive(self.ret)
+            return ms.ops.functional.depend(self.ret, self.param)
+
+    sync_net = SharedParameterSyncCell(param, is_send, peer_rank, sr_tag)
+    sync_net()
+
+
+def sync_pipeline_shared_parameters(net):
+    """synchronize pipeline parallel stage shared parameters.
+    Parameters may be shared between different stages. For example, `embedding table` is
+    shared by `WordEmbedding` layer and `LMHead` layer, which are usually split into different stages. It is necessary
+    to perform synchronization after `embedding table` changes.
+
+    Note:
+        The network should be compiled before synchronize pipeline parallel stage shared parameters.
+
+    Args:
+        net (nn.Cell): the inference network.
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> from mindspore import nn, ops, Parameter, Tensor
+        >>> class VocabEmbedding(nn.Cell):
+        ...     def __init__(self, vocab_size, embedding_size):
+        ...         super().__init__()
+        ...         self.embedding_table = Parameter(Tensor(np.ones([vocab_size, embedding_size]), ms.float32),
+        ...                                          name='embedding')
+        ...         self.gather = ops.Gather()
+        ...
+        ...     def construct(self, x):
+        ...         output = self.gather(self.embedding_table, x, 0)
+        ...         output = output.squeeze(1)
+        ...         return output, self.embedding_table.value()
+        ...
+        >>> class LMHead(nn.Cell):
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.matmul = ops.MatMul(transpose_b=True)
+        ...
+        ...     def construct(self, state, embed):
+        ...         return self.matmul(state, embed)
+        ...
+        >>> class Network(nn.Cell):
+        ...     @lazy_inline
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.word_embedding = VocabEmbedding(vocab_size=4, embedding_size=4)
+        ...         self.head = LMHead()
+        ...
+        ...     def construct(self, x):
+        ...         x, embed = self.word_embedding(x)
+        ...         x = self.head(x, embed)
+        ...         return x
+        >>>
+        >>> net = Network()
+        >>> net.word_embedding.pipeline_stage = 0
+        >>> net.head.pipeline_stage = 1
+        >>> x = Tensor(np.ones((8, 4))
+        >>> net.compile()
+        >>> ms.sync_pipeline_shared_parameters(net)
+        >>> print(net.word_embedding.embedding_table.asnumpy())
+        >>> [[1. 1. 1. 1.]
+             [1. 1. 1. 1.]
+             [1. 1. 1. 1.]
+             [1. 1. 1. 1.]]
+    """
+
+    if not isinstance(net, ms.nn.Cell):
+        ms.log.critical("Failed to synchronize pipeline shared parameters.")
+        msg = ("For 'sync_pipeline_shared_parameters', the argument 'net' should be a Cell, "
+               "but got {}.".format(type(net)))
+        raise TypeError(msg)
+
+    layout_dict = net.parameter_layout_dict
+    if _is_in_auto_parallel_mode() and not layout_dict:
+        from mindspore.common.api import _get_parameter_layout
+        layout_dict = _get_parameter_layout()
+
+    # switch to standalone mode
+    parallel_mode = ms.context.get_auto_parallel_context("parallel_mode")
+    full_batch = ms.context.get_auto_parallel_context("full_batch")
+    ms.context.set_auto_parallel_context(parallel_mode="stand_alone", full_batch=False)
+
+    # synchronize shared parameter
+    for name, param in net.parameters_and_names():
+        if name in layout_dict:
+            _sync_params(name, param, layout_dict[name])
+
+    # restore parallel context
+    ms.context.set_auto_parallel_context(parallel_mode=parallel_mode, full_batch=full_batch)

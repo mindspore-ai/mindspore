@@ -5,9 +5,6 @@ mindspore.ops.logspace
 
     返回一个大小为 `steps` 的1-D Tensor，其值从 :math:`base^{start}` 到 :math:`base^{end}` ，以 `base` 为底数。
 
-    .. note::
-        - 输入 `base` 必须是整数。
-
     .. math::
         \begin{aligned}
         &step = (end - start)/(steps - 1)\\

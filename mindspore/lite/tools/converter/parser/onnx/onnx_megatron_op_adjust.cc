@@ -21,7 +21,7 @@
 #include "ops/all_reduce.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/mat_mul_fusion.h"
-#include "ops/softmax.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/where.h"
 #include "include/errorcode.h"
 #include "tools/common/tensor_util.h"

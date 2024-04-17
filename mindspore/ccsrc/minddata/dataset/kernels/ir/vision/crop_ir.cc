@@ -16,14 +16,18 @@
 #include "minddata/dataset/kernels/ir/vision/crop_ir.h"
 
 #include "minddata/dataset/kernels/image/crop_op.h"
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_crop_op.h"
+#endif
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
 namespace vision {
-CropOperation::CropOperation(const std::vector<int32_t> &coordinates, const std::vector<int32_t> &size)
-    : coordinates_(coordinates), size_(size) {}
+CropOperation::CropOperation(const std::vector<int32_t> &coordinates, const std::vector<int32_t> &size,
+                             const std::string &device_target)
+    : coordinates_(coordinates), size_(size), device_target_(device_target) {}
 
 CropOperation::~CropOperation() = default;
 
@@ -40,6 +44,11 @@ Status CropOperation::ValidateParams() {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   RETURN_IF_NOT_OK(ValidateVectorNonNegative("Crop", "coordinates", coordinates_));
+  // device target
+  if (device_target_ != "CPU" && device_target_ != "Ascend") {
+    std::string err_msg = "ResizedCrop: Invalid device target. It's not CPU or Ascend.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 
@@ -57,14 +66,25 @@ std::shared_ptr<TensorOp> CropOperation::Build() {
     width = size_[1];
   }
 
-  std::shared_ptr<CropOp> tensor_op = std::make_shared<CropOp>(y, x, height, width);
-  return tensor_op;
+  if (device_target_ == "CPU") {
+    std::shared_ptr<CropOp> tensor_op = std::make_shared<CropOp>(y, x, height, width);
+    return tensor_op;
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  } else if (device_target_ == "Ascend") {
+    std::shared_ptr<DvppCropOp> dvpp_tensor_op = std::make_shared<DvppCropOp>(y, x, height, width);
+    return dvpp_tensor_op;
+#endif
+  } else {
+    MS_LOG(ERROR) << "ResizedCrop: Invalid device target. It's not CPU or Ascend.";
+    return nullptr;
+  }
 }
 
 Status CropOperation::to_json(nlohmann::json *out_json) {
   RETURN_UNEXPECTED_IF_NULL(out_json);
   (*out_json)["coordinates"] = coordinates_;
   (*out_json)["size"] = size_;
+  (*out_json)["device_target"] = device_target_;
   return Status::OK();
 }
 
@@ -72,10 +92,23 @@ Status CropOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tensor
   RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "coordinates", kCropOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kCropOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "device_target", kCropOperation));
   std::vector<int32_t> coordinates = op_params["coordinates"];
   std::vector<int32_t> size = op_params["size"];
-  *operation = std::make_shared<CropOperation>(coordinates, size);
+  std::string device_target = op_params["device_target"];
+  *operation = std::make_shared<CropOperation>(coordinates, size, device_target);
   return Status::OK();
+}
+
+MapTargetDevice CropOperation::Type() {
+  if (device_target_ == "CPU") {
+    return MapTargetDevice::kCpu;
+  } else if (device_target_ == "Ascend") {
+    return MapTargetDevice::kAscend910B;
+  } else {
+    MS_LOG(ERROR) << "Crop: Invalid device target. It's not CPU or Ascend.";
+    return MapTargetDevice::kInvalid;
+  }
 }
 }  // namespace vision
 }  // namespace dataset

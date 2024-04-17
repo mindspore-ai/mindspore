@@ -31,10 +31,8 @@ namespace kernel {
 namespace {
 using KernelRunFunc = BCEWithLogitsLossCpuKernelMod::KernelRunFunc;
 }  // namespace
-bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool BCEWithLogitsLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -43,8 +41,7 @@ bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For 'BCEWithLogitsLoss', it's kernel name invalid, got " << kernel_name_;
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::BCEWithLogitsLoss>(base_operator->GetPrim());
-  const auto reduction = kernel_ptr->get_reduction();
+  const auto reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   if (reduction == NONE) {
     reduction_ = kNone;
     is_reduction_ = false;
@@ -59,14 +56,12 @@ bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                   << reduction;
     return false;
   }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int BCEWithLogitsLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -80,7 +75,7 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   // The output_size_list_ should be clear and reset.
   output_size_list_.clear();
   workspace_size_list_.clear();
-  size_t unit_byte_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->GetDtype()));
+  size_t unit_byte_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->dtype_id()));
   size_t input_byte_size = input_size_ * unit_byte_size;
   if (reduction_ == kNone) {
     // The output is a Tensor in ReductionType none.
@@ -160,17 +155,17 @@ int BCERun(void *c_data, int task_id, float, float) {
 }
 }  // namespace
 
-bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
-  logits_ = inputs.at(kIndex0)->addr;
-  label_ = inputs.at(kIndex1)->addr;
-  weight_ = inputs.at(kIndex2)->addr;
-  post_weight_ = inputs.at(kIndex3)->addr;
+bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  logits_ = inputs.at(kIndex0)->device_ptr();
+  label_ = inputs.at(kIndex1)->device_ptr();
+  weight_ = inputs.at(kIndex2)->device_ptr();
+  post_weight_ = inputs.at(kIndex3)->device_ptr();
   if (is_reduction_) {
-    reduction_output_ = workspace.at(kIndex0)->addr;
+    reduction_output_ = workspace.at(kIndex0)->device_ptr();
   }
-  output_ = outputs.at(kIndex0)->addr;
+  output_ = outputs.at(kIndex0)->device_ptr();
   if (pool_->ParallelLaunch(BCERun, this, SizeToInt(thread_num_)) != THREAD_OK) {
     return false;
   }

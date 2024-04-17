@@ -29,7 +29,7 @@ constexpr auto kNameInputNums = 3;
 
 STATUS BroadcastToMapper::Mapper(const CNodePtr &cnode) {
   CHECK_NULL_RETURN(cnode);
-  int input_num = cnode->inputs().size();
+  int input_num = cnode->size();
   if (input_num == kNameInputNums) {
     ops::Expand expand;
     auto dst_prim = expand.GetPrim();

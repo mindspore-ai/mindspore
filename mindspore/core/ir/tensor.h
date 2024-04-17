@@ -36,7 +36,7 @@
 #include "utils/os.h"
 #include "ir/quantization_param.h"
 #include "ir/meta_grad_data.h"
-#include "ir/tensor_storage_info.h"
+#include "ir/tensor_data.h"
 
 // brief mindspore namespace.
 //
@@ -87,105 +87,6 @@ class MS_CORE_API PinnedMemRegister {
 
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
-// Tensor data interface.
-class MS_CORE_API TensorData {
- public:
-  /// \brief Virtual destructor is required for base classes.
-  virtual ~TensorData() = default;
-
-  /// \brief Get total number of elements.
-  ///
-  /// \return Total number of elements.
-  virtual ssize_t size() const = 0;
-
-  /// \brief Get byte size of a single element.
-  ///
-  /// \return Byte size of a single element.
-  virtual ssize_t itemsize() const = 0;
-
-  /// \brief Get total number of bytes.
-  ///
-  /// \return Total number of bytes.
-  virtual ssize_t nbytes() const = 0;
-
-  /// \brief Get number of dimensions.
-  ///
-  /// \return Number of dimensions.
-  virtual ssize_t ndim() const = 0;
-
-  /// \brief Get data pointer.
-  ///
-  /// \return Data pointer.
-  virtual void *data() = 0;
-
-  /// \brief Get const data pointer.
-  ///
-  /// \return Const data pointer.
-  virtual const void *const_data() const = 0;
-
-  /// \brief Get whether this tensor data is sub data.
-  ///
-  /// \return Whether this tensor data is sub data.
-  virtual bool is_sub_data() const = 0;
-
-  /// \brief Check whether this tensor data has sub data.
-  ///
-  /// \return True if this tensor data has sub data, otherwise false.
-  virtual bool has_sub_data() const = 0;
-
-  /// \brief Get whether this tensor data is from numpy.
-  ///
-  /// \return Whether this tensor data is from numpy.
-  virtual bool is_from_numpy() const { return false; }
-
-  /// \brief Get whether this tensor data have use persistent storage to save data.
-  ///
-  /// \return Whether this tensor data have use persistent storage to save data.
-  virtual bool is_persistent_data() const { return false; }
-
-  /// \brief Whether the data are equal.
-  ///
-  /// \param[in] other Another TensorData.
-  /// \return Ture if the two data are equal, otherwise false.
-  virtual bool equals(const TensorData &other) const {
-    if (this == &other) {
-      return true;
-    }
-    // By default, compare data byte by byte.
-    auto this_data = static_cast<const uint8_t *>(const_data());
-    auto other_data = static_cast<const uint8_t *>(other.const_data());
-    if (this_data == nullptr || other_data == nullptr) {
-      // null means data not initialized, compare uninitialized data always return false.
-      return false;
-    }
-    return (this_data == other_data) || (ndim() == other.ndim() && nbytes() == other.nbytes() &&
-                                         std::equal(this_data, this_data + nbytes(), other_data));
-  }
-
-  /// \brief Get display information about this TensorData.
-  ///
-  /// \param[in] type The type of tensor data.
-  /// \param[in] shape The shape of tensor data.
-  /// \param[in] use_comma Whether to use comma.
-  /// \return The display information.
-  virtual std::string ToString(TypeId type, const ShapeVector &shape, bool use_comma) const = 0;
-
-  /// \brief Set data saved file path.
-  ///
-  /// \param[in] data file path.
-  /// \return Void.
-  virtual void set_file_path(const std::string &path) {
-    MS_LOG(INFO) << "Call default set file path, and do nothing with " << path << ".";
-  }
-
-  /// \brief Get data saved file path.
-  ///
-  /// \return data file path.
-  virtual const std::string file_path() const { return ""; }
-};
-
-using TensorDataPtr = std::shared_ptr<TensorData>;
-
 class WaitEvent : public ExceptionListener {
  public:
   ~WaitEvent() = default;
@@ -252,7 +153,6 @@ class FutureBase {
 // Tensor entity class
 class MS_CORE_API Tensor : public MetaTensor {
  public:
-  abstract::AbstractBasePtr ToAbstract() override;
   Tensor() = default;
 
   /// \brief Create tensor from another tensor, data is shared.
@@ -311,6 +211,12 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] input [std::vector<double>] the data for tensor.
   /// \param[in] data_type [TypeId] data type.
   explicit Tensor(const std::vector<double> &input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create 1 dimension tensor from a float vector.
+  ///
+  /// \param[in] input [std::vector<float>] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(const std::vector<float> &input, const TypePtr &data_type = nullptr);
 
   /// \brief Create 0 dimension tensor from an int64_t scalar.
   ///
@@ -417,6 +323,17 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] tensor The Tensor object to be compared.
   /// \return True if having same type, shape and data address, otherwise false.
   bool operator==(const Tensor &tensor) const;
+
+  /// \brief Create Abstract for Tensor.
+  ///
+  /// \return Abstract of Tensor.
+  abstract::AbstractBasePtr ToAbstract() override;
+
+  /// \brief Get Abstract cache. The value of the abstract is null.
+  /// Only used by InferShape in PyNative mode.
+  ///
+  /// \return Abstract of tensor.
+  abstract::AbstractBasePtr GetAbstractCache();
 
   /// \brief It is different from 'operator==' which just compares shape/type/address,
   /// it does real value comparison.
@@ -743,15 +660,26 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   /// \brief Set lazy callback function to this Tensor
   ///
-  /// \param[in] lazy_callback The callback from backend when lazy build is enabled
-  void set_lazy_callback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
+  /// \param[in] lazy_callback Wait for async tasks finish before data_sync.
+  static void RegisterLazyCallback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
 
   /// \brief Set contiguous callback function to this Tensor
   ///
   /// \param[in] contiguous_callback The callback from backend when need to make tensor contiguous.
-  void set_contiguous_callback(const std::function<DeviceSyncPtr(const tensor::TensorPtr &, const DeviceSyncPtr &,
-                                                                 const TensorStorageInfoPtr &)> &contiguous_callback) {
+  void set_contiguous_callback(const std::function<DeviceSyncPtr(const DeviceSyncPtr &)> &contiguous_callback) {
     contiguous_callback_ = contiguous_callback;
+  }
+
+  /// \brief Get callback need to execute when value is updated of Tensor.
+  ///
+  /// \return The callback need to execute when value is updated of Tensor.
+  const std::function<void(const Tensor *)> &update_value_callback() const { return update_value_callback_; }
+
+  /// \brief Set callback need to execute when value is updated of Tensor.
+  ///
+  /// \param[in] update_value_callback The callback need to execute when value is updated of Tensor.
+  void set_update_value_callback(const std::function<void(const Tensor *)> &update_value_callback) {
+    update_value_callback_ = update_value_callback;
   }
 
   /// \brief Get the memory chunk pointer and offset if memory chunk for this tensor exists.
@@ -859,15 +787,10 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return offload file path, or empty string if tensor has not offload.
   const std::string GetOffloadFilePath() const;
 
-  /// \brief Set tensor storage info.
-  ///
-  /// \param[in] tensors The tensors to be processed.
-  void set_storage_info(const TensorStorageInfoPtr &storage_info) const { storage_info_ = storage_info; }
-
   /// \brief Get tensor storage info.
   ///
   /// \return Tensor storage info, the value is nullptr default.
-  const TensorStorageInfoPtr storage_info() const { return storage_info_; }
+  const TensorStorageInfoPtr storage_info() const;
 
   /// \brief pin tensor memory.
   ///
@@ -877,16 +800,27 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief unpin tensor memory.
   void UnPinMemory();
 
-  /// \brief Convert tensor into contiguous memory.
-  void contiguous();
-
   /// \brief Determines whether the memory of tensor is contiguous.
   ///
   /// \return True if tensor memory is contiguous, false otherwise.
   bool is_contiguous() const;
 
+  std::vector<int64_t> stride() const;
+
+  /// \brief Set tensor abstract.
+  ///
+  /// \param[in] abstract The abstract of tensor.
+  void set_abstract(const std::weak_ptr<abstract::AbstractBase> &abstract) { abstract_ = abstract; }
+
+  const int64_t storage_offset() const;
+
+  void set_need_pipeline_sync(bool need_pipeline_sync) { need_pipeline_sync_ = need_pipeline_sync; }
+
  private:
   void ExecuteLazyTask() const;
+
+  // Really execute callback function when host value is updated of Tensor.
+  void ExecuteUpdateValueCallback() const;
 
   bool init_flag_{false};
   bool adapter_flag_{false};
@@ -902,22 +836,24 @@ class MS_CORE_API Tensor : public MetaTensor {
   // Release device address of graph output tensor or not.
   bool need_release_device_mem_{false};
   bool cache_enable_{false};
+  bool need_pipeline_sync_{false};
   // Tensor base shape which contain dynamic shape info.
   BaseShapePtr base_shape_ptr_{nullptr};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
   std::shared_ptr<Tensor> hashmap_tensor_ptr_{nullptr};
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
-  std::function<void(void)> lazy_callback_{nullptr};
-  std::function<DeviceSyncPtr(const tensor::TensorPtr &, const DeviceSyncPtr &, const TensorStorageInfoPtr &)>
-    contiguous_callback_{nullptr};
+  inline static std::function<void(void)> lazy_callback_{nullptr};
+  std::function<DeviceSyncPtr(const DeviceSyncPtr &)> contiguous_callback_{nullptr};
+  std::function<void(const Tensor *)> update_value_callback_{nullptr};
   PinnedMemRegister *pin_mem_register_{nullptr};
   AutoGradMetaDataPtr auto_grad_meta_data_{nullptr};
   TensorCompressionType compression_type_{kNoCompression};
   std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   std::string tensor_name_;
   mutable std::shared_ptr<FutureBase<DeviceSync>> address_future_{};
-  mutable TensorStorageInfoPtr storage_info_{nullptr};
+  // Abstract cache for PyNative InferShape.
+  std::weak_ptr<abstract::AbstractBase> abstract_;
 };
 
 // CSRTensor entity class

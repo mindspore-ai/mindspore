@@ -512,7 +512,8 @@ class GpuFrameWorkParser:
                 line_info = line_info.strip(' ').strip('\n').split(',')
                 if not self.op_detail.get(line_info[2]):
                     # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
-                    self.op_detail[line_info[2]] = [line_info[4], line_info[5], line_info[6], op_side]
+                    self.op_detail[line_info[2]] = [float(line_info[4]), float(line_info[5]),
+                                                    float(line_info[6]), op_side]
 
     def get_execute_times(self):
         """Get gpu operators execute times."""
@@ -768,7 +769,7 @@ class DynamicFrameWorkParser:
         rank_id (int): The rank ID.
     """
 
-    def __init__(self, output_path, rank_id):
+    def __init__(self, output_path, rank_id, pretty=False):
         """Initialization of parsing framework data."""
         self._output_path = output_path
         self._all_op_exe_time = defaultdict(list)
@@ -779,6 +780,12 @@ class DynamicFrameWorkParser:
         self._exe_time_and_shape_detail = defaultdict(dict)
         self._dynamic_shape_info = defaultdict(list)
         self._step = 0
+        self._pretty = pretty
+
+    @property
+    def indent(self):
+        indent = 1 if self._pretty else None
+        return indent
 
     def write_dynamic_shape_data(self, df_op_summary):
         """Analyze dynamic shape data and write to dynamic shape file."""
@@ -804,7 +811,7 @@ class DynamicFrameWorkParser:
         self._dynamic_shape_info['op_type'] = self._op_info.get("op_type")
         dynamic_shape_file_path = os.path.join(self._output_path, output_dynamic_shape_file_name)
         with os.fdopen(os.open(dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as fp:
-            json.dump(self._dynamic_shape_info, fp)
+            json.dump(self._dynamic_shape_info, fp, indent=self.indent)
         os.chmod(dynamic_shape_file_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _analyse_op_execute_time(self, op_summary):
@@ -827,7 +834,7 @@ class DynamicFrameWorkParser:
             for line_info in framework_info:
                 line_info = line_info.strip('\n').split(',')
                 op_name = line_info[3].split('/')[-1]
-                shape_info = ','.join(line_info[7:]).replace('"', '')
+                shape_info = ','.join(line_info[8:]).replace('"', '')
                 self._op_shape_info[op_name].append(shape_info)
 
     def _get_total_step_num(self, op_summary):

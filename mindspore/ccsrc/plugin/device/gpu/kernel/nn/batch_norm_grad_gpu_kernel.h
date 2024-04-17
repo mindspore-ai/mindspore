@@ -17,38 +17,33 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BATCH_NORM_GRAD_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BATCH_NORM_GRAD_GPU_KERNEL_H_
 
-#include <string>
-#include <vector>
 #include <map>
+#include <string>
 #include <utility>
+#include <vector>
 #include "include/common/utils/utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchnorm_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchnorm_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t CUDNN_BATCHNORM_OPS_BN_INPUT_NUM = 6;
-constexpr size_t NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM = 8;
 class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
  public:
   BatchNormGradGpuKernelMod() { ResetResource(); }
   explicit BatchNormGradGpuKernelMod(const std::string kernel_name) : kernel_name_(kernel_name) { ResetResource(); }
   ~BatchNormGradGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   void ResetResource() noexcept {
     batch_ = 0;
@@ -87,11 +82,11 @@ class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
  private:
   void SetTensorDescriptor(const Format &format, const ShapeVector &shape);
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   using BatchNormGradFunc =
-    std::function<bool(BatchNormGradGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(BatchNormGradGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   BatchNormGradFunc kernel_func_{};
   static std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGradGpuKernelMod::BatchNormGradFunc>>>
     kernel_attr_map_;
@@ -100,6 +95,7 @@ class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
   int channel_;
   int height_;
   int width_;
+  size_t attrs_pos0_;
   size_t x_size_;
   size_t para_size_;
   size_t workspace_size_;

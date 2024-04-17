@@ -17,8 +17,8 @@
 #ifndef AICPU_KERNELS_HAMMING_WINDOW_H_
 #define AICPU_KERNELS_HAMMING_WINDOW_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 
 namespace aicpu {
 class HammingWindowCpuKernel : public CpuKernel {
@@ -29,7 +29,7 @@ class HammingWindowCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t HammingWindowCompute(const CpuKernelContext &ctx);
+  uint32_t HammingWindowCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

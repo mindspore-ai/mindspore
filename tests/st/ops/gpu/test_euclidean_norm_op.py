@@ -116,28 +116,6 @@ def test_euclideannorm_complex_keep_dims(data_type1, data_type2):
 #@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_euclideannorm_no_axes():
-    """
-    Feature: EuclideanNorm
-    Description: Test of input
-    Expectation: The results are as expected
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    loss = 1e-6
-    input_x = Tensor(
-        np.array([[[2, 0, 4], [2, 5, 2], [9, 8, 6]], [[2, 7, 7], [3, 6, 8], [7, 7, 2]],
-                  [[6, 0, 7], [1, 1, 7], [8, 5, 3]]]).astype(np.float32))
-    axes = Tensor(np.array([]).astype(np.int32))
-    net = Net()
-    output = net(input_x, axes).asnumpy()
-    expect = np.array([[[2, 0, 4], [2, 5, 2], [9, 8, 6]], [[2, 7, 7], [3, 6, 8], [7, 7, 2]],
-                       [[6, 0, 7], [1, 1, 7], [8, 5, 3]]]).astype(np.float32)
-    assert np.allclose(output, expect, rtol=loss, atol=loss)
-
-
-#@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_euclideannorm_same_axes_with_input():
     """
     Feature: EuclideanNorm

@@ -180,7 +180,8 @@ std::pair<bool, size_t> NativeGpuKernelModFactory::GpuKernelAttrCheck(const std:
     MS_LOG(INFO) << "Not registered GPU kernel: op[" << kernel_name << "]!";
     return std::make_pair(false, 0);
   }
-  if ((iter->second).size() == 1 && (iter->second)[0].first.GetInputSize() == 0) {
+  if (((iter->second).size() == 1 && (iter->second)[0].first.GetInputSize() == 0) ||
+      (iter->second)[0].first.GetSkipCheck()) {
     return std::make_pair(true, 0);
   }
 
@@ -189,19 +190,16 @@ std::pair<bool, size_t> NativeGpuKernelModFactory::GpuKernelAttrCheck(const std:
       continue;
     }
     bool flag = true;
-    auto attr_size = (&(iter->second))->at(attr_index).first.GetInputSize();
+    auto cur_kernel_attr = (iter->second)[attr_index].first;
+    auto attr_size = cur_kernel_attr.GetInputSize();
+    auto input_size = kernel_info->GetInputNum();
     if (kernel_info->GetInputNum() > 0) {
       MS_EXCEPTION_IF_ZERO("attr size", attr_size);
     }
-    // data type matching check of all input parameters of kernel
-    for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
-      NativeGpuKernelModFactory::CheckSM(kernel_info, input_index);
-      if (kernel_info->GetInputDeviceType(input_index) !=
-          (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).dtype) {
-        flag = false;
-        break;
-      }
-    }
+    std::vector<mindspore::TypeId> input_types;
+    (void)std::transform(kernel_info->GetAllInputDeviceTypes().begin(), kernel_info->GetAllInputDeviceTypes().end(),
+                         std::back_inserter(input_types), [](const TypeId &type) { return type; });
+    flag = !CheckAttrForAllSameInput(input_size, input_types, cur_kernel_attr);
     if (!flag) {
       continue;
     }

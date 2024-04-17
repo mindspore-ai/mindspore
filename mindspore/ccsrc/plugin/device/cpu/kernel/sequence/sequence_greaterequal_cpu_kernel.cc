@@ -27,21 +27,16 @@ namespace {
 constexpr int kInputsNum = 2;
 constexpr int kOutputsNum = 1;
 }  // namespace
-bool SequenceGreaterEqualCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SequenceGreaterEqualCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int SequenceGreaterEqualCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SequenceGreaterEqualCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -54,9 +49,9 @@ int SequenceGreaterEqualCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename T, typename S>
-bool SequenceGreaterEqualCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &,
-                                                    const std::vector<AddressPtr> &outputs) {
+bool SequenceGreaterEqualCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &,
+                                                    const std::vector<KernelTensor *> &outputs) {
   const auto input_0_addr = GetDeviceAddress<T>(inputs, 0);
   const auto input_1_addr = GetDeviceAddress<S>(inputs, 1);
   bool *output_addr = GetDeviceAddress<bool>(outputs, 0);
@@ -81,8 +76,12 @@ bool SequenceGreaterEqualCpuKernelMod::LaunchKernel(const std::vector<AddressPtr
       break;
     }
   }
-  output_addr[0] = flag;
-  return true;
+  if (output_addr != nullptr) {
+    output_addr[0] = flag;
+    return true;
+  } else {
+    return false;
+  }
 }
 
 #define ADD_KERNEL(x_dtype, y_dtype, x_type, y_type)                  \

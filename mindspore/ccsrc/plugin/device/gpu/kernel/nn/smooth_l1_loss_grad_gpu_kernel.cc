@@ -28,13 +28,8 @@ constexpr size_t kSmoothL1LossGradOutputsNum = 1;
 }  // namespace
 namespace mindspore {
 namespace kernel {
-bool SmoothL1LossGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SmoothL1LossGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool SmoothL1LossGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kSmoothL1LossGradInputsNum || outputs.size() != kSmoothL1LossGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kSmoothL1LossGradInputsNum
                   << " and " << kSmoothL1LossGradOutputsNum << ", but got " << inputs.size() << " and "
@@ -42,13 +37,13 @@ bool SmoothL1LossGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  beta_ = kernel_ptr->get_beta();
+  beta_ = GetValue<float>(primitive_->GetAttr("beta"));
   if (beta_ == 0.0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << ", the 'beta' can not be 0.";
     return false;
   }
 
-  std::string reduction = kernel_ptr->get_reduction();
+  std::string reduction = GetValue<std::string>(primitive_->GetAttr("reduction"));
   if (reduction == "none") {
     reduction_ = SmoothL1LossReductionMode::NONE;
   } else if (reduction == "mean") {
@@ -70,11 +65,9 @@ bool SmoothL1LossGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SmoothL1LossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SmoothL1LossGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -91,15 +84,15 @@ int SmoothL1LossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SmoothL1LossGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SmoothL1LossGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSmoothL1LossGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSmoothL1LossGradOutputsNum, kernel_name_);
-  const auto *predict_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto *target_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  const auto *dloss_addr = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  T *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *predict_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto *target_addr = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  const auto *dloss_addr = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+  T *result_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   auto status = SmoothL1LossGrad(reduction_, tensor_size_, beta_, predict_addr, target_addr, dloss_addr, result_addr,
                                  device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));

@@ -32,7 +32,7 @@ namespace kernel {
   { KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_U).AddOutputAttr(MS_V), &FillGpuKernelMod::LaunchKernel<T> }
 
 template <typename T>
-T FillGpuKernelMod::GetInputDataFromDevice(const std::vector<AddressPtr> &inputs, size_t idx,
+T FillGpuKernelMod::GetInputDataFromDevice(const std::vector<KernelTensor *> &inputs, size_t idx,
                                            cudaStream_t cuda_stream) {
   auto value_ptr = GetDeviceAddress<T>(inputs, idx);
   T original_value;
@@ -97,19 +97,15 @@ const std::vector<std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc>> &FillG
   return func_list;
 }
 
-bool FillGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool FillGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   x_type_id_ = tensor_attr.GetInputAttr(kIndex1).dtype;
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int FillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int FillGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
   auto shape = outputs.at(kIndex0)->GetShapeVector();
@@ -121,8 +117,9 @@ int FillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool FillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool FillGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs) {
   T value;
   auto cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
   if (x_type_id_ == kNumberTypeInt8) {

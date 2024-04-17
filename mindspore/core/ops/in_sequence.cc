@@ -52,7 +52,7 @@ AbstractBasePtr InSequenceInferInner(const PrimitivePtr &primitive, const std::v
   }
   auto second_abs = input_args[seq_index];
   if (second_abs->isa<abstract::AbstractTensor>()) {
-    auto shape = second_abs->BuildShape()->cast<abstract::ShapePtr>();
+    auto shape = second_abs->GetShape()->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->shape().size() > 1) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -90,11 +90,11 @@ class InSequenceInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return InSequenceInferInner(primitive, input_args)->BuildShape();
+    return abstract::kNoShape;
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return InSequenceInferInner(prim, input_args)->BuildType();
+    return kBool;
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/hsigmoid_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
-#include "mindspore/core/ops/hsigmoid.h"
+#include "mindspore/core/ops/ops_func_impl/hsigmoid.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore::kernel {
@@ -26,20 +26,21 @@ constexpr const size_t kHSigmoidInputsNum = 1;
 constexpr const size_t kHSigmoidOutputsNum = 1;
 
 template <typename T>
-bool HSigmoidCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool HSigmoidCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSigmoidInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSigmoidOutputsNum, kernel_name_);
-  T *x = static_cast<T *>(inputs[kIndex0]->addr);
+  T *x = static_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
-  T *y = static_cast<T *>(outputs[kIndex0]->addr);
+  T *y = static_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(y, false);
   auto zero = static_cast<T>(0);
   auto one = static_cast<T>(1);
   auto three = static_cast<T>(3);
   auto six = static_cast<T>(6);
 
-  const size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  const size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [&](size_t start, size_t end) {
     for (uint64_t i = start; i < end; ++i) {
       if (x[i] + three <= zero) {
@@ -73,30 +74,24 @@ const std::vector<std::pair<KernelAttr, HSigmoidCpuKernelMod::KernelRunFunc>> &H
   return func_list;
 }
 
-bool HSigmoidCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::HSigmoid>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool HSigmoidCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kHSigmoidInputsNum || outputs.size() != kHSigmoidOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kHSigmoidInputsNum << " and "
                   << kHSigmoidOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int HSigmoidCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int HSigmoidCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();

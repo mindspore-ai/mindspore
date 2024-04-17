@@ -28,14 +28,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseReorderGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseReorder>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool SparseReorderGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -53,11 +47,9 @@ bool SparseReorderGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int SparseReorderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseReorderGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   input_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   for (const auto &input : inputs) {
@@ -83,15 +75,10 @@ int SparseReorderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be greater than zero.";
     return KRET_RESIZE_FAILED;
   }
-  size_t input_size = input_elements_ * unit_size_;
-  size_t values_size = values_elements_ * values_unit_size_;
-  size_t shape_size = shape_elements_ * shape_unit_size_;
+
   size_t output_indices_size = output_indices_elements_ * unit_size_;
   size_t output_values_size = output_values_elements_ * values_unit_size_;
   size_t workspace_size = num_elems_ * unit_size_;
-  input_size_list_.push_back(input_size);
-  input_size_list_.push_back(values_size);
-  input_size_list_.push_back(shape_size);
   output_size_list_.push_back(output_indices_size);
   output_size_list_.push_back(output_values_size);
   workspace_size_list_.push_back(workspace_size);
@@ -101,9 +88,9 @@ int SparseReorderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool SparseReorderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool SparseReorderGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   int64_t *indices = GetDeviceAddress<int64_t>(inputs, kIndex0);
   T *values = GetDeviceAddress<T>(inputs, kIndex1);
   int64_t *shape = GetDeviceAddress<int64_t>(inputs, kIndex2);

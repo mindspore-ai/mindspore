@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_GEQRF_H_
 
 #include <complex>
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class GeqrfCpuKernel : public CpuKernel {
@@ -28,13 +28,13 @@ class GeqrfCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  void Larfg(int n, int vm, int vn, T **A, T *tau);
+  void Larfg(int n, int vm, int vn, double **A, T *tau);
 
   template <typename T>
-  void Larf(int m, int n, T **A, T *tau, int cm, int cn);
+  void Larf(int m, int n, double **A, T *tau, int cm, int cn);
 
   template <typename T>
-  void Geqrf(int m, int n, T **A, T *tau);
+  void Geqrf(int m, int n, double **A, T *tau);
 
   template <typename T>
   void CLarfg(int n, int vm, int vn, std::complex<T> **A, std::complex<T> *tau);

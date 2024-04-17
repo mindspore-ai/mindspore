@@ -38,7 +38,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr InvertInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = input_args[0]->BuildShape();
+  auto x_shape = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
   auto output_shape = x_shape->cast<abstract::ShapePtr>();
   return output_shape;
@@ -46,7 +46,7 @@ abstract::ShapePtr InvertInferShape(const PrimitivePtr &, const std::vector<Abst
 
 TypePtr InvertInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);

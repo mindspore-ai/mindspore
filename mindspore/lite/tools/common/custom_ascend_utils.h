@@ -32,17 +32,47 @@
 #include "mindspore/ccsrc/kernel/kernel.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/custom.h"
+#include "mindspore/lite/src/common/common.h"
 
 namespace mindspore {
+struct DynKVCacheSaveInfo {
+  bool batch_size_dyn = false;
+  bool seq_length_dyn = false;
+  std::string kv_cache_layout = lite::kKVCacheLayoutBNSD;
+};
+
+static inline std::vector<int64_t> SetKVCacheShape(bool dyn_batch, bool dyn_seq, const std::string &layout,
+                                                   const std::vector<int64_t> &org_shape) {
+  std::vector<int64_t> shape = org_shape;
+  if (layout == lite::kKVCacheLayoutBNSD && org_shape.size() == kShape4dDims) {
+    if (dyn_batch) {
+      shape[kDim0] = abstract::Shape::kShapeDimAny;
+    }
+    if (dyn_seq) {
+      shape[kDim2] = abstract::Shape::kShapeDimAny;
+    }
+  } else if (layout == lite::kKVCacheLayoutBSH && org_shape.size() == kShape3dDims) {
+    if (dyn_batch) {
+      shape[kDim0] = abstract::Shape::kShapeDimAny;
+    }
+    if (dyn_seq) {
+      shape[kDim1] = abstract::Shape::kShapeDimAny;
+    }
+  }
+  return shape;
+}
+
 class MS_API CustomAscendUtils {
  public:
   static bool CreateCustomFuncGraph(const FuncGraphPtr &func_graph, const Buffer &model_cache,
                                     const std::string &graph_name, const std::map<std::string, ValuePtr> &attr_map,
-                                    const std::vector<std::string> &ref_datas);
+                                    const std::vector<std::string> &ref_datas,
+                                    const DynKVCacheSaveInfo &dyn_kv_info = {});
 
   static bool ParseCustomFuncGraph(const FuncGraphPtr &func_graph, tensor::TensorPtr *model_cache,
                                    std::string *graph_name, std::map<std::string, ValuePtr> *attr_map,
-                                   std::vector<std::pair<std::string, tensor::TensorPtr>> *ref_datas);
+                                   std::vector<std::pair<std::string, tensor::TensorPtr>> *ref_datas,
+                                   DynKVCacheSaveInfo *dyn_kv_info = nullptr);
 
   static bool IsCustomFuncGraph(const FuncGraphPtr &func_graph);
   static ParameterPtr CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om_data,

@@ -542,8 +542,9 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
 
         return timeline_list
 
-    def init_timeline(self):
+    def init_timeline(self, pretty=False):
         """Init timeline metadata, adding all collected info."""
+        self._pretty = pretty
         timeline_list = self._load_timeline_data()
 
         # Init a dict for counting the num of streams.

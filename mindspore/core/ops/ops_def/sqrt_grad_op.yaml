@@ -1,0 +1,12 @@
+#operator sqrt_grad
+sqrt_grad:
+    args:
+        dy: 
+            dtype: tensor
+        y:
+            dtype: tensor
+    returns:
+        z: 
+            dtype: tensor
+    function:
+        disable: True

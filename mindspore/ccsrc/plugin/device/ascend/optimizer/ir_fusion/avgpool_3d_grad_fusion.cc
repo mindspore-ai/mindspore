@@ -210,8 +210,9 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
     return nullptr;
   }
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAvgPool3DGradD->name()))};
-  (void)new_inputs.insert(new_inputs.cend(), avg_pool_3d_grad_node->inputs().cbegin() + 1,
-                          avg_pool_3d_grad_node->inputs().cend());
+  auto avg_pool_3d_grad_node_inputs = avg_pool_3d_grad_node->inputs();
+  (void)new_inputs.insert(new_inputs.cend(), avg_pool_3d_grad_node_inputs.cbegin() + 1,
+                          avg_pool_3d_grad_node_inputs.cend());
   // assist node 1
   auto kd = kernel_size[kDim2];
   auto kh = kernel_size[kDim3];

@@ -22,7 +22,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "ops/op_utils.h"
-#include "ops/cast.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/sequence_len.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/tensor.h"

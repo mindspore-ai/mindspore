@@ -21,7 +21,7 @@ mindspore.ops.conv2d
 
     :math:`k` 对应输入通道数，其范围为 :math:`[0, C_{in}-1]` ，其中 :math:`C_{in}` 为输入通道数，该值也等于卷积核的通道数。
 
-    因此，上面的公式中， :math:`{bias}(C_{\text{out}_j})` 为第 :math:`j` 个输出通道的偏置， :math:`{weight}(C_{\text{out}_j}, k)` 表示第 :math:`j` 个
+    因此，上面的公式中， :math:`{bias}(C_{out_j})` 为第 :math:`j` 个输出通道的偏置， :math:`{weight}(C_{out_j}, k)` 表示第 :math:`j` 个
     卷积核在第 :math:`k` 个输入通道的卷积核切片， :math:`{X}(N_i, k)` 为特征图第 :math:`i` 个batch第 :math:`k` 个输入通道的切片。
     卷积核shape为 :math:`(\text{kernel_size[0]},\text{kernel_size[1]})` ，其中 :math:`\text{kernel_size[0]}` 和
     :math:`\text{kernel_size[1]}` 是卷积核的高度和宽度。若考虑到输入输出通道以及group，则完整卷积核的shape为
@@ -31,7 +31,7 @@ mindspore.ops.conv2d
     想更深入了解卷积层，请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 以及 `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ 。
 
     .. note::
-        在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `groups>1` 的场景下，必须要满足 `C_{in}` = `C_{out}` = `groups` 的约束条件。
+        在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `groups>1` 的场景下，必须要满足 :math:`C_{in}` = :math:`C_{out}` = `groups` 的约束条件。
 
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。

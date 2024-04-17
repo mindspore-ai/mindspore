@@ -22,6 +22,7 @@
 #include <stack>
 #include <string>
 #include <vector>
+#include <map>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/convert_utils_base.h"
@@ -30,6 +31,7 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ir/kernel_tensor_value.h"
 #include "include/common/visible.h"
 
 namespace mindspore {
@@ -61,6 +63,8 @@ COMMON_EXPORT bool Isomorphic(const FuncGraphPtr &g1, const FuncGraphPtr &g2, Fu
 
 COMMON_EXPORT tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar);
 
+COMMON_EXPORT tensor::TensorPtr SequenceToTensor(const ValueSequencePtr &sequence);
+
 COMMON_EXPORT ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor);
 
 template <typename T>
@@ -81,6 +85,8 @@ COMMON_EXPORT size_t CountValueNum(const ValueSequencePtr &value_sequence);
 
 COMMON_EXPORT bool IsAKGSparseOP(const AnfNodePtr &cnode);
 
+COMMON_EXPORT KernelTensorValuePtr ConvertValueToKernelTensorValue(const ValuePtr &value);
+
 COMMON_EXPORT tensor::MetaSparseTensorPtr TensorListToSparseTensor(const abstract::AbstractBasePtr &abs_sparse,
                                                                    const tensor::TensorPtrList &tensor_list);
 // Convert base shape to shape vector, support the tuple shape.
@@ -89,6 +95,10 @@ COMMON_EXPORT std::vector<ShapeVector> BaseShapeToShapeVector(const abstract::Ba
 COMMON_EXPORT ShapeVector BaseShapeToShape(const abstract::BaseShapePtr &base_shape);
 
 COMMON_EXPORT ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &attr_data_type);
+
+COMMON_EXPORT std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(
+  const std::vector<SignatureEnumDType> &dtypes, const std::vector<TypeId> &args_type_id,
+  const std::vector<bool> &args_is_tensor);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CONVERT_UTILS_H_

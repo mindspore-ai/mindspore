@@ -21,33 +21,37 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(Range,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat32),
                       RangeGpuKernelMod, float)
 
 MS_REG_GPU_KERNEL_ONE(Range,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat64),
                       RangeGpuKernelMod, double)
 
 MS_REG_GPU_KERNEL_ONE(Range,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt32),
                       RangeGpuKernelMod, int32_t)
 
 MS_REG_GPU_KERNEL_ONE(Range,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
                       RangeGpuKernelMod, int64_t)
 }  // namespace kernel

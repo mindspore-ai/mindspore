@@ -111,8 +111,9 @@ Status ShardHeader::ValidateHeader(const std::string &path, std::shared_ptr<json
   if (header_size > kMaxHeaderSize) {
     fin.close();
     RETURN_STATUS_UNEXPECTED_MR(
-      "Invalid file, the size of mindrecord file header is larger than the upper limit. \nPlease use 'FileWriter' to "
-      "generate valid mindrecord files.");
+      "Invalid file, the size of mindrecord file header is larger than the upper limit. \n"
+      "The invalid mindrecord file is [" +
+      path + "]. \nPlease use 'FileWriter' to generate valid mindrecord files.");
   }
 
   // read header content
@@ -242,10 +243,6 @@ Status ShardHeader::ParseIndexFields(const json &index_fields) {
 
 Status ShardHeader::ParsePage(const json &pages, int shard_index, bool load_dataset) {
   // set shard_index when load_dataset is false
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_count_ <= kMaxFileCount,
-                                  "Invalid file, the number of mindrecord files: " + std::to_string(shard_count_) +
-                                    "is not in range (0, " + std::to_string(kMaxFileCount) +
-                                    "].\nPlease use 'FileWriter' to generate fewer mindrecord files.");
   if (pages_.empty()) {
     pages_.resize(shard_count_);
   }

@@ -81,8 +81,6 @@ def run_trans_flag(test_name):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_e2e_trans_true():
@@ -96,8 +94,6 @@ def test_ascend_e2e_trans_true():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_e2e_trans_false():
@@ -111,8 +107,6 @@ def test_ascend_e2e_trans_false():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_kernel_by_kernel_trans_true():
@@ -128,8 +122,6 @@ def test_ascend_kernel_by_kernel_trans_true():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_kernel_by_kernel_trans_false():
@@ -145,8 +137,6 @@ def test_ascend_kernel_by_kernel_trans_false():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_a_plus_m_conversion():

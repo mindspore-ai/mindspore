@@ -17,14 +17,12 @@ set -e
 BASE_PATH=$(cd "$(dirname $0)"; pwd)
 rm -rf ${BASE_PATH}/simple_net
 mkdir ${BASE_PATH}/simple_net
-export MS_ENABLE_GE=1
 echo "start test simple net with ge backend"
 cd ${BASE_PATH}/simple_net
 env > env.log
 python ../run_simple_net.py > test_simple_net.log 2>&1 &
 process_pid=`echo $!`
 wait ${process_pid}
-unset MS_ENABLE_GE
 status=`echo $?`
 if [ "${status}" != "0" ]; then
     echo "[ERROR] test simple net with ge backend failed. status: ${status}"

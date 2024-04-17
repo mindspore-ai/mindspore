@@ -23,6 +23,9 @@ MS_REG_GPU_KERNEL_ONE(GridSampler2DGrad,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
                       GridSampler2DGradKernelMod, half)
@@ -32,6 +35,9 @@ MS_REG_GPU_KERNEL_ONE(GridSampler2DGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       GridSampler2DGradKernelMod, float)
@@ -41,6 +47,9 @@ MS_REG_GPU_KERNEL_ONE(GridSampler2DGrad,
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
                       GridSampler2DGradKernelMod, double)
@@ -50,6 +59,9 @@ MS_REG_GPU_KERNEL_ONE(GridSampler3DGrad,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
                       GridSampler3DGradKernelMod, half)
@@ -59,6 +71,9 @@ MS_REG_GPU_KERNEL_ONE(GridSampler3DGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       GridSampler3DGradKernelMod, float)
@@ -68,6 +83,9 @@ MS_REG_GPU_KERNEL_ONE(GridSampler3DGrad,
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
                       GridSampler3DGradKernelMod, double)

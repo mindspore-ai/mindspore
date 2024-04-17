@@ -1,0 +1,26 @@
+#operator maximum_grad
+maximum_grad:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+        grads:
+            dtype: tensor
+        grad_x:
+            dtype: bool
+            default: True
+            prim_init: True
+        grad_y:
+            dtype: bool
+            default: True
+            prim_init: True
+    returns:
+        dx:
+            dtype: tensor
+        dy:
+            dtype: tensor
+    function:
+        disable: True

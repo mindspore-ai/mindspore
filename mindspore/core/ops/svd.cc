@@ -51,7 +51,7 @@ abstract::BaseShapePtr SvdInferShape(const PrimitivePtr &prim, const std::vector
   auto compute_uv = GetValue<bool>(prim->GetAttr(kAttrComputeUV));
   auto full_matrices = GetValue<bool>(prim->GetAttr(kAttrFullMatrices));
 
-  auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (IsDynamicRank(a_shape) || IsDynamic(a_shape)) {
     ShapeVector dyn_shape{abstract::Shape::kShapeRankAny};
     std::vector<abstract::BaseShapePtr> shape_tuple;
@@ -95,7 +95,7 @@ abstract::BaseShapePtr SvdInferShape(const PrimitivePtr &prim, const std::vector
 }
 
 TypePtr SvdInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_type = input_args[kInputIndex0]->BuildType();
+  auto infer_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(infer_type);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   auto type = CheckAndConvertUtils::CheckTensorTypeValid("a", infer_type, valid_types, prim->name());

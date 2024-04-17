@@ -18,6 +18,7 @@
 #include "tools/optimizer/const_fold/fold_along_infershape.h"
 #include <memory>
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -33,7 +34,7 @@ STATUS ConstFoldAlongInferShape::PostProcess(const FuncGraphPtr &func_graph, con
   MS_CHECK_TRUE_MSG(const_fold_processor_ != nullptr, lite::RET_NULL_PTR, "const fold processor is nullptr");
   auto status = const_fold_processor_->DoConstantFold(func_graph, cnode);
   if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "do constant fold failed, the node is " << cnode->fullname_with_scope();
+    MS_LOG(WARNING) << "do constant fold failed, the node is " << cnode->fullname_with_scope();
   }
   return status;
 }

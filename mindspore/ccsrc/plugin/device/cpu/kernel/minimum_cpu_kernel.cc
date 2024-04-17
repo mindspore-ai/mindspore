@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,7 @@ constexpr size_t kIdx5 = 5;
 constexpr size_t kIdx6 = 6;
 }  // namespace
 
-bool MinimumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-
+bool MinimumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
@@ -50,18 +46,16 @@ bool MinimumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int MinimumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MinimumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  input_x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_y_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
-  TypeId input_x_dtype = inputs[kIndex0]->GetDtype();
-  TypeId input_y_dtype = inputs[kIndex1]->GetDtype();
+  input_x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_y_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
+  TypeId input_x_dtype = inputs[kIndex0]->dtype_id();
+  TypeId input_y_dtype = inputs[kIndex1]->dtype_id();
   output_num_ = 1;
   size_t max_input_shape_size =
     input_x_shape_.size() > input_y_shape_.size() ? input_x_shape_.size() : input_y_shape_.size();
@@ -100,13 +94,13 @@ void MinimumCpuKernelMod::InitInputTensors(TypeId input_x_dtype, TypeId input_y_
 }
 
 template <typename T>
-bool MinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool MinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumOutputsNum, kernel_name_);
-  T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input_y_ = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output_ = reinterpret_cast<T *>(outputs[0]->addr);
+  T *input_x_ = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *input_y_ = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *output_ = reinterpret_cast<T *>(outputs[0]->device_ptr());
   BroadcastArith(input_x_, input_y_, output_);
   return true;
 }

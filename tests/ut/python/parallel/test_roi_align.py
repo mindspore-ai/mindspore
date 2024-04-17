@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 from mindspore import Tensor, context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell
@@ -129,3 +130,18 @@ def test_roi_align_layout():
         'AllReduce-0': ['Mul-0']
     }
     assert validator.check_graph_structure(sub_graph)
+
+
+def test_roi_align_dynamic_shape_constraint():
+    """
+    Feature: test ROIAlign dynamic shape
+    Description: data parallel
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0, full_batch=False)
+    strategy = ((4, 1, 1, 1), (2, 1))
+    net = Net(POOLED_HEIGHT, POOLED_WIDTH, SPATIAL_SCALE, strategy)
+
+    input_features = Tensor(shape=[None, CHANNELS, FEATURES_HEIGHT, FEATURES_WIDTH], dtype=ms.float32)
+    with pytest.raises(RuntimeError):
+        compile_net(net, input_features, _rois)

@@ -21,15 +21,16 @@
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr BucketizeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto x = input_args[0]->BuildShape();
+  auto x = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto out_shape = x_shape;
   return std::make_shared<abstract::Shape>(out_shape);
 }
@@ -38,8 +39,13 @@ TypePtr BucketizeInferType(const PrimitivePtr &primitive, const std::vector<Abst
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", x_type, common_valid_types, prim_name);
+  auto x_type = input_args[0]->GetType();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto is_ascend = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice;
+  const std::set<TypePtr> valid_types =
+    is_ascend ? std::set<TypePtr>({kInt32, kInt64, kFloat32, kFloat64}) : common_valid_types;
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", x_type, valid_types, prim_name);
   return std::make_shared<TensorType>(kInt32);
 }
 }  // namespace

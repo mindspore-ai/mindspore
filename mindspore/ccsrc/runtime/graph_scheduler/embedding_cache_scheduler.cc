@@ -100,8 +100,8 @@ void GetFirstEmbeddingCacheTableInfo(const KernelGraph &graph, AnfNodePtr *const
       FinalizeEmbeddingCachePrefetch("The EmbeddingLookup whose input index should be a CNode but got " +
                                      cnode->fullname_with_scope());
     }
-    auto input_index_node_name = common::AnfAlgo::GetCNodeName(cnode);
-    if (input_index_node_name != kGetNextOpName) {
+    if (!common::AnfAlgo::IsGetNextNode(cnode)) {
+      auto input_index_node_name = common::AnfAlgo::GetCNodeName(cnode);
       bool full_batch = parallel::ParallelContext::GetInstance()->full_batch();
       if ((!full_batch && (input_index_node_name != kUniqueOpName)) ||
           (full_batch && (input_index_node_name != kMinimumOpName))) {
@@ -141,7 +141,7 @@ void CheckSparseModeForEmbeddingCache(const CNodePtr &node) {
     pre_node = common::AnfAlgo::GetPrevNodeOutput(pre_node.first, 0, true);
     MS_EXCEPTION_IF_NULL(pre_node.first);
   }
-  if (!(pre_node.first->isa<CNode>()) || (common::AnfAlgo::GetCNodeName(pre_node.first) != kGetNextOpName)) {
+  if (!(pre_node.first->isa<CNode>()) || (!common::AnfAlgo::IsGetNextNode(pre_node.first))) {
     FinalizeEmbeddingCachePrefetch(
       "The input indices of kernel[Unique] must be produced from dataset directly and the indices value can not be "
       "changed before delivering to kernel[Unique] in parameter server cache mode.");
@@ -217,8 +217,7 @@ void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
       FinalizeEmbeddingCachePrefetch(
         "The EmbeddingLookup whose input index isn't from dataset doesn't support cache in parameter server training "
         "mode.");
-    } else if (cnode->isa<CNode>() && (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) &&
-               (input_index.second == output_idx)) {
+    } else if (cnode->isa<CNode>() && (common::AnfAlgo::IsGetNextNode(cnode)) && (input_index.second == output_idx)) {
       MS_LOG(ERROR) << "The EmbeddingLookup kernel(" << kernel->fullname_with_scope() << ") doesn't enable cache.";
       FinalizeEmbeddingCachePrefetch(
         "All EmbeddingLookup kernels whose input indices are from dataset must enable cache at the same time.");
@@ -375,7 +374,7 @@ void EmbeddingCacheScheduler::SetDataSetChannel(const std::string &actor_id,
   for (const auto &graph : graphs) {
     MS_EXCEPTION_IF_NULL(graph);
     for (const auto &kernel_node : graph->execution_order()) {
-      if (common::AnfAlgo::GetCNodeName(kernel_node) != kGetNextOpName) {
+      if (!common::AnfAlgo::IsGetNextNode(kernel_node)) {
         continue;
       }
 

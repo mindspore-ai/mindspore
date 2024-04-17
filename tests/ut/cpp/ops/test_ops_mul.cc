@@ -15,88 +15,49 @@
  */
 #include <vector>
 #include <memory>
-#include "common/common_test.h"
-#include "ops/mul.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
 #include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "common/common_test.h"
+#include "ir/dtype/type.h"
+#include "ir/primitive.h"
+#include "ops/ops_func_impl/mul.h"
 #include "ops/test_ops.h"
 
 namespace mindspore {
 namespace ops {
-struct MulParams {
-  ShapeVector x_shape;
-  TypePtr x_type;
-  ShapeVector y_shape;
-  TypePtr y_type;
-  bool is_success;
-  ShapeVector out_shape;
-  TypePtr out_type;
-};
+class TestMul : public TestOps, public testing::WithParamInterface<BroadcastOpParams> {};
 
-struct MulShapes {
-  ShapeVector x_shape;
-  ShapeVector y_shape;
-  bool is_success;
-  ShapeVector out_shape;
-};
+TEST_P(TestMul, mul_dyn_shape) {
+  auto primitive = std::make_shared<Primitive>("Mul");
+  ASSERT_NE(primitive, nullptr);
+  const auto &param = GetParam();
+  auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
+  auto y = std::make_shared<abstract::AbstractTensor>(param.y_type, param.y_shape);
+  ASSERT_NE(x, nullptr);
+  ASSERT_NE(y, nullptr);
+  std::vector<abstract::AbstractBasePtr> input_args{std::move(x), std::move(y)};
+  auto infer_impl = std::make_shared<MulFuncImpl>();
+  ASSERT_NE(infer_impl, nullptr);
+  auto infer_shape = infer_impl->InferShape(primitive, input_args);
+  ASSERT_NE(infer_shape, nullptr);
+  auto infer_type = infer_impl->InferType(primitive, input_args);
+  ASSERT_NE(infer_type, nullptr);
 
-struct MulTypes {
-  TypePtr x_type;
-  TypePtr y_type;
-  bool is_success;
-  TypePtr out_type;
-};
-
-class TestMul : public UT::Common, public testing::WithParamInterface<std::tuple<MulShapes, MulTypes>> {
- public:
-  TestMul() {}
-  void SetUp() {}
-  void TearDown() {}
-};
-
-TEST_P(TestMul, test_mul) {
-  const auto &shape_param = std::get<0>(GetParam());
-  const auto &type_param = std::get<1>(GetParam());
-  auto prim = std::make_shared<Primitive>(kNameMul);
-  auto mul = std::make_shared<Mul>();
-  mul->Init();
-  auto x = abstract::MakeAbstract(std::make_shared<abstract::Shape>(shape_param.x_shape), type_param.x_type);
-  auto y = abstract::MakeAbstract(std::make_shared<abstract::Shape>(shape_param.y_shape), type_param.y_type);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(y);
-  if (shape_param.is_success && type_param.is_success) {
-    auto expect = abstract::MakeAbstract(std::make_shared<abstract::Shape>(shape_param.out_shape), type_param.out_type);
-    auto out_abstract = MulInfer(nullptr, prim, {x, y});
-    ASSERT_NE(out_abstract, nullptr);
-    ASSERT_TRUE(*out_abstract == *expect);
-  } else {
-    ASSERT_ANY_THROW(MulInfer(nullptr, prim, {x, y}));
-  }
+  auto expect_shape = std::make_shared<abstract::Shape>(param.out_shape);
+  ASSERT_NE(expect_shape, nullptr);
+  auto expect_type = std::make_shared<TensorType>(param.out_type);
+  ASSERT_NE(expect_type, nullptr);
+  ASSERT_TRUE(*infer_shape == *expect_shape);
+  ASSERT_TRUE(*infer_type == *expect_type);
 }
 
-INSTANTIATE_TEST_CASE_P(
-  TestMul, TestMul,
-  testing::Combine(testing::ValuesIn({
-                     MulShapes{{1, 3}, {3, 1}, true, {3, 3}},
-                     MulShapes{{3, 1, 3}, {3, 3, 1}, true, {3, 3, 3}},
-                     MulShapes{{3, 3, 1}, {3, 3, 1}, true, {3, 3, 1}},
-                     MulShapes{{3, 1, 2, 4}, {1, 3, 2, 4}, true, {3, 3, 2, 4}},
-                     MulShapes{{1, 3}, {2, 1}, true, {2, 3}},
-                     MulShapes{{3, 1, 3}, {3, 2, 1}, true, {3, 2, 3}},
-                     MulShapes{{1}, {1}, true, {1}},
-                     MulShapes{{1, 3, 2, 4}, {3, 1, 4, 2}, false},  
-                     MulShapes{{3, 2, 4}, {4, 2}, false},           
-                   }),
-                   testing::ValuesIn({
-                     MulTypes{kFloat32, kFloat32, true, kFloat32},
-                     MulTypes{kFloat16, kFloat16, true, kFloat16},
-                     MulTypes{kInt32, kInt32, true, kInt32},
-                     MulTypes{kInt8, kInt8, true, kInt8}, 
-                     MulTypes{kInt16, kInt16, true, kInt16}, 
-                   })));
-
+INSTANTIATE_TEST_CASE_P(TestMulGroup, TestMul,
+                        testing::Values(
+                          BroadcastOpParams{{2, 1}, kFloat32, {1, 1, 4}, kFloat32, {1, 2, 4}, kFloat32},
+                          BroadcastOpParams{{-1, 3}, kFloat32, {-1, 1}, kFloat32, {-1, 3}, kFloat32},
+                          BroadcastOpParams{{-1, -1}, kFloat32, {-1, -1, -1}, kFloat32, {-1, -1, -1}, kFloat32},
+                          BroadcastOpParams{{-1, 1, 4}, kFloat32, {1, -1, 4}, kFloat32, {-1, -1, 4}, kFloat32},
+                          BroadcastOpParams{{-1, 2, 3}, kFloat32, {2, -1, 3}, kFloat32, {2, 2, 3}, kFloat32},
+                          BroadcastOpParams{{-2}, kFloat32, {2, 3}, kFloat32, {-2}, kFloat32}));
 }  // namespace ops
 }  // namespace mindspore

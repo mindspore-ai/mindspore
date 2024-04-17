@@ -30,12 +30,28 @@
 #include <vector>
 
 #include "include/common/visible.h"
+#include "include/common/utils/stream_util.h"
 #include "ir/dtype/type.h"
 #include "utils/log_adapter.h"
 
+#ifndef MS_UNLIKELY
+#ifdef _MSC_VER
+#define MS_UNLIKELY(x) (x)
+#else
+#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#endif
+#endif
+
+#ifndef MS_LIKELY
+#ifdef _MSC_VER
+#define MS_LIKELY(x) (x)
+#else
+#define MS_LIKELY(x) __builtin_expect(!!(x), 1)
+#endif
+#endif
+
 namespace mindspore {
 // attr key name
-constexpr auto kAttrNoneList = "none_list";
 constexpr auto kAttrSegment = "segment";
 constexpr auto kAttrAlignCorners = "align_corners";
 constexpr auto kAttrHalfPixelCenters = "half_pixel_centers";
@@ -75,6 +91,7 @@ constexpr auto kAttrAxes = "axes";
 constexpr auto kAttrAlpha = "alpha";
 constexpr auto kAttrAclSpecialFormat = "acl_special_format";
 constexpr auto kAttrAclSpecialInputFormat = "acl_special_input_format";
+constexpr auto kAttrAclInconsistentInputDtype = "acl_inconsistent_input_dtype";
 constexpr auto kAttrBatchDims = "batch_dims";
 constexpr auto kAttrKeepDims = "keep_dims";
 constexpr auto kTransposeA = "transpose_a";
@@ -103,11 +120,13 @@ constexpr auto kAttrNodeInfo = "node_info";
 constexpr auto kAttrNodeName = "node_name";
 constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
+constexpr auto kAttrChannelName = "channel_name";
 constexpr auto kAttrTupleInputStructural = "tuple_input_structural";
 constexpr auto kAttrListStartIndex = "list_start_index";
+constexpr auto kAttrPyExecuteNeedUpdateShape = "pyexecute_need_update_shape";
+constexpr auto kAttrPyExecuteOutput = "pyexecute_output";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrDstFormat = "dst_format";
-constexpr auto kAttrMultiples = "multiples";
 constexpr auto kAttrFixPrecision = "fix_precision";
 constexpr auto kAttrOutputPrecision = "output_precision";
 constexpr auto kAttrOutputUsedNum = "output_used_num";
@@ -191,7 +210,7 @@ constexpr auto kAttrSizes = "sizes";
 constexpr auto kAttrKsizes = "ksizes";
 constexpr auto kAttrIsKernelDynamicImpl = "is_kernel_dynamic_impl";
 constexpr auto kAttrIsKernelDynamicShape = "is_kernel_dynamic_shape";
-constexpr auto kAttrIsDynamicShape = "is_ms_function_dynamic_shape";
+constexpr auto kAttrIsPyboostTupleInput = "is_pyboost_tuple_input";
 constexpr auto kAttrIsDynamicRank = "is_dynamic_rank";
 constexpr auto kAttrInputIsDynamicRank = "input_is_dynamic_rank";
 constexpr auto kAttrOutputIsDynamicRank = "output_is_dynamic_rank";
@@ -297,6 +316,7 @@ constexpr auto kAttrWithRelu = "with_relu";
 constexpr auto kAttrNeedGradFlagOfInputs = "need_grad_flag_of_inputs";
 constexpr auto kAttrIsCNodeNeedGrad = "is_cnode_need_grad";
 constexpr auto kAttrJitLevel = "jit_level";
+constexpr auto kAttrJitLevelO1 = "O1";
 constexpr auto kAttrJitLevelO2 = "O2";
 constexpr auto kAttrCellJitConfigDict = "_jit_config_dict";
 constexpr auto kAttrBinaryOutput = "binary_output";
@@ -306,13 +326,13 @@ constexpr auto kAttrIouThreshold = "iou_threshold";
 constexpr auto kAttrEnableEmbeddingStorage = "enable_embedding_storage";
 constexpr auto kAttrParameterKey = "parameter_key";
 constexpr auto kAttrJitCallNode = "jit_call_node";
-constexpr auto kAttrFuncGraphCellId = "func_graph_cell_id";
 constexpr auto kAttrInsertDefaultValue = "insert_default_value";
 constexpr auto kAttrIsSparse = "IsSparse";
 constexpr auto kAttrKernelBackoffWithFailureInfo = "kernel_backoff_with_failure_info";
 constexpr auto kAttrKernelBackoffWithFailureType = "kernel_backoff_with_failure_type";
 constexpr auto kAttrKernelGraph = "kernel_graph";
 constexpr auto kAttrPreKernelGraph = "pre_kernel_graph";
+constexpr auto kAttrKernelGraphBoundary = "kernel_graph_boundary";
 constexpr auto kAttrNeedInline = "need_inline";
 constexpr auto kAttrOriFusionName = "ori_fusion_name";
 constexpr auto kAttrDynamicLenName = "is_dynamic_len";
@@ -354,18 +374,39 @@ constexpr auto kAttrGraphSplitGroup = "graph_split_group";
 constexpr const char kAttrNeedAllGather[] = "parallel_optimizer_allgather";
 constexpr const char kAttrNodeCloseFollowing[] = "node_close_following";
 constexpr const char kAttrNodeWithoutOutput[] = "node_without_output";
+constexpr char kAttrInputLayout[] = "input_layout";
+constexpr char kAttrKeepProb[] = "keep_prob";
+constexpr char kAttrHeadNum[] = "head_num";
+constexpr auto kAttrFuncGraph = "func_graph";
+constexpr char kAttrScaleValue[] = "scale_value";
+constexpr char kAttrPreTokens[] = "pre_tokens";
+constexpr char kAttrNextTokens[] = "next_tokens";
+constexpr char kAttrSparseMode[] = "sparse_mode";
+constexpr char kAttrEnableLoadBalance[] = "enable_load_balance";
+constexpr char kAttrIsTransA[] = "is_trans_a";
+constexpr char kAttrIsTransB[] = "is_trans_b";
+constexpr char kAttrReduceOp[] = "reduce_op";
+constexpr char kAttrTransposeX1[] = "transpose_x1";
+constexpr char kAttrTransposeX2[] = "transpose_x2";
+constexpr char kAttrCommTurn[] = "comm_turn";
+constexpr char kAttrGatherIndex[] = "gather_index";
+constexpr char kAttrBranchOutputNum[] = "branch_output_num";
+constexpr char kAttrBranchGraphName[] = "branch_graph_name";
+constexpr char kInlineSubGraphName[] = "inline_sub_graph_name";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
 constexpr auto kFlagPyNativeRunInGraph = "pynative_run_in_graph";
 constexpr auto kFlagNeedRenormalize = "need_renormalize";
 constexpr auto kFlagEnableZeroCopyInGraph = "enable_zero_copy_in_graph";
+constexpr auto kFlagPyNativeBpropGraphWithBpropCut = "pynative_bprop_graph_with_bprop_cut";
+constexpr auto kFlagPyNativeBpropGraphIsDynamic = "pynative_bprop_graph_is_dynamic";
 constexpr auto kFlagEnableRunGraphBySingleOp = "enable_run_graph_by_single_op";
 constexpr auto kFlagIsPyNativeBpropKernelGraph = "is_pynative_bprop_kernel_graph";
 constexpr auto kFlagPyNativeWithJitCallGraph = "pynative_with_jit_call_graph";
 constexpr auto kFlagJitCallGraph = "jit_call_graph";
 constexpr auto kFlagJitGraph = "jit_graph";
-constexpr auto kAttrPackFunction = "pack_func";
+constexpr auto kFlagSwitchInline = "switch_inline_graph";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";
@@ -383,6 +424,7 @@ constexpr auto kPrimalAttrSegmentMax = "segment_max";
 constexpr auto kPrimalAttrUniqueId = "unique_id";
 constexpr auto kPrimalAttrForwardUniqueId = "forward_unique_id";
 constexpr auto kPrimalAttrForwardCommNodeUniqueId = "forward_comm_node_unique_id";
+constexpr auto kPrimalAttrMirrorUserId = "mirror_user_id";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
@@ -393,11 +435,22 @@ constexpr auto kTensorValueIsEmpty = "tensor_value_is_empty";
 constexpr auto kTensorUserDataIsSensTensor = "is_sens_tensor";
 constexpr auto kFakeTensorPos = "fake_tensor_pos";
 constexpr auto kFakeTensorListPos = "fake_tensor_list_pos";
+constexpr auto kChannelNameNpuLog = "_npu_log";
 
 // env key
-constexpr auto kGraphOpRun = "GRAPH_OP_RUN";
 constexpr auto kCompilerCacheEnable = "MS_COMPILER_CACHE_ENABLE";
 constexpr auto kCompilerCachePath = "MS_COMPILER_CACHE_PATH";
+constexpr auto kSimulationLevel = "MS_SIMULATION_LEVEL";
+constexpr auto kSimulationLevelCompileGraph = "0";
+constexpr auto kSimulationLevelCompileKernel = "1";
+
+// comm
+constexpr auto kHCCLWorldGroup = "hccl_world_group";
+constexpr auto kNCCLWorldGroup = "nccl_world_group";
+constexpr auto kEnvRankSize = "RANK_SIZE";
+constexpr auto kEnvRankId = "RANK_ID";
+constexpr auto kEnvLocalRankSize = "LOCAL_RANK_SIZE";
+constexpr auto kEnvLocalRankId = "LOCAL_RANK_ID";
 
 // some size
 const size_t kShape4dDims = 4;
@@ -411,14 +464,10 @@ const size_t kCubeSize_C04 = 4;
 const size_t kNiSize = 16;
 const size_t kMemAlignSize = 512;
 const size_t kBNChannelMultipleFactor = 4;
-const int kParameterDataTensorMask = 0;
-const int kParameterWeightTensorMask = 1;
-const int kValueNodeTensorMask = 2;
 constexpr auto kNCHWShapeSize = 4;
+const size_t kMaxTensorIndexDimNums = 8;
 
 // define special index in special node
-constexpr auto kDefaultStreamIndex = 0;
-constexpr auto kWorldGroupStreamIndex = 1;
 constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kFirstDataInputIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
@@ -443,9 +492,9 @@ constexpr auto kSwitchFalseBranchIndex = 3;
 constexpr auto kSwitchBranchesNum = 2;
 
 // index define of GridSampler & GridSamplerGrad
-constexpr int kGridSamplerInputNum = 2;
+constexpr int kGridSamplerInputNum = 5;
 constexpr int kGridSamplerOutputNum = 1;
-constexpr int kGridSamplerGradInputNum = 3;
+constexpr int kGridSamplerGradInputNum = 6;
 constexpr int kGridSamplerGradOutputNum = 2;
 
 // index define of switch_layer
@@ -463,6 +512,7 @@ constexpr auto kUpdateStateRealInput = 2;
 // index define of Load
 constexpr auto kLoadRealInput = 1;
 constexpr auto kLoadStateInput = 2;
+constexpr auto kGenerateEodMaskOpName = "GenerateEodMask";
 // time transfer unit
 constexpr int kBasicTimeTransferUnit = 1000;
 constexpr int kMaxVectorSize = 10000;
@@ -521,6 +571,9 @@ constexpr auto kOpFormat_ND_RNN_BIAS = "ND_RNN_BIAS";
 constexpr auto kSliceStart = "start";
 constexpr auto kSliceStop = "stop";
 constexpr auto kSliceStep = "step";
+
+// graph parse
+constexpr auto kClassTensorObject = "class_tensor_object";
 
 // graph type
 constexpr auto kFuncGraphTypeName = "FuncGraph";
@@ -606,6 +659,34 @@ constexpr auto kGeCache = "ge_cache";
 constexpr auto kGeGraphKey = "ge.graph_key";
 constexpr auto kGeGraphCompilerCacheDir = "ge.graph_compiler_cache_dir";
 
+// recompute and parallel
+constexpr auto kRecomputeInsert = "recompute_insert";
+constexpr auto kAddedRecomputeDependAttr = "added_recompute_depend";
+constexpr auto kCondidateOverlapBlockId = "condidate_overlap_block_id";
+constexpr auto kNcclWorldGroup = "nccl_world_group";
+constexpr auto kHcclWorldGroup = "hccl_world_group";
+constexpr auto kSyncBnGroup = "sync_bn_group";
+constexpr auto kRankID = "RANK_ID";
+
+// User data key.
+
+// pyexecute.
+constexpr auto kSyncUserDataHandler = "sync_user_data_handler";
+
+constexpr auto kRealElementsSize = "real_elements_size";
+
+// For expander and pynative grad graph
+enum class InputType {
+  // Scala or Constant tensor, no need to grad
+  kConstant = 0,
+  // Weight parameter tensor
+  kParameter,
+  // Net input tensor
+  kInput,
+  // Other op output tensor
+  kOpOutput,
+};
+
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);
 COMMON_EXPORT bool IsOneOfNotSupportedTransFormat(const std::string &format);
@@ -626,6 +707,7 @@ COMMON_EXPORT size_t GetSystemMemorySize(const std::string &key);
 COMMON_EXPORT size_t GetSystemFreeDiskSize(const std::string &path);
 
 COMMON_EXPORT bool IsEnableRefMode();
+COMMON_EXPORT bool IsMemoryPoolRecycle();
 
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.
@@ -675,5 +757,8 @@ static inline uint64_t GetCurrentUSec() {
 #define SET_FLAG(value, flag) ((value) = ((value) | (flag)))
 #define TEST_FLAG(value, flag) (((value) & (flag)) == (flag))
 #define CLEAR_FLAG(value, flag) ((value) = ((value) & (~(flag))))
+
+#define _STRING_COMPILE_OPT(x) #x
+#define STRING_COMPILE_OPT(x) _STRING_COMPILE_OPT(x)
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_UTILS_H_

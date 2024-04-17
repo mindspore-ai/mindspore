@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@
 #include "ops/array_ops.h"
 #include "ops/arithmetic_ops.h"
 #include "ops/framework_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "base/base.h"
 #include "pipeline/jit/ps/debug/trace.h"
@@ -47,6 +49,7 @@
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "utils/hash_map.h"
 #include "utils/anf_utils.h"
+#include "utils/compile_config.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 
@@ -253,11 +256,21 @@ class BeforeOptARewriter : public BaseRewriter {
  protected:
   void ConvertParameter() {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime || !is_dict_output_) {
-      return;
-    }
     for (const auto &para : root_graph_->parameters()) {
+      auto abs = para->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      if (abs->isa<abstract::AbstractKeywordArg>()) {
+        auto kw_abs = abs->cast_ptr<abstract::AbstractKeywordArg>();
+        para->set_abstract(kw_abs->get_arg());
+      }
+      // If the dict input is not used in graph, convert it to tuple directly.
+      auto dict_param_not_used =
+        abs->isa<abstract::AbstractDictionary>() && manager_->node_users().find(para) == manager_->node_users().end();
+      if ((!allow_fallback_runtime || !is_dict_output_) && !dict_param_not_used) {
+        continue;
+      }
       auto new_node_and_abs = ConvertParameterDictAbstract(para, para->abstract());
+      new_node_and_abs.first->set_abstract(new_node_and_abs.second);
       if (new_node_and_abs.first == para) {
         continue;
       }
@@ -354,7 +367,7 @@ class BeforeOptARewriter : public BaseRewriter {
 
   AnfNodePtr ConvertDictGetItem(const CNodePtr &node) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime || ConvertDictToTuple(node, node->func_graph())) {
+    if (!allow_fallback_runtime || (!is_dict_output_ && !has_dict_inplace_)) {
       return ConvertDictGetItemToTupleGetItem(node);
     }
     return nullptr;
@@ -447,10 +460,30 @@ class BeforeOptARewriter : public BaseRewriter {
     auto mng = func->manager();
     auto &users = mng->node_users()[node];
     for (auto &user : users) {
-      if (IsPrimitiveCNode(user.first, prim::kPrimPyExecute)) {
+      if (IsPrimitiveCNode(user.first, prim::kPrimPyExecute) || IsPrimitiveCNode(user.first, prim::kPrimPyInterpret)) {
         return true;
       } else if (IsPrimitiveCNode(user.first, prim::kPrimMakeTuple)) {
         if (CheckUserHasPyExecute(user.first, user.first->func_graph())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool CheckDictUserHasFuncGraph(const AnfNodePtr &node, const FuncGraphPtr &func) const {
+    MS_EXCEPTION_IF_NULL(node);
+    MS_EXCEPTION_IF_NULL(func);
+    if (!IsValueNode<ValueDictionary>(node)) {
+      return false;
+    }
+    auto mng = func->manager();
+    auto &users = mng->node_users()[node];
+    for (auto &user : users) {
+      if (user.first->isa<CNode>()) {
+        auto cnode = user.first->cast<CNodePtr>();
+        auto input = cnode->input(0);
+        if (IsValueNode<FuncGraph>(input)) {
           return true;
         }
       }
@@ -598,6 +631,7 @@ class BeforeOptARewriter : public BaseRewriter {
   ValuePtr ConvertDictValue(const ValuePtr &value, size_t depth, bool convert_dict, bool *need_convert) const {
     MS_EXCEPTION_IF_NULL(value);
     if (depth > kMaxSeqRecursiveDepth) {
+      MS_LOG(ERROR) << "value:" << value->ToString();
       MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
                                  << " levels.";
     }
@@ -657,6 +691,7 @@ class BeforeOptARewriter : public BaseRewriter {
   // AbstractDictionary --> AbstractSequence.
   AbstractSequencePtr ConvertToAbstractSequence(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
+      MS_LOG(ERROR) << "abs:" << abs->ToString();
       MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
                                  << " levels.";
     }
@@ -721,7 +756,8 @@ class BeforeOptARewriter : public BaseRewriter {
   }
 
   bool ConvertDictToTuple(const AnfNodePtr &node, const FuncGraphPtr &fg) const {
-    return !is_dict_output_ && !has_dict_inplace_ && !CheckUserHasPyExecute(node, fg);
+    return !is_dict_output_ && !has_dict_inplace_ && !CheckUserHasPyExecute(node, fg) &&
+           !CheckDictUserHasFuncGraph(node, fg);
   }
 
  private:
@@ -775,16 +811,22 @@ AnfNodePtr ConvertSequenceGetItemInner(const CNodePtr &node) {
 
   auto output_abs = node->abstract();
   MS_EXCEPTION_IF_NULL(output_abs);
-  if (!CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(inputs_abs) &&
-      !output_abs->isa<abstract::AbstractAny>()) {
-    return nullptr;
-  }
 
-  if (!IsPrimitiveCNode(node, prim::kPrimDictGetItem)) {
-    auto target_node = node_inputs[target_index];
-    auto target_abs = target_node->abstract();
-    if (target_abs == nullptr || target_abs->BuildValue() != kValueAny) {
+  auto sequence_node = node_inputs[sequence_index];
+  MS_EXCEPTION_IF_NULL(sequence_node);
+  auto sequence_abs = sequence_node->abstract();
+  // If the sequence is any, then the sequence getitem should be converted to PyExecute node.
+  if (sequence_abs == nullptr || !sequence_abs->isa<abstract::AbstractAny>()) {
+    if (!CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(inputs_abs) &&
+        !output_abs->isa<abstract::AbstractAny>()) {
       return nullptr;
+    }
+    if (!IsPrimitiveCNode(node, prim::kPrimDictGetItem)) {
+      auto target_node = node_inputs[target_index];
+      auto target_abs = target_node->abstract();
+      if (target_abs == nullptr || !target_abs->BuildValue()->ContainsValueAny()) {
+        return nullptr;
+      }
     }
   }
 
@@ -821,7 +863,11 @@ class AfterOptARewriter : public BaseRewriter {
   using ThisClass = AfterOptARewriter;
   AfterOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager,
                     const StringSetPtr &value_with_inplace)
-      : BaseRewriter(root_graph, manager), data_with_inplace_(value_with_inplace) {}
+      : BaseRewriter(root_graph, manager), data_with_inplace_(value_with_inplace) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    not_convert_jit_ = context->not_convert_jit();
+  }
   ~AfterOptARewriter() override = default;
 
  protected:
@@ -833,12 +879,13 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(node->func_graph());
 
-    std::vector<AnfNodePtr> inputs;
+    AnfNodeWeakPtrList inputs;
     inputs.reserve(node->size());
-    (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    const auto make_tuple_node = NewValueNode(prim::kPrimMakeTuple);
+    (void)inputs.emplace_back(make_tuple_node);
     // Inputs of node should be [make_sparse, indices, values, dense_shape], so offset by 1 to get items.
-    (void)inputs.insert(inputs.cend(), node->inputs().cbegin() + 1, node->inputs().cend());
-    auto new_node = node->func_graph()->NewCNode(std::move(inputs));
+    (void)inputs.insert(inputs.cend(), node->weak_inputs().cbegin() + 1, node->weak_inputs().cend());
+    auto new_node = node->func_graph()->NewCNodeWeak(std::move(inputs));
     new_node->set_abstract(node->abstract());
     return new_node;
   }
@@ -877,6 +924,9 @@ class AfterOptARewriter : public BaseRewriter {
 
   // DictGetItem --> PyExecute()
   AnfNodePtr ConvertDictGetItem(const CNodePtr &cnode) const {
+    if (not_convert_jit_) {
+      return cnode;
+    }
     MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item]
     const size_t expect_inputs_size = 3;
@@ -925,7 +975,7 @@ class AfterOptARewriter : public BaseRewriter {
         const auto &tensor_val = dyn_cast<abstract::AbstractTensor>(val);
         if (tensor_val != nullptr) {
           const auto &tensor_type = tensor_val->element()->BuildType();
-          fallback::SetRealType<AnfNode, Type>(dict_getitem_node, tensor_type);
+          fallback::SetRealType<AnfNode, Type>(dict_getitem_node, tensor_val->BuildType());
           const auto &tensor_shape = dyn_cast<abstract::Shape>(tensor_val->BuildShape());
           MS_EXCEPTION_IF_NULL(tensor_shape);
           fallback::SetRealShape<AnfNode, abstract::BaseShape>(dict_getitem_node, tensor_shape);
@@ -940,6 +990,9 @@ class AfterOptARewriter : public BaseRewriter {
 
   // DictSetItem --> PyExecute()
   AnfNodePtr ConvertDictSetItem(const CNodePtr &cnode) const {
+    if (not_convert_jit_) {
+      return cnode;
+    }
     MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item, value]
     const size_t expect_inputs_size = 4;
@@ -1050,6 +1103,9 @@ class AfterOptARewriter : public BaseRewriter {
 
   // MakeDict(keys, values) --> PyExecute('dict(zip(keys, values))', ...)
   AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
+    if (not_convert_jit_) {
+      return node;
+    }
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     // Local parameters values.
@@ -1364,7 +1420,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_fallback_runtime) {
       return nullptr;
     }
-    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE") == "1";
+    static const auto allow_inplace_ops = common::GetCompileConfig("FALLBACK_SUPPORT_LIST_DICT_INPLACE") == "1";
     if (!allow_inplace_ops) {
       return nullptr;
     }
@@ -1463,6 +1519,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertRaise(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the raise statement, it is best to set jit_syntax_level to LAX, "
+                      << "because there is no the real raise operator.\n";
       return nullptr;
     }
     MS_EXCEPTION_IF_NULL(cnode);
@@ -1540,6 +1598,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertScalarCast(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the ScalarCast statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
       return nullptr;
     }
     constexpr size_t x_index = 1;
@@ -1550,14 +1610,16 @@ class AfterOptARewriter : public BaseRewriter {
     if (x_abs == nullptr) {
       return nullptr;
     }
-    auto dtype_abs = GetAbstract<abstract::AbstractType>(dtype_node);
+    auto dtype_abs = GetAbstract<abstract::AbstractScalar>(dtype_node);
     MS_EXCEPTION_IF_NULL(dtype_abs);
-    auto dtype_val = dtype_abs->BuildValue();
+    auto dtype_val = dtype_abs->GetValue();
     MS_EXCEPTION_IF_NULL(dtype_val);
-    auto scalar_type = dtype_val->cast<TypePtr>();
-    MS_EXCEPTION_IF_NULL(scalar_type);
+    auto type_id_opt = ops::GetScalarValue<int64_t>(dtype_val);
+    if (!type_id_opt.has_value()) {
+      MS_LOG(EXCEPTION) << "the dtype input is invalid!";
+    }
     std::string target_type_str;
-    auto type_id = NormalizeTypeId(scalar_type->type_id());
+    auto type_id = type_id_opt.value();
     if (type_id == kNumberTypeInt) {
       target_type_str = "int";
     } else if (type_id == kNumberTypeFloat) {
@@ -1565,7 +1627,7 @@ class AfterOptARewriter : public BaseRewriter {
     } else if (type_id == kNumberTypeBool) {
       target_type_str = "bool";
     } else {
-      MS_LOG(EXCEPTION) << "Unsupported type: " << scalar_type->ToString();
+      MS_LOG(EXCEPTION) << "Unsupported type: " << type_id;
     }
 
     const auto &fg = cnode->func_graph();
@@ -1637,7 +1699,8 @@ class AfterOptARewriter : public BaseRewriter {
   // Only process the node that have a PyExecute node(the abstract is AbstractAny).
   bool CheckInputsHasAnyType(const CNodePtr &cnode) const {
     bool exist_any_type = false;
-    for (const auto &input : cnode->inputs()) {
+    for (const auto &weak_input : cnode->weak_inputs()) {
+      auto input = weak_input.lock();
       auto input_abs = input->abstract();
       if (fallback::ContainsSequenceAnyType(input_abs)) {
         exist_any_type = true;
@@ -1650,6 +1713,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertIsInstance(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the isinstance statement, it is best to set jit_syntax_level to LAX, "
+                      << "because there is no the real isinstance operator.\n";
       return nullptr;
     }
     const auto &fg = cnode->func_graph();
@@ -1673,6 +1738,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertJoinedStr(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the JoinedStr statement, it is best to set jit_syntax_level to LAX, "
+                      << "because there is no the real JoinedStr operator.\n";
       return nullptr;
     }
     MS_EXCEPTION_IF_NULL(cnode);
@@ -1682,12 +1749,16 @@ class AfterOptARewriter : public BaseRewriter {
     // Convert all node to list[str]
     constexpr auto kConvertToListString = "list(map(str, __inner_convert_object__))";
     constexpr auto kConvertToListKey = "__inner_convert_object__";
-    std::vector<AnfNodePtr> list_str_value_list = {NewValueNode(prim::kPrimMakeTuple)};
-    (void)std::copy(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(list_str_value_list));
+    const auto make_tuple_value_node = NewValueNode(prim::kPrimMakeTuple);
+    AnfNodeWeakPtrList list_str_value_list = {make_tuple_value_node};
+    (void)std::copy(cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend(),
+                    std::back_inserter(list_str_value_list));
 
-    std::vector<AnfNodePtr> list_str_key_list = {NewValueNode(prim::kPrimMakeTuple), NewValueNode(kConvertToListKey)};
-    auto list_str_key_node = fg->NewCNode(list_str_key_list);
-    auto list_str_value_node = fg->NewCNode(list_str_value_list);
+    const auto make_tuple_key_node = NewValueNode(prim::kPrimMakeTuple);
+    const auto key_node = NewValueNode(kConvertToListKey);
+    AnfNodeWeakPtrList list_str_key_list = {make_tuple_key_node, key_node};
+    auto list_str_key_node = fg->NewCNodeWeak(list_str_key_list);
+    auto list_str_value_node = fg->NewCNodeWeak(list_str_value_list);
     auto convet_list_str_node = fallback::CreatePyExecuteCNodeInOrder(
       fg, NewValueNode(kConvertToListString), list_str_key_node,
       fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), list_str_value_node}), cnode->debug_info());
@@ -1715,13 +1786,15 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertPrint(const CNodePtr &cnode) const {
-    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime) {
-      return nullptr;
-    }
     const auto &fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     if (!CheckInputsHasAnyType(cnode) && !HasPyExecuteInput(cnode)) {
+      return nullptr;
+    }
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the print statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
       return nullptr;
     }
     // Skip the io_monad input
@@ -1748,6 +1821,12 @@ class AfterOptARewriter : public BaseRewriter {
   //        , (__inner_str__, __format_list_str__, __format_kwargs__str__), (str, B, A));
   // Replace(C -> Format).
   AnfNodePtr ConvertFormat(const CNodePtr &cnode) const {
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the format statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
+      return nullptr;
+    }
     auto fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
 
@@ -1801,6 +1880,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertMakeRange(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the range statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
       return nullptr;
     }
     const auto &fg = cnode->func_graph();
@@ -1811,6 +1892,63 @@ class AfterOptARewriter : public BaseRewriter {
     auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "range");
     MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
     return pyexecute_node;
+  }
+
+  AnfNodePtr ConvertIsAndIsNot(const CNodePtr &cnode, bool is) const {
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the is/is_not statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
+      return nullptr;
+    }
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+
+    constexpr auto data_str = "__data__";
+    constexpr auto target_str = "__target__";
+    std::stringstream script_buffer;
+    script_buffer << data_str;
+    if (is) {
+      script_buffer << " is ";
+    } else {
+      script_buffer << " is not ";
+    }
+    script_buffer << target_str;
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(data_str));
+    (void)key_value_names_list.emplace_back(NewValueNode(target_str));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    const auto &node_inputs = cnode->inputs();
+    constexpr size_t inputs_size = 3;
+    if (node_inputs.size() != inputs_size) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The size of input to kPrimIs should be " << inputs_size << "but got "
+                                 << node_inputs.size();
+    }
+    constexpr size_t data_index = 1;
+    constexpr size_t target_index = 2;
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(node_inputs[data_index]);
+    (void)key_value_list.emplace_back(node_inputs[target_index]);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+    res->set_debug_info(cnode->debug_info());
+    return res;
+  }
+
+  AnfNodePtr ConvertIs_(const CNodePtr &cnode) const {
+    auto res = ConvertIsAndIsNot(cnode, true);
+    MS_LOG(DEBUG) << "Convert primitive Is_ to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
+  AnfNodePtr ConvertIsNot(const CNodePtr &cnode) const {
+    auto res = ConvertIsAndIsNot(cnode, false);
+    MS_LOG(DEBUG) << "Convert primitive IsNot to PyExecute node: " << res->DebugString();
+    return res;
   }
 
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
@@ -1848,7 +1986,9 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr},
     {prim::kPrimPrint, &ThisClass::ConvertPrint},
     {prim::kPrimFormat, &ThisClass::ConvertFormat},
-    {prim::kPrimMakeRange, &ThisClass::ConvertMakeRange}};
+    {prim::kPrimMakeRange, &ThisClass::ConvertMakeRange},
+    {prim::kPrimIs_, &ThisClass::ConvertIs_},
+    {prim::kPrimIsNot, &ThisClass::ConvertIsNot}};
 
   static inline const PrimitiveSet seq_prim_set_{
     prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,    prim::kPrimSequenceIndex,
@@ -1979,6 +2119,53 @@ class AfterOptARewriter : public BaseRewriter {
     return true;
   }
 
+  AnfNodePtr ConvertValueSlice(const FuncGraphPtr &func_graph, const AnfNodePtr &slice_node,
+                               const ValueSlicePtr &value_slice) {
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    bool is_start_none = value_slice->start()->isa<None>();
+    bool is_stop_none = value_slice->stop()->isa<None>();
+    bool is_step_none = value_slice->step()->isa<None>();
+    auto start_str = is_start_none ? "None" : "__start__";
+    auto stop_str = is_stop_none ? "None" : "__stop__";
+    auto step_str = is_step_none ? "None" : "__step__";
+    // Script
+    std::stringstream script_buffer;
+    script_buffer << "slice(" << start_str << ", " << stop_str << ", " << step_str << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+
+    // Pack local parameters keys and values.
+    (void)key_value_names_list.emplace_back(NewValueNode(start_str));
+    (void)key_value_names_list.emplace_back(NewValueNode(stop_str));
+    (void)key_value_names_list.emplace_back(NewValueNode(step_str));
+    AnfNodePtr start_node;
+    AnfNodePtr end_node;
+    AnfNodePtr step_node;
+    if (!is_start_none) {
+      start_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), slice_node, NewValueNode("start")});
+    } else {
+      start_node = NewValueNode(start_str);
+    }
+    if (!is_stop_none) {
+      end_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), slice_node, NewValueNode("stop")});
+    } else {
+      end_node = NewValueNode(stop_str);
+    }
+    if (!is_step_none) {
+      step_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), slice_node, NewValueNode("step")});
+    } else {
+      step_node = NewValueNode(stop_str);
+    }
+    (void)key_value_list.emplace_back(start_node);
+    (void)key_value_list.emplace_back(end_node);
+    (void)key_value_list.emplace_back(step_node);
+    const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
+    const auto key_value_tuple = func_graph->NewCNode(key_value_list);
+    return fallback::CreatePyExecuteCNodeInOrder(func_graph, NewValueNode(script_str), key_value_name_tuple,
+                                                 key_value_tuple, key_value_tuple->debug_info());
+  }
+
   AnfNodePtr GetPyExecuteFromValue(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValuePtr &value,
                                    bool py_execute_input) {
     MS_EXCEPTION_IF_NULL(fg);
@@ -2026,6 +2213,9 @@ class AfterOptARewriter : public BaseRewriter {
     }
     if (value->isa<ValueDictionary>()) {
       return RebuildValueDict(fg, value_node, value->cast<ValueDictionaryPtr>());
+    }
+    if (value->isa<ValueSlice>()) {
+      return ConvertValueSlice(fg, value_node, value->cast<ValueSlicePtr>());
     }
     return value_node;
   }
@@ -2182,6 +2372,9 @@ class AfterOptARewriter : public BaseRewriter {
   // otherwise:
   //   dict(k0:v0, k1:v1, ...) --> PyExecute('dict(zip(keys, values))', ...)
   AnfNodePtr RebuildValueDict(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
+    if (not_convert_jit_) {
+      return value_node;
+    }
     auto abs = value_node->abstract();
     MS_EXCEPTION_IF_NULL(abs);
     auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
@@ -2285,6 +2478,9 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (allow_fallback_runtime) {
+      if (value->ContainsValueAny()) {
+        return nullptr;
+      }
       if (value->isa<ValueDictionary>()) {
         return RebuildValueDict(root_graph_, value_node, value->cast<ValueDictionaryPtr>());
       } else if (value->isa<parse::InterpretedObject>()) {
@@ -2299,6 +2495,7 @@ class AfterOptARewriter : public BaseRewriter {
   // AbstractRowTensor --> AbstractTuple.
   static AbstractBasePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
+      MS_LOG(ERROR) << "abs:" << abs->ToString();
       MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
                                  << " levels.";
     }
@@ -2356,6 +2553,7 @@ class AfterOptARewriter : public BaseRewriter {
 
  private:
   StringSetPtr data_with_inplace_;
+  bool not_convert_jit_{false};
 };
 
 void FindValueWithInplaceInner(const FuncGraphPtr &graph, const StringSetPtr &value_with_inplace) {
@@ -2433,8 +2631,7 @@ bool CheckNeedConvertList(const AbstractBasePtr &abs) {
 AnfNodePtr ConvertToPyExecuteListInner(const AnfNodePtr &node, const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(node);
   auto abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  if (!CheckNeedConvertList(abs)) {
+  if (abs == nullptr || !CheckNeedConvertList(abs)) {
     return nullptr;
   }
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
@@ -2483,9 +2680,8 @@ AnfNodePtr ConvertToPyExecuteListInner(const AnfNodePtr &node, const FuncGraphPt
   return fg->NewCNode(new_make_tuple_inputs);
 }
 
-AnfNodePtr ConvertToPyExecuteList(const AnfNodePtr &node, const FuncGraphPtr &fg) {
+AnfNodePtr ConvertToPyExecuteList(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(fg);
   if (!IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
     return nullptr;
   }
@@ -2496,6 +2692,7 @@ AnfNodePtr ConvertToPyExecuteList(const AnfNodePtr &node, const FuncGraphPtr &fg
                                << cnode->size() << " for node: " << cnode->DebugString();
   }
   constexpr size_t pyexecute_value_index = 3;
+  const auto &fg = cnode->func_graph();
   return ConvertToPyExecuteListInner(cnode->input(pyexecute_value_index), fg);
 }
 
@@ -2516,7 +2713,7 @@ bool ConvertPyExecuteAfterRewriter(const FuncGraphPtr &graph, const FuncGraphMan
       change = true;
       continue;
     }
-    auto new_value_input = ConvertToPyExecuteList(node, graph);
+    auto new_value_input = ConvertToPyExecuteList(node);
     if (new_value_input != nullptr) {
       tr.SetEdge(node, pyexecute_value_index, new_value_input);
       tr.Commit();

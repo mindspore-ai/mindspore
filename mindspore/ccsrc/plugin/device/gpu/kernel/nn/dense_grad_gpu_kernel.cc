@@ -24,10 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool DenseGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool DenseGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -37,11 +35,11 @@ bool DenseGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_func_ = kernel_attr_vec_[index].second;
 
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-  dtype_x_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-  dtype_w_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
-  dtype_dout_ = GetCudaDataType(TypeIdLabel(inputs[kIndex2]->GetDtype()));
-  dtype_dx_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->GetDtype()));
-  dtype_dw_ = GetCudaDataType(TypeIdLabel(outputs[kIndex1]->GetDtype()));
+  dtype_x_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
+  dtype_w_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->dtype_id()));
+  dtype_dout_ = GetCudaDataType(TypeIdLabel(inputs[kIndex2]->dtype_id()));
+  dtype_dx_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->dtype_id()));
+  dtype_dw_ = GetCudaDataType(TypeIdLabel(outputs[kIndex1]->dtype_id()));
 
   if (dtype_x_ != dtype_w_ || dtype_x_ != dtype_dout_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the types of inputs are not the same.";
@@ -52,7 +50,7 @@ bool DenseGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     algo_ = CUBLAS_GEMM_DEFAULT_TENSOR_OP;
   }
 
-  has_bias_ = GetValue<bool>(base_operator->GetAttr("has_bias"));
+  has_bias_ = GetValue<bool>(primitive_->GetAttr("has_bias"));
   if (has_bias_) {
     InitResource();
   }
@@ -74,10 +72,9 @@ cublasComputeType_t DenseGradGpuKernelMod::GetComputeType() {
 }
 #endif
 
-int DenseGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DenseGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -121,7 +118,7 @@ int DenseGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 #endif
 
   if (has_bias_) {
-    cudnnDataType_t cudnn_data_type = GetCudnnDataType(TypeIdLabel(inputs[kIndex2]->GetDtype()));
+    cudnnDataType_t cudnn_data_type = GetCudnnDataType(TypeIdLabel(inputs[kIndex2]->dtype_id()));
 
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetTensor4dDescriptor(dy_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type, m_, k_, 1, 1),
@@ -140,9 +137,9 @@ int DenseGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T, typename S>
-bool DenseGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DenseGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto x_addr = GetDeviceAddress<T>(inputs, 0);
   auto w_addr = GetDeviceAddress<T>(inputs, 1);
   auto dout_addr = GetDeviceAddress<T>(inputs, 2);

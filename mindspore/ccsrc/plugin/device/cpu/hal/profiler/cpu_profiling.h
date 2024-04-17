@@ -55,6 +55,7 @@ class CPUProfiler : public Profiler {
   float SetRuntimeEnd(const std::string op_name, const uint64_t stop_timestamp);
   void SetRuntimeStart(const std::string op_name, const uint64_t start_timestamp);
   void RecordFrameWorkInfo(const CNodePtr &kernel);
+  void RecordFrameWorkInfo(const std::string &op_name, const std::vector<BaseShapePtr> &input_shapes);
   std::vector<CurKernelInfo> all_kernel_info_;
   std::mutex kernel_mutex_;
 

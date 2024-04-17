@@ -25,13 +25,8 @@ constexpr auto kSelfAdjopintEig = "SelfAdjopintEig";
 constexpr const size_t kInputsNum = 1;
 constexpr const size_t kOutputsNum = 2;
 
-bool SelfAdjointEigCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-
+bool SelfAdjointEigCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
@@ -41,16 +36,15 @@ bool SelfAdjointEigCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
 
-  dtype_ = inputs[kIndex0]->GetDtype();
-  compute_v_ = GetValue<bool>(prim->GetAttr("compute_v"));
+  dtype_ = inputs[kIndex0]->dtype_id();
+  compute_v_ = GetValue<bool>(primitive_->GetAttr("compute_v"));
 
   return true;
 }
 
-int SelfAdjointEigCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SelfAdjointEigCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[kIndex0]->GetShapeVector();
@@ -58,9 +52,9 @@ int SelfAdjointEigCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return KRET_OK;
 }
 
-bool SelfAdjointEigCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool SelfAdjointEigCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     (void)LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -77,18 +71,18 @@ bool SelfAdjointEigCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
 }
 
 template <typename T>
-bool SelfAdjointEigCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *output0 = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto *output1 = reinterpret_cast<T *>(outputs[kIndex1]->addr);
+bool SelfAdjointEigCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *output0 = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto *output1 = reinterpret_cast<T *>(outputs[kIndex1]->device_ptr());
   bool attr0_ = compute_v_;
   // The size of each dimension
   std::vector<int64_t> shape = input_shape_;
   // rank
   auto input_dims = input_shape_.size();
   // Total number of elements
-  size_t input_numelements = static_cast<size_t>(inputs[0]->size / sizeof(T));
+  size_t input_numelements = static_cast<size_t>(inputs[0]->size() / sizeof(T));
   // The length of the line
   const int32_t m = shape[input_dims - 1];
   // The length of the column

@@ -1,0 +1,116 @@
+fft_with_size:
+  description: |
+    Fourier transform, can be adjusted by parameters to achieve FFT/IFFT/RFFT/IRFFT.
+
+    For fft, it computes the following expression:
+
+    .. math::
+        X[\omega_1, \dots, \omega_d] =
+            \sum_{n_1=0}^{N_1-1} \dots \sum_{n_d=0}^{N_d-1} x[n_1, \dots, n_d]
+             e^{-j\ 2 \pi \sum_{i=0}^d \frac{\omega_i n_i}{N_i}},
+
+    where :math:`d` = `signal_ndim` is number of dimensions for the
+    signal, and :math:`N_i` is the size of signal dimension :math:`i`.
+
+    For ifft, it computes the following expression:
+
+    .. math::
+        X[\omega_1, \dots, \omega_d] =
+            \frac{1}{\prod_{i=1}^d N_i} \sum_{n_1=0}^{N_1-1} \dots \sum_{n_d=0}^{N_d-1} x[n_1, \dots, n_d]
+             e^{\ j\ 2 \pi \sum_{i=0}^d \frac{\omega_i n_i}{N_i}},
+
+    where :math:`d` = `signal_ndim` is number of dimensions for the
+    signal, and :math:`N_i` is the size of signal dimension :math:`i`.
+
+    Note:
+        - FFT/IFFT requires complex64 or complex128 inputs, return complex64 or complex128 outputs.
+        - RFFT requires bool, uint8, int8, int16, int32, int64, float32 and float64 inputs,
+          return complex64 or complex128 outputs.
+        - IRFFT requires complex64 or complex128 inputs, return float32 or float64 outputs.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        signal_ndim (int): The number of dimensions in each signal, this controls how many dimensions
+            of the fourier transform are realized, can only be 1, 2 or 3.
+        inverse (bool): Whether it is the inverse transformation, used to select from FFT and RFFT or IFFT and IRFFT.
+
+            - when set to ``True``: IFFT and IRFFT.
+            - when set to ``False``: FFT and RFFT.
+
+        real (bool): Whether it is the real transformation, combines with `inverse` to select a specific
+            transformation mode:
+
+            - `inverse` is ``False`` ,  `real` is ``False`` : corresponds to FFT.
+            - `inverse` is ``True`` , `real` is ``False`` : corresponds to IFFT.
+            - `inverse` is ``False`` , `real` is ``True`` : corresponds to RFFT.
+            - `inverse` is ``True`` , `real` is ``True``  : corresponds to IRFFT.
+
+        norm (str, optional): The normalization, optional values: [ ``"backward"`` , ``"forward"`` , ``"ortho"`` ].
+            Default value: ``"backward"`` .
+
+            - ``"backward"`` has the direct transforms unscaled and the inverse transforms scaled by :math:`1/n`,
+              where n is the input x's element numbers.
+            - ``"ortho"`` has both direct and inverse transforms are scaled by :math:`1/\sqrt n`.
+            - ``"forward"`` has the direct transforms scaled by :math:`1/n` and the inverse transforms unscaled.
+
+        onesided (bool, optional): Controls whether the input is halved to avoid redundancy. Default: ``True`` .
+        signal_sizes (tuple, optional): Size of the original signal (the signal before rfft, no batch dimension),
+            only in IRFFT mode and set `onesided` to ``True`` requires the parameter, the following conditions must be
+            satisfied. Default: ``()`` .
+
+            - The length of `signal_sizes` is equal to the signal_ndim of the IRFFT:
+              :math:`len(signal\_sizes)=signal\_ndim`.
+            - The last dimension of `signal_sizes` divided by 2 is equal to
+              the last dimension of the IRFFT input: :math:`signal\_size[-1]/2+1=x.shape[-1]`.
+            - `signal_sizes` has exactly the same dimensions as the input shape
+              except for the last dimension: :math:`signal\_sizes[:-1]=x.shape[:-1]`.
+
+    Inputs:
+        - **x** (Tensor) - The dimension of the input tensor must be greater than or equal to signal_ndim.
+
+    Outputs:
+        A tensor containing the complex-to-complex, real-to-complex or complex-to-real Fourier transform result.
+
+    Raises:
+        TypeError: If the input type of FFT/IFFT/IRFFT is not one of: complex64, complex128.
+        TypeError: If the input type is not Tensor.
+        ValueError: If `x` dimension is less than signal_ndim.
+        ValueError: If signal_ndim is greater than 3 or less than 1.
+        ValueError: If norm is none of "backward", "forward" or "ortho".
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> # case FFT: signal_ndim: 1, inverse: False, real: False.
+        >>> fft_in = Tensor(np.array([2, 1, 2]), mindspore.complex64)
+        >>> fft_net = ops.FFTWithSize(signal_ndim=1, inverse=False, real=False)
+        >>> fft_output = fft_net(fft_in)
+        >>> print(fft_output)
+        [5.        +0.j         0.5       +0.86602545j 0.50000006-0.8660255j ]
+        >>> # case IFFT: signal_ndim: 1, inverse: True, real: False.
+        >>> ifft_in = fft_output
+        >>> ifft_net = ops.FFTWithSize(signal_ndim=1, inverse=True, real=False)
+        >>> ifft_output = ifft_net(ifft_in)
+        >>> print(ifft_output)
+        [2.        -1.9868216e-08j 0.99999994+0.0000000e+00j
+         1.9999999 +7.9472862e-08j]
+        >>> # case RFFT2D: signal_ndim: 2, inverse: False, real: True.
+        >>> rfft_in = Tensor(np.array([[2, 1, 2], [3, 1, 6]]), mindspore.float32)
+        >>> rfft_net = ops.FFTWithSize(signal_ndim=2, inverse=False, real=True)
+        >>> rfft_output = rfft_net(rfft_in)
+        >>> print(rfft_output)
+        [[ 1.5000000e+01+1.1920929e-07j -2.3841858e-07+5.1961522e+00j]
+         [-5.0000000e+00-2.9802322e-08j  9.9999988e-01-3.4641016e+00j]]
+        >>> # case IRFFT2D: signal_ndim: 2, inverse: True, real: True.
+        >>> irfft_in = rfft_output
+        >>> irfft_net = ops.FFTWithSize(signal_ndim=2, inverse=True, real=True, signal_sizes=rfft_in.shape)
+        >>> irfft_output = irfft_net(irfft_in)
+        >>> print(irfft_output)
+        [[2.         1.         2.        ]
+         [3.         0.99999994 5.9999995 ]]

@@ -31,8 +31,8 @@ namespace mindspore {
 namespace kernel {
 class DynamicRnnOpBaseMod;
 using DynamicRnnOpBaseFunc =
-  std::function<bool(DynamicRnnOpBaseMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                     const std::vector<AddressPtr> &, void *)>;
+  std::function<bool(DynamicRnnOpBaseMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                     const std::vector<KernelTensor *> &, void *)>;
 
 class DynamicRnnOpBaseMod : public NativeGpuKernelMod {
  public:
@@ -65,16 +65,14 @@ class DynamicRnnOpBaseMod : public NativeGpuKernelMod {
 
   ~DynamicRnnOpBaseMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   void DestroyResource() noexcept override {
     CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDescriptor(rnn_desc_), "Destroy rnn_desc failed");
@@ -111,8 +109,8 @@ class DynamicRnnOpBaseMod : public NativeGpuKernelMod {
   virtual const std::vector<std::pair<KernelAttr, DynamicRnnOpBaseFunc>> &GetSupportFuncList() = 0;
   std::vector<KernelAttr> GetOpSupport() override;
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
  protected:
   void InitResource() override {
@@ -150,7 +148,7 @@ class DynamicRnnOpBaseMod : public NativeGpuKernelMod {
 #endif
   void CreateTensorNdDesc();
   void SetRNNDesc();
-  void CheckWeightSize(const std::vector<KernelTensorPtr> &inputs);
+  void CheckWeightSize(const std::vector<KernelTensor *> &inputs);
   DynamicRnnOpBaseFunc kernel_func_;
   cudaStream_t cuda_stream_;
 

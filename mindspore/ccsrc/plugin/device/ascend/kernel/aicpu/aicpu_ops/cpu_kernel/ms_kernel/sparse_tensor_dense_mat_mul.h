@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_DENSE_MAT_MUL_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_DENSE_MAT_MUL_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class SparseTensorDenseMatMulCpuKernel : public CpuKernel {
@@ -30,8 +30,8 @@ class SparseTensorDenseMatMulCpuKernel : public CpuKernel {
 
  private:
   template <class SparseType, class IndicesType, class DenseType, class OutputType>
-  static uint32_t RegularCalculate(const CpuKernelContext &ctx);
-  static uint32_t SparseTensorDenseMatMulCheck(const CpuKernelContext &ctx);
+  static uint32_t RegularCalculate(CpuKernelContext &ctx);
+  static uint32_t SparseTensorDenseMatMulCheck(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

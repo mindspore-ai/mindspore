@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 
 #include "ops/arithmetic_op_name.h"
 #include "ops/math_ops.h"
+#include "ops/arithmetic_ops.h"
+
 namespace mindspore::transform {
 // Ger
 INPUT_MAP(Ger) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -82,7 +84,7 @@ OUTPUT_MAP(MatrixTriangularSolve) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixTriangularSolve, prim::kPrimMatrixTriangularSolve->name(), ADPT_DESC(MatrixTriangularSolve));
 
 // LuUnpack
-CUST_INPUT_MAP(LuUnpack) = {{1, INPUT_DESC(LU_data)}, {1, INPUT_DESC(LU_pivots)}};
+CUST_INPUT_MAP(LuUnpack) = {{1, INPUT_DESC(LU_data)}, {2, INPUT_DESC(LU_pivots)}};
 CUST_ATTR_MAP(LuUnpack) = {{"unpack_data", ATTR_DESC(unpack_data, AnyTraits<bool>())},
                            {"unpack_pivots", ATTR_DESC(unpack_pivots, AnyTraits<bool>())}};
 CUST_OUTPUT_MAP(LuUnpack) = {{0, OUTPUT_DESC(pivots)}, {1, OUTPUT_DESC(L)}, {2, OUTPUT_DESC(U)}};
@@ -102,8 +104,34 @@ CUST_OUTPUT_MAP(LuSolve) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(LuSolve, prim::kPrimLuSolve->name(), CUST_ADPT_DESC(LuSolve));
 
 // Qr
-INPUT_MAP(Qr) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Qr) = {{"full_matrices", ATTR_DESC(full_matrices, AnyTraits<bool>())}};
-OUTPUT_MAP(Qr) = {{0, OUTPUT_DESC(q)}, {1, OUTPUT_DESC(r)}};
+INPUT_MAP(Qr) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(Qr) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Qr) = {{kIndex2, ATTR_DESC(full_matrices, AnyTraits<bool>())}};
+OUTPUT_MAP(Qr) = {{kIndex0, OUTPUT_DESC(q)}, {kIndex1, OUTPUT_DESC(r)}};
 REG_ADPT_DESC(Qr, prim::kPrimQr->name(), ADPT_DESC(Qr));
+
+// LinearSumAssignment
+CUST_INPUT_MAP(LinearSumAssignment) = {
+  {1, INPUT_DESC(cost_matrix)}, {2, INPUT_DESC(dimension_limit)}, {3, INPUT_DESC(maximize)}};
+CUST_ATTR_MAP(LinearSumAssignment) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(LinearSumAssignment) = {{0, OUTPUT_DESC(row_ind)}, {1, OUTPUT_DESC(col_ind)}};
+REG_ADPT_DESC(LinearSumAssignment, prim::kPrimLinearSumAssignment->name(), CUST_ADPT_DESC(LinearSumAssignment));
+
+// SolveTriangular
+CUST_INPUT_MAP(SolveTriangular) = {{1, INPUT_DESC(a)},
+                                   {2, INPUT_DESC(b)},
+                                   {3, INPUT_DESC(trans)},
+                                   {4, INPUT_DESC(lower)},
+                                   {5, INPUT_DESC(unit_diagonal)}};
+CUST_ATTR_MAP(SolveTriangular) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(SolveTriangular) = {{0, OUTPUT_DESC(x)}};
+REG_ADPT_DESC(SolveTriangular, prim::kPrimSolveTriangular->name(), CUST_ADPT_DESC(SolveTriangular));
+
+// SolveTriangularGrad
+CUST_INPUT_MAP(SolveTriangularGrad) = {{1, INPUT_DESC(a)},     {2, INPUT_DESC(x)},     {3, INPUT_DESC(dx)},
+                                       {4, INPUT_DESC(trans)}, {5, INPUT_DESC(lower)}, {6, INPUT_DESC(unit_diagonal)}};
+CUST_ATTR_MAP(SolveTriangularGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(SolveTriangularGrad) = {{0, OUTPUT_DESC(da)}, {1, OUTPUT_DESC(db)}};
+REG_ADPT_DESC(SolveTriangularGrad, prim::kPrimSolveTriangularGrad->name(), CUST_ADPT_DESC(SolveTriangularGrad));
+
 }  // namespace mindspore::transform

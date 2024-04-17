@@ -65,7 +65,8 @@ std::string OpTypeLabel(const OpType &op_type) {
 
 std::string KernelBuildInfo::GetInputFormat(size_t input_index) const {
   if (input_index >= inputs_format_.size()) {
-    MS_LOG(ERROR) << "The index [" << input_index << "] is exceed the number of input node";
+    MS_LOG(ERROR) << "The index [" << input_index
+                  << "] is exceed the number of input node size:" << inputs_format_.size();
     return kInvalidFormat;
   }
   return inputs_format_[input_index];
@@ -176,6 +177,10 @@ void KernelBuildInfo::SetOutputElementsKernelObjectType(
 }
 
 void KernelBuildInfo::SetInputsFormat(const std::vector<std::string> &inputs_format) { inputs_format_ = inputs_format; }
+
+void KernelBuildInfo::SetInputsReshapeType(const std::vector<std::string> &input_reshape_type) {
+  input_reshape_type_ = input_reshape_type;
+}
 
 void KernelBuildInfo::SetInputsDeviceType(const std::vector<TypeId> &inputs_device_type) {
   inputs_device_type_ = inputs_device_type;

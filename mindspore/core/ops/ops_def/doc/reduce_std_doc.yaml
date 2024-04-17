@@ -1,0 +1,48 @@
+reduce_std:
+    description: |
+        Returns the standard-deviation and mean of the input Tensor along
+        dimension(s) specified by `axis`.
+
+        Note:
+            The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
+
+        Args:
+            axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce.
+                Default: ``()`` , reduce all dimensions. Only constant value is allowed.
+                Let `r` be rank of `input_x`, it should be in the range :math:`[-r,r)`.
+            unbiased (bool, optional):  Whether to use Bessel's correction.
+                If ``True`` , will use the Bessel correction unbiased estimation.
+                If ``False`` , will through the biased estimation to calculate the standard deviation.
+                Default: ``True`` .
+            keep_dims (bool, optional): Whether the output Tensor has dim retained or not.
+                If ``True`` , keep these reduced dimensions specified by `axis` and the length is 1.
+                If ``False`` , don't keep these dimensions.
+                Default: ``Fasle`` .
+
+        Inputs:
+            - **input_x** (Tensor[Number]) - The input Tensor with shape
+              :math:`(N, *)` where :math:`*` means any number of additional dimensions.
+              Supported dtypes: float16, float32.
+
+        Outputs:
+            Tuple(output_std, output_mean) containing the standard deviation and mean.
+
+        Raises:
+            TypeError: If `keep_dims` is not a bool.
+            TypeError: If `input_x` is not a Tensor.
+            ValueError: If `axis` is not one of the following: int, tuple, list or Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import ops, Tensor
+            >>> input_x = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
+            >>> op = ops.ReduceStd(axis=1, unbiased=True, keep_dims=False)
+            >>> output = op(input_x)
+            >>> output_std, output_mean = output[0], output[1]
+            >>> print(output_std)
+            [1.        2.5166113]
+            >>> print(output_mean)
+            [2.        1.3333334]

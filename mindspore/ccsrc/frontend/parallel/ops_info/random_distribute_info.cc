@@ -29,19 +29,6 @@ namespace mindspore {
 namespace parallel {
 int64_t RandomDistributeInfo::SEED_NUM = 1;
 
-Status RandomDistributeInfo::InferAttrs() {
-  if (infer_attrs_completed_) {
-    return SUCCESS;
-  }
-
-  if (GetAttrs() != SUCCESS) {
-    return FAILED;
-  }
-  ResetInputsShape();
-  infer_attrs_completed_ = true;
-  return SUCCESS;
-}
-
 Status RandomDistributeInfo::GetAttrs() {
   seed_ = GetIntAttr(SEED);
   if (seed_ < 0) {
@@ -53,6 +40,7 @@ Status RandomDistributeInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": Seed2 must be greater or equal to zero, bug got " << seed2_;
     return FAILED;
   }
+  ResetInputsShape();
   return SUCCESS;
 }
 
@@ -69,6 +57,12 @@ Status RandomDistributeInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
   return SUCCESS;
+}
+
+Status RandomDistributeInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  MS_LOG(ERROR) << name_
+                << ": it does not support dynamic shape, the output shape: " << ShapeToString(outputs_shape_[0]);
+  return FAILED;
 }
 
 Status RandomDistributeInfo::InferDevMatrixShape() {

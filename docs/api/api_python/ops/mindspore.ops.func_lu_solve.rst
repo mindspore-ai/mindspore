@@ -25,4 +25,4 @@ mindspore.ops.lu_solve
         - **TypeError** -  `b` ， `LU_data` 或 `LU_pivots` 不为Tensor。
         - **TypeError** -  `b` 的 dtype 与 `LU_data` 的 dtype 不相同。
         - **ValueError** - `LU_pivots` 的 batch 维度与 `LU_data` 的 batch 维度不相等。
-        - **ValueError** - `b` 的维度小于2，`LU_data` 的维度小于2，或 `LU_pivots` 的维度小于1.
+        - **ValueError** - `b` 的维度小于2，`LU_data` 的维度小于2，或 `LU_pivots` 的维度小于1。

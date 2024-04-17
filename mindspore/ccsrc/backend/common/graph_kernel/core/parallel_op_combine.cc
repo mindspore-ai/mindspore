@@ -318,7 +318,6 @@ CNodePtr GraphBuilder::NewConcatNode(const FuncGraphPtr &func_graph, const AnfNo
   std::vector<ShapeVector> shapes(1, shape);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, concat.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(concat_dim)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(static_cast<int64_t>(input_num)), concat);
   common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(static_cast<int64_t>(input_num)), concat);
   return concat;
 }

@@ -51,7 +51,7 @@ class LeNet5(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_loss_cell_wrapper():
@@ -65,7 +65,7 @@ def test_loss_cell_wrapper():
     assert loss_out.asnumpy().dtype == 'float32' or loss_out.asnumpy().dtype == 'float64'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_cell_wrapper():

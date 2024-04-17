@@ -17,8 +17,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_SEGMENT_SUM_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_SEGMENT_SUM_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -32,7 +32,7 @@ class SparseSegmentSumWithNumSegmentsCpuKernel : public CpuKernel {
 
  private:
   template <typename dataT, typename indicesT>
-  static uint32_t ComputeKernel(const CpuKernelContext &ctx);
+  static uint32_t ComputeKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

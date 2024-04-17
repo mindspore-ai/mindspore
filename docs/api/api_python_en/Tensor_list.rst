@@ -17,6 +17,13 @@
     :exclude-members: infer_value, infer_shape, infer_dtype, target
     :members:
 
+{% elif "mindspore.experimental.optim" in fullname and "lr_scheduler" not in fullname and objname[0].istitle() %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: infer_value, infer_shape, infer_dtype, implementation
+    :members:
+
 {% elif fullname=="mindspore.Tensor" %}
 {{ fullname | underline }}
 
@@ -295,12 +302,15 @@
     mindspore.Tensor.size
     mindspore.Tensor.slice_scatter
     mindspore.Tensor.slogdet
+    mindspore.Tensor.softmax
     mindspore.Tensor.sort
     mindspore.Tensor.split
     mindspore.Tensor.sqrt
     mindspore.Tensor.square
     mindspore.Tensor.squeeze
     mindspore.Tensor.std
+    mindspore.Tensor.storage_offset
+    mindspore.Tensor.stride
     mindspore.Tensor.strides
     mindspore.Tensor.sub
     mindspore.Tensor.subtract

@@ -41,7 +41,7 @@ class TestSideEffectOrderEnforce : public UT::Common {
 };
 
 void InsertUNode(const FuncGraphPtr &func_graph) {
-  auto nodes = TopoSort(func_graph->get_return(), SuccDeeper);
+  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
   for (const auto &node : nodes) {
     if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
       auto load = node->cast<CNodePtr>();

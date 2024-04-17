@@ -75,7 +75,9 @@ REG_ADPT_DESC(IFMR, kNameIFMR, ADPT_DESC(IFMR))
 
 // NLLLoss
 INPUT_MAP(NLLLoss) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(target)}, {3, INPUT_DESC(weight)}};
-ATTR_MAP(NLLLoss) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+ATTR_MAP(NLLLoss) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(NLLLoss) = {{4, ATTR_DESC(reduction, AnyTraits<GEReduction>())},
+                           {5, ATTR_DESC(ignore_index, AnyTraits<int64_t>())}};
 OUTPUT_MAP(NLLLoss) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(total_weight)}};
 REG_ADPT_DESC(NLLLoss, kNameNLLLoss, ADPT_DESC(NLLLoss))
 
@@ -85,7 +87,9 @@ INPUT_MAP(NLLLossGrad) = {{1, INPUT_DESC(x)},
                           {3, INPUT_DESC(target)},
                           {4, INPUT_DESC(weight)},
                           {5, INPUT_DESC(total_weight)}};
-ATTR_MAP(NLLLossGrad) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+ATTR_MAP(NLLLossGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(NLLLossGrad) = {{6, ATTR_DESC(reduction, AnyTraits<GEReduction>())},
+                               {7, ATTR_DESC(ignore_index, AnyTraits<int64_t>())}};
 OUTPUT_MAP(NLLLossGrad) = {{0, OUTPUT_DESC(x_grad)}};
 REG_ADPT_DESC(NLLLossGrad, kNameNLLLossGrad, ADPT_DESC(NLLLossGrad))
 
@@ -157,6 +161,12 @@ ATTR_MAP(Pdist) = {
 OUTPUT_MAP(Pdist) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Pdist, prim::kPrimPdist->name(), ADPT_DESC(Pdist))
 
+// PdistGrad
+CUST_INPUT_MAP(PdistGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(pdist)}};
+CUST_ATTR_MAP(PdistGrad) = {{"p", ATTR_DESC(p, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(PdistGrad) = {{0, OUTPUT_DESC(x_grad)}};
+REG_ADPT_DESC(PdistGrad, prim::kPrimPdistGrad->name(), CUST_ADPT_DESC(PdistGrad));
+
 // SoftMarginLossGrad
 INPUT_MAP(SoftMarginLossGrad) = {{1, INPUT_DESC(predict)}, {2, INPUT_DESC(label)}, {3, INPUT_DESC(dout)}};
 ATTR_MAP(SoftMarginLossGrad) = {
@@ -207,6 +217,7 @@ ATTR_MAP(GetNext) = {{"types", ATTR_DESC(output_types, AnyTraits<std::vector<GET
                      {"output_num", ATTR_DESC(output_num, AnyTraits<int64_t>())},
                      {"shared_name", ATTR_DESC(channel_name, AnyTraits<string>())}};
 REG_ADPT_DESC(GetNext, prim::kPrimGetNext->name(), ADPT_DESC(GetNext))
+REG_ADPT_DESC(DynamicGetNextAscend, prim::kPrimDynamicGetNextAscend->name(), ADPT_DESC(GetNext))
 
 INPUT_MAP(STFT) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(window)}};
 OUTPUT_MAP(STFT) = {{0, OUTPUT_DESC(y)}};
@@ -264,15 +275,23 @@ REG_ADPT_DESC(Bincount, kNameBincount, ADPT_DESC(Bincount));
 
 // CholeskyInverse
 CUST_INPUT_MAP(CholeskyInverse) = {{1, INPUT_DESC(x)}};
-CUST_ATTR_MAP(CholeskyInverse) = {{"upper", ATTR_DESC(upper, AnyTraits<bool>())}};
+CUST_INPUT_ATTR_MAP(CholeskyInverse) = {{2, ATTR_DESC(upper, AnyTraits<bool>())}};
+CUST_ATTR_MAP(CholeskyInverse) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(CholeskyInverse) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CholeskyInverse, prim::kPrimCholeskyInverse->name(), CUST_ADPT_DESC(CholeskyInverse));
 
 // Eig
 CUST_INPUT_MAP(Eig) = {{1, INPUT_DESC(x)}};
-CUST_ATTR_MAP(Eig) = {{"compute_v", ATTR_DESC(compute_v, AnyTraits<bool>())}};
+CUST_INPUT_ATTR_MAP(Eig) = {{2, ATTR_DESC(compute_v, AnyTraits<bool>())}};
+CUST_ATTR_MAP(Eig) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(Eig) = {{0, OUTPUT_DESC(eigen_values)}, {1, OUTPUT_DESC(eigen_vectors)}};
 REG_ADPT_DESC(Eig, prim::kPrimEig->name(), CUST_ADPT_DESC(Eig));
+
+// Eps
+CUST_INPUT_MAP(Eps) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Eps) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Eps) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Eps, prim::kPrimEps->name(), CUST_ADPT_DESC(Eps));
 
 // Hypot
 CUST_INPUT_MAP(Hypot) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -324,7 +343,7 @@ REG_ADPT_DESC(RaggedRange, prim::kPrimRaggedRange->name(), ADPT_DESC(RaggedRange
 
 // Imag
 INPUT_MAP(Imag) = {{1, INPUT_DESC(input)}};
-ATTR_MAP(Imag) = EMPTY_ATTR_MAP;
+ATTR_MAP(Imag) = {{"Tout", ATTR_DESC(Tout, AnyTraits<GEType>())}};
 OUTPUT_MAP(Imag) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(Imag, prim::kPrimImag->name(), ADPT_DESC(Imag));
 
@@ -335,8 +354,212 @@ CUST_OUTPUT_MAP(Lgamma) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Lgamma, prim::kPrimLgamma->name(), CUST_ADPT_DESC(Lgamma));
 
 // Real
-INPUT_MAP(Real) = {{1, INPUT_DESC(input)}};
-ATTR_MAP(Real) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(Real) = {{0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(Real, prim::kPrimReal->name(), ADPT_DESC(Real));
+CUST_INPUT_MAP(Real) = {{1, INPUT_DESC(input)}};
+CUST_ATTR_MAP(Real) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Real) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Real, prim::kPrimReal->name(), CUST_ADPT_DESC(Real));
+
+// Diagonal
+CUST_INPUT_MAP(Diagonal) = {{1, INPUT_DESC(x)}};
+CUST_INPUT_ATTR_MAP(Diagonal) = {{2, ATTR_DESC(offset, AnyTraits<int64_t>())},
+                                 {3, ATTR_DESC(dim1, AnyTraits<int64_t>())},
+                                 {4, ATTR_DESC(dim2, AnyTraits<int64_t>())}};
+CUST_ATTR_MAP(Diagonal) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Diagonal) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Diagonal, prim::kPrimDiagonal->name(), CUST_ADPT_DESC(Diagonal));
+
+// FFT
+CUST_INPUT_MAP(FFT) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(n)}, {3, INPUT_DESC(dim)}, {4, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(FFT) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(FFT) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFT, prim::kPrimFFT->name(), CUST_ADPT_DESC(FFT));
+
+// FFT2
+CUST_INPUT_MAP(FFT2) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(s)}, {3, INPUT_DESC(dim)}, {4, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(FFT2) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(FFT2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFT2, prim::kPrimFFT2->name(), CUST_ADPT_DESC(FFT2));
+
+// FFTN
+CUST_INPUT_MAP(FFTN) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(s)}, {3, INPUT_DESC(dim)}, {4, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(FFTN) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(FFTN) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFTN, prim::kPrimFFTN->name(), CUST_ADPT_DESC(FFTN));
+
+// IFFT
+CUST_INPUT_MAP(IFFT) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(n)}, {3, INPUT_DESC(dim)}, {4, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(IFFT) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IFFT) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IFFT, prim::kPrimIFFT->name(), CUST_ADPT_DESC(IFFT));
+
+// IFFT2
+CUST_INPUT_MAP(IFFT2) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(s)}, {3, INPUT_DESC(dim)}, {4, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(IFFT2) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IFFT2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IFFT2, prim::kPrimIFFT2->name(), CUST_ADPT_DESC(IFFT2));
+
+// IFFTN
+CUST_INPUT_MAP(IFFTN) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(s)}, {3, INPUT_DESC(dim)}, {4, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(IFFTN) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IFFTN) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IFFTN, prim::kPrimIFFTN->name(), CUST_ADPT_DESC(IFFTN));
+
+// FFTShapeCopy
+CUST_INPUT_MAP(FFTShapeCopy) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(shape)}};
+CUST_ATTR_MAP(FFTShapeCopy) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(FFTShapeCopy) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFTShapeCopy, prim::kPrimFFTShapeCopy->name(), CUST_ADPT_DESC(FFTShapeCopy));
+
+// FFTShift
+CUST_INPUT_MAP(FFTShift) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(dim)}};
+CUST_ATTR_MAP(FFTShift) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(FFTShift) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFTShift, prim::kPrimFFTShift->name(), CUST_ADPT_DESC(FFTShift));
+
+// IFFTShift
+CUST_INPUT_MAP(IFFTShift) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(dim)}};
+CUST_ATTR_MAP(IFFTShift) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IFFTShift) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IFFTShift, prim::kPrimIFFTShift->name(), CUST_ADPT_DESC(IFFTShift));
+
+// RFFT
+CUST_INPUT_MAP(RFFT) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(n)}, {3, INPUT_DESC(dim)}, {4, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(RFFT) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(RFFT) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RFFT, prim::kPrimRFFT->name(), CUST_ADPT_DESC(RFFT));
+
+// IRFFT
+CUST_INPUT_MAP(IRFFT) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(n)}, {3, INPUT_DESC(dim)}, {4, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(IRFFT) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IRFFT) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IRFFT, prim::kPrimIRFFT->name(), CUST_ADPT_DESC(IRFFT));
+
+// IRFFTGrad
+CUST_INPUT_MAP(IRFFTGrad) = {
+  {1, INPUT_DESC(input1)}, {2, INPUT_DESC(input2)}, {3, INPUT_DESC(n)}, {4, INPUT_DESC(dim)}, {5, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(IRFFTGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IRFFTGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IRFFTGrad, prim::kPrimIRFFTGrad->name(), CUST_ADPT_DESC(IRFFTGrad));
+
+// RFFTGrad
+CUST_INPUT_MAP(RFFTGrad) = {
+  {1, INPUT_DESC(input1)}, {2, INPUT_DESC(input2)}, {3, INPUT_DESC(n)}, {4, INPUT_DESC(dim)}, {5, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(RFFTGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(RFFTGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RFFTGrad, prim::kPrimRFFTGrad->name(), CUST_ADPT_DESC(RFFTGrad));
+
+std::vector<std::string> mode_strings = {"pad", "same", "valid", "full"};
+// Correlate
+CUST_INPUT_MAP(Correlate) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(v)}};
+CUST_ATTR_MAP(Correlate) = EMPTY_ATTR_MAP;
+CUST_INPUT_ATTR_MAP(Correlate) = {{3, ATTR_DESC(mode, AnyTraits<GEEnumToStr>(), mode_strings)}};
+CUST_OUTPUT_MAP(Correlate) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Correlate, prim::kPrimCorrelate->name(), CUST_ADPT_DESC(Correlate));
+
+// DCT
+CUST_INPUT_MAP(DCT) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(DCT) = EMPTY_ATTR_MAP;
+CUST_INPUT_ATTR_MAP(DCT) = {{2, ATTR_DESC(type, AnyTraits<int64_t>())}, {3, ATTR_DESC(n, AnyTraits<int64_t>())},
+                            {4, ATTR_DESC(axis, AnyTraits<int64_t>())}, {5, ATTR_DESC(norm, AnyTraits<int64_t>())},
+                            {6, ATTR_DESC(forward, AnyTraits<bool>())}, {7, ATTR_DESC(grad, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(DCT) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DCT, prim::kPrimDCT->name(), CUST_ADPT_DESC(DCT));
+
+// Polar
+CUST_INPUT_MAP(Polar) = {{1, INPUT_DESC(abs)}, {2, INPUT_DESC(angle)}};
+CUST_ATTR_MAP(Polar) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Polar) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Polar, prim::kPrimPolar->name(), CUST_ADPT_DESC(Polar));
+
+// TriuIndices
+CUST_INPUT_MAP(TriuIndices) = EMPTY_INPUT_MAP;
+CUST_ATTR_MAP(TriuIndices) = {{"row", ATTR_DESC(row, AnyTraits<int64_t>())},
+                              {"col", ATTR_DESC(col, AnyTraits<int64_t>())},
+                              {"offset", ATTR_DESC(offset, AnyTraits<int64_t>())},
+                              {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+CUST_OUTPUT_MAP(TriuIndices) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(TriuIndices, prim::kPrimTriuIndices->name(), CUST_ADPT_DESC(TriuIndices));
+
+// Digamma
+INPUT_MAP(Digamma) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Digamma) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Digamma) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Digamma, prim::kPrimDigamma->name(), ADPT_DESC(Digamma));
+
+// TrilIndices
+CUST_INPUT_MAP(TrilIndices) = EMPTY_INPUT_MAP;
+CUST_ATTR_MAP(TrilIndices) = {{"row", ATTR_DESC(row, AnyTraits<int64_t>())},
+                              {"col", ATTR_DESC(col, AnyTraits<int64_t>())},
+                              {"offset", ATTR_DESC(offset, AnyTraits<int64_t>())},
+                              {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+CUST_OUTPUT_MAP(TrilIndices) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(TrilIndices, prim::kPrimTrilIndices->name(), CUST_ADPT_DESC(TrilIndices));
+
+// Angle
+INPUT_MAP(Angle) = {{1, INPUT_DESC(input)}};
+ATTR_MAP(Angle) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Angle) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Angle, prim::kPrimAngle->name(), ADPT_DESC(Angle));
+
+// Polygamma
+CUST_INPUT_MAP(Polygamma) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Polygamma) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Polygamma) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Polygamma, prim::kPrimPolygamma->name(), CUST_ADPT_DESC(Polygamma));
+
+// Igammac
+INPUT_MAP(Igammac) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(x)}};
+ATTR_MAP(Igammac) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Igammac) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(Igammac, prim::kPrimIgammac->name(), ADPT_DESC(Igammac));
+
+// FFTWithSize
+static const std::vector<std::string> norm_strings = {"backward", "forward", "ortho"};
+CUST_INPUT_MAP(FFTWithSize) = {{1, INPUT_DESC(x)}};
+CUST_INPUT_ATTR_MAP(FFTWithSize) = {
+  {2, ATTR_DESC(signal_ndim, AnyTraits<int64_t>())}, {3, ATTR_DESC(inverse, AnyTraits<bool>())},
+  {4, ATTR_DESC(real, AnyTraits<bool>())},           {5, ATTR_DESC(norm, AnyTraits<GEEnumToStr>(), norm_strings)},
+  {6, ATTR_DESC(onesided, AnyTraits<bool>())},       {7, ATTR_DESC(signal_sizes, AnyTraits<std::vector<int64_t>>())}};
+CUST_ATTR_MAP(FFTWithSize) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(FFTWithSize) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFTWithSize, kNameFFTWithSize, CUST_ADPT_DESC(FFTWithSize));
+
+// IgammaGradA
+INPUT_MAP(IgammaGradA) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(x)}};
+ATTR_MAP(IgammaGradA) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(IgammaGradA) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(IgammaGradA, prim::kPrimIgammaGradA->name(), ADPT_DESC(IgammaGradA));
+
+// Zeta
+INPUT_MAP(Zeta) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(q)}};
+ATTR_MAP(Zeta) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Zeta) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(Zeta, prim::kPrimZeta->name(), ADPT_DESC(Zeta));
+
+// SilentCheck
+INPUT_MAP(SilentCheck) = {{1, INPUT_DESC(val)},     {2, INPUT_DESC(input_grad)}, {3, INPUT_DESC(pre_val)},
+                          {4, INPUT_DESC(min_val)}, {5, INPUT_DESC(max_val)},    {6, INPUT_DESC(val_counter)}};
+OUTPUT_MAP(SilentCheck) = {{0, OUTPUT_DESC(input_grad)},
+                           {1, OUTPUT_DESC(pre_val)},
+                           {2, OUTPUT_DESC(min_val)},
+                           {3, OUTPUT_DESC(max_val)},
+                           {4, OUTPUT_DESC(result)}};
+ATTR_MAP(SilentCheck) = {{"c_min_steps", ATTR_DESC(c_min_steps, AnyTraits<int64_t>())},
+                         {"c_thresh_l1", ATTR_DESC(c_thresh_l1, AnyTraits<float>())},
+                         {"c_coeff_l1", ATTR_DESC(c_coeff_l1, AnyTraits<float>())},
+                         {"c_thresh_l2", ATTR_DESC(c_thresh_l2, AnyTraits<float>())},
+                         {"c_coeff_l2", ATTR_DESC(c_coeff_l2, AnyTraits<float>())}};
+REG_ADPT_DESC(SilentCheck, prim::kPrimSilentCheck->name(), ADPT_DESC(SilentCheck))
+
+// Cross
+INPUT_MAP(Cross) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Cross) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Cross) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Cross, prim::kPrimCross->name(), ADPT_DESC(Cross))
+
+// Logit
+CUST_INPUT_MAP(Logit) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Logit) = {{"eps", ATTR_DESC(eps, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(Logit) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Logit, prim::kPrimLogit->name(), CUST_ADPT_DESC(Logit))
 }  // namespace mindspore::transform

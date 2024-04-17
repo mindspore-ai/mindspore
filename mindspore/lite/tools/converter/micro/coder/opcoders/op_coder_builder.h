@@ -48,6 +48,8 @@ class OpCoderBuilder {
 
   OpCoderBuilder &is_builtin_custom(bool builtin_custom);
 
+  OpCoderBuilder &is_dynamic(bool dynamic);
+
   void Reset();
 
  private:
@@ -74,6 +76,8 @@ class OpCoderBuilder {
   bool support_parallel_{false};
 
   bool builtin_custom_{false};
+
+  bool dynamic_{false};
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_BUILDER_H_

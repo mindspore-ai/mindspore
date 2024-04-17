@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "inc/ops/pad_ops.h"
+#include "op_proto/inc/pad_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
 namespace ge {
 template <typename T>
 static void CaclDims(const Tensor &data, std::vector<int64_t> &vec_dim) {
-  int32_t size = data.GetSize() / sizeof(T);
+  int32_t size = data.GetSize() / static_cast<int64_t>(sizeof(T));
   for (int32_t i = 0; i < size; i++) {
-    T dim = *((T *)data.GetData() + i);
+    T dim = *(reinterpret_cast<const T *>(data.GetData()) + i);
     vec_dim.push_back(dim);
   }
 }
@@ -33,11 +33,10 @@ IMPLEMT_INFERFUNC(BroadcastTo, BroadcastToInferShape) {
   const vector<string> depend_names = {"shape"};
   PREPARE_DYNAMIC_SHAPE(depend_names);
   Tensor data;
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
   if (op.GetInputConstData("shape", data) != GRAPH_SUCCESS) {
     OP_LOGI(TbeGetName(op).c_str(), "Get constValue failed of [shape]");
-    auto shape_desc = op_info->MutableInputDesc("shape");
-    vector<int64_t> shapedims = shape_desc->MutableShape().GetDims();
+    auto shape_desc = op.GetInputDesc("shape");
+    vector<int64_t> shapedims = shape_desc.GetShape().GetDims();
     size_t dim_num = shapedims.size();
 
     DataType input_dtype = op.GetInputDescByName("x").GetDataType();
@@ -50,14 +49,15 @@ IMPLEMT_INFERFUNC(BroadcastTo, BroadcastToInferShape) {
 
     std::vector<int64_t> shape_vector;
     std::vector<std::pair<int64_t, int64_t>> range_vector;
-    for (int64_t item = 0; item < shapedims[0]; ++item) {
+    for (size_t item = 0; item < dim_num; ++item) {
       shape_vector.push_back(-1);
       range_vector.push_back(std::make_pair(1, -1));
     }
-    auto output_desc = op_info->MutableOutputDesc("y");
-    output_desc->SetShape(GeShape(shape_vector));
-    output_desc->SetShapeRange(range_vector);
-    output_desc->SetDataType(input_dtype);
+    auto output_desc = op.GetOutputDesc("y");
+    output_desc.SetShape(Shape(shape_vector));
+    output_desc.SetShapeRange(range_vector);
+    output_desc.SetDataType(input_dtype);
+    op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   }
 
@@ -73,9 +73,10 @@ IMPLEMT_INFERFUNC(BroadcastTo, BroadcastToInferShape) {
   OP_LOGI(TbeGetName(op).c_str(), "the op infer shape and dtype");
   DataType input_dtype = op.GetInputDescByName("x").GetDataType();
 
-  auto output_desc = op_info->MutableOutputDesc("y");
-  output_desc->SetShape(GeShape(vec_dim));
-  output_desc->SetDataType(input_dtype);
+  auto output_desc = op.GetOutputDesc("y");
+  output_desc.SetShape(Shape(vec_dim));
+  output_desc.SetDataType(input_dtype);
+  op.UpdateOutputDesc("y", output_desc);
   return GRAPH_SUCCESS;
 }
 

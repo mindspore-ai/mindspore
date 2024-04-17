@@ -83,8 +83,8 @@ int NNACLKernel::Run() {
 
   int ret = kernel_->Compute(kernel_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "NNACL compute failed. Kernel: " << name() << ", ret: " << ret;
-    MS_LOG(ERROR) << NNACLErrorMsg(ret);
+    MS_LOG(WARNING) << "NNACL compute failed. Kernel: " << name() << ", ret: " << ret;
+    MS_LOG(WARNING) << NNACLErrorMsg(ret);
     return ret;
   }
   return RET_OK;

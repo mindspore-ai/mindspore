@@ -92,7 +92,7 @@ int EmbeddingHashMap::InsertDataUnsafe(const int key) {
   }
 
   ids_to_indices_->Put(key, hash_index);
-  hash_map_elements_[hash_index].set_step((size_t)1);
+  hash_map_elements_[hash_index].set_step(1UL);
   return hash_index;
 }
 

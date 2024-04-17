@@ -18,19 +18,16 @@
 #include <functional>
 #include <algorithm>
 #include "kernel/common_utils.h"
-#include "mindspore/core/ops/cummin.h"
-#include "mindspore/core/ops/cummax.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr int kCumInputsNum = 1;
+constexpr int kCumInputsNum = 2;
 constexpr int kCumOutputsNum = 2;
 }  // namespace
 
-bool CumMinMaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CumMinMaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -39,31 +36,15 @@ bool CumMinMaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[cum_op_type_][index].second;
-  switch (cum_op_type_) {
-    case CUMMIN: {
-      auto kernel_ptr = std::make_shared<ops::Cummin>(base_operator->GetPrim());
-      axis_ = kernel_ptr->get_axis();
-      break;
-    }
-    case CUMMAX: {
-      auto kernel_ptr = std::make_shared<ops::Cummax>(base_operator->GetPrim());
-      axis_ = kernel_ptr->get_axis();
-      break;
-    }
-    default: {
-      MS_LOG(ERROR) << "CumMin/CumMax Something unexpected happened!";
-      return false;
-    }
-  }
   return true;
 }
 
-int CumMinMaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CumMinMaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  axis_ = inputs[kIndex1]->GetValueWithCheck<int64_t>();
   outer_size_ = inner_size_ = axis_size_ = 1;
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   auto rank = SizeToLong(input_shape.size());
@@ -81,8 +62,8 @@ int CumMinMaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename DataType, typename IndexType>
-bool CumMinMaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CumMinMaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto element_size = (outer_size_ * inner_size_) * axis_size_;
   if (element_size == 0) {
     return true;
@@ -123,51 +104,139 @@ std::map<CumOpType, std::vector<std::pair<KernelAttr, CumMinMaxGpuKernelMod::Cum
   CumMinMaxGpuKernelMod::func_list_ = {
     {
       CUMMIN,
-      {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+      {{KernelAttr()
+          .AddInputAttr(kNumberTypeInt8)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeInt8)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<int8_t, int32_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
+       {KernelAttr()
+          .AddInputAttr(kNumberTypeInt16)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeInt16)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<int16_t, int32_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       {KernelAttr()
+          .AddInputAttr(kNumberTypeInt32)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeInt32)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<int32_t, int32_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+       {KernelAttr()
+          .AddInputAttr(kNumberTypeInt64)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<int64_t, int32_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
+       {KernelAttr()
+          .AddInputAttr(kNumberTypeUInt8)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeUInt8)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<uint8_t, int32_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
+       {KernelAttr()
+          .AddInputAttr(kNumberTypeUInt16)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeUInt16)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<uint16_t, int32_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
+       {KernelAttr()
+          .AddInputAttr(kNumberTypeUInt32)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeUInt32)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<uint32_t, int32_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
+       {KernelAttr()
+          .AddInputAttr(kNumberTypeUInt64)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeUInt64)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<uint64_t, int32_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
+       {KernelAttr()
+          .AddInputAttr(kNumberTypeFloat16)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeFloat16)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<half, int32_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+       {KernelAttr()
+          .AddInputAttr(kNumberTypeFloat32)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeFloat32)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<float, int32_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
+       {KernelAttr()
+          .AddInputAttr(kNumberTypeFloat64)
+          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+          .AddOutputAttr(kNumberTypeFloat64)
+          .AddOutputAttr(kNumberTypeInt32),
         &CumMinMaxGpuKernelMod::LaunchKernel<double, int32_t>}},
     },
     {CUMMAX,
-     {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+     {{KernelAttr()
+         .AddInputAttr(kNumberTypeInt8)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeInt8)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<int8_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt16)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeInt16)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<int16_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeInt32)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<int32_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<int64_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt8)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeUInt8)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<uint8_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt16)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeUInt16)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeUInt32)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeUInt64)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<uint64_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeFloat16)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<half, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeFloat32)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<float, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeFloat64)
+         .AddOutputAttr(kNumberTypeInt64),
        &CumMinMaxGpuKernelMod::LaunchKernel<double, int64_t>}}},
 };
 

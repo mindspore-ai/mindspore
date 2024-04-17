@@ -98,12 +98,15 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   int PrintInputData();
 #ifdef PARALLEL_INFERENCE
+  int RunParallelBenchmark(std::shared_ptr<mindspore::Context> context);
   int CompareOutputForModelPool(std::vector<mindspore::MSTensor> *outputs);
   void ModelParallelRunnerWarmUp(int index);
   void ModelParallelRunnerRun(int task_num, int parallel_idx);
   int ParallelInference(std::shared_ptr<mindspore::Context> context);
   int AddConfigInfo(const std::shared_ptr<RunnerConfig> &runner_config);
 #endif
+
+  int PrintOutputData();
 
   template <typename T>
   std::vector<int64_t> ConverterToInt64Vector(const std::vector<T> &srcDims) {
@@ -122,6 +125,7 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
  private:
   void UpdateConfigInfo();
+  std::vector<std::vector<int64_t>> ParseGraphInputShapeMap(const std::vector<MSTensor> &inputs);
 
  private:
   mindspore::OpenGL::OpenGLRuntime gl_runtime_;

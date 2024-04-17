@@ -40,7 +40,7 @@ def test_ops_one_hot(mode):
     Expectation: success
     """
     ms.set_context(mode=mode)
-    x = ms.Tensor(np.array([0, 1, 2]), ms.int32)
+    x = ms.Tensor(np.array([0, 1, 2]), ms.int64)
     net = Net()
     output = net(x)
     expect_output = [[1, 0, 0],

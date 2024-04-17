@@ -49,8 +49,8 @@ abstract::ShapePtr SoftMarginLossInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual,
                                            kSoftMarginLossInputSize, op_name);
-  auto predict = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto label = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto predict = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto label = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   CheckAndConvertUtils::Check("logits shape", SizeToLong(predict.size()), kEqual, SizeToLong(label.size()), op_name,
                               ValueError);
   if (!IsDynamic(predict) && !IsDynamic(label)) {
@@ -59,7 +59,7 @@ abstract::ShapePtr SoftMarginLossInferShape(const PrimitivePtr &primitive,
   auto out_shape = predict;
   int64_t reduction;
   CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
-  if (reduction == REDUCTION_SUM || reduction == MEAN) {
+  if (reduction == mindspore::REDUCTION_SUM || reduction == mindspore::MEAN) {
     out_shape.resize(0);
   }
   return std::make_shared<abstract::Shape>(out_shape);
@@ -71,10 +71,10 @@ TypePtr SoftMarginLossInferType(const PrimitivePtr &primitive, const std::vector
                                            kSoftMarginLossInputSize, op_name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("logits", input_args[0]->BuildType());
-  (void)types.emplace("labels", input_args[1]->BuildType());
+  (void)types.emplace("logits", input_args[0]->GetType());
+  (void)types.emplace("labels", input_args[1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
-  return input_args[0]->BuildType();
+  return input_args[0]->GetType();
 }
 }  // namespace
 

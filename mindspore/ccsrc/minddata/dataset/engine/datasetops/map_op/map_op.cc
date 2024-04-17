@@ -18,11 +18,9 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
-#include <set>
 #include <vector>
 
 #include "minddata/dataset/callback/callback_param.h"
-#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/tensor_row.h"
@@ -33,10 +31,8 @@
 #endif
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#ifdef ENABLE_PYTHON
-#include "minddata/dataset/kernels/py_func_op.h"
-#endif
 #include "minddata/dataset/util/log_adapter.h"
+#include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/task_manager.h"
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
@@ -45,12 +41,15 @@
 
 namespace mindspore {
 namespace dataset {
+using TensorOpVector = std::vector<std::shared_ptr<TensorOp>>;
+
 // Constructor of MapOp
 MapOp::MapOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
              std::vector<std::shared_ptr<TensorOperation>> tensor_operations, int32_t num_workers,
              int32_t op_connector_size)
     : ParallelOp(num_workers, op_connector_size),
       tensor_operations_(tensor_operations),
+      tfuncs_(std::vector<TensorOpVector>(num_workers, TensorOpVector())),
       in_columns_(in_col_names),
       out_columns_(out_col_names),
       python_mp_(nullptr) {
@@ -59,11 +58,15 @@ MapOp::MapOp(const std::vector<std::string> &in_col_names, const std::vector<std
 
   // Build TensorOp from TensorOperation vector
   // This is to ensure each iterator holds its own copy of the TensorOp objects.
-  for (int32_t i = 0; i < num_workers; i++) {
-    tfuncs_.push_back(std::vector<std::shared_ptr<TensorOp>>());
+  auto base_seed = GetSeed();
+  for (int32_t worker_index = 0; worker_index < num_workers; ++worker_index) {
     (void)std::transform(
-      tensor_operations_.begin(), tensor_operations_.end(), std::back_inserter(tfuncs_[i]),
-      [](std::shared_ptr<TensorOperation> operation) -> std::shared_ptr<TensorOp> { return operation->Build(); });
+      tensor_operations_.begin(), tensor_operations_.end(), std::back_inserter(tfuncs_[worker_index]),
+      [base_seed, worker_index](const std::shared_ptr<TensorOperation> &operation) -> std::shared_ptr<TensorOp> {
+        auto op = operation->Build();
+        op->SetSeed(base_seed + worker_index);
+        return op;
+      });
   }
 
   if (out_columns_.empty() || out_columns_[0].empty()) {
@@ -264,8 +267,8 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
     if (ret != APP_ERR_OK) {
       RETURN_STATUS_UNEXPECTED("Get Soc Version failed.");
     }
-    if (soc_version.find("Ascend910B") == std::string::npos) {
-      std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B";
+    if (soc_version.find("Ascend910B") == std::string::npos && soc_version.find("Ascend910C") == std::string::npos) {
+      std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B / Ascend910C";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
 
@@ -331,7 +334,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
 Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
                             const std::vector<std::shared_ptr<MapJob>> &job_list, device::DeviceContext *device_context,
                             size_t stream_id) {
-  int32_t num_cols = in_row.size();
+  size_t num_cols = in_row.size();
 
   std::vector<TensorRow> job_input_table;
   std::vector<TensorRow> original_table;
@@ -431,7 +434,7 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
 #else
 Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
                             const std::vector<std::shared_ptr<MapJob>> &job_list) {
-  int32_t num_cols = in_row.size();
+  size_t num_cols = in_row.size();
 
   std::vector<TensorRow> job_input_table;
   std::vector<TensorRow> original_table;
@@ -695,6 +698,7 @@ std::vector<int32_t> MapOp::GetMPWorkerPIDs() const {
 }
 
 Status MapOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
   if (new_row.eoe()) {
@@ -726,6 +730,15 @@ Status MapOp::GetNextRowPullMode(TensorRow *const row) {
     }
     i_row = std::move(o_row);
   }
+
+  // Sanity check a row in result_table
+  if (!i_row.empty() && out_columns_.size() != i_row.size()) {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid columns, the number of columns returned in 'map' operations should match "
+      "the number of 'output_columns', but got the number of columns returned in 'map' operations: " +
+      std::to_string(i_row.size()) + ", the number of 'output_columns': " + std::to_string(out_columns_.size()) + ".");
+  }
+
   if (in_columns_.size() == out_columns_.size()) {
     // assign transformed tensor back to the original
     for (size_t i = 0; i < to_process_indices_.size(); i++) {

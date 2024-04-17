@@ -68,8 +68,13 @@ std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, c
       fg->set_manager(mng);
     }
     std::vector<AnfNodePtr> node_list, input_list, output_list;
+    auto cnode = dyn_cast_ptr<CNode>(node);
+    auto use_akg_cce = false;
+    if (cnode != nullptr && cnode->HasAttr("use_akg_cce")) {
+      use_akg_cce = true;
+    }
     GkUtils::GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
-    graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list);
+    (void)graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list, use_akg_cce);
     auto json_kernel_name = graph_kernel_json_generator.kernel_name();
     if (node_kernel != nullptr) {
       (*node_kernel)[node] = json_kernel_name;
@@ -90,7 +95,7 @@ std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, c
 std::string GetCNodeDynamicInputIndex(const CNodePtr &cnode) {
   std::string dynamic_input_index;
   auto cb = Callback::Instance();
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     if (cnode->input(i)->isa<CNode>() || cnode->input(i)->isa<Parameter>()) {
       auto input_shape = cb->GetInputShape(cnode, i - 1);
       if (input_shape.size() <= 0 || input_shape[0] != 1) {
@@ -105,7 +110,7 @@ std::string GetCNodeDynamicInputIndex(const CNodePtr &cnode) {
 std::string GetCNodeInputShapeStr(const CNodePtr &cnode) {
   std::string input_shape_str;
   auto cb = Callback::Instance();
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_shape = cb->GetInputShape(cnode, i - 1);
     input_shape_str += std::to_string(input_shape.size()) + ",";
     for (auto &v : input_shape) {

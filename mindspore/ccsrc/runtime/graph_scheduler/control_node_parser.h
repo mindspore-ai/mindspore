@@ -231,7 +231,9 @@ class ControlNodeParser {
   void ParseDeviceContextForReturnNode(const DeviceContext *default_context);
   void ParseDeviceContextForCallNode(const std::vector<AnfNodePtr> &control_nodes);
   void ParseDeviceContextForPartialNode(const std::vector<AnfNodePtr> &control_nodes);
-
+  void FetchDeviceContextByNode(const std::vector<KernelWithIndex> &output_nodes,
+                                std::vector<const DeviceContext *> *return_device_contexts,
+                                const FuncGraphPtr &func_graph, const DeviceContext *default_context);
   // In the actor model, when the funcgraph comes to an end temporarily, the exit of the funcgraph needs to notify
   // the entrance actor so that it can process next parameters. This is used to obtain the nodes corresponding to all
   // actors in the funcgraph that need to send control messages to the entrance.

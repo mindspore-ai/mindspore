@@ -19,7 +19,6 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 if(ENABLE_D OR ENABLE_ACL)
     # build 910 and 310 code into one distro, files needed for 310 mode
     add_compile_definitions(ENABLE_ACL)
-    include_directories(${CMAKE_SOURCE_DIR}/graphengine/910/ge)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 
     file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
@@ -58,6 +57,7 @@ set(MSLIB_INFER_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/model_pool/model_parallel_runner_impl.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/model_pool/resource_manager.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/llm_engine/llm_engine.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/llm_engine/llm_engine_impl.cc
     ${API_MS_INFER_SRC}
     ${API_ACL_SRC}
     ${API_OPS_SRC}
@@ -67,6 +67,9 @@ if(ENABLE_D)
     list(APPEND MSLIB_INFER_SRC
         "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/strategy_checkpoint/strategy_checkpoint_info.cc"
         "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc"
+        "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/group_manager.cc"
+        "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/device_manager.cc"
+        "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/device_matrix.cc"
         "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/tensor_layout/array.cc"
         "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/tensor_layout/map.cc"
         "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/tensor_layout/arrangement.cc"

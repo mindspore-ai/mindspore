@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_HARD_SIGMOID_GRAD_H
 #define AICPU_KERNELS_NORMALIZED_HARD_SIGMOID_GRAD_H
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -29,7 +29,7 @@ class HardSigmoidGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  uint32_t HardSigmoidGradCompute(const CpuKernelContext &ctx);
+  uint32_t HardSigmoidGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

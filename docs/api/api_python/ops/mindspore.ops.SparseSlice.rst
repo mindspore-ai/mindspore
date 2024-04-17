@@ -16,7 +16,7 @@ mindspore.ops.SparseSlice
         切片操作生成一个 `SparseTensor` 对象。
 
         - y_indices: int64类型的Tensor。
-        - y_values: 数据类型与 `values` 相同的Tensor.
+        - y_values: 数据类型与 `values` 相同的Tensor。
         - y_shape: int64类型的Tensor，其大小与 `size` 相同。
 
     异常：

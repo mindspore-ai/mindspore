@@ -26,30 +26,24 @@ namespace kernel {
 constexpr size_t kDropoutGradInputNum = 2;
 constexpr size_t kDropoutGradOutputNum = 1;
 
-bool DropoutGradBwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DropoutGrad>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast DropoutGrad ops failed!";
-    return false;
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutGradInputNum, kernel_ptr->name());
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutGradOutputNum, kernel_ptr->name());
+bool DropoutGradBwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutGradInputNum, primitive_->name());
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutGradOutputNum, primitive_->name());
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_ptr->name()
-                      << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
-  keep_prob_ = kernel_ptr->get_keep_prob();
+  keep_prob_ = GetValue<float>(primitive_->GetAttr("keep_prob"));
   return true;
 }
 
-int DropoutGradBwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &others) {
+int DropoutGradBwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   dy_shape_ = inputs[kIndex0]->GetShapeVector();
   mask_shape_ = inputs[kIndex1]->GetShapeVector();
@@ -63,9 +57,9 @@ int DropoutGradBwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   MS_EXCEPTION_IF_CHECK_FAIL(!dy_shape_.empty(), "dy_shape_ should not be empty!");
   num_count_ = std::accumulate(dy_shape_.begin(), dy_shape_.end(), 1, std::multiplies<size_t>());
 
-  dy_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * num_count_;
-  mask_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) * num_count_;
-  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * num_count_;
+  dy_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * num_count_;
+  mask_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * num_count_;
+  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * num_count_;
 
   InitSizeLists();
   return 0;
@@ -77,19 +71,15 @@ void DropoutGradBwdGpuKernelMod::ResetResource() noexcept {
   mask_size_ = 0;
   output_size_ = 0;
   num_count_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 
-void DropoutGradBwdGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(dy_size_);
-  input_size_list_.push_back(mask_size_);
-  output_size_list_.push_back(output_size_);
-}
+void DropoutGradBwdGpuKernelMod::InitSizeLists() { output_size_list_.push_back(output_size_); }
 
 template <typename T>
-bool DropoutGradBwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DropoutGradBwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }

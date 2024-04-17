@@ -26,15 +26,14 @@
 #include <utility>
 #include <vector>
 
-#include "utils/hash_map.h"
 #include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
 #include "include/common/utils/parallel_context.h"
-#include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/graph_util/graph_info.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/ops_info/tmp_identity_info.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
@@ -117,7 +116,7 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
     }
     return layout_ptr;
   }
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+  for (size_t index = 0; index < cnode->size(); ++index) {
     if (prim->name() == DEPEND && index != 1) {
       continue;
     }
@@ -174,45 +173,6 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &cnode, bool 
   }
   MS_LOG(WARNING) << "FindNextLayout return nullptr, if reshape is not the last primitive, there must be some error";
   return nullptr;
-}
-
-static void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const AnfNodePtr &pre_node,
-                       const FuncGraphPtr &func_graph, const std::string &instance_name,
-                       const std::string &param_name = "", const FuncGraphPtr &root = nullptr) {
-  // insert new node before the node
-  FuncGraphManagerPtr manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  ScopePtr scope = node->scope();
-  MS_EXCEPTION_IF_NULL(scope);
-  std::vector<AnfNodePtr> node_input;
-  if (root && !param_name.empty()) {
-    //    node_input = CreateMirrorInput(root, op, pre_node, instance_name, param_name);
-  } else {
-    node_input = CreateInput(op, pre_node, instance_name);
-  }
-  CNodePtr new_node = func_graph->NewCNode(node_input);
-  MS_EXCEPTION_IF_NULL(new_node);
-  if (instance_name.find(SPLIT_SENS) == std::string::npos) {
-    new_node->set_in_forward_flag(true);  // mark forward flag
-  }
-  auto new_node_value = node_input[0]->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(new_node_value);
-  PrimitivePtr new_node_prim = new_node_value->value()->cast<PrimitivePtr>();
-  new_node_prim->set_instance_name(instance_name);
-  new_node_prim->set_attr("keep_value_node_input", MakeValue(true));
-  if (instance_name.find(NOT_RECOMPUTE) != std::string::npos) {
-    new_node_prim->set_attr("recompute", MakeValue(false));
-  }
-  new_node->set_scope(scope);
-  node_input[0]->set_scope(scope);
-  if (instance_name.find(REDISTRIBUTION_OP) != std::string::npos) {
-    new_node->AddPrimalAttr(kPrimalAttrForwardCommNodeUniqueId, MakeValue<std::string>(new_node->UniqueId()));
-    if (node->HasPrimalAttr(MICRO)) {
-      new_node->AddPrimalAttr(MICRO, node->GetPrimalAttr(MICRO));
-    }
-  }
-  manager->SetEdge(node, SizeToInt(index), new_node);
-  MS_LOG(INFO) << "Insert " << instance_name << " success";
 }
 
 AnfNodePtr NewAllGatherNode(const std::string &name, const std::string &group) {
@@ -473,7 +433,7 @@ bool ModifyMakeTupleOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
     if (!IsSomePrimitive(expect_maketuple, prim::kPrimMakeTuple->name())) {
       continue;
     }
-    if (expect_maketuple->inputs().size() != 4) {
+    if (expect_maketuple->size() != 4) {
       continue;
     }
     if (expect_maketuple->input(1)->isa<CNode>() && expect_maketuple->input(2)->isa<CNode>() &&
@@ -824,7 +784,7 @@ static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePt
       appear_count = 1;
     }
     auto replace_input_cnode = replace_input.first->cast<CNodePtr>();
-    size_t inputs_size = replace_input_cnode->inputs().size();
+    size_t inputs_size = replace_input_cnode->size();
     while (IntToSize(appear_count) < inputs_size && replace_input_cnode->input(appear_count)->func_graph() != nullptr) {
       ++appear_count;
     }
@@ -980,6 +940,7 @@ bool StepAssignedParallel(const FuncGraphPtr &root, const FuncGraphManagerPtr &m
   MarkForwardCNode(root);
 
   if (sapp) {
+    CostModelContext::GetInstance()->set_rp_matmul_mem_coef(1);
     if (ParallelStrategyRecSearch(all_nodes, root, rank_id, device_num) != SUCCESS) {
       MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using RP searching mode";
     }

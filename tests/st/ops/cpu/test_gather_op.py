@@ -107,7 +107,7 @@ def cal_vmap_gather(x, indices, axis):
     return P.Gather()(x, indices, axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gather_vmap_basic():
@@ -128,7 +128,7 @@ def test_gather_vmap_basic():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gather_vmap_negative_axis():
@@ -154,7 +154,7 @@ def test_gather_vmap_negative_axis():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gather_vmap_with_inaxes():
@@ -183,7 +183,7 @@ def test_gather_vmap_with_inaxes():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gather_vmap_indices_outofbound():
@@ -206,7 +206,7 @@ def test_gather_vmap_indices_outofbound():
     assert "For 'Gather', the 'input_indices' should be in the range" in str(info.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gather_vmap_xdim_is_none():
@@ -228,7 +228,7 @@ def test_gather_vmap_xdim_is_none():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gather_vmap_idim_is_none():
@@ -250,7 +250,7 @@ def test_gather_vmap_idim_is_none():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gather_vmap_nested():

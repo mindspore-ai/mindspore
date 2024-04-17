@@ -1,0 +1,37 @@
+eye:
+  description: |
+    Creates a tensor with ones on the diagonal and zeros in the rest.
+
+    Refer to :func:`mindspore.ops.eye` for more details.
+
+    Note:
+        The data type of returned tensor can be float16, float32, int8, int16, int32, int64, uint8 or bool on Ascend platforms.
+
+    Inputs:
+        - **n** (int) - The number of rows of returned tensor. Constant value only.
+        - **m** (int) - The number of columns of returned tensor. Constant value only.
+        - **t** (mindspore.dtype) - MindSpore's dtype, the data type of the returned tensor.
+          Default: ``None`` , the data type of the returned tensor is mindspore.float32.
+
+    Outputs:
+        Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
+        the user's Inputs `n` and `m`. And the data type depends on Inputs `t`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> eye = ops.Eye()
+        >>> output = eye(2, 2, mindspore.int32)
+        >>> print(output)
+        [[1 0]
+         [0 1]]
+        >>> print(output.dtype)
+        Int32
+        >>> output = eye(1, 2, mindspore.float32)
+        >>> print(output)
+        [[1. 0.]]
+        >>> print(output.dtype)
+        Float32

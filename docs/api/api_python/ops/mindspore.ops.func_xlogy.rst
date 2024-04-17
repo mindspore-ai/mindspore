@@ -14,11 +14,11 @@ mindspore.ops.xlogy
         - 在Ascend上， `input` 和 `other` 必须为float16或float32。
 
     参数：
-        - **input** (Union[Tensor, number.Number, bool]) - 第一个输入为数值型。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
+        - **input** (Union[Tensor, number.Number, bool]) - 第一个输入为数值型。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
         - **other** (Union[Tensor, number.Number, bool]) - 第二个输入为数值型。当第一个输入是Tensor或数据类型为数值型或bool的Tensor时，则第二个输入是数值型或bool。当第一个输入是Scalar时，则第二个输入必须是数据类型为数值型或bool的Tensor。
 
     返回：
-        Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数数值较高的类型。
+        Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数值较高的类型。
 
     异常：
         - **TypeError** - 如果 `input` 和 `other` 不是数值型、bool或Tensor。

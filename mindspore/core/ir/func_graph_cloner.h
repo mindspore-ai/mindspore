@@ -117,15 +117,15 @@ class MS_CORE_API Cloner {
   void GenParameters(const FuncGraphPtr &func_graph);
   void CloneParameter(const ParameterPtr &param, const AnfNodePtr &node) const;
   ParameterPtr AddParameter(const FuncGraphPtr &func_graph, const AnfNodePtr &node, bool is_add = true);
-  void OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs, size_t arg_start_index);
+  void OrderParameters(const FuncGraphPtr &func_graph, const AnfNodeWeakPtrList &inputs, size_t arg_start_index);
   CNodePtr SetPartialEdges(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FuncGraphTransaction *tx);
   void SetEdges(const FuncGraphPtr &func_graph, FuncGraphTransaction *tx);
   void SetEdgesBfs(const FuncGraphPtr &root_fg, FuncGraphTransaction *tx);
-  void AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &params, AnfNodePtrList *const lift_params,
-                     AnfNodePtrList *const input_params);
-  void AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph, const AnfNodePtrList &params);
+  void AddParameters(const FuncGraphPtr &func_graph, const AnfNodeWeakPtrList &params,
+                     AnfNodeWeakPtrList *const lift_params, AnfNodeWeakPtrList *const input_params);
+  void AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph, const AnfNodeWeakPtrList &params);
   void LiftParameters(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph,
-                      const AnfNodePtrList &params);
+                      const AnfNodeWeakPtrList &params);
   void Lift(const std::vector<FuncGraphPtr> &sorted);
   void LiftParameters(const FuncGraphVector &todo_func_graphs);
   bool IsLiftTopFuncGraph(const FuncGraphPtr &func_graph);
@@ -149,7 +149,7 @@ class MS_CORE_API Cloner {
   mindspore::HashMap<FuncGraphPtr, bool> status_;
   mindspore::HashMap<FuncGraphPtr, NodeToNodeMap> replicated_map_node_;
   mindspore::HashMap<FuncGraphPtr, mindspore::HashMap<FuncGraphPtr, AnfNodePtr>> replicated_map_func_graph_;
-  mindspore::HashMap<FuncGraphPtr, AnfNodePtrList> replicated_func_graph_params_;
+  mindspore::HashMap<FuncGraphPtr, AnfNodeWeakPtrList> replicated_func_graph_params_;
 };
 
 MS_CORE_API AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,

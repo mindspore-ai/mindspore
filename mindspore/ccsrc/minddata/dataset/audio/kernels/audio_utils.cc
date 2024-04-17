@@ -430,32 +430,32 @@ Status Dct(std::shared_ptr<Tensor> *output, int n_mfcc, int n_mels, NormMode nor
 }
 
 Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_param,
-                           float mask_value, int axis, std::mt19937 rnd) {
+                           float mask_value, int axis, std::mt19937 *rnd) {
   std::uniform_int_distribution<int32_t> mask_width_value(0, mask_param);
   TensorShape input_shape = input->shape();
   int32_t mask_dim_size = axis == 1 ? input_shape[-2] : input_shape[-1];
-  int32_t mask_width = mask_width_value(rnd);
+  int32_t mask_width = mask_width_value(*rnd);
   std::uniform_int_distribution<int32_t> min_freq_value(0, mask_dim_size - mask_width);
-  int32_t mask_start = min_freq_value(rnd);
+  int32_t mask_start = min_freq_value(*rnd);
 
   return MaskAlongAxis(input, output, mask_width, mask_start, mask_value, axis);
 }
 
 Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_width,
                      int32_t mask_start, float mask_value, int32_t axis) {
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
   if (mask_width == 0) {
-    *output = input;
     return Status::OK();
   }
   if (axis != 2 && axis != 1) {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(
       "MaskAlongAxis: invalid parameter, 'axis' can only be 1 for Frequency Masking or 2 for Time Masking.");
   }
-  TensorShape input_shape = input->shape();
-  // squeeze input
+  TensorShape input_shape = (*output)->shape();
+  // squeeze output
   TensorShape squeeze_shape =
     TensorShape({input_shape.NumOfElements() / input_shape[-2] / input_shape[-1], input_shape[-2], input_shape[-1]});
-  RETURN_IF_NOT_OK(input->Reshape(squeeze_shape));
+  RETURN_IF_NOT_OK((*output)->Reshape(squeeze_shape));
 
   int check_dim_ind = (axis == 1) ? -2 : -1;
   CHECK_FAIL_RETURN_SYNTAX_ERROR(mask_start >= 0 && mask_start <= input_shape[check_dim_ind],
@@ -470,16 +470,17 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       std::to_string(mask_start) + ", 'mask_width' " + std::to_string(mask_width) + " and length " +
       std::to_string(input_shape[check_dim_ind]));
 
-  size_t cell_size = input->type().SizeInBytes();
+  size_t cell_size = (*output)->type().SizeInBytes();
 
   if (axis == 1) {
     // freq
-    for (auto ind = 0; ind < input->Size() / input_shape[-2] * mask_width; ind++) {
+    const auto kShapeIndex = -2;
+    for (auto ind = 0; ind < (*output)->Size() / input_shape[kShapeIndex] * mask_width; ind++) {
       int block_num = ind / (mask_width * input_shape[-1]);
       auto start_pos = ind % (mask_width * input_shape[-1]) + mask_start * input_shape[-1] +
-                       input_shape[-1] * input_shape[-2] * block_num;
-      auto start_mem_pos = const_cast<uchar *>(input->GetBuffer() + start_pos * cell_size);
-      if (input->type() != DataType::DE_FLOAT64) {
+                       input_shape[-1] * input_shape[kShapeIndex] * block_num;
+      auto start_mem_pos = const_cast<uchar *>((*output)->GetBuffer() + start_pos * cell_size);
+      if ((*output)->type() != DataType::DE_FLOAT64) {
         // tensor float 32
         auto mask_val = static_cast<float>(mask_value);
         auto ret_code = memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size);
@@ -495,11 +496,11 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     }
   } else {
     // time
-    for (int ind = 0; ind < input->Size() / input_shape[-1] * mask_width; ind++) {
+    for (int ind = 0; ind < (*output)->Size() / input_shape[-1] * mask_width; ind++) {
       int row_num = ind / mask_width;
       auto start_pos = ind % mask_width + mask_start + input_shape[-1] * row_num;
-      auto start_mem_pos = const_cast<uchar *>(input->GetBuffer() + start_pos * cell_size);
-      if (input->type() != DataType::DE_FLOAT64) {
+      auto start_mem_pos = const_cast<uchar *>((*output)->GetBuffer() + start_pos * cell_size);
+      if ((*output)->type() != DataType::DE_FLOAT64) {
         // tensor float 32
         auto mask_val = static_cast<float>(mask_value);
         auto ret_code = memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size);
@@ -514,9 +515,8 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       }
     }
   }
-  // unsqueeze input
-  RETURN_IF_NOT_OK(input->Reshape(input_shape));
-  *output = input;
+  // unsqueeze output
+  RETURN_IF_NOT_OK((*output)->Reshape(input_shape));
   return Status::OK();
 }
 
@@ -2027,14 +2027,15 @@ Status InverseSpectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<
 template <typename T>
 Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft,
                       int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type, float power,
-                      float momentum, int32_t length, bool rand_init, std::mt19937 rnd) {
+                      float momentum, int32_t length, bool rand_init, std::mt19937 *rnd) {
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
   // pack
-  TensorShape shape = input->shape();
-  TensorShape new_shape({input->Size() / shape[-1] / shape[-2], shape[-2], shape[-1]});
-  RETURN_IF_NOT_OK(input->Reshape(new_shape));
+  TensorShape shape = (*output)->shape();
+  TensorShape new_shape({(*output)->Size() / shape[-1] / shape[-2], shape[-2], shape[-1]});
+  RETURN_IF_NOT_OK((*output)->Reshape(new_shape));
   // power
   CHECK_FAIL_RETURN_UNEXPECTED(power != 0, "GriffinLim: power can not be zero.");
-  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+  for (auto itr = (*output)->begin<T>(); itr != (*output)->end<T>(); itr++) {
     *itr = pow(*itr, 1 / power);
   }
   // window
@@ -2053,13 +2054,13 @@ Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
       // static std::default_random_engine e;
       std::uniform_real_distribution<double> dist(0, 1);
       angles = angles.unaryExpr(
-        [&dist, &rnd](std::complex<double> value) { return std::complex<double>(dist(rnd), dist(rnd)); });
+        [&dist, &rnd](std::complex<double> value) { return std::complex<double>(dist(*rnd), dist(*rnd)); });
     } else {
       angles = angles.unaryExpr([](std::complex<double> value) { return std::complex<double>(1, 0); });
     }
     // slice and squeeze the first dim
     std::shared_ptr<Tensor> spec_tensor_slice;
-    RETURN_IF_NOT_OK(input->Slice(
+    RETURN_IF_NOT_OK((*output)->Slice(
       &spec_tensor_slice,
       std::vector<SliceOption>({SliceOption(std::vector<dsize_t>{dim}), SliceOption(true), SliceOption(true)})));
     TensorShape new_slice_shape({shape[-2], shape[-1]});
@@ -2132,7 +2133,7 @@ Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
 
 Status GriffinLim(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft, int32_t n_iter,
                   int32_t win_length, int32_t hop_length, WindowType window_type, float power, float momentum,
-                  int32_t length, bool rand_init, std::mt19937 rnd) {
+                  int32_t length, bool rand_init, std::mt19937 *rnd) {
   std::shared_ptr<Tensor> input_tensor;
   if (input->type() != DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
@@ -2149,7 +2150,7 @@ template <typename T>
 Status InverseMelScaleImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_stft,
                            int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
                            float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum,
-                           NormType norm, MelType mel_type, std::mt19937 rnd) {
+                           NormType norm, MelType mel_type, std::mt19937 *rnd) {
   constexpr int32_t sample_rate_factor = 2;
   f_max = std::fabs(f_max) <= std::numeric_limits<float>::epsilon()
             ? static_cast<T>(std::floor(sample_rate / sample_rate_factor))
@@ -2180,7 +2181,7 @@ Status InverseMelScaleImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr
                                                                                n_mels);
     // init specgram at n=channel
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat_channel =
-      Eigen::MatrixXd::Zero(time, freq).unaryExpr([&rnd, &dist](double dummy) { return dist(rnd); });
+      Eigen::MatrixXd::Zero(time, freq).unaryExpr([&rnd, &dist](double dummy) { return dist(*rnd); });
     std::vector<T> vec_channel(mat_channel.data(), mat_channel.data() + mat_channel.size());
     std::shared_ptr<Tensor> param_channel;
     TensorShape output_shape = TensorShape({freq, time});
@@ -2236,7 +2237,7 @@ Status InverseMelScaleImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr
 Status InverseMelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_stft,
                        int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
                        float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum, NormType norm,
-                       MelType mel_type, std::mt19937 rnd) {
+                       MelType mel_type, std::mt19937 *rnd) {
   std::shared_ptr<Tensor> input_tensor;
   if (input->type() != DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));

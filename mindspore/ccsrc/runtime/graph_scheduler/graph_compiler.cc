@@ -58,6 +58,7 @@
 #include "include/common/utils/compile_cache_context.h"
 #include "utils/phase.h"
 #include "pipeline/jit/ps/base.h"
+#include "ops/framework_ops.h"
 
 namespace mindspore {
 namespace runtime {
@@ -147,62 +148,9 @@ AnfNodePtr FetchRealNodeByNopNode(const AnfNodePtr &node) {
   return FetchRealNodeByNopNode(inputs[1]);
 }
 
-// Recursively delete the nodes in the eliminate nodes list in the graph, check node records
-// the nodes that have been checked during the recursive process.
-void EliminateNodesFromGraph(CNode *cnode, const std::set<AnfNodePtr> &eliminate_nodes,
-                             std::set<CNode *> *checked_nodes) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(checked_nodes);
-
-  std::list<CNode *> todo_list = {cnode};
-  while (!todo_list.empty()) {
-    auto cur_node = todo_list.back();
-    MS_EXCEPTION_IF_NULL(cur_node);
-    todo_list.pop_back();
-    if (checked_nodes->find(cur_node) != checked_nodes->end()) {
-      continue;
-    }
-    (void)checked_nodes->emplace(cur_node);
-    const auto &inputs = cur_node->inputs();
-    std::vector<AnfNodePtr> new_inputs;
-    for (auto &input : inputs) {
-      MS_EXCEPTION_IF_NULL(input);
-      if (!input->isa<CNode>()) {
-        (void)new_inputs.emplace_back(input);
-        continue;
-      }
-      if (eliminate_nodes.find(input) == eliminate_nodes.end()) {
-        (void)new_inputs.emplace_back(input);
-      } else {
-        // If input is an eliminate node, replace it by its real input.
-        const auto &real_input = FetchRealNodeByNopNode(input);
-        MS_EXCEPTION_IF_NULL(real_input);
-
-        // Since the output of previous node will be cached, the cache needs to be updated after eliminating the
-        // nopnode.
-        auto kernel_info = cur_node->kernel_info();
-        if (kernel_info) {
-          auto runtime_cache = kernel_info->runtime_cache();
-          if (runtime_cache.runtime_cache().is_valid()) {
-            runtime_cache.runtime_cache().update_prev_node_output(
-              new_inputs.size() - 1, common::AnfAlgo::VisitKernelWithReturnType(real_input, 0));
-          }
-        }
-        (void)new_inputs.emplace_back(real_input);
-      }
-      const auto &cnode_input = input->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode_input);
-      todo_list.push_back(cnode_input.get());
-    }
-    cur_node->set_inputs(new_inputs);
-  }
-}
-
 void OptimizeNopNode(KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  std::vector<CNodePtr> new_execution_order;
   std::vector<CNodePtr> nop_nodes_need_set_ref;
-  std::set<AnfNodePtr> nop_nodes_need_eliminated;
 
   // Skip the graph mode.
   if (graph->is_graph_run_mode()) {
@@ -217,29 +165,22 @@ void OptimizeNopNode(KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(cnode);
     if ((!common::AnfAlgo::IsNopNode(cnode)) || graph->IsInRefOutputMap({cnode, 0}) ||
         graph->IsRefOutputMapValue({cnode, 0}) ||
-        (std::find_if(graph_outputs.begin(), graph_outputs.end(), [&cnode](const KernelWithIndex &output) {
-           const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
-           return real_output == KernelWithIndex(cnode, 0);
-         }) != graph_outputs.end())) {
-      (void)new_execution_order.emplace_back(cnode);
+        (std::find_if(graph_outputs.begin(), graph_outputs.end(),
+                      [&cnode](const KernelWithIndex &output) {
+                        const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
+                        return real_output == KernelWithIndex(cnode, 0);
+                      }) != graph_outputs.end()) ||
+        std::find_if(cnode->inputs().begin(), cnode->inputs().end(), [](const auto &input) {
+          return common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimConditionGather) ||
+                 common::AnfAlgo::CheckPrimitiveType(common::AnfAlgo::VisitKernelWithReturnType(input, 0).first,
+                                                     prim::kPrimConditionGather);
+        }) != cnode->inputs().end()) {
       continue;
     }
-    // The nopnode which satisfies the following conditions cannot be eliminated and set to ref node:
-    // 1.dynamic shape 2.side effect 3. must not be eliminated.
-    if (graph->is_dynamic_shape() || common::AnfAlgo::HasMonadInput(cnode)) {
-      (void)new_execution_order.emplace_back(cnode);
-      (void)nop_nodes_need_set_ref.emplace_back(cnode);
-    } else {
-      MS_LOG(DEBUG) << "Eliminate node:" << cnode->DebugString();
-      (void)nop_nodes_need_eliminated.emplace(cnode);
-    }
+    // NopNode that does not meet the above conditions is set to Ref Node and is not deleted from the graph to avoid
+    // incorrect shape information of KernelTensor obtained in KernelMod::Launch.
+    (void)nop_nodes_need_set_ref.emplace_back(cnode);
   }
-
-  // Eliminate the nop nodes.
-  std::set<CNode *> checked_nodes;
-  MS_EXCEPTION_IF_NULL(graph->return_node());
-  EliminateNodesFromGraph(graph->return_node().get(), nop_nodes_need_eliminated, &checked_nodes);
-  graph->set_execution_order(new_execution_order);
 
   // Add the ref node pairs, which must be after elimination to avoid using elimination nodes.
   for (auto &ref_node : nop_nodes_need_set_ref) {
@@ -294,12 +235,7 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
   // ops not support addr change.
   // force zero copy when use ge
   bool is_enable_ge = ms_context->backend_policy() == "ge";
-  const std::string &phase = PhaseManager::GetInstance().phase();
-  bool is_train = false;
-  if (phase.length() != 0) {
-    is_train = pipeline::GetPhasePrefix(phase) == "train";
-  }
-  if (is_parallel_mode && (!is_enable_ge || !is_train)) {
+  if (is_parallel_mode && !is_enable_ge) {
     return false;
   }
   return true;
@@ -312,7 +248,7 @@ void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(node->input(0));
     bool enable = false;
     if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
-      if (kernel::IfNeedSkipResize(node) && graph->has_flag(kFlagPyNativeRunInGraph)) {
+      if (!kernel::CheckResizeCondition(node) && graph->has_flag(kFlagPyNativeRunInGraph)) {
         MS_LOG(INFO) << "Enable Run Graph By Single Op";
         enable = true;
       }
@@ -376,6 +312,7 @@ bool IsValidSequence(const ValueSequencePtr &sequence_value) {
   }
   TypeId base_type = values[0]->type()->type_id();
   for (size_t i = 1; i < values.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(values[i]);
     MS_EXCEPTION_IF_NULL(values[i]->type());
     TypeId type = values[i]->type()->type_id();
     if (type != base_type) {
@@ -412,6 +349,7 @@ GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrLi
                                  const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &input : graph->inputs()) {
+    MS_EXCEPTION_IF_NULL(input);
     MS_LOG(DEBUG) << "input node:" << input->DebugString()
                   << " abstract:" << (input->abstract() == nullptr ? "null" : input->abstract()->ToString());
   }
@@ -420,7 +358,19 @@ GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrLi
   opt::OptimizationForAnyTypeKernelGraph(graph);
   graph->SetInputNodes();
   for (const auto &input : graph->input_nodes()) {
-    MS_LOG(DEBUG) << "input node:" << input->DebugString() << " abstract:" << input->abstract()->ToString();
+    MS_EXCEPTION_IF_NULL(input);
+    MS_LOG(DEBUG) << "input node:" << input->DebugString()
+                  << " abstract:" << (input->abstract() == nullptr ? "null" : input->abstract()->ToString());
+    if (!input->isa<Parameter>()) {
+      continue;
+    }
+    const auto &parameter = input->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    const auto &shape = parameter->Shape();
+    if (shape != nullptr &&
+        ((shape->isa<abstract::Shape>() && shape->IsDynamic()) || shape->isa<abstract::DynamicSequenceShape>())) {
+      parameter->set_has_dynamic_shape(true);
+    }
   }
   auto backend_output = graph->output();
   MS_EXCEPTION_IF_NULL(backend_output);
@@ -586,11 +536,6 @@ GraphId GraphCompiler::CompileDynamicGraph(const KernelGraphPtr &kernel_graph, c
   MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: Dynamic shape or dynamic graph structure flag";
   kernel_graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
 
-  auto kernel_executor = device_context->GetKernelExecutor(true);
-  if (kernel_executor != nullptr) {
-    kernel_executor->AddMindIRPass(kernel_graph);
-  }
-
   kernel_graph->UpdateGraphAquireGilAttr();
   kernel_graph->SetInputNodes();
   auto manager = Manage(kernel_graph);
@@ -608,11 +553,6 @@ GraphId GraphCompiler::CompileDynamicGraph(const KernelGraphPtr &kernel_graph, c
   GraphId graph_id = kernel_graph->graph_id();
   kernel_graph->set_root_graph_id(graph_id);
   session_->DumpGraphs({kernel_graph});
-
-  auto &exec_nodes = kernel_graph->execution_order();
-  (void)std::for_each(exec_nodes.begin(), exec_nodes.end(), [](const CNodePtr &node) {
-    common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), node);
-  });
 
   MS_LOG(INFO) << "Status record: end compile kernel_graph. kernel_graph id: " << graph_id;
   return graph_id;
@@ -802,7 +742,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     // dynamic shape pass of graphmode
     if (graph->is_dynamic_shape()) {
       if (!graph->is_graph_run_mode()) {
-        opt::DynamicShapeConvertPass(graph);
+        // Temporarily disable CustomActor for asynchronous InferShape and Resize for the dynamic shape scenario,
+        // and implement the corresponding capability through direct InferShape and Resize in KernelActor.
+        // opt::DynamicShapeConvertPass(graph);
       }
       auto profiler_manage_inst = profiler::ProfilerManager::GetInstance();
       MS_EXCEPTION_IF_NULL(profiler_manage_inst);
@@ -880,28 +822,31 @@ void GraphCompiler::GetParamAndOutputIndex(
 void GraphCompiler::GetSingleOpInputTensors(const CNodePtr &kernel,
                                             const std::map<KernelWithIndex, TensorPtr> &op_output,
                                             const std::map<AnfNodePtr, size_t> &parameter_index,
-                                            const std::vector<TensorPtr> &graph_inputs,
-                                            InputTensorInfo *const input_tensor_info) {
+                                            const std::vector<TensorPtr> &graph_inputs, bool is_run_pyboost,
+                                            InputInfo *const input_info) {
   MS_EXCEPTION_IF_NULL(session_);
-  session_->GetOpInputTensors(kernel, op_output, parameter_index, graph_inputs, input_tensor_info);
+  if (is_run_pyboost) {
+    session_->GetOpInputTensorsFromCNode(kernel, op_output, parameter_index, graph_inputs, input_info);
+  } else {
+    session_->GetOpInputTensors(kernel, op_output, parameter_index, graph_inputs, input_info);
+  }
 }
 
 TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
                                                        const std::map<KernelWithIndex, TensorPtr> &op_output,
                                                        const std::map<AnfNodePtr, size_t> &parameter_index,
                                                        const std::vector<TensorPtr> &graph_inputs,
-                                                       InputTensorInfo *const input_tensor_info, size_t input_index) {
+                                                       InputInfo *const input_info, size_t input_index) {
   MS_EXCEPTION_IF_NULL(session_);
-  return session_->GetOpInputTensorByIndex(kernel, op_output, parameter_index, graph_inputs, input_tensor_info,
-                                           input_index);
+  return session_->GetOpInputTensorByIndex(kernel, op_output, parameter_index, graph_inputs, input_info, input_index);
 }
 
-void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
+void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputInfo &input_info,
                                                    bool use_dynamic_shape_process,
                                                    session::BackendOpRunInfoPtr *op_run_info,
                                                    const GraphOutputInfo *const graph_output_info) {
   MS_EXCEPTION_IF_NULL(session_);
-  *op_run_info = session_->GetSingleOpRunInfo(kernel, tensor_info, graph_output_info);
+  *op_run_info = session_->GetSingleOpRunInfo(kernel, input_info, graph_output_info);
   (*op_run_info)->base_op_run_info.use_dynamic_shape_process = use_dynamic_shape_process;
 }
 
@@ -927,11 +872,11 @@ void GraphCompiler::UpdateRefCount(const std::set<KernelWithIndex> &input_kernel
   session_->HandleOpInputs(input_kernels_with_index, ref_count, op_output_map);
 }
 
-void GraphCompiler::UpdateForwardOpOutputRefCount(const std::vector<tensor::TensorPtr> &input_tensor,
+void GraphCompiler::UpdateForwardOpOutputRefCount(const std::vector<ValuePtr> &input_values,
                                                   std::map<std::string, size_t> *forward_op_output_tensor_id) const {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
-  session_->ReleaseForwardOpOutput(input_tensor, forward_op_output_tensor_id);
+  session_->ReleaseForwardOpOutput(input_values, forward_op_output_tensor_id);
 }
 
 void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,

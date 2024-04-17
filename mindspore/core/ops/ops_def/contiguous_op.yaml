@@ -1,0 +1,14 @@
+#operator contiguous
+contiguous:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  view: True
+  dispatch:
+    enable: True
+    Ascend: ContiguousAscend
+    GPU: ContiguousGPU
+    CPU: ContiguousCPU

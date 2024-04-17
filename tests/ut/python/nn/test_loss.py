@@ -133,8 +133,7 @@ def test_focal_loss_input():
     x1 = Tensor([[0.8, 1.4], [0.5, 0.9], [1.2, 0.9]], mstype.float32)
     x2 = Tensor([[1]], mstype.int32)
     focalloss = nn.FocalLoss(weight=None, gamma=2.0, reduction='mean')
-    with pytest.raises(ValueError):
-        focalloss(x1, x2)
+    focalloss(x1, x2)
 
 
 def test_dice_loss():
@@ -253,6 +252,19 @@ def test_cross_entropy_ops_abnormal_input():
     Expectation: Success.
     """
     input_data = np.random.randn(3, 5).astype(np.float32)
+    target_data = Tensor(np.random.randint(0, 5, (3,)), mstype.int32)
+    weight_data = Tensor(np.random.randn(5,), mstype.float32)
+    with pytest.raises(TypeError):
+        ops.cross_entropy(input_data, target_data, weight_data)
+
+
+def test_cross_entropy_ops_abnormal_input_dtype():
+    """
+    Feature: Test abnormal dtype of input.
+    Description: Test CrossEntropyLoss functional.
+    Expectation: Success.
+    """
+    input_data = Tensor(np.random.randn(3, 5), mstype.int32)
     target_data = Tensor(np.random.randint(0, 5, (3,)), mstype.int32)
     weight_data = Tensor(np.random.randn(5,), mstype.float32)
     with pytest.raises(TypeError):

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@
 namespace mindspore {
 namespace parallel {
 const std::vector<std::string> filter_attrs = {RECOMPUTE, TARGET};
+const uint32_t kMinInputSize = 2;
+constexpr size_t kSize2 = 2;
 std::string ParameterName(const AnfNodePtr &node_ptr) {
   auto para_ptr = node_ptr->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(para_ptr);
@@ -71,8 +73,8 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
   std::vector<bool> is_parameter;
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
   // input is a ValueList or ValueTuple, then all inputs are not parameter.
-  if ((node_inputs.size() == 2) &&
-      (IsValueNode<ValueList>(node_inputs[1]) || IsValueNode<ValueTuple>(node_inputs[1]))) {
+  if ((node_inputs.size() == kMinInputSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      IsValueSequence(node_inputs[1])) {
     std::vector<ValuePtr> inputs_seq;
     if (IsValueNode<ValueList>(node_inputs[1])) {
       inputs_seq = node_inputs[1]->cast<ValueNodePtr>()->value()->cast<ValueListPtr>()->value();
@@ -90,8 +92,8 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
     }
     return std::vector<bool>(inputs_seq_tensor_size, false);
   }
-  if ((node_inputs.size() == 2) &&
-      (AnfNodeIsPrimitive(node_inputs[1], MAKE_TUPLE) || AnfNodeIsPrimitive(node_inputs[1], MAKE_LIST))) {
+  if ((node_inputs.size() == kMinInputSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      IsMakeSequence(node_inputs[1])) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
   }
   for (size_t i = 1; i < node_inputs.size(); ++i) {
@@ -103,8 +105,7 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
       auto input_parameter = input->cast<ParameterPtr>();
       is_parameter.push_back(ParameterRequireGrad(input_parameter));
     } else if (input->isa<CNode>() || IsValueNode<tensor::Tensor>(input) || IsValueNode<RefKey>(input)) {
-      if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
-          (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
+      if (IsDynamicShapeInput(node, input)) {
         MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape, the node is " << node->ToString();
         continue;
       }
@@ -118,8 +119,8 @@ std::string ExtractInputParameterNameByNode(const CNodePtr &node) {
   std::string param_name = "";
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
   // input is a ValueList or ValueTuple, then all inputs are not parameter.
-  if ((node_inputs.size() == 2) &&
-      (IsValueNode<ValueList>(node_inputs[1]) || IsValueNode<ValueTuple>(node_inputs[1]))) {
+  if ((node_inputs.size() == kMinInputSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      IsValueSequence(node_inputs[1])) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
   }
   for (size_t i = 1; i < node_inputs.size(); ++i) {
@@ -158,7 +159,7 @@ size_t GetLengthOfDataType(const TypePtr &type) {
     case kNumberTypeUInt64:
       return sizeof(uint64_t);
     case kNumberTypeFloat16:
-      return sizeof(float) / 2;
+      return sizeof(float) / kSize2;
     case kNumberTypeFloat32:
       return sizeof(float);
     case kNumberTypeFloat64:
@@ -170,7 +171,9 @@ size_t GetLengthOfDataType(const TypePtr &type) {
     case kNumberTypeFloat:
       return sizeof(float);
     case kNumberTypeBFloat16:
-      return sizeof(float) / 2;
+      return sizeof(float) / kSize2;
+    case kNumberTypeComplex64:
+      return sizeof(float) * kSize2;
     default:
       MS_LOG(EXCEPTION) << "Unexpected type " << type->type_name();
   }
@@ -210,8 +213,7 @@ std::vector<size_t> ExtractInputElementLength(const CNodePtr &node, std::vector<
       }
       inputs_type_len.push_back(GetInputsTypeLen(parameters[0]));
     } else if (input->isa<CNode>() || input->isa<Parameter>() || IsValueNode<tensor::Tensor>(input)) {
-      if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
-          (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
+      if (IsDynamicShapeInput(node, input)) {
         MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape, the node is " << node->ToString();
         continue;
       }
@@ -222,13 +224,33 @@ std::vector<size_t> ExtractInputElementLength(const CNodePtr &node, std::vector<
   return inputs_type_len;
 }
 
+std::vector<AnfNodePtr> extra_input_for_ifa(CNodePtr node, std::vector<AnfNodePtr> node_input) {
+  ValueNodePtr anf_node = node->input(0)->cast<ValueNodePtr>();
+  if (!anf_node) {
+    return node_input;
+  }
+  PrimitivePtr prim = anf_node->value()->cast<PrimitivePtr>();
+  if (!prim) {
+    return node_input;
+  }
+  if (prim->name() != INCRE_FLASH_ATTENTION) {
+    return node_input;
+  }
+  for (size_t input_index = 1; input_index < node_input.size(); input_index++) {
+    if (node_input[input_index] != nullptr && IsMakeSequence(node_input[input_index])) {
+      node_input[input_index] = node_input[input_index]->cast<CNodePtr>()->inputs()[1];
+    }
+  }
+  return node_input;
+}
+
 std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<size_t> inputs_type_len;
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
 
-  if ((node_inputs.size() == 2) &&
-      (IsValueNode<ValueList>(node_inputs[1]) || IsValueNode<ValueTuple>(node_inputs[1]))) {
+  if ((node_inputs.size() == kMinInputSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      IsValueSequence(node_inputs[1])) {
     std::vector<ValuePtr> inputs_seq;
     if (IsValueNode<ValueList>(node_inputs[1])) {
       inputs_seq = node_inputs[1]->cast<ValueNodePtr>()->value()->cast<ValueListPtr>()->value();
@@ -246,11 +268,12 @@ std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
     return inputs_type_len;
   }
 
-  if ((node_inputs.size() == 2) &&
-      (AnfNodeIsPrimitive(node_inputs[1], MAKE_TUPLE) || AnfNodeIsPrimitive(node_inputs[1], MAKE_LIST))) {
+  if ((node_inputs.size() == kMinInputSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      IsMakeSequence(node_inputs[1])) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
   }
 
+  node_inputs = extra_input_for_ifa(node, node_inputs);
   return ExtractInputElementLength(node, node_inputs);
 }
 
@@ -421,7 +444,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
     }
     return false;
   }
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+  for (size_t index = 0; index < cnode->size(); ++index) {
     if (prim->name() == DEPEND && index != 1) {
       continue;
     }
@@ -534,7 +557,7 @@ const AnfNodePtr RealInputNode(const CNodePtr cnode, size_t index) {
     MS_LOG(EXCEPTION) << "cnode inputs size: " << cnode->size() << " is less equal index: " << index;
   }
   auto input0 = cnode->input(index);
-  if (!input0->isa<CNode>()) {
+  if (!IsPrimitiveCNode(input0)) {
     return input0;
   }
   auto prim = GetCNodePrimitive(input0);

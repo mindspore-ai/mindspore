@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ class BroadcastToInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status ComputeReplaceGraph(const CNodePtr &cnode);
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
  private:
   Shape out_shape_;

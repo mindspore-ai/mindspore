@@ -145,9 +145,9 @@ const std::vector<std::pair<KernelAttr, EmbeddingLookupPtrCreatorFunc>> kernel_a
 };
 }  // namespace
 
-bool EmbeddingLookupGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool EmbeddingLookupGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -157,14 +157,12 @@ bool EmbeddingLookupGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-bool EmbeddingLookupGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::EmbeddingLookup>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool EmbeddingLookupGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_ptr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
 
@@ -174,7 +172,7 @@ bool EmbeddingLookupGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
 
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
 
-  int ret = Resize(kernel_ptr, inputs, outputs);
+  int ret = Resize(inputs, outputs);
   if (ret == KRET_RESIZE_FAILED) {
     return false;
   }
@@ -182,10 +180,8 @@ bool EmbeddingLookupGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int EmbeddingLookupGpuKernelMod::Resize(
-  const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-  const std::vector<KernelTensorPtr> &outputs,
-  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {  // check input size
+int EmbeddingLookupGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kEmbeddingLookupInputsNum || outputs.size() != kEmbeddingLookupOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kEmbeddingLookupInputsNum
                   << " and " << kEmbeddingLookupOutputsNum << ", but got " << inputs.size() << " and "
@@ -208,7 +204,6 @@ int EmbeddingLookupGpuKernelMod::Resize(
     return KRET_RESIZE_FAILED;
   }
 
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   return KRET_OK;
 }

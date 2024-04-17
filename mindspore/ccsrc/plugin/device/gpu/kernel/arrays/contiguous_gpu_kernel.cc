@@ -46,33 +46,37 @@ std::map<std::pair<TypeId, TypeId>, ContiguousGpuKernel::ContiguousFunc> Contigu
   {std::make_pair(kNumberTypeUInt32, kNumberTypeUInt32), &ContiguousGpuKernel::LaunchContiguousImpl<uint32_t>},
   {std::make_pair(kNumberTypeUInt64, kNumberTypeUInt64), &ContiguousGpuKernel::LaunchContiguousImpl<uint64_t>}};
 
-bool ContiguousGpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::AddressPtr &input,
+bool ContiguousGpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::KernelTensorPtr &input,
                                            const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
-                                           const kernel::AddressPtr &output, void *stream_ptr) {
+                                           const kernel::KernelTensorPtr &output,
+                                           const kernel::KernelTensorPtr &shape_addr,
+                                           const kernel::KernelTensorPtr &strides_addr, void *stream_ptr) {
   const auto &iter = func_list_.find(std::make_pair(input_type_id, output_type_id));
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "type_id:" << input_type_id << " is invalid";
   }
   int64_t type_size = GetDataTypeSize(input_type_id) / GetDataTypeSize(output_type_id);
 
-  return iter->second(this, input, input_storage_info, output, type_size, stream_ptr);
+  return iter->second(this, input, input_storage_info, output, shape_addr, strides_addr, type_size, stream_ptr);
 }
 
 template <typename T>
-bool ContiguousGpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
+bool ContiguousGpuKernel::LaunchContiguousImpl(const kernel::KernelTensorPtr &input,
                                                const TensorStorageInfoPtr &input_storage_info,
-                                               const kernel::AddressPtr &output, const int64_t &type_size,
+                                               const kernel::KernelTensorPtr &output,
+                                               const kernel::KernelTensorPtr &shape_addr,
+                                               const kernel::KernelTensorPtr &strides_addr, const int64_t &type_size,
                                                void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(input_storage_info);
-  T *input_addr = GetDeviceAddress<T>({input}, 0);
-  T *output_addr = GetDeviceAddress<T>({output}, 0);
+  T *input_addr = GetDeviceAddress<T>({input.get()}, 0);
+  T *output_addr = GetDeviceAddress<T>({output.get()}, 0);
   const auto &output_shape = input_storage_info->shape;
   auto output_size =
     LongToSize(std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>()));
   output_size *= type_size;
   if (input_storage_info->is_contiguous) {
     auto &offset = input_storage_info->storage_offset;
-    auto input_size = input->size * type_size;
+    auto input_size = input->size() * type_size;
     if ((offset + output_size) * sizeof(T) > input_size) {
       MS_LOG(EXCEPTION) << "Offset is out of bounds, offset:" << (offset * sizeof(T))
                         << " output_size:" << (output_size * sizeof(T)) << " input->size:" << input_size;
@@ -82,7 +86,9 @@ bool ContiguousGpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemcpy output failed");
   } else {
-    auto status = CalAsStrided(output_size, input_addr, output_addr, input_storage_info,
+    int64_t *shape = GetDeviceAddress<int64_t>({shape_addr.get()}, 0);
+    int64_t *strides = GetDeviceAddress<int64_t>({strides_addr.get()}, 0);
+    auto status = CalAsStrided(output_size, input_addr, output_addr, input_storage_info, shape, strides,
                                reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, "Contiguous");
   }

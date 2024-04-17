@@ -41,8 +41,8 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr LowerBoundInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (IsDynamicRank(values_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
@@ -59,8 +59,8 @@ abstract::ShapePtr LowerBoundInferShape(const PrimitivePtr &primitive, const std
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', the first dimension of the shape of 'sorted_x' must be equal to that of 'values', "
                                 "but got shape of 'values': "
-                             << input_args[1]->BuildShape()->ToString()
-                             << ", shape of 'sorted_x':" << input_args[0]->BuildShape()->ToString() << ".";
+                             << input_args[1]->GetShape()->ToString()
+                             << ", shape of 'sorted_x':" << input_args[0]->GetShape()->ToString() << ".";
   }
   return std::make_shared<abstract::Shape>(values_shape);
 }
@@ -68,16 +68,16 @@ abstract::ShapePtr LowerBoundInferShape(const PrimitivePtr &primitive, const std
 TypePtr LowerBoundInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> input_types;
   std::set<TypePtr> input_valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16};
-  TypePtr sorted_x_type = input_args[0]->BuildType();
-  TypePtr values_type = input_args[1]->BuildType();
+  TypePtr sorted_x_type = input_args[0]->GetType();
+  TypePtr values_type = input_args[1]->GetType();
   (void)input_types.emplace("sorted_x", sorted_x_type);
   (void)input_types.emplace("values", values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(input_types, input_valid_types, primitive->name());
   auto dtype_attr = primitive->GetAttr("out_type");
   MS_EXCEPTION_IF_NULL(dtype_attr);
   auto out_type = dtype_attr->cast<TypePtr>();
-  auto out_type_id = out_type->type_id();
   MS_EXCEPTION_IF_NULL(out_type);
+  auto out_type_id = out_type->type_id();
   if (out_type_id != kInt32->type_id() && out_type_id != kInt64->type_id()) {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name()
                             << "', 'out_type' must be int32 or int64, but got: " << out_type << ".";

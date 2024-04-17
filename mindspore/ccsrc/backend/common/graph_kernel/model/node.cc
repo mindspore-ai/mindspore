@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/model/node.h"
-#include <algorithm>
-#include <sstream>
-#include <utility>
 #include "abstract/utils.h"
 
 namespace mindspore::graphkernel::inner {

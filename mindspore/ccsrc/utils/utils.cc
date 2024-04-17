@@ -22,6 +22,7 @@
 #endif
 #include <set>
 #include <string>
+#include "include/common/utils/parallel_context.h"
 #include "ops/array_op_name.h"
 #include "ops/ascend_op_name.h"
 #include "ops/conv_pool_op_name.h"
@@ -256,11 +257,18 @@ bool IsOneOfDynRankNeedPadShape(const std::string &format) {
 }
 
 bool IsEnableRefMode() {
+  static bool ret = !(common::GetEnv("MS_DISABLE_REF_MODE") == "1");
+  return ret;
+}
+
+bool IsMemoryPoolRecycle() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  static const bool is_enable_ge = context_ptr->backend_policy() == "ge";
-  return ((is_enable_ge && common::GetEnv("MS_DISABLE_REF_MODE") != "1") ||
-          !common::GetEnv("MS_DEV_FORCE_ACL").empty());
+  bool optimize_mem = context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0;
+  bool enable_ref_mode = IsEnableRefMode();
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
+  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  return optimize_mem && enable_ref_mode && mode == kGraphMode && task_sink;
 }
 
 size_t GetSystemMemorySize(const std::string &key) {
@@ -314,8 +322,8 @@ size_t GetSystemFreeDiskSize(const std::string &path) {
     MS_LOG(INFO) << "Failed to get disk directory " << path << " size, check whether the directory is created.";
     return 0;
   }
-  size_t block_size = disk_info.f_bsize;
-  size_t fb_size = disk_info.f_bfree;
+  size_t block_size = static_cast<size_t>(disk_info.f_bsize);
+  size_t fb_size = static_cast<size_t>(disk_info.f_bfree);
   return block_size * fb_size;
 #endif
 }

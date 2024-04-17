@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ class ConcatInfo : public OperatorInfo {
   void ReComputeBatchSplitFlagList() override;
 
  protected:
+  Status InferMirrorOps() override;
   Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }
@@ -49,6 +50,7 @@ class ConcatInfo : public OperatorInfo {
 
  private:
   size_t axis_ = 0;
+  bool skip_redistribution_ = false;
 };
 
 using ConcatInfoPtr = std::shared_ptr<ConcatInfo>;

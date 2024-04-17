@@ -62,8 +62,8 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
 
   ~LambGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-              const std::vector<AddressPtr> &, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+              const std::vector<KernelTensor *> &, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -84,7 +84,7 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     float *g_hat_var = GetDeviceAddress<float>(workspaces, kGHatValIndex);
 
     auto status =
-      ApplyLambEraly(inputs[0]->size / sizeof(T), variable, m, v, beta1, beta2, epsilon, decay, global_step, gradient,
+      ApplyLambEraly(inputs[0]->size() / sizeof(T), variable, m, v, beta1, beta2, epsilon, decay, global_step, gradient,
                      update, var_float, grad_float, g_hat_var, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);
     float trust_ratio{0};
@@ -96,22 +96,18 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "For " + kernel_name_ + " cudaMemcpyAsync trust_ratio failed.");
 
-    status = ApplyLambLater(inputs[0]->size / sizeof(T), variable, learning_rate, update, trust_ratio_ptr,
+    status = ApplyLambLater(inputs[0]->size() / sizeof(T), variable, learning_rate, update, trust_ratio_ptr,
                             reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Lamb>(base_operator);
-    kernel_name_ = kernel_ptr->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     InitResource();
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     if (inputs.size() != INPUT_NUM) {
       MS_LOG(EXCEPTION) << "For 'Lamb', the number of inputs should be " << INPUT_NUM << ", but got " << inputs.size();
     }
@@ -156,20 +152,9 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitSizeLists() {
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
 
-    input_size_list_.push_back(variable_size_);
-    input_size_list_.push_back(m_size_);
-    input_size_list_.push_back(v_size_);
-    input_size_list_.push_back(learning_rate_size_);
-    input_size_list_.push_back(beta1_size_);
-    input_size_list_.push_back(beta2_size_);
-    input_size_list_.push_back(epsilon_size_);
-    input_size_list_.push_back(decay_size_);
-    input_size_list_.push_back(global_step_size_);
-    input_size_list_.push_back(gradient_size_);
     workspace_size_list_.push_back(update_size_);
     workspace_size_list_.push_back(var_float_size_);
     workspace_size_list_.push_back(grad_float_size_);
@@ -276,8 +261,8 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  void CalcTrustRatio(const std::vector<AddressPtr> &workspaces, float *var_float, float *grad_float, float *g_hat_var,
-                      void *stream_ptr, float *trust_ratio) {
+  void CalcTrustRatio(const std::vector<KernelTensor *> &workspaces, float *var_float, float *grad_float,
+                      float *g_hat_var, void *stream_ptr, float *trust_ratio) {
     if (var_float == nullptr || grad_float == nullptr || g_hat_var == nullptr) {
       MS_LOG(EXCEPTION) << "var_float or grad_float or g_hat_var is null";
     }

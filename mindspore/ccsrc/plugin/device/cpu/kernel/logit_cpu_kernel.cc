@@ -29,30 +29,23 @@ constexpr size_t kLogitInputsNum = 1;
 constexpr size_t kLogitOutputsNum = 1;
 }  // namespace
 
-bool LogitCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
+bool LogitCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match.first) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
     return false;
   }
-  MS_ERROR_IF_NULL(prim);
-  eps = GetValue<float>(prim->GetAttr("eps"));
   return true;
 }
 
-int LogitCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LogitCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  input_dtype_ = inputs[kIndex0]->GetDtype();
+  eps = inputs[kIndex1]->GetValueWithCheck<float>();
+  input_dtype_ = inputs[kIndex0]->dtype_id();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_elements_ =
@@ -60,8 +53,9 @@ int LogitCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return KRET_OK;
 }
 
-bool LogitCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool LogitCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   if (input_dtype_ == kNumberTypeFloat16) {
     (void)LaunchKernelHalf(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat32) {
@@ -76,13 +70,13 @@ bool LogitCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   return true;
 }
 
-bool LogitCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) const {
-  float16 *input = static_cast<float16 *>(inputs[0]->addr);
-  float16 *output = static_cast<float16 *>(outputs[0]->addr);
+bool LogitCpuKernelMod::LaunchKernelHalf(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) const {
+  float16 *input = static_cast<float16 *>(inputs[0]->device_ptr());
+  float16 *output = static_cast<float16 *>(outputs[0]->device_ptr());
   float16 one = float16(1);
   float16 up_bound = float16(static_cast<float>(1) - static_cast<float>(eps));
-  size_t output_size = outputs[0]->size;
+  size_t output_size = outputs[0]->size();
   if (memset_s(output, output_size, 0, output_size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
@@ -103,13 +97,13 @@ bool LogitCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-bool LogitCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                     const std::vector<AddressPtr> &outputs) const {
-  T *input = static_cast<T *>(inputs[0]->addr);
-  T *output = static_cast<T *>(outputs[0]->addr);
+bool LogitCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) const {
+  T *input = static_cast<T *>(inputs[0]->device_ptr());
+  T *output = static_cast<T *>(outputs[0]->device_ptr());
   T one = T(1);
   T up_bound = static_cast<T>(1) - static_cast<T>(eps);
-  size_t output_size = outputs[0]->size;
+  size_t output_size = outputs[0]->size();
   if (memset_s(output, output_size, 0, output_size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
@@ -130,10 +124,18 @@ bool LogitCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 std::vector<KernelAttr> LogitCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
+  static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat16)
+                                                   .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat16),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat32)
+                                                   .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat32),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat64)
+                                                   .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat64)};
   return support_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Logit, LogitCpuKernelMod);

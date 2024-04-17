@@ -35,7 +35,7 @@ void CoreMLGraph::set_input(mindspore::MSTensor in_tensor, int index) {
   MS_ASSERT(static_cast<size_t>(index) < inputs_.size());
   auto origin_tensor = this->inputs_[index];
   for (auto kernel : all_kernels_) {
-    for (size_t i = 0; i < kernel->inputs().size(); i++) {
+    for (size_t i = 0; i < kernel->size(); i++) {
       if (kernel->inputs()[i] == origin_tensor) {
         kernel->set_input(in_tensor, i);
       }

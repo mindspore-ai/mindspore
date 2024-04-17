@@ -31,7 +31,7 @@ abstract::ShapePtr SliceGradInferShape(const PrimitivePtr &primitive, const std:
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto input_shape = shape_map[kShape];
   return std::make_shared<abstract::Shape>(input_shape);
 }
@@ -46,7 +46,7 @@ TypePtr SliceGradInferType(const PrimitivePtr &prim, const std::vector<AbstractB
     MS_EXCEPTION_IF_NULL(item);
   }
   MS_EXCEPTION_IF_NULL(input_args[1]);
-  auto x_type_map = input_args[1]->BuildType();
+  auto x_type_map = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(x_type_map);
   auto x_dtype = x_type_map->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(x_dtype);

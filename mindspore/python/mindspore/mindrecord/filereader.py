@@ -23,6 +23,7 @@ from .shardheader import ShardHeader
 from .shardutils import populate_data
 from .shardutils import check_parameter
 from .common.exceptions import ParamTypeError
+from .config import _get_enc_key, _get_dec_mode, decrypt, verify_file_hash
 
 __all__ = ['FileReader']
 
@@ -81,6 +82,30 @@ class FileReader:
                 self._file_name = file_name.replace("\\", "/")
         else:
             self._file_name = file_name
+
+        if isinstance(self._file_name, str):
+            # decrypt the data file and index file
+            index_file_name = self._file_name + ".db"
+            decrypt_filename = decrypt(self._file_name, _get_enc_key(), _get_dec_mode())
+            self._file_name = decrypt_filename
+            decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+
+            # verify integrity check
+            verify_file_hash(self._file_name)
+            verify_file_hash(self._file_name + ".db")
+        else:
+            file_names_decrypted = []
+            for item in self._file_name:
+                # decrypt the data file and index file
+                index_file_name = item + ".db"
+                decrypt_filename = decrypt(item, _get_enc_key(), _get_dec_mode())
+                file_names_decrypted.append(decrypt_filename)
+                decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+
+                # verify integrity check
+                verify_file_hash(decrypt_filename)
+                verify_file_hash(decrypt_filename + ".db")
+            self._file_name = file_names_decrypted
 
         self._reader.open(self._file_name, num_consumer, columns, operator)
         self._header = ShardHeader(self._reader.get_header())

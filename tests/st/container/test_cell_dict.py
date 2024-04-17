@@ -22,7 +22,7 @@ import numpy as np
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -55,7 +55,7 @@ def test_cell_dict_getitem():
         assert np.allclose(output.shape, expect_output.shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -87,7 +87,7 @@ def test_cell_dict_contain():
     assert out2 == expect_out2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -116,7 +116,7 @@ def test_cell_dict_get_keys():
         assert key == expect_key
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -154,7 +154,7 @@ def test_cell_dict_get_values():
         assert np.allclose(expect.shape, output.shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -196,7 +196,7 @@ def test_cell_dict_get_items():
         assert np.allclose(expect.shape, output.shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard

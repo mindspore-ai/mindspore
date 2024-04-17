@@ -29,19 +29,18 @@
 #include "ops/math_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/nn_optimizer_ops.h"
-#include "ops/elu.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/fp32/exp_fp32.h"
+#include "ops/op_utils.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-using complex64 = std::complex<float>;
-using complex128 = std::complex<double>;
+using complex64 = complex64;
+using complex128 = complex128;
 
 constexpr float kMaxNegSerialSize = 5000.0f;
 constexpr size_t kInputsNum = 1;
@@ -50,7 +49,6 @@ constexpr size_t kOutputsNum = 1;
 constexpr auto kSquare = "Square";
 constexpr auto kNeg = "Neg";
 constexpr auto kSign = "Sign";
-constexpr auto kFloor = "Floor";
 constexpr auto kRint = "Rint";
 constexpr auto kRound = "Round";
 constexpr auto kReciprocal = "Reciprocal";
@@ -58,6 +56,7 @@ constexpr auto kInv = "Inv";
 constexpr auto kInvert = "Invert";
 constexpr auto kGeLU = "GeLU";
 constexpr auto kLogicalNot = "LogicalNot";
+constexpr auto kLogicalEqual = "LogicalEqual";
 constexpr auto kAsin = "Asin";
 constexpr auto kACos = "ACos";
 constexpr auto kAtan = "Atan";
@@ -75,58 +74,76 @@ constexpr auto kAtanh = "Atanh";
 constexpr auto kAbs = "Abs";
 constexpr auto kSqrt = "Sqrt";
 constexpr auto kRsqrt = "Rsqrt";
-constexpr auto kErf = "Erf";
-constexpr auto kErfc = "Erfc";
 constexpr auto kSoftsign = "Softsign";
 constexpr auto kReLU = "ReLU";
-constexpr auto kElu = "Elu";
 constexpr auto kReLU6 = "ReLU6";
 constexpr auto kSoftplus = "Softplus";
 constexpr auto kMish = "Mish";
 constexpr auto kSigmoid = "Sigmoid";
 
+template <typename T, typename S>
 class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
  public:
   ArithmeticSelfCpuKernelFunc() = default;
   ~ArithmeticSelfCpuKernelFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override {
+    kernel_name_ = primitive->name();
+  }
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override {
+    this->LaunchKernel(inputs, outputs);
+    return true;
+  }
 
-  BaseOperatorPtr base_op{nullptr};
-
- private:
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchLogicalEqual(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchLogicalNot(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  template <typename T>
-  void LaunchKernelComplex(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchKernelFloat16(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+ protected:
   std::string kernel_name_{kUnknown};
-  TypeId dtype_{kTypeUnknown};
+  virtual void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {}
 };
 
-template <typename T>
-void Square(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+class ArithmeticSelfCpuKernelFuncComplex : public ArithmeticSelfCpuKernelFunc<T, S> {
+ protected:
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+};
+
+template <typename T, typename S>
+class ArithmeticSelfCpuKernelFuncCommon : public ArithmeticSelfCpuKernelFunc<T, S> {
+ protected:
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+};
+
+template <typename T, typename S>
+class ArithmeticSelfCpuKernelFuncBool : public ArithmeticSelfCpuKernelFunc<T, S> {
+ protected:
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+};
+
+template <typename T, typename S>
+class ArithmeticSelfCpuKernelFuncFloat16 : public ArithmeticSelfCpuKernelFunc<T, S> {
+ protected:
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+};
+
+template <typename T, typename S>
+void Square(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(in[i] * in[i]);
+      out[i] = static_cast<S>(in[i] * in[i]);
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Sign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Sign(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     auto zero = static_cast<T>(0);
     for (size_t i = start; i < end; i++) {
       if (in[i] < zero) {
-        out[i] = static_cast<T>(-1);
+        out[i] = static_cast<S>(-1);
       } else if (in[i] > zero) {
-        out[i] = static_cast<T>(1);
+        out[i] = static_cast<S>(1);
       } else {
         out[i] = zero;
       }
@@ -135,8 +152,8 @@ void Sign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Neg(ArithmeticSelfCpuKernelFunc *, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Neg(ArithmeticSelfCpuKernelFunc<T, S> *, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = -in[i];
@@ -145,7 +162,8 @@ void Neg(ArithmeticSelfCpuKernelFunc *, const T *in, T *out, size_t size) {
   ParallelLaunch(task, size, kMaxNegSerialSize);
 }
 
-void LogicalEqual(ArithmeticSelfCpuKernelFunc *content, const bool *in, bool *out, size_t size) {
+template <typename T, typename S>
+void LogicalEqual(ArithmeticSelfCpuKernelFuncBool<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = in[i];
@@ -154,7 +172,8 @@ void LogicalEqual(ArithmeticSelfCpuKernelFunc *content, const bool *in, bool *ou
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-void LogicalNot(ArithmeticSelfCpuKernelFunc *content, const bool *in, bool *out, size_t size) {
+template <typename T, typename S>
+void LogicalNot(ArithmeticSelfCpuKernelFuncBool<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = !in[i];
@@ -163,68 +182,78 @@ void LogicalNot(ArithmeticSelfCpuKernelFunc *content, const bool *in, bool *out,
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Floor(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Ceil(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(floor(in[i]));
+      out[i] = static_cast<S>(ceil(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Rint(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Floor(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<S>(floor(in[i]));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T, typename S>
+void Rint(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   if constexpr ((std::is_same_v<T, float16>)) {
     auto task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
-        out[i] = static_cast<T>(rint(static_cast<float>(in[i])));
+        out[i] = static_cast<S>(rint(static_cast<float>(in[i])));
       }
     };
     ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
   } else {
     auto task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
-        out[i] = static_cast<T>(rint(in[i]));
+        out[i] = static_cast<S>(rint(in[i]));
       }
     };
     ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
   }
 }
 
-template <typename T>
-void Round(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Round(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(nearbyint(in[i]));
+      out[i] = static_cast<S>(nearbyint(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Reciprocal(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Reciprocal(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if constexpr ((std::is_same_v<T, double>) || (std::is_same_v<T, float>) || (std::is_same_v<T, complex64>) ||
                     (std::is_same_v<T, complex128>)) {
         T one = static_cast<T>(1.0);
-        out[i] = static_cast<T>(one / in[i]);
+        out[i] = static_cast<S>(one / in[i]);
       } else {
-        out[i] = static_cast<T>(1.0 / in[i]);
+        out[i] = static_cast<S>(1.0 / in[i]);
       }
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Inv(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
-  Reciprocal<T>(content, in, out, size);
+template <typename T, typename S>
+void Inv(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
+  Reciprocal<T, S>(content, in, out, size);
 }
 
-template <typename T>
-void Invert(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Invert(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   if constexpr ((std::is_same_v<T, double>) || (std::is_same_v<T, float>) || (std::is_same_v<T, float16>)) {
     MS_LOG(EXCEPTION) << "'Invert' cannot be instantiated.";
   } else {
@@ -237,8 +266,8 @@ void Invert(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t si
   }
 }
 
-template <typename T>
-void Gelu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Gelu(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     auto factor_a = static_cast<T>(0.7978845608);
     auto factor_b = static_cast<T>(0.044715);
@@ -252,295 +281,296 @@ void Gelu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Asin(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Asin(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     if constexpr ((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>)) {
       for (size_t i = start; i < end; i++) {
-        out[i] = static_cast<T>(asin(in[i]));
+        out[i] = static_cast<S>(asin(in[i]));
       }
     } else {
       for (size_t i = start; i < end; i++) {
-        out[i] = static_cast<T>(asin(static_cast<double>(in[i])));
+        out[i] = static_cast<S>(asin(static_cast<double>(in[i])));
       }
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ACos(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ACos(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(acos(static_cast<double>(in[i])));
+      out[i] = static_cast<S>(acos(static_cast<double>(in[i])));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Atan(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Atan(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(atan(static_cast<double>(in[i])));
+      out[i] = static_cast<S>(atan(static_cast<double>(in[i])));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexAtan(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexAtan(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(atan(in[i]));
+      out[i] = static_cast<S>(atan(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Sin(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
-  if constexpr (std::is_same_v<T, float>) {
-    auto task = [&in, &out](size_t start, size_t end) { (void)ElementSin(in, out, end - start); };
-    ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
-  } else {
-    auto task = [&in, &out](size_t start, size_t end) {
-      for (size_t i = start; i < end; i++) {
-        out[i] = static_cast<T>(sin(static_cast<double>(in[i])));
-      }
-    };
-    ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
-  }
-}
-
-template <typename T>
-void Cos(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Sin(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(cos(static_cast<double>(in[i])));
+      out[i] = static_cast<S>(sin(static_cast<double>(in[i])));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Erf(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Cos(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<S>(cos(static_cast<double>(in[i])));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T, typename S>
+void Erf(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     if constexpr (std::is_same_v<T, float16>) {
       for (size_t i = start; i < end; i++) {
-        out[i] = static_cast<T>(erf(static_cast<float>(in[i])));
+        out[i] = static_cast<S>(erf(static_cast<float>(in[i])));
       }
     } else {
       for (size_t i = start; i < end; i++) {
-        out[i] = static_cast<T>(erf(in[i]));
+        out[i] = static_cast<S>(erf(in[i]));
       }
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Erfc(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Erfc(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(erfc(static_cast<double>(in[i])));
+      out[i] = static_cast<S>(erfc(static_cast<double>(in[i])));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexSin(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexSin(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(sin(in[i]));
+      out[i] = static_cast<S>(sin(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexSign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexSign(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if (in[i] != static_cast<T>(0)) {
         out[i] = (in[i] / abs(in[i]));
       } else {
-        out[i] = static_cast<T>(0);
+        out[i] = static_cast<S>(0);
       }
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexSinh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexSinh(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(sinh(in[i]));
+      out[i] = static_cast<S>(sinh(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexCos(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexCos(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(cos(in[i]));
+      out[i] = static_cast<S>(cos(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexACos(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexACos(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(acos(in[i]));
+      out[i] = static_cast<S>(acos(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexCosh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexCosh(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(cosh(in[i]));
+      out[i] = static_cast<S>(cosh(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Exp(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Exp(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     if constexpr (std::is_same_v<T, float>) {
       (void)::ExpFp32(in + start, out + start, end - start);
       return;
     }
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(exp(in[i]));
+      out[i] = static_cast<S>(exp(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexExp(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexExp(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(exp(in[i]));
+      out[i] = static_cast<S>(exp(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Tan(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Tan(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if constexpr (std::is_same<T, float>::value) {
-        out[i] = static_cast<T>(tan(static_cast<double>(in[i])));
+        out[i] = static_cast<S>(tan(static_cast<double>(in[i])));
       } else {
-        out[i] = static_cast<T>(tan(in[i]));
+        out[i] = static_cast<S>(tan(in[i]));
       }
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Sinh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Sinh(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(sinh(static_cast<double>(in[i])));
+      out[i] = static_cast<S>(sinh(static_cast<double>(in[i])));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Cosh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Cosh(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(cosh(static_cast<double>(in[i])));
+      out[i] = static_cast<S>(cosh(static_cast<double>(in[i])));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Tanh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Tanh(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
+#if !defined(__APPLE__)
     if constexpr (std::is_same<T, float>::value) {
       (void)::Tanh(in + start, SizeToInt(end - start), out + start);
       return;
     }
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(tanh(in[i]));
+      out[i] = static_cast<S>(tanh(in[i]));
     }
+#else
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<S>(tanh(in[i]));
+    }
+#endif
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexAsinh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexAsinh(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(asinh(in[i]));
+      out[i] = static_cast<S>(asinh(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Asinh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Asinh(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(asinh(static_cast<double>(in[i])));
+      out[i] = static_cast<S>(asinh(static_cast<double>(in[i])));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexAcosh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexAcosh(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(acosh(in[i]));
+      out[i] = static_cast<S>(acosh(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Acosh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Acosh(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(acosh(static_cast<double>(in[i])));
+      out[i] = static_cast<S>(acosh(static_cast<double>(in[i])));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Atanh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Atanh(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if constexpr (std::is_same<T, float>::value) {
-        out[i] = static_cast<T>(atanh(static_cast<double>(in[i])));
+        out[i] = static_cast<S>(atanh(static_cast<double>(in[i])));
       } else {
-        out[i] = static_cast<T>(atanh(in[i]));
+        out[i] = static_cast<S>(atanh(in[i]));
       }
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Abs(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Abs(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
                 (std::is_same_v<T, uint64_t>)) {
     auto ret_code = memcpy_s(out, size * sizeof(T), in, size * sizeof(T));
@@ -557,66 +587,66 @@ void Abs(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size)
   }
 }
 
-template <typename T>
-void Log(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Log(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     if constexpr (std::is_same_v<T, float>) {
       auto ret = ::ElementLog(in + start, out + start, SizeToInt(end - start));
       if (ret == NNACL_ERRCODE_LOG_NEGATIVE_OR_ZERO) {
         for (size_t i = start; i < end; i++) {
-          out[i] = static_cast<T>(log(static_cast<double>(in[i])));
+          out[i] = static_cast<S>(log(static_cast<double>(in[i])));
         }
       }
       return;
     }
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(log(static_cast<double>(in[i])));
+      out[i] = static_cast<S>(log(static_cast<double>(in[i])));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void ComplexLog(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ComplexLog(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(log(in[i]));
+      out[i] = static_cast<S>(log(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Sqrt(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Sqrt(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
-    if constexpr (std::is_same_v<T, float>) {
+    if constexpr (std::is_same_v<T, float> && std::is_same_v<S, float>) {
       auto ret = ::ElementSqrt(in + start, out + start, SizeToInt(end - start));
       if (ret == NNACL_ERRCODE_SQRT_NEGATIVE) {
         for (size_t i = start; i < end; i++) {
-          out[i] = static_cast<T>(sqrt(in[i]));
+          out[i] = static_cast<S>(sqrt(in[i]));
         }
       }
       return;
     }
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(sqrt(in[i]));
+      out[i] = static_cast<S>(sqrt(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Rsqrt(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Rsqrt(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(1) / sqrt(in[i]);
+      out[i] = static_cast<S>(1) / sqrt(in[i]);
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Softsign(ArithmeticSelfCpuKernelFunc *, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Softsign(ArithmeticSelfCpuKernelFunc<T, S> *, const T *in, S *out, size_t size) {
   if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
                 (std::is_same_v<T, uint64_t>)) {
     MS_LOG(EXCEPTION) << "'Softsign' cannot be instantiated.";
@@ -640,8 +670,8 @@ void Softsign(ArithmeticSelfCpuKernelFunc *, const T *in, T *out, size_t size) {
   }
 }
 
-template <typename T>
-void Relu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Relu(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [in, out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = std::greater<T>()(in[i], 0) ? in[i] : 0;
@@ -650,8 +680,28 @@ void Relu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Relu6(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void ReluFloat16(ArithmeticSelfCpuKernelFuncFloat16<T, S> *content, const T *in, S *out, size_t size) {
+  auto task = [in, out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = in[i] > T(0) ? in[i] : T(0);
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T, typename S>
+void ReluBool(ArithmeticSelfCpuKernelFuncBool<T, S> *content, const T *in, S *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = in[i] ? true : false;
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T, typename S>
+void Relu6(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [in, out](size_t start, size_t end) {
     if constexpr (std::is_same_v<T, float>) {
       (void)::Fp32Relu6(in + start, SizeToInt(end - start), out + start);
@@ -670,8 +720,8 @@ void Relu6(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t siz
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Softplus(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Softplus(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [in, out](size_t start, size_t end) {
     if constexpr (std::is_same_v<T, float>) {
       (void)::Softplus(in + start, SizeToInt(end - start), out + start);
@@ -684,8 +734,8 @@ void Softplus(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t 
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Mish(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Mish(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [in, out](size_t start, size_t end) {
     if constexpr (std::is_same_v<T, float>) {
       (void)::ElementMish(in + start, out + start, SizeToInt(end - start));
@@ -698,30 +748,18 @@ void Mish(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Elu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Elu>(content->base_op);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  float alpha = kernel_ptr->get_alpha();
-  auto task = [in, out, alpha](size_t start, size_t end) {
-    if constexpr (std::is_same_v<T, float>) {
-      (void)::Elu(in + start, SizeToInt(end - start), out + start, alpha);
-      return;
-    }
-    for (size_t i = start; i < end; i++) {
-      out[i] = in[i] > 0 ? in[i] : (std::expm1(in[i]) * alpha);
-    }
-  };
-  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
-}
-
-template <typename T>
-void Sigmoid(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+template <typename T, typename S>
+void Sigmoid(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [in, out](size_t start, size_t end) {
-    if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
+    if constexpr ((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>)) {
       constexpr T one_complex{1, 0};
       for (size_t i = start; i < end; i++) {
         out[i] = one_complex / (one_complex + std::exp(-in[i]));
+      }
+    } else if constexpr (std::is_same_v<T, float16>) {
+      float16 one{1};
+      for (size_t i = start; i < end; i++) {
+        out[i] = one / (one + exp(-in[i]));
       }
     } else if constexpr (std::is_same_v<T, float>) {
       (void)::Sigmoid(in + start, SizeToInt(end - start), out + start);
@@ -741,10 +779,11 @@ void Identity(const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-bool IdentityCpuFunc(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
-  T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+bool IdentityCpuFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                     const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   Identity<T>(input, output, lens);
   return true;
 }
@@ -765,408 +804,600 @@ static std::vector<std::pair<KernelAttr, LaunchFunc>> identity_kernel_attr_lists
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), IdentityCpuFunc<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), IdentityCpuFunc<bool>}};
 
-void ArithmeticSelfCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &) {
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
-  base_op = base_operator;
-}
-
-bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernelFloat16(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeComplex64) {
-    LaunchKernelComplex<std::complex<float>>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeComplex128) {
-    LaunchKernelComplex<std::complex<double>>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt8) {
-    LaunchKernel<int8_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt16) {
-    LaunchKernel<int16_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt8) {
-    LaunchKernel<uint8_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt16) {
-    LaunchKernel<uint16_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt32) {
-    LaunchKernel<uint32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt64) {
-    LaunchKernel<uint64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeBool) {
-    if (kernel_name_ == kAbsOpName) {
-      LaunchLogicalEqual(inputs, outputs);
-    } else {
-      LaunchLogicalNot(inputs, outputs);
-    }
+template <typename T, typename S>
+void ArithmeticSelfCpuKernelFuncBool<T, S>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<S *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(S);
+  if (this->kernel_name_ == kAbsOpName) {
+    return LogicalEqual<T, S>(this, input, output, lens);
+  } else if (this->kernel_name_ == kReciprocal) {
+    return Reciprocal<T, S>(this, input, output, lens);
+  } else if (this->kernel_name_ == kLogicalNot) {
+    return LogicalNot<T, S>(this, input, output, lens);
+  } else if (this->kernel_name_ == kReLU) {
+    return ReluBool<T, S>(this, input, output, lens);
+  } else if (this->kernel_name_ == kSqrt) {
+    return Sqrt<T, S>(this, input, output, lens);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'x' must be float16, float32, float64, complex64, complex128, int8, int16, "
-                         "int32, int64, uint8, uint16, uint32, uint64, or bool, but got "
-                      << TypeIdLabel(dtype_);
+    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << this->kernel_name_ << " with bool as input.";
   }
-  return true;
 }
 
-void ArithmeticSelfCpuKernelFunc::LaunchLogicalEqual(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
-  size_t lens = outputs[0]->size / sizeof(bool);
-  LogicalEqual(this, input, output, lens);
-}
+template <typename T, typename S>
+void ArithmeticSelfCpuKernelFuncCommon<T, S>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<S *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(S);
+  static const std::unordered_map<
+    std::string, std::function<void(ArithmeticSelfCpuKernelFuncCommon<T, S> *, const T *, S *, size_t)>>
+    arithmeticSelfFuncMap{
+      {prim::kPrimSquare->name(), Square<T, S>},     {prim::kPrimSign->name(), Sign<T, S>},
+      {prim::kPrimNeg->name(), Neg<T, S>},           {prim::kPrimAtanh->name(), Atanh<T, S>},
+      {prim::kPrimAcosh->name(), Acosh<T, S>},       {prim::kPrimCeil->name(), Ceil<T, S>},
+      {prim::kPrimFloor->name(), Floor<T, S>},       {prim::kPrimSin->name(), Sin<T, S>},
+      {prim::kPrimGeLU->name(), Gelu<T, S>},         {prim::kPrimCos->name(), Cos<T, S>},
+      {prim::kPrimLog->name(), Log<T, S>},           {prim::kPrimTan->name(), Tan<T, S>},
+      {prim::kPrimAsin->name(), Asin<T, S>},         {prim::kPrimACos->name(), ACos<T, S>},
+      {prim::kPrimAtan->name(), Atan<T, S>},         {prim::kPrimSinh->name(), Sinh<T, S>},
+      {prim::kPrimCosh->name(), Cosh<T, S>},         {prim::kPrimTanh->name(), Tanh<T, S>},
+      {prim::kPrimAsinh->name(), Asinh<T, S>},       {prim::kPrimReciprocal->name(), Reciprocal<T, S>},
+      {prim::kPrimInv->name(), Inv<T, S>},           {prim::kPrimInvert->name(), Invert<T, S>},
+      {prim::kPrimRint->name(), Rint<T, S>},         {prim::kPrimRound->name(), Round<T, S>},
+      {prim::kPrimAbs->name(), Abs<T, S>},           {prim::kPrimSqrt->name(), Sqrt<T, S>},
+      {prim::kPrimRsqrt->name(), Rsqrt<T, S>},       {prim::kPrimErf->name(), Erf<T, S>},
+      {prim::kPrimErfc->name(), Erfc<T, S>},         {prim::kPrimSoftsign->name(), Softsign<T, S>},
+      {prim::kPrimReLU->name(), Relu<T, S>},         {prim::kPrimReLU6->name(), Relu6<T, S>},
+      {prim::kPrimSoftplus->name(), Softplus<T, S>}, {prim::kPrimMish->name(), Mish<T, S>},
+      {prim::kPrimSigmoid->name(), Sigmoid<T, S>},   {prim::kPrimExp->name(), Exp<T, S>}};
 
-void ArithmeticSelfCpuKernelFunc::LaunchLogicalNot(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
-  size_t lens = outputs[0]->size / sizeof(bool);
-  LogicalNot(this, input, output, lens);
-}
-
-template <typename T>
-void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  const size_t lens = outputs[0]->size / sizeof(T);
-  static const std::unordered_map<std::string,
-                                  std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>
-    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
-                          {prim::kPrimSign->name(), Sign<T>},
-                          {prim::kPrimNeg->name(), Neg<T>},
-                          {prim::kPrimAtanh->name(), Atanh<T>},
-                          {prim::kPrimAcosh->name(), Acosh<T>},
-                          {prim::kPrimFloor->name(), Floor<T>},
-                          {prim::kPrimSin->name(), Sin<T>},
-                          {prim::kPrimGeLU->name(), Gelu<T>},
-                          {prim::kPrimCos->name(), Cos<T>},
-                          {prim::kPrimLog->name(), Log<T>},
-                          {prim::kPrimTan->name(), Tan<T>},
-                          {prim::kPrimAsin->name(), Asin<T>},
-                          {prim::kPrimACos->name(), ACos<T>},
-                          {prim::kPrimAtan->name(), Atan<T>},
-                          {prim::kPrimSinh->name(), Sinh<T>},
-                          {prim::kPrimCosh->name(), Cosh<T>},
-                          {prim::kPrimTanh->name(), Tanh<T>},
-                          {prim::kPrimAsinh->name(), Asinh<T>},
-                          {prim::kPrimReciprocal->name(), Reciprocal<T>},
-                          {prim::kPrimInv->name(), Inv<T>},
-                          {prim::kPrimInvert->name(), Invert<T>},
-                          {prim::kPrimRint->name(), Rint<T>},
-                          {prim::kPrimRound->name(), Round<T>},
-                          {prim::kPrimAbs->name(), Abs<T>},
-                          {prim::kPrimSqrt->name(), Sqrt<T>},
-                          {prim::kPrimRsqrt->name(), Rsqrt<T>},
-                          {prim::kPrimErf->name(), Erf<T>},
-                          {prim::kPrimErfc->name(), Erfc<T>},
-                          {prim::kPrimSoftsign->name(), Softsign<T>},
-                          {prim::kPrimReLU->name(), Relu<T>},
-                          {prim::kPrimReLU6->name(), Relu6<T>},
-                          {prim::kPrimElu->name(), Elu<T>},
-                          {prim::kPrimSoftplus->name(), Softplus<T>},
-                          {prim::kPrimMish->name(), Mish<T>},
-                          {prim::kPrimSigmoid->name(), Sigmoid<T>},
-                          {prim::kPrimExp->name(), Exp<T>}};
-
-  const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
-  if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
+  const auto func_pair = arithmeticSelfFuncMap.find(this->kernel_name_);
+  if (arithmeticSelfFuncMap.find(this->kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION)
       << "For 'ArithmeticSelf', only supports operators in "
-      << Map2Str<std::unordered_map, std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>(
+      << Map2Str<std::unordered_map,
+                 std::function<void(ArithmeticSelfCpuKernelFuncCommon<T, S> *, const T *, S *, size_t)>>(
            arithmeticSelfFuncMap)
-      << ", but got " << kernel_name_;
+      << ", but got " << this->kernel_name_;
   }
   func_pair->second(this, input, output, lens);
 }
 
-template <typename T>
-void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  const size_t lens = outputs[0]->size / sizeof(T);
-  static const std::unordered_map<std::string,
-                                  std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>
-    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
-                          {prim::kPrimAcosh->name(), ComplexAcosh<T>},
-                          {prim::kPrimAsinh->name(), ComplexAsinh<T>},
-                          {prim::kPrimNeg->name(), Neg<T>},
-                          {prim::kPrimSinh->name(), ComplexSinh<T>},
-                          {prim::kPrimCosh->name(), ComplexCosh<T>},
-                          {prim::kPrimSin->name(), ComplexSin<T>},
-                          {prim::kPrimCos->name(), ComplexCos<T>},
-                          {prim::kPrimACos->name(), ComplexACos<T>},
-                          {prim::kPrimRsqrt->name(), Rsqrt<T>},
-                          {prim::kPrimReciprocal->name(), Reciprocal<T>},
-                          {prim::kPrimSqrt->name(), Sqrt<T>},
-                          {prim::kPrimTan->name(), Tan<T>},
-                          {prim::kPrimAtan->name(), ComplexAtan<T>},
-                          {prim::kPrimTanh->name(), Tanh<T>},
-                          {prim::kPrimAtanh->name(), Atanh<T>},
-                          {prim::kPrimInv->name(), Inv<T>},
-                          {prim::kPrimAbs->name(), Abs<T>},
-                          {prim::kPrimSign->name(), ComplexSign<T>},
-                          {prim::kPrimLog->name(), ComplexLog<T>},
-                          {prim::kPrimExp->name(), ComplexExp<T>},
-                          {prim::kPrimSigmoid->name(), Sigmoid<T>},
-                          {prim::kPrimAsin->name(), Asin<T>}};
-  const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
-  if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << kernel_name_ << " with complex as input. ";
-  }
-  func_pair->second(this, input, output, lens);
-}
-
-void ArithmeticSelfCpuKernelFunc::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = static_cast<float16 *>(inputs[0]->addr);
-  auto *output = static_cast<float16 *>(outputs[0]->addr);
-  const size_t lens = outputs[0]->size / sizeof(float16);
+template <typename T, typename S>
+void ArithmeticSelfCpuKernelFuncComplex<T, S>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<S *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(S);
   static const std::unordered_map<
-    std::string, std::function<void(ArithmeticSelfCpuKernelFunc *, const float16 *, float16 *, size_t)>>
-    arithmeticSelfFuncMap{{prim::kPrimNeg->name(), Neg<float16>},     {prim::kPrimAcosh->name(), Acosh<float16>},
-                          {prim::kPrimSin->name(), Sin<float16>},     {prim::kPrimCos->name(), Cos<float16>},
-                          {prim::kPrimAsin->name(), Asin<float16>},   {prim::kPrimACos->name(), ACos<float16>},
-                          {prim::kPrimSinh->name(), Sinh<float16>},   {prim::kPrimCosh->name(), Cosh<float16>},
-                          {prim::kPrimAsinh->name(), Asinh<float16>}, {prim::kPrimErfc->name(), Erfc<float16>},
-                          {prim::kPrimRsqrt->name(), Rsqrt<float16>}, {prim::kPrimErf->name(), Erf<float16>},
-                          {prim::kPrimSign->name(), Sign<float16>},   {prim::kPrimRint->name(), Rint<float16>},
-                          {prim::kPrimAtan->name(), Atan<float16>},   {prim::kPrimSqrt->name(), Sqrt<float16>}};
-  const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
-  if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << kernel_name_ << " with float16 as input. ";
+    std::string, std::function<void(ArithmeticSelfCpuKernelFuncComplex<T, S> *, const T *, S *, size_t)>>
+    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T, S>},
+                          {prim::kPrimAcosh->name(), ComplexAcosh<T, S>},
+                          {prim::kPrimAsinh->name(), ComplexAsinh<T, S>},
+                          {prim::kPrimNeg->name(), Neg<T, S>},
+                          {prim::kPrimSinh->name(), ComplexSinh<T, S>},
+                          {prim::kPrimCosh->name(), ComplexCosh<T, S>},
+                          {prim::kPrimSin->name(), ComplexSin<T, S>},
+                          {prim::kPrimCos->name(), ComplexCos<T, S>},
+                          {prim::kPrimACos->name(), ComplexACos<T, S>},
+                          {prim::kPrimRsqrt->name(), Rsqrt<T, S>},
+                          {prim::kPrimReciprocal->name(), Reciprocal<T, S>},
+                          {prim::kPrimSqrt->name(), Sqrt<T, S>},
+                          {prim::kPrimTan->name(), Tan<T, S>},
+                          {prim::kPrimAtan->name(), ComplexAtan<T, S>},
+                          {prim::kPrimTanh->name(), Tanh<T, S>},
+                          {prim::kPrimAtanh->name(), Atanh<T, S>},
+                          {prim::kPrimInv->name(), Inv<T, S>},
+                          {prim::kPrimAbs->name(), Abs<T, S>},
+                          {prim::kPrimSign->name(), ComplexSign<T, S>},
+                          {prim::kPrimLog->name(), ComplexLog<T, S>},
+                          {prim::kPrimExp->name(), ComplexExp<T, S>},
+                          {prim::kPrimSigmoid->name(), Sigmoid<T, S>},
+                          {prim::kPrimAsin->name(), Asin<T, S>}};
+  const auto func_pair = arithmeticSelfFuncMap.find(this->kernel_name_);
+  if (arithmeticSelfFuncMap.find(this->kernel_name_) == arithmeticSelfFuncMap.end()) {
+    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << this->kernel_name_
+                      << " with complex as input. ";
   }
   func_pair->second(this, input, output, lens);
 }
 
-std::shared_ptr<CpuKernelFunc> CreateArithSelfFunc() { return std::make_shared<ArithmeticSelfCpuKernelFunc>(); }
+template <typename T, typename S>
+void ArithmeticSelfCpuKernelFuncFloat16<T, S>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  const auto *input = static_cast<T *>(inputs[0]->device_ptr());
+  auto *output = static_cast<S *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(S);
+  static const std::unordered_map<
+    std::string, std::function<void(ArithmeticSelfCpuKernelFuncFloat16<T, S> *, const T *, S *, size_t)>>
+    arithmeticSelfFuncMap{
+      {prim::kPrimNeg->name(), Neg<T, S>},          {prim::kPrimAcosh->name(), Acosh<T, S>},
+      {prim::kPrimSin->name(), Sin<T, S>},          {prim::kPrimCos->name(), Cos<T, S>},
+      {prim::kPrimAsin->name(), Asin<T, S>},        {prim::kPrimACos->name(), ACos<T, S>},
+      {prim::kPrimSinh->name(), Sinh<T, S>},        {prim::kPrimCosh->name(), Cosh<T, S>},
+      {prim::kPrimAsinh->name(), Asinh<T, S>},      {prim::kPrimErfc->name(), Erfc<T, S>},
+      {prim::kPrimRsqrt->name(), Rsqrt<T, S>},      {prim::kPrimErf->name(), Erf<T, S>},
+      {prim::kPrimSign->name(), Sign<T, S>},        {prim::kPrimRint->name(), Rint<T, S>},
+      {prim::kPrimAtan->name(), Atan<T, S>},        {prim::kPrimSqrt->name(), Sqrt<T, S>},
+      {prim::kPrimSigmoid->name(), Sigmoid<T, S>},  {prim::kPrimLog->name(), Log<T, S>},
+      {prim::kPrimReLU->name(), ReluFloat16<T, S>},
+    };
+  const auto func_pair = arithmeticSelfFuncMap.find(this->kernel_name_);
+  if (arithmeticSelfFuncMap.find(this->kernel_name_) == arithmeticSelfFuncMap.end()) {
+    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << this->kernel_name_
+                      << " with float16 as input. ";
+  }
+  func_pair->second(this, input, output, lens);
+}
+
+template <typename T, typename S>
+std::shared_ptr<CpuKernelFunc> CreateArithSelfFuncCommon() {
+  return std::make_shared<ArithmeticSelfCpuKernelFuncCommon<T, S>>();
+}
+template <typename T, typename S>
+std::shared_ptr<CpuKernelFunc> CreateArithSelfFuncBool() {
+  return std::make_shared<ArithmeticSelfCpuKernelFuncBool<T, S>>();
+}
+template <typename T, typename S>
+std::shared_ptr<CpuKernelFunc> CreateArithSelfFuncComplex() {
+  return std::make_shared<ArithmeticSelfCpuKernelFuncComplex<T, S>>();
+}
+template <typename T, typename S>
+std::shared_ptr<CpuKernelFunc> CreateArithSelfFuncFloat16() {
+  return std::make_shared<ArithmeticSelfCpuKernelFuncFloat16<T, S>>();
+}
 using ArithFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>>> arith_kernel_attr_list_map = {
   {kRsqrt,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kSquare,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &CreateArithSelfFuncCommon<int8_t, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &CreateArithSelfFuncCommon<uint8_t, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &CreateArithSelfFuncCommon<int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     &CreateArithSelfFuncCommon<uint16_t, uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &CreateArithSelfFuncCommon<uint32_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &CreateArithSelfFuncCommon<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &CreateArithSelfFuncCommon<uint64_t, uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kNeg,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &CreateArithSelfFuncCommon<uint8_t, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     &CreateArithSelfFuncCommon<uint16_t, uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &CreateArithSelfFuncCommon<uint32_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &CreateArithSelfFuncCommon<uint64_t, uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &CreateArithSelfFuncCommon<int8_t, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &CreateArithSelfFuncCommon<int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &CreateArithSelfFuncCommon<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kSign,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
-  {kFloor,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &CreateArithSelfFuncCommon<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
+  {ops::kNameCeil,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
+  {ops::kNameFloor,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
   {kRint,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
   {kRound,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &CreateArithSelfFuncCommon<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
   {kReciprocal,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &CreateArithSelfFuncCommon<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), &CreateArithSelfFuncBool<bool, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &CreateArithSelfFuncCommon<int8_t, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &CreateArithSelfFuncCommon<uint8_t, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<int64_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<int, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<int16_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<int8_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint8_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint16_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint32_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint64_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncBool<bool, float>}}},
   {kInv,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &CreateArithSelfFuncCommon<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kInvert,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &CreateArithSelfFuncCommon<int8_t, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &CreateArithSelfFuncCommon<uint8_t, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &CreateArithSelfFuncCommon<int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     &CreateArithSelfFuncCommon<uint16_t, uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &CreateArithSelfFuncCommon<uint32_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &CreateArithSelfFuncCommon<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &CreateArithSelfFuncCommon<uint64_t, uint64_t>}}},
   {kGeLU,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
-  {kLogicalNot, {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
+  {kLogicalNot,
+   {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), &CreateArithSelfFuncBool<bool, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     &CreateArithSelfFuncBool<int64_t, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool), &CreateArithSelfFuncBool<int, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+     &CreateArithSelfFuncBool<int16_t, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool), &CreateArithSelfFuncBool<int8_t, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+     &CreateArithSelfFuncBool<uint8_t, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
+     &CreateArithSelfFuncBool<uint16_t, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
+     &CreateArithSelfFuncBool<uint32_t, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool),
+     &CreateArithSelfFuncBool<uint64_t, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+     &CreateArithSelfFuncBool<float, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+     &CreateArithSelfFuncBool<double, bool>}}},
   {kAsin,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kACos,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kAtan,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kSin,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kCos,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kTan,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kSinh,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kCosh,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kTanh,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kAsinh,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>}}},
   {kAcosh,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
   {kAtanh,
-   {{KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
   {kAbs,
-   {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), &CreateArithSelfFuncBool<bool, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &CreateArithSelfFuncCommon<int8_t, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &CreateArithSelfFuncCommon<uint8_t, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &CreateArithSelfFuncCommon<int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &CreateArithSelfFuncCommon<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
   {kSqrt,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<int64_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<int, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<int16_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<int8_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint8_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint16_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint32_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint64_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncBool<bool, float>}}},
   {kLog,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
-  {kErf,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
-  {kErfc,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>}}},
+  {ops::kNameErf,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
+  {ops::kNameErfc,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
   {kSoftsign,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>}}},
   {kReLU,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc}}},
-  {kReLU6, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
-  {kElu, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
-  {kSoftplus, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
-  {kMish, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &CreateArithSelfFuncCommon<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &CreateArithSelfFuncCommon<int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &CreateArithSelfFuncCommon<int8_t, int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &CreateArithSelfFuncCommon<uint8_t, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     &CreateArithSelfFuncCommon<uint16_t, uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &CreateArithSelfFuncCommon<uint32_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &CreateArithSelfFuncCommon<uint64_t, uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), &CreateArithSelfFuncBool<bool, bool>}}},
+  {kReLU6,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>}}},
+  {kSoftplus,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>}}},
+  {kMish,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>}}},
   {kSigmoid,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>}}},
   {kExp,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}}};
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CreateArithSelfFuncComplex<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CreateArithSelfFuncComplex<complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>}}}};
 }  // namespace
 
-bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ArithmeticSelfCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto iter = arith_kernel_attr_list_map.find(kernel_name_);
   if (iter == arith_kernel_attr_list_map.end()) {
     MS_LOG(ERROR) << "For 'ArithmeticSelf', the kernel name must be in "
@@ -1182,21 +1413,20 @@ bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
   func_obj_ = arith_kernel_attr_list_map[kernel_name_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int ArithmeticSelfCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ArithmeticSelfCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // Note: This is to call the Resize of SqrtMKLKernelFunc.
-  if (int ret = func_obj_->Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = func_obj_->Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto input_element_num =
     std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
@@ -1219,10 +1449,7 @@ std::vector<KernelAttr> ArithmeticSelfCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool IdentityCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool IdentityCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != mindspore::kIdentityOpName) {
     MS_LOG(ERROR) << "For 'Identity', the kernel name must be 'Identity', but got " << kernel_name_;
     return false;
@@ -1237,13 +1464,12 @@ bool IdentityCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int IdentityCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int IdentityCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto input_element_num =
     std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
@@ -1261,80 +1487,47 @@ std::vector<KernelAttr> IdentityCpuKernelMod::GetOpSupport() {
   return kernel_attr_list;
 }
 
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Rsqrt,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRsqrt); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Square,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSquare); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Neg,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kNeg); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sign,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSign); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Floor,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kFloor); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Rint,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRint); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Round,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRound); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Reciprocal,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReciprocal); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Inv,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kInv); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Invert,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kInvert); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, GeLU,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kGeLU); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalNot,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kLogicalNot); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Asin,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAsin); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ACos,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kACos); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atan,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAtan); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sin,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSin); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Cos,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kCos); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tan,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kTan); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Exp,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kExp); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sinh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSinh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Cosh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kCosh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tanh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kTanh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Asinh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAsinh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Acosh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAcosh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atanh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAtanh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Abs,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAbs); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sqrt,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSqrt); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Log,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kLog); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erf,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErf); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erfc,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErfc); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softsign,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSoftsign); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReLU); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU6,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReLU6); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Elu,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kElu); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softplus,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSoftplus); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mish,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kMish); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sigmoid,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSigmoid); });
+#define ARITHMETIC_SELF_CPU_REGISTER(FUNC, OP_NAME)          \
+  MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FUNC, \
+                                   []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(OP_NAME); });
+
+ARITHMETIC_SELF_CPU_REGISTER(Rsqrt, kRsqrt);
+ARITHMETIC_SELF_CPU_REGISTER(Square, kSquare);
+ARITHMETIC_SELF_CPU_REGISTER(Neg, kNeg);
+ARITHMETIC_SELF_CPU_REGISTER(Sign, kSign);
+ARITHMETIC_SELF_CPU_REGISTER(Ceil, ops::kNameCeil);
+ARITHMETIC_SELF_CPU_REGISTER(Floor, ops::kNameFloor);
+ARITHMETIC_SELF_CPU_REGISTER(Rint, kRint);
+ARITHMETIC_SELF_CPU_REGISTER(Round, kRound);
+ARITHMETIC_SELF_CPU_REGISTER(Reciprocal, kReciprocal);
+ARITHMETIC_SELF_CPU_REGISTER(Inv, kInv);
+ARITHMETIC_SELF_CPU_REGISTER(Invert, kInvert);
+ARITHMETIC_SELF_CPU_REGISTER(GeLU, kGeLU);
+ARITHMETIC_SELF_CPU_REGISTER(LogicalNot, kLogicalNot);
+ARITHMETIC_SELF_CPU_REGISTER(Asin, kAsin);
+ARITHMETIC_SELF_CPU_REGISTER(ACos, kACos);
+ARITHMETIC_SELF_CPU_REGISTER(Atan, kAtan);
+ARITHMETIC_SELF_CPU_REGISTER(Sin, kSin);
+ARITHMETIC_SELF_CPU_REGISTER(Cos, kCos);
+ARITHMETIC_SELF_CPU_REGISTER(Tan, kTan);
+ARITHMETIC_SELF_CPU_REGISTER(Exp, kExp);
+ARITHMETIC_SELF_CPU_REGISTER(Sinh, kSinh);
+ARITHMETIC_SELF_CPU_REGISTER(Cosh, kCosh);
+ARITHMETIC_SELF_CPU_REGISTER(Tanh, kTanh);
+ARITHMETIC_SELF_CPU_REGISTER(Asinh, kAsinh);
+ARITHMETIC_SELF_CPU_REGISTER(Acosh, kAcosh);
+ARITHMETIC_SELF_CPU_REGISTER(Atanh, kAtanh);
+ARITHMETIC_SELF_CPU_REGISTER(Abs, kAbs);
+ARITHMETIC_SELF_CPU_REGISTER(Sqrt, kSqrt);
+ARITHMETIC_SELF_CPU_REGISTER(Log, kLog);
+ARITHMETIC_SELF_CPU_REGISTER(Erf, ops::kNameErf);
+ARITHMETIC_SELF_CPU_REGISTER(Erfc, ops::kNameErfc);
+ARITHMETIC_SELF_CPU_REGISTER(Softsign, kSoftsign);
+ARITHMETIC_SELF_CPU_REGISTER(ReLU, kReLU);
+ARITHMETIC_SELF_CPU_REGISTER(ReLU6, kReLU6);
+ARITHMETIC_SELF_CPU_REGISTER(Softplus, kSoftplus);
+ARITHMETIC_SELF_CPU_REGISTER(Mish, kMish);
+ARITHMETIC_SELF_CPU_REGISTER(Sigmoid, kSigmoid);
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Identity, IdentityCpuKernelMod);
 }  // namespace kernel

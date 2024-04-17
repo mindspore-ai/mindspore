@@ -29,6 +29,8 @@
 namespace mindspore {
 class FuncGraphIndex {
  public:
+  using SearchFunc = std::function<AnfNodePtrList(const AnfNodePtr &, const IncludeFunc &)>;
+
   explicit FuncGraphIndex(const FuncGraphPtr &fg, const SearchFunc &search = DeepScopedGraphSearch,
                           const IncludeFunc &include = AlwaysInclude);
   FuncGraphIndex(const FuncGraphIndex &) = delete;
@@ -170,7 +172,7 @@ TEST_F(TestCloner, test_clone_simple) {
   Cloner cl2(gs);
   auto g3 = cl2[g];
 
-  std::vector<Primitive> results = {Primitive(kScalarAddOpName), Primitive(kScalarMulOpName), Primitive("Return")};
+  std::vector<Primitive> results = {Primitive("ScalarAdd"), Primitive("ScalarMul"), Primitive("Return")};
   AnfNodeSet d3 = AnfNodeSet(DeepScopedGraphSearch(g3->get_return()));
   common = d1 & d3;
   for (auto &x : common) {

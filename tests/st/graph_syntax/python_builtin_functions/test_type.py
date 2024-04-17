@@ -20,7 +20,7 @@ from mindspore import jit, context, Tensor
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -39,7 +39,7 @@ def test_fallback_type():
     assert str(out) == "<class 'dict'>"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -59,7 +59,7 @@ def test_fallback_type_with_input_int():
     assert str(out) == "<class 'int'>"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -79,7 +79,7 @@ def test_fallback_type_with_input_float():
     assert str(out) == "<class 'float'>"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -99,7 +99,7 @@ def test_fallback_type_with_input_list():
     assert str(out) == "<class 'list'>"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -119,7 +119,7 @@ def test_fallback_type_with_input_tuple():
     assert str(out) == "<class 'tuple'>"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -139,7 +139,7 @@ def test_fallback_type_with_input_dict():
     assert str(out) == "<class 'dict'>"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -159,7 +159,7 @@ def test_fallback_type_with_input_numpy_array():
     assert str(out) == "<class 'numpy.ndarray'>"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

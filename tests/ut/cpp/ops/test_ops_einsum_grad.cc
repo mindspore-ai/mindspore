@@ -31,11 +31,14 @@ class TestEinsumGrad : public TestOps,
 TEST_P(TestEinsumGrad, dyn_shape) {
   const auto &shape_param = std::get<0>(GetParam());
   const auto &dtype_param = std::get<1>(GetParam());
-  auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
+  auto x = std::make_shared<abstract::AbstractTuple>(
+    abstract::AbstractBasePtrList{std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape)});
   ASSERT_NE(x, nullptr);
-  auto d_out = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{0});
+  auto d_out = std::make_shared<abstract::AbstractTuple>(
+    abstract::AbstractBasePtrList{std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{0})});
   ASSERT_NE(d_out, nullptr);
-  auto expect = std::make_shared<abstract::AbstractTensor>(dtype_param.out_type, shape_param.out_shape);
+  auto expect = std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{
+    std::make_shared<abstract::AbstractTensor>(dtype_param.out_type, shape_param.out_shape)});
   ASSERT_NE(expect, nullptr);
   auto prim = std::make_shared<Primitive>(kNameEinsumGrad);
   auto out_abstract = opt::CppInferShapeAndType(prim, {x, d_out});

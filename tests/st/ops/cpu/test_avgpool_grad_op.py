@@ -49,3 +49,29 @@ def test_net():
     output = backword_net(Tensor(x), Tensor(sens))
     print(len(output))
     print(output[0].asnumpy())
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('input_dtype', [np.float16, np.float64])
+def test_net_dtype(input_dtype):
+    """
+    Feature: test avg_pool_grad op.
+    Description: backward.
+    Expectation: expect correct backward result.
+    """
+    x = np.arange(1 * 1 * 6 * 6).reshape((1, 1, 6, 6)).astype(input_dtype)
+    net = nn.AvgPool2d(kernel_size=3, stride=2, pad_mode='valid')
+    out = net(Tensor(x))
+
+    out_shape = out.asnumpy().shape
+    sens = np.arange(int(np.prod(out_shape))).reshape(out_shape).astype(input_dtype)
+    backword_net = Grad(net)
+    output = backword_net(Tensor(x), Tensor(sens))
+    expect_output = np.array([[[[0., 0., 0.1111, 0.1111, 0.1111, 0.],
+                                [0., 0., 0.1111, 0.1111, 0.1111, 0.],
+                                [0.2222, 0.2222, 0.6665, 0.4443, 0.4443, 0.],
+                                [0.2222, 0.2222, 0.5557, 0.3333, 0.3333, 0.],
+                                [0.2222, 0.2222, 0.5557, 0.3333, 0.3333, 0.],
+                                [0., 0., 0., 0., 0., 0.]]]]).astype(input_dtype)
+    assert np.allclose(output[0].asnumpy(), expect_output, 1e-3, 1e-3)

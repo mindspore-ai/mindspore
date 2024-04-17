@@ -33,6 +33,9 @@ DeviceTensorAscend910B::DeviceTensorAscend910B(const TensorShape &shape, const D
       stream_id_(stream_id),
       device_address_(nullptr),
       tensor_(nullptr),
+      workspace_(nullptr),
+      float_arrays_({}),
+      int_arrays_({}),
       tensor_shape_(shape),
       data_type_(type),
       is_hwc_(is_hwc) {}
@@ -187,6 +190,87 @@ Status DeviceTensorAscend910B::ToHostTensor(std::shared_ptr<Tensor> *host_tensor
   (*host_tensor)->Squeeze();
 
   return Status::OK();
+}
+
+bool DeviceTensorAscend910B::AddWorkSpace(void *workspace) {
+  if (workspace == nullptr) {
+    MS_LOG(ERROR) << "The input workspace is nullptr.";
+    return false;
+  }
+  if (workspace_ != nullptr) {
+    MS_LOG(ERROR) << "The workspace_ is not nullptr, please don't re-add workspace to the current DeviceTensor.";
+    return false;
+  }
+  workspace_ = workspace;
+  return true;
+}
+
+bool DeviceTensorAscend910B::AddMaintenFloatArrayMemory(void *float_array) {
+  if (float_array == nullptr) {
+    MS_LOG(ERROR) << "The input float_array is nullptr.";
+    return false;
+  }
+  float_arrays_.push_back(float_array);
+  return true;
+}
+
+bool DeviceTensorAscend910B::AddMaintenIntArrayMemory(void *int_array) {
+  if (int_array == nullptr) {
+    MS_LOG(ERROR) << "The input int_array is nullptr.";
+    return false;
+  }
+  int_arrays_.push_back(int_array);
+  return true;
+}
+
+bool DeviceTensorAscend910B::ReleaseDeviceMemory() {
+  // release the device memory of the data
+  if (device_address_ != nullptr) {
+    device_context_->device_res_manager_->FreeMemory(device_address_);
+    device_address_ = nullptr;
+  }
+
+  // release the acl_tensor
+  if (tensor_ != nullptr) {
+    auto ret = AclAdapter::GetInstance().DestroyTensor(tensor_);
+    if (ret != APP_ERR_OK) {
+      MS_LOG(ERROR) << "Destroy acl tensor failed.";
+      return false;
+    }
+    tensor_ = nullptr;
+  }
+
+  // release the device memory of the workspace
+  if (workspace_ != nullptr) {
+    device_context_->device_res_manager_->FreeMemory(workspace_);
+    workspace_ = nullptr;
+  }
+
+  // release the float arrays
+  for (auto &float_array : float_arrays_) {
+    if (float_array != nullptr) {
+      auto ret = AclAdapter::GetInstance().DestroyFloatArray(float_array);
+      if (ret != APP_ERR_OK) {
+        MS_LOG(ERROR) << "Destroy float array failed.";
+        return false;
+      }
+    }
+    float_array = nullptr;
+  }
+
+  // release the int arrays
+  for (auto &int_array : int_arrays_) {
+    if (int_array != nullptr) {
+      auto ret = AclAdapter::GetInstance().DestroyIntArray(int_array);
+      if (ret != APP_ERR_OK) {
+        MS_LOG(ERROR) << "Destroy int array failed.";
+        return false;
+      }
+    }
+    int_array = nullptr;
+  }
+
+  return true;
 }
 }  // namespace dataset
 }  // namespace mindspore

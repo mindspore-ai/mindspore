@@ -41,8 +41,8 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr UpperBoundInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (IsDynamicRank(values_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
@@ -59,8 +59,8 @@ abstract::ShapePtr UpperBoundInferShape(const PrimitivePtr &primitive, const std
     MS_EXCEPTION(ValueError)
       << "For '" << primitive->name()
       << "', the number of rows of 'sorted_x' must be consistent with that of 'values', but got the shape of 'values': "
-      << input_args[1]->BuildShape()->ToString()
-      << ", the shape of 'sorted_x': " << input_args[0]->BuildShape()->ToString() << ".";
+      << input_args[1]->GetShape()->ToString() << ", the shape of 'sorted_x': " << input_args[0]->GetShape()->ToString()
+      << ".";
   }
   return std::make_shared<abstract::Shape>(values_shape);
 }
@@ -68,8 +68,8 @@ abstract::ShapePtr UpperBoundInferShape(const PrimitivePtr &primitive, const std
 TypePtr UpperBoundInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> input_types;
   std::set<TypePtr> input_valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16};
-  TypePtr sorted_x_type = input_args[0]->BuildType();
-  TypePtr values_type = input_args[1]->BuildType();
+  TypePtr sorted_x_type = input_args[0]->GetType();
+  TypePtr values_type = input_args[1]->GetType();
   (void)input_types.emplace("sorted_x", sorted_x_type);
   (void)input_types.emplace("values", values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(input_types, input_valid_types, primitive->name());

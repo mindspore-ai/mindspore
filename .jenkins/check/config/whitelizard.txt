@@ -7,13 +7,16 @@ mindspore/mindspore/core/mindrt/src/thread/actor_threadpool.cc:mindspore::ActorW
 mindspore/mindspore/lite/src/common/ops/primitive_c.cc:mindspore::lite::PrimitiveC::Create
 mindspore/mindspore/lite/src/extendrt/convert/runtime_convert.cc:RuntimeConvert
 mindspore/mindspore/lite/tools/converter/parser/onnx/onnx_inputs_adjust.cc:mindspore::lite::OnnxInputAdjust::Adjust
+mindspore/mindspore/lite/tools/converter/adapter/acl/mapper/matmul_fusion_mapper.cc:mindspore::lite::MatMulFusionMapper::Mapper
+mindspore/mindspore/lite/tools/optimizer/fusion/flash_attention_fusion.cc:mindspore::opt::FlashAttentionFusion::Process
 mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/source/csv_op.cc:mindspore::dataset::CsvOp::CsvParser::InitCsvParser
 mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/data_queue_op.cc:mindspore::dataset::DataQueueOp::SendDataToAscend
 mindspore/mindspore/lite/tools/converter/graphdef_transform.cc:mindspore::lite::GraphDefTransform::Transform
 mindspore/mindspore/lite/providers/nnie_proposal/src/proposal.cc:mindspore::proposal::Rpn
+mindspore/mindspore/lite/tools/converter/config_parser/config_file_parser.cc:mindspore::lite::ConfigFileParser::SetParamByConfigfile
 mindspore/mindspore/core/abstract/ops/primitive_infer_map.cc:mindspore::abstract::GetPrimitiveInferMap
 mindspore/mindspore/core/ir/tensor.cc:mindspore::tensor::MakeTensorData
-mindspore/mindspore/ccsrc/kernel/common_utils.cc:mindspore::kernel::UnitSizeInBytes
+mindspore/mindspore/core/ir/dtype_extends.cc:mindspore::UnitSizeInBytes
 mindspore/mindspore/ccsrc/frontend/optimizer/irpass.cc:mindspore::opt::irpass::OptimizeIRPassLib::OptimizeIRPassLib
 mindspore/mindspore/ccsrc/frontend/parallel/ops_info/gather_v2_p_info.cc:mindspore::parallel::GatherV2PInfo::CheckStrategy
 mindspore/mindspore/ccsrc/plugin/device/gpu/hal/device/gpu_kernel_runtime.cc:mindspore::device::gpu::GPUKernelRuntime::LaunchKernelDynamic
@@ -31,6 +34,9 @@ mindspore/model_zoo/official/recommend/wide_and_deep_multitable/src/wide_and_dee
 mindspore/mindspore/ccsrc/pipeline/jit/ps/resource.cc:mindspore::pipeline::GetMethodMap
 mindspore/mindspore/ccsrc/pipeline/jit/ps/fallback.cc:mindspore::fallback::GetJitAnnotationTypeFromComment
 mindspore/mindspore/ccsrc/pipeline/jit/ps/pipeline.cc:mindspore::pipeline::GraphExecutorPy::RunInner
+mindspore/mindspore/ccsrc/pipeline/jit/ps/pipeline.cc:mindspore::pipeline::Pipeline::Run
+mindspore/mindspore/ccsrc/pipeline/jit/ps/debug/anf_ir_utils.cc:mindspore::Skip
+mindspore/mindspore/ccsrc/common/debug/anf_ir_dump.cc:mindspore::Skip
 mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
 mindspore/mindspore/python/mindspore/ops/function/array_func.py:scatter_nd
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:interpolate
@@ -46,12 +52,15 @@ mindspore/mindspore/python/mindspore/ops/function/math_func.py:norm
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:matrix_norm
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:einsum
 mindspore/mindspore/python/mindspore/ops/function/random_func.py:multinomial
+mindspore/mindspore/python/mindspore/ops_generate/arg_dtype_cast.py:type_it
 mindspore/mindspore/python/mindspore/context.py:set_auto_parallel_context
 mindspore/mindspore/python/mindspore/common/tensor.py:__init__
 mindspore/mindspore/python/mindspore/common/parameter.py:set_data
 mindspore/mindspore/python/mindspore/ops/_grad_experimental/grad_math_ops.py:get_bprop_fft_with_size.bprop
 mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetDataType
+mindspore/mindspore/ccsrc/pybind_api/ir/tensor_index_py.cc:mindspore::tensor::TensorIndex::GetItemByTupleWithView
+mindspore/mindspore/ccsrc/frontend/operator/composite/tensor_index.cc:mindspore::prim::TensorIndexGetitem::GetStrideInfoFromTuple
 mindspore/mindspore/lite/src/litert/thread_pool.c:GetArch
 mindspore/mindspore/lite/src/litert/kernel/opencl/kernel/conv2d.cc:mindspore::kernel::UseWinograd4x4To6x6
 mindspore/mindspore/lite/src/litert/scheduler.cc:mindspore::lite::Scheduler::FindBackendKernel
@@ -269,6 +278,9 @@ mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-genera
 mindspore/mindspore/lite/src/litert/kernel/cpu/fp32/matmul_fp32_base.cc:mindspore::kernel::MatmulFp32BaseCPUKernel::Run
 mindspore/mindspore/ccsrc/frontend/parallel/auto_parallel/rec_core/rec_partition.cc:mindspore::parallel::GetWeights
 mindspore/mindspore/ccsrc/frontend/parallel/auto_parallel/rec_core/rec_partition.cc:mindspore::parallel::PartitionNode
+mindspore/mindspore/ccsrc/frontend/parallel/ops_info/reshape_info.cc:mindspore::parallel::ReshapeInfo::ComputeReplaceOp
+mindspore/mindspore/ccsrc/frontend/parallel/tensor_layout/layout_transfer.cc:mindspore::parallel::IntroduceConstraints
+mindspore/mindspore/ccsrc/frontend/parallel/graph_util/graph_utils.cc:mindspore::parallel::ReplaceOpInput
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp16/instance_norm_fp16.c:InstanceNormNC8HW8Fp16
 mindspore/mindspore/lite/src/litert/kernel/cpu/fp32/matmul_fp32_base.cc:mindspore::kernel::MatmulFp32BaseCPUKernel::init_global_variable
 mindspore/mindspore/lite/src/train/train_loop.cc:mindspore::lite::TrainLoop::Train
@@ -283,12 +295,19 @@ mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::RegMetaT
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/eltwise_grad_cpu_kernel.cc:mindspore::kernel::EltWiseGradCpuTypeFunc<T>::InitFunc
 mindspore/mindspore/lite/tools/converter/quantizer/weight_quantizer.cc:mindspore::lite::quant::WeightQuantizer::LinearQuant
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:conv3d
+mindspore/mindspore/python/mindspore/common/api.py:_convert_python_data
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/matmul_avx512_mask_fp32.c:GemmRowxColMaskKernelFp32
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/crop_and_resize_cpu_kernel.cc:mindspore::kernel::CropAndResizeCpuKernelMod::LaunchKernel
 mindspore/mindspore/ccsrc/plugin/device/cpu/hal/device/cpu_device_address.cc:mindspore::device::cpu::CPUDeviceAddress::SyncHostToDevice
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/cast_cpu_kernel.cc:mindspore::kernel::Cast  
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetPyTypeFormat
 mindspore/mindspore/core/ir/dtype/type.cc:mindspore::NormalizeTypeId
+mindspore/mindspore/core/ops/sparse_to_dense_v2.cc:mindspore::ops::SparseToDenseV2InferShape  
+mindspore/mindspore/core/ops/ops_func_impl/div.cc:mindspore::ops::DivFrontendFuncImpl::InferValue
+mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/math/cumprod_gpu_kernel.cc:mindspore::kernel::CumProdGpuKernelMod::GetFuncList
+mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/cumprod_cpu_kernel.cc:mindspore::kernel::CumProdCpuKernelMod::GetFuncList
+mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel.cc:mindspore::kernel::PoolingCpuKernelMod::InitPoolingFields
+mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel_nnacl.cc:mindspore::kernel::PoolingCpuKernelNnaclMod::Resize
 
 # AICPU migration
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/bias_add_grad.cc:aicpu::BiasAddGradCpuKernel::BiasAddGradCompute
@@ -315,7 +334,6 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/triplet_margin_loss.cc:aicpu::TripletMarginLossCpuKernel::TripletMarginLossComputeRealTypeFloat16
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparse_matrix_transpose.cc:aicpu::SparseMatrixTransposeCpuKernel::Compute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparse_reshape.cc:aicpu::SparseReshapeCpuKernel::Compute
-mindspore/mindspore/ccsrc/plugin/device/ascend/optimizer/mindir/aicpu_lib_select.cc:mindspore::opt::AICpuLibSelectPass::Process
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/matrix_solve_ls.cc:aicpu::MatrixSolveLsCpuKernel::Compute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/tensor_scatter_update.cc:aicpu::TensorScatterUpdateCpuKernel::Compute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/scatter_nd.cc:aicpu::ScatterNdCpuKernel::Compute
@@ -359,7 +377,6 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/maximum.cc:aicpu::MaximumCpuKernel::BcastComputeMultiKernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/maximum.cc:aicpu::MaximumCpuKernel::BcastComputeOneKernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/lu_unpack.cc:aicpu::LuUnpackCpuKernel::Compute
-mindspore/mindspore/ccsrc/plugin/device/ascend/optimizer/mindir/aicpu_lib_select.cc:mindspore::opt::AICpuLibSelectPass::Process
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/crop_and_resize_grad_boxes.cc:aicpu::CropAndResizeGradBoxesCpuKernel::GradOfBoxesCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/fractional_max_pool_grad.cc:aicpu::FractionalMaxPoolGradCpuKernel::DoCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/fractional_avg_pool_grad.cc:aicpu::FractionalAvgPoolGradCpuKernel::DoCompute
@@ -420,8 +437,13 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/nn_pooling_ops_proto.cc:ge::CUST_IMPLEMT_VERIFIER
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/combined_non_max_suppression_proto.cc:ge::IMPLEMT_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/math_ops_proto.cc:ge::IMPLEMT_INFERFUNC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/image_ops_proto.cc:ge::CUST_IMPLEMT_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/concat_proto.cc:ge::ConcatInferShapeCommon
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/combined_non_max_suppression_proto.cc:ge::IMPLEMT_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/im2col_proto.cc:ge::IMPLEMT_COMMON_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/math_ops_proto.cc:ge::IMPLEMT_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/selection_ops_proto.cc:ge::IMPLEMT_COMMON_INFERFUNC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/nn_pooling_ops_proto.cc:ge::IMPLEMT_COMMON_INFERFUNC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/nn_norm_ops_proto.cc:ge::CUST_IMPLEMT_INFERFUNC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/cast.cc:aicpu::CastKernel::Compute
+mindspore/mindspore/ccsrc/frontend/parallel/step_parallel.cc:mindspore::parallel::StepParallel

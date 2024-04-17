@@ -30,7 +30,7 @@ class Net(nn.Cell):
         return ~x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -45,4 +45,4 @@ def test_invert():
         net = Net()
         ret = net(1)
         print(ret)
-    assert "For Primitive[LogicalNot], the type of input argument[x] must be Tensor but got Int64" in str(err)
+    assert "Failed calling LogicalNot with" in str(err.value)

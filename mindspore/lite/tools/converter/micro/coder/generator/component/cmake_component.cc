@@ -39,7 +39,7 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
   ofs << "    model.c.o\n"
       << "    context.c.o\n"
       << "    tensor.c.o\n";
-  if (config->target() != kCortex_M) {
+  if (config->target() != kCortex_M && !config->dynamic_shape()) {
     ofs << "    allocator.c.o\n";
   }
   if (config->debug_mode()) {

@@ -45,7 +45,7 @@ class MaxmumGradNet(Cell):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_broadcast_grad_gpu_tpye():
+def test_broadcast_grad_gpu_type():
     """
     Feature: ALL To ALL
     Description: test cases for broadcast_grad of two tensors
@@ -85,5 +85,27 @@ def test_max_tensor_grad_with_same_input():
     print(output[1].asnumpy())
     expect0 = np.array([0.5, -0.5, 0.])
     expect1 = np.array([0.5, -0.5, 0.])
+    assert np.allclose(output[0].asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_max_tensor_grad_with_input_nan():
+    """
+    Feature: test maximumgrad on GPU
+    Description: test maximumgrad with input nan.
+    Expectation: result match to expected result.
+    """
+    x_np = np.array([0.8, 2.9, 7.2]).astype(np.float32)
+    y_np = np.full((3,), np.nan).astype(np.float32)
+    dout = np.array([1.0, -1.0, 0]).astype(np.float32)
+    net = MaxmumGradNet()
+    output = net(Tensor(x_np), Tensor(y_np), Tensor(dout))
+    print(output[0].asnumpy())
+    print(output[1].asnumpy())
+    expect0 = np.array([1.0, -1.0, 0])
+    expect1 = np.array([1.0, -1.0, 0])
     assert np.allclose(output[0].asnumpy(), expect0, rtol=1e-6, atol=1e-4)
     assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)

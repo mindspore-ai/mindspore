@@ -48,13 +48,13 @@ int ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num, 
   MS_ASSERT(trans_scale != nullptr);
   AnfNodePtr scale_weight_node;
   AnfNodePtr scale_bias_node;
-  if (scale_node->inputs().size() == kScaleNoBiasLen) {
+  if (scale_node->size() == kScaleNoBiasLen) {
     scale_weight_node = scale_node->input(kScaleWeightIndex);
-  } else if (scale_node->inputs().size() == kScaleWithBiasLen) {
+  } else if (scale_node->size() == kScaleWithBiasLen) {
     scale_weight_node = scale_node->input(kScaleWeightIndex);
     scale_bias_node = scale_node->input(kScaleBiasIndex);
   } else {
-    MS_LOG(ERROR) << "Scale should has 2 or 3 input tensors, current inputs is" << scale_node->inputs().size();
+    MS_LOG(ERROR) << "Scale should has 2 or 3 input tensors, current inputs is" << scale_node->size();
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INPUT_TENSOR_ERROR);
     return lite::RET_ERROR;
   }

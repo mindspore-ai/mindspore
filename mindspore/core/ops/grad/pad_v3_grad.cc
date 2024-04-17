@@ -21,10 +21,27 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
+void PaddingsValueCheck(const PrimitivePtr &primitive, const ShapeVector &x_shape,
+                        const std::vector<int64_t> &paddings_val, const std::string &prim_name) {
+  const int64_t max_x_dim = 5;
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    (void)CheckAndConvertUtils::CheckInteger("x_dim", SizeToLong(x_shape.size()), kLessThan, max_x_dim, prim_name);
+    // For Ascend, ge::PadV3Grad only support paddings has positive value, and this node is called when mode
+    // is not 'constant'
+    auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
+    if (mode != "constant") {
+      (void)CheckAndConvertUtils::CheckPositiveVector("paddings", paddings_val, prim_name);
+    }
+  }
+}
+
 abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr size_t kTwo = 2;
   constexpr size_t kThree = 3;
@@ -37,7 +54,7 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   constexpr size_t paddings_pos_3 = 3;
   constexpr size_t paddings_pos_4 = 4;
   constexpr size_t paddings_pos_5 = 5;
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   // support dynamic rank
   if (x_shape_ptr->IsDimUnknown()) {
@@ -52,25 +69,23 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   auto prim_name = primitive->name();
 
   std::vector<int64_t> paddings_arg;
-  auto padding_type = input_args[kInputIndex1]->BuildType();
+  auto padding_type = input_args[kInputIndex1]->GetType();
   if (padding_type->isa<TensorType>()) {
-    auto paddings_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto paddings_shape_ptr = input_args[kInputIndex1]->GetShape();
     MS_EXCEPTION_IF_NULL(paddings_shape_ptr);
     if (paddings_shape_ptr->IsDynamic()) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_shape.size(), abstract::Shape::kShapeDimAny));
     }
-    auto paddings = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(paddings);
-    auto paddings_value = paddings->BuildValue();
+    auto paddings_value = input_args[kInputIndex1]->GetValue();
     MS_EXCEPTION_IF_NULL(paddings_value);
-    if (!paddings_value->isa<tensor::Tensor>()) {
+    if (paddings_value->isa<ValueAny>()) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_shape.size(), abstract::Shape::kShapeDimAny));
     }
-    paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings_value, prim_name);
+    paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings_value, prim_name, padding_type);
   } else if (padding_type->isa<Tuple>() || padding_type->isa<List>()) {
-    auto value = input_args[1]->BuildValue();
+    auto value = input_args[1]->GetValue();
     if (IsValueKnown(value)) {
-      paddings_arg = CheckAndConvertUtils::CheckIntOrTupleInt("paddings value", value, prim_name);
+      paddings_arg = CheckAndConvertUtils::CheckIntOrTupleInt("paddings value", input_args[1], prim_name);
     } else {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_shape.size(), abstract::Shape::kShapeDimAny));
     }
@@ -83,8 +98,9 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   for (int64_t i = 0; i < paddings_size; ++i) {
     paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));
   }
+  PaddingsValueCheck(primitive, x_shape, paddings_val, prim_name);
   auto paddings_contiguous = GetValue<bool>(primitive->GetAttr("paddings_contiguous"));
-  if (paddings_contiguous == false) {
+  if (!paddings_contiguous) {
     std::vector<int64_t> tmp = paddings_val;
     for (int64_t i = 0; i < paddings_size; ++i) {
       if (i % SizeToLong(kTwo) == 0) {
@@ -129,7 +145,7 @@ TypePtr PadV3GradInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  std::map<std::string, TypePtr> args = {{"x", input_args[0]->BuildType()}};
+  std::map<std::string, TypePtr> args = {{"x", input_args[0]->GetType()}};
   auto mode = GetValue<string>(prim->GetAttr("mode"));
   if (mode == kConstant) {
     return CheckAndConvertUtils::CheckTensorTypeSame(args,

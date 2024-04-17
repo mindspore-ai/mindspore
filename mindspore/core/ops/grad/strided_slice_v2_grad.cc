@@ -48,12 +48,12 @@ namespace ops {
 namespace {
 constexpr size_t num_eight = 8;
 void CheckSliceV2Type(const AbstractBasePtr &input_arg, const std::string &arg_name, const std::string &prim_name) {
-  if (input_arg->isa<abstract::AbstractTuple>()) {
-    auto temp_value = input_arg->BuildValue();
+  if (CheckAndConvertUtils::IsTuple(input_arg)) {
+    auto temp_value = input_arg->GetValue();
     (void)CheckAndConvertUtils::CheckTupleInt(arg_name, temp_value, prim_name);
     return;
-  } else if (input_arg->isa<abstract::AbstractTensor>()) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->BuildType(), {kInt64, kInt32}, prim_name);
+  } else if (CheckAndConvertUtils::IsTensor(input_arg)) {
+    (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->GetType(), {kInt64, kInt32}, prim_name);
     return;
   }
   MS_EXCEPTION(TypeError) << "For 'StridedSlice',  'begin', 'end' and 'stride' must be a tuple or Tensor.";
@@ -85,7 +85,7 @@ TypePtr StridedSliceV2GradInferType(const PrimitivePtr &primitive, const std::ve
   CheckSliceV2Type(input_args[begin_index], "begin", prim_name);
   CheckSliceV2Type(input_args[end_index], "end", prim_name);
   CheckSliceV2Type(input_args[stride_index], "stride", prim_name);
-  auto dy_type = input_args[dy_index]->BuildType();
+  auto dy_type = input_args[dy_index]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("dy", dy_type, valid_types, prim_name);
   return dy_type;
 }

@@ -1,0 +1,28 @@
+greater_equal:
+    description: |
+        Given two Tensors, compares them element-wise to check if each element in the first
+        Tensor is greater than or equal to the corresponding element in the second Tensor.
+
+        Refer to :func:`mindspore.ops.ge` for more details.
+
+        Args:
+            input (Union[Tensor, Number]): The first input is a number or
+                a bool or a tensor whose data type is number or bool.
+            other (Union[Tensor, Number]): The second input is a number
+                or a tensor whose data type is number or bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> other = Tensor(np.array([1, 1, 4]), mindspore.int32)
+            >>> output = ops.greater_equal(input, other)
+            >>> print(output)
+            [True True False]

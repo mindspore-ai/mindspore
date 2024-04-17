@@ -53,9 +53,9 @@ abstract::ShapePtr OrmqrInferShape(const PrimitivePtr &primitive, const std::vec
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto left = GetValue<bool>(primitive->GetAttr(kAttrLeft));
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto tau_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto other_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto tau_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto other_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (IsDynamicRank(x_shape) || IsDynamic(x_shape) || IsDynamicRank(tau_shape) || IsDynamic(tau_shape) ||
       IsDynamicRank(other_shape) || IsDynamic(other_shape)) {
     return std::make_shared<abstract::Shape>(other_shape);
@@ -81,7 +81,7 @@ abstract::ShapePtr OrmqrInferShape(const PrimitivePtr &primitive, const std::vec
   if (x_shape.size() > kInputNoBatch) {
     for (size_t i = 0; i < x_rank - kRowIndex; i++) {
       if (x_shape[i] != tau_shape[i]) {
-        MS_EXCEPTION(ValueError) << "For Ormqr, tau.shape[:-2] must be equal to x.shape[:-2], but x.shape[" << i
+        MS_EXCEPTION(ValueError) << "For Ormqr, tau.shape[:-1] must be equal to x.shape[:-2], but x.shape[" << i
                                  << "] is " << x_shape[i] << ", and tau.shape[" << i << "] is " << tau_shape[i] << ".";
       }
       if (x_shape[i] != other_shape[i]) {
@@ -124,9 +124,9 @@ TypePtr OrmqrInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   MS_EXCEPTION_IF_NULL(prim);
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
-  auto x_type = input_args[0]->BuildType();
-  auto tau_type = input_args[kInputIndex1]->BuildType();
-  auto other_type = input_args[kInputIndex2]->BuildType();
+  auto x_type = input_args[0]->GetType();
+  auto tau_type = input_args[kInputIndex1]->GetType();
+  auto other_type = input_args[kInputIndex2]->GetType();
   (void)types.emplace("x", x_type);
   (void)types.emplace("tau", tau_type);
   (void)types.emplace("other", other_type);

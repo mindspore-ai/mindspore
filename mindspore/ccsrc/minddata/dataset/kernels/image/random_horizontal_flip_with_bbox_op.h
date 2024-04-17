@@ -29,15 +29,9 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomHorizontalFlipWithBBoxOp : public TensorOp {
+class RandomHorizontalFlipWithBBoxOp : public RandomTensorOp {
  public:
-  // Default values, also used by python_bindings.cc
-  static const float kDefProbability;
-
-  explicit RandomHorizontalFlipWithBBoxOp(float probability = kDefProbability) : distribution_(probability) {
-    rnd_.seed(GetSeed());
-    is_deterministic_ = false;
-  }
+  explicit RandomHorizontalFlipWithBBoxOp(float probability) : distribution_(probability) {}
 
   ~RandomHorizontalFlipWithBBoxOp() override = default;
 
@@ -52,7 +46,6 @@ class RandomHorizontalFlipWithBBoxOp : public TensorOp {
   std::string Name() const override { return kRandomHorizontalFlipWithBBoxOp; }
 
  private:
-  std::mt19937 rnd_;
   std::bernoulli_distribution distribution_;
 };
 }  // namespace dataset

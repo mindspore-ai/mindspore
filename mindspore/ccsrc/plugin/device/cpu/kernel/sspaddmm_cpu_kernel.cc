@@ -46,32 +46,28 @@ void SspaddmmCPUKernelMod::CheckSparseIndices(const TypeId &indices_dtype, void 
   }
 }
 
-bool SspaddmmCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SspaddmmCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  output_values_dtype_ = inputs.at(kIndex1)->GetDtype();
-  input_indices_dtype_ = inputs.at(kIndex0)->GetDtype();
-  input_shape_dtype_ = inputs.at(kIndex2)->GetDtype();
-  mat1_indices_dtype_ = inputs.at(kIndex3)->GetDtype();
-  mat1_shape_dtype_ = inputs.at(kIndex5)->GetDtype();
-  alpha_dtype_ = inputs.at(kIndex7)->GetDtype();
-  beta_dtype_ = inputs.at(kIndex8)->GetDtype();
+  output_values_dtype_ = inputs.at(kIndex1)->dtype_id();
+  input_indices_dtype_ = inputs.at(kIndex0)->dtype_id();
+  input_shape_dtype_ = inputs.at(kIndex2)->dtype_id();
+  mat1_indices_dtype_ = inputs.at(kIndex3)->dtype_id();
+  mat1_shape_dtype_ = inputs.at(kIndex5)->dtype_id();
+  alpha_dtype_ = inputs.at(kIndex7)->dtype_id();
+  beta_dtype_ = inputs.at(kIndex8)->dtype_id();
   return true;
 }
 
-int SspaddmmCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SspaddmmCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_indices_shape = inputs.at(kIndex0)->GetShapeVector();
   auto mat1_indices_shape = inputs.at(kIndex3)->GetShapeVector();
   auto mat2_shape = inputs.at(kIndex6)->GetShapeVector();
-  auto y_indices_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  auto y_indices_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
   input_values_num_ = LongToSize(input_indices_shape[1]);
   mat1_values_num_ = LongToSize(mat1_indices_shape[1]);
   y_values_num_ = LongToSize(y_indices_shape[1]);
@@ -80,8 +76,8 @@ int SspaddmmCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   return KRET_OK;
 }
 
-bool SspaddmmCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                  const std::vector<AddressPtr> &outputs) {
+bool SspaddmmCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                  const std::vector<KernelTensor *> &outputs) {
   switch (output_values_dtype_) {
     case kNumberTypeUInt8: {
       LaunchKernel<uint8_t>(inputs, outputs);
@@ -119,16 +115,17 @@ bool SspaddmmCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
 }
 
 template <typename T>
-void SspaddmmCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto input_indices_addr = inputs[0]->addr;
+void SspaddmmCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto input_indices_addr = inputs[0]->device_ptr();
   auto input_values_addr = GetDeviceAddress<T>(inputs, 1);
-  auto input_shape_addr = inputs[kInputShapeIndex]->addr;
-  auto mat1_indices_addr = inputs[kMat1IndiceIndex]->addr;
+  auto input_shape_addr = inputs[kInputShapeIndex]->device_ptr();
+  auto mat1_indices_addr = inputs[kMat1IndiceIndex]->device_ptr();
   auto mat1_values_addr = GetDeviceAddress<T>(inputs, kMat1ValueIndex);
-  auto mat1_shape_addr = inputs[kMat1ShapeIndex]->addr;
+  auto mat1_shape_addr = inputs[kMat1ShapeIndex]->device_ptr();
   auto mat2_addr = GetDeviceAddress<T>(inputs, kMat2Index);
-  auto alpha_val_addr = inputs[kAlphaIndex]->addr;
-  auto beta_val_addr = inputs[kBetaIndex]->addr;
+  auto alpha_val_addr = inputs[kAlphaIndex]->device_ptr();
+  auto beta_val_addr = inputs[kBetaIndex]->device_ptr();
   auto y_indices_addr = GetDeviceAddress<int64_t>(outputs, 0);
   auto y_values_addr = GetDeviceAddress<T>(outputs, 1);
   auto y_shape_addr = GetDeviceAddress<int64_t>(outputs, kOutputShapeIndex);

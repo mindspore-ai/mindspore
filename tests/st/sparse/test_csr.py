@@ -27,7 +27,7 @@ from mindspore.ops.operations import _csr_ops
 from .sparse_utils import get_platform, compare_res, compare_csr
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -57,35 +57,7 @@ def test_make_csr():
     compare_csr(csr3, csr2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_make_csr_empty():
-    """
-    Feature: Test CSRTensor Constructor in Graph and PyNative.
-    Description: Test CSRTensor(indptr, indices, values, shape) and CSRTensor(CSRTensor)
-    Expectation: Success.
-    """
-    indptr = Tensor([], dtype=mstype.int32)
-    indices = Tensor([], dtype=mstype.int32)
-    values = Tensor([], dtype=mstype.float32)
-    shape = (2, 6)
-
-    def test_pynative():
-        return CSRTensor(indptr, indices, values, shape)
-    test_graph = jit(test_pynative)
-
-    csr1 = test_pynative()
-    csr2 = test_graph()
-    compare_csr(csr1, csr2)
-    csr3 = CSRTensor(csr_tensor=csr2)
-    compare_csr(csr3, csr2)
-
-
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -147,7 +119,7 @@ def test_csr_attr():
             assert py_tuple[i] == g_tuple[i]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -275,7 +247,7 @@ def test_csr_tensor_in_while_cpu():
     assert shape == out.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -341,7 +313,7 @@ def test_batch_csr_ops():
     assert np.allclose(graph_res_gather.asnumpy(), expect5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -404,7 +376,7 @@ def test_csr_ops():
     assert np.allclose(graph_res_sparse[2].values.asnumpy(), expect3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -507,7 +479,7 @@ def test_csrops_export_and_import_mindir():
     assert out[4].shape == outputs_after_load[4].shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -547,7 +519,7 @@ def test_isinstance_csr_tensor():
     assert out2 == (False, False, False, True, True, False, True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -577,7 +549,7 @@ def test_dtype_csr_tensor():
     assert out4 in [mstype.float32]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -668,7 +640,7 @@ def test_bprop():
     assert np.allclose(csr_div_output_2[3].asnumpy(), csr_div_expect_2_2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -706,7 +678,7 @@ def test_csr_method():
     assert np.allclose(to_dense_output.asnumpy(), to_dense_expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

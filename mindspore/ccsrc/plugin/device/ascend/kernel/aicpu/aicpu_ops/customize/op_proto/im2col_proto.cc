@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "inc/ops/transformation_ops.h"
+#include "mindspore/ccsrc/transform/graph_ir/custom_op_proto/cust_array_ops.h"
+#include "op_proto/inc/transformation_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
-#include "graph/common_error_codes.h"
 namespace ge {
+namespace {
 const std::string ATTR_NAME_DATA_SLICE = "_data_slice";
-
 static bool CheckListEmptyAndValue(const std::string &op_name, const std::vector<int64_t> &list,
                                    const std::string &attr_name) {
   if (list.size() < 1) {
@@ -38,11 +37,12 @@ static std::vector<int64_t> GetAttrValue(const Operator &op, const std::string &
   }
   return list;
 }
+}  // namespace
 
 // -----------------Im2col Op-------------------------
-IMPLEMT_VERIFIER(Im2col, Im2colVerify) {
+CUST_IMPLEMT_VERIFIER(Im2col, CustIm2colVerify) {
   std::vector<int64_t> ksize;
-  ksize = GetAttrValue(op, "ksizes");
+  op.GetAttr("ksizes", ksize);
   if (ksize.size() < 2) {
     OP_LOGE(TbeGetName(op).c_str(), "The ksizes dose not have enough elements(%lu)!", ksize.size());
     return GRAPH_FAILED;
@@ -79,7 +79,7 @@ IMPLEMT_VERIFIER(Im2col, Im2colVerify) {
   return GRAPH_SUCCESS;
 }
 
-IMPLEMT_COMMON_INFERFUNC(Im2colInferShape) {
+IMPLEMT_COMMON_INFERFUNC(CustIm2colInferShape) {
   OP_LOGI(TbeGetName(op).c_str(), "Enter op_proto inferfunction!");
 
   std::vector<int64_t> ksize;
@@ -96,12 +96,20 @@ IMPLEMT_COMMON_INFERFUNC(Im2colInferShape) {
   std::vector<int64_t> pad;
   pad = GetAttrValue(op, "pads");
 
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  GeTensorDescPtr desc_in_ptr = op_desc->MutableInputDesc("x");
-  GeTensorDescPtr desc_out_ptr = op_desc->MutableOutputDesc("y");
-  auto dtype = desc_in_ptr->GetDataType();
-  auto shape_in = desc_in_ptr->GetShape();
-  auto x_format = desc_in_ptr->GetOriginFormat();
+  TensorDesc desc_in = op.GetInputDesc("x");
+  TensorDesc desc_out = op.GetOutputDesc("y");
+  auto dtype = desc_in.GetDataType();
+  auto shape_in = desc_in.GetShape();
+  auto x_format = desc_in.GetOriginFormat();
+
+  if (IsUnknown(shape_in.GetDims())) {
+    std::vector<int64_t> out_dim{UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM};
+    desc_out.SetShape(ge::Shape(out_dim));
+    desc_out.SetDataType(dtype);
+    op.UpdateOutputDesc("y", desc_out);
+    return GRAPH_SUCCESS;
+  }
+
   if (x_format != FORMAT_NHWC && x_format != FORMAT_NCHW) {
     OP_LOGE(TbeGetName(op).c_str(), "Attr x_format only support NHWC, NCHW.");
     return GRAPH_FAILED;
@@ -184,19 +192,23 @@ IMPLEMT_COMMON_INFERFUNC(Im2colInferShape) {
     OP_LOGE(TbeGetName(op).c_str(), "The padding_mode only support VALID, SAME and CALCULATED.");
     return GRAPH_FAILED;
   }
-  out_c = in_c * filter_h * filter_w;
+
+  out_c = in_c;
+  out_w = out_h * out_w;
+  out_h = filter_h * filter_w;
 
   std::vector<int64_t> out_dim{in_n, out_h, out_w, out_c};
   if (x_format == FORMAT_NCHW) {
     out_dim = {in_n, out_c, out_h, out_w};
   }
 
-  desc_out_ptr->SetShape(ge::GeShape(out_dim));
-  desc_out_ptr->SetDataType(dtype);
+  desc_out.SetShape(ge::Shape(out_dim));
+  desc_out.SetDataType(dtype);
+  op.UpdateOutputDesc("y", desc_out);
   return GRAPH_SUCCESS;
 }
 
-COMMON_INFER_FUNC_REG(Im2col, Im2colInferShape);
-VERIFY_FUNC_REG(Im2col, Im2colVerify);
+CUST_COMMON_INFER_FUNC_REG(Im2col, CustIm2colInferShape);
+CUST_VERIFY_FUNC_REG(Im2col, CustIm2colVerify);
 // -----------------Im2col END-------------------------
 }  // namespace ge

@@ -26,14 +26,11 @@ namespace kernel {
 constexpr int kSortInputsNum = 1;
 constexpr int kSortOutputsNum = 2;
 
-bool SortCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool SortCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSortInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSortOutputsNum, kernel_name_);
 
-  auto kernel_ptr = std::make_shared<ops::Sort>(base_operator->GetPrim());
-  descending_ = static_cast<bool>(kernel_ptr->get_descending());
+  descending_ = GetValue<bool>(primitive_->GetAttr(ops::kDescending));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -44,8 +41,9 @@ bool SortCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool SortCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool SortCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << inputs.size()
                       << " input(s).";
@@ -54,19 +52,20 @@ bool SortCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 2, but got " << outputs.size()
                       << " output(s).";
   }
-  if (inputs[0]->size != axisIterator_.OuterSize() * axisIterator_.AxisSize() * axisIterator_.InnerSize() * sizeof(T)) {
+  if (inputs[0]->size() !=
+      axisIterator_.OuterSize() * axisIterator_.AxisSize() * axisIterator_.InnerSize() * sizeof(T)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the memory size of inputs error.";
   }
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto ids_addr = reinterpret_cast<size_t *>(workspace[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  auto indices = reinterpret_cast<int *>(outputs[1]->addr);
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto ids_addr = reinterpret_cast<size_t *>(workspace[0]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto indices = reinterpret_cast<int *>(outputs[1]->device_ptr());
 
-  if (outputs[0]->size != inputs[0]->size) {
+  if (outputs[0]->size() != inputs[0]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the memory size of the first output must be equal to "
                          "the memory size of input, but got the memory size of the first output "
-                      << outputs[0]->size << " and the memory size of input " << inputs[0]->size;
+                      << outputs[0]->size() << " and the memory size of input " << inputs[0]->size();
   }
 
   std::function<bool(size_t, size_t)> comparator;
@@ -102,16 +101,13 @@ bool SortCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   return true;
 }
 
-int SortCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SortCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[0]->GetShapeVector();
-  auto kernel_ptr = std::make_shared<ops::Sort>(base_operator->GetPrim());
-  auto axis = static_cast<int64_t>(kernel_ptr->get_axis());
+  auto axis = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
   if (axis_t >= input_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be less than the dimension of input tensor "

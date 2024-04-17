@@ -125,6 +125,7 @@ class DataTypeTransfer {
     FROM_FLOAT16_TO_FLOAT,
     FROM_FLOAT_TO_INT32,
     FROM_FLOAT_TO_FLOAT16,
+    FROM_FLOAT_TO_BFLOAT16,
     FROM_FLOAT32_TO_FLOAT64,
     FROM_FLOAT64_TO_FLOAT32
   };
@@ -132,6 +133,7 @@ class DataTypeTransfer {
     {std::pair<TypeId, TypeId>(kNumberTypeFloat64, kNumberTypeFloat32), DataTypeTransMode::FROM_FLOAT64_TO_FLOAT32},
     {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeFloat64), DataTypeTransMode::FROM_FLOAT32_TO_FLOAT64},
     {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeFloat16), DataTypeTransMode::FROM_FLOAT_TO_FLOAT16},
+    {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeBFloat16), DataTypeTransMode::FROM_FLOAT_TO_BFLOAT16},
     {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeInt32), DataTypeTransMode::FROM_FLOAT_TO_INT32},
     {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeFloat32), DataTypeTransMode::FROM_FLOAT16_TO_FLOAT},
     {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeInt32), DataTypeTransMode::FROM_FLOAT16_TO_INT32},

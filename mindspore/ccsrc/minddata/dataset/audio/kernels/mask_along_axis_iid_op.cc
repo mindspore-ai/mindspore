@@ -52,7 +52,7 @@ Status MaskAlongAxisIIDOp::Compute(const std::shared_ptr<Tensor> &input, std::sh
   } else {
     input_tensor = input;
   }
-  return RandomMaskAlongAxis(input_tensor, output, mask_param_, mask_value_, axis_, rnd_);
+  return RandomMaskAlongAxis(input_tensor, output, mask_param_, mask_value_, axis_, &random_generator_);
 }
 
 Status MaskAlongAxisIIDOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {

@@ -19,12 +19,9 @@
 
 namespace mindspore {
 namespace kernel {
-bool BincountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool BincountCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 3;
   constexpr size_t output_num = 1;
-  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -33,30 +30,29 @@ bool BincountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  dt_arr_ = inputs[kIndex0]->GetDtype();
-  dt_weights_ = inputs[kIndex2]->GetDtype();
+  dt_arr_ = inputs[kIndex0]->dtype_id();
+  dt_weights_ = inputs[kIndex2]->dtype_id();
   return true;
 }
 
-int BincountCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int BincountCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_arr_sizes_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_size_sizes_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  input_weights_sizes_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
-  output_sizes_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_arr_sizes_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_size_sizes_ = inputs[kIndex1]->GetDeviceShapeVector();
+  input_weights_sizes_ = inputs[kIndex2]->GetDeviceShapeVector();
+  output_sizes_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
 template <typename T_in, typename T_out>
-void BincountTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                  const std::vector<AddressPtr> &outputs, const std::vector<int64_t> &input_arr_sizes, int32_t num_bins,
-                  const std::vector<int64_t> &input_weights_sizes, const std::vector<int64_t> &) {
-  auto bin_array = static_cast<T_in *>(inputs[0]->addr);
-  auto output_data = static_cast<T_out *>(outputs[0]->addr);
+void BincountTask(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                  const std::vector<KernelTensor *> &outputs, const std::vector<int64_t> &input_arr_sizes,
+                  int32_t num_bins, const std::vector<int64_t> &input_weights_sizes, const std::vector<int64_t> &) {
+  auto bin_array = static_cast<T_in *>(inputs[0]->device_ptr());
+  auto output_data = static_cast<T_out *>(outputs[0]->device_ptr());
   const size_t data_num = SizeOf(input_arr_sizes);
   for (int32_t i = 0; i < num_bins; i++) {
     output_data[i] = 0;
@@ -69,7 +65,7 @@ void BincountTask(const std::vector<AddressPtr> &inputs, const std::vector<Addre
       }
     }
   } else {
-    auto bin_weights = static_cast<T_out *>(inputs[2]->addr);
+    auto bin_weights = static_cast<T_out *>(inputs[2]->device_ptr());
     for (size_t i = 0; i < data_num; i++) {
       T_in value = bin_array[i];
       if (value < num_bins) {
@@ -86,27 +82,28 @@ void BincountCpuKernelMod::SetMap() {
   calls_[kNumberTypeInt32][kNumberTypeFloat64] = BincountTask<int32_t, double>;
 }
 
-bool BincountCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                                  const std::vector<AddressPtr> &outputs) {
+bool BincountCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspaces,
+                                  const std::vector<KernelTensor *> &outputs) {
   const size_t array_num = SizeOf(input_arr_sizes_);
   const size_t weights_num = SizeOf(input_weights_sizes_);
   if (weights_num != 0 && array_num != weights_num) {
     MS_LOG(EXCEPTION) << "For Bincount, the size of input_weights " << input_weights_sizes_
                       << " need be the same with input_arr " << input_arr_sizes_;
   }
-  MS_EXCEPTION_IF_NULL(inputs[0]->addr);
-  MS_EXCEPTION_IF_NULL(inputs[1]->addr);
+  MS_EXCEPTION_IF_NULL(inputs[0]->device_ptr());
+  MS_EXCEPTION_IF_NULL(inputs[1]->device_ptr());
   if (input_size_sizes_.size() != 0) {
     MS_LOG(EXCEPTION) << "For Bincount, input_size should be a scalar, but got rank " << input_size_sizes_.size();
   }
-  auto num_bins_ptr = static_cast<int32_t *>(inputs[1]->addr);
+  auto num_bins_ptr = static_cast<int32_t *>(inputs[1]->device_ptr());
   if (*num_bins_ptr < 0) {
     MS_LOG(EXCEPTION) << "For Bincount, input size should be nonnegative, but got" << *num_bins_ptr;
   }
   int32_t num_bins = *num_bins_ptr;
 
   // check input_arr nonnegative
-  auto bin_array = static_cast<int32_t *>(inputs[0]->addr);
+  auto bin_array = static_cast<int32_t *>(inputs[0]->device_ptr());
   for (size_t i = 0; i < array_num; i++) {
     if (bin_array[i] < 0) {
       MS_LOG(EXCEPTION) << "For Bincount, input array should be nonnegative, but got " << bin_array[i];

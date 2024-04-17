@@ -18,7 +18,7 @@ mindspore.nn.ELU
 
     ELU函数图：
 
-    .. image:: images/ELU.png
+    .. image:: ../images/ELU.png
         :align: center
 
     参数：

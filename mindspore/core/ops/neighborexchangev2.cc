@@ -158,8 +158,7 @@ void NeighborExchangeV2Check(const PrimitivePtr &primitive, const std::vector<Ab
   }
 
   // check if send_lens > input_lens
-  std::vector<int64_t> input_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  std::vector<int64_t> input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   constexpr size_t kInputSize = 4;
   if (input_shape.size() != kInputSize) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', input shape size must be 4, but got " << input_shape.size()
@@ -217,8 +216,7 @@ abstract::BaseShapePtr NeighborExchangeV2InferShape(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(recv_lens_value);
   std::vector<int64_t> recv_lens_v = GetValue<std::vector<int64_t>>(recv_lens_value);
 
-  std::vector<int64_t> input_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  std::vector<int64_t> input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (recv_rank_ids_v[kNeighborExchangeV2Idx0] != kNeighborExchangeV2InvalidIds) {
     input_shape[kNeighborExchangeV2Idx2] += recv_lens_v[kNeighborExchangeV2Idx0];
   }
@@ -241,7 +239,7 @@ abstract::BaseShapePtr NeighborExchangeV2InferShape(const PrimitivePtr &primitiv
 TypePtr NeighborExchangeV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   // recv type
-  TypePtr recv_type = input_args[0]->BuildType();
+  TypePtr recv_type = input_args[0]->GetType();
   if (recv_type == nullptr) {
     return std::make_shared<TypeNone>();
   }

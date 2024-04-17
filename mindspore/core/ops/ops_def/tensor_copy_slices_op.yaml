@@ -1,0 +1,21 @@
+#operator tensor_copy_slices
+tensor_copy_slices:
+    args:
+        x:
+            dtype: tensor
+        value:
+            dtype: tensor
+        begin:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        end:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        strides:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True

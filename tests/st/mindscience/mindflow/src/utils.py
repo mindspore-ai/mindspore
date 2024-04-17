@@ -15,7 +15,10 @@
 """
 loss functions.
 """
-from mindspore import nn
+
+import numpy as np
+from mindspore import nn, Tensor
+from mindspore import dtype as mstype
 
 
 _loss_metric = {
@@ -66,3 +69,36 @@ def get_loss_metric(name):
     if name not in _loss_metric:
         raise ValueError("Unknown loss function type: {}".format(name))
     return _loss_metric.get(name)()
+
+
+def _calculate_error(label, prediction):
+    error = label - prediction
+    l2_error = np.sqrt(
+        np.sum(np.square(error[..., 0]))) / np.sqrt(np.sum(np.square(label[..., 0])))
+
+    return l2_error
+
+
+def _get_prediction(model, inputs, label_shape, batch_size):
+    prediction = np.zeros(label_shape)
+    prediction = prediction.reshape((-1, label_shape[1]))
+    inputs = inputs.reshape((-1, inputs.shape[1]))
+
+    index = 0
+    while index < inputs.shape[0]:
+        index_end = min(index + batch_size, inputs.shape[0])
+        test_batch = Tensor(inputs[index: index_end, :], mstype.float32)
+        prediction[index: index_end, :] = model(test_batch).asnumpy()
+        index = index_end
+
+    prediction = prediction.reshape(label_shape)
+    prediction = prediction.reshape((-1, label_shape[1]))
+    return prediction
+
+
+def calculate_l2_error(model, inputs, label, batch_size):
+    label_shape = label.shape
+    prediction = _get_prediction(model, inputs, label_shape, batch_size)
+    label = label.reshape((-1, label_shape[1]))
+    l2_error = _calculate_error(label, prediction)
+    return l2_error

@@ -43,30 +43,25 @@ constexpr int64_t kInputsNum = 2;
 constexpr int64_t kOutputsNum = 1;
 }  // namespace
 
-bool MvlgammaGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MvlgammaGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   // get kernel attr
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MvlgammaGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  attr_p_ = kernel_ptr->get_p();
+  attr_p_ = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
   if (attr_p_ < 1) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", the attr 'p' has to be greater than or equal to 1.";
     return false;
   }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int MvlgammaGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int MvlgammaGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   input_tensor_size_ = static_cast<int64_t>(SizeOf(input_shape_));
   return KRET_OK;
 }
@@ -137,12 +132,12 @@ T MvlgammaGradCpuKernelMod::MvlgammaGradSingle(const T &y_grad, const T &x, cons
 }
 
 template <typename T>
-bool MvlgammaGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_y_grad = static_cast<T *>(inputs[0]->addr);
-  auto input_x = static_cast<T *>(inputs[1]->addr);
-  auto output_x_grad = static_cast<T *>(outputs[0]->addr);
+bool MvlgammaGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_y_grad = static_cast<T *>(inputs[0]->device_ptr());
+  auto input_x = static_cast<T *>(inputs[1]->device_ptr());
+  auto output_x_grad = static_cast<T *>(outputs[0]->device_ptr());
 
   for (int64_t i = 0; i < input_tensor_size_; i++) {
     *(output_x_grad + i) = MvlgammaGradSingle<T>(*(input_y_grad + i), *(input_x + i), attr_p_);

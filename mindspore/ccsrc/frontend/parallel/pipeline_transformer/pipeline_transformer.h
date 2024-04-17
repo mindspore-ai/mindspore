@@ -62,9 +62,9 @@ class PipelineTransformer {
   void ElimGraphStage();
   void ModifyParameterList();
 
-  void CreateForwardGroup();
   AnfNodePtr GetArgumentsByParameter(const AnfNodePtr &parameter);
   void RemoveMonadNode();
+  bool HasNoUpdateParameter();
   AnfNodePtr CreateTupleZeroTensor(const AnfNodePtr &node, size_t index);
   std::vector<AnfNodePtr> GetLoadNodeByParam(const AnfNodePtr &param) const;
   AnfNodePtr ActualOp(const AnfNodePtr &node);
@@ -96,7 +96,8 @@ class PipelineTransformer {
   void RedundancyNode(const AnfNodePtr &node, mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> *make_tuple_map);
   bool IsRedundancyParameter(const AnfNodePtr &parameter, const std::vector<AnfNodePtr> &non_cloned_parameters);
   void ElimParameter();
-  tensor::TensorPtr CreateZeroseOutput(const AnfNodePtr &node, size_t index);
+  void FreezeGradient();
+  AnfNodePtr CreateZeroseOutput(const AnfNodePtr &node, size_t index);
   AnfNodePtr GetZeroOutputs(const FuncGraphPtr &graph);
 
   std::pair<OperatorInfoPtr, int> GetOpInfoPair(const AnfNodePtr &node, const AnfNodePtr &graph_param,
@@ -117,6 +118,8 @@ class PipelineTransformer {
   bool GetStageByArgument(const CNodePtr &node, size_t index, const std::vector<AnfNodePtr> &parameters,
                           const NodeUsersMap &node_users_map, std::set<int64_t> *const parameter_stage);
   size_t GetBatchAxisForInput(const AnfNodeIndexSet &input_node_users) const;
+  void UpdateParameterSharedInfo(const AnfNodePtr &node, const AnfNodePtr &communcate_op, bool is_send);
+  void FillParameterStage(const CNodePtr &node, std::set<int64_t> *const parameter_stage);
   FuncGraphManagerPtr manager_;
   int64_t stage_;
   FuncGraphPtr root_;
@@ -129,11 +132,11 @@ class PipelineTransformer {
   ValueListPtr shape_;
   AnfNodePtr virtual_param_;
   int64_t micro_size_ = 0;
-  std::vector<std::string> group_ = {};
   mindspore::HashMap<AnfNodePtr, std::set<int64_t>> parameter_color_map_ = {};
   bool is_train_{true};
   std::vector<AnfNodePtr> shared_cell_users_;
   bool enable_share_cell_ = false;
+  std::string world_group_;
 };
 
 bool IsInWhiteList(const CNodePtr &cnode);
@@ -152,6 +155,7 @@ class NodeStageInfo {
  private:
   int64_t stage_;
 };
+bool IsolatedNodeAttach(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer);
 }  // namespace parallel
 }  // namespace mindspore
 

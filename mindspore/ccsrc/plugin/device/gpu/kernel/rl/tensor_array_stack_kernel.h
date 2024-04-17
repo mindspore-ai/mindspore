@@ -25,19 +25,21 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorArrayStackKernelMod : public DeprecatedNativeGpuKernelMod {
+class TensorArrayStackKernelMod : public NativeGpuKernelMod {
  public:
   TensorArrayStackKernelMod();
   ~TensorArrayStackKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
-  void ResetResource() noexcept override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
-  void InitSizeLists() override;
-  void SyncOutputShape() override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+  void ResetResource() noexcept;
 
  private:
   int64_t handle_;

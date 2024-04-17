@@ -16,38 +16,73 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnormgrad_to_bninfergrad.h"
 
 #include <memory>
-#include <vector>
 #include <string>
-#include "ops/sequence_ops.h"
-#include "ops/nn_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "ir/primitive.h"
-#include "include/common/utils/utils.h"
+#include <vector>
 #include "abstract/abstract_value.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "ir/primitive.h"
+#include "mindapi/base/types.h"
+#include "ops/nn_ops.h"
+#include "ops/op_utils.h"
+#include "ops/sequence_ops.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kIdxGrads = 1;
+constexpr size_t kIdxScale = 3;
+constexpr size_t kIdxVariance = 5;
+constexpr size_t kIdxIsTraining = 7;
+constexpr size_t kIdxEpsilon = 8;
+
+template <typename T>
+std::optional<T> GetScalarAnfNodeValue(const AnfNodePtr &anf_node) {
+  if (!anf_node->isa<ValueNode>()) {
+    return std::nullopt;
+  }
+  auto value_node = anf_node->cast<ValueNodePtr>();
+  auto value_opt = mindspore::ops::GetScalarValue<T>(value_node->value());
+  if (!value_opt.has_value()) {
+    return std::nullopt;
+  }
+  return value_opt.value();
+}
+
 CNodePtr CreateBNInferGrad(const FuncGraphPtr &graph, const CNodePtr &batchnormgrad, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(batchnormgrad);
   MS_EXCEPTION_IF_NULL(node);
   auto prim = std::make_shared<Primitive>(kBNInferGradOpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
-  constexpr size_t kDBatchMean = 1;
-  constexpr size_t kInputX = 3;
-  constexpr size_t kBatchStd = 5;
-  inputs.push_back(batchnormgrad->input(kDBatchMean));
-  inputs.push_back(batchnormgrad->input(kInputX));
-  inputs.push_back(batchnormgrad->input(kBatchStd));
+  inputs.push_back(batchnormgrad->input(kIdxGrads));
+  inputs.push_back(batchnormgrad->input(kIdxScale));
+  inputs.push_back(batchnormgrad->input(kIdxVariance));
+  inputs.push_back(batchnormgrad->input(kIdxEpsilon));
   auto new_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(batchnormgrad->scope());
   new_node->set_abstract(node->abstract());
-  common::AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnormgrad, new_node);
-  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnormgrad, new_node);
+
+  auto is_training_opt = GetScalarAnfNodeValue<bool>(batchnormgrad->input(kIdxIsTraining));
+  if (is_training_opt.has_value()) {
+    auto is_training = is_training_opt.value();
+    common::AnfAlgo::SetNodeAttr(kAttrIsTraining, MakeValue(is_training), new_node);
+  } else {
+    MS_LOG(ERROR) << "For BNInferGrad pass, failed to get attr is_training.";
+  }
+
+  auto epsilon_opt = GetScalarAnfNodeValue<pyfloat>(batchnormgrad->input(kIdxEpsilon));
+  float epsilon{1e-5};
+  if (epsilon_opt.has_value()) {
+    epsilon = epsilon_opt.has_value() ? epsilon_opt.value() : 1e-5;
+  } else {
+    MS_LOG(ERROR) << "For BNInferGrad pass, failed to get attr epsilon, use default epsilon: 1e-5.";
+  }
+  common::AnfAlgo::SetNodeAttr(kAttrEpsilon, MakeValue(epsilon), new_node);
+
   return new_node;
 }
 
@@ -73,10 +108,13 @@ bool CheckBatchNormGrad(const FuncGraphPtr &graph, const CNodePtr &batchnormgrad
     MS_LOG(DEBUG) << "BatchNormGrad's input number less than " << kBnInputTensorNum;
     return false;
   }
-  if (!common::AnfAlgo::HasNodeAttr(kAttrIsTraining, batchnormgrad)) {
+
+  auto is_training_opt = GetScalarAnfNodeValue<bool>(batchnormgrad->input(kIdxIsTraining));
+  if (!is_training_opt.has_value()) {
     return false;
   }
-  auto is_training = common::AnfAlgo::GetNodeAttr<bool>(batchnormgrad, kAttrIsTraining);
+
+  auto is_training = is_training_opt.value();
   if (is_training) {
     MS_LOG(DEBUG) << "Attr 'is_training' is true, no need do fusion";
     return false;
@@ -86,6 +124,7 @@ bool CheckBatchNormGrad(const FuncGraphPtr &graph, const CNodePtr &batchnormgrad
     MS_LOG(DEBUG) << "Only the 0th output of BatchNormGrad is used, then do fusion";
     return false;
   }
+
   return true;
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_DATA_TRANSFORMS_IR_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_DATA_TRANSFORMS_IR_H_
 
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/engine/data_schema.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 
 namespace mindspore {
@@ -37,13 +38,14 @@ constexpr char kFillOperation[] = "Fill";
 constexpr char kMaskOperation[] = "Mask";
 constexpr char kOneHotOperation[] = "OneHot";
 constexpr char kPadEndOperation[] = "PadEnd";
+constexpr char kParseExampleOperation[] = "ParseExample";
+constexpr char kPluginOperation[] = "Plugin";
 constexpr char kPreBuiltOperation[] = "PreBuilt";
-constexpr char kSliceOperation[] = "Slice";
 constexpr char kRandomApplyOperation[] = "RandomApply";
 constexpr char kRandomChoiceOperation[] = "RandomChoice";
+constexpr char kSliceOperation[] = "Slice";
 constexpr char kTypeCastOperation[] = "TypeCast";
 constexpr char kUniqueOperation[] = "Unique";
-constexpr char kPluginOperation[] = "Plugin";
 /* ####################################### Derived TensorOperation classes ################################# */
 
 class ComposeOperation : public TensorOperation {
@@ -61,6 +63,31 @@ class ComposeOperation : public TensorOperation {
   Status to_json(nlohmann::json *out_json) override;
 
   static Status from_json(const nlohmann::json &op_params, std::shared_ptr<TensorOperation> *operation);
+
+  // Get the compose type: kInvalid / kAscend910B / kCpu.
+  virtual MapTargetDevice Type() {
+    bool have_dvpp = false;
+    bool have_cpu = false;
+    for (auto &item : transforms_) {
+      if (item->Type() == MapTargetDevice::kAscend910B) {
+        have_dvpp = true;
+      } else if (item->Type() == MapTargetDevice::kCpu) {
+        have_cpu = true;
+      } else {
+        MS_LOG(ERROR) << "The transform: " << item->Name() << " is not Ascend or Cpu.";
+        return MapTargetDevice::kInvalid;
+      }
+    }
+
+    if (have_dvpp && have_cpu) {
+      MS_LOG(ERROR) << "Currently, it is not supported to mix DVPP transforms with CPU transforms in Compose.";
+      return MapTargetDevice::kInvalid;
+    } else if (have_dvpp) {
+      return MapTargetDevice::kAscend910B;
+    } else {
+      return MapTargetDevice::kCpu;
+    }
+  }
 
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
@@ -185,6 +212,22 @@ class PadEndOperation : public TensorOperation {
  private:
   TensorShape pad_shape_;
   std::shared_ptr<Tensor> pad_value_;
+};
+
+class ParseExampleOperation : public TensorOperation {
+ public:
+  ParseExampleOperation(DataSchema schema, std::vector<std::string> column_list, bool parallel_parse);
+
+  ~ParseExampleOperation() override = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  std::string Name() const override { return kParseExampleOperation; }
+
+ private:
+  DataSchema schema_;
+  std::vector<std::string> column_list_;
+  bool parallel_parse_;
 };
 
 class PreBuiltOperation : public TensorOperation {

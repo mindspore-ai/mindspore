@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_IS_INF_H_
 #define AICPU_KERNELS_NORMALIZED_IS_INF_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class IsInfCpuKernel : public CpuKernel {
@@ -26,10 +26,10 @@ class IsInfCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t IsInfCheck(const CpuKernelContext &ctx) const;
+  uint32_t IsInfCheck(CpuKernelContext &ctx) const;
 
   template <typename T>
-  uint32_t IsInfCompute(const CpuKernelContext &ctx);
+  uint32_t IsInfCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

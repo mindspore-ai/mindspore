@@ -1,0 +1,12 @@
+#operator rsqrt_grad
+rsqrt_grad:
+  args:
+    y_backprop:
+      dtype: tensor
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

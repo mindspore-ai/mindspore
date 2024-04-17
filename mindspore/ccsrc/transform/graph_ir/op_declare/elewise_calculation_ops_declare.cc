@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "ops/framework_ops.h"
 #include "ops/math_ops.h"
 #include "ops/nn_optimizer_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore::transform {
 INPUT_MAP(ClipByValue) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(clip_value_min)}, {3, INPUT_DESC(clip_value_max)}};
@@ -46,9 +47,8 @@ ATTR_MAP(Add) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Add) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Add, prim::kPrimAdd->name(),
               std::make_shared<OpAdapterDesc>(
-                std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}})),
-                std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}}))))
-REG_ADPT_DESC(ScalarAdd, prim::kPrimScalarAdd->name(), ADPT_DESC(Add))
+                std::make_shared<OpAdapter<Add>>("Add", ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}})),
+                std::make_shared<OpAdapter<Add>>("Add", ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}}))))
 
 // AddV2
 INPUT_MAP(AddV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -59,7 +59,7 @@ REG_ADPT_DESC(AddV2, prim::kPrimAddV2->name(), ADPT_DESC(AddV2))
 // AccumulateNV2
 INPUT_MAP(AccumulateNV2) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(AccumulateNV2) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(AccumulateNV2) = {{"n", ATTR_DESC(N, AnyTraits<int64_t>())}};
+ATTR_MAP(AccumulateNV2) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
 OUTPUT_MAP(AccumulateNV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AccumulateNV2, kNameAccumulateNV2, ADPT_DESC(AccumulateNV2))
 
@@ -179,6 +179,12 @@ ATTR_MAP(Sin) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Sin) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Sin, kNameSin, ADPT_DESC(Sin))
 
+// Sinc
+CUST_INPUT_MAP(Sinc) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Sinc) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Sinc) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Sinc, prim::kPrimSinc->name(), CUST_ADPT_DESC(Sinc));
+
 // Sinh
 INPUT_MAP(Sinh) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Sinh) = EMPTY_ATTR_MAP;
@@ -265,9 +271,10 @@ OUTPUT_MAP(Expm1) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Expm1, kNameExpm1, ADPT_DESC(Expm1))
 
 // BiasAdd
-INPUT_MAP(BiasAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(bias)}};
-ATTR_MAP(BiasAdd) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
-OUTPUT_MAP(BiasAdd) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(BiasAdd) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(bias)}};
+ATTR_MAP(BiasAdd) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(BiasAdd) = {{kIndex3, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
+OUTPUT_MAP(BiasAdd) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BiasAdd, kNameBiasAdd, ADPT_DESC(BiasAdd))
 
 // ZerosLike
@@ -284,8 +291,8 @@ REG_ADPT_DESC(OnesLike, kNameOnesLike, ADPT_DESC(OnesLike))
 
 // ArgMax
 CUST_INPUT_MAP(ArgMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
-CUST_ATTR_INPUT_MAP(ArgMax) = {{"axis", "dimension"}};
-CUST_ATTR_MAP(ArgMax) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+CUST_ATTR_MAP(ArgMax) = {};
+CUST_INPUT_ATTR_MAP(ArgMax) = {{3, ATTR_DESC(dtype, AnyTraits<GEType>())}};
 CUST_OUTPUT_MAP(ArgMax) = {{0, OUTPUT_DESC(y)}};
 
 // ArgMaxD
@@ -309,15 +316,17 @@ REG_ADPT_DESC(ArgMax, kNameArgmax, CUST_ADPT_DESC(ArgMax));
 
 // ArgMaxWithValue
 INPUT_MAP(ArgMaxWithValue) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMaxWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
-                             {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ArgMaxWithValue) = {{kIndex2, ATTR_DESC(dimension, AnyTraits<int64_t>())},
+                                   {kIndex3, ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+ATTR_MAP(ArgMaxWithValue) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ArgMaxWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(ArgMaxWithValue, kNameArgMaxWithValue, ADPT_DESC(ArgMaxWithValue))
 
 // ArgMinWithValue
 INPUT_MAP(ArgMinWithValue) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMinWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
-                             {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ArgMinWithValue) = {{kIndex2, ATTR_DESC(dimension, AnyTraits<int64_t>())},
+                                   {kIndex3, ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+ATTR_MAP(ArgMinWithValue) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ArgMinWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(ArgMinWithValue, kNameArgMinWithValue, ADPT_DESC(ArgMinWithValue))
 
@@ -384,7 +393,7 @@ REG_ADPT_DESC(ReciprocalGrad, kNameReciprocalGrad, ADPT_DESC(ReciprocalGrad))
 // AddN
 INPUT_MAP(AddN) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(AddN) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(AddN) = {{"n", ATTR_DESC(N, AnyTraits<int64_t>())}};
+ATTR_MAP(AddN) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
 OUTPUT_MAP(AddN) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AddN, kNameAddN, ADPT_DESC(AddN))
 
@@ -408,11 +417,10 @@ REG_ADPT_DESC(RealDiv, kNameRealDiv, ADPT_DESC(RealDiv))
 
 // Cast
 INPUT_MAP(Cast) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(Cast) = {{2, ATTR_DESC(dst_type, AnyTraits<GEType>())}};
-ATTR_MAP(Cast) = {{"dst_type", ATTR_DESC(dst_type, AnyTraits<GEType>())}};
+INPUT_ATTR_MAP(Cast) = {{2, ATTR_DESC(dst_type, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
+ATTR_MAP(Cast) = {{"dst_type", ATTR_DESC(dst_type, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
 OUTPUT_MAP(Cast) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Cast, prim::kPrimCast->name(), ADPT_DESC(Cast))
-REG_ADPT_DESC(ScalarCast, prim::kPrimScalarCast->name(), ADPT_DESC(Cast))
 
 // Reciprocal
 INPUT_MAP(Reciprocal) = {{1, INPUT_DESC(x)}};
@@ -488,16 +496,17 @@ OUTPUT_MAP(Minimum) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Minimum, prim::kPrimMinimum->name(), ADPT_DESC(Minimum))
 
 // MaximumGrad
-INPUT_MAP(MaximumGrad) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(grads)}};
-ATTR_MAP(MaximumGrad) = {{"grad_x", ATTR_DESC(grad_x, AnyTraits<bool>())},
-                         {"grad_y", ATTR_DESC(grad_y, AnyTraits<bool>())}};
-OUTPUT_MAP(MaximumGrad) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
+INPUT_MAP(MaximumGrad) = {{kIndex1, INPUT_DESC(x1)}, {kIndex2, INPUT_DESC(x2)}, {kIndex3, INPUT_DESC(grads)}};
+ATTR_MAP(MaximumGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(MaximumGrad) = {{kIndex4, ATTR_DESC(grad_x, AnyTraits<bool>())},
+                               {kIndex5, ATTR_DESC(grad_y, AnyTraits<bool>())}};
+OUTPUT_MAP(MaximumGrad) = {{kIndex0, OUTPUT_DESC(y1)}, {kIndex1, OUTPUT_DESC(y2)}};
 REG_ADPT_DESC(MaximumGrad, prim::kPrimMaximumGrad->name(), ADPT_DESC(MaximumGrad))
 
 // MinimumGrad
 INPUT_MAP(MinimumGrad) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(grads)}};
-ATTR_MAP(MinimumGrad) = {{"grad_x", ATTR_DESC(grad_x, AnyTraits<bool>())},
-                         {"grad_y", ATTR_DESC(grad_y, AnyTraits<bool>())}};
+ATTR_MAP(MinimumGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(MinimumGrad) = {{4, ATTR_DESC(grad_x, AnyTraits<bool>())}, {5, ATTR_DESC(grad_y, AnyTraits<bool>())}};
 OUTPUT_MAP(MinimumGrad) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
 REG_ADPT_DESC(MinimumGrad, prim::kPrimMinimumGrad->name(), ADPT_DESC(MinimumGrad))
 
@@ -649,7 +658,7 @@ REG_ADPT_DESC(LambApplyWeightAssign, kNameLambApplyWeightAssign, ADPT_DESC(LambA
 // Eltwise
 INPUT_MAP(Eltwise) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(Eltwise) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(Eltwise) = {{"n", ATTR_DESC(N, AnyTraits<int64_t>())},
+ATTR_MAP(Eltwise) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)},
                      {"mode", ATTR_DESC(mode, AnyTraits<int64_t>())},
                      {"coeff", ATTR_DESC(coeff, AnyTraits<std::vector<float>>(), AnyTraits<float>())}};
 OUTPUT_MAP(Eltwise) = {{0, OUTPUT_DESC(y)}};
@@ -676,8 +685,8 @@ REG_ADPT_DESC(Erfinv, prim::kPrimErfinv->name(), ADPT_DESC(Erfinv))
 
 // ArgMin
 INPUT_MAP(ArgMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
-ATTR_INPUT_MAP(ArgMin) = {{"axis", "dimension"}};
-ATTR_MAP(ArgMin) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+ATTR_MAP(ArgMin) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(ArgMin) = {{3, ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMin) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ArgMin, kArgMinOpName, ADPT_DESC(ArgMin))
 REG_ADPT_DESC(ArgMinD, kArgMinDOpName, ADPT_DESC(ArgMin))
@@ -734,4 +743,44 @@ INPUT_MAP(RightShift) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}};
 ATTR_MAP(RightShift) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(RightShift) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(RightShift, kNameRightShift, ADPT_DESC(RightShift))
+
+// NanToNum
+INPUT_MAP(NanToNum) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(NanToNum) = {{2, ATTR_DESC(nan, AnyTraits<float>())},
+                            {3, ATTR_DESC(posinf, AnyTraits<float>())},
+                            {4, ATTR_DESC(neginf, AnyTraits<float>())}};
+ATTR_MAP(NanToNum) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(NanToNum) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(NanToNum, kNameNanToNum, ADPT_DESC(NanToNum))
+
+// AdamApplyOneWithDecayAssign
+INPUT_MAP(AdamApplyOneWithDecayAssign) = {{1, INPUT_DESC(input0)},  {2, INPUT_DESC(input1)}, {3, INPUT_DESC(input2)},
+                                          {4, INPUT_DESC(input3)},  {5, INPUT_DESC(input4)}, {6, INPUT_DESC(mul0_x)},
+                                          {7, INPUT_DESC(mul1_x)},  {8, INPUT_DESC(mul2_x)}, {9, INPUT_DESC(mul3_x)},
+                                          {10, INPUT_DESC(mul4_x)}, {11, INPUT_DESC(add2_y)}};
+ATTR_MAP(AdamApplyOneWithDecayAssign) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AdamApplyOneWithDecayAssign) = {
+  {0, OUTPUT_DESC(input1)}, {1, OUTPUT_DESC(input2)}, {2, OUTPUT_DESC(input3)}};
+REG_ADPT_DESC(AdamApplyOneWithDecayAssign, kAdamApplyOneWithDecayAssignOpName, ADPT_DESC(AdamApplyOneWithDecayAssign))
+
+// AdamApplyOneWithDecay
+INPUT_MAP(AdamApplyOneWithDecay) = {{1, INPUT_DESC(input0)},  {2, INPUT_DESC(input1)}, {3, INPUT_DESC(input2)},
+                                    {4, INPUT_DESC(input3)},  {5, INPUT_DESC(input4)}, {6, INPUT_DESC(mul0_x)},
+                                    {7, INPUT_DESC(mul1_x)},  {8, INPUT_DESC(mul2_x)}, {9, INPUT_DESC(mul3_x)},
+                                    {10, INPUT_DESC(mul4_x)}, {11, INPUT_DESC(add2_y)}};
+ATTR_MAP(AdamApplyOneWithDecay) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AdamApplyOneWithDecay) = {{0, OUTPUT_DESC(output0)}, {1, OUTPUT_DESC(output1)}, {2, OUTPUT_DESC(output2)}};
+REG_ADPT_DESC(AdamApplyOneWithDecay, kAdamApplyOneWithDecayOpName, ADPT_DESC(AdamApplyOneWithDecay))
+
+// LogicalXor
+CUST_INPUT_MAP(LogicalXor) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}};
+CUST_ATTR_MAP(LogicalXor) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(LogicalXor) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(LogicalXor, kNameLogicalXor, CUST_ADPT_DESC(LogicalXor));
+
+// BesselI0
+CUST_INPUT_MAP(BesselI0) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(BesselI0) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(BesselI0) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BesselI0, prim::kPrimBesselI0->name(), CUST_ADPT_DESC(BesselI0));
 }  // namespace mindspore::transform

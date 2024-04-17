@@ -128,7 +128,7 @@ void PatternMap::Clear() {
 
 bool PatternMap::Check(const std::string &name, const AnfNodePtr &node) const { return opt::AnfEqual(node, Get(name)); }
 
-SrcPattern &SrcPattern::AddVar(const std::string &name, const ConditionFunc &f) {
+SrcPattern &SrcPattern::AddVar(const std::string &name, const PatternConditionFunc &f) {
   if (ref_map_.find(name) != ref_map_.end()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Var: " << name << " is already in SrcPattern.";
   }
@@ -138,7 +138,7 @@ SrcPattern &SrcPattern::AddVar(const std::string &name, const ConditionFunc &f) 
   return *this;
 }
 
-SrcPattern &SrcPattern::AddSeqVar(const std::string &name, const ConditionFunc &f) {
+SrcPattern &SrcPattern::AddSeqVar(const std::string &name, const PatternConditionFunc &f) {
   if (ref_map_.find(name) != ref_map_.end()) {
     MS_LOG(INTERNAL_EXCEPTION) << "SeqVar: " << name << " is already in SrcPattern.";
   }
@@ -358,11 +358,10 @@ DstPattern &DstPattern::AddCNode(const string &name, const std::initializer_list
   } else {
     auto cnode = new_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (anf_inputs.size() != cnode->inputs().size()) {
+    if (anf_inputs.size() != cnode->size()) {
       MS_LOG(INTERNAL_EXCEPTION)
         << "The actual input size does not correspond to the input size of the pattern, actual input size: "
-        << anf_inputs.size() << ", pattern input size: " << new_node->cast<CNodePtr>()->inputs().size()
-        << ", CNode: " << name;
+        << anf_inputs.size() << ", pattern input size: " << new_node->cast<CNodePtr>()->size() << ", CNode: " << name;
     }
     for (size_t i = 0; i < anf_inputs.size(); i++) {
       MS_EXCEPTION_IF_NULL(anf_inputs[i]);

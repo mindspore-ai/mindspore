@@ -20,14 +20,13 @@
 #define google ascend_private
 #include "common/opskernel/ops_kernel_info_store.h"
 #include "common/opskernel/ops_kernel_builder.h"
-#include "external/ge/ge_api_types.h"
+#include "ge/ge_api_types.h"
 #undef google
 #include "hccl/hccl.h"
 #include "hccl/hcom.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
-#include "plugin/device/ascend/hal/hccl_adapter/converter.h"
 #include "include/backend/distributed/constants.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/anfalgo.h"
@@ -35,8 +34,6 @@
 #include "ops/framework_op_name.h"
 
 static constexpr const auto kHcclPluginFileName = "libhccl_plugin.so";
-static constexpr const auto kHcclAlgoEnv = "HCCL_ALGO";
-static constexpr const auto kHcclAlgoOption = "HCCL_algorithm";
 
 #define CHECK_SYMBOL_NULL(symbol)                                                    \
   if ((symbol) == nullptr) {                                                         \
@@ -64,10 +61,6 @@ static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std
     {ge::OPTION_GRAPH_RUN_MODE, "1"},          {ge::OPTION_EXEC_HCCL_FLAG, "1"},
     {ge::OPTION_EXEC_DEPLOY_MODE, "0"}};
 
-  auto env_hccl_algo = mindspore::common::GetEnv(kHcclAlgoEnv);
-  if (!env_hccl_algo.empty()) {
-    default_options_map.emplace(kHcclAlgoOption, env_hccl_algo);
-  }
   if (!rank_file.empty()) {
     default_options_map.emplace(ge::OPTION_EXEC_RANK_TABLE_FILE, rank_file.data());
   }
@@ -171,9 +164,10 @@ HcclMode HcclAdapter::GetCurrentHcclMode() const {
   MS_EXCEPTION_IF_NULL(context);
   bool is_graph_mode = context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
   bool is_task_sink = context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  bool graph_op_run = context->IsKByKExecutorMode();
   if (!is_graph_mode) {
     return HcclMode::kPynative;
-  } else if (is_task_sink) {
+  } else if (is_task_sink && !graph_op_run) {
     return HcclMode::kGraph;
   } else {
     return HcclMode::kKernelByKernel;
@@ -182,7 +176,8 @@ HcclMode HcclAdapter::GetCurrentHcclMode() const {
 
 void HcclAdapter::CheckExcutionMode() const {
   auto hccl_mode = GetCurrentHcclMode();
-  if (hccl_mode != hccl_mode_ && (!common::UseHostCollective() || UseHcclCM())) {
+  if (hccl_mode != hccl_mode_ && (!common::UseHostCollective() || UseHcclCM()) &&
+      common::GetEnv(kSimulationLevel).empty()) {
     MS_LOG(EXCEPTION) << "HCCL is initialized in " << GetHcclModeString(hccl_mode_) << " but current execution mode is "
                       << GetHcclModeString(hccl_mode)
                       << ". Please set the execution mode before HCCL init(), and then do not change it in the "
@@ -191,10 +186,9 @@ void HcclAdapter::CheckExcutionMode() const {
 }
 
 std::string HcclAdapter::GetHcclModeString(HcclMode hccl_mode) {
-  static std::map<HcclMode, std::string> kHcclModeString = {
-    {HcclMode::kGraph, "GRAPH_MODE"},
-    {HcclMode::kPynative, "PYNATIVE_MODE"},
-    {HcclMode::kKernelByKernel, "GRAPH_MODE disable TASK_SINK"}};
+  static std::map<HcclMode, std::string> kHcclModeString = {{HcclMode::kGraph, "GRAPH_MODE"},
+                                                            {HcclMode::kPynative, "PYNATIVE_MODE"},
+                                                            {HcclMode::kKernelByKernel, "KERNEL_BY_KERNEL_MODE"}};
   return kHcclModeString.at(hccl_mode);
 }
 
@@ -274,138 +268,42 @@ bool HcclAdapter::FinalizeHccl() {
   return true;
 }
 
-bool HcclAdapter::GenTask(const AnfNodePtr &node, HcclDataType datatype,
-                          std::vector<HcclTaskInfo> *task_info_lists) const {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(task_info_lists);
-  MS_LOG(INFO) << "Start generate task for hccl node " << node->DebugString();
-  auto [ge_node, ge_graph] = GenerateStubGeNode(node, datatype);
-  MS_EXCEPTION_IF_NULL(ge_node);
-  auto op = ge_node->GetOpDesc();
-  MS_EXCEPTION_IF_NULL(op);
-
-  MS_LOG(INFO) << "Start to call CalcOpRunningParam";
-  MS_EXCEPTION_IF_NULL(ops_kernel_builder_);
-  ge::Status ret = ops_kernel_builder_->CalcOpRunningParam(*ge_node);
-  if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder CalcOpRunningParam failed, ret = " << ret;
-    return false;
-  }
-  MS_LOG(INFO) << "Start to call GenerateTask";
-  ge::RunContext unused_ctx;
-  std::vector<domi::TaskDef> domi_tasks;
-  ret = ops_kernel_builder_->GenerateTask(*ge_node, unused_ctx, domi_tasks);
-  if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder GenerateTask failed, ret = " << ret;
-    return false;
-  }
-
-  task_info_lists->clear();
-  std::transform(domi_tasks.begin(), domi_tasks.end(), std::back_inserter(*task_info_lists),
-                 [&op](const domi::TaskDef &task_def) -> HcclTaskInfo { return ParseDomiTask(op, task_def); });
-  MS_LOG(INFO) << "Generate task for node " << node->DebugString() << " success.";
-  ge_graph.reset();
-  return true;
-}
-
-int64_t HcclAdapter::CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType datatype) const {
-  MS_EXCEPTION_IF_NULL(node);
-  if (ops_kernel_builder_ == nullptr) {
-    MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Hccl ops kernel builder is null, may not be inited. "
-                         "Please call HCCL init() first.";
-  }
-  MS_LOG(INFO) << "Start calc workspace size for hccl node " << node->DebugString() << " ,dtype is " << datatype;
-  auto [ge_node, ge_graph] = GenerateStubGeNode(node, datatype);
-  MS_EXCEPTION_IF_NULL(ge_node);
-  auto op = ge_node->GetOpDesc();
-  MS_EXCEPTION_IF_NULL(op);
-
-  MS_LOG(INFO) << "Start to call CalcOpRunningParam";
-  ge::Status ret = ops_kernel_builder_->CalcOpRunningParam(*ge_node);
-  if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder CalcOpRunningParam failed, ret = " << ret;
-    return false;
-  }
-
-  auto workspace_sizes = op->GetWorkspaceBytes();
-  if (workspace_sizes.size() != 1) {
-    MS_LOG(EXCEPTION) << "Unexpected workspace size " << workspace_sizes.size() << ", which should be 1.";
-  }
-  int64_t workspace_size = workspace_sizes[0];
-  MS_LOG(INFO) << "Node " << node->DebugString() << " workspace size is " << workspace_size;
-  ge_graph.reset();
-  return workspace_size;
-}
-
-void *HcclAdapter::GetHcclOpsKernelInfoStore() const { return ops_kernel_info_store_.get(); }
-
-std::string HcclAdapter::GetHcclType(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  return GetGeNodeName(cnode);
-}
-
 HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root,
                                       aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_broadcast_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_broadcast_(buf, count, dataType, root, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                       const HcclReduceOp op, const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_all_reduce_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_reduce_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                    HcclReduceOp op, uint32_t root, const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_reduce_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_reduce_(send_buf, recv_buf, count, dataType, op, root, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                           const HcclReduceOp op, const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_reduce_scatter_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_reduce_scatter_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                       const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_all_gather_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_gather_(send_buf, recv_buf, count, dataType, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank,
                                  const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_send_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_send_(send_buf, count, dataType, destRank, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank,
                                  const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_recv_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_recv_(recv_buf, count, dataType, srcRank, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclBarrier(const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_barrier_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_barrier_(hccl_comm, stream);
 }
 
@@ -557,13 +455,8 @@ HcclResult HcclAdapter::HcclGetRankSize(const std::string &group, uint32_t *rank
 
 HcclResult HcclAdapter::HcclGetLocalRankId(const std::string &group, uint32_t *local_rank_id) const {
   CheckExcutionMode();
-  if (hccl_mode_ != HcclMode::kGraph) {
-    MS_LOG(ERROR) << "The pynative mode doesn't support get local rank.";
-    return HCCL_E_NOT_SUPPORT;
-  } else {
-    CHECK_SYMBOL_NULL(hccl_get_local_rank_id_);
-    return hccl_get_local_rank_id_(group.c_str(), local_rank_id);
-  }
+  CHECK_SYMBOL_NULL(hccl_get_local_rank_id_);
+  return hccl_get_local_rank_id_(group.c_str(), local_rank_id);
 }
 
 HcclResult HcclAdapter::HcclGetLocalRankSize(const std::string &group, uint32_t *local_rank_size) const {

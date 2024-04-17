@@ -34,7 +34,7 @@ STATUS SetOpInputs(const api::CNodePtr &cnode, mapper::BaseOperator *base_operat
     return RET_ERROR;
   }
   std::vector<std::string> input_names;
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_anode = cnode->input(i);
     MS_ASSERT(input_anode != nullptr);
     if (api::utils::isa<api::ParameterPtr>(input_anode)) {
@@ -166,7 +166,7 @@ STATUS SetConvFcDataInfo(const api::CNodePtr &cnode, mapper::BaseOperator *base_
     MS_LOG(ERROR) << "base_operator is nullptr.";
     return RET_ERROR;
   }
-  for (size_t i = 2; i < cnode->inputs().size(); i++) {
+  for (size_t i = 2; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
     auto param_node = input_node->cast<api::ParameterPtr>();
@@ -201,7 +201,7 @@ STATUS SetRecurrentDataInfo(const api::CNodePtr &cnode, mapper::RecurrentOperato
     MS_LOG(ERROR) << "recurrent_operator is nullptr.";
     return RET_ERROR;
   }
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     if (api::utils::isa<api::CNode>(input_node)) {
       MS_LOG(INFO) << "cnode don't have blobs";
@@ -243,7 +243,7 @@ STATUS SetRecurrentOnnxInfo(const api::CNodePtr &cnode, mapper::RecurrentOperato
     MS_LOG(ERROR) << "recurrent_operator is nullptr.";
     return RET_ERROR;
   }
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     if (api::utils::isa<api::CNode>(input_node)) {
       MS_LOG(INFO) << "cnode don't have blobs";
@@ -340,13 +340,12 @@ STATUS PushOfflineArgs(const api::CNodePtr &cnode, mapper::BaseOperator *base_op
     MS_LOG(ERROR) << "base_operator is nullptr.";
     return RET_ERROR;
   }
-  if (offline_args_size > cnode->inputs().size()) {
+  if (offline_args_size > cnode->size()) {
     MS_LOG(ERROR) << "input offline_args_size:" << offline_args_size
-                  << " is greater than cnode input size:" << cnode->inputs().size() << " "
-                  << cnode->fullname_with_scope();
+                  << " is greater than cnode input size:" << cnode->size() << " " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  auto inputs_size = std::min(offline_args_size + 1, cnode->inputs().size());
+  auto inputs_size = std::min(offline_args_size + 1, cnode->size());
   std::vector<std::pair<std::vector<float>, std::vector<int32_t>>> offline_args;
   bool has_offline_args = false;
   for (size_t i = 1; i < inputs_size; i++) {

@@ -55,7 +55,7 @@ def run_dynamic_rank():
         [x, k, num_rows, num_cols, padding_value], True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

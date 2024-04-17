@@ -24,18 +24,25 @@
 
 namespace mindspore {
 namespace kernel {
-class PadAndShiftCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class PadAndShiftCpuKernelMod : public NativeCpuKernelMod {
  public:
   PadAndShiftCpuKernelMod() = default;
   ~PadAndShiftCpuKernelMod() override = default;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &outputs);
+
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {KernelAttr()
@@ -55,8 +62,9 @@ class PadAndShiftCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t batch_size_{1};
   size_t cum_sum_size_{1};
   size_t type_size_{4};
+  size_t output_size_{1};
+  ShapeVector input_shape_;
   TypeId input_x_dtype_{kTypeUnknown};
-  CNodeWeakPtr node_wpt_;
 };
 }  // namespace kernel
 }  // namespace mindspore

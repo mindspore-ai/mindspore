@@ -1,0 +1,74 @@
+{
+    "llama2_910B_static_2p_full": {
+        "ascend_context": {
+            "rank_table_file": "./predict_config/hccl_2p.json",
+            "plugin_custom_ops": "KVCache,MatMulAllReduce",
+            "provider": "ge"
+        },
+        "graph_kernel_param": {
+            "disable_cluster_ops": "MatMul,Reshape",
+            "disable_expand_ops": "ReduceMean"
+        },
+        "ge_session_options": {
+            "ge.externalWeight": "1",
+            "ge.exec.atomicCleanPolicy": "1",
+            "ge.exec.staticMemoryPolicy": "2",
+            "ge.exec.precision_mode": "must_keep_origin_dtype",
+            "ge.exec.formatMode": "1"
+        }
+    },
+    "llama2_910B_static_2p_inc": {
+        "ascend_context": {
+            "rank_table_file": "./predict_config/hccl_2p.json",
+            "plugin_custom_ops": "KVCache,MatMulAllReduce",
+            "provider": "ge"
+        },
+        "graph_kernel_param": {
+            "opt_level": "2",
+            "disable_cluster_ops": "MatMul"
+        },
+        "ge_session_options": {
+            "ge.externalWeight": "1",
+            "ge.exec.atomicCleanPolicy": "1",
+            "ge.exec.staticMemoryPolicy": "2",
+            "ge.exec.precision_mode": "must_keep_origin_dtype",
+            "ge.exec.formatMode": "1"
+        }
+    },
+    "llama2_910A_static_2p_full": {
+        "ascend_context": {
+            "rank_table_file": "./predict_config/hccl_2p.json",
+            "plugin_custom_ops": "KVCache",
+            "provider": "ge"
+        },
+        "graph_kernel_param": {
+            "disable_cluster_ops": "MatMul,Reshape",
+            "disable_expand_ops": "ReduceMean"
+        },
+        "ge_session_options": {
+            "ge.externalWeight": "1",
+            "ge.exec.atomicCleanPolicy": "1",
+            "ge.exec.staticMemoryPolicy": "2",
+            "ge.exec.precision_mode": "must_keep_origin_dtype",
+            "ge.exec.formatMode": "1"
+        }
+    },
+    "llama2_910A_static_2p_inc": {
+        "ascend_context": {
+            "rank_table_file": "./predict_config/hccl_2p.json",
+            "plugin_custom_ops": "KVCache",
+            "provider": "ge"
+        },
+        "graph_kernel_param": {
+            "opt_level": "2",
+            "disable_cluster_ops": "MatMul"
+        },
+        "ge_session_options": {
+            "ge.externalWeight": "1",
+            "ge.exec.atomicCleanPolicy": "1",
+            "ge.exec.staticMemoryPolicy": "2",
+            "ge.exec.precision_mode": "must_keep_origin_dtype",
+            "ge.exec.formatMode": "1"
+        }
+    }
+}

@@ -62,26 +62,20 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &RandomCategoricalCpuKer
   return func_list;
 }
 
-bool RandomCategoricalCpuKernel::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool RandomCategoricalCpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int RandomCategoricalCpuKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int RandomCategoricalCpuKernel::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = NativeCpuKernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs.at(0)->GetShapeVector();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomCategorical>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
   return KRET_OK;
 }
 
@@ -131,9 +125,9 @@ void RandomCategoricalFunc(const size_t num_samples, const T1 *dev_rand, const T
 }
 
 template <typename T1, typename T2>
-bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kSizeThree) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size()
                       << "input(s).";
@@ -142,18 +136,17 @@ bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressP
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << outputs.size()
                       << "output(s).";
   }
-  T1 *input_tensor = GetDeviceAddress<T1>(inputs, kIndex0);
-  int *num_sample_ptr = GetDeviceAddress<int>(inputs, kIndex1);
-  int *input_seed_ptr = GetDeviceAddress<int>(inputs, kIndex2);
-  T2 *output = GetDeviceAddress<T2>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+
+  T1 *input_tensor = reinterpret_cast<T1 *>(inputs[kIndex0]->device_ptr());
+  int num_sample = reinterpret_cast<int *>(inputs[kIndex1]->device_ptr())[0];
+  int input_seed = reinterpret_cast<int *>(inputs[kIndex2]->device_ptr())[0];
+  T2 *output = reinterpret_cast<T2 *>(outputs[kIndex0]->device_ptr());
 
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(output);
-  MS_EXCEPTION_IF_NULL(num_sample_ptr);
-  MS_EXCEPTION_IF_NULL(input_seed_ptr);
-
-  int num_sample = num_sample_ptr[0];
-  int input_seed = input_seed_ptr[0];
   int batch_size = input_shape_[0];
   int num_classes = input_shape_[input_shape_.size() - 1];
 

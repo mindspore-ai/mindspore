@@ -22,6 +22,7 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ops/sparse_apply_adagrad.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -74,10 +75,8 @@ void SparseApplyAdagradCpuKernelMod::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(batch_size_ * indices_size_ * sizeof(T));
 }
 
-bool SparseApplyAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseApplyAdagradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -87,22 +86,20 @@ bool SparseApplyAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                   << inputs.size();
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::SparseApplyAdagrad>(base_operator->GetPrim());
-  lr_ = kernel_ptr->get_lr();
-  update_slots_ = kernel_ptr->get_update_slots();
-  batch_rank_ = base_operator->get_batch_rank();
+  lr_ = GetValue<float>(primitive_->GetAttr(kAttrLr));
+  update_slots_ = GetValue<bool>(primitive_->GetAttr(ops::kUpdateSlots));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   if (lr_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr' must be a positive scalar, but got " << lr_;
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
 void SparseApplyAdagradCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
@@ -111,12 +108,10 @@ void SparseApplyAdagradCpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyAdagradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -178,7 +173,7 @@ int SparseApplyAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                   << grad_shape[batch_rank_] << ", and the first dimension value of 'indices': " << indices_size_;
     return KRET_RESIZE_FAILED;
   }
-  indices_data_type_ = inputs[kIndicesIndex]->GetDtype();
+  indices_data_type_ = inputs[kIndicesIndex]->dtype_id();
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else {
@@ -206,17 +201,17 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyAdagradCpuKe
 }
 
 template <typename T>
-bool SparseApplyAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &workspace,
-                                                  const std::vector<kernel::AddressPtr> &) const {
-  auto *var = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *accum = reinterpret_cast<float *>(inputs[1]->addr);
-  auto *grad = reinterpret_cast<float *>(inputs[2]->addr);
-  auto *indices = reinterpret_cast<T *>(inputs[3]->addr);
-  auto *new_grad = reinterpret_cast<float *>(workspace[0]->addr);
-  auto *new_indices = reinterpret_cast<T *>(workspace[1]->addr);
-  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
+bool SparseApplyAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &workspace,
+                                                  const std::vector<kernel::KernelTensor *> &) const {
+  auto *var = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *accum = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  auto *grad = reinterpret_cast<float *>(inputs[2]->device_ptr());
+  auto *indices = reinterpret_cast<T *>(inputs[3]->device_ptr());
+  auto *new_grad = reinterpret_cast<float *>(workspace[0]->device_ptr());
+  auto *new_indices = reinterpret_cast<T *>(workspace[1]->device_ptr());
+  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->device_ptr());
+  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->device_ptr());
 
   for (int64_t index = 0; index < batch_size_; index++) {
     SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});

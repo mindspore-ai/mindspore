@@ -73,7 +73,7 @@ abstract::BaseShapePtr MultinomialWithReplacementInferShape(const PrimitivePtr &
   const int64_t x_rank_max = 2;
   const int64_t x_rank_min = 1;
   const int64_t dyn_shape = abstract::Shape::kShapeDimAny;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   std::vector<int64_t> y_shape;
   if (x_shape.size() > x_rank_max || x_shape.size() < x_rank_min) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'x' must have a rank of 1 or 2, but got rank "
@@ -112,9 +112,9 @@ abstract::BaseShapePtr MultinomialWithReplacementInferShape(const PrimitivePtr &
 TypePtr MultinomialWithReplacementInferType(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_dtype = input_args[0]->BuildType();
-  auto seed_dtype = input_args[1]->BuildType();
-  auto offset_dtype = input_args[2]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
+  auto seed_dtype = input_args[1]->GetType();
+  auto offset_dtype = input_args[2]->GetType();
   TypePtr y_type = {kInt64};
   const std::set<TypePtr> valid_types_x = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_types_seed = {kInt64};

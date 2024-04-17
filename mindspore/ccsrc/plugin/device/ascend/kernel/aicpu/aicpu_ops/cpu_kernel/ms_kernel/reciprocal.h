@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
 #define AICPU_KERNELS_NORMALIZED_RECIPROCAL_H_
 
-#include "inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class ReciprocalCpuKernel : public CpuKernel {
@@ -27,9 +27,9 @@ class ReciprocalCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, const CpuKernelContext &ctx);
+  uint32_t ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, const CpuKernelContext &ctx);
+  uint32_t ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

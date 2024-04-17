@@ -19,6 +19,7 @@
 #include "kernel/common_utils.h"
 #include "abstract/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/apply_proximal_adagrad_impl.cuh"
+#include "ops/op_utils.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -31,11 +32,9 @@ constexpr size_t kL2Index = 4;
 constexpr size_t kGradIndex = 5;
 }  // namespace
 
-bool ApplyProximalAdagradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+bool ApplyProximalAdagradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = ops::get_batch_rank(primitive_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -52,15 +51,13 @@ bool ApplyProximalAdagradGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int ApplyProximalAdagradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyProximalAdagradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kApplyProximalAdagradInputsNum) {
+  if (inputs.size() != kApplyProximalAdagradInputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 6.";
     return KRET_RESIZE_FAILED;
   }
@@ -145,22 +142,22 @@ int ApplyProximalAdagradGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return ret;
 }
 
-bool ApplyProximalAdagradGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &workspace,
-                                              const std::vector<kernel::AddressPtr> &outputs, void *cuda_stream) {
+bool ApplyProximalAdagradGpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &workspace,
+                                              const std::vector<kernel::KernelTensor *> &outputs, void *cuda_stream) {
   kernel_func_(this, inputs, outputs, cuda_stream);
   return true;
 }
 
 template <typename T>
-bool ApplyProximalAdagradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &, void *cuda_stream) {
-  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto accum = reinterpret_cast<T *>(inputs[kAccIndex]->addr);
-  auto lr = reinterpret_cast<T *>(inputs[kLRIndex]->addr);
-  auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->addr);
-  auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
+bool ApplyProximalAdagradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &, void *cuda_stream) {
+  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto accum = reinterpret_cast<T *>(inputs[kAccIndex]->device_ptr());
+  auto lr = reinterpret_cast<T *>(inputs[kLRIndex]->device_ptr());
+  auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->device_ptr());
+  auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->device_ptr());
+  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
 
   auto status = CalApplyProximalAdagrad(input_elements_, batch_size_, lr, l1, l2, grad, var, accum, device_id_,
                                         reinterpret_cast<cudaStream_t>(cuda_stream));

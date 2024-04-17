@@ -2,7 +2,7 @@ mindspore.rewrite
 =================
 MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的前向计算过程进行修改的能力，如插入、删除和替换语句。
 
-如何快速使用ReWrite，请参考 `使用ReWrite修改网络 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/rewrite/rewrite_tutorial.html>`_ 。
+如何快速使用ReWrite，请参考 `使用ReWrite修改网络 <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/rewrite/rewrite_tutorial.html>`_ 。
 
 .. py:class:: mindspore.rewrite.Node(node: NodeImpl)
 
@@ -44,7 +44,10 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
     .. py:method:: mindspore.rewrite.Node.create_call_function(function: FunctionType, targets: List[Union[ScopedValue, str]], args: List[ScopedValue] = None, kwargs: Dict[str, ScopedValue] = None)
         :staticmethod:
 
-        通过该接口可以根据一个函数调用创建一个Node实例。 `function` 对象会被保存在网络里，然后通过 `self.` 方法来调用这个函数对象。
+        通过该接口可以根据一个函数调用创建一个Node实例。
+
+        .. note::
+            函数内部的代码不会被解析。
 
         参数：
             - **function** (FunctionType) - 被调用的函数定义。
@@ -88,6 +91,13 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         返回：
             当前节点对应的代码语句里调用的对象类型。
 
+    .. py:method:: mindspore.rewrite.Node.get_kwargs()
+
+        获取当前节点的关键字参数列表。
+
+        返回：
+            一个包含关键字参数的字典，key的类型为str，value的类型为 ``ScopedValue`` 。
+
     .. py:method:: mindspore.rewrite.Node.get_name()
 
         获取当前节点的名称。当节点被插入到SymbolTree时，节点的名称在SymbolTree中应该是唯一的。
@@ -101,6 +111,17 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         返回：
             NodeType，当前节点的类型。
+
+    .. py:method:: mindspore.rewrite.Node.get_sub_tree()
+
+        获取类型为 `NodeType.Tree` 的节点里保存的符号树。节点类型详见 :class:`mindspore.rewrite.NodeType` 。
+
+        返回：
+            保存在Tree类型节点里的符号树。
+
+        异常：
+            - **TypeError** - 如果当前节点的类型不是 `NodeType.Tree` 。
+            - **AttributeError** - 如果当前Tree类型节点里没有保存符号树。
 
     .. py:method:: mindspore.rewrite.Node.get_symbol_tree()
 
@@ -145,7 +166,6 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             - **out_idx** (int，可选) - 指定输入节点的哪个输出作为当前节点输入，则取第一个输出。默认值： ``None`` 。
 
         异常：
-            - **RuntimeError** - 如果 `src_node` 不属于当前的SymbolTree。
             - **TypeError** - 如果参数 `arg_idx` 不是int类型。
             - **ValueError** - 如果参数 `arg_idx` 超出了当前节点的参数数量。
             - **TypeError** - 如果参数 `src_node` 不是Node类型。
@@ -178,7 +198,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
     参数：
         - **arg_type** (ValueType) - 当前值的类型。
-        - **scope** (str) - 字符串表示当前值的范围。以"self.var1"为例，这个var1的作用域是"self"。默认值： ``""`` 。
+        - **scope** (str，可选) - 字符串表示当前值的范围。以"self.var1"为例，这个var1的作用域是"self"。默认值： ``""`` 。
         - **value** - 当前ScopedValue中保存的值。值的类型对应于 `arg_type`。默认值： ``None`` 。
 
     .. py:method:: mindspore.rewrite.ScopedValue.create_name_values(names: Union[List[str], Tuple[str]], scopes: Union[List[str], Tuple[str]] = None)
@@ -188,7 +208,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         参数：
             - **names** (List[str] or Tuple[str]) - 引用变量的名称，类型为str的列表或元组。
-            - **scopes** (List[str] or Tuple[str]) - 引用变量的范围，类型为str的列表或元组。默认值： ``None`` ，表示没有指定作用范围。
+            - **scopes** (List[str] or Tuple[str]，可选) - 引用变量的范围，类型为str的列表或元组。默认值： ``None`` ，表示没有指定作用范围。
 
         返回：
             ScopedValue的实例列表。
@@ -196,15 +216,16 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         异常：
             - **TypeError** - 如果 `names` 不是 `list` 或 `tuple` 或者其中的元素不是str类型。
             - **TypeError** - 如果 `scopes` 不是 `list` 或 `tuple` 或者其中的元素不是str类型。
-            - **RuntimeError** - 如果 `names` 的长度不等于 `scopes` 的长度，而作用域不是None。
+            - **ValueError** - 如果 `names` 的长度不等于 `scopes` 的长度，而作用域不是None。
 
     .. py:method:: mindspore.rewrite.ScopedValue.create_naming_value(name: str, scope: str = "")
+        :classmethod:
 
         创建一个使用变量名称命名的ScopedValue。NamingValue表示对另一个变量的引用。
 
         参数：
-            - **name** (str) – 表示变量的字符串。
-            - **scope** (str) – 表示变量范围的字符串，默认值： ``""`` ，表示没有指定作用范围。
+            - **name** (str) - 表示变量的字符串。
+            - **scope** (str，可选) - 表示变量范围的字符串，默认值： ``""`` ，表示没有指定作用范围。
 
         返回：
             ScopedValue的实例。
@@ -214,6 +235,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             - **TypeError** - 如果 `scope` 不是str类型。
 
     .. py:method:: mindspore.rewrite.ScopedValue.create_variable_value(value)
+        :classmethod:
 
         创建一个保存变量的ScopedValue。ScopedValue的类型由值的类型决定。ScopedValue的范围是空的。
 
@@ -245,7 +267,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             Position，指定插入节点的位置。
 
         异常：
-            - **TypeError** - 参数不是Node类型。
+            - **TypeError** - 参数不是Node或str类型。
 
     .. py:method:: mindspore.rewrite.SymbolTree.before(node: Union[Node, str])
 
@@ -258,9 +280,10 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             Position，指定插入节点的位置。
 
         异常：
-            - **TypeError** - 参数不是Node类型。
+            - **TypeError** - 参数不是Node或str类型。
 
     .. py:method:: mindspore.rewrite.SymbolTree.create(network)
+        :classmethod:
 
         通过传入网络实例 `network` ，创建一个SymbolTree对象。
 
@@ -280,7 +303,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         如果网络的前向计算过程里调用了以下类型的语句，rewrite会将该语句所对应的内部语句进行解析，并生成对应节点：
 
         - :class:`mindspore.nn.SequentialCell`
-        - 类内函数
+        - 函数调用（不包括Python内置函数和三方库函数）
         - 控制流语句，如 `if` 语句
 
         .. note::
@@ -292,13 +315,13 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         当前rewrite模块存在以下语法限制：
 
         - 仅支持类型为 :class:`mindspore.nn.Cell` 的网络作为rewrite模块的输入。
-        - 暂不支持对存在多个输出值的赋值语句进行解析。
-        - 暂不支持对循环语句进行解析。
+        - 暂不支持对单行控制流语法（如单行if-else、单行for循环等）进行解析。
         - 暂不支持对装饰器语法进行解析。
-        - 暂不支持对类变量语法进行解析。如果类变量使用了外部数据，可能导致rewrite后的网络出现数据缺失。
         - 暂不支持对局部类和内嵌类进行解析，即类的定义需要放在最外层。
         - 暂不支持对闭包语法进行解析，即类外函数的定义需要放在最外层。
         - 暂不支持对lambda表达式语法进行解析。
+        - 暂不支持对全局变量进行解析，即需要将全局变量转换为类变量或局部变量后再使用。
+        - 暂不支持对父类里的方法进行解析。
 
         对于不支持解析的语句，rewrite会为对应语句生成类型为 `NodeType.Python` 的节点，以确保rewrite后的网络可以正常运行。
         `Python` 节点不支持对语句的输入和输出进行修改，且可能出现变量名与rewrite生成的变量名的问题，此时用户需要手动对变量名进行调整。
@@ -323,7 +346,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             如果 `node` 属于当前的SymbolTree则返回被删除节点。否则返回None。
 
         异常：
-            - **TypeError** - 参数不是Node类型。
+            - **TypeError** - 参数不是Node或str类型。
 
     .. py:method:: mindspore.rewrite.SymbolTree.get_code()
 
@@ -366,7 +389,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             `Node`，被插入的节点。
 
         异常：
-            - **RuntimeError** - 如果 `position` 指定的不是该SymbolTree内的位置。
+            - **ValueError** - 如果 `position` 指定的不是该SymbolTree内的位置。
             - **TypeError** - 如果参数 `position` 不是Position类型。
             - **TypeError** - 如果参数 `node` 不是Node类型。
 
@@ -392,7 +415,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         - **node type** (str)：节点类型，具体类型参考 :class:`mindspore.rewrite.NodeType` 。
         - **name** (str)： 节点名称。
-        - **codes** (str)： 节点对应的源代码语句。
+        - **codes** (str)： 节点对应的SymbolTree里的代码语句。
         - **arg providers** (Dict[int, Tuple[str, int]])： 格式为 `{[idx, (n, k)]}` ，代表该节点的第 `idx` 个参数是节点 `n` 的第 `k` 个输出提供的。
         - **target users** (Dict[int, List[Tuple[str, int]]])： 格式为 `{[idx, [(n, k)]]}` ，代表该节点的第 `idx` 个输出被用作节点 `n` 的第 `k` 个参数。
 
@@ -421,7 +444,6 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             替换到SymbolTree的节点列表的根节点。
 
         异常：
-            - **RuntimeError** - 如果 `old_node` 仍然被其他节点依赖。
             - **TypeError** - 如果参数 `new_nodes` 不是list，或者列表中的成员不是Node类型。
             - **TypeError** - 如果参数 `old_node` 不是Node类型。
 

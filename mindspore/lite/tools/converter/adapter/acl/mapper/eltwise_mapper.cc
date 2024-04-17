@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace lite {
 STATUS EltWiseMapper::Mapper(const CNodePtr &cnode) {
-  if (AddAttrForDynInputPrimitive(cnode, ops::kN) != RET_OK) {
+  if (AddAttrForDynInputPrimitive(cnode) != RET_OK) {
     MS_LOG(ERROR) << "EltWise mapper failed.";
     return RET_ERROR;
   }

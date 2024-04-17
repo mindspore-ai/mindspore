@@ -27,6 +27,7 @@
 #include "ir/manager.h"
 #include "frontend/optimizer/optimizer.h"
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 /* namespace to support opt */
@@ -65,19 +66,18 @@ SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std:
 }
 
 AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
-#ifdef ENABLE_PROFILE
-  double t = GetTime();
-#endif
-  AnfNodePtr result = (*transform_)(optimizer, node);
-#ifdef ENABLE_PROFILE
+  AnfNodePtr result;
   if (optimizer != nullptr) {
-    auto time = GetTime();
-    MsProfile::StatTime("substitution." + name_, time - t);
-    if (result != nullptr) {
-      MsProfile::StatTime("match." + name_, time - t);
+    MsProfileStatGuard stat_subs_guard("substitution." + name_);
+    MsProfileStatGuard stat_match_guard("match." + name_);
+    result = (*transform_)(optimizer, node);
+    if (result == nullptr) {
+      stat_match_guard.Interrupt();
     }
+  } else {
+    result = (*transform_)(optimizer, node);
   }
-#endif
+
   if (optimizer != nullptr && optimizer->is_watch_renormalize() && result != nullptr) {
     if ((renorm_action_ == FORCE_RENORM) || (result->abstract() == nullptr)) {
       optimizer->set_is_untyped_generated();
@@ -111,15 +111,10 @@ static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &n
     ScopeGuard scope_guard(node->scope());
     auto res = (*substitution)(optimizer, node);
     if (res != nullptr && res != node) {
-#ifdef ENABLE_PROFILE
-      double t = GetTime();
-#endif
+      MsProfileStatGuard stat_guard("replace." + substitution->name_);
       MS_LOG(DEBUG) << "Replace " << node->DebugString() << " with " << res->DebugString() << ", by "
                     << substitution->name_;
       (void)manager->Replace(node, res);
-#ifdef ENABLE_PROFILE
-      MsProfile::StatTime("replace." + substitution->name_, GetTime() - t);
-#endif
       return res;
     }
   }
@@ -188,9 +183,7 @@ static void UpdateTransformingListWithUserNodes(const FuncGraphManagerPtr &manag
 }
 
 bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const {
-#ifdef ENABLE_PROFILE
-  double start = GetTime();
-#endif
+  MsProfileStatGuard stat_guard("opt.transform." + optimizer->name());
   FuncGraphManagerPtr manager = optimizer->manager();
   auto seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
@@ -219,17 +212,12 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
     UpdateTransformingListForSubstitutions(node, &todo, change);
     UpdateTransformingListWithUserNodes(manager, node, &todo, change, seen);
   }
-#ifdef ENABLE_PROFILE
-  MsProfile::StatTime("opt.transforms." + optimizer->name(), GetTime() - start);
-#endif
   return changes;
 }
 
 bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph,
                                              const SubstitutionPtr &substitution) const {
-#ifdef ENABLE_PROFILE
-  double start = GetTime();
-#endif
+  MsProfileStatGuard stat_guard("opt.transform." + optimizer->name());
   FuncGraphManagerPtr manager = optimizer->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto seen = NewSeenGeneration();
@@ -257,10 +245,6 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
     UpdateTransformingListForIR(node, &todo, change, substitution);
     UpdateTransformingListWithUserNodes(manager, node, &todo, change, seen);
   }
-
-#ifdef ENABLE_PROFILE
-  MsProfile::StatTime("opt.transform." + optimizer->name(), GetTime() - start);
-#endif
   return changes;
 }
 
@@ -274,7 +258,11 @@ void SubstitutionList::DisplayStatusOfSubstitution(const mindspore::HashMap<std:
   for (size_t i = 0; i < list_.size(); i++) {
     auto name = list_[i]->name_;
     ss << std::left << std::setw(SizeToInt(space) + pad_width) << name << "\t";
-    for (auto change : status.at(name + std::to_string(i))) {
+    auto iter = status.find(name + std::to_string(i));
+    if (iter == status.cend()) {
+      continue;
+    }
+    for (auto change : iter->second) {
       ss << change << " ";
     }
     ss << std::endl;
@@ -298,13 +286,16 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
     loop = false;
     for (size_t i = 0; i < list_.size(); i++) {
       const auto &substitution = list_[i];
+      MS_LOG(INFO) << "Start substitution: " << substitution->name_;
       bool change = ApplySubstitutionToIR(optimizer, func_graph, substitution);
+      MS_LOG(INFO) << "End substitution: " << substitution->name_ << ", change: " << change;
       changes = changes || change;
       loop = loop || change;
 #ifdef ENABLE_DUMP_IR
-      static const auto enable_dump_pass_ir = GetDumpConfig().enable_dump_pass_ir;
+      static const auto enable_dump_pass = GetDumpConfig().enable_dump_pass_ir;
+      static const auto input_name = common::GetEnv("MS_DEV_DUMP_IR_PASSES");
+      auto enable_dump_pass_ir = (input_name.size() != 0) || enable_dump_pass;
       auto context = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(context);
       if ((enable_dump_pass_ir && context->CanDump(kIntroductory)) || context->CanDump(kFully)) {
         auto fg_name = optimizer->name() + "_r" + std::to_string(optimizer->current_pass_.counter) + "_" +
                        optimizer->current_pass_.name + "_" + substitution->name_;
@@ -346,17 +337,17 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
   manager->AddFuncGraph(func_graph);
   bool changes = false;
   static const auto traverse_mode =
-    (common::GetEnv("MS_DEV_TRAVERSE_SUBSTITUTIONS_MODE") != "1" ? kOptTraverseFromIRToSubstitutions
-                                                                 : kOptTraverseFromSubstitutionsToIR);
+    (common::GetCompileConfig("TRAVERSE_SUBSTITUTIONS_MODE") != "1" ? kOptTraverseFromIRToSubstitutions
+                                                                    : kOptTraverseFromSubstitutionsToIR);
   if (traverse_mode == kOptTraverseFromIRToSubstitutions &&
       MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
       optimizer->traverse_nodes_first() && !is_once_ && !global_sensitive_) {
-    MS_LOG(DEBUG) << "IR >> SUB, " << optimizer->name() << "(r" << optimizer->current_pass_.counter << ")_"
-                  << optimizer->current_pass_.name;
+    MS_LOG(INFO) << "IR >> SUB, *, " << optimizer->name() << "(r" << optimizer->current_pass_.counter << ")_"
+                 << optimizer->current_pass_.name;
     changes = ApplyIRToSubstitutions(optimizer, func_graph);
   } else {
-    MS_LOG(DEBUG) << "SUB >> IR, " << optimizer->name() << "(r" << optimizer->current_pass_.counter << ")_"
-                  << optimizer->current_pass_.name;
+    MS_LOG(INFO) << "SUB >> IR, " << optimizer->name() << "(r" << optimizer->current_pass_.counter << ")_"
+                 << optimizer->current_pass_.name;
     changes = ApplySubstitutionsToIR(optimizer, func_graph);
   }
   return changes;
@@ -382,8 +373,8 @@ bool SimpleRewriter::Run() {
     node->seen_ = seen;
     auto cnode = node->cast_ptr<CNode>();
     if (cnode != nullptr) {
-      for (auto &input : cnode->inputs()) {
-        add_todo(input);
+      for (auto &input : cnode->weak_inputs()) {
+        add_todo(input.lock());
       }
     } else {
       auto fg = GetValuePtr<FuncGraph>(node);

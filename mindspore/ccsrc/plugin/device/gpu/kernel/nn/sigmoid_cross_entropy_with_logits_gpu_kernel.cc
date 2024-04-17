@@ -19,14 +19,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool SigmoidCrossEntropyWithLogitsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs) {
+bool SigmoidCrossEntropyWithLogitsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -38,14 +37,15 @@ bool SigmoidCrossEntropyWithLogitsGpuKernelMod::Init(const BaseOperatorPtr &base
 }
 
 template <typename T, typename S>
-bool SigmoidCrossEntropyWithLogitsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &workspace,
-                                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SigmoidCrossEntropyWithLogitsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &workspace,
+                                                             const std::vector<KernelTensor *> &outputs,
+                                                             void *stream_ptr) {
   T *logits_addr = GetDeviceAddress<T>(inputs, 0);
   S *labels_addr = GetDeviceAddress<S>(inputs, 1);
   T *outputs_addr = GetDeviceAddress<T>(outputs, 0);
 
-  auto status = SigmoidCrossEntropyWithLogits(inputs[0]->size / sizeof(T), logits_addr, labels_addr, outputs_addr,
+  auto status = SigmoidCrossEntropyWithLogits(inputs[0]->size() / sizeof(T), logits_addr, labels_addr, outputs_addr,
                                               reinterpret_cast<cudaStream_t>(stream_ptr));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

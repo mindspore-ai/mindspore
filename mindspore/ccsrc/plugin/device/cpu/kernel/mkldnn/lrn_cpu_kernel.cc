@@ -25,18 +25,16 @@
 
 namespace mindspore {
 namespace kernel {
-bool LrnCpuKernelMod::GetLrnAttr(const BaseOperatorPtr &base_operator) {
+bool LrnCpuKernelMod::GetLrnAttr() {
   if (kernel_name_ != ops::kNameLRN) {
     MS_LOG(ERROR) << "For 'LRN' kernel name get failed, but got " << kernel_name_;
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::LRN>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  depth_radius_ = kernel_ptr->get_depth_radius();
-  bias_ = kernel_ptr->get_bias();
-  alpha_ = kernel_ptr->get_alpha();
-  beta_ = kernel_ptr->get_beta();
-  norm_region_ = kernel_ptr->get_norm_region();
+  depth_radius_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kDepthRadius));
+  bias_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kBias));
+  alpha_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kAlpha));
+  beta_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kBeta));
+  norm_region_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(ops::kNormRegion));
   if (norm_region_ != "ACROSS_CHANNELS") {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "''s attribute 'norm_region' must be ACROSS_CHANNELS but got "
                   << norm_region_;
@@ -46,15 +44,12 @@ bool LrnCpuKernelMod::GetLrnAttr(const BaseOperatorPtr &base_operator) {
   return true;
 }
 
-bool LrnCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool LrnCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!GetLrnAttr(base_operator)) {
+  if (!GetLrnAttr()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got GetReductionAttr failed.";
     return false;
   }
@@ -68,15 +63,13 @@ bool LrnCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   return true;
 }
 
-int LrnCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LrnCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   constexpr size_t kInputsNum = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  TypeId ms_type_id = inputs.at(kIndex0)->GetDtype();
+  TypeId ms_type_id = inputs.at(kIndex0)->dtype_id();
   auto dnnl_type_id = GetDnnlDataType(ms_type_id);
   if (dnnl_type_id == dnnl::memory::data_type::undef) {
     MS_LOG(ERROR) << "For '" << kernel_name_
@@ -99,18 +92,14 @@ int LrnCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   return KRET_OK;
 }
 
-bool LrnCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool LrnCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   constexpr size_t kInputsNum = 1;
   constexpr size_t kOutputsNum = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  auto *input0_ptr = GetDeviceAddress<float>(inputs, kIndex0);
-  auto *output0_ptr = GetDeviceAddress<float>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(input0_ptr);
-  MS_EXCEPTION_IF_NULL(output0_ptr);
-  SetArgumentHandle(DNNL_ARG_SRC, input0_ptr);
-  SetArgumentHandle(DNNL_ARG_DST, output0_ptr);
+  SetArgumentHandle(DNNL_ARG_SRC, inputs.at(kIndex0)->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST, outputs.at(kIndex0)->device_ptr());
   ExecutePrimitive();
   return true;
 }

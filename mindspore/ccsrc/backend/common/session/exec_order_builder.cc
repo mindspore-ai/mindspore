@@ -144,6 +144,7 @@ void ExecOrderBuilder::BuildLinkInfo() {
 }
 
 void ExecOrderBuilder::GetTrivialInputNode(const AnfNodePtr &node, SeenNum seen) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return;
   }

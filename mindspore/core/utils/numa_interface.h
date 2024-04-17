@@ -17,6 +17,8 @@
 #define MINDSPORE_CORE_UTILS_NUMA_INTERFACE_H_
 
 #include <memory>
+#include <vector>
+
 #include "include/api/status.h"
 #include "mindapi/base/macros.h"
 
@@ -30,5 +32,7 @@ MS_CORE_API std::shared_ptr<void> GetNumaAdapterHandle();
 // 1. Get function pointer of numa api
 // 2. Do numa_bind
 MS_CORE_API Status NumaBind(void *handle, const int32_t &rank_id);
+
+MS_CORE_API Status LoadNumaCpuInfo(void *handle, const int32_t rank_id, std::vector<int> *numa_cpus);
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_NUMA_INTERFACE_H_

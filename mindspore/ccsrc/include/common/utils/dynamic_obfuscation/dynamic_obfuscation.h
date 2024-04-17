@@ -75,8 +75,8 @@ class COMMON_EXPORT DynamicObfuscator {
   int subgraph_obf_num_ = 0;
   bool switch_branch_ = true;
   const std::vector<std::string> single_input_target_op_ = {
-    kReLUOpName,     kSigmoidOpName, kReLU6OpName, kSoftplusOpName, kHSigmoidOpName, kFastGeLUOpName, kHSwishOpName,
-    kSoftsignOpName, kSeLUOpName,    kTanhOpName,  kSquareOpName,   kAvgPoolOpName,  kMaxPoolOpName};
+    kReLUOpName,   kSigmoidOpName,  kReLU6OpName, kSoftplusOpName, kHSigmoidOpName, kFastGeLUOpName,
+    kHSwishOpName, kSoftsignOpName, kSeLUOpName,  kTanhOpName,     kSquareOpName};
   const std::vector<std::string> single_input_with_weight_target_op_ = {kConv2DOpName, kMatMulOpName};
   const std::vector<PrimitivePtr> one_input_prim_ = {
     mindspore::prim::kPrimReLU,     mindspore::prim::kPrimSigmoid,  mindspore::prim::kPrimReLU6,

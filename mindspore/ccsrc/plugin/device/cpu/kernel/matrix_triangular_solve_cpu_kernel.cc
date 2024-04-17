@@ -41,18 +41,13 @@ constexpr auto kAMatrixDimNum = 2;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 
-bool MatrixTriangularSolveCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
+bool MatrixTriangularSolveCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSolveTriangularInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSolveTriangularOutputsNum, kernel_name_);
 
-  trans_ = GetValue<bool>(prim->GetAttr(ADJOINT));
-  lower_ = GetValue<bool>(prim->GetAttr(LOWER));
+  trans_ = GetValue<bool>(primitive_->GetAttr(ADJOINT));
+  lower_ = GetValue<bool>(primitive_->GetAttr(LOWER));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -63,11 +58,9 @@ bool MatrixTriangularSolveCpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int MatrixTriangularSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixTriangularSolveCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto a_shape = inputs[0]->GetShapeVector();
@@ -110,12 +103,12 @@ inline void solve(const MatrixBase<Derived_a> &a, const MatrixBase<Derived_b> &b
 }
 
 template <typename T>
-bool MatrixTriangularSolveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &,
-                                                     const std::vector<AddressPtr> &outputs) {
-  auto a_addr = GetDeviceAddress<T>(inputs, kIndex0);
-  auto b_addr = GetDeviceAddress<T>(inputs, kIndex1);
-  auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+bool MatrixTriangularSolveCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  auto a_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto b_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(a_addr);
   MS_EXCEPTION_IF_NULL(b_addr);
   MS_EXCEPTION_IF_NULL(output_addr);

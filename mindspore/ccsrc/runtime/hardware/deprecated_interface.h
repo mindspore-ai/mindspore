@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,6 @@ class DeprecatedInterface {
 
   // ge
   virtual void DoExecNonInputGraph(const std::string &phase) {}
-  virtual bool InitExecDataset(const std::string &queue_name, int64_t size, int64_t batch_size,
-                               const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
-                               const std::vector<int64_t> &input_indexes, const std::string &phase) {
-    return true;
-  }
   virtual void ExportDFGraph(const std::string &file_name, const std::string &phase, const pybind11::object &encrypt,
                              char *key) {}
 
@@ -48,6 +43,7 @@ class DeprecatedInterface {
   virtual void RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {}
   virtual void ClearGraphWrapper() {}
   virtual void ClearOpAdapterMap() {}
+  virtual void UnregisterExternalAllocator() {}
 
   // ascend
   virtual void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {}
@@ -56,7 +52,6 @@ class DeprecatedInterface {
   virtual bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context) { return true; }
   virtual void AclOptimizer(const FuncGraphPtr &graph) {}
   virtual bool CheckIsAscend910Soc() { return true; }
-  virtual void AclLoadModel(Buffer *om_data) {}
   // gpu
   virtual int GetGPUCapabilityMajor() { return -1; }
   virtual int GetGPUCapabilityMinor() { return -1; }

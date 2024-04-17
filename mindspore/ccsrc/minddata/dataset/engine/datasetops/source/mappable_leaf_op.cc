@@ -220,6 +220,9 @@ Status MappableLeafOp::ResetAndUpdateRepeat() {
     RETURN_IF_NOT_OK(MappableLeafOp::Reset());
     TensorRow sample_row;
     RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
+    if (sample_row.eoe()) {
+      return Status::OK();
+    }
     CHECK_FAIL_RETURN_UNEXPECTED(sample_row.size() > 0, "GetNextRowPullMode: Expect at least one sample in sampler.");
     // Get sample_ids
     sample_ids_ = sample_row[0];

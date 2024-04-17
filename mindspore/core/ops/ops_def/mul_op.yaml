@@ -1,0 +1,19 @@
+#operator mul
+mul:
+    args:
+        input:
+            dtype: tensor
+            type_cast: number
+        other:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        rw_read: input, other
+        dtype_group: (input, other)
+    returns:
+        output: 
+            dtype: tensor
+    dispatch:
+        enable: True
+
+

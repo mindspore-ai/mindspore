@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,15 +43,6 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._decorator import deprecated
-from mindspore._c_expression import PackExpander
-from mindspore.ops._tracefunc import _convert_tensor, _SetMixedPrecision, PackFunc
-
-
-def _check_args(args):
-    """Check the input args's type"""
-    for item in args:
-        if isinstance(item, Tensor) and item.has_init:
-            item.init_data()
 
 
 class Cell(Cell_):
@@ -109,7 +100,7 @@ class Cell(Cell_):
     """
 
     IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_create_time',
-                   '_func_graph_flags', '_parameter_layout_dict', '_params_list', '_tensor_list', '_phase',
+                   '_func_graph_flags', '_parameter_layout_dict', '_params_list', '_phase',
                    '_forward_pre_hook', '_forward_hook', '_enable_forward_pre_hook', '_enable_forward_hook',
                    '_bprop_debug', '_enable_backward_hook', '_cell_backward_hook', '_is_run', '_param_prefix',
                    '_attr_synced', 'pynative', 'requires_grad', 'cell_type']
@@ -119,7 +110,6 @@ class Cell(Cell_):
         self._params = OrderedDict()
         self._cells = OrderedDict()
         self._params_list = OrderedDict()
-        self._tensor_list = OrderedDict()
         self._primitives = OrderedDict()
         self.training = False
         self.requires_grad = False
@@ -161,12 +151,14 @@ class Cell(Cell_):
         self._has_config_recompute = False
         self._user_parameters = []
         self._dynamic_shape_inputs = None
+        self._compile_args = None
         self.saved_dynamic_shape = None
         self._jit_config_dict = dict()
         self.grad_ops_label = False
         self.ge_sync_data = False
         self._is_check_and_refresh = False
         self._amp_level = ""
+        self._init_flag = False
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -225,7 +217,7 @@ class Cell(Cell_):
 
         Tutorial Examples:
             - `Cell and Parameter - Custom Cell Reverse
-              <https://mindspore.cn/tutorials/en/master/advanced/modules/layer.html#custom-cell-reverse>`_
+              <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/modules/layer.html#custom-cell-reverse>`_
         """
         return self._bprop_debug
 
@@ -317,10 +309,23 @@ class Cell(Cell_):
 
     @property
     def pipeline_stage(self):
+        """
+        `pipeline_stage` represents the pipeline stage of current Cell.
+        """
         return self._pipeline_stage
 
     @pipeline_stage.setter
     def pipeline_stage(self, value):
+        """
+        Set the `pipeline_stage` of a Cell.
+
+        Args:
+            value (int): The pipeline stage of a parameter.
+
+        Raises:
+            TypeError: If `value` is not int type or is a bool type.
+            ValueError: If `value` is not a positive integer.
+        """
         if not isinstance(value, int) or isinstance(value, bool):
             raise TypeError("For 'Cell', the property 'pipeline_stage' "
                             "must be int type, but got type : {}".format(type(value)))
@@ -376,10 +381,6 @@ class Cell(Cell_):
             cells = self.__dict__['_cells']
             if name in cells:
                 return cells[name]
-        if '_tensor_list' in self.__dict__:
-            tensor_list = self.__dict__['_tensor_list']
-            if name in tensor_list:
-                return tensor_list[name]
         if '_params_list' in self.__dict__:
             params_list = self.__dict__['_params_list']
             if name in params_list:
@@ -391,12 +392,8 @@ class Cell(Cell_):
             # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
             # here using pop(id(self), None) to avoid KeyError exception
             cells_compile_cache.pop(id(self), None)
-        try:
-            if self.compile_cache:
-                _cell_graph_executor.del_net_res(self, self.compile_cache)
-        except AttributeError as e:
-            raise AttributeError(f"The '{type(self).__name__}' object does not inherit attribute from 'cell'. "
-                                 f"Please use 'super().__init__()'.") from e
+        if hasattr(self, "compile_cache") and self.compile_cache:
+            _cell_graph_executor.del_net_res(self, self.compile_cache)
 
     def __delattr__(self, name):
         if name in self._params:
@@ -405,8 +402,6 @@ class Cell(Cell_):
             del self._cells[name]
         elif '_params_list' in self.__dict__ and name in self._params_list:
             del self._params_list[name]
-        elif '_tensor_list' in self.__dict__ and name in self._tensor_list:
-            del self._tensor_list[name]
         else:
             object.__delattr__(self, name)
         self._attr_synced = False
@@ -654,47 +649,40 @@ class Cell(Cell_):
 
         return cast_inputs
 
-    def __call__(self, *args, **kwargs):
-        if self.__class__.construct is Cell.construct:
-            raise AttributeError("For 'Cell', the method 'construct' is not defined.")
+    def _init_check(self):
+        for param in self.get_parameters(expand=False):
+            if param.has_init:
+                param.init_data()
 
-        if kwargs:
-            bound_arguments = inspect.signature(self.construct).bind(*args, **kwargs)
-            bound_arguments.apply_defaults()
-            args = bound_arguments.args
-            kwargs = bound_arguments.kwargs
-
-        if PackFunc.is_tracing():
-            return self._run_tracefunc(*args, **kwargs)
-
-        if hasattr(self, '_is_check_and_refresh') and not self._is_check_and_refresh:
+    def _self_check(self):
+        if not self._is_check_and_refresh:
             self.check_names_and_refresh_name()
             self._is_check_and_refresh = True
 
+    def __call__(self, *args, **kwargs):
         # Run in Graph mode.
         if os.getenv("MS_JIT") != '0' and context._get_mode() == context.GRAPH_MODE:
+            if kwargs:
+                bound_arguments = inspect.signature(self.construct).bind(*args, **kwargs)
+                bound_arguments.apply_defaults()
+                args = bound_arguments.args
+                kwargs = bound_arguments.kwargs
             self._check_construct_args(*args)
             if self._hook_fn_registered():
                 logger.warning(f"For 'Cell', it's not support hook function in graph mode. If you want to use hook "
                                f"function, please use context.set_context to set pynative mode.")
+            self._self_check()
             out = self.compile_and_run(*args, **kwargs)
             return out
 
         # Run in PyNative mode.
-        if _pynative_executor.is_first_cell():
-            _pynative_executor._optimizer = getattr(self, "optimizer", None)
-            _pynative_executor._top_cell = self
-            # There many Casts in parameter_broadcast. Enable build faster.
-            self._do_parameter_broadcast()
+        self._self_check()
+        if not self._init_flag:
+            self._init_check()
+            self._init_flag = True
 
-        _check_args(args)
-        self._check_cell_flags_in_pynative()
-
-        if self.requires_grad and _pynative_executor.enable_grad():
+        if self.requires_grad:
             _pynative_executor.set_grad_flag(True)
-
-        if self._dynamic_shape_inputs is not None:
-            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
 
         try:
             _pynative_executor.new_graph(self, *args, **kwargs)
@@ -704,15 +692,7 @@ class Cell(Cell_):
             _pynative_executor.clear_res()
             raise err
 
-        if isinstance(output, Parameter):
-            output = output.data
         return output
-
-    def _check_cell_flags_in_pynative(self):
-        """Check the flags added to cell in pynative mode"""
-        if hasattr(self, "_func_graph_flags") and self._func_graph_flags.get("output_no_recompute"):
-            raise TypeError("Recompute is not supported in PyNative mode currently, you can use "
-                            "'context.set_context(mode=context.GRAPH_MODE)' or @jit to set graph mode.")
 
     def _add_attr(self, name, value):
         if name and name[:2] != '__' and name not in Cell.IGNORE_LIST:
@@ -830,15 +810,6 @@ class Cell(Cell_):
         else:
             self.insert_param_to_cell(name, None)
 
-    def _set_attr_for_tensor(self, name, value):
-        if context._get_mode() == context.PYNATIVE_MODE:
-            tensor_list = self.__dict__.get('_tensor_list')
-            if name in self.__dict__:
-                del self.__dict__[name]
-            tensor_list[name] = value
-        else:
-            object.__setattr__(self, name, value)
-
     def __setattr__(self, name, value):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
@@ -856,8 +827,6 @@ class Cell(Cell_):
             if value is not None:
                 raise TypeError(f"For 'Cell', the type of {name} must be cell, but got {type(value).__name__}.")
             self._cells[name] = None
-        elif isinstance(value, Tensor):
-            self._set_attr_for_tensor(name, value)
         else:
             if isinstance(value, Primitive):
                 value.set_prim_instance_name(name)
@@ -981,6 +950,21 @@ class Cell(Cell_):
 
         return self._dynamic_shape_inputs
 
+    def _get_compile_args(self, args):
+        """Get compile arguments."""
+        # this is used only for test
+        if is_auto_dynamic() and (self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None):
+            self._dynamic_shape_inputs = convert_inputs_to_dynamic(*args)
+
+        if self._dynamic_shape_inputs is not None:
+            logger.debug("Compiled Graph with dynamic shape")
+            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
+            Validator.check_symbolic_shape(self._dynamic_shape_inputs, args)
+            self.saved_dynamic_shape = self._dynamic_shape_inputs
+            return self._dynamic_shape_inputs
+        return args
+
+
     def compile(self, *args, **kwargs):
         """
         Compile Cell as a computation graph, the input must be consistent with the input defined in construct.
@@ -989,19 +973,9 @@ class Cell(Cell_):
             args (tuple): Args of the Cell object.
             kwargs (dict): Kwargs of the Cell object.
         """
-        # this is used only for test
-        if is_auto_dynamic() and (self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None):
-            self._dynamic_shape_inputs = convert_inputs_to_dynamic(*args)
-
-        if self._dynamic_shape_inputs is None:
-            _cell_graph_executor.compile(self, phase=self.phase,
-                                         jit_config_dict=self._jit_config_dict, *args, **kwargs)
-        else:
-            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
-            self.saved_dynamic_shape = self._dynamic_shape_inputs
-            _cell_graph_executor.compile(self, *self._dynamic_shape_inputs, phase=self.phase,
-                                         jit_config_dict=self._jit_config_dict, **kwargs)
-            logger.debug("Compiled Graph with dynamic shape")
+        self._compile_args = self._get_compile_args(args)
+        _cell_graph_executor.compile(self, *self._compile_args, phase=self.phase,
+                                     jit_config_dict=self._jit_config_dict, **kwargs)
 
     def compile_and_run(self, *args, **kwargs):
         """
@@ -1019,7 +993,7 @@ class Cell(Cell_):
         """
         self.compile(*args, **kwargs)
         self.add_flags(ge_sync_data=False)
-        new_args = _get_args_for_run(self, args, kwargs)
+        new_args = _get_args_for_run(self, args, kwargs, self._compile_args)
         return _cell_graph_executor(self, *new_args, phase=self.phase)
 
     def auto_parallel_compile_and_run(self):
@@ -1070,20 +1044,17 @@ class Cell(Cell_):
             Parameter(name=bias, shape=(3,), dtype=Int64, requires_grad=True)
         """
         if not param_name:
-            raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not be None.")
+            raise KeyError(f"For 'insert_param_to_cell', the argument 'param_name' should not be None.")
         if check_name_contain_dot and '.' in param_name:
-            raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not contain \".\"")
+            raise KeyError(f"For 'insert_param_to_cell', the argument 'param_name' should not contain'.' ")
         if '_params' not in self.__dict__:
-            raise AttributeError("For 'insert_param_to_cell', please call Cell.__init__() firstly.")
+            raise AttributeError(f"For 'insert_param_to_cell', please call Cell.__init__() firstly.")
         if hasattr(self, param_name) and param_name not in self._params:
-            raise KeyError("For 'insert_param_to_cell', the {} parameter already exists in the network. Cannot "
-                           "insert another parameter with the same name.".format(param_name))
+            raise KeyError(f"For 'insert_param_to_cell', the {param_name} parameter already exists in the network."
+                           f"Cannot insert another parameter with the same name.")
         if not isinstance(param, Parameter) and param is not None:
             raise TypeError(f"For 'insert_param_to_cell', the argument 'param' must be 'Parameter' if not None, "
                             f"but got {type(param)}.")
-        if param is None:
-            raise TypeError(f"For 'insert_param_to_cell', the argument 'param' must not be None, "
-                            f"but got None.")
         if isinstance(param, Parameter) and param.name == PARAMETER_NAME_DEFAULT:
             param.name = param_name
         self._params[param_name] = param
@@ -1142,11 +1113,11 @@ class Cell(Cell_):
             raise TypeError(f"For 'insert_child_to_cell', the type of parameter 'child_name' must be str, "
                             f"but got {type(child_name)}.")
         if not child_name or '.' in child_name:
-            raise KeyError("For 'insert_child_to_cell', the parameter 'child_name' can not be None and "
-                           "can not contain '.'")
+            raise KeyError(f"For 'insert_child_to_cell', the parameter 'child_name' can not be None and "
+                           "can not contain '.' ")
         if hasattr(self, child_name) and child_name not in self._cells:
-            raise KeyError("For 'insert_child_to_cell', the {} child cell already exists in the network. Cannot "
-                           "insert another child cell with the same name.".format(child_name))
+            raise KeyError(f"For 'insert_child_to_cell', the {child_name} child cell already exists in the network."
+                           f"Cannot insert another child cell with the same name.")
         if not isinstance(child_cell, Cell) and child_cell is not None:
             raise TypeError(f"For 'insert_child_to_cell', the argument 'child_cell' must be 'Cell' if not None, "
                             f"but got type {type(child_cell)}.")
@@ -1166,7 +1137,7 @@ class Cell(Cell_):
         Returns:
             Tensor, returns the computed result.
         """
-        return None
+        raise AttributeError("For 'Cell', the method 'construct' is not defined.")
 
     def remove_redundant_parameters(self):
         """
@@ -1364,7 +1335,7 @@ class Cell(Cell_):
 
         Tutorial Examples:
             - `Model Training - Optimizer
-              <https://mindspore.cn/tutorials/en/master/beginner/train.html#optimizer>`_
+              <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/train.html#optimizer>`_
         """
         return list(filter(lambda x: x.requires_grad, self.get_parameters(expand=recurse)))
 
@@ -1475,7 +1446,7 @@ class Cell(Cell_):
 
         Tutorial Examples:
             - `Building a Network - Model Parameters
-              <https://mindspore.cn/tutorials/en/master/beginner/model.html#model-parameters>`_
+              <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/model.html#model-parameters>`_
         """
         cells = []
         if expand:
@@ -1701,6 +1672,9 @@ class Cell(Cell_):
         if not hasattr(self, "_func_graph_flags"):
             self._func_graph_flags = {}
         self._func_graph_flags.update({**flags})
+        if context._get_mode() == context.PYNATIVE_MODE and self._func_graph_flags.get("output_no_recompute"):
+            raise TypeError("Recompute is not supported in PyNative mode currently, you can use "
+                            "'context.set_context(mode=context.GRAPH_MODE)' or @jit to set graph mode.")
         self.__dict__.update({**flags})
         self._add_mixed_precision_flag(**flags)
         return self
@@ -1811,7 +1785,7 @@ class Cell(Cell_):
         accelerate the algorithm in the algorithm library.
 
         If `boost_type` is not in the algorithm library, please view the algorithm in the algorithm library through
-        `algorithm library <https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_.
+        `algorithm library <https://gitee.com/mindspore/mindspore/tree/r2.3.q1/mindspore/python/mindspore/boost>`_.
 
         Note:
             Some acceleration algorithms may affect the accuracy of the network, please choose carefully.
@@ -1868,7 +1842,7 @@ class Cell(Cell_):
 
         Tutorial Examples:
             - `Model Training - Implementing Training and Evaluation
-              <https://mindspore.cn/tutorials/en/master/beginner/train.html#training-and-evaluation>`_
+              <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/train.html#training-and-evaluation>`_
         """
         if mode:
             self._phase = 'train'
@@ -2387,16 +2361,13 @@ class Cell(Cell_):
                                  "the key kwargs must be 'mp_comm_recompute', "
                                  "'parallel_optimizer_comm_recompute', 'recompute_slice_activation'" % key)
 
+    @deprecated("2.3", "infer_param_pipeline_stage")
     def infer_param_pipeline_stage(self):
         """
         Infer pipeline stages of all parameters in the cell.
 
         Note:
-            - If a parameter does not belong to any cell which has been set pipeline_stage,
-              the parameter should use add_pipeline_stage to add it's pipeline_stage information.
-            - If a parameter P has been used by two operators in different stages "stageA" and "stageB",
-              the parameter P should use P.add_pipeline_stage(stageA) and P.add_pipeline_stage(stageB)
-              to add it's stage information before using infer_param_pipeline_stage.
+            - The interface is deprecated from version 2.3 and will be removed in a future version.
 
         Returns:
             The params belong to current stage in pipeline parallel.
@@ -2493,43 +2464,22 @@ class Cell(Cell_):
         Args:
             net_inputs (tuple): Inputs of the Cell object.
         """
-        set_inputs_len = len(set_inputs)
-        net_inputs_len = len(net_inputs)
-        if set_inputs_len != net_inputs_len:
-            raise ValueError("The length of 'set_inputs' or tuple(list) in 'set_inputs' must be equal to network's "
-                             f"inputs, but got 'set_inputs': {set_inputs_len} and network's input: {net_inputs_len}.")
+        if not getattr(set_inputs, '__ms_dynamic_len__', False):
+            set_inputs_len = len(set_inputs)
+            net_inputs_len = len(net_inputs)
+            if set_inputs_len != net_inputs_len:
+                raise ValueError(f"The length of 'set_inputs' or tuple(list) in 'set_inputs' "
+                                 f"must be equal to network's inputs, but got 'set_inputs': "
+                                 f"{set_inputs_len} and network's input: {net_inputs_len}.")
         for index, (set_input, net_input) in enumerate(zip(set_inputs, net_inputs)):
             if isinstance(set_input, Tensor):
                 self._check_dynamic_tensor(set_input, net_input, index)
             elif isinstance(set_input, (tuple, list)):
                 if not isinstance(net_input, (tuple, list)):
                     raise TypeError(
-                        f"The {index + 1}th input type of 'set_inputs' or tuple(list) in 'set_inputs' must be tuple or "
-                        f"list, but got {type(net_input)}.")
+                        f"The {index + 1}th input type of 'set_inputs' or tuple(list) in "
+                        f"'set_inputs' must be tuple or list, but got {type(net_input)}.")
                 self._check_compile_dynamic_shape(set_input, net_input)
-            else:
-                if context._get_mode() == context.PYNATIVE_MODE and set_input is None:
-                    continue
-                if net_input != set_input:
-                    raise ValueError(
-                        f"The {index + 1}th input of 'set_inputs' or tuple(list) in 'set_inputs' must be the same with "
-                        f"network's input, but got set_inputs: {set_input} and network's input: {net_input}.")
-
-    def _run_tracefunc(self, *args, **kwargs):
-        """ Run Packed Cell in Pack."""
-        args = self._mixed_precision_cast(args)
-        need_subgraph = hasattr(self, "bprop") or hasattr(self, "_pipeline_stage") or self.get_flags()
-        if not PackFunc.current.is_pynative_mode and need_subgraph:
-            expander = PackExpander.get_instance()
-            args = expander.begin_subgraph(self, *args)
-            args = [_convert_tensor(a) for a in args]
-            output = self._run_construct(args, kwargs)
-            ret = expander.end_subgraph(self, output)
-            output = _convert_tensor(ret)
-        else:
-            with _SetMixedPrecision(self):
-                output = self._run_construct(args, kwargs)
-        return output
 
     def _mixed_precision_cast(self, inputs):
         mixed_type = self.get_mixed_precision_type()
@@ -2636,7 +2586,7 @@ class GraphCell(Cell):
         self._add_attr("graph_load_from_mindir", self.graph)
         if not self.obf_random_seed:
             return self.compile_and_run(*args, **kwargs)
-        append_input = Tensor((numpy.ones((1, 1)) * self._branch_control_input).astype(numpy.int32))
+        append_input = Tensor((numpy.ones((1,)) * self._branch_control_input).astype(numpy.int32))
         return self.compile_and_run(*args, append_input, **kwargs)
 
 

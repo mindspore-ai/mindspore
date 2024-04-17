@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/hardware/ge_device_context.h"
 #include <tuple>
 #include <algorithm>
+#include <sstream>
 #include <map>
 #include <set>
 #include "include/transform/graph_ir/types.h"
@@ -26,20 +27,20 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
-#include "plugin/device/ascend/hal/hardware/ge_utils.h"
-#include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "runtime/config.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/compile_cache_context.h"
 #include "mindspore/core/utils/file_utils.h"
-#include "toolchain/adx_datadump_server.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
+#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -47,6 +48,8 @@ namespace ascend {
 namespace {
 constexpr auto kOpDebugConfigFile = "ge_op_debug_config.ini";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
+constexpr auto kSaturationMode = "Saturation";
+constexpr auto kINFNANMode = "INFNAN";
 
 bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
@@ -57,13 +60,20 @@ bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
     if (node == nullptr || common::AnfAlgo::IsCallNode(node)) {
       return false;
     }
-    return common::AnfAlgo::IsDynamicShape(node);
+    return common::AnfAlgo::IsDynamicShape(node) || common::AnfAlgo::IsDynamicSequence(node) ||
+           common::AnfAlgo::IsNodeMutableScalar(node);
   });
 }
 }  // namespace
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   if (IsDynamicShapeFuncGraph(func_graph)) {
+    // dynamic shape default kernel be kernel before ge support
+    if (GetRunMode(func_graph) == RunMode::kKernelMode) {
+      return true;
+    }
     opt::GEDynamicUnifyMindIR(func_graph);
     bool all_support = true;
     auto mng = func_graph->manager();
@@ -88,35 +98,43 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
         if (!transform::ConvertCheck(node)) {
           all_support = false;
           common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue<std::string>(kCPUDevice), node);
+          MS_LOG(DEBUG) << node->fullname_with_scope() << " can not find adpt, run on CPU";
           continue;
         }
         if (!transform::DynamicShapeSupportCheck(node)) {
           all_support = false;
           common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
+          MS_LOG(DEBUG) << node->fullname_with_scope() << " not support dynamic shape, will run in KernelGraph";
           continue;
         }
         if (!transform::SinkGraphCheck(node)) {
           all_support = false;
           common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
+          MS_LOG(DEBUG) << node->fullname_with_scope() << " have attrs is not ValueNode, will run in KernelGraph";
         }
       }
     }
+    if (!all_support) {
+      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+    }
     return all_support;
   }
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
   return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
 }
 
 RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  // PyNative is only support ACL now on 910B.
-  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
-    return enable_ge == "1" ? RunMode::kGraphMode : RunMode::kKernelMode;
+  if (IsDynamicShapeFuncGraph(func_graph)) {
+    if (common::GetEnv("GRAPH_OP_RUN") == "0") {
+      MS_LOG(INFO) << "dynamic shape default RunMode::kGraphMode";
+      return RunMode::kGraphMode;
+    }
+    MS_LOG(INFO) << "dynamic shape default RunMode::kKernelMode";
+    return RunMode::kKernelMode;
   }
-  if (common::GetEnv("GRAPH_OP_RUN") == "1") {
+
+  if (context->IsKByKExecutorMode()) {
     MS_LOG(INFO) << "RunMode::kKernelMode";
     return RunMode::kKernelMode;
   } else {
@@ -133,38 +151,38 @@ void GeDeviceContext::Initialize() {
   }
 
   MS_LOG(DEBUG) << "Start initialize...";
+
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  // set overflow mode in ascend910b
+
+  // set overflow mode
   const auto &soc_version = ms_context->ascend_soc_version();
-  if (soc_version == "ascend910b") {
-    bool is_infnan = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "INFNAN_MODE");
-    if (is_infnan) {
-      auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
-      auto ret = aclrtSetDeviceSatMode(mode);
-      if (ret != ACL_SUCCESS) {
-        MS_LOG(EXCEPTION) << "aclrtSetDeviceSatMode failed";
-      }
+  if (soc_version == "ascend910b" || soc_version == "ascend910c") {
+    bool is_sat = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "SATURATION_MODE");
+    auto mode = (is_sat) ? aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION
+                         : aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
+    auto overflow_mode = (is_sat) ? kSaturationMode : kINFNANMode;
+    MS_LOG(INFO) << "The current overflow detection mode is " << overflow_mode << ".";
+    auto ret = CALL_ASCEND_API(aclrtSetDeviceSatMode, mode);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Set " << overflow_mode << " mode failed.";
     }
   }
+
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
 
   // set MS_CTX_ENABLE_GE_HETEROGENOUS true according to  heterogeneous mode
-  int32_t is_heterogenous = 0;
-  (void)rtGetIsHeterogenous(&is_heterogenous);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogenous == 1);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   InitGe(ms_context);
 
-  if (IsEnableRefMode()) {
-    MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
-    GetKernelExecutor(false)->Initialize();
-    // DynamicKernelExecutor and KernenlExecutor should be equal for GE
-    MS_EXCEPTION_IF_CHECK_FAIL(GetKernelExecutor(true) == GetKernelExecutor(false),
-                               "GE dynamic KernelExecutor and KernenlExecutor is not Equal.");
-    MS_EXCEPTION_IF_NULL(GetKernelExecutor(true));
-    GetKernelExecutor(true)->Initialize();
-  }
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
+  GetKernelExecutor(false)->Initialize();
+  // DynamicKernelExecutor and KernenlExecutor should be equal for GE
+  MS_EXCEPTION_IF_CHECK_FAIL(GetKernelExecutor(true) == GetKernelExecutor(false),
+                             "GE dynamic KernelExecutor and KernenlExecutor is not Equal.");
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(true));
+  GetKernelExecutor(true)->Initialize();
 
   InitDump();
   if (ms_context->EnableAoeOnline()) {
@@ -183,6 +201,8 @@ void GeDeviceContext::Destroy() {
     transform::DestroyAoeUtil();
   }
   FinalizeDump();
+  // Device resource manager must be destroyed before 'FinalizeGe' unless some runtime APIs will throw exception.
+  device_res_manager_->Destroy();
   (void)FinalizeGe(ms_context);
   if (hccl::HcclAdapter::GetInstance().Inited()) {
     (void)hccl::HcclAdapter::GetInstance().FinalizeHccl();
@@ -190,6 +210,7 @@ void GeDeviceContext::Destroy() {
   if (deprecated_interface_ != nullptr) {
     (void)deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
   }
+  initialized_ = false;
 }
 
 void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
@@ -213,41 +234,23 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
       MS_LOG(EXCEPTION) << "Initialize GE failed!";
     }
   }
+
+  GeDeviceResManager::CreateSessionAndGraphRunner();
+  auto graph_runner = transform::GetGraphRunner();
+  MS_EXCEPTION_IF_NULL(graph_runner);
+  if (IsEnableRefMode()) {
+    transform::Status ret = transform::RegisterExternalAllocator(
+      graph_runner, dynamic_cast<GeDeviceResManager *>(device_res_manager_.get())->GetStream(),
+      dynamic_cast<GeDeviceResManager *>(device_res_manager_.get())->GetAllocator());
+    if (ret != transform::Status::SUCCESS) {
+      MS_LOG(EXCEPTION) << "RegisterExternalAllocator failed";
+    }
+    MS_LOG(INFO) << "Create session and graphrunner successful.";
+  }
+
   inst_context->increase_param<uint32_t>(MS_CTX_GE_REF);
   MS_LOG(INFO) << "Init ge successful, ge reference = " << inst_context->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
   return;
-}
-
-void UseOpDebugConfig(std::map<std::string, std::string> *ge_options) {
-  auto op_debug_config = common::GetEnv("MS_COMPILER_OP_DEBUG_CONFIG");
-  if (!op_debug_config.empty()) {
-    auto config_path = Common::GetCompilerCachePath();
-    DIR *dir = opendir(config_path.c_str());
-    if (dir == nullptr) {
-      auto ret = mkdir(config_path.c_str(), S_IRWXU);
-      if (ret != 0) {
-        MS_LOG(INFO) << "kernel dir: " << config_path << "not exist";
-        return;
-      }
-    }
-    auto ge_op_debug_config_file = config_path + kOpDebugConfigFile;
-    if (ge_op_debug_config_file.size() > PATH_MAX) {
-      MS_LOG(WARNING) << "File path length should be smaller than " << PATH_MAX << ", but got "
-                      << ge_op_debug_config_file;
-      return;
-    }
-    (*ge_options)["op_debug_config"] = ge_op_debug_config_file;
-    std::string ge_op_debug_config = "op_debug_config = " + op_debug_config;
-    std::ofstream file_write;
-    file_write.open(ge_op_debug_config_file, std::ios::out | std::ios::trunc);
-    if (!file_write.is_open()) {
-      MS_LOG(WARNING) << "Create ge op debug config file failed. [" << ge_op_debug_config_file << "]";
-      return;
-    }
-    file_write << ge_op_debug_config << std::endl;
-    file_write.close();
-    MS_LOG(INFO) << "Use MS_COMPILER_OP_DEBUG_CONFIG:" << ge_op_debug_config;
-  }
 }
 
 // ge.exec.allow_hf32 default value is "10"(enable Conv, disable Matmul) set by CANN
@@ -275,26 +278,18 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
   MS_EXCEPTION_IF_NULL(ge_options);
 
   std::string topo_sorting_mode = "0";
-  auto topo_sorting_env = common::GetEnv("GE_TOPO_SORTING_MODE");
-  MS_LOG(INFO) << "GE topo sorting mode is: " << topo_sorting_env;
-  if (topo_sorting_env == "bfs") {
-    topo_sorting_mode = "0";
-  } else if (topo_sorting_env == "dfs") {
-    topo_sorting_mode = "1";
-  } else if (topo_sorting_env == "dfs_postorder" ||
-             ms_context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+  if (ms_context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     topo_sorting_mode = "2";
   }
-
   (*ge_options)["ge.topoSortingMode"] = topo_sorting_mode;
+  // disable RemoveSameConstPass, it will be caused the communication failed on multi-card.
+  (*ge_options)["ge.disableOptimizations"] = "RemoveSameConstPass";
+
   (*ge_options)["ge.exec.memoryOptimizationPolicy"] = "MemoryPriority";
   MS_LOG(INFO) << "Set GE topo mode to memory-priority.";
 
-  auto ge_use_static_memory = common::GetEnv("GE_USE_STATIC_MEMORY");
-  if (ge_use_static_memory.empty()) {
-    (*ge_options)["ge.exec.staticMemoryPolicy"] = "2";
-    MS_LOG(INFO) << "Set staticMemoryPolicy to default mode.";
-  }
+  (*ge_options)["ge.exec.staticMemoryPolicy"] = "2";
+  MS_LOG(INFO) << "Set staticMemoryPolicy to default mode 2.";
 
   if (ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE) != "") {
     (*ge_options)["ge.jit_compile"] = ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE);
@@ -303,6 +298,9 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
     (*ge_options)["ge.jit_compile"] = "2";
     MS_LOG(INFO) << "The default value of jit_compile is set to 2.";
   }
+
+  auto ge_exception_dump = ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_EXCEPTION_DUMP);
+  (*ge_options)["ge.exec.enable_exception_dump"] = ge_exception_dump;
 
   SetAscendHF32Config(ms_context_ptr, ge_options);
 
@@ -317,34 +315,11 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
   MS_EXCEPTION_IF_NULL(ge_options);
 
-  (*ge_options)["device_id"] = "0";
-
-  (*ge_options)["ge.exec.formatMode"] = "0";
-  if (common::GetEnv("MS_ENABLE_FORMAT_MODE") == "1") {
-    (*ge_options)["ge.exec.formatMode"] = "1";
-  }
-
-  auto profiler_manager = profiler::ProfilerManager::GetInstance();
-  MS_EXCEPTION_IF_NULL(profiler_manager);
-  (*ge_options)["ge.exec.profilingMode"] = std::to_string(static_cast<int>(profiler_manager->GetProfilingEnableFlag()));
-  if (profiler_manager->GetProfilingEnableFlag()) {
-    (*ge_options)["ge.exec.profilingOptions"] = profiler_manager->GetProfilingOptions();
-  }
-
-  (*ge_options)["rank_table_file"] = "";
-  (*ge_options)["graphType"] = "1";
-
-  SetDisableReuseMemoryFlag(ge_options);
   SetHcclOptions(ms_context_ptr, ge_options);
   SetDumpOptions(ge_options);
 
-  auto env_job_id = common::GetEnv("JOB_ID");
-  if (!env_job_id.empty()) {
-    (*ge_options)["ge.exec.jobId"] = env_job_id;
-  } else {
-    (*ge_options)["ge.exec.jobId"] = "0";
-    MS_LOG(INFO) << "JOB_ID is not set in ENV. Now set to default value 0";
-  }
+  (*ge_options)["ge.exec.jobId"] = "0";
+  MS_LOG(INFO) << "Set ge.exec.jobId to default value 0";
 
   if (CompileCacheEnable()) {
     auto ge_cache_path = Common::GetCompilerCachePath() + kGeCache;
@@ -361,7 +336,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
       (*ge_options)["ge.opsProtoLibPath"] = proto_lib_path;
     }
   } else {
-    MS_LOG(INFO) << "Set proto lib path failed!";
+    MS_LOG(INFO) << "Got empty proto lib path, cannot set ge.opsProtoLibPath.";
   }
 
   SetAscendConfig(ms_context_ptr, ge_options);
@@ -384,7 +359,8 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   (*ge_options)["ge.exec.overflow"] = "1";
   // enable deterministic
   (*ge_options)[::ge::DETERMINISTIC] = ms_context_ptr->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON" ? "1" : "0";
-  UseOpDebugConfig(ge_options);
+
+  SetPassthroughGeOptions(true, ge_options);
 }
 
 void GeDeviceContext::SetDumpOptions(std::map<std::string, std::string> *ge_options) const {
@@ -392,7 +368,7 @@ void GeDeviceContext::SetDumpOptions(std::map<std::string, std::string> *ge_opti
   // set up dump options
   auto &dump_parser = DumpJsonParser::GetInstance();
   dump_parser.Parse();
-  if (dump_parser.async_dump_enabled()) {
+  if (dump_parser.async_dump_enabled() && !dump_parser.IsAclDump()) {
     (*ge_options)["ge.exec.enableDump"] = std::to_string(static_cast<int>(dump_parser.async_dump_enabled()));
     auto dump_path = FileUtils::CreateNotExistDirs(dump_parser.path());
     if (!dump_path.has_value()) {
@@ -433,17 +409,6 @@ void GeDeviceContext::SetDumpOptions(std::map<std::string, std::string> *ge_opti
   }
 }
 
-void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const {
-  MS_EXCEPTION_IF_NULL(ge_options);
-  auto env_disable_reuse_memory = common::GetEnv("DISABLE_REUSE_MEMORY");
-  if (!env_disable_reuse_memory.empty()) {
-    (*ge_options)["ge.exec.disableReuseMemory"] = env_disable_reuse_memory;
-  } else {
-    (*ge_options)["ge.exec.disableReuseMemory"] = "0";
-    MS_LOG(INFO) << "DISABLE_REUSE_MEMORY is not set in ENV. Now set to default value 0";
-  }
-}
-
 void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_context,
                                      std::map<std::string, std::string> *ge_options) {
   MS_EXCEPTION_IF_NULL(inst_context);
@@ -451,6 +416,10 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
   auto env_table_file = common::GetEnv("MINDSPORE_HCCL_CONFIG_PATH");
   if (env_table_file.empty()) {
     env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  }
+  auto simulation_level = common::GetEnv(kSimulationLevel);
+  if (!simulation_level.empty()) {
+    env_table_file = "";
   }
   auto env_rank_id = common::GetEnv("RANK_ID");
   auto env_device_id = std::to_string(inst_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
@@ -466,10 +435,7 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
     } else if (hccl::HcclAdapter::GetInstance().UseHcclCM()) {
       hccl::HcclAdapter::AddCMEnvToHcclOption(ge_options);
     }
-    auto env_hccl_flag = common::GetEnv("HCCL_FLAG");
-    if (!env_hccl_flag.empty()) {
-      (*ge_options)["ge.exec.hcclFlag"] = env_hccl_flag;
-    }
+
     (*ge_options)["ge.exec.isUseHcom"] = "1";
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
     (*ge_options)["ge.exec.rankId"] = env_rank_id;
@@ -516,10 +482,7 @@ void GeDeviceContext::InitDump() const {
     return;
   }
   if (dump_parser.FileFormatIsNpy()) {
-    (void)Adx::AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
-  }
-  if (AdxDataDumpServerInit() != 0) {
-    MS_LOG(EXCEPTION) << "Adx data dump server init failed";
+    (void)acldumpRegCallback(mindspore::ascend::DumpDataCallBack, 0);
   }
 }
 
@@ -532,9 +495,6 @@ void GeDeviceContext::FinalizeDump() const {
   if (dump_parser.FileFormatIsNpy() && dump_parser.IsTensorDump()) {
     mindspore::ascend::AscendAsyncDumpManager::GetInstance().WaitForWriteFileFinished();
   }
-  if (AdxDataDumpServerUnInit() != 0) {
-    MS_LOG(EXCEPTION) << "Adx data dump server init failed";
-  }
 }
 
 DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
@@ -545,11 +505,101 @@ DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
   return deprecated_interface_.get();
 }
 
-constexpr auto kGeDevice = "GE";
-MS_REGISTER_DEVICE(kGeDevice, GeDeviceContext);
-#ifdef ASCEND_910B
+uint32_t GeDeviceContext::GetDeviceCount() {
+  uint32_t device_count = 0;
+  auto ret = CALL_ASCEND_API(aclrtGetDeviceCount, &device_count);
+  if (ret != ACL_ERROR_NONE) {
+    MS_EXCEPTION(DeviceProcessError) << "Call rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
+  }
+  return device_count;
+}
+
+std::string GeDeviceContext::GetDeviceName(uint32_t) {
+  const char *name = CALL_ASCEND_API(aclrtGetSocName);
+  std::string device_name = (name == nullptr) ? "" : name;
+  return device_name;
+}
+
+AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
+  AscendDeviceProperties device_properties;
+  const char *name = CALL_ASCEND_API(aclrtGetSocName);
+  device_properties.name = (name == nullptr) ? "" : name;
+
+  size_t free_size{0}, total_size{0};
+  auto ret = CALL_ASCEND_API(aclrtGetMemInfo, ACL_HBM_MEM, &free_size, &total_size);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(WARNING) << "Failed get memory info for current device. Error number: " << ret;
+  }
+  device_properties.total_memory = total_size;
+  device_properties.free_memory = free_size;
+  return device_properties;
+}
+
 MS_REGISTER_DEVICE(kAscendDevice, GeDeviceContext);
+#ifdef WITH_BACKEND
+namespace {
+void SetContextSocVersion(MsContext *ctx) {
+  const std::map<std::string, std::string> kAscendSocVersions = {
+    {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
+    {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
+    {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
+    {"Ascend910B4", "ascend910b"},  {"Ascend910C1", "ascend910c"},  {"Ascend910C2", "ascend910c"},
+    {"Ascend910C3", "ascend910c"}};
+  const char *soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
+  if (soc_name_c == nullptr) {
+    MS_LOG(ERROR) << "Get soc name failed.";
+    return;
+  }
+  std::string version(soc_name_c);
+  MS_LOG(INFO) << "The soc version :" << version;
+  ctx->set_ascend_soc_name(version);
+  auto iter = kAscendSocVersions.find(version);
+  if (iter == kAscendSocVersions.end()) {
+    ctx->set_ascend_soc_version(version);
+  } else {
+    ctx->set_ascend_soc_version(iter->second);
+  }
+}
+}  // namespace
+
+MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
+  MS_EXCEPTION_IF_NULL(ctx);
+  if (ctx->backend_policy() != "ge") {
+    (void)ctx->set_backend_policy("ge");
+  }
+  // change some Environment Variables name
+  auto format_mode = common::GetEnv("MS_ENABLE_FORMAT_MODE");
+  if (!format_mode.empty()) {
+    MS_LOG(WARNING)
+      << "The Environment Variable MS_ENABLE_FORMAT_MODE will be discarded, please use MS_FORMAT_MODE instead.";
+    common::SetEnv("MS_FORMAT_MODE", format_mode.c_str());
+  }
+
+  transform::LoadAscendApiSymbols();
+  SetContextSocVersion(ctx);
+});
 #endif
+
+// Register functions to _c_expression so python hal module could call Ascend device interfaces.
+void PybindAscendStatelessFunc(py::module *m) {
+  MS_EXCEPTION_IF_NULL(m);
+  (void)py::class_<AscendDeviceProperties>(*m, "AscendDeviceProperties")
+    .def_readonly("name", &AscendDeviceProperties::name)
+    .def_readonly("total_memory", &AscendDeviceProperties::total_memory)
+    .def_readonly("free_memory", &AscendDeviceProperties::free_memory)
+    .def("__repr__", [](const AscendDeviceProperties &p) {
+      std::ostringstream s;
+      s << "AscendDeviceProperties(name='" << p.name << "', total_memory=" << p.total_memory / (1024 * 1024)
+        << "MB, free_memory=" << p.free_memory / (1024 * 1024) << "MB)";
+      return s.str();
+    });
+  (void)m->def("ascend_get_device_count", &GeDeviceContext::GetDeviceCount, "Get Ascend device count.");
+  (void)m->def("ascend_get_device_name", &GeDeviceContext::GetDeviceName,
+               "Get Ascend device name of specified device id.");
+  (void)m->def("ascend_get_device_properties", &GeDeviceContext::GetDeviceProperties,
+               "Get Ascend device properties of specified device id.");
+}
+REGISTER_DEV_STATELESS_FUNC_CB(kAscendDevice, PybindAscendStatelessFunc);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

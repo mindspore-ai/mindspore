@@ -57,7 +57,7 @@ def test_acosgrad_fp16():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acosgrad_fp64():
@@ -75,7 +75,7 @@ def test_acosgrad_fp64():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acosgrad_complex64():
@@ -92,7 +92,7 @@ def test_acosgrad_complex64():
     assert np.allclose(output_ms.asnumpy(), expect.astype(np.complex64), 1e-5, 1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acosgrad_complex128():

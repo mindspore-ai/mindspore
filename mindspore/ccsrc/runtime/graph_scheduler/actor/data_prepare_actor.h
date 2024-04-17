@@ -48,12 +48,12 @@ class DataPrepareActor : public DebugAwareActor {
         real_strategy_(GraphExecutionStrategy::kPipeline),
         host_data_source_actor_(host_data_source_actor),
         host_tensor_queue_(host_tensor_queue),
-        value_node_prepared_(false) {}
+        first_step_(true) {}
   ~DataPrepareActor() override = default;
 
   // The process entry of data prepare.
-  void PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors, OpContext<DeviceTensor> *const context,
-                   GraphExecutionStrategy real_strategy);
+  void PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors, const VectorRef &args,
+                   OpContext<DeviceTensor> *const context, GraphExecutionStrategy real_strategy);
 
   // The debug related operation interface.
   void SendDebugReq(OpContext<DeviceTensor> *const context) override;
@@ -70,21 +70,27 @@ class DataPrepareActor : public DebugAwareActor {
  protected:
   void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override {
-    PrepareData(init_tensors_, context, GraphExecutionStrategy::kPipeline);
+    VectorRef empty_args;
+    PrepareData(init_tensors_, empty_args, context, GraphExecutionStrategy::kPipeline);
   }
 
  private:
   friend class GraphScheduler;
 
-  void UpdateDynamicShape(const AnfNodePtr &input_node, const TensorPtr &input_tensor) const;
+  void UpdateDynamicShapeAndSize(const AnfNodePtr &input_node, const TensorPtr &input_tensor) const;
+  void UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor);
 
-  void UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
-                                      const KernelGraphPtr &graph);
+  // Fetch the input info.
+  TensorPtr FetchInputTensor(const std::vector<TensorPtr> &tensors, size_t tensor_index, const VectorRef &args,
+                             const KernelWithIndex &front_node) const;
+  TensorPtr FetchInputTensorByArg(const VectorRef &args, size_t arg_index, const KernelWithIndex &front_node) const;
+  size_t FetchInputTensorIndex(const KernelWithIndex &front_node) const;
 
-  void PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
+  void PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors, const VectorRef &args,
                                        OpContext<DeviceTensor> *const context);
-  void PrepareDataForHostTensorQueue(const std::vector<std::vector<TensorPtr>> &input_tensors,
+  void PrepareDataForHostTensorQueue(const std::vector<std::vector<TensorPtr>> &input_tensors, const VectorRef &args,
                                      OpContext<DeviceTensor> *const context);
+  void PrepareDataForHostTensorQueueNew(const VectorRef &args, OpContext<DeviceTensor> *const context);
 
   // Prepare the device data for persistent device tensor of weight node from host tensor.
   void PrepareDataForWeightNode(const AnfNodePtr &backend_node, const AnfNodePtr &front_node, const TensorPtr &tensor,
@@ -94,6 +100,10 @@ class DataPrepareActor : public DebugAwareActor {
                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
   void PrepareDataForStringValue(const ValueNodePtr &node, size_t index, const AnfNodePtr &front_node,
                                  const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
+  // Sync host data of Sequence or Scalar type value to device side.
+  void PrepareDataForSequenceAndScalarValue(const ValueNodePtr &node, size_t index, const AnfNodePtr &front_node,
+                                            const DeviceContext *device_context,
+                                            OpContext<DeviceTensor> *const context) const;
   //  The branch processing of PrepareDataForValueNode that value type is tensor.
   void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value, const AnfNodePtr &front_node,
                                      const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
@@ -102,7 +112,7 @@ class DataPrepareActor : public DebugAwareActor {
   // If the parameters in the root graph are only used by the control node, these parameters will not be initialized
   // by the kernel graph, and addresses need to be specially allocated for these parameters.
   void PrepareDeviceTensorStoreForControlNode(const ControlNodeParserPtr &control_node_parser,
-                                              const std::vector<TensorPtr> &tensors,
+                                              const std::vector<TensorPtr> &tensors, const VectorRef &args,
                                               OpContext<DeviceTensor> *const context) const;
   void PrepareHostTensorQueueForControlNode(const std::vector<TensorPtr> &tensors,
                                             std::vector<TensorPtr> *const host_tensors,
@@ -133,13 +143,19 @@ class DataPrepareActor : public DebugAwareActor {
   // The members for continuous memory alloc fetched by continuous_memory_nodes_.
   std::vector<std::vector<DeviceTensorPtr>> continuous_memory_alloc_list_list_;
   std::vector<std::vector<size_t>> size_list_list_;
+  std::vector<uint32_t> stream_id_list_;
   std::vector<size_t> total_size_list_;
   std::vector<const DeviceContext *> continuous_memory_device_contexts_;
   std::vector<std::vector<TensorPtr>> init_tensors_;
 
   // Record the address modified input nodes to refresh the ref node.
   std::set<AnfNode *> address_modified_input_nodes_;
-  bool value_node_prepared_;
+  bool first_step_;
+
+  // The tensor of parameter(weight) maybe update host value by Python phase and need re-prepare to sync new host value
+  // to device side. 'tensors_need_reprepare_' records all tensors whose host value has updated, this HashSet will be
+  // update by update value callback of tensors.
+  static mindspore::HashSet<const tensor::Tensor *> tensors_need_reprepare_;
 };  // namespace runtime
 
 using DataPrepareActorPtr = std::shared_ptr<DataPrepareActor>;

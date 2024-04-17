@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@
 #include "include/common/utils/callbacks.h"
 #if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
 #include "transform/graph_ir/callbacks_ge.h"
-#include "common/ge_inner_error_codes.h"
+#include "external/ge_common/ge_api_error_codes.h"
+#include "graph/graph.h"
 #endif
 #include "utils/ms_context.h"
 #include "include/common/utils/scoped_long_running.h"
@@ -45,7 +46,7 @@ std::shared_ptr<::ge::Session> GraphRunner::NewSession(const SessionOptions &ses
   std::shared_ptr<::ge::Session> ret;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->backend_policy() == "ge") {
+  if (ms_context->backend_policy() == "ge" || ms_context->backend_policy() == "ms") {
     ret = std::make_shared<::ge::Session>(sess_options);
     if (ret == nullptr) {
       MS_LOG(EXCEPTION) << "Create GE session failed!";
@@ -81,17 +82,13 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
 #endif
   }
 
-  std::vector<DfGraphWrapperPtr> wrappers = graph_manager_.GetAllGraphs();
-  if (wrappers.empty()) {
-    MS_LOG(INFO) << "The GraphManager is empty!!";
-    return;
-  }
 #if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
   if (ms_context->backend_policy() != "ge") {
     return;
   }
 #ifndef ENABLE_LITE_ACL
   // register the callback function
+  MS_EXCEPTION_IF_NULL(sess_);
   if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ::ge::GRAPH_SUCCESS) {
     MS_LOG(EXCEPTION) << "Register callback failed!";
   }
@@ -99,20 +96,42 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     MS_LOG(EXCEPTION) << "Register summary callback failed!";
   }
 #endif
-  for (auto &it : wrappers) {
-    std::set<string> saved_graph = graph_manager_.GetSavedGraphs();
-    auto iter_find = saved_graph.find(std::to_string(it->id_));
-    if (iter_find != saved_graph.end()) {
-      continue;
+#endif
+}
+
+Status GraphRunner::AddGraph(const std::string &name) {
+  DfGraphWrapperPtr wrap_ptr = graph_manager_.GetGraphByName(name);
+  if (wrap_ptr == nullptr) {
+    MS_LOG(WARNING) << "Get graph form DfGraphManager failed!";
+    return Status::NOT_FOUND;
+  }
+
+#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() != "ge" && ms_context->backend_policy() != "ms") {
+    return Status::SUCCESS;
+  }
+  std::set<string> saved_graph = graph_manager_.GetSavedGraphs();
+  auto iter_find = saved_graph.find(std::to_string(wrap_ptr->id_));
+  if (iter_find != saved_graph.end()) {
+    MS_LOG(INFO) << "The graph is already added, graph name: " << name;
+    return Status::SUCCESS;
+  }
+
+  graph_manager_.AddSavedGraphs(std::to_string(wrap_ptr->id_));
+  if (!wrap_ptr->is_added_to_ge_session_) {
+    MS_LOG(INFO) << "Add the graph " << (*wrap_ptr).name_ << " to GE, it's id is: " << (*wrap_ptr).id_;
+    MS_EXCEPTION_IF_NULL(sess_);
+    auto ret = sess_->AddGraph(static_cast<uint32_t>(wrap_ptr->id_), *(wrap_ptr->graph_ptr_), wrap_ptr->options_);
+    if (ret != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "AddGraph to Ge Session failed, ret: " << ret;
+      return Status::FAILED;
     }
-    graph_manager_.AddSavedGraphs(std::to_string(it->id_));
-    if (!it->is_added_to_ge_session_) {
-      MS_LOG(INFO) << "Add the graph " << (*it).name_ << " to GE, it's id is: " << (*it).id_;
-      (void)sess_->AddGraph(static_cast<uint32_t>(it->id_), *(it->graph_ptr_), it->options_);
-      it->is_added_to_ge_session_ = true;
-    }
+    wrap_ptr->is_added_to_ge_session_ = true;
   }
 #endif
+  return Status::SUCCESS;
 }
 
 Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,
@@ -125,7 +144,7 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
 
   DfGraphWrapperPtr wrap_ptr = graph_manager_.GetGraphByName(name);
   if (wrap_ptr == nullptr) {
-    MS_LOG(WARNING) << "Get graph form DfGraphManager failed!";
+    MS_LOG(INFO) << "Get graph form DfGraphManager failed!";
     return Status::NOT_FOUND;
   }
 
@@ -340,7 +359,7 @@ Status GraphRunner::RunGraphWithStreamAsync(const RunOptions &options, void *str
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 
-  if (ms_context->backend_policy() == "ge") {
+  if (ms_context->backend_policy() == "ge" || ms_context->backend_policy() == "ms") {
     if (sess_ == nullptr) {
       MS_LOG(ERROR) << "The GE session is null, can't run the graph!";
       return Status::FAILED;
@@ -364,20 +383,30 @@ Status GraphRunner::RunGraphWithStreamAsync(const RunOptions &options, void *str
 }
 
 Status GraphRunner::RegisterExternalAllocator(const void *const stream, GeAllocatorPtr allocator) {
+  if (sess_ == nullptr) {
+    MS_LOG(ERROR) << "The GE session is null, can't call GE RegisterExternalAllocator!";
+    return Status::FAILED;
+  }
   ge::Status ret = sess_->RegisterExternalAllocator(stream, allocator);
   if (ret != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Call GE RegisterExternalAllocator Failed, ret is: " << ret;
     return Status::FAILED;
   }
+  is_allocator_registered = true;
   return Status::SUCCESS;
 }
 
 Status GraphRunner::UnregisterExternalAllocator(const void *const stream) {
+  if (sess_ == nullptr) {
+    MS_LOG(ERROR) << "The GE session is null, can't call GE UnregisterExternalAllocator!";
+    return Status::FAILED;
+  }
   ge::Status ret = sess_->UnregisterExternalAllocator(stream);
   if (ret != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Call GE UnregisterExternalAllocator Failed, ret is: " << ret;
     return Status::FAILED;
   }
+  is_allocator_registered = false;
   return Status::SUCCESS;
 }
 

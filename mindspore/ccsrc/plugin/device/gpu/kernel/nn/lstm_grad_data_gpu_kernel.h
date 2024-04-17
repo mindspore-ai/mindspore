@@ -60,14 +60,12 @@ class LstmGradDataGpuKernelMod : public NativeGpuKernelMod {
         cudnn_data_type_(CUDNN_DATA_FLOAT) {}
   ~LstmGradDataGpuKernelMod() override { DestroyResource(); }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -102,23 +100,11 @@ class LstmGradDataGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeLists() {
-    input_size_list_.clear();
-    size_t y_size = IntToSize(seq_len_ * batch_size_ * hidden_size_ * (bidirectional_ ? 2 : 1)) * type_size_;
-
     size_t h_size = 0;
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(hx_desc_, &h_size), "get h size failed");
-    input_size_list_.push_back(y_size);
-    input_size_list_.push_back(y_size);
-    input_size_list_.push_back(h_size);
-    input_size_list_.push_back(h_size);
-    input_size_list_.push_back(weight_size_);
-    input_size_list_.push_back(h_size);
-    input_size_list_.push_back(h_size);
-    input_size_list_.push_back(reserved_size_);
     size_t state_size = 0;
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDropoutGetStatesSize(handle_, &state_size),
                                         "get dropout states size failed");
-    input_size_list_.push_back(state_size);
 
     output_size_list_.clear();
     size_t x_size = IntToSize(seq_len_ * batch_size_ * input_size_) * type_size_;
@@ -178,11 +164,11 @@ class LstmGradDataGpuKernelMod : public NativeGpuKernelMod {
   }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   using LstmGradDataGpuLaunchFunc =
-    std::function<bool(LstmGradDataGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(LstmGradDataGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, LstmGradDataGpuLaunchFunc>> func_list_;
   LstmGradDataGpuLaunchFunc kernel_func_;
 

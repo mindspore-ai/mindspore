@@ -19,10 +19,10 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "runtime/mem.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
-#include "acl/acl_rt.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -63,12 +63,25 @@ void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
   }
 }
 
+namespace {
+bool NoAdditionalMemory() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  const auto is_multi_graph_sink = context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
+  const auto is_task_sink = context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  return (is_cell_reuse || is_multi_graph_sink) && is_task_sink;
+}
+}  // namespace
+
 size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_mem, bool need_recycle) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size && common::IsNeedProfileMemory()) {
     device_free_mem_size = size;
   }
   if (device_free_mem_size < size) {
+    MS_LOG(INFO) << "The device memory is not enough, the free memory size is " << device_free_mem_size
+                 << ", but the alloc size is " << size;
     MS_LOG(INFO) << "The dynamic memory pool total size is "
                  << device::ascend::AscendMemoryPool::GetInstance().TotalMemStatistics() / kMBToByte
                  << "M, total used size is "
@@ -105,10 +118,7 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
   }
 
   alloc_mem_size = std::min(alloc_mem_size, device_free_mem_size);
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
-  if (is_cell_reuse && !need_recycle) {
+  if (NoAdditionalMemory() && !need_recycle) {
     alloc_mem_size = std::min(alloc_mem_size, size);
   }
   return alloc_mem_size;
@@ -135,7 +145,7 @@ DeviceMemPtr AscendMemoryPool::AllocOverflowTensorMem(size_t size, bool from_per
   }
   DeviceMemPtr overflow_memory_ptr = AllocTensorMem(align_size, from_persistent_mem);
   MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
-  auto acl_ret = aclrtMemset(overflow_memory_ptr, align_size, 0, align_size);
+  auto acl_ret = CALL_ASCEND_API(aclrtMemset, overflow_memory_ptr, align_size, 0, align_size);
   if (acl_ret != ACL_RT_SUCCESS) {
     MS_LOG(EXCEPTION) << "Clear overflow memory failed, aclrtMemset size = " << align_size << ", ret = " << acl_ret;
   }
@@ -178,9 +188,11 @@ void AscendMemoryPool::ResetIdleMemBuf() const {
     if (mem_mng->mem_block_list_.empty()) {
       return;
     }
-    for (const auto &it : mem_mng->idle_mem_buf_map_) {
-      MS_EXCEPTION_IF_NULL(it.second);
-      (void)aclrtMemset(it.second->device_addr_, it.first, 0, it.first);
+    for (const auto &idle_mem_buf : mem_mng->idle_mem_bufs_) {
+      for (const auto &it : idle_mem_buf.second) {
+        MS_EXCEPTION_IF_NULL(it.second);
+        (void)CALL_ASCEND_API(aclrtMemset, it.second->device_addr_, it.first, 0, it.first);
+      }
     }
   };
   fn(persistent_mem());

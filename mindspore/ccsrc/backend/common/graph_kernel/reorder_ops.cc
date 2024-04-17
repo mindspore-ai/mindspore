@@ -26,6 +26,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
 

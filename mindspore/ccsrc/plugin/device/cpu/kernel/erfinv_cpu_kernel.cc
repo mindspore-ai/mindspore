@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/erfinv_cpu_kernel.h"
-#include "mindspore/core/ops/erfinv.h"
 #include <cmath>
 #include <limits>
 
@@ -27,37 +26,27 @@ constexpr size_t kErfinvOutputsNum = 1;
 constexpr double PI = 3.14159265358979323846264338327950288;
 }  // namespace
 
-bool ErfinvCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Erfinv>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Erfinv ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool ErfinvCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int ErfinvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &others) {
-  int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+int ErfinvCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = NativeCpuKernelMod::Resize(inputs, outputs);
+  if (ret != 0) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return ret;
   }
   return 0;
 }
 
 template <typename T>
-bool ErfinvCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool ErfinvCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &workspace,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kErfinvInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kErfinvOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t total = inputs[0]->size / sizeof(T);
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t total = inputs[0]->size() / sizeof(T);
   auto task = [&input, &output](size_t start, size_t end) {
     // coefficient of the rational approximation on range [-0,7, 0.7]
     const T a[4] = {T(0.886226899), T(-1.645349621), T(0.914624893), T(-0.140543331)};

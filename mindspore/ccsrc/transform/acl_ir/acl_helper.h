@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace transform {
 class GeAdapterInfo;
-typedef enum ErrorAclType { kNormalOp, kUnknownOp, kInValidType, kSpecialOp } ErrorAclType;
+typedef enum ErrorAclType { kNormalOp, kUnknownOp, kInValidType, kSpecialOp, kInvalidBuildInfo } ErrorAclType;
 
 class AclHelper {
  public:
@@ -47,6 +47,7 @@ class AclHelper {
                                       std::vector<std::string> *output_reshape_types);
 
   // Convert mindspore's origin information to acl's origin information.
+  static void PaddingOriShape(const std::string &name, size_t idx, const std::string &format, ShapeVector *shape);
   static std::string ConvertOriginShapeAndFormat(const std::string &name, size_t idx, const std::string &dev_format,
                                                  ShapeVector *shape);
 
@@ -63,6 +64,10 @@ class AclHelper {
 
   // Check whether is nop op.
   static bool IsNopNode(const CNodePtr &node);
+  static bool IsInputDtypeSupport(const std::string &kernel_name, TypeId base_type, size_t idx);
+
+  // Set identity flag.
+  static bool NeedIdentityFlag(const std::vector<std::string> &formats);
 };
 }  // namespace transform
 }  // namespace mindspore

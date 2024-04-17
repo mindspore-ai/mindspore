@@ -31,17 +31,13 @@
 namespace mindspore {
 namespace parallel {
 Status OneHotInfo::GetAttrs() {
-  auto iter = attrs_.find(AXIS);
-  if (iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(iter->second);
-    if (iter->second->isa<Int64Imm>()) {
-      axis_value_ptr_ = iter->second;
-      axis_ = iter->second->cast<Int64ImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << ": The value of axis is not int64_t.";
-      return FAILED;
-    }
+  auto axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, name_, AXIS);
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << ": The value of axis is not int64_t.";
+    return FAILED;
   }
+  axis_ = axis_opt.value();
+  axis_value_ptr_ = MakeValue(static_cast<int64_t>(axis_));
 
   if ((axis_ > 1) || (axis_ < -1)) {
     MS_LOG(ERROR) << name_ << ": Axis " << axis_ << " is out of range[-1, 1].";
@@ -145,17 +141,18 @@ Status OneHotInfo::ExtractInputInfo() {
     MS_LOG(ERROR) << "Failure:OneHot cnode_ is nullptr";
     return FAILED;
   }
-  if (cnode_->inputs().size() != ONE_HOT_CNODE_INPUT_SIZE) {
+  if (cnode_->size() != ONE_HOT_CNODE_INPUT_SIZE) {
     MS_LOG(ERROR) << "Failure:There is " << ONE_HOT_CNODE_INPUT_SIZE
                   << " inputs for the CNode corresponding to "
                      "OneHot Primitive, real input size is "
-                  << cnode_->inputs().size();
+                  << cnode_->size();
     return FAILED;
   }
-  if (input_value_.size() != 4) {
-    MS_LOG(ERROR) << "Failure:There is 5 inputs for the CNode corresponding to OneHot Primitive, and input value size "
-                     "must be 4, real size is "
-                  << input_value_.size();
+  if (input_value_.size() != ONE_HOT_CNODE_INPUT_SIZE - 1) {
+    MS_LOG(ERROR) << "Failure:There is " << ONE_HOT_CNODE_INPUT_SIZE
+                  << " inputs for the CNode corresponding to OneHot Primitive, and input value size "
+                     "must be "
+                  << ONE_HOT_CNODE_INPUT_SIZE - 1 << ", real size is " << input_value_.size();
     return FAILED;
   }
   auto value_ptr = input_value_.at(1);
@@ -196,7 +193,7 @@ Status OneHotInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto mul1 = gen_g.PushBack({gen_g.NewOpInst(MUL), floor_div, CreateInt32Tensor(classes_each_device_)});
   auto sub1 = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), mul1});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), floor_div, CreateInt32Tensor(mod_rank_)});
-  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, CreateTypeInt(32)});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, CreatInt64Imm(static_cast<int64_t>(kNumberTypeInt32))});
   auto mul2 = gen_g.PushBack({gen_g.NewOpInst(MUL), sub1, cast});
   auto tensor_add = gen_g.PushBack({gen_g.NewOpInst(ADD), mul2, CreateInt32Tensor(1)});
   auto mul3 = gen_g.PushBack({gen_g.NewOpInst(MUL), cast, tensor_add});

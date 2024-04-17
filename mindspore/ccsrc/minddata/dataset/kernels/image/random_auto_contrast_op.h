@@ -28,18 +28,10 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomAutoContrastOp : public TensorOp {
+class RandomAutoContrastOp : public RandomTensorOp {
  public:
-  // Default values, also used by python_bindings.cc
-  static const float kCutOff;
-  static const std::vector<uint32_t> kIgnore;
-  static const float kDefProbability;
-
-  RandomAutoContrastOp(float cutoff, const std::vector<uint32_t> &ignore, float prob = kDefProbability)
-      : cutoff_(cutoff), ignore_(ignore), distribution_(prob) {
-    is_deterministic_ = false;
-    rnd_.seed(GetSeed());
-  }
+  RandomAutoContrastOp(float cutoff, const std::vector<uint32_t> &ignore, float prob)
+      : cutoff_(cutoff), ignore_(ignore), distribution_(prob) {}
 
   ~RandomAutoContrastOp() override = default;
 
@@ -54,7 +46,6 @@ class RandomAutoContrastOp : public TensorOp {
   std::string Name() const override { return kRandomAutoContrastOp; }
 
  private:
-  std::mt19937 rnd_;
   float cutoff_;
   std::vector<uint32_t> ignore_;
   std::bernoulli_distribution distribution_;

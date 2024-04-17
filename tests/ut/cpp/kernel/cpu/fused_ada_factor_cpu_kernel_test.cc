@@ -86,10 +86,10 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
     }
   }
 
-  AddressPtr CreateKernelAddress(void *addr, size_t elem_num, size_t type_size) {
-    auto kernel_addr = std::make_shared<Address>();
-    kernel_addr->addr = addr;
-    kernel_addr->size = elem_num * type_size;
+  KernelTensor *CreateKernelAddress(void *addr, size_t elem_num, size_t type_size) {
+    auto kernel_addr = new KernelTensor();
+    kernel_addr->set_device_ptr(addr);
+    kernel_addr->set_size(elem_num * type_size);
     return kernel_addr;
   }
 
@@ -160,9 +160,9 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
   std::vector<float> r_factor_;
   std::vector<float> c_factor_;
 
-  std::vector<AddressPtr> inputs_;
-  std::vector<AddressPtr> workspace_;
-  std::vector<AddressPtr> outputs_;
+  std::vector<KernelTensor *> inputs_;
+  std::vector<KernelTensor *> workspace_;
+  std::vector<KernelTensor *> outputs_;
   std::shared_ptr<FusedAdaFactorCpuKernelMod> ada_factor_;
 
   size_t last_row_dim_size_ = 4;

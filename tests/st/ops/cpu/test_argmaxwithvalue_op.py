@@ -135,7 +135,7 @@ def test_argmaxwithvalue_base_float16():
     argmaxwithvalue_base(np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argmaxwithvalue_3d_float32():
@@ -146,7 +146,7 @@ def test_argmaxwithvalue_3d_float32():
     argmaxwithvalue_3d(np.float32, shape_x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argmaxwithvalue_3d_float16():
@@ -155,7 +155,7 @@ def test_argmaxwithvalue_3d_float16():
     argmaxwithvalue_3d(np.float16, shape_x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argmaxwithvalue_3d_big_float32():

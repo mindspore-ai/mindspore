@@ -31,17 +31,14 @@ const size_t kHammingWindowOutputNum = 1;
 const size_t kHammingWindowInputNum = 1;
 }  // namespace
 
-bool HammingWindowCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool HammingWindowCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHammingWindowInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHammingWindowOutputNum, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::HammingWindow>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  periodic_ = op_prim->get_periodic();
-  alpha_ = op_prim->get_alpha();
-  beta_ = op_prim->get_beta();
+  periodic_ = GetValue<bool>(primitive_->GetAttr(ops::kPeriodic));
+
+  alpha_ = GetValue<float>(primitive_->GetAttr(ops::kAlpha));
+  beta_ = GetValue<float>(primitive_->GetAttr(ops::kBeta));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -53,11 +50,11 @@ bool HammingWindowCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T, typename S>
-bool HammingWindowCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> & /* workspace */,
-                                             const std::vector<AddressPtr> &outputs) const {
-  auto *length_addr = static_cast<T *>(inputs[0]->addr);
-  auto *output = static_cast<S *>(outputs[0]->addr);
+bool HammingWindowCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> & /* workspace */,
+                                             const std::vector<KernelTensor *> &outputs) const {
+  auto *length_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto *output = static_cast<S *>(outputs[0]->device_ptr());
   int64_t window_length_ = static_cast<int64_t>(*length_addr);
   if (window_length_ < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the value of input 'length' cannot be negative, but got "

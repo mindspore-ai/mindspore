@@ -50,7 +50,7 @@ def test_affine_grid_corner_case():
     assert np.allclose(output.asnumpy(), expected, atol=0.001, rtol=0.001)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -73,7 +73,7 @@ def test_affine_grid_4d_normal(mode, align, dtype):
     assert np.allclose(output.asnumpy(), expected_output, atol=0.001, rtol=0.001)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

@@ -156,15 +156,15 @@ def test_tfrecord1():
     """
     s = ds.Schema()
     s.add_column("line", "string", [])
-    s.add_column("words", "string", [-1])
+    s.add_column("words", "string", [2, 2])
     s.add_column("chinese", "string", [])
 
     data = ds.TFRecordDataset("../data/dataset/testTextTFRecord/text.tfrecord", shuffle=False, schema=s)
 
     for i, d in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        assert d["line"].shape == line[i].shape
+        assert d["line"].shape == (1,)
         assert d["words"].shape == words[i].shape
-        assert d["chinese"].shape == chinese[i].shape
+        assert d["chinese"].shape == (1,)
         np.testing.assert_array_equal(line[i], d["line"])
         np.testing.assert_array_equal(words[i], d["words"])
         np.testing.assert_array_equal(chinese[i], d["chinese"])
@@ -195,17 +195,17 @@ def test_tfrecord3():
     """
     s = ds.Schema()
     s.add_column("line", mstype.string, [])
-    s.add_column("words", mstype.string, [-1, 2])
+    s.add_column("words", mstype.string, [2, 2])
     s.add_column("chinese", mstype.string, [])
 
     data = ds.TFRecordDataset("../data/dataset/testTextTFRecord/text.tfrecord", shuffle=False, schema=s)
 
     for i, d in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        assert d["line"].shape == line[i].shape
-        assert d["words"].shape == words[i].reshape([2, 2]).shape
-        assert d["chinese"].shape == chinese[i].shape
+        assert d["line"].shape == (1,)
+        assert d["words"].shape == words[i].shape
+        assert d["chinese"].shape == (1,)
         np.testing.assert_array_equal(line[i], d["line"])
-        np.testing.assert_array_equal(words[i].reshape([2, 2]), d["words"])
+        np.testing.assert_array_equal(words[i], d["words"])
         np.testing.assert_array_equal(chinese[i], d["chinese"])
 
 
@@ -367,6 +367,7 @@ def test_process_string_pipeline():
     Description: Test processing string and bytes data
     Expectation: The output is as expected
     """
+
     def generate_and_process_string(dtype):
         data = np.array([["apple"], ["orange"], ["banana"], ["1"], ["2"], ["3"], ["a"], ["b"], ["c"]], dtype=dtype)
         dataset = ds.NumpySlicesDataset(data, column_names=["text"])

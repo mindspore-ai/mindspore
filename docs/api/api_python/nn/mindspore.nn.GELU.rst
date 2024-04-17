@@ -17,7 +17,7 @@ mindspore.nn.GELU
 
     GELU函数图：
 
-    .. image:: images/GELU.png
+    .. image:: ../images/GELU.png
         :align: center
 
     参数：

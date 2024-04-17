@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "include/common/utils/utils.h"
 #include "frontend/parallel/tensor_layout/construct_operator.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {
@@ -312,7 +313,8 @@ void SliceRecomputedActivationNodes(const FuncGraphPtr &graph) {
   if (slice_allgathers.size() == 0) {
     return;
   }
-  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1 ||
+      parallel::ParallelContext::GetInstance()->grad_accumulation_step() > 1) {
     int64_t current_micro = -1;
     std::vector<CNodePtr> stage_slice_allgathers;
     for (auto &slice_allgather_node : slice_allgathers) {

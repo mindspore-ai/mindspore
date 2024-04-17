@@ -21,27 +21,4 @@
 #include <memory>
 #include "include/c_api/types_c.h"
 
-namespace mindspore {
-class Allocator;
-class Delegate;
-
-typedef struct DeviceInfoC {
-  MSDeviceType device_type;
-  bool enable_fp16 = false;
-  int frequency = 3;
-  std::string provider;
-  std::string provider_device;
-  std::shared_ptr<Allocator> allocator = nullptr;
-} DeviceInfoC;
-
-typedef struct ContextC {
-  std::vector<std::shared_ptr<DeviceInfoC>> device_info_list;
-  int32_t thread_num = 2;
-  bool enable_parallel = false;
-  std::vector<int32_t> affinity_core_list;
-  int affinity_mode = 0;
-  int delegate_mode = 0;
-  std::shared_ptr<Delegate> delegate = nullptr;
-} ContextC;
-}  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_C_API_CONTEXT_C_H_

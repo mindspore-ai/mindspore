@@ -36,6 +36,7 @@ int CoreMLFormatTransPass::InsertPreNodes(CoreMLOp *op, std::vector<CoreMLOp *> 
     MS_LOG(ERROR) << "CoreML Transform pass does not find in op with 4d output";
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN((*it));
   if (is_input_op || nchw_nodes.find((*it)->type()) == nchw_nodes.end()) {
     CoreMLOp *pre_op = nullptr;
     if (!is_input_op) {

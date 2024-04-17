@@ -16,9 +16,9 @@
 #include "geqrf.h"
 #include <cmath>
 #include <complex>
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "context/inc/cpu_kernel_utils.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -54,20 +54,20 @@ uint32_t GeqrfCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = DoComputeC<double>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type[%s]", DTypeStr(input0_data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type[%s]", DTypeStr(input0_data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;
 }
 
 template <typename T>
-void GeqrfCpuKernel::Larfg(int n, int vm, int vn, T **A, T *tau) {
+void GeqrfCpuKernel::Larfg(int n, int vm, int vn, double **A, T *tau) {
   T zero = static_cast<T>(0);
   if (n <= 1) {
     *tau = zero;
     return;
   }
-  T xnorm = zero;
+  double xnorm = zero;
   for (int i = vm + 1; i < vm + n; i++) {
     xnorm = xnorm + A[i][vn] * A[i][vn];
   }
@@ -76,11 +76,11 @@ void GeqrfCpuKernel::Larfg(int n, int vm, int vn, T **A, T *tau) {
     *tau = zero;
     return;
   } else {
-    T beta = sqrt(A[vm][vn] * A[vm][vn] + xnorm * xnorm);
+    double beta = sqrt(A[vm][vn] * A[vm][vn] + xnorm * xnorm);
     if (A[vm][vn] > zero) {
       beta = -beta;
     }
-    *tau = (beta - (A[vm][vn])) / beta;
+    *tau = static_cast<T>((beta - (A[vm][vn])) / beta);
     auto scal = (A[vm][vn]) - beta;
     for (int i = vm + 1; i < vm + n; i++) {
       A[i][vn] /= scal;
@@ -90,11 +90,11 @@ void GeqrfCpuKernel::Larfg(int n, int vm, int vn, T **A, T *tau) {
 }
 
 template <typename T>
-void GeqrfCpuKernel::Larf(int m, int n, T **A, T *tau, int cm, int cn) {
+void GeqrfCpuKernel::Larf(int m, int n, double **A, T *tau, int cm, int cn) {
   if (m <= 0 || n <= 0) {
     return;
   }
-  T *work = new T[n]();
+  double *work = new double[n]();
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
       work[j] += A[cm + i][cn - 1] * A[cm + i][cn + j];
@@ -110,7 +110,7 @@ void GeqrfCpuKernel::Larf(int m, int n, T **A, T *tau, int cm, int cn) {
 }
 
 template <typename T>
-void GeqrfCpuKernel::Geqrf(int m, int n, T **A, T *tau) {
+void GeqrfCpuKernel::Geqrf(int m, int n, double **A, T *tau) {
   if (m < 0 || n < 0) {
     return;
   }
@@ -118,7 +118,7 @@ void GeqrfCpuKernel::Geqrf(int m, int n, T **A, T *tau) {
   T one = static_cast<T>(1);
   for (int i = 0; i < k; i++) {
     Larfg<T>(m - i, i, i, A, tau + i);
-    T aii = A[i][i];
+    double aii = A[i][i];
     A[i][i] = one;
     Larf<T>(m - i, n - i - 1, A, tau + i, i, i + 1);
     A[i][i] = aii;
@@ -201,23 +201,24 @@ template <typename T>
 uint32_t GeqrfCpuKernel::DoCompute(CpuKernelContext &ctx) {
   auto input0_tensor = ctx.Input(0);
   auto input0_tensor_shape = input0_tensor->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input0_tensor_shape, KERNEL_STATUS_PARAM_INVALID, "For Geqrf, input0_tensor_shape is null.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input0_tensor_shape, KERNEL_STATUS_PARAM_INVALID,
+                            "For Geqrf, input0_tensor_shape is null.");
   int32_t dim = input0_tensor_shape->GetDims();
   if (dim != kOutputNum) {
-    KERNEL_LOG_ERROR("The input matrix must have dimension = 2");
+    CUST_KERNEL_LOG_ERROR(ctx, "The input matrix must have dimension = 2");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::vector<int64_t> input0_dims = input0_tensor_shape->GetDimSizes();
-  KERNEL_CHECK_FALSE(!input0_dims.empty(), KERNEL_STATUS_PARAM_INVALID, "For Geqrf, input0_dims is empty.");
+  CUST_KERNEL_CHECK_FALSE(ctx, !input0_dims.empty(), KERNEL_STATUS_PARAM_INVALID, "For Geqrf, input0_dims is empty.");
   const int32_t m = input0_dims[0];
   const int32_t n = input0_dims[1];
   auto input_m = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_r = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto output_tau = reinterpret_cast<T *>(ctx.Output(1)->GetData());
 
-  T **A = new T *[m];
+  double **A = new double *[m];
   for (int i = 0; i < m; i++) {
-    A[i] = new T[n];
+    A[i] = new double[n];
   }
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
@@ -227,7 +228,7 @@ uint32_t GeqrfCpuKernel::DoCompute(CpuKernelContext &ctx) {
   Geqrf<T>(m, n, A, output_tau);
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
-      *(output_r + i * n + j) = A[i][j];
+      *(output_r + i * n + j) = static_cast<T>(A[i][j]);
     }
   }
   for (int i = 0; i < m; i++) {
@@ -241,14 +242,15 @@ template <typename T>
 uint32_t GeqrfCpuKernel::DoComputeC(CpuKernelContext &ctx) {
   auto input0_tensor = ctx.Input(0);
   auto input0_tensor_shape = input0_tensor->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input0_tensor_shape, KERNEL_STATUS_PARAM_INVALID, "For Geqrf, input0_tensor_shape is null.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input0_tensor_shape, KERNEL_STATUS_PARAM_INVALID,
+                            "For Geqrf, input0_tensor_shape is null.");
   int32_t dim = input0_tensor_shape->GetDims();
   if (dim != kOutputNum) {
-    KERNEL_LOG_ERROR("The input matrix must have dimension = 2");
+    CUST_KERNEL_LOG_ERROR(ctx, "The input matrix must have dimension = 2");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::vector<int64_t> input0_dims = input0_tensor_shape->GetDimSizes();
-  KERNEL_CHECK_FALSE(!input0_dims.empty(), KERNEL_STATUS_PARAM_INVALID, "For Geqrf, input0_dims is empty.");
+  CUST_KERNEL_CHECK_FALSE(ctx, !input0_dims.empty(), KERNEL_STATUS_PARAM_INVALID, "For Geqrf, input0_dims is empty.");
   const int32_t m = input0_dims[0];
   const int32_t n = input0_dims[1];
   auto input_m = reinterpret_cast<complex<T> *>(ctx.Input(0)->GetData());
@@ -276,5 +278,5 @@ uint32_t GeqrfCpuKernel::DoComputeC(CpuKernelContext &ctx) {
   delete[] A;
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kGeqrf, GeqrfCpuKernel);
+REGISTER_MS_CPU_KERNEL(kGeqrf, GeqrfCpuKernel);
 }  // namespace aicpu

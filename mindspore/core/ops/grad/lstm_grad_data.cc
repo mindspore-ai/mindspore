@@ -128,16 +128,16 @@ abstract::TupleShapePtr LstmGradDataInferShape(const PrimitivePtr &primitive,
   auto unknown_shapes =
     std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>(SizeToLong(kLstmOutputNum), shape_ptr));
   for (size_t i = 0; i < input_num; i++) {
-    auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i]->BuildShape())[kShape];
+    auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i]->GetShape())[kShape];
     if (IsDynamicRank(shape)) {
       return unknown_shapes;
     }
   }
 
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto dhy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto dcy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto dhy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto dcy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   bool dy_is_dynamic = IsDynamic(dy_shape);
   bool dhy_is_dynamic = IsDynamic(dhy_shape);
   bool dcy_is_dynamic = IsDynamic(dcy_shape);
@@ -180,7 +180,7 @@ abstract::TupleShapePtr LstmGradDataInferShape(const PrimitivePtr &primitive,
 TuplePtr LstmGradDataInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim->name());
 
   std::vector<TypePtr> type_tuple(kLstmOutputNum, x_dtype);

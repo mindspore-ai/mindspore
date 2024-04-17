@@ -25,18 +25,19 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BN
                                                                             {"BNInfer", "NCHW"},
                                                                             {"BNInferGrad", "NCHW"},
                                                                             {"Conv2D", "NCHW"},
+                                                                            {"Transpose", "ND"},
                                                                             {"DepthwiseConv2D", "NCHW"},
                                                                             {"DepthwiseConv2dNative", "NCHW"},
                                                                             {"Conv2DBackpropInput", "NCHW"},
                                                                             {"Conv2DBackpropFilter", "NCHW"},
                                                                             {"BasicLSTMCellWeightGrad", "HWCN"},
                                                                             {"ExtractImagePatches", "NCHW"},
-                                                                            {"ApplyMomentum", "NCHW"},
                                                                             {"FullConnection", "NCHW"},
                                                                             {"PReLU", "NCHW"},
                                                                             {"Scale", "NCHW"},
                                                                             {"GridSampler2D", "NCHW"},
                                                                             {"ResizeBilinearV2", "NCHW"},
+                                                                            {"ResizeNearestNeighborV2", "NCHW"},
                                                                             {"Conv3D", "format"},
                                                                             {"MaxPool3D", "NCDHW"},
                                                                             {"MaxPool3DGrad", "NCDHW"},
@@ -44,7 +45,10 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BN
                                                                             {"AvgPool3DGrad", "NCDHW"},
                                                                             {"Conv3DBackpropFilter", "format"},
                                                                             {"Conv3DBackpropInput", "format"},
-                                                                            {"Conv3DTranspose", "format"}};
+                                                                            {"Conv3DTranspose", "format"},
+                                                                            {"DepthToSpace", "format"},
+                                                                            {"DeformableOffsetsGrad", "format"},
+                                                                            {"ExtractVolumePatches", "format"}};
 mindspore::HashMap<std::string, std::string> &IOFormatMap::get() { return io_format_map_; }
 }  // namespace transform
 }  // namespace mindspore

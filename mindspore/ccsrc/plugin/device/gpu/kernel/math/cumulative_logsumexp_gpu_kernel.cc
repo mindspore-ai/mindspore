@@ -24,10 +24,8 @@ constexpr size_t kCumulativeLogsumexpStaticInputsNum = 1;
 constexpr size_t kCumulativeLogsumexpDynamicInputsNum = 2;
 }  // namespace
 
-bool CumulativeLogsumexpGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CumulativeLogsumexpGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   auto input_num = inputs.size();
   if (input_num == kCumulativeLogsumexpStaticInputsNum) {
     is_dynamic_shape_ = false;
@@ -47,11 +45,9 @@ bool CumulativeLogsumexpGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int CumulativeLogsumexpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CumulativeLogsumexpGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape = inputs.at(kIndex0)->GetShapeVector();
@@ -61,12 +57,11 @@ int CumulativeLogsumexpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (is_null_input_) {
     return true;
   }
-  auto kernel_ptr = std::make_shared<ops::CumulativeLogsumexp>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  exclusive_ = kernel_ptr->get_exclusive();
-  reverse_ = kernel_ptr->get_reverse();
+
+  exclusive_ = GetValue<bool>(primitive_->GetAttr("exclusive"));
+  reverse_ = GetValue<bool>(primitive_->GetAttr("reverse"));
   if (!is_dynamic_shape_) {
-    axis_ = static_cast<int>(kernel_ptr->get_axis());
+    axis_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("axis")));
     Reshape();
   }
   return KRET_OK;
@@ -88,9 +83,9 @@ void CumulativeLogsumexpGpuKernelMod::Reshape() {
 }
 
 template <typename T>
-bool CumulativeLogsumexpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs) {
+bool CumulativeLogsumexpGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -103,28 +98,28 @@ bool CumulativeLogsumexpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   if (is_dynamic_shape_) {
     const auto &axis_addr = inputs.at(kIndex1);
     MS_EXCEPTION_IF_NULL(axis_addr);
-    if (axis_addr->size == sizeof(int)) {
+    if (axis_addr->size() == sizeof(int)) {
       int axis_tmp;
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost, cuda_stream_),
+        cudaMemcpyAsync(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost, cuda_stream_),
         "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
       if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
         CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
       }
       axis_ = axis_tmp;
-    } else if (inputs.at(kIndex1)->size == sizeof(int64_t)) {
+    } else if (inputs.at(kIndex1)->size() == sizeof(int64_t)) {
       int64_t axis_tmp;
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost, cuda_stream_),
+        cudaMemcpyAsync(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost, cuda_stream_),
         "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
       if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
         CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
       }
       axis_ = static_cast<int>(axis_tmp);
-    } else if (inputs.at(kIndex1)->size == sizeof(int16_t)) {
+    } else if (inputs.at(kIndex1)->size() == sizeof(int16_t)) {
       int16_t axis_tmp;
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost, cuda_stream_),
+        cudaMemcpyAsync(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost, cuda_stream_),
         "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
       if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
         CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");

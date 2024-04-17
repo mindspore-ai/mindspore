@@ -28,11 +28,10 @@ class BartlettWindowCpuKernelMod : public NativeCpuKernelMod {
   BartlettWindowCpuKernelMod() = default;
   ~BartlettWindowCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -41,13 +40,13 @@ class BartlettWindowCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T, typename T2>
-  bool BartlettWindowKernelFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs) const;
+  bool BartlettWindowKernelFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &workspace,
+                                const std::vector<kernel::KernelTensor *> &outputs) const;
   bool periodic_{true};
   using BartlettWindowFunc =
-    std::function<bool(BartlettWindowCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(BartlettWindowCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, BartlettWindowFunc>> func_list_;
   BartlettWindowFunc kernel_func_;
 };

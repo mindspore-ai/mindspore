@@ -18,7 +18,8 @@
 #include <memory>
 
 namespace mindspore::ops {
-constexpr size_t kStridedSliceCalcInputsNum = 4;
+constexpr size_t kStridedSliceCalcInputsNumWithoutMask = 4;
+constexpr size_t kStridedSliceCalcInputsNumWithMask = 9;
 void ConvertNegToPos(std::vector<int64_t> *begin, std::vector<int64_t> *end, const std::vector<int64_t> &tensor_shape) {
   if (begin->size() != tensor_shape.size()) {
     MS_EXCEPTION(ValueError) << "Convert shape size is not equal";
@@ -75,29 +76,39 @@ void VectorEmplace(std::vector<int64_t> *vec, const std::vector<int64_t> &number
   }
 }
 
-bool CheckAttrIsNull(const PrimitivePtr &primitive) {
-  if (primitive == nullptr) {
-    return true;
-  }
-  auto tmp_begin_mask = primitive->GetAttr(kBeginMask);
-  auto tmp_end_mask = primitive->GetAttr(kEndMask);
-  auto tmp_ellipsis_mask = primitive->GetAttr(kEllipsisMask);
-  auto tmp_new_axis_mask = primitive->GetAttr(kNewAxisMask);
-  auto tmp_shrink_axis_mask = primitive->GetAttr(kShrinkAxisMask);
+bool CheckMaskIsZero(const std::vector<ValuePtr> &inputs) {
+  auto begin_mask = GetValue<int64_t>(inputs[kIndex4]);
+  auto end_mask = GetValue<int64_t>(inputs[kIndex5]);
+  auto ellipsis_mask = GetValue<int64_t>(inputs[kIndex6]);
+  auto new_axis_mask = GetValue<int64_t>(inputs[kIndex7]);
+  auto shrink_axis_mask = GetValue<int64_t>(inputs[kIndex8]);
 
-  auto begin_mask = (tmp_begin_mask == nullptr ? 0 : GetValue<int64_t>(tmp_begin_mask));
-  auto end_mask = (tmp_end_mask == nullptr ? 0 : GetValue<int64_t>(tmp_end_mask));
-  auto ellipsis_mask = (tmp_ellipsis_mask == nullptr ? 0 : GetValue<int64_t>(tmp_ellipsis_mask));
-  auto new_axis_mask = (tmp_new_axis_mask == nullptr ? 0 : GetValue<int64_t>(tmp_new_axis_mask));
-  auto shrink_axis_mask = (tmp_shrink_axis_mask == nullptr ? 0 : GetValue<int64_t>(tmp_shrink_axis_mask));
   if (begin_mask == 0 && end_mask == 0 && ellipsis_mask == 0 && new_axis_mask == 0 && shrink_axis_mask == 0) {
     return true;
   }
   return false;
 }
 
+bool CheckStridedSliceInputs(const std::vector<ValuePtr> &inputs) {
+  bool nullptr_input_exist =
+    std::any_of(inputs.cbegin(), inputs.cend(), [](const ValuePtr &v) { return v == nullptr; });
+  if (nullptr_input_exist) {
+    return false;
+  }
+
+  if (inputs.size() == kStridedSliceCalcInputsNumWithoutMask) {
+    return true;
+  }
+
+  if (inputs.size() != kStridedSliceCalcInputsNumWithMask) {
+    return false;
+  }
+
+  return CheckMaskIsZero(inputs);
+}
+
 TensorStorageInfoPtrList StridedSliceCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (!CheckAttrIsNull(prim) || CheckInputsNull(inputs, kStridedSliceCalcInputsNum)) {
+  if (!CheckStridedSliceInputs(inputs)) {
     return {};
   }
 

@@ -36,15 +36,15 @@ namespace kernel {
 // and result environment instance handle. The environment instance and handle will cache in
 // EnvironmentFactory. It is notice that repeate calls launch() will returns the same
 // handle created before.
-class EnvCreateKernelMod : public DeprecatedNativeGpuKernelMod {
+class EnvCreateKernelMod : public NativeGpuKernelMod {
  public:
   EnvCreateKernelMod() = default;
   ~EnvCreateKernelMod() = default;
 
-  bool Init(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  void InitSizeLists() override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   int64_t handle_ = kInvalidHandle;
@@ -54,15 +54,15 @@ class EnvCreateKernelMod : public DeprecatedNativeGpuKernelMod {
 // Class for reinforcement environment reset.
 // It reset environment state (for example agent state, timestep etc.) and result initial observations.
 // The environment instance should already created with `EnvCreateKernelMod`.
-class EnvResetKernelMod : public DeprecatedNativeGpuKernelMod {
+class EnvResetKernelMod : public NativeGpuKernelMod {
  public:
   EnvResetKernelMod() = default;
   ~EnvResetKernelMod() = default;
 
-  bool Init(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  void InitSizeLists() override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   int64_t handle_ = kInvalidHandle;
@@ -72,15 +72,15 @@ class EnvResetKernelMod : public DeprecatedNativeGpuKernelMod {
 // Class for environment step.
 // It execute one time step and result observation, reward and done flag.
 // The environment instance should already created with `EnvCreateKernelMod`.
-class EnvStepKernelMod : public DeprecatedNativeGpuKernelMod {
+class EnvStepKernelMod : public NativeGpuKernelMod {
  public:
   EnvStepKernelMod() = default;
   ~EnvStepKernelMod() = default;
 
-  bool Init(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  void InitSizeLists() override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   int64_t handle_ = kInvalidHandle;

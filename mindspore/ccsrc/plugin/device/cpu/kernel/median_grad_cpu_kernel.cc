@@ -34,26 +34,21 @@ constexpr size_t kIndex2 = 2;
 constexpr size_t kHalf = 2;
 }  // namespace
 
-bool MedianGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool MedianGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMedianGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMedianGradOutputsNum, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
-  input0_type_ = inputs[kIndex0]->GetDtype();
-  input1_type_ = inputs[kIndex1]->GetDtype();
+  input0_type_ = inputs[kIndex0]->dtype_id();
+  input1_type_ = inputs[kIndex1]->dtype_id();
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MedianGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  global_median_ = kernel_ptr->get_global_median();
-  axis_ = kernel_ptr->get_axis();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  global_median_ = GetValue<bool>(primitive_->GetAttr(ops::kGlobalMedian));
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int MedianGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MedianGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -66,9 +61,9 @@ int MedianGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
                     << input_element_num;
     return KRET_OK;
   }
-  input0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  input2_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  input0_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input1_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  input2_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
   input0_dim_ = input0_shape_.size();
   input1_dim_ = input1_shape_.size();
   input2_dim_ = input2_shape_.size();
@@ -145,8 +140,9 @@ const std::vector<std::pair<KernelAttr, MedianGradCpuKernelMod::KernelRunFunc>> 
 }
 
 template <typename T1, typename T2>
-bool MedianGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
+bool MedianGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -159,12 +155,12 @@ bool MedianGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T1, typename T2>
-bool MedianGradCpuKernelMod::GlobalMedianGradCompute(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &outputs) const {
-  auto y_grad = static_cast<T1 *>(inputs[0]->addr);
-  auto x = static_cast<T1 *>(inputs[1]->addr);
-  auto y = static_cast<T1 *>(inputs[2]->addr);
-  auto x_grad = static_cast<T2 *>(outputs[0]->addr);
+bool MedianGradCpuKernelMod::GlobalMedianGradCompute(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) const {
+  auto y_grad = static_cast<T1 *>(inputs[0]->device_ptr());
+  auto x = static_cast<T1 *>(inputs[1]->device_ptr());
+  auto y = static_cast<T1 *>(inputs[2]->device_ptr());
+  auto x_grad = static_cast<T2 *>(outputs[0]->device_ptr());
 
   int64_t count_repeat = 0;
   for (size_t i = 0; i < input1_num_elements_; i++) {
@@ -194,11 +190,11 @@ bool MedianGradCpuKernelMod::GlobalMedianGradCompute(const std::vector<AddressPt
 }
 
 template <typename T1, typename T2>
-bool MedianGradCpuKernelMod::MedianGradCompute(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) {
-  auto y_grad = static_cast<T1 *>(inputs[0]->addr);
-  auto indices = static_cast<int64_t *>(inputs[3]->addr);
-  auto x_grad = static_cast<T2 *>(outputs[0]->addr);
+bool MedianGradCpuKernelMod::MedianGradCompute(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  auto y_grad = static_cast<T1 *>(inputs[0]->device_ptr());
+  auto indices = static_cast<int64_t *>(inputs[3]->device_ptr());
+  auto x_grad = static_cast<T2 *>(outputs[0]->device_ptr());
 
   for (size_t i = 0; i < input1_num_elements_; i++) {
     *(x_grad + i) = 0;

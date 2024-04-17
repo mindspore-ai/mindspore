@@ -28,9 +28,8 @@ constexpr size_t kNumber3 = 3;
 constexpr size_t kNumber4 = 4;
 }  // namespace
 
-bool SparseSegmentOpsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
+bool SparseSegmentOpsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   if (kernel_type_ == "SparseSegmentSum" || kernel_type_ == "SparseSegmentSqrtN") {
     flag_ = true;
   } else {
@@ -40,7 +39,7 @@ bool SparseSegmentOpsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   size_t outputs_num = kNumber1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -53,10 +52,8 @@ bool SparseSegmentOpsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SparseSegmentOpsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseSegmentOpsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -89,24 +86,16 @@ int SparseSegmentOpsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   idx_seg_elements_ = std::accumulate(indices_shape.begin(), indices_shape.end(), 1, std::multiplies{});
   output_dim0_ = LongToSize(output_shape.front());
 
-  size_t input_x_size = x_elements_ * unit_x_size_;
-  size_t input_idx_seg_size = idx_seg_elements_ * unit_idx_seg_size_;
   size_t output_size = output_elements_ * unit_x_size_;
-  input_size_list_.push_back(input_x_size);
-  input_size_list_.push_back(input_idx_seg_size);
-  input_size_list_.push_back(input_idx_seg_size);
-  if (flag_) {
-    input_size_list_.push_back(unit_idx_seg_size_);
-  }
   output_size_list_.push_back(output_size);
   workspace_size_list_.push_back((output_dim0_ + 1) * sizeof(size_t));
   return KRET_OK;
 }
 
 template <typename R, typename S>
-bool SparseSegmentOpsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
+bool SparseSegmentOpsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
   R *x_ptr = GetDeviceAddress<R>(inputs, kIndex0);
   S *indices_ptr = GetDeviceAddress<S>(inputs, kIndex1);
   S *segment_ids_ptr = GetDeviceAddress<S>(inputs, kIndex2);

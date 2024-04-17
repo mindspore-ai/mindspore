@@ -6,7 +6,7 @@ mindspore.ops.sinh
     逐元素计算输入Tensor的双曲正弦。
 
     .. math::
-        out_i = \sinh(input_i)
+        output_i = \sinh(input_i)
 
     参数：
         - **input** (Tensor) - sinh的输入Tensor。

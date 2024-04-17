@@ -61,6 +61,7 @@ class LeNet5(nn.Cell):
         super(LeNet5, self).__init__()
         self.num_class = num_class
         self.conv1 = conv(channel, 6, 5)
+        self.conv1.conv2d.add_prim_attr("primitive_target", "CPU")
         self.conv2 = conv(6, 16, 5)
         self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
         self.fc2 = fc_with_initialize(120, 84)
@@ -143,7 +144,7 @@ class TestProfiler:
         if os.path.exists(self.data_path):
             shutil.rmtree(self.data_path)
 
-    @pytest.mark.level2
+    @pytest.mark.level3
     @pytest.mark.platform_x86_cpu
     @pytest.mark.env_onecard
     @security_off_wrap
@@ -197,6 +198,23 @@ class TestProfiler:
                                   profile_framework=profile_framework)
         self._check_host_profiling_file(profile_framework=profile_framework)
 
+    @pytest.mark.level0
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_ascend_kbyk_profiler(self):
+        os.environ['GRAPH_OP_RUN'] = "1"
+        self._train_with_profiler(device_target="Ascend", profile_memory=False)
+        self._check_d_profiling_file()
+        self._check_host_profiling_file()
+        self._check_kbyk_profiling_file()
+        del os.environ['GRAPH_OP_RUN']
+
+    def _check_kbyk_profiling_file(self):
+        op_range_file = os.path.join(self.profiler_path, "FRAMEWORK/op_range_0")
+        assert os.path.isfile(op_range_file)
+
     def _train_with_profiler(self, device_target, profile_memory, context_mode=context.GRAPH_MODE,
                              only_profile_host=False, profile_framework='all'):
         context.set_context(mode=context_mode, device_target=device_target)
@@ -238,15 +256,13 @@ class TestProfiler:
 
     def _check_d_profiling_file(self):
         aicore_file = self.profiler_path + f'aicore_intermediate_{self.rank_id}_detail.csv'
-        step_trace_file = self.profiler_path + f'step_trace_raw_{self.rank_id}_detail_time.csv'
         timeline_file = self.profiler_path + f'ascend_timeline_display_{self.rank_id}.json'
         aicpu_file = self.profiler_path + f'aicpu_intermediate_{self.rank_id}.csv'
         minddata_pipeline_file = self.profiler_path + f'minddata_pipeline_raw_{self.rank_id}.csv'
         queue_profiling_file = self.profiler_path + f'device_queue_profiling_{self.rank_id}.txt'
-        memory_file = self.profiler_path + f'memory_usage_{self.rank_id}.pb'
 
-        d_profiler_files = (aicore_file, step_trace_file, timeline_file, aicpu_file,
-                            minddata_pipeline_file, queue_profiling_file, memory_file)
+        d_profiler_files = (aicore_file, timeline_file, aicpu_file,
+                            minddata_pipeline_file, queue_profiling_file)
         for file in d_profiler_files:
             assert os.path.isfile(file)
 

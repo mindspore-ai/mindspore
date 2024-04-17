@@ -1,7 +1,7 @@
 mindspore.ops.NanToNum
 ======================
 
-.. py:class:: mindspore.ops.NanToNum(nan=0.0, posinf=None, neginf=None)
+.. py:class:: mindspore.ops.NanToNum(nan=None, posinf=None, neginf=None)
 
     将输入中的 `NaN` 、正无穷大和负无穷大值分别替换为 `nan` 、 `posinf` 和 `neginf` 指定的值。
 
@@ -11,7 +11,7 @@ mindspore.ops.NanToNum
     更多细节请参考 :func:`mindspore.ops.nan_to_num` 。
 
     参数：
-        - **nan** (float，可选) - 替换 `NaN` 的值。默认值为 ``0.0`` 。
+        - **nan** (float，可选) - 替换 `NaN` 的值。默认值为 ``None`` 。
         - **posinf** (float，可选) - 如果是一个数字，则为替换正无穷的值。如果为 ``None`` ，则将正无穷替换为 `x` 类型支持的上限。默认值为 ``None`` 。
         - **neginf** (float，可选) - 如果是一个数字，则为替换负无穷的值。如果为 ``None`` ，则将负无穷替换为 `x` 类型支持的下限。默认值为 ``None`` 。
 

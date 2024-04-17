@@ -159,9 +159,9 @@ class JiebaMode(IntEnum):
 
     Possible enumeration values are: ``JiebaMode.MIX``, ``JiebaMode.MP``, ``JiebaMode.HMM``.
 
-    - JiebaMode.MIX: tokenize with a mix of MPSegment and HMMSegment algorithm.
-    - JiebaMode.MP: tokenize with MPSegment algorithm.
-    - JiebaMode.HMM: tokenize with Hidden Markov Model Segment algorithm.
+    - ``JiebaMode.MIX``: tokenize with a mix of MPSegment and HMMSegment algorithm.
+    - ``JiebaMode.MP``: tokenize with MPSegment algorithm.
+    - ``JiebaMode.HMM``: tokenize with Hidden Markov Model Segment algorithm.
     """
 
     MIX = 0
@@ -195,10 +195,10 @@ class SentencePieceModel(IntEnum):
 
     Available values are as follows:
 
-    - SentencePieceModel.UNIGRAM: `Unigram Language Model <https://arxiv.org/abs/1804.10959>`_ subword algorithm.
-    - SentencePieceModel.BPE: `Byte-Pair-Encoding <https://arxiv.org/abs/1508.07909>`_ subword algorithm.
-    - SentencePieceModel.CHAR: Character-based subword algorithm.
-    - SentencePieceModel.WORD: Word-based subword algorithm.
+    - ``SentencePieceModel.UNIGRAM``: `Unigram Language Model <https://arxiv.org/abs/1804.10959>`_ subword algorithm.
+    - ``SentencePieceModel.BPE``: `Byte-Pair-Encoding <https://arxiv.org/abs/1508.07909>`_ subword algorithm.
+    - ``SentencePieceModel.CHAR``: Character-based subword algorithm.
+    - ``SentencePieceModel.WORD``: Word-based subword algorithm.
     """
 
     UNIGRAM = 0
@@ -326,8 +326,8 @@ class SPieceTokenizerLoadType(IntEnum):
 
     Available values are as follows:
 
-    - SPieceTokenizerLoadType.FILE: Load model from specified file path.
-    - SPieceTokenizerLoadType.MODEL: Load model from specified vocab object.
+    - ``SPieceTokenizerLoadType.FILE``: Load model from specified file path.
+    - ``SPieceTokenizerLoadType.MODEL``: Load model from specified vocab object.
     """
 
     FILE = 0

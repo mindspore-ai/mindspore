@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_H_
-#define MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_H_
+#ifndef MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_GRAD_H_
+#define MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_GRAD_H_
 #include <map>
 #include <vector>
 #include <memory>
@@ -35,9 +35,9 @@ class MIND_API FlashAttentionScoreGrad : public BaseOperator {
   MIND_API_BASE_MEMBER(FlashAttentionScoreGrad);
   /// \brief Constructor.
   FlashAttentionScoreGrad() : BaseOperator(kNameFlashAttentionScoreGrad) {
-    InitIOName({"query", "key", "value", "attn_mask", "attention_in", "softmax_max", "softmax_sum", "dy", "drop_mask",
-                "real_shift", "padding_mask", "softmax_out"},
-               {"dq", "dk", "dv"});
+    InitIOName({"query", "key", "value", "dy", "real_shift", "drop_mask", "padding_mask", "attn_mask", "softmax_max",
+                "softmax_sum", "softmax_out", "attention_in", "prefix"},
+               {"dq", "dk", "dv", "dpse"});
   }
 };
 AbstractBasePtr FlashAttentionScoreGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -46,4 +46,4 @@ using FlashAttentionScoreGradPtr = std::shared_ptr<FlashAttentionScoreGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_H_
+#endif  // MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_GRAD_H_

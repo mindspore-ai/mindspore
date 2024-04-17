@@ -30,34 +30,35 @@ class NormalizeTupleIndexCpuKernelMod : public NativeCpuKernelMod {
   NormalizeTupleIndexCpuKernelMod() = default;
   ~NormalizeTupleIndexCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     if (output_sizes_.empty()) {
-      outputs_[0]->SetShapeVector({});
+      // scalar
+      outputs[0]->SetShapeVector({});
+      outputs[0]->set_size(UnitSizeInBytes(outputs[0]->dtype_id()));
     } else {
-      outputs_[0]->SetShapeVector({SizeToLong(output_sizes_[0])});
+      outputs[0]->SetShapeVector({SizeToLong(output_sizes_[0])});
+      outputs[0]->set_size(output_sizes_[0] * UnitSizeInBytes(outputs[0]->dtype_id()));
     }
   }
 
   using NormalizeTupleIndexFunc =
-    std::function<bool(NormalizeTupleIndexCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(NormalizeTupleIndexCpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
 
   static std::vector<std::pair<KernelAttr, NormalizeTupleIndexFunc>> func_list_;
   NormalizeTupleIndexFunc kernel_func_;

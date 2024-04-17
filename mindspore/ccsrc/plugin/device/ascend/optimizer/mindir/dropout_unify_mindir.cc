@@ -27,6 +27,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "utils/log_adapter.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "mindspore/core/ops/op_utils.h"
 
 /*
     DropoutGenMask：
@@ -65,21 +66,24 @@ TypeId GetInputXDataType(const AnfNodePtr &node) {
   return dropout_input_type;
 }
 
-ValueNodePtr CreateKeepPorbValueNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, TypeId type_id) {
+TypeId GetOriginInputXDataType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+}
+
+ValueNodePtr CreateKeepProbValueNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, TypeId type_id) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // Step1: get keep_prob
-  if (!common::AnfAlgo::HasNodeAttr(kAttrKeepProb, cnode)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Dropout node does not have attr: keep_prob." << trace::DumpSourceLines(node);
-  }
+  float keep_prob = 0.5;
   if (common::AnfAlgo::GetCNodeName(cnode) == kDropoutOpName) {
-    if (!common::AnfAlgo::HasNodeAttr(kAttrSeed0, cnode) || !common::AnfAlgo::HasNodeAttr(kAttrSeed1, cnode)) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Dropout node does not have attr: seed0 or seed1." << trace::DumpSourceLines(node);
-    }
+    auto keep_prob_v = cnode->input(kIndex2)->cast<ValueNodePtr>()->value();
+    keep_prob = ops::GetScalarValue<float>(keep_prob_v).value();
+  } else {
+    keep_prob = common::AnfAlgo::GetNodeAttr<float>(node, kAttrKeepProb);
   }
-  auto keep_prob = common::AnfAlgo::GetNodeAttr<float>(node, kAttrKeepProb);
   MS_LOG(DEBUG) << "Keep_prob value: " << keep_prob;
 
   std::vector<int64_t> keep_prob_shape = {};
@@ -91,6 +95,9 @@ ValueNodePtr CreateKeepPorbValueNode(const FuncGraphPtr &func_graph, const AnfNo
   if (type_id == kNumberTypeFloat16) {
     auto *val16 = reinterpret_cast<float16 *>(data_ptr);
     *val16 = float16(keep_prob);
+  } else if (type_id == kNumberTypeBFloat16) {
+    auto *valb16 = reinterpret_cast<bfloat16 *>(data_ptr);
+    *valb16 = bfloat16(keep_prob);
   } else {
     auto *val = reinterpret_cast<float *>(data_ptr);
     *val = keep_prob;
@@ -163,7 +170,7 @@ CNodePtr CreateDynamicShapeCNode(const FuncGraphPtr &func_graph, const AnfNodePt
                                  const abstract::ShapePtr &input_shape) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_shape);
-  std::vector<AnfNodePtr> dynamic_shape_inputs{NewValueNode(std::make_shared<Primitive>("DynamicShape")), node_input};
+  std::vector<AnfNodePtr> dynamic_shape_inputs{NewValueNode(std::make_shared<Primitive>("TensorShape")), node_input};
   CNodePtr dynamic_shape = func_graph->NewCNode(dynamic_shape_inputs);
   MS_EXCEPTION_IF_NULL(dynamic_shape);
   ShapeVector tensor_shp({static_cast<int64_t>(input_shape->shape().size())});
@@ -224,6 +231,11 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
   dropout_gen_mask->set_abstract(gen_mask_abstract);
   dropout_gen_mask->set_scope(dropout->scope());
   common::AnfAlgo::CopyNodeAttrs(dropout, dropout_gen_mask);
+  auto dropout_gen_mask_primitive = common::AnfAlgo::GetCNodePrimitive(dropout_gen_mask);
+  auto seed0 = dropout->input(kIndex3)->cast<ValueNodePtr>()->value();
+  auto seed1 = dropout->input(kIndex4)->cast<ValueNodePtr>()->value();
+  dropout_gen_mask_primitive->set_attr(kAttrSeed0, seed0);
+  dropout_gen_mask_primitive->set_attr(kAttrSeed1, seed1);
   if (dropout->HasPrimalAttr(kAttrMicro)) {
     dropout_gen_mask->AddPrimalAttr(kAttrMicro, dropout->GetPrimalAttr(kAttrMicro));
   }
@@ -247,7 +259,6 @@ CNodePtr CreateDropoutDoMaskCNode(const FuncGraphPtr &func_graph, const CNodePtr
   MS_EXCEPTION_IF_NULL(dropout_do_mask);
   dropout_do_mask->set_abstract(abstract);
   dropout_do_mask->set_scope(dropout->scope());
-  common::AnfAlgo::CopyNodeAttr(kAttrKeepProb, dropout, dropout_do_mask);
 
   std::vector<std::string> need_primal_attr = {kAttrMicro, kPrimalAttrUniqueId, kPrimalAttrForwardUniqueId};
   for (auto &primal_attr : need_primal_attr) {
@@ -316,6 +327,7 @@ void UpdateReturnNode(const FuncGraphPtr &graph, const AnfNodePtr &origin_node, 
   MS_EXCEPTION_IF_NULL(g_output);
   auto abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
   g_output->set_abstract(abstract);
+  g_output->set_scope(new_node->scope());
   graph->set_output(g_output);
 }
 
@@ -329,8 +341,11 @@ class BuildKeepProbValue {
     CheckCNodeInputSize(dropout_grad_cnode, kDropoutGradInputTensorNum);
 
     auto func_graph = node->func_graph();
-    auto grad_input_type_id = GetInputXDataType(dropout_grad_cnode);
-    auto keep_prob_value = CreateKeepPorbValueNode(func_graph, dropout_grad_cnode, grad_input_type_id);
+    auto grad_input_type_id = GetOriginInputXDataType(dropout_grad_cnode);
+    if (grad_input_type_id != kNumberTypeBFloat16) {
+      grad_input_type_id = GetInputXDataType(dropout_grad_cnode);
+    }
+    auto keep_prob_value = CreateKeepProbValueNode(func_graph, dropout_grad_cnode, grad_input_type_id);
     return keep_prob_value;
   }
 };
@@ -343,9 +358,12 @@ AnfNodePtr BuildDropoutDoMask(const PatternMap &m, const AnfNodePtr &) {
   CheckCNodeInputSize(dropout_grad_cnode, kDropoutGradInputTensorNum);
 
   auto func_graph = dropout_grad_cnode->func_graph();
-  auto grad_input_type_id = GetInputXDataType(dropout_grad_cnode);
+  auto grad_input_type_id = GetOriginInputXDataType(dropout_grad_cnode);
+  if (grad_input_type_id != kNumberTypeBFloat16) {
+    grad_input_type_id = GetInputXDataType(dropout_grad_cnode);
+  }
   auto grad_input_shape = GetDropoutInputShape(dropout_grad_cnode->input(kIndex1));
-  auto keep_prob_value = CreateKeepPorbValueNode(func_graph, dropout_grad_cnode, grad_input_type_id);
+  auto keep_prob_value = CreateKeepProbValueNode(func_graph, dropout_grad_cnode, grad_input_type_id);
   auto use_v3 = WhetherUseDropoutV3(dropout_grad_cnode, grad_input_shape);
 
   // DropoutGrad may not in the same graph with Dropout in heterogeneous scene, and mask input which is a parameter
@@ -431,12 +449,17 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(dropout_cnode);
 
   auto inputx_type_id = GetInputXDataType(dropout_node);
-  auto keep_prob_value = CreateKeepPorbValueNode(func_graph, dropout_node, inputx_type_id);
+  auto keep_prob_value = CreateKeepProbValueNode(func_graph, dropout_node, inputx_type_id);
   auto dropout_input = dropout_cnode->input(kIndex1);
   auto input_shape = GetDropoutInputShape(dropout_input);
   auto use_v3 = WhetherUseDropoutV3(dropout_cnode, input_shape);
   // CreateDropoutGenMask
   auto dropout_gen_mask = CreateDropoutGenMaskCNode(func_graph, dropout_cnode, keep_prob_value, input_shape, use_v3);
+
+  if (GetOriginInputXDataType(dropout_node) == kNumberTypeBFloat16) {
+    inputx_type_id = kNumberTypeBFloat16;
+    keep_prob_value = CreateKeepProbValueNode(func_graph, dropout_node, inputx_type_id);
+  }
   // CreateDropoutDoMask-forward
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -494,7 +517,7 @@ const AnfNodePtr DropoutUnifyMindIR0::Process(const FuncGraphPtr &func_graph, co
   auto dropout_node = tuple_cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(dropout_node);
   auto inputx_type_id = GetInputXDataType(dropout_node);
-  auto keep_prob_value = CreateKeepPorbValueNode(func_graph, dropout_node, inputx_type_id);
+  auto keep_prob_value = CreateKeepProbValueNode(func_graph, dropout_node, inputx_type_id);
 
   auto dropout_cnode = dropout_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(dropout_cnode);
@@ -510,10 +533,17 @@ const AnfNodePtr DropoutUnifyMindIR0::Process(const FuncGraphPtr &func_graph, co
   if (dropout_gen_mask == nullptr) {
     dropout_gen_mask = CreateDropoutGenMaskCNode(func_graph, dropout_cnode, keep_prob_value, input_shape, use_v3);
   }
+
   // CreateDropoutDoMask
+  if (GetOriginInputXDataType(dropout_node) == kNumberTypeBFloat16) {
+    inputx_type_id = kNumberTypeBFloat16;
+  }
+
   auto do_mask_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), input_shape);
   auto dropout_do_mask = CreateDropoutDoMaskCNode(
-    func_graph, dropout_cnode, {dropout_input, dropout_gen_mask, keep_prob_value}, do_mask_abstract, use_v3);
+    func_graph, dropout_cnode,
+    {dropout_input, dropout_gen_mask, CreateKeepProbValueNode(func_graph, dropout_node, inputx_type_id)},
+    do_mask_abstract, use_v3);
 
   // make tuple to replace dropout
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), dropout_do_mask, dropout_gen_mask};
@@ -538,7 +568,10 @@ std::vector<std::string> DropoutUnifyMindIR1::MustExistPrimitiveName() const {
 
 const BaseRef DropoutUnifyMindIR1::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
-  return VectorRef({prim::kPrimDropout, X});
+  VarPtr KEEP_PROB = std::make_shared<Var>();
+  VarPtr SEED0 = std::make_shared<Var>();
+  VarPtr SEED1 = std::make_shared<Var>();
+  return VectorRef({prim::kPrimDropout, X, KEEP_PROB, SEED0, SEED1});
 }
 
 const AnfNodePtr DropoutUnifyMindIR1::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -561,14 +594,18 @@ const AnfNodePtr DropoutUnifyMindIR1::Process(const FuncGraphPtr &func_graph, co
   }
   if (dropout_gen_mask == nullptr) {
     dropout_gen_mask = CreateDropoutGenMaskCNode(func_graph, dropout_cnode,
-                                                 CreateKeepPorbValueNode(func_graph, dropout_cnode, inputx_type_id),
+                                                 CreateKeepProbValueNode(func_graph, dropout_cnode, inputx_type_id),
                                                  input_shape, use_v3);
   }
+
   // CreateDropoutDoMask
+  if (GetOriginInputXDataType(dropout_cnode) == kNumberTypeBFloat16) {
+    inputx_type_id = kNumberTypeBFloat16;
+  }
   auto do_mask_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), input_shape);
   auto dropout_do_mask = CreateDropoutDoMaskCNode(
     func_graph, dropout_cnode,
-    {dropout_input, dropout_gen_mask, CreateKeepPorbValueNode(func_graph, dropout_cnode, inputx_type_id)},
+    {dropout_input, dropout_gen_mask, CreateKeepProbValueNode(func_graph, dropout_cnode, inputx_type_id)},
     do_mask_abstract, use_v3);
 
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), dropout_do_mask, dropout_gen_mask};
@@ -576,6 +613,7 @@ const AnfNodePtr DropoutUnifyMindIR1::Process(const FuncGraphPtr &func_graph, co
   std::vector<AbstractBasePtr> abstract_list{dropout_do_mask->abstract(), dropout_gen_mask->abstract()};
   auto abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
   make_tuple->set_abstract(abstract);
+  make_tuple->set_scope(dropout_cnode->scope());
   UpdateReturnNode(func_graph, node, make_tuple);
   return make_tuple;
 }

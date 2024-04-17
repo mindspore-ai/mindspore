@@ -30,7 +30,7 @@ namespace mindspore {
 namespace pipeline {
 class ResourceBase {
  public:
-  ResourceBase() { manager_ = MakeManager(); }
+  ResourceBase() { manager_ = MakeManager({}, true, true); }
 
   virtual ~ResourceBase() = default;
 

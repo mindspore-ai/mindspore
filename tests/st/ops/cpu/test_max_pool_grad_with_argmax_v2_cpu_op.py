@@ -36,7 +36,7 @@ class MaxPoolGradWithArgmaxV2(nn.Cell):
         return self.grad(x, grad, argmax)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool_grad_with_argmax_v2():
@@ -75,7 +75,7 @@ def test_maxpool_grad_with_argmax_v2():
     assert (actual_output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool_grad_with_argmax_v2_fp16():
@@ -115,7 +115,7 @@ def test_maxpool_grad_with_argmax_v2_fp16():
     assert (actual_output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool_grad_with_argmax_v2_vmap():
@@ -141,7 +141,7 @@ def test_maxpool_grad_with_argmax_v2_vmap():
     assert actual_output.shape == (1, 1, 1, 6, 6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool_grad_with_argmax_v2_x_dynamic_shape():

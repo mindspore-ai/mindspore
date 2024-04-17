@@ -170,7 +170,7 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto op_name = primitive->name();
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMaxPoolIdx0]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMaxPoolIdx0]->GetShape())[kShape];
   // ToSupport Dynamic rank
   if (IsDynamicRank(in_shape)) {
     // The input tensor of Primitive MaxPoolWithArgmax must be a 4-D tensor and the data format is NCHW/NHWC.
@@ -225,7 +225,7 @@ TypePtr MaxPoolWithArgmaxInferType(const PrimitivePtr &primitive, const std::vec
   }
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt64,   kUInt8,   kUInt16,
                                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-  auto input_type = input_args[kDim0]->BuildType();
+  auto input_type = input_args[kDim0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, primitive->name());
   std::vector<TypePtr> type_list = {input_type, kInt32};
   return std::make_shared<Tuple>(type_list);

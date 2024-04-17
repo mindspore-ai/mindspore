@@ -12,7 +12,7 @@ mindspore.ops.multi_margin_loss
     .. math::
         \text{loss}(x, y) = \frac{\sum_i \max(0, \text{margin} - x[y] + x[i])^p}{\text{x.size}(0)}
 
-    其中 :math:`i\in \{0,⋯,x.size(0)−1\}` 并且 :math:`i \ne y`。
+    其中 :math:`i\in \{0,⋯,x.size(0)-1\}` 并且 :math:`i \ne y`。
 
     参数：
         - **input** (Tensor) - 输入，shape为 :math:`(N, C)`。数据类型只支持float32、float16或float64。即上述公式中的 :math:`x` 。

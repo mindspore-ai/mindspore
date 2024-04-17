@@ -18,14 +18,15 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <utility>
 #include <map>
-#include "acl/acl_op_compiler.h"
-#include "acl/acl_base.h"
+#include "graph/types.h"
 #include "include/transform/graph_ir/types.h"
 #include "transform/acl_ir/ge_adapter_info.h"
-
-#define MAX_INPUT_TO_HOST 25
+#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_op_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace transform {
@@ -37,45 +38,49 @@ struct AclExecParam {
   aclopAttr *attr = nullptr;
 };
 
+struct AclHostInfo {
+  AclHostInfo() : host_addr(nullptr), size(0), dtype_id(kTypeUnknown), is_const(true) {}
+  AclHostInfo(void *addr, size_t addr_size, TypeId type_id, bool is_const)
+      : host_addr(addr), size(addr_size), dtype_id(type_id), is_const(is_const) {}
+  void *host_addr;
+  size_t size;
+  TypeId dtype_id;
+  bool is_const;
+};
+using AclHostInfoPtr = std::shared_ptr<AclHostInfo>;
+
 class AclInputToHost {
  public:
-  AclInputToHost() { clear(); }
-
-  void clear() {
-    for (auto &item : input_to_host_) {
-      item = nullptr;
-    }
-    size_ = 0;
+  AclInputToHost() {
+    static constexpr size_t reserve_size = 40;
+    input_to_host_.reserve(reserve_size);
   }
 
-  tensor::TensorPtr get(size_t index) const {
-    if (index >= MAX_INPUT_TO_HOST) {
-      MS_LOG(EXCEPTION) << "Index is bigger than max input to host size, index: " << index
-                        << ", max_input_to_host: " << MAX_INPUT_TO_HOST;
+  void clear() { input_to_host_.clear(); }
+
+  AclHostInfoPtr get(size_t index) const {
+    if (index >= input_to_host_.size()) {
+      return nullptr;
     }
     return input_to_host_[index];
   }
 
-  void emplace(size_t index, const tensor::TensorPtr &tensor_ptr) {
-    auto origin_tensor = get(index);
-    if (origin_tensor == nullptr && tensor_ptr != nullptr) {
-      size_++;
+  void emplace(size_t index, const AclHostInfoPtr &acl_input) {
+    if (index >= input_to_host_.size()) {
+      input_to_host_.resize(index + 1, nullptr);
     }
-    input_to_host_[index] = tensor_ptr;
+    input_to_host_[index] = acl_input;
   }
 
-  void build(const std::map<uint32_t, tensor::TensorPtr> &inputs_on_host) {
+  void build(const std::map<uint32_t, AclHostInfoPtr> &inputs_on_host) {
     clear();
-    for (auto &kv : inputs_on_host) {
+    for (const auto &kv : inputs_on_host) {
       emplace(kv.first, kv.second);
     }
   }
 
-  bool empty() const { return size_ == 0; }
-
  private:
-  tensor::TensorPtr input_to_host_[MAX_INPUT_TO_HOST];
-  size_t size_{};
+  std::vector<AclHostInfoPtr> input_to_host_;
 };
 
 class AclAttrMaker {
@@ -90,6 +95,7 @@ class AclAttrMaker {
   static void SetAttr(const string &attr_name, const std::vector<std::string> &value, aclopAttr *attr);
   static void SetAttr(const string &attr_name, const std::vector<std::vector<int64_t>> &value, aclopAttr *attr);
   static void SetAttr(const string &attr_name, const ::ge::DataType value, aclopAttr *attr);
+  static void SetAttr(const string &attr_name, const std::vector<::ge::DataType> value, aclopAttr *attr);
 };  // class AclAttrMaker
 
 class AclTensorDescMaker {
@@ -98,19 +104,19 @@ class AclTensorDescMaker {
   ~AclTensorDescMaker() = default;
 
   AclTensorDescMaker &Create(aclDataType data_type, const ShapeVector &shape, aclFormat format) {
-    acl_desc_ = aclCreateTensorDesc(data_type, shape.size(), shape.data(), format);
+    acl_desc_ = CALL_ASCEND_API(aclCreateTensorDesc, data_type, shape.size(), shape.data(), format);
     MS_EXCEPTION_IF_NULL(acl_desc_);
     return *this;
   }
 
   AclTensorDescMaker &Create(aclDataType data_type, aclFormat format) {
-    acl_desc_ = aclCreateTensorDesc(data_type, 0, nullptr, format);
+    acl_desc_ = CALL_ASCEND_API(aclCreateTensorDesc, data_type, 0, nullptr, format);
     MS_EXCEPTION_IF_NULL(acl_desc_);
     return *this;
   }
 
   AclTensorDescMaker &SetFormat(aclFormat format) {
-    auto ret = aclSetTensorFormat(acl_desc_, format);
+    auto ret = CALL_ASCEND_API(aclSetTensorFormat, acl_desc_, format);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Acl set tensor format failed!";
     }
@@ -119,7 +125,7 @@ class AclTensorDescMaker {
 
   AclTensorDescMaker &SetShape(const ShapeVector &shape) {
     if (!shape.empty()) {
-      auto ret = aclSetTensorShape(acl_desc_, shape.size(), shape.data());
+      auto ret = CALL_ASCEND_API(aclSetTensorShape, acl_desc_, shape.size(), shape.data());
       if (ret != ACL_SUCCESS) {
         MS_LOG(EXCEPTION) << "Acl set tensor shape failed!";
       }
@@ -129,13 +135,13 @@ class AclTensorDescMaker {
 
   AclTensorDescMaker &SetName(const std::string &name) {
     if (!name.empty()) {
-      aclSetTensorDescName(acl_desc_, name.c_str());
+      CALL_ASCEND_API(aclSetTensorDescName, acl_desc_, name.c_str());
     }
     return *this;
   }
 
   AclTensorDescMaker &SetTensorPlaceMent(const aclMemType &mem_type) {
-    auto ret = aclSetTensorPlaceMent(acl_desc_, mem_type);
+    auto ret = CALL_ASCEND_API(aclSetTensorPlaceMent, acl_desc_, mem_type);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "ACL set host tensor failed!";
     }
@@ -156,18 +162,20 @@ class AclTensorBufferMaker {
       type_size = GetTypeByte(TypeIdToType(type));
     }
     auto real_size = type_size * size;
-    if (addr == nullptr || real_size == 0) {
-      data_buffer_ = aclCreateDataBuffer(nullptr, 0);
+    if (type == kObjectTypeString) {
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, addr, size + sizeof(ge::StringHead));
+    } else if (addr == nullptr || real_size == 0) {
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, nullptr, 0);
     } else {
-      data_buffer_ = aclCreateDataBuffer(addr, size);
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, addr, size);
     }
   }
 
   explicit AclTensorBufferMaker(const TensorPtr &tensor) {
     if (tensor->Size() == 0) {
-      data_buffer_ = aclCreateDataBuffer(nullptr, 0);
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, nullptr, 0);
     } else {
-      data_buffer_ = aclCreateDataBuffer(tensor->data_c(), tensor->Size());
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, tensor->data_c(), tensor->Size());
     }
   }
 
@@ -197,13 +205,13 @@ class AclRunner {
   void ResizeOpInputs(size_t size) {
     (void)std::for_each(acl_param_.input_desc.begin(), acl_param_.input_desc.end(), [](const aclTensorDesc *desc) {
       if (desc != nullptr) {
-        aclDestroyTensorDesc(desc);
+        CALL_ASCEND_API(aclDestroyTensorDesc, desc);
       }
     });
     (void)std::for_each(acl_param_.input_buffer.begin(), acl_param_.input_buffer.end(),
                         [](const aclDataBuffer *buffer) {
                           if (buffer != nullptr) {
-                            aclDestroyDataBuffer(buffer);
+                            CALL_ASCEND_API(aclDestroyDataBuffer, buffer);
                           }
                         });
     acl_param_.input_desc.clear();
@@ -218,10 +226,10 @@ class AclRunner {
     }
 
     if (acl_param_.input_desc[i] != nullptr) {
-      aclDestroyTensorDesc(acl_param_.input_desc[i]);
+      CALL_ASCEND_API(aclDestroyTensorDesc, acl_param_.input_desc[i]);
     }
     if (acl_param_.input_buffer[i] != nullptr) {
-      aclDestroyDataBuffer(acl_param_.input_buffer[i]);
+      CALL_ASCEND_API(aclDestroyDataBuffer, acl_param_.input_buffer[i]);
     }
 
     acl_param_.input_desc[i] = desc;
@@ -234,7 +242,7 @@ class AclRunner {
     }
     MS_EXCEPTION_IF_CHECK_FAIL(acl_param_.input_desc.size() == acl_param_.input_buffer.size(),
                                "Acl param input_desc size is not equal to acl param input_buffer size");
-    for (size_t i = acl_param_.input_desc.size() - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(acl_param_.input_desc.size()) - 1; i >= 0; --i) {
       if (acl_param_.input_desc[i] != nullptr && acl_param_.input_buffer[i] != nullptr) {
         return i + 1;
       }
@@ -242,16 +250,19 @@ class AclRunner {
     return 0;
   }
 
+  // fill null optional input in the range of inputs with place holder
+  void FillOptInputWithPlaceHolder();
+
   void ResizeOpOutputs(size_t size) {
     (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), [](const aclTensorDesc *desc) {
       if (desc != nullptr) {
-        aclDestroyTensorDesc(desc);
+        CALL_ASCEND_API(aclDestroyTensorDesc, desc);
       }
     });
     (void)std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(),
                         [](const aclDataBuffer *buffer) {
                           if (buffer != nullptr) {
-                            aclDestroyDataBuffer(buffer);
+                            CALL_ASCEND_API(aclDestroyDataBuffer, buffer);
                           }
                         });
     acl_param_.output_desc.clear();
@@ -266,10 +277,10 @@ class AclRunner {
     }
 
     if (acl_param_.output_desc[i] != nullptr) {
-      aclDestroyTensorDesc(acl_param_.output_desc[i]);
+      CALL_ASCEND_API(aclDestroyTensorDesc, acl_param_.output_desc[i]);
     }
     if (acl_param_.output_buffer[i] != nullptr) {
-      aclDestroyDataBuffer(acl_param_.output_buffer[i]);
+      CALL_ASCEND_API(aclDestroyDataBuffer, acl_param_.output_buffer[i]);
     }
 
     acl_param_.output_desc[i] = desc;
@@ -308,7 +319,7 @@ class AclRunner {
  private:
   void InitAttr() {
     if (acl_param_.attr == nullptr) {
-      acl_param_.attr = aclopCreateAttr();
+      acl_param_.attr = CALL_ASCEND_API(aclopCreateAttr);
     }
   }
 

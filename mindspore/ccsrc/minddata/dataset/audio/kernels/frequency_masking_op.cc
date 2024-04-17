@@ -28,9 +28,7 @@ FrequencyMaskingOp::FrequencyMaskingOp(bool iid_masks, int32_t frequency_mask_pa
     : frequency_mask_param_(frequency_mask_param),
       mask_start_(mask_start),
       iid_masks_(iid_masks),
-      mask_value_(mask_value) {
-  rnd_.seed(GetSeed());
-}
+      mask_value_(mask_value) {}
 
 // main function
 Status FrequencyMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
@@ -56,7 +54,7 @@ Status FrequencyMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::sh
   if (!iid_masks_) {
     return MaskAlongAxis(input_tensor, output, frequency_mask_param_, mask_start_, mask_value_, 1);
   } else {
-    return RandomMaskAlongAxis(input_tensor, output, frequency_mask_param_, mask_value_, 1, rnd_);
+    return RandomMaskAlongAxis(input_tensor, output, frequency_mask_param_, mask_value_, 1, &random_generator_);
   }
 }
 

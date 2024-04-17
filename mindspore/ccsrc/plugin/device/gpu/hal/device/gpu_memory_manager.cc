@@ -23,16 +23,17 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-void *GPUMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool) {
-  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size, from_persistent_mem);
+void *GPUMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool, uint32_t stream_id) {
+  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size, from_persistent_mem, false, stream_id);
 }
 
 void GPUMemoryManager::FreeMemFromMemPool(void *device_ptr) {
   GPUMemoryAllocator::GetInstance().FreeTensorMem(device_ptr);
 }
 
-std::vector<void *> GPUMemoryManager::MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) {
-  return GPUMemoryAllocator::GetInstance().AllocContinuousTensorMem(size_list);
+std::vector<void *> GPUMemoryManager::MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list,
+                                                                     uint32_t stream_id) {
+  return GPUMemoryAllocator::GetInstance().AllocContinuousTensorMem(size_list, stream_id);
 }
 
 size_t GPUMemoryManager::GetAvailableMemSize() {
@@ -43,8 +44,8 @@ size_t GPUMemoryManager::GetAvailableMemSize() {
 }
 
 bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
-                                                      std::vector<size_t> size_list) {
-  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list);
+                                                      std::vector<size_t> size_list, uint32_t steam_id) {
+  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list, steam_id);
   if (device_ptr_list.empty()) {
     return false;
   }
@@ -56,7 +57,7 @@ bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList
   bool need_sync_stream = false;
   for (size_t i = 0; i < addr_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(addr_list[i]);
-    auto old_addr = addr_list[i]->ptr_;
+    auto old_addr = addr_list[i]->GetDevicePtr();
     auto new_addr = device_ptr_list[i];
     MS_EXCEPTION_IF_NULL(new_addr);
     if (old_addr != nullptr) {
@@ -66,9 +67,9 @@ bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList
         "Failed to copyHostMemToDeviceAsync.");
       FreeMemFromMemPool(old_addr);
     }
-    addr_list[i]->ptr_ = new_addr;
-    addr_list[i]->size_ = size_list[i];
-    addr_list[i]->from_mem_pool_ = true;
+    addr_list[i]->SetDevicePtr(new_addr);
+    addr_list[i]->SetSize(size_list[i]);
+    addr_list[i]->set_from_mem_pool(true);
   }
   if (need_sync_stream) {
     return GPUDeviceManager::GetInstance().SyncStream(stream);

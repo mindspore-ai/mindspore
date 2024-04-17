@@ -137,8 +137,9 @@ const std::vector<std::pair<KernelAttr, AddcmulPtrCreatorFunc>> kernel_attr = {
    CreateAddcmulKernelPtr<int8_t, int64_t>}};
 }  // namespace
 
-bool AddcmulGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AddcmulGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &workspace,
+                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -148,10 +149,7 @@ bool AddcmulGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   return true;
 }
 
-bool AddcmulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Addcmul>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool AddcmulGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -162,13 +160,11 @@ bool AddcmulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
 
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  Resize(base_operator, inputs, outputs);
+  Resize(inputs, outputs);
   return true;
 }
 
-int AddcmulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int AddcmulGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -197,7 +193,6 @@ int AddcmulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

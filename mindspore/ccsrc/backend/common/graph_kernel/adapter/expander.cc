@@ -22,6 +22,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include "backend/common/graph_kernel/convert_input_and_attr.h"
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/random_ops.h"
@@ -34,7 +35,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/python_adapter.h"
 #include "kernel/graph_kernel/graph_kernel_json_generator.h"
-#include "backend/common/graph_kernel/split_umonad.h"
+#include "backend/common/graph_kernel/core/split_umonad.h"
 #include "backend/common/graph_kernel/substitute_dropout.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
@@ -228,28 +229,40 @@ AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const
     if (!AnfUtils::IsRealCNodeKernel(inner_node)) {
       continue;
     }
-    bool suc = false;
-    auto inner_cnode = inner_node->cast<CNodePtr>();
-    if (need_replace_parameter) {
-      std::vector<std::pair<size_t, AnfNodePtr>> ori_input;
-      for (size_t i = 1; i < inner_cnode->size(); i++) {
-        auto iter = param_map.find(inner_cnode->input(i));
-        if (iter != param_map.end()) {
-          MS_LOG(DEBUG) << "Replace " << inner_cnode->input(i)->DebugString() << " by " << iter->second->DebugString();
-          (void)ori_input.emplace_back(i, inner_cnode->input(i));
-          inner_cnode->set_input(i, iter->second);
+    try {
+      MS_LOG_TRY_CATCH_SCOPE;
+      bool suc = false;
+      if (OpDefAdapter::NeedConvertGK2FE(inner_node)) {
+        (void)ConvertGraphKernelToFrontEnd::Process(inner_node);
+      }
+      auto inner_cnode = inner_node->cast<CNodePtr>();
+      if (need_replace_parameter) {
+        std::vector<std::pair<size_t, AnfNodePtr>> ori_input;
+        for (size_t i = 1; i < inner_cnode->size(); i++) {
+          auto iter = param_map.find(inner_cnode->input(i));
+          if (iter != param_map.end()) {
+            MS_LOG(DEBUG) << "Replace " << inner_cnode->input(i)->DebugString() << " by "
+                          << iter->second->DebugString();
+            (void)ori_input.emplace_back(i, inner_cnode->input(i));
+            inner_cnode->set_input(i, iter->second);
+          }
         }
+        suc = func(inner_cnode);
+        // recover the origin inputs
+        for (auto &ori : ori_input) {
+          inner_cnode->set_input(ori.first, ori.second);
+        }
+      } else {
+        suc = func(inner_cnode);
       }
-      suc = func(inner_cnode);
-      // recover the origin inputs
-      for (auto &ori : ori_input) {
-        inner_cnode->set_input(ori.first, ori.second);
+      if (!suc) {
+        MS_LOG(INFO) << "ExpanderFallback: select kernel [" << inner_node->fullname_with_scope() << "] failed.";
+        res = nullptr;
+        break;
       }
-    } else {
-      suc = func(inner_cnode);
-    }
-    if (!suc) {
-      MS_LOG(DEBUG) << "Expanding core ops [" << inner_node->fullname_with_scope() << "] failed.";
+    } catch (std::exception &e) {
+      MS_LOG(WARNING) << "ExpanderFallback: error in select kernel for [" << inner_node->fullname_with_scope()
+                      << "], msg: " << e.what();
       res = nullptr;
       break;
     }
@@ -331,12 +344,12 @@ AnfNodePtr ArgWithValueDeco::Run(const AnfNodePtr &node) {
 AnfNodePtr UnfoldMakeTupleDeco::Run(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() == kIndex2 && IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeTuple)) {
+  if (cnode->size() == kIndex2 && IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeTuple)) {
     auto make_tupe_cnode = cnode->input(1)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tupe_cnode);
     std::vector<AnfNodePtr> new_inputs;
     new_inputs.push_back(cnode->input(0));
-    for (size_t i = 1; i < make_tupe_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < make_tupe_cnode->size(); ++i) {
       new_inputs.push_back(make_tupe_cnode->input(i));
     }
     cnode = QuickCloneCNode(cnode);

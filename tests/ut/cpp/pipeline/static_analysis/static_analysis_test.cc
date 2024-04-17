@@ -28,9 +28,11 @@
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "pipeline/jit/ps/parse/parse.h"
 #include "pipeline/jit/ps/resource.h"
+#include "pipeline/jit/ps/action.h"
 #include "pipeline/jit/ps/static_analysis/prim.h"
 #include "pipeline/static_analysis/helper.h"
 #include "utils/log_adapter.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace abstract {
@@ -98,7 +100,7 @@ class MetaScalarAdd : public MetaFuncGraph {
     FuncGraphPtr fg = std::make_shared<FuncGraph>();
     ParameterPtr x = fg->add_parameter();
     ParameterPtr y = fg->add_parameter();
-    auto prim_scalar_add = std::make_shared<Primitive>(kScalarAddOpName);
+    auto prim_scalar_add = std::make_shared<Primitive>("ScalarAdd");
     std::vector<AnfNodePtr> inputs;
     inputs.push_back(NewValueNode(prim_scalar_add));
     inputs.push_back(x);
@@ -163,7 +165,7 @@ TEST_F(TestInfer, test_inferred_scalar_add) {
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
 
-  auto prim_scalar_add = std::make_shared<Primitive>(kScalarAddOpName);
+  auto prim_scalar_add = std::make_shared<Primitive>("ScalarAdd");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_add);
   AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
   ASSERT_TRUE(*abs_base_got->BuildValue() == *MakeValue(static_cast<int64_t>(3)));
@@ -295,20 +297,20 @@ TEST_F(TestInferGraph, test_context) {
 
   AnalysisContextPtr dummy_context = AnalysisContext::DummyContext();
 
-  AnalysisContextPtr f_context = dummy_context->NewContext(graph_f_, AbstractBasePtrList());
+  AnalysisContextPtr f_context = NewContext(dummy_context, graph_f_, AbstractBasePtrList());
   ASSERT_TRUE(f_context->FindOwnOrParentContext(graph_f_.get()) = f_context);
   ASSERT_TRUE(f_context->FindOwnOrParentContext(nullptr) = dummy_context);
 
-  AnalysisContextPtr g_context = f_context->NewContext(graph_g_, AbstractBasePtrList());
+  AnalysisContextPtr g_context = NewContext(f_context, graph_g_, AbstractBasePtrList());
   ASSERT_TRUE(g_context->FindOwnOrParentContext(graph_g_.get()) = g_context);
   ASSERT_TRUE(g_context->FindOwnOrParentContext(graph_f_.get()) = dummy_context);
   ASSERT_TRUE(g_context->FindOwnOrParentContext(nullptr) = dummy_context);
 
-  AnalysisContextPtr alpha_context = dummy_context->NewContext(graph_alpha_, AbstractBasePtrList());
+  AnalysisContextPtr alpha_context = NewContext(dummy_context, graph_alpha_, AbstractBasePtrList());
   ASSERT_TRUE(alpha_context->FindOwnOrParentContext(graph_alpha_.get()) = alpha_context);
   ASSERT_TRUE(alpha_context->FindOwnOrParentContext(nullptr) = dummy_context);
 
-  AnalysisContextPtr beta_context = alpha_context->NewContext(graph_beta_, AbstractBasePtrList());
+  AnalysisContextPtr beta_context = NewContext(alpha_context, graph_beta_, AbstractBasePtrList());
   ASSERT_TRUE(beta_context->FindOwnOrParentContext(graph_beta_.get()) = beta_context);
   ASSERT_TRUE(beta_context->FindOwnOrParentContext(graph_alpha_.get()) = alpha_context);
   ASSERT_TRUE(beta_context->FindOwnOrParentContext(nullptr) = dummy_context);
@@ -391,44 +393,11 @@ TEST_F(TestInferUniform, test_inferred_scalar_add) {
   args_spec.push_back(abstract_v1);
   args_spec.push_back(abstract_v2);
 
-  auto prim_scalar_add = std::make_shared<Primitive>(kScalarAddOpName);
+  auto prim_scalar_add = std::make_shared<Primitive>("ScalarAdd");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_add);
   AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec).eval_result->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_v1->GetTypeTrack()));
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeInt64);
-}
-
-class TestEvalOnePrim : public UT::Common {
- public:
-  TestEvalOnePrim() : getPyFun("gtest_input.pipeline.infer.infer_test", true), engine_(nullptr) {}
-  void SetUp();
-  void TearDown();
-
-  UT::PyFuncGraphFetcher getPyFun;
-  AnalysisEnginePtr engine_;
-};
-
-void TestEvalOnePrim::SetUp() { engine_ = SetupAnalysisEngineStub(); }
-
-void TestEvalOnePrim::TearDown() {
-  // destroy resource
-}
-
-/// Feature: Test EvalOnePrim.
-/// Description: Test EvalOnePrim.
-/// Expectation: success.
-TEST_F(TestEvalOnePrim, test_scalar_add) {
-  float x1 = 1.1;
-  float x2 = 1.1;
-  float x3 = 2.2;
-  AbstractBasePtr base1 = FromValue(x1, false);
-  AbstractBasePtr base2 = FromValue(x2, false);
-  AbstractBasePtrList base_list = {base1, base2};
-  auto res = EvalOnePrim(std::make_shared<Primitive>(prim::kPrimScalarAdd->name()), base_list)->abstract();
-  MS_LOG(INFO) << "result spec: " << res->ToString();
-  AbstractBasePtr exp = FromValue(x3, false);
-  MS_LOG(INFO) << "result exp: " << exp->ToString();
-  ASSERT_EQ(*res, *exp);
 }
 
 class TestGraphEval : public UT::Common {
@@ -446,6 +415,72 @@ void TestGraphEval::TearDown() {
   // destroy resource
   engine_->ClearEvaluatorCache();
   parse::data_converter::ClearObjectCache();
+}
+
+class TestEvalCNode : public UT::Common {
+ public:
+  TestEvalCNode() : getPyFun_("gtest_input.pipeline.infer.infer_test", true, true), engine_(nullptr) {}
+  void SetUp();
+  void TearDown();
+
+  UT::PyFuncGraphFetcher getPyFun_;
+  AnalysisEnginePtr engine_;
+};
+
+void TestEvalCNode::SetUp() { engine_ = SetupAnalysisEngineStub(); }
+
+void TestEvalCNode::TearDown() {
+  // destroy resource
+}
+
+abstract::AbstractBasePtr EvalFunction(const ValuePtr &value, const abstract::AbstractBasePtrList &args_abs) {
+  return pipeline::AbstractAnalyze(value, args_abs).eval_result->abstract();
+}
+
+/// Feature: Test EvalCNodePrim.
+/// Description: Test EvalOnePrim.
+/// Expectation: success.
+TEST_F(TestEvalCNode, test_eval_cnode) {
+  FuncGraphPtr test_graph = getPyFun_.CallAndParseRet("eval_test_functions", "func");
+  ASSERT_TRUE(nullptr != test_graph);
+  auto node_list = TopoSort(test_graph->get_return());
+  AbstractBasePtr x = std::make_shared<AbstractTensor>(kFloat16, std::vector<int64_t>{1, 2, 3});
+  AbstractBasePtr y = std::make_shared<AbstractTensor>(kFloat32, std::vector<int64_t>{1, 2, 3});
+  int counter = 0;
+  for (const auto &item : node_list) {
+    if (item->isa<CNode>()) {
+      auto cnode = item->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto func = GetValueNode(cnode->input(0));
+      MS_EXCEPTION_IF_NULL(func);
+      if (counter == 0) {
+        auto inputs = std::vector<AbstractBasePtr>{x, y};
+        // S-Prim-Add  Test DoSignature Eval
+        auto reno_abs = pipeline::Renormalize(func, inputs)->return_node()->abstract();
+        assert((*reno_abs) == (*y));
+        auto res = EvalFunction(func, inputs);
+        assert((*res) == (*y));
+      }
+      if (counter == 1) {
+        auto inputs = std::vector<AbstractBasePtr>{x, y};
+        // S-Prim-Add  Test DoSignature Eval
+        auto reno_abs = pipeline::Renormalize(func, inputs)->return_node()->abstract();
+        assert((*reno_abs) == (*y));
+        auto res = EvalFunction(func, inputs);
+        assert((*res) == (*y));
+      }
+      if (counter == 2) {
+        auto inputs = std::vector<AbstractBasePtr>{y};
+        // S-Prim-Add  Test DoSignature Eval
+        auto reno_abs = pipeline::Renormalize(func, inputs)->return_node()->abstract();
+        assert((*reno_abs) == (*y));
+        auto res = EvalFunction(func, inputs);
+        assert((*res) == (*y));
+      }
+      ++counter;
+    }
+    continue;
+  }
 }
 
 /* skip ut test cases temporarily

@@ -42,11 +42,8 @@ using KernelRunFunc = SparseApplyProximalGradientDescentCpuKernelMod::KernelRunF
     .AddOutputAttr(kNumberType##t7)
 }  // namespace
 
-bool SparseApplyProximalGradientDescentCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                          const std::vector<KernelTensorPtr> &inputs,
-                                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseApplyProximalGradientDescentCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -61,14 +58,13 @@ bool SparseApplyProximalGradientDescentCpuKernelMod::Init(const BaseOperatorPtr 
                   << kSparseApplyProximalGradientDescentOutputsNum << ", but got " << outputs.size() << ".";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
 void SparseApplyProximalGradientDescentCpuKernelMod::ResetResouce() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
@@ -77,12 +73,10 @@ void SparseApplyProximalGradientDescentCpuKernelMod::ResetResouce() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                           const std::vector<KernelTensorPtr> &inputs,
-                                                           const std::vector<KernelTensorPtr> &outputs,
-                                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &outputs) {
   ResetResouce();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != static_cast<int>(KRET_OK)) {
     return ret;
   }
@@ -135,18 +129,18 @@ int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr
 
 template <typename I, typename T>
 bool SparseApplyProximalGradientDescentCpuKernelMod::LaunchKernel(
-  const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-  const std::vector<kernel::AddressPtr> &outputs) const {
+  const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+  const std::vector<kernel::KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyProximalGradientDescentInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyProximalGradientDescentOutputsNum, kernel_name_);
 
-  auto var = static_cast<T *>(inputs[0]->addr);
-  auto grad = static_cast<T *>(inputs[4]->addr);
-  auto indices = static_cast<I *>(inputs[5]->addr);
-  auto alpha_scalar = static_cast<T *>(inputs[1]->addr)[0];
-  auto l1_scalar = static_cast<T *>(inputs[2]->addr)[0];
-  auto l2_scalar = static_cast<T *>(inputs[3]->addr)[0];
-  auto output = static_cast<T *>(outputs[0]->addr);
+  auto var = static_cast<T *>(inputs[0]->device_ptr());
+  auto grad = static_cast<T *>(inputs[4]->device_ptr());
+  auto indices = static_cast<I *>(inputs[5]->device_ptr());
+  auto alpha_scalar = static_cast<T *>(inputs[1]->device_ptr())[0];
+  auto l1_scalar = static_cast<T *>(inputs[2]->device_ptr())[0];
+  auto l2_scalar = static_cast<T *>(inputs[3]->device_ptr())[0];
+  auto output = static_cast<T *>(outputs[0]->device_ptr());
 
   for (size_t i = 0; i < indices_size_; i++) {
     I index = indices[i];

@@ -1,0 +1,40 @@
+pow:
+    description: |
+        Calculates the `exponent` power of each element in `input`.
+        
+        When `exponent` is a Tensor, the shapes of `input` and `exponent` must be broadcastable.
+
+        .. math::
+
+            out_{i} = input_{i} ^{ exponent_{i}}
+
+        Args:
+            input (Union[Tensor, Number]): The first input is a Number or a tensor whose data type is
+                `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            exponent (Union[Tensor, Number]): The second input is a Number or a tensor whose data type is
+                `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> exponent = 3.0
+            >>> output = ops.pow(input, exponent)
+            >>> print(output)
+            [ 1.  8. 64.]
+            >>>
+            >>> input = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> exponent = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
+            >>> output = ops.pow(input, exponent)
+            >>> print(output)
+            [ 1. 16. 64.]

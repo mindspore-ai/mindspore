@@ -76,6 +76,14 @@ std::vector<AbstractActorPtr> SchedulerHelper::CollectActors(const ActorSet *act
     MS_EXCEPTION_IF_NULL(kernel_actor);
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(kernel_actor));
   }
+  for (auto &kernel_infer_actor : actor_set->kernel_infer_actors_) {
+    MS_EXCEPTION_IF_NULL(kernel_infer_actor);
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(kernel_infer_actor));
+  }
+  for (auto &kernel_resize_actor : actor_set->kernel_resize_actors_) {
+    MS_EXCEPTION_IF_NULL(kernel_resize_actor);
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(kernel_resize_actor));
+  }
   for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(super_kernel_actor));
@@ -262,19 +270,13 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
 
   AddMemorySign(from_actor, to_actor);
 
-  // Ignore the input address that is not used in the kernel launch.
-  if (IsIgnoredInputAddress(to_actor, to_input_index)) {
-    MS_LOG(DEBUG) << "Ignored input to actor:" << to_actor->GetAID() << " to index:" << to_input_index;
-    return;
-  }
-
   auto data_arrow = std::make_shared<DataArrow>(from_output_index, to_actor->GetAID(), to_input_index);
   (void)from_actor->output_data_arrows_.emplace_back(data_arrow);
   (void)from_actor->output_data_nodes_.emplace_back(from_kernel);
   to_actor->input_datas_num_++;
   (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), data_arrow.get()));
 
-  if (from_kernel == nullptr || from_actor->type() == KernelTransformType::kAnyTypeKernelActor) {
+  if (from_kernel == nullptr) {
     return;
   }
   // Update the reference count of from_kernel.
@@ -314,7 +316,7 @@ void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActo
 
   if (!AnfAlgo::OutputAddrExist(from_kernel, from_output_index, false)) {
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << from_kernel->DebugString()
-                               << " device address does not exist";
+                               << " index:" << from_output_index << " device address does not exist";
   }
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
@@ -357,6 +359,20 @@ void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractA
                                  << " is repeated.";
     }
     return;
+  }
+
+  // No need add control arrow if already exists data arrow in from and to actor.
+  if (from_actor->type() == KernelTransformType::kKernelActor &&
+      to_actor->type() == KernelTransformType::kKernelActor) {
+    const auto &input_data_arrows = to_actor->input_data_arrow_aids();
+    if (std::any_of(input_data_arrows.begin(), input_data_arrows.end(),
+                    [&from_actor](const std::pair<AID, DataArrow *> &input_data_arrow_pair) {
+                      return input_data_arrow_pair.first.Name() == from_actor->GetAID().Name();
+                    })) {
+      MS_LOG(INFO) << "No need add control arrow, because already exists data arrow in from actor: "
+                   << from_actor->GetAID().Name() << " and to actor: " << to_actor->GetAID().Name();
+      return;
+    }
   }
 
   auto control_arrow = std::make_shared<ControlArrow>(to_actor->GetAID());
@@ -701,7 +717,9 @@ void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractAct
 KernelGraphPtr SchedulerHelper::FetchKernelGraphByActor(AbstractActor *const actor) {
   MS_EXCEPTION_IF_NULL(actor);
   AnfNode *from_kernel = nullptr;
-  if (actor->type() == KernelTransformType::kKernelActor) {
+  if (actor->type() == KernelTransformType::kKernelActor ||
+      actor->type() == KernelTransformType::kConditionGatherActor ||
+      actor->type() == KernelTransformType::kConditionSwitchActor) {
     auto kernel_actor = dynamic_cast<KernelActor *>(actor);
     MS_EXCEPTION_IF_NULL(kernel_actor);
     from_kernel = kernel_actor->kernel().get();
@@ -769,7 +787,9 @@ void SchedulerHelper::AddMemoryFreeSign(AbstractActor *const from_actor, Abstrac
 void SchedulerHelper::AddSomasInfo(AbstractActor *const actor) {
   MS_EXCEPTION_IF_NULL(actor);
   // Only the kernel actor supports somas.
-  if (actor->type() != KernelTransformType::kKernelActor) {
+  if (actor->type() != KernelTransformType::kKernelActor &&
+      actor->type() != KernelTransformType::kConditionGatherActor &&
+      actor->type() != KernelTransformType::kConditionSwitchActor) {
     return;
   }
   auto kernel_actor = dynamic_cast<KernelActor *>(actor);
@@ -794,6 +814,34 @@ void SchedulerHelper::AddSomasInfo(AbstractActor *const actor) {
   MS_EXCEPTION_IF_NULL(somas_info);
   somas_info->graph_id_ = graph->graph_id();
   kernel_actor->somas_info_ = somas_info;
+}
+
+void SchedulerHelper::AddSomasInfoForGraphOutput(AbstractActor *const output_actor, const AnfNodePtr &output_kernel,
+                                                 size_t output_index, size_t graph_id) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) {
+    return;
+  }
+  if ((output_actor == nullptr) || (output_actor->type() != KernelTransformType::kKernelActor &&
+                                    output_actor->type() != KernelTransformType::kConditionSwitchActor &&
+                                    output_actor->type() != KernelTransformType::kConditionGatherActor)) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(output_kernel);
+  auto kernel_info = dynamic_cast<KernelInfo *>(output_kernel->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  const auto &somas_outputs = kernel_info->somas_output_result();
+  auto is_somas = kernel_info->IsTensorEnableSomas(somas_outputs, output_index);
+  MS_LOG(INFO) << "The graph " << graph_id << " output node:" << output_kernel->fullname_with_scope()
+               << " with index: " << output_index << " somas enable or not: " << is_somas
+               << ", somas offset: " << kernel_info->GetTensorSomasOffset(somas_outputs, output_index)
+               << ", aligned size: " << kernel_info->GetTensorSomasAlignedSize(somas_outputs, output_index);
+  if (is_somas) {
+    auto kernel_actor = dynamic_cast<KernelActor *>(output_actor);
+    kernel_actor->somas_graph_output_indexes_.insert(output_index);
+  }
 }
 
 namespace {
@@ -951,8 +999,7 @@ void SchedulerHelper::CheckActorValid(const ActorSet *actor_set) {
         MS_EXCEPTION_IF_NULL(kernel_actor);
         auto &kernel = kernel_actor->kernel();
         MS_EXCEPTION_IF_NULL(kernel);
-        size_t total_input_num = common::AnfAlgo::GetInputTensorNum(kernel);
-        expect_input_num = total_input_num - GetIgnoredInputAddressCount(kernel);
+        expect_input_num = common::AnfAlgo::GetInputTensorNum(kernel);
       }
       auto input_data_num = actor->input_datas_num_;
       auto device_tensor_store_num = actor->device_tensor_store_keys_.size();
@@ -983,6 +1030,8 @@ void SchedulerHelper::DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs
   DumpDataPrepareActor(actor_set->data_prepare_actor_, ofs);
   DumpDSActors(actor_set->data_source_actors_, ofs);
   DumpKernelActors(actor_set->kernel_actors_, ofs);
+  DumpKernelInferActors(actor_set->kernel_infer_actors_, ofs);
+  DumpKernelResizeActors(actor_set->kernel_resize_actors_, ofs);
   DumpSuperKernelActors(actor_set->super_kernel_actors_, ofs);
   DumpAnyTypeKernelActors(actor_set->any_type_kernel_actors_, ofs);
   // The on input kernel actors are taken over by control actor in the control flow scene.
@@ -997,6 +1046,21 @@ void SchedulerHelper::DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs
   DumpControlActors(actor_set->control_actors_, ofs);
   DumpCustomActors(actor_set->custom_actors_, ofs);
   DumpSwapActors(actor_set->swap_actors_, ofs);
+}
+
+void SchedulerHelper::DumpFormatActorSet(const ActorSet *actor_set, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  try {
+    MS_LOG(DEBUG) << "Start dump format actor set:" << actor_set->name_;
+    auto actors = TopoSortForActor(actor_set->output_actor_.get());
+    ActorInfoMap actor_info;
+    for (size_t i = 0; i < actors.size(); ++i) {
+      DumpActorInfo(actors[i], i, &actor_info, ofs);
+    }
+    MS_LOG(DEBUG) << "End dump format actor set:" << actor_set->name_;
+  } catch (const std::exception &e) {
+    MS_LOG(INFO) << "Failed to dump actor set:" << actor_set->name_ << ", msg: " << e.what();
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore

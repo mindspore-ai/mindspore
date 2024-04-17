@@ -21,7 +21,7 @@
 #include "ops/op_utils.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
-#include "ops/split.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {

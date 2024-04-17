@@ -1,0 +1,16 @@
+#operator real_div
+real_div:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (x, y)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True

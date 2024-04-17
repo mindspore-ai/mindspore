@@ -54,8 +54,8 @@ AbstractBasePtr CSRMVInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(dense);
 
-  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
-  CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
+  CheckSparseIndicesDtypeInt32(indptr->element()->GetType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indices->element()->GetType(), "Indices");
 
   ShapeVector sparse_shape = ConvertToShapeVector(shape);
   ShapeVector dense_shape = dense->shape()->shape();
@@ -71,7 +71,7 @@ AbstractBasePtr CSRMVInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   }
 
   ShapeVector out_shape = {sparse_shape[kIndexZero], dense_shape[kIndexOne]};
-  auto ret = std::make_shared<AbstractTensor>(values->element()->BuildType(), out_shape);
+  auto ret = std::make_shared<AbstractTensor>(values->element()->GetType(), out_shape);
   // SetAttr
   auto nnz_vec = indices->shape()->shape();
   auto csr_avg_rows = nnz_vec[kIndexZero] / dense_shape[kIndexZero];

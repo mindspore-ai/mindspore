@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,21 @@ static inline errno_t huge_memcpy(uint8_t *destAddr, size_t destMaxLen, const ui
     srcLen -= SECUREC_MEM_MAX_LEN;
   }
   return memcpy_s(destAddr, destMaxLen, srcAddr, srcLen);
+}
+
+// Used to initialize huge memory. It is necessary to apply for a large memory length and use the memset_s security
+// function together to ensure the security of data initialization.
+static inline errno_t huge_memset(uint8_t *destAddr, size_t destMaxLen, int value, size_t count) {
+  while (destMaxLen > SECUREC_MEM_MAX_LEN && count > SECUREC_MEM_MAX_LEN) {
+    errno_t ret = memset_s(destAddr, SECUREC_MEM_MAX_LEN, value, SECUREC_MEM_MAX_LEN);
+    if (ret != EOK) {
+      return ret;
+    }
+    destAddr += SECUREC_MEM_MAX_LEN;
+    destMaxLen -= SECUREC_MEM_MAX_LEN;
+    count -= SECUREC_MEM_MAX_LEN;
+  }
+  return memset_s(destAddr, destMaxLen, value, count);
 }
 }  // namespace common
 }  // namespace mindspore

@@ -15,11 +15,10 @@
 
 # This example should be run with multiple processes.
 
-# Please refer to the Programming Guide > Distributed Training -> Distributed Parallel Usage Example
+# Please refer to Learning > Tutorials > Experts > Distributed Parallel Startup Methods on mindspore.cn. Pick a
 
-# on mindspore.cn and focus on the contents of these three parts: Configuring Distributed Environment
+# supported startup method for your hardware and get more detail information on the corresponding page.
 
-# Variables, Calling the Collective Communication Library, Running the Script.
 import numpy as np
 import pytest
 

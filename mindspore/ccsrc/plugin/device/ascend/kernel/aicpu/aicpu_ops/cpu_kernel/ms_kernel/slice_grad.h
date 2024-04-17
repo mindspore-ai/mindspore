@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SLICEGRAD_H_
 #define AICPU_KERNELS_NORMALIZED_SLICEGRAD_H_
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include <vector>
 
 namespace aicpu {
@@ -31,9 +31,9 @@ class SliceGradKernel : public CpuKernel {
  private:
   template <typename T, typename S>
   uint32_t SliceGradTask(CpuKernelContext &ctx);
-  bool CheckParams() const;
+  bool CheckParams(CpuKernelContext &ctx) const;
   uint32_t ParseKernelParam(CpuKernelContext &ctx);
-  bool CheckBeginSizeValue();
+  bool CheckBeginSizeValue(CpuKernelContext &ctx);
 
   std::vector<int64_t> dy_shape_;
   std::vector<int64_t> begin_shape_;

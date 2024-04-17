@@ -176,10 +176,6 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const AnfNodePtrList &input
   MS_EXCEPTION_IF_NULL(concat);
 
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(0), concat);
-  auto input_nums = SizeToLong(input_nodes.size());
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(input_nums), concat);
-  ShapeVector dyn_input_size_empty{input_nums};
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size_empty), concat);
   auto data_type = common::AnfAlgo::GetOutputInferDataType(input_nodes[kIndex0], kIndex0);
   common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {shape}, concat.get());
   return concat;
@@ -202,7 +198,8 @@ CNodePtr CreateAllToAllvForGENode(const FuncGraphPtr &graph, const AnfNodePtr &i
                                 mindspore::common::CreateShapeVectorNode(recv_mem_range.displs)};
   auto atav_node = NewCNode(atav_inputs, graph);
   MS_EXCEPTION_IF_NULL(atav_node);
-
+  atav_node->set_scope(origin_node->scope());
+  atav_node->set_fullname_with_scope(origin_node->fullname_with_scope());
   common::AnfAlgo::CopyNodeAttrs(origin_node, atav_node);
   common::AnfAlgo::SetNodeAttr(kAttrModifiedForGE, MakeValue(true), atav_node);
   auto data_type = common::AnfAlgo::GetOutputInferDataType(origin_node, kIndex0);
@@ -289,6 +286,7 @@ const AnfNodePtr AllToAllvForGE::Process(const FuncGraphPtr &graph, const AnfNod
   auto flatten_reshape_nodes =
     CreateFlattenReshapeNodes(graph, {all_to_all_v_inputs.begin() + 1, all_to_all_v_inputs.end()});
   auto concat_node = CreateConcatNode(graph, flatten_reshape_nodes);
+  concat_node->set_scope(node->scope());
   // get the outputs shapes of origin node to restore outputs of new node
   auto origin_output_shapes = GetAllToAllvOutputShapes(all_to_all_v);
   auto new_atav_node = CreateAllToAllvForGENode(graph, concat_node, all_to_all_v, origin_output_shapes);
@@ -298,10 +296,12 @@ const AnfNodePtr AllToAllvForGE::Process(const FuncGraphPtr &graph, const AnfNod
     return new_atav_node;
   }
   auto split_node = CreateSplitNode(graph, new_atav_node, origin_output_shapes);
+  split_node->set_scope(node->scope());
   AnfNodePtrList split_outputs;
   CreateMultipleOutputsOfAnfNode(graph, split_node, origin_output_shapes.size(), &split_outputs);
   auto reshape_nodes = CreateReshapeNodes(graph, split_outputs, origin_output_shapes);
   auto maketuple_node = CreateMakeTupleNode(graph, reshape_nodes);
+  maketuple_node->set_scope(node->scope());
   return maketuple_node;
 }
 }  // namespace opt

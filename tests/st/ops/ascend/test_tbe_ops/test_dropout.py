@@ -14,6 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -51,6 +52,24 @@ def dropout_net(*args, is_dynamic=False):
     else:
         out = op(Tensor(x))
     print("input shape: ", x.shape)
+    print("output shape: ", out[0].shape)
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_dropout_bf16():
+    """
+    Feature: test dropout operator in graph and pynative mode.
+    Description: test dropout.
+    Expectation: the result is correct
+    """
+    x = np.random.randn(3, 3, 4).astype(np.float32)
+    net = Net()
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    out = net(Tensor(x, dtype=mindspore.bfloat16))
+    print("output shape: ", out[0].shape)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    out = net(Tensor(x, dtype=mindspore.bfloat16))
     print("output shape: ", out[0].shape)
 
 

@@ -50,6 +50,9 @@ void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param
     int kh_e = MSMIN(kernel_h, UP_DIV(conv_param->input_h_ - input_h, dilation_h));
     int kw_s = MSMAX(0, UP_DIV(-input_w, dilation_w));
     int kw_e = MSMIN(kernel_w, UP_DIV(in_w - input_w, dilation_w));
+    if (kw_e <= kw_s) {
+      continue;
+    }
     if (dilation_w == 1 && dilation_h == 1) {
       for (int j = kh_s; j < kh_e; j++) {
         int input_y_stride = j * in_w * in_channel + input_stride;

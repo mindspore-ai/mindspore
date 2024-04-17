@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
 #include "kernel/oplib/oplib.h"
+#include "mindapi/base/type_id.h"
 #include "ops/arithmetic_ops.h"
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
@@ -83,7 +84,7 @@ static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpNam
                                                         kSparseSegmentMeanOpName};
 
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
-  size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
+  size_t output_num = kernel::GetOutputNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     TypeId dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
     (void)output_types->emplace_back(dtype);
@@ -98,7 +99,7 @@ void GetOutputDtypesForRealTuple(const CNodePtr &kernel_node, std::vector<TypeId
 }
 
 void GetOutputFormat(const CNodePtr &kernel_node, std::vector<std::string> *output_formats) {
-  size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
+  size_t output_num = kernel::GetOutputNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     (void)output_formats->emplace_back(kOpFormat_DEFAULT);
   }
@@ -162,9 +163,12 @@ bool InputDtypeFormatMatched(const kernel::KernelAttr &kernel_attr, const std::v
   }
   auto input_num = input_types.size();
   for (size_t i = 0; i < input_num; ++i) {
-    if (!InputDtypeMatch(kernel_attr.GetInputAttr(i).dtype, input_types[i], strict)) {
-      MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetInputAttr(i).dtype
-                    << ", actual input dtype:" << input_types[i];
+    auto is_tuple = (kernel_attr.GetInputAttr(i).object_type == kObjectTypeTuple);
+    // Optional input may be a None.
+    if (!(input_types[i] == kMetaTypeNone && kernel_attr.GetInputAttr(i).is_optional) &&
+        !InputDtypeMatch(kernel_attr.GetInputAttr(i).dtype, input_types[i], (strict || is_tuple))) {
+      MS_LOG(DEBUG) << i << " required dtype:" << TypeIdToString(kernel_attr.GetInputAttr(i).dtype)
+                    << ", actual input dtype:" << TypeIdToString(input_types[i]) << ", strict " << strict;
       return false;
     }
   }
@@ -179,16 +183,34 @@ void ExpandKernelAttr(const CNodePtr &kernel_node, kernel::KernelAttr *kernel_at
     MS_LOG(EXCEPTION) << "Input size is empty";
     return;  // To pass the CI Check_Cppcheck
   }
+  size_t all_same_input_num = kernel_attr->GetAllSameInputNum();  // default 0; else >=1 when allsame=true
+  size_t standalone_input_num = attr_num - all_same_input_num;
+  bool is_group_allsame = kernel_attr->GetGroupAllSame();
   // Only support one dynamic input like Concat or
   // many dynamic input but each input has same number like DynamicStitch
   std::string format = kOpFormat_DEFAULT;
   std::vector<DataType> attr_list;
-  size_t each_attr_input_num = input_num / attr_num;
-  for (size_t i = 0; i < attr_num; ++i) {
-    TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
-    for (size_t j = 0; j < each_attr_input_num; ++j) {
-      (void)attr_list.emplace_back(DataType(input_dtype, format));
+  size_t each_attr_input_num = (input_num - standalone_input_num) / (all_same_input_num == 0 ? 1 : all_same_input_num);
+  // Deal with allsame==True
+  if (is_group_allsame) {
+    for (size_t i = 0; i < each_attr_input_num; ++i) {
+      TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
+      for (size_t j = 0; j < all_same_input_num; ++j) {
+        (void)attr_list.emplace_back(DataType(input_dtype, format));
+      }
     }
+  } else {
+    for (size_t i = 0; i < all_same_input_num; ++i) {
+      TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
+      for (size_t j = 0; j < each_attr_input_num; ++j) {
+        (void)attr_list.emplace_back(DataType(input_dtype, format));
+      }
+    }
+  }
+  // Deal with the rest attrs
+  for (size_t i = all_same_input_num; i < attr_num; ++i) {
+    TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
+    (void)attr_list.emplace_back(input_dtype, format);
   }
   kernel_attr->SetInputAttrList(attr_list);
 
@@ -293,6 +315,9 @@ void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kerne
     (void)input_types.emplace_back(selected_kernel_attr.GetInputAttr(index).dtype);
     (void)input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).format);
   }
+  MS_LOG(DEBUG) << "Set kernel build info: input format:" << input_formats << " input type:" << input_types
+                << " output format:" << output_formats << " output type:" << output_types
+                << " for kernel:" << kernel_node->fullname_with_scope();
   SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());
   if (selected_kernel_attr.GetSkipCheck()) {
     auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
@@ -410,6 +435,7 @@ void UpdateDynamicKernelBuildInfo(const CNodePtr &kernel_node) {
       MS_EXCEPTION_IF_NULL(input_node);
       const std::vector<PrimitivePtr> need_handled_prims = {prim::kPrimMakeTuple, prim::kPrimTupleGetItem};
       auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false, need_handled_prims).first;
+      MS_EXCEPTION_IF_NULL(real_input_node);
       if (real_input_node->abstract() != nullptr && real_input_node->abstract()->isa<abstract::AbstractSequence>() &&
           real_input_node->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
         MS_LOG(INFO) << "Change kernel object type from:" << input_object_types[i]
@@ -480,9 +506,9 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
 #endif
     kernel_attr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyAKG);
     if (kernel_attr == nullptr) {
-      MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
-                      << "Infer operator information from inputs. For more details, "
-                      << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
+      MS_LOG(INFO) << "Not find operator information for Custom operator[" << op_name << "]. "
+                   << "Infer operator information from inputs. For more details, "
+                   << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
     }
   } else {
     builder->SetKernelType(KernelType::CPU_KERNEL);
@@ -574,14 +600,20 @@ kernel::KernelAttr FillNoneInKernelAttr(const CNodePtr &kernel_node, const std::
 }
 }  // namespace
 
-kernel::KernelAttr BuildKernelFromInput(const std::vector<TypeId> &inputs, const std::vector<TypeId> &outputs,
-                                        const kernel::KernelAttr &origin_attr) {
+kernel::KernelAttr BuildKernelAttrByKernel(const CNodePtr &cnode, const kernel::KernelAttr &origin_attr) {
+  MS_EXCEPTION_IF_NULL(cnode);
   kernel::KernelAttr attr = origin_attr;
-  for (auto in_dtype : inputs) {
-    (void)attr.AddInputAttr(in_dtype);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, i);
+    (void)attr.AddInputAttr(dtype);
   }
-  for (auto out_dtype : outputs) {
-    (void)attr.AddOutputAttr(out_dtype);
+  size_t output_num = kernel::GetOutputNum(cnode);
+  for (size_t i = 0; i < output_num; ++i) {
+    TypeId dtype = common::AnfAlgo::GetOutputInferDataType(cnode, i);
+    auto object_type_ptr = common::AnfAlgo::GetOutputInferType(cnode, i);
+    MS_EXCEPTION_IF_NULL(object_type_ptr);
+    attr.AddOutputAttr(object_type_ptr->type_id(), dtype);
   }
   (void)attr.AddSkipCheckAttr(true);
   return attr;
@@ -611,18 +643,19 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
     // If GetSkipCheck is true, that means we do not check the build info between input and registered.
     // Take the input attrs to build the kernel.
     if (kernel_attr.GetSkipCheck()) {
-      kernel_attr = BuildKernelFromInput(input_types, output_types, kernel_attr);
-      MS_LOG(DEBUG) << "Build kernel form input for " << common::AnfAlgo::GetCNodeName(kernel_node);
+      kernel_attr = BuildKernelAttrByKernel(kernel_node, kernel_attr);
+      MS_LOG(DEBUG) << "Build kernel form input for " << common::AnfAlgo::GetCNodeName(kernel_node)
+                    << kernel::FetchPrintInfoByKernelAttr(kernel_attr);
     }
 
     ExpandKernelAttrByDynamicSize(kernel_node, &kernel_attr, kernel_attrs[0].GetSkipCheck(), has_tuple_input);
 
     auto new_kernel_attr = FillNoneInKernelAttr(kernel_node, input_types, output_types, kernel_attr);
     bool input_dtype_matched = InputDtypeFormatMatched(new_kernel_attr, input_types, strict);
-    bool output_dtype_matched = OutputDtypeMatched(new_kernel_attr, output_types);
     if (input_dtype_matched) {
       input_matched = true;
       *selected_kernel_attr = new_kernel_attr;
+      bool output_dtype_matched = OutputDtypeMatched(new_kernel_attr, output_types);
       // All formats and data types matched.
       if (output_dtype_matched) {
         return true;
@@ -679,9 +712,9 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     // then infer info from inputs
     auto op_reg_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyCPU);
     if (op_reg_info == nullptr || op_reg_info->inputs_ptr().empty()) {
-      MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
-                      << "Infer operator information from inputs. For more details, "
-                      << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
+      MS_LOG(INFO) << "Not find operator information for Custom operator[" << op_name << "]. "
+                   << "Infer operator information from inputs. For more details, "
+                   << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
       UpdateCustomKernelBuildInfo(kernel_node, false);
       return {};
     }
@@ -701,8 +734,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     return KernelNotSupportWarning(kernel_node, false);
   } else if (kernel_attrs[0].GetSkipCheck()) {
     object_selected_kernel_attrs = kernel_attrs;
-  } else if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, true) &&
-             !kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, false)) {
+  } else if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs)) {
     return kernel::KernelObjectTypeNotSupportWarning(kernel_node);
   }
 
@@ -712,13 +744,6 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     if (op_name == "Cast" || !SelectKernel(kernel_node, &selected_kernel_attr, object_selected_kernel_attrs, false)) {
       return KernelNotSupportWarning(kernel_node, !kernel_attrs.empty());
     }
-  }
-
-  if (IsTupleNestedOutputKernelAttr(selected_kernel_attr)) {
-    return {kernel::KernelObjectTypeNotSupportWarning(kernel_node).first +
-              " Multiple tuple outputs is not supported for registered kernel attr: " +
-              kernel::FetchPrintInfoByKernelAttr(selected_kernel_attr),
-            TypeError};
   }
 
   // Print the selected attr info.

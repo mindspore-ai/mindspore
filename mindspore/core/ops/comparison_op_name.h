@@ -19,12 +19,6 @@
 
 namespace mindspore {
 // Comparisons
-constexpr auto kScalarEqOpName = "scalar_eq";
-constexpr auto kScalarLtOpName = "scalar_lt";
-constexpr auto kScalarGtOpName = "scalar_gt";
-constexpr auto kScalarLeOpName = "scalar_le";
-constexpr auto kScalarGeOpName = "scalar_ge";
-constexpr auto kScalarBoolOpName = "ScalarBool";
 constexpr auto kBoolNotOpName = "bool_not";
 constexpr auto kNotEqualOpName = "NotEqual";
 constexpr auto kLogicalXorOpName = "LogicalXor";

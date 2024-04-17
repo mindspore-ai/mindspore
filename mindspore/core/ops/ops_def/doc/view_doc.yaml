@@ -1,0 +1,20 @@
+view:
+    description: |
+        Reshape the tensor according to the input shape. It's the same as :func:`mindspore.Tensor.reshape`,
+        implemented by the underlying reshape operator.
+
+        Args:
+            shape (Union[tuple(int), int]): Dimension of the output tensor.
+
+        Returns:
+            Tensor, which dimension is the input shape's value.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> a = Tensor(np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float32))
+            >>> output = a.view((3, 2))
+            >>> print(output)
+            [[1. 2.]
+            [3. 2.]
+            [3. 4.]]

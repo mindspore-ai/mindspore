@@ -85,7 +85,7 @@ CNodePtr FunctionalizeWhile::BlongToWhichExternalEnter(const CNodePtr &node) {
     }
     if (utils::isa<CNodePtr>(todo_node)) {
       auto cnode = utils::cast<CNodePtr>(todo_node);
-      for (size_t i = 0; i < cnode->inputs().size(); i++) {
+      for (size_t i = 0; i < cnode->size(); i++) {
         todo.push_back(cnode->input(i));
       }
     }
@@ -143,7 +143,7 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeExternalInput() {
   std::deque<AnfNodePtr> todo(128);
   std::vector<CNodePtr> merge_nodes{};
   todo.clear();
-  for (size_t i = 1; i < loop_cond_node_->inputs().size(); i++) {
+  for (size_t i = 1; i < loop_cond_node_->size(); i++) {
     todo.push_back(loop_cond_node_->input(i));
   }
   while (!todo.empty()) {
@@ -156,7 +156,7 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeExternalInput() {
     }
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->size(); i++) {
         todo.push_back(cnode->input(i));
       }
     }
@@ -307,7 +307,7 @@ STATUS FunctionalizeWhile::BuildWhileNode() {
 STATUS FunctionalizeWhile::CondSubgraphAddNodes() {
   std::deque<AnfNodePtr> todo(512);
   todo.clear();
-  for (size_t i = 1; i < loop_cond_node_->inputs().size(); i++) {
+  for (size_t i = 1; i < loop_cond_node_->size(); i++) {
     todo.push_back(loop_cond_node_->input(i));
   }
   while (!todo.empty()) {
@@ -327,7 +327,7 @@ STATUS FunctionalizeWhile::CondSubgraphAddNodes() {
     }
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->size(); i++) {
         todo.push_back(cnode->input(i));
       }
     }
@@ -441,7 +441,7 @@ STATUS FunctionalizeWhile::BodySubgraphAddNodes() {
     if (FunctionalizeControlOpPass::IsNextIteration(node)) {
       CHECK_NULL_RETURN(node);
       auto next_iteration_cnode = node->cast<CNodePtr>();
-      for (size_t i = 1; i < next_iteration_cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < next_iteration_cnode->size(); i++) {
         todo.push_back(next_iteration_cnode->input(i));
       }
       body_subgraph_output_map_[node] = next_iteration_cnode->input(1);
@@ -465,7 +465,7 @@ STATUS FunctionalizeWhile::BodySubgraphAddNodes() {
     }
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->size(); i++) {
         todo.push_back(cnode->input(i));
       }
     }

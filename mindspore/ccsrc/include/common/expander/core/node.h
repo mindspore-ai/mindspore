@@ -21,8 +21,8 @@
 #include <memory>
 #include <utility>
 #include "ir/anf.h"
-#include "ir/dtype.h"
 #include "include/common/visible.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace expander {
@@ -31,53 +31,96 @@ using DAttr = std::vector<std::pair<std::string, ValuePtr>>;
 
 class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
  public:
-  Node(const AnfNodePtr &node, Emitter *emitter);
-  ~Node() = default;
+  explicit Node(Emitter *emitter);
+  Node(Emitter *emitter, const ValuePtr &value) : emitter_(emitter), value_(value) {}
+  virtual ~Node() = default;
 
-  const AnfNodePtr &get() const { return anf_node_; }
+  virtual const AnfNodePtr &get() const { MS_EXCEPTION(NotImplementedError) << "Base Node not implement get() method"; }
 
-  template <typename T>
-  bool isa() const {
-    return anf_node_->isa<T>();
-  }
-  template <typename T>
-  T get() const {
-    return anf_node_->cast<T>();
-  }
-
-  AbstractBasePtr abstract();
+  virtual InputType input_type();
+  virtual AbstractBasePtr abstract();
 
   void SetValue(const ValuePtr &val) { value_ = val; }
   ValuePtr Value() { return value_; }
-  ValuePtr BuildValue();
-  bool HasAbstractValue();
+  virtual ValuePtr BuildValue();
+  virtual bool HasAbstractValue();
+  virtual BaseShapePtr GetShape();
+  virtual TypePtr GetType();
 
   std::vector<int64_t> shape();
   std::vector<std::vector<int64_t>> shapes();
-
   TypePtr dtype();
   std::vector<TypePtr> dtypes();
-
-  Emitter *emitter() const { return emitter_; }
-  bool is_used_value() const { return is_used_value_; }
+  Emitter *emitter() { return emitter_; }
+  virtual std::string ToString() const;
+  virtual void set_debug_info(const std::string &debug_info) {}
+  virtual std::string debug_info() const { return ""; }
+  virtual bool is_used_value() const {
+    MS_EXCEPTION(NotImplementedError) << "Base Node not implement is_used_value() method";
+  }
+  virtual bool need_compute_grad_out() const { return true; }
 
  protected:
-  // the wrapped anfnode.
-  AnfNodePtr anf_node_{nullptr};
   // hold the emitter who created this node.
   Emitter *emitter_{nullptr};
-
   // cache the output shape after first query
   BaseShapePtr shape_{nullptr};
   // cache the output dtype after first query
   TypePtr type_{nullptr};
   // cache the value of node
   ValuePtr value_{nullptr};
-  // whether use value
-  bool is_used_value_{false};
 };
 using NodePtr = std::shared_ptr<Node>;
 using NodePtrList = std::vector<NodePtr>;
+
+class COMMON_EXPORT IrNode : public Node {
+ public:
+  IrNode(const AnfNodePtr anfnode, Emitter *emitter) : Node(emitter), anf_node_(anfnode) {}
+  const AnfNodePtr &get() const override { return anf_node_; }
+  InputType input_type() override;
+  AbstractBasePtr abstract() override;
+
+  ValuePtr BuildValue() override;
+  bool HasAbstractValue() override;
+  BaseShapePtr GetShape() override;
+  TypePtr GetType() override;
+
+  std::string ToString() const override;
+  void set_debug_info(const std::string &debug_info) override;
+  std::string debug_info() const override;
+  bool is_used_value() const override { return is_used_value_; }
+
+ private:
+  // the wrapped anfnode.
+  AnfNodePtr anf_node_{nullptr};
+  // whether use value
+  bool is_used_value_{false};
+};
+using IrNodePtr = std::shared_ptr<IrNode>;
+
+class COMMON_EXPORT FuncNode : public Node {
+ public:
+  FuncNode(const ValuePtr &value, const abstract::AbstractBasePtr &abs, InputType input_type, Emitter *emitter)
+      : Node(emitter, value), abstract_(abs), input_type_(input_type) {}
+  ValuePtr BuildValue() override;
+  InputType input_type() override;
+  void set_node_type(InputType input_type) { input_type_ = input_type; }
+  AbstractBasePtr abstract() override;
+  void set_abstract(const AbstractBasePtr &abs) { abstract_ = abs; }
+  BaseShapePtr GetShape() override;
+  TypePtr GetType() override;
+  std::string ToString() const override { return value_->ToString(); }
+  void set_debug_info(const std::string &debug_info) override {}
+  std::string debug_info() const override { return ""; }
+  bool need_compute_grad_out() const override { return need_compute_grad_out_; }
+  void set_need_compute_grad_out(bool need_compute_grad_out) { need_compute_grad_out_ = need_compute_grad_out; }
+
+ private:
+  AbstractBasePtr abstract_;
+  InputType input_type_;
+  bool need_compute_grad_out_{true};
+};
+using FuncNodePtr = std::shared_ptr<FuncNode>;
 }  // namespace expander
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_NODE_H_

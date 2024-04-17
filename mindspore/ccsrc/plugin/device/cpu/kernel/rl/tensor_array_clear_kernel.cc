@@ -24,15 +24,19 @@ using mindspore::device::TensorArrayMgr;
 using mindspore::device::TensorArrayPtr;
 TensorArrayClearCpuKernelMod::TensorArrayClearCpuKernelMod() {}
 
-void TensorArrayClearCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  input_size_list_.push_back(sizeof(int64_t));
+int TensorArrayClearCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-bool TensorArrayClearCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &) {
-  auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
+bool TensorArrayClearCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) {
+  auto handle_addr = GetDeviceAddress<int64_t>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(handle_addr);
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr[0]);
   MS_ERROR_IF_NULL(tensors_);

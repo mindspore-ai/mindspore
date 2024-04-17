@@ -24,6 +24,7 @@
 #include "ir/primitive.h"
 #include "ops/structure_op_name.h"
 #include "utils/hash_map.h"
+#include "ops/image_op_name.h"
 
 namespace mindspore {
 static constexpr char kDoSignaturePrimitivePrefix[] = "S_Prim_";
@@ -62,19 +63,20 @@ GVAR_DEF(PrimitivePtr, kPrimDynamicBroadcastGradientArgs,
          std::make_shared<Primitive>(kDynamicBroadcastGradientArgsOpName));
 GVAR_DEF(PrimitivePtr, kPrimConvertToAdapterTensor, std::make_shared<Primitive>("ConvertToAdapterTensor"));
 GVAR_DEF(PrimitivePtr, kPrimConvertToMsTensor, std::make_shared<Primitive>("ConvertToMsTensor"));
+GVAR_DEF(PrimitivePtr, kPrimDtypeToEnum, std::make_shared<Primitive>("DtypeToEnum"));
 
 // Statements
 GVAR_DEF(PrimitivePtr, kPrimUnroll, std::make_shared<Primitive>("Unroll"));
 GVAR_DEF(PrimitivePtr, kPrimVmapStackAssign, std::make_shared<Primitive>(kVmapStackAssignOpName));
 GVAR_DEF(PrimitivePtr, kPrimVmapUnstackAssign, std::make_shared<Primitive>(kVmapUnstackAssignOpName));
-GVAR_DEF(PrimitivePtr, kPrimMakeSlice, std::make_shared<Primitive>("make_slice"));
+GVAR_DEF(PrimitivePtr, kPrimMakeSlice, std::make_shared<Primitive>(kMakeSliceOpName));
 GVAR_DEF(PrimitivePtr, kPrimSliceGetItem, std::make_shared<Primitive>(kSliceGetItemOpName));
 GVAR_DEF(PrimitivePtr, kPrimGetAttr, std::make_shared<Primitive>("getattr"));
 GVAR_DEF(PrimitivePtr, kPrimTileShape, std::make_shared<Primitive>("tile_shape"));
 GVAR_DEF(PrimitivePtr, kPrimGenerateShapeIndex, std::make_shared<Primitive>("generate_shape_index"));
 GVAR_DEF(PrimitivePtr, kPrimGenerateInverseIndex, std::make_shared<Primitive>("generate_inverse_index"));
 GVAR_DEF(PrimitivePtr, kPrimCond, std::make_shared<Primitive>(kCondOpName));
-GVAR_DEF(PrimitivePtr, kPrimJoinedStr, std::make_shared<Primitive>("JoinedStr"));
+GVAR_DEF(PrimitivePtr, kPrimJoinedStr, std::make_shared<Primitive>(kJoinedStrOpName));
 GVAR_DEF(PrimitivePtr, kPrimTileSize, std::make_shared<Primitive>("TileSize"));
 GVAR_DEF(PrimitivePtr, kPrimNormalizeSlice, std::make_shared<Primitive>("NormalizeSlice"));
 GVAR_DEF(PrimitivePtr, kPrimNormalizeDimIndex, std::make_shared<Primitive>("NormalizeDimIndex"));
@@ -93,6 +95,7 @@ GVAR_DEF(PrimitivePtr, kPrimImageSummary, std::make_shared<Primitive>("ImageSumm
 GVAR_DEF(PrimitivePtr, kPrimTensorSummary, std::make_shared<Primitive>("TensorSummary"));
 GVAR_DEF(PrimitivePtr, kPrimHistogramSummary, std::make_shared<Primitive>("HistogramSummary"));
 GVAR_DEF(PrimitivePtr, kPrimHistogramFixedWidth, std::make_shared<Primitive>("HistogramFixedWidth"));
+GVAR_DEF(PrimitivePtr, kPrimTensorDump, std::make_shared<Primitive>(kTensorDump));
 #endif
 GVAR_DEF(PrimitivePtr, kPrimDebug, std::make_shared<Primitive>("Debug"));
 
@@ -111,6 +114,7 @@ GVAR_DEF(PrimitivePtr, kPrimIsTensorBoolCond, std::make_shared<Primitive>("IsTen
 GVAR_DEF(PrimitivePtr, kPrimGetNext, std::make_shared<Primitive>(kGetNextOpName));
 GVAR_DEF(PrimitivePtr, kPrimGetNextFromQueue, std::make_shared<Primitive>(kGetNextFromQueueOpName));
 GVAR_DEF(PrimitivePtr, kPrimDynamicGetNextV2, std::make_shared<Primitive>(kDynamicGetNextV2OpName));
+GVAR_DEF(PrimitivePtr, kPrimDynamicGetNextAscend, std::make_shared<Primitive>(kDynamicGetNextAscendOpName));
 
 class DoSignaturePrimitive : public Primitive {
  public:
@@ -127,6 +131,32 @@ class DoSignaturePrimitive : public Primitive {
   ValuePtr function_;
 };
 using DoSignaturePrimitivePtr = std::shared_ptr<DoSignaturePrimitive>;
+
+class DoTransPrimitiveFunction : public Primitive {
+ public:
+  explicit DoTransPrimitiveFunction(const PrimitivePtr &prim) : Primitive("T-PrimFunc-" + prim->name()), prim_(prim) {}
+
+  ~DoTransPrimitiveFunction() override = default;
+
+  MS_DECLARE_PARENT(DoTransPrimitiveFunction, Primitive)
+
+  const PrimitivePtr function() const { return prim_; }
+
+  bool has_given_init_size() const { return has_given_init_size_; }
+
+  void set_given_init_size(size_t args_size) {
+    has_given_init_size_ = true;
+    given_init_size_ = args_size;
+  }
+
+  size_t given_init_size() const { return given_init_size_; }
+
+ private:
+  PrimitivePtr prim_;
+  size_t given_init_size_;
+  bool has_given_init_size_{false};
+};
+using DoTransPrimitiveFunctionPtr = std::shared_ptr<DoTransPrimitiveFunction>;
 }  // namespace prim
 }  // namespace mindspore
 

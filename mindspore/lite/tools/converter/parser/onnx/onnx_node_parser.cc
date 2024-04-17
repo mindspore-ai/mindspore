@@ -22,6 +22,7 @@
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
 #include "nnacl/op_base.h"
 #include "src/common/file_utils.h"
+#include "utils/ms_utils_secure.h"
 
 namespace mindspore {
 namespace lite {
@@ -290,7 +291,8 @@ STATUS OnnxNodeParser::LoadOnnxExternalTensorData(const onnx::TensorProto &onnx_
     return RET_MEMORY_FAILED;
   }
   auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-  if (memcpy_s(tensor_data, tensor_info->data().nbytes(), onnx_data, data_size) != EOK) {
+  if (common::huge_memcpy(tensor_data, static_cast<size_t>(tensor_info->data().nbytes()),
+                          static_cast<const uint8_t *>(onnx_data), data_size) != EOK) {
     MS_LOG(ERROR) << "memcpy_s from onnx tensor data to mindspore tensor data failed, dst size "
                   << tensor_info->data().nbytes() << ", src size " << data_size;
     return RET_ERROR;

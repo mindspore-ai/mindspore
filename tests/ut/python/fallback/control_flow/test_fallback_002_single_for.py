@@ -13,7 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
+import os
 import pytest
+import itertools
 import numpy as np
 from mindspore import Tensor, jit, context
 
@@ -104,8 +106,10 @@ def test_single_for_builtin_function_list():
         for _ in range(3):
             x = x + list(x)
         return Tensor(x)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     res = control_flow_for()
     assert (res.asnumpy() == [8.8, 17.6]).all()
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_single_for_x_in_xs():
@@ -156,7 +160,7 @@ def test_single_for_wrong_xs():
 
     with pytest.raises(TypeError) as info:
         control_flow_for()
-    assert "object of type 'int' has no len()" in str(info.value)
+    assert "object is not iterable" in str(info.value)
 
 
 def test_single_for_wrong_xs_2():
@@ -175,4 +179,23 @@ def test_single_for_wrong_xs_2():
 
     with pytest.raises(TypeError) as info:
         control_flow_for()
-    assert "object of type 'int' has no len()" in str(info.value)
+    assert "object is not iterable" in str(info.value)
+
+
+def test_single_for_iter_object():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @jit
+    def control_flow_for():
+        a = 0
+        m = (1, 2, 3)
+        n = (4, 5, 6)
+        for i, j in itertools.product(m, n):
+            a = a + i * j
+        return a
+
+    ret = control_flow_for()
+    assert ret == 90

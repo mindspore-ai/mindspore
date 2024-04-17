@@ -16,13 +16,15 @@
 #include <memory>
 #include <vector>
 
+#include "mindapi/base/shape_vector.h"
 #include "backend/common/graph_kernel/expanders/op_desc_registry.h"
+#include "ops/ops_func_impl/tile.h"
 
 namespace mindspore::graphkernel::expanders {
 class Tile : public OpDesc {
  public:
   Tile() {
-    std::initializer_list<std::string> attrs{"multiples"};
+    std::initializer_list<std::string> attrs{"dims"};
     (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
   ~Tile() = default;
@@ -31,24 +33,17 @@ class Tile : public OpDesc {
   bool CheckInputs() override {
     const auto &x = inputs_info_[0];
     auto x_shape = x.shape;
-    auto multiples = GetAxisList(attrs_["multiples"]);
+    auto dims = GetAxisList(attrs_["dims"]);
     if (IsDynamicRank(x_shape)) {
       MS_LOG(INFO) << "Skip dynamic rank case";
       return false;
     }
-    if (multiples.size() < x_shape.size()) {
-      MS_LOG(INFO) << "For 'Tile', the length of 'multiples' should be greater than or equal to the length of input "
-                      "'x' shape, but got "
-                   << multiples.size() << " and " << x_shape.size();
-      return false;
-    }
-    auto diff_len = multiples.size() - x_shape.size();
+    ops::AdaptShapeAndMultipies(&x_shape, &dims);
     for (size_t i = 0; i < x_shape.size(); ++i) {
-      auto m_i = i + diff_len;
-      if (x_shape[i] != 1 && multiples[m_i] != 1) {
-        MS_LOG(INFO) << "For 'Tile', x_shape[" << i << "] = " << x_shape[i] << ", multiples[" << m_i
-                     << "] = " << multiples[m_i]
-                     << ", both value are not equal to 1, which can not be replaced by 'BroadcastTo'";
+      if (x_shape[i] != 1 && dims[i] != 1) {
+        MS_LOG(INFO) << "For 'Tile', input.shape = " << x.shape << ", dims = " << GetAxisList(attrs_["dims"])
+                     << ", both value are not equal to 1 in matched-index " << i
+                     << ", which can not be replaced by 'BroadcastTo'";
         return false;
       }
     }
@@ -58,14 +53,11 @@ class Tile : public OpDesc {
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &x = inputs[0];
     auto x_shape = x->shape;
-    auto multiples = GetAxisList(attrs_["multiples"]);
-
-    // calc output shape
-    ShapeVector out_shape = multiples;
-    auto diff_len = multiples.size() - x_shape.size();  // already checked in CheckInputs
+    auto dims = GetAxisList(attrs_["dims"]);
+    ops::AdaptShapeAndMultipies(&x_shape, &dims);
+    ShapeVector out_shape = std::move(dims);
     for (size_t i = 0; i < x_shape.size(); ++i) {
-      auto m_i = i + diff_len;
-      out_shape[m_i] *= x_shape[i];
+      out_shape[i] *= x_shape[i];
     }
 
     auto result = gb.BroadcastTo(x, out_shape);

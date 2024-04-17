@@ -32,7 +32,7 @@ bool ArithmeticChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::F
   auto prim = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   MS_CHECK_TRUE_MSG(prim != nullptr, false, "prim is nullptr." << op->fullname_with_scope());
 
-  if (op->inputs().size() != kDims3) {
+  if (op->size() != kDims3) {
     MS_LOG(ERROR) << op->fullname_with_scope() << " only supports 2 inputs.";
     return false;
   }

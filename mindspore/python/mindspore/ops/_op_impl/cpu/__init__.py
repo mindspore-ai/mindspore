@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ from .sub import _sub_cpu
 from .pow import _pow_cpu
 from .real_div import _real_div_cpu
 from .div import _div_cpu
-from .concat import _concat_cpu
 from .concat_offset import _concat_offset_cpu
 from .dynamic_shape import _dynamic_shape_cpu
 from .dynamic_stitch import _dynamic_stitch_cpu
@@ -32,7 +31,6 @@ from .arg_max_with_value import _arg_max_with_value_cpu
 from .dropout import _dropout_cpu
 from .dropout_grad import _dropout_grad_cpu
 from .gather_d import _gather_cpu
-from .tensor_shape import _tensor_shape_cpu
 from .gather_d_grad import _gather_d_grad_cpu
 from .gather_d_grad_v2 import _gather_d_grad_v2_cpu
 from .gather_v2 import _gather_v2_cpu

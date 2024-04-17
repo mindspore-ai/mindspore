@@ -88,14 +88,7 @@ if(MSLITE_ENABLE_RUNTIME_GLOG AND (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLIT
 endif()
 
 if(MSLITE_ENABLE_ACL)
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc/aoe)
-include_directories(${CCSRC_DIR})
+    include_directories(${CCSRC_DIR})
 endif()
 
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/api MINDDATA_API_SRC_FILES)
@@ -215,16 +208,16 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/engine/datasetops/source/album_op.cc
         ${MINDDATA_DIR}/engine/datasetops/source/mnist_op.cc
         ${MINDDATA_DIR}/engine/datasetops/source/mappable_leaf_op.cc
-
         ${MINDDATA_DIR}/engine/datasetops/source/io_block.cc
         ${MINDDATA_DIR}/engine/opt/pre/add_skip_pass.cc
+        ${MINDDATA_DIR}/engine/opt/pre/cache_validation_pass.cc
+        ${MINDDATA_DIR}/engine/opt/pre/debug_mode_pass.cc
+        ${MINDDATA_DIR}/engine/opt/pre/deep_copy_pass.cc
+        ${MINDDATA_DIR}/engine/opt/pre/epoch_ctrl_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/getter_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/input_validation_pass.cc
-        ${MINDDATA_DIR}/engine/opt/pre/debug_mode_pass.cc
-        ${MINDDATA_DIR}/engine/opt/pre/cache_validation_pass.cc
+        ${MINDDATA_DIR}/engine/opt/pre/insert_map_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/node_removal_pass.cc
-        ${MINDDATA_DIR}/engine/opt/pre/epoch_ctrl_pass.cc
-        ${MINDDATA_DIR}/engine/opt/pre/deep_copy_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/skip_pushdown_pass.cc
         ${MINDDATA_DIR}/engine/opt/post/auto_worker_pass.cc
         ${MINDDATA_DIR}/engine/opt/pass.cc

@@ -20,12 +20,13 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
-NodePtr MatrixDiag(BpropIRBuilder *ib, const NodePtr &x) {
+NodePtr MatrixDiag(BpropBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);
   NodePtr row = nullptr;
   if (IsDynamic(shape)) {
     auto real_shape = ib->Shape(x);
-    row = ib->Emit("Cast", {ib->TupleGetItem(real_shape, ib->Value(static_cast<int64_t>(-1))), ib->EmitValue(kInt32)});
+    row = ib->Emit("ScalarToTensor", {ib->TupleGetItem(real_shape, ib->Value(static_cast<int64_t>(-1))),
+                                      ib->Value<int64_t>(kInt32->type_id())});
   } else {
     row = ib->Tensor(shape[shape.size() - 1], kInt32);
   }
@@ -34,7 +35,7 @@ NodePtr MatrixDiag(BpropIRBuilder *ib, const NodePtr &x) {
   return out;
 }
 
-NodePtr DoMatMul(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
+NodePtr DoMatMul(BpropBuilder *ib, const NodePtr &x, const NodePtr &y) {
   auto shape = ib->GetShape(x);
   if (IsDynamicRank(shape)) {
     auto true_case = [&x, &y](Emitter *e) -> NodePtrList { return {e->BatchMatMul(x, y)}; };
@@ -49,7 +50,7 @@ NodePtr DoMatMul(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
   return ib->MatMul(x, y);
 }
 
-NodePtr SafeReciprocal(BpropIRBuilder *ib, const NodePtr &x) {
+NodePtr SafeReciprocal(BpropBuilder *ib, const NodePtr &x) {
   return ib->Mul(x, ib->Reciprocal(ib->Cast(ib->Add(ib->Square(x), ib->Tensor(1e-20, ib->GetDtype(x))), kFloat32)));
 }
 

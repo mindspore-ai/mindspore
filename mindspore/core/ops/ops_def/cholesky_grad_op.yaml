@@ -1,0 +1,12 @@
+#operator cholesky_grad
+cholesky_grad:
+  args:
+    x:
+      dtype: tensor
+    grad:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True

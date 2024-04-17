@@ -50,7 +50,7 @@ class NetConv2d(nn.Cell):
         return self.conv(self.x, self.w)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_conv2d():
@@ -85,7 +85,7 @@ class NetConv(nn.Cell):
         return self.conv(self.x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_conv():
@@ -177,7 +177,7 @@ class NetConv3d(nn.Cell):
         return self.conv(x, w)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_conv3d():
@@ -207,7 +207,7 @@ def test_conv3d():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_conv3d_2():
@@ -319,7 +319,7 @@ class GradNet(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_conv3d_with_grad():

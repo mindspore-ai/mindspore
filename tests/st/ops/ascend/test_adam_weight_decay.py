@@ -14,6 +14,7 @@
 # ============================================================================
 import copy
 import numpy as np
+import pytest
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, context
 from mindspore.ops import operations as P
@@ -106,6 +107,42 @@ def test_adam_weight_decay_fission_2_decay_flag_is_false():
     v2 = copy.deepcopy(v1)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
+    origin_net = OriNet(decay_flag)
+    output1 = origin_net(param1, m1, v1, lr, beta1, beta2, eps, weight_decay, gradient)
+    fission_net = FissionNet()
+    output2 = fission_net(param2, m2, v2, lr, beta1, beta2, eps, weight_decay, gradient)
+    assert (output1.asnumpy() == output2[0].asnumpy()).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_adam_weight_decay_pass_without_same_type():
+    """
+    Feature: AdamWeightDecay op
+    Description: test the rightness of AdamWeightDecay kernel, decay_flag is true
+    Expectation: the output is wrong
+    """
+    decay_flag = True  # equivalent to weight_decay is not zero
+    weight_decay = Parameter(Tensor(np.array([0.9]).astype(np.float32)), name="weight_decay")
+    beta1 = Parameter(Tensor(np.array([0.9]).astype(np.float32)), name="beta1")
+    beta2 = Parameter(Tensor(np.array([0.999]).astype(np.float32)), name="beta2")
+    eps = Parameter(Tensor(np.array([1e-8]).astype(np.float32)), name="eps")
+    lr = Parameter(Tensor(np.array([0.001]).astype(np.float32)), name="lr")
+    gradient = Parameter(Tensor(np.array([[2, 3], [1, 5]]).astype(np.float32)), name="gradient")
+
+    # The inputs: param, m and v will be modified in-place by P.AdamWeightDecay() or _update_run_op(),
+    # so here defines two copied of them: (param1, m1, v1) and (param2, m2, v2)
+    param1 = Parameter(Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32)), name="param1")
+    m1 = Parameter(Tensor(np.array([[5, 6], [7, 8]]).astype(np.float16)), name="m1")
+    v1 = Parameter(Tensor(np.array([[3, 1], [7, 4]]).astype(np.float16)), name="v1")
+
+    param2 = copy.deepcopy(param1)
+    m2 = copy.deepcopy(m1)
+    v2 = copy.deepcopy(v1)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
     origin_net = OriNet(decay_flag)
     output1 = origin_net(param1, m1, v1, lr, beta1, beta2, eps, weight_decay, gradient)
     fission_net = FissionNet()

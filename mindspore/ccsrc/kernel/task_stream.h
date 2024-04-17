@@ -20,7 +20,6 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
-#include "runtime/base.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -34,8 +33,8 @@ class TaskStream {
     return instance;
   }
 
-  void set_gen_stream_list(const std::vector<rtStream_t> &stream_list) { gen_stream_list_ = stream_list; }
-  void set_run_stream_list(const std::vector<rtStream_t> &stream_list) { run_stream_list_ = stream_list; }
+  void set_gen_stream_list(const std::vector<aclrtStream> &stream_list) { gen_stream_list_ = stream_list; }
+  void set_run_stream_list(const std::vector<aclrtStream> &stream_list) { run_stream_list_ = stream_list; }
   void SetGenStreamIndex(uint32_t stream_id, uint32_t index) { gen_stream_index_map_[stream_id] = index; }
   std::unordered_map<uint32_t, uint32_t> GetGenStreamIndexMap() { return gen_stream_index_map_; }
   uint32_t GetGenStreamIndex(uint32_t stream_id) {
@@ -45,12 +44,12 @@ class TaskStream {
     }
     return iter->second;
   }
-  const std::vector<rtStream_t> &gen_stream_list() const { return gen_stream_list_; }
-  const std::vector<rtStream_t> &run_stream_list() const { return run_stream_list_; }
+  const std::vector<aclrtStream> &gen_stream_list() const { return gen_stream_list_; }
+  const std::vector<aclrtStream> &run_stream_list() const { return run_stream_list_; }
 
  private:
-  std::vector<rtStream_t> gen_stream_list_;
-  std::vector<rtStream_t> run_stream_list_;
+  std::vector<aclrtStream> gen_stream_list_;
+  std::vector<aclrtStream> run_stream_list_;
   std::unordered_map<uint32_t, uint32_t> gen_stream_index_map_;
 };
 }  // namespace kernel

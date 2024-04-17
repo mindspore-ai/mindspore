@@ -18,8 +18,8 @@
 #define EIGEN_USE_THREADS
 #define EIGEN_USE_SIMPLE_THREAD_POOL
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 
 namespace aicpu {
@@ -32,7 +32,7 @@ class CauchyCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t CauchyCompute(const CpuKernelContext &ctx);
+  uint32_t CauchyCompute(CpuKernelContext &ctx);
 
   float median_ = 0.0;
   float sigma_ = 1.0;

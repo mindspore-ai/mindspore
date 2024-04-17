@@ -19,18 +19,34 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include "abstract/ops/primitive_infer_map.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
+#include "ir/anf.h"
 #include "kernel/common_utils.h"
 #include "kernel/framework_utils.h"
 #include "ops/arithmetic_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/op_def.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
+namespace {
+bool IsNewKernel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>() || common::AnfAlgo::IsCallNode(node)) {
+    return false;
+  }
+  const auto &primitive = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  return mindspore::ops::GetOpDef(primitive->name()) != nullptr;
+}
+}  // namespace
 int64_t SplitTupleInputsForInsertType(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
                                       std::vector<AnfNodePtr> *plant_inputs) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -148,6 +164,7 @@ AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const 
   inputs[kIndex0] = prim;
   CNodePtr real_make_tuple = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(real_make_tuple);
+  real_make_tuple->set_scope(make_tuple_node->scope());
   real_make_tuple->set_abstract(make_tuple_node->abstract());
 
   SetKernelInfoForNewCNode(real_make_tuple);
@@ -181,6 +198,7 @@ AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
   AnfNodePtrList inputs = {prim, node_with_tuple_unfold_output};
   CNodePtr real_make_tuple = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(real_make_tuple);
+  real_make_tuple->set_scope(node_with_tuple_unfold_output->scope());
   // Inherit abstract from TupleUnfold output node.
   real_make_tuple->set_abstract(node_with_tuple_unfold_output->abstract());
 
@@ -314,16 +332,14 @@ void SetKernelInfoForValueNode(const ValueNodePtr &value_node) {
 
 abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, const AnfNodePtrList &input_list) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto found = abstract::GetPrimitiveInferImpl(primitive);
-  if (!found.has_value()) {
-    MS_LOG(EXCEPTION) << primitive->name() << " infer is not registered.";
-  }
-
   std::vector<AbstractBasePtr> input_args;
   (void)std::for_each(input_list.begin(), input_list.end(),
                       [&input_args](const auto &input) { (void)input_args.emplace_back(input->abstract()); });
-  auto infer_impl = found.value();
-  auto abs = infer_impl.InferShapeAndType(nullptr, primitive, input_args);
+  auto abs_opt = abstract::TryInferAbstract(primitive, input_args);
+  if (!abs_opt.has_value()) {
+    MS_LOG(EXCEPTION) << primitive->name() << " infer is not registered.";
+  }
+  auto abs = abs_opt.value();
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for " << primitive->name() << " is " << abs->ToString();
   return abs;
@@ -350,7 +366,7 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
   // But if the input's object type is not set, this will throw exception so must pay attention when using this
   // function.
   auto general_input_obj_type_func = [&]() {
-    for (size_t i = kIndex1; i < cnode->inputs().size(); i++) {
+    for (size_t i = kIndex1; i < cnode->size(); i++) {
       auto input_node = cnode->input(i);
       MS_EXCEPTION_IF_NULL(input_node);
       // Set input kernel object type as input node's output kernel object type.
@@ -389,14 +405,53 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
     general_input_obj_type_func();
     output_obj_type->push_back(KernelObjectType::SCALAR);
   } else {
-    // For other ops, defaulty set TENSOR as output object type.
+    // For other ops, set TENSOR as output object type by default.
     general_input_obj_type_func();
     output_obj_type->push_back(KernelObjectType::TENSOR);
   }
 
-  MS_LOG(INFO) << "Generate input and output object types for new node " << cnode->fullname_with_scope() << " "
-               << cnode->DebugString() << ". Input object types: " << *input_obj_type
-               << ". Output object types: " << *output_obj_type;
+  MS_LOG(DEBUG) << "Generate input and output object types for new node " << cnode->fullname_with_scope() << " "
+                << cnode->DebugString() << ". Input object types: " << *input_obj_type
+                << ". Output object types: " << *output_obj_type;
+}
+
+AnfNodePtr ConstructInputByValueNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {
+  auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(func_graph);
+  if (kernel_graph == nullptr || (!input->isa<ValueNode>())) {
+    return nullptr;
+  }
+  const auto &value_node = input->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<Scalar>()) {
+    return CreateTensorInput(kernel_graph, input);
+  }
+  if (!value->isa<ValueSequence>()) {
+    return nullptr;
+  }
+  const auto &value_sequence = value->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(value_sequence);
+  if (value_sequence->size() == 0) {
+    return nullptr;
+  }
+  const auto &value0 = value_sequence->value()[0];
+  if (value0 == nullptr || (!value0->isa<Scalar>())) {
+    return nullptr;
+  }
+  const auto &scalar0 = value0->cast<ScalarPtr>();
+  MS_EXCEPTION_IF_NULL(scalar0);
+  const auto &type0 = scalar0->type();
+  MS_EXCEPTION_IF_NULL(type0);
+  const auto &type_id0 = type0->type_id();
+  if (std::any_of(value_sequence->value().begin() + 1, value_sequence->value().end(),
+                  [type_id0](const ValuePtr &value) {
+                    return value == nullptr || (!value->isa<Scalar>()) || value->cast<ScalarPtr>()->type() == nullptr ||
+                           value->cast<ScalarPtr>()->type()->type_id() != type_id0;
+                  })) {
+    return nullptr;
+  }
+  return CreateTensorInput(kernel_graph, input);
 }
 
 // A map of kernel object type pairs to processing functions.
@@ -438,6 +493,9 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
+    return nullptr;
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimSwitch)) {
     return nullptr;
   }
   if ((node->kernel_info() == nullptr) ||
@@ -530,8 +588,8 @@ bool InsertTypeTransformOp::IsInputUpdated(const AnfNodePtr &origin_input, const
   }
 
   if (new_input_list.size() == kSizeOne && new_input_list[kIndex0] == origin_input) {
-    MS_LOG(INFO) << "Input node " << origin_input->fullname_with_scope() << " " << origin_input->DebugString()
-                 << " should not be updated.";
+    MS_LOG(DEBUG) << "Input node " << origin_input->fullname_with_scope() << " " << origin_input->DebugString()
+                  << " should not be updated.";
     return false;
   }
   MS_LOG(DEBUG) << "Input node " << origin_input->fullname_with_scope() << " " << origin_input->DebugString()
@@ -587,13 +645,6 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraph
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
 
-  // Use TupleToTensor op as the input of this node. Then TupleUnfoldToTuple pattern will be matched.
-  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
-  MS_EXCEPTION_IF_NULL(prim);
-  AnfNodePtrList inputs = {prim, input};
-  CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
-  MS_EXCEPTION_IF_NULL(tuple_to_tensor);
-
   // Data type of the tensor should be set as an attr of TupleToTensor op.
   size_t input_index = GetInputNodeIndex(input, node);
   auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
@@ -607,19 +658,24 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraph
     data_type = seq_abs->cast<abstract::AbstractSequencePtr>()->ElementsType()[kIndex0]->type_id();
     MS_LOG(DEBUG) << "Input " << input->DebugString() << " real data type is " << data_type;
   }
-  common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), tuple_to_tensor);
-
+  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToKernelGraph(func_graph, data_type);
+  // Use TupleToTensor op as the input of this node. Then TupleUnfoldToTuple pattern will be matched.
+  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
+  MS_EXCEPTION_IF_NULL(prim);
+  AnfNodePtrList inputs = {prim, input, type_id_value_node};
+  CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(tuple_to_tensor);
+  tuple_to_tensor->set_scope(input->scope());
   // Set abstract for TupleToTensor op according to user node's input shape and type.
-  auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(tuple_to_tensor), {input});
+  auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(tuple_to_tensor), {input, type_id_value_node});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for TupleToTensor op is " << abs->ToString();
   tuple_to_tensor->set_abstract(abs);
-
   SetKernelInfoForNewCNode(tuple_to_tensor);
   // Set object type to TUPLE for TupleUnfoldToTuple pattern to be matched.
   KernelBuildInfoPtr tuple_to_tensor_build_info = AnfAlgo::GetSelectKernelBuildInfo(tuple_to_tensor);
   MS_EXCEPTION_IF_NULL(tuple_to_tensor_build_info);
-  tuple_to_tensor_build_info->SetInputsKernelObjectType({KernelObjectType::TUPLE});
+  tuple_to_tensor_build_info->SetInputsKernelObjectType({KernelObjectType::TUPLE, KernelObjectType::SCALAR});
   return {tuple_to_tensor};
 }
 
@@ -636,14 +692,76 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfold(const FuncGraphP
     KernelBuildInfoPtr build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
     MS_EXCEPTION_IF_NULL(build_info);
     if (build_info->op_type() == kernel::OpType::SKIP) {
-      MS_LOG(INFO) << "Node " << node->fullname_with_scope() << " skip TupleToTupleUnfold type matching.";
-      *new_prim = false;
-      return {input};
+      return ProcessTupleToTupleUnfoldForSkipOp(func_graph, input, node, new_prim);
     }
     MS_LOG(EXCEPTION) << "Tuple to TupleUnfold pattern should have TupleGetItem as user node, but got "
                       << node->fullname_with_scope() << ", " << node->DebugString();
   }
+  return ProcessTupleToTupleUnfoldForTupleGetItem(func_graph, input, node, new_prim);
+}
 
+AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfoldForSkipOp(const FuncGraphPtr &func_graph,
+                                                                         const AnfNodePtr &input, const CNodePtr &node,
+                                                                         bool *new_prim) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(new_prim);
+  if (input->abstract() != nullptr && input->abstract()->isa<abstract::AbstractSequence>()) {
+    const auto &seq_abs = input->abstract()->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq_abs);
+    if (!seq_abs->dynamic_len()) {
+      AnfNodePtrList new_inputs;
+      for (const auto &node_input : node->inputs()) {
+        if (node_input != input) {
+          continue;
+        }
+        for (size_t i = 0; i < seq_abs->size(); ++i) {
+          CNodePtr get_item = CreatTupleGetItemNode(func_graph, input, i);
+          MS_EXCEPTION_IF_NULL(get_item);
+          auto kernel_info = std::make_shared<device::KernelInfo>();
+          MS_EXCEPTION_IF_NULL(kernel_info);
+          get_item->set_kernel_info(kernel_info);
+          auto builder = std::make_shared<KernelBuildInfoBuilder>();
+          MS_EXCEPTION_IF_NULL(builder);
+          AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), get_item.get());
+          KernelBuildInfoPtr build_info = AnfAlgo::GetSelectKernelBuildInfo(get_item);
+          MS_EXCEPTION_IF_NULL(build_info);
+          build_info->SetInputsFormat({AnfAlgo::GetOutputFormat(input, 0), kOpFormat_DEFAULT});
+          build_info->SetInputsDeviceType({AnfAlgo::GetOutputDeviceDataType(input, 0), TypeId::kNumberTypeInt64});
+          build_info->SetOutputsFormat({AnfAlgo::GetOutputFormat(input, 0)});
+          build_info->SetOutputsDeviceType({AnfAlgo::GetOutputDeviceDataType(input, 0)});
+          build_info->SetInputsKernelObjectType({KernelObjectType::TUPLE_UNFOLD, KernelObjectType::SCALAR});
+          build_info->SetOutputsKernelObjectType({KernelObjectType::TENSOR});
+          bool new_get_item_prim = false;
+          auto new_get_item_inputs =
+            ProcessTupleToTupleUnfoldForTupleGetItem(func_graph, input, get_item, &new_get_item_prim);
+          new_get_item_inputs.emplace_back(get_item->input(2));
+          auto new_get_item = CreateNewNode(func_graph, new_get_item_inputs, get_item);
+          MS_LOG(DEBUG) << "Create new node " << new_get_item->fullname_with_scope() << " "
+                        << new_get_item->DebugString(2) << " to replace " << get_item->fullname_with_scope() << " "
+                        << get_item->DebugString(2)
+                        << " build info:" << AnfAlgo::GetSelectKernelBuildInfo(new_get_item)->ToString();
+          new_inputs.emplace_back(new_get_item);
+        }
+      }
+      return new_inputs;
+    }
+  } else {
+    MS_LOG(WARNING) << "Invalid input:" << input->DebugString() << " for node:" << node->DebugString();
+  }
+  MS_LOG(INFO) << "Node " << node->fullname_with_scope() << " skip TupleToTupleUnfold type matching.";
+  *new_prim = false;
+  return {input};
+}
+
+AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfoldForTupleGetItem(const FuncGraphPtr &func_graph,
+                                                                               const AnfNodePtr &input,
+                                                                               const CNodePtr &node, bool *new_prim) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(new_prim);
   auto prim = NewValueNode(prim::kPrimRealTupleGetItem);
   MS_EXCEPTION_IF_NULL(prim);
   // Use original inputs except the primitive.
@@ -682,17 +800,26 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
+  auto new_input = ConstructInputByValueNode(func_graph, input);
+  if (new_input != nullptr) {
+    MS_LOG(DEBUG) << "Create new value node:" << new_input->DebugString() << " by " << input->DebugString()
+                  << " for cnode:" << node->DebugString() << " in graph:" << func_graph->ToString();
+    return {new_input};
+  }
 
-  // Simply insert TupleToTensor op between 'input' and 'node'.
-  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
-  MS_EXCEPTION_IF_NULL(prim);
-  AnfNodePtrList inputs = {prim, input};
-  CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
-  MS_EXCEPTION_IF_NULL(tuple_to_tensor);
+  if (IsNewKernel(node) && IsNewKernel(input)) {
+    MS_LOG(EXCEPTION) << "Insert TupleToTensor op for input:" << input->fullname_with_scope()
+                      << " of node:" << node->fullname_with_scope() << " in graph:" << func_graph->ToString();
+  }
 
   // Data type of the tensor should be set as an attr of TupleToTensor op.
   size_t input_index = GetInputNodeIndex(input, node);
   auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
+  if (data_type == TypeId::kTypeUnknown && input->abstract() != nullptr &&
+      input->abstract()->isa<abstract::AbstractSequence>() &&
+      input->abstract()->cast<abstract::AbstractSequencePtr>()->elements().size() == 0) {
+    data_type = TypeId::kNumberTypeInt64;
+  }
   // There might be nested tuples, we need to find one step further to get element's data type.
   if (data_type == kObjectTypeTuple) {
     auto seq_abs = input->abstract();
@@ -703,15 +830,25 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
     data_type = seq_abs->cast<abstract::AbstractSequencePtr>()->ElementsType()[kIndex0]->type_id();
     MS_LOG(DEBUG) << "Input " << input->DebugString() << " real data type is " << data_type;
   }
-  common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), tuple_to_tensor);
+  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToKernelGraph(func_graph, data_type);
+  // Simply insert TupleToTensor op between 'input' and 'node'.
+  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
+  MS_EXCEPTION_IF_NULL(prim);
+  AnfNodePtrList inputs = {prim, input, type_id_value_node};
+  CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(tuple_to_tensor);
 
   // Set abstract for TupleToTensor op according to user node's input shape and type.
-  auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(tuple_to_tensor), {input});
+  auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(tuple_to_tensor), {input, type_id_value_node});
   MS_EXCEPTION_IF_NULL(abs);
+  tuple_to_tensor->set_scope(input->scope());
   MS_LOG(DEBUG) << "Abstract for TupleToTensor op is " << abs->ToString();
   tuple_to_tensor->set_abstract(abs);
-
   SetKernelInfoForNewCNode(tuple_to_tensor);
+  // Set object type to TUPLE for TupleUnfoldToTuple pattern to be matched.
+  KernelBuildInfoPtr tuple_to_tensor_build_info = AnfAlgo::GetSelectKernelBuildInfo(tuple_to_tensor);
+  MS_EXCEPTION_IF_NULL(tuple_to_tensor_build_info);
+  tuple_to_tensor_build_info->SetInputsKernelObjectType({KernelObjectType::TUPLE, KernelObjectType::SCALAR});
   return {tuple_to_tensor};
 }
 
@@ -720,25 +857,38 @@ AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
+  if (IsNewKernel(node) && IsNewKernel(input)) {
+    MS_LOG(EXCEPTION) << "Insert ScalarToTensor op for input:" << input->fullname_with_scope()
+                      << " of node:" << node->fullname_with_scope() << " in graph:" << func_graph->ToString();
+  }
 
-  // Simply insert ScalarToTensor op between 'input' and 'node'.
-  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimScalarToTensor->name()));
-  MS_EXCEPTION_IF_NULL(prim);
-  AnfNodePtrList inputs = {prim, input};
-  CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
-  MS_EXCEPTION_IF_NULL(scalar_to_tensor);
+  auto new_input = ConstructInputByValueNode(func_graph, input);
+  if (new_input != nullptr) {
+    MS_LOG(DEBUG) << "Create new value node:" << new_input->DebugString() << " by " << input->DebugString()
+                  << " for cnode:" << node->DebugString() << " in graph:" << func_graph->ToString();
+    return {new_input};
+  }
 
   // Data type of the tensor should be set as an attr of ScalarToTensor op.
   size_t input_index = GetInputNodeIndex(input, node);
   auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
-  common::AnfAlgo::SetNodeAttr("dtype", TypeIdToType(data_type), scalar_to_tensor);
-
-  auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(scalar_to_tensor), {input});
+  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToKernelGraph(func_graph, data_type);
+  // Simply insert ScalarToTensor op between 'input' and 'node'.
+  auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimScalarToTensor->name()));
+  MS_EXCEPTION_IF_NULL(prim);
+  AnfNodePtrList inputs = {prim, input, type_id_value_node};
+  CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(scalar_to_tensor);
+  scalar_to_tensor->set_scope(input->scope());
+  auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(scalar_to_tensor), {input, type_id_value_node});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for ScalarToTensor op is " << abs->ToString();
   scalar_to_tensor->set_abstract(abs);
-
   SetKernelInfoForNewCNode(scalar_to_tensor);
+  // Set object type info
+  KernelBuildInfoPtr scalar_to_tensor_build_info = AnfAlgo::GetSelectKernelBuildInfo(scalar_to_tensor);
+  MS_EXCEPTION_IF_NULL(scalar_to_tensor_build_info);
+  scalar_to_tensor_build_info->SetInputsKernelObjectType({KernelObjectType::SCALAR, KernelObjectType::SCALAR});
   return {scalar_to_tensor};
 }
 
@@ -747,14 +897,17 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTensorToTuple(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
-
+  if (IsNewKernel(node) && IsNewKernel(input)) {
+    MS_LOG(EXCEPTION) << "Insert TensorToTuple op for input:" << input->fullname_with_scope()
+                      << " of node:" << node->fullname_with_scope() << " in graph:" << func_graph->ToString();
+  }
   // Create TensorToTuple op.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTensorToTuple->name()));
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {prim, input};
   CNodePtr tensor_to_tuple = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(tensor_to_tuple);
-
+  tensor_to_tuple->set_scope(input->scope());
   auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(tensor_to_tuple), {input});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for TensorToTuple op is " << abs->ToString();
@@ -769,14 +922,17 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTensorToScalar(const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
-
+  if (IsNewKernel(node) && IsNewKernel(input)) {
+    MS_LOG(EXCEPTION) << "Insert TensorToScalar op for input:" << input->fullname_with_scope()
+                      << " of node:" << node->fullname_with_scope() << " in graph:" << func_graph->ToString();
+  }
   // Create TensorToScalar op.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTensorToScalar->name()));
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {prim, input};
   CNodePtr tensor_to_scalar = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(tensor_to_scalar);
-
+  tensor_to_scalar->set_scope(input->scope());
   auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(tensor_to_scalar), {input});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for TensorToScalar op is " << abs->ToString();

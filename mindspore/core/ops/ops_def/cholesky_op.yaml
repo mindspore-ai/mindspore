@@ -1,0 +1,14 @@
+#operator cholesky
+cholesky:
+  args:
+    input_x:
+      dtype: tensor
+    upper:
+      dtype: bool
+      default: false
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

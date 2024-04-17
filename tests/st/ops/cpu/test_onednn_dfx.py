@@ -23,7 +23,7 @@ import mindspore.context as context
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_onednn_dfx_log():

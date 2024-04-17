@@ -26,6 +26,19 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
+inline int64_t InferIndicesOutTypeValue(bool has_false, bool empty_indices_out) {
+  int64_t indices_out_type = -1;
+  if (has_false) {
+    indices_out_type = 0;
+  } else {
+    if (empty_indices_out) {
+      indices_out_type = 1;
+    }
+  }
+  return indices_out_type;
+}
+}  // namespace
 
 static void RemNotExpandedDims(int64_t *idx_advanced, bool expand_true, int64_t tensor_index_ndim, int64_t rem_ndim,
                                std::vector<bool> *not_expanded_dim) {
@@ -70,7 +83,7 @@ std::tuple<int64_t, ShapeVector, int64_t> RemoveExpandedDims::ConstRemoveExpande
   size_t ellipse_position = 0;
   size_t not_ellipse_occupy_dims = 0;
   bool has_ellipsis = false;
-  for (size_t i = 0; i < 8; i++) {
+  for (size_t i = 0; i < kMaxTensorIndexDimNums; i++) {
     if (new_tuple_index_types[i] == kMetaTypeEllipsis) {
       has_ellipsis = true;
       ellipse_position = i;
@@ -118,26 +131,33 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   const AbstractBasePtr &broadcast_shape_abs = input_args[kIndex3];
   const AbstractBasePtr &idx_advanced_abs = input_args[kIndex4];
 
-  ShapeVector value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(value_abs->BuildShape())[kShape];
-  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->BuildShape())[kShape];
-  if (IsDynamic(value_shape) || IsDynamic(data_shape) || !IsValueKnown(has_false_abs->BuildValue()) ||
-      !IsValueKnown(broadcast_shape_abs->BuildValue()) || idx_advanced_abs->isa<abstract::AbstractTensor>()) {
-    auto abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
-    auto new_value_shape = std::vector<int64_t>{SizeToLong(value_shape.size())};
-    if (IsDynamicRank(value_shape)) {
-      new_value_shape = value_shape;
-    }
-    auto abs_tensor =
-      std::make_shared<abstract::AbstractTensor>(abs_any, std::make_shared<abstract::Shape>(new_value_shape));
-    auto scalar_abs_tensor = std::make_shared<abstract::AbstractTensor>(abs_any, std::make_shared<abstract::Shape>());
+  auto value_shape = value_abs->GetShape()->GetShapeVector();
+  auto data_shape = data_abs->GetShape()->GetShapeVector();
+  if (IsDynamic(value_shape) || IsDynamic(data_shape) || !IsValueKnown(has_false_abs->GetValue()) ||
+      !IsValueKnown(broadcast_shape_abs->GetValue()) || !IsValueKnown(idx_advanced_abs->GetValue())) {
+    auto scalar_abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
+    // we can get more accurate shape for new_value_shape_out
+    auto new_value_shape_out =
+      std::make_shared<abstract::AbstractTuple>(std::vector<abstract::AbstractBasePtr>{scalar_abs_any})
+        ->BroadenToDynamicLenSequence();
 
-    AbstractBasePtrList abs_list{scalar_abs_tensor, abs_tensor, scalar_abs_tensor};
+    auto has_false_opt = GetScalarValue<int64_t>(has_false_abs->GetValue());
+    auto indices_out_type_abs = scalar_abs_any;
+    if (has_false_opt.has_value()) {
+      auto has_false = has_false_opt.value() > 0;
+      auto empty_indices_out = GetValue<bool>(primitive->GetAttr(kAttrEmptyIndicesOut));
+      auto indices_out_type = InferIndicesOutTypeValue(has_false, empty_indices_out);
+      indices_out_type_abs = std::make_shared<abstract::AbstractScalar>(indices_out_type);
+    }
+
+    // we can get more accurate value for the third output
+    AbstractBasePtrList abs_list{indices_out_type_abs, new_value_shape_out, scalar_abs_any};
     return std::make_shared<abstract::AbstractTuple>(abs_list);
   }
-  auto tensor_ptr = has_false_abs->BuildValue()->cast<mindspore::tensor::TensorPtr>();
-  bool has_false = *reinterpret_cast<int64_t *>(tensor_ptr->data_c()) > 0;
-  auto idx_advanced = GetValue<int64_t>(idx_advanced_abs->BuildValue());
-  ShapeVector broadcast_shape = GetValue<std::vector<int64_t>>(broadcast_shape_abs->BuildValue());
+  auto has_false_value = GetScalarValue<int64_t>(has_false_abs->GetValue()).value();
+  bool has_false = has_false_value > 0;
+  auto idx_advanced = GetScalarValue<int64_t>(idx_advanced_abs->GetValue()).value();
+  ShapeVector broadcast_shape = GetArrayValue<int64_t>(broadcast_shape_abs).value().ToVector();
   auto has_true = GetValue<bool>(primitive->GetAttr(kAttrHasTrue));
   auto has_sequence = GetValue<bool>(primitive->GetAttr(kAttrHasSequence));
   auto new_tuple_index_types = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrTupleIndexTypes));
@@ -145,7 +165,7 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   auto expand_dims = GetValue<int64_t>(primitive->GetAttr(kAttrExpandDimsCnt));
   for (size_t i = 0; i < new_tuple_index_types.size(); i++) {
     if (new_tuple_index_types[i] == kMetaTypeEllipsis) {
-      valid_tensor_nums = data_shape.size() + expand_dims;
+      valid_tensor_nums = data_shape.size() + static_cast<size_t>(expand_dims);
       break;
     } else if (new_tuple_index_types[i] != kTypeUnknown) {
       valid_tensor_nums += 1;
@@ -156,13 +176,14 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   auto [indices_out, new_value_shape, new_idx_advanced] = RemoveExpandedDims::ConstRemoveExpandedDims(
     has_true, has_false, has_sequence, broadcast_shape, rem_ndim, value_shape, data_shape, empty_indices_out,
     idx_advanced, new_tuple_index_types, static_cast<size_t>(expand_dims));
-  abstract::AbstractBasePtrList elems;
-  std::transform(new_value_shape.begin(), new_value_shape.end(), std::back_inserter(elems),
-                 [](int64_t num) { return std::make_shared<abstract::AbstractScalar>(num); });
-
-  auto indices_out_tensor = std::make_shared<tensor::Tensor>(indices_out);
-  AbstractBasePtrList abs_list{indices_out_tensor->ToAbstract(), std::make_shared<abstract::AbstractTuple>(elems),
-                               std::make_shared<abstract::AbstractScalar>(new_idx_advanced)};
+  auto indices_out_tensor = std::make_shared<abstract::AbstractScalar>(indices_out);
+  std::vector<abstract::AbstractBasePtr> elements;
+  for (auto s : new_value_shape) {
+    (void)elements.emplace_back(std::make_shared<abstract::AbstractScalar>(s));
+  }
+  auto new_value_shape_out = std::make_shared<abstract::AbstractTuple>(elements);
+  auto idx_advanced_tensor = std::make_shared<abstract::AbstractScalar>(new_idx_advanced);
+  AbstractBasePtrList abs_list{indices_out_tensor, new_value_shape_out, idx_advanced_tensor};
   return std::make_shared<abstract::AbstractTuple>(abs_list);
 }
 MIND_API_OPERATOR_IMPL(RemoveExpandedDims, BaseOperator);
@@ -170,17 +191,19 @@ class RemoveExpandedDimsInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return RemoveExpandedDimsInner(primitive, input_args)->BuildShape();
+    return RemoveExpandedDimsInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return RemoveExpandedDimsInner(prim, input_args)->BuildType();
+    return RemoveExpandedDimsInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return RemoveExpandedDimsInner(primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {kInputIndex2, kInputIndex3, kInputIndex4}; }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(RemoveExpandedDims, prim::kPrimRemoveExpandedDims, RemoveExpandedDimsInfer, false);
 }  // namespace ops

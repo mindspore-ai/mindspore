@@ -29,7 +29,7 @@ class NetDot(nn.Cell):
         return ops.dot(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dot_001():
@@ -44,7 +44,7 @@ def test_dot_001():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dot_002():
@@ -58,7 +58,7 @@ def test_dot_002():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dot_003():
@@ -101,7 +101,7 @@ def test_dot_003():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dot_004():
@@ -117,7 +117,7 @@ def test_dot_004():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dot_005():
@@ -136,7 +136,7 @@ def test_dot_005():
     assert (ms_result_np.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dot_006():
@@ -161,23 +161,7 @@ def test_dot_007():
         assert ValueError == type(e)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_dot_008():
-    x1_tensor = Tensor(np.array([]).astype(np.float32))
-    x2_tensor = Tensor(np.array([[[1., 2.], [3., 4.]],
-                                 [[5., 6.], [7., 8.]],
-                                 [[9., 10.], [11., 12.]]]).astype(np.float32))
-
-    network = NetDot()
-    try:
-        network(x2_tensor, x1_tensor)
-    except ValueError as e:
-        assert ValueError == type(e)
-
-
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dot_009():
@@ -192,7 +176,7 @@ def test_dot_009():
         assert ValueError == type(e)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dot_010():

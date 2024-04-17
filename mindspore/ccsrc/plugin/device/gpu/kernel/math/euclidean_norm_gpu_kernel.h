@@ -31,37 +31,33 @@ class EuclideanNormGpuKernelMod : public NativeGpuKernelMod {
   EuclideanNormGpuKernelMod() = default;
   ~EuclideanNormGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
-    MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-    MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
-    if (inputs[0]->size == 0) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
+    if (inputs[kIndex0]->size() == 0) {
       // input is null, axis is not null, infer output is not null. memset outputs 0.
-      cudaMemset(outputs[kIndex0]->addr, 0, outputs[kIndex0]->size);
+      cudaMemset(outputs[kIndex0]->device_ptr(), 0, outputs[kIndex0]->size());
       return true;
     }
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   void InitWorkSpaceSizeList();
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   using EuclideanNormFunc =
-    std::function<bool(EuclideanNormGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(EuclideanNormGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
-  bool GetEuclideanNormAttr(const BaseOperatorPtr &base_operator);
+  bool GetEuclideanNormAttr();
 
   TypeId data_type_{kNumberTypeFloat32};
   std::vector<int64_t> axes_;

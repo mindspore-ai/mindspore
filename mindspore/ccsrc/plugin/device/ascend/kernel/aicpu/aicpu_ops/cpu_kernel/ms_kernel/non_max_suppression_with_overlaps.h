@@ -16,9 +16,9 @@
 #ifndef AICPU_KERNELS_NORMALIZED_NON_MAX_SUPPRESSION_WITH_OVERLAPS_H_
 #define AICPU_KERNELS_NORMALIZED_NON_MAX_SUPPRESSION_WITH_OVERLAPS_H_
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
-#include "eigen_tensor.h"
+#include "utils/eigen_tensor.h"
 
 namespace aicpu {
 class NonMaxSuppressionWithOverlapsCpuKernel : public CpuKernel {
@@ -29,7 +29,7 @@ class NonMaxSuppressionWithOverlapsCpuKernel : public CpuKernel {
  private:
   uint32_t GetInputAndCheck(CpuKernelContext &ctx);
   template <typename T, typename T_threshold>
-  uint32_t DoNonMaxSuppressionWithOverlapsOp();
+  uint32_t DoNonMaxSuppressionWithOverlapsOp(CpuKernelContext &ctx);
 
   const Tensor *overlaps_ = nullptr;
   Tensor *scores_ = nullptr;

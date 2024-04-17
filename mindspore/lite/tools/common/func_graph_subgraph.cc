@@ -465,7 +465,7 @@ int SubGraph::CreatePartialInBelongAnf() {
   // replace belong-graph's output
   auto return_node = belong_anf_->get_return();
   // return node should has 2 inputs
-  MS_ASSERT(return_node != nullptr && return_node->inputs().size() == 2);
+  MS_ASSERT(return_node != nullptr && return_node->size() == 2);
   auto ori_output = return_node->inputs().at(1);
   manager->Replace(ori_output, call_cnode);
   return RET_OK;
@@ -489,7 +489,7 @@ int SubGraph::CreateParameterForPartialSubGraph(
     if (in_cnode == nullptr) {
       continue;
     }
-    for (size_t i = 1; i < in_cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < in_cnode->size(); i++) {
       auto input = in_cnode->input(i);
       if (input == nullptr) {
         continue;
@@ -554,7 +554,7 @@ int SubGraph::CreateCNodeForPartialSubGraph(
     if (!utils::isa<ValueNodePtr>(node)) {
       node->set_func_graph(sub_graph);
     }
-    for (size_t i = 0; i < node->inputs().size(); i++) {
+    for (size_t i = 0; i < node->size(); i++) {
       auto input = node->inputs().at(i);
       if (input == nullptr) {
         continue;
@@ -604,11 +604,11 @@ int SubGraph::ApplySubGraph() {
   // merge after partial into subgraph
   auto subgraph_nodes = this->nodes_;
   auto return_node = belong_anf_->get_return();
-  MS_ASSERT(return_node != nullptr && return_node->inputs().size() == 2);
+  MS_ASSERT(return_node != nullptr && return_node->size() == 2);
   auto call_node = return_node->inputs().at(1);
   MS_ASSERT(call_node != nullptr && utils::isa<CNodePtr>(call_node));
   auto call_cnode = utils::cast<CNodePtr>(call_node);
-  MS_ASSERT(call_cnode != nullptr && call_cnode->inputs().size() == 1);
+  MS_ASSERT(call_cnode != nullptr && call_cnode->size() == 1);
   auto after_partial_node = call_cnode->inputs().at(0);
   MS_ASSERT(after_partial_node != nullptr && utils::isa<CNodePtr>(after_partial));
   auto after_partial_cnode = utils::cast<CNodePtr>(after_partial_node);

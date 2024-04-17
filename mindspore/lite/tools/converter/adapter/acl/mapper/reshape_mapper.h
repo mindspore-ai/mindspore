@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RESHAPE_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {
@@ -33,7 +33,7 @@ class ReshapeMapper : public PrimitiveMapper {
   STATUS Mapper(const CNodePtr &cnode) override;
 
  private:
-  STATUS AttrAdjust(const PrimitivePtr &src_prim, const ValueNodePtr &val_node, const CNodePtr &cnode);
+  STATUS ShapeAttrAdjustTensor(const PrimitivePtr &src_prim, const ValueNodePtr &val_node, const CNodePtr &cnode);
 };
 }  // namespace lite
 }  // namespace mindspore

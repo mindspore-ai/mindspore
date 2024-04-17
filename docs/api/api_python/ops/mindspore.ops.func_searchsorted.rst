@@ -14,7 +14,7 @@ mindspore.ops.searchsorted
         - **right** (bool, 可选) - 搜索策略。如果为 ``True`` ，则返回找到的最后一个合适的索引；如果为 ``False`` ，则返回第一个合适的索引。默认值： ``False`` 。
 
     返回：
-        表示 `sorted_sequence` 最内维度的索引的Tensor，如果插入 `values` tensor中相应的值，则 `sorted_sequence` tensor的顺序将被保留；如果out_int32为True，则返回的数据类型为int32，否则为int64，并且形状与values的形状相同。
+        表示 `sorted_sequence` 最内维度的索引的Tensor，如果插入 `values` Tensor中相应的值，则 `sorted_sequence` Tensor的顺序将被保留；如果out_int32为True，则返回的数据类型为int32，否则为int64，并且形状与values的形状相同。
 
     异常：
         - **ValueError** - 如果 `sorted_sequence` 的维度不是1，并且除 `sorted_sequence` 和 `values` 的最后一个维度之外的维度不同。

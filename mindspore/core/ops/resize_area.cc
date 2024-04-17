@@ -46,7 +46,7 @@ constexpr size_t kDimension4 = 4;
 
 abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int64_t> output_shape(kDimension4, -1);
-  auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (!IsDynamicRank(images_shape)) {
     constexpr int64_t image_shape_size = 4;
     (void)CheckAndConvertUtils::CheckInteger("images dimension", SizeToLong(images_shape.size()), kEqual,
@@ -54,7 +54,7 @@ abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std
     output_shape[0] = images_shape[0];
     output_shape[kInputIndex3] = images_shape[kInputIndex3];
   }
-  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("size dimension", SizeToLong(size_shape.size()), kEqual, 1,
                                            primitive->name());
   if (!IsDynamic(size_shape)) {
@@ -62,7 +62,7 @@ abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std
     (void)CheckAndConvertUtils::CheckInteger("input1 num", size_shape[0], kEqual, size_num, primitive->name());
   }
 
-  auto input_size_value = input_args[1]->BuildValue();
+  auto input_size_value = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(input_size_value);
   auto input_size = GetShapeValue(primitive, input_args[1]);
   if (IsValueKnown(input_size_value)) {
@@ -94,10 +94,8 @@ AbstractBasePtr ResizeAreaInfer(const abstract::AnalysisEnginePtr &, const Primi
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   const std::set<TypePtr> valid_types = {kInt8, kUInt8, kInt16, kUInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_types_1 = {kInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_args[0]->BuildType(), valid_types,
-                                                   primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->BuildType(), valid_types_1,
-                                                   primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_args[0]->GetType(), valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->GetType(), valid_types_1, primitive->name());
   auto infer_shape = ResizeAreaInferShape(primitive, input_args);
   auto infer_type = ResizeAreaInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

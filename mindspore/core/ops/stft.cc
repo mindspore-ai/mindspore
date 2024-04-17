@@ -126,12 +126,12 @@ TypePtr STFTInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSTFTInputNum, primitive->name());
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(x_dtype);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, op_name);
 
-  auto window_dtype = input_args[1]->BuildType();
+  auto window_dtype = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("window", window_dtype, valid_types, op_name);
   auto window_tensor = window_dtype->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(window_tensor);

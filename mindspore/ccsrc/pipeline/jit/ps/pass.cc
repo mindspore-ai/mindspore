@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,23 +38,33 @@
 #include "frontend/optimizer/auto_monad_eliminate.h"
 #include "include/common/fallback.h"
 #include "include/common/utils/parallel_context.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
+#include "frontend/parallel/pass/merge_comm.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/parallel/pynative_shard/pynative_shard.h"
 #include "frontend/parallel/pass/label_micro_interleaved_index.h"
+#include "frontend/parallel/pass/label_fine_grained_interleaved_index.h"
 #include "frontend/parallel/pass/reorder_send_recv_between_fp_bp.h"
 #include "frontend/parallel/pass/micro_interleaved_order_control.h"
+#include "frontend/parallel/pass/full_micro_interleaved_order_control.h"
+#include "frontend/parallel/pass/assign_add_opt.h"
+#include "frontend/parallel/pass/merge_cast_opt.h"
+#include "frontend/parallel/pass/remove_cast_before_assign_add.h"
 #include "frontend/parallel/pass/comp_comm_scheduling.h"
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/parallel/pass/overlap_recompute_and_grad_model_parallel.h"
 #include "frontend/parallel/pass/overlap_gradmatmul_and_gradallreduce.h"
+#include "frontend/parallel/pass/begin_end_overlap_inline.h"
 #include "frontend/parallel/pass/split_matmul_comm_elementwise_fp.h"
 #include "frontend/parallel/pass/split_layernorm_comm_fp.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
+#include "frontend/parallel/pass/overlap_grad_comm.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/irpass/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
@@ -65,6 +75,7 @@
 #include "frontend/optimizer/comm_op_reuse_tag.h"
 #include "frontend/optimizer/py_interpret_to_execute.h"
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 #include "pipeline/jit/ps/pipeline_split.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/ps/static_analysis/auto_monad.h"
@@ -76,7 +87,7 @@
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
-#include "frontend/optimizer/irpass/pack_expand.h"
+#include "frontend/optimizer/irpass/symbol_engine_optimizer.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/util.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -90,7 +101,6 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 using mindspore::validator::Validate;
-namespace {
 void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(resource);
@@ -101,7 +111,6 @@ void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource)
                        [](const AnfNodePtr &p) { return p->abstract(); });
   resource->set_args_abs(args_abs);
 }
-}  // namespace
 
 bool PyInterpretToExecutePass(const ResourcePtr &resource) {
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
@@ -131,8 +140,8 @@ bool TransformTopGraphPass(const ResourcePtr &resource) {
     MS_LOG(INTERNAL_EXCEPTION) << "Transform top graph error.";
   }
   FuncGraphPtr func_graph = resource->func_graph();
-  if (opt::FuncGraphHasTupleInput(func_graph)) {
-    opt::GraphTupleParamTransform graph_trans;
+  if (opt::FuncGraphHasSequenceInput(func_graph)) {
+    opt::GraphSequenceParamTransform graph_trans;
     func_graph = graph_trans(func_graph, resource->manager());
     resource->set_func_graph(func_graph);
     AbstractBasePtrList abs_spec_list;
@@ -243,6 +252,8 @@ FuncGraphPtr JitBpropGraphPass(const ResourcePtr &resource, bool need_renormaliz
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
     irpass.inline_,
+    irpass.list_to_tuple_eliminator_,
+    irpass.tuple_to_list_eliminator_,
     irpass.tuple_list_get_set_item_eliminator_,
     irpass.tuple_list_get_item_eliminator_,
     irpass.tuple_list_set_item_eliminator_,
@@ -277,13 +288,13 @@ FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource, bool has_control_f
   opt::OptPassConfig inline_opt = opt::OptPassConfig({
     irpass.inline_,
   });
-  map.push_back({"ad_inline", inline_opt});
+  map.emplace_back("ad_inline", inline_opt);
 
   opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
     irpass.tuple_list_get_item_eliminator_,
     irpass.zero_like_fill_zero_,
   });
-  (void)map.push_back({"grad_graph_opt", grad_graph_opt});
+  (void)map.emplace_back("grad_graph_opt", grad_graph_opt);
 
   if (has_control_flow) {
     opt::OptPassConfig env_eliminate = opt::OptPassConfig({
@@ -317,7 +328,10 @@ void AddParallelRenormalize(OptPassGroupMap *map_a) {
     auto parallel_end_opt =
       find_if(map_a->begin(), map_a->end(), [](auto opt_pair) { return opt_pair.first == "meta_fg_expand"; });
     if (parallel_end_opt != map_a->end()) {
-      (void)map_a->insert(parallel_end_opt, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
+      opt::irpass::OptimizeIRPassLib irpass;
+      opt::OptPassConfig cast_eliminate_pass = opt::OptPassConfig({irpass.cast_eliminate_});
+      auto iter = map_a->insert(parallel_end_opt, {"cast_eliminate", cast_eliminate_pass});
+      (void)map_a->insert(iter, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
     }
   }
 }
@@ -342,6 +356,8 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.convert_tensor_eliminate_,
 
     // Miscellaneous
+    irpass.list_to_tuple_eliminator_,
+    irpass.tuple_to_list_eliminator_,
     irpass.tuple_list_get_item_eliminator_,
     irpass.make_slice_get_slice_eliminator_,
     irpass.tuple_list_get_item_const_eliminator_,
@@ -424,7 +440,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::OptPassConfig after_resolve_pass = opt::OptPassConfig({irpass.replace_old_param_});
   // Disable after_resolve_pass if Pre-Lift is enabled.
-  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
   if (enable_pre_lift) {
     after_resolve_pass.set_disabled(true);
   }
@@ -459,6 +475,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"pynative_shard", opt::OptPassConfig(parallel::PynativeShard)},
                          {"auto_parallel", opt::OptPassConfig(parallel::StepAutoParallel)},
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
+                         {"merge_comm", opt::OptPassConfig(parallel::MergeComm)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
@@ -467,6 +484,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"cell_reuse_recompute_pass", opt::OptPassConfig(opt::irpass::AddRecomputeNodes)},
                          {"cell_reuse_handle_not_recompute_node_pass", cell_reuse_handle_not_recompute_node_pass},
                          {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
+                         {"receive_attached", opt::OptPassConfig(parallel::IsolatedNodeAttach)},
                          {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
@@ -515,6 +533,8 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
 OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig d_1 = opt::OptPassConfig({
     irpass.call_graph_tuple_transform_,
+    irpass.list_to_tuple_eliminator_,
+    irpass.tuple_to_list_eliminator_,
     irpass.tuple_list_get_item_eliminator_,
     irpass.tuple_list_get_item_const_eliminator_,
     irpass.tuple_list_set_item_eliminator_,
@@ -523,13 +543,17 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
     irpass.tuple_list_convert_item_index_to_positive_,
   });
 
-  OptPassGroupMap map_a({{"d_1", d_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
+  opt::OptPassConfig d_2 = opt::OptPassConfig({irpass.partial_unused_args_eliminate_});
+
+  OptPassGroupMap map_a({{"d_1", d_1}, {"d_2", d_2}, {"renormalize", opt::OptPassConfig::Renormalize()}});
 
   return map_a;
 }
 
 OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig b_1 = opt::OptPassConfig({irpass.zero_like_fill_zero_,
+                                               irpass.list_to_tuple_eliminator_,
+                                               irpass.tuple_to_list_eliminator_,
                                                irpass.tuple_list_get_item_eliminator_,
                                                irpass.tuple_list_get_item_const_eliminator_,
                                                irpass.tuple_list_set_item_eliminator_,
@@ -551,7 +575,8 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.environ_get_depend_swap_,
                                                irpass.environ_add_const_eliminate_,
                                                irpass.value_based_eliminate_,
-                                               irpass.parallel_virtual_node_},
+                                               irpass.parallel_virtual_node_,
+                                               irpass.const_output_eliminate_},
                                               false, true);
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.row_tensor_eliminate_,
@@ -622,6 +647,21 @@ OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &) {
   return map;
 }
 
+OptPassGroupMap GetSymbolEngineOptPass(const opt::irpass::OptimizeIRPassLib &irpass) {
+  if (common::GetEnv("MS_SYMBOL_ENGINE_OPTIMIZE") == "off") {
+    MS_LOG(INFO) << "SymbolEngineOptimizer is disabled.";
+    return OptPassGroupMap();
+  }
+  OptPassGroupMap map({{"build", opt::OptPassConfig(opt::irpass::SymbolEngineBuilder())},
+                       {"elim_shapecalc", opt::OptPassConfig({irpass.elim_shapecalc_of_broadcastargs_})},
+                       {"elim_not_effective", opt::OptPassConfig({irpass.elim_not_effective_node_})},
+                       {"opt_reshape", opt::OptPassConfig({irpass.opt_reshape_})},
+                       {"fold_const_symbol", opt::OptPassConfig({irpass.fold_const_symbol_})},
+                       {"shape_op_cse", opt::OptPassConfig(opt::irpass::ShapeOpCse())},
+                       {"renormalize", opt::OptPassConfig::Renormalize()}});
+  return map;
+}
+
 static mindspore::HashMap<std::string, std::shared_ptr<Optimizer>> g_pass_opts = {};
 
 void InitOpt(const ResourcePtr &resource) {
@@ -640,6 +680,8 @@ void InitOpt(const ResourcePtr &resource) {
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", resource, GetPreparePhases(irpass));
     g_pass_opts["opt_after_recompute"] =
       Optimizer::MakeOptimizer("opt_after_recompute", resource, GetAfterRecomputePass(irpass));
+    g_pass_opts["symbol_engine_opt"] =
+      Optimizer::MakeOptimizer("symbol_engine_opt", resource, GetSymbolEngineOptPass(irpass), true, true);
   }
 }
 }  // namespace
@@ -680,6 +722,7 @@ bool PrepareGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "
 bool OptAfterRecomputeGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_after_recompute"); }
 
 bool OptPassRNGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "renormal"); }
+bool SymEngOptGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "symbol_engine_opt"); }
 
 bool OptPassGradEpilogueGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_grad_epilogue"); }
 
@@ -718,6 +761,30 @@ bool LabelMicroInterleavedIndexPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool LabelFineGrainedInterleavedIndexPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::LabelFineGrainedInterleavedIndex(resource->func_graph());
+  return true;
+}
+
+bool AssignAddOpt(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::AssignAddOpt(resource->func_graph());
+  return true;
+}
+
+bool MergeCastOpt(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::MergeCastOpt(resource->func_graph());
+  return true;
+}
+
+bool RemoveCastBeforeAssignAdd(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::RemoveCastBeforeAssignAdd(resource->func_graph());
+  return true;
+}
+
 bool ReorderSendRecvBetweenFpBpPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::ReorderSendRecvBetweenFpBp(resource->func_graph());
@@ -733,6 +800,18 @@ bool CompCommSchedulingPass(const ResourcePtr &resource) {
 bool MicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::MicroInterleavedOrderControl(resource->func_graph());
+  return true;
+}
+
+bool OverlapGradCommPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::OverlapGradComm(resource->func_graph());
+  return true;
+}
+
+bool FullMicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::FullMicroInterleavedOrderControl(resource->func_graph());
   return true;
 }
 
@@ -769,6 +848,24 @@ bool AddCommOpReusePass(const ResourcePtr &resource) {
 bool OverlapOptShardInPipelinePass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::OverlapOptShardInPipeline(resource->func_graph());
+  return true;
+}
+
+bool BeginEndOverlapInlinePass(const ResourcePtr &resource) {
+  auto ms_context = MsContext::GetInstance();
+  auto is_enable = ms_context->get_param<bool>(MS_CTX_ENABLE_BEGIN_END_INLINE_OPT);
+  if (!is_enable) {
+    return true;
+  }
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  parallel::BeginEndOverlapInlineOpt(resource->func_graph());
+  opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig get_item_eliminator_pass = opt::OptPassConfig({irpass.tuple_list_get_item_eliminator_});
+  OptPassGroupMap map({{"get_item_eliminator", get_item_eliminator_pass}});
+  auto get_item_eliminator = opt::Optimizer::MakeOptimizer("get_item_eliminator", resource, map);
+  (void)get_item_eliminator->step(func_graph, false);
   return true;
 }
 
@@ -834,8 +931,7 @@ bool RemoveValueNodeDuplicationsPass(const ResourcePtr &resource) {
       // not be removed, if we found the fusion tag.
       if (users.size() == 1) {
         auto cnode = users.front().first->cast<CNodePtr>();
-        if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce) && cnode->inputs().size() > 1 &&
-            cnode->input(1)->isa<ValueNode>()) {
+        if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce) && cnode->size() > 1 && cnode->input(1)->isa<ValueNode>()) {
           auto allreduce_prim = GetCNodePrimitive(users.front().first);
           auto attrs = allreduce_prim->attrs();
           auto fusion_id = attrs.find(mindspore::parallel::FUSION);
@@ -861,10 +957,28 @@ bool CconvPass(const ResourcePtr &resource) {
 
 bool PipelineSplitPass(const ResourcePtr &resource) { return PipelineSplit(resource); }
 
+bool ParallelVirtualDatasetPass(const ResourcePtr &resource) { return ParallelVirtualDataset(resource); }
+
 bool AutoParallelPass(const ResourcePtr &resource) {
   auto func_graph = resource->func_graph();
   auto opt = opt::Optimizer::MakeEmptyOptimizer(resource);
   return parallel::StepAutoParallel(func_graph, opt);
+}
+
+bool AutoParallelSymbolPassWithReNormalize(const ResourcePtr &resource) {
+  // 1, auto parallel; 2, dynamic shape
+  auto func_graph = resource->func_graph();
+  if (!parallel::IsParallelDynamicShape(func_graph)) {
+    return true;
+  }
+  MS_LOG(INFO) << "symbol pass for parallel begin";
+  // must be bind with renormalize
+  OptPassGroupMap opt_map({{"renormalize", opt::OptPassConfig::Renormalize()},
+                           {"build", opt::OptPassConfig(opt::irpass::SymbolEngineBuilder())}});
+  auto opt = opt::Optimizer::MakeOptimizer("parallel-infer-symbol", resource, opt_map, true);
+  (void)opt->step(func_graph, false);
+  MS_LOG(INFO) << "symbol pass for parallel end";
+  return true;
 }
 
 bool ValidatePass(const ResourcePtr &resource) {
@@ -893,22 +1007,6 @@ bool GradPartialTransformPass(const ResourcePtr &resource) {
   auto grad_partial_transform =
     opt::Optimizer::MakeOptimizer("grad_partial_transform", resource, grad_partial_transform_map);
   (void)grad_partial_transform->step(func_graph, false);
-  return true;
-}
-
-bool PackExpandPass(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto opt = opt::Optimizer::MakeEmptyOptimizer(resource);
-  opt::OptPass pack_expand = opt::OptPass(mindspore::opt::irpass::PackExpand());
-  if (pack_expand(func_graph, opt)) {
-    opt::irpass::OptimizeIRPassLib irpass;
-    opt::OptPassConfig after_resolve_pass = opt::OptPassConfig({irpass.replace_old_param_});
-    OptPassGroupMap map({{"after_resolve", after_resolve_pass}});
-    auto after_resolve = opt::Optimizer::MakeOptimizer("after_resolve", resource, map);
-    (void)after_resolve->step(func_graph, false);
-  }
   return true;
 }
 
@@ -1044,8 +1142,13 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"cse_after_recomputation", OptAfterRecomputeGroup},
                                    {"environ_conv", EnvironConversionPass},
                                    {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
+                                   {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
+                                   {"merge_cast_opt", MergeCastOpt},
                                    {"slice_recompute_activation", SliceRecomputeActivationPass},
                                    {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
+                                   {"assign_add_opt", AssignAddOpt},
+                                   {"remove_cast_before_assign_add", RemoveCastBeforeAssignAdd},
+                                   {"full_micro_interleaved_order_control", FullMicroInterLeavedOrderControlPass},
                                    {"comp_comm_scheduling", CompCommSchedulingPass},
                                    {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},
                                    {"comm_op_add_attrs", CommOpAddAttrs},
@@ -1054,11 +1157,14 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"grouped_pairwise_exchange_alltoall", GroupedPairwiseExchangeAllToAllPass},
                                    {"overlap_recompute_and_grad_model_parallel", OverlapRecomputeAndGradModelParallel},
                                    {"overlap_grad_matmul_and_grad_allreduce", OverlapGradMatmulAndGradAllreduce},
+                                   {"begin_end_overlap_inline", BeginEndOverlapInlinePass},
+                                   {"overlap_grad_comm", OverlapGradCommPass},
                                    {"split_matmul_comm_elemetwise", SplitMatmulCommElementwiseOpFpPass},
                                    {"split_layernorm_comm", SplitLayerNormCommFpPass},
                                    {"process_send_recv_for_ge", ProcessSendRecvForGE},
                                    // The pass cache hccl group, so the hccl group should be created before the pass
-                                   {"handle_group_info", HandleGroupInfoPass}};
+                                   {"handle_group_info", HandleGroupInfoPass},
+                                   {"symbol_engine_optimizer", SymEngOptGroup}};
 
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},
                                          {"opt_b", OptPassBGroup},

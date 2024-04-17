@@ -31,7 +31,7 @@ class IgammaNet(nn.Cell):
         return self.igamma(a, x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -49,7 +49,7 @@ def test_dynamic_shape_igamma():
         [Tensor(a_np), Tensor(x_np)], False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

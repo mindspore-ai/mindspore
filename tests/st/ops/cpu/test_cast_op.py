@@ -33,7 +33,7 @@ class Net(Cell):
         return self.Cast(x, self.dtype)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_bool():
@@ -58,7 +58,7 @@ def test_cast_bool():
         output = net(tensor)
         assert output.asnumpy().dtype == 'bool'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_float16():
@@ -83,7 +83,7 @@ def test_cast_float16():
         output = net(tensor)
         assert output.asnumpy().dtype == 'float16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_float32():
@@ -108,7 +108,7 @@ def test_cast_float32():
         output = net(tensor)
         assert output.asnumpy().dtype == 'float32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_float64():
@@ -133,7 +133,7 @@ def test_cast_float64():
         output = net(tensor)
         assert output.asnumpy().dtype == 'float64'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_bfloat16():
@@ -163,7 +163,7 @@ def test_cast_bfloat16():
         output = net(tensor)
         assert output.dtype == mstype.bfloat16
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_int8():
@@ -188,7 +188,7 @@ def test_cast_int8():
         output = net(tensor)
         assert output.asnumpy().dtype == 'int8'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_int16():
@@ -213,7 +213,7 @@ def test_cast_int16():
         output = net(tensor)
         assert output.asnumpy().dtype == 'int16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_int32():
@@ -238,7 +238,7 @@ def test_cast_int32():
         output = net(tensor)
         assert output.asnumpy().dtype == 'int32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_int64():
@@ -263,7 +263,7 @@ def test_cast_int64():
         output = net(tensor)
         assert output.asnumpy().dtype == 'int64'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_uint8():
@@ -288,7 +288,7 @@ def test_cast_uint8():
         output = net(tensor)
         assert output.asnumpy().dtype == 'uint8'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_uint16():
@@ -313,7 +313,7 @@ def test_cast_uint16():
         output = net(tensor)
         assert output.asnumpy().dtype == 'uint16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_uint32():
@@ -338,7 +338,7 @@ def test_cast_uint32():
         output = net(tensor)
         assert output.asnumpy().dtype == 'uint32'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_uint64():

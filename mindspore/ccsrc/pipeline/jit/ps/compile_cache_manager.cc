@@ -28,6 +28,7 @@
 #include "utils/system/sha256.h"
 #include "include/common/utils/utils.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/tensor_layout/shared_parameter.h"
 #include "mindspore/core/utils/file_utils.h"
 
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -76,6 +77,13 @@ void BuildLayout(const FuncGraphPtr &func_graph, mind_ir::ModelProto *model) {
       layoutProto->set_field_size(field_size);
       layoutProto->set_uniform_split(uniform_split);
       layoutProto->set_opt_shard_group(opt_shard_group);
+      auto shared_param = para->user_data<parallel::SharedParameter>();
+      if (shared_param) {
+        layoutProto->set_pipeline_shared(shared_param->pipeline_shared());
+        layoutProto->set_is_send(shared_param->is_send());
+        layoutProto->set_peer_rank(shared_param->peer_rank());
+        layoutProto->set_sr_tag(shared_param->sr_tag());
+      }
     }
   }
 }
@@ -319,14 +327,14 @@ std::string CompileCacheManager::GetCachedDataQueueName(const std::string &datas
     return queue_name;
   }
   data_queue_num_++;
+  auto &config_mng = ConfigManager::GetInstance();
+  if (config_mng.dataset_phase().empty()) {
+    config_mng.set_dataset_phase(dataset_phase);
+  }
   // if queue name has cached, we should not get it again from cache file in the same process.
   auto &context = CompileCacheContext::GetInstance();
   if (context.has_cached_queue_name()) {
     return queue_name;
-  }
-  auto &config_mng = ConfigManager::GetInstance();
-  if (config_mng.dataset_phase().empty()) {
-    config_mng.set_dataset_phase(dataset_phase);
   }
   const auto &filename = GetDataQueueNameCachePath(std::to_string(CompileCacheManager::data_queue_num_));
   MS_LOG(INFO) << "Get data queue name from file " << filename;

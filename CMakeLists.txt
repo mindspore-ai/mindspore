@@ -17,10 +17,8 @@ include(${CMAKE_SOURCE_DIR}/cmake/ascend_variables.cmake)
 if(DEFINED ENV{ENABLE_GEN_CODE})
     set(ENABLE_GEN_CODE $ENV{ENABLE_GEN_CODE})
 endif()
-if(ENABLE_GEN_CODE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_GEN_CODE")
-    include(${CMAKE_SOURCE_DIR}/cmake/gencode.cmake)
-endif()
+set(ENABLE_GEN_CODE on)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_GEN_CODE")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -150,7 +148,7 @@ endif()
 
 add_subdirectory_with_faster_option(mindspore/ccsrc)
 
-if(ENABLE_TESTCASES OR ENABLE_CPP_ST OR ENABLE_C_ST)
+if(ENABLE_TESTCASES OR ENABLE_CPP_ST)
     add_subdirectory(tests)
 endif()
 

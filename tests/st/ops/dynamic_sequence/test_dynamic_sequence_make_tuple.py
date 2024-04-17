@@ -25,7 +25,7 @@ context.set_context(mode=context.GRAPH_MODE)
 context_prepare()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -55,7 +55,7 @@ def test_real_make_tuple():
     assert res == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -84,7 +84,7 @@ def test_real_make_tuple_dy():
     assert res == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -109,7 +109,7 @@ def test_real_make_tuple_tensor_dy():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -132,7 +132,7 @@ def test_real_make_tuple_grad():
     x_0 = mutable(0)
     x_1 = mutable(2)
     x_2 = mutable(2)
-    dout = mutable((0, 2, 0, 2), True)
+    dout = (0, 2, 0, 2)
     net = Net()
     grad_func = GradOperation(get_all=True, sens_param=True)(net)
     grad_func(x_0, x_1, x_2, dout)

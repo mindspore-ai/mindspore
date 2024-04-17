@@ -23,6 +23,7 @@
 #include "extendrt/utils/tensor_utils.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
 #include "mindspore/ccsrc/kernel/framework_utils.h"
+#include "mindspore/ccsrc/kernel/format_utils.h"
 
 namespace mindspore {
 TensorRefData::TensorRefData(void *data, size_t bytes_size, size_t data_size, size_t ndim,
@@ -88,6 +89,8 @@ std::vector<mindspore::tensor::TensorPtr> TensorUtils::MSTensorToTensorPtr(const
     auto data_size = ms_tensor.DataSize();
     auto ref_tensor_data = std::make_shared<TensorRefData>(data, ms_tensor.ElementNum(), data_size, shape.size());
     auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, shape, ref_tensor_data);
+    tensor_ptr->set_name(ms_tensor.Name());
+    tensor_ptr->set_data_type(type_id);
     tensor_ptrs.push_back(tensor_ptr);
   }
   return tensor_ptrs;
@@ -181,31 +184,28 @@ std::vector<mindspore::kernel::AddressPtr> CloudTensorUtils::LiteTensorToAddress
   return address_list;
 }
 
-kernel::KernelTensorPtr CloudTensorUtils::LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor) {
+kernel::KernelTensor *CloudTensorUtils::LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor) {
   kernel::AddressPtr address = LiteTensorToAddressPtr(lite_tensor);
-  kernel::KernelTensorPtr kernel_tensor_ptr = std::make_shared<kernel::KernelTensor>();
+  kernel::KernelTensor *kernel_tensor_ptr = new (std::nothrow) kernel::KernelTensor();
+  if (kernel_tensor_ptr == nullptr) {
+    return kernel_tensor_ptr;
+  }
   kernel_tensor_ptr->SetData(address);
-  kernel_tensor_ptr->SetFormat(lite_tensor->format());
+  kernel_tensor_ptr->set_format(lite_tensor->format());
+  kernel_tensor_ptr->SetType(std::make_shared<TensorType>(TypeIdToType(lite_tensor->data_type())));
 
   auto lite_shape = lite_tensor->shape();
   std::vector<int64_t> shape;
   for (size_t i = 0; i < lite_shape.size(); i++) {
     shape.push_back(lite_shape[i]);
   }
-
-  auto kernel_tensor_abstract_ptr = std::make_shared<mindspore::abstract::AbstractTensor>(
-    mindspore::TypeIdToType(lite_tensor->data_type()), std::make_shared<abstract::Shape>(shape));
-  kernel::TensorInfo info;
-  info.format = lite_tensor->format();
-  info.base_ = kernel_tensor_abstract_ptr;
-
-  kernel_tensor_ptr->SetTensorInfo(info);
+  kernel_tensor_ptr->SetShape(std::make_shared<abstract::TensorShape>(std::move(shape)));
   return kernel_tensor_ptr;
 }
 
-std::vector<kernel::KernelTensorPtr> CloudTensorUtils::LiteTensorToKernelTensorPtrVec(
+std::vector<kernel::KernelTensor *> CloudTensorUtils::LiteTensorToKernelTensorPtrVec(
   const std::vector<lite::Tensor *> &lite_tensors) {
-  std::vector<kernel::KernelTensorPtr> kernel_tensor_list;
+  std::vector<kernel::KernelTensor *> kernel_tensor_list;
 
   for (auto lite_tensor : lite_tensors) {
     if (lite_tensor == nullptr) {

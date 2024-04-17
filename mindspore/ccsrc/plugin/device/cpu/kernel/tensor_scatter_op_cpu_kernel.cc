@@ -41,21 +41,17 @@ std::map<string, Op> OpMap{
   {prim::kPrimTensorScatterMul->name(), Op::MUL}, {prim::kPrimTensorScatterDiv->name(), Op::DIV},
 };
 }  // namespace
-bool TensorScatterOpCpuKernelMode::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool TensorScatterOpCpuKernelMode::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int TensorScatterOpCpuKernelMode::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int TensorScatterOpCpuKernelMode::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_.clear();
@@ -135,24 +131,24 @@ inline void ComputeFunc(const string &kernel_name, MatrixXd<T> eigen_output, siz
 }
 
 template <typename T, typename S>
-bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto indices = GetDeviceAddress<S>(inputs, kIndex1);
   auto updates = GetDeviceAddress<T>(inputs, kIndex2);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
 
-  if (inputs[kIndex0]->size > SECUREC_MEM_MAX_LEN) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input data size[" << inputs[kIndex0]->size
+  if (inputs[kIndex0]->size() > SECUREC_MEM_MAX_LEN) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input data size[" << inputs[kIndex0]->size()
                       << " bytes] is larger than memcpy_s cache limit[" << SECUREC_MEM_MAX_LEN << " bytes].";
   }
 
   // ScatterNd* operations need to write input data and copy into output data,
   // while TensorScatter* operations need to copy input data and write into output data.
   const size_t big_mem_limit = 1 << 20;
-  if (outputs[kIndex0]->size <= big_mem_limit) {
-    auto ret = memcpy_s(output, outputs[kIndex0]->size, input, inputs[kIndex0]->size);
+  if (outputs[kIndex0]->size() <= big_mem_limit) {
+    auto ret = memcpy_s(output, outputs[kIndex0]->size(), input, inputs[kIndex0]->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy_s function run error. Error no: " << ret;
     }
@@ -165,7 +161,7 @@ bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::Addres
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy_s function run error. Error no: " << ret;
       }
     };
-    ParallelLaunchAutoSearch(memcpy_task, outputs[kIndex0]->size / sizeof(T), this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(memcpy_task, outputs[kIndex0]->size() / sizeof(T), this, &parallel_search_info_);
   }
 
   int64_t invalid_index_pos = -1;

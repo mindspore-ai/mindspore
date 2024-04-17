@@ -46,9 +46,9 @@ abstract::ShapePtr RandomGammaGradInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto alpha_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto alpha_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(alpha_shape_ptr);
-  auto sample_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto sample_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(sample_shape_ptr);
 
   auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(alpha_shape_ptr)[kShape];
@@ -67,11 +67,11 @@ TypePtr RandomGammaGradInferType(const PrimitivePtr &prim, const std::vector<Abs
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("alpha_type", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("sample_type", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("alpha_type", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("sample_type", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
 
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

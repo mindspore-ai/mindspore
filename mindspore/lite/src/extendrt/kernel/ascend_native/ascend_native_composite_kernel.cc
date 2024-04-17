@@ -237,7 +237,7 @@ void AscendNativeCompositeKernel::CreateOutputKernelTensors(const CNodePtr &cnod
       auto graph_output = func_graph_->output();
       if (IsPrimitiveCNode(graph_output, prim::kPrimMakeTuple)) {
         auto outc = graph_output->cast<CNodePtr>();
-        for (size_t i = 1; i < outc->inputs().size(); i++) {
+        for (size_t i = 1; i < outc->size(); i++) {
           if (IsPrimitiveCNode(outc->input(i), prim::kPrimTupleGetItem)) {
             auto get_item = outc->input(i)->cast<CNodePtr>();
             auto tuple_idx = common::AnfAlgo::GetTupleGetItemOutIndex(get_item);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,11 @@
  */
 #include "minddata/dataset/engine/datasetops/cache_op.h"
 
-#include <memory>
-#include <utility>
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
-
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"
 

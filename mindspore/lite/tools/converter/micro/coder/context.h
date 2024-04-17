@@ -25,6 +25,8 @@
 #include <vector>
 #include <algorithm>
 #include "src/tensor.h"
+#include "tools/converter/micro/coder/shape_info_container.h"
+#include "tools/converter/micro/coder/dynamic_mem_manager.h"
 
 namespace mindspore::lite::micro {
 class CoderContext {
@@ -146,6 +148,17 @@ class CoderContext {
 
   bool end_flag() { return end_flag_; }
 
+  void set_shape_info_container(ShapeInfoContainer *shape_info_container) {
+    shape_info_container_ = shape_info_container;
+  }
+  void set_dynamic_mem_manager(DynamicMemManager *dynamic_mem_manager) { dynamic_mem_manager_ = dynamic_mem_manager; }
+  const std::map<int, std::vector<int>> &shape_all_scenes() const;
+  const std::map<const Tensor *, std::vector<std::string>> &shape_templates();
+  const std::map<int, std::vector<size_t>> &offset_all_scenes();
+  const std::vector<size_t> &buffer_sizes() const;
+  const std::vector<size_t> &workspaces() const;
+  std::string tensor_addr(const Tensor *tensor);
+
  private:
   std::string model_name_;
   std::vector<Tensor *> graph_inputs_;
@@ -195,6 +208,8 @@ class CoderContext {
   // operator C Lang files list, depended by the net.c. it will be add to CMakeLists.txt
   static std::set<std::string> c_files_;
   static size_t max_buffer_size_;
+  ShapeInfoContainer *shape_info_container_;
+  DynamicMemManager *dynamic_mem_manager_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_CONTEXT_H_

@@ -8,6 +8,7 @@
     Vocab是数据集中可能出现的所有Token的集合，保存了各Token与其ID之间的映射关系。
 
     .. py:method:: from_dataset(dataset, columns=None, freq_range=None, top_k=None, special_tokens=None, special_first=True)
+        :classmethod:
 
         从给定数据集创建Vocab。
 
@@ -36,6 +37,7 @@
             - **TypeError** - 当 `special_first` 不为bool类型。
 
     .. py:method:: from_dict(word_dict)
+        :classmethod:
 
         从给定字典创建Vocab。
 
@@ -50,6 +52,7 @@
             - **ValueError** - 当 `word_dict` 中的键值为负数。
 
     .. py:method:: from_file(file_path, delimiter="", vocab_size=None, special_tokens=None, special_first=True)
+        :classmethod:
 
         从给定文件创建Vocab。
 
@@ -73,6 +76,7 @@
 
 
     .. py:method:: from_list(word_list, special_tokens=None, special_first=True)
+        :classmethod:
 
         从给定Token列表创建Vocab。
 

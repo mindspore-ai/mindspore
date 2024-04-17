@@ -28,15 +28,15 @@ class AdamWeightDecayCpuKernelMod : public NativeCpuKernelMod {
  public:
   AdamWeightDecayCpuKernelMod() = default;
   ~AdamWeightDecayCpuKernelMod() override = default;
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
  private:
   template <typename T>
-  void LaunchAdamWeightDecay(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchAdamWeightDecayNnacl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchAdamWeightDecay(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void LaunchAdamWeightDecayNnacl(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs);
 
   TypeId dtype_{kTypeUnknown};
 };

@@ -50,7 +50,7 @@ FIFOReplayBuffer::~FIFOReplayBuffer() {
   }
 }
 
-bool FIFOReplayBuffer::Push(const std::vector<AddressPtr> &inputs) {
+bool FIFOReplayBuffer::Push(const std::vector<KernelTensor *> &inputs) {
   if (inputs.size() != schema_.size()) {
     MS_LOG(EXCEPTION) << "Transition element num error. Expect " << schema_.size() << " , but got " << inputs.size();
   }
@@ -62,10 +62,10 @@ bool FIFOReplayBuffer::Push(const std::vector<AddressPtr> &inputs) {
   return Emplace(head_, inputs);
 }
 
-bool FIFOReplayBuffer::Emplace(const size_t &pos, const std::vector<AddressPtr> &inputs) {
+bool FIFOReplayBuffer::Emplace(const size_t &pos, const std::vector<KernelTensor *> &inputs) {
   for (size_t i = 0; i < inputs.size(); i++) {
     void *offset = reinterpret_cast<uint8_t *>(buffer_[i]->addr) + pos * schema_[i];
-    auto ret = memcpy_s(offset, buffer_[i]->size, inputs[i]->addr, inputs[i]->size);
+    auto ret = memcpy_s(offset, buffer_[i]->size, inputs[i]->device_ptr(), inputs[i]->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "memcpy_s() failed. Error code: " << ret;
     }

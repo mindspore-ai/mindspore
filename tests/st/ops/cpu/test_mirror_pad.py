@@ -24,7 +24,7 @@ from mindspore import Tensor
 from mindspore.ops.composite import GradOperation
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mirror_pad():
@@ -75,7 +75,7 @@ class Net(nn.Cell):
         return self.pad(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mirror_pad_backprop():
@@ -92,7 +92,7 @@ def test_mirror_pad_backprop():
     np.testing.assert_array_almost_equal(dx, expected_dx)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mirror_pad_fwd_back_4d_int32_reflect():
@@ -132,7 +132,7 @@ def test_mirror_pad_fwd_back_4d_int32_reflect():
     np.testing.assert_array_equal(dx_value_expected, dx_value_obtained)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mirror_pad_fwd_back_4d_int32_symm():
@@ -172,7 +172,7 @@ def test_mirror_pad_fwd_back_4d_int32_symm():
     np.testing.assert_array_equal(dx_value_expected, dx_value_obtained)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mirror_pad_grad_dynamic_shape():

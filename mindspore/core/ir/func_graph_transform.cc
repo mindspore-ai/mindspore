@@ -20,7 +20,19 @@
 #include <memory>
 
 #include "ir/primitive.h"
+#include "ir/func_graph.h"
 
 namespace mindspore {
 const PrimitivePtr FuncGraphTransform::func_graph_prim_ = std::make_shared<Primitive>("FuncGraph");
+
+FuncGraphTransform::FuncGraphTransform(const FuncGraphPtr &func_graph, const PrimitivePtr &prim,
+                                       const CNodePtr &primal_cnode)
+    : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)), primal_cnode_(primal_cnode) {
+  func_graph->set_reserved(true);
+  auto manager = Manage({func_graph}, false);
+  const auto &total_used_fg = manager->func_graphs_used_total(func_graph);
+  for (const auto &used_fg : total_used_fg) {
+    used_fg->set_reserved(true);
+  }
 }
+}  // namespace mindspore

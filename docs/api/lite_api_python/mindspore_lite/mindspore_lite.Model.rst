@@ -11,7 +11,7 @@ mindspore_lite.Model
 
         参数：
             - **model_path** (str) - 定义输入模型文件的路径，例如："/home/user/model.mindir"。模型应该使用.mindir作为后缀。
-            - **model_type** (ModelType) - 定义输入模型文件的类型。选项有 ``ModelType::MINDIR`` 。有关详细信息，请参见 `模型类型 <https://mindspore.cn/lite/api/zh-CN/master/mindspore_lite/mindspore_lite.ModelType.html>`_ 。
+            - **model_type** (ModelType) - 定义输入模型文件的类型。选项有 ``ModelType::MINDIR`` 。有关详细信息，请参见 `模型类型 <https://mindspore.cn/lite/api/zh-CN/r2.3.q1/mindspore_lite/mindspore_lite.ModelType.html>`_ 。
             - **context** (Context，可选) - 定义上下文，用于在执行期间传递选项。默认值： ``None`` 。 ``None`` 表示设置target为cpu的Context。
             - **config_path** (str，可选) - 定义配置文件的路径，用于在构建模型期间传递用户定义选项。在以下场景中，用户可能需要设置参数。例如："/home/user/config.txt"。默认值： ``""`` 。
 
@@ -20,8 +20,8 @@ mindspore_lite.Model
                 .. code-block::
 
                     [execution_plan]
-                    [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为Float16）
-                    [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为Float32）
+                    [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为float16）
+                    [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为float32）
 
               - **用法2** - 在使用GPU推理时，进行TensorRT设置，配置文件内容及说明如下：
 
@@ -117,3 +117,19 @@ mindspore_lite.Model
             - **TypeError** - `dims` 是list类型，元素是list类型，但元素的元素不是int类型。
             - **ValueError** -  `inputs` 的size不等于 `dims` 的size。
             - **RuntimeError** - 调整输入形状的大小失败。
+
+    .. py:method:: update_weights(weights)
+
+        对模型中的常量Tensor进行权重更新。
+
+        参数：
+            - **weights** (list[list[Tensor]]) - 需要更新的Tensor。
+
+        异常：
+            - **RuntimeError** - `weights` 不是两层list。
+            - **RuntimeError** - `weights` 是list，但是两层list中的元素不是Tensor。
+            - **RuntimeError** - 权重更新失败。
+
+        教程样例：
+            - `动态权重更新
+              <https://www.mindspore.cn/lite/docs/zh-CN/r2.3.q1/use/cloud_infer/runtime_python.html#%E5%8A%A8%E6%80%81%E6%9D%83%E9%87%8D%E6%9B%B4%E6%96%B0>`_

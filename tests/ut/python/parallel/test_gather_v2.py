@@ -473,3 +473,29 @@ def test_gatherv2_dynamic_shape_and_set_out_strategy():
     phase = compile_graph(net, 8, "semi_auto_parallel", x, y)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('AllReduce-0', ['Mul-0'])
+
+
+class Net3(nn.Cell):
+    def __init__(self, axis=0, strategy1=None):
+        super().__init__()
+        self.gatherv2 = P.Gather().shard(strategy1)
+        self.axis = axis
+
+    def construct(self, x, y):
+        out = self.gatherv2(x, y, self.axis)
+        return out
+
+
+def test_gather_dynamic_shape_constraint():
+    """
+    Feature: distribute operator gather in dynamic shape
+    Description: shard axis, and param[axis] is dynamic
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(full_batch=False)
+    strategy1 = ((8, 1), (1, 1))
+    net = Net3(0, strategy1)
+    x = Tensor(shape=[None, 64], dtype=ms.float32)
+    y = Tensor(np.ones([64, 64]), dtype=ms.int32)
+    with pytest.raises(RuntimeError):
+        compile_graph(net, 8, "semi_auto_parallel", x, y)

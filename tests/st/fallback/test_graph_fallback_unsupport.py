@@ -49,7 +49,7 @@ def test_return_interpret_object():
     assert np.all(output[2] == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -91,7 +91,7 @@ def test_str_format_in_variable_scene():
     assert output == "[2], [1]"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -132,7 +132,7 @@ def test_in_with_none():
     assert foo()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -153,7 +153,7 @@ def test_sequence_in_sequence():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -175,7 +175,7 @@ def test_all_with_variable():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -197,7 +197,7 @@ def test_slice_with_variable():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -239,32 +239,7 @@ def test_compress_with_mutable_input():
     assert (foo(Tensor([1])) == [1, 3, 4]).all()
 
 
-@pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_star_to_compress_input():
-    """
-    Feature: Support JIT Fallback runtime feature.
-    Description: use star to compress assigned input.
-    Expectation: No exception.
-    """
-
-    @jit
-    def foo():
-        x = [1, 2, 3, 4]
-        a, *b = x
-        return a, b
-
-    ret = foo()
-    assert len(ret) == 2
-    assert ret[0] == 1
-    assert ret[1] == [2, 3, 4]
-
-
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -285,7 +260,7 @@ def test_math_ceil_with_variable():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -312,28 +287,7 @@ def test_unpack_interpret_node():
     assert ret == 10
 
 
-@pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_starred_to_unpack_input():
-    """
-    Feature: Support JIT Fallback runtime feature.
-    Description: * operator can not unpack a list.
-    Expectation: No exception.
-    """
-
-    @jit
-    def foo(x):
-        return f"output is {*a,}"
-
-    ret = foo([1, 2, 3, 4])
-    assert ret == "output is (1, 2, 3, 4)"
-
-
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -357,6 +311,7 @@ def test_call_third_party_class():
     assert out == deque([4, 3, 2, 1])
 
 
+@pytest.mark.skip(reason="kwargs with AbstractAny, fix later")
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -384,7 +339,7 @@ def test_np_ix_with_variable():
     assert (ret == [[0], [1], [2], [3], [4]]).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -406,7 +361,7 @@ def test_generate_tensor_using_variable_numpy_array():
     assert (out == Tensor([0, 1])).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -428,7 +383,7 @@ def test_numpy_prod_with_variable_axis():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -452,7 +407,7 @@ def test_for_with_interpret_object():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

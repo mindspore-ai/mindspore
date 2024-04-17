@@ -74,7 +74,7 @@ def test_apply_proximal_gradient_descent_float32():
     run_net(var, alpha, l1, l2, delta, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_apply_proximal_gradient_descent_float16():
@@ -119,7 +119,7 @@ class ProximalGradientDescentNetVmap(nn.Cell):
         return self.vmap_proximal_gradient_descent(self.var, alpha, l1, l2, delta)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_apply_proximal_gradient_descent_op_vmap():
@@ -162,7 +162,7 @@ class ProximalGradientDescentNetVmap2(nn.Cell):
         return self.vmap_proximal_gradient_descent(self.var, alpha, l1, l2, delta)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_apply_proximal_adagrad_op_vmap2():

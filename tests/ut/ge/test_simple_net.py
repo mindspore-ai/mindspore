@@ -14,12 +14,14 @@
 # ============================================================================
 import os
 import pytest
+from tests.st.utils import test_utils
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_simple_net():
     """
     Feature: unify ge and vm backend

@@ -15,6 +15,8 @@
  */
 
 #include "runtime/graph_scheduler/actor/memory/memory_free_actor.h"
+
+#include <vector>
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 
 namespace mindspore {
@@ -30,6 +32,14 @@ void MemoryFreeActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) 
   } else {
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeSomasMemory, somas_info_, device_contexts_[0],
                           context, GetAID());
+  }
+}
+
+void MemoryFreeActor::ProcessSomasCrossStreamMemorySynchronization(OpContext<DeviceTensor> *const /*context*/) {
+  if (ActorDispatcher::enable_multi_stream()) {
+    ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kStreamSync, GetAID().Name());
+    device_contexts_[0]->device_res_manager_->SyncAllStreams();
+    MS_LOG(INFO) << "Somas cross stream memory synchronize, sync all streams.";
   }
 }
 }  // namespace runtime

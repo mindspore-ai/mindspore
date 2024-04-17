@@ -97,7 +97,6 @@ class FakeImageOp : public MappableLeafOp {
   std::vector<int> image_size_;
   int32_t num_classes_;
 
-  int64_t rows_per_buffer_;
   std::unique_ptr<DataSchema> data_schema_;
 
   int32_t image_total_size_;

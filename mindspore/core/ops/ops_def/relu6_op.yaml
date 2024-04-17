@@ -1,0 +1,10 @@
+#operator relu6
+relu6:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ReLU6

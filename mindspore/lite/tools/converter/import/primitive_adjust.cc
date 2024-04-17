@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,11 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <algorithm>
 #include "mindspore/core/ops/conv_pool_ops.h"
+#include "ops/nn_op_name.h"
 #include "ops/op_utils.h"
-#include "ops/batch_norm.h"
-#include "ops/elu.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fused_batch_norm.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/fusion/div_fusion.h"
@@ -53,27 +54,12 @@
 #include "ops/fusion/tile_fusion.h"
 #include "ops/fusion/topk_fusion.h"
 #include "ops/grad/activation_grad.h"
-#include "ops/grad/avg_pool_grad.h"
-#include "ops/grad/batch_norm_grad.h"
 #include "ops/grad/max_pool_grad.h"
-#include "ops/gelu.h"
 #include "ops/leaky_relu.h"
 #include "ops/fusion/mat_mul_fusion.h"
-#include "ops/reduce_all.h"
 #include "ops/reduce_asum.h"
-#include "ops/reduce_max.h"
-#include "ops/reduce_mean.h"
-#include "ops/reduce_min.h"
-#include "ops/reduce_prod.h"
-#include "ops/reduce_sum.h"
 #include "ops/reduce_sum_square.h"
-#include "ops/relu.h"
-#include "ops/relu6.h"
 #include "ops/resize.h"
-#include "ops/resize_bilinear.h"
-#include "ops/resize_nearest_neighbor.h"
-#include "ops/shape.h"
-#include "ops/sigmoid.h"
 #include "ops/stack.h"
 #include "ops/tanh.h"
 #include "ops/softplus.h"
@@ -85,11 +71,10 @@
 #include "nnacl/op_base.h"
 using mindspore::ops::kNameAdd;
 using mindspore::ops::kNameAdder;
-using mindspore::ops::kNameArgMax;
-using mindspore::ops::kNameArgMin;
+using mindspore::ops::kNameArgmax;
+using mindspore::ops::kNameArgmin;
 using mindspore::ops::kNameAvgPool;
 using mindspore::ops::kNameAvgPoolGrad;
-using mindspore::ops::kNameBatchNorm;
 using mindspore::ops::kNameConv2D;
 using mindspore::ops::kNameConv2DBackpropFilter;
 using mindspore::ops::kNameConv2DBackpropInput;
@@ -121,7 +106,6 @@ using mindspore::ops::kNameReduceSum;
 using mindspore::ops::kNameReduceSumSquare;
 using mindspore::ops::kNameReLU;
 using mindspore::ops::kNameReLU6;
-using mindspore::ops::kNameResizeBilinear;
 using mindspore::ops::kNameResizeNearestNeighbor;
 using mindspore::ops::kNameScale;
 using mindspore::ops::kNameSigmoid;
@@ -155,6 +139,7 @@ constexpr auto kNameSlice = "Slice";
 constexpr auto kNameAvgPoolGradGpu = "AvgPoolGradGpu";
 constexpr auto kNameAvgPoolGradCpu = "AvgPoolGradCpu";
 constexpr auto kNameTanhGrad = "TanhGrad";
+constexpr auto kNameResizeBilinear = "ResizeBilinear";
 constexpr auto kNameResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kNameResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
 constexpr auto kNameStandardNormal = "StandardNormal";
@@ -208,12 +193,17 @@ int AttrAdjust(const PrimitivePtr &prim, const std::string &name, const std::vec
     new_value.push_back(origin_value[0]);
     new_value.push_back(origin_value[0]);
   } else {
-    for (auto index : position) {
-      if (index >= static_cast<int>(origin_value.size())) {
-        MS_LOG(ERROR) << "index is out of range.";
-        return lite::RET_ERROR;
+    if (origin_value.size() < 4) {
+      (void)std::transform(origin_value.begin(), origin_value.end(), std::back_inserter(new_value),
+                           [](const int v) { return static_cast<int64_t>(v); });
+    } else {
+      for (auto index : position) {
+        if (index >= static_cast<int>(origin_value.size())) {
+          MS_LOG(ERROR) << "index is out of range.";
+          return lite::RET_ERROR;
+        }
+        new_value.push_back(static_cast<int64_t>(origin_value[index]));
       }
-      new_value.push_back(static_cast<int64_t>(origin_value[index]));
     }
   }
   prim->AddAttr(name, MakeValue(new_value));
@@ -603,7 +593,10 @@ int MoveAttrBatchNorm(const CNodePtr &cnode) {
   auto dst_prim_c = dst_prim->GetPrim();
   MS_CHECK_TRUE_MSG(dst_prim_c != nullptr, RET_NULL_PTR, "dst_prim_c is nullptr.");
   (void)dst_prim_c->SetAttrs(src_prim->attrs());
-  bool is_training = GetValue<bool>(src_prim->GetAttr(ops::kIsTraining));
+  bool is_training = false;
+  if (src_prim->GetAttr(ops::kIsTraining) != nullptr) {
+    is_training = GetValue<bool>(src_prim->GetAttr(ops::kIsTraining));
+  }
   dst_prim->set_mode(static_cast<int64_t>(is_training));
   value_node->set_value(dst_prim_c);
   return lite::RET_OK;
@@ -700,9 +693,9 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
 
 REGIST_PRIMITIVE_ADJUST(kNameAdd, MoveAttrMapCommon<ops::AddFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameAdder, MoveAttrMapAdder)
-REGIST_PRIMITIVE_ADJUST(kNameArgMax, MoveAttrMapCommon<ops::ArgMaxFusion>)
+REGIST_PRIMITIVE_ADJUST(kNameArgmax, MoveAttrMapCommon<ops::ArgMaxFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameArgMaxWithValue, MoveAttrMapArgMaxWithValue)
-REGIST_PRIMITIVE_ADJUST(kNameArgMin, MoveAttrMapCommon<ops::ArgMinFusion>)
+REGIST_PRIMITIVE_ADJUST(kNameArgmin, MoveAttrMapCommon<ops::ArgMinFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameArgMinWithValue, MoveAttrMapCommon<ops::ArgMinFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPool, MoveAttrPool)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGrad, MoveAttrPoolGrad)
@@ -710,7 +703,7 @@ REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGradGpu, MoveAttrPoolGrad)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGradCpu, MoveAttrPoolGrad)
 REGIST_PRIMITIVE_ADJUST(kNameBatchMatMul, MoveAttrMapCommon<ops::MatMulFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameMatMul, MoveAttrMapCommon<ops::MatMulFusion>)
-REGIST_PRIMITIVE_ADJUST(kNameBatchNorm, MoveAttrBatchNorm)
+REGIST_PRIMITIVE_ADJUST(kBatchNormOpName, MoveAttrBatchNorm)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropFilter, MoveAttrMapCommon<ops::Conv2DBackpropFilterFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropInput, MoveAttrMapCommon<ops::Conv2DBackpropInputFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2D, MoveAttrMapConv2D)

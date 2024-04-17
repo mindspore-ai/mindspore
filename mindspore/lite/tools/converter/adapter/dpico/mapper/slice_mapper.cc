@@ -19,10 +19,11 @@
 #include <utility>
 #include <algorithm>
 #include <vector>
+#include "common/op_attr.h"
 #include "common/anf_util.h"
 #include "common/op_enum.h"
 #include "common/check_base.h"
-#include "ops/split.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "op/slice_operator.h"
 
 namespace mindspore {
@@ -68,7 +69,7 @@ STATUS SliceMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr>
   }
   slice_operator->SetAxis(static_cast<int32_t>(split_axis));
   if (split_prim->GetAttr(ops::kSizeSplits) != nullptr) {
-    auto sizes = split_prim->get_size_splits();
+    auto sizes = api::GetValue<std::vector<int64_t>>(split_prim->GetAttr("size_splits"));
     if (sizes.empty()) {
       MS_LOG(ERROR) << "sizes shouldn't be empty." << cnode->fullname_with_scope();
       return RET_ERROR;

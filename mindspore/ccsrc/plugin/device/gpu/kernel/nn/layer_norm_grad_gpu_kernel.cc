@@ -16,8 +16,8 @@
 
 #include "plugin/device/gpu/kernel/nn/layer_norm_grad_gpu_kernel.h"
 #include <algorithm>
+#include <functional>
 #include <numeric>
-#include "mindspore/core/ops/grad/layer_norm_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/layer_norm_grad_impl.cuh"
 
 namespace mindspore {
@@ -28,18 +28,15 @@ constexpr size_t kLayerNormGradInputDyIndex = 1;
 constexpr size_t kLayerNormGradInputVarIndex = 2;
 constexpr size_t kLayerNormGradInputMeanIndex = 3;
 constexpr size_t kLayerNormGradInputGammaIndex = 4;
+constexpr size_t kLayerNormGradBeginNormAxisIndex = 5;
+constexpr size_t kLayerNormGradBeginParamsAxisIndex = 6;
 constexpr size_t kLayerNormGradOutputDxIndex = 0;
 constexpr size_t kLayerNormGradOutputDgIndex = 1;
 constexpr size_t kLayerNormGradOutputDbIndex = 2;
 }  // namespace
 
-bool LayerNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "LayerNormGradGpuKernelMod Cast ops::LayerNormGrad failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
+bool LayerNormGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -47,26 +44,26 @@ bool LayerNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  epsilon_ = kernel_ptr->get_epsilon();
+  if (!primitive()->HasAttr(ops::kEpsilon)) {
+    MS_LOG(WARNING) << "LayerNormGrad should have attr 'epsilon'.";
+  } else {
+    epsilon_ = GetValue<float>(primitive()->GetAttr(ops::kEpsilon));
+  }
+
   return true;
 }
 
-int LayerNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LayerNormGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
-  }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast ops::LayerNormGrad failed!";
   }
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid LayerNormGradGpuKernelMod input size!";
   }
-  auto begin_norm_axis = kernel_ptr->get_begin_norm_axis();
-  auto begin_params_axis = kernel_ptr->get_begin_params_axis();
+  auto begin_norm_axis = inputs[kLayerNormGradBeginNormAxisIndex]->GetValueWithCheck<int64_t>();
+  auto begin_params_axis = inputs[kLayerNormGradBeginParamsAxisIndex]->GetValueWithCheck<int64_t>();
   auto input_shape = inputs[kLayerNormGradInputXIndex]->GetShapeVector();
   if (begin_norm_axis < 0) {
     begin_norm_axis += input_shape.size();
@@ -92,16 +89,16 @@ int LayerNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return ret;
 }
 
-bool LayerNormGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool LayerNormGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   kernel_func_(this, inputs, outputs);
   return true;
 }
 
 template <typename T>
-void LayerNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
+void LayerNormGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto x = GetDeviceAddress<T>(inputs, kLayerNormGradInputXIndex);
   auto dy = GetDeviceAddress<T>(inputs, kLayerNormGradInputDyIndex);
   auto var = GetDeviceAddress<float>(inputs, kLayerNormGradInputVarIndex);
@@ -123,6 +120,8 @@ std::vector<std::pair<KernelAttr, LayerNormGradGpuKernelMod::KernelFunc>> LayerN
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16),
@@ -133,6 +132,8 @@ std::vector<std::pair<KernelAttr, LayerNormGradGpuKernelMod::KernelFunc>> LayerN
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
@@ -143,6 +144,8 @@ std::vector<std::pair<KernelAttr, LayerNormGradGpuKernelMod::KernelFunc>> LayerN
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat64),

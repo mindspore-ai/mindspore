@@ -125,6 +125,9 @@ ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const 
 ParameterPtr BuildFloatVecParameterNode(const FuncGraphPtr &func_graph, const std::vector<float> &data,
                                         const std::string &node_name);
 
+ParameterPtr BuildFloat16ValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
+                                            const std::string &node_name, bool empty_shape);
+
 ParameterPtr BuildFloat16VecParameterNode(const FuncGraphPtr &func_graph, const std::vector<float16> &data,
                                           const std::string &node_name);
 
@@ -188,6 +191,10 @@ inline bool IsSpecifiedNode(const BaseRef &n) {
   }
   return false;
 }
+
+tensor::TensorPtr GetTensorFromParameterNode(const EquivPtr &equiv, const VarPtr &input);
+const float GetFloatParameterValue(const EquivPtr &equiv, const VarPtr &input);
+const int GetIntParameterValue(const EquivPtr &equiv, const VarPtr &input);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_

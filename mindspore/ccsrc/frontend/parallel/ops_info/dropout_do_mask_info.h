@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ class DropoutDoMaskInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status GetAttrs() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 };
 
 using DropoutDoMaskInfoPtr = std::shared_ptr<DropoutDoMaskInfo>;

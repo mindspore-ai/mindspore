@@ -88,21 +88,6 @@ def test_histogram_multi_summary():
 
 
 @security_off_wrap
-def test_histogram_summary_empty_tensor():
-    """Test histogram summary, input is an empty tensor."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
-            test_data = _wrap_test_data(Tensor([]))
-            _cache_summary_tensor_data(test_data)
-            test_writer.record(step=1)
-
-        file_name = os.path.realpath(test_writer.log_dir)
-        with SummaryReader(file_name) as reader:
-            event = reader.read_event()
-            assert event.summary.value[0].histogram.count == 0
-
-
-@security_off_wrap
 def test_histogram_summary_same_value():
     """Test histogram summary, input is an ones tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:

@@ -1,0 +1,36 @@
+log_softmax:
+    description: |
+        Applies the Log Softmax function to the input tensor on the specified axis.
+        Supposes a slice in the given axis, :math:`x` for each element :math:`x_i`,
+        the Log Softmax function is shown as follows:
+    
+        .. math::
+            \text{output}(x_i) = \log \left(\frac{\exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
+    
+        where :math:`N` is the length of the Tensor.
+    
+        Args:
+            logits (Tensor): The input Tensor, which is the :math:`x` in the formula above, it's shape is :math:`(N, *)`, 
+                where :math:`*` means, any number of additional dimensions, with float16 or float32 data type.
+            axis (int): The axis to perform the Log softmax operation. Default: ``-1`` .
+    
+        Returns:
+            Tensor, with the same type and shape as the logits.
+    
+        Raises:
+            TypeError: If `axis` is not an int.
+            TypeError: If dtype of `logits` is neither float16 nor float32.
+            ValueError: If `axis` is not in range [-len(logits.shape), len(logits.shape)).
+            ValueError: If dimension of `logits` is less than 1.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+            >>> output = ops.log_softmax(logits)
+            >>> print(output)
+            [-4.4519143 -3.4519143 -2.4519143 -1.4519144 -0.4519144]

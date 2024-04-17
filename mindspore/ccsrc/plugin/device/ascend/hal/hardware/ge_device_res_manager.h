@@ -21,10 +21,10 @@
 #include <string>
 #include <map>
 #include "runtime/hardware/device_context.h"
-#include "runtime/device/memory_manager.h"
 #include "utils/ms_context.h"
 #include "include/transform/graph_ir/types.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#include "plugin/device/ascend/hal/hardware/dummy_ascend_collective_comm_lib.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "runtime/device/kernel_runtime_manager.h"
 
@@ -36,6 +36,7 @@ class GeHostAddress : public cpu::CPUDeviceAddress {
   GeHostAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const std::string &device_name,
                 uint32_t device_id)
       : CPUDeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+  explicit GeHostAddress(const KernelTensorPtr &kernel_tensor) : CPUDeviceAddress(kernel_tensor) {}
   DeviceType GetDeviceType() const override { return DeviceType::kAscend; }
 };
 
@@ -55,36 +56,43 @@ class GeAllocator : public ::ge::Allocator {
 
 class GeDeviceResManager : public DeviceResManager {
  public:
-  GeDeviceResManager() : mem_manager_(nullptr) {}
+  GeDeviceResManager() {}
   ~GeDeviceResManager() override = default;
 
   void Initialize() override;
 
   void Destroy() override;
 
-  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
+  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                               uint32_t stream_id = kDefaultStreamIndex) const override;
 
-  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape, const UserDataPtr &user_data = nullptr) const override;
+  DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
 
   static void CreateSessionAndGraphRunner();
 
   bool LoadCollectiveCommLib() override {
-    collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
+    if (common::GetEnv(kSimulationLevel).empty()) {
+      collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
+    } else {
+      collective_comm_lib_ = &DummyAscendCollectiveCommLib::GetInstance();
+    }
     return true;
   }
 
   void ResetStreamAndCtx() override;
   bool BindDeviceToCurrentThread(bool force_bind) const override;
-  void *GetStream() const {
+  void *GetStream() const override {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     return runtime_instance_->compute_stream();
   }
 
   // Relevant function to allocate and free device memory of raw ptr.
   bool AllocateMemory(DeviceAddress *const &address) const override;
-  void *AllocateMemory(size_t size) const override;
+  void *AllocateMemory(size_t size, uint32_t stream_id = kDefaultStreamIndex) const override;
   void FreeMemory(void *ptr) const override;
+  void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                       const std::vector<size_t> &keep_addr_sizes) const override;
+
   size_t GetMaxUsedMemorySize() const override;
 
   transform::GeAllocatorPtr GetAllocator() { return std::make_shared<GeAllocator>(this); }
@@ -93,16 +101,30 @@ class GeDeviceResManager : public DeviceResManager {
   void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override;
 
   bool CreateStream(size_t *stream_id) const override;
+  bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const override;
   void *GetStream(size_t stream_id) const override;
+  void SetCurrentStreamId(size_t stream_id) override;
+  size_t GetCurrentStreamId() const override;
+  bool QueryStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id = 0) const override;
   bool SyncAllStreams() const override;
+  bool SyncNotDefaultStreams() const override;
+  size_t DefaultStream() const override;
+
+  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) override;
+
+  bool single_op_multi_stream_enable() const override;
+  void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) override;
+  // Only used in graph_mode with MS_DISABLE_REF_MODE, delete it when delete MS_DISABLE_REF_MODEF
+  void SetCPUMemManager();
 
  private:
   friend class GeGraphExecutor;
   static void GeSetContextOptions(const std::shared_ptr<MsContext> &ms_context_ptr, transform::SessionOptions *options);
   static void GeSetReuseOptions(const std::string &key, size_t num, transform::SessionOptions *options);
-  std::shared_ptr<MemoryManager> mem_manager_ = nullptr;
   KernelRuntime *runtime_instance_ = nullptr;
+  // Only used in graph_mode with MS_DISABLE_REF_MODE, delete it when delete MS_DISABLE_REF_MODE
+  bool is_use_cpu_memory_ = false;
 };
 }  // namespace ascend
 }  // namespace device

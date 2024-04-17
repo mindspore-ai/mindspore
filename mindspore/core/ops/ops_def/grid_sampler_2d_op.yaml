@@ -1,0 +1,28 @@
+#operator grid_sampler_2d
+grid_sampler_2d:
+    args:
+        input_x:
+            dtype: tensor
+        grid:
+            dtype: tensor
+        interpolation_mode:
+            dtype: int
+            default: "'bilinear'"
+            prim_init: True
+            arg_handler: str_to_enum
+        padding_mode:
+            dtype: int
+            default: "'zeros'"
+            prim_init: True
+            arg_handler: str_to_enum
+        align_corners:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: GridSampler2D
+    function:
+        disable: True

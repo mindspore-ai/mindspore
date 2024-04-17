@@ -25,9 +25,6 @@ BACKEND_EXPORT const PrimitiveEvalImplMap &GetBackendPrimitiveInferMap();
 BACKEND_EXPORT PrimitiveEvalImplMap *GetBackendPrimitiveInferMapPtr();
 // get prim infer from core/ops infer map or backend infer map
 BACKEND_EXPORT std::optional<StandardPrimitiveImplReg> GetBackendPrimitiveInferImpl(const PrimitivePtr &primitive);
-#define REGISTER_PRIMITIVE_BACKEND_EVAL_IMPL(name, primitive, infer_impl, infer_value_impl)                      \
-  auto helper_##name = abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetBackendPrimitiveInferMapPtr(), \
-                                                                     primitive, infer_impl, infer_value_impl, false);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPERATE_OPS_FRONT_INFER_FUNCTION_H_

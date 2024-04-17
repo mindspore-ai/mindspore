@@ -259,9 +259,9 @@ def test_mixup_batch_float_label():
     decode_label = transforms.OneHot(5)(label)
     float_label = transforms.TypeCast(float)(decode_label)
     _, mix_label = vision.MixUpBatch()(image, float_label)
-    expected_label = np.array([[0., 0.6824126, 0., 0., 0.3175874],
+    expected_label = np.array([[0., 0.8252811, 0., 0., 0.1747189],
                                [0., 0., 0., 0., 1.],
-                               [0., 0.3175874, 0., 0., 0.6824126]])
+                               [0., 0.1747189, 0., 0., 0.8252811]])
     np.testing.assert_almost_equal(mix_label, expected_label)
 
     ds.config.set_seed(original_seed)
@@ -284,9 +284,9 @@ def test_mixup_batch_then_cut_mix_batch():
     dataset = dataset.map(operations=mix_up_batch, input_columns=["image", "label"])
     dataset = dataset.map(operations=cut_mix_batch, input_columns=["image", "label"])
 
-    expected_label = np.array([[0.2858054, 0.49770468, 0.21648991, 0., 0., 0., 0., 0., 0., 0.],
-                               [0., 0.54197174, 0.45802826, 0., 0., 0., 0., 0., 0., 0.],
-                               [0.45802826, 0., 0.54197174, 0., 0., 0., 0., 0., 0., 0.]])
+    expected_label = np.array([[0.5112224, 0.3333217, 0.1554559, 0., 0., 0., 0., 0., 0., 0.],
+                               [0.2947904, 0.7052096, 0., 0., 0., 0., 0., 0., 0., 0.],
+                               [0., 0.2947904, 0.7052096, 0., 0., 0., 0., 0., 0., 0.]])
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_almost_equal(item["label"], expected_label)
 

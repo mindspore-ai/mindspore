@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
+#include "ir/anf.h"
 #include "utils/hash_map.h"
 #include "utils/ms_utils.h"
 #include "base/base.h"
@@ -34,7 +36,9 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
+#include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "utils/log_adapter.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -47,6 +51,7 @@ using TensorLayouts = std::vector<TensorLayout>;
 using different_type = std::vector<int64_t>::difference_type;
 using PrimitiveAttrs = mindspore::HashMap<std::string, ValuePtr>;
 using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>;
+using TensorRedistributionPtr = std::shared_ptr<TensorRedistribution>;
 
 #define FILTER_LOG(x) (x) ? void(0) : MS_LOG(ERROR)
 
@@ -59,6 +64,8 @@ enum InferStrategyMode {
 };
 
 class Edge;
+
+inline std::string GetPrimNameFromInfoName(const std::string &info_name);
 
 class OperatorInfo {
  public:
@@ -77,6 +84,7 @@ class OperatorInfo {
     stage_device_list_ = g_device_manager->GetDeviceListInThisStage();
     stage_device_size_ = SizeToLong(stage_device_list_.size());
     cnode_ = nullptr;
+    prim_name_ = GetPrimNameFromInfoName(this->name_);
   }
 
   virtual ~OperatorInfo() = default;
@@ -92,7 +100,9 @@ class OperatorInfo {
   // If output is tuple, outputs_type.size() is greater than 1.
   Status set_outputs_type(const std::vector<TypePtr> &outputs_type);
   const std::vector<TypePtr> &outputs_type() const { return outputs_type_; }
-  virtual Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
+  virtual Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+                      const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts = {},
+                      const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts = {});
   // only init the necessary parts
   virtual Status InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
 
@@ -110,6 +120,9 @@ class OperatorInfo {
   void ComputeBatchSplitFlagList();
   Shapes inputs_shape() const { return inputs_shape_; }
   Shapes outputs_shape() const { return outputs_shape_; }
+  void set_inputs_divisor(const Shapes &in_divisor) { inputs_divisor_ = in_divisor; }
+  void set_outputs_divisor(const Shapes &out_divisor) { outputs_divisor_ = out_divisor; }
+  void set_dynamic_shape_flag(bool flag) { dynamic_shape_flag_ = flag; }
 
   double GetForwardMemoryCostFromCNode();
   // This is a common method for setting operator cost for a given strategy, in which the validity of this strategy
@@ -179,9 +192,9 @@ class OperatorInfo {
   void SetIsStrategyCostExactTrue() { is_strategy_cost_exact_ = true; }
   void ClearStrategyCost() { strategy_cost_.clear(); }
   void CheckSelectedStrategy(const StrategyPtr &s_strategy);
-  Status InitSelectedStrategy(const StrategyPtr &s_strategy) {
+  Status InitSelectedStrategy(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
     set_auto_parallel(false);
-    return Init(s_strategy, nullptr);
+    return Init(in_strategy, out_strategy);
   }
   void set_input_value(const std::vector<ValuePtr> &input_value) { input_value_ = input_value; }
   const std::vector<ValuePtr> &input_value() const { return input_value_; }
@@ -194,8 +207,10 @@ class OperatorInfo {
   CNodePtr cnode() const { return cnode_; }
   bool is_alive() const { return is_alive_; }
   void SetNotAlive() { is_alive_ = false; }
+  std::vector<bool> split_flag_list() const { return split_flag_list_; }
   StrategyPtr strategy() const { return strategy_; }
   StrategyPtr out_strategy() const { return out_strategy_; }
+  void set_out_strategy(const StrategyPtr &strategy) { out_strategy_ = strategy; }
   void set_strategy(const StrategyPtr &strategy) { strategy_ = strategy; }
   void set_refkey_parameter_name(std::string p_name) { refkey_parameter_name_ = std::move(p_name); }
   const std::string &refkey_parameter_name() const { return refkey_parameter_name_; }
@@ -224,35 +239,79 @@ class OperatorInfo {
   bool repeated_num_in_dev_matrix_right() const { return repeated_num_in_dev_matrix_right_; }
   void set_repeated_num_in_dev_matrix_right(bool is_right) { repeated_num_in_dev_matrix_right_ = is_right; }
 
+  TensorRedistributionPtr CreateTensorRedistribution(bool construct_op_flag = true, bool keep_reshape = false) {
+    if (this->tensor_redistribution_ != nullptr) {
+      MS_LOG(DEBUG) << "TensorRedistribution re-created.";
+    }
+    this->tensor_redistribution_ = std::make_shared<TensorRedistribution>(construct_op_flag, keep_reshape);
+    return this->tensor_redistribution_;
+  }
+
+  TensorRedistributionPtr CreateReshapeTensorRedistribution(bool construct_op_flag = true, bool keep_reshape = false) {
+    if (this->reshape_tensor_redistribution_ != nullptr) {
+      MS_LOG(DEBUG) << "TensorRedistribution re-created.";
+    }
+    this->reshape_tensor_redistribution_ = std::make_shared<TensorRedistribution>(construct_op_flag, keep_reshape);
+    return this->reshape_tensor_redistribution_;
+  }
+
+  void SetTensorRedistribution(const TensorRedistributionPtr &tensor_redistribution) {
+    this->tensor_redistribution_ = tensor_redistribution;
+  }
+
+  void SetReshapeTensorRedistribution(const TensorRedistributionPtr &tensor_redistribution) {
+    this->reshape_tensor_redistribution_ = tensor_redistribution;
+  }
+
+  TensorRedistributionPtr tensor_redistribution() { return this->tensor_redistribution_; }
+
+  TensorRedistributionPtr reshape_tensor_redistribution() { return this->reshape_tensor_redistribution_; }
+
   // Key for user data.
   constexpr static char key[] = "OpInfo";
 
  protected:
   // needed by rec_parser
   std::string type_;
+  TensorRedistributionPtr tensor_redistribution_;
+  TensorRedistributionPtr reshape_tensor_redistribution_;
   bool is_last_node_ = false;
   virtual Status CheckStrategy(const StrategyPtr &strategy) = 0;
   virtual Status InferTensorMap() = 0;
   virtual Status InferOutputTensorMap() { return SUCCESS; }
+  virtual Status InferOutputTensorInfo() { return SUCCESS; }
   virtual Status CheckLayoutConfig() { return SUCCESS; }
+  virtual Status CheckInputLayout() { return SUCCESS; }
+  virtual Status CheckOutputLayout() { return SUCCESS; }
+  virtual Status InferForwardCommunicationByLayout() { return SUCCESS; }
+  virtual Status InferMirrorOpsByLayout();
   virtual Status InferForwardCommunication() = 0;
   virtual Status GetAttrs() = 0;
   virtual Status InferDevMatrixShape() = 0;
   virtual Status InferMirrorOps();
   virtual Status InferTensorInfo();
+
   virtual void InferReplaceOps() {}
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
+  virtual Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) { return SUCCESS; }
   Status CheckStrategyByVector(const Shapes &strategy, const Shapes &inputs_shape);
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
+  void DivisorsReplaceShapes();  // in dynamic shape, using divisors replace to shapes before CheckStrategy and so on
+  void ResumeShapes();           // in dynamic shape, resume shapes after CheckStrategy and so on
+  void DynamicShapeCheckStrategyLog();
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
-  virtual Status InferAttrs();
+  Status InferAttrs();
   void ResetQueueMember();
   Status InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
+  Status InitWithTensorLayout(const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
+                              const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts);
   Status InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
   Status InferRepeatedCalcInfo();
   Status InferVirtualDivOps();
+  bool IsDynamicShape();
+  bool IsDynamicRank();
 
   // Calculate the number of repeated calculations for the output by the number of devices and the output tensor map.
   // The tensor map of Outputs[0] is used by default. If there are multiple outputs, need to identify which output
@@ -273,8 +332,14 @@ class OperatorInfo {
   }
 
   std::string name_;
+  std::string prim_name_;
   Shapes inputs_shape_;
   Shapes outputs_shape_;
+  Shapes inputs_divisor_;   // using for dynamic shape, the size is equal to inputs_shape_
+  Shapes outputs_divisor_;  // using for dynamic shape, the size is equal to outputs_shape_
+  Shapes inputs_shape_clone_;
+  Shapes outputs_shape_clone_;
+  bool dynamic_shape_flag_ = False;  // means this op in the dynamic shape graph
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   std::vector<ValuePtr> input_value_;
   TypePtr outputs_dtype_;
@@ -301,6 +366,8 @@ class OperatorInfo {
   int64_t stage_device_size_ = 0;
   bool infer_attrs_completed_ = false;
   bool is_layout_config_ = false;
+  bool is_dynamic_shape_ = false;
+  bool is_dynamic_rank_ = false;
   Shapes strategy_from_layout_;
 
   bool is_auto_parallel_ = false;      // false: semi_auto_parallel; true: auto_parallel
@@ -350,6 +417,7 @@ class OperatorInfo {
   std::vector<TypePtr> outputs_type_;
   int64_t swc_index_ = -1;
   Status GetLayoutConfig();
+  Status GetRepeatedNumInDevMatrixRight();
   Status CheckLayoutConfigBase();
 };
 
@@ -361,6 +429,8 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
 Operator CreateAllGatherOp(const std::string &group);
 Operator CreateCastOp(TypePtr type);
 Operator CreateDivOp(float scale);
+Operator CreateScalarFloorDivOp(int64_t div_num);
+Operator CreateScalarMulOp(int64_t scalar);
 void AddCNodePrimAttr(const CNodePtr &comm_node, const std::string &attr_name, const ValuePtr &attr_val);
 int32_t AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
 Operator CreateMicroStepAllGatherOp(const std::string &group);
@@ -396,6 +466,82 @@ AnfNodePtr CreateTensorTupleAnfNodePtr(const tensor::TensorPtrList &tensor_tuple
 ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, const TypePtr &dtype);
 Operator CreateDivOpWithType(float divisor, const TypePtr &dtype);
 std::vector<int64_t> GetTensorValue(const ValuePtr &ori_value);
+
+inline std::string GetPrimNameFromInfoName(const std::string &info_name) {
+  auto prim_name = info_name;
+  if (auto pos = info_name.rfind("Info"); pos != std::string::npos) {
+    prim_name = info_name.substr(0, pos);
+  }
+  return prim_name;
+}
+
+template <typename T>
+std::optional<T> GetScalarValueFromInputs(const std::vector<ValuePtr> &input_value, size_t idx) {
+  if (idx == SIZE_MAX) {
+    MS_EXCEPTION(ValueError) << "Index is the size max, target value maybe wrong!";
+  }
+
+  if (input_value.size() <= idx || input_value[idx] == nullptr) {
+    return std::nullopt;
+  }
+  return ops::GetScalarValue<T>(input_value[idx]);
+}
+
+template <typename T>
+std::optional<T> GetScalarValueFromInputs(const std::vector<ValuePtr> &input_value, const std::string &op_name,
+                                          const std::string &attr_name) {
+  auto prim_name = GetPrimNameFromInfoName(op_name);
+  auto idx = ops::GetInputIndexByName(prim_name, attr_name);
+  return GetScalarValueFromInputs<T>(input_value, idx);
+}
+
+template <typename T>
+std::optional<std::vector<T>> GetArrayValueFromInputs(const std::vector<ValuePtr> &input_value, size_t idx) {
+  if (idx == SIZE_MAX) {
+    MS_EXCEPTION(ValueError) << "Index is the size max, target value maybe wrong!";
+  }
+
+  if (input_value.size() <= idx || input_value[idx] == nullptr) {
+    return std::nullopt;
+  }
+  auto array_opt = ops::GetArrayValue<T>(input_value[idx]);
+  if (!array_opt.has_value() || array_opt.value().HasUnknownValue()) {
+    return std::nullopt;
+  }
+  return array_opt.value().ToVector();
+}
+
+template <typename T>
+std::optional<std::vector<T>> GetArrayValueFromInputs(const std::vector<ValuePtr> &input_value,
+                                                      const std::string &op_name, const std::string &attr_name) {
+  auto prim_name = GetPrimNameFromInfoName(op_name);
+  auto idx = ops::GetInputIndexByName(prim_name, attr_name);
+  return GetArrayValueFromInputs<T>(input_value, idx);
+}
+
+template <typename T>
+std::optional<std::vector<T>> GetArrayValueFromInputsWithCheck(const std::vector<ValuePtr> &input_value,
+                                                               const std::string &op_name,
+                                                               const std::string &attr_name) {
+  auto attr_opt = GetArrayValueFromInputs<T>(input_value, op_name, attr_name);
+  if (!attr_opt.has_value()) {
+    MS_LOG(ERROR) << op_name << ": Don't have attribution " << attr_name;
+    return std::nullopt;
+  }
+  return attr_opt;
+}
+
+template <typename T>
+std::optional<T> GetScalarValueFromInputsWithCheck(const std::vector<ValuePtr> &input_value, const std::string &op_name,
+                                                   const std::string &attr_name) {
+  auto attr_opt = GetScalarValueFromInputs<T>(input_value, op_name, attr_name);
+  if (!attr_opt.has_value()) {
+    MS_LOG(ERROR) << op_name << ": Don't have attribution " << attr_name;
+    return std::nullopt;
+  }
+  return attr_opt;
+}
+
 }  // namespace parallel
 }  // namespace mindspore
 

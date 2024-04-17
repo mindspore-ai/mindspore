@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,10 +24,29 @@ lsap_op_info = AiCPURegOp("LinearSumAssignment") \
     .input(2, 'maximize', "required") \
     .output(0, "row_ind", "required") \
     .output(1, "col_ind", "required") \
-    .attr("cust_aicpu", "str") \
     .dtype_format(DataType.F64_Default, DataType.I64_Default,
                   DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
     .dtype_format(DataType.F32_Default, DataType.I64_Default,
+                  DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
+    .dtype_format(DataType.F16_Default, DataType.I64_Default,
+                  DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
+    .dtype_format(DataType.BOOL_Default, DataType.I64_Default,
+                  DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
+    .dtype_format(DataType.I16_Default, DataType.I64_Default,
+                  DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
+    .dtype_format(DataType.I32_Default, DataType.I64_Default,
+                  DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
+    .dtype_format(DataType.I64_Default, DataType.I64_Default,
+                  DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
+    .dtype_format(DataType.I8_Default, DataType.I64_Default,
+                  DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
+    .dtype_format(DataType.U16_Default, DataType.I64_Default,
+                  DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
+    .dtype_format(DataType.U32_Default, DataType.I64_Default,
+                  DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
+    .dtype_format(DataType.U64_Default, DataType.I64_Default,
+                  DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
+    .dtype_format(DataType.U8_Default, DataType.I64_Default,
                   DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default,) \
     .get_op_info()
 

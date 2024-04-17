@@ -81,7 +81,7 @@ size_t SwitchActor::GetIndex(const OpContext<DeviceTensor> *const context) const
   int64_t index = 0;
   char buf[kMaxSwitchCondSize] = {0};
   ShapeVector host_shape;
-  if (device_tensor->user_data() != nullptr && device_tensor->sync_user_data_handler() != nullptr &&
+  if (device_tensor->user_data() != nullptr && device_tensor->need_sync_user_data() &&
       device_tensor->user_data()->has(kernel::PyExecuteOutputUserData::key)) {
     const auto &user_data_obj =
       device_tensor->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key);
@@ -106,8 +106,10 @@ size_t SwitchActor::GetIndex(const OpContext<DeviceTensor> *const context) const
     MS_LOG(DEBUG) << "Index:" << index << " for actor:" << GetAID();
   } else if (type_id == TypeId::kNumberTypeBool) {
     bool cond = (static_cast<bool *>(static_cast<void *>(buf)))[0];
-    MS_LOG(DEBUG) << "Condition:" << cond << " for actor:" << GetAID();
-    index = static_cast<int64_t>(cond ? 1 : 0);
+    if (cond) {
+      index = 1;
+    }
+    MS_LOG(DEBUG) << "Condition:" << cond << ", index:" << index << " for actor:" << GetAID();
   } else {
     MS_LOG(ERROR) << "Index must be Int type.";
     return 0;

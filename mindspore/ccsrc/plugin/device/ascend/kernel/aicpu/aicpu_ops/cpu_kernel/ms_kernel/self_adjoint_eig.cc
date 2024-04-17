@@ -17,7 +17,7 @@
 #include <vector>
 #include <complex>
 #include <Eigen/Dense>
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 #include "utils/kernel_util.h"
 #include "Eigen/Core"
@@ -34,7 +34,7 @@ uint32_t SelfAdjointEigCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   Tensor *input0 = ctx.Input(0);
   if ((input0->GetDataSize() == 0)) {
-    KERNEL_LOG_INFO("[%s] Input is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_INFO(ctx, "[%s] Input is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_OK;
   }
   uint32_t ret = KERNEL_STATUS_OK;
@@ -53,15 +53,15 @@ uint32_t SelfAdjointEigCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = SelfAdjointEigCompute<std::complex<double>>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(data_type).c_str());
       ret = KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;
 }
 
 template <typename T>
-uint32_t SelfAdjointEigCpuKernel::SelfAdjointEigCompute(const CpuKernelContext &ctx) {
+uint32_t SelfAdjointEigCpuKernel::SelfAdjointEigCompute(CpuKernelContext &ctx) {
   auto input_tensor = ctx.Input(0);
   auto output_tensor0 = ctx.Output(0);
   auto output_tensor1 = ctx.Output(1);
@@ -122,5 +122,5 @@ uint32_t SelfAdjointEigCpuKernel::SelfAdjointEigCompute(const CpuKernelContext &
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kSelfAdjointEig, SelfAdjointEigCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSelfAdjointEig, SelfAdjointEigCpuKernel);
 }  // namespace aicpu

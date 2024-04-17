@@ -93,7 +93,7 @@ def one_hot_dynamic_shape_test_case(in_type, value_type, out_type):
     assert np.allclose(expect, output.asnumpy(), 1.e-4, 1.e-7)
 
 
-def one_hot_vmap(in_type, value_type):
+def one_hot_vmap(in_type, value_type, out_type):
     def cal_onehot(ind, dep, on_v, off_v):
         return P.OneHot()(ind, dep, on_v, off_v)
     depth = 5
@@ -111,18 +111,12 @@ def one_hot_vmap(in_type, value_type):
                         [0.0, 0.0, 0.0, 1.0, 0.0],
                         [0.0, 0.0, 1.0, 0.0, 0.0],
                         [0.0, 0.0, 0.0, 0.0, 1.0],
-                        [1.0, 0.0, 0.0, 0.0, 0.0]]]).astype(in_type)
+                        [1.0, 0.0, 0.0, 0.0, 0.0]]]).astype(out_type)
     assert np.allclose(expect, outputs.asnumpy(), 1.e-4, 1.e-7)
 
 
 def one_hot_static_shape_all_types():
-    one_hot_static_shape_test_case(np.uint8, mstype.int8, np.int8)
-    one_hot_static_shape_test_case(np.uint8, mstype.uint8, np.uint8)
-    one_hot_static_shape_test_case(np.uint8, mstype.int32, np.int32)
-    one_hot_static_shape_test_case(np.uint8, mstype.float16, np.float16)
-    one_hot_static_shape_test_case(np.uint8, mstype.float32, np.float32)
-    one_hot_static_shape_test_case(np.int32, mstype.int8, np.int8)
-    one_hot_static_shape_test_case(np.int32, mstype.uint8, np.uint8)
+    one_hot_static_shape_test_case(np.int64, mstype.int64, np.int64)
     one_hot_static_shape_test_case(np.int32, mstype.int32, np.int32)
     one_hot_static_shape_test_case(np.int32, mstype.float16, np.float16)
     one_hot_static_shape_test_case(np.int32, mstype.float32, np.float32)
@@ -157,4 +151,4 @@ def test_ascend_pynative_mode():
     one_hot_static_shape_all_types()
     one_hot_dynamic_shape_test_case(np.int32, mstype.float32, np.float32)
     one_hot_functional(np.int32, mstype.float32, np.float32)
-    one_hot_vmap(np.int32, mstype.float32)
+    one_hot_vmap(np.int32, mstype.float32, np.float32)

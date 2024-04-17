@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test syntax for logic expression """
-
-import pytest
 import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore import dtype as mstype
@@ -40,11 +38,20 @@ def test_ms_syntax_operator_int_is_not_int():
     Description: test is not operator.
     Expectation: No exception
     """
-    with pytest.raises(RuntimeError) as err:
-        net = IdentityIsNot(1, 2)
-        ret = net()
-        print(ret)
-    assert "For syntax like 'a is not b', b supports True, False, None and Type" in str(err)
+    net = IdentityIsNot(1, 2)
+    ret = net()
+    assert ret
+
+
+def test_ms_syntax_operator_int_is_not_int_2():
+    """
+    Feature: simple expression
+    Description: test is not operator.
+    Expectation: No exception
+    """
+    net = IdentityIsNot(1, 1)
+    ret = net()
+    assert not ret
 
 
 def test_ms_syntax_operator_int_is_not_none():
@@ -134,3 +141,25 @@ def test_ms_syntax_operator_is_not_tensor():
     net = IdentityIsNot(ms.Tensor, ms.Tensor)
     ret = net()
     assert not ret
+
+
+def test_ms_syntax_operator_str_is_not_str():
+    """
+    Feature: simple expression
+    Description: test is not operator.
+    Expectation: No exception
+    """
+    net = IdentityIsNot("aaa", "aaa")
+    ret = net()
+    assert not ret
+
+
+def test_ms_syntax_operator_str_is_not_str_2():
+    """
+    Feature: simple expression
+    Description: test is not operator.
+    Expectation: No exception
+    """
+    net = IdentityIsNot("aaa", "bbb")
+    ret = net()
+    assert ret

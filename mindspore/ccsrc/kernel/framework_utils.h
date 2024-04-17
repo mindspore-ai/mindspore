@@ -30,6 +30,7 @@
 #include "kernel/kernel_build_info.h"
 #include "include/backend/device_address.h"
 #include "ops/base_operator.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -57,8 +58,6 @@ class BACKEND_EXPORT KernelMeta {
   std::string kernel_meta_path_;
   std::unordered_map<std::string, std::string> kernel_meta_map_;
 };
-
-std::set<int64_t> GetShapeSetFromResizeMap(const CNodePtr &node);
 
 BACKEND_EXPORT std::string GetCompilerCachePath();
 bool CheckCache(const std::string &kernel_name);
@@ -97,9 +96,6 @@ struct KernelArgs {
   constexpr static char key[] = "KernelArgs";
 };
 BACKEND_EXPORT KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode);
-BACKEND_EXPORT KernelArgs AbstractArgsFromDeviceAddress(
-  KernelMod *const kernel_mod, const std::vector<device::DeviceAddressPtr> &inputs_device_address,
-  const std::vector<device::DeviceAddressPtr> &outputs_device_address, const AbstractBasePtr &abstract);
 BACKEND_EXPORT std::shared_ptr<KernelArgs> GetArgsFromCNode(const CNodePtr &cnode);
 BACKEND_EXPORT void SetArgsToCNode(const CNodePtr &cnode, const KernelArgs &args);
 
@@ -110,7 +106,7 @@ BACKEND_EXPORT void SetInputsByDependMap(const std::map<uint32_t, tensor::Tensor
                                          std::vector<KernelTensorPtr> *inputs, bool is_stored_in_device = false);
 BACKEND_EXPORT void SetInputsByConstInputs(const CNodePtr &node,
                                            std::map<uint32_t, tensor::TensorPtr> *inputs_tensor_map);
-BACKEND_EXPORT bool IfNeedSkipResize(const CNodePtr &node);
+BACKEND_EXPORT bool CheckResizeCondition(const CNodePtr &node);
 
 inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cnode) {
   auto args = GetArgsFromCNode(cnode);
@@ -128,6 +124,8 @@ BACKEND_EXPORT void SetDynamicInputSizeAttr(const CNodePtr &cnode);
 BACKEND_EXPORT bool IsDynamicParamKernel(const std::string &op_name);
 BACKEND_EXPORT std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CNodePtr &kernel_node);
 BACKEND_EXPORT bool IsKernelObjectTypeNotSupportedError(const std::string &error_str);
+BACKEND_EXPORT std::pair<std::vector<DataType>, std::vector<DataType>> GetInOutDataTypesFromKernelAttr(
+  const KernelAttr &kernel_attr);
 }  // namespace kernel
 }  // namespace mindspore
 

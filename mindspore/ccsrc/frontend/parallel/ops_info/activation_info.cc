@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/redistribution_operator_infer.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
+#include "frontend/parallel/step_parallel_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -155,39 +156,52 @@ Status Softmax::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status Softmax::GetAttrs() {
-  if (attrs_.size() < SOFTMAX_ATTR_SIZE) {
-    MS_LOG(ERROR) << name_ << " : The size of attrs small than 1.";
+  std::string op_name = GetPrimNameFromInfoName(this->name_);
+  std::optional<std::vector<int64_t>> axis_opt = GetArrayValueFromInputs<int64_t>(input_value_, op_name, AXIS);
+
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << " : has no axis value.";
     return FAILED;
   }
 
-  auto iter = attrs_.find(AXIS);
-  if (iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(iter->second);
-    if (iter->second->isa<Int64Imm>()) {  // the axis is a number
-      int64_t axis_element = iter->second->cast<Int64ImmPtr>()->value();
-      axis_.push_back(axis_element);
-      MS_LOG(INFO) << name_ << " : The axis is int64_t, value is " << axis_element;
-    } else if (iter->second->isa<ValueTuple>()) {  // the axis is a tuple
-      ValueTuplePtr value_tuple = iter->second->cast<ValueTuplePtr>();
-      if (value_tuple == nullptr) {
-        MS_LOG(ERROR) << name_ << " : The value_tuple is nullptr.";
-        return FAILED;
-      }
-      std::vector<ValuePtr> value_vector = value_tuple->value();
-      (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_),
-                           [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
-      if (axis_.empty()) {
-        MS_LOG(ERROR) << name_ << " : The axis tuple is empty.";
-        return FAILED;
-      }
-      MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
-    } else {
-      MS_LOG(ERROR) << name_ << " : The value of axis is not int64_t or tuple int64_t.";
-      return FAILED;
-    }
+  std::vector<int64_t> axis_val = axis_opt.value();
+  if (axis_val.empty()) {
+    MS_LOG(ERROR) << name_ << " axis doesn't have value.";
+    return FAILED;
+  }
+  axis_.swap(axis_val);
+  MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
+
+  if (input_value_.size() != ops::GetOpInputsNum(op_name)) {
+    MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
+    return FAILED;
   }
 
-  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE)) {
+  // for example: tensor dimension is 4, then axis range [-4, 3]
+  int64_t dim = SizeToLong(inputs_shape_.at(0).size());
+  auto it =
+    std::find_if(axis_.begin(), axis_.end(), [dim](int64_t element) { return ((element >= dim) || (element < -dim)); });
+  if (it != axis_.end()) {
+    MS_LOG(ERROR) << name_ << " : The axis(" << *it << ") is out of range[" << (-dim) << ", " << (dim - 1) << "].";
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
+Status LogSoftmaxInfo::GetAttrs() {
+  std::string op_name = GetPrimNameFromInfoName(this->name_);
+  std::optional<int64_t> axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, op_name, AXIS);
+
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << " : has no axis value.";
+    return FAILED;
+  }
+  int64_t axis_val = axis_opt.value();
+  axis_.push_back(axis_val);
+  MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
+
+  if (input_value_.size() != ops::GetOpInputsNum(op_name)) {
     MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
     return FAILED;
   }
@@ -231,17 +245,19 @@ std::vector<StrategyPtr> Softmax::GenerateOpStrategies(int64_t stage_id) {
 }
 
 Status CumOpBase::GetAttrs() {
-  if (input_value_.size() != CUM_OP_INPUT_SIZE) {
-    MS_LOG(ERROR) << name_ << ": Invalid inputs size " << input_value_.size();
+  std::string op_name = GetPrimNameFromInfoName(this->name_);
+  if (input_value_.size() != ops::GetOpInputsNum(op_name)) {
+    MS_LOG(ERROR) << name_ << ": Invalid inputs size " << input_value_.size()
+                  << ", GetOpInputsNum: " << ops::GetOpInputsNum(op_name);
     return FAILED;
   }
 
-  if (!input_value_.back()->isa<Int64Imm>()) {
-    MS_LOG(ERROR) << name_ << ": The type of axis is not int64_t";
+  std::optional<int64_t> axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, op_name, AXIS);
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << ": The type of axis has no value.";
     return FAILED;
   }
-
-  int64_t axis = GetValue<int64_t>(input_value_.back());
+  int64_t axis = axis_opt.value();
 
   if (inputs_shape_.empty()) {
     MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
@@ -346,6 +362,19 @@ Status ActivationBase::InferMirrorOps() {
     MS_LOG(INFO) << name_ << " : Create the mirror ops success, the group name is " << group_name;
   }
 
+  // No need to insert mirror ops
+  if (mirror_ops_.empty() || !ops::HasOpDef(this->prim_name_)) {
+    return SUCCESS;
+  }
+
+  int64_t to_be_append = SizeToLong(ops::GetOpInputsNum(this->prim_name_)) - SizeToLong(mirror_ops_.size());
+  if (to_be_append <= 0) {
+    return SUCCESS;
+  }
+
+  std::vector<OperatorVector> op_vec(to_be_append);
+  (void)mirror_ops_.insert(mirror_ops_.end(), op_vec.begin(), op_vec.end());
+
   return SUCCESS;
 }
 
@@ -373,26 +402,21 @@ Status ActivationBase::InferOutputTensorMap() {
 }
 
 Status DropoutInfo::GetAttrs() {
-  auto iter0 = attrs_.find(SEED0);
-  if (iter0 != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(iter0->second);
-    if (iter0->second->isa<Int64Imm>()) {
-      seed0_ = iter0->second->cast<Int64ImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << " : The value of seed0 is not int64_t.";
-      return FAILED;
-    }
+  auto keep_prob_value = GetScalarValueFromInputsWithCheck<float>(input_value_, name_, KEEP_PROB);
+  if (!keep_prob_value.has_value()) {
+    return FAILED;
   }
-  auto iter1 = attrs_.find(SEED1);
-  if (iter1 != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(iter1->second);
-    if (iter1->second->isa<Int64Imm>()) {
-      seed1_ = iter1->second->cast<Int64ImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << " : The value of seed1 is not int64_t.";
-      return FAILED;
-    }
+  keep_prob_ = keep_prob_value.value();
+  auto seed0_value = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, SEED0);
+  if (!seed0_value.has_value()) {
+    return FAILED;
   }
+  seed0_ = seed0_value.value();
+  auto seed1_value = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, SEED1);
+  if (!seed1_value.has_value()) {
+    return FAILED;
+  }
+  seed1_ = seed1_value.value();
   return SUCCESS;
 }
 
@@ -429,9 +453,10 @@ void DropoutInfo::InferReplaceOps() {
   int64_t seed = get_seed();
   ValuePtr new_seed0 = MakeValue(seed);
   ValuePtr new_seed1 = MakeValue(seed);
+  ValuePtr new_keep_prob = MakeValue(keep_prob_);
   Attr attr_seed0 = std::make_pair(SEED0, new_seed0);
   Attr attr_seed1 = std::make_pair(SEED1, new_seed1);
-  Attr attr_keep_probs = std::make_pair(KEEP_PROB, attrs_[KEEP_PROB]);
+  Attr attr_keep_probs = std::make_pair(KEEP_PROB, new_keep_prob);
   OperatorAttrs attrs = {attr_keep_probs, attr_seed0, attr_seed1};
   OperatorParams params;
   OperatorArgs args = std::make_pair(attrs, params);
@@ -675,7 +700,13 @@ Status L2LossInfo::InferForwardCommunication() {
 }
 
 Status CummaxInfo::GetAttrs() {
-  axis_ = GetIntAttr(AXIS);
+  std::string op_name = GetPrimNameFromInfoName(this->name_);
+  std::optional<int64_t> axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, op_name, AXIS);
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << ": The type of axis has no value.";
+    return FAILED;
+  }
+  axis_ = axis_opt.value();
   if (axis_ < 0) {
     axis_ += SizeToLong(inputs_shape_[0].size());
   }
@@ -740,6 +771,82 @@ Status SortInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
+Status SortInfo::GetAttrs() {
+  auto iter = attrs_.find(AXIS);
+  if (iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    if (iter->second->isa<Int64Imm>()) {  // the axis is a number
+      int64_t axis_element = iter->second->cast<Int64ImmPtr>()->value();
+      axis_.push_back(axis_element);
+      MS_LOG(INFO) << name_ << " : The axis is int64_t, value is " << axis_element;
+    } else if (iter->second->isa<ValueTuple>()) {  // the axis is a tuple
+      ValueTuplePtr value_tuple = iter->second->cast<ValueTuplePtr>();
+      if (value_tuple == nullptr) {
+        MS_LOG(ERROR) << name_ << " : The value_tuple is nullptr.";
+        return FAILED;
+      }
+      std::vector<ValuePtr> value_vector = value_tuple->value();
+      (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_),
+                           [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+      if (axis_.empty()) {
+        MS_LOG(ERROR) << name_ << " : The axis tuple is empty.";
+        return FAILED;
+      }
+      MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
+    } else {
+      MS_LOG(ERROR) << name_ << " : The value of axis is not int64_t or tuple int64_t.";
+      return FAILED;
+    }
+  }
+
+  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE)) {
+    MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
+    return FAILED;
+  }
+
+  // for example: tensor dimension is 4, then axis range [-4, 3]
+  int64_t dim = SizeToLong(inputs_shape_.at(0).size());
+  auto it =
+    std::find_if(axis_.begin(), axis_.end(), [dim](int64_t element) { return ((element >= dim) || (element < -dim)); });
+  if (it != axis_.end()) {
+    MS_LOG(ERROR) << name_ << " : The axis(" << *it << ") is out of range[" << (-dim) << ", " << (dim - 1) << "].";
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
+Status GeLUInfo::CheckInputLayout() {
+  if (inputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for gelu is " << inputs_tensor_info_.size() << " rather than 1.";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status GeLUInfo::CheckOutputLayout() {
+  if (outputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of output_tensor_layout for gelu is " << outputs_tensor_info_.size()
+                  << " rather than 1.";
+    return FAILED;
+  }
+  if (output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
+    MS_LOG(ERROR) << "Parameter of output tensor layout for gelu is not allowed to be set by users.";
+    return FAILED;
+  }
+  MS_LOG(INFO) << "Using output tensor layout infer by input tensor layout.";
+  return SUCCESS;
+}
+
+Status GeLUInfo::InferOutputTensorInfo() {
+  output_infer_tensor_layout_ = inputs_tensor_info_[kIndex0].tensor_layout();
+  TensorInfo output_tensor_info(output_infer_tensor_layout_);
+  outputs_tensor_info_.push_back(output_tensor_info);
+  return SUCCESS;
+}
+
+Status GeLUInfo::InferForwardCommunicationByLayout() { return SUCCESS; }
+
 REGISTER(ActivationInfo);
 REGISTER(GeLUInfo);
 REGISTER(FastGeLUInfo);
@@ -754,6 +861,7 @@ REGISTER(CumminInfo);
 REGISTER(CumProdInfo);
 REGISTER(EluInfo);
 REGISTER(ReLUInfo);
+REGISTER(SiLUInfo);
 REGISTER(identityInfo);
 REGISTER(RepeatElementsInfo);
 REGISTER(ReLU6Info);
@@ -770,6 +878,7 @@ REGISTER(DropoutInfo);
 REGISTER(HShrinkInfo);
 REGISTER(HSigmoidInfo);
 REGISTER(IsFiniteInfo);
+REGISTER(GenerateEodMaskInfo);
 REGISTER(MishInfo);
 REGISTER(RintInfo);
 REGISTER(SeLUInfo);

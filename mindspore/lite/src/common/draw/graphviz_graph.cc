@@ -206,7 +206,7 @@ int GVGraph::Link(const std::string &from_name, size_t from_port, const std::str
                   << ")'s input ports number: " << to->second->input_size();
     return RET_ERROR;
   }
-  if (to_port < to->second->inputs().size()) {
+  if (to_port < to->second->size()) {
     MS_LOG(ERROR) << "node(" << to_name << ")'s " << to_port << "th input port already link to "
                   << to->second->inputs()[to_port]->From();
     return RET_ERROR;

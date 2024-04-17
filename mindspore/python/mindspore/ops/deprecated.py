@@ -69,7 +69,10 @@ class BNTrainingUpdate(Primitive):
 
 class MaxPoolWithArgmax(Primitive):
     """
-    Please use MaxPoolWithArgmaxV2 instead.
+    Please use :class:`mindspore.ops.MaxPoolWithArgmaxV2` instead.
+
+    Supported Platforms:
+        Deprecated
     """
     @deprecated("2.0", "ops.MaxPoolWithArgmaxV2", False)
     @prim_attr_register
@@ -105,7 +108,6 @@ class DropoutGenMask(Primitive):
     @prim_attr_register
     def __init__(self, Seed0=0, Seed1=0):
         """Initialize DropoutGenMask."""
-        super().__init__(name="DropoutGenMask")
         self.init_prim_io_names(inputs=['shape', 'keep_prob'], outputs=['output'])
         validator.check_value_type("Seed0", Seed0, [int], self.name)
         validator.check_value_type("Seed1", Seed1, [int], self.name)
@@ -159,7 +161,10 @@ class TensorAdd(_MathBinaryOp):
 
 class InplaceUpdate(Primitive):
     """
-    Please use InplaceUpdateV2 instead.
+    Please use :class:`mindspore.ops.InplaceUpdateV2` instead.
+
+    Supported Platforms:
+        Deprecated
     """
     @deprecated("2.0", "ops.InplaceUpdateV2", False)
     @prim_attr_register
@@ -239,6 +244,9 @@ class Unpack(Primitive):
 class ScatterNonAliasingAdd(Primitive):
     """
     Please use TensorScatterAdd instead.
+
+    Supported Platforms:
+        Deprecated
     """
     __mindspore_signature__ = (
         sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -257,6 +265,9 @@ class ScatterNonAliasingAdd(Primitive):
 class BatchToSpaceND(Primitive):
     """
     Please use batch_to_space_nd instead.
+
+    Supported Platforms:
+        Deprecated
     """
     @deprecated("2.0", "ops.batch_to_space_nd", False)
     @prim_attr_register

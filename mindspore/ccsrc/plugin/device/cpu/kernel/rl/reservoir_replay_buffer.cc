@@ -30,7 +30,7 @@ ReservoirReplayBuffer::ReservoirReplayBuffer(uint32_t seed, size_t capacity, con
   fifo_replay_buffer_ = std::make_unique<FIFOReplayBuffer>(capacity, schema);
 }
 
-bool ReservoirReplayBuffer::Push(const std::vector<AddressPtr> &transition) {
+bool ReservoirReplayBuffer::Push(const std::vector<KernelTensor *> &transition) {
   // The buffer is not full: Push the transition at end of buffer.
   if (total_ < capacity_) {
     auto ret = fifo_replay_buffer_->Push(transition);
@@ -51,7 +51,7 @@ bool ReservoirReplayBuffer::Push(const std::vector<AddressPtr> &transition) {
   return true;
 }
 
-bool ReservoirReplayBuffer::Sample(const size_t &batch_size, const std::vector<AddressPtr> &output) {
+bool ReservoirReplayBuffer::Sample(const size_t &batch_size, const std::vector<KernelTensor *> &output) {
   const size_t valid_size = std::min(capacity_, total_);
   std::uniform_int_distribution<size_t> pos_sampler(0, valid_size - 1);
 
@@ -59,7 +59,7 @@ bool ReservoirReplayBuffer::Sample(const size_t &batch_size, const std::vector<A
   for (size_t i = 0; i < batch_size; i++) {
     auto transition = fifo_replay_buffer_->GetItem(pos_sampler(generator_));
     for (size_t item_index = 0; item_index < schema_.size(); item_index++) {
-      void *offset = reinterpret_cast<uint8_t *>(output[item_index]->addr) + schema_[item_index] * i;
+      void *offset = reinterpret_cast<uint8_t *>(output[item_index]->device_ptr()) + schema_[item_index] * i;
       MS_EXCEPTION_IF_CHECK_FAIL(
         memcpy_s(offset, schema_[item_index], transition[item_index]->addr, transition[item_index]->size) == EOK,
         "memcpy_s() failed.");

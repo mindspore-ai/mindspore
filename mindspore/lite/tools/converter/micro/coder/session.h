@@ -32,7 +32,7 @@ class CoderSession {
  public:
   CoderSession();
 
-  ~CoderSession();
+  virtual ~CoderSession();
 
   int Init(const void *content, int size, const int model_index, bool end_flag, bool enable_fp16);
 
@@ -65,6 +65,10 @@ class CoderSession {
  private:
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   bool enable_fp16_{false};
+  bool dynamic_{false};
+  DynamicMemManager dynamic_mem_manager_;
+  ShapeInfoContainer shape_info_container_;
+  std::map<Tensor *, std::vector<std::vector<int>>> graph_inputs_shape_infos_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_SESSION_H_

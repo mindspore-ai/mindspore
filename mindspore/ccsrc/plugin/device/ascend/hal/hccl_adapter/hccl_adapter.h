@@ -26,6 +26,9 @@
 #include "mindspore/core/ir/anf.h"
 #include "hccl/hccl_types.h"
 #include "include/common/utils/parallel_context.h"
+#include "kernel/kernel.h"
+
+using mindspore::kernel::KernelTensor;
 
 namespace ge {
 class OpsKernelInfoStore;
@@ -66,13 +69,6 @@ class HcclAdapter {
   HcclResult HcclGetLocalRankSize(const std::string &group, uint32_t *local_rank_size) const;
   HcclResult HcclGetWorldRankFromGroupRank(const std::string &group, uint32_t local_rank, uint32_t *world_rank) const;
   HcclResult HcclGetGroupRankFromWorldRank(uint32_t world_rank, const std::string &group, uint32_t *local_rank) const;
-
-  // for ge node
-  bool GenTask(const AnfNodePtr &node, HcclDataType datatype, std::vector<HcclTaskInfo> *task_info_lists) const;
-  int64_t CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType datatype) const;
-  void *GetHcclOpsKernelInfoStore() const;
-  static std::string GetHcclType(const AnfNodePtr &node);
-
   // for single op
   HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, aclrtStream stream,
                            HcclComm comm) const;

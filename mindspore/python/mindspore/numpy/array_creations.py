@@ -134,6 +134,8 @@ def asarray_const(a, dtype=None):
                 dtype = mstype.float32
             elif dtype == mstype.int64:
                 dtype = mstype.int32
+        if a.size == 0:
+            a = Tensor_(a)
 
     if isinstance(a, onp.ndarray) and dtype is None:
         if a.dtype is onp.dtype('object'):

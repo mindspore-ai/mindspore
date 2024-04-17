@@ -22,8 +22,8 @@ from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import jit
 from mindspore.ops.primitive import _primexpr
+from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore import _checkparam as Validator
 
 __all__ = [
@@ -34,15 +34,16 @@ __all__ = [
     'clip_by_global_norm',
 ]
 
+apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
+cast_op = P.Cast()
+expand_dims = P.ExpandDims().add_prim_attr("grad_scale", True)
+get_square_sum = C.MultitypeFuncGraph("get_square_sum")
+greater_equal_ = P.GreaterEqual()
 hyper_map = C.HyperMap()
 max_op = P.Maximum()
 min_op = P.Minimum()
-cast_op = P.Cast()
-scalar2tensor_op = P.ScalarToTensor()
 partial_op = P.Partial()
-expand_dims = P.ExpandDims().add_prim_attr("grad_scale", True)
-get_square_sum = C.MultitypeFuncGraph("get_square_sum")
-apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
+scalar2tensor_op = P.ScalarToTensor()
 
 
 def _old_norm(norm_type, x):
@@ -51,7 +52,6 @@ def _old_norm(norm_type, x):
     return out
 
 
-@jit
 def _cal_total_norm(x, norm_type):
     if norm_type == float('inf'):
         func = lambda data: data.abs().max()
@@ -229,9 +229,9 @@ def clamp(input, min=None, max=None):
 
         out_i= \left\{
         \begin{array}{align}
-            max & \text{ if } x_i\ge max \\
-            x_i & \text{ if } min \lt x_i \lt max \\
-            min & \text{ if } x_i \le min \\
+            max & \text{ if } input_i\ge max \\
+            input_i & \text{ if } min \lt input_i \lt max \\
+            min & \text{ if } input_i \le min \\
         \end{array}\right.
 
     Note:
@@ -300,7 +300,7 @@ def clip(input, min=None, max=None):
 
 @get_square_sum.register("Tensor")
 def _get_square_sum(x):
-    norm = P.ReduceSum(False)(F.square(x), ())
+    norm = _get_cache_prim(P.ReduceSum)(False)(F.square(x), ())
     norm = expand_dims(F.cast(norm, mstype.float32), 0)
     return norm
 
@@ -338,12 +338,11 @@ class _ClipByGlobalNorm(Cell):
         Validator.check_number("clip_norm", clip_norm, 0.0, Validator.GT, self.cls_name)
         self.clip_norm = Tensor([clip_norm], mstype.float32)
         self.hyper_map = C.HyperMap()
-        self.greater_equal = P.GreaterEqual()
 
     def construct(self, x):
         square_sum = self.hyper_map(get_square_sum, x)
         global_norm = F.sqrt(F.addn(square_sum))
-        cond = self.greater_equal(global_norm, self.clip_norm)
+        cond = greater_equal_(global_norm, self.clip_norm)
         global_norm = F.select(cond, global_norm, self.clip_norm)
         clip_x = self.hyper_map(F.partial(apply_global_norm, self.clip_norm, global_norm), x)
         return clip_x

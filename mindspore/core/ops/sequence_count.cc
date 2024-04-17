@@ -69,14 +69,14 @@ class SequenceCountInfer : public abstract::OpInferBase {
     if (seq_abs->dynamic_len()) {
       return nullptr;
     }
-    auto target_value = target_abs->BuildValue();
-    if (seq_abs->BuildValue() == kValueAny || target_value == kValueAny) {
+    auto target_value = target_abs->GetValue();
+    if (seq_abs->GetValue()->ContainsValueAny() || target_value->ContainsValueAny()) {
       return nullptr;
     }
     const auto &seq_elements = seq_abs->elements();
     int64_t count = 0;
     for (auto element : seq_elements) {
-      if (CheckAndConvertUtils::CheckValueSame(target_value, element->BuildValue())) {
+      if (CheckAndConvertUtils::CheckValueSame(target_value, element->GetValue())) {
         ++count;
       }
     }

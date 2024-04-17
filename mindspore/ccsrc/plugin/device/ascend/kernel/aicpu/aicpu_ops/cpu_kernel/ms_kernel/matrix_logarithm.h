@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MATRIX_LOGARITHM_H_
 #define AICPU_KERNELS_NORMALIZED_MATRIX_LOGARITHM_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class MatrixLogarithmCpuKernel : public CpuKernel {
@@ -26,9 +26,9 @@ class MatrixLogarithmCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t MatrixLogarithmCheck(const CpuKernelContext &ctx);
+  uint32_t MatrixLogarithmCheck(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t MatrixLogarithmCompute(const CpuKernelContext &ctx);
+  uint32_t MatrixLogarithmCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

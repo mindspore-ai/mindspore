@@ -182,7 +182,8 @@ CNodePtr NewSplitNode(const AnfNodePtr &input_node, size_t split_dim, size_t spl
   }
   MS_EXCEPTION_IF_NULL(input_node);
   std::vector<AnfNodePtr> split_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplit->name())),
-                                          input_node};
+                                          input_node, NewValueNode<int64_t>(split_dim),
+                                          NewValueNode<int64_t>(split_num)};
   auto split = input_node->func_graph()->NewCNode(split_inputs);
   MS_EXCEPTION_IF_NULL(split);
 
@@ -192,9 +193,6 @@ CNodePtr NewSplitNode(const AnfNodePtr &input_node, size_t split_dim, size_t spl
   shape[split_dim] /= SizeToLong(split_num);
   std::vector<ShapeVector> shapes(split_num, shape);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
-
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(split_dim), split);
-  common::AnfAlgo::SetNodeAttr(kAttrOutputNum, MakeValue<int64_t>(split_num), split);
   split->set_scope(input_node->scope());
   return split;
 }
@@ -206,7 +204,8 @@ CNodePtr NewSplitNode(const AnfNodePtr &input_node, size_t split_dim, size_t spl
   }
   MS_EXCEPTION_IF_NULL(input_node);
   std::vector<AnfNodePtr> split_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplit->name())),
-                                          input_node};
+                                          input_node, NewValueNode<int64_t>(split_dim),
+                                          NewValueNode<int64_t>(split_num)};
   auto split = input_node->func_graph()->NewCNode(split_inputs);
   MS_EXCEPTION_IF_NULL(split);
 
@@ -218,9 +217,6 @@ CNodePtr NewSplitNode(const AnfNodePtr &input_node, size_t split_dim, size_t spl
   shape[split_dim] /= SizeToLong(split_num);
   std::vector<ShapeVector> shapes(split_num, shape);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
-
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(split_dim), split);
-  common::AnfAlgo::SetNodeAttr(kAttrOutputNum, MakeValue<int64_t>(split_num), split);
   split->set_scope(input_node->scope());
   return split;
 }
@@ -228,7 +224,7 @@ CNodePtr NewSplitNode(const AnfNodePtr &input_node, size_t split_dim, size_t spl
 CNodePtr NewConcatNode(const AnfNodePtr &input_node, size_t concat_dim, size_t input_num) {
   MS_EXCEPTION_IF_NULL(input_node);
   std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())),
-                                           input_node};
+                                           input_node, NewValueNode(MakeValue(static_cast<int64_t>(concat_dim)))};
   auto concat = input_node->func_graph()->NewCNode(concat_inputs);
   MS_EXCEPTION_IF_NULL(concat);
 
@@ -237,10 +233,6 @@ CNodePtr NewConcatNode(const AnfNodePtr &input_node, size_t concat_dim, size_t i
   shape[concat_dim] *= SizeToLong(input_num);
   std::vector<ShapeVector> shapes(1, shape);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, concat.get());
-
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(concat_dim)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(input_num), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(input_num), concat);
   concat->set_scope(input_node->scope());
   return concat;
 }

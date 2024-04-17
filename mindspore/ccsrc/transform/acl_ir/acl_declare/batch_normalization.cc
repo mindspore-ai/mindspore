@@ -18,42 +18,33 @@
 
 namespace mindspore {
 namespace transform {
-REGISTER_ACL_OP(BNTrainingReduce).Input(0, {"NCHW"}, "NCH");
+
+std::string Set5HDFormat(TypeId, const std::vector<ShapeVector> &) { return kOpFormat_NC1HWC0; }
+
+REGISTER_ACL_OP(BNTrainingReduce)
+  .Input(0, {"NCHW"}, "NCH")
+  .set_extra_supported_datatype({ge::DT_FLOAT16})
+  .OutputSelector(&Set5HDFormat);
 
 REGISTER_ACL_OP(BNTrainingUpdate)
   .Input(0, {"NCHW"}, "NCH")
-  .Input(1, {"NCHW"})
-  .Input(2, {"NCHW"})
-  .Input(3, {"NCHW"})
-  .Input(4, {"NCHW"})
-  .Input(5, {"NCHW"})
-  .Input(6, {"NCHW"})
-  .Output(0, 0);
+  .Output(0, 0)
+  .set_extra_supported_datatype({ge::DT_FLOAT16})
+  .OutputSelector(&Set5HDFormat);
 
 REGISTER_ACL_OP(BNTrainingUpdateGrad)
   .Input(0, {"NCHW"}, "NCH")
   .Input(1, {"NCHW"}, "NCH")
-  .Input(2, {"NCHW"})
-  .Input(3, {"NCHW"});
+  .set_extra_supported_datatype({ge::DT_FLOAT16});
 
 REGISTER_ACL_OP(BNTrainingReduceGrad)
   .Input(0, {"NCHW"}, "NCH")
   .Input(1, {"NCHW"}, "NCH")
-  .Input(2, {"NCHW"})
-  .Input(3, {"NCHW"})
-  .Input(4, {"NCHW"})
-  .Input(5, {"NCHW"})
-  .Input(6, {"NCHW"})
-  .Output(0, 0);
+  .Output(0, 0)
+  .set_extra_supported_datatype({ge::DT_FLOAT16});
 
-REGISTER_ACL_OP(BNInfer)
-  .Input(0, {"NCHW"}, "NCH")
-  .Input(1, {"NCHW"})
-  .Input(2, {"NCHW"})
-  .Input(3, {"NCHW"})
-  .Input(4, {"NCHW"})
-  .Output(0, 0);
+REGISTER_ACL_OP(BNInfer).Input(0, {"NCHW"}, "NCH").Output(0, 0).set_extra_supported_datatype({ge::DT_FLOAT16});
 
-REGISTER_ACL_OP(BNInferGrad).Input(0, {"NCHW"}, "NCH").Input(1, {"NCHW"}).Input(2, {"NCHW"}).Output(0, 0);
+REGISTER_ACL_OP(BNInferGrad).Input(0, {"NCHW"}, "NCH").Output(0, 0).set_extra_supported_datatype({ge::DT_FLOAT16});
 }  // namespace transform
 }  // namespace mindspore

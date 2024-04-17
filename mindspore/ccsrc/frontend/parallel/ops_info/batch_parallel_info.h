@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ class BatchParallelInfo : public OperatorInfo {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;

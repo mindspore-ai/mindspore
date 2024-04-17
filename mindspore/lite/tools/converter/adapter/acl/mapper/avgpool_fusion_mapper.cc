@@ -20,11 +20,13 @@
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "include/registry/converter_context.h"
 #include "src/common/log_util.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/op_utils.h"
 #include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
+using mindspore::ops::kNameAvgPool;
 constexpr const char *kDivisorOverride = "divisor_override";
 constexpr const char *kExclusive = "exclusive";
 constexpr int kSizeHW = 20;
@@ -58,6 +60,10 @@ STATUS AvgPoolFusionMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Adjust pool attr failed.";
     return lite::RET_ERROR;
   }
+  if (src_prim->HasAttr(ops::kFormat)) {
+    // the attr format has been changed to data_format because of dynamic(defined in gen_lite_ops.h)
+    dst_prim->AddAttr(kAttrDataFormat, src_prim->GetAttr(ops::kFormat));
+  }
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
@@ -86,6 +92,7 @@ void AvgPoolFusionMapper::CreateTargetPrim(const PrimitivePtr &src_prim, Primiti
   }
 }
 
+REGISTER_PRIMITIVE_MAPPER(kNameAvgPool, AvgPoolFusionMapper)
 REGISTER_PRIMITIVE_MAPPER(kNameAvgPoolFusion, AvgPoolFusionMapper)
 }  // namespace lite
 }  // namespace mindspore

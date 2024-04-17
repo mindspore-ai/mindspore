@@ -232,6 +232,5 @@ class OpInfo {
 using OpAttrPtr = std::shared_ptr<OpAttr>;
 using OpIOInfoPtr = std::shared_ptr<OpIOInfo>;
 using OpInfoPtr = std::shared_ptr<OpInfo>;
-BACKEND_EXPORT std::vector<std::string> SplitStrToVec(const std::string &input);
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OPINFO_H_

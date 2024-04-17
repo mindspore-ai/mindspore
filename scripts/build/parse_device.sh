@@ -67,7 +67,7 @@ parse_device()
         export ENABLE_ACL="on"
         ENABLE_CPU="on"
         export ENABLE_MPI="on"
-        export ASCEND_VERSION="$DEVICE_VERSION"
+        export ENABLE_INTERNAL_KERNELS="on"
       else
         echo "Invalid value ${DEVICE_VERSION} for option -V"
         usage
@@ -90,5 +90,10 @@ parse_device()
     # check llvm version for akg
     HAS_LLVM=`bash ${BASEPATH}/scripts/build/akg_find_llvm.sh`
     export USE_LLVM=$HAS_LLVM
+  fi
+  export ENABLE_DVM="off"
+  source ${BASEPATH}/scripts/build/check_binary_file.sh
+  if [[ "X$ENABLE_INTERNAL_KERNELS" == "Xon" ]]; then
+    source ${BASEPATH}/scripts/build/check_and_build_ms_kernels_internal.sh
   fi
 }

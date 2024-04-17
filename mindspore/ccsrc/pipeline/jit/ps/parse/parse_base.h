@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ enum AstSubType : int64_t {
   AST_SUB_TYPE_SUBSCRIPT = 8,   // ast.Subscript
   AST_SUB_TYPE_STARRED = 9,     // ast.Starred
   AST_SUB_TYPE_ATTRIBUTE = 10,  // ast.Attribute
+  AST_SUB_TYPE_DICT = 11,       // ast.Dict
   AST_SUB_TYPE_UNKNOWN = 0xFF   // Unknown type
 };
 
@@ -58,6 +59,13 @@ enum ParseTargetType {
 // Define python module name.
 const char PYTHON_MOD_MODULE[] = "mindspore";
 const char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
+const char PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE[] = "mindspore.ops.auto_generate.gen_arg_handler";
+const char PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE[] = "mindspore.ops.auto_generate.gen_arg_dtype_cast";
+const char PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE[] =
+  "mindspore.ops.auto_generate.cpp_create_prim_instance_helper";
+const char PYTHON_MOD_PRIMITIVE_OP_TYPE_CAST[] = "do_type_cast";
+const char PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT[] = "op_labels";
+const char PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT[] = "op_args_default_value";
 const char PYTHON_MOD_PARSE_OBJECT_FUNCTION[] = "parse_cb";
 const char PYTHON_MOD_RESOLVE_FUNCTION[] = "resolve_symbol";
 const char PYTHON_MOD_RESOLVE_GET_OBJ_KEY[] = "get_object_key";
@@ -95,6 +103,11 @@ const char PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION[] = "convert_class_to_function";
 const char PYTHON_MOD_GET_CONST_ABS[] = "get_const_abs";
 const char PYTHON_MOD_GET_CONST_ROUND[] = "get_const_round";
 const char PYTHON_MOD_GET_CONST_LEN[] = "get_const_len";
+const char PYTHON_MOD_CHECK_ATTRS[] = "check_attrs";
+const char PYTHON_MOD_CHECK_IS_SUBCLASS[] = "check_is_subclass";
+const char PYTHON_MOD_GET_METHOD_INFO[] = "get_method_info";
+const char PYTHON_MOD_IS_MS_TENSOR_METHOD[] = "is_ms_tensor_method";
+const char PYTHON_MOD_CAN_CONSTANT_FOLD[] = "can_constant_fold";
 
 const char PYTHON_PARSE_GET_ARGS[] = "get_args";
 const char PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES[] = "get_args_default_values";
@@ -103,15 +116,17 @@ const char PYTHON_PARSE_GET_AST_TYPE[] = "get_ast_type";
 const char PYTHON_PARSE_GET_AST_NAMESPACE_SYMBOL[] = "get_ast_namespace_symbol";
 const char PYTHON_PARSE_GET_OPERATION_SYMBOL[] = "get_operation_symbol";
 const char PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL[] = "get_operation_namespace_symbol";
+const char PYTHON_PARSE_GET_CLASS_TENSOR_TYPE[] = "get_tensor_class_type";
 const char PYTHON_PARSE_GET_NAMESPACE_SYMBOL[] = "get_namespace_symbol";
+const char PYTHON_PARSE_IS_BUILTIN_FUNCTION_NAME[] = "is_builtin_function_name";
 const char PYTHON_PARSE_GET_LOCATION[] = "get_location";
-const char PYTHON_PARSE_IS_JIT_SUPPORTED_ATTRIBUTE[] = "is_jit_supported_attribute";
 const char PYTHON_PARSE_EXPAND_EXPR_STATEMENT[] = "expand_expr_statement";
 const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
 const char PYTHON_PARSE_GET_TYPE[] = "get_type";
 const char PYTHON_PARSE_ANALYZE_SUPER[] = "analyze_super";
 const char PYTHON_PARSE_CHECK_THIRD_PARTY_LIBRARY_SIDE_EFFECT[] = "check_third_party_library_side_effect";
+const char PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY[] = "check_attr_is_property";
 
 const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
 const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
@@ -163,6 +178,9 @@ const char NAMED_PRIMITIVE_MAKELIST[] = "make_list";
 const char NAMED_PRIMITIVE_MAKESLICE[] = "make_slice";
 const char NAMED_PRIMITIVE_MAKEDICT[] = "make_dict";
 const char NAMED_METAGRAPH_UNPACKCALL[] = "unpack_call";
+const char NAMED_METAGRAPH_STARRED_UNPACK[] = "starred_unpack";
+const char NAMED_METAGRAPH_STARRED_GET_ITEM[] = "starred_get_item";
+const char NAMED_METAGRAPH_STARRED_UNPACK_MERGE[] = "starred_unpack_merge";
 
 // Define NAMED_PRIMITIVE_GETATTR "getattr".
 // Define python inline attr.
@@ -204,9 +222,11 @@ enum ResolveType : int64_t {
 
 // Define the class instance detail type When the type is RESOLVE_TYPE_CLASS_INSTANCE.
 enum ClassInstanceType {
-  CLASS_INSTANCE_TYPE_CELL = 0,         // Class instance type is Cell.
-  CLASS_INSTANCE_TYPE_PRIMITIVE = 1,    // Class instance type is Primitive.
-  CLASS_INSTANCE_TYPE_NUMPY_ARRAY = 2,  // Class instance type is Numpy Array.
+  CLASS_INSTANCE_TYPE_CELL = 0,            // Class instance type is Cell.
+  CLASS_INSTANCE_TYPE_PRIMITIVE = 1,       // Class instance type is Primitive.
+  CLASS_INSTANCE_TYPE_NUMPY_ARRAY = 2,     // Class instance type is Numpy Array.
+  CLASS_INSTANCE_TYPE_TENSOR = 3,          // Class instance type is Tensor
+  CLASS_INSTANCE_TYPE_ADAPTER_TENSOR = 4,  // Class instance type is Adapter Tensor
   CLASS_INSTANCE_TYPE_INVALID = 0xFF
 };
 
@@ -235,6 +255,10 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
 FuncGraphPtr ParsePythonCode(const py::object &obj,
                              const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD,
                              const ValuePtrList &args_value_list = {});
+ValuePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name);
+AnfNodePtr TransPropertyToFunc(const FuncGraphPtr &fg, const AnfNodePtr &node, const py::object &property_net_obj,
+                               std::string attr_str);
+void CleanParameterNameCache();
 }  // namespace parse
 }  // namespace mindspore
 

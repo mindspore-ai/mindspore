@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_FILL_H_
 #define AICPU_KERNELS_NORMALIZED_FILL_H_
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class FillCpuKernel : public CpuKernel {
@@ -28,7 +28,7 @@ class FillCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t CalculateDims(const Tensor *dims_tensor, std::vector<int64_t> &dims);
+  uint32_t CalculateDims(CpuKernelContext &ctx, const Tensor *dims_tensor, std::vector<int64_t> &dims);
 
   template <typename T>
   void FillOutput(CpuKernelContext &ctx, const Tensor *value_tensor, Tensor *output);

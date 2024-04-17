@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the License);
 # you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ class ASPPSampleBlock(nn.Cell):
     """ASPP sample block."""
     def __init__(self, feature_shape, scale_size, output_stride):
         super(ASPPSampleBlock, self).__init__()
-        sample_h = (feature_shape[0] * scale_size + 1) / output_stride + 1
-        sample_w = (feature_shape[1] * scale_size + 1) / output_stride + 1
-        self.sample = P.ResizeBilinear((int(sample_h), int(sample_w)), align_corners=True)
+        self.sample_h = (feature_shape[0] * scale_size + 1) / output_stride + 1
+        self.sample_w = (feature_shape[1] * scale_size + 1) / output_stride + 1
+        self.sample = P.ResizeBilinearV2(align_corners=True)
 
     def construct(self, x):
-        return self.sample(x)
+        return self.sample(x, (int(self.sample_h), int(self.sample_w)))
 
 
 class ASPP(nn.Cell):
@@ -143,12 +143,12 @@ class DecoderSampleBlock(nn.Cell):
     """Decoder sample block."""
     def __init__(self, feature_shape, scale_size=1.0, decoder_output_stride=4):
         super(DecoderSampleBlock, self).__init__()
-        sample_h = (feature_shape[0] * scale_size + 1) / decoder_output_stride + 1
-        sample_w = (feature_shape[1] * scale_size + 1) / decoder_output_stride + 1
-        self.sample = P.ResizeBilinear((int(sample_h), int(sample_w)), align_corners=True)
+        self.sample_h = (feature_shape[0] * scale_size + 1) / decoder_output_stride + 1
+        self.sample_w = (feature_shape[1] * scale_size + 1) / decoder_output_stride + 1
+        self.sample = P.ResizeBilinearV2(align_corners=True)
 
     def construct(self, x):
-        return self.sample(x)
+        return self.sample(x, (int(self.sample_h), int(self.sample_w)))
 
 
 class Decoder(nn.Cell):
@@ -289,9 +289,7 @@ class SingleDeepLabV3(nn.Cell):
                              kernel_size=1,
                              stride=1,
                              has_bias=True)
-        self.upsample = P.ResizeBilinear((int(feature_shape[2]),
-                                          int(feature_shape[3])),
-                                         align_corners=True)
+
         self.samples = []
         for scale_size in self.scale_sizes:
             self.samples.append(SampleBlock(feature_shape, scale_size))
@@ -336,12 +334,13 @@ class SampleBlock(nn.Cell):
                  feature_shape,
                  scale_size=1.0):
         super(SampleBlock, self).__init__()
-        sample_h = np.ceil(float(feature_shape[2]) * scale_size)
-        sample_w = np.ceil(float(feature_shape[3]) * scale_size)
-        self.sample = P.ResizeBilinear((int(sample_h), int(sample_w)), align_corners=True)
+
+        self.sample_h = np.ceil(float(feature_shape[2]) * scale_size)
+        self.sample_w = np.ceil(float(feature_shape[3]) * scale_size)
+        self.sample = P.ResizeBilinearV2(align_corners=True)
 
     def construct(self, x):
-        return self.sample(x)
+        return self.sample(x, (int(self.sample_h), int(self.sample_w)))
 
 
 class DeepLabV3(nn.Cell):
@@ -381,9 +380,11 @@ class DeepLabV3(nn.Cell):
         self.concat = P.Concat(axis=2)
         self.expand_dims = P.ExpandDims()
         self.reduce_mean = P.ReduceMean()
-        self.sample_common = P.ResizeBilinear((int(feature_shape[2]),
-                                               int(feature_shape[3])),
-                                              align_corners=True)
+
+        self.sample_h = int(feature_shape[2])
+        self.sample_w = int(feature_shape[3])
+        self.sample_common = P.ResizeBilinearV2(align_corners=True)
+
 
     def construct(self, x):
         logits = ()
@@ -394,12 +395,12 @@ class DeepLabV3(nn.Cell):
                 else:
                     x1 = self.samples[0](x)
                     logits = self.deeplabv3(x1)
-                    logits = self.sample_common(logits)
+                    logits = self.sample_common(logits, (self.sample_h, self.sample_w))
                 logits = self.expand_dims(logits, 2)
                 for i in range(len(self.image_pyramid) - 1):
                     x_i = self.samples[i + 1](x)
                     logits_i = self.deeplabv3(x_i)
-                    logits_i = self.sample_common(logits_i)
+                    logits_i = self.sample_common(logits_i, (self.sample_h, self.sample_w))
                     logits_i = self.expand_dims(logits_i, 2)
                     logits = self.concat((logits, logits_i))
             logits = self.reduce_mean(logits, 2)
@@ -408,13 +409,13 @@ class DeepLabV3(nn.Cell):
             infer_index = len(self.image_pyramid)
             x1 = self.samples[infer_index](x)
             logits = self.deeplabv3(x1)
-            logits = self.sample_common(logits)
+            logits = self.sample_common(logits, (self.sample_h, self.sample_w))
             logits = self.softmax(logits)
             logits = self.expand_dims(logits, 2)
             for i in range(len(self.infer_scale_sizes) - 1):
                 x_i = self.samples[i + 1 + infer_index](x)
                 logits_i = self.deeplabv3(x_i)
-                logits_i = self.sample_common(logits_i)
+                logits_i = self.sample_common(logits_i, (self.sample_h, self.sample_w))
                 logits_i = self.softmax(logits_i)
                 logits_i = self.expand_dims(logits_i, 2)
                 logits = self.concat((logits, logits_i))

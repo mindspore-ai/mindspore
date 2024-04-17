@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/upsample_nearest_3d_cpu_kernel.h"
 #include <string>
 #include <utility>
-#include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
 #include "ops/upsample_nearest_3d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -44,11 +43,8 @@ void UpsampleNearest3DCpuKernelMod::ComputeNearestIndex(int64_t *const indices, 
   ParallelLaunch(loop, static_cast<size_t>(output_size), block_size);
 }
 
-bool UpsampleNearest3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool UpsampleNearest3DCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -60,11 +56,9 @@ bool UpsampleNearest3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int UpsampleNearest3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int UpsampleNearest3DCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = NativeCpuKernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // shape
@@ -74,26 +68,29 @@ int UpsampleNearest3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   workspace_size_list_.push_back(unit_size_ * LongToSize(y_shape_[kIndex2]));
   workspace_size_list_.push_back(unit_size_ * LongToSize(y_shape_[kIndex3]));
   workspace_size_list_.push_back(unit_size_ * LongToSize(y_shape_[kIndex4]));
+
   // none_list
-  MS_EXCEPTION_IF_NULL(base_operator);
-  none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
-  if (none_list_.size() != kIndex1) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
+  auto type_idx1 = inputs[kIndex1]->GetType();
+  MS_EXCEPTION_IF_NULL(type_idx1);
+  auto output_size_none = type_idx1->isa<TypeNone>();
+  auto scales_opt = inputs[kIndex2]->GetOptionalValueWithCheck<std::vector<float>>();
+  bool scales_none = !scales_opt.has_value();
+  if (output_size_none == scales_none) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
+    return KRET_RESIZE_FAILED;
   }
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
-    scales_ = std::vector<double>(kIndex3, kValueZero);
+  if (scales_none) {
+    scales_ = std::vector<float>(kIndex3, kValueZero);
   } else {
-    if (!TryGetFloatValue(inputs, kIndex1, kernel_name_, &scales_, false)) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
-    }
+    scales_ = scales_opt.value();
   }
   return KRET_OK;
 }
 
 template <typename T>
-bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
   auto x_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(x_ptr);
   auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
@@ -111,7 +108,7 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   int64_t output_slice_size = output_depth * output_height * output_width;
 
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
-    auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size, x_ptr, outputs[kIndex0]->size);
+    auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size(), x_ptr, outputs[kIndex0]->size());
     if (cpy_ret != EOK) {
       MS_EXCEPTION(MemoryError) << "For " << kernel_name_ << ", memcpy_s to output failed.";
     }
@@ -151,24 +148,25 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
 
   return true;
 }
-#define UpsampleNearest3D_CPU_KERNEL_REG(M_S, M_T, T) \
-  KernelAttr().AddInputAttr(M_S).AddInputAttr(M_T).AddOutputAttr(M_S), &UpsampleNearest3DCpuKernelMod::LaunchKernel<T>
+#define UpsampleNearest3D_CPU_KERNEL_REG(M_S, T)                   \
+  std::make_pair(KernelAttr()                                      \
+                   .AddInputAttr(M_S)                              \
+                   .AddOptionalInputAttr(kNumberTypeInt32)         \
+                   .AddOptionalInputAttr(kNumberTypeFloat32)       \
+                   .AddOutputAttr(M_S),                            \
+                 &UpsampleNearest3DCpuKernelMod::LaunchKernel<T>), \
+    std::make_pair(KernelAttr()                                    \
+                     .AddInputAttr(M_S)                            \
+                     .AddOptionalInputAttr(kNumberTypeInt64)       \
+                     .AddOptionalInputAttr(kNumberTypeFloat32)     \
+                     .AddOutputAttr(M_S),                          \
+                   &UpsampleNearest3DCpuKernelMod::LaunchKernel<T>)
 
 std::vector<std::pair<KernelAttr, UpsampleNearest3DCpuKernelMod::KernelRunFunc>>
-  UpsampleNearest3DCpuKernelMod::func_list_ = {
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeUInt8, kNumberTypeFloat32, uint8_t)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeInt32, float16)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeInt64, float16)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeFloat32, float16)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeFloat32, float)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
-    {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeFloat32, double)},
-};
+  UpsampleNearest3DCpuKernelMod::func_list_ = {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeUInt8, uint8_t),
+                                               UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat16, float16),
+                                               UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat32, float),
+                                               UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeFloat64, double)};
 
 std::vector<KernelAttr> UpsampleNearest3DCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

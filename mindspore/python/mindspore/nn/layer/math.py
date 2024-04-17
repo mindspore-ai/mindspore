@@ -375,9 +375,6 @@ class DiGamma(Cell):
                            nan, real_result)
 
 
-eps_fp32 = Tensor(np.finfo(np.float32).eps, mstype.float32)
-
-
 def _while_helper_func(cond, body, vals):
     while cond(vals).any():
         vals = body(vals)
@@ -394,7 +391,7 @@ def _igamma_series(ax, x, a, enabled):
     select = P.Select()
 
     # If more data types are supported, this epsilon need to be selected.
-    epsilon = eps_fp32
+    epsilon = Tensor(np.finfo(np.float32).eps, mstype.float32)
 
     def cond(vals):
         enabled = vals[0]
@@ -443,7 +440,7 @@ def _igammac_continued_fraction(ax, x, a, enabled):
     select = P.Select()
 
     # If more data types are supported, this epsilon need to be selected.
-    epsilon = eps_fp32
+    epsilon = Tensor(np.finfo(np.float32).eps, mstype.float32)
 
     def cond(vals):
         enabled = vals[0]
@@ -620,8 +617,7 @@ class IGamma(Cell):
             x = F.broadcast_to(x, para_shape)
             a = F.broadcast_to(a, para_shape)
         x_is_zero = self.equal(x, 0)
-        log_maxfloat = self.log_maxfloat32
-        underflow = self.less(ax, self.neg(log_maxfloat))
+        underflow = self.less(ax, self.neg(self.log_maxfloat32))
         ax = self.exp(ax)
         enabled = self.logicalnot(self.logicalor(self.logicalor(x_is_zero, domain_error), underflow))
         output = self.select(use_igammac,

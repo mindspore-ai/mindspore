@@ -37,7 +37,6 @@ oneslike = P.OnesLike()
 def _check_has_aux_type(inputs):
     if not isinstance(inputs, bool):
         raise TypeError("The 'has_aux' must be bool type.")
-    return True
 
 
 @constexpr
@@ -124,8 +123,8 @@ def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
         Function, the gradient function to calculate gradient for the input function or cell.
         For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set ``True`` , gradient function will return
         outputs like `(gradient, out2)` and `out2` does not contribute to the differentiation, otherwise `gradient`.
-        When return_ids is set to ``True`` , The format of the output will be the same with the output of grad when
-        return_ids is set to false, but every gradient in the output will be replaced by a tuple of position id or
+        When return_ids is set to ``True`` , the format of the output will be the same with the output of grad when
+        return_ids is set to ``False``, but every gradient in the output will be replaced by a tuple of position id or
         parameter name and its gradient.
 
     Raises:
@@ -263,7 +262,7 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
     Returns:
         Function, returns the gradient function to calculate forward output and gradient for the input function or cell.
         For example, as for `out1, out2 = fn(*args)` , gradient function will return outputs like
-        `((out1, out2), gradient)` . When `has_aux` is set True, only `out1` contributes to the differentiation.
+        `((out1, out2), gradient)` . When `has_aux` is set to ``True``, only `out1` contributes to the differentiation.
 
     Raises:
         ValueError: If both `grad_position` and `weights` are None.
@@ -362,8 +361,9 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
 
 def get_grad(gradients, identifier):
     """
-    When `return_ids` of :func:`mindspore.grad` is set to True, use its return value as gradients. Then find
-    the specific gradient from `gradients` according to `identifier` .
+    When `return_ids` of :func:`mindspore.grad` or :func:`mindspore.grad` is set to ``True`` ,
+    use return value of `mindspore.grad`, or the second return value of `mindspore.grad` as gradients.
+    Then find the specific gradient from `gradients` according to `identifier` .
 
     As for gradient, two typical cases are included:
 
@@ -660,7 +660,7 @@ def jvp(fn, inputs, v, has_aux=False):
     """
     Compute the jacobian-vector-product of the given network. `jvp` matches
     `forward-mode differentiation
-    <https://www.mindspore.cn/docs/en/master/design/programming_paradigm.html#forward-mode-ad>`_.
+    <https://www.mindspore.cn/docs/en/r2.3.q1/design/programming_paradigm.html#forward-mode-ad>`_.
 
     Args:
         fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single Tensor or tuple of
@@ -875,7 +875,7 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
     """
     Compute the vector-jacobian-product of the given network. `vjp` matches
     `reverse-mode differentiation
-    <https://www.mindspore.cn/docs/en/master/design/programming_paradigm.html#reverse-mode-ad>`_.
+    <https://www.mindspore.cn/docs/en/r2.3.q1/design/programming_paradigm.html#reverse-mode-ad>`_.
 
     Args:
         fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single Tensor or tuple of
@@ -891,10 +891,11 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
     Returns:
         Forward outputs and function to calculate vjp.
 
-        - **net_output** (Union[Tensor, tuple[Tensor]]) - The output of `fn(inputs)`. Specially, when `has_aux` is set
-          True, `netout` is the first output of `fn(inputs)`.
+        - **net_output** (Union[Tensor, tuple[Tensor]]) - The output of `fn(inputs)`.
+          Specially, when `has_aux` is set to
+          ``True``, `net_output` is the first output of `fn(inputs)`.
         - **vjp_fn** (Function) - To calculate vector-jacobian-product. Its inputs are the vectors whose shape and
-          type should be the same as `netout` .
+          type should be the same as `net_output` .
         - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is True, `aux_value` will be returned.
           It means the second to last outputs of `fn(inputs)`. Specially, `aux_value` does not contribute to gradient.
 
@@ -1073,7 +1074,7 @@ def jacfwd(fn, grad_position=0, has_aux=False):
     """
     Compute Jacobian via forward mode, corresponding to
     `forward-mode differentiation
-    <https://www.mindspore.cn/docs/en/master/design/programming_paradigm.html#forward-mode-ad>`_.
+    <https://www.mindspore.cn/docs/en/r2.3.q1/design/programming_paradigm.html#forward-mode-ad>`_.
     When number of outputs is much greater than that of inputs, it's better to calculate Jacobian via forward mode than
     reverse mode to get better performance.
 
@@ -1244,7 +1245,7 @@ def jacrev(fn, grad_position=0, has_aux=False):
     """
     Compute Jacobian via reverse mode, corresponding to
     `reverse-mode differentiation
-    <https://www.mindspore.cn/docs/en/master/design/programming_paradigm.html#reverse-mode-ad>`_.
+    <https://www.mindspore.cn/docs/en/r2.3.q1/design/programming_paradigm.html#reverse-mode-ad>`_.
     When number of inputs is much greater than that of outputs, it's better to calculate Jacobian via reverse mode than
     forward mode to get better performance.
 
@@ -1375,7 +1376,7 @@ def stop_gradient(value):
     StopGradient is used for eliminating the effect of a value on the gradient, such as truncating
     the gradient propagation from an output of a function.
     For more details, please refer to `Stop Gradient
-    <https://www.mindspore.cn/tutorials/en/master/beginner/autograd.html#stop-gradient>`_.
+    <https://www.mindspore.cn/tutorials/en/r2.3.q1/beginner/autograd.html#stop-gradient>`_.
 
     Args:
         value (Any): The value whose effect on the gradient to be eliminated.

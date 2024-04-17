@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -83,24 +83,21 @@ def get_cast_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Argmax)
 @vmap_rules_getters.register(P.Argmin)
 def get_argmin_vmap_rule(prim, axis_size):
     """VmapRule for `Argmin` operations."""
-    if isinstance(prim, str):
-        axis = -1
-        output_type = mindspore.int32
-    else:
-        axis = prim.axis
-        output_type = prim.output_type
 
-    def vmap_rule(x_bdim):
+    def vmap_rule(x_bdim, axis_bdim, type_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim)
         if is_all_none:
             return result
         var, x_dim = x_bdim
+        axis_data, _ = axis_bdim
+        type_data, _ = type_bdim
         x_ndim = ops.rank(var)
-        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
-        out = P.Argmin(batch_axis, output_type)(var)
+        batch_axis = _get_reduce_batch_axis(axis_data, x_dim, x_ndim)
+        out = prim(var, batch_axis, type_data)
         out_dim = _get_reduce_out_dim(x_dim, batch_axis)
         return out, out_dim
 
@@ -111,28 +108,23 @@ def get_argmin_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ArgMinWithValue)
 def get_arg_min_max_with_value_vmap_rule(prim, axis_size):
     """VmapRule for `ArgMaxWithValue` and `ArgMinWithValue` operations."""
-    if isinstance(prim, str):
-        axis = -1
-        keep_dims = False
-    else:
-        axis = prim.axis
-        keep_dims = prim.keep_dims
-
     cum_fun_map = {
         "ArgMaxWithValue": P.ArgMaxWithValue,
         "ArgMinWithValue": P.ArgMinWithValue,
     }
     prim_class = cum_fun_map.get(prim.name)
 
-    def vmap_rule(x_bdim):
+    def vmap_rule(x_bdim, axis_bdim, keep_dims_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim)
         if is_all_none:
             return result
         var, x_dim = x_bdim
+        axis_data, _ = axis_bdim
+        keep_dims_data, _ = keep_dims_bdim
         x_ndim = ops.rank(var)
-        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
-        index, out = prim_class(batch_axis, keep_dims)(var)
-        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
+        batch_axis = _get_reduce_batch_axis(axis_data, x_dim, x_ndim)
+        index, out = prim_class(batch_axis, keep_dims_data)(var)
+        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims_data)
         return (index, out_dim), (out, out_dim)
 
     return vmap_rule
@@ -155,8 +147,7 @@ def _get_prefix(indices_shape, axis_size, indices_dtype):
     _check(indices_shape)
     indices_len = len(indices_shape)
     if indices_len == 1:
-        prefix = P.Range()(Tensor(0, indices_dtype), F.fill(
-            indices_dtype, (), axis_size), Tensor(1, indices_dtype))
+        prefix = P.Range()(Tensor(0, indices_dtype), Tensor(axis_size, indices_dtype), Tensor(1, indices_dtype))
         return prefix
 
     indices_end = indices_len - 1
@@ -221,24 +212,22 @@ def get_transpose_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.Tile)
+@vmap_rules_getters.register("Tile")
 def get_tile_vmap_rule(prim, axis_size):
     """VmapRule for `P.Tile` operation."""
-    if isinstance(prim, str):
-        prim = Primitive(prim)
 
     @_primexpr
-    def _get_batch_multiples(input_shape, dim, multiples):
+    def _get_batch_multiples(input_shape, dim, dims):
         input_ndim = len(input_shape)
-        multiples_ndim = len(multiples)
+        multiples_ndim = len(dims)
         if multiples_ndim < input_ndim - 1:
-            multiples = (1,) * (input_ndim - 1 - multiples_ndim) + multiples
+            dims = (1,) * (input_ndim - 1 - multiples_ndim) + dims
 
         rev_dim = input_ndim - 1 - dim
         if rev_dim == 0:
-            return multiples + (1,), multiples_ndim
+            return dims + (1,), multiples_ndim
 
-        batch_multiples = list(multiples)
+        batch_multiples = list(dims)
         batch_multiples.insert(-rev_dim, 1)
         return tuple(batch_multiples), multiples_ndim - rev_dim
 
@@ -248,45 +237,48 @@ def get_tile_vmap_rule(prim, axis_size):
             return result
 
         input_x, dim = input_bdim
-        multiples, multiples_dim = multiples_bdim
-        if multiples_dim is not None:
-            _raise_value_error("The source axis of shape in `Tile` must be None, but got {}.".format(multiples_dim))
+        dims, dims_dim = multiples_bdim
+        if dims_dim is not None:
+            _raise_value_error("The source axis of shape in `Tile` must be None, but got {}.".format(dims_dim))
 
         input_shape = F.shape(input_x)
-        batch_multiples, out_dim = _get_batch_multiples(input_shape, dim, multiples)
-        repeat_tensor = P.Tile()(input_x, batch_multiples)
+        batch_multiples, out_dim = _get_batch_multiples(input_shape, dim, dims)
+        repeat_tensor = prim(input_x, batch_multiples)
         return repeat_tensor, out_dim
 
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.Concat)
+@vmap_rules_getters.register("Concat")
 def get_concat_vmap_rule(prim, axis_size):
     """VmapRule for `Concat` operation."""
-    if isinstance(prim, str):
-        prim = P.Concat(0)
-        new_axis = 0
-    else:
-        new_axis = prim.axis
-    if new_axis >= 0:
-        new_axis += 1
+    @_primexpr
+    def _get_concat_batch_axis(axis):
+        new_axis = axis
+        if new_axis >= 0:
+            new_axis += 1
+        return new_axis
 
-    def vmap_rule(*inputs_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, *inputs_bdim)
+    def vmap_rule(inputs_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, inputs_bdim, axis_bdim)
         if is_all_none:
             return result
 
         if not isinstance(inputs_bdim, (tuple, list)):
-            _raise_value_error("The 'x' of P.Concat is neither tuple nor list.")
+            _raise_value_error("The 'x' of Concat is neither tuple nor list.")
 
-        args = inputs_bdim[0]
         vals = ()
-        for each_arg in args:
+        for each_arg in inputs_bdim:
             x, bdim = each_arg
             x = _bdim_at_front(x, bdim, axis_size)
             vals = vals + (x,)
 
-        out = P.Concat(new_axis)(vals)
+        axis, axis_dim = axis_bdim
+        if axis_dim is not None:
+            _raise_value_error("The source axis of `axis` in P.Concat must be None, but got {}.".format(axis_dim))
+        axis = _get_concat_batch_axis(axis)
+
+        out = prim(vals, axis)
         return out, 0
 
     return vmap_rule
@@ -355,7 +347,6 @@ def get_unstack_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.Reshape)
 def get_reshape_vmap_rule(prim, axis_size):
     """VmapRule for `Reshape` operation."""
-
 
     @_primexpr
     def get_batch_shape(x_shape, x_dim, target_shape, axis_size):
@@ -775,7 +766,6 @@ def get_tensor_scatter_op_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.UnsortedSegmentMin)
 @vmap_rules_getters.register(P.UnsortedSegmentMax)
 @vmap_rules_getters.register(P.UnsortedSegmentProd)
-@vmap_rules_getters.register(P.UnsortedSegmentSum)
 def get_unsorted_segment_arithmetic_vmap_rule(prim, axis_size):
     """VmapRule for `UnsortedSegment*` operation."""
 
@@ -783,7 +773,6 @@ def get_unsorted_segment_arithmetic_vmap_rule(prim, axis_size):
         "UnsortedSegmentMin": P.UnsortedSegmentMin,
         "UnsortedSegmentMax": P.UnsortedSegmentMax,
         "UnsortedSegmentProd": P.UnsortedSegmentProd,
-        "UnsortedSegmentSum": P.UnsortedSegmentSum,
     }
     prim_name = prim.name
     unsorted_segment_func = unsorted_segment_func_map.get(prim_name)()
@@ -813,6 +802,42 @@ def get_unsorted_segment_arithmetic_vmap_rule(prim, axis_size):
         segment_ids = _bdim_at_front(segment_ids, segment_ids_dim, axis_size)
 
         out = unsorted_segment_func(input_value, segment_ids, num_segment)
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.UnsortedSegmentSum)
+def get_unsorted_segment_sum_vmap_rule(prim, axis_size):
+    """VmapRule for `UnsortedSegmentSum*` operation."""
+
+    prim_name = prim.name
+    if prim.has_label("batch_rank"):
+        batch_rank = prim.get_label("batch_rank") + 1
+    else:
+        batch_rank = 1
+
+    prim = prim.clone()
+    prim.set_label('batch_rank', batch_rank)
+
+    def vmap_rule(input_bdim, segment_ids_bdim, num_segment_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, input_bdim, segment_ids_bdim, num_segment_bdim)
+        if is_all_none:
+            return result
+
+        # num_segment affect output shape, must be none
+        num_segment, num_segment_dim = num_segment_bdim
+        if num_segment_dim is not None:
+            _raise_value_error("The source axis of `num_segment` in `{}` must be None, "
+                               "but got {}.".format(prim_name, num_segment_dim))
+
+        input_value, input_dim = input_bdim
+        segment_ids, segment_ids_dim = segment_ids_bdim
+
+        input_value = _bdim_at_front(input_value, input_dim, axis_size)
+        segment_ids = _bdim_at_front(segment_ids, segment_ids_dim, axis_size)
+
+        out = prim(input_value, segment_ids, num_segment)
         return out, 0
 
     return vmap_rule
@@ -1033,12 +1058,9 @@ def get_matrix_diag_v3_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.TensorShape)
+@vmap_rules_getters.register("TensorShape")
 def get_tensor_shape_vmap_rule(prim, axis_size):
     """VmapRule for `TensorShape` operation."""
-    if isinstance(prim, str):
-        prim = Primitive(prim)
-
     def vmap_rule(input_bdim):
         is_all_none, result = vmap_general_preprocess(prim, input_bdim)
         if is_all_none:
@@ -1068,16 +1090,11 @@ def _get_one_hot_vmap_axis(orig_axis, ndim, indices_dim):
 @vmap_rules_getters.register(P.OneHot)
 def get_one_hot_vmap_rule(prim, axis_size):
     """VmapRule for `OneHot` operation."""
-    if isinstance(prim, str):
-        prim_name = prim
-        prim = Primitive(prim)
-    else:
-        prim_name = prim.name
+    prim_name = prim.name
 
-    axis = prim.axis
-
-    def vmap_rule(indices_bdim, depth_bdim, on_value_bdim, off_value_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, indices_bdim, depth_bdim, on_value_bdim, off_value_bdim)
+    def vmap_rule(indices_bdim, depth_bdim, on_value_bdim, off_value_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, indices_bdim, depth_bdim, on_value_bdim,
+                                                      off_value_bdim, axis_bdim)
         if is_all_none:
             return result
 
@@ -1085,6 +1102,7 @@ def get_one_hot_vmap_rule(prim, axis_size):
         depth, depth_dim = depth_bdim
         on_value, on_value_dim = on_value_bdim
         off_value, off_value_dim = off_value_bdim
+        axis, _ = axis_bdim
 
         if depth_dim is not None:
             _raise_value_error(
@@ -1097,9 +1115,12 @@ def get_one_hot_vmap_rule(prim, axis_size):
         if off_value_dim is not None:
             _raise_value_error(
                 "The source axis of `off_value` in {} must be None, but got {}.".format(prim_name, off_value_dim))
+
+        if not F.isconstant(axis):
+            _raise_value_error("'axis' in {} must be constant.".format(prim_name))
         ndim = F.rank(indices)
         new_axis, new_bd = _get_one_hot_vmap_axis(axis, ndim, indices_dim)
-        out = P.OneHot(new_axis)(indices, depth, on_value, off_value)
+        out = prim(indices, depth, on_value, off_value, new_axis)
 
         return out, new_bd
 
@@ -1526,13 +1547,13 @@ def get_meshgrid_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.MaskedFill)
 def get_masked_fill_vmap_rule(prim, axis_size):
     """VmapRule for `MaskedFill` operation."""
-    if hasattr(prim, 'batch_rank'):
-        batch_rank = prim.batch_rank + 1
+    if prim.has_label('batch_rank'):
+        batch_rank = prim.get_label('batch_rank') + 1
     else:
         batch_rank = 1
 
-    batch_prim = P.MaskedFill()
-    batch_prim.add_prim_attr('batch_rank', batch_rank)
+    prim = prim.clone()
+    prim.set_label('batch_rank', batch_rank)
 
     def vmap_rule(input_bdim, mask_bdim, value_bdim):
         is_all_none, result = vmap_general_preprocess(prim, input_bdim, mask_bdim, value_bdim)
@@ -1545,7 +1566,7 @@ def get_masked_fill_vmap_rule(prim, axis_size):
         input_x = _bdim_at_front(input_x, x_dim, axis_size)
         mask = _bdim_at_front(mask, mask_dim, axis_size)
         value = _bdim_at_front(value, value_dim, axis_size)
-        out = batch_prim(input_x, mask, value)
+        out = prim(input_x, mask, value)
         return out, 0
 
     return vmap_rule
@@ -1582,30 +1603,35 @@ def get_gather_vmap_rule(prim, axis_size):
 
         return target_axis_size, x_dst_shape, max_axis_size
 
-    def vmap_rule(x_bdim, indices_bdim, axis_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, indices_bdim)
+    def vmap_rule(x_bdim, indices_bdim, axis_bdim, batch_dims_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, indices_bdim, batch_dims_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
         indices, indices_dim = indices_bdim
         axis, axis_dim = axis_bdim
+        batch_dims, batch_dims_dim = batch_dims_bdim
 
         if axis_dim is not None:
             _raise_value_error("The source axis of `axis` in {} must be None, but got {}.".format(prim_name, axis_dim))
+
+        if batch_dims_dim is not None:
+            _raise_value_error("The source batch_dims of `batch_dims` in {} must be None, but got {}."
+                               .format(prim_name, batch_dims_dim))
 
         x_shape_len = len(x.shape)
 
         if x_dim is not None and indices_dim is None:
             x = _bdim_at_front(x, x_dim, axis_size)
             axis = process_axis(axis, x_shape_len, True, False)
-            output = prim(x, indices, axis)
+            output = prim(x, indices, axis, batch_dims)
             return output, 0
 
         if x_dim is None and indices_dim is not None:
             indices = _bdim_at_front(indices, indices_dim, axis_size)
             axis = process_axis(axis, x_shape_len, False, True)
-            output = prim(x, indices, axis)
+            output = prim(x, indices, axis, batch_dims)
             return output, axis
 
         x = _bdim_at_front(x, x_dim, axis_size)
@@ -1631,7 +1657,7 @@ def get_gather_vmap_rule(prim, axis_size):
         indices = F.add(indices, counts)
         indices = F.add(indices, indices_out_of_bound)
 
-        output = prim(x, indices, axis)
+        output = prim(x, indices, axis, batch_dims)
 
         return output, axis
 
@@ -1804,13 +1830,13 @@ def get_expand_dims_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.Diag)
 def get_diag_vmap_rule(prim, axis_size):
     """VmapRule for `Diag` operations."""
-    if hasattr(prim, 'batch_rank'):
-        batch_rank = prim.batch_rank + 1
+    if prim.has_label("batch_rank"):
+        batch_rank = prim.get_label("batch_rank") + 1
     else:
         batch_rank = 1
 
-    batch_prim = P.Diag()
-    batch_prim.add_prim_attr('batch_rank', batch_rank)
+    prim = prim.clone()
+    prim.set_label('batch_rank', batch_rank)
 
     def vmap_rule(x_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim)
@@ -1818,7 +1844,7 @@ def get_diag_vmap_rule(prim, axis_size):
             return result
         x, x_dim = x_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
-        out = batch_prim(x)
+        out = prim(x)
         return out, 0
 
     return vmap_rule
@@ -1914,14 +1940,6 @@ def get_squeeze_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.StridedSlice)
 def get_stridedslice_vmap_rule(prim, axis_size):
     """VmapRule for `StridedSlice`."""
-    new_begin_mask = prim.begin_mask * 2 + 1
-    new_end_mask = prim.end_mask * 2 + 1
-    new_ellipsis_mask = prim.ellipsis_mask
-    new_new_axis_mask = prim.new_axis_mask * 2
-    new_shrink_axis_mask = prim.shrink_axis_mask * 2
-    batch_stridedslice = P.StridedSlice(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask, \
-                                        new_shrink_axis_mask)
-
     @_primexpr
     def get_new_begin_end_strided(begin, end, strided):
         new_begin = (0,) + begin
@@ -1929,7 +1947,24 @@ def get_stridedslice_vmap_rule(prim, axis_size):
         new_strided = (1,) + strided
         return new_begin, new_end, new_strided
 
-    def vmap_rule(x_bdim, begin_bdim, end_bdim, strided_bdim):
+    def _get_mask_value_and_prim(begin_mask_bdim, end_mask_bdim, ellipsis_mask_bdim, new_axis_mask_bdim,
+                                 shrink_axis_mask_bdim):
+        begin_mask, _ = begin_mask_bdim
+        end_mask, _ = end_mask_bdim
+        ellipsis_mask, _ = ellipsis_mask_bdim
+        new_axis_mask, _ = new_axis_mask_bdim
+        shrink_axis_mask, _ = shrink_axis_mask_bdim
+        new_begin_mask = begin_mask * 2 + 1
+        new_end_mask = end_mask * 2 + 1
+        new_ellipsis_mask = ellipsis_mask
+        new_new_axis_mask = new_axis_mask * 2
+        new_shrink_axis_mask = shrink_axis_mask * 2
+        batch_stridedslice = P.StridedSlice(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask,
+                                            new_shrink_axis_mask)
+        return batch_stridedslice
+
+    def vmap_rule(x_bdim, begin_bdim, end_bdim, strided_bdim, begin_mask_bdim, end_mask_bdim, ellipsis_mask_bdim,
+                  new_axis_mask_bdim, shrink_axis_mask_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, begin_bdim, end_bdim, strided_bdim)
         if is_all_none:
             return result
@@ -1938,6 +1973,8 @@ def get_stridedslice_vmap_rule(prim, axis_size):
         begin, begin_dim = begin_bdim
         end, end_dim = end_bdim
         strided, strided_dim = strided_bdim
+        batch_stridedslice = _get_mask_value_and_prim(begin_mask_bdim, end_mask_bdim, ellipsis_mask_bdim,
+                                                      new_axis_mask_bdim, shrink_axis_mask_bdim)
 
         if any(dim is not None for dim in [begin_dim, end_dim, strided_dim]):
             _raise_value_error("vmap of `StridedSlice` not support `begin`, `end` or `strided` has batch dimension, "
@@ -1960,7 +1997,7 @@ def get_stridedslice_grad_vmap_rule(prim, axis_size):
     new_ellipsis_mask = prim.ellipsis_mask
     new_new_axis_mask = prim.new_axis_mask * 2
     new_shrink_axis_mask = prim.shrink_axis_mask * 2
-    batch_stridedslice_grad = G.StridedSliceGrad(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask, \
+    batch_stridedslice_grad = G.StridedSliceGrad(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask,
                                                  new_shrink_axis_mask)
 
     @_primexpr
@@ -2057,18 +2094,17 @@ def get_im2col_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.Split)
 def get_split_vmap_rule(prim, axis_size):
     """VmapRule for `Split`."""
-
-    axis = prim.axis
-    if axis >= 0:
-        axis += 1
-    batch_prim = P.Split(axis, prim.output_num)
-
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, axis_bdim, output_num_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim, output_num_bdim)
         if is_all_none:
             return result
         x, x_dim = x_bdim
+        axis, axis_bdim = axis_bdim
+        if axis >= 0:
+            axis += 1
+        output_num, output_num_bdim = output_num_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
+        batch_prim = P.Split(axis, output_num)
         outputs = batch_prim(x)
         output = ()
         for out in outputs:
@@ -2084,5 +2120,5 @@ get_unsupported_dynamic_vmap_rule = \
     vmap_rules_getters.register(UniqueConsecutive)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(Col2Im)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(RandomPoisson)(get_unsupported_dynamic_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.ZerosLike)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register("ZerosLike")(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.OnesLike)(get_unop_vmap_rule)

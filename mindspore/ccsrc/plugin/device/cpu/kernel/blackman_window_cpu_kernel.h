@@ -29,11 +29,10 @@ class BlackmanWindowCpuKernelMod : public NativeCpuKernelMod {
   BlackmanWindowCpuKernelMod() = default;
   ~BlackmanWindowCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -41,14 +40,14 @@ class BlackmanWindowCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T, typename S>
-  bool BlackmanWindowKernelFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs) const;
+  bool BlackmanWindowKernelFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &workspace,
+                                const std::vector<kernel::KernelTensor *> &outputs) const;
   bool periodic_{true};
   TypeId input_dtype{kTypeUnknown};
   using BlackmanWindowFunc =
-    std::function<bool(BlackmanWindowCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(BlackmanWindowCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, BlackmanWindowFunc>> func_list_;
   BlackmanWindowFunc kernel_func_;
 };

@@ -62,25 +62,14 @@ bool DropoutNdCpuKernelMod::CheckDropOutNdShape() {
   return true;
 }
 
-bool DropoutNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool DropoutNdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
   // Get Self primitive attribute by primitive.
-  if (kernel_name_ == prim::kPrimDropout2D->name()) {
-    auto kernel_ptr = std::make_shared<ops::Dropout2D>(base_operator->GetPrim());
-    keep_prob_ = kernel_ptr->get_keep_prob();
-  } else if (kernel_name_ == prim::kPrimDropout3D->name()) {
-    auto kernel_ptr = std::make_shared<ops::Dropout3D>(base_operator->GetPrim());
-    keep_prob_ = kernel_ptr->get_keep_prob();
-  } else {
-    MS_LOG(ERROR) << "For 'DropoutNDGpuKernelMod', it's must be Dropout2D or Dropout3D, but get invalid kernel name : "
-                  << kernel_name_;
-    return false;
-  }
+  keep_prob_ = GetValue<float>(primitive_->GetAttr(ops::kKeepProb));
   if ((keep_prob_ < 0.0f) || (keep_prob_ > 1.0f)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'keep_prob' should be in range [0.0, 1.0], "
                   << "but got " << keep_prob_;
@@ -88,13 +77,12 @@ bool DropoutNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   }
   std::bernoulli_distribution::param_type dis_param(keep_prob_);
   distribution_.param(dis_param);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int DropoutNdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
@@ -110,18 +98,18 @@ int DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
   auto mask = GetDeviceAddress<bool>(outputs, kIndex1);
   // When keep_prob equal to 0.0, output default to zero, mask default to false.
   if (std::equal_to<float>()(keep_prob_, 0)) {
-    auto ret = memset_s(output, outputs.at(kIndex0)->size, 0, outputs.at(kIndex0)->size);
+    auto ret = memset_s(output, outputs.at(kIndex0)->size(), 0, outputs.at(kIndex0)->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memset_s error.";
     }
-    ret = memset_s(mask, outputs.at(kIndex1)->size, 0, outputs.at(kIndex1)->size);
+    ret = memset_s(mask, outputs.at(kIndex1)->size(), 0, outputs.at(kIndex1)->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memset_s error.";
     }

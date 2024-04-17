@@ -25,11 +25,8 @@ const int32_t kNumint64 = 2;
 const int32_t kSizeint32 = 4;
 const int32_t kSizeint64 = 8;
 
-bool NonDeterministicIntsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool NonDeterministicIntsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -50,17 +47,17 @@ bool NonDeterministicIntsGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-bool NonDeterministicIntsGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *cuda_stream) {
+bool NonDeterministicIntsGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs, void *cuda_stream) {
   kernel_func_(this, inputs, workspace, outputs, cuda_stream);
   return true;
 }
 
 template <typename T>
-bool NonDeterministicIntsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs, void *cuda_stream) {
+bool NonDeterministicIntsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs, void *cuda_stream) {
   T *output = GetDeviceAddress<T>(outputs, 0);
   curandStatePhilox4_32_10_t *devStates = nullptr;
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
@@ -71,11 +68,9 @@ bool NonDeterministicIntsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   return true;
 }
 
-int NonDeterministicIntsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int NonDeterministicIntsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -86,7 +81,6 @@ int NonDeterministicIntsGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 
   input_num_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<int64_t>());
   output_num_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>());
-  input_size_list_.emplace_back(input_num_ * unit_input_size_);
   output_size_list_.emplace_back(output_num_ * unit_output_size_);
   if (unit_output_size_ == kSizeint32) {
     // int32 or uint32.

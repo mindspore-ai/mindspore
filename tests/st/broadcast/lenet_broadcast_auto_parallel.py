@@ -27,7 +27,6 @@ from tests.models.official.cv.lenet.src.lenet import LeNet5
 
 np.set_printoptions(threshold=np.inf)
 device_num = 2
-device_id = int(os.getenv('DEVICE_ID'))
 rank_id = 0
 
 
@@ -35,11 +34,10 @@ def setup_module():
     global device_num
     global rank_id
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(device_id=device_id)
     distributedTool.init()
     rank_id = distributedTool.get_rank()
     device_num = distributedTool.get_group_size()
-    context.set_auto_parallel_context(device_num=device_num, global_rank=device_id, parameter_broadcast=True)
+    context.set_auto_parallel_context(device_num=device_num, parameter_broadcast=True)
 
 
 def teardown_module():

@@ -16,8 +16,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_SEGMENT_SQRT_N_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_SEGMENT_SQRT_N_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 #include "utils/sparse_tensor.h"
 
@@ -32,7 +32,7 @@ class SparseSegmentSqrtNCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2, typename T3>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx);
+  uint32_t ComputeKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

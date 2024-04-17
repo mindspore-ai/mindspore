@@ -167,7 +167,7 @@ def _ps_roi_pooling_grad_case(data_type, mode, y_size_adjust=None, dynamic_shape
         atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_mind_ir():
@@ -216,7 +216,7 @@ def test_ps_roi_pooling_grad_mind_ir():
         atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_graph_mode():
@@ -230,7 +230,7 @@ def test_ps_roi_pooling_grad_graph_mode():
         mode=CTX_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_y_0_shape_wrong():
@@ -246,7 +246,7 @@ def test_ps_roi_pooling_grad_y_0_shape_wrong():
     )
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_y_1_shape_wrong():
@@ -262,7 +262,7 @@ def test_ps_roi_pooling_grad_y_1_shape_wrong():
     )
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_y_2_shape_wrong():
@@ -278,7 +278,7 @@ def test_ps_roi_pooling_grad_y_2_shape_wrong():
     )
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_y_3_shape_wrong():
@@ -294,7 +294,7 @@ def test_ps_roi_pooling_grad_y_3_shape_wrong():
     )
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_pynative_mode():
@@ -308,7 +308,7 @@ def test_ps_roi_pooling_grad_pynative_mode():
         mode=ms.context.PYNATIVE_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_size_attr_type_wrong():
@@ -324,7 +324,7 @@ def test_ps_roi_pooling_grad_input_size_attr_type_wrong():
     _check_attr_validation(arg_name, arg_value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_size_attr_type_wrong2():
@@ -340,7 +340,7 @@ def test_ps_roi_pooling_grad_input_size_attr_type_wrong2():
     _check_attr_validation(arg_name, arg_value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_size_attr_type_wrong3():
@@ -356,7 +356,7 @@ def test_ps_roi_pooling_grad_input_size_attr_type_wrong3():
     _check_attr_validation(arg_name, arg_value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_size_attr_range_wrong():
@@ -368,7 +368,7 @@ def test_ps_roi_pooling_grad_input_size_attr_range_wrong():
     _check_attr_validation(arg_name="input_size", arg_value=-1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_size_attr_range_wrong2():
@@ -380,7 +380,7 @@ def test_ps_roi_pooling_grad_input_size_attr_range_wrong2():
     _check_attr_validation(arg_name="input_size", arg_value=0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_size_attr_range_wrong3():
@@ -392,7 +392,7 @@ def test_ps_roi_pooling_grad_input_size_attr_range_wrong3():
     _check_attr_validation(arg_name="input_size", arg_value=(100, -1))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_size_attr_range_wrong4():
@@ -404,7 +404,7 @@ def test_ps_roi_pooling_grad_input_size_attr_range_wrong4():
     _check_attr_validation(arg_name="input_size", arg_value=(0, 100))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_spatial_scale_attr_type_wrong():
@@ -416,7 +416,7 @@ def test_ps_roi_pooling_grad_spatial_scale_attr_type_wrong():
     _check_attr_validation(arg_name="spatial_scale", arg_value=object())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_spatial_scale_attr_range_wrong():
@@ -428,7 +428,7 @@ def test_ps_roi_pooling_grad_spatial_scale_attr_range_wrong():
     _check_attr_validation(arg_name="spatial_scale", arg_value=-0.15)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_group_size_attr_type_wrong():
@@ -440,7 +440,7 @@ def test_ps_roi_pooling_grad_group_size_attr_type_wrong():
     _check_attr_validation(arg_name="group_size", arg_value=7.1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_group_size_attr_range_wrong():
@@ -452,7 +452,7 @@ def test_ps_roi_pooling_grad_group_size_attr_range_wrong():
     _check_attr_validation(arg_name="group_size", arg_value=-1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_output_dim_attr_type_wrong():
@@ -464,7 +464,7 @@ def test_ps_roi_pooling_output_dim_attr_type_wrong():
     _check_attr_validation(arg_name="output_dim", arg_value=7.1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_output_dim_attr_range_wrong():
@@ -496,7 +496,7 @@ def _check_attr_validation(arg_name, arg_value):
         assert False
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_args_num():
@@ -526,7 +526,7 @@ def test_ps_roi_pooling_grad_input_args_num():
         assert False, "Expected ValueError to occur, but it does not occur."
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_type_unsupported():
@@ -556,7 +556,7 @@ def test_ps_roi_pooling_grad_input_type_unsupported():
         assert False, "Expected TypeError to occur, but it does not occur."
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_type_unsupported2():
@@ -586,7 +586,7 @@ def test_ps_roi_pooling_grad_input_type_unsupported2():
         assert False, "Expected TypeError to occur, but it does not occur."
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_input_type_unsupported3():

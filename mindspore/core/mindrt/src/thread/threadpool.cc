@@ -17,6 +17,7 @@
 #include <sched.h>
 #include <unistd.h>
 #endif
+#include <sstream>
 #include "thread/threadpool.h"
 #include "thread/core_affinity.h"
 #if !defined(_WIN32) && !defined(BUILD_LITE)
@@ -52,7 +53,7 @@ Worker::~Worker() {
 
 void Worker::CreateThread() { thread_ = std::make_unique<std::thread>(&Worker::Run, this); }
 
-void Worker::ReinitAfterFork() {
+void Worker::ChildAfterFork() {
   THREAD_INFO("worker %ld recreate thread after fork in child process", worker_id_);
   if (cond_var_ != nullptr) {
     (void)cond_var_.release();
@@ -63,6 +64,17 @@ void Worker::ReinitAfterFork() {
     CreateThread();
   }
 }
+
+#if defined(BIND_CORE) && !defined(__ANDROID__) && !defined(__APPLE__) && !defined(_MSC_VER) && !defined(_WIN32)
+std::string MaskToStr(cpu_set_t *mask) {
+  std::stringstream ss;
+  size_t cpu_num = static_cast<size_t>(sysconf(_SC_NPROCESSORS_ONLN));
+  for (size_t i = 0; i < cpu_num; i++) {
+    ss << (CPU_ISSET(i, mask) ? "1" : "0");
+  }
+  return ss.str();
+}
+#endif
 
 void Worker::SetAffinity() {
 #ifdef _WIN32
@@ -76,6 +88,8 @@ void Worker::SetAffinity() {
   return;
 #else
 #if !defined(__APPLE__) && !defined(_MSC_VER)
+
+  THREAD_INFO("Worker pthread_setaffinity_np, mask %s", MaskToStr(&mask_));
   int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &mask_);
   if (ret != THREAD_OK) {
     THREAD_ERROR("bind thread %lu to cpu failed. ERROR %d", pthread_self(), errno);
@@ -246,14 +260,6 @@ void Worker::Active() {
 bool Worker::available() {
   int expected = kThreadIdle;
   return status_.compare_exchange_strong(expected, kThreadHeld);
-}
-
-ThreadPool::ThreadPool() {
-#if !defined(_WIN32) && !defined(BUILD_LITE)
-  ForkUtils::GetInstance().RegisterCallbacks(this, static_cast<void (ThreadPool::*)()>(nullptr),
-                                             static_cast<void (ThreadPool::*)()>(nullptr),
-                                             &ThreadPool::ReinitAfterFork);
-#endif
 }
 
 ThreadPool::~ThreadPool() {
@@ -560,10 +566,10 @@ void ThreadPool::SetWorkerIdMap() {
   return;
 }
 
-void ThreadPool::ReinitAfterFork() {
-  THREAD_INFO("fork event detected in child process, workers' threads will be recreated.");
+void ThreadPool::ChildAfterFork() {
+  THREAD_INFO("ThreadPool reinitialize workers after fork");
   for (auto &worker : workers_) {
-    worker->ReinitAfterFork();
+    worker->ChildAfterFork();
   }
 }
 }  // namespace mindspore

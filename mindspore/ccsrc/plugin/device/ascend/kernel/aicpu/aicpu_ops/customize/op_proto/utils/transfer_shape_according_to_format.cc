@@ -20,7 +20,6 @@
  */
 #include "transfer_shape_according_to_format.h"
 #include <memory>
-#include "framework/omg/omg_inner_types.h"
 
 namespace ge {
 ShapeTransferAccordingToFormat::ShapeTransferAccordingToFormat()
@@ -45,7 +44,7 @@ ShapeTransferAccordingToFormat::ShapeTransferAccordingToFormat()
                        {ge::DT_UINT64, SHAPE_NUMBER_16},
                        {ge::DT_BOOL, SHAPE_NUMBER_16}}) {}
 
-bool ShapeTransferAccordingToFormat::GetNCHWShapeByAxisValue(ge::GeShape &newShape, const int64_t &implType,
+bool ShapeTransferAccordingToFormat::GetNCHWShapeByAxisValue(ge::Shape &newShape, const int64_t &implType,
                                                              const vector<int64_t> &axisValue,
                                                              const vector<int64_t> &ndValue) {
   CHECK(axisValue.size() <= static_cast<size_t>(AXIS_W), LOG_INFO("AxisValue is not correct!"), return true);
@@ -55,11 +54,11 @@ bool ShapeTransferAccordingToFormat::GetNCHWShapeByAxisValue(ge::GeShape &newSha
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_C]));
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_H]));
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_W]));
-  newShape = ge::GeShape(newDimVec);
+  newShape = ge::Shape(newDimVec);
   return true;
 }
 
-bool ShapeTransferAccordingToFormat::GetNHWCShapeByAxisValue(ge::GeShape &newShape, const int64_t &implType,
+bool ShapeTransferAccordingToFormat::GetNHWCShapeByAxisValue(ge::Shape &newShape, const int64_t &implType,
                                                              const vector<int64_t> &axisValue,
                                                              const vector<int64_t> &ndValue) {
   CHECK(axisValue.size() <= static_cast<size_t>(AXIS_W), LOG_INFO("AxisValue is not correct!"), return true);
@@ -69,11 +68,11 @@ bool ShapeTransferAccordingToFormat::GetNHWCShapeByAxisValue(ge::GeShape &newSha
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_H]));
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_W]));
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_C]));
-  newShape = ge::GeShape(newDimVec);
+  newShape = ge::Shape(newDimVec);
   return true;
 }
 
-bool ShapeTransferAccordingToFormat::GetNC1HWC0ShapeByAxisValue(ge::GeShape &newShape, const int64_t &implType,
+bool ShapeTransferAccordingToFormat::GetNC1HWC0ShapeByAxisValue(ge::Shape &newShape, const int64_t &implType,
                                                                 const vector<int64_t> &axisValue,
                                                                 const vector<int64_t> &ndValue) {
   CHECK(axisValue.empty(), LOG_INFO("AxisValue is empty!"), return true);
@@ -87,19 +86,19 @@ bool ShapeTransferAccordingToFormat::GetNC1HWC0ShapeByAxisValue(ge::GeShape &new
     newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_H]));
     newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_W]));
     newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_C0]));
-    newShape = ge::GeShape(newDimVec);
+    newShape = ge::Shape(newDimVec);
   } else {
     CHECK(axisValue.size() <= static_cast<size_t>(AXIS_W), LOG_INFO("AxisValue is not correct!"), return true);
     newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_N]));
     newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_C]));
     newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_H]));
     newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_W]));
-    newShape = ge::GeShape(newDimVec);
+    newShape = ge::Shape(newDimVec);
   }
   return true;
 }
 
-bool ShapeTransferAccordingToFormat::GetFzShapeByAxisValue(ge::GeShape &newShape, const int64_t &implType,
+bool ShapeTransferAccordingToFormat::GetFzShapeByAxisValue(ge::Shape &newShape, const int64_t &implType,
                                                            const vector<int64_t> &axisValue,
                                                            const vector<int64_t> &ndValue) {
   CHECK(axisValue.empty(), LOG_INFO("AxisValue is empty!"), return true);
@@ -118,31 +117,31 @@ bool ShapeTransferAccordingToFormat::GetFzShapeByAxisValue(ge::GeShape &newShape
       DivisionCeiling(ndValue[sizeOfOriginalVec - MINUS_VALUE_TWO], static_cast<size_t>(axisValue[AXIS_C0]));
     newDimVec.push_back(SHAPE_NUMBER_16);
     newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_C0]));
-    newShape = ge::GeShape(newDimVec);
+    newShape = ge::Shape(newDimVec);
   } else {
     if (implType == static_cast<int64_t>(EN_IMPL_HW_TBE) || implType == static_cast<int64_t>(EN_IMPL_CUSTOM_TBE) ||
         implType == static_cast<int64_t>(EN_IMPL_NON_PERSISTENT_CUSTOM_TBE)) {
       CHECK(axisValue.size() <= static_cast<size_t>(AXIS_C1), LOG_INFO("AxisValue is not correct!"), return true);
-      int64_t hwc1 = static_cast<size_t>(axisValue[AXIS_C1] * axisValue[AXIS_H] * axisValue[AXIS_W]);
+      int64_t hwc1 = axisValue[AXIS_C1] * axisValue[AXIS_H] * axisValue[AXIS_W];
       newDimVec.push_back(hwc1);
       newDimVec.push_back(DivisionCeiling(static_cast<size_t>(axisValue[AXIS_N]), NI));
       newDimVec.push_back(NI);
       newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_C0]));
-      newShape = ge::GeShape(newDimVec);
+      newShape = ge::Shape(newDimVec);
     } else {
       CHECK(axisValue.size() <= static_cast<size_t>(AXIS_W), LOG_INFO("AxisValue is not correct!"), return true);
       newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_N]));
       newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_C]));
       newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_H]));
       newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_W]));
-      newShape = ge::GeShape(newDimVec);
+      newShape = ge::Shape(newDimVec);
     }
   }
 
   return true;
 }
 
-bool ShapeTransferAccordingToFormat::GetHWCNShapeByAxisValue(ge::GeShape &newShape, const int64_t &implType,
+bool ShapeTransferAccordingToFormat::GetHWCNShapeByAxisValue(ge::Shape &newShape, const int64_t &implType,
                                                              const vector<int64_t> &axisValue,
                                                              const vector<int64_t> &ndValue) {
   CHECK(axisValue.size() <= static_cast<size_t>(AXIS_W), LOG_INFO("AxisValue is not correct!"), return true);
@@ -152,11 +151,11 @@ bool ShapeTransferAccordingToFormat::GetHWCNShapeByAxisValue(ge::GeShape &newSha
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_W]));
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_C]));
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_N]));
-  newShape = ge::GeShape(newDimVec);
+  newShape = ge::Shape(newDimVec);
   return true;
 }
 
-bool ShapeTransferAccordingToFormat::GetC1HWNCoC0ShapeByAxisValue(ge::GeShape &newShape, const int64_t &implType,
+bool ShapeTransferAccordingToFormat::GetC1HWNCoC0ShapeByAxisValue(ge::Shape &newShape, const int64_t &implType,
                                                                   const vector<int64_t> &axisValue,
                                                                   const vector<int64_t> &ndValue) {
   CHECK(axisValue.size() <= static_cast<size_t>(AXIS_Co), LOG_INFO("AxisValue is not correct!"), return true);
@@ -168,11 +167,11 @@ bool ShapeTransferAccordingToFormat::GetC1HWNCoC0ShapeByAxisValue(ge::GeShape &n
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_N]));
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_Co]));
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_C0]));
-  newShape = ge::GeShape(newDimVec);
+  newShape = ge::Shape(newDimVec);
   return true;
 }
 
-bool ShapeTransferAccordingToFormat::GetNzShapeByAxisValue(ge::GeShape &newShape, const int64_t &implType,
+bool ShapeTransferAccordingToFormat::GetNzShapeByAxisValue(ge::Shape &newShape, const int64_t &implType,
                                                            const vector<int64_t> &axisValue,
                                                            const vector<int64_t> &ndValue) {
   CHECK(ndValue.empty(), LOG_INFO("ndValue is empty!"), return true);
@@ -190,13 +189,13 @@ bool ShapeTransferAccordingToFormat::GetNzShapeByAxisValue(ge::GeShape &newShape
   /* sizeOfOriginalVec - 1 mean the last value of original vec
    * sizeOfOriginalVec - 2 mean the second last value of original vec */
   newDimVec[sizeOfOriginalVec - MINUS_VALUE_ONE] =
-    DivisionCeiling(ndValue[sizeOfOriginalVec - MINUS_VALUE_TWO], (int64_t)SHAPE_NUMBER_16);
+    DivisionCeiling(ndValue[sizeOfOriginalVec - MINUS_VALUE_TWO], static_cast<int64_t>(SHAPE_NUMBER_16));
 
   newDimVec[sizeOfOriginalVec - MINUS_VALUE_TWO] =
     DivisionCeiling(ndValue[sizeOfOriginalVec - MINUS_VALUE_ONE], static_cast<size_t>(axisValue[AXIS_C0]));
   newDimVec.push_back(SHAPE_NUMBER_16);
   newDimVec.push_back(static_cast<size_t>(axisValue[AXIS_C0]));
-  newShape = ge::GeShape(newDimVec);
+  newShape = ge::Shape(newDimVec);
   return true;
 }
 

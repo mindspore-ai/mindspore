@@ -15,12 +15,15 @@
  */
 #include "backend/common/graph_kernel/core/graph_kernel_cluster.h"
 
-#include <algorithm>
-#include <set>
-#include <utility>
-#include <fstream>
-#include <string>
-
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "utils/hash_map.h"
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"
@@ -303,14 +306,14 @@ void GraphKernelCluster::DumpClusterInfo(const AnfNodePtrList &old_nodes, const 
 void GraphKernelCluster::DumpToFile() {
   auto dir_path = FileUtils::CreateNotExistDirs(std::string("./") + kGraphKernelDumpPath);
   if (!dir_path.has_value()) {
-    MS_LOG(ERROR) << "Failed to CreateNotExistDirs: ./" << kGraphKernelDumpPath;
+    MS_LOG(INFO) << "Failed to CreateNotExistDirs: ./" << kGraphKernelDumpPath;
     return;
   }
   std::string filepath = dir_path.value() + "/" + "graph_kernel_cluster.txt";
   ChangeFileMode(filepath, S_IWUSR);
   std::ofstream fout(filepath, std::ios::app);
   if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << filepath << "' failed!";
+    MS_LOG(INFO) << "Open dump file '" << filepath << "' failed!";
     ChangeFileMode(filepath, S_IRUSR);
     return;
   }
@@ -330,7 +333,7 @@ void GraphKernelCluster::RemoveWildGetitem(std::vector<size_t> *candidates) {
     if (IsPrimitiveCNode(nodes_[cluster_id], prim::kPrimTupleGetItem)) {
       const auto &inputs = graph_->GetInputs(cluster_id);
       if (inputs.size() != 1) {
-        MS_LOG(ERROR) << "Input size of GetItem(" << cluster_id << ") should be 1, but got " << inputs.size();
+        MS_LOG(INFO) << "Input size of GetItem(" << cluster_id << ") should be 1, but got " << inputs.size();
         candidates->clear();
         return;
       }

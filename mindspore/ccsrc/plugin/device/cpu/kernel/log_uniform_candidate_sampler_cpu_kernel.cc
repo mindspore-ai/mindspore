@@ -26,20 +26,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool LogUniformCandidateSamplerCpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  auto op = std::dynamic_pointer_cast<ops::LogUniformCandidateSampler>(base_operator);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "cast op LogUniformCandidateSampler failed!";
-    return false;
-  }
-  this->num_true_ = op->get_num_true();
-  this->num_sampled_ = op->get_num_sampled();
-  this->unique_ = op->get_unique();
-  this->seed_ = op->get_seed();
-  this->range_max_ = op->get_range_max();
-  kernel_name_ = base_operator->name();
+bool LogUniformCandidateSamplerCpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  num_true_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumTrue));
+  num_sampled_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumSampled));
+  unique_ = GetValue<bool>(primitive_->GetAttr(ops::kUnique));
+  seed_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  range_max_ = GetValue<int64_t>(primitive_->GetAttr(ops::kRangeMax));
   constexpr int32_t ZERO = 0;
   if (range_max_ == ZERO) {
     MS_LOG(ERROR) << "For '" << kernel_name_
@@ -76,12 +69,10 @@ int64_t LogUniformCandidateSamplerCpuKernel::Sample(random::SinglePhiloxRandom *
   return val % range_max_;
 }
 
-int LogUniformCandidateSamplerCpuKernel::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int LogUniformCandidateSamplerCpuKernel::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto true_classes_shape = inputs[0]->GetShapeVector();
@@ -116,14 +107,15 @@ int LogUniformCandidateSamplerCpuKernel::Resize(const BaseOperatorPtr &base_oper
   }
   return ret;
 }
-bool LogUniformCandidateSamplerCpuKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
-  int64_t *true_classes = static_cast<int64_t *>(inputs.at(0)->addr);
-  auto true_classes_size = input_size_list_.at(0);
-  int64_t *sampled_candidates = static_cast<int64_t *>(outputs.at(0)->addr);
-  float *true_expected_count = static_cast<float *>(outputs.at(1)->addr);
-  float *sampled_expected_count = static_cast<float *>(outputs.at(2)->addr);
+bool LogUniformCandidateSamplerCpuKernel::Launch(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  int64_t *true_classes = static_cast<int64_t *>(inputs.at(0)->device_ptr());
+  auto true_classes_size = inputs.at(0)->size();
+  size_t true_classes_len = static_cast<size_t>(true_classes_size / sizeof(int64_t));
+  int64_t *sampled_candidates = static_cast<int64_t *>(outputs.at(0)->device_ptr());
+  float *true_expected_count = static_cast<float *>(outputs.at(1)->device_ptr());
+  float *sampled_expected_count = static_cast<float *>(outputs.at(2)->device_ptr());
 
   auto gen = generator_.ReserveSamples32(reserveSamplesNr_);
 
@@ -152,7 +144,7 @@ bool LogUniformCandidateSamplerCpuKernel::Launch(const std::vector<AddressPtr> &
     sampled_expected_count[i] = CalcExpectedCount(Probability(sampled_candidates[i]), num_sampled_, num_tries);
   }
 
-  for (size_t i = 0; i < true_classes_size; i++) {
+  for (size_t i = 0; i < true_classes_len; i++) {
     true_expected_count[i] = CalcExpectedCount(Probability(true_classes[i]), num_sampled_, num_tries);
   }
   return true;

@@ -36,21 +36,12 @@ TensorStorageInfoPtrList CopyWithSliceCalc(const PrimitivePtr &prim, const std::
     const auto &old_strides = GetOriStrides(old_shape);
     storage_info = std::make_shared<TensorStorageInfo>(old_shape, old_strides, old_shape, old_strides,
                                                        IsContiguous(old_shape, old_strides));
-    self_tensor->set_storage_info(storage_info);
-  }
-
-  if (src_tensor->storage_info() == nullptr) {
-    const auto &old_shape = src_tensor->shape();
-    const auto &old_strides = GetOriStrides(old_shape);
-    auto src_storage_info = std::make_shared<TensorStorageInfo>(old_shape, old_strides, old_shape, old_strides,
-                                                                IsContiguous(old_shape, old_strides));
-    src_tensor->set_storage_info(src_storage_info);
   }
 
   MS_EXCEPTION_IF_NULL(storage_info);
-  if (storage_info->shape != src_tensor->storage_info()->shape) {
+  if (storage_info->shape != src_tensor->shape()) {
     MS_LOG(EXCEPTION) << "storage_info->shape is not equal to src_tensor->shape(), storage_info->shape:"
-                      << storage_info->shape << ", src_tensor->shape:" << src_tensor->storage_info()->shape;
+                      << storage_info->shape << ", src_tensor->shape:" << src_tensor->shape();
   }
 
   if (self_tensor->data_type() != src_tensor->data_type()) {

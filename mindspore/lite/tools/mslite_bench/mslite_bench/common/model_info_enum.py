@@ -21,9 +21,11 @@ from enum import Enum
 
 class TaskType(Enum):
     """task type enum"""
-    MODEL_INFER = 0
-    FRAMEWORK_CMP = 1
-    NPU_DYNAMIC_INFER = 2
+    MODEL_INFER = "infer"
+    FRAMEWORK_CMP = "framework_cmp"
+    CONVERTER = "convert"
+    AUTO_CMP = "auto_cmp"
+    NPU_DYNAMIC_INFER = "npu_dynamic_infer"
 
 
 class DeviceType(Enum):
@@ -43,5 +45,16 @@ class FrameworkType(Enum):
 
 class SaveFileType(Enum):
     """save file type enum"""
-    NPY = 0
-    BIN = 1
+    DONT_SAVE = 'dont_save'
+    NPY = 'npy'
+    BIN = 'bin'
+
+
+class ErrorAlgType(Enum):
+    """
+    Algorithm types to calculate error between features
+    - MEAN_RELATIVE_ERROR: sum(abs(A-B) / A) / A.size
+    - COSINE_SIMILARITY: sum(A * B) / (sqrt(sum(A * A)) * sqrt(sum(B * B)))
+    """
+    MEAN_RELATIVE_ERROR = "mean_relative_error"
+    COSINE_SIMILARITY = "cosine_similarity"

@@ -278,11 +278,11 @@ T IgammaGradASingle(const T &a, const T &x) {
 }
 
 template <typename T>
-void IgammaGradACpuKernelMod::BcastCompute(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto a_data_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto x_data_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto z_data_addr = reinterpret_cast<T *>(outputs[0]->addr);
+void IgammaGradACpuKernelMod::BcastCompute(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto a_data_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto x_data_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto z_data_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   size_t data_num = get_element_num(z_shape_);
   auto output_shape = CPUKernelUtils::GetBroadcastShape(a_shape_, x_shape_);
   BroadcastIterator iter(a_shape_, x_shape_, output_shape);
@@ -353,11 +353,11 @@ void IgammaGradACpuKernelMod::SpecialCompute(int64_t type, int64_t start, int64_
 }
 
 template <typename T>
-void IgammaGradACpuKernelMod::NoBcastCompute(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
-  auto in0 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto in1 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto out0 = reinterpret_cast<T *>(outputs[0]->addr);
+void IgammaGradACpuKernelMod::NoBcastCompute(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
+  auto in0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto in1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto out0 = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto in0_elements_nums = get_element_num(a_shape_);
   auto in1_elements_nums = get_element_num(x_shape_);
   auto data_num = get_element_num(z_shape_);
@@ -373,15 +373,13 @@ void IgammaGradACpuKernelMod::NoBcastCompute(const std::vector<kernel::AddressPt
   }
 }
 
-bool IgammaGradACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool IgammaGradACpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -392,22 +390,21 @@ bool IgammaGradACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int IgammaGradACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int IgammaGradACpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  a_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  x_shape_ = inputs[1]->GetDeviceShapeAdaptively();
-  z_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  a_shape_ = inputs[0]->GetDeviceShapeVector();
+  x_shape_ = inputs[1]->GetDeviceShapeVector();
+  z_shape_ = outputs[0]->GetDeviceShapeVector();
   return ret;
 }
 
-bool IgammaGradACpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool IgammaGradACpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -420,8 +417,8 @@ bool IgammaGradACpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
-void IgammaGradACpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+void IgammaGradACpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   size_t in0_elements_nums = get_element_num(a_shape_);

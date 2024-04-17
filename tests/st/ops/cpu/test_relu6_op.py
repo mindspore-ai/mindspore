@@ -40,7 +40,7 @@ class NetReLU6Grad(nn.Cell):
     def construct(self, x, dy):
         return self.relu6_grad(dy, x)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_relu6():
@@ -55,7 +55,7 @@ def test_relu6():
     output = relu6(x)
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_relu6_grad():

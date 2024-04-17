@@ -233,6 +233,12 @@ inline uint8_t *AddressOffset(void *address, size_t offset) {
   return static_cast<uint8_t *>(address) + offset;
 }
 
+inline size_t CalAddressOffset(void *dst_address, void *ori_address) {
+  MS_EXCEPTION_IF_NULL(dst_address);
+  MS_EXCEPTION_IF_NULL(ori_address);
+  return static_cast<uint8_t *>(dst_address) - static_cast<uint8_t *>(ori_address);
+}
+
 inline std::vector<int64_t> Convert2Int(const std::vector<size_t> &v) {
   std::vector<int64_t> result;
   (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToInt);

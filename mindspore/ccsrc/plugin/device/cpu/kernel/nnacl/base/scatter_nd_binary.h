@@ -27,6 +27,9 @@ int ScatterNDUpdate(void *output, const void *update, int *output_unit_offsets, 
 
 int ScatterNDAdd(const void *update, void *output, int *output_unit_offsets, const ScatterNDParameter *param, int type,
                  int task_id);
+
+int ScatterNDMax(const void *update, void *output, int *output_unit_offsets, const ScatterNDParameter *param, int type,
+                 int task_id);
 #ifdef __cplusplus
 }
 #endif

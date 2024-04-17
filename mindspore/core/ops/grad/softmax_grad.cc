@@ -48,7 +48,7 @@ abstract::ShapePtr SoftmaxGradInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
 
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto in_shape = shape_map[kShape];
   if (!IsDynamicRank(in_shape)) {
     auto rank = SizeToLong(in_shape.size());
@@ -60,9 +60,9 @@ abstract::ShapePtr SoftmaxGradInferShape(const PrimitivePtr &primitive,
 TypePtr SoftmaxGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(input_args[1]);
-  auto x_type = input_args[1]->BuildType();
+  auto x_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
-  if (!x_type->isa<TensorType>()) {
+  if (!CheckAndConvertUtils::IsTensor(input_args[1])) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()
                             << ".";
   }

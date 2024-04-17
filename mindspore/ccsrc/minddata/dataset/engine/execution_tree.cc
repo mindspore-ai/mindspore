@@ -245,7 +245,7 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
                                name + "'s num_worker=" + std::to_string(num_workers) + ", is negative or too large.");
   // Launch the workers
   if (num_workers > num_cpu_threads) {
-    MS_LOG(WARNING) << name + " is launched with " << std::to_string(num_workers) << " worker threads which exceeds "
+    MS_LOG(WARNING) << name << " is launched with " << std::to_string(num_workers) << " worker threads which exceeds "
                     << std::to_string(num_cpu_threads) << ", the maximum number of threads on this CPU.";
   }
   worker_tasks->resize(num_workers);

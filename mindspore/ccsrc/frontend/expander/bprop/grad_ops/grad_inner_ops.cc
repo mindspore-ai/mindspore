@@ -19,10 +19,11 @@
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
 #include "ops/array_op_name.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::expander::bprop {
 
-NodePtr GetMatrixDiagPartAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
+NodePtr GetMatrixDiagPartAssit(BpropBuilder *ib, const ShapeVector &x_shape, const TypePtr &x_dtype) {
   auto base_eye = ib->Emit(
     "Eye", {ib->Value(x_shape[x_shape.size() - i2]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
   base_eye = ib->Reshape(base_eye, {-1});
@@ -32,7 +33,7 @@ NodePtr GetMatrixDiagPartAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, T
   return assist;
 }
 
-NodePtr GetMatrixDiagAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
+NodePtr GetMatrixDiagAssit(BpropBuilder *ib, const ShapeVector &x_shape, const TypePtr &x_dtype) {
   auto base_eye = ib->Emit(
     "Eye", {ib->Value(x_shape[x_shape.size() - 1]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
   base_eye = ib->Reshape(base_eye, {-1});
@@ -45,14 +46,45 @@ NodePtr GetMatrixDiagAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypeP
 }
 
 REG_BPROP_BUILDERS_BEGIN(GradInnerOps)
-REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("DSDMatmul.NotReady").SetBody(BODYFUNC(ib) {
+  auto w1_gm = ib->GetInput(kIndex0);
+  auto w2_gm = ib->GetInput(kIndex1);
+  auto v_gm = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
+  auto tmp = ib->Emit("DSDGrad", {w1_gm, w2_gm, v_gm, out, dout});
+  auto d_w1_gm = ib->TupleGetItem(tmp, kIndex0);
+  auto d_w2_gm = ib->TupleGetItem(tmp, kIndex1);
+  auto d_v_gm = ib->TupleGetItem(tmp, kIndex2);
+  return {d_w1_gm, d_w2_gm, d_v_gm};
+});
+
+REG_BPROP_BUILDER("MatmulDDS.NotReady").SetUnusedInputs({i2, i3, i5}).SetBody(BODYFUNC(ib) {
+  auto q = ib->GetInput(kIndex0);
+  auto k = ib->GetInput(kIndex1);
+  auto local_mask = ib->GetInput(kIndex2);
+  auto global_mask = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto lc = ib->TupleGetItem(out, kIndex0);
+  auto gc = ib->TupleGetItem(out, kIndex1);
+  auto d_lc = ib->TupleGetItem(out, kIndex0);
+  auto d_gc = ib->TupleGetItem(out, kIndex1);
+  auto tmp = ib->Emit("MatmulDDSGrad", {q, k, lc, gc, d_lc, d_gc});
+  auto dq = ib->TupleGetItem(tmp, kIndex0);
+  auto dk = ib->TupleGetItem(tmp, kIndex1);
+  ShapeVector shape = {1, 0, 3, 2};
+  dk = ib->Transpose(dk, shape);
+  return {dq, dk, ib->OutZeros(local_mask), ib->OutZeros(global_mask)};
+});
+
+REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i1, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit(
-    "ResizeBilinearGrad", {dout, x},
-    {{"align_corners", ib->GetAttr("align_corners")}, {"half_pixel_centers", ib->GetAttr("half_pixel_centers")}});
-  return {dx, ib->OutZeros(size)};
+  auto align_corners = ib->GetInput(kIndex2);
+  auto half_pixel_centers = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("ResizeBilinearGrad", {dout, x, align_corners, half_pixel_centers});
+  return {dx, ib->OutZeros(size), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 
 REG_BPROP_BUILDER("ConvertToDynamic").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -82,31 +114,43 @@ REG_BPROP_BUILDER("FillV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
   auto update = ib->GetInput(kIndex1);
   auto begin = ib->GetInput(kIndex2);
   auto end = ib->GetInput(kIndex3);
   auto stride = ib->GetInput(kIndex4);
   auto dout = ib->GetInput(kIndex6);
-  auto x_grad = ib->Emit(kTensorCopySlicesOpName, {dout, ib->ZerosLike(update), begin, end, stride});
-  constexpr int64_t begin_mask = 0;
-  constexpr int64_t end_mask = 0;
-  constexpr int64_t ellipsis_mask = 0;
-  constexpr int64_t new_axis_mask = 0;
-  constexpr int64_t shrink_axis_mask = 0;
-  auto update_grad = ib->Emit(kStridedSliceOpName, {dout, begin, end, stride},
-                              {{kAttrBeginMask, MakeValue(begin_mask)},
-                               {kAttrEndMask, MakeValue(end_mask)},
-                               {kAttrEllipsisMask, MakeValue(ellipsis_mask)},
-                               {kAttrNewAxisMask, MakeValue(new_axis_mask)},
-                               {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
+  auto x_grad = x->need_compute_grad_out()
+                  ? ib->Emit(kTensorCopySlicesOpName, {dout, ib->ZerosLike(update), begin, end, stride})
+                  : ib->OutZeros(x);
+  auto update_grad =
+    update->need_compute_grad_out() ? ib->StridedSlice(dout, begin, end, stride) : ib->OutZeros(update);
   return {x_grad, update_grad, ib->OutZeros(begin), ib->OutZeros(end), ib->OutZeros(stride)};
 });
 
-REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto dout = ib->GetInput(kIndex2);
-  std::vector<int64_t> shift = GetIntList(ib->GetAttr("shift"));
-  (void)std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
-  return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
+REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto shift = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto shift_value = shift->BuildValue();
+  MS_EXCEPTION_IF_NULL(shift_value);
+  auto shift_array_opt = ops::GetArrayValue<int64_t>(shift->abstract());
+  if (!shift_array_opt.has_value()) {
+    MS_LOG(EXCEPTION)
+      << "Roll bprop doesn't support dynamic shift. The exception can be deleted if the following conditions are met:"
+         "1. The SequenceNeg op is supported, 2. Roll supports dynamic shift.";
+  }
+  auto shift_array = shift_array_opt.value();
+  if (shift_array.HasUnknownValue()) {
+    MS_LOG(EXCEPTION)
+      << "Roll bprop doesn't support dynamic shift. The exception can be deleted if the following conditions are met:"
+         "1. The SequenceNeg op is supported, 2. Roll supports dynamic shift.";
+  }
+  std::vector<int64_t> shift_vec = shift_array.ToVector();
+  std::vector<int64_t> neg_shift(shift_vec.size());
+  (void)std::transform(shift_vec.begin(), shift_vec.end(), neg_shift.begin(),
+                       [](const int64_t &shift) { return shift * -1; });
+  return {ib->Emit("Roll", {dout, ib->Value(neg_shift), axis}), ib->OutZeros(shift), ib->OutZeros(axis)};
 });
 
 DEF_PURE_SHAPE_CALC(g_dynamic_resize_nearest_neighbor)
@@ -169,19 +213,30 @@ REG_BPROP_BUILDER("SiLUGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto sig = ib->Emit("Sigmoid", {y});
   auto mul0 = ib->Mul(grad, y);
   auto sig_grad1 = ib->Emit("SigmoidGrad", {sig, dout});
-  auto mul1 = ib->Mul(grad, sig_grad1);
-  auto mul2 = ib->Mul(mul0, dout);
-  auto mul3 = ib->Mul(ib->Tensor(2, ib->GetDtype(sig)), sig);
-  auto sub1 = ib->Sub(ib->Tensor(1, ib->GetDtype(mul3)), mul3);
-  auto mul4 = ib->Mul(mul2, sub1);
-  auto mul5 = ib->Mul(grad, dout);
-  auto add1 = ib->Add(mul4, mul5);
-  auto sig_grad2 = ib->Emit("SigmoidGrad", {sig, add1});
-  auto add2 = ib->Add(mul1, sig_grad2);
-  auto mul6 = ib->Mul(sig, dout);
-  auto mul7 = ib->Mul(y, sig_grad1);
-  auto add3 = ib->Add(mul6, mul7);
-  return {add3, add2};
+  NodePtr dy;
+  if (y->need_compute_grad_out()) {
+    auto mul1 = ib->Mul(grad, sig_grad1);
+    auto mul2 = ib->Mul(mul0, dout);
+    auto mul3 = ib->Mul(ib->Tensor(2, ib->GetDtype(sig)), sig);
+    auto sub1 = ib->Sub(ib->Tensor(1, ib->GetDtype(mul3)), mul3);
+    auto mul4 = ib->Mul(mul2, sub1);
+    auto mul5 = ib->Mul(grad, dout);
+    auto add1 = ib->Add(mul4, mul5);
+    auto sig_grad2 = ib->Emit("SigmoidGrad", {sig, add1});
+    dy = ib->Add(mul1, sig_grad2);
+  } else {
+    dy = ib->OutZeros(y);
+  }
+
+  NodePtr dgrad;
+  if (grad->need_compute_grad_out()) {
+    auto mul6 = ib->Mul(sig, dout);
+    auto mul7 = ib->Mul(y, sig_grad1);
+    dgrad = ib->Add(mul6, mul7);
+  } else {
+    dgrad = ib->OutZeros(grad);
+  }
+  return {dgrad, dy};
 });
 
 REG_BPROP_BUILDER("_VirtualPipelineEnd").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -247,6 +302,7 @@ REG_BPROP_BUILDER("MatrixDiag").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(i
 
 REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
   auto z = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto input_shape = ib->GetShape(x);
@@ -262,8 +318,10 @@ REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BOD
   auto grad_dtype = ib->GetDtype(dout);
   auto assist = GetMatrixDiagPartAssit(ib, grad_shape, grad_dtype);
   auto dx =
-    ib->Emit("MatrixSetDiag", {dout, ib->Emit("Zeros", {ib->Value(diag_shape), ib->EmitValue(grad_dtype)}), assist});
-  auto dy = ib->Emit("MatrixDiagPart", {dout, assist});
+    x->need_compute_grad_out()
+      ? ib->Emit("MatrixSetDiag", {dout, ib->Emit("Zeros", {ib->Value(diag_shape), ib->EmitValue(grad_dtype)}), assist})
+      : ib->OutZeros(x);
+  auto dy = y->need_compute_grad_out() ? ib->Emit("MatrixDiagPart", {dout, assist}) : ib->OutZeros(y);
   auto dz = ib->OutZeros(z);
   return {dx, dy, dz};
 });

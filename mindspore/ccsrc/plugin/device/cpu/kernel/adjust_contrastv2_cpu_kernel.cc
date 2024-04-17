@@ -57,16 +57,16 @@ bool ParallelForAdjustContrastv2(std::int64_t total, std::int64_t per_unit_size,
 }
 
 template <typename T>
-bool AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const std::vector<AddressPtr> &inputs,
-                                                                const std::vector<AddressPtr> &outputs) {
-  T *input{static_cast<T *>(inputs[0]->addr)};
-  std::float_t *contrast_factor{static_cast<std::float_t *>(inputs[1]->addr)};
-  T *output{static_cast<T *>(outputs[0]->addr)};
+bool AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const std::vector<KernelTensor *> &inputs,
+                                                                const std::vector<KernelTensor *> &outputs) {
+  T *input{static_cast<T *>(inputs[0]->device_ptr())};
+  std::float_t *contrast_factor{static_cast<std::float_t *>(inputs[1]->device_ptr())};
+  T *output{static_cast<T *>(outputs[0]->device_ptr())};
   std::vector<int64_t> x_dim_sizes = images_shape_;
   std::size_t n{x_dim_sizes.size()};
   std::size_t per_batch_elements{LongToSize(x_dim_sizes[n - 1] * x_dim_sizes[n - 2] * x_dim_sizes[n - 3])};
   MS_EXCEPTION_IF_ZERO("per_batch_elements", per_batch_elements);
-  std::int64_t input_numelements = static_cast<int64_t>(inputs[0]->size / sizeof(T));
+  std::int64_t input_numelements = static_cast<int64_t>(inputs[0]->size() / sizeof(T));
   std::int64_t total{input_numelements / SizeToLong(per_batch_elements)};
   std::int64_t per_unit_size{total / std::min(kAdjustContrastv2ParallelNum - 2L, total)};
   return ParallelForAdjustContrastv2(total, per_unit_size, [&](std::int64_t begin, std::int64_t end) {
@@ -78,11 +78,8 @@ bool AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const std::vecto
   });
 }
 
-bool AdjustContrastv2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool AdjustContrastv2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdjustContrastv2InputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdjustContrastv2OutputNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -91,24 +88,22 @@ bool AdjustContrastv2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  input_type_ = inputs[kIndex0]->GetDtype();
+  input_type_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 
-int AdjustContrastv2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int AdjustContrastv2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  images_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  images_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
-bool AdjustContrastv2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &workspace,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool AdjustContrastv2CpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &workspace,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   if (input_type_ == kNumberTypeFloat32) {
     return LaunchAdjustContrastv2Kernel<float>(inputs, outputs);
   } else if (input_type_ == kNumberTypeFloat16) {

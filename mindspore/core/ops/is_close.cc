@@ -38,8 +38,8 @@ abstract::ShapePtr IsCloseInferShape(const PrimitivePtr &primitive, const std::v
   bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   if (is_ascend) {
     const int MAX = 0x3fffffff;
-    auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    auto other_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+    auto other_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     int64_t input_size = 1, other_size = 1;
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size *= input_shape[i];
@@ -66,10 +66,10 @@ TypePtr IsCloseInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64, kUInt8};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input", input_args[0]->BuildType());
-  (void)types.emplace("other", input_args[1]->BuildType());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(), valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("other", input_args[1]->BuildType(), valid_types, op_name);
+  (void)types.emplace("input", input_args[0]->GetType());
+  (void)types.emplace("other", input_args[1]->GetType());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->GetType(), valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("other", input_args[1]->GetType(), valid_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return std::make_shared<TensorType>(kBool);
 }

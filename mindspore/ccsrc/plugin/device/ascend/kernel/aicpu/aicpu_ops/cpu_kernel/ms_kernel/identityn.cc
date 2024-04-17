@@ -19,9 +19,9 @@
 #include <algorithm>
 #include <vector>
 
-#include "cpu_kernel/inc/cpu_types.h"
-#include "common/kernel_log.h"
-#include "cpu_kernel/common/status.h"
+#include "cpu_types.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -33,32 +33,32 @@ uint32_t IdentityNCpuKernel::IdentityNParamCheck(CpuKernelContext &ctx) {
   // input size and output size check
   uint32_t input_size = ctx.GetInputsSize();
   uint32_t output_size = ctx.GetOutputsSize();
-  KERNEL_CHECK_FALSE((input_size == output_size), KERNEL_STATUS_PARAM_INVALID,
-                     "Input size should equal to Output size.");
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, input_size, output_size), "[%s] check params failed.", kIdentityN);
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_size == output_size), KERNEL_STATUS_PARAM_INVALID,
+                          "Input size should equal to Output size.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, input_size, output_size), "[%s] check params failed.", kIdentityN);
   for (uint32_t idx = 0; idx < input_size; ++idx) {
     Tensor *in_tensor = ctx.Input(idx);
     Tensor *out_tensor = ctx.Output(idx);
     // TensorShape check
     auto in_shape = in_tensor->GetTensorShape();
     auto out_shape = out_tensor->GetTensorShape();
-    KERNEL_CHECK_FALSE((in_shape->GetDimSizes() == out_shape->GetDimSizes()), KERNEL_STATUS_PARAM_INVALID,
-                       "In tensor shape should equal to out tensor shape.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (in_shape->GetDimSizes() == out_shape->GetDimSizes()), KERNEL_STATUS_PARAM_INVALID,
+                            "In tensor shape should equal to out tensor shape.");
     // DataType Check
     DataType in_type = in_tensor->GetDataType();
     DataType out_type = out_tensor->GetDataType();
-    KERNEL_CHECK_FALSE((in_type == out_type), KERNEL_STATUS_PARAM_INVALID,
-                       "In tensor data type should equal to out tensor data type.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (in_type == out_type), KERNEL_STATUS_PARAM_INVALID,
+                            "In tensor data type should equal to out tensor data type.");
     bool type_support =
       std::find(support_data_type.begin(), support_data_type.end(), in_type) != support_data_type.end();
-    KERNEL_CHECK_FALSE(type_support, KERNEL_STATUS_PARAM_INVALID, "IdentityN kernel data type [%s] not support.",
-                       DTypeStr(in_type).c_str());
+    CUST_KERNEL_CHECK_FALSE(ctx, type_support, KERNEL_STATUS_PARAM_INVALID,
+                            "IdentityN kernel data type [%s] not support.", DTypeStr(in_type).c_str());
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t IdentityNCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(IdentityNParamCheck(ctx), "IdentityNCpuKernel check params failed");
+  CUST_KERNEL_HANDLE_ERROR(ctx, IdentityNParamCheck(ctx), "IdentityNCpuKernel check params failed");
   uint32_t input_size = ctx.GetInputsSize();
   for (uint32_t idx = 0; idx < input_size; ++idx) {
     Tensor *in_tensor = ctx.Input(idx);
@@ -70,13 +70,18 @@ uint32_t IdentityNCpuKernel::Compute(CpuKernelContext &ctx) {
 
     // memory copy
     if (out_data != in_data) {
+      // Don't memory copy when out_data is empty tensor.
+      if (out_size == 0) {
+        continue;
+      }
       int cpret = memcpy_s(out_data, out_size, in_data, in_size);
-      KERNEL_CHECK_FALSE((cpret == EOK), KERNEL_STATUS_INNER_ERROR,
-                         "[%s] memcpy_s to output failed, destMax [%ld], count [%ld].", kIdentityN, out_size, in_size);
+      CUST_KERNEL_CHECK_FALSE(ctx, (cpret == EOK), KERNEL_STATUS_INNER_ERROR,
+                              "[%s] memcpy_s to output failed, destMax [%ld], count [%ld].", kIdentityN, out_size,
+                              in_size);
     }
   }
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kIdentityN, IdentityNCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIdentityN, IdentityNCpuKernel);
 }  // namespace aicpu

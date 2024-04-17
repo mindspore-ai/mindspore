@@ -56,7 +56,6 @@ class GpuKernelHelperBase {
   virtual int Process(const std::vector<void *> &input_ptrs, const std::vector<void *> &output_ptrs,
                       const std::vector<void *> &work_ptrs, void *cuda_stream) = 0;
 
-  std::vector<size_t> GetInputSizeList() { return input_size_list_; }
   std::vector<size_t> GetOutputSizeList() { return output_size_list_; }
   std::vector<size_t> GetWorkSizeList() { return work_size_list_; }
 

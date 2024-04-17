@@ -18,20 +18,15 @@
 
 namespace mindspore {
 namespace kernel {
-bool AdaptiveAvgPool2DGradKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool AdaptiveAvgPool2DGradKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdaptiveAvgPool2dGradInputNum, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int AdaptiveAvgPool2DGradKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int AdaptiveAvgPool2DGradKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto grad_shape = inputs[kIndex0]->GetShapeVector();     // dy
@@ -64,9 +59,9 @@ int AdaptiveAvgPool2DGradKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool AdaptiveAvgPool2DGradKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) {
+bool AdaptiveAvgPool2DGradKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs) {
   T *dy_addr = GetDeviceAddress<T>(inputs, 0);
   T *dx_addr = GetDeviceAddress<T>(outputs, 0);
   float *wk_addr = GetDeviceAddress<float>(workspace, 0);

@@ -24,14 +24,17 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
   // The unused data may be invalid ptr.
-  if (!input_data->data_->IsPtrValid() && !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
-    MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr of actor:" << GetAID().Name()
-                      << " with index:" << input_data->index_ << ", flag:" << input_data->data_->flag()
-                      << " device address:" << input_data->data_ << " ref count:" << input_data->data_->ref_count()
-                      << " dynamic ref count:" << input_data->data_->dynamic_ref_count()
-                      << " origin ref count:" << input_data->data_->original_ref_count();
+  if (!ActorDispatcher::enable_async_launch_kernel() && !input_data->data_->IsPtrValid() &&
+      !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
+    std::string error_info = "The input_data does not have a valid ptr of actor:" + GetAID().Name() +
+                             " with index:" + std::to_string(input_data->index_) +
+                             ", flag:" + std::to_string(input_data->data_->flag()) +
+                             " device address:" + std::to_string((int64_t)(input_data->data_)) +
+                             " ref count:" + std::to_string(input_data->data_->ref_count()) +
+                             " dynamic ref count:" + std::to_string(input_data->data_->dynamic_ref_count()) +
+                             " origin ref count:" + std::to_string(input_data->data_->original_ref_count());
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
-  MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   (void)input_op_datas_[sequential_num].emplace_back(input_data);
 
@@ -43,7 +46,8 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
                 << ", origin ref count:" << input_data->data_->original_ref_count()
                 << ", current ref count:" << input_data->data_->ref_count()
                 << ", dynamic ref count:" << input_data->data_->dynamic_ref_count()
-                << ", flag:" << input_data->data_->flag() << " user data:" << input_data->data_->user_data();
+                << ", flag:" << input_data->data_->flag() << " user data:" << input_data->data_->user_data()
+                << " from memory pool:" << input_data->data_->from_mem_pool();
 
   if (is_run) {
     Run(context);
@@ -51,14 +55,13 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
 }
 
 void AbstractActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   (void)input_op_controls_[sequential_num].emplace_back(input_control);
 
   auto is_run = CheckRunningCondition(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
-                << ") receive the input op control and check running condition:" << is_run
-                << ", sequential num:" << sequential_num;
+                << ") receive the input op control from:" << (input_control == nullptr ? "null" : input_control->Name())
+                << " and check running condition:" << is_run << ", sequential num:" << sequential_num;
   if (is_run) {
     Run(context);
   }
@@ -108,37 +111,15 @@ bool AbstractActor::CheckRunningCondition(const OpContext<DeviceTensor> *context
 }
 
 void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
-  MS_EXCEPTION_IF_NULL(context);
-  if ((input_datas_num_ != 0) && (!input_op_datas_.empty())) {
-    auto ret = input_op_datas_.erase(context->sequential_num_);
-    if (ret == 0) {
-      std::string error_info = "Erase input data failed: " + GetAID().Name();
-      // The sequential num may be invalid, can't set the promise value of context.
-      MS_LOG(WARNING) << error_info << ", sequential_num: " << context->sequential_num_;
-      return;
-    }
-  }
-
-  if ((input_controls_num_ != 0) && (!input_op_controls_.empty())) {
-    auto ret = input_op_controls_.erase(context->sequential_num_);
-    if (ret == 0) {
-      std::string error_info = "Erase input controls failed: " + GetAID().Name();
-      // The sequential num may be invalid, can't set the promise value of context.
-      MS_LOG(WARNING) << error_info << ", sequential_num: " << context->sequential_num_;
-      return;
-    }
-  }
+  (void)input_op_datas_.erase(context->sequential_num_);
+  (void)input_op_controls_.erase(context->sequential_num_);
 }
 
-void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const input_device_tensors,
-                                            std::vector<DeviceTensor *> *const memory_free_tensors,
-                                            OpContext<DeviceTensor> *const context) const {
-  MS_EXCEPTION_IF_NULL(input_device_tensors);
-  MS_EXCEPTION_IF_NULL(memory_free_tensors);
-  MS_EXCEPTION_IF_NULL(context);
+void AbstractActor::FetchInputByTensorStore(
+  std::vector<DeviceTensor *> *const input_device_tensors, std::vector<KernelTensor *> *const input_kernel_tensors,
+  std::vector<abstract::AbstractBasePtr> *const input_kernel_tensors_for_infer,
+  std::vector<DeviceTensor *> *const memory_free_tensors, OpContext<DeviceTensor> *const context) const {
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");
-    MS_EXCEPTION_IF_NULL(device_contexts_[0]);
     auto device_tensor = DeviceTensorStore::GetInstance()
                            .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
                            .get();
@@ -148,17 +129,16 @@ void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const i
         ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-
-    if ((device_tensor_store_key.first >= input_device_tensors->size()) ||
-        (device_tensor_store_key.first >= memory_free_tensors->size())) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is out of range.");
-    }
     if ((*input_device_tensors)[device_tensor_store_key.first] != device_tensor) {
       (*input_device_tensors)[device_tensor_store_key.first] = device_tensor;
       (*memory_free_tensors)[device_tensor_store_key.first] = device_tensor;
-      MS_LOG(DEBUG) << "actor:" << GetAID() << " fetch input index:" << device_tensor_store_key.first
-                    << " device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
-                    << " key node:" << device_tensor_store_key.second->DebugString();
+    }
+    // Collect the input kernel tensor.
+    const auto &kernel_tensor = (*input_device_tensors)[device_tensor_store_key.first]->kernel_tensor();
+    if (input_kernel_tensors && input_kernel_tensors_for_infer &&
+        ((*input_kernel_tensors)[device_tensor_store_key.first] != kernel_tensor.get())) {
+      (*input_kernel_tensors)[device_tensor_store_key.first] = kernel_tensor.get();
+      (*input_kernel_tensors_for_infer)[device_tensor_store_key.first] = kernel_tensor;
     }
   }
 }
@@ -206,23 +186,12 @@ void AbstractActor::InitOutputData() {
 
 void AbstractActor::SendOutputData(
   OpContext<DeviceTensor> *const context, const std::vector<AnfNodePtr> &output_data_nodes,
-  const std::vector<DataArrowPtr> output_data_arrows,
+  const std::vector<DataArrowPtr> &output_data_arrows,
   const std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, size_t>> &output_data_list,
   const mindspore::HashMap<DataArrow *, size_t> &data_arrow_to_fusion_actor_indexs,
   mindspore::HashMap<std::string, std::vector<OpData<DeviceTensor> *>> *batch_output_data) {
-  MS_EXCEPTION_IF_NULL(context);
-
-  if (((output_data_arrows.size() != output_data_list.size()) ||
-       (output_data_arrows.size() != output_data_nodes.size())) &&
-      (type_ < KernelTransformType::kSwitchActor)) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(
-      (*context), "The size of output data arrows:" + std::to_string(output_data_arrows.size()) +
-                    " output data:" + std::to_string(output_data_list.size()) + " output node size:" +
-                    std::to_string(output_data_nodes.size()) + " is not equal for actor:" + GetAID().Name());
-  }
   for (size_t i = 0; i < output_data_list.size(); ++i) {
     auto &output_data = output_data_list[i];
-    MS_EXCEPTION_IF_NULL(output_data.first);
     auto &to_op_id = output_data.first->op_id_;
     auto &output_data_arrow = output_data_arrows[i];
     UpdateOutputData(output_data.first.get(), output_data_arrow, output_data_nodes[i], context);
@@ -271,10 +240,6 @@ void AbstractActor::SendOutputData(
 }
 
 void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
-
-  MS_EXCEPTION_IF_NULL(context);
   // Must be the execution order: send data --> send control, avoid the illegal timing problem.
   // 1.Send output data.
   SendOutputData(context, output_data_nodes_, output_data_arrows_, output_data_, data_arrow_to_fusion_actor_indexs_,
@@ -284,7 +249,6 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   if (output_control_arrows_.size() > 0) {
     auto from_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
-      MS_EXCEPTION_IF_NULL(output_control);
       if (TEST_FLAG(output_control->flag_, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(output_control->to_op_id_.Name());
         ActorDispatcher::SendSync(to_actor, &OpActor::RunOpControl, from_aid, context);
@@ -296,17 +260,6 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
 
   // 3.Send recorder info.
   SendRecorderInfo(context);
-
-  // No output.
-  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
-      (type_ < KernelTransformType::kSwitchActor)) {
-    SET_OPCONTEXT_SUCCESS_RET((*context));
-  }
-
-  // Only the multi thread execution can profile the ProfilerEvent::kSendOutput.
-  if (ActorDispatcher::is_multi_thread_execution()) {
-    PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name(), false);
-  }
 }
 
 AbstractActor *AbstractActor::FetchSubActorInFusionActor(const std::string &sub_actor_name) const {
@@ -314,6 +267,38 @@ AbstractActor *AbstractActor::FetchSubActorInFusionActor(const std::string &sub_
     return nullptr;
   }
   return (parent_fusion_actor_->sub_actors_[sub_actor_name]).get();
+}
+
+bool AbstractActor::IsOutputAddressPersisted(const DeviceTensor *output_device_tensor,
+                                             const KernelWithIndex &output_node) {
+  MS_EXCEPTION_IF_NULL(output_node.first);
+  MS_EXCEPTION_IF_NULL(output_device_tensor);
+  // The persisted address can't be replaced.
+  if (output_device_tensor->is_ptr_persisted()) {
+    return true;
+  }
+
+  if (output_node.first->isa<ValueNode>()) {
+    return true;
+  }
+
+  // The device address of parameter may come from the device address of input tensor.
+  // In order to avoid mistakenly cleaning up the device data of input tensor, return it as persisted address.
+  if (output_node.first->isa<Parameter>()) {
+    return true;
+  }
+
+  // Ref node need check the origin node.
+  const auto &graph = AnfAlgo::FetchKernelGraph(output_node.first.get());
+  if ((graph != nullptr) && graph->IsInRefOutputMap(output_node)) {
+    const auto &origin_node = graph->GetRefCorrespondOutput(output_node).first;
+    MS_EXCEPTION_IF_NULL(origin_node);
+    if (origin_node->isa<ValueNode>() || origin_node->isa<Parameter>()) {
+      return true;
+    }
+  }
+
+  return false;
 }
 }  // namespace runtime
 }  // namespace mindspore

@@ -17,8 +17,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/shape.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/nn_ops.h"
 #include "include/errorcode.h"
 #include "tools/common/tensor_util.h"
@@ -154,7 +153,7 @@ bool OnnxDeformConv2dAdjust::Adjust(const FuncGraphPtr &func_graph) {
     // features, filter, offsets, bias(optional)
     std::vector<AnfNodePtr> new_input = {cnode->input(0), cnode->input(1), cnode->input(opt::kInputIndexFour),
                                          concat_offset};
-    if (cnode->inputs().size() == opt::kInputIndexSix) {
+    if (cnode->size() == opt::kInputIndexSix) {
       new_input.push_back(cnode->input(opt::kInputIndexFive));
     }
     cnode->set_inputs(new_input);

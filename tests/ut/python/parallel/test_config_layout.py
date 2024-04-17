@@ -66,7 +66,7 @@ class Net(Cell):
 
     def construct(self, q, k, v, x):
         q = self.transpose_q(q, (0, 2, 1, 3))
-        q = self.real_div(q, 2.0)
+        q = self.real_div(q, Tensor(2.0, dtype=q.dtype))
         k = self.transpose_k(k, (0, 2, 3, 1))
         score = self.qk_matmul(q, k)
         score = self.cast(score, ms.float32)

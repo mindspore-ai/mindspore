@@ -15,6 +15,7 @@
  */
 
 #include "tools/converter/config_parser/config_file_parser.h"
+#include <set>
 #include "tools/common/parse_config_utils.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
@@ -41,6 +42,9 @@ constexpr auto kDynamicQuantParam = "dynamic_quant_param";
 constexpr auto kGraphKernelParam = "graph_kernel_param";
 constexpr int kNumSize3 = 3;
 constexpr int kNumSize2 = 2;
+constexpr size_t kNumIndex0 = 0;
+constexpr size_t kNumIndex1 = 1;
+constexpr size_t kNumIndex2 = 2;
 }  // namespace
 using ShapeVector = std::vector<int64_t>;
 const int kBatchDim = 0;
@@ -210,6 +214,75 @@ bool SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
   return true;
 }
 
+int ParseInputShapeTemplate(const std::string &shape_template, std::set<std::string> *dynamic_symbols) {
+  // the inputs_shape config is like: input1:[d0,d1,3];input2:[4,d0]
+  auto graph_inputs_shape_vec = SplitStringToVector(shape_template, ';');
+  for (const auto &graph_input_shape : graph_inputs_shape_vec) {
+    auto graph_input_shape_info = SplitStringToVector(graph_input_shape, ':');
+    MS_CHECK_TRUE_MSG(graph_input_shape_info.size() == kIndex2, RET_INPUT_PARAM_INVALID, "the inputs_shape is invalid");
+    auto input_shape = graph_input_shape_info[1];
+    if (input_shape[0] != '[' || input_shape[input_shape.size() - 1] != ']') {
+      MS_LOG(ERROR) << "the inputs_shape is invalid";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    input_shape = input_shape.substr(1, input_shape.size() - kIndex2);
+    auto input_shape_vec = SplitStringToVector(input_shape, ',');
+    for (const auto &shape : input_shape_vec) {
+      if (!IsNumber(shape)) {
+        dynamic_symbols->insert(shape);
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int ParseDynamicDimTemplate(const std::string &dims_template, std::set<std::string> *dynamic_symbols,
+                            MicroParamString *micro_param_string) {
+  // the dynamic_dim_params config is like: d0:[1,3~6];d1:[1~8]
+  auto dim_info_vec = SplitStringToVector(dims_template, ';');
+  MS_CHECK_TRUE_MSG(dim_info_vec.size() <= kIndex2, RET_NOT_SUPPORT, "currently, only support to set two dynamic dims");
+  for (const auto &dim_info : dim_info_vec) {
+    auto dim_vec = SplitStringToVector(dim_info, ':');
+    MS_CHECK_TRUE_MSG(dim_vec.size() == kIndex2, RET_INPUT_PARAM_INVALID, "the dynamic_dim_params is invalid");
+    std::string symbol = dim_vec[0];
+    if (dynamic_symbols->find(symbol) == dynamic_symbols->end()) {
+      MS_LOG(ERROR) << symbol << "is invalid, because it's not set in the inputs_shape.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    std::string dim_range = dim_vec[1];
+    if (dim_range[0] != '[' || dim_range[dim_range.size() - 1] != ']') {
+      MS_LOG(ERROR) << "the dynamic_dim_params is invalid";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    dim_range = dim_range.substr(1, dim_range.size() - kIndex2);
+    auto discrete_vec = SplitStringToVector(dim_range, ',');
+    for (const auto &dim : discrete_vec) {
+      auto continuous_dim = SplitStringToVector(dim, '~');
+      MS_CHECK_TRUE_MSG(continuous_dim.size() == kIndex1 || continuous_dim.size() == kIndex2, RET_INPUT_PARAM_INVALID,
+                        "the dynamic_dim_params is invalid");
+      if (continuous_dim.size() == kIndex1) {
+        if (!IsNumber(continuous_dim[0]) || std::stoi(continuous_dim[0]) <= 0) {
+          MS_LOG(ERROR) << "the dynamic_dim_params range value must be greater than 0";
+          return RET_INPUT_PARAM_INVALID;
+        }
+        micro_param_string->dynamic_symbols_map[symbol].emplace_back(std::stoi(continuous_dim[0]));
+        continue;
+      }
+      if (!IsNumber(continuous_dim[0]) || std::stoi(continuous_dim[0]) <= 0 || !IsNumber(continuous_dim[1]) ||
+          std::stoi(continuous_dim[1]) <= 0) {
+        MS_LOG(ERROR) << "the dynamic_dim_params range value must be greater than 0";
+        return RET_INPUT_PARAM_INVALID;
+      }
+      auto start = std::stoi(continuous_dim[0]);
+      auto end = std::stoi(continuous_dim[1]);
+      for (auto i = start; i <= end; ++i) {
+        micro_param_string->dynamic_symbols_map[symbol].emplace_back(i);
+      }
+    }
+  }
+  return RET_OK;
+}
+
 void ConfigFileParser::SetVariableParams(const std::shared_ptr<mindspore::ConverterPara> &param,
                                          const std::map<std::string, std::string> &ascend_map) {
   auto it = ascend_map.find("inputs_to_variable");
@@ -271,11 +344,6 @@ int ConfigFileParser::CheckVariableParm(const std::vector<int64_t> &variable_ind
 }
 
 bool ConfigFileParser::CheckPluginCustomOps(const std::vector<std::string> &plugin_custom_ops) {
-  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() &&
-      plugin_custom_ops.size() != 1) {
-    MS_LOG(ERROR) << "plugin_custom_ops include All, can not include other param.";
-    return false;
-  }
   if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "None") != plugin_custom_ops.end() &&
       plugin_custom_ops.size() != 1) {
     MS_LOG(ERROR) << "plugin_custom_ops include None, can not include other param.";
@@ -366,6 +434,32 @@ bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
       return false;
     }
   }
+
+  auto op_attrs_str = FindInAscendMap(kOpAttrs, ascend_map);
+  std::vector<std::string> op_attrs_vec = {};
+  if (!op_attrs_str.empty()) {
+    MS_LOG(INFO) << "op_attrs_str: " << op_attrs_str;
+    op_attrs_vec = mindspore::lite::SplitStringToVector(op_attrs_str, ";");
+    std::map<std::string, std::string> attr;
+    for (auto op_attr_str : op_attrs_vec) {
+      MS_LOG(INFO) << "op_attr: " << op_attr_str;
+      auto op_attr = mindspore::lite::SplitStringToVector(op_attr_str, ":");
+      if (op_attr.size() != kNumSize3) {
+        return false;
+      }
+      auto op_type = op_attr[kNumIndex0];
+      auto attr_key = op_attr[kNumIndex1];
+      auto attr_value = op_attr[kNumIndex2];
+      param->aclModelOptionCfgParam.op_attrs_map[op_type].insert(std::make_pair(attr_key, attr_value));
+      param->ascendGeOptionCfg.op_attrs_map[op_type].insert(std::make_pair(attr_key, attr_value));
+    }
+  }
+  for (auto item : param->aclModelOptionCfgParam.op_attrs_map) {
+    for (auto attr : item.second) {
+      MS_LOG(INFO) << "op type: " << item.first << ", key: " << attr.first << ", value: " << attr.second;
+    }
+  }
+
   auto it = ascend_map.find("input_shape");
   if (it != ascend_map.end()) {
     param->aclModelOptionCfgParam.input_shape = RemoveInputShapeBrackets(it->second);
@@ -501,8 +595,12 @@ int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::strin
 }
 
 int ConfigFileParser::SetMapData(const std::map<std::string, std::string> &input_map,
-                                 const std::map<std::string, std::string &> &parse_map, const std::string &section) {
+                                 const std::map<std::string, std::string &> &parse_map, const std::string &section,
+                                 const std::set<std::string> &dynamic_key) {
   for (const auto &map : input_map) {
+    if (dynamic_key.find(map.first) != dynamic_key.end()) {
+      continue;
+    }
     if (parse_map.find(map.first) == parse_map.end()) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: `" << map.first << "` is not supported in "
                     << "[" << section << "]";
@@ -649,21 +747,36 @@ int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::m
 }
 
 int ConfigFileParser::ParseMicroParamString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
-  if (maps.find(kMicroParam) != maps.end()) {
-    const auto &map = maps.at(kMicroParam);
-    std::map<std::string, std::string &> parse_map{
-      {"target", micro_param_string_.target},
-      {"codegen_mode", micro_param_string_.codegen_mode},
-      {"debug_mode", micro_param_string_.debug_mode},
-      {"support_parallel", micro_param_string_.support_parallel},
-      {"enable_micro", micro_param_string_.enable_micro},
-      {"save_path", micro_param_string_.save_path},
-      {"project_name", micro_param_string_.project_name},
-      {"keep_original_weight", micro_param_string_.keep_original_weight},
-      {"changeable_weights_name", micro_param_string_.changeable_weights_name}};
-    return SetMapData(map, parse_map, kMicroParam);
+  if (maps.find(kMicroParam) == maps.end()) {
+    return RET_OK;
   }
-  return RET_OK;
+  const auto &map = maps.at(kMicroParam);
+  const std::string graph_inputs_shape_template = "inputs_shape";
+  std::set<std::string> dynamic_symbols;
+  if (map.find(graph_inputs_shape_template) != map.end()) {
+    const auto &shape_template = map.at(graph_inputs_shape_template);
+    MS_CHECK_TRUE_MSG(ParseInputShapeTemplate(shape_template, &dynamic_symbols) == RET_OK, RET_ERROR,
+                      "ParseInputShapeTemplate failed");
+  }
+  const std::string dynamic_dims = "dynamic_dim_params";
+  if (!dynamic_symbols.empty() && map.find(dynamic_dims) != map.end()) {
+    const auto &dims_template = map.at(dynamic_dims);
+    MS_CHECK_TRUE_MSG(ParseDynamicDimTemplate(dims_template, &dynamic_symbols, &micro_param_string_) == RET_OK,
+                      RET_ERROR, "ParseDynamicDimTemplate failed");
+  }
+  std::map<std::string, std::string &> parse_map{
+    {"target", micro_param_string_.target},
+    {"codegen_mode", micro_param_string_.codegen_mode},
+    {"debug_mode", micro_param_string_.debug_mode},
+    {"support_parallel", micro_param_string_.support_parallel},
+    {"enable_micro", micro_param_string_.enable_micro},
+    {"save_path", micro_param_string_.save_path},
+    {"project_name", micro_param_string_.project_name},
+    {"keep_original_weight", micro_param_string_.keep_original_weight},
+    {"changeable_weights_name", micro_param_string_.changeable_weights_name},
+    {"inputs_shape", micro_param_string_.inputs_shape},
+    {"dynamic_dim_params", micro_param_string_.dynamic_dim_params}};
+  return SetMapData(map, parse_map, kMicroParam);
 }
 
 int ConfigFileParser::ParseWeightQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps) {

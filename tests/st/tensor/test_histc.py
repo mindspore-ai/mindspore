@@ -25,7 +25,7 @@ class Net(nn.Cell):
         return x.histc(bins, min_value, max_value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training

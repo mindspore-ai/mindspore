@@ -33,10 +33,10 @@ struct IRBuilderHandle {
   IRBuilderFunc func;
 };
 
-class FallbackIRBuilder : public Emitter {
+class FallbackIRBuilder : public IrEmitter {
  public:
   FallbackIRBuilder(const std::string &name, const FuncGraphPtr &fg, const SelectKernelFunc &func);
-  ~FallbackIRBuilder() = default;
+  ~FallbackIRBuilder() override = default;
 
   AnfNodePtr Run(const CNodePtr &cnode, const IRBuilderHandle &handle);
   ValuePtr GetAttr(const std::string &attr) const;
@@ -55,9 +55,6 @@ class FallbackIRBuilder : public Emitter {
   const NodePtrList &GetInputs() const { return inputs_; }
 
  protected:
-  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override;
-  void ConvertConstInputToTensorInput(const PrimitivePtr &p, NodePtrList *inputs_ptr);
-
   std::string name_;
   NodePtrList inputs_;
   const mindspore::HashMap<std::string, ValuePtr> *attrs_ptr_{nullptr};

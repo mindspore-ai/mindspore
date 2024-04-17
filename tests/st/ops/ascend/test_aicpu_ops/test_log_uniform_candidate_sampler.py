@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+from mindspore.common import dtype as mstype
 
 
 class Net(nn.Cell):
@@ -31,15 +31,42 @@ class Net(nn.Cell):
         return self.sampler(x)
 
 
-def test_net_true():
-    x = np.array([[1, 7], [0, 4], [3, 3]])
-    net = Net(2, 5, True, 5)
-    output = net(Tensor(x))
-    print(output)
-
-
-def test_net_false():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net_false(context_mode):
+    """
+    Feature: aicpu ops LogUniformCandidateSampler.
+    Description: test LogUniformCandidateSampler forward.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=context_mode, device_target="Ascend")
     x = np.array([[1, 7], [0, 4], [3, 3]])
     net = Net(2, 5, False, 10)
-    output = net(Tensor(x))
-    print(output)
+    output = net(Tensor(x, mstype.int64))
+    assert output[0].shape == (5,)
+    assert output[1].shape == (3, 2)
+    assert output[2].shape == (5,)
+
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net_true(context_mode):
+    """
+    Feature: aicpu ops LogUniformCandidateSampler.
+    Description: test LogUniformCandidateSampler forward.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=context_mode, device_target="Ascend")
+    x = np.array([[1, 7], [0, 4], [3, 3]])
+    net = Net(2, 5, True, 5)
+    output = net(Tensor(x, mstype.int64))
+    assert output[0].shape == (5,)
+    assert output[1].shape == (3, 2)
+    assert output[2].shape == (5,)

@@ -35,6 +35,7 @@ namespace parallel {
 // Thus, it can support row-split/column-split/row-column-split
 Status ScatterMathOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
+  do_replace_graph_ = false;
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
@@ -68,6 +69,17 @@ Status ScatterMathOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   if (stra[0][0] > 1) {
     do_replace_graph_ = true;
+  }
+  return SUCCESS;
+}
+
+Status ScatterMathOpsInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  std::vector<Dimensions> stra = strategy->GetInputDim();
+  if (stra[0][0] > 1) {
+    MS_LOG(ERROR) << name_ << ": the dim 0 of first input can not be split in dynamic shape, the strategy is "
+                  << ShapesToString(stra) << ", the inputs' shape: " << ShapesToString(inputs_shape_)
+                  << ", the output shape: " << ShapeToString(outputs_shape_[0]);
+    return FAILED;
   }
   return SUCCESS;
 }
@@ -157,7 +169,9 @@ Status ScatterMathOpsInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gen_g.virtual_input_node()});
-  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
+  auto dtype_id =
+    gen_g.PushBack({gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_id});
   std::vector<int64_t> mask_shape = inputs_shape_[1];
   (void)mask_shape.insert(mask_shape.end(), inputs_shape_[2].size() - inputs_shape_[1].size(), 1);
   auto reshape = gen_g.PushBack({gen_g.NewOpInst(RESHAPE), cast, NewValueNode(MakeValue(mask_shape))});
@@ -199,7 +213,9 @@ Status ScatterAddInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gen_g.virtual_input_node()});
-  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
+  auto dtype_id =
+    gen_g.PushBack({gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_id});
   std::vector<int64_t> mask_shape = inputs_shape_[1];
   (void)mask_shape.insert(mask_shape.end(), inputs_shape_[2].size() - inputs_shape_[1].size(), 1);
   auto reshape = gen_g.PushBack({gen_g.NewOpInst(RESHAPE), cast, NewValueNode(MakeValue(mask_shape))});

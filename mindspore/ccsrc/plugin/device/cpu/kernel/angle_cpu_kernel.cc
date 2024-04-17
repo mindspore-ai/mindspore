@@ -25,18 +25,16 @@ const size_t kInputsNum = 1;
 
 namespace mindspore {
 namespace kernel {
-bool AngleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool AngleCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  kernel_name_ = base_operator->name();
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
   return true;
 }
 
-bool AngleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool AngleCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   bool ret = true;
   switch (input_dtype_) {
     case (kNumberTypeComplex64): {
@@ -56,11 +54,11 @@ bool AngleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 template <typename T, typename T2>
-bool AngleCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_addr = static_cast<T *>(inputs[0]->addr);
-  auto output_addr = static_cast<T2 *>(outputs[0]->addr);
-  size_t output_size = outputs[0]->size / sizeof(T2);
+bool AngleCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_addr = static_cast<T2 *>(outputs[0]->device_ptr());
+  size_t output_size = outputs[0]->size() / sizeof(T2);
   auto task = [output_addr, input_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       T2 a = input_addr[i].real();

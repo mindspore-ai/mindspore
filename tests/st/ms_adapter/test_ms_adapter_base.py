@@ -24,7 +24,7 @@ from tests.st.ms_adapter._register.utils import convert_to_ms_tensor, convert_to
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_attr():
@@ -41,7 +41,7 @@ def test_tensor_attr():
     assert func(x) == 10
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_method():
@@ -58,7 +58,7 @@ def test_tensor_method():
     assert func(x) == 20
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameter_attr():
@@ -75,7 +75,7 @@ def test_parameter_attr():
     assert func(x) == 10
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameter_method():
@@ -92,7 +92,7 @@ def test_parameter_method():
     assert func(x) == 20
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_convert_type():
@@ -122,6 +122,22 @@ def test_tensor_convert_type():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_convert_to_ms_tensor():
+    """
+    Feature: MSAdapter
+    Description: Test type conversion
+    Expectation: No exception
+    """
+    @ms.jit
+    def func(x):
+        return convert_to_ms_tensor(x)
+
+    out = func(Tensor([1, 2, 3]))
+    assert type(out) is ms.Tensor
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_tensor_isinstance():
     """
     Feature: MSAdapter
@@ -142,7 +158,7 @@ def test_tensor_isinstance():
     assert out[0] and not out[1] and out[2]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameter_isinstance():
@@ -183,7 +199,7 @@ def test_tensor_create_instance():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_adpater_tensor_size():
+def test_adapter_tensor_size():
     """
     Feature: MSAdapter
     Description: Test adapter tensor size
@@ -198,11 +214,10 @@ def test_adpater_tensor_size():
     assert out == (4,)
 
 
-@pytest.mark.skip(reason='Not support yet')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_adpater_tensor_size_2():
+def test_adapter_tensor_size_2():
     """
     Feature: MSAdapter
     Description: Test adapter tensor size
@@ -226,3 +241,20 @@ def test_adpater_tensor_size_2():
 
     out_size = func()
     assert out_size == (3,)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_create_instance_2():
+    """
+    Feature: MSAdapter
+    Description: Test isinstance syntax
+    Expectation: No exception
+    """
+    @ms.jit
+    def func(x):
+        return Tensor(x+1, dtype=ms.int32)
+
+    out = func(Tensor([1]))
+    assert out == 2

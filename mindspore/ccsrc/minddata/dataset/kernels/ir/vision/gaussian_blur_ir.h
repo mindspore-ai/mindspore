@@ -32,7 +32,8 @@ constexpr char kGaussianBlurOperation[] = "GaussianBlur";
 
 class GaussianBlurOperation : public TensorOperation {
  public:
-  GaussianBlurOperation(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma);
+  GaussianBlurOperation(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma,
+                        const std::string &device_target = "CPU");
 
   ~GaussianBlurOperation() override;
 
@@ -46,9 +47,12 @@ class GaussianBlurOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   std::vector<int32_t> kernel_size_;
   std::vector<float> sigma_;
+  std::string device_target_;
 };
 }  // namespace vision
 }  // namespace dataset

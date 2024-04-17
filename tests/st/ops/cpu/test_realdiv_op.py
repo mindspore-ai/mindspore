@@ -31,7 +31,7 @@ class NetRealDiv(nn.Cell):
         return self.divide(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.float16, np.uint32, np.uint16])

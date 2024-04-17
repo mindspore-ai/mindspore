@@ -29,18 +29,17 @@ class CauchyCpuKernelMod : public NativeCpuKernelMod {
   CauchyCpuKernelMod() = default;
   ~CauchyCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &outputs) const;
+  bool LaunchKernel(const std::vector<KernelTensor *> &outputs) const;
 
   float sigma_{1.0};
   float median_{0};

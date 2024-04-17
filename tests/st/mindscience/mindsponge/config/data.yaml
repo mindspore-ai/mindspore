@@ -1,0 +1,88 @@
+block_deletion:
+  msa_fraction_per_block: 0.3
+  num_blocks: 5
+  randomize_num_blocks: True
+common:
+  random_recycle: False
+  distillation: False
+  replace_proportion: 0.0
+  masked_msa:
+    use_masked_msa: True
+    profile_prob: 0.1
+    same_prob: 0.1
+    uniform_prob: 0.1
+  max_extra_msa: 5120
+  msa_cluster_features: True
+  num_recycle: 4
+  reduce_msa_clusters_by_max_templates: True
+  resample_msa_in_recycling: True
+  use_templates: True
+  template_features:
+  - template_all_atom_positions
+  - template_sum_probs
+  - template_aatype
+  - template_all_atom_masks
+  - template_domain_names
+  unsupervised_features:
+  - aatype
+  - residue_index
+  - sequence
+  - msa
+  - domain_name
+  - num_alignments
+  - seq_length
+  - between_segment_residues
+  - deletion_matrix
+  - template_all_atom_positions
+  - template_sum_probs
+  - template_aatype
+  - template_all_atom_masks
+  - template_domain_names
+  supervised_features:
+  - all_atom_positions
+  - all_atom_mask
+  - atom14_atom_exists
+  - atom14_gt_exists
+  - atom14_gt_positions
+  - residx_atom14_to_atom37
+  - residx_atom37_to_atom14
+  - atom37_atom_exists
+  - atom14_alt_gt_positions
+  - atom14_alt_gt_exists
+  - atom14_atom_is_ambiguous
+  - rigidgroups_gt_frames
+  - rigidgroups_gt_exists
+  - rigidgroups_group_exists
+  - rigidgroups_group_is_ambiguous
+  - rigidgroups_alt_gt_frames
+  - backbone_affine_tensor
+  - torsion_angles_sin_cos
+  - alt_torsion_angles_sin_co
+  - torsion_angles_mask
+  - pseudo_beta
+  - pseudo_beta_mask
+  - chi_mask
+  - backbone_affine_mask
+
+
+eval:
+  crop_size: 256
+  fixed_size: True
+  masked_msa_replace_fraction: 0.15
+  max_msa_clusters: 512
+  max_templates: 4
+  num_ensemble: 1
+  subsample_templates: True
+  keep_extra: True
+
+database_search:
+  hhsearch_binary_path: None
+  kalign_binary_path: None
+  pdb70_database_path: None
+  mmcif_dir: None
+  obsolete_pdbs_path: None
+  max_template_date: "2100-01-01"
+  mmseqs_binary: None
+  uniref30_path: None
+  database_envdb_dir: None
+  a3m_result_path: "./a3m_result/"

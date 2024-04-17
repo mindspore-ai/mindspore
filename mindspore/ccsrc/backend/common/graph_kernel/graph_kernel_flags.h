@@ -215,7 +215,7 @@ class BACKEND_EXPORT GraphKernelFlags {
 
   /**
    * Kernel Generator.
-   * The generator used to compile kernels, AKG or MLIR.
+   * The generator used to compile kernels, AKG or MLIR or DVM.
    */
   std::string kernel_generator{"AKG"};
 
@@ -284,6 +284,17 @@ class BACKEND_EXPORT GraphKernelFlags {
    * The format is "stage_id.pass_id" or "stage_name.pass_name", which corresponds to the ir filename.
    */
   std::vector<std::string> disable_pass;
+
+  /**
+   * Cluster ops to run akg cce lib.
+   */
+  bool enable_cce_lib{false};
+
+  std::vector<std::string> enable_cce_lib_ops;
+
+  std::vector<std::string> enable_cce_lib_ops_only;
+
+  std::vector<std::string> disable_cce_lib_ops;
 
  private:
   GraphKernelFlags(const std::string &graph_kernel_flags, bool enable_graph_kernel)

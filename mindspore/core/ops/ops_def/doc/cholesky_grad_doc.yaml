@@ -1,0 +1,22 @@
+cholesky_grad:
+    description: |
+        Computes the reverse mode backpropgated gradient of the Cholesky algorithm.
+
+        Args:
+            - **x** (Tensor) - A tensor with float32 or float64 data type.
+            - **grad** (Tensor) - A tensor with float32 or float64 data type. `grad` should have
+              the same dtype with `x`.
+
+        Outputs:
+            Tensor, has the same dtype as `a` and `x`.
+
+        Raises:
+            TypeError: If x is not Tensor.
+            TypeError: If grad is not Tensor.
+            TypeError: If dtype of input x and grad is not float64 nor float32,
+            TypeError: If x has different dtype with grad.
+            ValueError: If input tensor's last two dims are not equal,
+            ValueError: If the shape of x and grad mismatch.
+
+        Supported Platforms:
+            ``Ascend``

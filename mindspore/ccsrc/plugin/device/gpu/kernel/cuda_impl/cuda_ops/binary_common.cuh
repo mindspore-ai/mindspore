@@ -48,4 +48,11 @@ struct BinaryFunc {
   __device__ __forceinline__ Out_t operator()(In0_t val0, In1_t val1) const { return Out_t(0.0); }
 };
 
+template <enum BinaryOpType op, typename In0_t, typename In1_t, typename In2_t, typename Out_t,
+          typename Enabled = std::true_type>
+struct BinaryExtFunc {
+  __device__ __host__ __forceinline__ BinaryExtFunc() {}
+  __device__ __forceinline__ Out_t operator()(In0_t val0, In1_t val1, In2_t alpha) const { return Out_t(0.0); }
+};
+
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BINARY_COMMON_CUH_

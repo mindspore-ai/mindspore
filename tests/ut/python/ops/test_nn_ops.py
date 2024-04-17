@@ -531,7 +531,7 @@ class PReLUGradNet(nn.Cell):
 
     def __init__(self):
         super(PReLUGradNet, self).__init__()
-        self.prelu_grad = G.PReLUGrad()
+        self.prelu_grad = mindspore.ops.auto_generate.PReLUGrad()
 
     def construct(self, dout, x, w):
         return self.prelu_grad(dout, x, w)

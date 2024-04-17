@@ -27,7 +27,6 @@ import java.nio.FloatBuffer;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.logging.Logger;
-import javax.xml.crypto.Data;
 
 /**
  * The MSTensor class defines a tensor in MindSpore.
@@ -132,7 +131,7 @@ public class MSTensor {
             return this.buffer;
         } else {
             int dataType = this.getDataType();
-            switch(dataType) {
+            switch (dataType) {
                 case DataType.kNumberTypeFloat32:
                     ret = this.getFloatData(this.tensorPtr);
                     break;
@@ -165,8 +164,7 @@ public class MSTensor {
         if (this.buffer instanceof byte[]) {
             return (byte[]) this.buffer;
         }
-        byte[] ret = new byte[0];
-        return ret;
+        return new byte[0];
     }
 
     /**
@@ -302,8 +300,8 @@ public class MSTensor {
             LOGGER.severe("input param null.");
             return false;
         }
-        if (this.getDataType() != DataType.kNumberTypeFloat32 &&
-            this.getDataType() != DataType.kNumberTypeFloat16) {
+        if (this.getDataType() != DataType.kNumberTypeFloat32
+            && this.getDataType() != DataType.kNumberTypeFloat16) {
             LOGGER.severe("Data type is not consistent");
             return false;
         }

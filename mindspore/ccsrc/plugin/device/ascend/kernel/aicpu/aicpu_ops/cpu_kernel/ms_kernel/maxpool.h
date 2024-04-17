@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 
 namespace aicpu {

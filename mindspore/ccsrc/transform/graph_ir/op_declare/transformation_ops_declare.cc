@@ -37,11 +37,11 @@ REG_ADPT_DESC(Unpack, mindspore::kUnpackOpName, ADPT_DESC(Unpack))
 
 // ExtractImagePatches
 INPUT_MAP(ExtractImagePatches) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ExtractImagePatches) = {
-  {"ksizes", ATTR_DESC(ksizes, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-  {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-  {"rates", ATTR_DESC(rates, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-  {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+INPUT_ATTR_MAP(ExtractImagePatches) = {{2, ATTR_DESC(ksizes, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                                       {3, ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                                       {4, ATTR_DESC(rates, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                                       {5, ATTR_DESC(padding, AnyTraits<GEPadMod>())}};
+ATTR_MAP(ExtractImagePatches) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ExtractImagePatches) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ExtractImagePatches, kNameExtractImagePatches, ADPT_DESC(ExtractImagePatches))
 
@@ -157,13 +157,13 @@ ATTR_MAP(TfIdfVectorizer) = {
   {"pool_strings", ATTR_DESC(pool_strings, AnyTraits<std::vector<std::string>>())},
   {"weights", ATTR_DESC(weights, AnyTraits<std::vector<float>>())}};
 OUTPUT_MAP(TfIdfVectorizer) = {{0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(TfIdfVectorizer, kNameTfIdfVectorizer, ADPT_DESC(TfIdfVectorizer))
+REG_ADPT_DESC(TfIdfVectorizer, kNameTfIdfVectorizer, ADPT_DESC(TfIdfVectorizer));
 
 // AffineGrid
-INPUT_MAP(AffineGrid) = {{1, INPUT_DESC(theta)}, {2, INPUT_DESC(output_size)}};
-ATTR_MAP(AffineGrid) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-OUTPUT_MAP(AffineGrid) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(AffineGrid, prim::kPrimAffineGrid->name(), ADPT_DESC(AffineGrid));
+CUST_INPUT_MAP(AffineGrid) = {{1, INPUT_DESC(theta)}, {2, INPUT_DESC(output_size)}};
+CUST_ATTR_MAP(AffineGrid) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(AffineGrid) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(AffineGrid, prim::kPrimAffineGrid->name(), CUST_ADPT_DESC(AffineGrid));
 
 // AffineGridGrad
 CUST_INPUT_MAP(AffineGridGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x_size)}};
@@ -171,13 +171,23 @@ CUST_ATTR_MAP(AffineGridGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyT
 CUST_OUTPUT_MAP(AffineGridGrad) = {{0, OUTPUT_DESC(x_grad)}};
 REG_ADPT_DESC(AffineGridGrad, prim::kPrimAffineGridGrad->name(), CUST_ADPT_DESC(AffineGridGrad));
 
+// Col2im
+INPUT_MAP(Col2im) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(output_size)}};
+ATTR_MAP(Col2im) = {{"kernel_size", ATTR_DESC(kernel_size, AnyTraits<std::vector<int64_t>>())},
+                    {"stride", ATTR_DESC(stride, AnyTraits<std::vector<int64_t>>())},
+                    {"dilation", ATTR_DESC(dilation, AnyTraits<std::vector<int64_t>>())},
+                    {"padding", ATTR_DESC(padding, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(Col2im) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Col2im, kNameCol2Im, ADPT_DESC(Col2im))
+
 // Im2col
-INPUT_MAP(Im2col) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Im2col) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<std::vector<int64_t>>())},
-                    {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
-                    {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>())},
-                    {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
-                    {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())}};
-OUTPUT_MAP(Im2col) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Im2col, kNameIm2col, ADPT_DESC(Im2col))
+CUST_INPUT_MAP(Im2col) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Im2col) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<std::vector<int64_t>>())},
+                         {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
+                         {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>())},
+                         {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+                         {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())}};
+CUST_OUTPUT_MAP(Im2col) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Im2col, kNameIm2col, CUST_ADPT_DESC(Im2col));
+REG_ADPT_DESC(Im2Col, prim::kPrimIm2Col->name(), CUST_ADPT_DESC(Im2col));
 }  // namespace mindspore::transform

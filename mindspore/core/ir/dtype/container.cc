@@ -52,10 +52,7 @@ static std::string DumpTypeVector(const std::vector<TypePtr> &elements, bool is_
     if (i + 1 < elements.size()) {
       TypePtr next = elements[i + 1];
       MS_EXCEPTION_IF_NULL(next);
-      // AnyType is the subclass of TensorType but AnyType and TensorType should not be combined.
-      bool is_tensor_and_any = (elem->isa<TensorType>() && !elem->isa<AnyType>() && next->isa<AnyType>()) ||
-                               (elem->isa<AnyType>() && next->isa<TensorType>() && !next->isa<TensorType>());
-      if (*elem != *next || is_tensor_and_any) {
+      if (*elem != *next) {
         print = true;
       }
     } else {

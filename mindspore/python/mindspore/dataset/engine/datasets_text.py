@@ -70,7 +70,7 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . This
             argument can only be specified when `num_shards` is also specified. Default: ``None``.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None``, which means no cache is used.
 
     Raises:
@@ -81,7 +81,7 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -178,7 +178,7 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -189,7 +189,7 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -276,7 +276,7 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     The generated dataset with different task setting has different output columns:
@@ -433,7 +433,7 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -522,7 +522,7 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -533,7 +533,7 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -621,7 +621,7 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -633,7 +633,7 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -720,7 +720,7 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -731,7 +731,7 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -808,7 +808,7 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -822,7 +822,7 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The shape of the test column.
@@ -947,7 +947,7 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -958,7 +958,7 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1079,7 +1079,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1090,7 +1090,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1184,7 +1184,7 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1199,7 +1199,7 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1293,7 +1293,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1304,7 +1304,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1395,7 +1395,7 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1406,7 +1406,7 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1493,7 +1493,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1505,7 +1505,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1611,7 +1611,7 @@ class SST2Dataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards`. This argument can only be specified when
             `num_shards` is also specified. Default: ``None`` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1623,7 +1623,7 @@ class SST2Dataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1714,7 +1714,7 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1726,7 +1726,7 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1781,7 +1781,7 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1792,7 +1792,7 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1864,7 +1864,7 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1877,7 +1877,7 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     About WikiTextDataset dataset:
 
@@ -1961,7 +1961,7 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1973,7 +1973,7 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -2064,7 +2064,7 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -2075,7 +2075,7 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds

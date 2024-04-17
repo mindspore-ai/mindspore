@@ -23,12 +23,14 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/diag_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "kernel/common_utils.h"
+#include "mindspore/ccsrc/kernel/kernel.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr int kDiagInputsNum = 1;
 constexpr int kDiagOutputsNum = 1;
+constexpr const char *kBatchRank = "batch_rank";
 }  // namespace
 
 std::vector<std::pair<KernelAttr, DiagGpuKernelMod::DiagLaunchFunc>> DiagGpuKernelMod::diag_func_list_ = {
@@ -65,11 +67,7 @@ std::vector<KernelAttr> DiagGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool DiagGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+bool DiagGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDiagOutputsNum, kernel_name_);
@@ -84,14 +82,14 @@ bool DiagGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 
   // Get kernel launch function.
   kernel_launch_func_ = diag_func_list_[index].second;
-  batch_rank_ = base_operator->get_batch_rank();
+  if (primitive_->HasAttr(kBatchRank)) {
+    batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(kBatchRank));
+  }
   return true;
 }
 
-int DiagGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int DiagGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -137,8 +135,9 @@ int DiagGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename DataType>
-bool DiagGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DiagGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto input_begin_ptr = GetDeviceAddress<DataType>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(input_begin_ptr);
   auto output_begin_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);

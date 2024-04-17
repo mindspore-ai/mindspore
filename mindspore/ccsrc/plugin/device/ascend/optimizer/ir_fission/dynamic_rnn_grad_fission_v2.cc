@@ -23,6 +23,7 @@
 #include "ops/math_ops.h"
 #include "ops/lite_ops.h"
 #include "ops/array_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/backend/kernel_graph.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -497,7 +498,8 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateHConcat(const FuncGraphPtr &func_graph
                                               concat.get());
   // Set attr
   common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kAttrNValue)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue}), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes,
+                               MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue, (int64_t)-1}), concat);
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(0)), concat);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), concat);
   return concat;
@@ -539,7 +541,8 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateConcat(const FuncGraphPtr &func_graph,
   common::AnfAlgo::SetOutputInferTypeAndShape({origin_input0_dtype}, {shape}, concat.get());
   // Set attr
   common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kAttrNValue)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue}), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes,
+                               MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue, (int64_t)-1}), concat);
   if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
     common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(1), concat);
   } else {
@@ -609,7 +612,8 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateConcatNodeT1(const FuncGraphPtr &func_
   common::AnfAlgo::SetOutputInferTypeAndShape({origin_input0_dtype}, {shape}, concat.get());
   // Set attr
   common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kAttrNValue)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue}), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes,
+                               MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue, (int64_t)-1}), concat);
   if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
     common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(1), concat);
   } else {
@@ -870,7 +874,7 @@ const AnfNodePtr DynamicRnnGradFissionV2::Process(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(node);
   auto dynamic_rnn_grad_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(dynamic_rnn_grad_cnode);
-  if (dynamic_rnn_grad_cnode->inputs().size() < kDynamicRNNGradInputNum + 1) {
+  if (dynamic_rnn_grad_cnode->size() < kDynamicRNNGradInputNum + 1) {
     MS_LOG(INFO) << "The node " << dynamic_rnn_grad_cnode->DebugString() << " has less than "
                  << (kDynamicRNNGradInputNum + 1) << " inputs";
     return nullptr;

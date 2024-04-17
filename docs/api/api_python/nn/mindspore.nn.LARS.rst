@@ -39,7 +39,7 @@ mindspore.nn.LARS
         - **epsilon** (float) - 将添加到分母中，提高数值稳定性。默认值： ``1e-05`` 。
         - **coefficient** (float) - 计算局部学习速率的信任系数。默认值： ``0.001`` 。
         - **use_clip** (bool) - 计算局部学习速率时是否裁剪。默认值： ``False`` 。
-        - **lars_filter** (Function) - 用于指定使用LARS算法的网络参数。默认值：lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name。
+        - **lars_filter** (Function) - 用于指定使用LARS算法的网络参数。默认值： ``lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name``。
 
     输入：
         - **gradients** (tuple[Tensor]) - 优化器中 `params` 的梯度，shape与优化器中的 `params` 相同。

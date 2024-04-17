@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <utility>
 #include <string>
 #include <set>
+#include "base/base.h"
 #include "utils/hash_set.h"
 #include "ir/func_graph.h"
 #include "include/backend/kernel_graph.h"
@@ -45,7 +46,7 @@ constexpr size_t kMatMulInputTensorNum = 2;
 constexpr size_t kMulInputTensorNum = 2;
 constexpr size_t kSubInputTensorNum = 2;
 constexpr size_t kAssignSubInputTensorNum = 2;
-constexpr size_t kDropoutInputTensorNum = 1;
+constexpr size_t kDropoutInputTensorNum = 4;
 constexpr size_t kAssignInputTensorNum = 2;
 
 constexpr size_t kGradIndex = 3;
@@ -54,14 +55,16 @@ constexpr size_t kAddNInputNum = 2;
 constexpr size_t kConvBn1OutputNum = 3;
 constexpr size_t kBn2ReluOutputNum = 4;
 
-constexpr size_t kBnInputTensorNum = 5;
+constexpr size_t kBnInputTensorNum = 9;
+constexpr size_t kSyncBnInputTensorNum = 5;
 constexpr size_t kBnOutputNum = 5;
 
 constexpr size_t kBN1OutputNum = 2;
 constexpr size_t kBN2OutputNum = 3;
 constexpr size_t kBN3OutputNum = 1;
 
-constexpr size_t kBNGradInputTensorNum = 5;
+constexpr size_t kBNGradInputTensorNum = 9;
+constexpr size_t kSyncBNGradInputTensorNum = 5;
 constexpr size_t kBNGradOutputNum = 3;
 
 constexpr size_t kBNGrad1OutputNum = 3;
@@ -194,7 +197,7 @@ BACKEND_EXPORT ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph,
                                                  bool to_tensor = false);
 
 BACKEND_EXPORT CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &node,
-                                    const bool is_input);
+                                    const bool is_input, const size_t input_index = 0);
 
 BACKEND_EXPORT AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &new_node_inputs,
                                          const AnfNodePtr &node);
@@ -271,8 +274,15 @@ BACKEND_EXPORT AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr 
 
 BACKEND_EXPORT void InferOp(const CNodePtr &node, void *args = nullptr);
 
-using InfPyHandler = abstract::AbstractBasePtr (*)(const CNodePtr &, const PrimitivePtr &, const AbstractBasePtrList &);
-BACKEND_EXPORT void SetCppInferPyHanbdler(const InfPyHandler &infer_handler);
+using LaunchHandler = abstract::AbstractBasePtr (*)(const PrimitivePtr &,
+                                                    const std::vector<abstract::AbstractBase *> &);
+BACKEND_EXPORT void set_launch_handler(const LaunchHandler &handler);
+
+BACKEND_EXPORT abstract::AbstractBasePtr LaunchPy(const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBase *> &args_abs_list);
+BACKEND_EXPORT AbstractBasePtr InferAbstract(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &input_list);
+
+BACKEND_EXPORT AnfNodePtr CreateValueNodeWithKernelInfo(const FuncGraphPtr &graph, const ValuePtr &value);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_

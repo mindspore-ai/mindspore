@@ -17,48 +17,11 @@
 
 from mindspore.ops import operations as P
 from mindspore.ops._primitive_cache import _get_cache_prim
-
-assign_ = P.Assign()
-
-
-def assign(variable, value):
-    """
-    Assigns `Parameter` with a value.
-
-    Args of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-
-    Args:
-        variable (Parameter): The `Parameter`. :math:`(N,*)` where :math:`*` means,
-            any number of additional dimensions.
-        value (Tensor): The value to be assigned, has the same shape with `variable`.
-
-    Returns:
-        Tensor, has the same data type and shape as original `variable`.
-
-    Raises:
-        TypeError: If `variable` is not a Parameter.
-        TypeError: If `value` is not a Tensor.
-        RuntimeError: If the data type of `variable` and `value` conversion of Parameter
-                      is required when data type conversion of Parameter is not supported.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> value = Tensor([2.0], mindspore.float32)
-        >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
-        >>> ops.assign(variable, value)
-        >>> print(variable.asnumpy())
-        [2.]
-    """
-    return assign_(variable, value)
+from mindspore.ops.auto_generate import assign, assign_add
 
 
 assign_sub_ = P.AssignSub()
+assign_add_ = P.AssignAdd()
 
 
 def assign_sub(variable, value):
@@ -99,6 +62,7 @@ def assign_sub(variable, value):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
+        >>> from mindspore.common.initializer import initializer
         >>> variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
         >>> value = Tensor(np.ones([1]).astype(np.int32) * 100)
         >>> ops.assign_sub(variable, value)
@@ -106,56 +70,6 @@ def assign_sub(variable, value):
         [-99]
     """
     return assign_sub_(variable, value)
-
-
-assign_add_ = P.AssignAdd()
-
-
-def assign_add(variable, value):
-    """
-    Updates a `Parameter` by adding a value to it.
-
-    Args of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-    If `value` is a number, the number is automatically converted to Tensor,
-    and the data type is consistent with the Tensor data type involved in the operation.
-
-    Note:
-        Since `variable` is a data type Parameter, the data type cannot be changed,
-        so only the type of `value` is allowed to be promoted to the type of `variable`.
-        And the conversion type supported by different devices will be different,
-        it is recommended to use the same data type when using this operator.
-
-    Args:
-        variable (Parameter): The `Parameter`.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        value (Tensor): The value to be added to the `variable`.
-            It must have the same shape as `variable`.
-            it is recommended to use the same data type when using this operator.
-
-    Returns:
-        Tensor, has the same data type and shape as original `variable`.
-
-    Raises:
-        TypeError: If `value` is neither Number nor Tensor.
-        RuntimeError: If the data type of `variable` and `value` conversion of Parameter
-                      is required when data type conversion of Parameter is not supported.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
-        >>> value = Tensor(np.ones([1]).astype(np.int32) * 100)
-        >>> ops.assign_add(variable, value)
-        >>> print(variable.asnumpy())
-        [101]
-    """
-    return assign_add_(variable, value)
 
 
 def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
@@ -172,12 +86,12 @@ def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
         y (Tensor): The input tensor with the value to add. Must have same data type as `x`.
             The shape must be the same as `x` except the `axis` th dimension.
         axis (int): The dimension along which to index.
-        use_lock (bool): Whether to enable a lock to protect the updating process of variable tensors.
+        use_lock (bool, optional): Whether to enable a lock to protect the updating process of variable tensors.
             If ``True`` , when updating the value of `x`, this process will be protected by a lock by using atomic
             operation.
             If ``False`` , the result may be unpredictable. Default: ``True`` .
-        check_index_bound (bool): If True, check index boundary. If ``False`` , don't check index boundary.
-            Default: ``True`` .
+        check_index_bound (bool, optional): If ``True``, check index boundary. If ``False`` ,
+            don't check index boundary. Default: ``True`` .
 
     Returns:
         Tensor, has the same shape and dtype as `x`.

@@ -34,6 +34,9 @@ class BatchNormAddReluGradFusion : public PatternProcessPass {
     var_ = std::make_shared<Var>();
     save_mean_ = std::make_shared<Var>();
     save_var_ = std::make_shared<Var>();
+    is_training_ = std::make_shared<Var>();
+    eps_ = std::make_shared<Var>();
+    format_ = std::make_shared<Var>();
     reserve_ = std::make_shared<Var>();
   }
   ~BatchNormAddReluGradFusion() override = default;
@@ -50,6 +53,9 @@ class BatchNormAddReluGradFusion : public PatternProcessPass {
   VarPtr var_;
   VarPtr save_mean_;
   VarPtr save_var_;
+  VarPtr is_training_;
+  VarPtr eps_;
+  VarPtr format_;
   VarPtr reserve_;
 };
 }  // namespace opt

@@ -33,12 +33,14 @@ int CalShape(const int *data, const TensorC *const *inputs, int *out_shape, size
     }
     ShapePush(out_shape, out_shape_size, data[i]);
   }
-
+  if (size == 0) {
+    return NNACL_ERR;
+  }
   if ((int)(data[index]) == -1) {
     if (index >= MAX_SHAPE_SIZE) {
       return NNACL_ERR;
     }
-    out_shape[index] = size == 0 ? 0 : input_count / size;
+    out_shape[index] = input_count / size;
   }
   return NNACL_OK;
 }
@@ -180,7 +182,7 @@ int ReshapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   size_t out_shape_size = 0;
   if (inputs_size == 2) {
     const TensorC *shape_tensor = inputs[1];
-    if (GetElementNum(input) == 1 && input->shape_size_ == 0) {
+    if (GetElementNum(input) == 1) {
       if (shape_tensor->data_ == NULL || (shape_tensor->shape_size_ == 1 && shape_tensor->shape_[0] == 0)) {
         SetShapeArray(output, out_shape, out_shape_size);
         return NNACL_OK;

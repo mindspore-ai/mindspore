@@ -287,6 +287,10 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     if (type == DataType::DE_STRING) {
       std::string s{data, data + n_bytes};
       RETURN_IF_NOT_OK(Tensor::CreateScalar(s, &tensor));
+    } else if (type == DataType::DE_BYTES) {
+      std::vector<std::string> strings;
+      strings.push_back(std::string(reinterpret_cast<const char *>(data), num_elements));
+      RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, TensorShape({1}), DataType(DataType::DE_BYTES), &tensor));
     } else if (column.HasShape()) {
       auto new_shape = TensorShape(column.Shape());
       // if the numpy is null, create empty tensor shape

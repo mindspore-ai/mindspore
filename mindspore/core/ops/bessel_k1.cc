@@ -39,11 +39,11 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr BesselK1InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
 TypePtr BesselK1InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   return x_type;

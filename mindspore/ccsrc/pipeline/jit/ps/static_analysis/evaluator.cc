@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "abstract/utils.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "utils/ms_context.h"
+#include "utils/compile_config.h"
 #include "pipeline/jit/ps/static_analysis/stack_frame.h"
 #include "pipeline/jit/ps/static_analysis/async_eval_result.h"
 #include "frontend/expander/bprop/bprop_meta_func_graph.h"
@@ -78,13 +79,6 @@ bool ContainsAbstractAnyInner(const AbstractBasePtr &abs) {
     });
   }
   return abs->isa<AbstractAny>();
-}
-
-bool ContainsAbstractAny(const AbstractBasePtrList &args_abs_list) {
-  return std::any_of(args_abs_list.cbegin(), args_abs_list.cend(), [](const AbstractBasePtr &item) {
-    MS_EXCEPTION_IF_NULL(item);
-    return ContainsAbstractAnyInner(item);
-  });
 }
 
 TypePtr GetArgsUniqueDtype(const AbstractBasePtrList &args_abs_list) {
@@ -156,6 +150,30 @@ bool IsSideEffectCNode(const AnfNodePtr &node) {
   return false;
 }
 
+bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph);
+
+bool CheckSideEffect(const AnfNodePtr &input) {
+  if (IsSideEffectCNode(input)) {
+    MS_LOG(DEBUG) << "Multiple side-effect node: " << input->DebugString();
+    return true;
+  }
+  // Process {Depend -> StopGradient -> MakeTuple(call function, ...)}.
+  if (input->isa<CNode>()) {
+    auto fn_input = input->cast<CNodePtr>()->input(0);
+    if (IsValueNode<prim::UnpackCall>(fn_input)) {
+      fn_input = input->cast<CNodePtr>()->input(1);
+    }
+    if (IsValueNode<FuncGraph>(fn_input)) {
+      auto func = GetValueNode<FuncGraphPtr>(fn_input);
+      if (IsSideEffectCNode(func->output()) || HasIsolatedSideEffectNode(func)) {
+        MS_LOG(DEBUG) << "Single nested side-effect node: " << input->DebugString();
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   const auto node = func_graph->output();
@@ -180,33 +198,17 @@ bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph) {
   constexpr size_t isolated_node_pos = 1;
   auto isolated_node = stop_gradient_cnode->input(isolated_node_pos);
   MS_EXCEPTION_IF_NULL(isolated_node);
+  if (CheckSideEffect(isolated_node)) {
+    return true;
+  }
   if (IsPrimitiveCNode(isolated_node, prim::kPrimMakeTuple)) {
     auto isolated_cnode = dyn_cast<CNode>(isolated_node);
     MS_EXCEPTION_IF_NULL(isolated_cnode);
     for (size_t i = 1; i < isolated_cnode->size(); ++i) {
-      if (IsSideEffectCNode(isolated_cnode->input(i))) {
-        MS_LOG(DEBUG) << "Multiple side-effect node[" << i << "]: " << isolated_cnode->input(i)->DebugString();
+      auto input = isolated_cnode->input(i);
+      if (CheckSideEffect(input)) {
         return true;
       }
-    }
-  } else {
-    // Process call function
-    if (isolated_node->isa<CNode>()) {
-      auto fn_input = isolated_node->cast<CNodePtr>()->input(0);
-      if (IsValueNode<prim::UnpackCall>(fn_input)) {
-        fn_input = isolated_node->cast<CNodePtr>()->input(1);
-      }
-      if (IsValueNode<FuncGraph>(fn_input)) {
-        auto func = GetValueNode<FuncGraphPtr>(fn_input);
-        if (IsSideEffectCNode(func->output()) || HasIsolatedSideEffectNode(func)) {
-          MS_LOG(DEBUG) << "Single nested side-effect node: " << isolated_node->DebugString();
-          return true;
-        }
-      }
-    }
-    if (IsSideEffectCNode(isolated_node)) {
-      MS_LOG(DEBUG) << "Single side-effect node: " << isolated_node->DebugString();
-      return true;
     }
   }
   return false;
@@ -229,6 +231,13 @@ void PresetCertainSideEffect(const FuncGraphPtr &func_graph) {
   MS_LOG(DEBUG) << "Set isolated side-effect node flag for " << func_graph->ToString();
 }
 }  // namespace
+
+bool ContainsAbstractAny(const AbstractBasePtrList &args_abs_list) {
+  return std::any_of(args_abs_list.cbegin(), args_abs_list.cend(), [](const AbstractBasePtr &item) {
+    MS_EXCEPTION_IF_NULL(item);
+    return ContainsAbstractAnyInner(item);
+  });
+}
 
 // MakeTuple and MakeList will handle AbstractAny in ops infer.
 const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> ignore_any_type_checking_prims{
@@ -391,7 +400,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
   const AnfNodePtr &func_node = fg->get_return();
   const auto &all_nodes = TopoSort(func_node, SuccIncoming, [](const AnfNodePtr &node) -> IncludeType {
     MS_EXCEPTION_IF_NULL(node);
-    static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+    static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
     if (node->isa<ValueNode>() || node->isa<Parameter>() ||
         (enable_pre_lift && IsPrimitiveCNode(node, prim::kPrimPartial))) {
       return EXCLUDE;
@@ -411,7 +420,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
     } else {
       node_eval_result = ObtainEvalResultFromCache(node_conf);
       if (node_eval_result != nullptr) {
-        static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+        static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
         if (enable_eliminate_unused_element) {
           const auto &cnode = node->cast<CNodePtr>();
           MS_EXCEPTION_IF_NULL(cnode);
@@ -478,7 +487,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   FuncGraphPtr fg = GetFuncGraph(engine, args_abs_list);
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(parent_context_);
-  auto context = parent_context_->NewContext(fg, args_abs_list);
+  auto context = NewContext(parent_context_, fg, args_abs_list);
   trace::TraceGraphEvalEnter(context, out_conf);
 
   std::size_t nargs = fg->parameters().size();
@@ -516,7 +525,9 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                   << ", NodeConfig: " << conf->ToString() << ", result: " << arg << "/" << arg->ToString();
   }
   PushAlwaysEvalFlag(always_eval_flag);
-  MS_EXCEPTION_IF_NULL(fg->get_return());
+  if (fg->get_return() == nullptr) {
+    MS_LOG(EXCEPTION) << "The func graph " << fg << "/" << fg->ToString() << " has no return node.";
+  }
   MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg << "/" << fg->ToString()
                 << ", context: " << context->ToString() << ", return node: " << fg->get_return()->DebugString()
                 << ", parent: " << (parent_context_->func_graph() ? parent_context_->func_graph()->ToString() : "NULL")
@@ -642,7 +653,6 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   if (scope_ != nullptr) {
     meta_func_graph_->set_scope_name(scope_->name());
   }
-  FuncGraphPtr generated_func_graph;
   if (this->bound_node() != nullptr) {
     auto node_debug_info = bound_node()->debug_info();
     TraceGuard trace_guard(std::make_shared<TraceGenMetaFuncGraph>(node_debug_info));
@@ -650,9 +660,9 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
     if (node_location != nullptr) {
       meta_func_graph_->set_node_expr_src(node_location->expr_src());
     }
-    generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_abs_list);
+    generated_func_graph_ = meta_func_graph_->GenerateFuncGraph(args_abs_list);
   } else {
-    generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_abs_list);
+    generated_func_graph_ = meta_func_graph_->GenerateFuncGraph(args_abs_list);
   }
 
   FuncGraphPtr cloned_func_graph;
@@ -663,9 +673,9 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   if (meta_func_graph_->isa<expander::bprop::BpropMetaFuncGraph>()) {
     auto method = "-expand";
     auto new_scope = std::make_shared<Scope>(scope_->name() + method);
-    cloned_func_graph = GetCloneBpropGraph(meta_func_graph_, generated_func_graph, this->bound_node(), new_scope);
+    cloned_func_graph = GetCloneBpropGraph(meta_func_graph_, generated_func_graph_, this->bound_node(), new_scope);
   } else {
-    cloned_func_graph = BasicClone(generated_func_graph, false, std::make_shared<UpdateInfo>(scope_, debug_info));
+    cloned_func_graph = BasicClone(generated_func_graph_, false, std::make_shared<UpdateInfo>(scope_, debug_info));
   }
   func_graph_cache_[args_abs_list] = cloned_func_graph;
   MS_EXCEPTION_IF_NULL(engine);
@@ -707,7 +717,7 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
                   << "] cache hit. result: " << eval_result->abstract()->ToString() << ", args: " << args_abs_list;
     // Update inputs sequence nodes info, if matched in cache.
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
       for (size_t i = 0; i < args_abs_list.size(); ++i) {
         auto new_sequence = dyn_cast<AbstractSequence>(args_abs_list[i]);
@@ -725,6 +735,17 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
     }
   }
   return eval_result;
+}
+
+EvalResultPtr Evaluator::EvalUndeterminedArgs(const AbstractBasePtrList &args_abs_list) {
+  auto is_undetermined = std::any_of(args_abs_list.begin(), args_abs_list.end(), [](auto &arg) -> bool {
+    return arg->BuildType()->type_id() == kObjectTypeUndeterminedType;
+  });
+  if (is_undetermined) {
+    MS_LOG(DEBUG) << "Eval " << identifier_ << " return undetermined abstract result";
+    return std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), std::make_shared<AttrValueMap>());
+  }
+  return nullptr;
 }
 
 EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
@@ -919,8 +940,10 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
   MS_EXCEPTION_IF_NULL(orig_abs);
   MS_EXCEPTION_IF_NULL(axis_size);
   if (!orig_abs->isa<AbstractTensor>()) {
-    MS_LOG(EXCEPTION) << "The orig_abs should be AbstractTensor when axis is " << *axis << ", but got a "
-                      << orig_abs->ToString() << ".";
+    MS_LOG(EXCEPTION) << "The orig_abs should be AbstractTensor when corresponding axis is " << *axis << ", but got a "
+                      << orig_abs->ToString() << ". Tip: Please check the correspondence between "
+                      << "vmap's 'in_axes' and inputs. You may want to explicitly specify the 'in_axes' "
+                      << "corresponding to " << orig_abs->ToString() << " as 'None' to solve this problem.";
   }
   auto orig_abs_shape = dyn_cast_ptr<Shape>(orig_abs->BuildShape());
   MS_EXCEPTION_IF_NULL(orig_abs_shape);
@@ -1163,7 +1186,7 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
   if (this->bound_node()->isa<CNode>()) {
     sense_param_flag = this->bound_node()->cast<CNodePtr>()->HasAttr("sens_param_");
   }
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+  static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
   // Check each parameter and argument match;
   for (std::size_t i = 0; i < args_abs_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(args_abs_list[i]);

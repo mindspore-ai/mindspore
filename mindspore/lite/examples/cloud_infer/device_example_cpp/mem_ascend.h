@@ -17,11 +17,12 @@
 #ifndef MINDSPORE_LITE_EXAMPLE_ASCEND_MEM_H
 #define MINDSPORE_LITE_EXAMPLE_ASCEND_MEM_H
 #include <string>
-#include "acl/acl.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 void *MallocDeviceMemory(size_t data_size) {
   void *device_data = nullptr;
-  auto ret = aclrtMalloc(&device_data, data_size, ACL_MEM_MALLOC_NORMAL_ONLY);
+  auto ret = CALL_ASCEND_API(aclrtMalloc, &device_data, data_size, ACL_MEM_MALLOC_NORMAL_ONLY);
   if (ret != ACL_ERROR_NONE) {
     std::cerr << "Malloc device buffer failed , buffer size " << data_size;
     return nullptr;
@@ -31,12 +32,12 @@ void *MallocDeviceMemory(size_t data_size) {
 
 void FreeDeviceMemory(void *device_data) {
   if (device_data) {
-    aclrtFree(device_data);
+    CALL_ASCEND_API(aclrtFree, device_data);
   }
 }
 
 int CopyMemoryHost2Device(void *device_data, size_t dst_size, void *host_data, size_t src_size) {
-  auto ret = aclrtMemcpy(device_data, dst_size, host_data, src_size, ACL_MEMCPY_HOST_TO_DEVICE);
+  auto ret = CALL_ASCEND_API(aclrtMemcpy, device_data, dst_size, host_data, src_size, ACL_MEMCPY_HOST_TO_DEVICE);
   if (ret != ACL_ERROR_NONE) {
     std::cerr << "Acl memcpy host data to device failed, src size: " << src_size << ", dst size: " << dst_size
               << std::endl;
@@ -46,7 +47,7 @@ int CopyMemoryHost2Device(void *device_data, size_t dst_size, void *host_data, s
 }
 
 int CopyMemoryDevice2Host(void *host_data, size_t dst_size, void *device_data, size_t src_size) {
-  auto ret = aclrtMemcpy(host_data, dst_size, device_data, src_size, ACL_MEMCPY_DEVICE_TO_HOST);
+  auto ret = CALL_ASCEND_API(aclrtMemcpy, host_data, dst_size, device_data, src_size, ACL_MEMCPY_DEVICE_TO_HOST);
   if (ret != ACL_ERROR_NONE) {
     std::cerr << "Acl memcpy device data to host failed, src size: " << src_size << ", dst size: " << dst_size
               << std::endl;

@@ -112,7 +112,7 @@ Status HostCacheModel::LoadCache(DelegateModel<schema::Primitive> *model) {
     if (kernel->type() != schema::PrimitiveType_Gather) {
       continue;
     }
-    MS_ASSERT(kernel->inputs().size() == kGatherInputsSize);
+    MS_ASSERT(kernel->size() == kGatherInputsSize);
     auto tensor = kernel->inputs()[0];
     if (tensor.Data() == nullptr) {
       continue;
@@ -136,7 +136,7 @@ bool HostCacheModel::CheckIsCacheKernel(kernel::Kernel *kernel) {
 }
 
 MSTensor HostCacheModel::GetHostCacheTensor(kernel::Kernel *kernel) {
-  if (kernel != nullptr && kernel->inputs().size() > 0) {
+  if (kernel != nullptr && kernel->size() > 0) {
     auto iter = cache_tensor_.find(kernel->inputs()[0].Name());
     if (iter != cache_tensor_.end()) {
       return iter->second;

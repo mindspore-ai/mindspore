@@ -193,7 +193,7 @@ def test_out_int64():
     assert np.allclose(outputs[2].asnumpy()[1, 0, 0, 0, 0, :], [100, 101])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_out_uint32():

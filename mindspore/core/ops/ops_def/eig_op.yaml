@@ -1,0 +1,16 @@
+#operator eig
+eig:
+  args:
+    x:
+      dtype: tensor
+    compute_v:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    eigen_values:
+      dtype: tensor
+    eigen_vectors:
+      dtype: tensor
+  function:
+    disable: True

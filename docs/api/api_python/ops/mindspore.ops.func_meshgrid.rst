@@ -18,4 +18,4 @@ mindspore.ops.meshgrid
 
     异常：
         - **TypeError** - `indexing` 不是str或 `inputs` 不是元组。
-        - **ValueError** - `indexing` 的取值既不是'xy'也不是'ij'。
+        - **ValueError** - `indexing` 的取值既不是 ``'xy'`` 也不是 ``'ij'`` 。

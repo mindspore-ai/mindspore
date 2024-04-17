@@ -1,0 +1,20 @@
+#operator resize_bicubic_grad
+resize_bicubic_grad:
+  args:
+    grads:
+      dtype: tensor
+    image:
+      dtype: tensor
+    align_corners:
+      dtype: bool
+      default: False
+      prim_init: True
+    half_pixel_centers:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

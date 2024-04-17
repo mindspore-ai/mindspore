@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,8 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::strin
 }
 
 std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::string &kernel_name) const {
-  static std::set<std::string> same_op_name = {"Concat", "Pack", "Stack",        "Split",        "Transpose",
-                                               "Unpack", "AddN", "ConcatOffset", "DynamicStitch"};
+  static std::set<std::string> same_op_name = {"Pack",   "Stack", "Split",        "Transpose",
+                                               "Unpack", "AddN",  "ConcatOffset", "DynamicStitch"};
   std::vector<KernelAttr> support_kernel_attrs;
   auto op_info = mindspore::kernel::OpLib::FindOp(kernel_name, kernel::OpImplyType::kImplyCPU);
   if (op_info == nullptr) {
@@ -87,73 +87,6 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
   }
 
   return support_kernel_attrs;
-}
-
-int DeprecatedNativeCpuKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &,
-                                         const std::vector<KernelTensorPtr> &,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto cnode = cnode_ptr_.lock();
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(DEBUG) << "Update Args: " << cnode->fullname_with_scope();
-
-  Init(cnode);
-  return 0;
-}
-
-void DeprecatedNativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  input_size_list_.clear();
-  output_size_list_.clear();
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, input_index);
-    size_t type_size = GetTypeByte(TypeIdToType(type_id));
-    auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
-    size_t tensor_size =
-      shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-    tensor_size = std::max(tensor_size, type_size);
-    (void)input_size_list_.emplace_back(tensor_size);
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(kernel_node, output_index);
-    (void)output_size_list_.emplace_back(tensor_size);
-  }
-}
-
-void DeprecatedNativeCpuKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  if (cnode_ptr_.lock() == nullptr) {
-    cnode_ptr_ = kernel_node;
-  }
-
-  workspace_size_list_.clear();
-  InitKernel(kernel_node);
-  InitInputOutputSize(kernel_node);
-}
-
-std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetInputDtypes(const CNodePtr &kernel_node) const {
-  std::vector<TypeId> input_types;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    auto dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
-    (void)input_types.emplace_back(dtype);
-  }
-  return input_types;
-}
-
-std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetOutputDtypes(const CNodePtr &kernel_node) const {
-  std::vector<TypeId> output_types;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    auto dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
-    (void)output_types.emplace_back(dtype);
-  }
-  return output_types;
-}
-
-void DeprecatedNativeCpuKernelMod::SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel) {
-  kernel::SetCpuRefMapToKernelInfo(apply_kernel, GetOpSupport());
 }
 
 void CPUKernelUtils::ExpandDimsTo4(ShapeVector *shape) {
@@ -614,7 +547,7 @@ int Sign(float x) {
 void GetBroadCastIndex(const std::vector<size_t> &unaligned_input_shape, const std::vector<size_t> &output_shape,
                        std::vector<size_t> *index_list) {
   // Given unaligned input shape and output shape, this function returns the mapping
-  // from indices of output (logical) to corespondingly real input indices (physical).
+  // from indices of output (logical) to correspondingly real input indices (physical).
   // The return will write to index_list, whose size is equal to total elements of output.
   constexpr size_t kIsCloseMaxDim = 10;
   size_t logical_shape[kIsCloseMaxDim];

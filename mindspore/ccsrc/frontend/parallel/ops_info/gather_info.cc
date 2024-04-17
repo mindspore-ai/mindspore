@@ -16,21 +16,21 @@
 
 #include "frontend/parallel/ops_info/gather_info.h"
 
-#include <vector>
-#include <numeric>
-#include <functional>
-#include <utility>
 #include <algorithm>
+#include <functional>
 #include <memory>
+#include <numeric>
+#include <utility>
+#include <vector>
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "include/common/utils/parallel_context.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
 #include "include/backend/distributed/ps/ps_context.h"
-#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #endif
 
 namespace mindspore {
@@ -121,6 +121,27 @@ Status GatherInfo::GetManualSplitAttr() {
   return SUCCESS;
 }
 
+void GatherInfo::GetBatchDims() noexcept {
+  auto batch_dims_opt = GetScalarValueFromInputs<int64_t>(input_value_, name_, BATCH_DIMS);
+  if (batch_dims_opt.has_value()) {
+    batch_dims_ = batch_dims_opt.value();
+  } else {
+    MS_LOG(EXCEPTION) << name_ << ": Failed to fetch the value of batch dims.";
+  }
+}
+
+GatherUtilPtr GatherInfo::MakeManualUtil() {
+  return std::make_shared<GatherManualImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
+}
+
+GatherUtilPtr SparseGatherV2Info::MakeManualUtil() {
+  return std::make_shared<ManualImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
+}
+
+GatherUtilPtr EmbeddingLookupInfo::MakeManualUtil() {
+  return std::make_shared<ManualImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
+}
+
 Status GatherInfo::GetAttrs() {
   if (attrs_.find(TARGET) != attrs_.end()) {
     target_ = GetStringAttr(TARGET);
@@ -160,16 +181,7 @@ Status GatherInfo::GetAttrs() {
     return FAILED;
   }
 
-  auto attr_iter = attrs_.find(BATCH_DIMS);
-  if (attr_iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(attr_iter->second);
-    if (!attr_iter->second->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << name_ << ": The value of batch dims is not int";
-    }
-
-    batch_dims_ = attr_iter->second->cast<Int64ImmPtr>()->value();
-    MS_LOG(INFO) << name_ << ": batch dims is " << batch_dims_;
-  }
+  GetBatchDims();
 
   if (manual_split_ && (axis_ != 0)) {
     MS_LOG(ERROR) << name_ << ": The axis must be 0 if manual split, bug got " << axis_;
@@ -254,7 +266,7 @@ Status BatchImpl::CheckStrategy(const Shape &param_strategy, const Shape &indice
     return FAILED;
   }
 
-  for (size_t i = 0; i < LongToSize(axis_); ++i) {
+  for (size_t i = 0; i < LongToSize(batch_dims_); ++i) {
     if (param_strategy[i] != indices_strategy[i]) {
       MS_LOG(ERROR)
         << name_
@@ -541,9 +553,39 @@ Status ManualImpl::InferReplaceGraph(const CNodePtr &cnode) {
     MS_LOG(ERROR) << name_ << ": Infer Bias failed.";
     return FAILED;
   }
+
   auto sub_node = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(index_offset_)});
-  auto gather_v2_node =
+  AnfNodePtr gather_v2_node = nullptr;
+  gather_v2_node =
     gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_)});
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub_node, 2),
+                                                             std::make_pair(gather_v2_node, 1)};
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, gather_v2_node));
+  return SUCCESS;
+}
+
+Status GatherManualImpl::InferReplaceGraph(const CNodePtr &cnode) {
+  if (target_ == CPU) {  // if target is CPU, no need to replace graph
+    return SUCCESS;
+  }
+
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << "GenerateGraph Init failed";
+    return FAILED;
+  }
+
+  if (InferOffset() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Infer Bias failed.";
+    return FAILED;
+  }
+
+  auto sub_node = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(index_offset_)});
+  AnfNodePtr gather_v2_node = nullptr;
+  // Gather processing.
+  gather_v2_node = gen_g.PushBack(
+    {gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_), CreatInt64Imm(0)});
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub_node, 2),
                                                              std::make_pair(gather_v2_node, 1)};
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
@@ -952,10 +994,21 @@ Status ShardAxisImpl::InferReplaceGraph(const CNodePtr &cnode) {
   auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
-  auto gather_v2 =
-    gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), minimum, CreatInt64Imm(axis_)});
+
+  AnfNodePtr gather_v2{nullptr};
+  auto replace_op_name = GetPrimNameFromInfoName(replace_op_name_);
+  if (replace_op_name == GATHERV2) {
+    gather_v2 = gen_g.PushBack(
+      {gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), minimum, CreatInt64Imm(axis_), CreatInt64Imm(0)});
+  } else {
+    gather_v2 =
+      gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), minimum, CreatInt64Imm(axis_)});
+  }
+
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gather_v2});
-  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
+  auto dtype_id =
+    gen_g.PushBack({gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_id});
   auto expand_dims = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), cast, CreatInt64Imm(axis_ - 1)});
   auto mul = gen_g.PushBack({gen_g.NewOpInst(MUL), gather_v2, expand_dims});
   // don't need expand dim, if param_size = 1
@@ -970,7 +1023,7 @@ Status ShardAxisImpl::InferReplaceGraph(const CNodePtr &cnode) {
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_.name()));
   OperatorAttrs attrs = {attr_op, attr_group};
   AnfNodePtr reduce_op;
-  if (dynamic_shape_indices_ || axis_split_forward_allreduce_) {
+  if (dynamic_shape_indices_ || axis_split_forward_allreduce_ || is_assigned_parallel_) {
     reduce_op = gen_g.PushBack({gen_g.NewOpInst(ALL_REDUCE, attrs), mul});
   } else {
     reduce_op = gen_g.PushBack({gen_g.NewOpInst(REDUCE_SCATTER, attrs), mul});
@@ -1029,16 +1082,16 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
   gather_mode_ = GetGatherMode(param_strategy, indices_strategy);
   switch (gather_mode_) {
     case BATCH: {
-      gather_util_ = std::make_shared<BatchImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+      gather_util_ = std::make_shared<BatchImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
       auto batch_util = std::dynamic_pointer_cast<BatchImpl>(gather_util_);
       batch_util->set_batch_dims(batch_dims_);
       break;
     }
     case NORMAL:
-      gather_util_ = std::make_shared<NormalImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+      gather_util_ = std::make_shared<NormalImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
       break;
     case MANUAL: {
-      gather_util_ = std::make_shared<ManualImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+      gather_util_ = MakeManualUtil();
       auto manual_util = std::dynamic_pointer_cast<ManualImpl>(gather_util_);
       manual_util->set_param_split_shapes(param_split_shapes_);
       manual_util->set_index_offsets(index_offsets_);
@@ -1048,7 +1101,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
       break;
     }
     case SHARD_BATCH_AND_AXIS: {
-      gather_util_ = std::make_shared<ShardBatchAndAxisImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+      gather_util_ = std::make_shared<ShardBatchAndAxisImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
       auto shard_batch_and_axis_util = std::dynamic_pointer_cast<ShardBatchAndAxisImpl>(gather_util_);
       shard_batch_and_axis_util->set_target(target_);
       shard_batch_and_axis_util->set_dynamic_shape_indices(dynamic_shape_indices_);
@@ -1061,12 +1114,13 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
     case SHARD_AXIS_0_DYNAMIC:
     case SHARD_AXIS_0_STATIC:
     case SHARD_AXIS_1: {
-      gather_util_ = std::make_shared<ShardAxisImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+      gather_util_ = std::make_shared<ShardAxisImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
       auto shard_axis_util = std::dynamic_pointer_cast<ShardAxisImpl>(gather_util_);
       shard_axis_util->set_target(target_);
       shard_axis_util->set_dynamic_shape_indices(dynamic_shape_indices_);
       shard_axis_util->set_attrs(attrs_);
       shard_axis_util->set_replace_op_name(replace_op_name_);
+      shard_axis_util->set_assigned_parallel(is_assigned_parallel_);
       break;
     }
     default:
@@ -1074,9 +1128,16 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
   }
 
+  gather_util_->set_dynamic_shape_flag(dynamic_shape_flag_);
+  gather_util_->set_inputs_divisor(inputs_divisor_);
+  gather_util_->set_outputs_divisor(outputs_divisor_);
+
+  gather_util_->DivisorsReplaceShapes();
   if (gather_util_->CheckStrategy(param_strategy, indices_strategy) != SUCCESS) {
     return FAILED;
   }
+  gather_util_->ResumeShapes();
+
   gather_util_->set_param_strategy(param_strategy);
   gather_util_->set_indices_strategy(indices_strategy);
   gather_util_->set_gather_mode(gather_mode_);
@@ -1084,6 +1145,18 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   repeated_num_in_dev_matrix_right_ = gather_util_->repeated_num_in_dev_matrix_right();  // set the base class member
 
+  return SUCCESS;
+}
+
+Status GatherInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  Strategies strategies = strategy->GetInputDim();
+  auto param_strategy = strategies[0];
+  if (param_strategy[axis_] != 1 && inputs_shape_[0][axis_] == -1) {
+    MS_LOG(ERROR) << name_ << ": the axis dim of first input can not be split if it's dynamic shape, the strategy is "
+                  << ShapesToString(strategies) << ", the inputs' shape: " << ShapesToString(inputs_shape_)
+                  << ", the axis " << axis_;
+    return FAILED;
+  }
   return SUCCESS;
 }
 
@@ -1144,6 +1217,11 @@ Status GatherInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
   return FAILED;
 }
 
+void GatherInfo::DealWithBatchDimsMirrorOp() noexcept {
+  OperatorVector op_for_batch_dims;
+  mirror_ops_.push_back(op_for_batch_dims);
+}
+
 Status GatherInfo::InferMirrorOps() {
   mirror_ops_.clear();
   Shape input_a_tensor_map = inputs_tensor_map_.at(0);
@@ -1165,6 +1243,7 @@ Status GatherInfo::InferMirrorOps() {
   mirror_ops_.push_back(op_for_input_a);
   mirror_ops_.push_back(op_for_input_b);
   mirror_ops_.push_back(op_for_axis);
+  DealWithBatchDimsMirrorOp();
 
   return SUCCESS;
 }
@@ -1214,6 +1293,24 @@ Status GatherUtil::InferTensorInfoNoSplitAxis() {
   return SUCCESS;
 }
 
+void GatherUtil::DivisorsReplaceShapes() {
+  if (!dynamic_shape_flag_) {
+    return;
+  }
+
+  inputs_shape_ = inputs_divisor_;
+  outputs_shape_ = outputs_divisor_;
+}
+
+void GatherUtil::ResumeShapes() {
+  if (!dynamic_shape_flag_) {
+    return;
+  }
+
+  inputs_shape_ = inputs_shape_clone_;
+  outputs_shape_ = outputs_shape_clone_;
+}
+
 Status GatherInfo::InferTensorInfo() {
   // the tensor map of gather_util may be changed if repeat calculation, so need to reset
   gather_util_->set_inputs_tensor_map(inputs_tensor_map_);
@@ -1256,7 +1353,9 @@ Status GatherInfo::ComputeReplaceOp() {
   return SUCCESS;
 }
 
-Status GatherInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+Status GatherInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+                        const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
+                        const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts) {
   if (InitWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;

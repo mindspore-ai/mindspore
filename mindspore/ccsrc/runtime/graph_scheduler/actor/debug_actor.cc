@@ -30,18 +30,57 @@
 #include "include/backend/debug/debugger/debugger.h"
 #include "debug/debugger/debugger_utils.h"
 #endif
+#include "debug/data_dump/data_dumper.h"
+#include "include/common/debug/common.h"
+#include "utils/file_utils.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace runtime {
+void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs, bool is_kbyk) {
+  std::string env_enable_str = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
+  std::string dump_enable_str = common::GetEnv("MINDSPORE_DUMP_CONFIG");
+  auto step_count_num = 0;
+  step_count_num = step_count;
+  if (step_count == 1 && is_dataset_sink == 1) {
+    step_count_num = 0;
+  }
+  if (!graphs.empty()) {
+    auto graph = graphs[0];
+    is_dataset_sink = graph->IsDatasetGraph();
+  }
+  if (DumpJsonParser::GetInstance().async_dump_enabled() &&
+      ((DumpJsonParser::GetInstance().IsDumpIter(step_count_num) && is_kbyk) ||
+       (env_enable_str == dump_enable_str && !is_kbyk))) {
+    bool is_init = false;
+    if ((env_enable_str == dump_enable_str) && !(DumpJsonParser::GetInstance().IsDumpIter(step_count_num))) {
+      is_init = true;
+    } else {
+      std::string dump_path = DumpJsonParser::GetInstance().path();
+      std::string dump_path_step = dump_path + "/" + std::to_string(step_count_num);
+      auto real_path = FileUtils::CreateNotExistDirs(dump_path_step, false);
+      if (!real_path.has_value()) {
+        MS_LOG(WARNING) << "Fail to create acl dump dir " << real_path.value();
+        return;
+      }
+    }
+    dump_flag = true;
+    auto registered_dumper = datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
+    if (registered_dumper != nullptr) {
+      registered_dumper->Initialize();
+      registered_dumper->EnableDump(device_id, step_count_num, is_init);
+    }
+  }
+}
 /*
  * Feature group: Dump, Online debugger.
- * Target device group: Ascend, GPU.
+ * Target device group: GPU.
  * Runtime category: MindRT.
  * Description: Load and read data for the given node if needed. Dump the node if dump is enabled and free the loaded
  * memory after the dump (for GPU and ascend kernel-by-kernel).
  */
-void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_,
-                       const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context, const AID *) {
+void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info, const DeviceContext *device_context,
+                       OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
@@ -53,7 +92,10 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
   const auto &cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "kernel by kernel debug for node: " << cnode->fullname_with_scope() << ".";
-  if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
+  if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
+    MS_LOG(DEBUG) << "On ascend, this funct is not need now.";
+    return;
+  } else if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
 #ifndef ENABLE_SECURITY
     if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
       auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
@@ -72,21 +114,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
       debugger->SetCurNode(kernel_name);
       bool read_data = CheckReadData(cnode);
       if (read_data) {
-        ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
-      }
-    }
-    exec_order_ += 1;
-#endif
-  } else if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-#ifdef ENABLE_DEBUGGER
-    auto debugger = Debugger::GetInstance();
-    if (debugger != nullptr) {
-      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
-      debugger->InsertExecutedGraph(kernel_graph);
-      debugger->SetAscendKernelByKernelFlag(true);
-      bool read_data = CheckReadData(cnode);
-      if (read_data && !DumpJsonParser::GetInstance().async_dump_enabled()) {
-        ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
+        ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
       }
     }
     exec_order_ += 1;
@@ -131,10 +159,26 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
                                   const std::vector<AnfNodePtr> &origin_parameters_order,
                                   std::vector<DeviceContext *> device_contexts,
                                   OpContext<DeviceTensor> *const op_context, const AID *) {
+  MS_LOG(INFO) << "Debug on step begin.";
+  auto context = MsContext::GetInstance();
+  auto is_kbyk = context->IsKByKExecutorMode();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
+  device_ctx_ = device_contexts[0];
+  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
+  if ((profiler == nullptr || !profiler->IsInitialized()) &&
+      device_ctx_->GetDeviceType() == device::DeviceType::kAscend) {
+    auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    if (common::GetEnv("MS_ACL_DUMP_CFG_PATH") == common::GetEnv("MINDSPORE_DUMP_CONFIG")) {
+      ACLDump(device_id, graphs, is_kbyk);
+    }
+  }
+  if (backend == "ge") {
+    MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
+    return;
+  }
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
-
-  MS_LOG(DEBUG) << "Debug on step begin.";
 #ifdef ENABLE_DEBUGGER
   if (!graphs.empty()) {
     // First graph is the dataset graph when dataset_sink_mode = True
@@ -149,7 +193,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
     debugger->PreExecuteGraphDebugger(graphs, origin_parameters_order);
   }
 #endif
-
 #ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().e2e_dump_enabled()) {
     DumpJsonParser::GetInstance().ClearGraph();
@@ -166,46 +209,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
       }
     }
   }
-  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    bool is_data_map_ = false;
-    if (graphs.size() == 1) {
-      const auto &graph_ = graphs[0];
-      KernelGraphPtr kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(graph_);
-      MS_EXCEPTION_IF_NULL(kernel_graph);
-      const auto kernels = kernel_graph->execution_order();
-      is_data_map_ = std::any_of(kernels.cbegin(), kernels.cend(), [](const auto &kernel) {
-        MS_EXCEPTION_IF_NULL(kernel);
-        return kernel->fullname_with_scope().find("InitDataSetQueue") != std::string::npos;
-      });
-    }
-    if (!is_data_map_) {
-      auto kCurLoopCountName = "current_loop_count";
-      for (size_t i = 0; i < graphs.size(); i++) {
-        const auto &graph_ = graphs[i];
-        if (device_contexts[i]->GetDeviceType() != device::DeviceType::kAscend) {
-          continue;
-        }
-        auto device_loop_control_tensors = graph_->device_loop_control_tensors();
-        if (device_loop_control_tensors.count(kCurLoopCountName) == 0) {
-          MS_LOG(WARNING) << "Can't find Device Loop Control Tensor " << kCurLoopCountName;
-          return;
-        }
-        auto tensor = device_loop_control_tensors.at(kCurLoopCountName);
-        MS_EXCEPTION_IF_NULL(tensor);
-        auto *cur_val = static_cast<int64_t *>(tensor->data_c());
-        MS_EXCEPTION_IF_NULL(cur_val);
-        *cur_val = current_step;
-        tensor->set_sync_status(kNeedSyncHostToDevice);
-        auto device_address = tensor->device_address();
-        MS_EXCEPTION_IF_NULL(device_address);
-        if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                              tensor->data_c(), tensor->device_info().host_format_)) {
-          MS_LOG(EXCEPTION) << "SyncHostToDevice failed for device loop control parameter " << kCurLoopCountName;
-        }
-      }
-      current_step++;
-    }
-  }
 #endif
 }
 
@@ -216,11 +219,27 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
  * Description: Dump parameters and constants and update dump iter for CPU. Call PostExecuteGraph Debugger for GPU and
  * Ascend and update step number of online debugger GPU.
  */
-void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *) {
+void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *, int total_running_count_) {
+  MS_LOG(INFO) << "Debug on step begin.";
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
+  step_count = total_running_count_;
+  if (dump_flag == true) {
+    auto registered_dumper = datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
+    if (registered_dumper != nullptr) {
+      device_ctx_->device_res_manager_->SyncAllStreams();
+      registered_dumper->Finalize();
+    }
+    dump_flag = false;
+  }
+  if (backend == "ge") {
+    MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
+    return;
+  }
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
 
-  MS_LOG(DEBUG) << "Debug on step end.";
 #ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
     CPUE2eDump::DumpParametersData();

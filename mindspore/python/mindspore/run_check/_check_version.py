@@ -259,7 +259,7 @@ class AscendEnvChecker(EnvChecker):
 
     def __init__(self, library_path):
         self.library_path = library_path
-        self.version = ["7.0"]
+        self.version = ["7.2"]
         atlas_nnae_version = "/usr/local/Ascend/nnae/latest/compiler/version.info"
         atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/compiler/version.info"
         hisi_fwk_version = "/usr/local/Ascend/latest/compiler/version.info"
@@ -400,11 +400,12 @@ class AscendEnvChecker(EnvChecker):
         curr_path = os.path.abspath(os.path.dirname(__file__))
         cust_aicpu_path = os.path.abspath(os.path.join(curr_path, "../lib/plugin/ascend/custom_aicpu_ops"))
         cust_aicore_path = os.path.abspath(os.path.join(curr_path, "../lib/plugin/ascend/custom_aicore_ops"))
+        cust_ascendc_path = os.path.abspath(os.path.join(curr_path, "../lib/plugin/ascend/custom_ascendc_ops"))
         if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
             os.environ['ASCEND_CUSTOM_OPP_PATH'] = os.environ['ASCEND_CUSTOM_OPP_PATH'] + ":" + \
-                                                   cust_aicore_path + ":" + cust_aicpu_path
+                                                   cust_ascendc_path + ":" + cust_aicore_path + ":" + cust_aicpu_path
         else:
-            os.environ['ASCEND_CUSTOM_OPP_PATH'] = cust_aicore_path + ":" + cust_aicpu_path
+            os.environ['ASCEND_CUSTOM_OPP_PATH'] = cust_ascendc_path + ":" + cust_aicore_path + ":" + cust_aicpu_path
         plugin_dir = os.path.dirname(self.library_path)
         akg_dir = os.path.join(plugin_dir, "ascend")
         AscendEnvChecker._concat_variable('LD_LIBRARY_PATH', akg_dir)
@@ -526,7 +527,7 @@ def check_version_and_env_config():
         except OSError:
             logger.warning("Pre-Load Library libgomp.so.1 failed, which might cause TLS memory allocation failure. If "
                            "the failure occurs, please refer to the FAQ for a solution: "
-                           "https://www.mindspore.cn/docs/en/master/faq/installation.html.")
+                           "https://www.mindspore.cn/docs/en/r2.3.q1/faq/installation.html.")
         MSContext.get_instance().register_check_env_callback(check_env)
         MSContext.get_instance().register_set_env_callback(set_env)
         MSContext.get_instance().set_device_target_inner(MSContext.get_instance().get_param(ms_ctx_param.device_target))
@@ -568,6 +569,6 @@ def _add_cuda_path():
                 os.environ['PATH'] += os.pathsep + cuda_home_bin_path
 
 
-check_version_and_env_config()
 _set_pb_env()
+check_version_and_env_config()
 _add_cuda_path()

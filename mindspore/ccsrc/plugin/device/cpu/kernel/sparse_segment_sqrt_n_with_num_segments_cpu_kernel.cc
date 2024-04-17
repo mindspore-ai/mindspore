@@ -32,36 +32,30 @@ constexpr size_t kSparseSegmentSqrtNWithNumSegmentsOutputsNum = 1;
     .AddOutputAttr(kNumberType##t5)
 }  // namespace
 
-bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                         const std::vector<KernelTensorPtr> &inputs,
-                                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentSqrtNWithNumSegmentsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentSqrtNWithNumSegmentsOutputsNum, kernel_name_);
-  xdtype_ = inputs.at(kIndex0)->GetDtype();
-  dtype1_ = inputs.at(kIndex1)->GetDtype();
+  xdtype_ = inputs.at(kIndex0)->dtype_id();
+  dtype1_ = inputs.at(kIndex1)->dtype_id();
   return true;
 }
 
-int SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                          const std::vector<KernelTensorPtr> &inputs,
-                                                          const std::vector<KernelTensorPtr> &outputs,
-                                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  MS_EXCEPTION_IF_NULL(base_operator);
-  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
-  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeVector();
+  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeVector();
+  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   return KRET_OK;
 }
 
-bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                           const std::vector<kernel::AddressPtr> &,
-                                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                           const std::vector<kernel::KernelTensor *> &,
+                                                           const std::vector<kernel::KernelTensor *> &outputs) {
   switch (xdtype_) {
     case (kNumberTypeFloat16):
       if (dtype1_ == kNumberTypeInt32) {
@@ -110,8 +104,8 @@ bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Launch(const std::vector<ker
 }
 
 template <typename T1, typename T2>
-void SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                                 const std::vector<kernel::AddressPtr> &outputs) {
+void SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                                 const std::vector<kernel::KernelTensor *> &outputs) {
   size_t n = static_cast<size_t>(
     std::accumulate(x_shape_.begin(), x_shape_.end(), kIndex1, std::multiplies<int64_t>()) / x_shape_[kIndex0]);
   size_t m = static_cast<size_t>(
@@ -119,11 +113,11 @@ void SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vect
   size_t k =
     static_cast<size_t>(std::accumulate(y_shape_.begin(), y_shape_.end(), kIndex1, std::multiplies<int64_t>()));
   auto x_shape_0 = static_cast<T2>(x_shape_[kIndex0]);
-  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->addr);
-  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = static_cast<T2 *>(inputs[kIndex2]->addr);
-  auto num_segments_addr = static_cast<T2 *>(inputs[kIndex3]->addr);
-  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->addr);
+  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->device_ptr());
+  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->device_ptr());
+  auto segment_ids_addr = static_cast<T2 *>(inputs[kIndex2]->device_ptr());
+  auto num_segments_addr = static_cast<T2 *>(inputs[kIndex3]->device_ptr());
+  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->device_ptr());
 
   for (size_t i = 0; i < k; i++) {
     y_addr[i] = static_cast<T1>(0);

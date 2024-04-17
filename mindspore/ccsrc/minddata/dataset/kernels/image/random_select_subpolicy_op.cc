@@ -22,23 +22,18 @@
 namespace mindspore {
 namespace dataset {
 RandomSelectSubpolicyOp::RandomSelectSubpolicyOp(const std::vector<Subpolicy> &policy)
-    : gen_(GetSeed()), policy_(policy), rand_int_(0, policy.size() - 1), rand_double_(0, 1) {
-  if (policy_.empty()) {
-    MS_LOG(ERROR) << "RandomSelectSubpolicy: input 'policy' in RandomSelectSubpolicy is empty, check input parameter.";
-  }
-  is_deterministic_ = false;
-}
+    : policy_(policy), rand_int_(0, policy.size() - 1), rand_double_(0, 1) {}
 
 Status RandomSelectSubpolicyOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   TensorRow in_row = input;
-  size_t rand_num = rand_int_(gen_);
+  size_t rand_num = rand_int_(random_generator_);
   CHECK_FAIL_RETURN_UNEXPECTED(rand_num < policy_.size(),
                                "RandomSelectSubpolicy: "
                                "get rand number failed:" +
                                  std::to_string(rand_num));
   for (auto &sub : policy_[rand_num]) {
-    if (rand_double_(gen_) <= sub.second) {
+    if (rand_double_(random_generator_) <= sub.second) {
       RETURN_IF_NOT_OK(sub.first->Compute(in_row, output));
       in_row = std::move(*output);
     }

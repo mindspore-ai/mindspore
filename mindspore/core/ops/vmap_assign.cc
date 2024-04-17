@@ -80,7 +80,7 @@ std::string GetShapeString(const ShapeVector &tensor_shape) {
 
 // The input format is: stacked parameter, param1, param2, ...(a batch of parameters), UMonad.
 abstract::ShapePtr VmapAssignInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto stacked_param_shape = dyn_cast_ptr<abstract::Shape>(input_args[0]->BuildShape());
+  auto stacked_param_shape = dyn_cast_ptr<abstract::Shape>(input_args[0]->GetShape());
   MS_EXCEPTION_IF_NULL(stacked_param_shape);
   ShapeVector stacked_param_shape_vec = stacked_param_shape->shape();
   if (stacked_param_shape_vec.empty()) {
@@ -94,12 +94,12 @@ abstract::ShapePtr VmapAssignInferShape(const PrimitivePtr &primitive, const std
   }
   (void)stacked_param_shape_vec.erase(stacked_param_shape_vec.begin());
   for (size_t i = 1; i < input_args.size() - 1; ++i) {
-    if (!input_args[i]->isa<abstract::AbstractTensor>()) {
+    if (!CheckAndConvertUtils::IsTensor(input_args[i])) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input[" << i
                                << "] should be a Tensor, but got:" << input_args[i]->ToString();
     }
 
-    auto shape = dyn_cast_ptr<abstract::Shape>(input_args[i]->BuildShape());
+    auto shape = dyn_cast_ptr<abstract::Shape>(input_args[i]->GetShape());
     MS_EXCEPTION_IF_NULL(shape);
     const auto &shape_vec = shape->shape();
     if (!VmapAssignShapeJoin(stacked_param_shape_vec, shape_vec)) {
@@ -118,7 +118,7 @@ TypePtr VmapAssignInferType(const PrimitivePtr &primitive, const std::vector<Abs
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < input_args.size() - 1; ++i) {
     std::string element_i = "element_" + std::to_string(i);
-    (void)types.emplace(element_i, input_args[i]->BuildType());
+    (void)types.emplace(element_i, input_args[i]->GetType());
   }
   std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8, kUInt16,
                                    kUInt32, kUInt64, kFloat16, kFloat32, kBool};

@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -170,8 +170,7 @@ class SummaryLandscape:
     It can create landscape in PCA direction or random direction by calculating loss.
 
     Note:
-        1. When using SummaryLandscape, you need to run the code in `if __name__ == "__main__"` .
-        2. SummaryLandscape only supports Linux systems.
+        SummaryLandscape only supports Linux systems.
 
     Args:
         summary_dir (str): The path of summary is used to save the model weight,
@@ -187,10 +186,10 @@ class SummaryLandscape:
         ...     # If the device_target is Ascend, set the device_target to "Ascend"
         ...     ms.set_context(mode=ms.GRAPH_MODE, device_target="GPU")
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
         ...     ds_train = create_dataset()
         ...     # Define the network structure of LeNet5. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         ...     network = LeNet5()
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
@@ -210,13 +209,13 @@ class SummaryLandscape:
         ...     # Simple usage for visualization landscape:
         ...     def callback_fn():
         ...         # Define the network structure of LeNet5. Refer to
-        ...         # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        ...         # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         ...         network = LeNet5()
         ...         net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...         metrics = {"Loss": Loss()}
         ...         model = Model(network, net_loss, metrics=metrics)
         ...         # Create the dataset taking MNIST as an example. Refer to
-        ...         # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...         # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
         ...         ds_eval = create_dataset()
         ...         return model, network, ds_eval, metrics
         ...
@@ -254,7 +253,13 @@ class SummaryLandscape:
                 self._epoch_group[i].append(j)
 
     def clean_ckpt(self):
-        """Clean the checkpoint."""
+        """
+        Clean the checkpoint.
+
+        Tutorial Examples:
+            - `Training Optimization Process Visualization
+              <https://www.mindspore.cn/mindinsight/docs/en/master/landscape.html>`_
+        """
         shutil.rmtree(self._ckpt_dir, ignore_errors=True)
 
     def gen_landscapes_with_multi_process(self, callback_fn, collect_landscape=None,
@@ -281,7 +286,7 @@ class SummaryLandscape:
                   Default: ``40`` . Optional values: between 3 and 256.
                 - create_landscape (dict): Select how to create loss landscape.
                   Training process loss landscape(train) and training result loss landscape(result).
-                  Default: {"train": True, "result": True}. Optional: ``True`` / ``False`` .
+                  Default: ``{"train": True, "result": True}``. Optional: ``True`` / ``False`` .
                 - num_samples (int): The size of the dataset used to create the loss landscape.
                   For example, in image dataset, You can set num_samples is 2048,
                   which means that 2048 images are used to create loss landscape.
@@ -816,7 +821,7 @@ class SummaryLandscape:
             #device_id should be between 0 and 7.
             if i < 0 or i > 7:
                 raise ValueError(f'For "{self.__class__.__name__}.gen_landscapes_with_multi_process", the parameter '
-                                 f'"device_ids" should be between 0 and 7,but got {i}.')
+                                 f'"device_ids" should be between 0 and 7, but got {i}.')
 
     def _check_collect_landscape_data(self, collect_landscape):
         """Check collect landscape data type and value."""

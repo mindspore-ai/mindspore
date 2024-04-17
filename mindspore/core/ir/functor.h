@@ -20,6 +20,8 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <utility>
+#include <set>
 
 #include "ir/value.h"
 #include "utils/hash_set.h"
@@ -83,15 +85,55 @@ class MS_CORE_API Functor : public Value {
 };
 using FunctorPtr = std::shared_ptr<Functor>;
 
-/// \brief ShapeCalcFunctor is the functor of operator ShapeCalc that encapsulate its Infer and Calc functions.
-class MS_CORE_API ShapeCalcFunctor : public Functor {
+// std::vector<int64_t> -> The shapes of Calc output.
+// bool -> Whether the shapes is a dynamic sequence one or not.
+using InferOutputInfo = std::pair<std::vector<int64_t>, bool>;
+// For ShapeArray:
+// 1. If all input only have one item, ElemPosIdx can be ignored.
+// 2. If one input may contain more than one item, ElemPosIdx should be considered. For example,
+//    For inputs (tuple0[item*2], item1, tuple2[item*3]),
+//      ShapeArray of inputs is {a, b, c, d, e, f} and
+//      ElemPosIdx is {[0,1], [2], [3,4,5]},
+//    where tuple[item*2] -> {a, b}, item1 -> c, tuple2 -> {d, e, f}.
+using ElemPosIdx = std::vector<std::vector<size_t>>;
+/// \brief ShapeCalcBaseFunctor is the functor of operator ShapeCalc that encapsulate its Infer and Calc functions. The
+/// shape-input of ShapeCalcBaseFunctor can be a tuple one, and the number of output can be dynamic.
+class MS_CORE_API ShapeCalcBaseFunctor : public Functor {
+ public:
+  /// \brief Constructor of ShapeCalcBaseFunctor.
+  explicit ShapeCalcBaseFunctor(const std::string &name) : Functor(name) {}
+
+  /// \brief Destructor of ShapeCalcBaseFunctor.
+  ~ShapeCalcBaseFunctor() override = default;
+  MS_DECLARE_PARENT(ShapeCalcBaseFunctor, Functor)
+
+  /// \brief Calculate shapes. It's the real calculation of ShapeCalc kernel.
+  /// \param[in] inputs The inputs.
+  /// \param[in] pos_idx If input contain tuple cases, pos_idx will tell the real elements' index of it.
+  /// \return Result shapes.
+  virtual ShapeArray Calc(const ShapeArray &inputs, const ElemPosIdx &pos_idx) const = 0;
+
+  /// \brief The InferShape implementation of ShapeCalc primitive.
+  /// \param[in] inputs The inputs.
+  /// \param[in] unknown_inputs If i exists in 'unknown_inputs', the shape value of inputs[i] is unknown.
+  /// \param[in] pos_idx If input contain tuple cases, pos_idx will tell the real elements' index of it.
+  /// \return A pair composited with length of each shape that returned by Calc and whether the number of Calc output is
+  /// unknown.
+  virtual InferOutputInfo Infer(const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs,
+                                const ElemPosIdx &pos_idx) const = 0;
+};
+using ShapeCalcBaseFunctorPtr = std::shared_ptr<ShapeCalcBaseFunctor>;
+
+/// \brief ShapeCalcFunctor is the functor of operator ShapeCalc that encapsulate its Infer and Calc functions. The
+/// shape-input of ShapeCalcFunctor should be a scalar or a tensor.
+class MS_CORE_API ShapeCalcFunctor : public ShapeCalcBaseFunctor {
  public:
   /// \brief Constructor of ShapeCalcFunctor.
-  explicit ShapeCalcFunctor(const std::string &name) : Functor(name) {}
+  explicit ShapeCalcFunctor(const std::string &name) : ShapeCalcBaseFunctor(name) {}
 
   /// \brief Destructor of ShapeCalcFunctor.
   ~ShapeCalcFunctor() override = default;
-  MS_DECLARE_PARENT(ShapeCalcFunctor, Functor)
+  MS_DECLARE_PARENT(ShapeCalcFunctor, ShapeCalcBaseFunctor)
 
   /// \brief Calculate shapes. It's the real calculation of ShapeCalc kernel.
   /// \param[in] inputs The inputs.
@@ -103,6 +145,13 @@ class MS_CORE_API ShapeCalcFunctor : public Functor {
   /// \param[in] unknown_inputs If i exists in 'unknown_inputs', the shape value of inputs[i] is unknown.
   /// \return Length of each shape that returned by Calc.
   virtual std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) const = 0;
+
+  ShapeArray Calc(const ShapeArray &inputs, const ElemPosIdx &) const final { return Calc(inputs); }
+  InferOutputInfo Infer(const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs,
+                        const ElemPosIdx &pos_idx) const final {
+    auto lengths = Infer(inputs, unknown_inputs);
+    return std::make_pair(lengths, false);
+  }
 };
 using ShapeCalcFunctorPtr = std::shared_ptr<ShapeCalcFunctor>;
 

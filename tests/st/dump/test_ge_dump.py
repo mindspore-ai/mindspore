@@ -16,12 +16,13 @@ import os
 import sys
 import tempfile
 import shutil
-import glob
 import numpy as np
 import pytest
 import time
 import mindspore.context as context
+import csv
 
+import mindspore
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
@@ -31,13 +32,9 @@ from mindspore.nn import SoftmaxCrossEntropyWithLogits
 from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
-from dump_test_utils import generate_dump_json, generate_dump_json_with_overflow, \
-    generate_statistic_dump_json, check_statistic_dump, check_data_dump
+from dump_test_utils import generate_dump_json, generate_dump_json_with_overflow, generate_statistic_dump_json, \
+    check_ge_dump_structure, check_saved_data, check_overflow_file
 from tests.security_utils import security_off_wrap
-
-
-os.environ['MS_ENABLE_GE'] = '1'
-os.environ['MS_DISABLE_REF_MODE'] = '1'
 
 
 class Net(nn.Cell):
@@ -49,50 +46,30 @@ class Net(nn.Cell):
         return self.add(x_, y_)
 
 
+class NetMul(nn.Cell):
+    def __init__(self):
+        super(NetMul, self).__init__()
+        self.mul = P.Mul()
+
+    def construct(self, x_, y_):
+        return self.mul(x_, y_)
+
+
 x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
 y = np.array([[7, 8, 9], [10, 11, 12]]).astype(np.float32)
 
 
-def check_saved_data(iteration_path, saved_data):
-    if not saved_data:
-        return
-    if saved_data in ('statistic', 'full'):
-        check_statistic_dump(iteration_path)
-    if saved_data in ('tensor', 'full'):
-        check_data_dump(iteration_path, True)
-    if saved_data == 'statistic':
-        # assert only file is statistic.csv, tensor data is not saved
-        assert len(os.listdir(iteration_path)) == 1
-    elif saved_data == 'tensor':
-        # assert only tensor data is saved, not statistics
-        stat_path = os.path.join(iteration_path, 'statistic.csv')
-        assert not os.path.isfile(stat_path)
-
-
-def check_overflow_file(iteration_path, overflow_num, need_check):
-    if not need_check:
-        return overflow_num
-    overflow_files = glob.glob(os.path.join(iteration_path, "Opdebug.Node_OpDebug.*.*.*"))
-    overflow_num += len(overflow_files)
-    return overflow_num
-
-
-def check_iteration(iteration_id, num_iteration):
-    if iteration_id.isdigit():
-        assert int(iteration_id) < num_iteration
-
-
-def check_ge_dump_structure(dump_path, num_iteration, device_num=1, check_overflow=False, saved_data=None):
+def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_overflow=False, saved_data=None):
     overflow_num = 0
     for _ in range(3):
         if not os.path.exists(dump_path):
             time.sleep(2)
-    sub_paths = os.listdir(dump_path)
+    assert os.path.isdir(dump_path)
+    iteration_path = os.path.join(dump_path, str(num_iteration))
+    assert os.path.isdir(iteration_path)
+    sub_paths = os.listdir(iteration_path)
     for sub_path in sub_paths:
-        # on GE, the whole dump directory of one training is saved within a time path, like '20230822120819'
-        if not (sub_path.isdigit() and len(sub_path) == 14):
-            continue
-        time_path = os.path.join(dump_path, sub_path)
+        time_path = os.path.join(iteration_path, sub_path)
         assert os.path.isdir(time_path)
         device_paths = os.listdir(time_path)
         assert len(device_paths) == device_num
@@ -110,7 +87,6 @@ def check_ge_dump_structure(dump_path, num_iteration, device_num=1, check_overfl
                     assert os.path.isdir(model_id_path)
                     iteration_ids = os.listdir(model_id_path)
                     for iteration_id in iteration_ids:
-                        check_iteration(iteration_id, num_iteration)
                         iteration_path = os.path.join(model_id_path, iteration_id)
                         assert os.path.isdir(iteration_path)
                         check_saved_data(iteration_path, saved_data)
@@ -150,6 +126,24 @@ def run_ge_dump(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
+def run_ge_dump_acl(test_name):
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'acl_dump')
+        dump_config_path = os.path.join(tmp_dir, 'acl_dump.json')
+        generate_dump_json(dump_path, dump_config_path, test_name)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        os.environ['MS_ACL_DUMP_CFG_PATH'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        os.mkdir(dump_path)
+        add = Net()
+        add(Tensor(x), Tensor(y))
+        check_ge_dump_structure_acl(dump_path, 0, 1)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+        del os.environ['MS_ACL_DUMP_CFG_PATH']
+
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -163,6 +157,19 @@ def test_ge_dump():
     """
     run_ge_dump("test_ge_dump")
 
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ge_dump_acl():
+    """
+    Feature: async dump on Ascend on GE backend.
+    Description: test async dump with default file_format value ("bin")
+    Expectation: dump data are generated as protobuf file format (suffix with timestamp)
+    """
+    run_ge_dump_acl("test_acl_dump")
 
 class ReluReduceMeanDenseRelu(Cell):
     def __init__(self, kernel, bias, in_channel, num_class):
@@ -252,9 +259,69 @@ def run_overflow_dump():
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         add = Net()
-        add(Tensor(overflow_x), Tensor(overflow_x))
+        output = add(Tensor(overflow_x), Tensor(overflow_x))
+        output_np = output.asnumpy()
+        print("output_np: ", output_np)
         check_ge_dump_structure(dump_path, 1, 1, True)
         del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+def run_saved_data_dump_test_bf16(scenario, saved_data):
+    """Run dump on GE backend, testing statistic dump"""
+    if sys.platform != 'linux':
+        return
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'test_saved_data')
+        dump_config_path = os.path.join(tmp_dir, 'test_saved_data.json')
+        generate_statistic_dump_json(dump_path, dump_config_path, scenario, saved_data)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+
+        x_np = np.array([1.1, 2.3, 3.7])
+        y_np = np.array([4.1, 5.3, 6.7])
+        x_tensor = Tensor(x_np, mindspore.bfloat16)
+        y_tensor = Tensor(y_np, mindspore.bfloat16)
+
+        mul = NetMul()
+        mul(x_tensor, y_tensor)
+
+        for _ in range(3):
+            if not os.path.exists(dump_path):
+                time.sleep(2)
+        find_x_cmd = 'find {0} -name "Data.x_*.output.*.npy"'.format(dump_path)
+        x_file_path = os.popen(find_x_cmd).read()
+        x_file_path = x_file_path.replace('\n', '')
+        statistic_cmd = 'find {0} -name "statistic.csv"'.format(dump_path)
+        statistic_file_path = os.popen(statistic_cmd).read()
+        statistic_files_path = statistic_file_path.split('\n')
+
+        x_output = np.load(x_file_path)
+        x_float32 = Tensor(x_tensor, mindspore.float32).asnumpy()
+        assert (x_float32 == x_output).all()
+        with open(statistic_files_path[0], 'r') as csvfile:
+            csv_reader = csv.reader(csvfile)
+            _ = next(csv_reader)
+            for row in csv_reader:
+                if row[0] == "Data" and row[1] == "x_":
+                    assert row[8] == "bfloat16"
+                    break
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ge_statistic_dump_bfloat16():
+    """
+    Feature: Ascend Statistics Dump on GE backend
+    Description: Test Ascend statistics dump
+    Expectation: Statistics are stored in statistic.csv files
+    """
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_saved_data_dump_test_bf16('test_ge_dump', 'full')
 
 
 @pytest.mark.level0
@@ -336,6 +403,7 @@ def test_ge_full_dump():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_saved_data_dump_test('test_ge_dump', 'full')
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training

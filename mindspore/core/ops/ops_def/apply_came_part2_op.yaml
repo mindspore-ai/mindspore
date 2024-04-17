@@ -1,0 +1,34 @@
+#operator apply_came_part2
+apply_came_part2:
+    args:
+        grad:
+            dtype: tensor
+        sum_grad_r:
+            dtype: tensor
+        sum_grad_c:
+            dtype: tensor
+        sum_grad_rc:
+            dtype: tensor
+        r:
+            dtype: tensor
+        c:
+            dtype: tensor
+        beta2:
+            dtype: float
+        sum_r:
+            dtype: tensor
+            default: None
+        global_shape:
+            dtype: tuple[int]
+            default: None
+    returns:
+        r:
+            dtype: tensor
+        c:
+            dtype: tensor
+        u:
+            dtype: tensor
+        sum_square_u:
+            dtype: tensor
+    function:
+        disable: True

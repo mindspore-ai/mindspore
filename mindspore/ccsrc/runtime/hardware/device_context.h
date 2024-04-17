@@ -31,8 +31,10 @@
 #include "include/common/utils/anfalgo.h"
 #include "runtime/hardware/deprecated_interface.h"
 #include "runtime/device/auto_mem_offload.h"
+#include "runtime/device/memory_manager.h"
 #include "include/backend/optimizer/graph_optimizer.h"
-#include "runtime/pynative/async/task.h"
+#include "runtime/pipeline/task/task.h"
+#include "ir/device_event.h"
 #ifdef __APPLE__
 #include "mindrt/include/async/spinlock.h"
 #endif
@@ -41,6 +43,7 @@ namespace mindspore {
 namespace device {
 using mindspore::kernel::AddressPtr;
 using mindspore::kernel::KernelMod;
+using mindspore::kernel::KernelTensor;
 
 const size_t kDeviceContextsNumOne = 1;
 const size_t kDeviceContextsNumTwo = 2;
@@ -62,7 +65,8 @@ class KernelExecutor;
 // DeviceContext is unified interface of interaction with device.
 class DeviceContext {
  public:
-  explicit DeviceContext(const DeviceContextKey &device_context_key) : device_context_key_(device_context_key) {}
+  explicit DeviceContext(const DeviceContextKey &device_context_key)
+      : device_context_key_(device_context_key), initialized_(false) {}
   virtual ~DeviceContext() = default;
 
   // Initialize the device context.
@@ -75,7 +79,7 @@ class DeviceContext {
   // mark the unsupported node as "NotSupport" through SetCNodeNotSupported()
   // For further usage, each device can add a attribute kAttrGraphSplitGroup to the node, and give different
   // group_name (the type must be a std::string, default is 'DefaultGroup') to the attribute, which means the
-  // continuous nodes with the same group_name will be splited into one subgraph.
+  // continuous nodes with the same group_name will be split into one subgraph.
   virtual bool PartitionGraph(const FuncGraphPtr &func_graph) const { return false; }
 
   // Analysis the function graph and select the appropriate run mode for the graph
@@ -105,6 +109,16 @@ class DeviceContext {
   // todo: delete
   virtual DeprecatedInterface *GetDeprecatedInterface() { return nullptr; }
 
+  // Return whether this device context is initialized.
+  bool initialized() const {
+#ifdef __APPLE__
+    std::lock_guard<SpinLock> spin_lock(init_lock_);
+#else
+    std::lock_guard<std::mutex> lock(init_mutex_);
+#endif
+    return initialized_;
+  }
+
   DeviceContextKey device_context_key_;
   std::unique_ptr<DeviceResManager> device_res_manager_;
   std::unique_ptr<GraphExecutor> graph_executor_;
@@ -116,6 +130,7 @@ class DeviceContext {
 #else
   inline static std::mutex init_mutex_;
 #endif
+  bool initialized_;
 
  private:
   std::shared_ptr<KernelExecutor> kernel_executor_;
@@ -143,8 +158,10 @@ class BACKEND_EXPORT DeviceResManager {
   virtual void ResetStreamAndCtx() {}
 
   // Relevant function to allocate and free device memory of raw ptr.
-  virtual void *AllocateMemory(size_t size) const = 0;
+  virtual void *AllocateMemory(size_t size, uint32_t stream_id = kDefaultStreamIndex) const = 0;
   virtual void FreeMemory(void *ptr) const = 0;
+  virtual void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                               const std::vector<size_t> &keep_addr_sizes) const = 0;
 
   virtual void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
@@ -175,31 +192,52 @@ class BACKEND_EXPORT DeviceResManager {
   // Allocate continuous device memory according to size list.
   // Communication operators may need continuous memory for input and output
   // to optimize the communication performance.
-  virtual std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+  virtual std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                                       uint32_t stream_id = kDefaultStreamIndex) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
 
-  // Create concrete device address according different device type.
-  virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                               TypeId type_id, const ShapeVector &shape,
-                                               const UserDataPtr &user_data = nullptr) const = 0;
+  // Create concrete device address according different device type using KernelTensor.
+  virtual DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+  }
 
   // Create a stream with assigning a stream id, the assigned stream id will be written to the parameter '*stream_id'.
   virtual bool CreateStream(size_t *stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+    MS_LOG(WARNING) << "Unimplemented interface: 'CreateStream'.";
+    *stream_id = kSizeZero;
     return false;
   }
 
-  virtual void *GetStream(size_t stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
-    return nullptr;
-  };
+  // Create a stream with priority.
+  virtual bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const {
+    *stream_id = kSizeZero;
+    return false;
+  }
+
+  // If multi-stream used in pynative mode, other streams must be sync before the graph
+  // is executed. Otherwise, out-of-order occurs. Therefore this flag is added.
+  // This solution is a temporary solution, this flag will be removed after multi-stream is
+  // supported in graph mode.
+  virtual bool single_op_multi_stream_enable() const { return false; }
+  virtual void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) {}
+
+  // Get the stream pointer by stream_id.
+  virtual void *GetStream(size_t stream_id) const { return nullptr; };
+
+  // Set currently using stream id.
+  virtual void SetCurrentStreamId(size_t stream_id) { return; }
+
+  // Get currently using stream id.
+  virtual size_t GetCurrentStreamId() const { return kSizeZero; }
+
+  virtual void *GetStream() const { return nullptr; };
 
   // Destroy a stream bound to the input parameter "stream_id".
-  virtual bool DestroyStream(size_t stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
-    return false;
-  }
+  virtual bool DestroyStream(size_t stream_id) const { return false; }
+
+  // Query tasks' completion status of a stream.
+  virtual bool QueryStream(size_t stream_id) const { return true; }
 
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
   // Using 'SyncStream' to block thread and wait for completing all tasks on specific stream.
@@ -209,6 +247,19 @@ class BACKEND_EXPORT DeviceResManager {
   // "SyncAllStreams" interfaces are implemented by subclasses.
   virtual bool SyncStream(size_t stream_id) const { return true; }
   virtual bool SyncAllStreams() const { return true; }
+  virtual bool SyncNotDefaultStreams() const { return true; }
+
+  // Return default stream id. Normally it's 0.
+  virtual size_t DefaultStream() const { return 0; }
+
+  // Create device event with flag.
+  virtual DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) { return nullptr; };
+
+  // Destroy specified device event.
+  virtual bool DestroyEvent(const DeviceEventPtr &event);
+
+  // Destroy all device events.
+  virtual bool DestroyAllEvents();
 
   // Dynamically load collective communication library.
   // Currently, four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
@@ -229,6 +280,10 @@ class BACKEND_EXPORT DeviceResManager {
   DeviceContext *device_context_{nullptr};
 
   std::shared_ptr<SwapManager> swap_manager_{nullptr};
+
+  DeviceEventPtrList device_events_{};
+
+  std::shared_ptr<MemoryManager> mem_manager_{nullptr};
 
  private:
   template <class... Args>
@@ -258,6 +313,8 @@ class GraphExecutor {
   void SetDeviceContext(DeviceContext *device_context) { device_context_ = device_context; }
 };
 
+using CallbackFunc = std::function<void(void)>;
+
 class BACKEND_EXPORT KernelExecutor {
  public:
   virtual ~KernelExecutor() = default;
@@ -271,16 +328,22 @@ class BACKEND_EXPORT KernelExecutor {
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const {}
+  virtual kernel::KernelModPtr CreateKernelMod(const std::string &op_name) const { MS_LOG(EXCEPTION) << "Unrealized"; };
 
   // Adjust kernel graph before run graph.
   virtual void PreprocessBeforeRun(const FuncGraphPtr &graph) const {}
 
-  // Launch a kernel via 'KernelMod' of the kernel.
-  virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                            const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                            size_t stream_id) const {
+  // Launch a kernel via 'KernelMod' of the kernel, use KernelTensor input type.
+  virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                            const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
+                            KernelMod *kernel_mod, void *stream) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
+  // Launch callback.
+  virtual bool LaunchCallback(std::function<void(void)> callback_func, size_t stream_id) const {
+    callback_func();
+    return true;
+  };
   // Unify the MindIR, the default behavior uses the common unified MindIR.
   virtual void UnifyMindIR(const KernelGraphPtr &graph) const;
   virtual void AddMindIRPass(const KernelGraphPtr &graph) const {};
@@ -290,10 +353,9 @@ class BACKEND_EXPORT KernelExecutor {
 
   void SetDeviceContext(DeviceContext *device_context) { device_context_ = device_context; }
 
-  virtual bool ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+  virtual bool ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                  const device::DeviceAddressPtrList &input_addr_list,
-                                 const TensorStorageInfoPtrList &input_storage_list,
-                                 const device::DeviceAddressPtrList &output_addr_list) const {
+                                 const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const {
     return false;
   };
 

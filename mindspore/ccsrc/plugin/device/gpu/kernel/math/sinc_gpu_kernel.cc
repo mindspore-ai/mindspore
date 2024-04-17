@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/gpu/kernel/math/sinc_gpu_kernel.h"
-#include "mindspore/core/ops/sinc.h"
 #include <functional>
 #include <utility>
 #include <map>
@@ -27,12 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool SincGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Sinc>(base_operator);
-  MS_ERROR_IF_NULL(kernel_ptr_);
-  kernel_name_ = kernel_ptr_->name();
+bool SincGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -49,9 +43,7 @@ bool SincGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int SincGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &others) {
+int SincGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -60,22 +52,21 @@ int SincGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     }
   }
   ResetResource();
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeVector().end());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
-  size_t input_size = output_elements_ * unit_input_size_;
   size_t output_size = output_elements_ * unit_output_size_;
-  input_size_list_.emplace_back(input_size);
   output_size_list_.emplace_back(output_size);
   return KRET_OK;
 }
 
 template <typename T, typename S>
-bool SincGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool SincGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   S *output = GetDeviceAddress<S>(outputs, 0);
   auto status = CalSinc(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));

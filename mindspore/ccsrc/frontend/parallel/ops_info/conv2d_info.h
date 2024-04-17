@@ -71,6 +71,7 @@ class Conv2DInfo : public OperatorInfo {
   OperatorAttrs CreateNeighborExchangeV2Attrs();
   OperatorAttrs CreateConv2DAttrs();
   virtual void ComputeReplaceGraph(const CNodePtr &cnode);
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
   int64_t out_channel_ = 1;
   std::vector<int64_t> kernel_size_;               // two integers
@@ -179,6 +180,7 @@ class Conv2DBackpropInputInfo : public Conv2DInfo {
   int64_t ComputeOverlapBottomSizeByRankBias(int64_t rank_bias) override;
   int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias) override;
   int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias) override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
  private:
   Shape out_shape_;

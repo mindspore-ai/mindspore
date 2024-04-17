@@ -15,44 +15,10 @@
 
 """inner_ops"""
 
-import numbers
-import numpy as np
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 from mindspore.ops import signature as sig
-
-
-class ScalarCast(Primitive):
-    """
-    Casts the input scalar to another type.
-
-    Refer to :func:`mindspore.ops.scalar_cast` for more details.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> scalar_cast = ops.ScalarCast()
-        >>> output = scalar_cast(255.0, mindspore.int32)
-        >>> print(output)
-        255
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['input_scalar', 'dtype'], outputs=['output_data'])
-
-    def __call__(self, x, dtype):
-        validator.check_value_type("x", x, [bool, numbers.Number], self.name)
-        if isinstance(dtype, type(mstype.tensor_type)):
-            dtype = dtype.element_type()
-        np_dtype = str(dtype)
-        value = np.cast[np_dtype.lower()](x)
-        value = value.item()
-        return value
 
 
 class Randperm(Primitive):
@@ -639,6 +605,55 @@ class FusedAdaFactorWithGlobalNorm(FusedAdaFactor):
                     learning_rate_type, grad_type, param_type, exp_avg_type, exp_avg_sq_row_type,
                     exp_avg_sq_col_type, exp_avg_sq_type, global_norm_type):
         return param_type
+
+
+class GenerateEodMask(Primitive):
+    r"""
+    Given the input `inputs_ids`, if found eod_token_id, the output position and attention mask matrix will be reset.
+    This means the `position_id` will start counting from 0, and the corresponding mask matrix will be filled with 0.
+
+    Args:
+        eod_token_id (int) - In the NLP scenario, this value corresponds to the id of
+            the symbol of 'EodOfDocument' in the vocabulary.
+
+    Inputs:
+      - **inputs_ids** (Tensor) - token id, a 2-D Tensor with shape :math:`(batch\_size, seq\_length)`.
+
+    Outputs:
+      - **position_id** (Tensor) - position id matrix with same shape and type as original `inputs_ids`.
+      - **attention_mask** (Tensor) - attention mask matrix with type
+            float16 and shape :math:`(batch\_size, seq\_length)`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> op = ops.GenerateEodMask(eod_token_id=0)
+        >>> position, mask = op(Tensor([[1, 0, 3], [1, 0, 0]], dtype=mindspore.int32))
+        >>> print(position)
+        [[0 1 0] [0 0 1]]
+        >>> print(mask)
+        [[[ 1. 0. 0.]
+          [1. 1. 0.]
+          [0. 0. 1.]]
+         [[1. 0. 0.]
+          [0. 1. 0.]
+          [0. 1. 1.]]]
+
+    Raises:
+        - **TypeError** - If `eod_token_id` is not int.
+        - **TypeError** - If `inputs_ids` is not int.
+        - **ValueError** - If `inputs_ids` is not a 2-D Tensor.
+    """
+    @prim_attr_register
+    def __init__(self, n_pos, eod_token_id, n_step, n_error_mode='specific'):
+        """Initialize GenerateEodMask"""
+        validator.check_value_type("eod_token_id", eod_token_id, [int], self.name)
+        validator.check_value_type("n_pos", n_pos, [int], self.name)
+        validator.check_value_type("n_step", n_step, [list], self.name)
+        validator.check_value_type("n_error_mode", n_error_mode, [str], self.name)
+        self.init_prim_io_names(inputs=['inputs_ids'],
+                                outputs=['position_ids'])
 
 
 class ScaleGrad(PrimitiveWithInfer):

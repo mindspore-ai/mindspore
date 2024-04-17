@@ -68,26 +68,6 @@ class ScaleAndTranslateHelperGpuKernel : public GpuKernelHelperBase {
     std::vector<int64_t> in_translation_shape_ = input_shapes[kTranslation];
     std::vector<int64_t> ou_output_shape_ = output_shapes[kOutputIndex];
 
-    size_t cur_size_T = sizeof(T);
-    for (const auto &val : in_images_shape_) {
-      cur_size_T *= val;
-    }
-    input_size_list_.emplace_back(cur_size_T);
-    size_t cur_size_int64 = sizeof(int64_t);
-    for (const auto &val : in_size_shape_) {
-      cur_size_int64 *= val;
-    }
-    input_size_list_.emplace_back(cur_size_int64);
-    size_t cur_size_float = sizeof(float);
-    for (const auto &val : in_scale_shape_) {
-      cur_size_float *= val;
-    }
-    input_size_list_.emplace_back(cur_size_float);
-    cur_size_float = sizeof(float);
-    for (const auto &val : in_translation_shape_) {
-      cur_size_float *= val;
-    }
-    input_size_list_.emplace_back(cur_size_float);
     int out_flag =
       CalShapesSizeInBytes<float>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {

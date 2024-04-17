@@ -36,7 +36,7 @@ abstract::ShapePtr TrilInferShape(const PrimitivePtr &primitive, const std::vect
   const int64_t kShapeSize = 2;
   auto input_shape = input_args[0];
   MS_EXCEPTION_IF_NULL(input_shape);
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape->GetShape());
   auto x_shape = shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -52,7 +52,7 @@ TypePtr TrilInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
 
   auto input_shape = input_args[0];
   MS_EXCEPTION_IF_NULL(input_shape);
-  auto x_type = input_shape->BuildType();
+  auto x_type = input_shape->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   std::set<TypePtr> valid_x_types(common_valid_types);
   (void)valid_x_types.emplace(kBool);

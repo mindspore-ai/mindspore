@@ -118,8 +118,8 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   for (const auto &arg : input_args) {
     MS_EXCEPTION_IF_NULL(arg);
   }
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto offsets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
+  auto offsets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto x_shape = x_shape_map[kShape];
   auto offsets_shape = offsets_shape_map[kShape];
   if (IsDynamicRank(x_shape) || IsDynamicRank(offsets_shape)) {
@@ -178,7 +178,7 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
 
 TypePtr DeformableOffsetsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  return CheckAndConvertUtils::CheckTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTypeValid("x", input_args[0]->GetType(), valid_types, prim->name());
 }
 }  // namespace
 
@@ -261,8 +261,8 @@ AbstractBasePtr DeformableOffsetsInfer(const abstract::AnalysisEnginePtr &, cons
                                            input_num, primitive->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("offsets", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[0]->GetType());
+  (void)types.emplace("offsets", input_args[1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return abstract::MakeAbstract(DeformableOffsetsInferShape(primitive, input_args),
                                 DeformableOffsetsInferType(primitive, input_args));

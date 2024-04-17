@@ -15,18 +15,22 @@
  */
 
 #include "custom_op_proto/cust_array_ops.h"
-#include "inc/ops/array_ops.h"
+#include "op_proto/inc/array_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/common_shape_fns.h"
 #include "utils/util.h"
 
 namespace ge {
+
+ONE_IN_ONE_OUT_INFER(CheckNumerics, x, y);
+ONE_IN_ONE_OUT_INFER(MatrixBandPart, x, output);
+
 // ----------------Expand Begin-------------------
 template <typename T>
 static bool ExpandCalDim(const Tensor &data, std::vector<int64_t> &vec_dim, std::vector<int64_t> &x_dims,
                          std::vector<std::pair<int64_t, int64_t>> &range_vector) {
-  int64_t len_x = x_dims.size();
-  int64_t len_shape = data.GetSize() / sizeof(T);
+  int64_t len_x = static_cast<int64_t>(x_dims.size());
+  int64_t len_shape = data.GetSize() / static_cast<int64_t>(sizeof(T));
   int64_t diff = abs(len_x - len_shape);
   const char *op_name = "Expand";
 
@@ -134,7 +138,7 @@ IMPLEMT_INFERFUNC(Expand, ExpandInferShape) {
       OP_LOGE(op_name, "The dim numbers of shape [%zu] are more than one.", dim_num);
       return GRAPH_FAILED;
     }
-    int64_t max_len = x_dims.size();
+    int64_t max_len = static_cast<int64_t>(x_dims.size());
     if (shape_dims[0] > max_len) {
       max_len = shape_dims[0];
     }
@@ -210,19 +214,19 @@ CUST_INFER_FUNC_REG(MaskedSelectGrad, MaskedSelectGradInfer);
 // -------------------------------IdentityN Begin-------------------------------
 // //
 IMPLEMT_INFERFUNC(IdentityN, IdentityNInfer) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
   for (size_t i = 0; i < op.GetInputsSize(); i++) {
-    auto input_desc = op_desc->MutableInputDesc(i);
-    auto input_dims = input_desc->MutableShape().GetDims();
-    auto output_desc = op_desc->MutableOutputDesc(i);
-    auto intput_dtype = input_desc->GetDataType();
+    auto input_desc = op.GetInputDesc(i);
+    auto input_dims = input_desc.GetShape().GetDims();
+    auto output_desc = op.GetOutputDesc(i);
+    auto intput_dtype = input_desc.GetDataType();
 
     std::vector<std::pair<int64_t, int64_t>> input_range;
-    input_desc->GetShapeRange(input_range);
-    output_desc->SetShape(GeShape(input_dims));
-    output_desc->SetOriginShape(GeShape(input_dims));
-    output_desc->SetDataType(intput_dtype);
-    output_desc->SetShapeRange(input_range);
+    input_desc.GetShapeRange(input_range);
+    output_desc.SetShape(Shape(input_dims));
+    output_desc.SetOriginShape(Shape(input_dims));
+    output_desc.SetDataType(intput_dtype);
+    output_desc.SetShapeRange(input_range);
+    op.UpdateDynamicOutputDesc("y", i, output_desc);
   }
   return GRAPH_SUCCESS;
 }
@@ -270,39 +274,40 @@ INFER_FUNC_REG(LowerBound, LowerBoundInfer);
 
 // -------------------------------ListDiff------------------------------- //
 IMPLEMT_INFERFUNC(ListDiff, ListDiffInfer) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto x_desc = op_desc->MutableInputDesc(0);
-  auto y_desc = op_desc->MutableInputDesc(1);
+  auto x_desc = op.GetInputDesc(0);
+  auto y_desc = op.GetInputDesc(1);
 
   Shape unused_shape;
   std::string error_msg;
   if (WithRank(x_desc, 1, unused_shape, op) != GRAPH_SUCCESS) {
-    std::string error_msg = GetShapeErrMsg(0, DebugString(x_desc->GetShape().GetDims()), "1D");
+    std::string error_msg = GetShapeErrMsg(0, DebugString(x_desc.GetShape().GetDims()), "1D");
     error_msg = string("failed to call WithRank function, ") + error_msg;
     return GRAPH_FAILED;
   }
 
   if (WithRank(y_desc, 1, unused_shape, op) != GRAPH_SUCCESS) {
-    std::string error_msg = GetShapeErrMsg(1, DebugString(y_desc->GetShape().GetDims()), "1D");
+    std::string error_msg = GetShapeErrMsg(1, DebugString(y_desc.GetShape().GetDims()), "1D");
     error_msg = string("failed to call WithRank function, ") + error_msg;
     return GRAPH_FAILED;
   }
 
-  DataType output_type = x_desc->GetDataType();
+  DataType output_type = x_desc.GetDataType();
   DataType index_type;
   if (op.GetAttr("out_idx", index_type) != GRAPH_SUCCESS) {
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("failed to get attr[out_idx]."));
     return GRAPH_FAILED;
   }
 
-  GeShape result({ge::UNKNOWN_DIM});
-  auto output_desc = op_desc->MutableOutputDesc(0);
-  output_desc->SetShape(GeShape(result));
-  output_desc->SetDataType(output_type);
+  Shape result({ge::UNKNOWN_DIM});
+  auto output_desc = op.GetOutputDesc(0);
+  output_desc.SetShape(Shape(result));
+  output_desc.SetDataType(output_type);
+  op.UpdateOutputDesc("out", output_desc);
 
-  auto index_desc = op_desc->MutableOutputDesc(1);
-  index_desc->SetShape(GeShape(result));
-  index_desc->SetDataType(index_type);
+  auto index_desc = op.GetOutputDesc(1);
+  index_desc.SetShape(Shape(result));
+  index_desc.SetDataType(index_type);
+  op.UpdateOutputDesc("idx", index_desc);
 
   return GRAPH_SUCCESS;
 }
@@ -352,6 +357,25 @@ IMPLEMT_COMMON_INFERFUNC(HammingWindowInferShape) {
 
 CUST_COMMON_INFER_FUNC_REG(HammingWindow, HammingWindowInferShape);
 // ----------------HammingWindow End---------------------
+
+// ----------------Padding Begin-------------------
+CUST_IMPLEMT_INFERFUNC(Padding, PaddingInferShape) {
+  int64_t pad_dim_size{0};
+  RETURN_IF_FAILURE(op.GetAttr("pad_dim_size", pad_dim_size));
+  auto x_desc = op.GetInputDescByName("x");
+  auto x_dtype = x_desc.GetDataType();
+  auto x_shape = x_desc.GetShape().GetDims();
+  RETURN_IF_FALSE(x_shape.size() > 0, op, "Input can't be scalar.");
+  x_shape.back() = pad_dim_size;
+
+  auto out_desc = op.GetOutputDescByName("y");
+  out_desc.SetDataType(x_dtype);
+  out_desc.SetShape(Shape(x_shape));
+
+  return op.UpdateOutputDesc("y", out_desc);
+}
+CUST_INFER_FUNC_REG(Padding, PaddingInferShape);
+// ----------------MvlgammaGrad END---------------------
 
 // ----------------Mvlgamma Begin-------------------
 CUST_IMPLEMT_INFERFUNC(Mvlgamma, MvlgammaInferShape) {
@@ -448,9 +472,9 @@ IMPLEMT_COMMON_INFERFUNC(LogSpaceInferShape) {
   dim_vec.push_back(num_rows);
   dim_vec.push_back(steps);
   v_output_desc.SetShape(ge::Shape(dim_vec));
-  int64_t dtype = 1;
+  DataType dtype;
   if (op.GetAttr("dtype", dtype) != GRAPH_SUCCESS) {
-    v_output_desc.SetDataType(DT_FLOAT16);
+    v_output_desc.SetDataType(DT_FLOAT);
   } else {
     if (dtype == 1) {
       v_output_desc.SetDataType(DT_FLOAT16);
@@ -467,39 +491,6 @@ CUST_COMMON_INFER_FUNC_REG(LogSpace, LogSpaceInferShape);
 // Registered verify function
 CUST_VERIFY_FUNC_REG(LogSpace, LogSpaceVerify);
 // --------------------------LogSpace END---------------------
-
-// ----------------UniqueConsecutive Begin-------------------
-IMPLEMT_INFERFUNC(UniqueConsecutive, UniqueConsecutiveInfer) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto x_desc_ptr = op_desc->MutableInputDesc(0);
-  auto y_desc_ptr = op_desc->MutableOutputDesc(0);
-  y_desc_ptr->SetDataType(x_desc_ptr->GetDataType());
-
-  auto idx_desc_ptr = op_desc->MutableOutputDesc(1);
-  auto count_desc_ptr = op_desc->MutableOutputDesc(2);
-
-  auto &y_shape = y_desc_ptr->MutableShape();
-  auto &idx_shape = idx_desc_ptr->MutableShape();
-  auto &count_shape = count_desc_ptr->MutableShape();
-
-  bool return_idx = false;
-  bool return_counts = false;
-  int64_t axis = 1000;
-
-  op.GetAttr("axis", axis);
-  op.GetAttr("return_idx", return_idx);
-  op.GetAttr("return_counts", return_counts);
-  count_shape.SetIsUnknownDimNum();
-  count_desc_ptr->SetDataType(DT_INT64);
-  idx_shape.SetIsUnknownDimNum();
-  idx_desc_ptr->SetDataType(DT_INT64);
-  y_shape.SetIsUnknownDimNum();
-
-  return GRAPH_SUCCESS;
-}
-
-INFER_FUNC_REG(UniqueConsecutive, UniqueConsecutiveInfer);
-// ----------------UniqueConsecutive End-----------------------
 
 // ----------------UpperBound-----------------------
 IMPLEMT_INFERFUNC(UpperBound, UpperBoundInfer) {
@@ -571,4 +562,60 @@ IMPLEMT_INFERFUNC(UnravelIndex, UnravelIndexInfer) {
 
 INFER_FUNC_REG(UnravelIndex, UnravelIndexInfer);
 // ----------------UnravelIndex END-----------------------
+
+// ----------------AffineGrid-----------------------
+template <typename T>
+void CalcOutputShape(const Tensor &output_size_tensor, int64_t theta_second_dim, vector<int64_t> &output_shape) {
+  auto size_data = reinterpret_cast<const T *>(output_size_tensor.GetData());
+  int64_t temp = 1;
+  for (int i = 0; i < theta_second_dim; i++) {
+    temp = static_cast<int64_t>(size_data[i + 2]);
+    output_shape.push_back(temp);
+  }
+}
+
+CUST_IMPLEMT_INFERFUNC(AffineGrid, AffineGridInfer) {
+  int64_t theta_second_dim = op.GetInputDesc(0).GetShape().GetDim(1);
+
+  vector<int64_t> output_shape;
+  int64_t batch_dim = op.GetInputDesc(0).GetShape().GetDim(0);
+  output_shape.push_back(batch_dim);
+
+  Tensor output_size_tensor;
+  SetOpInferDepends(op, {"output_size"});
+  TensorDesc output_desc = op.GetOutputDescByName("output");
+  if (op.GetInputConstData("output_size", output_size_tensor) == GRAPH_SUCCESS) {
+    auto size_type = op.GetInputDesc(1).GetDataType();
+    if (size_type == DT_INT32) {
+      CalcOutputShape<int32_t>(output_size_tensor, theta_second_dim, output_shape);
+    } else {
+      CalcOutputShape<int64_t>(output_size_tensor, theta_second_dim, output_shape);
+    }
+  } else {
+    int64_t temp = -1;
+    for (int i = 0; i < theta_second_dim; i++) {
+      output_shape.push_back(temp);
+    }
+  }
+  output_shape.push_back(theta_second_dim);
+
+  auto theta_dtype = op.GetInputDesc(0).GetDataType();
+
+  TensorDesc theta_desc = op.GetInputDescByName("theta");
+  theta_desc.SetFormat(ge::FORMAT_ND);
+  (void)op.UpdateInputDesc("theta", theta_desc);
+
+  TensorDesc outsize_desc = op.GetInputDescByName("output_size");
+  outsize_desc.SetFormat(ge::FORMAT_ND);
+  (void)op.UpdateInputDesc("output_size", outsize_desc);
+
+  output_desc.SetShape(ge::Shape(output_shape));
+  output_desc.SetDataType(theta_dtype);
+  output_desc.SetOriginFormat(ge::FORMAT_ND);
+  output_desc.SetFormat(ge::FORMAT_ND);
+  return op.UpdateOutputDesc("output", output_desc);
+}
+
+CUST_INFER_FUNC_REG(AffineGrid, AffineGridInfer);
+// ----------------AffineGrid END-----------------------
 }  // namespace ge

@@ -13,48 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
-#include <memory>
-#include "common/common_test.h"
-#include "ops/add.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
-#include "abstract/abstract_value.h"
-#include "ops/test_ops.h"
+#include "ops/test_ops_binary_op.h"
+#include "ops/ops_func_impl/add.h"
 
 namespace mindspore {
 namespace ops {
-struct AddParams {
-  ShapeVector x_shape;
-  TypePtr x_type;
-  ShapeVector y_shape;
-  TypePtr y_type;
-  ShapeVector out_shape;
-  TypePtr out_type;
-};
-
-class TestAdd : public TestOps, public testing::WithParamInterface<AddParams> {};
-
-TEST_P(TestAdd, add_dyn_shape) {
-  const auto &param = GetParam();
-  auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-  auto y = std::make_shared<abstract::AbstractTensor>(param.y_type, param.y_shape);
-  auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
-  ASSERT_NE(x, nullptr);
-  ASSERT_NE(y, nullptr);
-  auto add = std::make_shared<Add>();
-  add->Init();
-  auto prim = std::make_shared<Primitive>(kNameAdd);
-  auto out_abstract = AddInfer(nullptr, prim, {x, y});
-  ASSERT_NE(out_abstract, nullptr);
-  ASSERT_TRUE(*out_abstract == *expect);
-}
-
-INSTANTIATE_TEST_CASE_P(TestAdd, TestAdd,
-                        testing::Values(AddParams{{-1, -1}, kFloat32, {1, 1}, kFloat32, {-1, -1}, kFloat32},
-                                        AddParams{{-1, -1}, kFloat32, {2, 3}, kFloat32, {2, 3}, kFloat32},
-                                        AddParams{{-2}, kFloat32, {2, 3}, kFloat32, {-2}, kFloat32}));
+BINARY_OP_FUNC_IMPL_TEST_WITH_DEFAULT_CASES(Add);
 }  // namespace ops
 }  // namespace mindspore

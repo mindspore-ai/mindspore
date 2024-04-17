@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -52,7 +52,7 @@ def test_reflection_pad1d_input3d(mode):
     assert np.array_equal(output.asnumpy(), expected_output)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -83,7 +83,7 @@ def test_reflection_pad1d_input2d(mode):
     assert np.array_equal(output.asnumpy(), expected_output)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -115,7 +115,7 @@ def test_reflection_pad2d_input4d(mode):
     assert np.array_equal(output.asnumpy(), expected_output)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -136,7 +136,6 @@ def test_reflection_pad2d_input3d(mode):
     output = net(x)
     expected_output = Tensor(np.array([[[7, 6, 7, 8, 7], [4, 3, 4, 5, 4], [1, 0, 1, 2, 1],
                                         [4, 3, 4, 5, 4], [7, 6, 7, 8, 7]]]).astype(np.float32))
-    print(output, expected_output)
 
     padding = 2
     output = nn.ReflectionPad2d(padding)(x)
@@ -148,7 +147,7 @@ def test_reflection_pad2d_input3d(mode):
     assert np.array_equal(output.asnumpy(), expected_output)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

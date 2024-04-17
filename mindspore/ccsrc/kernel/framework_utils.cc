@@ -23,7 +23,9 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 #include "kernel/common_utils.h"
+#include "kernel/format_utils.h"
 #include "kernel/oplib/oplib.h"
+#include "mindapi/base/type_id.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "ops/array_op_name.h"
 #include "ops/conv_pool_op_name.h"
@@ -79,45 +81,26 @@ abstract::AbstractBasePtr GetChildAbstract(const abstract::AbstractBasePtr &cur_
 }
 
 KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract, const TypeId &real_type, size_t idx,
-                                   const ShapeVector &device_shape_adaptively, const std::string &format_str,
-                                   bool prev_node_has_getitem = false) {
+                                   const std::string &format_str, bool prev_node_has_getitem = false) {
   MS_EXCEPTION_IF_NULL(cur_abstract);
   abstract::AbstractBasePtr tag_abstract = nullptr;
+  abstract::AbstractBasePtr new_abstract = nullptr;
   if (prev_node_has_getitem) {
     tag_abstract = cur_abstract;
   } else {
     tag_abstract = GetChildAbstract(cur_abstract, idx);
   }
   TypePtr tag_type_ptr = TypeIdToType(real_type);
-  KernelTensorPtr res_tensor = std::make_shared<KernelTensor>();
-  if (tag_abstract->isa<abstract::AbstractScalar>()) {
-    // Scalar
-    auto new_abstract = tag_abstract->Clone()->cast<abstract::AbstractScalarPtr>();
-    ScalarInfo scalar_info{new_abstract};
-    res_tensor->SetScalarInfo(scalar_info);
-    res_tensor->SetMetaType(kObjectTypeNumber);
-  } else if (tag_abstract->isa<abstract::AbstractTuple>()) {
-    // Tuple
-    auto new_abstract = tag_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
-    TupleInfo tuple_info{new_abstract};
-    res_tensor->SetTupleInfo(tuple_info);
-    res_tensor->SetMetaType(kObjectTypeTuple);
-  } else if (tag_abstract->isa<abstract::AbstractList>()) {
-    // List
-    auto new_abstract = tag_abstract->Clone()->cast<abstract::AbstractListPtr>();
-    ListInfo list_info{new_abstract};
-    res_tensor->SetListInfo(list_info);
-    res_tensor->SetMetaType(kObjectTypeList);
-  } else if (tag_abstract->isa<abstract::AbstractNone>()) {
-    res_tensor->SetMetaType(kMetaTypeNone);
-  } else {
-    // Tensor
+
+  if (tag_abstract->isa<abstract::AbstractTensor>()) {
     auto abstract_shape_ptr = GetValidShapeFromAbstract(tag_abstract);
-    auto new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_abstract, device_shape_adaptively};
-    res_tensor->SetTensorInfo(tensor_info);
-    res_tensor->SetMetaType(kObjectTypeTensorType);
+    new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
+  } else {
+    new_abstract = tag_abstract->Clone();
   }
+  KernelTensorPtr res_tensor =
+    std::make_shared<KernelTensor>(new_abstract->GetShape(), new_abstract->GetType(), new_abstract->GetValue());
+  res_tensor->set_format(GetFormatFromStrToEnum(format_str));
   return res_tensor;
 }
 
@@ -155,11 +138,9 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
       MS_LOG(DEBUG) << "need changed type node:" << cnode->DebugString()
                     << "Real input type :" << TypeIdToType(real_input_type)->ToString();
     }
-    auto device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
     auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
-    auto input_tensor =
-      CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively, format_str,
-                         ((!prev_node_has_getitem) || common::AnfAlgo::IsDynamicSequence(prev_node)));
+    auto input_tensor = CreateKernelTensor(prev_abstract, real_input_type, output_idx, format_str,
+                                           ((!prev_node_has_getitem) || common::AnfAlgo::IsDynamicSequence(prev_node)));
     input_tensors.push_back(input_tensor);
   }
 
@@ -180,77 +161,67 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
                     << "Real output type :" << TypeIdToType(real_output_type)->ToString()
                     << " is dynamic len:" << common::AnfAlgo::IsDynamicSequence(cnode);
     }
-    auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
     auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
-    auto output_tensor =
-      CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively, format_str,
-                         is_real_tuple_output || common::AnfAlgo::IsDynamicSequence(cnode));
+    auto output_tensor = CreateKernelTensor(cur_abstract, real_output_type, output_idx, format_str,
+                                            is_real_tuple_output || common::AnfAlgo::IsDynamicSequence(cnode));
     output_tensors.push_back(output_tensor);
   }
   return std::make_pair(input_tensors, output_tensors);
 }
 
-inline InOutKernelTensors AbstractInOutFromDeviceAddress(
-  KernelMod *const kernel_mod, const std::vector<device::DeviceAddressPtr> &inputs_device_address,
-  const std::vector<device::DeviceAddressPtr> &outputs_device_address, const AbstractBasePtr &out_abstract) {
-  MS_EXCEPTION_IF_NULL(out_abstract);
-  // Makeup input KernelTensors, meta_types can be tensor, scalar, tuple, list.
-  auto &input_tensors = kernel_mod->GetInputs();
-  size_t input_num = inputs_device_address.size();
-  KernelTensorPtr input_tensor;
-  for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
-    if (input_idx >= input_tensors.size()) {
-      input_tensor = std::make_shared<KernelTensor>();
-      (void)input_tensors.emplace_back(input_tensor);
-    } else {
-      input_tensor = input_tensors[input_idx];
-    }
-    const auto &input_device_address = inputs_device_address[input_idx];
-    if (input_device_address == nullptr) {
-      MS_LOG(WARNING) << "None input create None KernelTensor.";
-      continue;
-    }
-    auto shape = input_device_address->host_shape();
-    auto new_abstract =
-      std::make_shared<abstract::AbstractTensor>(TypeIdToType(input_device_address->type_id()), shape);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(input_device_address->format()), new_abstract,
-                           AnfAlgo::GetDeviceShapeAdaptively(shape)};
-    input_tensor->SetTensorInfo(tensor_info);
-    input_tensor->SetMetaType(kObjectTypeTensorType);
+bool IsObjectTypeStrictlyMatched(const std::vector<TypeId> &object_types,
+                                 const std::vector<DataType> &kernel_data_types) {
+  if (object_types.size() != kernel_data_types.size()) {
+    return false;
   }
 
-  // Makeup output tensors.
-
-  auto &output_tensors = kernel_mod->GetOutputs();
-  size_t output_num = outputs_device_address.size();
-  KernelTensorPtr output_tensor;
-  for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
-    if (output_idx >= output_tensors.size()) {
-      output_tensor = std::make_shared<KernelTensor>();
-      (void)output_tensors.emplace_back(output_tensor);
-    } else {
-      output_tensor = output_tensors[output_idx];
+  for (size_t i = 0; i < object_types.size(); i++) {
+    // For optional input, the real input object type can be a None.
+    if ((object_types[i] != kernel_data_types[i].object_type) &&
+        !(object_types[i] == kMetaTypeNone && kernel_data_types[i].is_optional)) {
+      return false;
     }
-    AbstractBasePtr new_abstract;
-    const auto &output_device_address = outputs_device_address[output_idx];
-    auto shape = output_device_address->host_shape();
-    if (out_abstract->isa<abstract::AbstractTuple>()) {
-      auto abstract_tuple = out_abstract->cast<abstract::AbstractTuplePtr>();
-      new_abstract = abstract_tuple->elements()[output_idx];
-    } else {
-      new_abstract = out_abstract;
-    }
-    auto kernel_tensor_abstract = std::make_shared<abstract::AbstractTensor>(
-      TypeIdToType(output_device_address->type_id()), new_abstract->BuildShape());
-    TensorInfo tensor_info{GetFormatFromStrToEnum(output_device_address->format()), kernel_tensor_abstract,
-                           AnfAlgo::GetDeviceShapeAdaptively(shape)};
-    output_tensor->SetTensorInfo(tensor_info);
-    output_tensor->SetMetaType(kObjectTypeTensorType);
   }
-  return std::make_pair(input_tensors, output_tensors);
+
+  return true;
+}
+
+bool IsObjectTypeWeaklyMatched(const std::vector<TypeId> &object_types, const std::vector<DataType> &kernel_data_types,
+                               bool all_same, size_t element_num) {
+  // 1. The size equal can trigger the kernel object backoff(For example Reshape op).
+  if (object_types.size() == kernel_data_types.size()) {
+    return true;
+  }
+
+  // 2. AllSame is the tupleUnfold type(For example Split/Addn op).
+  if (all_same) {
+    return true;
+  }
+
+  // 3. Multiple outputs are expanded in the kernel attr(For example BatchNorm op).
+  if (kernel_data_types.size() == element_num) {
+    return true;
+  }
+
+  return false;
 }
 }  // namespace
 
+std::pair<std::vector<DataType>, std::vector<DataType>> GetInOutDataTypesFromKernelAttr(const KernelAttr &kernel_attr) {
+  size_t input_attr_size = kernel_attr.GetInputSize();
+  std::vector<DataType> input_data_types;
+  for (size_t i = 0; i < input_attr_size; ++i) {
+    input_data_types.push_back(kernel_attr.GetInputAttr(i));
+  }
+
+  size_t output_attr_size = kernel_attr.GetOutputSize();
+  std::vector<DataType> output_data_types;
+  for (size_t i = 0; i < output_attr_size; ++i) {
+    output_data_types.push_back(kernel_attr.GetOutputAttr(i));
+  }
+
+  return std::make_pair(input_data_types, output_data_types);
+}
 std::string GetCompilerCachePath() { return Common::GetUserDefineCachePath(); }
 
 bool CheckCache(const std::string &kernel_name) {
@@ -715,7 +686,7 @@ void GetFuncGraphOutputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNode
     auto input0 = cnode->input(kAnfPrimitiveIndex);
     MS_EXCEPTION_IF_NULL(input0);
     if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
-      for (size_t input_idx = 1; input_idx < cnode->inputs().size(); ++input_idx) {
+      for (size_t input_idx = 1; input_idx < cnode->size(); ++input_idx) {
         auto input_node = cnode->input(input_idx);
         MS_EXCEPTION_IF_NULL(input_node);
         if (input_node->isa<CNode>() && common::AnfAlgo::GetInputTensorNum(input_node) == 0) {
@@ -831,57 +802,34 @@ bool IsDynamicParamKernel(const std::string &op_name) {
   return true;
 }
 
-bool IsObjectTypeMatched(const std::vector<TypeId> &object_types, const std::vector<TypeId> &kernel_object_types,
-                         const KernelAttr &ori_kernel_attr, size_t element_num, bool strict) {
-  // Full matched.
-  if (object_types.size() == kernel_object_types.size()) {
-    size_t equal_num = 0;
-    for (size_t i = 0; i < object_types.size(); i++) {
-      if (object_types[i] == kernel_object_types[i]) {
-        ++equal_num;
-      }
-    }
-    if (equal_num == object_types.size()) {
-      return true;
-    }
-  }
-
-  if (strict) {
-    return false;
-  }
-
-  // Check the matched without strict.
-  // 1. The size equal can trigger the kernel object backoff(For example Reshape op).
-  if (object_types.size() == kernel_object_types.size()) {
-    return true;
-  }
-  // 2. AllSame is the tupleUnfold type(For example Split/Addn op).
-  if (ori_kernel_attr.GetAllSame()) {
-    return true;
-  }
-  // 3. Multiple outputs are expanded in the kernel attr(For example BatchNorm op).
-  if (kernel_object_types.size() == element_num) {
-    return true;
-  }
-
-  return false;
-}
-
-bool SelectKernelByObjectType(const CNodePtr &kernel_node, const std::vector<KernelAttr> &ori_kernel_attrs,
-                              std::vector<KernelAttr> *selected_kernel_attrs, bool strict) {
+bool SelectKernelByObjectType(const CNodePtr &kernel_node, const std::vector<KernelAttr> &registered_kernel_attrs,
+                              std::vector<KernelAttr> *selected_kernel_attrs) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_attrs);
   const auto &inputs_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
   const auto &output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
+
+  // 1. Try match all object type firstly.
+  for (auto &cur_kernel_attr : registered_kernel_attrs) {
+    const auto &[input_data_types, output_data_types] = GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    if (IsObjectTypeStrictlyMatched(inputs_object_types, input_data_types) &&
+        IsObjectTypeStrictlyMatched(output_object_types, output_data_types)) {
+      (void)selected_kernel_attrs->emplace_back(cur_kernel_attr);
+    }
+  }
+  if (!selected_kernel_attrs->empty()) {
+    return true;
+  }
+
+  // 2. Precise matching failed, try fuzzy one again.
   auto input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   auto output_num = AnfAlgo::GetOutputElementNum(kernel_node);
-
-  for (auto &ori_kernel_attr : ori_kernel_attrs) {
-    const auto &kernel_inputs_object_types = GetInputObjectTypeListFromKernelAttr(ori_kernel_attr);
-    const auto &kernel_outputs_object_types = GetOutputObjectTypeListFromKernelAttr(ori_kernel_attr);
-    if (IsObjectTypeMatched(inputs_object_types, kernel_inputs_object_types, ori_kernel_attr, input_num, strict) &&
-        IsObjectTypeMatched(output_object_types, kernel_outputs_object_types, ori_kernel_attr, output_num, strict)) {
-      (void)selected_kernel_attrs->emplace_back(ori_kernel_attr);
+  for (auto &cur_kernel_attr : registered_kernel_attrs) {
+    const auto &[input_data_types, output_data_types] = GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    auto all_same = cur_kernel_attr.GetAllSame();
+    if (IsObjectTypeWeaklyMatched(inputs_object_types, input_data_types, all_same, input_num) &&
+        IsObjectTypeWeaklyMatched(output_object_types, output_data_types, all_same, output_num)) {
+      (void)selected_kernel_attrs->emplace_back(cur_kernel_attr);
     }
   }
 
@@ -962,7 +910,7 @@ void UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < input_kernel_object_types.size(); ++i) {
     if (input_kernel_object_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
       auto input_node = common::AnfAlgo::GetInputNode(kernel_node, i);
-      auto unfold_num = AnfAlgo::GetOutputElementNum(input_node);
+      auto unfold_num = GetOutputNum(input_node);
       MS_LOG(DEBUG) << kernel_node->fullname_with_scope() << " input idnex:" << i << " unfold num:" << unfold_num;
       RepeatAppend(true, i, unfold_num);
     } else {
@@ -972,7 +920,7 @@ void UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
 
   for (size_t i = 0; i < output_kernel_object_types.size(); ++i) {
     if (output_kernel_object_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
-      auto unfold_num = AnfAlgo::GetOutputElementNum(kernel_node);
+      auto unfold_num = GetOutputNum(kernel_node);
       MS_LOG(DEBUG) << kernel_node->fullname_with_scope() << " output idnex:" << i << " unfold num:" << unfold_num;
       // Multiple outputs are expanded in the kernel attr(For example BatchNorm op).
       if (output_num == unfold_num) {
@@ -1050,17 +998,6 @@ void SetDynamicInputSizeAttr(const CNodePtr &cnode) {
 KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto [input_tensors, output_tensors] = AbstractInOutFromCNode(cnode);
-  KernelArgs args = {input_tensors, output_tensors};
-  return args;
-}
-
-KernelArgs AbstractArgsFromDeviceAddress(KernelMod *const kernel_mod,
-                                         const std::vector<device::DeviceAddressPtr> &inputs_device_address,
-                                         const std::vector<device::DeviceAddressPtr> &outputs_device_address,
-                                         const AbstractBasePtr &abstract) {
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto [input_tensors, output_tensors] =
-    AbstractInOutFromDeviceAddress(kernel_mod, inputs_device_address, outputs_device_address, abstract);
   KernelArgs args = {input_tensors, output_tensors};
   return args;
 }
@@ -1166,11 +1103,13 @@ void UpdateNodeShape(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  if (!kernel_mod->IsNeedRetrieveOutputShape()) {
+  if (!kernel_mod->IsNeedUpdateOutputShapeAndSize()) {
     return;
   }
 
-  auto output_tensor = kernel_mod->RetrieveOutputShape();
+  auto output_tensor = AnfAlgo::GetOrCreateAllOutputKernelTensors(cnode);
+  auto input_tensor = AnfAlgo::GetOrCreateAllInputKernelTensors(cnode);
+  kernel_mod->UpdateOutputShapeAndSize(input_tensor, output_tensor);
   if (output_tensor.empty()) {
     return;
   }
@@ -1185,85 +1124,27 @@ void UpdateNodeShape(const CNodePtr &cnode) {
       return;
     }
     (void)shapes.emplace_back(std::move(out_shape));
-    (void)type_ids.emplace_back(output_tensor[i]->GetDtype());
+    (void)type_ids.emplace_back(output_tensor[i]->dtype_id());
   }
   common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get(), true);
 }
 
-using ShapeSet = std::set<int64_t>;
-static const mindspore::HashMap<std::string, std::set<int64_t>> try_get_value_in_resize_map = {
-  {kReduceMeanOpName, ShapeSet{1}},
-  {kReduceMaxOpName, ShapeSet{1}},
-  {kReduceSumOpName, ShapeSet{1}},
-  {kReduceMinOpName, ShapeSet{1}},
-  {kReduceProdOpName, ShapeSet{1}},
-  {kReduceAllOpName, ShapeSet{1}},
-  {kReduceAnyOpName, ShapeSet{1}},
-  {kROIAlignGradOpName, ShapeSet{2}},
-  {kSliceOpName, ShapeSet{1, 2}},
-  {kSliceGradOpName, ShapeSet{2, 3, 4}},
-  {kTensorCopySlicesOpName, ShapeSet{2, 3, 4}},
-  {kTransposeOpName, ShapeSet{1}},
-  {kGatherDOpName, ShapeSet{1}},
-  {kGatherOpName, ShapeSet{2}},
-  {kGatherDGradV2OpName, ShapeSet{1}},
-  {kSparseGatherV2OpName, ShapeSet{2}},
-  {kScatterNdOpName, ShapeSet{2}},
-  {kStridedSliceOpName, ShapeSet{1, 2, 3}},
-  {kStridedSliceGradOpName, ShapeSet{1, 2, 3, 4}},
-  {kTileOpName, ShapeSet{1}},
-  {kConv2DBackpropFilterOpName, ShapeSet{2}},
-  {kConv2DBackpropInputOpName, ShapeSet{2}},
-  {kRandomCategoricalOpName, ShapeSet{1, 2}},
-  {kUpsampleTrilinear3DOpName, ShapeSet{1}},
-  {kUpsampleNearest3DOpName, ShapeSet{1}},
-  {kUpsampleTrilinear3DGradOpName, ShapeSet{2}},
-  {kUpsampleNearest3DGradOpName, ShapeSet{2}},
-  {kPadV3OpName, ShapeSet{1}},
-  {kPadV3GradOpName, ShapeSet{1}},
-};
-
-std::set<int64_t> GetShapeSetFromResizeMap(const CNodePtr &node) {
-  auto primitive = GetValueNode<PrimitivePtr>(node->input(0));
-  auto prim_name = primitive->ToString();
-  auto iter = try_get_value_in_resize_map.find(prim_name);
-  std::set<int64_t> res = {};
-  if (iter != try_get_value_in_resize_map.end()) {
-    res = iter->second;
-  }
-  return res;
-}
-
-bool IfNeedSkipResize(const CNodePtr &node) {
+// In compile stage, run resize when kernel is not dynamic shape or has no value depend list.
+bool CheckResizeCondition(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->input(0));
   if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
-    auto input_size = common::AnfAlgo::GetInputTensorNum(node);
-    for (size_t i = 0; i < input_size; ++i) {
-      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
-      auto real_input = input_node_with_index.first;
-
-      // Inverse op have constant input need infer ,then resize
-      auto shape_set = GetShapeSetFromResizeMap(node);
-      if (shape_set.find(i) != shape_set.end()) {
-        if (real_input->isa<Parameter>()) {
-          MS_LOG(DEBUG) << "Set Node Attr is Dynamic Shape";
-          common::AnfAlgo::SetNodeAttr(mindspore::kAttrOutputIsDynamicShape, MakeValue(true), node);
-          node->func_graph()->cast<KernelGraphPtr>()->SetGraphDynamicAttr(true);
-          return true;
-        } else if (real_input->isa<ValueNode>()) {
-          auto value_node = real_input->cast<ValueNodePtr>();
-          auto value = value_node->value();
-          MS_EXCEPTION_IF_NULL(value);
-          if (value->isa<tensor::Tensor>()) {
-            auto value_tensor_ptr = value->cast<tensor::TensorPtr>();
-            value_tensor_ptr->data_sync();
-          }
-        }
-      }
+    if (common::AnfAlgo::IsDynamicShape(node)) {
+      MS_LOG(DEBUG) << "Skip resize for " << node->DebugString() << ", for reason is dynamic shape";
+      return false;
+    }
+    if (common::AnfAlgo::IsDynamicValue(node)) {
+      MS_LOG(DEBUG) << "Skip resize for " << node->DebugString() << ", for reason is dynamic value";
+      return false;
     }
   }
-  return false;
+
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

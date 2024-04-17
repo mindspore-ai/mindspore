@@ -25,7 +25,7 @@ mindspore.nn.GRU
         - **input_size** (int) - 输入的大小。
         - **hidden_size** (int) - 隐藏状态大小。
         - **num_layers** (int) - 网络层数。默认值： ``1`` 。
-        - **has_bias** (bool) - cell是否有偏置项 `b_{in}` 和 `b_{hn}` 。默认值： ``True`` 。
+        - **has_bias** (bool) - cell是否有偏置项 :math:`b_{in}` 和 :math:`b_{hn}` 。默认值： ``True`` 。
         - **batch_first** (bool) - 指定输入 `x` 的第一个维度是否为batch_size。默认值： ``False`` 。
         - **dropout** (float) - 指的是除第一层外每层输入时的Dropout概率。默认值： ``0.0`` 。Dropout的范围为[0.0, 1.0)。
         - **bidirectional** (bool) - 是否为双向GRU。如果bidirectional=True，则num_directions=2，为双向GRU。否则为1，单向GRU。默认值： ``False`` 。
@@ -44,7 +44,7 @@ mindspore.nn.GRU
 
     异常：
         - **TypeError** - `input_size` ， `hidden_size` 或 `num_layers` 不是整数。
-        - **TypeError** - `has_bias` ， `batch_first` 或 `bibound` 不是bool。
+        - **TypeError** - `has_bias` ， `batch_first` 或 `bidirectional` 不是bool。
         - **TypeError** - `dropout` 既不是浮点数也不是整数。
         - **ValueError** - `dropout` 不在[0.0, 1.0)范围内。
 

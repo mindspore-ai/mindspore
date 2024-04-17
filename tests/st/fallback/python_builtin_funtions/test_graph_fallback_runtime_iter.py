@@ -24,7 +24,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -52,7 +52,7 @@ def test_list_tuple_string_dict_tensor_iter():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -75,7 +75,7 @@ def test_tensor_iter():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -102,7 +102,7 @@ def test_list_iter_in_for():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -128,7 +128,7 @@ def test_iter_asnumpy():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -156,7 +156,7 @@ def test_tuple_iter_next():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -200,7 +200,7 @@ class MyIterator(nn.Cell):
 
 
 @pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -226,7 +226,7 @@ def test_custom_self_iterator_1():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -253,7 +253,7 @@ def test_custom_self_iterator_2():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

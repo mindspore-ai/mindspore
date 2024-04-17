@@ -24,18 +24,12 @@ namespace kernel {
 namespace {
 #define MAX_INT ((static_cast<unsigned int>(-1)) >> 1)
 
-constexpr auto kGatherNd = "GatherNd";
-constexpr size_t kGatherNdInputsNum = 2;
-constexpr size_t kGatherNdOutputsNum = 1;
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-bool GatherNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-  dtype_ = inputs[0]->GetDtype();
+bool GatherNdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[0]->dtype_id();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
@@ -48,10 +42,9 @@ bool GatherNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   kernel_func_ = func_list_[index].second;
   return true;
 }
-int GatherNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int GatherNdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -94,13 +87,11 @@ int GatherNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename S, typename T>
-bool GatherNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGatherNdInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherNdOutputsNum, kernel_name_);
-  const auto *input_addr = static_cast<T *>(inputs[0]->addr);
-  const auto *indices_addr = static_cast<S *>(inputs[1]->addr);
-  auto output_addr = static_cast<T *>(outputs[0]->addr);
+bool GatherNdCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto *input_addr = static_cast<T *>(inputs[0]->device_ptr());
+  const auto *indices_addr = static_cast<S *>(inputs[1]->device_ptr());
+  auto output_addr = static_cast<T *>(outputs[0]->device_ptr());
 
   size_t output_dim0 = dims_[0];
   size_t output_dim1 = dims_[1];

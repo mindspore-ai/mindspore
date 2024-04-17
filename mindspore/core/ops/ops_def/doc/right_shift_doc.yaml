@@ -1,0 +1,38 @@
+right_shift:
+    description: |
+        Shift the value of each position of Tensor `input_x` to the right by corresponding bits in Tensor `input_y`.
+        The inputs are two tensors, dtypes of them must be consistent, and the
+        shapes of them could be broadcast.
+
+        .. math::
+
+            \begin{aligned}
+            &out_{i} =x_{i} >> y_{i}
+            \end{aligned}
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        Inputs:
+            - **input_x** (Tensor) - The target tensor, will be shifted to the right
+              by `input_y` bits element-wise. Support all int and uint types.
+            - **input_y** (Tensor) - Number of bits shifted, the tensor must have the same type as `input_x`.
+
+        Outputs:
+            - **output** (Tensor) - The output tensor, has the same type as `input_x`.
+
+        Raises:
+            TypeError: If `input_x` or `input_y` is not tensor.
+            TypeError: If `input_x` and `input_y` could not be broadcast.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.uint8))
+            >>> input_y = Tensor(np.array([1, 1, 1]).astype(np.uint8))
+            >>> output = ops.RightShift()(input_x, input_y)
+            >>> print(output)
+            [0 1 1]

@@ -44,15 +44,14 @@ namespace {
 abstract::ShapePtr AdjustContrastv2InferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto input_images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   // support dynamic rank and dynamic shape.
   if (IsDynamic(input_images_shape)) {
     return std::make_shared<abstract::Shape>(input_images_shape);
   }
-  auto input_contrast_factor_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto input_images_shape_ptr = input_args[0]->BuildShape();
-  auto input_contrast_factor_shape_ptr = input_args[1]->BuildShape();
+  auto input_contrast_factor_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto input_images_shape_ptr = input_args[0]->GetShape();
+  auto input_contrast_factor_shape_ptr = input_args[1]->GetShape();
   if (input_images_shape_ptr->IsDynamic() || input_contrast_factor_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::Shape>(input_images_shape);
   }
@@ -75,10 +74,10 @@ abstract::ShapePtr AdjustContrastv2InferShape(const PrimitivePtr &primitive,
 
 TypePtr AdjustContrastv2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  auto input_images_type = input_args[0]->BuildType();
-  auto input_contrast_factor_type = input_args[1]->BuildType();
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
+  auto input_images_type = input_args[0]->GetType();
+  auto input_contrast_factor_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(input_images_type);
   MS_EXCEPTION_IF_NULL(input_contrast_factor_type);
   const std::set<TypePtr> valid_images_types = {kFloat16, kFloat32};

@@ -660,7 +660,9 @@ int InferShapePass::InitSearchTensor(const int64_t &subgraph_index, MetaGraphT *
   }
   auto &subgraph = graph->subGraph.at(subgraph_index);
   for (uint32_t i = 0; i < tensors_.size(); i++) {
-    if (IsContain(subgraph->inputIndices, i) || !graph->allTensors.at(i)->data.empty()) {
+    if (IsContain(subgraph->inputIndices, i) || !graph->allTensors.at(i)->data.empty() ||
+        (graph->allTensors.at(i)->nodeType == NodeType_ValueNode && graph->allTensors.at(i)->dims.size() == 1 &&
+         graph->allTensors.at(i)->dims[0] == 0)) {
       tensors_[i].is_inferred_ = true;
     }
   }

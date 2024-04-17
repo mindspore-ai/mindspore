@@ -48,8 +48,8 @@ abstract::ShapePtr LeftShiftInferShape(const PrimitivePtr &primitive, const std:
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t max_dim = 8;
-  auto in_shape_x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto in_shape_y = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto in_shape_x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto in_shape_y = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("The dimension of LeftShift input", SizeToLong(in_shape_x.size()), kLessThan,
                                            max_dim, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("The dimension of LeftShift input", SizeToLong(in_shape_y.size()), kLessThan,
@@ -60,12 +60,12 @@ abstract::ShapePtr LeftShiftInferShape(const PrimitivePtr &primitive, const std:
 TypePtr LeftShiftInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto y = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim_name, x, y);
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
-  if (!input_type->isa<TensorType>()) {
+  if (input_type->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "The " << prim_name << "'s"
                             << " input must be tensor type but got " << input_type->ToString();
   }

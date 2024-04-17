@@ -32,11 +32,8 @@ constexpr size_t kDeltaIndex = 4;
 constexpr size_t kOutputIndex = 0;
 }  // namespace
 
-bool ApplyProximalGradientDescentGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                    const std::vector<KernelTensorPtr> &inputs,
-                                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool ApplyProximalGradientDescentGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -52,15 +49,13 @@ bool ApplyProximalGradientDescentGpuKernelMod::Init(const BaseOperatorPtr &base_
   return true;
 }
 
-int ApplyProximalGradientDescentGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs,
-                                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyProximalGradientDescentGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kApplyProximalGradientDescentInputsNum) {
+  if (inputs.size() != kApplyProximalGradientDescentInputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 5.";
     return KRET_RESIZE_FAILED;
   }
@@ -102,20 +97,20 @@ int ApplyProximalGradientDescentGpuKernelMod::Resize(const BaseOperatorPtr &base
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = input_size_list_[0] / unit_size_;
+  input_elements_ = inputs[0]->size() / unit_size_;
   return ret;
 }
 
 template <typename T>
-bool ApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &workspace,
-                                                            const std::vector<AddressPtr> &outputs) {
-  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto alpha = reinterpret_cast<T *>(inputs[kAlphaIndex]->addr);
-  auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->addr);
-  auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
-  auto delta = reinterpret_cast<T *>(inputs[kDeltaIndex]->addr);
-  auto output = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
+bool ApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &workspace,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto alpha = reinterpret_cast<T *>(inputs[kAlphaIndex]->device_ptr());
+  auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->device_ptr());
+  auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->device_ptr());
+  auto delta = reinterpret_cast<T *>(inputs[kDeltaIndex]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[kOutputIndex]->device_ptr());
 
   auto status = CalApplyProximalGradientDescent(input_elements_, var, alpha, l1, l2, delta, output, device_id_,
                                                 reinterpret_cast<cudaStream_t>(cuda_stream_));

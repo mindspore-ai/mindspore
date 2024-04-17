@@ -449,7 +449,7 @@ class Conv2dThor(_ConvThor):
             weight_shape = [1, self.in_channels, *self.kernel_size]
             self.weight_init = weight_init
             if isinstance(weight_init, Tensor):
-                self.weight_init = Tensor(weight_init.asnumpy().swapaxes(0, 1), weight_init.dtype)
+                self.weight_init = weight_init.swapaxes(0, 1)
             if isinstance(weight_init, Initializer):
                 self.weight_init.shape = weight_shape
             self.weight = Parameter(initializer(self.weight_init, weight_shape), name='weight')
@@ -596,7 +596,6 @@ class EmbeddingThor(Cell):
         if padding_idx is not None:
             self.padding_idx = Validator.check_int_range(padding_idx, 0, vocab_size, Validator.INC_BOTH,
                                                          "padding_idx", self.cls_name)
-            self.init_tensor = self.init_tensor.init_data().asnumpy()
             self.init_tensor[self.padding_idx] = 0
         self.embedding_table = Parameter(self.init_tensor, name='embedding_table')
         self.expand = P.ExpandDims()

@@ -33,6 +33,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "abstract/abstract_value.h"
@@ -51,6 +52,10 @@ void ResetStackFrameDepth();
 void IncreaseStackFrameDepth();
 void DecreaseStackFrameDepth();
 size_t StackFrameDepth();
+
+// Extend current context with values for another graph.
+AnalysisContextPtr NewContext(const AnalysisContextPtr &current_context, const FuncGraphPtr &fg,
+                              const AbstractBasePtrList &args_abs_list);
 
 // Config to a certain node in a certain context.
 class AnfNodeConfig final : public Config {
@@ -255,7 +260,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
       : prim_constructors_(prim_evaluator_map),
         func_graph_manager_(func_graph_manager),
         forward_count_(0),
-        enable_recursive_eval_(common::GetEnv("MS_DEV_RECURSIVE_EVAL") == "1"),
+        enable_recursive_eval_(common::GetCompileConfig("RECURSIVE_EVAL") == "1"),
         check_side_effect_(false) {}
   virtual ~AnalysisEngine() = default;
 
@@ -275,6 +280,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
                                            const FuncGraphPtr &func_graph);
   AbstractBasePtr EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf) const;
   EvalResultPtr EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
+  EvalResultPtr ConvertClassTypeToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf);
   // Infer the result of fn(args).
   EvalResultPtr Execute(const AbstractFunctionPtr &func, const AbstractBasePtrList &args_abs_list);
   void Clear();
@@ -377,6 +383,8 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
 // the value 1234 would become ANYTHING.
 AbstractBasePtr FromValueInside(const ValuePtr &value, bool broaden = false);
 
+EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs);
+
 template <typename T>
 AbstractBasePtr FromValue(const T &value, bool broaden = false) {
   return FromValueInside(MakeValue(value), broaden);
@@ -391,7 +399,6 @@ void SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(const AnalysisEnginePtr
                                                          const CNodePtr &cnode,
                                                          const AbstractFunctionPtr &base_func_graph_func,
                                                          const AnalysisContextPtr &fg_context);
-EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs);
 }  // namespace abstract
 }  // namespace mindspore
 

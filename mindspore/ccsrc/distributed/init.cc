@@ -30,19 +30,21 @@ bool Initialize() {
   // If this process participates in the cluster building, we need to initialize cluster context.
   if (common::UseDynamicCluster()) {
     if (!InitializeCluster()) {
-      MS_LOG(EXCEPTION) << "Failed to initialize distributed training because some nodes in the cluster are not "
-                           "successfully launched. "
-                           "Please check log of each node to find out which is the first one to throw exception. You "
-                           "can search 'is timed out' in Scheduler's log to see which node is offline.";
+      MS_LOG(EXCEPTION)
+        << "Failed to initialize distributed job cluster because some processes in the cluster are not successfully "
+           "spawned. You can run command: 'grep -rn -E 'ERROR|CRITICAL' -C 10' in your log directory to filter out "
+           "error info. It may be one of the following reasons:\n1."
+        << kWorkerProcessNotEnoughError << "\n2." << kSchedPortOccupiedError << "\n3."
+        << kSchedWorkerAddrNotConsistentError;
     }
   }
 
   // Initialize the collective manager regardless of whether the cluster is initialized or not.
   if (!InitializeCollective()) {
-    MS_LOG(EXCEPTION) << "Failed to initialize collective communication because some nodes in the cluster are not "
-                         "successfully launched. Please check "
-                         "log of each node to find out which is the first one to throw exception. You can search 'is "
-                         "timed out' in Scheduler's log to see which node is offline.";
+    MS_LOG(EXCEPTION)
+      << "Failed to initialize collective communication because some processes in the cluster are not successfully "
+         "spawned. You can run command: 'grep -rn -E 'ERROR|CRITICAL' -C 10' in your log directory to filter out error "
+         "info.";
   }
 
   // If this is a scheduler node, it does not need to execute other codes like graph compiling and running. We should
@@ -98,6 +100,8 @@ bool InitializeCluster() {
     MS_LOG(INFO) << "Begin finalize the EmbeddingCacheScheduler.";
     runtime::EmbeddingCacheScheduler::GetInstance().Finalize(false);
     MS_LOG(INFO) << "End finalize the EmbeddingCacheScheduler.";
+    // Forcibly Kill this process.
+    (void)kill(getpid(), SIGTERM);
   });
   node->set_abnormal_callback(callback);
 

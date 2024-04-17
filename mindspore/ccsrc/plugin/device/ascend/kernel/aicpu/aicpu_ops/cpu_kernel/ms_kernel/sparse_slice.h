@@ -18,8 +18,8 @@
 #define OPS_BUILT_IN_OP_PROTO_INC_SPARSE_OPS_H_
 
 #include <string>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_tensor.h"
 #include "cpu_tensor_shape.h"
 #include "unsupported/Eigen/CXX11/Tensor"
@@ -34,7 +34,8 @@ class SparseSliceCpuKernel : public CpuKernel {
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
-  uint32_t SparseSliceParamCheck(Tensor *indices, Tensor *values, Tensor *shape, Tensor *start, Tensor *size);
+  uint32_t SparseSliceParamCheck(CpuKernelContext &ctx, Tensor *indices, Tensor *values, Tensor *shape, Tensor *start,
+                                 Tensor *size);
 };
 }  // namespace aicpu
 #endif

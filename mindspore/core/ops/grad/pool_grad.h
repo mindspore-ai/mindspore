@@ -48,6 +48,20 @@ class MIND_API PoolGrad : public BaseOperator {
   std::vector<int64_t> _grad_check_vector(const std::string &arg_name, const std::vector<int64_t> arg_val,
                                           const std::string &op_name);
 };
+
+static std::map<std::string, int64_t> pad_map = {
+  {"CALCULATED", PadMode::PAD},
+  {"PAD", PadMode::PAD},
+  {"SAME", PadMode::SAME},
+  {"VALID", PadMode::VALID},
+};
+
+static std::map<std::string, int64_t> dataformat_map = {
+  {"NCHW", Format::NCHW},
+  {"NHWC", Format::NHWC},
+  {"NCDHW", Format::NCDHW},
+  {"NDHWC", Format::NDHWC},
+};
 }  // namespace ops
 }  // namespace mindspore
 

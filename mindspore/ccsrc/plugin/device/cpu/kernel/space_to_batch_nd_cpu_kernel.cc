@@ -71,15 +71,15 @@ void SpaceToBatchNDCpuKernelMod::CheckParam() {
 }
 
 template <typename T>
-bool SpaceToBatchNDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool SpaceToBatchNDCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   // check all shapes, blocks and paddings are valid
   CheckParam();
 
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  int ret = memset_s(output, outputs[0]->size, 0, sizeof(T) * static_cast<size_t>(output_size_));
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  int ret = memset_s(output, outputs[0]->size(), 0, sizeof(T) * static_cast<size_t>(output_size_));
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
   }
@@ -113,36 +113,28 @@ bool SpaceToBatchNDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   return true;
 }
 
-bool SpaceToBatchNDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SpaceToBatchND>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast SpaceToBatchND ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-
+bool SpaceToBatchNDCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kSpaceToBatchNDInputsNum || outputs.size() != kSpaceToBatchNDOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kSpaceToBatchNDInputsNum << " and "
                   << kSpaceToBatchNDOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  block_size_ = kernel_ptr->get_block_shape();
-  paddings_ = kernel_ptr->get_paddings();
+  block_size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kBlockShape));
+  paddings_ = GetValue<std::vector<std::vector<int64_t>>>(primitive_->GetAttr(ops::kPaddings));
   block_rank_ = block_size_.size();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int SpaceToBatchNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SpaceToBatchNDCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // get input_shape

@@ -26,6 +26,7 @@
 #include <initializer_list>
 
 #include "utils/hash_map.h"
+#include "ir/signature.h"
 #include "ir/dtype/type.h"
 #include "abstract/abstract_value.h"
 #include "base/base_ref.h"
@@ -99,8 +100,7 @@ class MS_CORE_API Primitive : public Named {
   Primitive &operator=(const Primitive &other);
   MS_DECLARE_PARENT(Primitive, Named);
   abstract::AbstractBasePtr ToAbstract() override;
-  abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr &anf_node);
-  std::string ToString() const override { return name(); }
+  std::string ToString() const override;
   /// \brief Ready to recording the attribute if the attribute needs to be added when deducing shape and type.
   /// This attributes has been recorded needs to add in infer cache.
   void BeginRecordAddAttr() {
@@ -277,6 +277,14 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \return Return true if primitive has signature flag , else return false.
   bool has_signature() const { return has_signature_; }
+  /// \brief Set signatures of primitive.
+  ///
+  /// \param[in] signatures Set signatures of primitive.
+  void set_signatures(const std::vector<Signature> &signatures);
+  /// \brief Get signatures of primitive.
+  ///
+  /// \return Return signatures of primitive.
+  const std::vector<Signature> &signatures() const { return signatures_; }
   /// \brief Check whether the primitive is a basic primitive.
   ///
   /// \return Return true if the primitive is basic, else return false.
@@ -326,6 +334,8 @@ class MS_CORE_API Primitive : public Named {
   /// \return Return shared_mutex of the primitive.
   const std::shared_ptr<std::shared_mutex> &shared_mutex() const { return shared_mutex_; }
 
+  virtual bool IsPythonPrim() { return false; }
+
  protected:
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   mindspore::HashMap<std::string, ValuePtr> evaluate_added_attrs_;
@@ -335,6 +345,7 @@ class MS_CORE_API Primitive : public Named {
   PrimType prim_type_;
   bool is_base_;
   bool has_signature_;
+  std::vector<Signature> signatures_;
   bool record_evaluate_add_attr_;
   bool const_prim_;
   bool inplace_prim_;

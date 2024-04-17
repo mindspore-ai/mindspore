@@ -1,0 +1,14 @@
+#operator relu6_grad
+relu6_grad:
+  args:
+    y_backprop:
+      dtype: tensor
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ReLU6Grad
+  function:
+    disable: True

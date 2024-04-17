@@ -55,7 +55,7 @@ void ParameterizedTruncatedNormalCheckdims(const std::vector<AbstractBasePtr> &i
     MS_EXCEPTION(ValueError) << "For ParameterizedTruncatedNormal, the batch size must be >= 0.";
   }
   for (size_t i = 1; i < input_args.size(); i++) {
-    auto para_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i]->BuildShape())[kShape];
+    auto para_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i]->GetShape())[kShape];
     if (para_shape.size() > 1) {
       MS_EXCEPTION(ValueError) << "For ParameterizedTruncatedNormal, " << parameters.at(i - 1)
                                << " should be at most rank 1, but got rank " << para_shape.size() << ".";
@@ -76,7 +76,7 @@ abstract::ShapePtr ParameterizedTruncatedNormalInferShape(const PrimitivePtr &pr
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const int64_t kShapeSize = 2;
-  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (IsDynamic(shape_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
@@ -86,10 +86,11 @@ abstract::ShapePtr ParameterizedTruncatedNormalInferShape(const PrimitivePtr &pr
   (void)CheckAndConvertUtils::CheckInteger("size of argument[shape]", shape_shape[0], kGreaterEqual, kShapeSize,
                                            op_name);
 
-  auto shape_value = input_args[kInputIndex0]->BuildValue();
+  auto shape_value = input_args[kInputIndex0]->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
-  if (!shape_value->isa<ValueAny>() && !shape_value->isa<None>()) {
-    auto out_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);
+  if (!shape_value->ContainsValueAny() && !shape_value->isa<None>()) {
+    auto out_shape =
+      CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name, input_args[kInputIndex0]->GetType());
     (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, op_name);
     ParameterizedTruncatedNormalCheckdims(input_args, out_shape[0]);
 
@@ -104,11 +105,11 @@ TypePtr ParameterizedTruncatedNormalInferType(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto input_type_shape = input_args[kInputIndex0]->BuildType();
-  auto input_type_mean = input_args[kInputIndex1]->BuildType();
-  auto input_type_stdevs = input_args[kInputIndex2]->BuildType();
-  auto input_type_min = input_args[kInputIndex3]->BuildType();
-  auto input_type_max = input_args[kInputIndex4]->BuildType();
+  auto input_type_shape = input_args[kInputIndex0]->GetType();
+  auto input_type_mean = input_args[kInputIndex1]->GetType();
+  auto input_type_stdevs = input_args[kInputIndex2]->GetType();
+  auto input_type_min = input_args[kInputIndex3]->GetType();
+  auto input_type_max = input_args[kInputIndex4]->GetType();
   const std::set<TypePtr> valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_type_shape, valid_types, prim_name);
   const std::set<TypePtr> valid_types_mean = {kFloat16, kFloat32, kFloat64};

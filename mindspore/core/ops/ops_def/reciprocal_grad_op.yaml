@@ -1,0 +1,12 @@
+#operator reciprocal_grad
+reciprocal_grad:
+    args:
+        y:
+            dtype: tensor
+        dy:
+            dtype: tensor
+    returns:
+        z:
+            dtype: tensor
+    function:
+        disable: True

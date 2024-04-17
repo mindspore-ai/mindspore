@@ -29,30 +29,25 @@ constexpr int kMatrixDiagPartV3OutputsNum = 1;
 constexpr int kMatrixDiagPartV3MinOutputShape = 2;
 }  // namespace
 
-bool MatrixDiagPartV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MatrixDiagPartV3GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatrixDiagPartV3InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatrixDiagPartV3OutputsNum, kernel_name_);
 
-  auto matrix_prim = std::make_shared<ops::MatrixDiagPartV3>(base_operator->GetPrim());
-  auto align = matrix_prim->get_align();
+  auto align = GetValue<std::string>(primitive_->GetAttr("align"));
   left_align_super_diag_ = (align == "LEFT_LEFT" || align == "LEFT_RIGHT");
   left_align_sub_diag_ = (align == "LEFT_LEFT" || align == "RIGHT_LEFT");
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int MatrixDiagPartV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int MatrixDiagPartV3GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto matrix_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -71,9 +66,9 @@ int MatrixDiagPartV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool MatrixDiagPartV3GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
+bool MatrixDiagPartV3GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
   auto matrix_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   auto k_ptr = GetDeviceAddress<IndexType>(inputs, kIndex1);
   auto padding_value_ptr = GetDeviceAddress<T>(inputs, kIndex2);

@@ -111,7 +111,7 @@ TEST_F(AnyTypeKernelActorTest, RunOpData) {
   auto graph_pair = BuildAnyTypeGraph();
   auto func_graph = graph_pair.first;
   auto kernel_graph = graph_pair.second;
-  auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
+  auto &memory_manager_actor = MemoryManagerActor::GetInstance();
   const auto &any_type_kernel_actor =
     std::make_shared<AnyTypeKernelActor>(kernel_graph->ToString() + "_AnyTypeKernelActor", kernel_graph,
                                          device_context.get(), memory_manager_actor->GetAID(), nullptr, nullptr);
@@ -126,12 +126,16 @@ TEST_F(AnyTypeKernelActorTest, RunOpData) {
   op_context.sequential_num_ = 140429;
   op_context.results_ = &result;
 
-  auto device_address0 = device_context->device_res_manager_->CreateDeviceAddress(
-    &input_0, sizeof(DataType), kOpFormat_DEFAULT, TypeId::kNumberTypeFloat32, shape);
+  auto kernel_tensor0 = std::make_shared<kernel::KernelTensor>(
+    &input_0, sizeof(DataType), Format::DEFAULT_FORMAT, TypeId::kNumberTypeFloat32, shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  auto device_address0 = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor0);
   auto op_data0 = std::make_shared<OpData<DeviceTensor>>(any_type_kernel_actor->GetAID(), device_address0.get(), 0);
 
-  auto device_address1 = device_context->device_res_manager_->CreateDeviceAddress(
-    &input_1, sizeof(DataType), kOpFormat_DEFAULT, TypeId::kNumberTypeFloat32, shape);
+  auto kernel_tensor1 = std::make_shared<kernel::KernelTensor>(
+    &input_1, sizeof(DataType), Format::DEFAULT_FORMAT, TypeId::kNumberTypeFloat32, shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  auto device_address1 = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor1);
   auto op_data1 = std::make_shared<OpData<DeviceTensor>>(any_type_kernel_actor->GetAID(), device_address1.get(), 1);
 
   any_type_kernel_actor->input_datas_num_ = 2;

@@ -18,7 +18,7 @@
 #include <array>
 #include <iostream>
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class DiagonalCpuKernel final : public CpuKernel {
@@ -33,6 +33,9 @@ class DiagonalCpuKernel final : public CpuKernel {
 
   template <typename T>
   void set_output(int64_t *ar, T *dptr, T *y_dptr);
+
+ private:
+  uint32_t ComputeWithType(CpuKernelContext &ctx);
 
  private:
   int64_t offset_ = 0;

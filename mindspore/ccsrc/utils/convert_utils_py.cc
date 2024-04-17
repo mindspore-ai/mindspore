@@ -40,7 +40,6 @@
 #include "include/common/fallback.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/convert_utils.h"
-#include "frontend/expander/pack/pack_expander.h"
 
 namespace mindspore {
 py::object BuiltinsToPyData(const Any &value);
@@ -74,6 +73,8 @@ py::object SetAdaptedAttrToTensor(const py::object &tensor, const AbstractBasePt
   auto tensor_abs = abs->cast<abstract::AbstractTensorPtr>();
   if (tensor_abs->is_adapter()) {
     py::setattr(tensor, "adapter_flag", py::bool_(true));
+  } else {
+    py::setattr(tensor, "adapter_flag", py::bool_(false));
   }
   return tensor;
 }
@@ -234,9 +235,9 @@ py::object ValueSequenceToPyData(const ValueSequencePtr &value, const AbstractBa
       ele_sequeue[i] = ValueToPyData(value_sequeue[i]);
     }
     py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-    py::str type_name = py::str(value_named_tuple->name());
-    py::object named_tuple =
-      python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_TO_NAMEDTUPLE, type_name, key_sequeue, ele_sequeue);
+    py::str sub_class_name = py::str(value_named_tuple->sub_class_name());
+    py::object named_tuple = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_TO_NAMEDTUPLE, sub_class_name,
+                                                         key_sequeue, ele_sequeue);
     return named_tuple;
   }
   py::tuple res_sequeue(value_size);
@@ -678,6 +679,11 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
       *ret_val = py::cast(tensor);
     }
     *ret_val = SetAdaptedAttrToTensor(*ret_val, output->abstract());
+    auto abs = output->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractTensor>()) {
+      py::setattr(*ret_val, "__ms_parameter_output__", py::bool_(true));
+    }
     return true;
   }
   return false;
@@ -823,12 +829,7 @@ ValuePtr PyStubNodeCast(const py::handle &obj) {
 
 std::pair<ShapeVector, TypePtr> GetStubTensorInfo(const py::handle &obj) {
   auto py_stub = py::getattr(obj, stub::PY_ATTR_STUB);
-  ValuePtr stub;
-  if (py::isinstance<expander::PackNode>(py_stub)) {
-    stub = py_stub.cast<expander::PackNodePtr>();
-  } else {
-    stub = py_stub.cast<stub::StubNodePtr>();
-  }
+  ValuePtr stub = py_stub.cast<stub::StubNodePtr>();
   AbstractBasePtr stub_abs;
   if (stub == nullptr) {
     auto tensor_ptr = py::getattr(obj, stub::PY_ATTR_TENSOR).cast<tensor::TensorPtr>();
@@ -863,5 +864,40 @@ ValuePtr ShallowCopyTensorValue(const ValuePtr &value) {
   } else {
     return value;
   }
+}
+
+void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors) {
+  MS_EXCEPTION_IF_NULL(tensors);
+  ValuePtr tensor_ptr = nullptr;
+  if (py::isinstance<tensor::Tensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
+  } else if (IsStubTensor(input_object)) {
+    tensor_ptr = ConvertStubTensor(input_object);
+  } else if (py::isinstance<py::float_>(input_object)) {
+    double input_value = py::cast<py::float_>(input_object);
+    tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
+  } else if (py::isinstance<py::int_>(input_object)) {
+    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
+  } else if (py::isinstance<py::list>(input_object)) {
+    auto list_inputs = py::cast<py::list>(input_object);
+    for (size_t i = 0; i < list_inputs.size(); ++i) {
+      ConvertPyObjectToTensor(list_inputs[i], tensors);
+    }
+    return;
+  } else if (py::isinstance<py::tuple>(input_object)) {
+    auto tuple_inputs = py::cast<py::tuple>(input_object);
+    for (size_t i = 0; i < tuple_inputs.size(); ++i) {
+      ConvertPyObjectToTensor(tuple_inputs[i], tensors);
+    }
+    return;
+  } else if (py::isinstance<tensor::CSRTensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::CSRTensorPtr>(input_object);
+  } else if (py::isinstance<tensor::COOTensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::COOTensorPtr>(input_object);
+  } else {
+    MS_EXCEPTION(TypeError) << "Unreasonable data type: " << input_object.get_type() << ".";
+  }
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  (void)tensors->emplace_back(tensor_ptr);
 }
 }  // namespace mindspore

@@ -27,7 +27,7 @@ def np_all_close_with_loss(out, expect):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("data_type", [np.float, np.double])
+@pytest.mark.parametrize("data_type", [np.float32, np.float64])
 def test_stft_real_input(data_type):
     """
     Feature: STFT cpu kernel real data input.
@@ -77,7 +77,7 @@ def test_stft_complex_input(input_data_type, win_data_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("input_data_type", [np.complex64, np.complex128])
-@pytest.mark.parametrize("win_data_type", [np.float, np.double])
+@pytest.mark.parametrize("win_data_type", [np.float32, np.float64])
 def test_stft_diff_type(input_data_type, win_data_type):
     """
     Feature: STFT cpu kernel.

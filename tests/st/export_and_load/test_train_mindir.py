@@ -112,7 +112,7 @@ def decrypt_func(cipher_file, key):
     return plain_data
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -134,7 +134,7 @@ def test_export_lenet_grad_mindir():
     assert os.path.exists(verify_name)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -165,7 +165,7 @@ def test_load_mindir_and_run():
     assert np.allclose(outputs0.asnumpy(), outputs_after_load.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -193,3 +193,23 @@ def test_load_mindir_and_run_with_encryption():
     outputs_after_load = loaded_net(inputs0)
     assert np.allclose(outputs0.asnumpy(), outputs_after_load.asnumpy())
     os.remove(mindir_name)
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_load_mindir_generated_from_old_version():
+    """
+    Feature: Load MindIR generated from old version
+    Description: Test Load MindIR generated from old version
+    Expectation: load successfully
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    path = os.path.abspath(os.path.dirname(__file__)) + "/exported_mindir/old_version_mindir.mindir"
+    graph = load(file_name=path)
+    x = Tensor(np.ones([1, 3, 224, 224]).astype(np.float32))
+    loaded_net = nn.GraphCell(graph)
+    output = Tensor([0.01944945, 0.01933849, -0.00446877])
+    output_from_load = loaded_net(x)
+    assert np.allclose(output.asnumpy(), output_from_load.asnumpy())

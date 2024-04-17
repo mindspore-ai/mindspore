@@ -19,7 +19,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_COMPLEX_H_
 #define AICPU_KERNELS_NORMALIZED_COMPLEX_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class ComplexCpuKernel : public CpuKernel {
@@ -31,10 +31,10 @@ class ComplexCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ComplexCheck(const CpuKernelContext &ctx);
+  uint32_t ComplexCheck(CpuKernelContext &ctx);
 
   template <typename T, typename t>
-  uint32_t ComplexCompute(const CpuKernelContext &ctx);
+  uint32_t ComplexCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

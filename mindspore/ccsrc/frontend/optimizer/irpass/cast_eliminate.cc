@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 #include "frontend/optimizer/irpass/cast_eliminate.h"
-#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "frontend/optimizer/irpass.h"
@@ -32,6 +32,10 @@ AnfNodePtr TransThroughDepend(const AnfNodePtr &node) {
   auto cur_node = node;
   while (IsPrimitiveCNode(cur_node, prim::kPrimDepend)) {
     cur_node = cur_node->cast<CNodePtr>()->input(1);
+    const auto &abs = node->abstract();
+    if (abs != nullptr) {
+      cur_node->set_abstract(abs);
+    }
   }
   return cur_node;
 }
@@ -58,21 +62,23 @@ AnfNodePtr CastSameTypeEliminater::operator()(const OptimizerPtr &, const AnfNod
   MS_EXCEPTION_IF_NULL(src_type);
 
   // tgt type check
-  auto tgt_type = GetValueNode<TypePtr>(tgt_);
-  MS_EXCEPTION_IF_NULL(tgt_type);
-  if (tgt_type->isa<TensorType>()) {
-    tgt_type = tgt_type->cast<TensorTypePtr>()->element();
-  }
+  auto tgt_type_id_value = GetValueNode<Int64ImmPtr>(tgt_);
+  MS_EXCEPTION_IF_NULL(tgt_type_id_value);
+  int64_t tgt_type_id = tgt_type_id_value->value();
 
-  if (src_type->type_id() == tgt_type->type_id()) {
+  if (src_type->type_id() == tgt_type_id) {
     // If 2nd input of cast is a depend, can't erase cast directly, but should replace cast with a new depend.
     if (IsPrimitiveCNode(node->cast<CNodePtr>()->input(2), prim::kPrimDepend)) {
       auto new_depend =
         node->func_graph()->NewCNode({NewValueNode(prim::kPrimDepend), src_, node->cast<CNodePtr>()->input(2)});
+      const auto &abs = src_->abstract();
+      if (abs != nullptr) {
+        new_depend->set_abstract(abs);
+      }
       return new_depend;
     }
     // Temporary patch for the output dtype mismatch, ResizeBilinear on Ascend always return Float32 tensor.
-    if (IsPrimitiveCNode(node->cast<CNodePtr>()->input(1), prim::kPrimResizeBilinear)) {
+    if (IsPrimitiveCNode(node->cast<CNodePtr>()->input(1), prim::kPrimResizeBilinearV2)) {
       return nullptr;
     }
     return src_;
@@ -117,20 +123,15 @@ bool TwoCastEliminater::CheckTypesIsIncreasingOrDecreasing() {
     x_type = x_type->cast<TensorTypePtr>()->element();
   }
 
-  auto y_type = GetValueNode<TypePtr>(y_);
-  MS_EXCEPTION_IF_NULL(y_type);
-  if (y_type->isa<TensorType>()) {
-    y_type = y_type->cast<TensorTypePtr>()->element();
-  }
+  auto y_dtype_id_value = GetValueNode<Int64ImmPtr>(y_);
+  MS_EXCEPTION_IF_NULL(y_dtype_id_value);
+  auto y_type_id = static_cast<TypeId>(y_dtype_id_value->value());
 
-  auto t_type = GetValueNode<TypePtr>(t_);
-  MS_EXCEPTION_IF_NULL(t_type);
-  if (t_type->isa<TensorType>()) {
-    t_type = t_type->cast<TensorTypePtr>()->element();
-  }
+  auto t_dtype_id_value = GetValueNode<Int64ImmPtr>(t_);
+  MS_EXCEPTION_IF_NULL(t_dtype_id_value);
+  auto t_type_id = static_cast<TypeId>(t_dtype_id_value->value());
+
   auto x_type_id = x_type->type_id();
-  auto y_type_id = y_type->type_id();
-  auto t_type_id = t_type->type_id();
   // y_type == t_type
   if (y_type_id == t_type_id) {
     return true;
@@ -156,10 +157,16 @@ AnfNodePtr TwoCastEliminater::operator()(const OptimizerPtr &, const AnfNodePtr 
   if (x_ == nullptr || t_ == nullptr || y_ == nullptr) {
     return nullptr;
   }
+  // Sometimes the abstract information of the Depend node has not been derived.
+  // the type of X is nullptr, {prim::kPrimCast, {prim::kPrimCast, Depend(W, Z), Y}, T}
+  // In this case, we postpone the elimination of the two casts after the next renormalize.
+  auto x_type = x_->Type();
+  if (x_type == nullptr) {
+    return nullptr;
+  }
   if (CheckTypesIsIncreasingOrDecreasing()) {
-    auto cast_op = python_adapter::GetPyFn("mindspore.ops.operations", "Cast")();
-    ValuePtr cast = parse::data_converter::PyDataToValue(cast_op);
-    auto cnode = NewCNode({NewValueNode(cast), x_, t_}, node->func_graph());
+    auto cnode = NewCNode({NewValueNode(prim::kPrimCast), x_, t_}, node->func_graph());
+    MS_EXCEPTION_IF_NULL(cnode);
     cnode->set_abstract(node->abstract());
     return cnode;
   }

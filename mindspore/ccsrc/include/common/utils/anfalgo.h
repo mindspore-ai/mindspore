@@ -65,7 +65,8 @@ class COMMON_EXPORT AnfAlgo {
   static std::vector<KernelWithIndex> GetAllOutputIndexByReturnTypes(const AnfNodePtr &node,
                                                                      const std::vector<PrimitivePtr> &return_types = {},
                                                                      bool need_make_tuple = false);
-  static std::vector<KernelWithIndex> GetAllOutputWithIndex(const AnfNodePtr &node);
+  static std::vector<KernelWithIndex> GetAllOutputWithIndex(const AnfNodePtr &node,
+                                                            const std::vector<PrimitivePtr> &return_types = {});
   static std::vector<KernelWithIndex> GetAllOutputWithOutMonadAndParameter(const AnfNodePtr &node);
   // get cnode primitive
   static AnfNodePtr GetCNodePrimitiveNode(const CNodePtr &node);
@@ -77,6 +78,7 @@ class COMMON_EXPORT AnfAlgo {
   static FuncGraphPtr GetCNodeFuncGraphPtr(const AnfNodePtr &node);
   // get kernel_name of anf node
   static std::string GetCNodeName(const AnfNodePtr &node);
+  static bool IsGetNextNode(const AnfNodePtr &node);
   // get detail info of anf node
   static std::string GetNodeDebugString(const AnfNodePtr &node);
   // get attr of anf node
@@ -127,22 +129,20 @@ class COMMON_EXPORT AnfAlgo {
   // get output shapes inferred by ME from input nodes.
   static ShapeVector GetOutputInferShape(const AnfNodePtr &node, size_t output_idx,
                                          bool is_real_squence_output = false);
-  static ShapeVector GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
-                                         size_t output_idx, bool is_real_squence_output = false);
   // get input shapes inferred by ME from input nodes.
   static ShapeVector GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx);
   // get output data type inferred by ME of anf node
+  static TypePtr GetOutputInferType(const AnfNodePtr &node, size_t output_idx, bool is_real_tuple = false);
   static TypeId GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx);
   static TypeId GetOutputInferDataType(const TypePtr &type, size_t output_idx);
   // get output original data type from prev node,input_index is the input index of current node related to prev node
   static TypeId GetPrevNodeOutputInferDataType(const AnfNodePtr &node, size_t input_idx);
+  static TypePtr GetPrevNodeOutputInferType(const AnfNodePtr &node, size_t input_idx);
   // for tuple condition
   static std::vector<TypeId> GetRealPrevNodesOutputInferDataType(const AnfNodePtr &node, size_t input_idx);
   // set infer shapes and types of anf node
   static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
                                          AnfNode *node, bool disable_dynamic_len = false);
-  static void SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
-                                            const AnfNodePtr &node);
   // set output shape ptr
   static void SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
                                           const std::vector<abstract::BaseShapePtr> &shapes, AnfNode *node);
@@ -181,11 +181,11 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsNodeOutputDynamicShape(const AnfNodePtr &node);
   static bool IsDynamicShape(const AnfNodePtr &node);
   static bool IsDynamicRankNode(const AnfNodePtr &node);
+  static bool IsDynamicValue(const AnfNodePtr &node);
   static bool IsNodeInputDynamicRank(const CNodePtr &anf_node_ptr);
   static bool IsNodeOutputDynamicRank(const AnfNodePtr &node);
   static bool IsInputAnchorDynamicRank(const AnfNodePtr &node, size_t idx);
   static bool IsOutputAnchorDynamicRank(const AnfNodePtr &node, size_t idx);
-  static bool HasDynamicShapeFlag(const PrimitivePtr &prim);
   static bool IsCondControlKernel(const CNodePtr &node);
   static bool GetBooleanAttr(const AnfNodePtr &node, const std::string &attr);
   static std::optional<string> GetDumpFlag(const AnfNodePtr &node);
@@ -298,24 +298,30 @@ class COMMON_EXPORT AnfAlgo {
   static TypeId GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx);
 
   static std::string GetTensorValueString(const tensor::TensorPtr &tensor);
-  static abstract::AbstractBasePtr GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index);
+  static abstract::AbstractBasePtr FrontendGetNodeAbstractByIndex(const AnfNodePtr &node, size_t index);
 
   // Get jit level from func_graph
   static std::string GetJitLevel(const FuncGraphPtr &func_graph);
 
+  static bool IsNodeMutableScalar(const AnfNodePtr &node);
   static bool IsDynamicSequence(const AnfNodePtr &node);
   static bool IsAnyTypeOutput(const AnfNodePtr &node);
   static bool IsAnyTypeInput(const std::vector<AnfNodePtr> &inputs);
   static bool HasTupleInput(const CNodePtr &node);
   static bool HasDynamicTupleInput(const CNodePtr &node);
   static bool IsReduceOp(const std::string &op_name);
-
+  static bool IsTypeTransformOp(const std::string &op_name);
   // Get the element shape of dynamic sequence shape.
   static abstract::BaseShapePtr GetDynamicSequenceShape(const AnfNodePtr &node, size_t output_idx);
   // Fetch the sub abstract from the top abstract by the index.
   static abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index);
 
   static std::string GetInputName(const CNodePtr &origin_op, size_t input_index);
+  static bool IsNoOuputNode(const AnfNodePtr &node);
+  static ValuePtr ValueToScalar(const ValuePtr &value, TypeId type_id);
+  static std::vector<ValuePtr> TransformVectorRefToMultiValue(const VectorRef &base_ref);
+  static bool HasIncorporateCallNode(const CNodePtr &cnode);
+  static bool IsDynamicGraph(const FuncGraphPtr &func_graph);
 };
 
 inline AnfNodePtr CreateShapeVectorNode(const ShapeVector &value) {
@@ -332,6 +338,7 @@ inline CNodePtr CreateReshapeNode(const FuncGraphPtr &graph, const AnfNodePtr &i
   AnfNodePtrList reshape_inputs = {NewValueNode(std::make_shared<Primitive>(kReshapeOpName)), input_node, shape_node};
   auto reshape_node = NewCNode(reshape_inputs, graph);
   MS_EXCEPTION_IF_NULL(reshape_node);
+  reshape_node->set_scope(input_node->scope());
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), reshape_node);
   common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(shape), reshape_node);
   auto data_type = common::AnfAlgo::GetOutputInferDataType(input_node, kIndex0);

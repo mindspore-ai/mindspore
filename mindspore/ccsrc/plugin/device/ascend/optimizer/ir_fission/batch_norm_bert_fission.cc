@@ -69,7 +69,7 @@ AnfNodePtr BatchNormBertFission::CreateBNTrainingReduce(const FuncGraphPtr &func
   MS_EXCEPTION_IF_NULL(bn);
   auto bn_cnode = bn->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(bn_cnode);
-  if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
+  if (bn_cnode->size() < kBatchNormRealInputNum + 1) {
     MS_LOG(INTERNAL_EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
                                << (kBatchNormRealInputNum + 1) << trace::DumpSourceLines(bn);
   }
@@ -96,7 +96,7 @@ AnfNodePtr BatchNormBertFission::CreateBNTrainingUpdateV2(
   MS_EXCEPTION_IF_NULL(bn);
   auto bn_cnode = bn->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(bn_cnode);
-  if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
+  if (bn_cnode->size() < kBatchNormRealInputNum + 1) {
     MS_LOG(INTERNAL_EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
                                << (kBatchNormRealInputNum + 1) << trace::DumpSourceLines(bn);
   }
@@ -146,7 +146,7 @@ const AnfNodePtr BatchNormBertFission::Process(const FuncGraphPtr &func_graph, c
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() != kBatchNormRealInputNum + 1) {
+  if (cnode->size() != kBatchNormRealInputNum + 1) {
     MS_LOG(INFO) << "The input size of BatchNorm should be " << kBatchNormRealInputNum
                  << ". The node should not be changed";
     return nullptr;

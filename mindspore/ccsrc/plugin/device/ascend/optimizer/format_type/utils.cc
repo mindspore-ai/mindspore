@@ -17,7 +17,6 @@
 #include "plugin/device/ascend/optimizer/format_type/utils.h"
 #include "ops/array_ops.h"
 #include "include/backend/optimizer/helper.h"
-#include "kernel/kernel_build_info.h"
 
 namespace mindspore {
 namespace opt {
@@ -40,6 +39,8 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
   builder.SetOutputsReshapeType({reshape_type});
   builder.SetInputsDeviceType({input_type});
   builder.SetOutputsDeviceType({output_type});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   builder.SetFusionType(kernel::kPatternOpaque);
   builder.SetProcessor(kernel::Processor::AICORE);
   if (kernel::OpLib::FindOp(prim::kPrimCast->name(), kernel::kImplyTBE) != nullptr) {
@@ -56,7 +57,7 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cast);
     common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cast);
   }
-  common::AnfAlgo::SetNodeAttr("dst_type", TypeIdToType(output_type), cast);
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(output_type), cast);
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
   common::AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, cast.get());
   common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);

@@ -16,17 +16,10 @@
 
 #include "minddata/dataset/engine/datasetops/build_vocab_op.h"
 
-#include <algorithm>
-#include <iomanip>
-#include <limits>
-#include <string>
-#include <unordered_map>
-#include <utility>
 #include "minddata/dataset/core/config_manager.h"
 
 namespace mindspore {
 namespace dataset {
-
 BuildVocabOp::BuildVocabOp(std::shared_ptr<Vocab> vocab, std::vector<std::string> col_names,
                            std::pair<int64_t, int64_t> freq_r, int64_t top_k, const std::vector<std::string> &tokens,
                            bool prepend, int32_t num_workers, int32_t op_conn_size)

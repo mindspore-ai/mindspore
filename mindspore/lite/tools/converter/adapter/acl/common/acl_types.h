@@ -56,6 +56,7 @@ struct AclModelOptionCfg {
   std::map<std::string, std::string> build_options_map;
   std::map<std::string, std::string> aoe_global_options_map;
   std::map<std::string, std::string> aoe_tuning_options_map;
+  std::map<std::string, std::map<std::string, std::string>> op_attrs_map;
 };
 }  // namespace acl
 }  // namespace lite

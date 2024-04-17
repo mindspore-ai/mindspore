@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,21 @@
 
 #include "plugin/device/cpu/kernel/resize_nearest_neighbor_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/grad/resize_nearest_neighbor_grad.h"
 #include "kernel/ops_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kResizeNearestNeighborGradInputNum = 4;
 constexpr size_t kResizeNearestNeighborGradOutputNum = 1;
 constexpr size_t kResizeNearestNeighborGradInputsShapeSize = 4;
 constexpr size_t kResizeNearestNeighborGradOutputsShapeSize = 4;
 }  // namespace
 
-bool ResizeNearestNeighborGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ResizeNearestNeighborGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeNearestNeighborGradInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborGradOutputNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -41,21 +40,16 @@ bool ResizeNearestNeighborGradCpuKernelMod::Init(const BaseOperatorPtr &base_ope
   return true;
 }
 
-int ResizeNearestNeighborGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != KRET_OK) {
+int ResizeNearestNeighborGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape_signed = inputs[kIndex0]->GetShapeVector();
   auto input_shape = Convert2SizeTClipNeg(shape_signed);
   auto output_size = outputs[kIndex0]->GetShapeVector();
-  auto op_prim = std::dynamic_pointer_cast<ops::ResizeNearestNeighborGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(op_prim, KRET_RESIZE_FAILED);
-  align_corners_ = op_prim->get_align_corners();
-  dtype_ = inputs[kIndex0]->GetDtype();
+  align_corners_ = inputs[kIndex2]->GetValueWithCheck<bool>();
+  dtype_ = inputs[kIndex0]->dtype_id();
 
   if (input_shape.size() != kResizeNearestNeighborGradInputsShapeSize) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of input must be "
@@ -80,10 +74,9 @@ int ResizeNearestNeighborGradCpuKernelMod::Resize(const BaseOperatorPtr &base_op
   return KRET_OK;
 }
 
-bool ResizeNearestNeighborGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborGradOutputNum, kernel_name_);
+bool ResizeNearestNeighborGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<kernel::KernelTensor *> &,
+                                                   const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -103,11 +96,11 @@ bool ResizeNearestNeighborGradCpuKernelMod::Launch(const std::vector<kernel::Add
 }
 
 template <typename T>
-void ResizeNearestNeighborGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &outputs) {
-  const auto *dloss_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
+void ResizeNearestNeighborGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
+  const auto *dloss_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto ret = memset_s(output_addr, outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed. Error no: " << ret;
   }

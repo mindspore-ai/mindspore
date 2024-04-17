@@ -68,5 +68,7 @@ REG_FALLBACK_BUILDER("VmapUnstackAssign").SetBody(BODYFUNC(ib) {
   auto result = ib->Depend(ib->Tensor(std::vector<int>{0}, kInt32), res_tuple);
   return {result};
 });
+
+REG_FALLBACK_BUILDER("Contiguous").SetBody(BODYFUNC(ib) { return {ib->GetInput(kIndex0)}; });
 }  // namespace expander
 }  // namespace mindspore

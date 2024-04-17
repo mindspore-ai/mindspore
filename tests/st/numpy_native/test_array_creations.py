@@ -115,8 +115,16 @@ class Cases():
             ([(1, 2), onp.ones(2)], (onp.ones(2), [3, 4])),
         ]
 
+        # ms.ops.Eye unsupported uint32 on Ascend
+        self.onp_eye_dtypes = [onp.int32, 'int32', int,
+                               onp.float32, 'float32', float,
+                               onp.bool_, 'bool', bool]
 
-@pytest.mark.level1
+        self.mnp_eye_dtypes = [mnp.int32, 'int32', int,
+                               mnp.float32, 'float32', float,
+                               mnp.bool_, 'bool', bool]
+
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -152,7 +160,7 @@ def test_asarray():
     match_array(actual, expected, error=7)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -181,7 +189,7 @@ def test_array():
     match_array(actual, expected, error=7)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -215,7 +223,7 @@ def test_asfarray():
     match_array(actual, expected, error=7)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -233,7 +241,7 @@ def test_zeros():
         match_array(actual, expected)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -251,7 +259,7 @@ def test_ones():
         match_array(actual, expected)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -272,8 +280,6 @@ def test_full():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -295,6 +301,22 @@ def test_eye():
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_eye_ascend():
+    """
+    Feature: Test ms.numpy.eye on Ascend
+    Description:  `dtype` of ms.ops.Eye is different on Ascend
+    Expectation: the result of ms.numpy.eye is correct.
+    """
+    test_case = Cases()
+    for i in range(len(test_case.onp_eye_dtypes)):
+        for m in range(1, 5):
+            actual = onp.eye(m, dtype=test_case.onp_eye_dtypes[i])
+            expected = mnp.eye(m, dtype=test_case.mnp_eye_dtypes[i]).asnumpy()
+            match_array(actual, expected)
+
+
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -307,7 +329,25 @@ def test_identity():
             match_array(actual, expected)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_identity_ascend():
+    """
+    Feature: Test ms.numpy.identity on Ascend
+    Description:  `dtype` of ms.ops.Eye is different on Ascend
+    Expectation: the result of ms.numpy.identity is correct.
+    """
+    test_case = Cases()
+    for i in range(len(test_case.onp_eye_dtypes)):
+        for m in range(1, 5):
+            actual = onp.identity(m, dtype=test_case.onp_eye_dtypes[i])
+            expected = mnp.identity(m, dtype=test_case.mnp_eye_dtypes[i]).asnumpy()
+            match_array(actual, expected)
+
+
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -417,7 +457,7 @@ def test_logspace():
     match_array(actual, expected, error=3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -435,7 +475,7 @@ def test_empty():
             match_meta(actual, expected)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -480,7 +520,7 @@ def run_x_like(mnp_fn, onp_fn):
                 match_array(actual, expected)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -490,7 +530,7 @@ def test_ones_like():
     run_x_like(mnp.ones_like, onp.ones_like)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -500,7 +540,7 @@ def test_zeros_like():
     run_x_like(mnp.zeros_like, onp.zeros_like)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -527,7 +567,7 @@ def test_full_like():
             match_array(actual, expected)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -550,7 +590,7 @@ def test_tri_triu_tril():
     match_array(mnp.tri(64, 64, -10).asnumpy(), onp.tri(64, 64, -10))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -602,7 +642,7 @@ def onp_trace(arr):
     return onp.trace(arr, offset=4, axis1=1, axis2=2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -633,7 +673,7 @@ def onp_meshgrid(*xi):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -675,7 +715,7 @@ def test_diag():
             match_res(mnp.diag, onp.diag, arr, k=i)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -695,7 +735,7 @@ def onp_ix_(*args):
     return onp.ix_(*args)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -753,7 +793,7 @@ def test_geomspace():
                     onp.geomspace(start, end, num=4, axis=i), error=1)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -770,7 +810,7 @@ def test_vander():
         match_all_arrays(mnp_vander, onp_vander, error=1e-4)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -781,7 +821,7 @@ def test_bartlett():
         match_all_arrays(mnp.bartlett(i), onp.bartlett(i), error=3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -792,7 +832,7 @@ def test_blackman():
         match_all_arrays(mnp.blackman(i), onp.blackman(i), error=3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -803,7 +843,7 @@ def test_hamming():
         match_all_arrays(mnp.hamming(i), onp.hamming(i), error=3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -814,7 +854,7 @@ def test_hanning():
         match_all_arrays(mnp.hanning(i), onp.hanning(i), error=3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -829,7 +869,7 @@ def test_triu_indices():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -844,7 +884,7 @@ def test_tril_indices():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -860,7 +900,7 @@ def test_triu_indices_from():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -876,7 +916,7 @@ def test_tril_indices_from():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -889,7 +929,7 @@ def test_histogram_bin_edges():
     match_res(mnp.histogram_bin_edges, onp.histogram_bin_edges, x, bins=10, range=(2, 20), error=3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -925,7 +965,7 @@ def test_randn():
 
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -960,9 +1000,7 @@ def test_rand():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -1001,7 +1039,7 @@ def test_randint():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1037,7 +1075,7 @@ def test_ops_arange():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1049,7 +1087,7 @@ def test_asarray_exception():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1061,7 +1099,7 @@ def test_linspace_exception():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1073,7 +1111,7 @@ def test_empty_like_exception():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

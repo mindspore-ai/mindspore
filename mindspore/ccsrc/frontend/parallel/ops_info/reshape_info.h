@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,9 @@ class ReshapeInfo : public OperatorInfo {
         input_layout_set_flag_(false),
         output_layout_set_flag_(false) {}
   ~ReshapeInfo() override = default;
-  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
+  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+              const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts = {},
+              const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts = {}) override;
   void SetInputLayout(const TensorLayout &input_layout) {
     input_layout_ = input_layout;
     input_layout_set_flag_ = true;
@@ -59,6 +61,7 @@ class ReshapeInfo : public OperatorInfo {
   void set_next_operator_name(const std::string &next_name) { next_operator_name_ = next_name; }
   void set_pre_operator_index(int64_t pre_index) { pre_operator_index_ = pre_index; }
   void set_next_operator_index(int64_t next_index) { next_operator_index_ = next_index; }
+  StrategyPtr get_input_shard_strategy();
   Status GenerateStrategyCosts(
     const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
     std::vector<std::pair<std::vector<std::shared_ptr<StrategyWithCost>>, int64_t>> next_costs_index, int64_t out_index,

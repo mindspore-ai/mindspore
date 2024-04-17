@@ -3,7 +3,7 @@ mindspore.nn.SoftShrink
 
 .. py:class:: mindspore.nn.SoftShrink(lambd=0.5)
 
-    SoftShrink激活函数。
+    逐元素计算SoftShrink激活函数。
 
     .. math::
         \text{SoftShrink}(x) =
@@ -15,7 +15,7 @@ mindspore.nn.SoftShrink
 
     SoftShrink函数图：
 
-    .. image:: images/Softshrink.png
+    .. image:: ../images/Softshrink.png
         :align: center
 
     参数：

@@ -74,10 +74,6 @@ class SparseAddGradHelperGpuKernel : public GpuKernelHelperBase {
     sum_index_num_ = sum_indices_shape_[0];
     dim_ = x1_indices_shape_[1];
 
-    input_size_list_.push_back(val_grad_size_ * value_bytes_);
-    input_size_list_.push_back(x1_indices_size_ * index_bytes_);
-    input_size_list_.push_back(x2_indices_size_ * index_bytes_);
-    input_size_list_.push_back(sum_indices_size_ * index_bytes_);
     output_size_list_.push_back(x1_index_num_ * value_bytes_);
     output_size_list_.push_back(x2_index_num_ * value_bytes_);
     work_size_list_.push_back(dim_ * index_bytes_);
@@ -146,7 +142,6 @@ class SparseAddGradHelperGpuKernel : public GpuKernelHelperBase {
   }
 
   void ResetResource() override {
-    input_size_list_.clear();
     output_size_list_.clear();
     work_size_list_.clear();
     input_shapes_.clear();

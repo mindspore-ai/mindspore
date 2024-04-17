@@ -84,13 +84,31 @@ void DeviceQueueDataSourceActor::Init() {
 
   // Init kernel launch info.
   MS_EXCEPTION_IF_NULL(kernel_info_);
-  for (size_t i = 0; i < kernel_info_->output_address_list().size(); ++i) {
-    (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
+  const auto &output_addresses = kernel_info_->output_address_list();
+  for (size_t i = 0; i < output_addresses.size(); ++i) {
+    (void)output_kernel_tensors_.emplace_back(output_addresses[i]->kernel_tensor().get());
+    if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+      mem_info_.outputs_.emplace_back(std::make_shared<Address>());
+    }
   }
+
+  is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(data_kernel_);
+  stream_ = device_contexts_[0]->device_res_manager_->GetStream(kernel_info_->stream_id());
 }
 
 void DeviceQueueDataSourceActor::FillDataBuffer() {
   MS_EXCEPTION_IF_NULL(kernel_info_);
+  if (is_dynamic_shape_) {
+    // For GetNext dynamic case, the Resize method finish update output shape and output size in kernel tensor via data
+    // item from MindData, need not do infer shape first.
+    const auto &kernel_mod = kernel_info_->MutableKernelMod();
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    int ret = kernel_mod->Resize({}, output_kernel_tensors_);
+    if (ret != kernel::KRET_OK) {
+      MS_LOG(EXCEPTION) << "Resize failed for kernel: " << data_kernel_->fullname_with_scope();
+    }
+  }
+
   // Construct device tensors.
   std::vector<DeviceTensor *> device_tensors;
   for (auto &device_tensor : kernel_info_->output_address_list()) {
@@ -141,14 +159,18 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 
   // Construct outputs of data kernel launching.
   auto &device_tensors = buffers_.back();
-  if (launch_info_.outputs_.size() != device_tensors.size()) {
+  if (output_kernel_tensors_.size() != device_tensors.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The outputs number is not equal to the device tensors number.");
   }
   for (size_t i = 0; i < device_tensors.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(launch_info_.outputs_[i]);
+    MS_EXCEPTION_IF_NULL(output_kernel_tensors_[i]);
     MS_EXCEPTION_IF_NULL(device_tensors[i]);
-    launch_info_.outputs_[i]->addr = device_tensors[i]->GetMutablePtr();
-    launch_info_.outputs_[i]->size = device_tensors[i]->GetSize();
+    output_kernel_tensors_[i]->set_device_ptr(device_tensors[i]->GetMutablePtr());
+    output_kernel_tensors_[i]->set_size(device_tensors[i]->GetSize());
+    if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+      mem_info_.outputs_[i]->addr = device_tensors[i]->GetMutablePtr();
+      mem_info_.outputs_[i]->size = device_tensors[i]->GetSize();
+    }
   }
 
   // Copy data from device queue by data kernel launching.
@@ -156,8 +178,9 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   try {
     uint64_t start_time = 0;
     PROFILER_START(start_time);
-    auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
-      data_kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_, kernel_info_->stream_id());
+    auto kernel_mod = AnfAlgo::GetKernelMod(data_kernel_);
+    auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(data_kernel_, {}, {}, output_kernel_tensors_,
+                                                                           kernel_mod, stream_);
     PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelLaunch, GetAID().Name(), false);
     if (!ret) {
       std::string error_info = "Launch kernel failed: " + data_kernel_->fullname_with_scope();
@@ -175,15 +198,11 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     return;
   }
 
-  if (common::AnfAlgo::IsDynamicShape(data_kernel_)) {
-    ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelUpdate, GetAID().Name());
-    AnfAlgo::UpdateInternalParameterShape(internal_parameters_);
-  }
   PostRun(context);
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_contexts_[0], context,
+  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, data_kernel_, &mem_info_, device_contexts_[0], context,
                             &GetAID());
   OnDebugFinish(context);
 }
@@ -191,8 +210,8 @@ void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const con
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
   if (recorder_aid_ != nullptr && (!device_contexts_.empty())) {
     MS_EXCEPTION_IF_NULL(data_kernel_);
-    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(),
-                          &launch_info_, device_contexts_[0], context);
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(), &mem_info_,
+                          device_contexts_[0], context);
   }
 }
 
@@ -311,8 +330,8 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
       // Sync data from host_tensor to device_tensor.
       if (!device_tensor->SyncHostToDevice(
             trans::GetRuntimePaddingShape(data_node_with_indexs_[i].first, data_node_with_indexs_[i].second),
-            LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(), host_tensor->data_c(),
-            host_tensor->device_info().host_format_)) {
+            LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(), host_tensor->device_info().host_format_,
+            host_tensor->data_ptr())) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
       }
       if (IsDynamic(device_tensor->host_shape())) {
@@ -324,8 +343,6 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Host data source actor run exception.");
   }
   PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kCopyData, GetAID().Name(), false);
-
-  host_queue_->Pop();
 
   PostRun(context);
 }
@@ -356,7 +373,12 @@ bool HostQueueDataSourceActor::IsSameDeviceType() const {
   return true;
 }
 
-void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
+void HostQueueDataSourceActor::ReleaseData() {
+  // The step end need free the host queue tensor.
+  MS_EXCEPTION_IF_NULL(host_queue_);
+  host_queue_->Pop();
+
+  // The step end need release data node address.
   for (auto &data_node_with_index : data_node_with_indexs_) {
     if (!AnfAlgo::OutputAddrExist(data_node_with_index.first, data_node_with_index.second)) {
       continue;
@@ -372,16 +394,21 @@ void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
       auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
         {old_address->device_name(), old_address->device_id()});
       MS_EXCEPTION_IF_NULL(device_context);
-      auto new_address = device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, old_address->GetSize(), old_address->format(), old_address->type_id(), old_address->host_shape());
+      const auto &kernel_tensor = old_address->kernel_tensor();
+      MS_EXCEPTION_IF_NULL(kernel_tensor);
+      auto new_kernel_tensor = kernel_tensor->CloneKernelTensor();
+      MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+      new_kernel_tensor->set_device_ptr(nullptr);
+
+      auto new_address = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
       MS_EXCEPTION_IF_NULL(new_address);
-      MS_LOG(DEBUG) << "Create device tensor:" << new_address << " type:" << new_address->type_id();
+      MS_LOG(DEBUG) << "Create device tensor:" << new_address << " type:" << new_address->type_id()
+                    << ", kernel tensor addr:" << new_kernel_tensor.get();
       new_address->set_original_ref_count(old_address->original_ref_count());
       new_address->ResetRefCount();
       new_address->set_flag(old_address->flag());
       auto [node, index] = old_address->GetNodeIndex();
       new_address->SetNodeIndex(node, index);
-      new_address->set_padding_type(old_address->padding_type());
       AnfAlgo::SetOutputAddr(new_address, data_node_with_index.second, data_node_with_index.first.get());
     }
   }

@@ -116,15 +116,15 @@ void CPUKernelRuntime::AssignValueNodeAddress(const session::KernelGraph *kernel
       MS_EXCEPTION_IF_NULL(address);
       address->set_from_persistent_mem(tensor->is_parameter());
       if (tensor->data_type() == output_type_id) {
-        address->ptr_ = tensor->data_c();
+        address->SetDevicePtr(tensor->data_c());
       } else {
-        address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
+        address->SetDevicePtr(static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size));
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                        tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Value node sync host to device failed!";
         }
       }
-      address->ref_count_ = INIT_NODE_REF;
+      address->set_ref_count(INIT_NODE_REF);
       AnfAlgo::SetOutputAddr(address, 0, item_node.get());
     }
   }
@@ -211,9 +211,9 @@ tensor::TensorPtr CPUKernelRuntime::CreateTensorForOutput(session::KernelGraph *
         MS_LOG(EXCEPTION) << "Invalid type_size " << type_size;
       }
       size_t tensor_size = std::accumulate(temp_shape.begin(), temp_shape.end(), type_size, std::multiplies<size_t>());
-      if (tensor_size < address->size_) {
+      if (tensor_size < address->GetSize()) {
         temp_shape.clear();
-        (void)temp_shape.emplace_back(address->size_ / type_size);
+        (void)temp_shape.emplace_back(address->GetSize() / type_size);
       }
       tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
     }
@@ -228,9 +228,9 @@ tensor::TensorPtr CPUKernelRuntime::CreateTensorForOutput(session::KernelGraph *
       size_t type_size = GetTypeByte(TypeIdToType(device_type_id));
       ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
-      address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
-      address->size_ = tensor_size;
-      address->type_id_ = device_type_id;
+      address->SetDevicePtr(static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size));
+      address->SetSize(tensor_size);
+      address->set_type_id(device_type_id);
     } else {
       tensor->set_sync_status(kNoNeedSync);
     }
@@ -256,7 +256,7 @@ BaseRef CPUKernelRuntime::GetOrCreateTensorForOutput(
     MS_EXCEPTION_IF_NULL(node);
     if (common::AnfAlgo::GetCNodeName(input_node) == prim::kPrimMakeTuple->name()) {
       VectorRef ret;
-      for (size_t i = 1; i < node->inputs().size(); i++) {
+      for (size_t i = 1; i < node->size(); i++) {
         auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(node->input(i), 0);
         auto out = GetOrCreateTensorForOutput(kernel_graph, item_with_index, tensor_to_node, input_param_tensor_map,
                                               bound_addresses);
@@ -334,15 +334,15 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
         tensor->data_sync();
       }
     }
-    if (GetTypeByte(TypeIdToType(tensor->data_type())) == GetTypeByte(TypeIdToType(address->type_id_))) {
-      address->ptr_ = tensor->data_c();
+    if (GetTypeByte(TypeIdToType(tensor->data_type())) == GetTypeByte(TypeIdToType(address->type_id()))) {
+      address->SetDevicePtr(tensor->data_c());
     } else {
       ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(),
-                                           GetTypeByte(TypeIdToType(address->type_id_)), std::multiplies<size_t>());
-      if (address->ptr_ == nullptr || address->size_ != tensor_size) {
-        address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
-        address->size_ = tensor_size;
+                                           GetTypeByte(TypeIdToType(address->type_id())), std::multiplies<size_t>());
+      if (address->GetDevicePtr() == nullptr || address->GetSize() != tensor_size) {
+        address->SetDevicePtr(static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size));
+        address->SetSize(tensor_size);
       }
       if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                      tensor->data_c())) {
@@ -355,7 +355,7 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
       common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(item, 0)}, {tensor_shape},
                                                   item.get());
     }
-    address->ref_count_ = INIT_NODE_REF;
+    address->set_ref_count(INIT_NODE_REF);
     if (common::AnfAlgo::IsParameterWeight(input_param)) {
       tensor->set_device_address(address);
     }
@@ -376,10 +376,10 @@ void CPUKernelRuntime::BindOutputTensorAddressPtr(const VectorRef *outputs) {
         continue;
       }
       auto address_ptr = std::dynamic_pointer_cast<device::DeviceAddress>(address);
-      if (address_ptr->type_id_ == tensor->data_type_c() && tensor->sync_status() == kNoNeedSync) {
-        address_ptr->ptr_ = tensor->data_c();
+      if (address_ptr->type_id() == tensor->data_type_c() && tensor->sync_status() == kNoNeedSync) {
+        address_ptr->SetDevicePtr(tensor->data_c());
       }
-      address_ptr->ref_count_ = INIT_NODE_REF;
+      address_ptr->set_ref_count(INIT_NODE_REF);
     }
   }
 }
@@ -392,18 +392,17 @@ void CPUKernelRuntime::BindInputOutput(session::KernelGraph *kernel_graph, const
   BindOutputTensorAddressPtr(outputs);
 }
 
-void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<kernel::AddressPtr> *input_list) {
+void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<kernel::KernelTensor *> *input_list) {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(input_list);
-  kernel::AddressPtr input = std::make_shared<kernel::Address>();
+  const auto &input = address->kernel_tensor();
   MS_EXCEPTION_IF_NULL(input);
-  if (address->ptr_ == nullptr) {
-    address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(address->size_);
+  if (address->GetDevicePtr() == nullptr) {
+    auto addr = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(address->GetSize());
+    MS_EXCEPTION_IF_NULL(addr);
+    input->set_device_ptr(addr);
   }
-  MS_EXCEPTION_IF_NULL(address->ptr_);
-  input->addr = address->ptr_;
-  input->size = address->size_;
-  input_list->push_back(input);
+  input_list->push_back(input.get());
 }
 
 void CPUKernelRuntime::IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
@@ -414,9 +413,9 @@ void CPUKernelRuntime::DecreaseSummaryRefCount(const session::NamedSummaryOutput
   static_cast<CPUMemoryManager *>(mem_manager_.get())->DecreaseSummaryRefCount(summary_outputs);
 }
 
-void CPUKernelRuntime::GetRuntimeAddressFromNode(const AnfNodePtr &node, std::vector<kernel::AddressPtr> *inputs,
-                                                 std::vector<kernel::AddressPtr> *outputs,
-                                                 std::vector<kernel::AddressPtr> *workspaces) {
+void CPUKernelRuntime::GetRuntimeAddressFromNode(const AnfNodePtr &node, std::vector<kernel::KernelTensor *> *inputs,
+                                                 std::vector<kernel::KernelTensor *> *outputs,
+                                                 std::vector<kernel::KernelTensor *> *workspaces) {
   MS_EXCEPTION_IF_NULL(inputs);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(workspaces);
@@ -456,9 +455,10 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
   (void)mindspore::RDR::RecordMemAddressInfo(SubModuleId::SM_KERNEL, name);
 #endif
   for (const auto &kernel : kernels) {
-#ifdef ENABLE_PROFILE
-    double start_time = GetTime();
-#endif
+    double start_time = 0;
+    if (IS_OUTPUT_ON(mindspore::kInfo)) {
+      start_time = GetTime();
+    }
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     // akg kernel do not support dynamic shape by now
@@ -469,16 +469,16 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
     }
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       AnfAlgo::InferShape(kernel);
-      auto args = kernel::GetArgsFromCNode(kernel);
-      MS_EXCEPTION_IF_NULL(args);
-      if (cpu_kernel != nullptr && cpu_kernel->Resize(args->inputs, args->outputs, args->depend_tensor_map) ==
-                                     static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
+      auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+      auto outputs = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+      if (cpu_kernel != nullptr &&
+          cpu_kernel->Resize(inputs, outputs) == static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
         MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed!";
       }
     }
-    std::vector<kernel::AddressPtr> kernel_inputs;
-    std::vector<kernel::AddressPtr> kernel_workspaces;
-    std::vector<kernel::AddressPtr> kernel_outputs;
+    std::vector<kernel::KernelTensor *> kernel_inputs;
+    std::vector<kernel::KernelTensor *> kernel_workspaces;
+    std::vector<kernel::KernelTensor *> kernel_outputs;
     GetRuntimeAddressFromNode(kernel, &kernel_inputs, &kernel_outputs, &kernel_workspaces);
     bool ret = true;
 #ifndef ENABLE_SECURITY
@@ -488,8 +488,10 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
     profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), pid);
 #endif
 #ifdef ENABLE_DUMP_IR
-    kernel::KernelLaunchInfo mem_info = {kernel_inputs, kernel_workspaces, kernel_outputs};
+    kernel::KernelLaunchInfo launch_info = {kernel_inputs, kernel_outputs, kernel_workspaces};
     std::string op_name = kernel->fullname_with_scope();
+    kernel::KernelLaunchAddr mem_info;
+    ConvertLaunchInfoToAddr(launch_info, &mem_info);
     (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_info);
 #endif
     try {
@@ -510,10 +512,10 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
       MS_LOG(EXCEPTION) << "Launch kernel failed." << trace::DumpSourceLines(kernel);
     }
     static_cast<CPUMemoryManager *>(mem_manager_.get())->DecreaseAddressRefCount(kernel);
-#ifdef ENABLE_PROFILE
-    double cost_time = GetTime() - start_time;
-    MS_LOG(INFO) << "cpu kernel: " << kernel->fullname_with_scope() << "  costs " << cost_time * 1e6 << " us";
-#endif
+    if (IS_OUTPUT_ON(mindspore::kInfo)) {
+      double cost_time = GetTime() - start_time;
+      MS_LOG(INFO) << "cpu kernel: " << kernel->fullname_with_scope() << "  costs " << cost_time * 1e6 << " us";
+    }
   }
 #ifndef ENABLE_SECURITY
   if (iter_dump_flag) {

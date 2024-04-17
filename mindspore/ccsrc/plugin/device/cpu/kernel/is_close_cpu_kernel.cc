@@ -42,25 +42,20 @@ inline bool IsClose(T a, T b, float rtol, float atol, bool equal_nan) {
   return std::isfinite(left_side) && left_side <= right_side;
 }
 }  // namespace
-bool IsCloseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool IsCloseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsCloseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsCloseOutputsNum, kernel_name_);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::IsClose>(base_operator->GetPrim());
-  rtol_ = kernel_ptr->get_rtol();
-  atol_ = kernel_ptr->get_atol();
-  equal_nan_ = kernel_ptr->get_equal_nan();
+  rtol_ = GetValue<float>(primitive_->GetAttr(ops::kRtol));
+  atol_ = GetValue<float>(primitive_->GetAttr(ops::kAtol));
+  equal_nan_ = GetValue<bool>(primitive_->GetAttr(ops::kEqualNan));
   return true;
 }
 
-int IsCloseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int IsCloseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
@@ -80,13 +75,13 @@ int IsCloseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsCloseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsCloseOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto other = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto output = reinterpret_cast<bool *>(outputs[kIndex0]->addr);
+  auto input = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto other = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto output = reinterpret_cast<bool *>(outputs[kIndex0]->device_ptr());
 
   if (has_null_input_) {
     return true;
@@ -120,7 +115,7 @@ bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
       }
     };
   }
-  size_t elem_num = outputs[kIndex0]->size / sizeof(bool);
+  size_t elem_num = outputs[kIndex0]->size() / sizeof(bool);
   ParallelLaunch(task, elem_num, 0, this, pool_);
   return true;
 }

@@ -33,19 +33,16 @@ class ROIAlignGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
   ROIAlignGradGpuKernelMod() { ResetResource(); }
   ~ROIAlignGradGpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -57,22 +54,17 @@ class ROIAlignGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
   using FuncList = std::vector<std::pair<KernelAttr, ROIAlignGradGpuKernelMod::KernelRunFunc>>;
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   void ResetResource() noexcept {
     is_null_input_ = false;
     stream_ptr_ = nullptr;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
-  void InitSizeLists() {
-    input_size_list_.push_back(dy_size_);
-    input_size_list_.push_back(rois_size_);
-    output_size_list_.push_back(output_size_);
-  }
+  void InitSizeLists() { output_size_list_.push_back(output_size_); }
 
  private:
   void *stream_ptr_{nullptr};

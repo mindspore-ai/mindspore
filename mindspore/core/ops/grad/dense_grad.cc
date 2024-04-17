@@ -65,8 +65,8 @@ class DenseGradInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDenseGradIndex0]->BuildShape())[kShape];
-    auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDenseGradIndex1]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDenseGradIndex0]->GetShape())[kShape];
+    auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDenseGradIndex1]->GetShape())[kShape];
     auto dx_shape_ptr = std::make_shared<abstract::Shape>(x_shape);
     auto dw_shape_ptr = std::make_shared<abstract::Shape>(w_shape);
     ShapeVector b_shape = {w_shape[kDenseGradIndex0]};
@@ -79,17 +79,17 @@ class DenseGradInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     MS_EXCEPTION_IF_NULL(input_args[kDenseGradIndex0]);
-    auto x_type_map = input_args[kDenseGradIndex0]->BuildType();
+    auto x_type_map = input_args[kDenseGradIndex0]->GetType();
     MS_EXCEPTION_IF_NULL(x_type_map);
     auto x_type = x_type_map->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(x_type);
     MS_EXCEPTION_IF_NULL(input_args[kDenseGradIndex1]);
-    auto w_type_map = input_args[kDenseGradIndex1]->BuildType();
+    auto w_type_map = input_args[kDenseGradIndex1]->GetType();
     MS_EXCEPTION_IF_NULL(w_type_map);
     auto w_type = w_type_map->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(w_type);
     MS_EXCEPTION_IF_NULL(input_args[kDenseGradIndex2]);
-    auto dout_type_map = input_args[kDenseGradIndex2]->BuildType();
+    auto dout_type_map = input_args[kDenseGradIndex2]->GetType();
     MS_EXCEPTION_IF_NULL(dout_type_map);
     auto dout_type = dout_type_map->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(dout_type);

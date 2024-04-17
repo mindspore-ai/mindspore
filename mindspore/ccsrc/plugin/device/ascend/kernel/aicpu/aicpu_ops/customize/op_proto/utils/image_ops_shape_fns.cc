@@ -19,8 +19,9 @@
  * \brief
  */
 #include "image_ops_shape_fns.h"
+#include <set>
 #include "error_util.h"
-#include "graph/utils/op_desc_utils.h"
+#include "util.h"
 #include "op_log.h"
 
 namespace ge {
@@ -34,7 +35,8 @@ graphStatus ColorspaceShapeFn(Operator &op, const std::string &output_name) {
     return GRAPH_PARAM_INVALID;
   }
   int64_t dim = op.GetInputDesc(0).GetShape().GetDims().back();
-  if (dim != 3) {
+  constexpr int64_t kImageLastDim = 3;
+  if (dim != kImageLastDim) {
     AscendString op_name;
     op.GetName(op_name);
     OP_LOGE(op_name.GetString(), "input[images] last dimension must be size 3.");
@@ -48,7 +50,8 @@ graphStatus ColorspaceShapeFn(Operator &op, const std::string &output_name) {
 graphStatus ResizeShapeFn(Operator &op, const std::string &input_name, const std::string &size_input_name,
                           const std::string &output_name) {
   if (op.GetInputDesc(0).GetShape().GetDims() == UNKNOWN_RANK) {
-    std::vector<int64_t> output_shape(4, UNKNOWN_DIM);
+    constexpr int64_t kOutputDim0 = 4;
+    std::vector<int64_t> output_shape(kOutputDim0, UNKNOWN_DIM);
     TensorDesc td = op.GetOutputDescByName(output_name.c_str());
     td.SetShape(Shape(output_shape));
     op.UpdateOutputDesc(output_name.c_str(), td);
@@ -82,7 +85,8 @@ graphStatus SetOutputToSizedImage(Operator &op, const int64_t batch_dim, const s
     return GRAPH_PARAM_INVALID;
   }
   auto size_dims = op.GetInputDescByName(size_input_name.c_str()).GetShape().GetDims();
-  if (size_dims[0] != 2) {
+  constexpr int kSizeOfSize = 2;
+  if (size_dims[0] != kSizeOfSize) {
     AscendString op_name;
     op.GetName(op_name);
     OP_LOGE(op_name.GetString(), "input size must be 1-D tensor of 2 elements.");
@@ -90,9 +94,7 @@ graphStatus SetOutputToSizedImage(Operator &op, const int64_t batch_dim, const s
   }
 
   std::vector<std::string> input_infer_depends = {size_input_name};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
-
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
   DataType data_type = DT_FLOAT;
   auto op_name = op.GetName();
   if (op_name == "ResizeBicubic") {
@@ -101,9 +103,9 @@ graphStatus SetOutputToSizedImage(Operator &op, const int64_t batch_dim, const s
   // Update DataType when Attr "dtype" is set, used for op ResizeBicubic
   if (op.GetAttr("dtype", data_type) == GRAPH_SUCCESS) {
     if ((data_type != DT_FLOAT) && (data_type != DT_UINT8)) {
-      OP_LOGW(op_desc->GetName().c_str(), "Attr dtype should only be DT_FLOAT or DT_UNIT8");
+      OP_LOGW(op.GetName().c_str(), "Attr dtype should only be DT_FLOAT or DT_UNIT8");
     } else {
-      OP_LOGI(op_desc->GetName().c_str(), "Update DataType from attr, which is %d", data_type);
+      OP_LOGI(op.GetName().c_str(), "Update DataType from attr, which is %d", data_type);
     }
   }
 
@@ -159,7 +161,8 @@ graphStatus SetOutputToSizedImage(Operator &op, const int64_t batch_dim, const s
 
 graphStatus EncodeImageShapeFn(Operator &op) {
   Shape unused_shape;
-  if (WithRank(op.GetInputDesc(0), 3, unused_shape, op) != GRAPH_SUCCESS) {
+  constexpr int64_t kInputRank = 3;
+  if (WithRank(op.GetInputDesc(0), kInputRank, unused_shape, op) != GRAPH_SUCCESS) {
     AscendString op_name;
     op.GetName(op_name);
     OP_LOGE(op_name.GetString(), "input rank must be 3 .");
@@ -180,7 +183,8 @@ graphStatus DecodeImageShapeFn(Operator &op) {
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("Get attr[channels] failed"));
     return GRAPH_FAILED;
   }
-  if (channels != 0 && channels != 1 && channels != 3 && channels != 4) {
+  const std::set<int> kAllowedChannelDims{0, 1, 3, 4};
+  if (kAllowedChannelDims.count(channels) == 0) {
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("attr[Channels] must be 0,1,3,or 4"));
     return GRAPH_FAILED;
   }

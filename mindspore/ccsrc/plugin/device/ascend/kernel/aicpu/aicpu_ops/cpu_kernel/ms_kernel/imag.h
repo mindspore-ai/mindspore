@@ -19,7 +19,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_REAL_H_
 #define AICPU_KERNELS_NORMALIZED_REAL_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class ImagCpuKernel : public CpuKernel {
@@ -31,10 +31,10 @@ class ImagCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ImagCheck(const CpuKernelContext &ctx);
+  uint32_t ImagCheck(CpuKernelContext &ctx);
 
   template <typename T, typename t>
-  uint32_t ImagCompute(const CpuKernelContext &ctx);
+  uint32_t ImagCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

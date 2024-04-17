@@ -1,0 +1,36 @@
+#operator weight_quant_batch_matmul
+weight_quant_batch_matmul:
+  args:
+    x:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    antiquant_scale:
+      dtype: tensor
+    antiquant_offset:
+      dtype: tensor
+      default: None
+    quant_scale:
+      dtype: tensor
+      default: None
+    quant_offset:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    transpose_x:
+      dtype: bool
+      default: false
+      prim_init: True
+    transpose_weight:
+      dtype: bool
+      default: false
+      prim_init: True
+    antiquant_group_size:
+      dtype: int
+      default: 0
+      prim_init: True
+  returns:
+    y:
+      dtype: tensor

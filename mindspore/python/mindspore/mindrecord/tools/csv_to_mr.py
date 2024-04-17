@@ -22,10 +22,6 @@ from mindspore import log as logger
 from ..filewriter import FileWriter
 from ..shardutils import check_filename, ExceptionThread
 
-try:
-    pd = import_module("pandas")
-except ModuleNotFoundError:
-    pd = None
 
 __all__ = ['CsvToMR']
 
@@ -51,12 +47,12 @@ class CsvToMR:
         >>> csv_file = "/path/to/csv/file"
         >>> mindrecord_file = "/path/to/mindrecord/file"
         >>> csv_to_mr = CsvToMR(csv_file, mindrecord_file)
-        >>> status = csv_to_mr.transform()
+        >>> csv_to_mr.transform()
     """
 
     def __init__(self, source, destination, columns_list=None, partition_number=1):
-        if not pd:
-            raise Exception("Module pandas is not found, please use pip install it.")
+        self.pd = import_module("pandas")
+
         if isinstance(source, str):
             check_filename(source)
             self.source = source
@@ -135,8 +131,8 @@ class CsvToMR:
         if not os.path.exists(self.source):
             raise IOError("Csv file {} do not exist.".format(self.source))
 
-        pd.set_option('display.max_columns', None)
-        df = pd.read_csv(self.source)
+        self.pd.set_option('display.max_columns', None)
+        df = self.pd.read_csv(self.source)
 
         csv_schema = self._get_schema(df)
 
@@ -176,9 +172,8 @@ class CsvToMR:
                         "transformed {} record...".format(transform_count))
                 break
 
-        ret = self.writer.commit()
-
-        return ret
+        self.writer.commit()
+        return 0
 
     def transform(self):
         """
@@ -186,9 +181,6 @@ class CsvToMR:
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.CsvToMR` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -206,4 +198,3 @@ class CsvToMR:
         t.join()
         if t.exitcode != 0:
             raise t.exception
-        return t.res

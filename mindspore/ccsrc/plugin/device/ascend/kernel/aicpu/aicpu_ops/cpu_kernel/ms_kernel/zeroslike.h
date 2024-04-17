@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ZEROSLIKE_H
 #define AICPU_KERNELS_NORMALIZED_ZEROSLIKE_H
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class ZerosLikeCpuKernel : public CpuKernel {
@@ -27,10 +27,10 @@ class ZerosLikeCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ZerosLikeCheck(const CpuKernelContext &ctx) const;
+  uint32_t ZerosLikeCheck(CpuKernelContext &ctx) const;
 
   template <typename T>
-  uint32_t ZerosLikePartCompute(const CpuKernelContext &ctx);
+  uint32_t ZerosLikePartCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

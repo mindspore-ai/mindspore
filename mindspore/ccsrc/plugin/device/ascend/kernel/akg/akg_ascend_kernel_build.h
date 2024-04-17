@@ -29,13 +29,16 @@ class AkgAscendKernelBuilder : public AkgKernelBuilder {
   AkgAscendKernelBuilder() = default;
   ~AkgAscendKernelBuilder() = default;
 
-  kernel::KernelBuildClient *GetClient() override { return &(kernel::AscendKernelBuildClient::Instance()); }
+  kernel::KernelBuildClient *GetClient() override { return &(kernel::AkgKernelBuildClient::Instance()); }
   void LoadCache() override { return; }
   KernelPackPtr SearchKernelCache(const std::string &kernel_name) override;
   KernelPackPtr InsertKernelCache(const std::string &kernel_name) override;
   void SetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
                     const AnfNodePtr &anf_node) override;
   void SaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
+
+ private:
+  std::string GetPlatform() const override { return "ASCEND"; }
 };
 
 REG_GRAPH_KERNEL_BUILDER(kAscendDevice, false, AkgAscendKernelBuilder);

@@ -22,3 +22,8 @@ mindspore.Tensor.min
 
     异常：
         - **TypeError** - 参数的数据类型与上述不一致。
+
+    其他API参考：
+        - :func:`mindspore.Tensor.argmin` ：返回沿轴最小值的索引。
+        - :func:`mindspore.Tensor.argmax` ：返回沿轴最大值的索引。
+        - :func:`mindspore.Tensor.max` ：返回整个Tensor最大值或沿轴最大值。

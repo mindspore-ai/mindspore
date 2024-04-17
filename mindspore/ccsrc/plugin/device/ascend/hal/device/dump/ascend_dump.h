@@ -22,7 +22,7 @@
 #include <map>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "backend/common/session/session_basic.h"
-#include "include/backend/debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/dump_utils.h"
 #include "include/backend/debug/debugger/debugger.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/common/debug/anf_dump_utils.h"
@@ -31,11 +31,11 @@
 #include "kernel/kernel.h"
 #include "plugin/device/ascend/hal/device/dump/dump_data_builder.h"
 #include "runtime/hardware/device_context.h"
-#include "toolchain/adx_datadump_callback.h"
+#include "acl/acl_dump.h"
 #include "proto/dump_data.pb.h"
 
 namespace mindspore {
-using Adx::DumpChunk;
+using DumpChunk = acldumpChunk;
 namespace ascend {
 struct dump_data_t {
   std::string dump_file_path;
@@ -70,9 +70,10 @@ class AscendAsyncDump {
  public:
   AscendAsyncDump() = default;
   ~AscendAsyncDump() = default;
-  static void DumpTensorToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data, char *data_ptr);
+  static void DumpTensorToFile(const std::string &dump_path, const toolkit::dumpdata::DumpData &dump_data,
+                               char *data_ptr);
 
-  static void DumpOpDebugToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data,
+  static void DumpOpDebugToFile(const std::string &dump_path, const toolkit::dumpdata::DumpData &dump_data,
                                 const char *data_ptr);
 
  private:

@@ -21,8 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-const float RandomVerticalFlipOp::kDefProbability = 0.5;
-
 Status RandomVerticalFlipOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   const auto output_count = input.size();
@@ -33,7 +31,7 @@ Status RandomVerticalFlipOp::Compute(const TensorRow &input, TensorRow *output) 
     RETURN_IF_NOT_OK(ValidateImageRank("RandomVerticalFlip", image->Rank()));
   }
 
-  if (distribution_(rnd_)) {
+  if (distribution_(random_generator_)) {
     for (size_t i = 0; i < input.size(); i++) {
       RETURN_IF_NOT_OK(VerticalFlip(input[i], &(*output)[i]));
     }

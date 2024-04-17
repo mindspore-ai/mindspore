@@ -1,0 +1,12 @@
+#operator tuple_to_list
+tuple_to_list:
+  args:
+    x:
+      dtype: tuple[any]
+  returns:
+    output:
+      dtype: list[any]
+  class:
+      disable: True
+  function:
+      disable: True

@@ -24,6 +24,7 @@ enum class MetaOp : int {
   BroadcastTo,
   Cast,
   Concat,
+  Cosh,
   Div,
   Equal,
   Exp,
@@ -36,10 +37,12 @@ enum class MetaOp : int {
   LessEqual,
   Log,
   LogicalAnd,
+  LogicalNot,
   LogicalOr,
   MatMul,
   Mul,
   Neg,
+  Reciprocal,
   ReduceMax,
   ReduceMin,
   ReduceSum,
@@ -47,6 +50,7 @@ enum class MetaOp : int {
   Rsqrt,
   Select,
   Shape,
+  Sinh,
   Sqrt,
   StridedSlice,
   Sub,
@@ -63,6 +67,7 @@ inline static std::string MetaOpStr[static_cast<int>(MetaOp::MetaOpNum)] = {
   "BroadcastTo",       // MetaOp::BroadcastTo
   "Cast",              // MetaOp::Cast
   "Concat",            // MetaOp::Concat
+  "Cosh",              // MetaOp::Cosh
   "Div",               // MetaOp::Div
   "Equal",             // MetaOp::Equal
   "Exp",               // MetaOp::Exp
@@ -75,10 +80,12 @@ inline static std::string MetaOpStr[static_cast<int>(MetaOp::MetaOpNum)] = {
   "LessEqual",         // MetaOp::LessEqual
   "Log",               // MetaOp::Log
   "LogicalAnd",        // MetaOp::LogicalAnd
+  "LogicalNot",        // MetaOp::LogicalNot
   "LogicalOr",         // MetaOp::LogicalOr
   "MatMul",            // MetaOp::MatMul
   "Mul",               // MetaOp::Mul
   "Neg",               // MetaOp::Neg
+  "Reciprocal",        // MetaOp::Reciprocal
   "ReduceMax",         // MetaOp::ReduceMax
   "ReduceMin",         // MetaOp::ReduceMin
   "ReduceSum",         // MetaOp::ReduceSum
@@ -86,6 +93,7 @@ inline static std::string MetaOpStr[static_cast<int>(MetaOp::MetaOpNum)] = {
   "Rsqrt",             // MetaOp::Rsqrt
   "Select",            // MetaOp::Select
   "Shape",             // MetaOp::Shape
+  "Sinh",              // MetaOp::Sinh
   "Sqrt",              // MetaOp::Sqrt
   "StridedSlice",      // MetaOp::StridedSlice
   "Sub",               // MetaOp::Sub

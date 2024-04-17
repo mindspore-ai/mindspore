@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <utility>
 #include <algorithm>
 #include <memory>
+#include "base/base.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
@@ -35,18 +36,36 @@
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
+#include "frontend/parallel/tensor_layout/shared_parameter.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
 #include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/tensor_construct_utils.h"
 #include "mindspore/core/utils/parallel_node_check.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace parallel {
+namespace {
+void SetMakeTupleAbstract(const CNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    return;
+  }
+
+  AbstractBasePtrList abstract_list;
+  for (size_t i = 1; i < node->inputs().size(); i++) {
+    abstract_list.emplace_back(node->input(i)->abstract());
+  }
+  auto abs = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  node->set_abstract(abs);
+}
+}  // namespace
+
 mindspore::HashMap<int64_t, int64_t> send_tag_map;
 mindspore::HashMap<int64_t, int64_t> recv_tag_map;
 const std::set<PrimitivePtr> WHITE_LIST = {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimCast};
@@ -69,6 +88,45 @@ static AbstractBasePtr GetRealAbstract(const AnfNodePtr &node) {
   return node->abstract();
 }
 
+void PipelineTransformer::UpdateParameterSharedInfo(const AnfNodePtr &node, const AnfNodePtr &communcate_op,
+                                                    bool is_send) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(communcate_op);
+
+  if (!node->isa<Parameter>()) {
+    return;
+  }
+  auto root_param = node;
+  if (node->func_graph() != root_) {
+    root_param = GetArgumentsByParameter(node);
+    MS_EXCEPTION_IF_NULL(root_param);
+  }
+
+  // get communication info from cnode.
+  auto prim = GetCNodePrimitive(communcate_op);
+  MS_EXCEPTION_IF_NULL(prim);
+
+  auto sr_tag_attr = prim->GetAttr(SR_TAG);
+  MS_EXCEPTION_IF_NULL(sr_tag_attr);
+  auto sr_tag = GetValue<int64_t>(sr_tag_attr);
+  auto peer_rank_attr = is_send ? prim->GetAttr(DEST_RANK) : prim->GetAttr(SRC_RANK);
+  MS_EXCEPTION_IF_NULL(peer_rank_attr);
+  auto peer_rank = GetValue<int64_t>(peer_rank_attr);
+  auto group_attr = prim->GetAttr(GROUP);
+  MS_EXCEPTION_IF_NULL(group_attr);
+  auto group = GetValue<std::string>(group_attr);
+
+  // Use global rank since local group may not exist after loading checkpoint.
+  auto rank_list = g_device_manager->FindRankListByHashName(group);
+  peer_rank = rank_list.at(peer_rank);
+
+  // update tensor layout.
+  auto param = root_param->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(param);
+  auto shared_parameters = std::make_shared<SharedParameter>(true, is_send, peer_rank, sr_tag);
+  param->set_user_data<SharedParameter>(shared_parameters);
+}
+
 TensorInfo PipelineTransformer::GetTensorInfo(const std::pair<OperatorInfoPtr, int> &op_info_pair, bool is_param) {
   if (is_param) {
     auto inputs_tensor_info = op_info_pair.first->inputs_tensor_info();
@@ -86,6 +144,9 @@ static void SeparateParamBorder(const std::vector<AnfNodePtr> &nodes, bool send,
     (void)std::transform(nodes.begin(), nodes.end(), std::back_inserter(real_comm_ops), [](const AnfNodePtr &n) {
       const auto &cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
+      if (cnode->inputs().size() <= INDEX_TWO) {
+        return cnode;
+      }
       const auto &real = cnode->input(INDEX_TWO)->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(real);
       return real;
@@ -105,10 +166,6 @@ static void SeparateParamBorder(const std::vector<AnfNodePtr> &nodes, bool send,
 }
 
 bool PipelineTransformer::MainGraph() {
-  if (!is_train_) {
-    main_graph_ = root_;
-    return true;
-  }
   bool find_main_graph = false;
   for (auto &fg : manager_->func_graphs()) {
     for (auto &node : fg->nodes()) {
@@ -128,7 +185,17 @@ bool PipelineTransformer::MainGraph() {
     MS_LOG(WARNING) << "Can't find main graph, possible reason is can't find virtual dataset.";
     return false;
   }
+  for (auto &fg : manager_->func_graphs()) {
+    if (fg->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+      shared_cell_ = fg;
+      break;
+    }
+  }
+  if (!shared_cell_) {
+    return true;
+  }
   auto value_nodes = main_graph_->value_nodes();
+  std::set<AnfNodePtr> shared_cell_nodes;
   for (auto value_pair = value_nodes.cbegin(); value_pair != value_nodes.cend(); ++value_pair) {
     auto node = (*value_pair).first;
     if (!IsValueNode<FuncGraph>(node)) {
@@ -136,24 +203,27 @@ bool PipelineTransformer::MainGraph() {
     }
     auto graph = GetValueNode<FuncGraphPtr>(node);
     MS_EXCEPTION_IF_NULL(graph);
-    if (!graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
-      continue;
+    if (graph == shared_cell_) {
+      (void)(shared_cell_nodes.insert(node));
     }
-    shared_cell_ = graph;
+  }
+  if (shared_cell_nodes.empty()) {
+    return true;
+  }
+  for (auto node : shared_cell_nodes) {
     auto node_users = manager_->node_users()[node];
     for (auto &node_user : node_users) {
       auto user = node_user.first;
       if (user->func_graph() == main_graph_) {
-        shared_cell_users_.push_back(user);
+        if (std::find(shared_cell_users_.begin(), shared_cell_users_.end(), user) == shared_cell_users_.end()) {
+          shared_cell_users_.push_back(user);
+        }
       }
     }
-    break;
-  }
-  if (!shared_cell_) {
-    return true;
   }
   MS_LOG(INFO) << "Enable micro-fold, the folded cell is " << shared_cell_->ToString();
   enable_share_cell_ = true;
+
   return true;
 }
 
@@ -254,7 +324,7 @@ bool PipelineTransformer::LabelParameterStart(const FuncGraphPtr &graph) {
     auto cnode = (*node)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto stage_info = cnode->user_data<NodeStageInfo>();
-    if (stage_info != nullptr && stage_info->stage() > 0) {
+    if (stage_info == nullptr || stage_info->stage() != 0) {
       continue;
     }
     if (IsValueNode<FuncGraph>(cnode->input(0))) {
@@ -309,7 +379,7 @@ size_t PipelineTransformer::GetBatchAxisForInput(const AnfNodeIndexSet &input_no
       }
     }
   }
-  if (batch_axis_count != kSizeOne) {
+  if (is_train_ && batch_axis_count != kSizeOne) {
     MS_LOG(EXCEPTION)
       << "For pipeline parallelism, micro_size partitioning of the input along a certain dimension is and "
       << "is only allowed, but it is found that " << batch_axis_count << " to be partitioned.";
@@ -330,9 +400,6 @@ size_t MicroSize(const AnfNodeIndexSet &input_node_users) {
 }
 
 void PipelineTransformer::LabelMicroBatch() {
-  if (!is_train_) {
-    return;
-  }
   auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
   MS_EXCEPTION_IF_NULL(graph);
   if (!LabelParameterStart(graph)) {
@@ -342,6 +409,7 @@ void PipelineTransformer::LabelMicroBatch() {
   MS_EXCEPTION_IF_NULL(virtual_dataset_);
   auto node_user_map = manager_->node_users();
   auto node_users = node_user_map[virtual_dataset_];
+  auto stage_num = g_device_manager->stage_num();
   for (auto &node_user : node_users) {
     if (IsPrimitiveCNode(node_user.first, prim::kPrimTupleGetItem)) {
       auto data_users = manager_->node_users()[node_user.first];
@@ -351,6 +419,10 @@ void PipelineTransformer::LabelMicroBatch() {
         data_users = node_user_map[node_first];
       }
       auto micro_size = int64_t(MicroSize(data_users));
+      if (is_train_ && micro_size < stage_num) {
+        MS_LOG(EXCEPTION) << "The size of micro_batch must be greater than or equal to stage_num. But got the size of "
+                          << "micro_batch is " << micro_size << " and the stage_num is " << stage_num;
+      }
       micro_size_ = micro_size;
       auto batch_axis = GetBatchAxisForInput(data_users);
       MS_LOG(INFO) << "For the "
@@ -368,24 +440,6 @@ void PipelineTransformer::LabelMicroBatch() {
       }
     }
   }
-}
-
-void PipelineTransformer::CreateForwardGroup() {
-  std::vector<int64_t> rank_list = g_device_manager->GetDeviceListBetweenStage();
-  auto dev_list = g_device_manager->CreateDeviceListByRankList(rank_list);
-  Group g;
-  if (g_device_manager->CreateGroup(rank_list, &g) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Create forward communication group between all pipeline stages failed, the rank_list is: "
-                      << rank_list;
-  }
-  auto g_back_name = g.name() + BACKWARD;
-  Group g_back;
-  if (g_device_manager->CreateGroup(g_back_name, dev_list, &g_back) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Create backward communication group between all pipeline stages failed, the rank_list is: "
-                      << rank_list;
-  }
-  group_.push_back(g.name());
-  group_.push_back(g_back.name());
 }
 
 void PipelineTransformer::LabelGenMaskFusion() {
@@ -487,6 +541,22 @@ void PipelineTransformer::BroadCastColoring() {
           need_coloring = true;
         }
       }
+    }
+  }
+  for (auto &fg : manager_->func_graphs()) {
+    auto stage = fg->stage();
+    if (stage < 0) {
+      continue;
+    }
+    if (fg == root_ || fg == main_graph_ || fg == shared_cell_) {
+      continue;
+    }
+    auto all_nodes = fg->nodes();
+    for (auto node : all_nodes) {
+      if (node->user_data<NodeStageInfo>() != nullptr) {
+        continue;
+      }
+      node->set_user_data<NodeStageInfo>(std::make_shared<NodeStageInfo>(stage));
     }
   }
 }
@@ -752,6 +822,19 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   return std::make_pair(sends, recvs);
 }
 
+void PipelineTransformer::FillParameterStage(const CNodePtr &node, std::set<int64_t> *const parameter_stage) {
+  auto stage_info = node->user_data<NodeStageInfo>();
+  if (stage_info != nullptr && stage_info->stage() != -1) {
+    (void)(parameter_stage->insert(stage_info->stage()));
+  } else {
+    auto graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(graph);
+    if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
+      (void)(parameter_stage->insert(graph->stage()));
+    }
+  }
+}
+
 bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
                                              const std::vector<AnfNodePtr> &parameters,
                                              const NodeUsersMap &node_users_map,
@@ -764,7 +847,8 @@ bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
   }
   const auto &input = node->input(0);
   if (!IsValueNode<FuncGraph>(input)) {
-    return false;
+    FillParameterStage(node, parameter_stage);
+    return true;
   }
   if (GetValueNode<FuncGraphPtr>(input) != shared_cell_) {
     return false;
@@ -772,23 +856,17 @@ bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
   auto pos = index - 1;
   const auto &param = parameters.at(pos);
   MS_EXCEPTION_IF_NULL(param);
-  const auto &iter = node_users_map.find(param);
-  if (iter == node_users_map.end()) {
-    return true;
-  }
-  const auto &users = (*iter).second;
-  for (auto &user : users) {
-    auto user_cnode = user.first->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(user_cnode);
-    auto stage_info = user_cnode->user_data<NodeStageInfo>();
-    if (stage_info != nullptr && stage_info->stage() != -1) {
-      (void)((*parameter_stage).insert(stage_info->stage()));
-    } else {
-      auto graph = user_cnode->func_graph();
-      MS_EXCEPTION_IF_NULL(graph);
-      if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
-        (void)((*parameter_stage).insert(graph->stage()));
-      }
+  auto loads = GetLoadNodeByParam(param);
+  for (auto &load : loads) {
+    const auto &iter = node_users_map.find(load);
+    if (iter == node_users_map.end()) {
+      continue;
+    }
+    const auto &users = (*iter).second;
+    for (auto &user : users) {
+      auto user_cnode = user.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(user_cnode);
+      FillParameterStage(user_cnode, parameter_stage);
     }
   }
   return true;
@@ -809,18 +887,7 @@ void PipelineTransformer::ParameterColoring() {
         if (GetStageByArgument(user_cnode, load_user.second, share_cell_parameters, node_users_map, &parameter_stage)) {
           continue;
         }
-        auto stage_info = user_cnode->user_data<NodeStageInfo>();
-        if (stage_info != nullptr && stage_info->stage() != -1) {
-          (void)parameter_stage.insert(stage_info->stage());
-          continue;
-        } else {
-          auto graph = user_cnode->func_graph();
-          MS_EXCEPTION_IF_NULL(graph);
-          if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
-            (void)parameter_stage.insert(graph->stage());
-            continue;
-          }
-        }
+        FillParameterStage(user_cnode, &parameter_stage);
       }
     }
     auto param_info = parameter->cast<ParameterPtr>()->param_info();
@@ -846,6 +913,8 @@ void PipelineTransformer::RemoveMonadNode() {
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
+    auto abs = cnode->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
     auto stage_info = cnode->user_data<NodeStageInfo>();
     if (stage_info == nullptr) {
       continue;
@@ -854,8 +923,11 @@ void PipelineTransformer::RemoveMonadNode() {
     if (stage != stage_ && stage != -1) {
       auto node_users = node_users_map[node];
       for (auto &user_node : node_users) {
-        auto u_node = NewValueNode(kUMonad);
-        manager_->SetEdge(user_node.first, user_node.second, u_node);
+        auto monad_node = NewValueNode(kUMonad);
+        if (abs->isa<abstract::AbstractIOMonad>()) {
+          monad_node = NewValueNode(kIOMonad);
+        }
+        manager_->SetEdge(user_node.first, user_node.second, monad_node);
       }
     }
   }
@@ -922,13 +994,10 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   int64_t send_tag = send_tag_map[dest_rank];
   send_tag_map[dest_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(send_tag));
-  Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(user_node_stage));
-  Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
-  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
+  Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(dest_rank));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(world_group_));
+  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(world_group_));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_group, attr_group_back};
-  auto send_op = CreateOpInstance(attrs, SEND, SEND);
-  auto send_node = NewValueNode(send_op);
-  auto prim = GetValueNode<PrimitivePtr>(send_node);
   AnfNodePtr care_node;
   bool is_param = true;
   auto op_info_pair = GetOpInfoPair(parameter, parameter, &care_node, &is_param);
@@ -937,11 +1006,12 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   auto op_info = op_info_pair.first;
   auto slice_shape = tensor_info.slice_shape();
   auto shape_type_pair = GetShapeType(parameter, slice_shape, 0);
+  auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
+  CNodePtr send = CreateCNodeByInputsAndAttr(graph, SEND, SEND, AnfNodePtrList{parameter}, attrs);
+  auto prim = GetCNodePrimitive(send);
   prim->set_attr(SHAPE, shape_type_pair.first);
   prim->set_attr(DTYPE, shape_type_pair.second);
-  std::vector<AnfNodePtr> send_input = {send_node, parameter};
-  auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
-  CNodePtr send = graph->NewCNode(send_input);
+
   if (!is_param) {
     send->AddPrimalAttr(PIPELINE_END, value);
   } else {
@@ -953,17 +1023,12 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   }
   send->AddPrimalAttr(MICRO, value);
   send->AddPrimalAttr(DEST_RANK, MakeValue(user_node_stage));
-  OperatorAttrs depend_attrs;
-  auto depend_op = CreateOpInstance(depend_attrs, DEPEND, DEPEND);
-  std::vector<AnfNodePtr> depend_input = {NewValueNode(depend_op), parameter, send};
-  CNodePtr depend = graph->NewCNode(depend_input);
   auto abstract = parameter->abstract();
   if (care_node) {
     abstract = care_node->abstract();
   }
-  depend->set_abstract(abstract);
   send->set_abstract(abstract);
-  SendAttr send_out = {shape_type_pair.first, shape_type_pair.second, depend};
+  SendAttr send_out = {shape_type_pair.first, shape_type_pair.second, send};
 
   // for FetchSends
   send->set_user_data<int64_t>(DEST_RANK, std::make_shared<int64_t>(dest_rank));
@@ -979,7 +1044,7 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
   int64_t recv_tag = recv_tag_map[src_rank];
   recv_tag_map[src_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(recv_tag));
-  Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(node_stage));
+  Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(src_rank));
   bool is_param = true;
   AnfNodePtr care_node;
   auto op_info_pair = GetOpInfoPair(node, graph_param, &care_node, &is_param);
@@ -989,17 +1054,20 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
   auto shape_type_pair = GetShapeType(node, slice_shape, 0);
   Attr attr_shape = std::make_pair(SHAPE, shape_type_pair.first);
   Attr attr_dtype = std::make_pair(DTYPE, shape_type_pair.second);
-  Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
-  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(world_group_));
+  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(world_group_));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_shape, attr_dtype, attr_group, attr_group_back};
-  auto recv_op = CreateOpInstance(attrs, RECEIVE, RECEIVE);
   std::vector<AnfNodePtr> recv_input;
   if (node->isa<Parameter>()) {
-    recv_input = {NewValueNode(recv_op), node};
+    recv_input = {node};
   } else {
-    recv_input = {NewValueNode(recv_op), virtual_param_};
+    recv_input = {virtual_param_};
+    if (enable_share_cell_ || !is_train_) {
+      auto recv_tensor = TensorConstructUtils::CreateZerosTensor(kFloat16, {1});
+      recv_input = {NewValueNode(recv_tensor)};
+    }
   }
-  auto recv = graph->NewCNode(recv_input);
+  auto recv = CreateCNodeByInputsAndAttr(graph, RECEIVE, RECEIVE, recv_input, attrs);
   if (is_param) {
     recv->set_user_data<AnfNode>(PIPELINE_PARAM, node);
     recv->AddPrimalAttr(PIPELINE_PARAM, value);
@@ -1119,7 +1187,9 @@ AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, con
     }
     (void)parameter_color_map_[root_param].insert(user_stage);
     auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
-    return InsertReceive(graph, argument, use_node, SizeToInt(pos), user_stage, stage, micro, parameter);
+    auto recv_node = InsertReceive(graph, argument, use_node, SizeToInt(pos), user_stage, stage, micro, parameter);
+    UpdateParameterSharedInfo(root_param, recv_node, false);
+    return recv_node;
   }
   // insert send
   if (Reuse(argument, user_stage, ops, DEST_RANK)) {
@@ -1128,6 +1198,7 @@ AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, con
   auto send_out = InsertSend(argument, user_stage, stage_, micro);
   send_out.depend->set_user_data<Type>(DTYPE, send_out.type);
   send_out.depend->set_user_data<ValueList>(SHAPE, send_out.shape);
+  UpdateParameterSharedInfo(argument, send_out.depend, true);
   return send_out.depend;
 }
 
@@ -1220,11 +1291,49 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   return std::make_pair(send_ops, receive_ops);
 }
 
-tensor::TensorPtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
+AnfNodePtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
   auto out_shapes = GetNodeShape(node);
-  auto out_shape_type = GetShapeType(node, out_shapes.at(index), index);
-  auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shapes.at(index));
-  return zero_tensor;
+  if (out_shapes.size() <= index) {
+    MS_LOG(EXCEPTION) << "the index is out of range, the size of output_shapes is " << out_shapes.size()
+                      << ", but the index is " << index;
+  }
+  auto out_shape = out_shapes.at(index);
+  if (std::count(out_shape.cbegin(), out_shape.cend(), DYNAMIC_DIM_VAL) > 0) {
+    MS_LOG(EXCEPTION) << "it is not supported that loss is not a scalar in dynamic shape and pipeline parallel "
+                         "scenarios, the output shape is "
+                      << out_shape;
+  }
+
+  // Modify output dimension when enable data parallel since only the last stage enable VirtualOutput redistribution.
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+  int64_t dev_num = full_batch ? 1 : g_device_manager->stage_device_num();
+  if (dev_num == 0) {
+    MS_LOG(EXCEPTION) << "Device num must be larger than 0, but get 0.";
+  }
+
+  if (!is_train_ && !out_shape.empty() && out_shape[0] % dev_num == 0) {
+    out_shape[0] /= dev_num;
+  }
+
+  auto out_shape_type = GetShapeType(node, out_shape, index);
+  auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shape);
+  MS_EXCEPTION_IF_NULL(zero_tensor);
+
+  auto value_node = NewValueNode(zero_tensor);
+  MS_EXCEPTION_IF_NULL(value_node);
+
+  // Build abstract from node to prevent confusion between Scalar and 0D-Tensor.
+  auto abs = node->abstract()->Clone();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto elements = abs->cast<abstract::AbstractSequencePtr>()->elements();
+    abs = elements.at(index)->Clone();
+    MS_EXCEPTION_IF_NULL(abs);
+  }
+
+  abs->set_shape(std::make_shared<abstract::Shape>(out_shape));
+  value_node->set_abstract(abs);
+  return value_node;
 }
 
 AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
@@ -1235,7 +1344,7 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
   std::vector<AnfNodePtr> out_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   if (IsPrimitiveCNode(real_out, prim::kPrimMakeTuple)) {
     auto real_out_cnode = real_out->cast<CNodePtr>();
-    for (size_t i = 1; i < real_out_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < real_out_cnode->size(); ++i) {
       auto each_out_shapes = GetNodeShape(real_out_cnode->input(i));
       // In case: tuple's input is also a tuple
       if (each_out_shapes.size() > 1) {
@@ -1243,11 +1352,12 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
         (void)out_tuple_inputs.emplace_back(temp_tuple);
         continue;
       }
-      (void)out_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(real_out_cnode->input(i), 0)));
+      (void)out_tuple_inputs.emplace_back(CreateZeroseOutput(real_out_cnode->input(i), 0));
     }
   }
   if (out_tuple_inputs.size() > INDEX_ONE) {
     auto out_tuple = main_graph_->NewCNode(out_tuple_inputs);
+    SetMakeTupleAbstract(out_tuple);
     return out_tuple;
   } else {
     auto real_out_shapes = GetNodeShape(real_out);
@@ -1256,7 +1366,7 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
     if (real_out_shapes.size() > 1 && real_kernel.second == -1) {
       out_tensor = CreateTupleZeroTensor(real_out, real_out_shapes.size());
     } else {
-      out_tensor = NewValueNode(CreateZeroseOutput(real_out, 0));
+      out_tensor = CreateZeroseOutput(real_out, 0);
     }
     return out_tensor;
   }
@@ -1305,18 +1415,18 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
   const auto &old = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(old);
   auto old_is_pipeline_param = old->HasPrimalAttr(PIPELINE_PARAM);
-  auto dest_rank = old->user_data<int64_t>(DEST_RANK);
-  auto send_tag = send_tag_map[*dest_rank];
-  send_tag_map[*dest_rank]++;
+  auto dest_rank_ptr = old->user_data<int64_t>(DEST_RANK);
+  MS_EXCEPTION_IF_NULL(dest_rank_ptr);
+  auto dest_rank = *dest_rank_ptr;
+  auto send_tag = send_tag_map[dest_rank];
+  send_tag_map[dest_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(send_tag));
-  Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(*(old->user_data<int64_t>(USER_NODE_STAGE))));
-  Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
-  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
+  Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(dest_rank));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(world_group_));
+  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(world_group_));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_group, attr_group_back};
-  auto send_op = CreateOpInstance(attrs, SEND, SEND);
-  AnfNodePtr send_node = NewValueNode(send_op);
-  std::vector<AnfNodePtr> send_input{send_node, input};
-  auto send = main_graph_->NewCNode(send_input);
+  std::vector<AnfNodePtr> send_input{input};
+  auto send = CreateCNodeByInputsAndAttr(main_graph_, SEND, SEND, send_input, attrs);
   AnfNodePtr care_node;
   bool is_param = true;
   auto op_info_pair = GetOpInfoPair(input, input, &care_node, &is_param);
@@ -1325,7 +1435,7 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
   auto index = op_info_pair.second;
   auto slice_shape = tensor_info.slice_shape();
   auto shape_type_pair = GetShapeType(input, slice_shape, 0);
-  auto prim = GetValueNode<PrimitivePtr>(send_node);
+  auto prim = GetCNodePrimitive(send);
   prim->set_attr(SHAPE, shape_type_pair.first);
   prim->set_attr(DTYPE, shape_type_pair.second);
   if (!is_param) {
@@ -1342,20 +1452,12 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
     send->set_user_data<OperatorInfo>(op_info);
   }
   send->AddPrimalAttr(MICRO, value);
-
-  OperatorAttrs depend_attrs;
-  auto depend_op = CreateOpInstance(depend_attrs, DEPEND, DEPEND);
-  std::vector<AnfNodePtr> depend_input = {NewValueNode(depend_op), send_input[INDEX_ONE], send};
-  auto depend = main_graph_->NewCNode(depend_input);
   auto abstract = input->abstract();
   if (care_node) {
     abstract = care_node->abstract();
   }
-  depend->set_abstract(abstract);
   send->set_abstract(abstract);
-  depend->set_user_data<ValueList>(SHAPE, shape_type_pair.first);
-  depend->set_user_data<Type>(DTYPE, shape_type_pair.second);
-  return depend;
+  return send;
 }
 
 std::vector<AnfNodePtr> PipelineTransformer::FetchSend(const AnfNodePtr &node, bool pipeline_param,
@@ -1387,7 +1489,7 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchSend(const AnfNodePtr &node, b
   for (auto &user : shared_cell_users_) {
     auto cuser = user->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cuser);
-    auto value = cuser->GetPrimalAttr(MICRO);
+    auto value = shared_cell_users_.size() > 1 ? cuser->GetPrimalAttr(MICRO) : MakeValue(int64_t(0));
     MS_EXCEPTION_IF_NULL(value);
     send_input = single_pipeline_end ? user : CreateTupleGetItemNode(main_graph_, user, end_index);
     (void)(depends.emplace_back(GenNewSendFromOld(node, send_input, value)));
@@ -1401,6 +1503,11 @@ void PipelineTransformer::HandleGraphOutputs(const std::vector<AnfNodePtr> &node
   SeparateParamBorder(nodes, true, &pipeline_params, &pipeline_ends);
   std::vector<AnfNodePtr> sends;
   SetNodeAbstract(pipeline_ends);
+
+  // Create root graph output before modify subgraph(shared cell).
+  // This process order is crucial when the output of subgraph is directly used as root graph.
+  auto zero_outputs = GetZeroOutputs(main_graph_);
+
   size_t ends_size = pipeline_ends.size();
   bool single_pipeline_end = ends_size == 1;
   if (single_pipeline_end) {
@@ -1421,7 +1528,9 @@ void PipelineTransformer::HandleGraphOutputs(const std::vector<AnfNodePtr> &node
   }
   for (auto &node : pipeline_params) {
     auto params = FetchSend(node, true, false, 0);
-    (void)std::copy(params.begin(), params.end(), std::back_inserter(sends));
+    if (is_train_) {
+      (void)std::copy(params.begin(), params.end(), std::back_inserter(sends));
+    }
   }
   for (size_t i = 0; i < ends_size; i++) {
     auto node = pipeline_ends[i];
@@ -1429,9 +1538,9 @@ void PipelineTransformer::HandleGraphOutputs(const std::vector<AnfNodePtr> &node
     (void)std::copy(ends.begin(), ends.end(), std::back_inserter(sends));
   }
   auto make_tuple = CreateMakeTupleNode(main_graph_, sends);
-  auto zero_outputs = GetZeroOutputs(main_graph_);
   std::vector<AnfNodePtr> out = {NewValueNode(prim::kPrimDepend), zero_outputs, make_tuple};
   auto out_node = main_graph_->NewCNode(out);
+  out_node->set_abstract(zero_outputs->abstract());
   (void)manager_->Replace(main_graph_->output(), out_node);
 }
 
@@ -1439,31 +1548,32 @@ AnfNodePtr PipelineTransformer::GenNewRecvFromOld(const AnfNodePtr &node, const 
                                                   const ValuePtr &value) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto src_rank = *(cnode->user_data<int64_t>(SRC_RANK));
+  auto src_rank_ptr = cnode->user_data<int64_t>(SRC_RANK);
+  MS_EXCEPTION_IF_NULL(src_rank_ptr);
+  auto src_rank = *src_rank_ptr;
   auto recv_tag = recv_tag_map[src_rank];
   recv_tag_map[src_rank]++;
   auto dtype = node->user_data<Type>(SLICE_DTYPE);
   auto slice_shape = *(cnode->user_data<Shape>(SLICE_SHAPE));
   auto shape = GetShapeValue(slice_shape);
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(recv_tag));
-  Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(*(node->user_data<int64_t>(NODE_STAGE))));
+  Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(src_rank));
   Attr attr_shape = std::make_pair(SHAPE, shape);
   Attr attr_dtype = std::make_pair(DTYPE, dtype);
-  Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
-  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(world_group_));
+  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(world_group_));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_shape, attr_dtype, attr_group, attr_group_back};
 
-  auto recv_op = CreateOpInstance(attrs, RECEIVE, RECEIVE);
-  std::vector<AnfNodePtr> recv_input = {NewValueNode(recv_op), input};
-  auto recv = main_graph_->NewCNode(recv_input);
+  std::vector<AnfNodePtr> recv_input = {input};
+  auto recv = CreateCNodeByInputsAndAttr(main_graph_, RECEIVE, RECEIVE, recv_input, attrs);
   auto tensor_layout = node->user_data<TensorLayout>();
   if (cnode->HasPrimalAttr(PIPELINE_PARAM)) {
     auto abstract_clone = node->abstract()->Clone();
     MS_EXCEPTION_IF_NULL(abstract_clone);
-    recv->set_user_data<AnfNode>(PIPELINE_PARAM, recv_input[INDEX_ONE]);
+    recv->set_user_data<AnfNode>(PIPELINE_PARAM, recv_input[INDEX_ZERO]);
     recv->AddPrimalAttr(PIPELINE_PARAM, value);
-    recv_input[INDEX_ONE]->set_abstract(abstract_clone);
-    recv_input[INDEX_ONE]->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(*tensor_layout));
+    recv_input[INDEX_ZERO]->set_abstract(abstract_clone);
+    recv_input[INDEX_ZERO]->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(*tensor_layout));
   } else {
     recv->AddPrimalAttr(PIPELINE_BEGIN, value);
   }
@@ -1497,7 +1607,11 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchRecv(const AnfNodePtr &node, b
       recv_input = user->input(input_pos);
       recv = GenNewRecvFromOld(node, recv_input, value);
       for (auto &share_user : shared_cell_users_) {
-        manager_->SetEdge(share_user, input_pos, recv);
+        if (is_train_) {
+          manager_->SetEdge(share_user, input_pos, recv);
+        } else {
+          manager_->SetEdge(share_user, input_pos, recv_input);
+        }
       }
       node->set_user_data<bool>(ORIGIN_INPUT_IS_PARAM, std::make_shared<bool>(true));
     } else {
@@ -1512,9 +1626,14 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchRecv(const AnfNodePtr &node, b
   for (auto &user : shared_cell_users_) {
     auto cuser = user->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cuser);
-    auto value = cuser->GetPrimalAttr(MICRO);
+    auto value = shared_cell_users_.size() > 1 ? cuser->GetPrimalAttr(MICRO) : MakeValue(int64_t(0));
     MS_EXCEPTION_IF_NULL(value);
-    recv = GenNewRecvFromOld(node, virtual_param_, value);
+    if (enable_share_cell_ || !is_train_) {
+      auto recv_tensor = TensorConstructUtils::CreateZerosTensor(kFloat16, {1});
+      recv = GenNewRecvFromOld(node, NewValueNode(recv_tensor), value);
+    } else {
+      recv = GenNewRecvFromOld(node, virtual_param_, value);
+    }
     (void)(recvs.emplace_back(recv));
   }
   return recvs;
@@ -1555,6 +1674,7 @@ void PipelineTransformer::ResetSharedCellParamAndArgu(
   MS_LOG(DEBUG) << "The shared cell origin params size is " << params.size() << ", new params size is "
                 << new_params.size();
   manager_->SetParameters(shared_cell_, new_params);
+  shared_cell_->set_fv_param_count(new_params.size());
   // set call inputs
   size_t user_index = 0;
   for (auto &user : shared_cell_users_) {
@@ -1655,14 +1775,15 @@ AnfNodePtr PipelineTransformer::CreateTupleZeroTensor(const AnfNodePtr &node, si
   std::vector<AnfNodePtr> temp_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   auto out_shapes = GetNodeShape(node);
   for (size_t ele = 0; ele < out_shapes.size(); ++ele) {
-    temp_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(node, ele)));
+    temp_tuple_inputs.emplace_back(CreateZeroseOutput(node, ele));
   }
   auto temp_tuple = main_graph_->NewCNode(temp_tuple_inputs);
+  SetMakeTupleAbstract(temp_tuple);
   return temp_tuple;
 }
 
 void PipelineTransformer::CutGraph() {
-  CreateForwardGroup();
+  world_group_ = GetWorldGroup();
   auto send_recv_shared_param = HandleSharedParameter();
   auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
   MS_EXCEPTION_IF_NULL(graph);
@@ -1671,9 +1792,6 @@ void PipelineTransformer::CutGraph() {
   (void)(send_ops.insert(send_ops.end(), send_recv_shared_param.first.begin(), send_recv_shared_param.first.end()));
   (void)(send_ops.insert(send_ops.end(), send_recv_cut_border.first.begin(), send_recv_cut_border.first.end()));
   if (IsLastStage() && !enable_share_cell_) {
-    return;
-  }
-  if (send_ops.empty() && !is_train_) {
     return;
   }
   if (!send_ops.empty()) {
@@ -1688,8 +1806,6 @@ void PipelineTransformer::CutGraph() {
     (void)manager_->Replace(main_graph_->output(), out_node);
     return;
   }
-  send_tag_map.clear();
-  recv_tag_map.clear();
   if (!IsLastStage()) {
     HandleGraphOutputs(send_ops);
   }
@@ -1718,12 +1834,17 @@ void PipelineTransformer::RedundancyNode(const AnfNodePtr &node,
       continue;
     }
     if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
-      auto u_node = NewValueNode(kUMonad);
-      manager_->SetEdge(cnode, node_user_pair.second, u_node);
+      auto abs = cnode->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      auto monad_node = NewValueNode(kUMonad);
+      if (abs->isa<abstract::AbstractIOMonad>()) {
+        monad_node = NewValueNode(kIOMonad);
+      }
+      manager_->SetEdge(cnode, node_user_pair.second, monad_node);
       continue;
     }
     // node->make_tuple, record with a map, Unified deleted later.
-    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
       if (make_tuple_map->find(cnode) == (*make_tuple_map).end()) {
         (*make_tuple_map)[cnode] = {node};
       } else {
@@ -1765,10 +1886,76 @@ bool PipelineTransformer::IsRedundancyParameter(const AnfNodePtr &parameter,
   return stage_set.count(stage_) == 0;
 }
 
+bool PipelineTransformer::HasNoUpdateParameter() {
+  auto parameters = root_->parameters();
+  for (auto &parameter : parameters) {
+    if (ParameterIsCloned(parameter)) {
+      continue;
+    }
+    auto param_info = parameter->cast<ParameterPtr>()->param_info();
+    if (!param_info) {
+      continue;
+    }
+    auto stage_set = parameter_color_map_.at(parameter);
+    auto requires_grad = param_info->requires_grad();
+    if (requires_grad && stage_set.count(stage_)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void PipelineTransformer::FreezeGradient() {
+  auto node_users_map = manager_->node_users();
+  if (HasNoUpdateParameter() && is_train_) {
+    root_->set_flag(NO_UPDATE, true);
+    auto nodes = root_->nodes();
+    for (auto &node : nodes) {
+      if (!IsPrimitiveCNode(node, prim::kPrimJ)) {
+        continue;
+      }
+      auto node_users = node_users_map.at(node);
+      auto grad_users = node_users_map.at(node_users.front().first);
+      for (auto &grad_user : grad_users) {
+        auto user_node = grad_user.first->cast<CNodePtr>();
+        if (!IsPrimitiveCNode(user_node, prim::kPrimTupleGetItem)) {
+          continue;
+        }
+        auto index = GetTupleGetItemIndex(user_node);
+        if (index != 1) {
+          continue;
+        }
+        auto temp = node_users_map.at(user_node).front().first;
+        auto out = root_->output();
+        std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), out, temp};
+        auto new_node = root_->NewCNode(depend_input);
+        manager_->Replace(out, new_node);
+        break;
+      }
+      break;
+    }
+    for (auto &node : nodes) {
+      if (!IsPrimitiveCNode(node, prim::kPrimNPUGetFloatStatusV2)) {
+        continue;
+      }
+      auto cnode = node->cast<CNodePtr>();
+      auto out_cnode = root_->output()->cast<CNodePtr>();
+      auto grads = out_cnode->input(INDEX_TWO);
+      std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), cnode->input(1), grads};
+      auto new_node = root_->NewCNode(depend_input);
+      new_node->set_abstract(cnode->input(1)->abstract());
+      manager_->Replace(cnode->input(1), new_node);
+      break;
+    }
+  }
+}
+
 void PipelineTransformer::ElimParameter() {
   auto parameters = root_->parameters();
   mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> make_tuple_map;
   std::vector<AnfNodePtr> non_cloned_parameters;
+  FreezeGradient();
+  auto node_users_map = manager_->node_users();
   for (auto &parameter : parameters) {
     if (ParameterIsCloned(parameter)) {
       continue;
@@ -1790,11 +1977,16 @@ void PipelineTransformer::ElimParameter() {
     if (remove_vector.empty()) {
       continue;
     }
+    auto make_tuple_user = node_users_map.at(make_tuple).front().first;
     auto make_tuple_inputs = make_tuple->inputs();
     std::vector<AnfNodePtr> new_inputs;
     for (auto &input : make_tuple_inputs) {
       if (std::find(remove_vector.begin(), remove_vector.end(), input) == remove_vector.end()) {
         new_inputs.push_back(input);
+        continue;
+      }
+      if (root_->has_flag(NO_UPDATE) && IsPrimitiveCNode(make_tuple_user, prim::kPrimAddN)) {
+        new_inputs.push_back(CreateZeroseOutput(input, 0));
       }
     }
     auto new_make_tuple = fg->NewCNode(new_inputs);
@@ -1816,6 +2008,137 @@ void PipelineTransformer::ModifyParameterList() {
   auto del_num = parameters.size() - parameter_list.size();
   root_->set_fv_param_count(root_->fv_param_count() - del_num);
   manager_->SetParameters(root_, parameter_list);
+}
+
+static AnfNodePtr GetDout(const AnfNodePtr &node, const NodeUsersMap &node_users_map) {
+  auto node_usrs = node_users_map.at(node);
+  for (auto &node_user_pair : node_usrs) {
+    auto node_usr = node_user_pair.first->cast<CNodePtr>();
+    if (!IsPrimitiveCNode(node_usr, prim::kPrimTupleGetItem)) {
+      continue;
+    }
+    auto index = GetTupleGetItemIndex(node_usr);
+    if (index != 1) {
+      continue;
+    }
+    auto get_item_usrs = node_users_map.at(node_usr);
+    if (get_item_usrs.size() != 1) {
+      MS_LOG(WARNING) << "Get Multi grad usrs. Use first.";
+    }
+    return get_item_usrs.begin()->first;
+  }
+  return nullptr;
+}
+
+static bool NeedAttach(const FuncGraphManagerPtr &manager) {
+  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode != kAutoParallel && parallel_mode != kSemiAutoParallel) {
+    return false;
+  }
+  bool cell_reuse = false;
+  for (auto &fg : manager->func_graphs()) {
+    if (fg->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+      cell_reuse = true;
+      break;
+    }
+  }
+  auto stage_num = g_device_manager->stage_num();
+  if (!cell_reuse || stage_num <= 1) {
+    return false;
+  }
+  return true;
+}
+
+bool IsolatedNodeAttach(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
+  if (root->has_flag(HAS_ATTACHED)) {
+    return false;
+  }
+  root->set_flag(HAS_ATTACHED, true);
+  auto manager = root->manager();
+  if (!NeedAttach(manager)) {
+    return false;
+  }
+  auto ret_after = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret_after);
+  auto all_nodes = DeepScopedGraphSearch(ret_after);
+  const auto &node_users_map = manager->node_users();
+  std::vector<AnfNodePtr> make_tuple_input = {NewValueNode(prim::kPrimMakeTuple)};
+  FuncGraphPtr main_graph;
+  FuncGraphPtr grad_graph;
+  for (auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (!IsValueNode<FuncGraph>(cnode->input(0))) {
+      continue;
+    }
+    auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
+    auto sub_graph_output = graph->output();
+    if (!IsPrimitiveCNode(sub_graph_output, prim::kPrimMakeTuple)) {
+      continue;
+    }
+    auto csub_graph_output = sub_graph_output->cast<CNodePtr>();
+    if (!IsPrimitiveCNode(csub_graph_output->input(1), prim::kPrimReceive)) {
+      continue;
+    }
+    auto call_node_input = cnode->input(1);
+    if (!IsValueNode<tensor::Tensor>(call_node_input)) {
+      continue;
+    }
+    auto call_node_users = node_users_map.at(node);
+    if (call_node_users.size() != 1) {
+      continue;
+    }
+    auto usr_node = call_node_users.begin()->first;
+    if (!IsPrimitiveCNode(usr_node, prim::kPrimTupleGetItem)) {
+      continue;
+    }
+    auto get_item_usrs = node_users_map.at(usr_node);
+    std::vector<AnfNodePtr> addn_input = {NewValueNode(prim::kPrimAddN)};
+    main_graph = node->func_graph();
+    for (auto &get_item_usr_pair : get_item_usrs) {
+      auto get_item_usr = get_item_usr_pair.first;
+      auto grad_node = GetDout(get_item_usr, node_users_map);
+      if (grad_graph == nullptr) {
+        grad_graph = grad_node->func_graph();
+      } else {
+        if (grad_graph != grad_node->func_graph()) {
+          MS_LOG(EXCEPTION) << "Got Wrong Grad graph when attached Receive's grad, Maybe don't use lazy inline.";
+        }
+      }
+      std::vector<AnfNodePtr> new_get_item_input = {NewValueNode(prim::kPrimTupleGetItem), grad_node,
+                                                    NewValueNode(MakeValue(SizeToLong(get_item_usr_pair.second)))};
+      auto new_get_item = grad_graph->NewCNode(new_get_item_input);
+      addn_input.emplace_back(new_get_item);
+    }
+    AnfNodePtr temp;
+    if (addn_input.size() > SIZE_TWO) {
+      temp = grad_graph->NewCNode(addn_input);
+    } else {
+      temp = addn_input.at(1);
+    }
+    std::vector<AnfNodePtr> send_grad_fn_input = {NewValueNode(prim::kPrimTupleGetItem), node,
+                                                  NewValueNode(MakeValue(int64_t(1)))};
+    auto send_grad_fn = main_graph->NewCNode(send_grad_fn_input);
+    auto call_grad_node = grad_graph->NewCNode({send_grad_fn, temp});
+    std::vector<AnfNodePtr> call_grad_get_item_input = {NewValueNode(prim::kPrimTupleGetItem), call_grad_node,
+                                                        NewValueNode(MakeValue(int64_t(1)))};
+    auto call_grad_get_item = grad_graph->NewCNode(call_grad_get_item_input);
+    make_tuple_input.emplace_back(call_grad_get_item);
+  }
+  if (make_tuple_input.size() <= 1) {
+    return false;
+  }
+  auto make_tuple = grad_graph->NewCNode(make_tuple_input);
+  if (root->has_flag(NO_UPDATE)) {
+    manager->Replace(grad_graph->output(), make_tuple);
+    return true;
+  }
+  std::vector<AnfNodePtr> attach_node_input = {NewValueNode(prim::kPrimDepend), grad_graph->output(), make_tuple};
+  auto attach_node = grad_graph->NewCNode(attach_node_input);
+  manager->Replace(grad_graph->output(), attach_node);
+  return true;
 }
 }  // namespace parallel
 }  // namespace mindspore

@@ -97,11 +97,14 @@ class SchedulerHelper {
   static void AddMemoryFreeSign(AbstractActor *const from_actor, AbstractActor *const to_actor,
                                 const KernelGraphPtr &from_graph);
   static void AddSomasInfo(AbstractActor *const actor);
+  static void AddSomasInfoForGraphOutput(AbstractActor *const output_actor, const AnfNodePtr &output_kernel,
+                                         size_t output_index, size_t graph_id);
 
   // Check whether the actor set is valid.
   static void CheckActorValid(const ActorSet *actor_set);
 
   static void DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs);
+  static void DumpFormatActorSet(const ActorSet *actor_set, std::ofstream &ofs);
 
   static size_t fusion_actor_index_;
 };

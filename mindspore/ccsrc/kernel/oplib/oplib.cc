@@ -22,39 +22,9 @@
 #include "kernel/oplib/opinfo.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
-#include "kernel/oplib/super_bar.h"
 #include "utils/file_utils.h"
 
 namespace mindspore::kernel {
-std::vector<std::string> SplitStrToVec(const std::string &input) {
-  static const std::map<std::string, std::string> kSpecFormat = {{kOpFormat_NCHW, kOpFormat_DEFAULT},
-                                                                 {kOpFormat_ND, kOpFormat_DEFAULT}};
-  if (input.empty()) {
-    MS_LOG(INFO) << "Input string is empty.";
-    return {};
-  }
-  // remove blank elem
-  std::string input_tmp = input;
-  (void)input_tmp.erase(remove(input_tmp.begin(), input_tmp.end(), ' '), input_tmp.end());
-  (void)input_tmp.append(",");
-  // split
-  const char sep = ',';
-  std::vector<std::string> result = {};
-  auto begin = 0U;
-  auto end = input_tmp.find(sep);
-  while (end != std::string::npos) {
-    auto format = input_tmp.substr(begin, end - begin);
-    auto find_iter = kSpecFormat.find(format);
-    if (find_iter != kSpecFormat.end()) {
-      format = find_iter->second;
-    }
-    (void)result.emplace_back(format);
-    begin = end + 1;
-    end = input_tmp.find(sep, begin);
-  }
-  return result;
-}
-
 bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) {
   try {
     auto op_json = nlohmann::json::parse(json_string);
@@ -136,41 +106,6 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
       }
     }
   }
-}
-
-bool OpLib::RegOpFromLocalInfo() {
-  static bool has_load = false;
-  if (has_load) {
-    return true;
-  }
-  MS_LOG(INFO) << "Start";
-  has_load = true;
-  std::string dir = common::GetEnv("MINDSPORE_OP_INFO_PATH");
-  if (dir.empty()) {
-    MS_LOG(INFO) << "MINDSPORE_OP_INFO_PATH has not been set, return.";
-    return true;
-  }
-  auto real_path = FileUtils::GetRealPath(dir.c_str());
-  if (!real_path.has_value()) {
-    MS_LOG(INFO) << "Invalid environment variable 'MINDSPORE_OP_INFO_PATH', the path is: " << dir
-                 << ". Please check (1) whether the path exists, (2) whether the path has the access permission, "
-                 << "(3) whether the path is too long. ";
-    return false;
-  }
-  std::ifstream file(real_path.value());
-  if (!file.is_open()) {
-    MS_LOG(ERROR) << "Find op info file failed.";
-    return false;
-  }
-  std::string line;
-  while (getline(file, line)) {
-    if (!line.empty()) {
-      (void)OpLib::RegOp(line, "");
-    }
-  }
-  file.close();
-  MS_LOG(INFO) << "End";
-  return true;
 }
 
 std::shared_ptr<OpInfo> OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpImplyType &imply_type,
@@ -331,9 +266,6 @@ bool OpLib::DecodeInputOutput(const nlohmann::json &obj, OpImplyType imply_type,
 }
 
 std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType imply_type, bool is_dynamic_shape) {
-  if (!OpLib::RegOpFromLocalInfo()) {
-    MS_LOG(INFO) << "Warning reg local op info failed.";
-  }
   auto &op_infos = GetOpInfoMap();
   auto op_infos_iter = op_infos.find(imply_type);
   if (op_infos_iter == op_infos.end()) {

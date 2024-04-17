@@ -39,7 +39,7 @@ class ShapeInfoContainer {
     return var_tensor_shapes_;
   }
 
-  const std::map<int, std::vector<int>> GetShapesWholeScenes() const { return shapes_whole_scenes_; }
+  const std::map<int, std::vector<int>> &GetShapesWholeScenes() const { return shapes_whole_scenes_; }
 
   const std::map<const Tensor *, std::vector<std::string>> &GetWholeTemplateShape() const { return shape_templates_; }
 

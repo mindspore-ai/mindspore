@@ -1,0 +1,13 @@
+#operator npu_get_float_status_v2
+npu_get_float_status_v2:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: NPUGetFloatStatusV2
+    function:
+        disable: True
+         

@@ -29,6 +29,7 @@
 #include "utils/hash_set.h"
 #include "runtime/graph_scheduler/control_node_scheduler.h"
 #include "runtime/graph_scheduler/any_type_graph_scheduler.h"
+#include "runtime/graph_scheduler/inline_control_flow_scheduler.h"
 #include "runtime/graph_scheduler/mem_swap_scheduler.h"
 #include "runtime/graph_scheduler/actor/actor_set.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
@@ -74,7 +75,7 @@ class BACKEND_EXPORT GraphScheduler {
   void Schedule(const ActorSet *actor_set);
 
   // The processing entry of actors running. The fourth parameter is used only in the step execution strategy.
-  void Run(ActorSet *constactor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
+  void Run(ActorSet *constactor_set, const std::vector<std::vector<TensorPtr>> &input_tensors, const VectorRef &args,
            GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
   // Fetch the actor set by actor info.
@@ -87,6 +88,9 @@ class BACKEND_EXPORT GraphScheduler {
   // Returns pointer of RpcNodeScheduler to distributed module.
   RpcNodeScheduler *rpc_node_scheduler() { return rpc_node_scheduler_.get(); }
 #endif
+
+  // The callback function after process fork finish to reinitialize multi pipeline actors.
+  void ChildAfterFork();
 
  private:
   GraphScheduler() = default;
@@ -128,7 +132,11 @@ class BACKEND_EXPORT GraphScheduler {
   KernelActorPtr GenerateRpcActor(const CNodePtr &kernel, const DeviceContext *device_context,
                                   GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
                                   const std::set<size_t> &modifiable_ref_output_indexes);
-
+  // Generate inner control flow actor in execution order.
+  KernelActorPtr GenerateInnerControlFlowActor(const CNodePtr &kernel, const DeviceContext *device_context,
+                                               GraphExecutionStrategy strategy,
+                                               const std::set<size_t> &ref_input_indexes,
+                                               const std::set<size_t> &ref_output_indexes);
   // Cache the information of graph output node to actor between “build” and “link”, for linking between the tail of
   // previous graph and the head of next graph.
   void CacheGraphOutputToActor(const GraphCompilerInfo &graph_compiler_info);
@@ -220,9 +228,20 @@ class BACKEND_EXPORT GraphScheduler {
   // Display the actor information of corresponding kernel graph.
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
   void DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const;
-
+  void DumpFinalActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
   // bind thread pool to same numa node
   void BindNumaNode();
+
+  // Refresh the context and thread pool before run model.
+  void RefreshContextAndThreadPool(ActorSet *const actor_set, ActorThreadPool *const thread_pool);
+
+  // Spawn kernel async infer/resize/launch kernel in run graph phase if need.
+  void SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThreadPool *const thread_pool);
+
+  // Whether enable async launch kernel or infer->resize->launch pipeline.
+  // Set ture will enable async launch, and also enable infer->resize->launch pipeline if actor set contains dynamic
+  // shape kernel.
+  bool EnableRuntimePipeline();
 
   // The global maps, only be cleared in the deconstruction.
   mindspore::HashMap<ActorInfo, ActorSetPtr> actors_;
@@ -238,6 +257,8 @@ class BACKEND_EXPORT GraphScheduler {
   ControlNodeScheduler control_node_scheduler_;
   // If there is an any type input in graph, it will be used to transform it.
   AnyTypeGraphScheduler any_type_graph_scheduler_;
+  // If there is inline control flow in kernel graph, it will be used to transform it.
+  InlineControlFlowScheduler inline_control_flow_scheduler_;
 
   // Build and link swap actor when memory offload is enabled.
   MemSwapScheduler swap_node_scheduler_;
@@ -259,8 +280,12 @@ class BACKEND_EXPORT GraphScheduler {
   bool execution_order_running_{false};
   // numa library handle
   std::shared_ptr<void> numa_handle_{};
+  size_t default_actor_thread_num_{1};
+  std::vector<int> numa_cpus_;
 
   bool init_{false};
+  bool already_spawn_kernel_async_launch_actor_{false};
+  bool already_spawn_kernel_async_infer_resize_actor_{false};
 };
 }  // namespace runtime
 }  // namespace mindspore

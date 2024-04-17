@@ -41,7 +41,7 @@ void AddCustomAttr(std::vector<std::unique_ptr<mindspore::schema::AttributeT>> *
   attr->name = key;
   std::vector<uint8_t> attr_data(value.begin(), value.end());
   attr->data = attr_data;
-  attrs->emplace_back(std::move(attr));
+  (void)attrs->emplace_back(std::move(attr));
 }
 
 int AddWeightSumsToInputs(const mindspore::kernel::MatmulDynamicBaseInt8CPUKernel *matmul_kernel,
@@ -52,11 +52,11 @@ int AddWeightSumsToInputs(const mindspore::kernel::MatmulDynamicBaseInt8CPUKerne
     MS_LOG(ERROR) << "weight_sums_tensor is nullptr";
     return RET_ERROR;
   }
-  weight_sums_tensor->nodeType = lite::NodeType_ValueNode;
+  weight_sums_tensor->nodeType = static_cast<int32_t>(lite::NodeType_ValueNode);
   weight_sums_tensor->format = schema::Format_NHWC;
-  weight_sums_tensor->dataType = TypeId::kNumberTypeInt32;
+  weight_sums_tensor->dataType = static_cast<int32_t>(TypeId::kNumberTypeInt32);
   weight_sums_tensor->dims = {};
-  weight_sums_tensor->dims.emplace_back(weight_sum_size / sizeof(int));
+  (void)weight_sums_tensor->dims.emplace_back(weight_sum_size / sizeof(int));
   weight_sums_tensor->data.resize(weight_sum_size);
   weight_sums_tensor->name = cnode->name + "_weight_sums";
   if (memcpy_s(weight_sums_tensor->data.data(), weight_sums_tensor->data.size(), matmul_kernel->GetWeightSums(),
@@ -64,8 +64,8 @@ int AddWeightSumsToInputs(const mindspore::kernel::MatmulDynamicBaseInt8CPUKerne
     MS_LOG(ERROR) << "new CustomT error.";
     return RET_ERROR;
   }
-  cnode->inputIndex.emplace_back(meta_graph->allTensors.size());
-  meta_graph->allTensors.emplace_back(std::move(weight_sums_tensor));
+  (void)cnode->inputIndex.emplace_back(meta_graph->allTensors.size());
+  (void)meta_graph->allTensors.emplace_back(std::move(weight_sums_tensor));
   return RET_OK;
 }
 
@@ -102,11 +102,11 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
   primitive->type = kMatmulCustomType;
 
   // activation_type
-  AddCustomAttr(&(primitive->attr), ops::kActivationType, std::to_string(matmul_param->act_type_));
+  AddCustomAttr(&(primitive->attr), ops::kActivationType, std::to_string(static_cast<int>(matmul_param->act_type_)));
   // transpose_a
-  AddCustomAttr(&(primitive->attr), ops::kTransposeA, std::to_string(matmul_param->a_transpose_));
+  AddCustomAttr(&(primitive->attr), ops::kTransposeA, std::to_string(static_cast<int>(matmul_param->a_transpose_)));
   // transpose_b
-  AddCustomAttr(&(primitive->attr), ops::kTransposeB, std::to_string(matmul_param->b_transpose_));
+  AddCustomAttr(&(primitive->attr), ops::kTransposeB, std::to_string(static_cast<int>(matmul_param->b_transpose_)));
 
   int b_batch;
   const void *pack_b_ptr = nullptr;
@@ -117,7 +117,7 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
     const MatmulStruct *matmul = reinterpret_cast<const MatmulStruct *>(kernel_base);
     if (matmul->matmul_type_ == kMatmulFp32BaseCpu || matmul->matmul_type_ == kMatmulFp32Arm64Cpu) {
       b_batch = matmul->b_batch_;
-      pack_b_size = b_batch * matmul->compute_.col_align_ * matmul->compute_.deep_ * sizeof(float);
+      pack_b_size = static_cast<size_t>(b_batch * matmul->compute_.col_align_ * matmul->compute_.deep_) * sizeof(float);
       pack_b_ptr = matmul->matrix_b_.pack_ptr_;
     }
   }
@@ -126,9 +126,9 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
     // replace packed data
     auto matmul_kernel = reinterpret_cast<const mindspore::kernel::MatmulDynamicBaseInt8CPUKernel *>(lite_kernel);
     b_batch = matmul_kernel->GetBBatch();
-    pack_b_size = b_batch * matmul_param->col_align_ * matmul_param->deep_align_ * sizeof(int8_t);
+    pack_b_size = static_cast<size_t>(b_batch * matmul_param->col_align_ * matmul_param->deep_align_) * sizeof(int8_t);
     pack_b_ptr = reinterpret_cast<const void *>(matmul_kernel->GetPackBPtr());
-    auto weight_sum_size = b_batch * matmul_param->col_align_ * sizeof(int);
+    auto weight_sum_size = static_cast<size_t>(b_batch * matmul_param->col_align_) * sizeof(int);
     int ret = AddWeightSumsToInputs(matmul_kernel, meta_graph, cnode, weight_sum_size);
     if (ret != RET_OK) {
       delete primitive;

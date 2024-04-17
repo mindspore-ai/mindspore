@@ -125,7 +125,9 @@ class Adagrad(Optimizer):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              `LearningRateSchedule
+              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              with step as the input to get the learning rate of current step.
 
         update_slots (bool): Whether the :math:`h` will be updated. Default: ``True`` .
         loss_scale (float): Value for the loss scale. It must be greater than 0.0. In general, use the default value.
@@ -162,11 +164,11 @@ class Adagrad(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
+        >>> from mindspore import train
         >>> import mindspore.nn as nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Adagrad(params=net.trainable_params())
@@ -185,7 +187,7 @@ class Adagrad(Optimizer):
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = train.Model(net, loss_fn=loss, optimizer=optim)
     """
 
     @opt_init_args_register

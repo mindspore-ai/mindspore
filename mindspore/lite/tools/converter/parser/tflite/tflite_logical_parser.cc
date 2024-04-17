@@ -17,9 +17,7 @@
 #include "tools/converter/parser/tflite/tflite_logical_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/logical_and.h"
-#include "ops/logical_not.h"
-#include "ops/logical_or.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

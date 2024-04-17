@@ -19,15 +19,15 @@
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 #include <memory>
-#include <utility>
-
 #include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "ir/primitive.h"
 #include "ir/signature.h"
 #include "pybind11/pybind11.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -38,6 +38,9 @@ using PrimitivePyWeakPtr = std::weak_ptr<PrimitivePy>;
 
 class PrimitivePyAdapter;
 using PrimitivePyAdapterPtr = std::shared_ptr<PrimitivePyAdapter>;
+
+class PrimitiveFunctionAdapter;
+using PrimitiveFunctionAdapterPtr = std::shared_ptr<PrimitiveFunctionAdapter>;
 
 class PrimitivePy : public Primitive {
  public:
@@ -51,8 +54,6 @@ class PrimitivePy : public Primitive {
   py::function GetVmapRuleFunction(const bool is_side_effect = false, int axis_size = 0);
   py::function GetBpropFunction();
   py::function GetTaylorRuleFunction();
-  void set_signatures(const std::vector<Signature> &signatures);
-  const std::vector<Signature> &signatures() const { return signatures_; }
   const std::map<int, py::function> &backward_hook_fn() const { return backward_hook_fn_; }
   void CopyHookFunction(const PrimitivePyPtr &primitive_py);
   void AddBpropCutPrim(const PrimitivePyPtr &bprop_cut_prim);
@@ -77,6 +78,7 @@ class PrimitivePy : public Primitive {
   void set_bprop_cls_name(const std::string &name) { bprop_cls_name_ = name; }
   static void ProcessUnPairedCellHook(bool execute_hook_fn);
   static void ClearHookRes();
+  bool IsPythonPrim() override { return true; }
 
  private:
   py::function GetComputeFunction() const;
@@ -187,6 +189,25 @@ class OpPrimPyRegister {
  private:
   OpPrimPyRegister() {}
   HashMap<std::string, ValuePtr> primpy_map_;  // op_name, primpy
+};
+
+class PrimitiveFunctionAdapter {
+ public:
+  PrimitiveFunctionAdapter() = default;
+  virtual ~PrimitiveFunctionAdapter() = default;
+  void set_attached_primitive_function(const PrimitivePtr &prim_func) { attached_primitive_function_ = prim_func; }
+  PrimitivePtr attached_primitive_function() { return attached_primitive_function_; }
+  virtual std::string name() { return py::str(attached_primitive_function_->name()).cast<std::string>(); }
+  py::object has_label(const std::string &label) { return py::bool_(attached_primitive_function_->HasAttr(label)); }
+  void set_label(const std::string &label, const py::object &value);
+  py::object get_label(const std::string &label) { return ValueToPyData(attached_primitive_function_->GetAttr(label)); }
+  py::object clone();
+
+  const bool parse_info_ = true;
+
+ private:
+  std::string name_;
+  PrimitivePtr attached_primitive_function_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_

@@ -14,6 +14,7 @@
 # ============================================================================
 
 import numpy as np
+import mindspore as ms
 import mindspore.context as context
 from mindspore import Tensor
 import mindspore.nn as nn
@@ -33,7 +34,7 @@ class BertAttentionPiece(Cell):
         self.add = P.Add()
         self.dropout = nn.Dropout(p=0.1)
         self.softmax = nn.Softmax()
-        self.multiply_data = -10000.0
+        self.multiply_data = Tensor(-10000.0, ms.float16)
         self.sub = P.Sub()
         self.multiply = P.Mul()
         self.get_dtype = P.DType()

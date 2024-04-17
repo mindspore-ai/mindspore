@@ -90,13 +90,13 @@ void CheckInputParameter(const PrimitivePtr &primitive, const std::vector<Abstra
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input_number", SizeToLong(input_args.size()), kEqual, kInputsNum, op_name);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
+  (void)CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(op_name, input_args, 1, kObjectTypeTensorType);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  auto random_samples_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto random_samples_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (!IsDynamicRank(input_shape) && input_shape.size() != kDimSize4 && input_shape.size() != kDimSize5) {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the dimension of 'x' must be equal to 4 or 5, but got "
                             << std::to_string(input_shape.size()) << ".";
@@ -142,7 +142,7 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto data_format = GetValue<std::string>(primitive->GetAttr(kFormat));
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (data_format != "NCDHW" && data_format != "NDHWC") {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', data_format is neither NCDHW nor NDHWC." << data_format
                              << ".";
@@ -204,16 +204,16 @@ TuplePtr FractionalMaxPool3DWithFixedKsizeInferType(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input_number", SizeToLong(input_args.size()), kEqual, kInputsNum, op_name);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
+  (void)CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(op_name, input_args, 1, kObjectTypeTensorType);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
   const std::set<TypePtr> random_samples_valid_types = {kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("random_samples", input_args[1]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("random_samples", input_args[1]->GetType(),
                                                    random_samples_valid_types, op_name);
-  auto x_dtype = CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), x_valid_types, op_name);
+  auto x_dtype = CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), x_valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_dtype, kInt64});
 }
 }  // namespace

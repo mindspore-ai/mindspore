@@ -20,14 +20,12 @@
 namespace mindspore {
 namespace kernel {
 const size_t UNIFORM_INT_INPUT_NUM = 3;
-bool RandomOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  kernel_type_ = base_operator->name();
-  auto iter = kRandomOpTypeMap.find(kernel_type_);
+bool RandomOpGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto iter = kRandomOpTypeMap.find(kernel_name_);
   if (iter == kRandomOpTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_type_
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << ", only support these types: StandardNormal, UniformInt or UniformReal currently, but got "
-                      << kernel_type_;
+                      << kernel_name_;
   } else {
     random_op_type_ = iter->second;
   }
@@ -36,11 +34,11 @@ bool RandomOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   } else {
     input_num_ = 1;
   }
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
-  if (base_operator->HasAttr("use_curand")) {
-    use_curand_ = GetValue<bool>(base_operator->GetAttr("use_curand"));
+  if (primitive_->HasAttr("use_curand")) {
+    use_curand_ = GetValue<bool>(primitive_->GetAttr("use_curand"));
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -52,9 +50,8 @@ bool RandomOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int RandomOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int RandomOpGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto real_input_num = inputs.size();
   if (real_input_num != input_num_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', the number of inputs should be " << input_num_ << ", but got "
@@ -64,7 +61,7 @@ int RandomOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', the number of outputs should be 1, but got " << output_num;
   }
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   workspace_size_list_.clear();
@@ -80,9 +77,9 @@ int RandomOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &workspace,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   curandStatePhilox4_32_10_t *devStates = nullptr;
   // Operator CudnnUniformReal does not need workspace memory.
   if (random_op_type_ != RANDOM_OP_CUDNN_UNIFORM_REAL) {
@@ -107,10 +104,10 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
                                      "Failed to set stream for generator");
         // curandGen only support float or double for mask.
         CHECK_CURAND_RET_WITH_EXCEPT(
-          curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size / sizeof(float), 0.0, 1.0),
+          curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size() / sizeof(float), 0.0, 1.0),
           "Failed to generate normal");
       } else {
-        auto status = StandardNormal(seed_, seed_offset_, devStates, output_addr, outputs[0]->size / sizeof(T),
+        auto status = StandardNormal(seed_, seed_offset_, devStates, output_addr, outputs[0]->size() / sizeof(T),
                                      reinterpret_cast<cudaStream_t>(cuda_stream_));
         CHECK_CUDA_STATUS(status, kernel_name_);
         seed_offset_ += 1;
@@ -121,8 +118,8 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
       T *input_addr_1 = GetDeviceAddress<T>(inputs, 1);
       T *input_addr_2 = GetDeviceAddress<T>(inputs, 2);
       bool ret = false;
-      auto status = UniformInt(seed_, seed_offset_, devStates, input_addr_1, inputs[1]->size / sizeof(T), input_addr_2,
-                               inputs[2]->size / sizeof(T), output_addr, outputs[0]->size / sizeof(T),
+      auto status = UniformInt(seed_, seed_offset_, devStates, input_addr_1, inputs[1]->size() / sizeof(T),
+                               input_addr_2, inputs[2]->size() / sizeof(T), output_addr, outputs[0]->size() / sizeof(T),
                                reinterpret_cast<cudaStream_t>(cuda_stream_), &ret);
       CHECK_CUDA_STATUS(status, kernel_name_);
       if (!ret) {
@@ -133,7 +130,7 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
       break;
     }
     case RANDOM_OP_UNIFORM_REAL: {
-      auto status = UniformReal(seed_, seed_offset_, devStates, output_addr, outputs[0]->size / sizeof(T),
+      auto status = UniformReal(seed_, seed_offset_, devStates, output_addr, outputs[0]->size() / sizeof(T),
                                 reinterpret_cast<cudaStream_t>(cuda_stream_));
       CHECK_CUDA_STATUS(status, kernel_name_);
       seed_offset_ += 1;
@@ -152,7 +149,7 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
       CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(mask_generator_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                    "Failed to set stream for generator");
       // curandGen only support float or double for mask.
-      CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(mask_generator_, mask_f, outputs[0]->size / sizeof(float)),
+      CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(mask_generator_, mask_f, outputs[0]->size() / sizeof(float)),
                                    "Failed to generate uniform");
       break;
     }
@@ -168,12 +165,18 @@ std::map<std::string, std::vector<std::pair<KernelAttr, RandomOpGpuKernelMod::Op
   RandomOpGpuKernelMod::kernel_attr_map_ = {
     {"StandardNormal",
      {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+       &RandomOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
        &RandomOpGpuKernelMod::LaunchKernel<float>}}},
     {"UniformReal",
      {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+       &RandomOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
        &RandomOpGpuKernelMod::LaunchKernel<float>}}},
     {"CudnnUniformReal",
      {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+       &RandomOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
        &RandomOpGpuKernelMod::LaunchKernel<float>}}},
     {"UniformInt",
      {{KernelAttr()

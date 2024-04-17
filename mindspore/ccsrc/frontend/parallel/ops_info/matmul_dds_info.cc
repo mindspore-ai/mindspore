@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
@@ -46,7 +47,7 @@ namespace parallel {
  */
 constexpr size_t kLocalMaskDim2 = 2;
 constexpr size_t kLocalMaskDim3 = 3;
-Status MatmulDDSInfo::CheckStrategys(const Strategies &stras) {
+Status MatmulDDSInfo::CheckStrategies(const Strategies &stras) {
   if (stras.size() != MATMUL_DDS_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys size should be 4.";
     return FAILED;
@@ -80,26 +81,26 @@ Status MatmulDDSInfo::CheckStrategys(const Strategies &stras) {
                   << " should be divisible by batch_sizes:" << batch_size_;
     return FAILED;
   }
-  for (size_t i = 2; i < stras[0].size(); ++i) {
-    if (stras[0][i] != 1) {
+  for (size_t i = 2; i < stras[kIndex0].size(); ++i) {
+    if (stras[kIndex0][i] != 1) {
       MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys[0][" << i << "] only support 1";
       return FAILED;
     }
   }
-  for (size_t i = 2; i < stras[1].size(); ++i) {
-    if (stras[1][i] != 1) {
+  for (size_t i = 2; i < stras[kIndex1].size(); ++i) {
+    if (stras[kIndex1][i] != 1) {
       MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys[1][" << i << "] only support 1";
       return FAILED;
     }
   }
-  for (size_t i = 0; i < stras[2].size(); ++i) {
-    if (i != 1 && stras[2][i] != 1) {
+  for (size_t i = 0; i < stras[kIndex2].size(); ++i) {
+    if (i != 1 && stras[kIndex2][i] != 1) {
       MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys[2][" << i << "] only support 1";
       return FAILED;
     }
   }
-  for (size_t i = 1; i < stras[3].size(); ++i) {
-    if (stras[3][i] != 1) {
+  for (size_t i = 1; i < stras[kIndex3].size(); ++i) {
+    if (stras[kIndex3][i] != 1) {
       MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys[3][" << i << "] only support 1";
       return FAILED;
     }
@@ -113,10 +114,16 @@ Status MatmulDDSInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
   Strategies stras = strategy->GetInputDim();
-  if (CheckStrategys(stras) != SUCCESS) {
+  if (CheckStrategies(stras) != SUCCESS) {
     return FAILED;
   }
   return SUCCESS;
+}
+
+Status MatmulDDSInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  MS_LOG(ERROR) << name_
+                << ": it does not support dynamic shape now, the inputs' shape: " << ShapesToString(inputs_shape_);
+  return FAILED;
 }
 
 /*

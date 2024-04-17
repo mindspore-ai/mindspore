@@ -44,6 +44,7 @@
 #include "plugin/device/cpu/optimizer/matmul_biasadd_fusion.h"
 #include "plugin/device/cpu/optimizer/matmul_biasadd_relu_fusion.h"
 #include "backend/common/pass/insert_type_transform_op.h"
+#include "backend/common/pass/flatten_value_sequence_in_pyexecute.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/replace_node_by_proxy.h"
 #include "backend/common/pass/erase_visit_attr.h"
@@ -67,6 +68,9 @@
 #endif
 #include "include/common/profiler.h"
 #include "plugin/device/cpu/hal/device/cpu_kernel_task.h"
+#include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
+#include "ops/framework_ops.h"
+#include "kernel/oplib/oplib.h"
 
 namespace mindspore {
 namespace device {
@@ -76,12 +80,12 @@ const char kModelNameCPU[] = "CPU";
 const char kEventOptimizeGraph[] = "OptimizeGraph";
 const char kStageSetKernelInfo[] = "SetKernelInfo";
 
-pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_type,
-                                          const std::shared_ptr<pynative::KernelTaskContext> &task_context) {
+runtime::KernelTaskPtr GetTaskByTaskType(const runtime::KernelTaskType &task_type,
+                                         const std::shared_ptr<runtime::KernelTaskContext> &task_context) {
   switch (task_type) {
-    case pynative::KernelTaskType::kCONTIGUOUS_TASK:
+    case runtime::KernelTaskType::kCONTIGUOUS_TASK:
       return std::make_shared<CpuContiguousKernelTask>(task_context);
-    case pynative::KernelTaskType::kCOPY_TASK:
+    case runtime::KernelTaskType::kCOPY_TASK:
       return std::make_shared<CpuCopyWithSliceKernelTask>(task_context);
     default:
       MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
@@ -101,18 +105,19 @@ void CPUDeviceContext::Initialize() {
   }
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
-
-#ifndef ENABLE_SECURITY
-  // Dump json config file if dump is enabled.
-  uint32_t rank_id = 0;
-  auto &json_parser = DumpJsonParser::GetInstance();
-  json_parser.Parse();
-  json_parser.CopyDumpJsonToDir(rank_id);
-  json_parser.CopyMSCfgJsonToDir(rank_id);
-#endif
-#ifdef __linux__
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+#ifndef ENABLE_SECURITY
+  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
+    // Dump json config file if dump is enabled.
+    uint32_t rank_id = 0;
+    auto &json_parser = DumpJsonParser::GetInstance();
+    json_parser.Parse();
+    json_parser.CopyDumpJsonToDir(rank_id);
+    json_parser.CopyMSCfgJsonToDir(rank_id);
+  }
+#endif
+#ifdef __linux__
   if (ms_context->IsDefaultDeviceTarget() && ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
     MS_LOG(INFO)
       << "No device_target set, set CPU as default. You can call mindspore.set_context(device_target=\"XXX\")";
@@ -124,6 +129,7 @@ void CPUDeviceContext::Initialize() {
 void CPUDeviceContext::Destroy() {
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Destroy();
+  initialized_ = false;
 }
 
 void CPUDeviceResManager::Initialize() {
@@ -139,9 +145,9 @@ void CPUDeviceResManager::Destroy() {
   }
 }
 
-void *CPUDeviceResManager::AllocateMemory(size_t size) const {
+void *CPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->MallocMemFromMemPool(size, false);
+  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
 }
 
 void CPUDeviceResManager::FreeMemory(void *ptr) const {
@@ -150,9 +156,15 @@ void CPUDeviceResManager::FreeMemory(void *ptr) const {
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
-std::vector<void *> CPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+void CPUDeviceResManager::FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                                          const std::vector<size_t> &keep_addr_sizes) const {
+  CPUMemoryPool::GetInstance().FreePartTensorMems(free_addrs, keep_addrs, keep_addr_sizes);
+}
+
+std::vector<void *> CPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                                                  uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->MallocContinuousMemFromMemPool(size_list);
+  return mem_manager_->MallocContinuousMemFromMemPool(size_list, stream_id);
 }
 
 namespace {
@@ -187,17 +199,19 @@ void FillUserData(const UserDataPtr &user_data, DeviceAddress *device_address) {
 }
 }  // namespace
 
-DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
-                                                          const string &format, TypeId type_id,
-                                                          const ShapeVector &shape,
-                                                          const UserDataPtr &user_data) const {
-  auto device_address = std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id,
-                                                           device_context_->device_context_key().device_name_,
-                                                           device_context_->device_context_key().device_id_);
-  device_address->set_host_shape(shape);
+DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (kernel_tensor->device_name().empty()) {
+    kernel_tensor->set_device_name(device_context_->device_context_key().device_name_);
+    kernel_tensor->set_device_id(device_context_->device_context_key().device_id_);
+  }
+  auto device_address = std::make_shared<CPUDeviceAddress>(kernel_tensor);
+
+  const auto &user_data = kernel_tensor->user_data();
   if (user_data != nullptr) {
     FillUserData(user_data, device_address.get());
   }
+  device_address->set_device_synchronizer(std::make_shared<CPUDeviceSynchronizer>());
   return device_address;
 }
 
@@ -250,6 +264,11 @@ void CPUKernelExecutor::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel);
+    if (IsPrimitiveCNode(kernel, prim::kPrimCustom) &&
+        mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyCPU) == nullptr) {
+      MS_LOG(DEBUG) << "Not find operator information for Custom operator [" << op_name << "]";
+      return;
+    }
 
     auto kernel_attr_list = kernel::NativeCpuKernelMod::GetCpuSupportedList(op_name);
     if (kernel_attr_list.empty()) {
@@ -281,6 +300,7 @@ void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
+  pm->AddPass(std::make_shared<opt::FlattenValueSequenceInPyExecute>("flatten_value_sequence_in_pyexecute"));
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));
@@ -298,11 +318,6 @@ void CPUKernelExecutor::SingleOpGraphOptimize(const KernelGraphPtr &graph) const
   MS_EXCEPTION_IF_NULL(graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  if (graph->has_attr(kAttrPackFunction)) {
-    graph->SetKernelObjectTypesForUnrealNodes();
-    pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
-    pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
-  }
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
@@ -399,6 +414,10 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
   (void)profiler::CollectHostInfo(kModelNameCPU, kEventOptimizeGraph, kStageSetKernelInfo, 1, 0, 1);
 }
 
+kernel::KernelModPtr CPUKernelExecutor::CreateKernelMod(const std::string &op_name) const {
+  return kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(op_name);
+}
+
 void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   SetKernelInfoBeforeCreateKernel(nodes);
 
@@ -426,38 +445,24 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
                                  << "] failed";
     }
 
-    // This branch would be removed When KernelMode rectification is complete
-    auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel);
-    auto args = kernel::AbstractArgsFromCNode(node);
-    // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
-    // we will put this tensor in args.inputs.data_.
-    auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
-    kernel::SetInputsByConstInputs(node, &inputs_tensor_map);
-    kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, true);
-    if (discard_cpu_kernel_mod != nullptr) {
-      kernel::SetArgsToCNode(node, args);
-      discard_cpu_kernel_mod->SetCpuRefMapToKernelInfo(node);
-      discard_cpu_kernel_mod->Init(node);
-      AnfAlgo::SetKernelMod(discard_cpu_kernel_mod, node.get());
-    } else {
-      auto kernel_attrs = cpu_kernel->GetOpSupport();
-      kernel::SetCpuRefMapToKernelInfo(node, kernel_attrs);
-      auto thread_pool = kernel::GetActorMgrInnerThreadPool();
-      cpu_kernel->SetThreadPool(thread_pool);
-      auto op = kernel::CreateOperatorByCNode(node);
-      auto ret = cpu_kernel->Init_(op, args.inputs, args.outputs);
-      if (!ret) {
-        MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
-      }
-      if (!kernel::IfNeedSkipResize(node)) {
-        if (cpu_kernel->Resize(args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
-          MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << node->fullname_with_scope()
-                                     << "] resize failed.";
-        }
-      }
-
-      AnfAlgo::SetKernelMod(cpu_kernel, node.get());
+    auto kernel_attrs = cpu_kernel->GetOpSupport();
+    kernel::SetCpuRefMapToKernelInfo(node, kernel_attrs);
+    auto thread_pool = kernel::GetActorMgrInnerThreadPool();
+    cpu_kernel->SetThreadPool(thread_pool);
+    std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(node);
+    std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(node);
+    auto ret = cpu_kernel->Init(common::AnfAlgo::GetCNodePrimitive(node), input_kernel_tensors, output_kernel_tensors);
+    if (!ret) {
+      MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
     }
+    if (kernel::CheckResizeCondition(node)) {
+      if (cpu_kernel->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << node->fullname_with_scope()
+                                   << "] resize failed.";
+      }
+    }
+
+    AnfAlgo::SetKernelMod(cpu_kernel, node.get());
   }
 #ifdef ENABLE_AKG
   kernel::AkgCpuKernelBuilder akg_cpu_kernel_builder;
@@ -491,33 +496,30 @@ void CPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_LOG(INFO) << "Status record: end preprocess before run graph. graph id: " << kernel_graph->graph_id();
 }
 
-bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                                     size_t /* stream_id */) const {
+bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod,
+                                     void * /* stream*/) const {
   MS_EXCEPTION_IF_NULL(kernel);
 
 #ifndef ENABLE_SECURITY
   const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
   if (profiler_inst->GetEnableFlag() && profiler_inst->GetOpTimeFlag()) {
-    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-    auto ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
-    MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
+    auto ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs, kernel_mod);
     return ret;
   }
 #endif
-  MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-  auto ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
-  MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
+  auto ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod);
   return ret;
 }
 
-bool CPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+bool CPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                           const device::DeviceAddressPtrList &input_addr_list,
-                                          const TensorStorageInfoPtrList &input_storage_list,
-                                          const device::DeviceAddressPtrList &output_addr_list) const {
-  auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
-                                                                    input_storage_list, output_addr_list, nullptr);
+                                          const device::DeviceAddressPtrList &output_addr_list,
+                                          const size_t &stream_id) const {
+  auto task_context =
+    std::make_shared<runtime::KernelTaskContext>(device_context_, input_addr_list, output_addr_list, nullptr);
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);
 
@@ -553,9 +555,10 @@ bool CPUDeviceResManager::LoadCollectiveCommLib() {
   return true;
 }
 
-bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) const {
+bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs,
+                                                  KernelMod *kernel_mod) const {
   MS_EXCEPTION_IF_NULL(kernel);
 
   auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
@@ -564,17 +567,16 @@ bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
   uint32_t pid = IntToUint(getpid());
   // cpu support multi-thread with mindrt for profiling.
   profiler_inst->OpDataProducerBeginParallel(kernel->fullname_with_scope(), pid);
-  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
+  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod);
   profiler_inst->OpDataProducerEndParallel(kernel->fullname_with_scope());
   profiler_inst->RecordFrameWorkInfo(kernel);
   return ret;
 }
 
-bool CPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                       const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) const {
+bool CPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   uint64_t start_time = 0;
   PROFILER_START(start_time);
@@ -629,6 +631,10 @@ MSCONTEXT_REGISTER_INIT_FUNC(kCPUDevice, [](MsContext *ctx) -> void {
   }
 });
 #endif
+
+// Register functions to _c_expression so python hal module could call CPU device interfaces.
+void PybindCPUStatelessFunc(py::module *m) { MS_EXCEPTION_IF_NULL(m); }
+REGISTER_DEV_STATELESS_FUNC_CB(kCPUDevice, PybindCPUStatelessFunc);
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

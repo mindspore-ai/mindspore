@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_HEAVISIDE_H_
 #define AICPU_KERNELS_NORMALIZED_HEAVISIDE_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 namespace aicpu {
 class HeavisideCpuKernel : public CpuKernel {
@@ -28,16 +28,16 @@ class HeavisideCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t HeavisideParamCheck(const CpuKernelContext &ctx);
+  uint32_t HeavisideParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t NoBcastCompute(const CpuKernelContext &ctx);
+  uint32_t NoBcastCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast);
+  uint32_t BcastCompute(CpuKernelContext &ctx, const Bcast &bcast);
 
   template <typename T>
-  uint32_t HeavisideCompute(const CpuKernelContext &ctx);
+  uint32_t HeavisideCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

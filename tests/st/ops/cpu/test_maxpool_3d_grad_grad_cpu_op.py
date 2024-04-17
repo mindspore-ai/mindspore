@@ -36,7 +36,7 @@ class NetMaxPool3DGradGrad(nn.Cell):
         return self.maxpool_grad_grad_fun(x, out, grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool3d_grad_grad_fp16():
@@ -67,7 +67,7 @@ def test_maxpool3d_grad_grad_fp16():
     assert np.allclose(output.asnumpy(), expect_result)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool3d_grad_grad_fp32():
@@ -125,7 +125,7 @@ def test_maxpool3d_grad_grad_fp32():
     assert np.allclose(output.asnumpy(), expect_result)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('axis', [2])

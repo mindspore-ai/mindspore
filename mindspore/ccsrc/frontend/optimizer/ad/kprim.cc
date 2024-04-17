@@ -55,7 +55,7 @@ FuncGraphPtr KPrim::GetPrimBprop(const PrimitivePtr &prim, const ValueNodePtr &v
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(value_node);
   auto iter = bprop_registry_.find(prim);
-  if (iter != bprop_registry_.end()) {
+  if (iter != bprop_registry_.end() && !iter->second->dropped()) {
     return iter->second;
   }
 
@@ -236,6 +236,8 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   } else {
     bprop_fg = GetPrimBprop(prim, value_node, resources, cnode);
   }
+  MS_EXCEPTION_IF_NULL(bprop_fg);
+  MS_EXCEPTION_IF_NULL(bprop_fg->return_node());
 
   SetDumpFlag(prim, bprop_fg);
   AdjustForAutoMonad(prim, bprop_fg);

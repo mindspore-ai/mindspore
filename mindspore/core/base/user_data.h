@@ -86,6 +86,8 @@ class UserData {
   std::unique_ptr<DataMap> data_;
 };
 
+using UserDataPtr = std::shared_ptr<UserData>;
+
 // User data key name.
 constexpr auto kUserDataData = "user_data_data";
 constexpr auto kUserDataType = "user_data_type";

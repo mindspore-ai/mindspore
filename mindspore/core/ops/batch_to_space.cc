@@ -76,8 +76,8 @@ class BatchToSpaceInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     const int64_t input_num = 1;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-    auto x_shape = x->BuildShape();
+    auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+    auto x_shape = x->GetShape();
     MS_EXCEPTION_IF_NULL(x_shape);
     auto shape_element = x_shape->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape_element);
@@ -136,9 +136,9 @@ class BatchToSpaceInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                            kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-    auto x_type = input_args[kInputIndex0]->BuildType();
+    auto x_type = input_args[kInputIndex0]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
-    return input_args[kInputIndex0]->BuildType();
+    return input_args[kInputIndex0]->GetType();
   }
 };
 

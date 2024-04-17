@@ -55,6 +55,9 @@ class ExitActor : public ControlActor {
   }
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
+  CallbackCounterPtr callback_counter() const { return callback_counter_; }
+  void set_callback_counter(const CallbackCounterPtr &callback_counter) { callback_counter_ = callback_counter; }
+
  protected:
   void Init() override;
   void FetchInput(OpContext<DeviceTensor> *const context) override;
@@ -89,6 +92,8 @@ class ExitActor : public ControlActor {
   mindspore::HashMap<int, std::vector<std::pair<size_t, OpDataUniquePtr<DeviceTensor>>>> output_branch_data_;
   // The value of haspmap indicates the output data flag. See constant prefixed with kOutputDataFalg for details.
   mindspore::HashMap<int, std::vector<size_t>> output_branch_data_flag_;
+
+  CallbackCounterPtr callback_counter_;
 };
 
 using ExitActorPtr = std::shared_ptr<ExitActor>;

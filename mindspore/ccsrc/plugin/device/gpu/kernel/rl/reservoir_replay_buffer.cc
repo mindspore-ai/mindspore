@@ -62,17 +62,18 @@ ReservoirReplayBuffer::~ReservoirReplayBuffer() {
   }
 }
 
-bool ReservoirReplayBuffer::Insert(const size_t &pos, const std::vector<AddressPtr> &transition, cudaStream_t stream) {
+bool ReservoirReplayBuffer::Insert(const size_t &pos, const std::vector<KernelTensor *> &transition,
+                                   cudaStream_t stream) {
   for (size_t i = 0; i < transition.size(); i++) {
     size_t offset = pos * schema_[i];
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(fifo_replay_buffer_[i] + offset, transition[i]->addr, schema_[i],
-                                                      cudaMemcpyDeviceToDevice, stream),
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(fifo_replay_buffer_[i] + offset, transition[i]->device_ptr(),
+                                                      schema_[i], cudaMemcpyDeviceToDevice, stream),
                                       "cudaMemcpyAsync failed.");
   }
   return true;
 }
 
-bool ReservoirReplayBuffer::Push(const std::vector<AddressPtr> &transition, cudaStream_t stream) {
+bool ReservoirReplayBuffer::Push(const std::vector<KernelTensor *> &transition, cudaStream_t stream) {
   // The buffer is not full: Push the transition at end of buffer.
   if (total_ < capacity_) {
     auto ret = Insert(total_, transition, stream);
@@ -94,7 +95,7 @@ bool ReservoirReplayBuffer::Push(const std::vector<AddressPtr> &transition, cuda
   return true;
 }
 
-bool ReservoirReplayBuffer::Sample(const size_t &batch_size, const std::vector<AddressPtr> &transition,
+bool ReservoirReplayBuffer::Sample(const size_t &batch_size, const std::vector<KernelTensor *> &transition,
                                    cudaStream_t stream) {
   cudaError_t status = cudaErrorNotReady;
   if (!rand_state_) {
@@ -114,7 +115,7 @@ bool ReservoirReplayBuffer::Sample(const size_t &batch_size, const std::vector<A
   CHECK_CUDA_STATUS(status, "RandomGenUniform called by Sample");
 
   for (size_t i = 0; i < schema_.size(); i++) {
-    auto output_addr = static_cast<uint8_t *>(transition[i]->addr);
+    auto output_addr = static_cast<uint8_t *>(transition[i]->device_ptr());
     status = FifoSlice(fifo_replay_buffer_[i], indices_, output_addr, batch_size, schema_[i], stream);
     CHECK_CUDA_STATUS(status, "FifoSlice called by Sample");
   }

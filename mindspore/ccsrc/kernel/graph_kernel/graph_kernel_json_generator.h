@@ -26,7 +26,7 @@
 #include "kernel/oplib/opinfo.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "include/common/utils/convert_utils.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol_engine.h"
+#include "mindspore/core/symbolic_shape/symbol_engine.h"
 
 namespace mindspore::graphkernel {
 using kernel::OpAttrPtr;
@@ -70,10 +70,11 @@ class GraphKernelJsonGenerator {
 
   bool CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
-                        const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json);
+                        const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json,
+                        const bool is_akg_cc = false);
   bool CollectJson(const AnfNodePtr &anf_node);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
-                        const std::vector<AnfNodePtr> &output_list);
+                        const std::vector<AnfNodePtr> &output_list, const bool is_akg_cc = false);
   bool CollectFusedJsonWithSingleKernel(const CNodePtr &c_node);
 
   std::string kernel_name() const { return kernel_name_; }
@@ -121,7 +122,8 @@ class GraphKernelJsonGenerator {
   std::string GetProcessorByTarget() const;
   size_t GenHashId(const std::string &info) const;
   void GenKernelName(const FuncGraphPtr &fg, size_t hash_id, nlohmann::json *kernel_json);
-  void SaveSymbolicShape(const AnfNodePtr &node, nlohmann::json *kernel_json);
+  void SaveShape(const AnfNodePtr &node, nlohmann::json *kernel_json, const ShapeVector &shape);
+  std::vector<std::string> QuerySymbolicShapeStr(const AnfNodePtr &node);
 
   DumpOption dump_option_;
   std::string kernel_name_;

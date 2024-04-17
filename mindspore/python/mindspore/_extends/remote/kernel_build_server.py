@@ -154,6 +154,8 @@ class AkgBuilderBase():
             messager.send_ack()
             wait_time_str = messager.get_message()
             messager.send_ack()
+            self.platform = messager.get_message()
+            messager.send_ack()
             self.create(int(process_num_str), int(wait_time_str))
         elif arg == 'AKG/ATTR':
             messager.send_ack()

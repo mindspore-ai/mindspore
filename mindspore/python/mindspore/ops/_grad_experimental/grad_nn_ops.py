@@ -31,12 +31,10 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import AvgPoolV1
 from mindspore.ops.operations._grad_ops import AvgPoolGradV1
-from mindspore.ops.operations.nn_ops import MaxPoolWithArgmaxV2
 from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import WKV
 from mindspore.ops.operations._grad_ops import WKVGrad
-from mindspore.ops.operations.nn_ops import GLU
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.operations import _rl_inner_ops as rl_ops
@@ -111,36 +109,6 @@ def get_bprop_avg_pool_v1_grad(self):
     return bprop
 
 
-@bprop_getters.register(GLU)
-def get_bprop_glu(self):
-    """Grad definition for `Glu` operation."""
-    input_grad = G.GluGrad(self.axis)
-
-    def bprop(x, out, dout):
-        dx = input_grad(dout, x)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(MaxPoolWithArgmaxV2)
-def get_bprop_maxpoolwithargmaxv2(self):
-    """Grad definition for `MaxPoolWithArgmaxV2` operation."""
-    maxpoolwithargmaxv2_grad = G.MaxPoolGradWithArgmaxV2(
-        kernel_size=self.kernel_size,
-        strides=self.strides,
-        pads=self.pads,
-        dilation=self.dilation,
-        ceil_mode=self.ceil_mode,
-        argmax_type=self.argmax_type)
-
-    def bprop(x, out, dout):
-        dx = maxpoolwithargmaxv2_grad(x, dout[0], out[1])
-        return (dx,)
-
-    return bprop
-
-
 @bprop_getters.register(FractionalMaxPoolWithFixedKsize)
 def get_bprop_fractional_max_pool_with_fixed_ksize(self):
     """Grad definition for 'FractionalMaxPoolWithFixedKsize' operation."""
@@ -189,27 +157,6 @@ def get_bprop_sparse_softmax_cross_entropy_with_logits(self):
             grad = F.depend(grad, out)
             grad = grad * dout
         return grad, zeros_like(labels)
-
-    return bprop
-
-
-@bprop_getters.register(rl_ops.GRUV2)
-def get_bprop_gru_v2(self):
-    """Grad definition for `GRUV2` operation."""
-    gru_grad_v2 = G.GRUV2Grad(
-        self.input_size,
-        self.hidden_size,
-        self.num_layers,
-        self.has_bias,
-        self.bidirectional,
-        self.dropout
-    )
-
-    def bprop(x, hx, w, seq_length, out, dout):
-        y, hy, reverse, _ = out
-        dy, dhy, _, _ = dout
-        dx, dhx, dw = gru_grad_v2(x, hx, w, seq_length, y, hy, dy, dhy, reverse)
-        return tuple((dx, dhx, dw, (0)))
 
     return bprop
 

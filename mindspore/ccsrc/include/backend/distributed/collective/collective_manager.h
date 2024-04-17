@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <atomic>
+#include <unordered_map>
 #include "utils/ms_utils.h"
 #include "include/backend/distributed/constants.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -85,6 +86,7 @@ class BACKEND_EXPORT CollectiveManager {
   void set_global_rank_id(uint32_t global_rank_id);
   void set_global_rank_size(uint32_t global_rank_size);
 
+  uint32_t global_rank_id() const;
   uint32_t local_rank_id() const;
 
   bool need_init() const { return need_init_.load(); }
@@ -96,6 +98,10 @@ class BACKEND_EXPORT CollectiveManager {
 
   // Return collective manager is initialized.
   bool initialized() const { return inited_.load(); }
+  std::unordered_map<std::string, std::vector<uint32_t>> get_group_map() { return group_map_; }
+
+  // Init Dummy communication lib
+  bool InitializeDummyCommLib();
 
  private:
   CollectiveManager();
@@ -140,6 +146,9 @@ class BACKEND_EXPORT CollectiveManager {
   // alias of host_comm_lib_instance_ and device_comm_lib_instance_ to avoid condition branch.
   CollectiveCommunicationLib *comm_lib_instance_;
 
+  // Dummy collective communication for single device compile
+  std::shared_ptr<CollectiveCommunicationLib> dummy_comm_lib_instance_;
+
   // The global rank id of this process. Normally this range is 0 to `total process number - 1`.
   uint32_t global_rank_id_;
 
@@ -166,6 +175,7 @@ class BACKEND_EXPORT CollectiveManager {
 
   // This member uses to assign local rank and size for each group.
   std::vector<size_t> all_host_hashs_;
+  std::unordered_map<std::string, std::vector<uint32_t>> group_map_;
 };
 
 // For scheduler node, CollectiveManager is not initialized. Return 0 as rank id.

@@ -16,13 +16,6 @@
 
 #include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
 
-#include <utility>
-#include <algorithm>
-#include <vector>
-#include <map>
-#include <string>
-#include <unordered_set>
-
 #include "mindspore/core/ops/conv_pool_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/math_ops.h"
@@ -132,7 +125,7 @@ AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
       auto value = std::static_pointer_cast<inner::ConstTensorNode>(outputs[0])->data();
       auto valuenode = NewValueNode(value);
       valuenode->set_abstract(value->ToAbstract());
-      output_const.emplace_back(valuenode);
+      (void)output_const.emplace_back(valuenode);
     }
   }
   if (outputs.size() == output_const.size()) {
@@ -297,7 +290,7 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
 
 void GraphKernelExpanderLite::PreProcessAllNode(const CNodePtr &node) {
   if (Callback::Instance()->GetTargetFromContext() == "CPU" && !AnfUtils::IsGraphKernel(node)) {
-    BasicOpInferShape().InferShape(node);
+    BasicOpInferShape().Infer(node);
   }
 }
 }  // namespace mindspore::graphkernel

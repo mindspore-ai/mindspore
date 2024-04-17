@@ -36,19 +36,23 @@ std::condition_variable TensorsQueueCPUBaseMod::write_cdv_;
 // Create a TensorsQueue.
 TensorsQueueCreateCpuKernelMod::TensorsQueueCreateCpuKernelMod() : size_(0), elements_num_(0), type_(nullptr) {}
 
-void TensorsQueueCreateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  shapes_ = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
-  type_ = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
-  size_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "size");
-  elements_num_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "elements_num");
-  name_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "name");
-
+int TensorsQueueCreateCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  shapes_ = GetValue<std::vector<std::vector<int64_t>>>(primitive_->GetAttr("shapes"));
+  type_ = GetValue<TypePtr>(primitive_->GetAttr("dtype"));
+  size_ = GetValue<int64_t>(primitive_->GetAttr("size"));
+  elements_num_ = GetValue<int64_t>(primitive_->GetAttr("elements_num"));
+  name_ = GetValue<std::string>(primitive_->GetAttr("name"));
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-bool TensorsQueueCreateCpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs) {
+bool TensorsQueueCreateCpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs) {
   // Create a TensorsQueue, and generate an unique handle.
   int64_t tensors_queue_handle = TensorsQueueMgr::GetInstance().GetHandleCount();
   auto name = "TensorsQueue_" + name_ + "_" + std::to_string(tensors_queue_handle);
@@ -70,33 +74,30 @@ bool TensorsQueueCreateCpuKernelMod::Launch(const std::vector<AddressPtr> &, con
 // Put one element into a TensorsQueue
 TensorsQueuePutCpuKernelMod::TensorsQueuePutCpuKernelMod() {}
 
-void TensorsQueuePutCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  // Current all the tensor in one element must have the same type.
-  type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kSecondInputIndex);
-  elements_num_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "elements_num");
-
-  // Input[0] for handle.
-  input_size_list_.push_back(sizeof(int64_t));
-  // Input[1-n] : (Tensor(), Tensor(), ...)
-  for (int64_t i = 0; i < elements_num_; i++) {
-    auto shapes = AnfAlgo::GetInputDeviceShape(kernel_node, LongToSize(i + 1));
-    auto value_size =
-      std::accumulate(shapes.begin(), shapes.end(), GetTypeByte(TypeIdToType(type_)), std::multiplies<size_t>());
-    input_size_list_.push_back(value_size);
+int TensorsQueuePutCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return KRET_OK;
   }
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-bool TensorsQueuePutCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &) {
+bool TensorsQueuePutCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &) {
   CPUTensorsQueuePtr tensors_q = GetTensorsQueue(inputs);
   std::unique_lock<std::mutex> lock_(tq_mutex_);
   int retry_times = 0;
+  std::vector<AddressPtr> inputs_address;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    AddressPtr input_address = std::make_shared<Address>(inputs[i]->device_ptr(), inputs[i]->size());
+    inputs_address.push_back(input_address);
+  }
   // If the tensors_q is full, put data will failed. So the op will sleep and waited to be notified.
   // Else if put succeed, we will notify all the warit op in read_cdv_.
   while (true) {
-    if (!tensors_q->Put(inputs)) {
+    if (!tensors_q->Put(inputs_address)) {
       if (write_cdv_.wait_for(lock_, std::chrono::seconds(kRetryNumber),
                               [this, tensors_q] { return !tensors_q->IsFull(); })) {
         retry_times++;
@@ -117,17 +118,18 @@ bool TensorsQueuePutCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, 
 // Get or Pop one element from a TensorsQueue
 TensorsQueueGetCpuKernelMod::TensorsQueueGetCpuKernelMod() : elements_num_(0), pop_after_get_(false) {}
 
-void TensorsQueueGetCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
+int TensorsQueueGetCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
   // Current all the tensor in one element must have the same type.
-  TypePtr type = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
-  elements_num_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "elements_num");
-  pop_after_get_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "pop_after_get");
-  auto shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
+  TypePtr type = GetValue<TypePtr>(primitive_->GetAttr("dtype"));
+  elements_num_ = GetValue<int64_t>(primitive_->GetAttr("elements_num"));
+  pop_after_get_ = GetValue<bool>(primitive_->GetAttr("pop_after_get"));
+  auto shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive_->GetAttr("shapes"));
 
-  // Input[0] for handle.
-  input_size_list_.push_back(sizeof(int64_t));
-
+  output_size_list_.clear();
   for (int64_t i = 0; i < elements_num_; i++) {
     size_t value_size = GetTypeByte(type);
     for (auto x : shapes[LongToSize(i)]) {
@@ -135,17 +137,23 @@ void TensorsQueueGetCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     }
     output_size_list_.push_back(value_size);
   }
+  return KRET_OK;
 }
 
-bool TensorsQueueGetCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool TensorsQueueGetCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs) {
   CPUTensorsQueuePtr tensors_q = GetTensorsQueue(inputs);
   std::unique_lock<std::mutex> lock_(tq_mutex_);
+  std::vector<AddressPtr> outputs_address;
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    AddressPtr output_address = std::make_shared<Address>(outputs[i]->device_ptr(), outputs[i]->size());
+    outputs_address.push_back(output_address);
+  }
   // Get one element from the head of tensors_q, if `pop_after_get` is true, then pop the tensors_q.
   // If the tensors_q is empty, get/pop failed, retry for max kRetryNumber times.
   int retry_times = 0;
   while (true) {
-    if (!tensors_q->Get(outputs, pop_after_get_)) {
+    if (!tensors_q->Get(outputs_address, pop_after_get_)) {
       if (read_cdv_.wait_for(lock_, std::chrono::seconds(kRetryNumber)) == std::cv_status::timeout) {
         retry_times++;
         MS_LOG(WARNING) << "Retry get data from TensorsQueue [" << retry_times << "/" << kRetryNumber << "].";
@@ -165,15 +173,18 @@ bool TensorsQueueGetCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, 
 // Clear the TensorsQueue
 TensorsQueueClearCpuKernelMod::TensorsQueueClearCpuKernelMod() {}
 
-void TensorsQueueClearCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  // Input[0] for handle.
-  input_size_list_.push_back(sizeof(int64_t));
+int TensorsQueueClearCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-bool TensorsQueueClearCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &) {
+bool TensorsQueueClearCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) {
   CPUTensorsQueuePtr tensors_q = GetTensorsQueue(inputs);
   std::unique_lock<std::mutex> lock_(tq_mutex_);
   // Return all the element addr back to store, and the tensors_q will be empty.
@@ -184,15 +195,19 @@ bool TensorsQueueClearCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
 // Get size of the TensorsQueue
 TensorsQueueSizeCpuKernelMod::TensorsQueueSizeCpuKernelMod() {}
 
-void TensorsQueueSizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  // Input[0] for handle.
-  input_size_list_.push_back(sizeof(int64_t));
+int TensorsQueueSizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-bool TensorsQueueSizeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
+bool TensorsQueueSizeCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs) {
   CPUTensorsQueuePtr tensors_q = GetTensorsQueue(inputs);
   std::unique_lock<std::mutex> lock_(tq_mutex_);
   auto out_addr = GetDeviceAddress<int64_t>(outputs, 0);
@@ -205,15 +220,18 @@ bool TensorsQueueSizeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
 // Close the TensorsQueue
 TensorsQueueCloseCpuKernelMod::TensorsQueueCloseCpuKernelMod() {}
 
-void TensorsQueueCloseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  // Input[0] for handle.
-  input_size_list_.push_back(sizeof(int64_t));
+int TensorsQueueCloseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-bool TensorsQueueCloseCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &) {
+bool TensorsQueueCloseCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_ERROR_IF_NULL(handle_addr);
   auto tensors_q =

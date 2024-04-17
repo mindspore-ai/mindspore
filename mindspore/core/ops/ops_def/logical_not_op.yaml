@@ -1,0 +1,12 @@
+#operator logical_not
+logical_not:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True

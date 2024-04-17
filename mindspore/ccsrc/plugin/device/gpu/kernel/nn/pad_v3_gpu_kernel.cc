@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/pad_v3_gpu_kernel.h"
-#include "kernel/kernel_get_value.h"
+#include <utility>
+#include "include/common/utils/utils.h"
+#include "mindapi/base/type_id.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -29,59 +31,44 @@ std::unique_ptr<cukernel::GpuKernelHelperBase> CreatePadV3KernelPtr(const std::s
 using PadV3PtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
-#define REG_PAD_V3_TWO_INTPUT_INT32_KERNEL(INPUT_T, T, S)                                     \
-  {                                                                                           \
-    KernelAttr().AddInputAttr(INPUT_T).AddInputAttr(kNumberTypeInt32).AddOutputAttr(INPUT_T), \
-      CreatePadV3KernelPtr<T, S>                                                              \
-  }
-
-#define REG_PAD_V3_TWO_INTPUT_INT64_KERNEL(INPUT_T, T, S)                                     \
-  {                                                                                           \
-    KernelAttr().AddInputAttr(INPUT_T).AddInputAttr(kNumberTypeInt64).AddOutputAttr(INPUT_T), \
-      CreatePadV3KernelPtr<T, S>                                                              \
-  }
-
-#define REG_PAD_V3_TWO_INTPUT_KERNEL(INPUT_T, T, S) \
-  REG_PAD_V3_TWO_INTPUT_INT32_KERNEL(INPUT_T, T, S), REG_PAD_V3_TWO_INTPUT_INT64_KERNEL(INPUT_T, T, S)
-
-#define REG_PAD_V3_THREE_INTPUT_INT32_KERNEL(INPUT_T, T, S)                                                         \
-  {                                                                                                                 \
-    KernelAttr().AddInputAttr(INPUT_T).AddInputAttr(kNumberTypeInt32).AddInputAttr(INPUT_T).AddOutputAttr(INPUT_T), \
-      CreatePadV3KernelPtr<T, S>                                                                                    \
-  }
-
-#define REG_PAD_V3_THREE_INTPUT_INT64_KERNEL(INPUT_T, T, S)                                                         \
-  {                                                                                                                 \
-    KernelAttr().AddInputAttr(INPUT_T).AddInputAttr(kNumberTypeInt64).AddInputAttr(INPUT_T).AddOutputAttr(INPUT_T), \
-      CreatePadV3KernelPtr<T, S>                                                                                    \
-  }
-
-#define REG_PAD_V3_THREE_INTPUT_KERNEL(INPUT_T, T, S) \
-  REG_PAD_V3_THREE_INTPUT_INT32_KERNEL(INPUT_T, T, S), REG_PAD_V3_THREE_INTPUT_INT64_KERNEL(INPUT_T, T, S)
-
-#define REG_PAD_V3_KERNEL(INPUT_T, T, S) \
-  REG_PAD_V3_TWO_INTPUT_KERNEL(INPUT_T, T, S), REG_PAD_V3_THREE_INTPUT_KERNEL(INPUT_T, T, S)
+#define REG_PAD_V3_KERNEL(INPUT_T, T)                                                                        \
+  std::make_pair(KernelAttr().AddInputAttr(INPUT_T).AddInputAttr(kNumberTypeInt32).AddOutputAttr(INPUT_T),   \
+                 CreatePadV3KernelPtr<T, int64_t>),                                                          \
+    std::make_pair(KernelAttr().AddInputAttr(INPUT_T).AddInputAttr(kNumberTypeInt64).AddOutputAttr(INPUT_T), \
+                   CreatePadV3KernelPtr<T, int64_t>),                                                        \
+    std::make_pair(KernelAttr()                                                                              \
+                     .AddInputAttr(INPUT_T)                                                                  \
+                     .AddInputAttr(kNumberTypeInt32)                                                         \
+                     .AddOptionalInputAttr(INPUT_T)                                                          \
+                     .AddOutputAttr(INPUT_T),                                                                \
+                   CreatePadV3KernelPtr<T, int64_t>),                                                        \
+    std::make_pair(KernelAttr()                                                                              \
+                     .AddInputAttr(INPUT_T)                                                                  \
+                     .AddInputAttr(kNumberTypeInt64)                                                         \
+                     .AddOptionalInputAttr(INPUT_T)                                                          \
+                     .AddOutputAttr(INPUT_T),                                                                \
+                   CreatePadV3KernelPtr<T, int64_t>)
 
 const std::vector<std::pair<KernelAttr, PadV3PtrCreatorFunc>> kernel_attr = {
-  REG_PAD_V3_KERNEL(kNumberTypeFloat64, double, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeFloat32, float, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeFloat16, half, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeInt64, int64_t, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeInt32, int32_t, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeInt16, int16_t, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeInt8, int8_t, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeUInt64, uint64_t, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeUInt32, uint32_t, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeUInt16, uint16_t, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeUInt8, uint8_t, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeComplex64, Complex<float>, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeComplex128, Complex<double>, int64_t),
-  REG_PAD_V3_KERNEL(kNumberTypeBool, bool, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeFloat64, double),
+  REG_PAD_V3_KERNEL(kNumberTypeFloat32, float),
+  REG_PAD_V3_KERNEL(kNumberTypeFloat16, half),
+  REG_PAD_V3_KERNEL(kNumberTypeInt64, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeInt32, int32_t),
+  REG_PAD_V3_KERNEL(kNumberTypeInt16, int16_t),
+  REG_PAD_V3_KERNEL(kNumberTypeInt8, int8_t),
+  REG_PAD_V3_KERNEL(kNumberTypeUInt64, uint64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeUInt32, uint32_t),
+  REG_PAD_V3_KERNEL(kNumberTypeUInt16, uint16_t),
+  REG_PAD_V3_KERNEL(kNumberTypeUInt8, uint8_t),
+  REG_PAD_V3_KERNEL(kNumberTypeComplex64, Complex<float>),
+  REG_PAD_V3_KERNEL(kNumberTypeComplex128, Complex<double>),
+  REG_PAD_V3_KERNEL(kNumberTypeBool, bool),
 };
 }  // namespace
 
-bool PadV3GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PadV3GpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -91,48 +78,41 @@ bool PadV3GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
   return true;
 }
 
-bool PadV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(base_operator);
-  MS_ERROR_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool PadV3GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
   MS_ERROR_IF_NULL(attr_ptr_);
-  attr_ptr_->mode = kernel_ptr->get_mode();
-  attr_ptr_->paddings_contiguous = kernel_ptr->get_paddings_contiguous();
+  attr_ptr_->mode = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
+  attr_ptr_->paddings_contiguous = GetValue<bool>(primitive_->GetAttr("paddings_contiguous"));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
 }
 
-int PadV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != KRET_OK) {
+int PadV3GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, KRET_RESIZE_FAILED);
 
-  std::vector<int64_t> paddings_arg;
   std::vector<int64_t> paddings_val;
-  if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &paddings_arg)) {
-    MS_LOG(EXCEPTION) << "Fot '" << kernel_name_ << "', can't get paddings value from input[1].";
+  auto paddings_type = inputs[kIndex1]->dtype_id();
+  if (paddings_type == kNumberTypeInt32) {
+    std::vector<int32_t> paddings_arg = inputs[kIndex1]->GetValueWithCheck<std::vector<int32_t>>();
+    for (size_t i = 0; i < paddings_arg.size(); ++i) {
+      paddings_val.push_back(static_cast<int64_t>(paddings_arg[i]));
+    }
+  } else if (paddings_type == kNumberTypeInt64) {
+    paddings_val = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  } else {
+    MS_LOG(ERROR) << "For Padv3, the paddings value type should be int64 or int32, but got " << paddings_type;
+    return KRET_RESIZE_FAILED;
   }
 
-  int64_t paddings_size = SizeToLong(paddings_arg.size());
-  for (int64_t i = 0; i < paddings_size; ++i) {
-    paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));
-  }
-
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  if (!GetValue<bool>(prim->GetAttr("paddings_contiguous"))) {
+  int64_t paddings_size = SizeToLong(paddings_val.size());
+  if (!GetValue<bool>(primitive_->GetAttr("paddings_contiguous"))) {
     constexpr int64_t nTwo = 2;
     std::vector<int64_t> tmp = paddings_val;
     for (int64_t i = 0; i < paddings_size; ++i) {
@@ -145,23 +125,23 @@ int PadV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   }
   attr_ptr_->paddings = paddings_val;
 
-  std::vector<std::vector<int64_t>> input_shapes;
-  std::vector<std::vector<int64_t>> output_shapes;
-  std::vector<int64_t> x_shape = inputs[0]->GetShapeVector();
-  std::vector<int64_t> padding_shape = inputs[1]->GetShapeVector();
-  std::vector<int64_t> out_shape = outputs[0]->GetShapeVector();
-  input_shapes.emplace_back(x_shape);
-  input_shapes.emplace_back(padding_shape);
-  output_shapes.emplace_back(out_shape);
+  std::vector<std::vector<int64_t>> input_shapes = {inputs[kIndex0]->GetShapeVector(),
+                                                    inputs[kIndex1]->GetShapeVector()};
   if (attr_ptr_->mode == ops::kConstant) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadV3ConstantModeInputsNum, kernel_name_);
-    std::vector<int64_t> constant_value_shape = inputs[2]->GetShapeVector();
+    auto type = inputs[kIndex2]->GetType();
+    if (type == nullptr || type->isa<TypeNone>()) {
+      MS_LOG(ERROR) << "For 'PadV3', const value(" << inputs[kIndex2]->ToString()
+                    << ") is not valid for constant mode!";
+      return KRET_RESIZE_FAILED;
+    }
+    std::vector<int64_t> constant_value_shape = inputs[kIndex2]->GetShapeVector();
     input_shapes.emplace_back(constant_value_shape);
   }
+  std::vector<std::vector<int64_t>> output_shapes = {outputs[kIndex0]->GetShapeVector()};
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

@@ -23,9 +23,8 @@
 namespace mindspore::transform {
 // SoftmaxV2
 INPUT_MAP(SoftmaxV2) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(SoftmaxV2) = {
-  {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-};
+INPUT_ATTR_MAP(SoftmaxV2) = {{2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(SoftmaxV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SoftmaxV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Softmax, kNameSoftmax, ADPT_DESC(SoftmaxV2))
 REG_ADPT_DESC(SoftmaxV2, kSoftmaxV2OpName, ADPT_DESC(SoftmaxV2))
@@ -85,26 +84,48 @@ REG_ADPT_DESC(SigmoidCrossEntropyWithLogitsV2, kSigmoidCrossEntropyWithLogitsV2O
 
 // LogSoftmaxGrad
 INPUT_MAP(LogSoftmaxGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grad)}};
-ATTR_MAP(LogSoftmaxGrad) = {
-  {"axis", ATTR_DESC(axis, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(LogSoftmaxGrad) = {
+  {3, ATTR_DESC(axis, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(LogSoftmaxGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogSoftmaxGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LogSoftmaxGrad, prim::kPrimLogSoftmaxGrad->name(), ADPT_DESC(LogSoftmaxGrad))
 
 // LogSoftmaxV2
 INPUT_MAP(LogSoftmaxV2) = {{1, INPUT_DESC(logits)}};
-ATTR_MAP(LogSoftmaxV2) = {
-  {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(LogSoftmaxV2) = {
+  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(LogSoftmaxV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogSoftmaxV2) = {{0, OUTPUT_DESC(logsoftmax)}};
 REG_ADPT_DESC(LogSoftmax, prim::kPrimLogSoftmax->name(), ADPT_DESC(LogSoftmaxV2))
 REG_ADPT_DESC(LogSoftmaxV2, kLogSoftmaxV2OpName, ADPT_DESC(LogSoftmaxV2))
 
 // LayerNorm
 INPUT_MAP(LayerNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
-ATTR_MAP(LayerNorm) = {{"begin_norm_axis", ATTR_DESC(begin_norm_axis, AnyTraits<int64_t>())},
-                       {"begin_params_axis", ATTR_DESC(begin_params_axis, AnyTraits<int64_t>())},
-                       {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+ATTR_MAP(LayerNorm) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(LayerNorm) = {{4, ATTR_DESC(begin_norm_axis, AnyTraits<int64_t>())},
+                             {5, ATTR_DESC(begin_params_axis, AnyTraits<int64_t>())},
+                             {6, ATTR_DESC(epsilon, AnyTraits<float>())}};
+
 OUTPUT_MAP(LayerNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(variance)}};
 REG_ADPT_DESC(LayerNorm, prim::kPrimLayerNorm->name(), ADPT_DESC(LayerNorm))
+
+// AddLayerNorm
+INPUT_MAP(AddLayerNorm) = {
+  {1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(gamma)}, {4, INPUT_DESC(beta)}, {5, INPUT_DESC(bias)},
+};
+ATTR_MAP(AddLayerNorm) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
+                          {"additional_output", ATTR_DESC(additional_output, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(AddLayerNorm) = {
+  {6, ATTR_DESC(epsilon, AnyTraits<float>())},
+  {7, ATTR_DESC(additional_output, AnyTraits<bool>())},
+};
+OUTPUT_MAP(AddLayerNorm) = {
+  {0, OUTPUT_DESC(y)},
+  {1, OUTPUT_DESC(mean)},
+  {2, OUTPUT_DESC(rstd)},
+  {3, OUTPUT_DESC(x)},
+};
+REG_ADPT_DESC(AddLayerNorm, prim::kPrimAddLayerNorm->name(), ADPT_DESC(AddLayerNorm))
 
 // LayerNormGrad
 INPUT_MAP(LayerNormGrad) = {
@@ -112,6 +133,39 @@ INPUT_MAP(LayerNormGrad) = {
 ATTR_MAP(LayerNormGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LayerNormGrad) = {{0, OUTPUT_DESC(pd_x)}, {1, OUTPUT_DESC(pd_gamma)}, {2, OUTPUT_DESC(pd_beta)}};
 REG_ADPT_DESC(LayerNormGrad, prim::kPrimLayerNormGrad->name(), ADPT_DESC(LayerNormGrad))
+
+// LayerNormV3
+INPUT_MAP(LayerNormV3) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
+ATTR_MAP(LayerNormV3) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(LayerNormV3) = {{4, ATTR_DESC(begin_norm_axis, AnyTraits<int64_t>())},
+                               {5, ATTR_DESC(begin_params_axis, AnyTraits<int64_t>())},
+                               {6, ATTR_DESC(epsilon, AnyTraits<float>())}};
+
+OUTPUT_MAP(LayerNormV3) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(rstd)}};
+REG_ADPT_DESC(LayerNormV3, prim::kPrimLayerNormV3->name(), ADPT_DESC(LayerNormV3))
+
+// LayerNormGradV3
+INPUT_MAP(LayerNormGradV3) = {
+  {1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(rstd)}, {4, INPUT_DESC(mean)}, {5, INPUT_DESC(gamma)}};
+ATTR_MAP(LayerNormGradV3) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LayerNormGradV3) = {{0, OUTPUT_DESC(pd_x)}, {1, OUTPUT_DESC(pd_gamma)}, {2, OUTPUT_DESC(pd_beta)}};
+REG_ADPT_DESC(LayerNormGradV3, prim::kPrimLayerNormGradV3->name(), ADPT_DESC(LayerNormGradV3))
+
+// LayerNormGradGrad
+CUST_INPUT_MAP(LayerNormGradGrad) = {{1, INPUT_DESC(x)},
+                                     {2, INPUT_DESC(dy)},
+                                     {3, INPUT_DESC(variance)},
+                                     {4, INPUT_DESC(mean)},
+                                     {5, INPUT_DESC(gamma)},
+                                     {6, INPUT_DESC(d_dx)},
+                                     {7, INPUT_DESC(d_dg)},
+                                     {8, INPUT_DESC(d_db)},
+                                     {9, INPUT_DESC(begin_norm_axis)},
+                                     {10, INPUT_DESC(begin_params_axis)}};
+CUST_ATTR_MAP(LayerNormGradGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(LayerNormGradGrad) = {
+  {0, OUTPUT_DESC(sopd_x)}, {1, OUTPUT_DESC(sopd_dy)}, {2, OUTPUT_DESC(sopd_gamma)}};
+REG_ADPT_DESC(LayerNormGradGrad, prim::kPrimLayerNormGradGrad->name(), CUST_ADPT_DESC(LayerNormGradGrad))
 
 // LayerNormBetaGammaBackpropV2
 INPUT_MAP(LayerNormBetaGammaBackpropV2) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(res_for_gamma)}};
@@ -224,8 +278,9 @@ REG_ADPT_DESC(MultilabelMarginLoss, prim::kPrimMultilabelMarginLoss->name(), ADP
 
 // Roll
 INPUT_MAP(Roll) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Roll) = {{"shift", ATTR_DESC(shifts, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                  {"axis", ATTR_DESC(dims, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(Roll) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Roll) = {{kIndex2, ATTR_DESC(shifts, AnyTraits<std::vector<int64_t>>())},
+                        {kIndex3, ATTR_DESC(dims, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Roll) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Roll, mindspore::kRollOpName, ADPT_DESC(Roll))
 
@@ -263,6 +318,15 @@ ATTR_MAP(MVNV2) = {{"eps", ATTR_DESC(eps, AnyTraits<float>())},
 OUTPUT_MAP(MVNV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MVNV2, kNameMVNV2, ADPT_DESC(MVNV2))
 
+// SparseSoftmaxCrossEntropyWithLogits
+INPUT_MAP(SparseSoftmaxCrossEntropyWithLogits) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(labels)}};
+ATTR_MAP(SparseSoftmaxCrossEntropyWithLogits) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SparseSoftmaxCrossEntropyWithLogits) = {{0, OUTPUT_DESC(loss)}, {1, OUTPUT_DESC(backprop)}};
+REG_ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits, prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name(),
+              ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits))
+REG_ADPT_DESC(SparseSoftmaxCrossEntropyWithLogitsV2, prim::kPrimSparseSoftmaxCrossEntropyWithLogitsV2->name(),
+              ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits))
+
 // MultiMarginLossGrad
 CUST_INPUT_MAP(MultiMarginLossGrad) = {
   {1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(target)}, {4, INPUT_DESC(weight)}};
@@ -279,4 +343,34 @@ CUST_ATTR_MAP(MultiMarginLoss) = {{"p", ATTR_DESC(p, AnyTraits<int64_t>())},
                                   {"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 CUST_OUTPUT_MAP(MultiMarginLoss) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MultiMarginLoss, prim::kPrimMultiMarginLoss->name(), CUST_ADPT_DESC(MultiMarginLoss));
+
+// RmsNorm
+INPUT_MAP(RmsNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}};
+ATTR_MAP(RmsNorm) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(RmsNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(rstd)}};
+REG_ADPT_DESC(RmsNorm, prim::kPrimRmsNorm->name(), ADPT_DESC(RmsNorm))
+
+// RmsNormGrad
+INPUT_MAP(RmsNormGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(rstd)}, {4, INPUT_DESC(gamma)}};
+ATTR_MAP(RmsNormGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(RmsNormGrad) = {
+  {0, OUTPUT_DESC(dx)},
+  {1, OUTPUT_DESC(dgamma)},
+};
+REG_ADPT_DESC(RmsNormGrad, prim::kPrimRmsNormGrad->name(), ADPT_DESC(RmsNormGrad))
+
+// MultilabelMarginLossGrad
+CUST_INPUT_MAP(MultilabelMarginLossGrad) = {
+  {1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(target)}, {4, INPUT_DESC(is_target)}};
+CUST_ATTR_MAP(MultilabelMarginLossGrad) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(MultilabelMarginLossGrad) = {{0, OUTPUT_DESC(x_grad)}};
+REG_ADPT_DESC(MultilabelMarginLossGrad, prim::kPrimMultilabelMarginLossGrad->name(),
+              CUST_ADPT_DESC(MultilabelMarginLossGrad));
+
+// RNNTLoss
+INPUT_MAP(RNNTLoss) = {
+  {1, INPUT_DESC(acts)}, {2, INPUT_DESC(labels)}, {3, INPUT_DESC(input_lengths)}, {4, INPUT_DESC(label_lengths)}};
+ATTR_MAP(RNNTLoss) = {{"blank_label", ATTR_DESC(blank_label, AnyTraits<int64_t>())}};
+OUTPUT_MAP(RNNTLoss) = {{0, OUTPUT_DESC(costs)}, {1, OUTPUT_DESC(grads)}};
+REG_ADPT_DESC(RNNTLoss, prim::kPrimRNNTLoss->name(), ADPT_DESC(RNNTLoss))
 }  // namespace mindspore::transform

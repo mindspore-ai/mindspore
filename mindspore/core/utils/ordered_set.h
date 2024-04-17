@@ -561,6 +561,9 @@ class OrderedSet<std::shared_ptr<T>> {
   reverse_iterator rbegin() { return ordered_data_.rbegin(); }
   reverse_iterator rend() { return ordered_data_.rend(); }
 
+  const_reverse_iterator crbegin() const { return ordered_data_.crbegin(); }
+  const_reverse_iterator crend() const { return ordered_data_.crend(); }
+
  private:
   map_type map_;
   sequential_type ordered_data_;

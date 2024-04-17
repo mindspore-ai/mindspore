@@ -23,6 +23,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/file_utils.h"
 #include "utils/trace_base.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace {
@@ -250,7 +251,7 @@ DebugInfoPtr GetFirstHasLocationDebugInfo(const DebugInfoPtr &debug_info) {
 
 DebugInfoPtr DebugInfo::UpdateInlineCNodeDebugInfo(const DebugInfoPtr &call_debug_info,
                                                    const DebugInfoPtr &debug_info) {
-  static const auto enable_fix_code_line = (common::GetEnv("MS_DEV_ENABLE_FIX_CODE_LINE") != "0");
+  static const auto enable_fix_code_line = (common::GetCompileConfig("ENABLE_FIX_CODE_LINE") != "0");
   if (!enable_fix_code_line) {
     return debug_info;
   }

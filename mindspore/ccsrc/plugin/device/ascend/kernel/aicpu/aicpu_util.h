@@ -80,6 +80,7 @@ constexpr auto kConcatOffset = "ConcatOffset";
 constexpr auto kConcatOffsetV1 = "ConcatOffsetV1";
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
 constexpr auto kGatherDGradV2 = "GatherDGradV2";
+constexpr auto kGenerateEodMask = "GenerateEodMask";
 constexpr auto kResizeNearestNeighborV2 = "ResizeNearestNeighborV2";
 constexpr auto kResizeNearestNeighborV2Grad = "ResizeNearestNeighborV2Grad";
 constexpr auto kUpdateCache = "UpdateCache";
@@ -381,7 +382,6 @@ const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kKLDivLoss, "KLDiv"},
   {kKLDivLossGrad, "KlDivLossGrad"},
-  {kHistogram, "HistogramD"},
   {kMaxPoolV1, "MaxPool"},
   {kCol2Im, "Col2im"},
   {kIm2Col, "Im2col"},

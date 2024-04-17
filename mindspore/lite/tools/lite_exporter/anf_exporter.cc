@@ -391,7 +391,7 @@ int AnfExporter::SetSubGraphOutputIndex(const CNodePtr &cnode, const size_t subg
                                         schema::CNodeT *return_node) {
   MS_ASSERT(meta_graphT != nullptr);
   MS_ASSERT(return_node != nullptr);
-  for (size_t i = kFirstDataIndex; i < cnode->inputs().size(); i++) {
+  for (size_t i = kFirstDataIndex; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     if (input_node == nullptr) {
       MS_LOG(ERROR) << "output node is nullptr";
@@ -509,7 +509,7 @@ void AnfExporter::SetNonTailCall(const CNodePtr &cnode, schema::CNodeT *node) {
 
 int AnfExporter::SetTailCallForReturn(const CNodePtr &return_cnode) {
   MS_CHECK_TRUE_MSG(return_cnode != nullptr, RET_NULL_PTR, "return_cnode is nullptr");
-  auto return_cnode_input_size = return_cnode->inputs().size();
+  auto return_cnode_input_size = return_cnode->size();
   for (size_t i = 1; i < return_cnode_input_size; ++i) {
     if (!utils::isa<CNodePtr>(return_cnode->input(i))) {
       continue;
@@ -1037,7 +1037,7 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
                                 schema::CNodeT *fb_node) {
   MS_ASSERT(meta_graphT != nullptr);
   MS_ASSERT(fb_node != nullptr);
-  if (cnode->inputs().size() <= 1) {
+  if (cnode->size() <= 1) {
     return RET_OK;
   }
   auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
@@ -1045,7 +1045,7 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
     MS_LOG(ERROR) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     if (input_node->isa<mindspore::CNode>()) {
       auto ret = ConvertInputCNode(input_node, fb_node);

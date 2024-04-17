@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,8 @@ Status MatMulBase::CheckBatchDimensions(const Dimensions &long_strategy, const D
   size_t len_diff = long_size - short_size;
   for (size_t j = 0; j < SECOND_FROM_END(short_size); ++j) {
     if (long_strategy.at(len_diff + j) != short_strategy.at(j)) {
-      if (long_shape.at(len_diff + j) == 1 || short_shape.at(j) == 1) {
+      if (long_shape.at(len_diff + j) == 1 || short_shape.at(j) == 1 || long_shape.at(len_diff + j) == -1 ||
+          short_shape.at(j) == -1) {
         continue;  // support broadcast, such as: long shape:[A, 1, C, D], short shape:[B, C, D]
       }
       MS_LOG(ERROR) << "Strategies of batch dimensions are not equal, long strategy is " << ShapeToString(long_strategy)
@@ -418,6 +419,205 @@ Status MatMul::InferOutputTensorMap() {
   outputs_tensor_map_.push_back(output_map);
   MS_LOG(INFO) << name_ << ": the input tensor map is " << inputs_tensor_map_ << ", the output tensor map is "
                << output_map;
+  return SUCCESS;
+}
+
+Status MatMul::CheckInputLayout() {
+  // Check all device matrix should be the same
+  if (inputs_tensor_info_.size() != kSizeTwo) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for matmul is " << inputs_tensor_info_.size()
+                  << " rather than 2.";
+    return FAILED;
+  }
+  auto in_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
+  auto in_layout1 = inputs_tensor_info_[kIndex1].tensor_layout();
+  if (in_layout0.device_arrangement_origin().array() != in_layout1.device_arrangement_origin().array()) {
+    MS_LOG(ERROR) << "The device_matrix of input0 " << in_layout0.device_arrangement_origin().array()
+                  << " dose not equal to device_matrix of input1 " << in_layout1.device_arrangement_origin().array();
+    return FAILED;
+  }
+  std::vector<int64_t> map_verify;
+  size_t axis0 = in_layout0.tensor_shape_before().array().size() - 1;
+  if (transpose_a_) {
+    axis0--;
+  }
+  auto m_v =
+    in_layout0.tensor_map_before()[in_layout0.tensor_shape_before().array().size() * kSizeTwo - kIndex3 - axis0];
+  (void)std::copy(m_v.begin(), m_v.end(), std::back_inserter(map_verify));
+  size_t axis1 = in_layout1.tensor_shape_before().array().size() - 2;
+  if (transpose_b_) {
+    axis1++;
+  }
+  auto n_v =
+    in_layout1.tensor_map_before()[in_layout1.tensor_shape_before().array().size() * kSizeTwo - kIndex3 - axis1];
+  (void)std::copy(n_v.begin(), n_v.end(), std::back_inserter(map_verify));
+
+  if (in_layout0.tensor_map_before()[axis0] != in_layout1.tensor_map_before()[axis1]) {
+    MS_LOG(ERROR) << "The shard size of reduce_dim is not equal for input0 and input1";
+    return FAILED;
+  }
+
+  std::sort(map_verify.begin(), map_verify.end());
+  for (size_t i = 0; i + 1 < map_verify.size(); ++i) {
+    if (map_verify[i] == map_verify[i + 1] && map_verify[i] > 0) {
+      MS_LOG(ERROR) << "The device_matrix " << in_layout0.device_arrangement_origin().array() << " axis "
+                    << in_layout0.device_arrangement_origin().array().size() - 1 - LongToSize(map_verify[i])
+                    << " has been shard for more than once and not sharding the reduce_dim for matmul.";
+      return FAILED;
+    }
+  }
+  return SUCCESS;
+}
+
+Status MatMul::CheckOutputLayout() {
+  // Check all device matrix should be the same
+  if (outputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of output_tensor_layout for matmul is " << outputs_tensor_info_.size()
+                  << " rather than 1.";
+    return FAILED;
+  }
+  auto out_layout = outputs_tensor_info_[kIndex0].tensor_layout();
+  if (!output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
+    MS_LOG(INFO) << "Using output tensor layout infer by input tensor layout.";
+    return SUCCESS;
+  }
+  output_infer_tensor_layout_ = InferOutputLayout();
+  if (output_infer_tensor_layout_ == out_layout) {
+    MS_LOG(INFO)
+      << "output tensor layout infer by input tensor layout is same with user configured output tensor layout.";
+    return SUCCESS;
+  }
+
+  auto input_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
+  int64_t axis0 = SizeToLong(input_layout0.tensor_shape_before().array().size()) - 1;
+  if (transpose_a_) {
+    axis0 -= 1;
+  }
+  auto output_extended_tensor_map = output_infer_tensor_layout_.tensor_map_before();
+  auto axis_map = input_layout0.tensor_map_before()[axis0];
+  (void)output_extended_tensor_map[0].insert(output_extended_tensor_map[0].end(), axis_map.begin(), axis_map.end());
+  TensorLayout reduce_scatter_out_layout;
+  reduce_scatter_out_layout.InitFromExtendVector(output_infer_tensor_layout_.device_arrangement_origin().array(),
+                                                 output_extended_tensor_map,
+                                                 output_infer_tensor_layout_.tensor_shape_before().array());
+  if (reduce_scatter_out_layout != out_layout) {
+    MS_LOG(ERROR) << "The user configured output layout { device_matrix:"
+                  << out_layout.device_arrangement_origin().array() << ", tensor_map:" << out_layout.tensor_map_before()
+                  << ", tensor_shape:" << out_layout.tensor_shape_before().array()
+                  << " } dose not match the inferred output layout { device_matrix:"
+                  << output_infer_tensor_layout_.device_arrangement_origin().array()
+                  << ", tensor_map:" << output_infer_tensor_layout_.tensor_map_before()
+                  << ", tensor_shape:" << output_infer_tensor_layout_.tensor_shape_before().array()
+                  << " } (using all_reduce) or { device_matrix:"
+                  << reduce_scatter_out_layout.device_arrangement_origin().array()
+                  << ", tensor_map:" << reduce_scatter_out_layout.tensor_map_before()
+                  << ", tensor_shape:" << reduce_scatter_out_layout.tensor_shape_before().array()
+                  << " } (using reduce_scatter)";
+    return FAILED;
+  }
+  forward_reduce_scatter_ = true;
+  return SUCCESS;
+}
+
+TensorLayout MatMul::InferOutputLayout() {
+  auto input_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
+  auto input_layout1 = inputs_tensor_info_[kIndex1].tensor_layout();
+  size_t axis0 = input_layout0.tensor_shape_before().array().size() - 1;
+  if (transpose_a_) {
+    axis0 -= 1;
+  }
+  std::vector<Shape> output_extended_tensor_map;
+  Shape output_tensor_shape;
+
+  for (size_t i = 0; i < input_layout0.tensor_shape_before().array().size(); ++i) {
+    auto map_dim = input_layout0.tensor_map_before()[i];
+    auto shp_dim = input_layout0.tensor_shape_before().array()[i];
+    if (i != axis0) {
+      output_extended_tensor_map.push_back(map_dim);
+      output_tensor_shape.push_back(shp_dim);
+    }
+  }
+
+  if (!transpose_b_) {
+    output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[inputs_shape_[kIndex1].size() - kDim1]);
+    output_tensor_shape.push_back(
+      input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - kDim1));
+  } else {
+    output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[inputs_shape_[kIndex1].size() - kDim2]);
+    output_tensor_shape.push_back(
+      input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - kDim2));
+  }
+
+  TensorLayout output_tensor_layout;
+  output_tensor_layout.InitFromExtendVector(input_layout0.device_arrangement_origin().array(),
+                                            output_extended_tensor_map, output_tensor_shape);
+  return output_tensor_layout;
+}
+
+Status MatMul::InferOutputTensorInfo() {
+  output_infer_tensor_layout_ = InferOutputLayout();
+  if (output_infer_tensor_layout_.tensor_shape_before().array() != outputs_shape_[kIndex0]) {
+    MS_LOG(ERROR) << "The infer output shape " << output_infer_tensor_layout_.tensor_shape_before().array()
+                  << " dose not match the output shape " << outputs_shape_[kIndex0];
+    return FAILED;
+  }
+  TensorInfo output_tensor_info(output_infer_tensor_layout_);
+  outputs_tensor_info_.push_back(output_tensor_info);
+  return SUCCESS;
+}
+
+Status MatMul::InferForwardCommunicationByLayout() {
+  forward_op_.clear();
+  auto input_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
+  size_t axis0 = input_layout0.tensor_shape_before().array().size() - 1;
+  if (transpose_a_) {
+    axis0 -= 1;
+  }
+  auto axis_tensor_map = input_layout0.tensor_map_before()[axis0];
+  int64_t axis_shard = 1;
+  std::vector<int64_t> r_dim_vector;
+  for (const auto &dim : axis_tensor_map) {
+    if (dim == -1) {
+      continue;
+    }
+    int64_t divisor = input_layout0.device_arrangement_origin().GetDimByReverseIdx(LongToUlong(dim));
+    axis_shard *= divisor;
+    auto r_dim = SizeToLong(input_layout0.device_arrangement_origin().array().size() - 1) - dim;
+    r_dim_vector.push_back(r_dim);
+  }
+  // Relevant dimension is not split and all reduce is not required,
+  if (axis_shard == MIN_SLICE_NUM) {
+    MS_LOG(INFO) << name_ << ": Forward communication is not required.";
+    return SUCCESS;
+  }
+  RankList repeated_rank_list;
+  auto device_matrix = DeviceMatrix(g_device_manager->global_rank(), g_device_manager->GetDeviceListInThisStage(),
+                                    input_layout0.device_arrangement_origin().array());
+  if (device_matrix.GetDevicesAlongMultiDim(r_dim_vector, &repeated_rank_list) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Infer Forward communication by multi axis failed.";
+    return FAILED;
+  }
+  if (repeated_rank_list.size() == 1) {
+    MS_LOG(INFO) << name_ << ": Forward communication is not required.";
+    return SUCCESS;
+  }
+
+  Group forward_group;
+  if (g_device_manager->CreateGroup(repeated_rank_list, &forward_group) != SUCCESS) {
+    MS_LOG(ERROR) << name_
+                  << ": Create communication group by tensor_map failed, the rank_list is: " << repeated_rank_list
+                  << ", the full_name of node is: " << cnode_->fullname_with_scope();
+    return FAILED;
+  }
+
+  Operator op;
+  if (forward_reduce_scatter_) {
+    op = CreateReduceScatterOp(REDUCE_OP_SUM, forward_group.name());
+  } else {
+    op = CreateAllReduceOp(REDUCE_OP_SUM, forward_group.name());
+  }
+  forward_op_.push_back(op);
+  MS_LOG(INFO) << name_ << ": The group name of forward communication is " << forward_group.name();
   return SUCCESS;
 }
 
@@ -751,9 +951,7 @@ ReplaceGraphPtr MatMul::replace_graph(const CNodePtr &cnode) {
     auto make_tuple = gen_g.PushBack(make_tuple_inputs);
     // concat
     int64_t concat_axis = 1;
-    Attr concat_axis_attr = std::make_pair(AXIS, MakeValue(concat_axis));
-    OperatorAttrs concat_attrs = {concat_axis_attr};
-    auto concat = gen_g.PushBack({gen_g.NewOpInst(CONCAT, concat_attrs), make_tuple});
+    auto concat = gen_g.PushBack({gen_g.NewOpInst(CONCAT), make_tuple, CreatInt64Imm(concat_axis)});
     matmul_left_input = concat;
   } else {
     matmul_left_input = gen_g.virtual_input_node();

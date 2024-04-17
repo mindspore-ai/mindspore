@@ -60,9 +60,9 @@ const std::vector<std::pair<KernelAttr, FractionalAvgPoolPtrCreatorFunc>> kernel
    CreateFractionalAvgPoolKernelPtr<int64_t>}};
 }  // namespace
 
-bool FractionalAvgPoolGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FractionalAvgPoolGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -72,33 +72,28 @@ bool FractionalAvgPoolGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
   return true;
 }
 
-bool FractionalAvgPoolGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalAvgPool>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool FractionalAvgPoolGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->pooling_ratio = kernel_ptr->get_pooling_ratio();
-  attr_ptr_->pseudo_random = kernel_ptr->get_pseudo_random();
-  attr_ptr_->overlapping = kernel_ptr->get_overlapping();
-  attr_ptr_->deterministic = kernel_ptr->get_deterministic();
-  attr_ptr_->seed = kernel_ptr->get_seed();
-  attr_ptr_->seed2 = kernel_ptr->get_seed2();
+  attr_ptr_->pooling_ratio = GetValue<std::vector<float>>(primitive_->GetAttr("pooling_ratio"));
+  attr_ptr_->pseudo_random = GetValue<bool>(primitive_->GetAttr("pseudo_random"));
+  attr_ptr_->overlapping = GetValue<bool>(primitive_->GetAttr("overlapping"));
+  attr_ptr_->deterministic = GetValue<bool>(primitive_->GetAttr("deterministic"));
+  attr_ptr_->seed = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  attr_ptr_->seed2 = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed2));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 
-  Resize(base_operator, inputs, outputs);
+  Resize(inputs, outputs);
   return true;
 }
 
-int FractionalAvgPoolGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int FractionalAvgPoolGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -118,7 +113,6 @@ int FractionalAvgPoolGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

@@ -72,11 +72,11 @@ class SequenceIndexInfer : public abstract::OpInferBase {
     if (seq_abs->dynamic_len()) {
       return nullptr;
     }
-    auto target_value = target_abs->BuildValue();
-    auto start_build_value = input_args[start_index]->BuildValue();
-    auto end_build_value = input_args[end_index]->BuildValue();
-    if (seq_abs->BuildValue() == kValueAny || target_value == kValueAny || start_build_value == kValueAny ||
-        end_build_value == kValueAny) {
+    auto target_value = target_abs->GetValue();
+    auto start_build_value = input_args[start_index]->GetValue();
+    auto end_build_value = input_args[end_index]->GetValue();
+    if (seq_abs->GetValue()->ContainsValueAny() || target_value->ContainsValueAny() ||
+        start_build_value->ContainsValueAny() || end_build_value->ContainsValueAny()) {
       return nullptr;
     }
 
@@ -100,7 +100,7 @@ class SequenceIndexInfer : public abstract::OpInferBase {
 
     for (int64_t i = start_value; i < std::min(end_value, seq_len); ++i) {
       auto element = seq_elements[i];
-      if (CheckAndConvertUtils::CheckValueSame(target_value, element->BuildValue())) {
+      if (CheckAndConvertUtils::CheckValueSame(target_value, element->GetValue())) {
         return MakeValue(i);
       }
     }

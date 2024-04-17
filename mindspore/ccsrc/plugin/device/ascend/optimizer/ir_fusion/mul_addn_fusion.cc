@@ -85,7 +85,7 @@ const AnfNodePtr MulAddNFusion::Process(const FuncGraphPtr &graph, const AnfNode
   }
 
   size_t lossscale_input_index = 1;
-  for (size_t index = 1; index < mul->inputs().size(); ++index) {
+  for (size_t index = 1; index < mul->size(); ++index) {
     auto input_node = mul->input(index);
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<ValueNode>()) {

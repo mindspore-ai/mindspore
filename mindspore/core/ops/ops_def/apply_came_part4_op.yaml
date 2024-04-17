@@ -1,0 +1,37 @@
+#operator apply_came_part4
+apply_came_part4:
+    args:
+        param:
+            dtype: tensor
+        m:
+            dtype: tensor
+        r:
+            dtype: tensor
+        c:
+            dtype: tensor
+        weight_decay:
+            dtype: tensor
+        lr:
+            dtype: tensor
+        beta3:
+            dtype: float
+        sum_r:
+            dtype: tensor
+        sum_u_r:
+            dtype: tensor
+        sum_u_c:
+            dtype: tensor
+        sum_u_rc:
+            dtype: tensor
+        global_shape:
+            dtype: tuple[int]
+            default: None
+    returns:
+        param:
+            dtype: tensor
+        r:
+            dtype: tensor
+        c:
+            dtype: tensor
+    function:
+        disable: True

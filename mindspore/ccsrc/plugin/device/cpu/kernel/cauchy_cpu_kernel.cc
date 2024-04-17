@@ -27,31 +27,27 @@ namespace {
 constexpr size_t kCauchyOutputNum = 1;
 }  // namespace
 
-bool CauchyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool CauchyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCauchyOutputNum, kernel_name_);
-  auto prim = std::dynamic_pointer_cast<ops::Cauchy>(base_operator);
-  MS_ERROR_IF_NULL(prim);
-  sigma_ = prim->get_sigma();
-  median_ = prim->get_median();
+  sigma_ = GetValue<float>(primitive_->GetAttr("sigma"));
+  median_ = GetValue<float>(primitive_->GetAttr("median"));
   return true;
 }
 
-bool CauchyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool CauchyCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &,
+                                const std::vector<kernel::KernelTensor *> &,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
   (void)LaunchKernel<float>(outputs);
   return true;
 }
 
 template <typename T>
-bool CauchyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &outputs) const {
-  T *y_data = static_cast<T *>(outputs[0]->addr);
+bool CauchyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &outputs) const {
+  T *y_data = static_cast<T *>(outputs[0]->device_ptr());
   std::random_device rd;
   std::default_random_engine generator(rd());
   std::cauchy_distribution<float> cauchy_d(median_, sigma_);
-  auto end = outputs[0]->size / sizeof(T);
+  auto end = outputs[0]->size() / sizeof(T);
 
   for (size_t i = 0; i < end; ++i) {
     float data = cauchy_d(generator);

@@ -31,9 +31,9 @@ class Coder final {
 
   ~Coder() = default;
   static int MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std::string &output_path,
-                                       const MicroParam &param, bool enable_fp16);
-  static int MicroSourceCodeGeneration(const std::string &model_file, const std::string &output_path,
-                                       const MicroParam &param, bool enable_fp16);
+                                       MicroParam *param, bool enable_fp16);
+  static int MicroSourceCodeGeneration(const std::string &model_file, const std::string &output_path, MicroParam *param,
+                                       bool enable_fp16);
 
  private:
   static int ExecuteMicroGeneration(const void *model_buf, size_t size, const std::string &output_path,

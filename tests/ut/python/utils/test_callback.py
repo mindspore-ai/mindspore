@@ -370,6 +370,76 @@ def test_callbackmanager_exit_called():
     assert mock_exit.call_count == 2
 
 
+def prefix_func(cb_params):
+    return str(cb_params.cur_step_num) + "_custom_file"
+
+
+def directory_func(cb_params):
+    return "./custom_ckpt"
+
+
+def custom_checkpoint_dir_and_prefix(prefix, directory):
+    train_config = CheckpointConfig(
+        save_checkpoint_steps=16,
+        save_checkpoint_seconds=100,
+        keep_checkpoint_max=0,
+        keep_checkpoint_per_n_minutes=1)
+    ckpt_cb = ModelCheckpoint(prefix=prefix, directory=directory, config=train_config)
+    cb_params = _InternalCallbackParam()
+    net = Net()
+    loss = nn.SoftmaxCrossEntropyWithLogits()
+    optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    network_ = WithLossCell(net, loss)
+    _train_network = TrainOneStepCell(network_, optim)
+    cb_params.train_network = _train_network
+    cb_params.epoch_num = 10
+    cb_params.cur_epoch_num = 4
+    cb_params.cur_step_num = 128
+    cb_params.batch_num = 32
+    run_context = RunContext(cb_params)
+    ckpt_cb.begin(run_context)
+    ckpt_cb.step_end(run_context)
+
+
+def test_checkpoint_custom_dir_and_prefix():
+    """
+    Feature: callback
+    Description: Test checkpoint save ckpt with custom dir and custom prefix
+    Expectation: run success
+    """
+    custom_checkpoint_dir_and_prefix(prefix_func, directory_func)
+    ckpt_name = './custom_ckpt/128_custom_file.ckpt'
+    assert os.path.exists(ckpt_name)
+    os.chmod(ckpt_name, stat.S_IWRITE)
+    os.remove(ckpt_name)
+
+
+def test_checkpoint_custom_dir():
+    """
+    Feature: callback
+    Description: Test checkpoint save ckpt with custom dir
+    Expectation: run success
+    """
+    custom_checkpoint_dir_and_prefix("100", directory_func)
+    ckpt_name = './custom_ckpt/100-4_32.ckpt'
+    assert os.path.exists(ckpt_name)
+    os.chmod(ckpt_name, stat.S_IWRITE)
+    os.remove(ckpt_name)
+
+
+def test_checkpoint_custom_prefix():
+    """
+    Feature: callback
+    Description: Test checkpoint save ckpt with custom prefix
+    Expectation: run success
+    """
+    custom_checkpoint_dir_and_prefix(prefix_func, "./ckpt_path")
+    ckpt_name = './ckpt_path/128_custom_file.ckpt'
+    assert os.path.exists(ckpt_name)
+    os.chmod(ckpt_name, stat.S_IWRITE)
+    os.remove(ckpt_name)
+
+
 def test_callbackmanager_exit_called_when_raises():
     """
     Feature: callback

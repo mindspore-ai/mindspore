@@ -20,7 +20,6 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include "kernel/kernel_get_value.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
@@ -32,44 +31,42 @@ class TensorCopySlicesCpuKernelMod : public NativeCpuKernelMod {
   TensorCopySlicesCpuKernelMod() = default;
   ~TensorCopySlicesCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeBool)
                                                      .AddInputAttr(kNumberTypeBool)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
                                                      .AddOutputAttr(kNumberTypeBool),
                                                    KernelAttr()
                                                      .AddInputAttr(kNumberTypeInt32)
                                                      .AddInputAttr(kNumberTypeInt32)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
                                                      .AddOutputAttr(kNumberTypeInt32),
                                                    KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
                                                      .AddOutputAttr(kNumberTypeFloat32),
                                                    KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat64)
                                                      .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
                                                      .AddOutputAttr(kNumberTypeFloat64)};
     return support_list;
   }

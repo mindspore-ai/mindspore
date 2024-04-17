@@ -28,6 +28,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/framework_utils.h"
+#include "kernel/graph_kernel/kernel_packet/kernel_packet_kernel_mod.h"
 #include "plugin/device/gpu/hal/device/cuda_env_checker.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 namespace mindspore {
@@ -58,6 +59,39 @@ void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<ke
     kernel_info->set_ref_map(matched_kernel_attr.GetAllOutInRef(), matched_kernel_attr.GetOutInRefMap());
   }
 }
+
+// Create KernelPacketKernelMod and return the real inner kernel
+void CreateKernelPacketKernelMods(const std::vector<CNodePtr> &kernels) {
+  for (auto &kernel : kernels) {
+    MS_LOG(DEBUG) << "kernel name: " << kernel->DebugString();
+    auto real_node = kernel::GetKernelPacketRealNode(kernel);
+    auto kernel_mod = std::make_shared<kernel::KernelPacketKernelMod>(
+      [](void *dst, const void *src, size_t count, void *stream_ptr) -> bool {
+        cudaError_t status =
+          cudaMemcpyAsync(dst, src, count, cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr));
+        if (status != cudaSuccess) {
+          MS_LOG(ERROR) << "#umsg#CUDA Error:#umsg#cudaMemcpyAsync for KernelPacketdNode failed | Error Number: "
+                        << status << " " << cudaGetErrorString(status);
+          return false;
+        }
+        return true;
+      });
+    std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+    std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    kernel_mod->SetDevicedId(device_id);
+    if (!kernel_mod->KernelMod::Init(common::AnfAlgo::GetCNodePrimitive(kernel), input_kernel_tensors,
+                                     output_kernel_tensors) ||
+        !kernel::kernelpacket::Init(kernel_mod.get(), real_node)) {
+      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op[" << kernel->fullname_with_scope()
+                        << "] failed.";
+    }
+    session::AnfRuntimeAlgorithm::SetKernelMod(kernel_mod, kernel.get());
+  }
+}
 }  // namespace
 
 void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
@@ -65,8 +99,13 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   MS_EXCEPTION_IF_NULL(bin_map);
   bool already_check_nvcc = false;
   std::vector<AnfNodePtr> akg_nodes;
-  for (const auto &kernel : kernels) {
+  std::vector<CNodePtr> kernel_packet_nodes;
+  for (auto kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
+    if (IsPrimitiveCNode(kernel, prim::kPrimKernelPacket)) {
+      kernel_packet_nodes.push_back(kernel);
+      kernel = kernel::GetKernelPacketRealNode(kernel);
+    }
     // Need backoff to create CPU kernel.
     if (AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
       continue;
@@ -109,51 +148,40 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
       }
       MS_EXCEPTION_IF_NULL(kernel);
 
-      auto old_gpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeGpuKernelMod>(gpu_kernel_mod);
-      auto args = kernel::AbstractArgsFromCNode(kernel);
-      // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
-      // we will put this tensor in args.inputs.host_data_.
-      auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
-      kernel::SetInputsByConstInputs(kernel, &inputs_tensor_map);
-      kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs);
-      if (old_gpu_kernel_mod) {
-        kernel::SetArgsToCNode(kernel, args);
-        if (new_factory) {
-          old_gpu_kernel_mod->SetGpuRefMapToKernelInfo(kernel);
-        }
-        if (!old_gpu_kernel_mod->Init(kernel)) {
-          MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
-                                     << kernel->fullname_with_scope() << "] failed.";
-        }
-        session::AnfRuntimeAlgorithm::SetKernelMod(old_gpu_kernel_mod, kernel.get());
-      } else {
-        if (new_factory) {
-          auto kernel_attrs = gpu_kernel_mod->GetOpSupport();
-          SetGpuRefMapToKernelInfo(kernel, kernel_attrs);
-        }
-        auto ms_context = MsContext::GetInstance();
-        MS_EXCEPTION_IF_NULL(ms_context);
-        auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-        gpu_kernel_mod->SetDevicedId(device_id);
-        auto op = kernel::CreateOperatorByCNode(kernel);
-        if (!gpu_kernel_mod->Init_(op, args.inputs, args.outputs)) {
-          MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
-                            << kernel->fullname_with_scope() << "] failed.";
-        }
-        if (!kernel::IfNeedSkipResize(kernel)) {
-          if (gpu_kernel_mod->Resize(args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
-            MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Gpu kernel op[" << kernel->fullname_with_scope()
-                              << "] Resize failed.";
-          }
-        }
-        session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
+      if (new_factory) {
+        auto kernel_attrs = gpu_kernel_mod->GetOpSupport();
+        SetGpuRefMapToKernelInfo(kernel, kernel_attrs);
       }
+      auto ms_context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(ms_context);
+      auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+      gpu_kernel_mod->SetDevicedId(device_id);
+      std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+      std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+
+      MS_LOG(DEBUG) << "Begin Init kernel: " << kernel->fullname_with_scope();
+      if (!gpu_kernel_mod->Init(common::AnfAlgo::GetCNodePrimitive(kernel), input_kernel_tensors,
+                                output_kernel_tensors)) {
+        MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
+                          << kernel->fullname_with_scope() << "] failed.";
+      }
+      MS_LOG(DEBUG) << "End Init kernel: " << kernel->fullname_with_scope();
+      if (kernel::CheckResizeCondition(kernel)) {
+        MS_LOG(DEBUG) << "Begin Resize in compile phase for kernel: " << kernel->fullname_with_scope();
+        if (gpu_kernel_mod->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
+          MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Gpu kernel op[" << kernel->fullname_with_scope()
+                            << "] Resize failed.";
+        }
+        MS_LOG(DEBUG) << "End Resize in compile phase for kernel: " << kernel->fullname_with_scope();
+      }
+      session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
     }
   }
 #ifdef ENABLE_AKG
   kernel::AkgGpuKernelBuilder akg_gpu_kernel_builder;
   (void)akg_gpu_kernel_builder.SingleOpParallelBuild(akg_nodes);
 #endif
+  CreateKernelPacketKernelMods(kernel_packet_nodes);
 }
 }  // namespace gpu
 }  // namespace device

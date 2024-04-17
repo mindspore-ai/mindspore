@@ -19,7 +19,7 @@
 #define EIGEN_USE_THREADS
 #define EIGEN_USE_SIMPLE_THREAD_POOL
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 #include "utils/bcast.h"
 
@@ -37,7 +37,7 @@ class MulCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t MulCompute(const CpuKernelContext &ctx);
+  uint32_t MulCompute(CpuKernelContext &ctx);
 
   /**
    * @brief Check if input&output addr is aligned

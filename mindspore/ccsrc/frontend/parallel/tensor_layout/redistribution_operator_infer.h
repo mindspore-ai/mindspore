@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,10 @@
 
 #include "utils/hash_map.h"
 #include "frontend/parallel/tensor_layout/construct_operator.h"
+#include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/tensor_layout/redistribution_layout_transfer.h"
 #include "include/common/utils/convert_utils.h"
+
 namespace mindspore {
 namespace parallel {
 using DeviceArrangement = Shape;
@@ -42,7 +44,7 @@ class RedistributionOperatorInfer {
   explicit RedistributionOperatorInfer(bool construct_op_flag = true)
       : construct_op_flag_(construct_op_flag), is_cost_model_(false) {}
   Status Init(const TensorLayout &tensor_layout, const Map &out_tensor_map, RankList dev_list,
-              bool is_cost_model = false);
+              bool is_cost_model = false, bool is_dynamic_shape = false);
   ~RedistributionOperatorInfer() = default;
   OperatorList operator_list() const { return operator_list_; }
   OperatorVector operator_vector() const { return operator_vector_; }

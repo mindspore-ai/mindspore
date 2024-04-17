@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,11 +20,14 @@ import numpy as np
 import scipy as scp
 from scipy.linalg import solve_triangular, eig, eigvals
 
+import mindspore as ms
+import mindspore.scipy as mscp
 from mindspore import Tensor, context, nn
 from mindspore.common import dtype as mstype
+from mindspore.common.api import _pynative_executor
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.linalg_ops import Eigh
-from mindspore.scipy.ops import Eig, SolveTriangular
+from mindspore.scipy.ops import Eig, LinearSumAssignment
 from mindspore.scipy.utils import _nd_transpose
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition
 
@@ -34,10 +37,22 @@ np.random.seed(0)
 class SolveTriangularNet(nn.Cell):
     def __init__(self, lower: bool = False, unit_diagonal: bool = False, trans: str = 'N'):
         super(SolveTriangularNet, self).__init__()
-        self.solve = SolveTriangular(lower, unit_diagonal, trans)
+        self.solve = mscp.linalg.solve_triangular
+        self.lower = lower
+        self.unit_diagonal = unit_diagonal
+        self.trans = trans
 
     def construct(self, a, b):
-        return self.solve(a, b)
+        return self.solve(a, b, self.trans, self.lower, self.unit_diagonal)
+
+
+class LinearSumAssignmentNet(nn.Cell):
+    def __init__(self):
+        super(LinearSumAssignmentNet, self).__init__()
+        self.solve = LinearSumAssignment()
+
+    def construct(self, cost_matrix, maximize, dimension_limit):
+        return self.solve(cost_matrix, dimension_limit, maximize)
 
 
 @pytest.mark.level1
@@ -97,7 +112,7 @@ def test_batch_cholesky(shape, lower: bool, data_type):
     assert np.allclose(b_m_l.asnumpy(), b_s_l, rtol=rtol, atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(6, 6), (10, 10)])
@@ -133,6 +148,27 @@ def test_eig(shape, data_type, rtol, atol):
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(), (1)])
+@pytest.mark.parametrize('data_type', [np.float32, np.float64])
+def test_eig_illegal_input(shape, data_type):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Eig operator when input are illegal
+    Expectation: Eig raise ValueError
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    a = create_random_rank_matrix(shape, data_type)
+    tensor_a = Tensor(a)
+
+    # Check Eig with illegal input
+    with pytest.raises(ValueError) as err:
+        _ = Eig(True)(tensor_a)
+    assert "ValueError" in str(err)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2, 4, 4)])
 @pytest.mark.parametrize('data_type, rtol, atol', [(np.float32, 1e-3, 1e-4), (np.float64, 1e-5, 1e-8),
                                                    (np.complex64, 1e-3, 1e-4), (np.complex128, 1e-5, 1e-8)])
@@ -157,7 +193,7 @@ def test_batch_eig(shape, data_type, rtol, atol):
         assert np.allclose(batch_a @ batch_v - batch_v @ np.diag(batch_w), np.zeros_like(batch_a), rtol, atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -276,8 +312,8 @@ def test_solve_triangular_2d(n: int, dtype, lower: bool, unit_diagonal: bool, tr
     a = (np.random.random((n, n)) + np.eye(n)).astype(dtype)
     b = np.random.random((n, 1)).astype(dtype)
     expect = solve_triangular(a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)
-    solve = SolveTriangular(lower, unit_diagonal, trans)
-    output = solve(Tensor(a), Tensor(b)).asnumpy()
+    solve = mscp.linalg.solve_triangular
+    output = solve(Tensor(a), Tensor(b), lower=lower, unit_diagonal=unit_diagonal, trans=trans).asnumpy()
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
@@ -300,8 +336,8 @@ def test_solve_triangular_1d(n: int, dtype, lower: bool, unit_diagonal: bool, tr
     a = (np.random.random((n, n)) + np.eye(n)).astype(dtype)
     b = np.random.random(n).astype(dtype)
     expect = solve_triangular(a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)
-    solve = SolveTriangular(lower, unit_diagonal, trans)
-    output = solve(Tensor(a), Tensor(b)).asnumpy()
+    solve = mscp.linalg.solve_triangular
+    output = solve(Tensor(a), Tensor(b), lower=lower, unit_diagonal=unit_diagonal, trans=trans).asnumpy()
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
@@ -364,7 +400,7 @@ def test_solve_triangular_batched(n: int, batch, dtype, lower: bool, unit_diagon
     b = create_random_rank_matrix(batch + (n,), dtype)
 
     # mindspore
-    output = SolveTriangular(lower, unit_diagonal, trans)(Tensor(a), Tensor(b)).asnumpy()
+    output = mscp.linalg.solve_triangular(Tensor(a), Tensor(b), trans, lower, unit_diagonal).asnumpy()
 
     # scipy
     batch_num = reduce(lambda x, y: x * y, batch)
@@ -392,18 +428,21 @@ def test_solve_triangular_error_dims():
     a = create_random_rank_matrix((10,), dtype=np.float32)
     b = create_random_rank_matrix((10,), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     # matrix a is not square matrix
     a = create_random_rank_matrix((4, 5), dtype=np.float32)
     b = create_random_rank_matrix((10,), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     a = create_random_rank_matrix((3, 5, 4, 5), dtype=np.float32)
     b = create_random_rank_matrix((3, 5, 10,), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level1
@@ -420,26 +459,58 @@ def test_solve_triangular_error_dims_mismatched():
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10,), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     # last two dimensions not matched
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 4), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 4, 1), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     # batch dimensions not matched
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 5), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 5, 1), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('cost_matrix_type', [ms.float16, ms.float32, ms.float64, ms.bool_, ms.int16, ms.int32,
+                                              ms.int64, ms.int8, ms.uint16, ms.uint32, ms.uint64, ms.uint8])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_linear_sum_assignment(cost_matrix_type, mode):
+    """
+    Feature: mindspore.scipy.ops.LinearSumAssignment
+    Description: Verify the result of LinearSumAssignment
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    cost_matrix = ms.Tensor([[2, 3, 3], [3, 2, 3], [3, 3, 2]]).astype(cost_matrix_type)
+    dimension_limit = ms.Tensor(2)
+    maximize = False
+    net = LinearSumAssignmentNet()
+    row_idx, col_idx = net(cost_matrix, maximize, dimension_limit)
+    expect_row_idx = ms.Tensor([0, 1, -1], ms.int64)
+    expect_col_idx = ms.Tensor([0, 1, -1], ms.int64)
+    assert np.allclose(row_idx.asnumpy(), expect_row_idx.asnumpy())
+    assert np.allclose(col_idx.asnumpy(), expect_col_idx.asnumpy())

@@ -25,6 +25,9 @@
 #include "utils/hash_map.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/actor/debug_aware_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_launch_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_infer_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_resize_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "kernel/kernel.h"
@@ -36,8 +39,10 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
 using mindspore::kernel::Address;
-using mindspore::kernel::KernelLaunchInfo;
+using mindspore::kernel::KernelLaunchAddr;
 using mindspore::kernel::KernelMod;
+using mindspore::kernel::KernelTensor;
+using mindspore::kernel::KernelTensorPtr;
 using mindspore::session::SomasInfo;
 using mindspore::tensor::TensorPtr;
 
@@ -62,17 +67,27 @@ class KernelActor : public DebugAwareActor {
               const KernelTransformType &type = KernelTransformType::kKernelActor)
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
         kernel_(kernel),
-        is_dynamic_shape_(false),
+        is_dynamic_value_(false),
+        is_dynamic_type_(false),
+        has_dynamic_(false),
+        enable_async_infer_(false),
         kernel_info_(nullptr),
+        kernel_mod_(nullptr),
+        somas_info_(nullptr),
         real_input_num_(0),
         strategy_(strategy),
         modifiable_ref_input_indexes_(modifiable_ref_input_indexes),
         modifiable_ref_output_indexes_(modifiable_ref_output_indexes),
         is_launch_skipped_(false),
-        inputs_continuous_memory_(false),
-        somas_info_(nullptr) {
+        inputs_continuous_memory_(false) {
     (void)device_contexts_.emplace_back(device_context);
+    is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_) || common::AnfAlgo::IsDynamicSequence(kernel_);
+
+    kernel_async_infer_aid_ = KernelAsyncInferActor::GetInstance()->GetAID();
+    kernel_async_resize_aid_ = KernelAsyncResizeActor::GetInstance()->GetAID();
+    kernel_async_launch_aid_ = KernelAsyncLaunchActor::GetInstance()->GetAID();
   }
+
   ~KernelActor() override = default;
 
   // The memory related operation interface.
@@ -81,11 +96,6 @@ class KernelActor : public DebugAwareActor {
   // The callback after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
-  // The debug related operation interface.
-  void SendDebugReq(OpContext<DeviceTensor> *const context) override;
-  // The callback after debug finished.
-  void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
-
   const CNodePtr &kernel() const { return kernel_; }
   const std::set<size_t> &modifiable_ref_input_indexes() const { return modifiable_ref_input_indexes_; }
   const std::set<size_t> &modifiable_ref_output_indexes() const { return modifiable_ref_output_indexes_; }
@@ -93,6 +103,18 @@ class KernelActor : public DebugAwareActor {
   bool is_launch_skipped() const { return is_launch_skipped_; }
   bool inputs_continuous_memory() const { return inputs_continuous_memory_; }
   SomasInfo *somas_info() const { return somas_info_; }
+  const std::set<size_t> &somas_graph_output_indexes() const { return somas_graph_output_indexes_; }
+  CallbackCounterPtr callback_counter() const { return callback_counter_; }
+  void set_callback_counter(const CallbackCounterPtr &callback_counter) { callback_counter_ = callback_counter; }
+
+  void set_enable_async_infer(bool enable_async_infer) { enable_async_infer_ = enable_async_infer; }
+
+  // Really do infer shape and update kernel tensor shape.
+  void ExecuteInferShapeTask(OpContext<DeviceTensor> *const context);
+  // Really do resize kernel mod and update new size into output and workspace kernel tensors.
+  void ExecuteResizeKernelModTask(OpContext<DeviceTensor> *const context);
+  // Really do launch kernel with memory allocate and free.
+  void ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context);
 
  protected:
   void Init() override;
@@ -102,20 +124,61 @@ class KernelActor : public DebugAwareActor {
   // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
   virtual bool LaunchKernel(OpContext<DeviceTensor> *const context);
 
+  virtual void LaunchCallback(OpContext<DeviceTensor> *const context);
+
+  // Execute infer shape, resize and launch kernel by runtime pipeline which executes by KernelAsyncInferActor,
+  // KernelAsyncResizeActor and KernelAsyncLaunchActor.
+  void RunWithMultiPipeline(OpContext<DeviceTensor> *const context);
+  // Execute launch kernel asynchronously in KernelAsyncLaunchActor.
+  void RunWithAsyncLaunchKernel(OpContext<DeviceTensor> *const context);
+
+  // Infer shape(and type) and resize kernel mod.
+  void InferAndResize(OpContext<DeviceTensor> *const context);
+
+  // Re-Infer shape, type and resize before kernel launch in dynamic scenarios.
+  void InferShapeAndType();
+
+  // Re-InferShape and resize before kernel launch in dynamic scenarios.
+  void InferShape();
+
+  void ResizeKernelMod();
+
+  // Update input_device_tensors by input op data.
+  void UpdateInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
+
+  // Set the memory address for the tensors which use the somas.
+  void SetSomasMemory(OpContext<DeviceTensor> *const context) const;
+
   // The info of kernel.
   CNodePtr kernel_;
   bool is_dynamic_shape_;
+  bool is_dynamic_value_;
+  bool is_dynamic_type_;
+  bool has_dynamic_;
+  // whether the kernel has input node which is a computed depend kernel.
+  bool has_computed_depend_input_{false};
+  // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
+  bool enable_async_infer_;
+  AID kernel_async_infer_aid_;
+  AID kernel_async_resize_aid_;
+  AID kernel_async_launch_aid_;
   KernelInfo *kernel_info_;
   KernelMod *kernel_mod_;
-  // The kernel launch info is fetched by the device tensors.
-  KernelLaunchInfo launch_info_;
 
   // The device tensors for launch.
   std::vector<DeviceTensor *> input_device_tensors_;
   std::vector<DeviceTensor *> output_device_tensors_;
   std::vector<DeviceTensor *> workspace_device_tensors_;
-  // The received input device type and format may be different from the formal parameter in the control flow scenarios,
-  // so it needs to be copied from the input data to real data that kernel launch needs.
+
+  // The input kernel tensors for infer shape.
+  std::vector<abstract::AbstractBasePtr> input_kernel_tensors_for_infer_;
+  // The kernel tensors for resize and launch.
+  std::vector<KernelTensor *> input_kernel_tensors_;
+  std::vector<KernelTensor *> output_kernel_tensors_;
+  std::vector<KernelTensor *> workspace_kernel_tensors_;
+
+  // The received input device type and format may be different from the formal parameter in the control flow
+  // scenarios, so it needs to be copied from the input data to real data that kernel launch needs.
   std::vector<DeviceTensorPtr> copy_input_device_tensors_;
   // Real data info that kernel launch needs, used to check the consistency of received input data.
   std::vector<std::shared_ptr<InputDataInfo>> real_input_data_infos_;
@@ -125,12 +188,19 @@ class KernelActor : public DebugAwareActor {
   std::vector<DeviceTensor *> memory_alloc_list_;
   // input + output + workspace
   std::vector<DeviceTensor *> memory_free_list_;
-  // The device tensor of external reference is not the real data of this kernel, but need add to the memory_free_list_.
+  // The device tensor of external reference is not the real data of this kernel, but need add to the
+  // memory_free_list_.
   std::vector<DeviceTensor *> external_reference_tensors_;
+
+  // The information used for integration of dynamic and static memory.
+  SomasInfo *somas_info_;
+  // The graph output node and index use somas info.
+  std::set<size_t> somas_graph_output_indexes_;
 
  private:
   friend class GraphScheduler;
   friend class ControlNodeScheduler;
+  friend class InlineControlFlowScheduler;
   friend class SchedulerHelper;
 #ifdef ENABLE_RPC_ACTOR
   friend class RpcNodeScheduler;
@@ -147,8 +217,6 @@ class KernelActor : public DebugAwareActor {
   void FetchWorkspaceDeviceTensor();
   // Need copy when the data type or format between real parameters and formal parameters are inconsistent.
   void CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
-  // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.
-  void PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors);
 
   // The processing before kernel launch: update the info of kernel launch.
   void PreLaunchKernel(OpContext<DeviceTensor> *const context);
@@ -157,8 +225,6 @@ class KernelActor : public DebugAwareActor {
   // Back refresh the dynamic device tensor stores that have been triggered copy.
   void RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const context);
 
-  // Set the memory address for the tensors which use the somas.
-  void SetSomasMemory(OpContext<DeviceTensor> *const context) const;
   void *GetSomasDevicePtr(size_t offset) const;
 
   // The real input number of kernel launch.
@@ -176,14 +242,19 @@ class KernelActor : public DebugAwareActor {
   // Whether skip the kernel launch.
   bool is_launch_skipped_;
 
+  // Recoreded mem info.
+  KernelLaunchAddr mem_info_;
+
   // The ignore input addresses when the kernel launch.
   std::vector<size_t> launch_ignored_inputs_;
 
   // Whether the inputs need continuous memory, used to check the inputs legitimacy.
   bool inputs_continuous_memory_;
 
-  // The information used for integration of dynamic and static memory.
-  SomasInfo *somas_info_;
+  CallbackCounterPtr callback_counter_;
+
+  // The stream resource of the KernelActor to launch kernel.
+  void *stream_{nullptr};
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

@@ -1,0 +1,34 @@
+#operator fft_with_size
+fft_with_size:
+  args:
+    x:
+      dtype: tensor
+    signal_ndim:
+      dtype: int
+      prim_init: True
+    inverse:
+      dtype: bool
+      prim_init: True
+    real:
+      dtype: bool
+      prim_init: True
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: "'backward'"
+      prim_init: True
+    onesided:
+      dtype: bool
+      default: True
+      prim_init: True
+    signal_sizes:
+      dtype: tuple[int]
+      default: ()
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: FFTWithSize
+  function:
+    disable: True

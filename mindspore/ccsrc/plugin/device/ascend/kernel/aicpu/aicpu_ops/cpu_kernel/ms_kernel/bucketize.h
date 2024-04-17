@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_BUCKETIZE_H_
 #define AICPU_KERNELS_NORMALIZED_BUCKETIZE_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class BucketizeCpuKernel : public CpuKernel {
@@ -29,7 +29,7 @@ class BucketizeCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
   template <typename T>
-  static uint32_t BucketizeCompute(const CpuKernelContext &ctx);
+  static uint32_t BucketizeCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

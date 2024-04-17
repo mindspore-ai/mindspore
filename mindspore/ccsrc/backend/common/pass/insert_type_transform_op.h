@@ -138,7 +138,10 @@ class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {
   // Convert Tuple output to TupleUnfold. User must be TupleGetItem op and change it to RealTupleGetItem.
   AnfNodePtrList ProcessTupleToTupleUnfold(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                            const CNodePtr &node, bool *new_prim);
-
+  AnfNodePtrList ProcessTupleToTupleUnfoldForTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                                          const CNodePtr &node, bool *new_prim);
+  AnfNodePtrList ProcessTupleToTupleUnfoldForSkipOp(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                                    const CNodePtr &node, bool *new_prim);
   // Convert Tuple/Scalar output to Tensor. Simply insert TupleToTensor/ScalarToTensor op.
   AnfNodePtrList ProcessTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const CNodePtr &node,
                                       bool *new_prim);

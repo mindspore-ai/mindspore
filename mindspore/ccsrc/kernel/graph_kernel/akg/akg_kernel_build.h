@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_BUILD_H_
 
 #include <vector>
+#include <string>
 #include "nlohmann/json.hpp"
 #include "ir/anf.h"
 #include "kernel/kernel.h"
@@ -38,6 +39,7 @@ class BACKEND_EXPORT AkgKernelBuilder : public GraphKernelBuilder {
   bool ParallelBuild(const std::vector<JsonNodePair> &build_args) override;
 
  private:
+  virtual std::string GetPlatform() const { return "default"; }
   bool AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args);
 };
 }  // namespace kernel

@@ -65,14 +65,12 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod,
   Conv3dTransposeFwdGpuKernelMod() { ResetResource(); }
   ~Conv3dTransposeFwdGpuKernelMod() override { DestroyResource(); }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -154,7 +152,6 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod,
     workspace_size_ = 0;
     use_pad_ = true;
     greater_stride_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
@@ -240,8 +237,9 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod,
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   void Set5DDesc(const ShapeVector &input_shape, const ShapeVector &output_shape, const ShapeVector &filter_shape);
   void SetStrideAndDilation(std::vector<int64_t> stride_me, std::vector<int64_t> dilation_me);

@@ -36,20 +36,20 @@ abstract::TupleShapePtr SparseApplyAdadeltaInferShape(const PrimitivePtr &primit
     MS_EXCEPTION_IF_NULL(item);
   }
   // Indices and grad must be tensor
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex5);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex6);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex5, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex6, kObjectTypeTensorType);
   // Get input shape
-  auto var_shape_ptr = input_args[0]->BuildShape();
-  auto accum_shape_ptr = input_args[1]->BuildShape();
-  auto accum_updata_shape_ptr = input_args[2]->BuildShape();
+  auto var_shape_ptr = input_args[0]->GetShape();
+  auto accum_shape_ptr = input_args[1]->GetShape();
+  auto accum_updata_shape_ptr = input_args[2]->GetShape();
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape_ptr)[kShape];
   auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(accum_shape_ptr)[kShape];
   auto accum_updata_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(accum_updata_shape_ptr)[kShape];
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
-  auto rho_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
+  auto rho_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShape())[kShape];
   auto grad_shape_rank = SizeToLong(grad_shape.size());
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->BuildShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->GetShape())[kShape];
   // Args lr rho must be scalar
   (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, 0, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rho_shape size", SizeToLong(rho_shape.size()), kEqual, 0, prim_name);
@@ -81,13 +81,13 @@ TuplePtr SparseApplyAdadeltaInferType(const PrimitivePtr &prim, const std::vecto
     MS_EXCEPTION_IF_NULL(item);
   }
   // Get all inputs's type
-  auto var_type = input_args[0]->BuildType();
-  auto accum_type = input_args[1]->BuildType();
-  auto accum_updata_type = input_args[2]->BuildType();
-  auto lr_type = input_args[3]->BuildType();
-  auto rho_type = input_args[4]->BuildType();
-  auto grad_type = input_args[5]->BuildType();
-  auto indices_type = input_args[6]->BuildType();
+  auto var_type = input_args[0]->GetType();
+  auto accum_type = input_args[1]->GetType();
+  auto accum_updata_type = input_args[2]->GetType();
+  auto lr_type = input_args[3]->GetType();
+  auto rho_type = input_args[4]->GetType();
+  auto grad_type = input_args[5]->GetType();
+  auto indices_type = input_args[6]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // Args accum accum_updata and grad must have the same type as var
   std::map<std::string, TypePtr> args;

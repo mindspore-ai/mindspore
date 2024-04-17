@@ -1,0 +1,20 @@
+#operator resize_linear_1d
+resize_linear_1d:
+  args:
+    x:
+      dtype: tensor
+    size:
+      dtype: tuple[int]
+      type_cast: list[int], tensor
+    coordinate_transformation_mode:
+      dtype: int
+      default: "'align_corners'"
+      prim_init: True
+      arg_handler: str_to_enum
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ResizeLinear1D
+  function:
+    disable: True

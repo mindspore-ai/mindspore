@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,22 +60,19 @@ namespace dataset {
     break;                                                                                      \
   }
 
-Tensor::Tensor(const TensorShape &shape, const DataType &type) : shape_(shape), type_(type), data_(nullptr) {
-  // grab the mem pool from global context and create the allocator for char data area
-  std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
-  data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
-}
+Tensor::Tensor(TensorShape shape, DataType type) : shape_(std::move(shape)), type_(type), data_(nullptr) {}
 
 Tensor::Tensor(Tensor &&other) noexcept
-    : shape_(other.shape()),
-      type_(other.type()),
-      data_(other.GetMutableBuffer()),
-      data_end_(other.data_end_),
-      data_allocator_(std::move(other.data_allocator_)) {
+    : shape_(std::move(other.shape_)), type_(other.type_), data_(other.data_), data_end_(other.data_end_) {
 #ifdef ENABLE_PYTHON
   if (type_.value() == DataType::DE_PYTHON) {
     py::gil_scoped_acquire gil_acquire;
-    python_dict_ = (other.python_dict_);
+    python_dict_ = std::move(other.python_dict_);
+  }
+  // If other.python_array_ has value, assign it to this->python_array_
+  if (static_cast<bool>(other.python_array_)) {
+    py::gil_scoped_acquire gil_acquire;
+    python_array_ = (other.python_array_);
   }
 #endif
   other.Invalidate();
@@ -83,16 +80,20 @@ Tensor::Tensor(Tensor &&other) noexcept
 
 Tensor &Tensor::operator=(Tensor &&other) noexcept {
   if (&other != this) {
-    shape_ = other.shape();
-    type_ = other.type();
-    data_ = other.GetMutableBuffer();
+    shape_ = std::move(other.shape_);
+    type_ = other.type_;
+    data_ = other.data_;
     data_end_ = other.data_end_;
-    data_allocator_ = std::move(other.data_allocator_);
-    yuv_shape_ = other.yuv_shape_;
+    yuv_shape_ = std::move(other.yuv_shape_);
 #ifdef ENABLE_PYTHON
     if (type_.value() == DataType::DE_PYTHON) {
       py::gil_scoped_acquire gil_acquire;
-      python_dict_ = (other.python_dict_);
+      python_dict_ = std::move(other.python_dict_);
+    }
+    // If other.python_array_ has value, assign it to this->python_array_
+    if (static_cast<bool>(other.python_array_)) {
+      py::gil_scoped_acquire gil_acquire;
+      python_array_ = (other.python_array_);
     }
 #endif
     other.Invalidate();
@@ -101,11 +102,10 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept {
 }
 
 Status Tensor::CreateEmpty(const TensorShape &shape, const DataType &type, TensorPtr *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   CHECK_FAIL_RETURN_UNEXPECTED(shape.known(), "Failed to create empty tensor, tensor shape is unknown.");
   CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN, "Failed to create empty tensor, data type is unknown.");
-  RETURN_UNEXPECTED_IF_NULL(out);
-  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-  *out = std::allocate_shared<Tensor>(*alloc, shape, type);
+  *out = std::make_shared<Tensor>(shape, type);
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Failed to create empty tensor, allocate memory failed.");
   // if it's a string tensor and it has no elements, Just initialize the shape and type.
   if (!type.IsNumeric()) {
@@ -154,8 +154,7 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
 Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, const uchar *src, const dsize_t &length,
                                 TensorPtr *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-  *out = std::allocate_shared<Tensor>(*alloc, shape, type);
+  *out = std::make_shared<Tensor>(shape, type);
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
   if (type.IsNumeric()) {
     dsize_t calculated_length = (*out)->SizeInBytes();
@@ -244,12 +243,64 @@ Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *
   return Status::OK();
 }
 
+Status Tensor::CreateFromNpArrayNoCopy(py::array arr, std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  DataType type = DataType::FromNpArray(arr);
+  CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN,
+                               "Failed to create tensor from numpy array, data type is unknown.");
+
+  if (type.IsString()) {
+    return CreateFromNpString(arr, out);
+  }
+
+  std::vector<dsize_t> shape;
+  std::vector<dsize_t> strides;
+  // check if strides are contiguous
+  bool is_strided = false;
+  dsize_t count = arr.size();
+  for (dsize_t i = 0; i < arr.ndim(); i++) {
+    shape.push_back(static_cast<dsize_t>(arr.shape()[i]));
+    strides.push_back(static_cast<dsize_t>(arr.strides()[i]));
+    // in case of empty array num_items=0
+    if (count != 0 && shape.size() > i && shape[i] != 0) {
+      count /= shape[i];
+      if (strides[i] != arr.itemsize() * count) {
+        is_strided = true;
+      }
+    }
+  }
+
+  if (is_strided) {
+    unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(shape), type, out));
+    RETURN_IF_NOT_OK(CopyStridedArray((*out)->data_, data, shape, strides, (*out)->type_.SizeInBytes()));
+  } else {
+#ifdef ENABLE_PYTHON
+    // here we create empty tensor and use this->python_array_ point to data which is np.ndarray
+    *out = std::make_shared<Tensor>(TensorShape(shape), type);
+    {
+      py::gil_scoped_acquire gil_acquire;
+      (*out)->python_array_ = arr;
+    }
+    unsigned char *data = static_cast<unsigned char *>((*out)->python_array_.request().ptr);
+    int64_t byte_size = (*out)->SizeInBytes();
+    if (byte_size == 0) {
+      return Status::OK();
+    }
+    (*out)->data_ = data;
+    (*out)->data_end_ = data + byte_size;
+#else
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape(shape), type, data, out));
+#endif
+  }
+  return Status::OK();
+}
+
 Status Tensor::CreateFromPythonObject(py::object obj, std::shared_ptr<Tensor> *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<dsize_t> shape{};
   DataType type = DataType(DataType::DE_PYTHON);
-  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-  *out = std::allocate_shared<Tensor>(*alloc, TensorShape({0}), type);
+  *out = std::make_shared<Tensor>(TensorShape({0}), type);
   {
     py::gil_scoped_acquire gil_acquire;
     (*out)->python_dict_ = obj;
@@ -263,16 +314,15 @@ Status Tensor::CreateFromPythonObject(py::object obj, std::shared_ptr<Tensor> *o
 #ifndef ENABLE_ANDROID
 Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const TensorShape &shape, TensorPtr *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-  *out = std::allocate_shared<Tensor>(*alloc, TensorShape({static_cast<dsize_t>(bytes_list.value_size())}),
-                                      DataType(DataType::DE_STRING));
+  *out = std::make_shared<Tensor>(TensorShape({static_cast<dsize_t>(bytes_list.value_size())}),
+                                  DataType(DataType::DE_STRING));
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
   // total bytes needed = offset array + strings
   // offset array needs to store one offset var per element + 1 extra to get the length of the last string.
   // strings will be null-terminated --> need 1 extra byte per element
   dsize_t num_bytes = (kOffsetSize) * (*out)->shape_.NumOfElements() + kOffsetSize + bytes_list.ByteSizeLong();
 
-  (*out)->data_ = (*out)->data_allocator_->allocate(num_bytes);
+  (*out)->data_ = GetAllocator()->allocate(num_bytes);
 
   auto offset_arr = reinterpret_cast<offset_t *>((*out)->data_);
   uchar *buf = (*out)->GetStringsBuffer();
@@ -408,29 +458,42 @@ Status Tensor::CopyStridedArray(unsigned char *dst, unsigned char *src, std::vec
 // Name: Destructor
 // Description: Destructor
 Tensor::~Tensor() {
-  if (data_ != nullptr) {
-    if (data_allocator_ != nullptr) {
-      data_allocator_->deallocate(data_);
-      data_ = nullptr;
-      data_end_ = nullptr;
-    } else {
-      // If we didn't have an allocator, but data_ is not null then it must
-      // be a stand-alone tensor that used malloc directly.
-      free(data_);
-      data_ = nullptr;
-      data_end_ = nullptr;
+#ifdef ENABLE_PYTHON
+  if (!static_cast<bool>(python_array_)) {  // the data is not np.ndarray from python layer
+#endif
+    if (data_ != nullptr) {
+      if (GetAllocator() != nullptr) {
+        GetAllocator()->deallocate(data_);
+        data_ = nullptr;
+        data_end_ = nullptr;
+      } else {
+        // If we didn't have an allocator, but data_ is not null then it must
+        // be a stand-alone tensor that used malloc directly.
+        free(data_);
+        data_ = nullptr;
+        data_end_ = nullptr;
+      }
     }
+#ifdef ENABLE_PYTHON
+  } else {
+    // release the data from python layer
+    py::gil_scoped_acquire gil_acquire;
+    python_array_ = py::none();  // let borrowed python ndarray ref - 1
   }
+#endif
 #ifdef ENABLE_PYTHON
   try {
+    // The default destructor will not acquire the Python GIL when it destructs
+    // the class members, so we need to handle py::object manually.
     if (Py_IsInitialized() > 0) {
-      if (static_cast<bool>(python_dict_)) {  // if it contains data
+      if (static_cast<bool>(python_dict_)) {
         // Acquire Python GIL
         py::gil_scoped_acquire gil_acquire;
-        if (python_dict_.ref_count() == 1) {  // if we aren't referencing it anywhere else
-          (void)python_dict_.dec_ref();       // manually set the ref count to zero (to be garbage collected by Python)
-          python_dict_ = py::none();          // wrapper now pointing to a meaningful thing (added to avoid a segfault)
-        }
+        // We need to reduce the reference count of the py::object to which python_dict_
+        // refers by 1, then break that reference relationship, otherwise the default
+        // destructor will destruct that py::object again while recycling class member
+        // python_dict_. A simple assignment to None satisfies all of the above.
+        python_dict_ = py::none();
       }
     }
   } catch (const py::error_already_set &e) {
@@ -555,9 +618,9 @@ void Tensor::PrintData(std::ostream &out) const {
 }
 
 Status Tensor::AllocateBuffer(const dsize_t &length) {
-  RETURN_UNEXPECTED_IF_NULL(data_allocator_);
+  RETURN_UNEXPECTED_IF_NULL(GetAllocator());
   if (data_ == nullptr) {
-    data_ = data_allocator_->allocate(length);
+    data_ = GetAllocator()->allocate(length);
     CHECK_FAIL_RETURN_UNEXPECTED(data_ != nullptr, "Failed to allocate memory for tensor.");
     data_end_ = data_ + length;
   }
@@ -579,11 +642,14 @@ void Tensor::Invalidate() {
   type_ = DataType(DataType::DE_UNKNOWN);
   data_ = nullptr;
   data_end_ = nullptr;
-  data_allocator_ = nullptr;
 #ifdef ENABLE_PYTHON
   if (type_.value() == DataType::DE_PYTHON) {
     py::gil_scoped_acquire gil_acquire;
     python_dict_ = py::none();
+  }
+  if (static_cast<bool>(python_array_)) {
+    py::gil_scoped_acquire gil_acquire;
+    python_array_ = py::none();  // let borrowed python ndarray ref - 1
   }
 #endif
 }

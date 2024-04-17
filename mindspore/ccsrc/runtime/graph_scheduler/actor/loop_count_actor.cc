@@ -55,6 +55,12 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   current_count_++;
   MS_LOG(INFO) << "Loop count actor(" << GetAID().Name() << ") running, loop count: " << loop_count_
                << ", current count: " << current_count_ << ", total running count: " << total_running_count_;
+  auto counter = callback_counter();
+  MS_EXCEPTION_IF_NULL(counter);
+  counter->Wait();
+  if (!WaitRuntimePipelineFinish(context)) {
+    MS_LOG(INFO) << "Run graph failed and please check error log.";
+  }
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr) {
@@ -86,16 +92,11 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
 }
 
 void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugOnStepEnd, context, &GetAID());
+  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugOnStepEnd, context, &GetAID(), total_running_count_);
   OnDebugFinish(context);
 }
 
 void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  // Only the multi thread execution can profile the ProfilerEvent::kSendOutput.
-  if (ActorDispatcher::is_multi_thread_execution()) {
-    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
-  }
-
   // Send recorder info.
   if (recorder_aid_ != nullptr) {
     ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordOnStepEnd, context);

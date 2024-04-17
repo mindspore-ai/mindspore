@@ -29,23 +29,21 @@ const size_t DIM_1 = 1;
 const size_t DIM_2 = 2;
 const size_t DIM_3 = 3;
 
-bool SpaceToDepthGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool SpaceToDepthGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  auto attr_pointer = std::dynamic_pointer_cast<ops::SpaceToDepth>(base_operator);
-  block_size_ = attr_pointer->get_block_size();
+
+  block_size_ = GetValue<int64_t>(primitive_->GetAttr("block_size"));
   if (block_size_ < MIN_BLOCK_SIZE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'block_size' cannot be less than 2, but got "
                       << block_size_;
   }
   return true;
 }
-int SpaceToDepthGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SpaceToDepthGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   // check input num and output num
   size_t input_num = inputs.size();
   if (input_num != 1) {
@@ -56,7 +54,7 @@ int SpaceToDepthGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
   }
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // check input_shape
@@ -78,9 +76,9 @@ int SpaceToDepthGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool SpaceToDepthGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool SpaceToDepthGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   // get device buffer ptr
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);

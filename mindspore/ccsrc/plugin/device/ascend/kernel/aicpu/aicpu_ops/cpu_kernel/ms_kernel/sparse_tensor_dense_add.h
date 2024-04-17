@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_DENSE_ADD_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_DENSE_ADD_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class SparseTensorDenseAddCpuKernel : public CpuKernel {
@@ -30,10 +30,10 @@ class SparseTensorDenseAddCpuKernel : public CpuKernel {
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
-  uint32_t ValidateInputs(const CpuKernelContext &ctx);
+  uint32_t ValidateInputs(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

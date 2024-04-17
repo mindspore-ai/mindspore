@@ -34,14 +34,12 @@ class BincountCpuKernelMod : public NativeCpuKernelMod {
   BincountCpuKernelMod() = default;
   ~BincountCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -54,9 +52,10 @@ class BincountCpuKernelMod : public NativeCpuKernelMod {
   TypeId dt_arr_{kTypeUnknown};
   TypeId dt_weights_{kTypeUnknown};
   void SetMap();
-  std::map<int, std::map<int, std::function<void(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                                 const std::vector<AddressPtr> &, std::vector<int64_t> &, int32_t,
-                                                 const std::vector<int64_t> &, const std::vector<int64_t> &)>>>
+  std::map<int,
+           std::map<int, std::function<void(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &, std::vector<int64_t> &, int32_t,
+                                            const std::vector<int64_t> &, const std::vector<int64_t> &)>>>
     calls_;
 };
 }  // namespace kernel

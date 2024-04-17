@@ -36,7 +36,7 @@ AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,
 
 void CheckTensorCondValid(const AbstractBasePtr &cond) {
   // Tensor condition must be one element or dynamic shape.
-  auto base_shape = cond->BuildShape();
+  auto base_shape = cond->GetShape();
   MS_EXCEPTION_IF_NULL(base_shape);
   ShapeVector cond_shape = base_shape->cast<ShapePtr>()->shape();
   if (cond_shape.empty()) {
@@ -116,14 +116,6 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
                              << branches.size() << " branches.";
   }
 
-  for (size_t i = 0; i < branches.size(); i++) {
-    MS_EXCEPTION_IF_NULL(branches[i]);
-    if (!branches[i]->isa<FuncGraphAbstractClosure>() && !branches[i]->isa<PartialAbstractClosure>()) {
-      MS_EXCEPTION(ValueError) << op_name << " requires that the 2th arg be tuple of functions, but got "
-                               << branches[i]->ToString() << " as the " << i << "th element.";
-    }
-  }
-
   auto b = branches[0];
   SetVariableFlag(b);
   // Return AbstractFuncUnion, otherwise the switch_layer will be replaced by branches[0]
@@ -139,29 +131,40 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
   return b;
 }
 
-bool SupportedIsTargetValue(const ValuePtr t) {
-  std::vector<ValuePtr> list = {kNone, MakeValue(false), MakeValue(true)};
-  return std::any_of(list.begin(), list.end(), [&t](const ValuePtr &v) { return *v == *t; });
+bool SupportedIsTargetValue(const TypePtr t) {
+  if (t->isa<TypeNone>() || t->isa<Int>() || t->isa<Bool>() || t->isa<String>() || t->isa<TypeType>()) {
+    return true;
+  }
+  return false;
 }
 
-bool CheckIfDataIsTarget(const std::string &op_name, const AbstractBasePtr &data_abs,
-                         const AbstractBasePtr &target_abs) {
+std::pair<bool, bool> CheckIfDataIsTarget(const std::string &op_name, const AbstractBasePtr &data_abs,
+                                          const AbstractBasePtr &target_abs) {
   MS_EXCEPTION_IF_NULL(target_abs);
   // Check if data and target are both None.
   if (data_abs->isa<AbstractNone>() || target_abs->isa<AbstractNone>()) {
-    return data_abs->isa<AbstractNone>() && target_abs->isa<AbstractNone>();
+    return {data_abs->isa<AbstractNone>() && target_abs->isa<AbstractNone>(), false};
   }
   const auto &target_value = target_abs->BuildValue();
   const auto &target_type = target_abs->BuildType();
   MS_EXCEPTION_IF_NULL(target_value);
   MS_EXCEPTION_IF_NULL(target_type);
-  if (!SupportedIsTargetValue(target_value) && !target_type->isa<TypeType>()) {
-    MS_LOG(EXCEPTION) << "For syntax like 'a " << op_name << " b', b supports True, False, None and Type, but got "
-                      << target_value->ToString();
-  }
   const auto &data_value = data_abs->BuildValue();
   MS_EXCEPTION_IF_NULL(data_value);
-  return *data_value == *target_value;
+  if (data_value != kValueAny && target_value != kValueAny && !SupportedIsTargetValue(target_type)) {
+    MS_LOG(EXCEPTION) << "For syntax like 'a " << op_name << " b', b supports Int, Bool, String, None and Type, "
+                      << "but got " << target_value->ToString();
+  }
+  const auto &data_type = data_abs->BuildType();
+  MS_EXCEPTION_IF_NULL(data_type);
+  if (*data_type != *target_type) {
+    return {false, false};
+  }
+
+  if (data_value == kValueAny || target_value == kValueAny) {
+    return {false, true};
+  }
+  return {*data_value == *target_value, false};
 }
 
 AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -173,8 +176,11 @@ AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &prim
   CheckArgsSize(op_name, args_abs_list, kInputsNum);
   constexpr size_t data_index = 0;
   constexpr size_t target_index = 1;
-  bool res = CheckIfDataIsTarget("is", args_abs_list[data_index], args_abs_list[target_index]);
-  return std::make_shared<AbstractScalar>(res);
+  auto res = CheckIfDataIsTarget("is", args_abs_list[data_index], args_abs_list[target_index]);
+  if (res.second) {
+    return std::make_shared<AbstractScalar>(kValueAny, kBool);
+  }
+  return std::make_shared<AbstractScalar>(res.first);
 }
 
 AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -186,8 +192,11 @@ AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &pr
   CheckArgsSize(op_name, args_abs_list, kInputsNum);
   constexpr size_t data_index = 0;
   constexpr size_t target_index = 1;
-  bool res = CheckIfDataIsTarget("is not", args_abs_list[data_index], args_abs_list[target_index]);
-  return std::make_shared<AbstractScalar>(!res);
+  auto res = CheckIfDataIsTarget("is not", args_abs_list[data_index], args_abs_list[target_index]);
+  if (res.second) {
+    return std::make_shared<AbstractScalar>(kValueAny, kBool);
+  }
+  return std::make_shared<AbstractScalar>(!res.first);
 }
 
 bool IsInDict(const PrimitivePtr &primitive, const AbstractBasePtrList &args_abs_list) {
@@ -228,7 +237,7 @@ AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePt
     MS_LOG(EXCEPTION) << "IsConstant requires args input size = 1";
   }
   ValuePtr v = args_abs_list[0]->BuildValue();
-  return std::make_shared<AbstractScalar>(!v->isa<ValueAny>());
+  return std::make_shared<AbstractScalar>(!v->ContainsValueAny());
 }
 }  // namespace abstract
 }  // namespace mindspore

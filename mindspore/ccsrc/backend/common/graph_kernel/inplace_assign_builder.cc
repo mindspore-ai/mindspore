@@ -104,7 +104,7 @@ void InplaceAssignBuilder::CreateAssignNodeAndCorrectReturn(
   if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
     auto output_cnode = output->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(output_cnode);
-    for (size_t i = 1; i < output_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < output_cnode->size(); ++i) {
       std::map<size_t, size_t>::const_iterator cur_input = target_indices.find(i);
       if (cur_input == target_indices.end()) {
         continue;
@@ -132,11 +132,11 @@ CNodePtr InplaceAssignBuilder::CreateCleanCompositeNode(const InplaceAssignerInf
   auto dtype = (dst_type == kNumberTypeFloat16) ? kNumberTypeFloat32 : dst_type;
   ValueNodePtr value_node;
   if (dtype == kNumberTypeFloat32) {
-    value_node =
-      CreateScalarTensorValueNode<float>({format, {1}, TypeIdToType(dtype)}, static_cast<float>(0), sizeof(float));
+    float val = 0;
+    value_node = CreateTensorValueNode({format, {1}, TypeIdToType(dtype)}, &val, sizeof(float));
   } else {
-    value_node =
-      CreateScalarTensorValueNode<double>({format, {1}, TypeIdToType(dtype)}, static_cast<double>(0), sizeof(double));
+    double val = 0;
+    value_node = CreateTensorValueNode({format, {1}, TypeIdToType(dtype)}, &val, sizeof(double));
   }
 
   // Create composite op's sub-graph.
@@ -154,16 +154,19 @@ CNodePtr InplaceAssignBuilder::CreateCleanCompositeNode(const InplaceAssignerInf
 
   // Create broadcast basic op.
   auto dst_shape_vec = GetShape(op_info.op_node);
-  AnfNodePtrList clean_inputs = {NewValueNode(prim::kPrimBroadcastTo), broadcast_input_node};
+  auto device_shape = GetDeviceShape(op_info.op_node);
+  auto shape_node = CreateTensorValueNode({kOpFormat_DEFAULT, {SizeToLong(device_shape.size())}, kInt64},
+                                          device_shape.data(), device_shape.size() * sizeof(int64_t));
+
+  AnfNodePtrList clean_inputs = {NewValueNode(prim::kPrimBroadcastTo), broadcast_input_node, shape_node};
   auto broadcast_to_node_inner =
     CreateCNode(clean_inputs, new_sub_graph, {format, dst_shape_vec, GetType(op_info.op_node)});
-  SetNodeAttrSafely("shape", MakeValue(GetDeviceShape(op_info.op_node)), broadcast_to_node_inner);
 
   // Makeup sub-graph.
   new_sub_graph->set_output(broadcast_to_node_inner);
   auto broadcast_to_composite_node = main_graph->NewCNode({NewValueNode(new_sub_graph)});
   broadcast_to_composite_node->set_abstract(broadcast_to_node_inner->abstract());
-  SetNewKernelInfo(broadcast_to_composite_node, new_sub_graph, {}, {broadcast_to_node_inner});
+  Callback::Instance()->SetGraphKernelNodeKernelInfo(broadcast_to_composite_node);
   auto graph_attr =
     GkUtils::ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "inplace_assign_builder");
   new_sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(graph_attr));

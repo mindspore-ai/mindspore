@@ -311,7 +311,7 @@ int ConstFoldProcessor::DoConstantFold(const FuncGraphPtr &func_graph, const CNo
   delete (kernel_exec);
   kernel_exec = nullptr;
   if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "run kernel failed, name: " << cnode->fullname_with_scope();
+    MS_LOG(WARNING) << "run kernel failed, name: " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }
   // replace cnode by new param

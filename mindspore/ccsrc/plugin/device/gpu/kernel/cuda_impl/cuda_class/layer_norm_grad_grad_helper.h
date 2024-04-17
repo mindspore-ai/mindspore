@@ -26,7 +26,6 @@
 
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "mindspore/core/ops/grad/layer_norm_grad_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/helper_base.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/layer_norm_grad_grad_impl.cuh"
 
@@ -82,14 +81,6 @@ class LayerNormGradGradHelperGpuKernel : public GpuKernelHelperBase {
     }
 
     input_size_ = input_row_ * input_col_ * sizeof(T);
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(input_row_ * sizeof(float));
-    input_size_list_.push_back(input_row_ * sizeof(float));
-    input_size_list_.push_back(param_dim_ * sizeof(T));
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(param_dim_ * sizeof(T));
-    input_size_list_.push_back(param_dim_ * sizeof(T));
 
     output_size_list_.push_back(input_size_);
     output_size_list_.push_back(input_size_);
@@ -208,7 +199,6 @@ class LayerNormGradGradHelperGpuKernel : public GpuKernelHelperBase {
     is_null_input_ = false;
     input_shape_.clear();
     output_shape_.clear();
-    input_size_list_.clear();
     output_size_list_.clear();
     work_size_list_.clear();
   }

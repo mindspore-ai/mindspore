@@ -1,0 +1,10 @@
+#operator bool_not
+bool_not:
+  args:
+    x:
+      dtype: number
+  returns:
+    output:
+      dtype: number
+  function:
+    disable: True

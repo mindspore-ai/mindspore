@@ -47,7 +47,8 @@ void RegParamInfo(const py::module *m) {
         return py::make_tuple(p.name(), p.requires_grad(), p.layerwise_parallel());
       },
       [](const py::tuple &t) {  // __setstate__
-        if (t.size() != 6) {
+        constexpr size_t expect_size = 6;
+        if (t.size() != expect_size) {
           std::runtime_error("Invalid state for ParamInfo!");
         }
         ParamInfoPtr p = std::make_shared<ParamInfo>();

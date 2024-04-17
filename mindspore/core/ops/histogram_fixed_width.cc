@@ -47,7 +47,7 @@ abstract::ShapePtr HistogramFixedWidthInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
 
-  auto range_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto range_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("rank of 'range'", range_shape.size(), kEqual, 1, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("first rank of 'range'", range_shape[0], kEqual, 2, primitive->name());
 
@@ -62,8 +62,8 @@ TypePtr HistogramFixedWidthInferType(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);
   const std::set<TypePtr> valid_types = {kInt32, kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("range", input_args[1]->BuildType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("range", input_args[1]->GetType(), valid_types, prim_name);
   TypePtr y_dtype = kInt32;
   return y_dtype;
 }

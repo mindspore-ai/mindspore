@@ -31,6 +31,7 @@
 #include "ir/dtype.h"
 #include "ir/dtype/number.h"
 #include "utils/hashing.h"
+#include "base/bfloat16.h"
 
 using std::fabs;
 
@@ -556,6 +557,46 @@ class MS_CORE_API FP64Imm final : public FloatImm {
 using FP64ImmPtr = std::shared_ptr<FP64Imm>;
 IMM_TRAITS(FP64ImmPtr, double)
 
+/// \brief BF16Imm defines interface for bfloat16 data.
+class MS_CORE_API BF16Imm final : public FloatImm {
+ public:
+  /// \brief The default constructor for BF16Imm.
+  BF16Imm() : FloatImm(kBFloat16), v_(0.0) {}
+  /// \brief The constructor for BF16Imm.
+  ///
+  /// \param[in] v The value of BF16Imm.
+  explicit BF16Imm(bfloat16 v) : FloatImm(kBFloat16), v_(v) {
+    hash_ = hash_combine({tid(), std::hash<bfloat16>{}(v_)});
+  }
+  /// \brief The destructor of BF16Imm.
+  ~BF16Imm() override = default;
+  MS_DECLARE_PARENT(BF16Imm, FloatImm)
+  std::size_t hash() const override { return hash_; }
+  bool IsZero() override { return v_ == BFloat16(0.0); }
+  bool IsOne() override { return v_ == BFloat16(1.0); }
+  /// \brief Get the value of BF16Imm.
+  ///
+  /// \return Return the value of BF16Imm.
+  bfloat16 value() const { return v_; }
+  bool operator==(const Value &other) const override;
+  /// \brief Compare two BF16Imm objects is equal.
+  ///
+  /// \param[in] other The other BF16Imm to be compared with.
+  /// \return Return true if other's value and the value of current object are the same,else return false.
+  bool operator==(const BF16Imm &other) const;
+  std::string ToString() const override { return scalar_float_to_string(v_); }
+
+  std::string DumpText() const override {
+    std::ostringstream oss;
+    oss << "BF16(" << v_ << ")";
+    return oss.str();
+  }
+
+ private:
+  bfloat16 v_;
+};
+using BF16ImmPtr = std::shared_ptr<BF16Imm>;
+IMM_TRAITS(BF16ImmPtr, bfloat16)
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_SCALAR_H_

@@ -230,7 +230,6 @@ def test_if_after_for_in_if_break():
 
 @case_register.level1
 @case_register.target_gpu
-@case_register.target_ascend
 def test_if_after_for_in_for_break():
     class IfAfterForInForNet(nn.Cell):
         def __init__(self):

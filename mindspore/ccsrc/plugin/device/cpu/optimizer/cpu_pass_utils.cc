@@ -41,6 +41,11 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   MS_EXCEPTION_IF_NULL(origin_shape);
   std::string input_format = format;
   std::string output_format = format;
+
+  if (origin_shape->isa<abstract::SequenceShape>()) {
+    MS_LOG(EXCEPTION) << "The Cast op doesn't support Tuple/List input, the input node: " << input->DebugString();
+  }
+
   CNodePtr cast = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), input});
   MS_EXCEPTION_IF_NULL(cast);
   // set kernel build info
@@ -49,6 +54,8 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   builder.SetOutputsFormat({output_format});
   builder.SetInputsDeviceType({input_type});
   builder.SetOutputsDeviceType({output_type});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   if (cast->kernel_info() == nullptr) {
     auto kernel_info = std::make_shared<device::KernelInfo>();
     cast->set_kernel_info(kernel_info);
@@ -71,14 +78,17 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   kernel::SetCpuRefMapToKernelInfo(cast, kernel_attrs);
   auto thread_pool = kernel::GetActorMgrInnerThreadPool();
   cpu_kernel->SetThreadPool(thread_pool);
-  auto args = kernel::AbstractArgsFromCNode(cast);
-  auto op = kernel::CreateOperatorByCNode(cast);
-  auto ret = cpu_kernel->Init_(op, args.inputs, args.outputs);
+
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(cast);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(cast);
+  auto ret = cpu_kernel->Init(common::AnfAlgo::GetCNodePrimitive(cast), input_kernel_tensors, output_kernel_tensors);
   if (!ret) {
     MS_LOG(EXCEPTION) << trace::DumpSourceLines(cast);
   }
-  if (cpu_kernel->Resize(args.inputs, args.outputs, kernel::GetKernelDepends(cast)) == kernel::KRET_RESIZE_FAILED) {
-    MS_LOG(EXCEPTION) << "CPU kernel op [" << cast->fullname_with_scope() << "] Resize failed.";
+  if (kernel::CheckResizeCondition(cast)) {
+    if (cpu_kernel->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
+      MS_LOG(EXCEPTION) << "CPU kernel op [" << cast->fullname_with_scope() << "] Resize failed.";
+    }
   }
   AnfAlgo::SetKernelMod(cpu_kernel, cast.get());
   return cast;

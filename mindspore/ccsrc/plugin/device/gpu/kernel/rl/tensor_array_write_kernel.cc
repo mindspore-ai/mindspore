@@ -27,26 +27,23 @@ using mindspore::device::gpu::GPUTensorArray;
 using mindspore::device::gpu::GPUTensorArrayPtr;
 TensorArrayWriteKernelMod::TensorArrayWriteKernelMod() : value_size_(0) {}
 
-bool TensorArrayWriteKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kSecondInputIndex);
-  shapes_ = AnfAlgo::GetInputDeviceShape(kernel_node, kSecondInputIndex);
-  value_size_ = GetTypeByte(TypeIdToType(type_)) * SizeOf(shapes_);
-
-  InitSizeLists();
+bool TensorArrayWriteKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-void TensorArrayWriteKernelMod::InitSizeLists() {
-  input_size_list_.push_back(sizeof(int64_t));
-  input_size_list_.push_back(sizeof(int64_t));
-  input_size_list_.push_back(value_size_);
+int TensorArrayWriteKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  type_ = inputs[kSecondInputIndex]->dtype_id();
+  shapes_ = inputs[kSecondInputIndex]->GetDeviceShapeVector();
+  value_size_ = GetTypeByte(TypeIdToType(type_)) * SizeOf(shapes_);
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-bool TensorArrayWriteKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &, void *stream) {
+bool TensorArrayWriteKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &, void *stream) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto index = GetDeviceAddress<int64_t>(inputs, 1);
   auto value = GetDeviceAddress<unsigned char>(inputs, kSecondInputIndex);
@@ -56,12 +53,11 @@ bool TensorArrayWriteKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   MS_ERROR_IF_NULL(cuda_stream);
   int64_t index_host = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
-                             "Get indexd failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream), "Get indexd failed");
   int64_t handle = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(
-    kernel_node_, cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
     "For 'TensorArrayWrite', Get handle to host failed");
   if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "cuda Stream Sync Failed");
@@ -83,9 +79,8 @@ bool TensorArrayWriteKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
   }
   MS_EXCEPTION_IF_NULL(dev_addr->addr);
   dev_addr->size = value_size_;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(dev_addr->addr, value, value_size_, cudaMemcpyDeviceToDevice, cuda_stream),
-                             "Copy value failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(dev_addr->addr, value, value_size_, cudaMemcpyDeviceToDevice, cuda_stream), "Copy value failed");
 
   if (tensors_->Write(index_host, dev_addr)) {
     MS_LOG(DEBUG) << "Write to tensorarry succeed, index " << index_host;

@@ -13,9 +13,8 @@
 # limitations under the License.
 # ============================================================================
 from mindspore.nn import Cell, Conv2d
-from mindspore.rewrite import SymbolTree
+from mindspore.rewrite import SymbolTree, ScopedValue
 from mindspore.ops import operations as P
-from .utils import get_node_by_index
 
 
 class SubNet(Cell):
@@ -57,9 +56,91 @@ def test_multi_targets():
     """
     test_cls = NetMultiTargets()
     stree = SymbolTree.create(test_cls)
-    node = get_node_by_index(stree, 2)
+    node = stree.get_node('conv1')
     assert node is not None
     targets = node.get_targets()
     assert targets[0].value == 'c1'
     assert targets[1].value == 'c2'
     assert targets[2].value == 'c3'
+
+class NetMultiTargetsWithAttribute(Cell):
+    """Test cls for multiple targets."""
+    def __init__(self):
+        """Init."""
+        super().__init__()
+        self.conv1 = SubNet()
+        self.add = P.Add()
+        self.c1 = None
+        self.c2 = None
+        self.c3 = None
+
+    def construct(self, x):
+        """Construct."""
+        self.c1, self.c2, self.c3 = self.conv1(x)
+        x = self.add(self.c1, self.c2)
+        x = self.add(x, self.c3)
+        return x
+
+def test_multi_targets_with_attribute():
+    """
+    Feature: Test multi-targets.
+    Description: Test multi-targets with attribute.
+    Expectation: Success.
+    """
+    net = NetMultiTargetsWithAttribute()
+    stree = SymbolTree.create(net)
+    conv1_node = stree.get_node("conv1")
+    add = stree.get_node("add") # code: x = self.add(self.c1, self.c2)
+    add_1 = stree.get_node("add_1") # x = self.add(x, self.c3)
+    assert conv1_node.get_handler().get_target_users(0)[0] == (add.get_handler(), 0)
+    assert conv1_node.get_handler().get_target_users(1)[0] == (add.get_handler(), 1)
+    assert conv1_node.get_handler().get_target_users(2)[0] == (add_1.get_handler(), 1)
+    # modify order of targets
+    stree.get_handler().set_node_target(conv1_node.get_handler(), 0, ScopedValue.create_naming_value("c2", "self"))
+    stree.get_handler().set_node_target(conv1_node.get_handler(), 1, ScopedValue.create_naming_value("c3", "self"))
+    stree.get_handler().set_node_target(conv1_node.get_handler(), 2, ScopedValue.create_naming_value("c1", "self"))
+    assert conv1_node.get_handler().get_target_users(0)[0] == (add.get_handler(), 1)
+    assert conv1_node.get_handler().get_target_users(1)[0] == (add_1.get_handler(), 1)
+    assert conv1_node.get_handler().get_target_users(2)[0] == (add.get_handler(), 0)
+    codes = stree.get_code()
+    assert codes.count("(self.c2, self.c3, self.c1) = self.conv1(x)")
+
+class NetMultiTargetsWithContinuousAssign(Cell):
+    """Test cls for multiple targets."""
+    def __init__(self):
+        """Init."""
+        super().__init__()
+        self.conv1 = SubNet()
+        self.add = P.Add()
+        self.c1 = None
+        self.c2 = None
+        self.c3 = None
+
+    def construct(self, x):
+        """Construct."""
+        c1, c2, c3 = self.c1, self.c2, self.c3 = self.conv1(x)
+        x = self.add(c1, c2)
+        x = self.add(x, c3)
+        return x
+
+def test_multi_targets_with_continuous_assign():
+    """
+    Feature: Test multi-targets.
+    Description: Test multi-targets with continuous assign.
+    Expectation: Success.
+    """
+    net = NetMultiTargetsWithContinuousAssign()
+    stree = SymbolTree.create(net)
+    conv1_node = stree.get_node("conv1")
+    tuple_node = stree.get_node("tuple") # code: (c1, c2, c3) = (self.c1,self.c2, self.c3)
+    add_node = stree.get_node("add") # code: x = self.add(c1, c2)
+    add_1_node = stree.get_node("add_1") # code: x = self.add(c1, c2)
+    assert conv1_node.get_handler().get_target_users(0)[0] == (tuple_node.get_handler(), 0)
+    assert conv1_node.get_handler().get_target_users(1)[0] == (tuple_node.get_handler(), 1)
+    assert conv1_node.get_handler().get_target_users(2)[0] == (tuple_node.get_handler(), 2)
+    assert tuple_node.get_handler().get_target_users(0)[0] == (add_node.get_handler(), 0)
+    assert tuple_node.get_handler().get_target_users(1)[0] == (add_node.get_handler(), 1)
+    assert tuple_node.get_handler().get_target_users(2)[0] == (add_1_node.get_handler(), 1)
+    codes = stree.get_code()
+    assert codes.count("(self.c1, self.c2, self.c3) = self.conv1(x)")
+    assert codes.count("(c1, c2, c3) = (self.c1, self.c2, self.c3)")

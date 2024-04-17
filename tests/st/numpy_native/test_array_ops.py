@@ -14,8 +14,6 @@
 # ============================================================================
 """unit tests for numpy array operations"""
 
-import functools
-
 import pytest
 import numpy as onp
 
@@ -129,7 +127,7 @@ def onp_transpose(input_array):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -160,7 +158,7 @@ def onp_expand_dims(input_array):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -195,7 +193,7 @@ def onp_squeeze(input_array):
     return a, b, c, d, e, f
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -236,7 +234,7 @@ def onp_rollaxis(input_array):
     return a, b, c, d, e, f
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -314,7 +312,7 @@ def onp_reshape(input_array):
     return a, b, c, d, e, f, g, h, i, j
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -339,7 +337,7 @@ def onp_ravel(input_array):
     return a
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -370,7 +368,7 @@ def onp_concatenate(input_array):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -396,7 +394,7 @@ def onp_append(arr1, arr2):
     c = onp.append(arr1, arr2, axis=-1)
     return a, b, c
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -479,7 +477,7 @@ def onp_hstack(input_array):
     return onp.hstack(input_array)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -507,7 +505,7 @@ def onp_dstack(input_array):
     return onp.dstack(input_array)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -531,7 +529,7 @@ def onp_vstack(input_array):
     return onp.vstack(input_array)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -572,7 +570,7 @@ def onp_atleast3d(*arys):
     return onp.atleast_3d(*arys)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -582,7 +580,7 @@ def test_atleast1d():
     run_non_kw_test(mnp_atleast1d, onp_atleast1d, Cases())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -592,7 +590,7 @@ def test_atleast2d():
     run_non_kw_test(mnp_atleast2d, onp_atleast2d, Cases())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -611,7 +609,7 @@ def onp_where(condition, x, y):
     return onp.where(condition, x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -642,7 +640,7 @@ def onp_ndarray_flatten(input_array):
     return a, b, c
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -673,7 +671,7 @@ def onp_ndarray_transpose(input_array):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -733,7 +731,7 @@ def mnp_concatenate_type_promotion(mnp_array1, mnp_array2, mnp_array3, mnp_array
     return m_concatenate
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -776,7 +774,7 @@ def onp_stack(*arrs):
     return a, b, c, d, e
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -841,7 +839,7 @@ def onp_moveaxis(a):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -868,7 +866,7 @@ def onp_tile(x):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -891,7 +889,7 @@ def onp_broadcast_to(x):
     return a, b
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -914,7 +912,7 @@ def onp_broadcast_arrays(*args):
     return onp.broadcast_arrays(*args)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -944,7 +942,7 @@ def onp_flip(x):
     return a, b, c, d
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -963,7 +961,7 @@ def onp_flipud(x):
     return  onp.flipud(x)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -982,7 +980,7 @@ def onp_fliplr(x):
     return onp.fliplr(x)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1038,7 +1036,7 @@ def onp_array_split(input_array):
     return a, b, c
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1064,7 +1062,7 @@ def onp_vsplit(input_array):
     return a
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1093,7 +1091,7 @@ def onp_hsplit(input_array):
     return a
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1120,7 +1118,7 @@ def onp_dsplit(input_array):
     a = onp.dsplit(input_array, indices_or_sections=3)
     return a
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1157,7 +1155,7 @@ def onp_take_along_axis(*arrs):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1202,7 +1200,7 @@ def onp_take(x, indices):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1232,7 +1230,7 @@ def onp_repeat(x):
     return a, b, c, d, e
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1243,7 +1241,7 @@ def test_repeat():
     run_multi_test(mnp_repeat, onp_repeat, (x,))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1266,7 +1264,7 @@ def test_select():
     match_res(mnp.select, onp.select, condlist, choicelist, default=10)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -1319,29 +1317,11 @@ class RollSwap(Cell):
         return x
 
 
-test_case_array_ops = [
-    ('ReshapeExpandSqueeze', {
-        'block': ReshapeExpandSqueeze(),
-        'desc_inputs': [mnp.ones((2, 3, 4))]}),
-
-    ('TransposeConcatRavel', {
-        'block': TransposeConcatRavel(),
-        'desc_inputs': [mnp.ones((2, 3, 4)),
-                        mnp.ones((2, 3, 4)),
-                        mnp.ones((2, 4, 1))]}),
-
-    ('RollSwap', {
-        'block': RollSwap(),
-        'desc_inputs': [mnp.ones((2, 3, 4))]})
-]
-
-test_case_lists = [test_case_array_ops]
-test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1352,7 +1332,7 @@ def test_expand_dims_exception():
         mnp.expand_dims(mnp.ones((3, 3)), 1.2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1363,7 +1343,7 @@ def test_swapaxes_exception():
         mnp.swapaxes(mnp.ones((3, 3)), 1, 10)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1377,7 +1357,7 @@ def test_tensor_flatten():
         1.0, 3.0, 2.0, 4.0]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1396,7 +1376,7 @@ def test_tensor_reshape():
         _pynative_executor.sync()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1414,7 +1394,7 @@ def test_tensor_squeeze():
         tensor_list = tensor_list.squeeze(4)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1452,7 +1432,7 @@ def onp_rot90(input_array):
     return a, b, c, d, e, f, g, h
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1478,7 +1458,7 @@ def onp_size(x):
     return a, b
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1499,7 +1479,7 @@ def onp_array_str(x):
     return onp.array_str(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1533,7 +1513,7 @@ def test_apply_along_axis():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1557,8 +1537,6 @@ def test_tensor_resize():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -1593,9 +1571,7 @@ def test_piecewise():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -1627,7 +1603,7 @@ def onp_apply_over_axes(x):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1645,7 +1621,7 @@ def test_apply_over_axes():
             match_array(actual.asnumpy(), expected, error=5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

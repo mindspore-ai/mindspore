@@ -30,28 +30,22 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomResizeWithBBoxOp : public ResizeWithBBoxOp {
+class RandomResizeWithBBoxOp : public RandomTensorOp {
  public:
-  // Default values, also used by python_bindings.cc
-  static const int32_t kDefTargetWidth;
-  explicit RandomResizeWithBBoxOp(int32_t size_1, int32_t size_2 = kDefTargetWidth) : ResizeWithBBoxOp(size_1, size_2) {
-    random_generator_.seed(GetSeed());
-    is_deterministic_ = false;
-  }
+  RandomResizeWithBBoxOp(int32_t size_1, int32_t size_2) : size1_(size_1), size2_(size_2) {}
 
   ~RandomResizeWithBBoxOp() override = default;
 
   // Description: A function that prints info about the node
-  void Print(std::ostream &out) const override {
-    out << Name() << ": " << ResizeWithBBoxOp::size1_ << " " << ResizeWithBBoxOp::size2_;
-  }
+  void Print(std::ostream &out) const override { out << Name() << ": " << size1_ << " " << size2_; }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
   std::string Name() const override { return kRandomResizeWithBBoxOp; }
 
  private:
-  std::mt19937 random_generator_;
+  int32_t size1_;
+  int32_t size2_;
   std::uniform_int_distribution<int> distribution_{0, 3};
 };
 }  // namespace dataset

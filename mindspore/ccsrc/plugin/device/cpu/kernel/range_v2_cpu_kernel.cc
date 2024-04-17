@@ -24,23 +24,20 @@ constexpr size_t kRangeV2InputsNum = 3;
 constexpr size_t kRangeV2OutputsNum = 1;
 }  // namespace
 
-bool RangeV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool RangeV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRangeV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRangeV2OutputsNum, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 template <typename T>
-bool RangeV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &outputs) {
-  auto start = static_cast<T *>(inputs[kIndex0]->addr)[kIndex0];
-  auto delta = static_cast<T *>(inputs[kIndex2]->addr)[kIndex0];
+bool RangeV2CpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &outputs) {
+  auto start = static_cast<T *>(inputs[kIndex0]->device_ptr())[kIndex0];
+  auto delta = static_cast<T *>(inputs[kIndex2]->device_ptr())[kIndex0];
 
-  auto output_addr = static_cast<T *>(outputs[kIndex0]->addr);
-  size_t elem_num = outputs[kIndex0]->size / sizeof(T);
+  auto output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
+  size_t elem_num = outputs[kIndex0]->size() / sizeof(T);
   T val = start;
   for (size_t i = 0; i < elem_num; i++) {
     output_addr[i] = val;

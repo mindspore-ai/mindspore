@@ -17,7 +17,7 @@
 #include "tools/converter/parser/tflite/tflite_expand_dims_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/expand_dims.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

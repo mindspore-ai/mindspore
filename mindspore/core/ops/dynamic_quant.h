@@ -91,6 +91,16 @@ class MIND_API DynamicQuant : public BaseOperator {
   ///
   /// \return Whether transpose matrix.
   bool get_transpose() const;
+
+  /// \brief Method to set prefer_axis attribute.
+  ///
+  /// \param[in] prefer_axis Define the preferred axis.
+  void set_prefer_axes(const std::vector<int> &prefer_axes);
+
+  /// \brief Method to get prefer_axis attribute.
+  ///
+  /// \return the preferred axis.
+  std::vector<int> get_prefer_axes() const;
 };
 MIND_API abstract::AbstractBasePtr DynamicQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                      const std::vector<abstract::AbstractBasePtr> &input_args);

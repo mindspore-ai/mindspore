@@ -39,12 +39,13 @@ constexpr auto kDim1 = 1;
 
 uint32_t SequenceAddNKernel::ParseKernelParam() {
   if (node_def_.inputs_size() != kSequenceAddNInputNum) {
-    AICPU_LOGE("For 'SequenceAddN', input number must be 1, but got %d", node_def_.inputs_size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SequenceAddN', input number must be 1, but got %d", node_def_.inputs_size());
     return kAicpuKernelStateInvalid;
   }
 
   if (node_def_.outputs_size() != kSequenceAddNOutputNum) {
-    AICPU_LOGE("For 'SequenceAddN', output number must be 1, but got %d", node_def_.outputs_size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SequenceAddN', output number must be 1, but got %d",
+                    node_def_.outputs_size());
     return kAicpuKernelStateInvalid;
   }
   aicpuops::Tensor input_tensor = node_def_.inputs(0);
@@ -64,7 +65,8 @@ uint32_t SequenceAddNKernel::SequenceAddNTask() {
   auto element_size = output_data_size_ / sizeof(T);
   auto cp_ret = memset_s(reinterpret_cast<void *>(output_addr), output_data_size_, 0x0, output_data_size_);
   if (cp_ret != EOK) {
-    AICPU_LOGE("For 'SequenceAddN',  memset for output error, errorno: %d, size: %d.", cp_ret, output_data_size_);
+    CUST_AICPU_LOGE(workspace_info_, "For 'SequenceAddN',  memset for output error, errorno: %d, size: %d.", cp_ret,
+                    output_data_size_);
     return kAicpuKernelStateInvalid;
   }
   auto input_x_addr = inputs_addr;
@@ -104,7 +106,8 @@ uint32_t SequenceAddNKernel::DoCompute() {
     case aicpuops::DataType::MS_COMPLEX128:
       return SequenceAddNTask<std::complex<std::double_t>>();
     default:
-      AICPU_LOGE("SequenceAddN kernel data type [%s] not support.", static_cast<int>(input_data_type_));
+      CUST_AICPU_LOGE(workspace_info_, "SequenceAddN kernel data type [%s] not support.",
+                      static_cast<int>(input_data_type_));
       return kAicpuKernelStateInvalid;
   }
 }

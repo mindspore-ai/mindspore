@@ -102,10 +102,10 @@ TypePtr LARSUpdateInferType(const PrimitivePtr &primitive, const std::vector<Abs
   const int64_t input_num = 6;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("Weight dtype", input_args[0]->BuildType());
-  (void)types.emplace("gradient dtype", input_args[1]->BuildType());
-  (void)types.emplace("norm weight dtype", input_args[2]->BuildType());
-  (void)types.emplace("norm gradient dtype", input_args[3]->BuildType());
+  (void)types.emplace("Weight dtype", input_args[0]->GetType());
+  (void)types.emplace("gradient dtype", input_args[1]->GetType());
+  (void)types.emplace("norm weight dtype", input_args[2]->GetType());
+  (void)types.emplace("norm gradient dtype", input_args[3]->GetType());
   const std::set<TypePtr> valid_types = {kInt16, kInt32, kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(types, valid_types, primitive->name(), true);
   return types["Weight dtype"];

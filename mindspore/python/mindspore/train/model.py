@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import os
 import math
 import copy
 import importlib
+import time
 import numpy as np
 
 import mindspore
@@ -132,8 +133,8 @@ class Model:
 
     Args:
         network (Cell): A training or testing network.
-        loss_fn (Cell): Objective function. If `loss_fn` is None, the `network` should contain the calculation of loss
-                        and parallel if needed. Default: ``None`` .
+        loss_fn (Cell): Objective function. If `loss_fn` is None, the `network` should contain the calculation of loss.
+                        Default: ``None`` .
         optimizer (Cell): Optimizer for updating the weights. If `optimizer` is None, the `network` needs to
                           do backpropagation and update weights. Default: ``None`` .
         metrics (Union[dict, set]): A Dictionary or a set of metrics for model evaluation.
@@ -189,7 +190,7 @@ class Model:
         >>> from mindspore.train import Model
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -198,7 +199,7 @@ class Model:
         >>> model.predict_network
         >>> model.eval_network
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> model.train(2, dataset)
     """
@@ -523,6 +524,18 @@ class Model:
                                                                         dataset_sink_mode=True,
                                                                         sink_size=sink_size)
             self._warmup_dataset(epoch, train_dataset, sink_size)
+            # Since dataset pipeline has been triggered, delete flag
+            delattr(train_dataset, "__no_send__")
+            if train_dataset.get_init_step() > 0:
+                mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
+                while mbuf_size == 0:
+                    time.sleep(10)
+                    mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
+                    if mbuf_size != 0:
+                        break
+                    logger.warning(f"Failover mode, waiting for dataset recover to specify step, "
+                                   f"current device queue size: {mbuf_size}")
+
             if context.get_auto_parallel_context("pipeline_stages") > 1 and valid_dataset:
                 train_network.add_flags_recursive(is_first_iteration=True)
             for inputs in train_dataset_helper:
@@ -648,9 +661,9 @@ class Model:
         is_graph = (context.get_context("mode") == context.GRAPH_MODE)
         dataset_size = train_dataset.get_dataset_size()
         if dataset_size % sink_size != 0:
-            logger.warning("In dataset_sink mode (dataset_size % sink_size) should equal to 0, "
-                           "it is suggested to pad/drop data or adjust sink_size. "
-                           "But got 'dataset_size': {}, 'sink_size': {}.".format(dataset_size, sink_size))
+            logger.info("In dataset_sink mode (dataset_size % sink_size) should equal to 0, "
+                        "it is suggested to pad/drop data or adjust sink_size. "
+                        "But got 'dataset_size': {}, 'sink_size': {}.".format(dataset_size, sink_size))
         if sink_size == -1:
             dataset_sink_num = epoch
         else:
@@ -967,7 +980,7 @@ class Model:
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
 
             When dataset_sink_mode is True, the `step_end` method of the instance of Callback will be called at the end
-            of step in PyNative mode， or will be called at the end of epoch in Graph mode.
+            of step in PyNative mode, or will be called at the end of epoch in Graph mode.
 
             If dataset_sink_mode is True, dataset will be bound to this model and cannot be used by other models.
 
@@ -1004,14 +1017,15 @@ class Model:
                                  Default: 0.
 
         Examples:
+            >>> import mindspore as ms
             >>> from mindspore import nn
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> loss_scale_manager = ms.FixedLossScaleManager(1024., False)
@@ -1161,11 +1175,11 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
             >>> train_dataset = create_dataset("train")
             >>> valid_dataset = create_dataset("test")
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -1174,7 +1188,7 @@ class Model:
 
         Tutorial Examples:
             - `Advanced Encapsulation: Model - Train and Save Model
-              <https://www.mindspore.cn/tutorials/en/master/advanced/model.html#training-and-saving-model>`_
+              <https://www.mindspore.cn/tutorials/en/r2.3.q1/advanced/model.html#training-and-saving-model>`_
         """
         device_target = context.get_context("device_target")
         if _is_ps_mode() and not _cache_enable() and (device_target in ["Ascend", "CPU"]) and dataset_sink_mode:
@@ -1254,10 +1268,10 @@ class Model:
             >>> from mindspore.amp import FixedLossScaleManager
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> loss_scale_manager = FixedLossScaleManager()
@@ -1430,10 +1444,10 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
@@ -1441,7 +1455,7 @@ class Model:
 
         Tutorial Examples:
             - `Advanced Encapsulation: Model - Train and Save Model
-              <https://www.mindspore.cn/tutorials/en/master/advanced/model.html#training-and-saving-model>`_
+              <https://www.mindspore.cn/tutorials/en/r2.3.q1/advanced/model.html#training-and-saving-model>`_
         """
         valid_dataset = self._prepare_obf_dataset(valid_dataset)
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
@@ -1515,8 +1529,8 @@ class Model:
                     [ascend_context]
                     rank_table_file = [path_a](storage initial path of the rank table file)
                     [execution_plan]
-                    [op_name1] = data_type:float16 (operator named op_name1 is set to data type Float16)
-                    [op_name2] = data_type:float32 (operator named op_name2 is set to data type Float32)
+                    [op_name1] = data_type:float16 (operator named op_name1 is set to data type float16)
+                    [op_name2] = data_type:float32 (operator named op_name2 is set to data type float32)
 
                 When only the config_path is configured, it is done as follows:
 
@@ -1586,7 +1600,7 @@ class Model:
                 use_past = not is_first_iteration
                 model_group_id = self._mindspore_lite_model_group_id
 
-        check_input_data(*predict_data, data_class=Tensor)
+        check_input_data(*predict_data, data_class=(int, float, str, None, Tensor))
         if use_past:
             # Execute incremental model inference
             if not self._lite_incremental_predictor:
@@ -1649,8 +1663,8 @@ class Model:
                     [ascend_context]
                     rank_table_file = [path_a](storage initial path of the rank table file)
                     [execution_plan]
-                    [op_name1] = data_type:float16 (operator named op_name1 is set to data type Float16)
-                    [op_name2] = data_type:float32 (operator named op_name2 is set to data type Float32)
+                    [op_name1] = data_type:float16 (operator named op_name1 is set to data type float16)
+                    [op_name2] = data_type:float32 (operator named op_name2 is set to data type float32)
 
                 When only the config_path is configured, it is done as follows:
 
@@ -1674,7 +1688,7 @@ class Model:
                               "execution_plan" : {"op_name3" : "data_type:float16", "op_name4" : "data_type:float32"}}
 
                 Note that both the "configPath" is configured in the config_dict and the config_item,
-                    in this case, the path_b in the config_dict takes precedence.
+                in this case, the path_b in the config_dict takes precedence.
 
         Returns:
             Tensor, array(s) of predictions.
@@ -1687,7 +1701,7 @@ class Model:
             >>>
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), mindspore.float32)
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> model = Model(LeNet5())
             >>> result = model.predict(input_data)
         """
@@ -1795,10 +1809,10 @@ class Model:
             >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL)
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> loss_scale_manager = ms.FixedLossScaleManager()
@@ -1867,7 +1881,7 @@ class Model:
         if _get_parallel_mode() not in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             raise RuntimeError('Infer predict layout only supports semi auto parallel and auto parallel mode.')
         _parallel_predict_check()
-        check_input_data(*predict_data, data_class=Tensor)
+        check_input_data(*predict_data, data_class=(int, float, str, None, Tensor))
 
         predict_net = self._predict_network
         # Unlike the cases in build_train_network() and build_eval_network(), 'multi_subgraphs' is not set

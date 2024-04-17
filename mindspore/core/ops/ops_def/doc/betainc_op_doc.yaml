@@ -1,0 +1,53 @@
+betainc:
+    description: |
+        Calculates the regularized incomplete beta function
+        :math:`I_{x}(a, b)`. It is defined as the ratio of the incomplete beta function
+        to the complete beta function:
+    
+        .. math::
+        
+        I_{x}(a, b)=\frac{B(x ; a, b)}{B(a, b)}
+    
+        where
+    
+        .. math::
+        
+            B(x ; a, b)=\int_{0}^{x} t^{a-1}(1-t)^{b-1} dt
+    
+        is the incomplete beta function and
+    
+        .. math::
+        
+            B(a, b) = \int_0^1 t^{a-1} (1-t)^{b-1} dt
+    
+        is the complete beta function.
+    
+        Inputs:
+            - **a** (Tensor) - Peak location of beta distribution.
+              A Tensor of types: float32, float64.
+            - **b** (Tensor) - Spread of the beta distribution.
+              A Tensor, must have the same dtype and shape as `a` .
+            - **x** (Tensor) - Upper limit of integration of the incomplete beta function.
+              A Tensor, must have the same dtype and shape as `a` .
+    
+        Outputs:
+            A Tensor, has the same dtype and shape as `a` .
+    
+        Raises:
+            TypeError: If dtype of `a` is not float32 nor float64.
+            TypeError: If either dtype of `b` and `x` is not the same as the `a`.
+            ValueError: If either shape of `b` and `x` is not the same as the `a`.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> a = Tensor(np.array([0.3, 0.1, 0.4]), mindspore.float32)
+            >>> b = Tensor(np.array([0.4, 0.5, 0.9]), mindspore.float32)
+            >>> x = Tensor(np.array([0.2, 0.6, 0.5]), mindspore.float32)
+            >>> betainc = ops.Betainc()
+            >>> print(betainc(a, b, x))
+            [0.41462693 0.8706035  0.7298298 ]

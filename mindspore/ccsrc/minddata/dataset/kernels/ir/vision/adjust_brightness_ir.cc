@@ -19,7 +19,7 @@
 #include "minddata/dataset/kernels/image/adjust_brightness_op.h"
 #endif
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
-#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_adjust_brightness.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_adjust_brightness_op.h"
 #endif
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"

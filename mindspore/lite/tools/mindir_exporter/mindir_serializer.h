@@ -70,7 +70,7 @@ class MindIRSerializer {
   bool IsSystemLittleEndidan() const;
   int GetDataFile(const std::string &data_file_name, std::ofstream *fout, int64_t *parameter_size, int64_t *offset);
   std::string CreateExternalPath(const std::string &external_file);
-  int RemoveQuantParameterHolder(FuncGraphPtr func_graph);
+  int HandlePrimAttr(FuncGraphPtr func_graph);
 
  private:
   std::string model_name_;

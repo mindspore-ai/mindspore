@@ -130,7 +130,7 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
                                                  op_name);
   (void)CheckAndConvertUtils::CheckValue<size_t>("length of strides", strides.size(), kEqual, kSizeFour, op_name);
 
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   if (shape_map.empty()) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input should exist, but missed.";
   }

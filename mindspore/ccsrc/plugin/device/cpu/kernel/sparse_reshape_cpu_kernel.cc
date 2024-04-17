@@ -49,10 +49,8 @@ bool SparseReshapeCpuKernelMod::SameConvert(int64_t input_size, int64_t output_s
   return false;
 }
 
-bool SparseReshapeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseReshapeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -62,10 +60,9 @@ bool SparseReshapeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int SparseReshapeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseReshapeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   indices_shape_ = inputs.at(kIndex0)->GetShapeVector();
@@ -83,17 +80,17 @@ int SparseReshapeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename I, typename T>
-bool SparseReshapeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseReshapeCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseReshapeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseReshapeOutputsNum, kernel_name_);
-  auto in0 = static_cast<int64_t *>(inputs[0]->addr);
-  auto in1 = static_cast<int64_t *>(inputs[1]->addr);
-  auto in2 = static_cast<int64_t *>(inputs[2]->addr);
-  auto out0 = static_cast<int64_t *>(outputs[0]->addr);
-  auto out1 = static_cast<int64_t *>(outputs[1]->addr);
-  const int64_t input_rank = SizeToLong(inputs[1]->size) / sizeof(int64_t);
-  const int64_t output_rank = SizeToLong(inputs[2]->size) / sizeof(int64_t);
+  auto in0 = static_cast<int64_t *>(inputs[0]->device_ptr());
+  auto in1 = static_cast<int64_t *>(inputs[1]->device_ptr());
+  auto in2 = static_cast<int64_t *>(inputs[2]->device_ptr());
+  auto out0 = static_cast<int64_t *>(outputs[0]->device_ptr());
+  auto out1 = static_cast<int64_t *>(outputs[1]->device_ptr());
+  const int64_t input_rank = SizeToLong(inputs[1]->size()) / sizeof(int64_t);
+  const int64_t output_rank = SizeToLong(inputs[2]->size()) / sizeof(int64_t);
   const int64_t nnz = SizeToLong(indices_shape_[0]);
 
   int64_t dense_size = 1;
@@ -138,8 +135,8 @@ bool SparseReshapeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
                       << ", but got the input newshape is a tensor with " << dense_size;
   }
 
-  int64_t input_size = SizeToLong(inputs[0]->size);
-  int64_t output_size = SizeToLong(outputs[0]->size);
+  int64_t input_size = SizeToLong(inputs[0]->size());
+  int64_t output_size = SizeToLong(outputs[0]->size());
   bool same = SameConvert(input_size, output_size, input_rank, output_rank, in0, in1, out0, out1);
   if (same) {
     return true;

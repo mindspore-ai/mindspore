@@ -32,7 +32,7 @@ int KVCacheMgrLoadFusion::RemoveLoadOp(const AnfNodePtr &anf_node, const FuncGra
                                        const CNodePtr &kv_cache_cnode) {
   const int expected_load_input_count = 3;
   auto load_cnode = anf_node->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(load_cnode->inputs().size() == expected_load_input_count, lite::RET_NO_CHANGE);
+  MS_CHECK_TRUE_RET(load_cnode->size() == expected_load_input_count, lite::RET_NO_CHANGE);
   const size_t past_input_index = 1;
   const size_t input_para_index = 1;
   if (kv_cache_cnode->input(past_input_index) != load_cnode) {

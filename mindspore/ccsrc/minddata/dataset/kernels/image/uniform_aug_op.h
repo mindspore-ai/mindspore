@@ -27,11 +27,8 @@
 
 namespace mindspore {
 namespace dataset {
-class UniformAugOp : public TensorOp {
+class UniformAugOp : public RandomTensorOp {
  public:
-  // Default number of Operations to be applied
-  static const int kDefNumOps;
-
   // Constructor for UniformAugOp
   // @param std::vector<std::shared_ptr<TensorOp>> op_list: list of candidate C++ operations
   // @param int32_t num_ops: number of augemtation operations to applied
@@ -51,7 +48,6 @@ class UniformAugOp : public TensorOp {
  private:
   std::vector<std::shared_ptr<TensorOp>> tensor_op_list_;
   int32_t num_ops_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

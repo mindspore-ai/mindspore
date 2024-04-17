@@ -69,14 +69,16 @@ class MindirEmitter : public Emitter {
     std::function<NodePtr(MindirEmitter *, const std::string &, const NodePtrList &, const NodePtrDict &)>;
   // put 'args' in inputs and put 'kargs' in attrs
   NodePtr DefaultEmitFunc(const std::string &op_name, const NodePtrList &args, const NodePtrDict &kargs);
+  NodePtr ReduceEmitFunc(const std::string &op_name, const NodePtrList &args, const NodePtrDict &kargs);
 
   inline static EmitFunc emit_functions[static_cast<int>(MetaOp::MetaOpNum)] = {
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Abs
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Add
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Assign
-    nullptr,                          // MetaOp::BroadcastTo
+    &MindirEmitter::DefaultEmitFunc,  // MetaOp::BroadcastTo
     nullptr,                          // MetaOp::Cast
     nullptr,                          // MetaOp::Concat
+    &MindirEmitter::DefaultEmitFunc,  // MetaOp::Cosh
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Div
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Equal
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Exp
@@ -89,17 +91,20 @@ class MindirEmitter : public Emitter {
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::LessEqual
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Log
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::LogicalAnd
+    &MindirEmitter::DefaultEmitFunc,  // MetaOp::LogicalNot
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::LogicalOr
     nullptr,                          // MetaOp::MatMul
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Mul
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Neg
-    nullptr,                          // MetaOp::ReduceMax
-    nullptr,                          // MetaOp::ReduceMin
-    nullptr,                          // MetaOp::ReduceSum
+    &MindirEmitter::DefaultEmitFunc,  // MetaOp::Reciprocal
+    &MindirEmitter::ReduceEmitFunc,   // MetaOp::ReduceMax
+    &MindirEmitter::ReduceEmitFunc,   // MetaOp::ReduceMin
+    &MindirEmitter::ReduceEmitFunc,   // MetaOp::ReduceSum
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Reshape
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Rsqrt
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Select
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Shape
+    &MindirEmitter::DefaultEmitFunc,  // MetaOp::Sinh
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Sqrt
     nullptr,                          // MetaOp::StridedSlice
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Sub

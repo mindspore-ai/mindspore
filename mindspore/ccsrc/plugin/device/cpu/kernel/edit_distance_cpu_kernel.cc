@@ -27,11 +27,8 @@ constexpr size_t kMaximumInputsNum = 6;
 constexpr size_t kMaximumOutputsNum = 1;
 }  // namespace
 
-bool EditDistanceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool EditDistanceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
 
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -42,26 +39,23 @@ bool EditDistanceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int EditDistanceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int EditDistanceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   for (size_t i = 0; i < kMaximumInputsNum; ++i) {
     shapes_.push_back(inputs[i]->GetShapeVector());
   }
   shapes_.push_back(outputs[0]->GetShapeVector());
-  auto kernel_ptr = std::make_shared<ops::EditDistance>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  normalize_ = kernel_ptr->normalize();
+  normalize_ = GetValue<bool>(primitive_->GetAttr("normalize"));
   return KRET_OK;
 }
 
 template <typename T1, typename T2>
-bool EditDistanceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool EditDistanceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaximumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaximumOutputsNum, kernel_name_);
 
@@ -71,15 +65,15 @@ bool EditDistanceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
     MS_EXCEPTION(RuntimeError) << "For '" << kernel_name_ << "', output's shape size must be greater than 0.";
   }
 
-  const auto *hypothesis_indices_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  const auto *hypothesis_values_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
-  const auto *truth_indices_addr = reinterpret_cast<T1 *>(inputs[3]->addr);
-  const auto *truth_values_addr = reinterpret_cast<T2 *>(inputs[4]->addr);
-  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  const auto *hypothesis_indices_addr = reinterpret_cast<T1 *>(inputs[0]->device_ptr());
+  const auto *hypothesis_values_addr = reinterpret_cast<T2 *>(inputs[1]->device_ptr());
+  const auto *truth_indices_addr = reinterpret_cast<T1 *>(inputs[3]->device_ptr());
+  const auto *truth_values_addr = reinterpret_cast<T2 *>(inputs[4]->device_ptr());
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
-  const size_t hypothesis_values_length = inputs[1]->size / sizeof(T2);
-  const size_t truth_values_length = inputs[4]->size / sizeof(T2);
-  const size_t output_length = outputs[0]->size / sizeof(float);
+  const size_t hypothesis_values_length = inputs[1]->size() / sizeof(T2);
+  const size_t truth_values_length = inputs[4]->size() / sizeof(T2);
+  const size_t output_length = outputs[0]->size() / sizeof(float);
 
   std::vector<size_t> output_strides(rank);
   output_strides[rank - 1] = 1;

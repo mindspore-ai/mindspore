@@ -40,6 +40,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/random_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
@@ -49,62 +50,29 @@ namespace mindspore {
 namespace ops {
 namespace {
 int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  int64_t num_sample = -1;
-  const auto &nun_sample_arg = input_args[kInputIndex1];
-  if (nun_sample_arg->isa<abstract::AbstractScalar>()) {
-    auto num_sample_input_type = nun_sample_arg->BuildType();
-    auto value = nun_sample_arg->BuildValue();
-    if (value->isa<ValueAny>()) {
-      return num_sample;
-    }
-    if (num_sample_input_type->type_id() == kNumberTypeInt64) {
-      num_sample = GetValue<int64_t>(value);
-    } else if (num_sample_input_type->type_id() == kNumberTypeInt32) {
-      num_sample = GetValue<int32_t>(value);
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
-                              << TypeIdToString(num_sample_input_type->type_id()) << ".";
-    }
-  } else if (nun_sample_arg->isa<abstract::AbstractTensor>()) {
-    auto num_sample_ptr = nun_sample_arg->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(num_sample_ptr);
-    auto num_sample_value_ptr = num_sample_ptr->BuildValue();
-    MS_EXCEPTION_IF_NULL(num_sample_value_ptr);
-    auto num_sample_tensor = num_sample_value_ptr->cast<tensor::TensorPtr>();
-    if (num_sample_tensor == nullptr) {
-      return num_sample;
-    }
-    MS_EXCEPTION_IF_ZERO("num_sample_tensor->ElementsNum()", num_sample_tensor->ElementsNum());
-    if (num_sample_tensor->data_type() == kNumberTypeInt64) {
-      num_sample = static_cast<int64_t *>(num_sample_tensor->data_c())[0];
-    } else if (num_sample_tensor->data_type() == kNumberTypeInt32) {
-      num_sample = static_cast<int32_t *>(num_sample_tensor->data_c())[0];
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
-                              << TypeIdToString(num_sample_tensor->data_type()) << ".";
-    }
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << prim->name()
-                            << "', the second input type should be scalar or tensor, but got invalid abstract type:"
-                            << nun_sample_arg->type_name() << ".";
+  const auto num_sample_value = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
+  if (!num_sample_value.has_value()) {
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', failed to get value 'num_sample'";
   }
+  auto num_sample = num_sample_value.value();
   if (num_sample <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', num_sample must greater than 0, but got " << num_sample;
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', num_sample can't has negative value, but got "
+                             << num_sample;
   }
   return num_sample;
 }
 
-abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
-                                               const std::vector<AbstractBasePtr> &input_args) {
+abstract::BaseShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
+                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto logits_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto logits_shape_ptr = input_args[kInputIndex0]->GetShape();
   if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape_ptr)[kShape])) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
   auto logits_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape_ptr);
   auto logits_shape = logits_shape_map[kShape];
   if (logits_shape_ptr->IsDynamic()) {
-    return logits_shape_ptr->cast<abstract::ShapePtr>();
+    return logits_shape_ptr->Clone();
   }
   if (logits_shape.size() != kDim2) {
     MS_EXCEPTION(ValueError) << "logits shape size only support 2D";
@@ -115,7 +83,7 @@ abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
   }
   int64_t num_sample = GetNumSample(primitive, input_args);
   if (num_sample == -1) {
-    return logits_shape_ptr->cast<abstract::ShapePtr>();
+    return logits_shape_ptr->Clone();
   }
   output_shape.push_back(num_sample);
   MS_LOG(INFO) << output_shape;
@@ -126,14 +94,13 @@ TypePtr RandomCategoricalInferType(const PrimitivePtr &prim, const std::vector<A
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_logits_types = {kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTypeValid("logits", input_args[kInputIndex0]->BuildType(), valid_logits_types,
+  (void)CheckAndConvertUtils::CheckTypeValid("logits", input_args[kInputIndex0]->GetType(), valid_logits_types,
                                              prim_name);
   const std::set<TypePtr> valid_num_sample_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("num_sample", input_args[kInputIndex1]->BuildType(),
-                                             valid_num_sample_types, prim_name);
-  const std::set<TypePtr> valid_seed_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("seed", input_args[kInputIndex2]->BuildType(), valid_seed_types,
+  (void)CheckAndConvertUtils::CheckTypeValid("num_sample", input_args[kInputIndex1]->GetType(), valid_num_sample_types,
                                              prim_name);
+  const std::set<TypePtr> valid_seed_types = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTypeValid("seed", input_args[kInputIndex2]->GetType(), valid_seed_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {

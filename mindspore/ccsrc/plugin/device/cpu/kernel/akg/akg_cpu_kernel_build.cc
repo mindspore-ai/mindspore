@@ -15,8 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
-#include <memory>
-#include <string>
 #include "kernel/framework_utils.h"
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_mod.h"
 #include "include/backend/anf_runtime_algorithm.h"

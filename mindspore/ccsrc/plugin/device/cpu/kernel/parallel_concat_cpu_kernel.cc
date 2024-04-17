@@ -26,10 +26,8 @@ constexpr int axis = 0;
 constexpr size_t kParallelConcatOutputsNum = 1;
 }  // namespace
 
-bool ParallelConcatCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ParallelConcatCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -45,10 +43,9 @@ bool ParallelConcatCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ParallelConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ParallelConcatCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ResetResource();
@@ -78,15 +75,15 @@ int ParallelConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool ParallelConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool ParallelConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   std::vector<T *> input_addr_list;
   for (size_t j = 0; j < input_num_; ++j) {
-    auto *tmp_addr = GetDeviceAddress<T>(inputs, j);
+    auto *tmp_addr = static_cast<T *>(inputs[j]->device_ptr());
     MS_EXCEPTION_IF_NULL(tmp_addr);
     (void)input_addr_list.emplace_back(tmp_addr);
   }
-  auto *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  auto *output_addr = static_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_addr);
 
   size_t output_dim_1 = 0;

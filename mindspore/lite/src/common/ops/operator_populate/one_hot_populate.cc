@@ -15,7 +15,7 @@
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "nnacl/fp32/one_hot_fp32.h"
-#include "ops/one_hot.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 using mindspore::ops::kNameOneHot;
 using mindspore::schema::PrimitiveType_OneHot;
 

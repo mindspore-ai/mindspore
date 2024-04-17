@@ -37,6 +37,7 @@
 #include "mindspore/core/ops/image_ops.h"
 #include "ops/extract_glimpse.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
@@ -57,9 +58,9 @@ inline bool CheckShapePositiveTool(const std::vector<int64_t> &input_shape) {
 abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto offsets_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto offsets_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
   if (IsDynamicRank(size_shape)) {
     return std::make_shared<abstract::Shape>(size_shape);
   }
@@ -95,16 +96,11 @@ abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
   int32_t g_width = -1;
   int64_t batch_cnt = input_shape[0];
   int64_t channels = input_shape.back();
-  if (!input_args[1]->BuildValue()->isa<ValueAny>() && !input_args[1]->BuildValue()->isa<None>()) {
-    auto size_value = input_args[1]->BuildValue();
-    MS_EXCEPTION_IF_NULL(size_value);
-    auto size_value_tensor = size_value->cast<tensor::TensorPtr>();
-    if (size_value_tensor == nullptr) {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the input size must be const Tensor.";
-    }
-    int32_t *size_data = static_cast<int32_t *>(size_value_tensor->data_c());
-    g_height = size_data[0];
-    g_width = size_data[1];
+  auto size_value_ptr = input_args[1]->GetValue();
+  if (IsValueKnown(size_value_ptr)) {
+    auto size_value = GetArrayValue<int32_t>(input_args[1]).value();
+    g_height = size_value[0];
+    g_width = size_value[1];
     if (g_height == 0 || g_width == 0) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the value of parameter "
                                << "'size' must be greater than zero, but got [0, 0].";
@@ -114,24 +110,23 @@ abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(output_shape);
 }
 TypePtr ExtractGlimpseInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const int kMagicNumber = 2;
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
+  if (input_args[0]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input x only support tensor!";
   }
-  if (!input_args[1]->isa<abstract::AbstractTensor>()) {
+  if (input_args[1]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input size only support tensor!";
   }
-  if (!input_args[kMagicNumber]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kIndex2]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input offsets only support tensor!";
   }
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat32}, primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->BuildType(), {kInt32}, primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("offsets", input_args[kMagicNumber]->BuildType(), {kFloat32},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), {kFloat32}, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->GetType(), {kInt32}, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("offsets", input_args[kIndex2]->GetType(), {kFloat32},
                                                    primitive->name());
-  auto res = input_args[0]->BuildType();
+  auto res = input_args[0]->GetType();
   return res;
 }
 }  // namespace

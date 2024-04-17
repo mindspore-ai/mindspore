@@ -33,7 +33,12 @@ class MS_CORE_API InterpretNodeRecorder {
   void PushPyInterpretNode(const AnfNodePtr &node) { (void)py_interpret_nodes_.emplace(node); }
   const mindspore::HashSet<AnfNodePtr> &PyInterpretNodes() const { return py_interpret_nodes_; }
 
-  void PushPyExecuteNode(const AnfNodePtr &node) { (void)py_execute_nodes_.emplace(node); }
+  void PushPyExecuteNode(const AnfNodePtr &node) {
+    const auto &cnode = dyn_cast<CNode>(node);
+    MS_EXCEPTION_IF_NULL(cnode);
+    (void)cnode->inputs();  // Bind its inputs node.
+    (void)py_execute_nodes_.emplace(node);
+  }
   const mindspore::HashSet<AnfNodePtr> &PyExecuteNodes() const { return py_execute_nodes_; }
 
   void Clear() {

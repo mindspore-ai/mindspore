@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 import mindspore.nn as nn
 from mindspore.ops import composite as C
-from mindspore.ops.operations.image_ops import ResizeLinear1D
+from mindspore.ops.operations import ResizeLinear1D
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -54,7 +54,7 @@ class ResizeLinear1DGradNet(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
@@ -78,7 +78,7 @@ def test_resize_linear_1d_grad_align_corners(dtype):
     assert np.allclose(output[0].asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
@@ -102,7 +102,7 @@ def test_resize_linear_1d_grad_half_pixel(dtype):
     assert np.allclose(output[0].asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])

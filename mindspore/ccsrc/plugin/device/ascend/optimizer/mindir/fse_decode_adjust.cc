@@ -17,7 +17,6 @@
 
 #include <vector>
 #include <memory>
-#include <string>
 
 #include "ops/lite_op_name.h"
 #include "include/common/utils/utils.h"

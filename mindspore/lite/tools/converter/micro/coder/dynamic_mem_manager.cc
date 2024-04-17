@@ -112,7 +112,7 @@ std::string DynamicMemManager::AllocWorkSpace(size_t size, int index) {
     MS_LOG(ERROR) << "Offset is a nullptr.";
     return "";
   }
-  return "(" + std::string(kBufferPrefixName) + " + " + std::string(kBufferPrefixName) + "[" +
+  return "(" + std::string(kBufferPrefixName) + " + " + kOffsetPrefixName + "[" +
          std::to_string(offsets_all_scenes_.begin()->second.size() - 1) + "])";
 }
 }  // namespace mindspore::lite::micro

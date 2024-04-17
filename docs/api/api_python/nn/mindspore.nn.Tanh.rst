@@ -3,7 +3,7 @@ mindspore.nn.Tanh
 
 .. py:class:: mindspore.nn.Tanh
 
-    逐元素计算Tanh函数，返回一个新的Tensor，该Tensor是输入元素的双曲正切值。
+    逐元素计算Tanh（双曲正切值）激活函数，返回一个新的Tensor。
 
     Tanh函数定义为：
 
@@ -14,7 +14,7 @@ mindspore.nn.Tanh
 
     Tanh函数图：
 
-    .. image:: images/Tanh.png
+    .. image:: ../images/Tanh.png
         :align: center
 
     输入：

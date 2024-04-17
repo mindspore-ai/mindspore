@@ -37,6 +37,7 @@ __global__ void CalExtractGlimpseKernel(const size_t output_size, const size_t b
                                         T *output) {
   curandState localState;
   int64_t g_height = size[0], g_width = size[1];
+  CUDA_KERNEL_ASSERT(size[1] > 0);
   int64_t size1 = image_width * image_height * channels;
   int64_t size2 = image_width * channels;
   int64_t g_size = g_width * g_height;

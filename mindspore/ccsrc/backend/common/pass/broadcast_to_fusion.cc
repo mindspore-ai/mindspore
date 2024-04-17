@@ -16,11 +16,10 @@
 
 #include "backend/common/pass/broadcast_to_fusion.h"
 
-#include <vector>
-#include <memory>
-
 #include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/op_utils.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,19 +34,24 @@ const AnfNodePtr BroadcastToFusion::Process(const FuncGraphPtr &graph, const Anf
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-
   const auto &origin_prim = common::AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(origin_prim);
-  const auto &origin_attrs = origin_prim->attrs();
 
-  if (origin_attrs.count(kShape) == 0) {
-    MS_LOG(DEBUG) << "Origin primitive: " << origin_prim->name() << "has no attr : " << kShape;
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     return node;
   }
-  auto attr_value = origin_prim->GetAttr(kShape);
-  MS_EXCEPTION_IF_NULL(attr_value);
 
-  auto input_x = GetValue<std::vector<int64_t>>(attr_value);
+  auto input_shape = cnode->input(kIndex2);
+  auto shape_array_opt = ops::GetArrayValue<int64_t>(input_shape->abstract());
+  if (!shape_array_opt.has_value()) {
+    return node;
+  }
+
+  auto shape_array = shape_array_opt.value();
+  if (shape_array.HasUnknownValue()) {
+    return node;
+  }
+  std::vector<int64_t> input_x = shape_array.ToVector();
   auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex0);
   auto outer_dim_offset = input_x.size() - x_shape.size();
   bool flag = true;
@@ -71,7 +75,8 @@ const AnfNodePtr BroadcastToFusion::Process(const FuncGraphPtr &graph, const Anf
       }
     }
   }
-  common::AnfAlgo::SetNodeAttr(kShape, MakeValue(input_x), cnode);
+  auto new_input = opt::CreateValueNodeWithKernelInfo(graph, MakeValue(input_x));
+  cnode->set_input(kIndex2, new_input);
   return cnode;
 }
 }  // namespace opt

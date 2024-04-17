@@ -19,7 +19,7 @@
 #include <vector>
 #include <memory>
 #include "ops/op_utils.h"
-#include "ops/cast.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/lite_exporter/fetch_content.h"
@@ -98,8 +98,6 @@ STATUS InOutDTypeTransPass::HandleGraphInput(const FuncGraphPtr &graph) {
 
 STATUS InOutDTypeTransPass::HandleGraphOutput(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
-  auto manager = graph->manager();
-  MS_ASSERT(manager != nullptr);
   auto return_node = graph->get_return();
   MS_CHECK_TRUE_RET(return_node != nullptr, RET_ERROR);
   bool has_make_tuple = false;

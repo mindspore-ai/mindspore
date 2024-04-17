@@ -38,7 +38,7 @@ typedef std::map<std::string, std::tuple<std::vector<float>, bool>> Space;
 
 namespace mindspore {
 namespace dataset {
-class AutoAugmentOp : public TensorOp {
+class AutoAugmentOp : public RandomTensorOp {
  public:
   AutoAugmentOp(AutoAugmentPolicy policy, InterpolationMode interpolation, const std::vector<uint8_t> &fill_value);
 
@@ -59,7 +59,6 @@ class AutoAugmentOp : public TensorOp {
   AutoAugmentPolicy policy_;
   InterpolationMode interpolation_;
   std::vector<uint8_t> fill_value_;
-  std::mt19937 rnd_;
   Transforms transforms_;
 };
 }  // namespace dataset

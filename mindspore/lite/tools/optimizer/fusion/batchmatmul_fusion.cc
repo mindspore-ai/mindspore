@@ -61,7 +61,7 @@ void *GetInputAddr(const AnfNodePtr &node, size_t input_index) {
 STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPtr &rmatmul_input) {
   MS_ASSERT(stack_node != nullptr);
   MS_ASSERT(rmatmul_input != nullptr);
-  auto joint_fullconnect_size = stack_node->inputs().size() - 1;
+  auto joint_fullconnect_size = stack_node->size() - 1;
   auto fc = stack_node->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(fc != nullptr, lite::RET_NULL_PTR);
   auto fc_weight = fc->input(kInputIndexTwo)->cast<ParameterPtr>();
@@ -159,7 +159,7 @@ bool IsTensorZero(const tensor::TensorPtr &tensor) {
 
 bool IsFCNonBias(const CNodePtr &fc) {
   MS_ASSERT(fc != nullptr);
-  if (fc->inputs().size() == kInputSizeThree) {
+  if (fc->size() == kInputSizeThree) {
     return true;
   }
   auto bias_input = fc->inputs().at(kInputSizeThree);
@@ -275,7 +275,7 @@ bool BatchMatMulFusion::CheckCnodeProper(const CNodePtr &stack_cnode, const CNod
     return false;
   }
   // check stack node all inputs must fullconnect
-  for (size_t i = 1; i < stack_cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < stack_cnode->size(); i++) {
     auto input_node = stack_cnode->input(i);
     if (!CheckPrimitiveType(input_node, prim::kPrimFullConnection)) {
       MS_LOG(WARNING) << "batchmatmulfusion stack node all inputs must fullconnect type";
@@ -366,7 +366,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
     if (IsMarkedTrainOp(right_reshape_cnode)) {
       return nullptr;
     }
-    MS_ASSERT(right_reshape_cnode->inputs().size() > 1);
+    MS_ASSERT(right_reshape_cnode->size() > 1);
     auto right_transpose_node = right_reshape_cnode->input(1);
     MS_CHECK_TRUE_RET(right_transpose_node != nullptr, nullptr);
     auto right_transpose_cnode = right_transpose_node->cast<CNodePtr>();

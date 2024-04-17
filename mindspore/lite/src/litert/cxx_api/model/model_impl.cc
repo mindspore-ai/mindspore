@@ -272,7 +272,13 @@ Status ModelImpl::Build() {
 
   auto create_callback = CreateTrainSessionCallbackHolder();
   if (create_callback != nullptr) {
-    auto session = create_callback(graph_->graph_data_, cfg_, inner_context);
+    auto train_context = ContextUtils::Convert(context_.get());
+    if (train_context == nullptr) {
+      MS_LOG(ERROR) << "Failed to convert Context to Lite Context for train.";
+      return kLiteNullptr;
+    }
+
+    auto session = create_callback(graph_->graph_data_, cfg_, train_context);
     if (session != nullptr) {
       session_ = session;
       MS_LOG(DEBUG) << "Build model success.";
@@ -411,14 +417,8 @@ Status ModelImpl::UpdateConfig(const std::string &section, const std::pair<std::
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
-    return kLiteNullptr;
-  }
-  if (outputs == nullptr) {
-    MS_LOG(ERROR) << "outputs is nullptr.";
-    return kLiteError;
-  }
+  MS_CHECK_TRUE_MSG(session_ != nullptr, kLiteNullptr, "Model has not been called Build, or Model Build has failed.");
+  MS_CHECK_TRUE_MSG(outputs != nullptr, kLiteError, "outputs is nullptr.");
   auto input_tensors = session_->GetInputs();
   if (input_tensors.empty()) {
     MS_LOG(ERROR) << "Failed to get input tensor.";
@@ -478,7 +478,16 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
           input->set_shape(truncate_shape);
 #endif
         }
-        input->set_data(user_input.MutableData());
+        // Mali GPU tensor can't manipulate CPU memory which the user provides.
+        // When model input is GPU tensor and user input is NOT GPU data,
+        if (IS_OPENCL_ALLOCATOR(input->allocator()) && (!IS_OPENCL_ALLOCATOR(user_input.allocator()))) {
+          // Use outside CPU data to fill GPU Tensor.
+          auto dst_data = input->MutableData();
+          auto src_data = user_input.MutableData();
+          (void)memcpy(dst_data, src_data, input->Size());
+        } else {
+          input->set_data(user_input.MutableData());
+        }
       }
     }
   }
@@ -974,13 +983,17 @@ bool ModelImpl::IsValidDoubleNum(const std::string &num_str) {
 }
 
 int ModelImpl::ModelDeObfuscate() {
-  float obf_ratio = 0.0;
+  float obf_ratio = -1.0;
   auto iter = config_info_.find(kBuildSection);
   if (iter != config_info_.end()) {
     auto item_runner = iter->second.find(kObfRatioKey);
     if (item_runner != iter->second.end()) {
       if (IsValidDoubleNum(iter->second.at(kObfRatioKey))) {
-        obf_ratio = std::stof(iter->second.at(kObfRatioKey));
+        float candidate_obf_ratio = std::stof(iter->second.at(kObfRatioKey));
+        if (!lite::FloatCompare(candidate_obf_ratio, 1.0) && !lite::FloatCompare(candidate_obf_ratio, 0.0)) {
+          // obtain legal obf_ratio
+          obf_ratio = candidate_obf_ratio;
+        }
       } else {
         MS_LOG(ERROR) << "Obfuscate ratio should be float but got " << iter->second.at(kObfRatioKey);
         return RET_ERROR;

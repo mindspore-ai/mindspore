@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/anf.h"
@@ -54,6 +55,7 @@
 #include "pipeline/jit/ps/pipeline_split.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
+#include "utils/ms_context.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/util.h"
 #endif
@@ -110,10 +112,18 @@ bool IsSkipAutoParallel(const FuncGraphPtr &root, const std::string &strategy_se
 
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   // Mode 'dynamic programming' will run after pipeline_split, others don't.
+  MS_EXCEPTION_IF_NULL(root);
   bool is_pre_action = !root->has_flag(AUTO_PARALLEL_FINISH_PRE_ACTION);
   bool changes;
   if (is_pre_action) {
     root->set_flag(AUTO_PARALLEL_FINISH_PRE_ACTION, true);
+    auto manager = root->manager();
+    const auto &graphs = manager->func_graphs();
+    bool is_training = std::any_of(graphs.cbegin(), graphs.cend(),
+                                   [](auto cur_graph) -> bool { return cur_graph->has_flag(kTraining); });
+    if (is_training) {
+      root->set_flag(kTraining, true);
+    }
     changes = true;
   } else {
     changes = false;
@@ -123,7 +133,6 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
     return changes;
   }
 #endif
-  MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   // control whether use model_parallel mode
   std::string strategy_search_mode = ParallelContext::GetInstance()->strategy_search_mode();
@@ -132,6 +141,9 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
     return changes;
   }
   MS_LOG(INFO) << "search_mode: " << strategy_search_mode;
+
+  // tag dynamic shape graph
+  parallel::TagDynamicShapeFuncGraph(root);
 
   MSLogTime msTime;
   msTime.Start();
@@ -491,7 +503,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
     auto prim = GetValueNode<PrimitivePtr>(prim_anf_node);
     MS_EXCEPTION_IF_NULL(prim);
 
-    auto search_cnode = from_cnode_to_info.find(cnode->UniqueId());
+    auto search_cnode = from_cnode_to_info.find(cnode->UniqueId() + prim->name());
     if (search_cnode == from_cnode_to_info.cend()) {
       size_t loop_index = 0;
       bool is_in_loop = GetLoopIndexFromCNode(cnode, &loop_index);
@@ -509,7 +521,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
                      << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                      << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                      << " is set OperatorInfo: " << current_op_ptr->name() << ", Primitive: " << prim->name();
-        (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId(), current_op_ptr));
+        (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId() + prim->name(), current_op_ptr));
         continue;
       }
       bool is_last_nodes = IsPrimitiveCNode(cnode, prim::kPrimVirtualOutput);
@@ -530,7 +542,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
                    << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                    << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                    << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
-      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId(), operator_info));
+      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId() + prim->name(), operator_info));
       if (single_loop && is_in_loop) {
         operators_in_forloop.push_back(operator_info);
         (void)ops_in_a_loop_.insert(operator_info->name());
@@ -608,7 +620,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
     auto prim = GetValueNode<PrimitivePtr>(prim_anf_node);
 
     // Find the operatorInfo if it exists
-    auto search_cnode = from_cnode_to_info.find(cnode->UniqueIdThroughCopy());
+    auto search_cnode = from_cnode_to_info.find(cnode->UniqueIdThroughCopy() + prim->name());
     if (search_cnode == from_cnode_to_info.cend()) {
       size_t loop_index = 0;
       bool is_in_loop = GetLoopIndexFromCNode(cnode, &loop_index);
@@ -627,7 +639,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
                      << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                      << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                      << " is set OperatorInfo: " << current_op_ptr->name() << ", Primitive: " << prim->name();
-        (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), current_op_ptr));
+        (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy() + prim->name(), current_op_ptr));
         continue;
       }
       // In this case, the corresponding OperatorInfo is not created, create the new one.
@@ -648,7 +660,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
                    << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                    << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                    << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
-      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), operator_info));
+      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy() + prim->name(), operator_info));
       if (single_loop && is_in_loop) {
         operators_in_forloop.push_back(operator_info);
         (void)ops_in_a_loop_.insert(operator_info->name());
@@ -1014,7 +1026,7 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     if (!FindReshape(cnode, &op_cache)) {
       continue;
     }
-    MS_ASSERT(cnode->inputs().size() == 3);
+    MS_ASSERT(cnode->size() == 3);
     // get previous node's strategy_cost_
     auto pre_node = cnode->input(1);
     if (IsPrimitiveCNode(pre_node, prim::kPrimLoad)) {
@@ -1283,10 +1295,10 @@ std::vector<std::vector<size_t>> GetIndexOfOpsSharingInputTensor(
   return param_users_ops_index;
 }
 
-void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraphPtr &root) {
+void CalculateMicroBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraphPtr &root) {
   // The first dimension of an operator is its batch dimension.
   // However, the shape of the first dimension is not the batch_size assigned by users.
-  // This function helps to calculate the real batch size.
+  // This function helps to calculate the micro batch size in the pipeline scenario.
 
   auto manager = root->manager();
   auto ops = entire_costgraph->GetOperators();
@@ -1302,8 +1314,8 @@ void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraph
   if (!virtual_dataset_) {
     // Normally for auto parallel, virtual dataset is required in order to control the input's parallel strategy.
     // However, in some test cases or NN, there is no input data.
-    // This if condition aims to deal with these cases, and return -1 to indicate that input batch size is null.
-    graph->batch_size = -1;
+    // This if condition aims to deal with these cases, and return 1.
+    graph->micro_batch_size = 1;
     return;
   }
   auto node_user_map = manager->node_users();
@@ -1334,15 +1346,14 @@ void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraph
     }
   }
   if (data_user_size != 0) {
-    graph->batch_size = total_batch_size / data_user_size;
+    graph->micro_batch_size = total_batch_size / data_user_size;
+    MS_LOG(INFO) << "In the pipeline scenario, the micro_batch_size of each stage is " << graph->micro_batch_size;
   } else {
     MS_LOG(EXCEPTION) << "Data user size equals to 0, which could not be divided by the total batch size";
   }
 }
 
-void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, bool dyn_shape_tmp_fix) {
-  InitCostGraph();
-
+void CreateNodesForCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
   if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
     if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
       MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
@@ -1358,7 +1369,11 @@ void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPt
       MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
     }
   }
+}
 
+void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, bool dyn_shape_tmp_fix) {
+  InitCostGraph();
+  CreateNodesForCostGraph(all_nodes, root);
   if (!dyn_shape_tmp_fix) {
     ReshapeCostCompute(all_nodes);
   }
@@ -1381,6 +1396,43 @@ void WriteStrategiesBackToAnfGraph(const std::vector<std::shared_ptr<OperatorInf
   }
 }
 
+void TMpInferBatchMatMul(const std::shared_ptr<Graph> &graph, Graph::NodeType *node) {
+  if (node->apply.arguments[0].tensor_shape.shape_c != -1 && node->apply.arguments[1].tensor_shape.shape_c == -1) {
+    auto infer_shape = node->apply.arguments[0].tensor_shape.shape_c;
+    node->apply.arguments[1].tensor_shape.shape_c = infer_shape;
+
+    if (node->node_out.size() == 0) {
+      MS_LOG(EXCEPTION) << "The current BatchMatMul (" << node->name << ") does not have an outgoing node.";
+    }
+    auto &outgoing_node = graph->nodes[node->node_out[0]];
+    if (outgoing_node.apply.arguments[0].tensor_shape.shape_c == node->tensor_parm.tensor_shape.shape_c) {
+      outgoing_node.apply.arguments[0].tensor_shape.shape_c = infer_shape;
+    }
+
+    node->tensor_parm.tensor_shape.shape_c = infer_shape;
+  }
+}
+
+void TmpInferForDynamicShapeInSAPP(const std::shared_ptr<Graph> &graph) {
+  for (size_t index = graph->nodes.size(); index > 0; index--) {
+    auto node = graph->nodes[index - 1];
+    if (node.apply.op_type == OperatorType::kRecBatchMatMul) {
+      TMpInferBatchMatMul(graph, &node);
+    }
+  }
+}
+
+bool HasUserConfiguredStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops) {
+  for (auto op : ops) {
+    auto prim_anf_node = GetValueNode<PrimitivePtr>(op->cnode()->input(0));
+    bool has_user_configured_strategy = prim_anf_node->HasAttr(parallel::IN_STRATEGY);
+    if (has_user_configured_strategy) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, size_t rank_id,
                                  const size_t device_num) {
   bool dyn_shape_tmp_fix = false;
@@ -1388,27 +1440,13 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     dyn_shape_tmp_fix = true;
   }
 
-  InitCostGraph();
-  if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
-    if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
-      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
-                   << entire_costgraph->GetOperators().size() << " operators.";
-    } else {
-      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
-    }
-  } else {
-    if (ConstructCostGraphNodesByUniqueId(all_nodes, root) == SUCCESS) {
-      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
-                   << entire_costgraph->GetOperators().size() << " operators.";
-    } else {
-      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
-    }
-  }
-  if (!dyn_shape_tmp_fix) {
-    ReshapeCostCompute(all_nodes);
+  ReInitCostGraph(all_nodes, root, dyn_shape_tmp_fix);
+  auto ops = entire_costgraph->GetOperators();
+  if (dyn_shape_tmp_fix && HasUserConfiguredStrategy(ops)) {
+    MS_LOG(WARNING) << "Now the split strategy will be automatically generated through SAPP, which will overwrite "
+                       "the strategy that has been manually configured by the user.";
   }
 
-  auto ops = entire_costgraph->GetOperators();
   std::vector<std::vector<std::string>> input_tensor_names = entire_costgraph->get_inputs_tensor_name_list();
   // Needed by rec_parser 2
   auto param_users_uniqueid_list = entire_costgraph->get_param_users_uniqueid_list();
@@ -1422,10 +1460,16 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     GetIndexOfOpsSharingInputTensor(param_users_uniqueid_list, input_tensor_names);
   std::shared_ptr<std::vector<std::vector<size_t>>> eli_list = std::make_shared<std::vector<std::vector<size_t>>>();
   std::shared_ptr<std::vector<size_t>> index_list = std::make_shared<std::vector<size_t>>();
-  graph = EliminateGraph(graph, eli_list, index_list);
+  graph = EliminateGraph(graph, eli_list, index_list, dyn_shape_tmp_fix);
   graph->dyn_shape_tmp_fix = dyn_shape_tmp_fix;
 
-  CalculateRealBatchSize(graph, root);
+  if (graph->dyn_shape_tmp_fix) {
+    TmpInferForDynamicShapeInSAPP(graph);
+  }
+
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    CalculateMicroBatchSize(graph, root);
+  }
 
   size_t num_device = g_device_manager->DeviceNum();
   const auto device_memory = CostModelContext::GetInstance()->device_memory_capacity();
@@ -1440,17 +1484,19 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   }
 
   // Needed when changing stage number
-  if (!graph->dyn_shape_tmp_fix) {
-    if (ParallelInit() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Parallel init failed after Rec search";
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    if (!graph->dyn_shape_tmp_fix) {
+      if (ParallelInit() != SUCCESS) {
+        MS_LOG(EXCEPTION) << "Parallel init failed after Rec search";
+      }
+    } else {
+      if (ParallelInit(rank_id, device_num) != SUCCESS) {
+        MS_LOG(EXCEPTION) << "Parallel init failed";
+      }
     }
-  } else {
-    if (ParallelInit(rank_id, device_num) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Parallel init failed";
-    }
+    ReInitCostGraph(all_nodes, root, graph->dyn_shape_tmp_fix);
+    ops = entire_costgraph->GetOperators();
   }
-  ReInitCostGraph(all_nodes, root, graph->dyn_shape_tmp_fix);
-  ops = entire_costgraph->GetOperators();
 
   GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, isTraining, param_users_ops_index, root);
 

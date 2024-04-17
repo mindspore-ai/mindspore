@@ -99,7 +99,6 @@ KernelBase *CreateBatchToSpace(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(batch_to_space);
   memset(batch_to_space, 0, sizeof(BatchToSpaceStruct));
   BatchToSpaceParameter *bts_param = (BatchToSpaceParameter *)param;
-  NNACL_CHECK_NULL_RETURN_NULL(bts_param);
   memcpy(batch_to_space->crops_, bts_param->crops_, sizeof(int32_t) * COMM_SHAPE_SIZE);
   memcpy(batch_to_space->block_shape_, bts_param->block_shape_, sizeof(int32_t) * BATCH_TO_SPACE_BLOCK_SHAPE_SIZE);
   batch_to_space->base_.Prepare = DefaultPrepare1In1Out;

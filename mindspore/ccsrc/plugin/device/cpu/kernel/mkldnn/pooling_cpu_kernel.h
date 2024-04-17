@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <map>
 #include <string>
-
+#include "mindspore/core/ops/op_utils.h"
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
@@ -37,14 +37,12 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
   explicit PoolingCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~PoolingCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -61,19 +59,19 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
   std::vector<int64_t> kernel_;
   std::vector<int64_t> padding_invalid_;
   std::string format_;
-  std::string pad_mode;
+  mindspore::PadMode pad_mode_;
   std::vector<int64_t> kernel_include_nc{};
   std::vector<int64_t> strides_include_nc{};
   std::map<uint32_t, tensor::TensorPtr> inputs_on_host_{};
 
  private:
-  void InitPoolingFields(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                         const std::vector<KernelTensorPtr> &outputs);
+  void InitPoolingFields(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   std::string kernel_type_{kUnkown};
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   TypeId dtype_{kTypeUnknown};
 };

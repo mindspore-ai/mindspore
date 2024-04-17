@@ -1,0 +1,14 @@
+#operator gelu
+gelu:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: GeLU
+    function:
+        disable: True
+    dispatch:
+        enable: True

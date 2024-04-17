@@ -21,31 +21,29 @@
 #include <string>
 #include <map>
 #include <unordered_map>
-#include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "nnacl/transpose_parameter.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore::kernel {
-class TransposeKernelMod : public CpuKernelMod {
+class TransposeKernelMod : public NativeCpuKernelMod {
  public:
   TransposeKernelMod() = default;
   ~TransposeKernelMod() override = default;
 
   explicit TransposeKernelMod(const std::string name) { kernel_name_ = name; }
 
-  virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
-  virtual bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                    const std::vector<KernelTensorPtr> &outputs);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   std::vector<KernelAttr> GetOpSupport() override { return {}; }
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T>
   int DoTranspose(const T *in_data, T *out_data, const int *output_shape, const TransposeParameter *transpose_param);
   template <typename T>
@@ -76,7 +74,7 @@ class TransposeKernelMod : public CpuKernelMod {
   std::vector<size_t> axes_;
   TypeId dtype_{kTypeUnknown};
   using TypeKernel =
-    std::function<void(TransposeKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+    std::function<void(TransposeKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   std::unordered_map<TypeId, TypeKernel> launch_map_;
   TypeKernel launch_func_;
 };

@@ -188,7 +188,6 @@ install(
 ## config files
 install(
         FILES ${CMAKE_SOURCE_DIR}/config/op_info.config
-              ${CMAKE_SOURCE_DIR}/config/super_bar_config.json
         DESTINATION ${INSTALL_CFG_DIR}
         COMPONENT mindspore
 )

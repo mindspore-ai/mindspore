@@ -21,7 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "ops/split.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {
@@ -86,7 +86,7 @@ PrimitiveCPtr TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
     std::vector<int64_t> size_splits;
     std::transform(size_splits_int32.begin(), size_splits_int32.end(), std::back_inserter(size_splits),
                    [](int32_t val) { return static_cast<int64_t>(val); });
-    prim->set_size_splits(size_splits);
+    prim->AddAttr("size_splits", api::MakeValue(size_splits));
   }
 
   *output_size = number_split;

@@ -1,0 +1,44 @@
+qr:
+    description: |
+        Returns the QR decomposition of one or more matrices.
+
+        If `mode` is 'reduced'(the default), compute the P columns of Q where P is minimum of the 2 innermost dimensions of
+        input. If `mode` is 'complete', compute full-sized Q and R.
+
+        Args:
+            full_matrices (bool, optional): Whether compute full-sized QR decomposition. Default: ``False`` .
+        
+        Inputs:
+            - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, the supported dtype are
+              float16, float32, float64, complex64 and complex128.
+              Define the shape of input as :math:`(..., m, n)`, p as the
+              minimum values of m and n.    
+
+        Outputs:
+            - **Q** (Tensor) - The orthonormal matrices of input. If `mode` is 'complete', the shape is :math:`(m, m)`,
+              else the shape is :math:`(m, p)`. The dtype of `Q` is same as `input`.
+            - **R** (Tensor) - The upper triangular matrices of input. If `mode` is 'complete', the shape is :math:`(m, n)`,
+              else the shape is :math:`(p, n)`. The dtype of `R` is same as `input`.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If `mode` is neither 'reduced' nor 'complete'.
+            ValueError: If the dimension of `input` is less than 2.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, ops
+            >>> import numpy as np
+            >>> x = Tensor(np.array([[20., -31, 7], [4, 270, -90], [-8, 17, -32]]), ms.float32)
+            >>> Q, R = ops.Qr()(x)
+            >>> print(Q)
+            [[-0.912871    0.16366126  0.37400758]
+            [-0.18257418 -0.9830709  -0.01544376]
+            [ 0.36514837 -0.08238228  0.92729706]]
+            >>> print(R)
+            [[ -21.908903  -14.788506  -1.6431675]
+            [    0.       -271.9031    92.25824  ]
+            [    0.          0.       -25.665514 ]]

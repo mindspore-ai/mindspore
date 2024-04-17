@@ -38,10 +38,10 @@ class AdamDeltaCpuKernelTest : public UT::Common {
     outputs_.clear();
   }
 
-  AddressPtr CreateKernelAddress(void *addr, size_t elem_num) {
-    auto kernel_addr = std::make_shared<Address>();
-    kernel_addr->addr = addr;
-    kernel_addr->size = elem_num * sizeof(float);
+  KernelTensor *CreateKernelAddress(void *addr, size_t elem_num) {
+    auto kernel_addr = new KernelTensor();
+    kernel_addr->set_device_ptr(addr);
+    kernel_addr->set_size(elem_num * sizeof(float));
     return kernel_addr;
   }
 
@@ -62,9 +62,9 @@ class AdamDeltaCpuKernelTest : public UT::Common {
   std::vector<float> m_;
   std::vector<float> v_;
   std::vector<float> grad_;
-  std::vector<AddressPtr> inputs_;
-  std::vector<AddressPtr> workspace_;
-  std::vector<AddressPtr> outputs_;
+  std::vector<KernelTensor *> inputs_;
+  std::vector<KernelTensor *> workspace_;
+  std::vector<KernelTensor *> outputs_;
   std::shared_ptr<AdamDeltaCpuKernelMod> adam_delta_;
   float beta1_power_ = 0.9;
   float beta2_power_ = 0.999;

@@ -43,13 +43,8 @@ class BatchToSpaceNDHelperGpuKernel : public GpuKernelHelperBase {
   virtual ~BatchToSpaceNDHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
-    constexpr size_t INPUT_NUM = 1;
     constexpr size_t OUTPUT_NUM = 1;
     ResetResource();
-    int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
     input_shape_ = input_shapes[0];
 
     int out_flag =
@@ -58,7 +53,7 @@ class BatchToSpaceNDHelperGpuKernel : public GpuKernelHelperBase {
       return out_flag;
     }
     output_shape_ = output_shapes[0];
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     return CheckKernelParam();
   }
 
@@ -120,7 +115,6 @@ class BatchToSpaceNDHelperGpuKernel : public GpuKernelHelperBase {
     output_size_ = 0;
     input_shape_size = 0;
     output_shape_size = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     work_size_list_.clear();
   }

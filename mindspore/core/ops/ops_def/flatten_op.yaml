@@ -1,0 +1,10 @@
+#operator flatten
+flatten:
+  args:
+    input_x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

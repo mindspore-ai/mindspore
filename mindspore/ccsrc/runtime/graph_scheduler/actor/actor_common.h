@@ -80,6 +80,8 @@ const char kCopyActorNameSignFromStore[] = "_device_tensor_store:";
 const char kMemSwapInActorNameSuffix[] = "_MemorySwapInActor";
 const char kMemSwapOutActorNameSuffix[] = "_MemorySwapOutActor";
 const char kMemSwapActorNamePrefix[] = "MemorySwapActor_";
+const char kKernelInferActorNamePrefix[] = "KernelInferActor_";
+const char kKernelResizeActorNamePrefix[] = "KernelResizeActor_";
 
 enum class KernelTransformType {
   kUnknown,
@@ -87,6 +89,8 @@ enum class KernelTransformType {
   kDeviceDataSourceActor,
   kHostDataSourceActor,
   kKernelActor,
+  kKernelInferActor,
+  kKernelResizeActor,
   kCustomActor,
   // Super kernel actor represents the sink executing of graph which is the combination of kernels.
   kSuperKernelActor,
@@ -112,7 +116,10 @@ enum class KernelTransformType {
   // Memory actor type.
   kMemoryAllocActor,
   kMemoryFreeActor,
-  kMemorySwapActor
+  kMemorySwapActor,
+  // Inner control flow actor type.
+  kConditionGatherActor,
+  kConditionSwitchActor
 };
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \
@@ -222,6 +229,14 @@ class ActorDispatcher {
   }
   static bool is_multi_thread_execution() { return is_multi_thread_execution_; }
 
+  static void set_enable_multi_stream(bool enable_multi_stream) { enable_multi_stream_ = enable_multi_stream; }
+  static bool enable_multi_stream() { return enable_multi_stream_; }
+
+  static bool has_kernel_need_user_data() { return has_kernel_need_user_data_; }
+  static void set_has_kernel_need_user_data(bool has_kernel_need_user_data) {
+    has_kernel_need_user_data_ = has_kernel_need_user_data;
+  }
+
   static bool is_memory_allocation_sync() { return is_memory_allocation_sync_; }
   static void set_is_memory_allocation_sync(bool is_memory_allocation_sync) {
     is_memory_allocation_sync_ = is_memory_allocation_sync;
@@ -229,6 +244,16 @@ class ActorDispatcher {
 
   static bool is_memory_free_sync() { return is_memory_free_sync_; }
   static void set_is_memory_free_sync(bool is_memory_free_sync) { is_memory_free_sync_ = is_memory_free_sync; }
+
+  static void set_enable_runtime_multi_pipeline(bool enable_runtime_multi_pipeline) {
+    enable_runtime_multi_pipeline_ = enable_runtime_multi_pipeline;
+  }
+  static bool enable_runtime_multi_pipeline() { return enable_runtime_multi_pipeline_; }
+
+  static void set_enable_async_launch_kernel(bool enable_async_launch_kernel) {
+    enable_async_launch_kernel_ = enable_async_launch_kernel;
+  }
+  static bool enable_async_launch_kernel() { return enable_async_launch_kernel_; }
 
   // The first five executions are for warm-up, the next five executions are statistics of multi thread execution time,
   // and the next next five executions are statistics of single thread execution time. The first 30 step which do search
@@ -250,10 +275,19 @@ class ActorDispatcher {
   // that of single thread, so single thread execution is required at this time.
   static bool is_multi_thread_execution_;
 
+  // Indicate whether use multi stream to execute.
+  static bool enable_multi_stream_;
+
+  // Indicate whether the actor set which is running contains kernel which need user data.
+  static bool has_kernel_need_user_data_;
+
   // Decide whether alloc and free memory synchronously.
   // The memory manager actor will not send and recv message if true.
   static bool is_memory_allocation_sync_;
   static bool is_memory_free_sync_;
+
+  static bool enable_runtime_multi_pipeline_;
+  static bool enable_async_launch_kernel_;
 };
 
 bool IsRunningFailed(const OpContext<DeviceTensor> *context);
@@ -279,6 +313,7 @@ bool IsSkippedKernelActor(const AnfNodePtr &node);
 
 bool IsRpcActor(const AnfNodePtr &node);
 
+bool IsInnerControlFlowActor(const AnfNodePtr &node);
 // Internal parameter is not the origin parameter of func graph, it is the output of previous kernel graph which is
 // related to the input of this kernel graph.
 bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph);
@@ -292,6 +327,13 @@ bool IsMemoryActor(KernelTransformType actor_type);
 
 // Judge whether skip the launch by the env MS_KERNEL_LAUNCH_SKIP.
 bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph);
+
+// Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
+bool EnableAsyncInfer();
+
+// If enable async launch kernel, wait all kernels launch task finish.
+// If enable infer->resize->launch pipeline, also wait all infer, resize and launch task finish.
+bool WaitRuntimePipelineFinish(const OpContext<DeviceTensor> *context, bool wait_kernel_launch_finish = true);
 
 // Copy data from src_device_tensor to dst_device_tensor.
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);

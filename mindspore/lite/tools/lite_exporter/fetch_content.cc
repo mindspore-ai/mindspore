@@ -490,9 +490,9 @@ int FetchDataFromAbstract(const AbstractBasePtr &abstract, DataInfo *data_info) 
   }
   auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
   std::vector<int32_t> dims(shape_vector.begin(), shape_vector.end());
-  data_info->data_type_ = type_ptr->type_id();
+  data_info->data_type_ = static_cast<int>(type_ptr->type_id());
   data_info->shape_ = dims;
-  data_info->node_type_ = NodeType_CNode;
+  data_info->node_type_ = static_cast<int>(NodeType_CNode);
   if (type_ptr->type_id() == kObjectTypeTensorType) {
     auto tensor_info = abstract_tensor->GetValueTrack();
     if (tensor_info == nullptr || !utils::isa<tensor::TensorPtr>(tensor_info)) {
@@ -520,7 +520,7 @@ int RemoveIfDepend(const CNodePtr &cnode) {
   inputs.clear();
 
   inputs.emplace_back(cnode->input(0));
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     AnfNodePtr input_node = cnode->input(i);
     MS_CHECK_TRUE_MSG(input_node != nullptr, RET_NULL_PTR, "inputNode is nullptr");
     if (!input_node->isa<CNode>()) {
@@ -531,8 +531,8 @@ int RemoveIfDepend(const CNodePtr &cnode) {
       auto depend_node = utils::cast<CNodePtr>(input_node);
       MS_CHECK_TRUE_MSG(depend_node != nullptr, RET_NULL_PTR, "depend_node is nullptr");
       has_depend = true;
-      bool mask_out = (depend_node->inputs().size() == opt::kInputSizeThree);
-      for (size_t j = 1; j < depend_node->inputs().size(); ++j) {
+      bool mask_out = (depend_node->size() == opt::kInputSizeThree);
+      for (size_t j = 1; j < depend_node->size(); ++j) {
         AnfNodePtr depend_input_node = depend_node->input(j);
         MS_CHECK_TRUE_MSG(depend_input_node != nullptr, RET_NULL_PTR, "depend_input_node is nullptr");
         inputs.emplace_back(depend_input_node);
@@ -554,7 +554,7 @@ int GetFlattenInputsIfMakeTuple(const CNodePtr &cnode, std::vector<AnfNodePtr> *
   MS_CHECK_TRUE_MSG(cnode != nullptr, RET_NULL_PTR, "Cnode is nullptr.");
   MS_CHECK_TRUE_MSG(inputs != nullptr, RET_NULL_PTR, "Inputs is nullptr.");
   MS_CHECK_TRUE_MSG(has_make_tuple != nullptr, RET_NULL_PTR, "Has make tuple is nullptr.");
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     AnfNodePtr input_node = cnode->input(i);
     MS_CHECK_TRUE_MSG(input_node != nullptr, RET_NULL_PTR, "Input_node is nullptr");
     auto input_cnode = utils::cast<CNodePtr>(input_node);

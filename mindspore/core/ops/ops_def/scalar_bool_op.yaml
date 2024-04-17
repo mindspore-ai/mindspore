@@ -1,0 +1,13 @@
+#operator scalar_bool
+scalar_bool:
+    args:
+        x:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+

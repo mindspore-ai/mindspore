@@ -110,12 +110,12 @@ TypePtr ReverseSequenceInferType(const PrimitivePtr &prim, const std::vector<Abs
                       << ", the input args used for infer shape and type is necessary, but missing it.";
   }
   const std::set<TypePtr> seq_lengths_valid_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("seq_lengths", input_args[1]->BuildType(), seq_lengths_valid_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("seq_lengths", input_args[1]->GetType(), seq_lengths_valid_types,
                                                    prim->name());
 
   const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kUInt16,    kUInt32,     kUInt64,
                                            kInt8,    kInt16,   kInt32,   kInt64, kComplex64, kComplex128, kBool};
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), x_valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), x_valid_types, prim->name());
 }
 }  // namespace
 AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

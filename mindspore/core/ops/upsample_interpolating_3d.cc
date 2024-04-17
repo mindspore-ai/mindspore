@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "abstract/abstract_value.h"
@@ -36,6 +37,7 @@
 #include "mindspore/core/ops/image_ops.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
+#include "mindapi/base/types.h"
 #include "ops/primitive_c.h"
 #include "ops/upsample_interpolating_3d.h"
 #include "ops/upsample_nearest_3d.h"
@@ -54,14 +56,16 @@ constexpr int64_t kVALUE_2 = 2;
 constexpr int64_t kVALUE_3 = 3;
 constexpr int64_t kVALUE_5 = 5;
 
-void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
-                        size_t *const scales_idx, const std::string &prim_name) {
+std::pair<size_t, std::vector<int64_t>> CheckAndGetScalesIdxAndNoneList(const PrimitivePtr &primitive,
+                                                                        const std::vector<AbstractBasePtr> &input_args,
+                                                                        const std::string &prim_name) {
+  size_t scales_idx = kInputIndex2;
+  std::vector<int64_t> none_list{};
   if (input_args.size() == kVALUE_3) {
-    std::vector<int64_t> none_list{};
-    auto size_type = input_args[kInputIndex1]->BuildType();
+    auto size_type = input_args[kInputIndex1]->GetType();
     MS_EXCEPTION_IF_NULL(size_type);
     auto is_output_size_none = size_type->type_id() == kMetaTypeNone;
-    auto scale_type = input_args[kInputIndex2]->BuildType();
+    auto scale_type = input_args[kInputIndex2]->GetType();
     MS_EXCEPTION_IF_NULL(scale_type);
     auto is_scales_none = scale_type->type_id() == kMetaTypeNone;
     if (is_output_size_none && is_scales_none) {
@@ -75,19 +79,20 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
     } else {
       none_list.push_back(static_cast<int64_t>(kInputIndex2));
     }
-    (void)primitive->AddAttr(kAttrNoneList, MakeValue<std::vector<int64_t>>(none_list));
   } else {
-    *scales_idx = kInputIndex1;
+    scales_idx = kInputIndex1;
   }
+
+  return std::make_pair(scales_idx, none_list);
 }
 
 void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg, const std::string &prim_name,
                    std::vector<int64_t> *const y_shape) {
-  auto size_value_ptr = input_arg->BuildValue();
+  auto size_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(size_value_ptr);
   auto output_size = GetShapeValue(primitive, input_arg);
   if (IsValueKnown(size_value_ptr)) {
-    (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
+    (void)CheckAndConvertUtils::CheckPositiveVector<int64_t>(kOutputSize, output_size, prim_name);
   }
   if (!IsDynamicRank(output_size)) {
     (void)CheckAndConvertUtils::CheckInteger("elements' number of output_size", SizeToLong(output_size.size()), kEqual,
@@ -100,18 +105,11 @@ void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_a
 
 void InferFromScales(const AbstractBasePtr &input_arg, const std::string &prim_name,
                      const std::vector<int64_t> &x_shape, std::vector<int64_t> *const y_shape) {
-  auto scales_value_ptr = input_arg->BuildValue();
+  auto scales_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(scales_value_ptr);
   if (IsValueKnown(scales_value_ptr) && !IsDynamicRank(x_shape)) {
-    std::vector<double> scales;
-    if (scales_value_ptr->isa<tensor::Tensor>()) {
-      scales = CheckAndConvertUtils::CheckTensorFloatValue("scales", scales_value_ptr, prim_name);
-    } else if (scales_value_ptr->isa<ValueSequence>()) {
-      scales = CheckAndConvertUtils::CheckListOrTupleFloat("scales", scales_value_ptr, prim_name);
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', scales should be 1D Tensor[Float] or Tuple[Float].";
-    }
-    (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
+    auto scales = CheckAndConvertUtils::CheckListOrTupleFloat("scales", input_arg, prim_name);
+    (void)CheckAndConvertUtils::CheckPositiveVector<pyfloat>(kScales, scales, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("elements' number of scales", SizeToLong(scales.size()), kEqual, kVALUE_3,
                                              prim_name);
     for (int64_t idx = 0; idx < kVALUE_3; ++idx) {
@@ -131,9 +129,11 @@ void GetOutputShape(const PrimitivePtr &primitive, const std::vector<AbstractBas
                     const std::vector<int64_t> &x_shape, std::vector<int64_t> *const y_shape) {
   auto prim_name = primitive->name();
   // none_list and idx
-  size_t scales_idx(kInputIndex2);
-  UpdateAttrNoneList(primitive, input_args, &scales_idx, prim_name);
-  auto none_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrNoneList));
+  auto [scales_idx, none_list] = CheckAndGetScalesIdxAndNoneList(primitive, input_args, prim_name);
+  if (none_list.empty()) {
+    return;
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("the length of non_list", SizeToLong(none_list.size()), kEqual, kVALUE_1,
                                            prim_name);
   // infer output shape
@@ -154,7 +154,7 @@ abstract::ShapePtr UpsampleInterpolating3DInferShape(const PrimitivePtr &primiti
   for (auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (!IsDynamicRank(x_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, kVALUE_5, prim_name);
   }
@@ -187,7 +187,7 @@ TypePtr UpsampleInterpolatingInferType(const PrimitivePtr &primitive, const std:
   }
   auto x_arg = input_args.at(kInputIndex0);
   MS_EXCEPTION_IF_NULL(x_arg);
-  auto x_type = x_arg->BuildType();
+  auto x_type = x_arg->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
 }
 }  // namespace

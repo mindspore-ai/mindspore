@@ -41,10 +41,14 @@ size_t NormalizeDimIndex::ConstNormalizeDimIndex(size_t data_dims, size_t dim_in
     return 0;
   }
   for (size_t i = 0; i < kMaxDimNums; i++) {
+    if (tuple_index_types[i] == kTypeUnknown) {
+      break;
+    }
+
     if (tuple_index_types[i] == kMetaTypeEllipsis) {
       has_ellipsis = true;
       ellipse_position = i;
-    } else if (tuple_index_types[i] != kTypeUnknown) {
+    } else {
       not_ellipse_occupy_dims += 1;
     }
   }
@@ -73,7 +77,7 @@ AbstractBasePtr NormalizeDimIndexInferInner(const PrimitivePtr &primitive,
   const size_t inputs_size = 1;
   CheckArgsSize(op_name, input_args, inputs_size);
   const AbstractBasePtr &data_abs = input_args[kIndex0];
-  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->BuildShape())[kShape];
+  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->GetShape())[kShape];
   if (IsDynamicRank(data_shape)) {
     return std::make_shared<abstract::AbstractScalar>(kInt64);
   }
@@ -89,11 +93,11 @@ class MIND_API NormalizeDimIndexInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return NormalizeDimIndexInferInner(primitive, input_args)->BuildShape();
+    return NormalizeDimIndexInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return NormalizeDimIndexInferInner(prim, input_args)->BuildType();
+    return NormalizeDimIndexInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

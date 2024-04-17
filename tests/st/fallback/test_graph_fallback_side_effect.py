@@ -133,7 +133,7 @@ def test_fallback_side_effect_dict_2():
     assert out[1] == {'a': 1, 'b': 4, 'c': 3, 'd': 22}
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fallback_side_effect_nested_net():
@@ -164,7 +164,7 @@ def test_fallback_side_effect_nested_net():
         @ms.jit
         def construct(self, x, y):
             out = InnerNet().inner.act(InnerNet().renew_para(x, y) + x, y)
-            out = out + InnerNet().renew_para(out, y)
+            out = out + (InnerNet().renew_para(out, y) * 1)
             return out
 
     x = ms.Tensor(2, dtype=ms.float64)
@@ -258,7 +258,6 @@ def test_fallback_side_effect_assign_1():
     assert out[1] == 20
 
 
-@pytest.mark.skip("the PyExecute is in the other graph and the parameter not get user data")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -330,7 +329,7 @@ class PrintPyExecuteNet(ms.nn.Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -348,7 +347,7 @@ def test_print_pyexecute():
     assert output == 200
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -407,7 +406,7 @@ def test_if_after_for_in_if_numpy():
     assert (output.asnumpy() == [3, 4]).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -447,7 +446,7 @@ def test_fallback_save_load():
         pass
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -501,7 +500,7 @@ class TransformerNet(nn.Cell):
         return dense_output.asnumpy(), Tensor(np.array([1, 2]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

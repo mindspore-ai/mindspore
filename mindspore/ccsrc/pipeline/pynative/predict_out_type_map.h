@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace pynative {
 using PredictOutTypeMap = mindspore::HashMap<std::string, TypePtr>;
+const TypePtr kTupleTensor1 = std::make_shared<Tuple>(TypePtrList{kTensorType});
 const TypePtr kTupleTensor2 = std::make_shared<Tuple>(TypePtrList{kTensorType, kTensorType});
 const TypePtr kTupleTensor3 = std::make_shared<Tuple>(TypePtrList{kTensorType, kTensorType, kTensorType});
 const TypePtr kTupleTensor4 = std::make_shared<Tuple>(TypePtrList{kTensorType, kTensorType, kTensorType, kTensorType});
@@ -57,11 +58,14 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"ApplyAdaMax", kTupleTensor3},
                                                        {"ApplyAdadelta", kTupleTensor3},
                                                        {"ApplyAdagrad", kTupleTensor2},
-                                                       {"ApplyAdagradDA", kTupleTensor3},
                                                        {"ApplyAdagradV2", kTupleTensor2},
                                                        {"ApplyAdamWithAmsgrad", kTupleTensor4},
                                                        {"ApplyAdamWithAmsgradV2", kTupleTensor4},
                                                        {"ApplyAddSign", kTupleTensor2},
+                                                       {"ApplyCamePart1", kTupleTensor3},
+                                                       {"ApplyCamePart2", kTupleTensor4},
+                                                       {"ApplyCamePart3", kTupleTensor4},
+                                                       {"ApplyCamePart4", kTupleTensor3},
                                                        {"ApplyKerasMomentum", kTupleTensor2},
                                                        {"ApplyPowerSign", kTupleTensor2},
                                                        {"ApplyProximalAdagrad", kTupleTensor2},
@@ -160,9 +164,12 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"LambNextMVWithDecay", kTupleTensor4},
                                                        {"LambNextRight", kTupleTensor2},
                                                        {"LayerNorm", kTupleTensor3},
+                                                       {"LayerNormV3", kTupleTensor3},
+                                                       {"LayerNormExt", kTupleTensor3},
                                                        {"LayerNormBetaGammaBackprop", kTupleTensor2},
                                                        {"LayerNormBetaGammaBackpropV2", kTupleTensor2},
                                                        {"LayerNormGrad", kTupleTensor3},
+                                                       {"LayerNormGradV3", kTupleTensor3},
                                                        {"LayerNormGradGrad", kTupleTensor3},
                                                        {"LayerNormXBackpropV2", kTupleTensor2},
                                                        {"LinearSumAssignment", kTupleTensor2},
@@ -200,14 +207,13 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"RaggedRange", kTupleTensor2},
                                                        {"RaggedTensorToSparse", kTupleTensor3},
                                                        {"RandomChoiceWithMask", kTupleTensor2},
-                                                       {"ReLUV2", kTupleTensor2},
                                                        {"ReduceStd", kTupleTensor2},
                                                        {"ReservoirReplayBufferDestroy", kTupleTensor4},
                                                        {"SampleDistortedBoundingBoxV2", kTupleTensor3},
                                                        {"ScalarAdd", kTypeNone},
                                                        {"ScalarBool", kTypeNone},
                                                        {"ScalarDiv", kTypeNone},
-                                                       {"ScalarFloordiv", kTypeNone},
+                                                       {"ScalarFloorDiv", kTypeNone},
                                                        {"ScalarMod", kTypeNone},
                                                        {"ScalarMul", kTypeNone},
                                                        {"ScalarSub", kTypeNone},
@@ -226,6 +232,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"SequenceStack", kTypeNone},
                                                        {"SequenceZerosLike", kTypeNone},
                                                        {"Size", kTypeNone},
+                                                       {"SolveTriangularGrad", kTupleTensor2},
                                                        {"SoftmaxCrossEntropyWithLogits", kTupleTensor2},
                                                        {"SoftmaxV2WithDropoutDoMaskV3", kTupleTensor2},
                                                        {"Sort", kTupleTensor2},
@@ -268,7 +275,6 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"TensorToTuple", kTypeNone},
                                                        {"TopK", kTupleTensor2},
                                                        {"TupleGetItem", kTypeNone},
-                                                       {"PackFunc", kTypeAny},
                                                        {"UniformCandidateSampler", kTupleTensor3},
                                                        {"Unique", kTupleTensor2},
                                                        {"UniqueConsecutive", kTupleTensor3},
@@ -278,15 +284,19 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"bit_and", kTypeNone},
                                                        {"bit_or", kTypeNone},
                                                        {"make_range", kTypeNone},
-                                                       {"scalar_eq", kTypeNone},
-                                                       {"scalar_ge", kTypeNone},
-                                                       {"scalar_gt", kTypeNone},
-                                                       {"scalar_le", kTypeNone},
-                                                       {"scalar_lt", kTypeNone},
+                                                       {"ScalarEq", kTypeNone},
+                                                       {"ScalarGe", kTypeNone},
+                                                       {"ScalarGt", kTypeNone},
+                                                       {"ScalarLe", kTypeNone},
+                                                       {"ScalarLt", kTypeNone},
                                                        {"sequence_len", kTypeNone},
                                                        {"tuple_setitem", kTypeNone},
-                                                       {"FlashAttentionScore", kTupleTensor3},
-                                                       {"FlashAttentionScoreGrad", kTupleTensor3}};
+                                                       {"FlashAttentionScore", kTupleTensor4},
+                                                       {"FlashAttentionScoreGrad", kTupleTensor4},
+                                                       {"SplitTensor", kTypeAny},
+                                                       {"SplitWithSize", kTypeAny},
+                                                       {"SilentCheck", kTupleTensor5},
+                                                       {"MatmulQkv", kTupleTensor3}};
 
 TypePtr PredictOutTypeByName(const std::string &op_name);
 

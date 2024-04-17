@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,7 @@ constexpr size_t kDiagInputsNum = 1;
 constexpr size_t kDiagOutputsNum = 1;
 }  // namespace
 
-bool DiagCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool DiagCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDiagOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -43,12 +40,12 @@ bool DiagCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool DiagCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &outputs) {
-  auto aptr = static_cast<T *>(inputs[0]->addr);
-  auto xptr = static_cast<T *>(outputs[0]->addr);
+bool DiagCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto aptr = static_cast<T *>(inputs[0]->device_ptr());
+  auto xptr = static_cast<T *>(outputs[0]->device_ptr());
 
-  int64_t data_num = static_cast<int64_t>(inputs[0]->size / sizeof(T));
+  int64_t data_num = static_cast<int64_t>(inputs[0]->size() / sizeof(T));
 
   auto task = [&xptr, &aptr, &data_num](int64_t start, int64_t end) {
     std::fill(xptr + data_num * start, xptr + data_num * end, T());

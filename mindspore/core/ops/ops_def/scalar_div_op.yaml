@@ -1,0 +1,14 @@
+#operator scalar_div
+scalar_div:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true

@@ -1,0 +1,12 @@
+#operator square
+square:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: SquareAscend
+

@@ -130,7 +130,7 @@ class MS_CORE_API PrimitiveAbstractClosure final : public AbstractFuncAtom {
 
   std::size_t hash() const override;
 
-  std::string ToString() const override { return "Prim: " + prim_->name(); }
+  std::string ToString() const override { return "PrimitiveAbstractClosure: " + prim_->name(); }
 
   std::string ToString(bool verbose) const override;
 
@@ -159,7 +159,10 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   // For internal usage only, make it public so that make_shared can work on it.
   FuncGraphAbstractClosure(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
                            std::uintptr_t tracking_id, bool specialized)
-      : func_graph_(func_graph), context_(context), tracking_id_(tracking_id), specialized_(specialized) {
+      : func_graph_(FuncGraphWeakPtr(func_graph)),
+        context_(context),
+        tracking_id_(tracking_id),
+        specialized_(specialized) {
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_EXCEPTION_IF_NULL(context);
   }
@@ -171,7 +174,7 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the FuncGraph that this FuncGraphAbstractClosure corresponding to.
   ///
   /// \return The FuncGraph that this FuncGraphAbstractClosure corresponding to.
-  const FuncGraphPtr &func_graph() const { return func_graph_; }
+  FuncGraphPtr func_graph() const { return func_graph_.lock(); }
 
   AnalysisContextPtr context() const override { return context_; }
 
@@ -180,11 +183,11 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   bool specialized() const { return specialized_; }
 
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, tracking_id_, specialized_);
+    return std::make_shared<FuncGraphAbstractClosure>(func_graph(), context_, tracking_id_, specialized_);
   }
 
   AbstractFunctionPtr CopyWithoutTrackingId() const override {
-    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, 0, specialized_);
+    return std::make_shared<FuncGraphAbstractClosure>(func_graph(), context_, 0, specialized_);
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -200,7 +203,7 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   std::size_t HashWithoutTrackingId() const;
 
  private:
-  FuncGraphPtr func_graph_;
+  FuncGraphWeakPtr func_graph_;
   AnalysisContextPtr context_;
   // To discriminate different usage of same graph by using this tracking_id,
   // so different tracking_id will produce different FuncGraphAbstractClosure,
@@ -315,8 +318,20 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   /// \param[in] node The CNode this PartialAbstractClosure evaluated from.
   void set_node(const AnfNodePtr &node) { node_ = AnfNodeWeakPtr(node); }
 
+  /// \brief Get whether the args need to be appended to the end.
+  ///
+  /// \return Whether the args need to be appended to the end.
+  bool need_append_to_end() const { return need_append_to_end_; }
+
+  /// \brief Set whether the args need to be appended to the end.
+  ///
+  /// \param[in] flag Whether the args need to be appended to the end.
+  void set_need_append_to_end(bool flag) { need_append_to_end_ = flag; }
+
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<PartialAbstractClosure>(fn_, args_abs_list_, node_.lock());
+    auto abs = std::make_shared<PartialAbstractClosure>(fn_, args_abs_list_, node_.lock());
+    abs->set_need_append_to_end(need_append_to_end_);
+    return abs;
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -335,6 +350,7 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   AbstractBasePtrList args_abs_list_;
   // The ANFNode which this PartialAbstractClosure evaluated from.
   AnfNodeWeakPtr node_;
+  bool need_append_to_end_{false};
 };
 using PartialAbstractClosurePtr = std::shared_ptr<PartialAbstractClosure>;
 

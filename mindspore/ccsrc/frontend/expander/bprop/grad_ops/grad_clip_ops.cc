@@ -27,7 +27,7 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody(BODYFUNC(ib) {
   auto cast_x = ib->Cast(x, kFloat32);
   auto cast_clip_norm = ib->Cast(clip_norm, kFloat32);
   auto square_out = ib->Emit("Square", {cast_x});
-  auto reduce_sum_axis = ib->EmitValue(ib->GetAttr("axis"));
+  auto reduce_sum_axis = ib->Value(GetIntList(ib->GetAttr("axis")));
   auto reduce_sum_out = ib->ReduceSum(square_out, reduce_sum_axis, true);
   auto sqrt_out = ib->Sqrt(reduce_sum_out);
   auto max_out = ib->Maximum(sqrt_out, cast_clip_norm);
@@ -42,8 +42,8 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody(BODYFUNC(ib) {
   auto tmp_mul_dout = BinopGradCommon(ib, cast_x, cast_clip_norm, mul_bc_x, mul_bc_y);
   auto mul_dout_x = tmp_mul_dout[0];
   auto mul_dout_y = tmp_mul_dout[1];
-  auto tmp_max_dout = ib->Emit("MaximumGrad", {sqrt_out, cast_clip_norm, div_dout_y},
-                               {{"grad_x", MakeValue(true)}, {"grad_y", MakeValue(true)}});
+  auto tmp_max_dout =
+    ib->Emit("MaximumGrad", {sqrt_out, cast_clip_norm, div_dout_y, ib->Value<bool>(true), ib->Value<bool>(true)});
   auto max_dout_x = ib->TupleGetItem(tmp_max_dout, 0);
   auto max_dout_y = ib->TupleGetItem(tmp_max_dout, 1);
   auto sqrt_dout_x = ib->Emit("SqrtGrad", {sqrt_out, max_dout_x});

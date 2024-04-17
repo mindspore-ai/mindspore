@@ -37,7 +37,7 @@ __global__ void BroadcastMaskedFillKernel(size_t l0, size_t l1, size_t l2, size_
                                           size_t r6, size_t r7, size_t d0, size_t d1, size_t d2, size_t d3, size_t d4,
                                           size_t d5, size_t d6, size_t d7, size_t inner_size, const T *input,
                                           const bool *mask, T *value, T *output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < d0 * d1 * d2 * d3 * d4 * d5 * d6;
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < d0 * d1 * d2 * d3 * d4 * d5 * d6 * d7;
        pos += blockDim.x * gridDim.x) {
     size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6 * d7) % d0;
     size_t j = pos / (d2 * d3 * d4 * d5 * d6 * d7) % d1;

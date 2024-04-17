@@ -1,18 +1,14 @@
 approvers:
 - zhaizhiqiang
-- zhanghaibo5
 - zhang_xue_tong #
 - HilbertDavid
 - jpc_chenjianping
-- hangangqiang
-- liuchongming74
 - wang_shaocong
-- liulili-huawei
-reviewers:
 - yeyunpeng2020
-- xu_anyue
-- gongdaguo1
+- YeFeng_24
 - yangruoqi713
+reviewers:
+- xu_anyue
 - ling_qiao_min
 - greatpanc
 - gengdongjie

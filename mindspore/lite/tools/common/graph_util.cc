@@ -199,7 +199,7 @@ static STATUS TraceOutput(const AnfNodePtr &node, std::vector<std::pair<AnfNodeP
   iter++;
   MS_LOG(INFO) << "Func name of cnode " << name << " ,trace iter: " << iter;
   if ((name == kMakeTuple) || (name == kMakeList)) {
-    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < cnode->size(); ++i) {
       auto make_tuple_input = cnode->input(i);
       if (opt::CheckPrimitiveType(make_tuple_input, prim::kPrimUpdateState) ||
           opt::CheckPrimitiveType(make_tuple_input, prim::kPrimLoad)) {
@@ -212,8 +212,8 @@ static STATUS TraceOutput(const AnfNodePtr &node, std::vector<std::pair<AnfNodeP
       }
     }
   } else if (name == prim::kPrimDepend->name()) {
-    if (cnode->inputs().size() < kDependInputNum) {
-      MS_LOG(ERROR) << "Length of inputs is " << cnode->inputs().size() << ", which is less than three.";
+    if (cnode->size() < kDependInputNum) {
+      MS_LOG(ERROR) << "Length of inputs is " << cnode->size() << ", which is less than three.";
       return lite::RET_ERROR;
     }
     if (TraceOutput(cnode->input(kDependFirstInputIdx), outputs, output_names, output_dims) != lite::RET_OK) {

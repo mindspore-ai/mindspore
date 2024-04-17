@@ -16,7 +16,6 @@
 
 #include "src/litert/delegate/nnapi/op/strided_slice_nnapi.h"
 #include <vector>
-#include <unordered_map>
 #include "src/litert/delegate/nnapi/nnapi_utils.h"
 #include "nnacl/op_base.h"
 

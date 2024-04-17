@@ -95,15 +95,30 @@ template CUDA_LIB_EXPORT cudaError_t CalTile<float>(const std::vector<size_t> in
 template CUDA_LIB_EXPORT cudaError_t CalTile<half>(const std::vector<size_t> inp_shape,
                                                    const std::vector<size_t> out_shape, const half *input, half *output,
                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTile<int8_t>(const std::vector<size_t> inp_shape,
+                                                     const std::vector<size_t> out_shape, const int8_t *input,
+                                                     int8_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalTile<int16_t>(const std::vector<size_t> inp_shape,
                                                       const std::vector<size_t> out_shape, const int16_t *input,
                                                       int16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT cudaError_t CalTile<int>(const std::vector<size_t> inp_shape,
-                                                  const std::vector<size_t> out_shape, const int *input, int *output,
-                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTile<int32_t>(const std::vector<size_t> inp_shape,
+                                                      const std::vector<size_t> out_shape, const int32_t *input,
+                                                      int32_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalTile<int64_t>(const std::vector<size_t> inp_shape,
                                                       const std::vector<size_t> out_shape, const int64_t *input,
                                                       int64_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalTile<bool>(const std::vector<size_t> inp_shape,
                                                    const std::vector<size_t> out_shape, const bool *input, bool *output,
                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTile<uint8_t>(const std::vector<size_t> inp_shape,
+                                                      const std::vector<size_t> out_shape, const uint8_t *input,
+                                                      uint8_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTile<uint16_t>(const std::vector<size_t> inp_shape,
+                                                       const std::vector<size_t> out_shape, const uint16_t *input,
+                                                       uint16_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTile<uint32_t>(const std::vector<size_t> inp_shape,
+                                                       const std::vector<size_t> out_shape, const uint32_t *input,
+                                                       uint32_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTile<uint64_t>(const std::vector<size_t> inp_shape,
+                                                       const std::vector<size_t> out_shape, const uint64_t *input,
+                                                       uint64_t *output, cudaStream_t cuda_stream);

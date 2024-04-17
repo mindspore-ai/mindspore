@@ -21,6 +21,8 @@
 #include <map>
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
+#include "frontend/parallel/auto_parallel/costmodel.h"
 
 namespace mindspore {
 namespace parallel {
@@ -233,6 +235,7 @@ class SqrtCost : public CastCost {
 using TanhCost = SqrtCost;
 using EluCost = SqrtCost;
 using ReLUCost = SqrtCost;
+using SiLUCost = SqrtCost;
 using identityCost = SqrtCost;
 using SigmoidCost = SqrtCost;
 using ReciprocalCost =
@@ -241,7 +244,6 @@ using InvCost = SqrtCost;
 using RsqrtCost = SqrtCost;
 using AsinhCost = SqrtCost;
 using AcoshCost = SqrtCost;
-using ReLUV2Cost = SqrtCost;
 using TopKCost = SqrtCost;
 using HShrinkCost = SqrtCost;
 using HSigmoidCost = SqrtCost;

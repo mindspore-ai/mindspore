@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_LU_UNPACK_GRAD_H_
 #define AICPU_KERNELS_LU_UNPACK_GRAD_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class LuUnpackGradCpuKernel : public CpuKernel {
@@ -31,10 +31,10 @@ class LuUnpackGradCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t LuUnpackGradCompute(const CpuKernelContext &ctx);
+  uint32_t LuUnpackGradCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t TriLU(const CpuKernelContext &ctx, Tensor *L_grad_output, Tensor *U_grad_output, int64_t a);
+  uint32_t TriLU(CpuKernelContext &ctx, Tensor *L_grad_output, Tensor *U_grad_output, int64_t a);
 };
 }  // namespace aicpu
 #endif

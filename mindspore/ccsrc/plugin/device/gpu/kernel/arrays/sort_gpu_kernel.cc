@@ -22,17 +22,17 @@ namespace kernel {
 constexpr double kMinValue = -65504.;
 
 template <typename K, typename V>
-bool SortGpuKernelMod<K, V>::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SortGpuKernelMod<K, V>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(EXCEPTION) << "Only support input datatype in [float16, float32] for sort kernel";
   return false;
 }
 
 template <>
-bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   if (is_null_input_) {
     return true;
@@ -106,9 +106,9 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
 }
 
 template <>
-bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   if (is_null_input_) {
     return true;

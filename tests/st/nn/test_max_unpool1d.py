@@ -18,6 +18,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.context as context
 import mindspore.ops as ops
+from tests.st.utils import test_utils
 
 
 class Net(nn.Cell):
@@ -29,7 +30,7 @@ class Net(nn.Cell):
         return self.max_unpool1d(x, indices, output_size)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -51,7 +52,7 @@ def test_max_unpool1d_normal(mode):
     assert np.allclose(output, expect, rtol=0.0001)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -66,7 +67,6 @@ def test_max_unpool1d_normal_output_size(mode):
     context.set_context(mode=mode)
     x = Tensor(np.array([[2, 4, 6, 8]]).astype(np.float32))
     incices = Tensor(np.array([[1, 3, 5, 7]]).astype(np.int64))
-    print('incices', incices.shape)
     output_size = (1, 8)
     net = Net(kernel_size=2, stride=2, padding=0)
     output = net(x, incices, output_size).asnumpy()
@@ -80,6 +80,7 @@ def test_max_unpool1d_normal_output_size(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_f_max_unpool1d_normal(mode):
     """
     Feature: max_unpool1d

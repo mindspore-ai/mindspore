@@ -46,10 +46,11 @@ class QuantDTypeCastCPUKernel : public LiteKernel {
   int DoDequantInt8ToFp32(int num_unit_thread, int thread_offset, int channel_offset);
   int DoDequantFp32ToInt8(int num_unit_thread, int thread_offset);
   int ExtractQuantParams(const lite::Tensor *tensor, int preferred_dim);
-  int DoDequanInt8ToFp32ChannelRow(const int8_t *quant_values, float *real_values, float *scale, int32_t *zp,
-                                   int channel_unit_num, int per_channel_size);
-  int DoDequanInt8ToFp32ChannelCol(const int8_t *quant_values, float *real_values, float *scale, int32_t *zp,
-                                   int channel_num, int channel_unit_num, int per_channel_size);
+  int DoDequanInt8ToFp32ChannelRow(const int8_t *quant_values, float *real_values, const float *scale,
+                                   const int32_t *zp, int channel_unit_num, int per_channel_size) const;
+  int DoDequanInt8ToFp32ChannelCol(const int8_t *quant_values, float *real_values, const float *scale,
+                                   const int32_t *zp, int channel_num, int channel_unit_num,
+                                   int per_channel_size) const;
 
   int thread_num_;
   int thread_n_num_{0};

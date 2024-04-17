@@ -23,12 +23,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool MeshgridGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Meshgrid>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
-  std::string indexing = kernel_ptr->get_indexing();
+bool MeshgridGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  std::string indexing = GetValue<std::string>(primitive_->GetAttr("indexing"));
   if (indexing == "xy") {
     swap_indexing_ = true;
   } else if (indexing == "ij") {
@@ -38,7 +34,7 @@ bool MeshgridGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
                   << indexing;
     return false;
   }
-  auto data_type = inputs.at(kIndex0)->GetDtype();
+  auto data_type = inputs.at(kIndex0)->dtype_id();
   data_size_ = GetTypeByte(TypeIdToType(data_type));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -51,17 +47,16 @@ bool MeshgridGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int MeshgridGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int MeshgridGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 
   input_shapes_.clear();
   input_size_ = 1;
-  input_count_ = static_cast<size_t>(input_size_list_.size());
+  input_count_ = static_cast<size_t>(inputs.size());
   for (size_t i = 0; i < input_count_; i++) {
     auto input_shape = inputs[i]->GetShapeVector();
     if (input_shape.size() < 1) {
@@ -75,7 +70,7 @@ int MeshgridGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   }
 
   output_size_ = 1;
-  output_count_ = static_cast<size_t>(output_size_list_.size());
+  output_count_ = static_cast<size_t>(outputs.size());
 
   // inferred shape swaps output shape for us if needed
   output_shape_ = outputs[kIndex0]->GetShapeVector();
@@ -98,8 +93,9 @@ int MeshgridGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool MeshgridGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool MeshgridGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }

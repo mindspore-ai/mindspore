@@ -37,7 +37,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/jit/ps/resource.h"
 #include "pipeline/pynative/base.h"
-#include "pipeline/pynative/grad/bprop_tensor_replace.h"
+#include "pipeline/pynative/grad/ir/bprop_tensor_replace.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -76,7 +76,7 @@ class TopCellInfo {
   inline void set_sub_cell_hook_changed(const std::string &sub_cell) { (void)sub_cell_hook_changed_.emplace(sub_cell); }
   inline const CellIdWithBackwardHookOp &cell_backward_hook_op() const { return cell_backward_hook_op_; }
   void RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op);
-  void GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) const;
+  void GetOpInfo(const FrontendOpRunInfoPtr &op_run_info, bool is_jit_graph) const;
   inline void ClearCellHookOp() { cell_backward_hook_op_.clear(); }
   inline bool forward_already_run() const { return forward_already_run_; }
   inline void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
@@ -103,6 +103,8 @@ class TopCellInfo {
   inline void set_has_call_graph(bool has_call_graph) { has_call_graph_ = has_call_graph; }
   inline const bool has_control_flow() const { return has_control_flow_; }
   inline void set_has_control_flow(bool has_control_flow) { has_control_flow_ = has_control_flow; }
+  inline const bool jit_out_has_dict() const { return jit_out_has_dict_; }
+  inline void set_jit_out_has_dict(bool jit_out_has_dict) { jit_out_has_dict_ = jit_out_has_dict; }
   inline const bool is_unknown_shape() const { return is_unknown_shape_; }
   inline void set_is_unknown_shape(bool is_unknown_shape) { is_unknown_shape_ = is_unknown_shape; }
   inline void set_fg(const FuncGraphPtr &fg) { fg_ = fg; }
@@ -118,11 +120,11 @@ class TopCellInfo {
     graph_info_map_[fg] = graph_info;
   }
   inline const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() const { return graph_info_map_; }
-  inline autograd::AutoGradCellImplPtr auto_grad_cell_ptr() const {
+  inline autograd::AutoGradPtr auto_grad_cell_ptr() const {
     MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr_);
     return auto_grad_cell_ptr_;
   }
-  void set_auto_grad_cell_ptr(autograd::AutoGradCellImplPtr &&auto_grad_cell_ptr) {
+  void set_auto_grad_cell_ptr(autograd::AutoGradPtr &&auto_grad_cell_ptr) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
                                        runtime::ProfilerEvent::kPyNativeGradClearAutoGradCell,
                                        runtime::ProfilerRecorder::kNoName, true);
@@ -150,13 +152,22 @@ class TopCellInfo {
   inline void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
     use_dynamic_shape_process_ = use_dynamic_shape_process;
   }
+  inline bool has_bprop_cut_op() const { return has_bprop_cut_op_; }
+  inline void set_has_bprop_cut_op(bool has_bprop_cut_op) { has_bprop_cut_op_ = has_bprop_cut_op; }
   inline void set_resume_flag(bool resume_flag) { resume_flag_ = resume_flag; }
   bool resume_flag() const { return resume_flag_; }
+  inline void set_is_ir_grad(bool is_ir_grad) { is_ir_grad_ = is_ir_grad; }
+  bool is_ir_grad() const { return is_ir_grad_; }
   void SaveTensorIdWithOpInfo(const std::string &op_info, const ValuePtr &v) {
     SetIdWithOpInfo(v, op_info, kIndex0, &(replace_info_.id_with_op_info));
   }
   void SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph);
+  void SetLastOutputValueForwardOutputFlag(const ValuePtr &v);
   void ChangeTopCellInfo(const std::vector<BaseShapePtr> &args_new_shape);
+  const std::vector<std::string> &output_ids() const { return output_ids_; }
+  void set_outputs_ids(std::vector<std::string> output_ids) { output_ids_ = std::move(output_ids); }
+  // Check whether the tensor is top cell output.
+  bool IsOutputTensor(const tensor::TensorPtr &tensor) const;
 
  private:
   void SetMultipleOutputToGraphInfoMap(const string &id, const AnfNodePtr &node) const;
@@ -176,6 +187,7 @@ class TopCellInfo {
   bool is_need_save_dynamic_detect_nodes_{false};
   bool has_call_graph_{false};
   bool has_control_flow_{false};
+  bool jit_out_has_dict_{false};
   bool is_unknown_shape_{false};
   size_t grad_order_{0};
   size_t op_index_{0};
@@ -186,9 +198,10 @@ class TopCellInfo {
   std::string already_run_cell_id_;
   std::string input_args_id_;
   std::string grad_operation_;
+  std::vector<std::string> output_ids_;
   pipeline::ResourcePtr resource_{nullptr};
   FuncGraphPtr fg_{nullptr};
-  autograd::AutoGradCellImplPtr auto_grad_cell_ptr_{nullptr};
+  autograd::AutoGradPtr auto_grad_cell_ptr_{nullptr};
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   // Record `register hook` or `remove hook` function has been called by sub cell
   // The record range between the begin and end of top cell.
@@ -200,8 +213,10 @@ class TopCellInfo {
   mindspore::OrderedMap<tensor::TensorPtr, AutoGradMetaDataPtr> param_grad_info_;
   InputArgsInfoPtr input_args_info_{nullptr};
   bool use_dynamic_shape_process_{false};
+  bool has_bprop_cut_op_{false};
   // Judge whether need resume param grad info.
   bool resume_flag_{false};
+  bool is_ir_grad_{false};
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
 }  // namespace pynative

@@ -19,13 +19,12 @@
 #include <string>
 #include <utility>
 #include "Eigen/Dense"
-#include "mindspore/core/ops/qr.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kAMatrixDimNumMin = 2;
-constexpr size_t kQRInputsNum = 1;
+constexpr size_t kQRInputsNum = 2;
 constexpr size_t kQROutputsNum = 2;
 constexpr size_t kPivotsIndex = 1;
 constexpr size_t kPermutationIndex = 2;
@@ -34,10 +33,7 @@ constexpr size_t kColIndex = 1;
 constexpr int64_t kParallelDataNums = 8 * 1024;
 }  // namespace
 
-bool QrCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool QrCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kQRInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kQROutputsNum, kernel_name_);
 
@@ -48,17 +44,12 @@ bool QrCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vecto
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Qr>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  full_matrices_ = kernel_ptr->get_full_matrices();
+  full_matrices_ = inputs[kIndex1]->GetValueWithCheck<bool>();
   return true;
 }
 
-int QrCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs,
-                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int QrCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
@@ -68,12 +59,12 @@ int QrCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
 }
 
 template <typename T>
-bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x = GetDeviceAddress<T>(inputs, kIndex0);
-  auto output_q = GetDeviceAddress<T>(outputs, kIndex0);
-  auto output_r = GetDeviceAddress<T>(outputs, kIndex1);
+bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &,
+                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_q = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto output_r = reinterpret_cast<T *>(outputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(output_q);
   MS_EXCEPTION_IF_NULL(output_r);
@@ -84,7 +75,7 @@ bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
   size_t size_mp = m * p;
   size_t size_pn = p * n;
   if (size_mn > 0) {
-    size_t input_num = static_cast<size_t>(inputs[0]->size / sizeof(T));
+    size_t input_num = static_cast<size_t>(inputs[0]->size() / sizeof(T));
     size_t matrix_num = input_num / size_mn;
     size_t data_size = input_num * sizeof(T);
     if (data_size <= kParallelDataNums) {
@@ -133,19 +124,32 @@ bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 std::vector<std::pair<KernelAttr, QrCpuKernelMod::QrFunc>> QrCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat16),
    &QrCpuKernelMod::LaunchKernel<Eigen::half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
    &QrCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
    &QrCpuKernelMod::LaunchKernel<double>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
      .AddOutputAttr(kNumberTypeComplex64)
      .AddOutputAttr(kNumberTypeComplex64),
    &QrCpuKernelMod::LaunchKernel<std::complex<float>>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
      .AddOutputAttr(kNumberTypeComplex128)
      .AddOutputAttr(kNumberTypeComplex128),
    &QrCpuKernelMod::LaunchKernel<std::complex<double>>}};

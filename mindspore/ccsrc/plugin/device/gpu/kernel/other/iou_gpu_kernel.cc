@@ -30,12 +30,11 @@ constexpr auto kIou = "iou";
 constexpr auto kIof = "iof";
 };  // namespace
 
-bool IOUGpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operator,
-                           const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) {
+bool IOUGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIOUInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIOUOutputsNum, kernel_name_);
 
-  auto mode_value_ptr = base_operator->GetAttr(kAttrMode);
+  auto mode_value_ptr = primitive_->GetAttr(kAttrMode);
   MS_EXCEPTION_IF_NULL(mode_value_ptr);
   auto mode = GetValue<std::string>(mode_value_ptr);
   if (mode == kIou) {
@@ -46,7 +45,6 @@ bool IOUGpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operat
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', mode only support 'iou' or 'iof'.";
   }
 
-  kernel_name_ = base_operator->GetPrim()->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -57,18 +55,16 @@ bool IOUGpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operat
   return true;
 }
 
-int IOUGpuKernelMod::Resize(const mindspore::kernel::BaseOperatorPtr &base_operator,
-                            const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int IOUGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIOUInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIOUOutputsNum, kernel_name_);
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  size_t type_size = GetTypeByte(TypeIdToType(inputs[ANCHOR_BOXES]->GetDtype()));
-  const size_t anchor_boxes_size_ = input_size_list_[ANCHOR_BOXES] / type_size;
-  const size_t gt_boxes_size_ = input_size_list_[GT_BOXES] / type_size;
+  size_t type_size = GetTypeByte(TypeIdToType(inputs[ANCHOR_BOXES]->dtype_id()));
+  const size_t anchor_boxes_size_ = inputs[ANCHOR_BOXES]->size() / type_size;
+  const size_t gt_boxes_size_ = inputs[GT_BOXES]->size() / type_size;
   if ((anchor_boxes_size_ % kBoxCoordinateLen) != 0 || (gt_boxes_size_ % kBoxCoordinateLen) != 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << ", the size of the box should be a multiple of 4.";
     return false;
@@ -79,8 +75,8 @@ int IOUGpuKernelMod::Resize(const mindspore::kernel::BaseOperatorPtr &base_opera
 }
 
 template <typename T>
-bool IOUGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                                   void *stream_ptr) {
+bool IOUGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto *anchor_boxes_addr = GetDeviceAddress<T>(inputs, ANCHOR_BOXES);
   auto *gt_boxes_addr = GetDeviceAddress<T>(inputs, GT_BOXES);
   auto *iou_addr = GetDeviceAddress<T>(outputs, IOU_VALUE);

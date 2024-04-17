@@ -17,7 +17,7 @@ mindspore.nn.FastGelu
 
     FastGelu函数图：
 
-    .. image:: images/FastGelu.png
+    .. image:: ../images/FastGelu.png
         :align: center
 
     输入：

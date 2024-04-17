@@ -34,7 +34,7 @@ class NetEluGrad(nn.Cell):
         return self.elu_grad(dy, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_elu_grad_dshape():
@@ -54,7 +54,7 @@ def test_elu_grad_dshape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_elu_grad_fp32():
@@ -79,7 +79,7 @@ def test_elu_grad_fp32():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_elu_grad_fp16():

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,12 @@
  */
 #include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
 
-#include <memory>
-#include <vector>
-
+#include "minddata/dataset/util/path.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
-#include "minddata/dataset/util/path.h"
 
 namespace mindspore {
 namespace dataset {
-
 SentencePieceTokenizerOp::SentencePieceTokenizerOp(const std::shared_ptr<SentencePieceVocab> vocab,
                                                    const SPieceTokenizerLoadType load_type,
                                                    const SPieceTokenizerOutType out_type)

@@ -28,12 +28,12 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
     """Draw an image with given bboxes and class labels (with scores).
 
     Args:
-        image (numpy.ndarray): The image to be displayed, shaped :math:`(C, H, W)` or :math:`(H, W, C)`,
+        image (numpy.ndarray): The image to be displayed, shaped :math:`<C, H, W>` or :math:`<H, W, C>`,
             formatted RGB.
-        bboxes (numpy.ndarray): Bounding boxes (with scores), shaped :math:`(N, 4)` or :math:`(N, 5)`,
-            data should be ordered with (N, x, y, w, h).
-        labels (numpy.ndarray): Labels of bboxes, shaped :math:`(N, 1)`.
-        segm (numpy.ndarray): The segmentation masks of image in M classes, shaped :math:`(M, H, W)`.
+        bboxes (numpy.ndarray): Bounding boxes (with scores), shaped :math:`<N, 4>` or :math:`<N, 5>`,
+            data should be ordered with <N, x, y, w, h>.
+        labels (numpy.ndarray): Labels of bboxes, shaped :math:`<N, 1>`.
+        segm (numpy.ndarray): The segmentation masks of image in M classes, shaped :math:`<M, H, W>`.
             Default: ``None``.
         class_names (list[str], tuple[str], dict): Names of each class to map label to class name.
             Default: ``None``, only display label.
@@ -63,10 +63,10 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
 
     Raises:
         ImportError: If `opencv-python` is not installed.
-        AssertionError: If `image` is not in (H, W, C) or (C, H, W) format.
-        AssertionError: If `bboxes` is not in (N, 4) or (N, 5) format.
-        AssertionError: If `labels` is not in (N, 1) format.
-        AssertionError: If `segm` is not in (M, H, W) format.
+        AssertionError: If `image` is not in <H, W, C> or <C, H, W> format.
+        AssertionError: If `bboxes` is not in <N, 4> or <N, 5> format.
+        AssertionError: If `labels` is not in <N, 1> format.
+        AssertionError: If `segm` is not in <M, H, W> format.
         AssertionError: If `class_names` is not of type list, tuple or dict.
         AssertionError: If `bbox_color` is not a tuple in format of (B, G, R).
         AssertionError: If `text_color` is not a tuple in format of (B, G, R).

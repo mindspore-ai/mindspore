@@ -23,6 +23,7 @@ enum Status {
   SUCCESS = 0,
   FAILED,
   INVALID_ARGUMENT,
+  REACH_MAX_RECURSIVE_DEPTH,
 };
 }
 }  // namespace mindspore

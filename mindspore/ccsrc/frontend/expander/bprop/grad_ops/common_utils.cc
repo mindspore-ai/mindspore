@@ -26,9 +26,10 @@
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::expander::bprop {
-NodePtrList ReturnZeros(BpropIRBuilder *ib) {
+NodePtrList ReturnZeros(BpropBuilder *ib) {
   const auto &inputs = ib->GetInputs();
   if (inputs.size() <= kDim2) {
     MS_LOG(EXCEPTION) << "Bprop's inputs size should be greater than 2 (includes out and dout), but got "
@@ -87,7 +88,7 @@ std::pair<std::vector<bool>, std::vector<std::vector<int64_t>>> DynBroadcastGrad
   return {need_shapecalc, reduce_axis};
 }
 
-NodePtrList DynBinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
+NodePtrList DynBinopGradCommon(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                                const NodePtr &dy, size_t shift = 0UL) {
   NodePtr inputs[] = {x, y};
   NodePtrList reduce = {dx, dy};
@@ -100,7 +101,7 @@ NodePtrList DynBinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodeP
   for (size_t i = 0; i < kDim2; i++) {
     auto dout_shape = ib->GetShape(reduce[i]);
     if (!need_shapecalc[i] && IsDynamicRank(dout_shape)) {
-      MS_LOG(WARNING) << "The dynamic shape inference of" << reduce[i]->get()->ToString() << " is overly generalized.";
+      MS_LOG(WARNING) << "The dynamic shape inference of" << reduce[i]->ToString() << " is overly generalized.";
     }
     if (!need_shapecalc[i] && !IsDynamicRank(dout_shape)) {
       if (!reduce_axis[i].empty()) {
@@ -186,40 +187,6 @@ std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_sha
   return std::make_pair(pack_shape, perm);
 }
 
-std::vector<std::vector<int64_t>> BroadcastGradientArgs(const std::vector<int64_t> &x_shape,
-                                                        const std::vector<int64_t> &y_shape) {
-  std::vector<std::vector<int64_t>> bc_axis;
-  if (x_shape == y_shape) {
-    (void)bc_axis.emplace_back(std::vector<int64_t>{});
-    (void)bc_axis.emplace_back(std::vector<int64_t>{});
-    return bc_axis;
-  }
-  std::vector<int64_t> grad_x_reduce_idx;
-  std::vector<int64_t> grad_y_reduce_idy;
-  auto x_size = x_shape.size();
-  auto y_size = y_shape.size();
-  auto n = std::max(x_size, y_size);
-  for (size_t i = n; i >= 1; i--) {
-    auto x_i = x_size < i ? 1 : x_shape[x_size - i];
-    auto y_i = y_size < i ? 1 : y_shape[y_size - i];
-    const int64_t reduce_idx = SizeToLong(n - i);
-    if (x_i == y_i) {
-      continue;
-    } else if (x_i == 1) {
-      grad_x_reduce_idx.push_back(reduce_idx);
-    } else if (y_i == 1) {
-      grad_y_reduce_idy.push_back(reduce_idx);
-    } else {
-      MS_LOG(EXCEPTION) << "not compatible shape input(" << x_shape << ", " << y_shape
-                        << ") for BroadcastGradientArgs.";
-    }
-  }
-
-  (void)bc_axis.emplace_back(std::move(grad_x_reduce_idx));
-  (void)bc_axis.emplace_back(std::move(grad_y_reduce_idy));
-  return bc_axis;
-}
-
 std::vector<int64_t> TupleDiv(const std::vector<int64_t> &x, const std::vector<int64_t> &y) {
   std::vector<int64_t> out;
   if (x.size() != y.size()) {
@@ -239,11 +206,14 @@ std::vector<int64_t> TupleDiv(const std::vector<int64_t> &x, const std::vector<i
   return out;
 }
 
-std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis) {
+std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis, bool skip_mode) {
   if (x.empty()) {
     return {};
   }
   if (axis.empty()) {
+    if (skip_mode) {
+      return x;
+    }
     return std::vector<int64_t>(x.size(), 1LL);
   }
   int64_t x_rank = SizeToLong(x.size());
@@ -262,18 +232,13 @@ std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vecto
 
 int64_t GetIntValue(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto real_node = node->get();
-  MS_EXCEPTION_IF_NULL(real_node);
-  if (real_node->isa<ValueNode>()) {
-    MS_EXCEPTION_IF_NULL(real_node->abstract());
-    if (real_node->abstract()->isa<abstract::AbstractTensor>()) {
-      auto value_node = real_node->cast<ValueNodePtr>();
-      auto t_vec = CheckAndConvertUtils::CheckTensorIntValue("tensor", value_node->value(), "bprop");
-      MS_EXCEPTION_IF_CHECK_FAIL(t_vec.size() >= kIndex1, "Get single tensor value failed");
-      return t_vec[kIndex0];
-    }
+  auto value = node->BuildValue();
+  if (value->isa<tensor::Tensor>()) {
+    auto t_vec = CheckAndConvertUtils::CheckTensorIntValue("tensor", value, "bprop");
+    MS_EXCEPTION_IF_CHECK_FAIL(t_vec.size() >= kIndex1, "Get single tensor value failed");
+    return t_vec[kIndex0];
   }
-  return AnfUtils::GetIntValue(node->BuildValue());
+  return AnfUtils::GetIntValue(value);
 }
 
 std::vector<int64_t> GetIntList(const ValuePtr &value) {
@@ -294,48 +259,60 @@ std::vector<int64_t> GetIntList(const NodePtr &node) {
   return GetIntList(value);
 }
 
-NodePtrList BinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
-                            const NodePtr &dy, size_t shift) {
+NodePtr StaticBinopGradCommon(BpropBuilder *ib, const NodePtr &dx, const ShapeArray &shape,
+                              const ShapeArray &broadcast_shape, size_t shift, size_t index, bool *is_dynamic_shape) {
+  NodePtr reduce_dx = dx;
+  if (broadcast_shape[kIndex0].empty() || broadcast_shape[kIndex1].empty()) {
+    if (broadcast_shape[index].empty()) {
+      if (shift) {
+        std::vector<int64_t> axis(broadcast_shape[index ^ 1].size());
+        std::iota(axis.begin(), axis.begin(), 0LL);
+        reduce_dx = ib->ReduceSum(reduce_dx, axis);
+      } else {
+        reduce_dx = ib->ReduceSum(reduce_dx);
+      }
+    }
+  } else if (!IsDynamic(broadcast_shape[0]) && !IsDynamic(broadcast_shape[1])) {
+    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgsInferValue(broadcast_shape[0], broadcast_shape[1]);
+    if (!bc_axis[index].empty()) {
+      reduce_dx = ib->ReduceSum(reduce_dx, bc_axis[index], ib->GetRank(reduce_dx) == shape[index].size());
+    }
+    reduce_dx = ib->Reshape(reduce_dx, shape[index]);
+  } else {
+    *is_dynamic_shape = true;
+  }
+  return reduce_dx;
+}
+
+NodePtrList BinopGradCommon(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx, const NodePtr &dy,
+                            size_t shift) {
   // Common grad definition for binary operations with shift.
   // The function is usually used in backprop op to reduce additional dimensions
   // created by broadcasting.
-  NodePtr inputs[] = {x, y};
-  ShapeVector shape[] = {ib->GetShape(inputs[0]), ib->GetShape(inputs[1])};
+  NodePtrList inputs{x, y};
+  ShapeArray shape{ib->GetShape(inputs[kIndex0]), ib->GetShape(inputs[kIndex1])};
   NodePtrList reduce = {dx, dy};
-  if (IsDynamicRank(shape[0]) || IsDynamicRank(shape[1])) {
+  if (IsDynamicRank(shape[kIndex0]) || IsDynamicRank(shape[kIndex1])) {
     return DynBinopGradCommon(ib, x, y, dx, dy, shift);
   }
   if (shape[kIndex0].size() <= shift && shape[kIndex0].size() == shape[kIndex1].size()) {
     return reduce;
   }
-  ShapeVector broadcast_shape[kDim2];
+  ShapeArray broadcast_shape(kDim2);
   for (size_t i = 0; i < kDim2; i++) {
     broadcast_shape[i] = ShapeVector(shape[i].begin(), shape[i].end() - shift);
   }
-
-  if (broadcast_shape[0].empty() || broadcast_shape[1].empty()) {
-    for (size_t i = 0; i < kDim2; i++) {
-      if (broadcast_shape[i].empty()) {
-        if (shift) {
-          std::vector<int64_t> axis(broadcast_shape[i ^ 1].size());
-          std::iota(axis.begin(), axis.begin(), 0LL);
-          reduce[i] = ib->ReduceSum(reduce[i], axis);
-        } else {
-          reduce[i] = ib->ReduceSum(reduce[i]);
-        }
-      }
-    }
-  } else if (!IsDynamic(broadcast_shape[0]) && !IsDynamic(broadcast_shape[1])) {
-    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(broadcast_shape[0], broadcast_shape[1]);
-    for (size_t i = 0; i < kDim2; i++) {
-      if (!bc_axis[i].empty()) {
-        reduce[i] = ib->ReduceSum(reduce[i], bc_axis[i], ib->GetRank(reduce[i]) == shape[i].size());
-      }
-      if (ib->GetRank(reduce[i]) != shape[i].size()) {
-        reduce[i] = ib->Reshape(reduce[i], shape[i]);
-      }
-    }
-  } else {
+  bool is_x_shape_dynamic = false;
+  bool is_y_shape_dynamic = false;
+  if (dx != nullptr) {
+    reduce[kIndex0] =
+      StaticBinopGradCommon(ib, reduce[kIndex0], shape, broadcast_shape, shift, kIndex0, &is_x_shape_dynamic);
+  }
+  if (dy != nullptr) {
+    reduce[kIndex1] =
+      StaticBinopGradCommon(ib, reduce[kIndex1], shape, broadcast_shape, shift, kIndex1, &is_y_shape_dynamic);
+  }
+  if (is_x_shape_dynamic || is_y_shape_dynamic) {
     return DynBinopGradCommon(ib, x, y, dx, dy, shift);
   }
   return reduce;
@@ -388,7 +365,7 @@ int64_t CheckRange(int64_t idx, int64_t dim_size) {
   return idx < 0 ? (idx + dim_size) : idx;
 }
 
-NodePtr GetEps(BpropIRBuilder *ib, const TypePtr &type) {
+NodePtr GetEps(BpropBuilder *ib, const TypePtr &type) {
   constexpr auto epsilon = 0.000977;
   switch (type->type_id()) {
     case kNumberTypeFloat16:
@@ -454,39 +431,6 @@ std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, co
   return out_shp;
 }
 
-std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std::vector<int64_t> &shapex) {
-  int64_t len_multi = static_cast<int64_t>(multiples.size());
-  int64_t len_shape = static_cast<int64_t>(shapex.size());
-  int64_t len_cmp = len_multi - len_shape;
-  auto max_len = std::max(len_multi, len_shape);
-  int64_t i = 0;
-  int64_t j = 0;
-  std::vector<int64_t> res;
-  auto res_sz = static_cast<size_t>(2 * max_len);
-  res.reserve(res_sz);
-  while (i < max_len && j < max_len) {
-    auto idx_i = LongToSize(i);
-    auto idx_j = LongToSize(j);
-    if (len_cmp == 0) {
-      res.push_back(multiples[idx_i]);
-      res.push_back(shapex[idx_j]);
-      i++;
-      j++;
-    } else if (len_cmp > 0) {
-      res.push_back(multiples[idx_i]);
-      res.push_back(1);
-      i++;
-      len_cmp--;
-    } else {
-      res.push_back(1);
-      res.push_back(shapex[idx_j]);
-      j++;
-      len_cmp++;
-    }
-  }
-  return res;
-}
-
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm) {
   std::vector<int64_t> check_perm(perm);
   std::vector<int64_t> res(perm);
@@ -518,31 +462,51 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank) {
   return trans;
 }
 
-DEF_PURE_SHAPE_CALC(reduce_shape_shapecalc)
-  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+class ReduceShapeShapeCalc : public ShapeCalcFunctor {
+ public:
+  // cppcheck-suppress unknownMacro
+  DECLARE_SHAPE_CALC("ShapeCalc_ReduceShape", ReduceShapeShapeCalc)
+  explicit ReduceShapeShapeCalc(bool skip_mode) : ShapeCalcFunctor("ShapeCalc_ReduceShape"), skip_mode_(skip_mode) {}
+  ValuePtr ToValue() const override { return MakeValue(skip_mode_); }
+  void FromValue(const ValuePtr &value) override { skip_mode_ = GetValue<int64_t>(value); }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
     auto x_shape = inputs.at(0);
     auto axis_value = inputs.at(1);
-    auto r_shape = ReduceShape(x_shape, axis_value);
-    return {r_shape};
-  })
-  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
-    return {IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size())};
-  });
-NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, const bool keep_dims) {
+    auto r_shape = ReduceShape(x_shape, axis_value, skip_mode_);
+    auto scaling = TupleDiv(x_shape, r_shape);
+    return {r_shape, scaling};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    return {x_rank, x_rank};
+  }
+
+ protected:
+  bool skip_mode_ = false;
+};
+REG_FUNCTOR("ShapeCalc_ReduceShape", ReduceShapeShapeCalc);
+
+NodePtr SumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, bool keep_dims,
+                bool skip_mode) {
   auto grad = dout;
+  auto calc_res = ib->ShapeCalc(std::make_shared<ReduceShapeShapeCalc>(skip_mode), {x, axis}, {1});
   if (!keep_dims) {
-    auto calc_res = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1});
     grad = ib->Reshape(grad, calc_res[0]);
+  }
+  auto tile_scaling = calc_res[1];
+  if (tile_scaling->input_type() == InputType::kConstant || IsDynamic(x->shape())) {
+    return ib->Tile(grad, tile_scaling);
   }
   return ib->BroadcastTo(grad, x);
 }
 
-NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
-                     const NodePtr &dout) {
+NodePtr MinOrMaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+                     const NodePtr &out, const NodePtr &dout) {
   auto y = out;
   auto grad = dout;
-  if (!ib->GetAttr<bool>("keep_dims")) {
-    auto output_shape_kept_dims = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1})[0];
+  auto keepdims = GetValue<bool>(keep_dims->BuildValue());
+  if (!keepdims) {
+    auto output_shape_kept_dims = ib->ShapeCalc(std::make_shared<ReduceShapeShapeCalc>(), {x, axis}, {1})[0];
     y = ib->Reshape(out, output_shape_kept_dims);
     grad = ib->Reshape(dout, output_shape_kept_dims);
   }
@@ -551,84 +515,24 @@ NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, 
   return indicators / num_selected * grad;
 }
 
-class ArgminOrArgmaxShapeCalc : public ShapeCalcFunctor {
- public:
-  // cppcheck-suppress unknownMacro
-  DECLARE_SHAPE_CALC("ShapeCalc_ArgminOrArgmax", ArgminOrArgmaxShapeCalc)
-  explicit ArgminOrArgmaxShapeCalc(int64_t axis) : ShapeCalcFunctor("ShapeCalc_ArgminOrArgmax"), axis_(axis) {}
-  ValuePtr ToValue() const override { return MakeValue(axis_); }
-  void FromValue(const ValuePtr &value) override { axis_ = GetValue<int64_t>(value); }
-  ShapeArray Calc(const ShapeArray &inputs) const override {
-    auto indices_expand_rank = inputs.at(0).size();
-    auto x_shape = inputs.at(1);
-    std::vector<int64_t> broad_shape(indices_expand_rank, 1);
-    auto x = LongToSize(axis_ + SizeToLong(indices_expand_rank));
-    auto depth = x_shape[x];
-    broad_shape[x] = depth;
-    return {broad_shape, {depth}};
-  }
-  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
-    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
-    return {x_rank, 1};
-  }
-
- protected:
-  int64_t axis_{0};
-};
-REG_FUNCTOR("ShapeCalc_ArgminOrArgmax", ArgminOrArgmaxShapeCalc);
-
-NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
+NodePtr ArgminOrArgmaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max) {
-  auto x_shape = ib->GetShape(x);
-  int64_t x_axis = axis;
-  if (!IsDynamicRank(x_shape)) {
-    x_axis = CheckRange(axis, SizeToLong(x_shape.size()));
-  } else if (axis < 0) {
-    MS_LOG_EXCEPTION << "For ArgminOrArgmaxGrad, when axis is negative,"
-                     << "input_x is currently not supported as a dynamic rank.";
+  auto keep_dims_value = keep_dims->BuildValue();
+  if (!ops::IsValueKnown(keep_dims_value)) {
+    MS_LOG_EXCEPTION
+      << "For bprop of `ArgminWithValue` or `ArgMaxWithValue` op, keep_dims must currently be a constant";
   }
-  NodePtr dout_expand;
-  NodePtr new_out = out;
-  if (keep_dims) {
-    dout_expand = ib->TupleGetItem(dout, 1);
-    if (is_max) {
-      new_out = ib->Emit("ArgMaxWithValue", {x}, {{"axis", MakeValue(axis)}, {"keep_dims", MakeValue(false)}});
-    } else {
-      new_out = ib->Emit("ArgMinWithValue", {x}, {{"axis", MakeValue(axis)}, {"keep_dims", MakeValue(false)}});
-    }
-  } else {
-    dout_expand = ib->Emit("ExpandDims", {ib->TupleGetItem(dout, 1), ib->Value<int64_t>(x_axis)});
+  NodePtr dout_value = ib->TupleGetItem(dout, 1);
+  NodePtr indices = ib->TupleGetItem(out, 0);
+  auto keep_dims_bool = GetValue<bool>(keep_dims_value);
+  if (!keep_dims_bool) {
+    indices = ib->Emit("ExpandDims", {indices, axis});
+    dout_value = ib->Emit("ExpandDims", {dout_value, axis});
   }
-  auto type_x = ib->GetDtype(x);
-  auto on_value = ib->Tensor(1, type_x);
-  auto off_value = ib->Tensor(0, type_x);
-  auto out_0 = ib->TupleGetItem(new_out, 0);
-  NodePtr depth = ib->Value<int64_t>(1);
-  if (!x_shape.empty()) {
-    depth = ib->TupleGetItem(ib->Shape(x), LongToSize(x_axis));
-  }
-  if (x_axis >= 0) {
-    auto onehot_axis = x_axis;
-    auto out_shape = ib->GetShape(out_0);
-    if (!IsDynamic(out_shape) && onehot_axis >= SizeToLong(out_shape.size())) {
-      onehot_axis = -1;
-    }
-    auto dx = dout_expand * ib->Emit("OneHot", {out_0, depth, on_value, off_value}, {{"axis", MakeValue(onehot_axis)}});
-    if (x_shape.empty()) {
-      dx = ib->Emit("Squeeze", {dx});
-    }
-    return dx;
-  } else {
-    auto indices_expand = ib->ExpandDims(out_0, x_axis);
-    auto res = ib->ShapeCalc(std::make_shared<ArgminOrArgmaxShapeCalc>(x_axis), {indices_expand, x});
-    auto broad_shape = res[0];
-    depth = res[1];
-    auto depth_range = ib->Range(depth);
-    auto depth_broad = ib->Reshape(depth_range, broad_shape);
-    auto one_hot_bool = ib->Equal(indices_expand, depth_broad);
-    auto one_hot_res = ib->Cast(one_hot_bool, type_x);
-    return dout_expand * one_hot_res;
-  }
+  NodePtr dx_zeros = ib->ZerosLike(x);
+  constexpr int reduce_value = 0;
+  auto dx = ib->Emit("Scatter", {dx_zeros, axis, indices, dout_value, ib->Value<int64_t>(reduce_value)});
+  return dx;
 }
 
 TypeId PromoteBinaryDtype(TypeId t1, TypeId t2) {
@@ -640,7 +544,7 @@ TypeId PromoteBinaryDtype(TypeId t1, TypeId t2) {
     t1, t2, (complex_types.find(t1) != complex_types.end() || complex_types.find(t2) != complex_types.end()));
 }
 
-NodePtr LGamma(BpropIRBuilder *ib, const NodePtr &x) {
+NodePtr LGamma(BpropBuilder *ib, const NodePtr &x) {
   auto k_lanczos_gamma = 7;
   auto k_base_lanczos_coeff = 0.9999999999998099;
   double k_lanczos_coefficients[8] = {676.520368121885098567009190444019, -1259.13921672240287047156078755283,
@@ -706,6 +610,7 @@ ShapeVector PoolToNHWC(const ShapeVector &v) {
   new_v[kIndex3] = v[kIndex1];
   return new_v;
 }
+
 ShapeVector ConvToNHWC(const ShapeVector &v) {
   ShapeVector new_v(v);
   new_v[kIndex0] = v[kIndex1];
@@ -724,40 +629,21 @@ ShapeVector GetShapeByRange(const ShapeVector &v, int64_t begin, int64_t end) {
   return res;
 }
 
-NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
+NodePtr MatrixTranspose(BpropBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);
   if (IsDynamicRank(shape)) {
     auto dim = ib->Emit("Rank", {x});
-    auto perm = ib->Range(ib->Tensor(0, kInt64), ib->Emit("Cast", {dim, ib->EmitValue(kInt64)}), ib->Tensor(1, kInt64));
-    auto stridedslice_helper = [&perm, &ib](const NodePtr &x) {
-      return ib->Emit("StridedSlice",
-                      {perm, ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(0))),
-                       ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(1))),
-                       ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(2)))},
-                      {{"begin_mask", MakeValue<int64_t>(0LL)},
-                       {"end_mask", MakeValue<int64_t>(0LL)},
-                       {"ellipsis_mask", MakeValue<int64_t>(0LL)},
-                       {"new_axis_mask", MakeValue<int64_t>(0LL)},
-                       {"shrink_axis_mask", MakeValue<int64_t>(0LL)}});
+    auto perm = ib->Range(dim);
+    auto stridedslice_helper = [&perm, &ib](int64_t begin, int64_t end, int64_t step, int64_t end_mask = 0) {
+      return ib->StridedSlice(perm, ib->Value<ShapeVector>(ShapeVector{begin}),
+                              ib->Value<ShapeVector>(ShapeVector{end}), ib->Value<ShapeVector>(ShapeVector{step}), 0,
+                              end_mask, 0, 0, 0);
     };
-    auto normalize_slice_helper = [&perm, &ib](int64_t x, int64_t y, int64_t z,
-                                               const std::vector<int64_t> &init_by_none) {
-      return ib->Emit("NormalizeSlice",
-                      {perm, ib->Value(static_cast<int64_t>(x)), ib->Value(static_cast<int64_t>(y)),
-                       ib->Value(static_cast<int64_t>(z))},
-                      {{kAttrTupleIndexAxis, MakeValue(static_cast<int64_t>(0))},
-                       {kAttrTupleIndexTypes, MakeValue({})},
-                       {kAttrExpandDimsMask, MakeValue(static_cast<int64_t>(0))},
-                       {kAttrInitByNone, MakeValue(init_by_none)}});
-    };
-    auto range_1 = normalize_slice_helper(0, -2, 0, {1, 0, 1});
-    auto range_2 = normalize_slice_helper(-1, 0, 0, {0, 1, 1});
-    auto range_3 = normalize_slice_helper(-2, -1, 0, {0, 0, 1});
-    auto part_1 = stridedslice_helper(range_1);
-    auto part_2 = stridedslice_helper(range_2);
-    auto part_3 = stridedslice_helper(range_3);
+    auto part_1 = stridedslice_helper(0, -2, 1);
+    auto part_2 = stridedslice_helper(-1, 0, 1, 1);
+    auto part_3 = stridedslice_helper(-2, -1, 1);
     perm = ib->Concat({part_1, part_2, part_3}, -1);
-    return ib->Transpose(x, perm);
+    return ib->Transpose(x, ib->TensorToTuple(perm));
   }
   auto dim = shape.size();
   if (dim < kDim2) {
@@ -771,5 +657,5 @@ NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
   return ib->Transpose(x, perm);
 }
 
-NodePtr Adjoint(BpropIRBuilder *ib, const NodePtr &x) { return MatrixTranspose(ib, ib->Conj(x)); }
+NodePtr Adjoint(BpropBuilder *ib, const NodePtr &x) { return MatrixTranspose(ib, ib->Conj(x)); }
 }  // namespace mindspore::expander::bprop

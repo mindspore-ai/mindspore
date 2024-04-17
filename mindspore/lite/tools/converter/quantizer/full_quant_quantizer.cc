@@ -199,7 +199,7 @@ int FullQuantQuantizer::QuantNodeGraphInput(const PrimitivePtr &primitive, const
     quant_param.zeroPoint = info->GetZeroPoint();
     quant_param.max = info->GetEncodeMax();
     quant_param.min = info->GetEncodeMin();
-    quant_param.numBits = init_param_.bit_num_;
+    quant_param.numBits = static_cast<int32_t>(init_param_.bit_num_);
     quant_param.narrowRange = true;
     quant_param.inited = true;
     quant_param.roundType = 1;
@@ -262,9 +262,9 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   auto op_name = cnode->fullname_with_scope();
-  MS_ASSERT(cnode->inputs().size() - 1 <= (*inputs_diverg_info)[op_name].size());
+  MS_ASSERT(cnode->size() - 1 <= (*inputs_diverg_info)[op_name].size());
   int ret;
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     CHECK_NULL_RETURN(input_node);
     bool is_graph_input = IsGraphInput(input_node);

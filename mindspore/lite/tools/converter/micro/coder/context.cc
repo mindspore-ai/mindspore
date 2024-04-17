@@ -50,4 +50,17 @@ std::vector<std::string> CoderContext::GetInitWeightSizeCode() const {
 }
 
 void CoderContext::AppendInitWeightSizeCode(size_t w_buf_size) { weight_buffer_size_ += w_buf_size; }
+
+const std::map<int, std::vector<int>> &CoderContext::shape_all_scenes() const {
+  return shape_info_container_->GetShapesWholeScenes();
+}
+const std::map<const Tensor *, std::vector<std::string>> &CoderContext::shape_templates() {
+  return shape_info_container_->GetWholeTemplateShape();
+}
+const std::map<int, std::vector<size_t>> &CoderContext::offset_all_scenes() {
+  return dynamic_mem_manager_->GetOffsetAllScenes();
+}
+const std::vector<size_t> &CoderContext::buffer_sizes() const { return dynamic_mem_manager_->GetBufferSizes(); }
+const std::vector<size_t> &CoderContext::workspaces() const { return dynamic_mem_manager_->GetWorkSpaces(); }
+std::string CoderContext::tensor_addr(const Tensor *tensor) { return dynamic_mem_manager_->GetVarTensorAddr(tensor); }
 }  // namespace mindspore::lite::micro

@@ -186,14 +186,16 @@ inline bool IsStrNumeric(const std::string &str) {
 
 inline bool IsNeedMemoryStatistic() {
   static const char kMemoryStatistic[] = "MS_MEMORY_STATISTIC";
-  static const auto need_statistic = GetEnv(kMemoryStatistic);
-  return need_statistic == "1";
+  static const auto need_statistic = GetEnv(kMemoryStatistic) == "1";
+  return need_statistic;
 }
 
 inline bool IsNeedProfileMemory() {
   static const char kLaunchSkippedEnv[] = "MS_KERNEL_LAUNCH_SKIP";
+  static const char kSimulationLevel[] = "MS_SIMULATION_LEVEL";
   static const auto launch_skipped = GetEnv(kLaunchSkippedEnv);
-  static bool skip_launch = (launch_skipped == "all" || launch_skipped == "ALL");
+  static const auto simulation_level = common::GetEnv(kSimulationLevel);
+  static const bool skip_launch = (launch_skipped == "all" || launch_skipped == "ALL" || !simulation_level.empty());
   return skip_launch && IsNeedMemoryStatistic();
 }
 

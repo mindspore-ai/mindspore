@@ -107,8 +107,6 @@ class ControlActor : public MemoryAwareActor {
   void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
                         const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) override;
 
-  // Update the dynamic shape in backend parameters.
-  void UpdateDynamicShapeInParameter();
   void SendOutput(OpContext<DeviceTensor> *const context) override;
   void EraseInput(const OpContext<DeviceTensor> *context) override;
 
@@ -141,6 +139,7 @@ class ControlActor : public MemoryAwareActor {
   std::vector<DeviceTensorPtr> created_device_tensors_;
   // In control flow, when the argument is not a dynamic len tuple but the parameter is, need create a new
   // real make tuple node for it.
+  std::vector<FuncGraphPtr> created_new_graphs_;
   std::vector<AnfNodePtr> created_new_nodes_;
   // Input num.
   size_t input_partials_num_{0};

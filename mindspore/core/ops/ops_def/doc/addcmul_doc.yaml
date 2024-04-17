@@ -1,0 +1,41 @@
+addcmul:
+    description: |
+        Adds the element-wise product of `x1` by `x2`, multiplied by `value` to `input_data`.
+        It computes the following operation:
+
+        .. math::
+            output[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
+
+        Inputs:
+            - **input_data** (Tensor) - The tensor to be added.
+            - **x1** (Tensor) - The tensor to be multiplied.
+            - **x2** (Tensor) - The tensor to be multiplied.
+            - **value** (Tensor) - The multiplier for tensor x1*x2.
+
+        Outputs:
+            Tensor, has the same shape and dtype as x1*x2.
+
+        Raises:
+            TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
+            TypeError: If dtype of `x1`, `x2`, `value`, `input_data` are not the same.
+            ValueError: If `x1` could not be broadcast to `x2`.
+            ValueError: If `value` could not be broadcast to `x1` * `x2`.
+            ValueError: If `input_data` could not be broadcast to `value*(x1*x2)`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
+            >>> x1 = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
+            >>> x2 = Tensor(np.array([[1, 2, 3]]), mindspore.float32)
+            >>> value = Tensor([1], mindspore.float32)
+            >>> addcmul = ops.Addcmul()
+            >>> y = addcmul(input_data, x1, x2, value)
+            >>> print(y)
+            [[ 2.  3.  4.]
+            [ 3.  5.  7.]
+            [ 4.  7. 10.]]

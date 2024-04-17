@@ -28,16 +28,32 @@ using ResizeBicubicPtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
 const std::vector<std::pair<KernelAttr, ResizeBicubicPtrCreatorFunc>> kernel_attr = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat16),
    CreateResizeBicubicKernelPtr<half, half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32),
    CreateResizeBicubicKernelPtr<float, float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64),
    CreateResizeBicubicKernelPtr<double, double>}};
 }  // namespace
 
-bool ResizeBicubicGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ResizeBicubicGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -47,35 +63,31 @@ bool ResizeBicubicGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
   return true;
 }
 
-bool ResizeBicubicGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeBicubic>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool ResizeBicubicGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  MS_EXCEPTION_IF_NULL(attr_ptr_);
-  attr_ptr_->align_corners = kernel_ptr->get_align_corners();
-  attr_ptr_->half_pixel_centers = kernel_ptr->get_half_pixel_centers();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   MS_EXCEPTION_IF_NULL(helper_ptr_);
-  helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
 }
 
-int ResizeBicubicGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ResizeBicubicGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> inp_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::vector<int64_t> inptosize_shape = inputs.at(kIndex1)->GetShapeVector();
-  std::vector<int64_t> out_shape = outputs.at(kIndex0)->GetShapeVector();
+  MS_EXCEPTION_IF_NULL(attr_ptr_);
+  attr_ptr_->align_corners = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+  attr_ptr_->half_pixel_centers = inputs.at(kIndex3)->GetValueWithCheck<bool>();
+  helper_ptr_->SetKernelParam(attr_ptr_);
+
+  std::vector<int64_t> inp_shape = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> inptosize_shape = inputs[kIndex1]->GetShapeVector();
+  std::vector<int64_t> out_shape = outputs[kIndex0]->GetShapeVector();
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   input_shapes.emplace_back(inp_shape);
@@ -84,7 +96,6 @@ int ResizeBicubicGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

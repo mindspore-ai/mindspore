@@ -300,7 +300,7 @@ int TrainSession::CompileTrainGraph(std::shared_ptr<Model> model) {
   CompileEvalOutputs();       // prepare outputs in eval mode
   // Prepare a list of eval kernels
   if (CompileInferenceKernels() != RET_OK) {
-    MS_LOG(ERROR) << "CompileInferenceKernels failed.";
+    MS_LOG(WARNING) << "CompileInferenceKernels failed.";
     return RET_ERROR;
   }
   ret = AllocWorkSpace();
@@ -602,30 +602,45 @@ void TrainSession::CompileEvalOutputs() {
   eval_output_tensor_map_.clear();
   eval_output_tensor_names_.clear();
   for (auto kernel : this->train_kernels_) {
-    if (IsLossKernel(kernel) && !(IsGradKernel(kernel))) {
-      for (auto in_kernel : kernel->in_kernels()) {
-        if (IsLossKernel(in_kernel) || IsGradKernel(in_kernel)) continue;
-        bool is_loss = false;
-        for (auto in_in_kernel : in_kernel->in_kernels()) {
-          if (IsLossKernel(in_in_kernel)) is_loss = true;
+    if (!IsLossKernel(kernel) || IsGradKernel(kernel)) {
+      continue;
+    }
+    // if LossKernel and not GradKernel, deal with outputs
+    for (auto in_kernel : kernel->in_kernels()) {
+      bool is_loss = IsLossInKernel(in_kernel);
+      if (is_loss) {
+        continue;
+      }
+      // insert if not already in
+      auto out_tensors = TSFindTensors(in_kernel, kernel);
+      if (eval_output_node_map_.find(in_kernel->name()) != eval_output_node_map_.end()) {
+        auto exist_out_tensors = eval_output_node_map_[in_kernel->name()];
+        auto kernel_all_out_tensors = in_kernel->out_tensors();
+        eval_output_node_map_[in_kernel->name()] = {};
+        for (auto tensor : kernel_all_out_tensors) {
+          if (std::find(out_tensors.begin(), out_tensors.end(), tensor) != out_tensors.end() ||
+              std::find(exist_out_tensors.begin(), exist_out_tensors.end(), tensor) != exist_out_tensors.end()) {
+            eval_output_node_map_[in_kernel->name()].emplace_back(tensor);
+          }
         }
-        if (is_loss) continue;
-        // insert if not already in
-        if (eval_output_node_map_.find(in_kernel->name()) == eval_output_node_map_.end()) {
-          auto *ms_tensor = in_kernel->out_tensors().at(0);
-          if (ms_tensor != nullptr) {
-            ms_tensor->set_init_ref_count(ms_tensor->init_ref_count() + 1);
-            eval_output_node_map_[in_kernel->name()].emplace_back(ms_tensor);
-            auto index = TSFindTensor(tensors_, ms_tensor);
-            if (index != tensors_.size()) {
-              if (!ms_tensor->tensor_name().empty()) {
-                eval_output_tensor_map_.insert(std::make_pair(ms_tensor->tensor_name(), ms_tensor));
-                eval_output_tensor_names_.emplace_back(ms_tensor->tensor_name());
-              } else {
-                eval_output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
-                eval_output_tensor_names_.emplace_back(std::to_string(index));
-              }
-            }
+      } else {
+        eval_output_node_map_[in_kernel->name()] = out_tensors;
+      }
+      for (auto out_tensor : out_tensors) {
+        auto index = TSFindTensor(tensors_, out_tensor);
+        if (std::find(eval_output_tensor_names_.begin(), eval_output_tensor_names_.end(), out_tensor->tensor_name()) !=
+              eval_output_tensor_names_.end() ||
+            std::find(eval_output_tensor_names_.begin(), eval_output_tensor_names_.end(), std::to_string(index)) !=
+              eval_output_tensor_names_.end()) {
+          continue;
+        }
+        if (index != tensors_.size()) {
+          if (!out_tensor->tensor_name().empty()) {
+            eval_output_tensor_map_.insert(std::make_pair(out_tensor->tensor_name(), out_tensor));
+            eval_output_tensor_names_.emplace_back(out_tensor->tensor_name());
+          } else {
+            eval_output_tensor_map_.insert(std::make_pair(std::to_string(index), out_tensor));
+            eval_output_tensor_names_.emplace_back(std::to_string(index));
           }
         }
       }
@@ -743,6 +758,12 @@ int TrainSession::CompileInferenceKernels() {
     }
     BuildInferenceKernelsRecursive(kernel, &inference_kernels_);
   }
+
+  if (train_kernels_.size() == inference_kernels_.size()) {
+    MS_LOG(WARNING) << "This is inference model, return err in TrainSession.";
+    return RET_ERROR;
+  }
+
   if (inference_kernels_.size() == 0) {
     inference_kernels_ = this->train_kernels_;
   }
@@ -778,6 +799,13 @@ void TrainSession::CompileOptimizedKernels() {
 }
 
 int TrainSession::FindConstFoldedKernels() {
+  float obf_ratio = ModelRecoverObfuscate(false);
+  if (!FloatCompare(obf_ratio, 1.0)) {
+    MS_LOG(INFO) << "obfuscated model do not need const folding.";
+    const_fold_kernels_ = this->inference_kernels_;
+    const_output_tensors_ = {};
+    return RET_OK;
+  }
   const_fold_kernels_.clear();
   const_output_tensors_.clear();
   for (auto kernel : this->inference_kernels_) {
@@ -1038,6 +1066,18 @@ int TrainSession::OptimizerStep() {
   return RET_OK;
 }
 
+bool TrainSession::IsLossInKernel(const kernel::KernelExec *kernel) const {
+  if (IsLossKernel(kernel) || IsGradKernel(kernel)) {
+    return true;
+  }
+  for (auto in_kernel : kernel->in_kernels()) {
+    if (IsLossKernel(in_kernel)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool TrainSession::IsLossKernel(const kernel::KernelExec *kernel) const {
   bool isLoss = false;
   for (auto &s : cfg_.loss_name_) {
@@ -1180,7 +1220,7 @@ int TrainSession::ExportByDifferentType(DestType destination, ModelType model_ty
           status = Train();
           TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Train failed.");
         }
-        if (obf_ratio != 1.0) {
+        if (!FloatCompare(obf_ratio, 1.0)) {
           ModelDeObfuscate(obf_ratio);
         }
         return status;
@@ -1204,10 +1244,17 @@ int TrainSession::ExportByDifferentType(DestType destination, ModelType model_ty
   }
   if constexpr (std::is_same_v<DestType, const std::string &>) {
     status = texport.SaveToFile();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "failed to save to " << destination;
+      if (!FloatCompare(obf_ratio, 1.0)) {
+        ModelDeObfuscate(obf_ratio);
+      }
+      return status;
+    }
   } else {
     status = texport.SaveToBuffer();
   }
-  if (obf_ratio != 1.0) {
+  if (!FloatCompare(obf_ratio, 1.0)) {
     ModelDeObfuscate(obf_ratio);
   }
   TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "failed to save to file or model buffer.");
@@ -1278,16 +1325,14 @@ int TrainSession::ExportWeightsCollaborateWithMicro(const std::string &file_name
   MS_CHECK_FALSE_MSG(format != FT_FLATBUFFERS, RET_ERROR, "File name cannot be empty");
   MS_CHECK_FALSE_MSG(model_type != mindspore::lite::MT_INFERENCE, RET_ERROR,
                      "Currently, can only export inference-model's weights.");
-  int status = Eval();
-  TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Eval failed");
 
   TrainExport texport(file_name);
-  status = texport.ExportInit(model_.get()->graph_.name_, model_.get()->graph_.version_);
+  auto status = texport.ExportInit(model_.get()->graph_.name_, model_.get()->graph_.version_);
   TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Fail to init export");
   // Find and prepare a list of kernels which are const folded
   MS_CHECK_TRUE_MSG(FindConstFoldedKernels() == RET_OK, RET_ERROR, "FindConstFoldedKernels failed.");
   status = texport.ExportNet(const_fold_kernels_, tensors_, const_output_tensors_, eval_output_tensor_names_,
-                             model_.get(), QT_NONE);
+                             model_.get(), QT_DEFAULT);
   TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Fail to export Network.");
   status = texport.TrainModelDrop();
   TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "TrainModelDrop failed.");
@@ -1421,12 +1466,15 @@ int TrainSession::ChangeObfWeight(std::string tensor_name, float obf_ratio) {
   return RET_OK;
 }
 
-float TrainSession::ModelRecoverObfuscate() {
+float TrainSession::ModelRecoverObfuscate(bool change_weight) {
   float true_obf_ratio = 1.0;
   auto tensor = FindObfTensor();
   if (tensor != nullptr) {
     std::string tensor_name = tensor->tensor_name();
     true_obf_ratio = *(reinterpret_cast<float *>(tensor->data()));
+    if (!change_weight) {
+      return true_obf_ratio;
+    }
     float init_obf_ratio = 1.0;
     ChangeObfWeight(tensor_name, init_obf_ratio);
   }
@@ -1434,7 +1482,7 @@ float TrainSession::ModelRecoverObfuscate() {
 }
 
 int TrainSession::ModelDeObfuscate(float obf_ratio) {
-  if (obf_ratio != 0.0) {
+  if (!FloatCompare(obf_ratio, 0.0)) {
     auto *tensor = FindObfTensor();
     if (tensor != nullptr) {
       std::string tensor_name = tensor->tensor_name();

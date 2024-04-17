@@ -64,6 +64,9 @@ class LoopCountActor : public DebugAwareActor {
   const AID &data_prepare_aid() const { return data_prepare_aid_; }
   const std::vector<AID> &entrance_aids() const { return entrance_aids_; }
 
+  CallbackCounterPtr callback_counter() const { return callback_counter_; }
+  void set_callback_counter(const CallbackCounterPtr &callback_counter) { callback_counter_ = callback_counter; }
+
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
   void SendOutput(OpContext<DeviceTensor> *const context) override;
@@ -93,6 +96,8 @@ class LoopCountActor : public DebugAwareActor {
 
   // Only need sync stream in DR scenarios.
   bool is_need_sync_stream_{true};
+
+  CallbackCounterPtr callback_counter_;
 };
 
 using LoopCountActorPtr = std::shared_ptr<LoopCountActor>;

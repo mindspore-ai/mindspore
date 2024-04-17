@@ -26,7 +26,6 @@
 #include "pipeline/jit/ps/parse/parse_base.h"
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
-#include "frontend/expander/pack/pack_expander.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "mindspore/core/ops/array_ops.h"
 
@@ -1224,26 +1223,18 @@ py::object TensorIndex::SetitemByTupleWithTensor(const ShapeVector &data_shape, 
                         VectorToPyTuple<py::object>(tensor_update_args));
 }
 
-std::pair<ValuePtr, bool> GetStubTensorValue(const py::handle &obj) {
+ValuePtr GetStubTensorValue(const py::handle &obj) {
   auto py_stub = py::getattr(obj, stub::PY_ATTR_STUB);
-  ValuePtr stub;
-  bool is_pack_node = false;
-  if (py::isinstance<expander::PackNode>(py_stub)) {
-    stub = py_stub.cast<expander::PackNodePtr>();
-    is_pack_node = true;
-  } else {
-    stub = py_stub.cast<stub::StubNodePtr>();
-  }
+  ValuePtr stub = py_stub.cast<stub::StubNodePtr>();
   if (stub == nullptr) {
     auto tensor_ptr = py::getattr(obj, stub::PY_ATTR_TENSOR).cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor_ptr);
     stub = tensor_ptr;
   }
-  return std::make_pair(stub, is_pack_node);
+  return stub;
 }
 
-std::pair<ValuePtr, bool> SqueezeRDataValue(TensorPtr tensor, const py::handle &py_value, ValuePtr rdata_value,
-                                            bool is_pack_node) {
+ValuePtr SqueezeRDataValue(const TensorPtr &tensor, const py::handle &py_value, const ValuePtr &rdata_value) {
   auto rdata_shape = tensor->shape();
   if (rdata_shape.size() >= 1 && (rdata_shape.at(0) > 1 || rdata_shape.size() > 1)) {
     MS_EXCEPTION(ValueError)
@@ -1252,9 +1243,11 @@ std::pair<ValuePtr, bool> SqueezeRDataValue(TensorPtr tensor, const py::handle &
   } else if (rdata_shape.size() == 1 && rdata_shape.at(0) == 1) {
     auto new_value = py::cast<py::list>(py_value);
     auto first_value = new_value[0];
-    return GetStubTensorValue(first_value);
+    ValuePtr result =
+      IsStubTensor(first_value) ? GetStubTensorValue(first_value) : first_value.cast<tensor::TensorPtr>();
+    return result;
   }
-  return std::make_pair(rdata_value, is_pack_node);
+  return rdata_value;
 }
 
 static inline py::object SetitemCopyView(std::vector<pynative::SliceOpInfoPtr> *slice_op_infos,
@@ -1273,24 +1266,22 @@ static inline py::object SetitemCopyView(std::vector<pynative::SliceOpInfoPtr> *
   (void)slice_op_infos->emplace_back(broadcastto_op_info);
 
   auto copy_op_info = std::make_shared<pynative::SliceOpInfo>();
-  copy_op_info->slice_op_name = kCopyWithScileOpName;
+  copy_op_info->slice_op_name = kCopyWithSliceOpName;
   copy_op_info->data_indexs = {0, 1};
   (void)slice_op_infos->emplace_back(copy_op_info);
   ValuePtr rdata_value;
   if (IsStubTensor(py_value)) {
-    bool is_pack_node = false;
-    std::tie(rdata_value, is_pack_node) = GetStubTensorValue(py_value);
+    rdata_value = GetStubTensorValue(py_value);
     if (new_data_shape.size() == 0) {
       auto tensor = ConvertStubTensor(py_value);
-      std::tie(rdata_value, is_pack_node) = SqueezeRDataValue(tensor, py_value, rdata_value, is_pack_node);
+      rdata_value = SqueezeRDataValue(tensor, py_value, rdata_value);
     }
   } else if (py::isinstance<Tensor>(py_value)) {
     auto tensor = py_value.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     rdata_value = tensor;
     if (new_data_shape.size() == 0) {
-      bool is_pack_node = false;
-      std::tie(rdata_value, is_pack_node) = SqueezeRDataValue(tensor, py_value, rdata_value, is_pack_node);
+      rdata_value = SqueezeRDataValue(tensor, py_value, rdata_value);
     }
   } else if (py::isinstance<py::int_>(py_value)) {
     rdata_value = MakeValue(py::cast<int64_t>(py_value));
@@ -1320,7 +1311,11 @@ py::object TensorIndex::SetitemBySliceWithTensor(const ShapeVector &data_shape, 
     std::vector<int64_t> end_info(data_shape);
     std::vector<int64_t> step_info(data_shape.size(), 1);
     std::vector<pynative::SliceOpInfoPtr> slice_op_infos;
-
+    if (start >= stop) {
+      (void)data_transfer_types.emplace_back(static_cast<int>(ValueTransferType::kJustReturn));
+      return py::make_tuple(py::str("view"), py::tuple(), py::tuple(), VectorToPyTuple(data_transfer_types),
+                            py::tuple());
+    }
     if (slice_info.start() != 0 || slice_info.step() != 1 || slice_info.stop() != end_info[0]) {
       begin_info[0] = slice_info.start();
       end_info[0] = slice_info.stop();
@@ -1496,6 +1491,22 @@ size_t GetSpecifiedDimensions(const py::tuple &new_tuple_index, size_t data_dims
   return specified_dimensions;
 }
 
+namespace {
+void CheckDataDim(const ShapeVector &data_shape) {
+  constexpr size_t max_data_dim = 8;
+  if (data_shape.size() > max_data_dim) {
+    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, " << max_data_dim << "], but got '"
+                             << data_shape.size() << "'.";
+  }
+}
+
+void CheckNumberOfEllipsis(const size_t counter) {
+  if (counter > 0) {
+    MS_EXCEPTION(IndexError) << "An index can only have a single ellipsis('...')";
+  }
+}
+}  // namespace
+
 bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const ShapeVector &data_shape,
                                          const py::object &py_index, std::vector<int64_t> *data_transfer_types,
                                          std::vector<py::object> *data_transfer_args, const TypePtr &data_type) {
@@ -1504,11 +1515,10 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
   }
   MS_LOG(DEBUG) << "In branch get item by tuple with view, data_shape: " << data_shape
                 << " tensor_indexes: " << py_index;
-
   size_t data_dims = data_shape.size();
   auto new_tuple_index = py_index.cast<py::tuple>();
   size_t specified_dimensions = GetSpecifiedDimensions(new_tuple_index, data_dims);
-
+  bool empty_strided_slice_result = false;
   auto new_data_shape = data_shape;
   size_t dim = 0;
   std::vector<pynative::SliceOpInfoPtr> slice_op_infos;
@@ -1535,18 +1545,16 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       std::vector<int64_t> begin_info(new_data_shape.size(), 0);
       std::vector<int64_t> end_info(new_data_shape);
       std::vector<int64_t> step_info(new_data_shape.size(), 1);
-
       if (slice_info.step() < 0) {
         data_transfer_types->clear();
         data_transfer_args->clear();
         return false;
       }
-
       if (slice_info.start() == 0 && slice_info.step() == 1 && slice_info.stop() == end_info[dim]) {
         dim++;
         continue;
       }
-
+      empty_strided_slice_result = (slice_info.start() >= slice_info.stop());
       begin_info[dim] = slice_info.start();
       end_info[dim] = slice_info.stop();
       step_info[dim] = slice_info.step();
@@ -1560,9 +1568,7 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       new_data_shape[dim] = (slice_info.stop() + slice_info.step() - 1 - slice_info.start()) / slice_info.step();
       dim++;
     } else if (py::isinstance<py::ellipsis>(obj)) {
-      if (ellipsis_count > 0) {
-        MS_EXCEPTION(IndexError) << "An index can only have a single ellipsis('...')";
-      }
+      CheckNumberOfEllipsis(ellipsis_count);
       dim += data_shape.size() - specified_dimensions;
       ellipsis_count += 1;
     } else if (py::isinstance<py::none>(obj)) {
@@ -1572,7 +1578,6 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       (void)slice_op_info->data_indexs.emplace_back(0);
       (void)slice_op_infos.emplace_back(slice_op_info);
       new_data_shape.insert(new_data_shape.begin() + dim, 1);
-
       dim++;
     } else {
       data_transfer_types->clear();
@@ -1580,14 +1585,14 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       return false;
     }
   }
-  constexpr size_t max_data_dim = 8;
-  if (new_data_shape.size() > max_data_dim) {
-    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, " << max_data_dim << "], but got '"
-                             << data_dims << "'.";
-  }
-
+  CheckDataDim(new_data_shape);
   py::object slice_output;
   if (data_type != nullptr) {
+    if (empty_strided_slice_result) {
+      data_transfer_types->emplace_back(static_cast<int>(ValueTransferType::kByPass));
+      data_transfer_args->emplace_back(py::none());
+      return true;
+    }
     slice_output = SetitemCopyView(&slice_op_infos, data_value, new_data_shape, data_type, py_value_handle_);
     if (slice_output == py::none()) {
       return false;
@@ -1813,17 +1818,15 @@ TypeId GetStubAbsTypeId(const AbstractBasePtr &abs) {
   }
 }
 
-bool EnableView(bool is_pack_node, const TypeId &type_id, const py::bool_ &is_ascend) {
-  if (is_pack_node || pynative::PyNativeExecutor::GetInstance()->grad_executor()->is_high_order_top_cell()) {
+bool EnableView(bool is_setitem = false) {
+  if (pynative::PyNativeExecutor::GetInstance()->grad_executor()->is_high_order_top_cell()) {
     // 1. pack node will slice failed with view.
     // 2. SelectView and CopyWithSlice has no kernel, can not enable view in high order cell.
     return false;
   }
 
-  if (is_ascend && (type_id == kNumberTypeComplex128 || type_id == kNumberTypeFloat64)) {
-    // AsStrided and ViewCopy is not support Complex128 and Float64, disable view
-    return false;
-  }
+  // For setitem, the grad of CopyWithSlice is erroneous. If we are in setitem and requires grad, disable view.
+  if (is_setitem && pynative::PyNativeExecutor::GetInstance()->grad_executor()->RequiresGrad()) return false;
 
   return true;
 }
@@ -1833,20 +1836,19 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
   ShapeVector data_shape;
   ValuePtr data_value;
   if (IsStubTensor(py_data)) {
-    auto value_info = GetStubTensorValue(py_data);
-    MS_EXCEPTION_IF_NULL(value_info.first);
-    auto abs = value_info.first->ToAbstract();
+    auto value = GetStubTensorValue(py_data);
+    MS_EXCEPTION_IF_NULL(value);
+    auto abs = value->ToAbstract();
     MS_EXCEPTION_IF_NULL(abs);
     data_shape = dyn_cast<abstract::Shape>(abs->BuildShape())->shape();
 
-    const auto &type_id = GetStubAbsTypeId(abs);
-    if (EnableView(value_info.second, type_id, is_ascend)) {
-      data_value = value_info.first;
+    if (EnableView()) {
+      data_value = value;
     }
   } else if (py::isinstance<Tensor>(py_data)) {
     auto tensor = py_data.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-    if (EnableView(false, tensor->data_type(), is_ascend)) {
+    if (EnableView()) {
       data_value = tensor;
     }
     data_shape = tensor->shape();
@@ -2161,22 +2163,20 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
   bool is_parameter = false;
   ValuePtr data_value;
   if (IsStubTensor(py_data)) {  // PackTensor have not real Tensor.
-    auto value_info = GetStubTensorValue(py_data);
-    MS_EXCEPTION_IF_NULL(value_info.first);
-    auto abs = value_info.first->ToAbstract();
+    auto value = GetStubTensorValue(py_data);
+    MS_EXCEPTION_IF_NULL(value);
+    auto abs = value->ToAbstract();
     MS_EXCEPTION_IF_NULL(abs);
     data_shape = dyn_cast<abstract::Shape>(abs->BuildShape())->shape();
     data_type = abs->BuildType();
     MS_EXCEPTION_IF_NULL(data_type);
-
-    const auto &type_id = GetStubAbsTypeId(abs);
-    if (EnableView(value_info.second, type_id, is_ascend)) {
-      data_value = value_info.first;
+    if (EnableView()) {
+      data_value = value;
     }
   } else {
     TensorPtr data = py_data.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(data);
-    if (EnableView(false, data->data_type(), is_ascend)) {
+    if (EnableView(true)) {
       data_value = data;
     }
     data_shape = data->shape();

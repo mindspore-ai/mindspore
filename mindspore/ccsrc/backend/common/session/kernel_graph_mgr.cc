@@ -43,6 +43,10 @@ namespace {
 constexpr size_t kMaxDepth = 128;
 constexpr size_t kFirstIndex = 1;
 constexpr int64_t kPairIdx1 = 1;
+// uint32_t max value is 4294967295
+// graph id in graph mode start from 0
+// graph id in pynative mode start from 4000000000
+constexpr uint32_t kPynativeGraphIdStart = 4000000000;
 
 bool IsGeReturnNode(const AnfNodePtr &node) {
   auto context = MsContext::GetInstance();
@@ -817,9 +821,11 @@ void ConvertValueNodeToParameter(const KernelGraphPtr &graph, const AnfNodePtr &
   auto graph_inputs = graph->MutableInputs();
   MS_EXCEPTION_IF_NULL(graph_inputs);
   auto new_parameter = graph->NewParameter(node->abstract());
+  MS_EXCEPTION_IF_NULL(new_parameter);
   new_parameter->IncreaseUsedGraphCount();
   graph_inputs->push_back(new_parameter);
 
+  MS_EXCEPTION_IF_NULL(node->cast<ValueNodePtr>());
   new_parameter->set_user_data(kForwardOutput, node->cast<ValueNodePtr>()->value());
   graph->FrontBackendMapAdd(node, new_parameter);
   (void)added_parameters->emplace_back(new_parameter);
@@ -851,6 +857,7 @@ bool ExistSummaryNode(const KernelGraph *graph) {
 #endif
 
 GraphId KernelGraphMgr::graph_sum_ = 0;
+GraphId KernelGraphMgr::pynative_graph_sum_ = kPynativeGraphIdStart;
 HashMap<std::string, std::weak_ptr<AnfNode>> KernelGraphMgr::name_to_params_ =
   HashMap<std::string, std::weak_ptr<AnfNode>>();
 
@@ -861,9 +868,6 @@ ValueNodePtr KernelGraphMgr::CreateNewValueNode(const AnfNodePtr &anf, KernelGra
   MS_EXCEPTION_IF_NULL(value_node);
   auto value = value_node->value();
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<None>()) {
-    return nullptr;
-  }
   // Copy data from device if the tensor is an output of Op or Graph.
   if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<TensorPtr>();
@@ -912,6 +916,7 @@ void KernelGraphMgr::ClearGraph() {
     graph_iter = graphs_.erase(graph_iter);
   }
   graph_sum_ = 0;
+  pynative_graph_sum_ = kPynativeGraphIdStart;
 }
 
 void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) const {
@@ -969,7 +974,7 @@ void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, con
 
     // If the flag is enable, it means the graph would run in subgraph sink mode, the internal parameter cannot share
     // the same device address.
-    auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index);
+    auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index, false);
     if (!node_graph->has_flag(kFlagEnableZeroCopyInGraph)) {
       AnfAlgo::SetOutputAddr(address, 0, parameter.get());
     }
@@ -1117,17 +1122,30 @@ void KernelGraphMgr::GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr>
   }
 }
 
-ValueNodePtr KernelGraphMgr::GetChildGraph(KernelGraph *graph, const AnfNodePtr &child_func_graph) {
+AnfNodePtr KernelGraphMgr::GetChildGraph(KernelGraph *graph, const AnfNodePtr &child_func_graph) {
   MS_EXCEPTION_IF_NULL(child_func_graph);
   std::vector<KernelGraphPtr> all_graphs;
   FuncGraphPtr child_graph = common::AnfAlgo::GetValueNodeFuncGraph(child_func_graph);
+  MS_EXCEPTION_IF_NULL(child_graph);
   if (front_backend_graph_map_.find(child_graph.get()) == front_backend_graph_map_.end()) {
     (void)ConstructKernelGraph(child_graph, &all_graphs, graph->device_target());
   }
-  auto new_value_node = CreateValueNodeKernelGraph(child_func_graph, graph);
+  auto new_value_node = graph->GetBackendAnfByFrontAnf(child_func_graph);
+  if (new_value_node != nullptr) {
+    return new_value_node;
+  }
+  new_value_node = CreateValueNodeKernelGraph(child_func_graph, graph);
   MS_EXCEPTION_IF_NULL(new_value_node);
   return new_value_node;
 }
+
+namespace {
+void AddValueNode(const AnfNodePtr &backend_node, KernelGraph *graph) {
+  if (backend_node->isa<ValueNode>() && !IsValueNode<FuncGraph>(backend_node)) {
+    graph->AddValueNodeToGraph(backend_node->cast<ValueNodePtr>());
+  }
+}
+}  // namespace
 
 void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
                                        mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
@@ -1148,7 +1166,9 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
     MS_EXCEPTION_IF_NULL(anf);
     // anf has been created before
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
-      (void)params.emplace_back(graph->GetBackendAnfByFrontAnf(anf));
+      const auto &backend_node = graph->GetBackendAnfByFrontAnf(anf);
+      (void)params.emplace_back(backend_node);
+      AddValueNode(backend_node, graph);
       continue;
     } else if ((is_depend && input_idx > kRealInputIndexInDepend && !enable_ge)) {
       (void)params.emplace_back(graph->NewValueNode(std::make_shared<Tensor>(SizeToInt(input_idx))));
@@ -1209,6 +1229,29 @@ CNodePtr KernelGraphMgr::CreateNewCNode(const CNodePtr &cnode, KernelGraph *grap
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(other_graph_cnode);
+  auto primitive_input = cnode->input(kAnfPrimitiveIndex);
+  // control flow sink to GE
+  bool need_control_flow_sink =
+    IsPrimitiveCNode(primitive_input, prim::kPrimSwitch) && cnode->HasPrimalAttr(kAttrNotCut);
+  // backend inline
+  bool need_backend_inline = cnode->HasPrimalAttr(kAttrNeedInline);
+  if (need_backend_inline) {
+    auto fn = cnode->input(kAnfPrimitiveIndex);
+    MS_EXCEPTION_IF_NULL(fn);
+    if (IsValueNode<FuncGraph>(fn)) {
+      // Need to create a new kernel graph
+      (void)GetChildGraph(graph, fn);
+    }
+  }
+  if (need_control_flow_sink || need_backend_inline) {
+    auto new_cnode = CreateNewCNode(cnode, graph);
+    MS_EXCEPTION_IF_NULL(new_cnode);
+    FlattenTuple(new_cnode);
+    if (need_backend_inline) {
+      new_cnode->AddPrimalAttr(kAttrNeedInline, MakeValue(true));
+    }
+    return new_cnode;
+  }
   // get primitive of old node
   std::vector<AnfNodePtr> cnode_inputs;
   GetCNodeInfo(cnode, &cnode_inputs);
@@ -1249,7 +1292,7 @@ CNodePtr KernelGraphMgr::CreateNewCNode(const CNodePtr &cnode, KernelGraph *grap
   auto new_cnode = graph->NewCNodeWithInfos(cnode_inputs, cnode);
   MS_EXCEPTION_IF_NULL(new_cnode);
   // if the cnode is call switch, remove call
-  if (new_cnode->inputs().size() > 1) {
+  if (new_cnode->size() > 1) {
     auto first_input = new_cnode->input(kFirstDataInputIndex);
     MS_EXCEPTION_IF_NULL(first_input);
     if (common::AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimCall) &&
@@ -1365,13 +1408,13 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchInputs(const CNodePtr &c
   MS_EXCEPTION_IF_NULL(cnode_input);
   auto switch_cnode = cnode_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(switch_cnode);
-  if (cnode->inputs().size() <= 1) {
+  if (cnode->size() <= 1) {
     cnode_inputs = switch_cnode->inputs();
     return cnode_inputs;
   }
   std::vector<AnfNodePtr> switch_inputs = {switch_cnode->input(kAnfPrimitiveIndex),
                                            switch_cnode->input(kFirstDataInputIndex)};
-  for (size_t index = kSwitchTrueBranchIndex; index < switch_cnode->inputs().size(); index++) {
+  for (size_t index = kSwitchTrueBranchIndex; index < switch_cnode->size(); index++) {
     auto node = switch_cnode->input(index);
     MS_EXCEPTION_IF_NULL(node);
     // there is real input in call, should put it to true and false branch in switch
@@ -1476,7 +1519,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchLayerInputs(const CNodeP
   auto make_tuple_inputs = node->inputs();
   // there are real inputs in call, should put it to make_tuple in switch_layer
   std::vector<AnfNodePtr> real_inputs;
-  for (size_t idx = kFirstDataInputIndex; idx < cnode->inputs().size(); ++idx) {
+  for (size_t idx = kFirstDataInputIndex; idx < cnode->size(); ++idx) {
     (void)(real_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(idx))));
   }
   std::vector<AnfNodePtr> new_make_tuple_inputs = {
@@ -1643,20 +1686,29 @@ void KernelGraphMgr::CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
   MS_EXCEPTION_IF_NULL(cnode_inputs);
   if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
     (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(kFirstDataInputIndex)));
-    for (size_t index = kSwitchTrueBranchIndex; index < cnode->inputs().size(); index++) {
+    for (size_t index = kSwitchTrueBranchIndex; index < cnode->size(); index++) {
       auto node_input = cnode->input(index);
       auto switch_input = CreateSwitchInput(cnode, node_input, graph);
       (void)cnode_inputs->emplace_back(switch_input);
     }
   } else {
-    for (size_t input_idx = kFirstDataInputIndex; input_idx < cnode->inputs().size(); input_idx++) {
+    for (size_t input_idx = kFirstDataInputIndex; input_idx < cnode->size(); input_idx++) {
       auto anf = cnode->input(input_idx);
       MS_EXCEPTION_IF_NULL(anf);
       // anf has been created before
       if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
         (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
         continue;
-      } else if (IsValueNode<None>(anf)) {
+      } else if (anf->isa<Parameter>()) {
+        auto new_parameter = CreateNewParameterFromParameter(anf, graph);
+        MS_EXCEPTION_IF_NULL(new_parameter);
+        (void)cnode_inputs->emplace_back(new_parameter);
+        graph->FrontBackendMapAdd(anf, new_parameter);
+        continue;
+      } else if (anf->isa<ValueNode>()) {
+        auto new_value_node = CreateNewValueNode(anf, graph);
+        MS_EXCEPTION_IF_NULL(new_value_node);
+        (void)cnode_inputs->emplace_back(new_value_node);
         continue;
       }
       MS_LOG(EXCEPTION) << "Unexpected input[" << anf->DebugString() << "]";
@@ -1759,7 +1811,12 @@ bool KernelGraphMgr::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGrap
   }
   new_cnode->set_abstract(cnode->abstract());
   std::string fullname = cnode->fullname_with_scope();
-  new_cnode->set_fullname_with_scope(fullname);
+  auto prim_input = cnode->input(kAnfPrimitiveIndex);
+  // cnode is a call (partial/switch/switch_layer), full scope name is "1_2".
+  // it is hard to analysis bug when it used as ge node name.
+  if (!prim_input->isa<CNode>()) {
+    new_cnode->set_fullname_with_scope(fullname);
+  }
   new_cnode->set_scope(cnode->scope());
   graph->FrontBackendMapAdd(node, new_cnode);
   SetReturnNode(new_cnode, graph);
@@ -1831,6 +1888,7 @@ void KernelGraphMgr::SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
       size_t param_begin = 0;
       for (size_t i = 0; i < tuple_input_num - 1; i++) {
         auto input = common::AnfAlgo::GetInputNode(make_tuple, i);
+        MS_EXCEPTION_IF_NULL(input);
         auto node_abs = input->abstract();
         MS_EXCEPTION_IF_NULL(node_abs);
         if (node_abs->isa<abstract::AbstractSequence>()) {
@@ -1883,6 +1941,7 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
                                                     DeviceType device_target, bool common_opt,
                                                     bool is_enable_zero_copy) {
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> other_graph_cnode;
+  std::vector<std::weak_ptr<KernelGraph>> child_graph_order;
   auto graph = NewKernelGraph();
   MS_EXCEPTION_IF_NULL(graph);
   // Set the zero copy flag in subgraph sink mode.
@@ -1901,12 +1960,16 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     // create a new cnode object
-    auto primitive_input = cnode->input(kAnfPrimitiveIndex);
-    auto new_cnode = (IsPrimitiveCNode(primitive_input, prim::kPrimSwitch) && cnode->HasPrimalAttr(kAttrNotCut))
-                       ? CreateNewCNode(cnode, graph.get())
-                       : CreateNewCNode(cnode, graph.get(), &other_graph_cnode);
-
+    auto new_cnode = CreateNewCNode(cnode, graph.get(), &other_graph_cnode);
     MS_EXCEPTION_IF_NULL(new_cnode);
+    if (IsOneOfPrimitiveCNode(new_cnode, {prim::kPrimCall, prim::kPrimPartial})) {
+      auto fn = new_cnode->input(kIndexOne);
+      MS_EXCEPTION_IF_NULL(fn);
+      auto child_kernel_graph = AnfRuntimeAlgorithm::GetValueNodeKernelGraph(fn);
+      MS_EXCEPTION_IF_NULL(child_kernel_graph);
+      child_graph_order.push_back(std::weak_ptr<KernelGraph>(child_kernel_graph));
+    }
+
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());
     new_cnode->set_attrs(cnode->attrs());
@@ -1917,8 +1980,9 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     graph->FrontBackendMapAdd(node, new_cnode);
   }
   // add a make_tuple at the end of graph as output
+  graph->set_child_graph_order(child_graph_order);
   graph->set_output(ConstructOutput(outputs, graph));
-  FuncGraphManagerPtr manager = MakeManager({graph});
+  FuncGraphManagerPtr manager = MakeManager({graph}, false);
   if (manager) {
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
@@ -1957,8 +2021,7 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(const FuncGrap
 std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructPackKernelGraph(const FuncGraphPtr &func_graph,
                                                                       std::vector<KernelGraphPtr> *all_out_graph,
                                                                       DeviceType device_target) {
-  auto graph = std::make_shared<KernelGraph>();
-  graph->set_graph_id(graph_sum_++);
+  auto graph = NewPynativeKernelGraph();
   ConstructKernelGraphInner(func_graph, all_out_graph, device_target, graph);
   return graph;
 }
@@ -1990,7 +2053,7 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
   }
 
   std::vector<ParameterPtr> added_parameters;
-
+  std::vector<std::weak_ptr<KernelGraph>> child_kernel_graphs;
   for (const auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<Parameter>()) {
@@ -2010,9 +2073,10 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
       }
       // Create child kernel graph according ValueNode<FuncGraph>
       FuncGraphPtr child_graph = common::AnfAlgo::GetValueNodeFuncGraph(node);
-      if (front_backend_graph_map_.find(child_graph.get()) == front_backend_graph_map_.end()) {
-        (void)ConstructKernelGraph(child_graph, all_out_graph, device_target);
-      }
+      auto child_kernel_graph = front_backend_graph_map_.find(child_graph.get()) == front_backend_graph_map_.end()
+                                  ? ConstructKernelGraph(child_graph, all_out_graph, device_target)
+                                  : front_backend_graph_map_[child_graph.get()];
+      (void)child_kernel_graphs.emplace_back(std::weak_ptr<KernelGraph>(child_kernel_graph));
       (void)CreateValueNodeKernelGraph(node, graph.get());
       continue;
     }
@@ -2047,6 +2111,7 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
 
   all_out_graph->push_back(graph);
   graph->set_parameters(graph->inputs());
+  graph->set_child_graph_order(child_kernel_graphs);
 }
 
 void HandleGraphInputsOutputs(const nlohmann::json &graph_json, KernelGraph *graph) {
@@ -2683,6 +2748,15 @@ CNodePtr KernelGraphMgr::ConstructOutput(const AnfNodePtrList &outputs, const st
   return output_node;
 }
 
+KernelGraphPtr KernelGraphMgr::NewPynativeKernelGraph() {
+  auto graph = std::make_shared<KernelGraph>();
+  graph->set_is_from_pynative(true);
+  MS_EXCEPTION_IF_NULL(graph);
+  graph->set_graph_id(pynative_graph_sum_);
+  pynative_graph_sum_++;
+  return graph;
+}
+
 KernelGraphPtr KernelGraphMgr::NewKernelGraph() {
   auto graph = std::make_shared<KernelGraph>();
   MS_EXCEPTION_IF_NULL(graph);
@@ -2692,10 +2766,153 @@ KernelGraphPtr KernelGraphMgr::NewKernelGraph() {
 
 void KernelGraphMgr::SetKernelGraphId(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (graph_sum_ >= kPynativeGraphIdStart) {
+    MS_LOG(EXCEPTION) << "The graph id in graph mode must be less than " << kPynativeGraphIdStart << ", but it is "
+                      << graph_sum_;
+  }
   kernel_graph->set_graph_id(graph_sum_);
   graphs_[graph_sum_++] = kernel_graph;
 }
 
 void KernelGraphMgr::UnifyMindIR(const KernelGraphPtr &graph) { opt::CommonUnifyMindIR(graph); }
+
+namespace {
+void CopyCNodeInfo(const FuncGraphPtr &func_graph, const uint32_t &target_graph_id, const AnfNodePtr &ori_node,
+                   const AnfNodePtr &new_node) {
+  MS_EXCEPTION_IF_NULL(new_node);
+  MS_EXCEPTION_IF_NULL(ori_node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(new_node->kernel_info());
+  // deep copy kernel info
+  if (kernel_info != nullptr && kernel_info->has_build_info()) {
+    // some check
+    MS_EXCEPTION_IF_CHECK_FAIL(kernel_info->MutableKernelMod() == nullptr,
+                               "Inline ERROR: " + ori_node->DebugString() + ", kernel mod is not nullptr");
+    MS_EXCEPTION_IF_CHECK_FAIL(kernel_info->output_address_list().empty(),
+                               "Inline ERROR: " + ori_node->DebugString() + ", output_address_list is not empty");
+    MS_EXCEPTION_IF_CHECK_FAIL(kernel_info->workspace_address_list().empty(),
+                               "Inline ERROR: " + ori_node->DebugString() + ", workspace_address_list is not empty");
+
+    auto new_kernel_info = std::make_shared<device::KernelInfo>();
+    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(
+      AnfRuntimeAlgorithm::GetSelectKernelBuildInfo(new_node));
+    MS_EXCEPTION_IF_NULL(builder);
+    MS_EXCEPTION_IF_NULL(new_kernel_info);
+    new_kernel_info->set_select_kernel_build_info(builder->Build());
+    new_kernel_info->set_graph_id(target_graph_id);
+    new_kernel_info->set_feature_map_flag(kernel_info->is_feature_map());
+    new_kernel_info->set_ref_map(false, kernel_info->out_in_ref_map());
+    new_node->set_kernel_info(new_kernel_info);
+  } else {
+    auto new_kernel_info = std::make_shared<device::KernelInfo>();
+    new_node->set_kernel_info(new_kernel_info);
+  }
+  if (ori_node->isa<CNode>()) {
+    auto ori_cnode = ori_node->cast<CNodePtr>();
+    if (common::AnfAlgo::HasNodeAttr(kAttrIsUBFusionOp, ori_cnode) &&
+        common::AnfAlgo::GetNodeAttr<bool>(ori_node, kAttrIsUBFusionOp)) {
+      // already done fusion compile
+      auto ori_full_name = ori_cnode->fullname_with_scope();
+      common::AnfAlgo::SetNodeAttr(kAttrOriFusionName, MakeValue(ori_full_name), new_node);
+    }
+    common::AnfAlgo::SetNodeAttr(kAttrNeedInline, MakeValue(ori_node->fullname_with_scope()), new_node);
+    common::AnfAlgo::SetNodeAttr(kAttrPreKernelGraph, MakeValue(func_graph), new_node);
+  }
+}
+
+void UpdateConditionNodePair(const KernelGraphPtr &kernel_graph, const KernelGraphPtr &target_kernel_graph,
+                             const mindspore::HashMap<AnfNodePtr, AnfNodePtr> &condition_node_map) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  const auto &gather_to_switch = kernel_graph->condition_gather_to_switch();
+  for (const auto &pair : gather_to_switch) {
+    MS_EXCEPTION_IF_NULL(pair.first);
+    MS_EXCEPTION_IF_NULL(pair.second);
+    const auto &gather_iter = condition_node_map.find(pair.first);
+    const auto &switch_iter = condition_node_map.find(pair.second);
+    if (gather_iter == condition_node_map.end() || switch_iter == condition_node_map.end()) {
+      MS_LOG(EXCEPTION) << "Failed to get new gather node:" << pair.first->fullname_with_scope()
+                        << " or switch node:" << pair.second->fullname_with_scope()
+                        << " in graph:" << kernel_graph->ToString();
+    }
+    MS_EXCEPTION_IF_NULL(gather_iter->second);
+    MS_EXCEPTION_IF_NULL(switch_iter->second);
+    if (target_kernel_graph != nullptr) {
+      target_kernel_graph->AddConditionGatherSwitchPair(gather_iter->second, switch_iter->second);
+      MS_LOG(INFO) << "Add condition node pair:" << gather_iter->second->fullname_with_scope()
+                   << " and:" << switch_iter->second->fullname_with_scope()
+                   << " for graph:" << target_kernel_graph->ToString();
+    }
+  }
+}
+}  // namespace
+
+AnfNodePtr KernelGraphMgr::DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
+                                    const AnfNodePtrList &func_graph_args, const ScopePtr &scope,
+                                    const uint32_t &target_graph_id,
+                                    const std::map<session::AnfWithOutIndex, session::AnfWithOutIndex> &ref_map,
+                                    const KernelGraphPtr &graph, bool is_switch_inline) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(target_func_graph);
+  KernelGraphPtr target_kernel_graph = nullptr;
+  if (target_func_graph->isa<KernelGraph>()) {
+    target_kernel_graph = target_func_graph->cast<KernelGraphPtr>();
+  }
+  Cloner cloner({}, false);
+  if (scope != nullptr) {
+    cloner.set_scope(scope);
+  }
+  cloner.AddClone(func_graph, target_func_graph, func_graph_args, kInline);
+  auto node_list = TopoSort(func_graph->output());
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> condition_node_map;
+  for (auto &ori_node : node_list) {
+    MS_EXCEPTION_IF_NULL(ori_node);
+    if (ori_node->isa<Parameter>()) {
+      continue;
+    }
+    auto new_node = cloner[ori_node];
+    MS_EXCEPTION_IF_NULL(new_node);
+    if (new_node->isa<ValueNode>()) {
+      auto value_node = new_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      graph->AddValueNodeToGraph(value_node);
+    }
+    // Add sub graph kernel for switch inline kernel graph.
+    if (new_node->isa<CNode>() && target_kernel_graph != nullptr && is_switch_inline) {
+      MS_LOG(DEBUG) << "Add inline sub graph for kernel:" << new_node->fullname_with_scope()
+                    << " graph:" << func_graph->ToString();
+      std::string sub_graph_name = func_graph->ToString();
+      if (func_graph->isa<KernelGraph>()) {
+        const auto &kernel_graph = func_graph->cast<KernelGraphPtr>();
+        MS_EXCEPTION_IF_NULL(kernel_graph);
+        const auto &sub_graph_iter = kernel_graph->inline_sub_graph_kernels().find(ori_node);
+        if (sub_graph_iter != kernel_graph->inline_sub_graph_kernels().end()) {
+          sub_graph_name = sub_graph_iter->second;
+        }
+      }
+      target_kernel_graph->AddInlineSubgraphKernel(new_node, sub_graph_name);
+      if (common::AnfAlgo::CheckPrimitiveType(new_node, prim::kPrimConditionGather) ||
+          common::AnfAlgo::CheckPrimitiveType(new_node, prim::kPrimConditionSwitch)) {
+        condition_node_map[ori_node] = new_node;
+      }
+    }
+    CopyCNodeInfo(func_graph, target_graph_id, ori_node, new_node);
+  }
+  // Collect condition gather node and condition switch node.
+  if (func_graph->isa<KernelGraph>() && is_switch_inline) {
+    const auto &kernel_graph = func_graph->cast<KernelGraphPtr>();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    UpdateConditionNodePair(kernel_graph, target_kernel_graph, condition_node_map);
+  }
+
+  for (const auto &kv : ref_map) {
+    auto final_pair = kv.first;
+    auto origin_pair = kv.second;
+    final_pair.first = cloner[final_pair.first];
+    origin_pair.first = cloner[origin_pair.first];
+    auto new_origin_pair = common::AnfAlgo::VisitKernel(origin_pair.first, origin_pair.second);
+    graph->AddRefCorrespondPairs(final_pair, new_origin_pair);
+  }
+  return cloner[func_graph->output()];
+}
 }  // namespace session
 }  // namespace mindspore

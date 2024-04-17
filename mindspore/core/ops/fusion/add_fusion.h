@@ -20,17 +20,17 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
-#include "ops/add.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAddFusion = "AddFusion";
 /// \brief AddFusion defined Add operator prototype of lite.
-class MIND_API AddFusion : public Add {
+class MIND_API AddFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AddFusion);
   /// \brief Constructor.
-  AddFusion() : Add(kNameAddFusion) { InitIOName({"x", "y"}, {"output"}); }
+  AddFusion() : BaseOperator(kNameAddFusion) { InitIOName({"x", "y"}, {"output"}); }
 
   /// \brief Method to init the op's attributes.
   ///

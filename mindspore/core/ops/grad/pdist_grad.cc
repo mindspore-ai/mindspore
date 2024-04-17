@@ -49,9 +49,9 @@ abstract::ShapePtr PdistGradInferShape(const PrimitivePtr &primitive, const std:
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto pdist_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto pdist_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
   auto x_size = x_shape.size();
   if (!IsDynamic(grad_shape) && !IsDynamic(pdist_shape)) {
     (void)CheckAndConvertUtils::CheckValue("y_grad shape", grad_shape, kEqual, "y shape", pdist_shape, prim_name);
@@ -73,9 +73,9 @@ TypePtr PdistGradInferType(const PrimitivePtr &primitive, const std::vector<Abst
   const size_t y_index = 2;
   const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("y_grad", input_args[y_grad_index]->BuildType());
-  (void)types.emplace("x", input_args[x_index]->BuildType());
-  (void)types.emplace("y", input_args[y_index]->BuildType());
+  (void)types.emplace("y_grad", input_args[y_grad_index]->GetType());
+  (void)types.emplace("x", input_args[x_index]->GetType());
+  (void)types.emplace("y", input_args[y_index]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
 }
 }  // namespace

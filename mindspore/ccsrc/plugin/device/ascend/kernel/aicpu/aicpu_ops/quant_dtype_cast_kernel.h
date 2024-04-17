@@ -34,7 +34,7 @@ class QuantDTypeCastKernel : public KernelBase {
   void FixedBitHalfDequantTask();
   void FixedBitFloatDequantTask();
   std::vector<int64_t> input_shapes_;
-  int64_t quant_param_size_;
+  int64_t quant_param_size_{0};
 
   int64_t axis_{0};
   int64_t dst_type_{0};

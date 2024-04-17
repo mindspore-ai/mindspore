@@ -56,12 +56,14 @@ constexpr auto kDim1 = 1;
 
 uint32_t SequenceConcatKernel::ParseKernelParam() {
   if (node_def_.inputs_size() != kSequenceConcatInputNum) {
-    AICPU_LOGE("For 'SequenceConcat', input number must be 1, but got %d", node_def_.inputs_size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SequenceConcat', input number must be 1, but got %d",
+                    node_def_.inputs_size());
     return kAicpuKernelStateInvalid;
   }
 
   if (node_def_.outputs_size() != kSequenceConcatOutputNum) {
-    AICPU_LOGE("For 'SequenceConcat', output number must be 1, but got %d", node_def_.outputs_size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SequenceConcat', output number must be 1, but got %d",
+                    node_def_.outputs_size());
     return kAicpuKernelStateInvalid;
   }
   aicpuops::Tensor input_tensor = node_def_.inputs(0);
@@ -107,7 +109,8 @@ uint32_t SequenceConcatKernel::SequenceConcatTask() {
   auto element_size = output_data_size_ / sizeof(T);
   auto cp_ret = memset_s(reinterpret_cast<void *>(output_addr), output_data_size_, 0x0, output_data_size_);
   if (cp_ret != EOK) {
-    AICPU_LOGE("For 'SequenceConcat',  memset for output error, errorno: %d, size: %d.", cp_ret, output_data_size_);
+    CUST_AICPU_LOGE(workspace_info_, "For 'SequenceConcat',  memset for output error, errorno: %d, size: %d.", cp_ret,
+                    output_data_size_);
     return kAicpuKernelStateInvalid;
   }
 
@@ -126,7 +129,9 @@ uint32_t SequenceConcatKernel::SequenceConcatTask() {
   auto tasks = [&](size_t start, size_t end) {
     for (size_t pos = start; pos < end; ++pos) {
       if (element_num == 0) {
-        AICPU_LOGE("For 'SequenceConcat',  the element of inputs must be greater than 0, but got: %d.", element_num);
+        CUST_AICPU_LOGE(workspace_info_,
+                        "For 'SequenceConcat',  the element of inputs must be greater than 0, but got: %d.",
+                        element_num);
       }
       size_t i = pos / element_num;
       size_t j = pos % element_num;
@@ -140,7 +145,7 @@ uint32_t SequenceConcatKernel::SequenceConcatTask() {
       auto output_ptr = output_addr + i * output_dim_ + offset_[j];
       auto ret = memcpy_s(reinterpret_cast<void *>(output_ptr), copy_size, input_addr_list[j] + offset, copy_size);
       if (ret != EOK) {
-        AICPU_LOGE("For 'SequenceConcat', memcpy_s failed. Error no: %d", ret);
+        CUST_AICPU_LOGE(workspace_info_, "For 'SequenceConcat', memcpy_s failed. Error no: %d", ret);
       }
     }
   };
@@ -172,7 +177,8 @@ uint32_t SequenceConcatKernel::DoCompute() {
     case aicpuops::DataType::MS_BOOL:
       return SequenceConcatTask<bool>();
     default:
-      AICPU_LOGE("SequenceConcat kernel data type [%s] not support.", static_cast<int>(input_data_type_));
+      CUST_AICPU_LOGE(workspace_info_, "SequenceConcat kernel data type [%s] not support.",
+                      static_cast<int>(input_data_type_));
       return kAicpuKernelStateInvalid;
   }
 }

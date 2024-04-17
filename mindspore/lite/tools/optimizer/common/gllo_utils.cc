@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,8 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "base/float16.h"
 #include "ops/fusion/conv2d_fusion.h"
-#include "ops/transpose.h"
-#include "ops/cast.h"
-#include "ops/gather.h"
-#include "ops/concat.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+#include "ops/ops_func_impl/gather.h"
 #include "ops/tuple_get_item.h"
 #include "tools/common/tensor_util.h"
 #include "frontend/operator/ops.h"
@@ -193,12 +190,12 @@ bool IsRealKernel(const AnfNodePtr &node) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return false;
   }
-  if (cnode->inputs().empty()) {
+  if (cnode->empty()) {
     MS_LOG(ERROR) << "Illegal null input of cnode(%s)" << node->DebugString();
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INPUT_TENSOR_ERROR);
     return false;
   }
-  auto input = cnode->inputs()[0];
+  auto input = cnode->input(0);
 #ifndef ENABLE_SECURITY
   bool is_virtual_node = IsPrimitive(input, prim::kPrimImageSummary) || IsPrimitive(input, prim::kPrimScalarSummary) ||
                          IsPrimitive(input, prim::kPrimTensorSummary) ||
@@ -538,11 +535,10 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
     MS_LOG(ERROR) << "CNodePtr is nullptr";
     return nullptr;
   }
-  auto inputs = cnode->inputs();
-  if (!(index > 0 && index < inputs.size())) {
+  if (!(index > 0 && index < cnode->size())) {
     return nullptr;
   }
-  auto input = inputs[index];
+  auto input = cnode->input(index);
   if (input == nullptr) {
     MS_LOG(ERROR) << "CNode input is nullptr";
     return nullptr;
@@ -557,7 +553,25 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
     abstract = value_node->abstract();
   } else if (utils::isa<CNodePtr>(input)) {
     auto input_cnode = input->cast<CNodePtr>();
-    abstract = input_cnode->abstract();
+    if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
+      MS_ASSERT(input_cnode->size() == kTupleGetItemInputSize);
+      auto get_item_input_cnode = input_cnode->input(1);
+      MS_ASSERT(get_item_input_cnode != nullptr);
+      auto idx = GetTupleGetItemOutIndex(input_cnode);
+      if (!utils::isa<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
+        MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple";
+        return nullptr;
+      }
+      auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract());
+      auto abstract_list = abstract_tuple->elements();
+      if (abstract_list.size() <= idx) {
+        MS_LOG(ERROR) << "AbstractTuple's size is smaller than expect";
+        return nullptr;
+      }
+      abstract = abstract_list[idx];
+    } else {
+      abstract = input_cnode->abstract();
+    }
   } else {
     MS_LOG(ERROR) << "unsupported input node type";
     return nullptr;
@@ -686,7 +700,7 @@ bool CheckIsAllInputsParam(const AnfNodePtr &node) {
   }
   if (utils::isa<CNode>(node)) {
     auto cnode = node->cast<CNodePtr>();
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->size(); i++) {
       if (!utils::isa<Parameter>(cnode->input(i)) && !utils::isa<ValueNodePtr>(cnode->input(i))) {
         return false;
       }
@@ -829,6 +843,7 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::Te
     data_type = kNumberTypeFloat32;
   }
   param_node->set_name(node_name);
+  param_node->debug_info()->set_name(node_name);
   auto tensor_info_new = std::make_shared<tensor::Tensor>(data_type, shape_vector);
   if (tensor_info_new == nullptr) {
     MS_LOG(ERROR) << "new tensor::Tensor failed.";
@@ -953,6 +968,27 @@ ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const 
 
   ShapeVector shape = empty_shape ? std::vector<int64_t>{} : std::vector<int64_t>{1};
   auto tensor_info = lite::CreateTensorInfo(&data, sizeof(float), shape, kNumberTypeFloat32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
+    return nullptr;
+  }
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
+  return param_node;
+}
+
+ParameterPtr BuildFloat16ValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
+                                            const std::string &node_name, bool empty_shape) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  auto param_node = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
+  param_node->set_name(node_name);
+
+  ShapeVector shape = empty_shape ? std::vector<int64_t>{} : std::vector<int64_t>{1};
+  auto tensor_info = lite::CreateTensorInfo(&data, sizeof(float16), shape, kNumberTypeFloat16);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "Create tensor info failed";
     return nullptr;
@@ -1536,7 +1572,7 @@ void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_fi
     GetDataTypeFromAnfNode(node, &type_id);
     fp << node->fullname_with_scope() << ", type: " << type_name(node) << ", shape: " << GetAnfNodeOutputShape(node, 0)
        << ", data type: " << static_cast<int>(type_id) << std::endl;
-    auto inputs = cnode->inputs();
+    auto &inputs = cnode->inputs();
     for (auto &input : inputs) {
       if (IsValueNode<Primitive>(input)) {
         continue;
@@ -1612,7 +1648,7 @@ STATUS AdjustInputToCnode(const CNodePtr &cnode, size_t input_index) {
     MS_LOG(ERROR) << "tensor move prim is nullptr.";
     return RET_ERROR;
   }
-  auto tensor_move_cnode = func_graph->NewCNode(tensor_move_prim, {cnode->inputs()[input_index]});
+  auto tensor_move_cnode = func_graph->NewCNode(tensor_move_prim, {cnode->input(input_index)});
   if (tensor_move_cnode == nullptr) {
     MS_LOG(ERROR) << "new cnode failed.";
     return RET_ERROR;
@@ -1633,5 +1669,54 @@ STATUS AdjustInputToCnode(const CNodePtr &cnode, size_t input_index) {
   manager->SetEdge(cnode, input_index, tensor_move_cnode);
   return RET_OK;
 }
+
+tensor::TensorPtr GetTensorFromParameterNode(const EquivPtr &equiv, const VarPtr &input) {
+  MS_CHECK_TRUE_RET(equiv != nullptr && input != nullptr, nullptr);
+  auto node = utils::cast<AnfNodePtr>((*equiv)[input]);
+  if (node == nullptr || !utils::isa<ParameterPtr>(node)) {
+    MS_LOG(ERROR) << "node is nullptr or node is not a parameter node.";
+    return nullptr;
+  }
+  auto parameter_node = node->cast<ParameterPtr>();
+  if (!parameter_node->has_default() || parameter_node->default_param() == nullptr) {
+    MS_LOG(ERROR) << "parameter_node has no default or its default_param() is nullptr.";
+    return nullptr;
+  }
+  auto param_value_lite = parameter_node->default_param()->cast<tensor::TensorPtr>();
+  return param_value_lite;
+}
+
+const int GetIntParameterValue(const EquivPtr &equiv, const VarPtr &input) {
+  MS_CHECK_TRUE_RET(equiv != nullptr && input != nullptr, INT_MIN);
+  auto param_value_lite = GetTensorFromParameterNode(equiv, input);
+  const int value = INT_MIN;
+  if (param_value_lite == nullptr) {
+    return value;
+  }
+  if (param_value_lite->data_type() != kNumberTypeInt32 && param_value_lite->data_type() != kNumberTypeInt) {
+    return value;
+  }
+  if (param_value_lite->Size() != sizeof(int)) {
+    return value;
+  }
+  return *static_cast<int *>(param_value_lite->data_c());
+}
+
+const float GetFloatParameterValue(const EquivPtr &equiv, const VarPtr &input) {
+  const float value = -1;
+  MS_CHECK_TRUE_RET(equiv != nullptr && input != nullptr, value);
+  auto param_value_lite = GetTensorFromParameterNode(equiv, input);
+  if (param_value_lite == nullptr) {
+    return value;
+  }
+  if (param_value_lite->data_type() != kNumberTypeFloat32 && param_value_lite->data_type() != kNumberTypeFloat) {
+    return value;
+  }
+  if (param_value_lite->Size() != sizeof(float)) {
+    return value;
+  }
+  return *static_cast<float *>(param_value_lite->data_c());
+}
+
 };  // namespace opt
 }  // namespace mindspore

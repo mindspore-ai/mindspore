@@ -18,6 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -187,3 +188,54 @@ def test_binary_cross_entropy_forward_float32_functional():
     test_binary_cross_entropy_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     test_binary_cross_entropy_forward_functional(np.float32)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_binary_cross_entropy_forward_float32_functional_with_optional(mode):
+    """
+    Feature: test binary_cross_entropy forward with optional input.
+    Description: test float32 inputs with optional input.
+    Expectation: without error.
+    """
+    context.set_context(mode=mode)
+    logits = Tensor(np.array([0.2, 0.7, 0.1]).astype(np.float32))
+    labels = Tensor(np.array([0., 1., 0.]).astype(np.float32))
+    weight = None
+    output = F.binary_cross_entropy(logits, labels, weight)
+    print(output.asnumpy())
+
+class GradNet(nn.Cell):
+    def __init__(self, network):
+        super(GradNet, self).__init__()
+        self.grad = C.GradOperation(get_all=True)
+        self.network = network
+
+    def construct(self, x1, x2, weight=None):
+        gout = self.grad(self.network)(x1, x2, weight)
+        return gout
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_binary_cross_entropy_loss_grad_with_optional(mode):
+    """
+    Feature: test binary_cross_entropy backward with optional input.
+    Description: test float32 inputs with optional input.
+    Expectation: without error.
+    """
+    context.set_context(mode=mode)
+    np.random.seed(42)
+    prediction = np.random.rand(20).astype(np.float32)
+    target = np.random.rand(20).astype(np.float32)
+    weight = None
+    reduction = "none"
+    grad = GradNet(Net(reduction))
+    dx = grad(Tensor(prediction), Tensor(target), weight)
+    print(dx[0].asnumpy())

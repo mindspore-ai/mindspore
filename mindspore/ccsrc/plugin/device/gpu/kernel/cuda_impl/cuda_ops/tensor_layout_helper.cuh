@@ -29,8 +29,8 @@
 struct TensorLayoutHelper {
   TensorLayoutHelper(const int shape[MAX_TENSORINFO_DIMS], int dim_size) {
     dim_size_ = dim_size;
-    if (dim_size_ >= MAX_TENSORINFO_DIMS) {
-      printf("dim_size_ >= MAX_TENSORINFO_DIMS.\n");
+    if (dim_size_ > MAX_TENSORINFO_DIMS) {
+      printf("[ERROR] dim_size_ > MAX_TENSORINFO_DIMS(8).\n");
       exit(1);
     }
 

@@ -1,0 +1,10 @@
+#operator geqrf
+geqrf: 
+    args:
+        input:
+            dtype: tensor
+    returns:
+        y:
+            dtype: tensor
+        tau: 
+            dtype: tensor

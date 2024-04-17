@@ -1,0 +1,28 @@
+softmax:
+    description: |
+        Applies the Softmax operation to the input tensor on the specified axis.
+
+        Refer to :func:`mindspore.ops.softmax` for more details.
+    
+        Args:
+            axis (Union[int, tuple], optional): The axis to perform the Softmax operation. Default: ``-1`` .
+    
+        Inputs:
+            - **input** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+              additional dimensions. 
+    
+        Outputs:
+            Tensor, with the same type and shape as the input.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+            >>> softmax = ops.Softmax()
+            >>> output = softmax(input)
+            >>> print(output)
+            [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]

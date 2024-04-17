@@ -113,6 +113,9 @@ class TensorPy {
 
   static py::bytes GetBytes(const Tensor &tensor);
 
+  static TensorPtr ConvertBytesToTensor(const py::bytes &bytes_obj, const py::tuple &dims,
+                                        const TypePtr &type_ptr = nullptr);
+
   static py::array SyncAsNumpy(const Tensor &tensor);
 
   static py::array AsNumpy(const Tensor &tensor);

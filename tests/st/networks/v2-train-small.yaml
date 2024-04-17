@@ -1,0 +1,79 @@
+model:
+  #base_learning_rate: 1.0e-05
+  target: ldm.models.diffusion.ddpm.LatentDiffusion
+  params:
+    linear_start: 0.00085
+    linear_end: 0.0120
+    num_timesteps_cond: 1
+    log_every_t: 200
+    timesteps: 1000
+    first_stage_key: "image"
+    cond_stage_key: "caption"
+    cond_stage_trainable: False # TODO: allow config easily
+    image_size: 64
+    channels: 4
+    conditioning_key: crossattn
+    monitor: val/loss_simple_ema
+    scale_factor: 0.18215
+    #use_ema: False # TODO: set in args
+    use_fp16: True
+    parameterization: "eps" # default, original ldm
+    #parameterization: "velocity"
+
+    unet_config:
+      target: ldm.modules.diffusionmodules.openaimodel.UNetModel
+      params:
+        image_size: 32 # unused
+        in_channels: 4
+        out_channels: 4
+        model_channels: 320
+        attention_resolutions: [ 4, 2, 1 ]
+        num_res_blocks: 1
+        channel_mult: [ 1, 1, 1, 1 ]
+        #num_heads: 8  #wukong
+        num_head_channels: 64  # SD_VERSION v2.0
+        use_spatial_transformer: True
+        enable_flash_attention: True
+        use_linear_in_transformer: True #SD_VERSION v2.0
+        transformer_depth: 1
+        #context_dim: 768
+        context_dim: 1024 # SD_VERSION v2.0
+        use_checkpoint: True
+        legacy: False
+        use_fp16: True
+        dropout: 0.1
+
+    first_stage_config:
+      target: ldm.models.autoencoder.AutoencoderKL
+      params:
+        embed_dim: 4
+        monitor: val/rec_loss
+        use_fp16: True
+        ddconfig:
+          double_z: true
+          z_channels: 4
+          resolution: 256
+          in_channels: 3
+          out_ch: 3
+          ch: 128
+          ch_mult:
+          - 1
+          - 2
+          - 4
+          - 4
+          num_res_blocks: 2
+          attn_resolutions: []
+
+    cond_stage_config:
+      target: ldm.modules.encoders.modules.FrozenCLIPEmbedder
+      params:
+        use_fp16: True
+        tokenizer_name: "BpeTokenizer"
+        context_length: 77
+        vocab_size: 49408
+        output_dim: 1024
+        width: 1024
+        layers: 23
+        heads: 16
+        epsilon: 1e-5
+        use_quick_gelu: False

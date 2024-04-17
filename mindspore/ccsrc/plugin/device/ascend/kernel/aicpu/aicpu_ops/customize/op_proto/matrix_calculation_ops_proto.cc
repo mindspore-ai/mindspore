@@ -4,66 +4,13 @@
  * limitations under the License.
  */
 
-#include "inc/ops/matrix_calculation_ops.h"
+#include "op_proto/inc/matrix_calculation_ops.h"
 #include "custom_op_proto/cust_math_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
 
 namespace ge {
-IMPLEMT_COMMON_INFERFUNC(OneInOneOutCommonInferShape) {
-  static const int64_t input_x_idx = 0;
-  static const int64_t output_y_idx = 0;
-  if (OneInOneOutDynamicInfer(op, input_x_idx, {output_y_idx})) {
-    return GRAPH_SUCCESS;
-  }
-  return GRAPH_FAILED;
-}
-
-// ----------------DiagPart-------------------
-IMPLEMT_COMMON_INFERFUNC(DiagPartInferShape) {
-  ge::OpDescPtr op_desc = ge::OpDescUtils::GetOpDescFromOperator(op);
-  CHECK(op_desc == nullptr, VECTOR_INFER_SHAPE_INNER_ERR_REPORT("DiagPart", GetInputInvalidErrMsg("op_desc")),
-        return GRAPH_FAILED);
-  ge::ConstGeTensorDescPtr input_x_desc = op_desc->GetInputDescPtr(0);
-  CHECK(input_x_desc == nullptr, VECTOR_INFER_SHAPE_INNER_ERR_REPORT("DiagPart", GetInputInvalidErrMsg("x")),
-        return GRAPH_FAILED);
-  const GeShape &input_shape = input_x_desc->GetShape();
-  const size_t input_to_output_dims_times = 2;
-  size_t output_shape_len = input_shape.GetDimNum() / input_to_output_dims_times;
-  ge::GeTensorDescPtr output_desc = op_desc->MutableOutputDesc(0);
-  GeShape &output_shape = output_desc->MutableShape();
-  DataType input_dtype = input_x_desc->GetDataType();
-
-  if (input_shape.IsUnknownDimNum()) {
-    output_desc->SetShape(input_shape);
-  } else {
-    output_shape.SetDimNum(output_shape_len);
-    for (size_t i = 0; i < output_shape_len; i++) {
-      output_shape.SetDim(i, input_shape.GetDim(i));
-    }
-  }
-  if (input_shape.IsUnknownShape()) {
-    std::vector<std::pair<int64_t, int64_t>> shape_range;
-    input_x_desc->GetShapeRange(shape_range);
-    for (unsigned i = 0; i < shape_range.size(); i++) {
-      if (shape_range[i].first > 0) {
-        shape_range[i].first = shape_range[i].first;
-      }
-      if (shape_range[i].second > 0) {
-        shape_range[i].second = shape_range[i].second;
-      }
-    }
-    output_desc->SetShapeRange(shape_range);
-  }
-  output_desc->SetShape(output_shape);
-  output_desc->SetDataType(input_dtype);
-  return GRAPH_SUCCESS;
-}
-
-COMMON_INFER_FUNC_REG(DiagPart, DiagPartInferShape);
-// ----------------DiagPart END-------------------
-
 // ---------------Eye----------------------------
 static bool CheckRows(const Operator &op, const string &attr_num_rows) {
   int64_t num_rows;
@@ -138,7 +85,7 @@ IMPLEMT_COMMON_INFERFUNC(MatrixLogarithmInferShaper) {
   auto x_shape = op.GetInputDescByName("x").GetShape().GetDims();
   Shape input_shape = op.GetInputDescByName("x").GetShape();
   DataType input_dtype = op.GetInputDescByName("x").GetDataType();
-  int64_t size_num = op.GetInputDescByName("x").GetShape().GetDimNum();
+  int64_t size_num = static_cast<int64_t>(op.GetInputDescByName("x").GetShape().GetDimNum());
   TensorDesc td = op.GetOutputDescByName("y");
   td.SetShape(ge::Shape(input_shape));
   td.SetDataType(input_dtype);
@@ -157,7 +104,7 @@ CUST_COMMON_INFER_FUNC_REG(MatrixLogarithm, MatrixLogarithmInferShaper);
 // ----------------MatrixLogarithm END-------------------
 
 // ----------------MatrixExp-------------------
-CUST_COMMON_INFER_FUNC_REG(MatirxExp, OneInOneOutCommonInferShape);
+CUST_ONE_IN_ONE_OUT_INFER(MatrixExp, x, y);
 // ----------------MatrixExp END-------------------
 
 // ----------------TraceGrad Begin------------------------
@@ -165,8 +112,7 @@ IMPLEMT_COMMON_INFERFUNC(TraceGradInferShape) {
   Shape shape = op.GetInputDescByName("y_grad").GetShape();
   DataType input_dtype = op.GetInputDescByName("y_grad").GetDataType();
   std::vector<std::string> input_infer_depends = {"x_shape"};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
   Tensor tensor_input;
   Shape output_shape;
   if (op.GetInputConstData("x_shape", tensor_input) == GRAPH_SUCCESS) {
@@ -220,15 +166,15 @@ IMPLEMT_VERIFIER(ScatterNdUpdate, ScatterNdUpdateVerify) {
 
 IMPLEMT_COMMON_INFERFUNC(ScatterNdUpdateInferShape) {
   // main part of shape infer
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  ge::GeShape var_shape = op_desc->MutableInputDesc("var")->GetShape();
+  ge::Shape var_shape = op.GetInputDesc("var").GetShape();
   std::vector<std::pair<int64_t, int64_t>> var_shape_range;
-  op_desc->MutableInputDesc("var")->GetShapeRange(var_shape_range);
-  DataType input_dtype = op_desc->MutableInputDesc("var")->GetDataType();
-  GeTensorDescPtr td = op_desc->MutableOutputDesc("var");
-  td->SetShape(var_shape);
-  td->SetDataType(input_dtype);
-  td->SetShapeRange(var_shape_range);
+  op.GetInputDesc("var").GetShapeRange(var_shape_range);
+  DataType input_dtype = op.GetInputDesc("var").GetDataType();
+  TensorDesc td = op.GetOutputDesc("var");
+  td.SetShape(var_shape);
+  td.SetDataType(input_dtype);
+  td.SetShapeRange(var_shape_range);
+  op.UpdateOutputDesc("var", td);
   return GRAPH_SUCCESS;
 }
 COMMON_INFER_FUNC_REG(ScatterNdUpdate, ScatterNdUpdateInferShape);
@@ -263,7 +209,7 @@ VERIFY_FUNC_REG(TensorScatterUpdate, TensorScatterUpdateVerify);
 // -------------------TensorScatterUpdate END----------------
 
 // -------------------Orgqr----------------
-CUST_COMMON_INFER_FUNC_REG(Orgqr, OneInOneOutCommonInferShape);
+CUST_ONE_IN_ONE_OUT_INFER(Orgqr, x, y);
 // -------------------Orgqr END----------------
 
 // -----------------------Trace-----------------------
@@ -289,7 +235,7 @@ static bool InferShapeAndTypeTrace(Operator &op, const std::string &inputName, c
 
 IMPLEMT_VERIFIER(Trace, TraceVerify) {
   AscendString op_name;
-  CHECK(op.GetName(op_name) != GRAPH_SUCCESS, OP_LOGE("", "GetName failed."), return GRAPH_FAILED);
+  CHECK((op.GetName(op_name) != GRAPH_SUCCESS), OP_LOGE("", "GetName failed."), return GRAPH_FAILED);
   ge::Shape shapeX = op.GetInputDescByName("x").GetShape();
   DataType dtypeX = op.GetInputDescByName("x").GetDataType();
   constexpr int64_t shapeDimsLimit = 2;
@@ -317,4 +263,8 @@ IMPLEMT_COMMON_INFERFUNC(TraceInferShape) {
 COMMON_INFER_FUNC_REG(Trace, TraceInferShape);
 VERIFY_FUNC_REG(Trace, TraceVerify);
 // ---------------------Trace END----------------------
+
+// ----------------IndexPut-------------------
+ONE_IN_ONE_OUT_INFER(IndexPut, x1, y);
+// ----------------IndexPut END-------------------
 }  // namespace ge

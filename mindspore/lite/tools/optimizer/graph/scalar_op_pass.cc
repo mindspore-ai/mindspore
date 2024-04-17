@@ -16,12 +16,13 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "ops/auto_generate/gen_lite_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "ops/array_ops.h"
 #include "ops/lite_ops.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
-#include "mindspore/core/ops/mul.h"
 #include "tools/optimizer/graph/lite_tensor_extractor.h"
 #include "mindspore/core/abstract/ops/primitive_infer_map.h"
 #include "mindspore/core/utils/anf_utils.h"
@@ -122,31 +123,29 @@ ValueNodePtr ScalarOpPass::GenerateScalarValueTensor(const FuncGraphPtr &func_gr
 
 CNodePtr ScalarOpPass::GenerateScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node,
                                               int input_index) {
-  auto prim = NewValueNode(std::make_shared<Primitive>(kScalarToTensorOpName));
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto scalar_cnode = anf_node->cast<CNodePtr>();
   auto scalar_input = scalar_cnode->input(input_index);
-  AnfNodePtrList inputs = {prim, scalar_input};
-  CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
-  MS_CHECK_TRUE_RET(scalar_to_tensor != nullptr, nullptr);
-
   // Data type of the tensor should be set as an attr of ScalarToTensor op.
-  TypeId scalar_data_type;
-  if (opt::GetDataTypeFromAnfNode(scalar_cnode->input(input_index), &scalar_data_type) != RET_OK) {
+  TypeId data_type;
+  if (opt::GetDataTypeFromAnfNode(scalar_cnode->input(input_index), &data_type) != RET_OK) {
     MS_LOG(ERROR) << "Failed to get " << anf_node->fullname_with_scope() << " output tensor data type.";
     return nullptr;
   }
+  auto type_id_value_node = NewValueNode(MakeValue(static_cast<int64_t>(data_type)));
+  auto type_id_value = std::make_shared<Int64Imm>(static_cast<int64_t>(data_type));
+  type_id_value_node->set_abstract(type_id_value->ToAbstract());
+  auto prim = NewValueNode(std::make_shared<Primitive>(kScalarToTensorOpName));
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  AnfNodePtrList inputs = {prim, scalar_input, type_id_value_node};
+  CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
+  MS_CHECK_TRUE_RET(scalar_to_tensor != nullptr, nullptr);
   auto primitive = GetCNodePrimitive(scalar_to_tensor);
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
-  primitive->set_attr("dtype", TypeIdToType(scalar_data_type));
-
   // set abstract
   ShapeVector tensor_shape = {1};
   auto tensor_shape_ptr = std::make_shared<abstract::Shape>(tensor_shape);
   MS_CHECK_TRUE_MSG(tensor_shape_ptr != nullptr, nullptr, "tensor_shape_ptr is nullptr.");
-
-  auto tmp_abstract =
-    abstract::MakeAbstract(std::make_shared<abstract::Shape>(tensor_shape), TypeIdToType(scalar_data_type));
+  auto tmp_abstract = abstract::MakeAbstract(std::make_shared<abstract::Shape>(tensor_shape), TypeIdToType(data_type));
   MS_CHECK_TRUE_MSG(tmp_abstract != nullptr, nullptr, "make AbstractTensor failed");
   scalar_to_tensor->set_abstract(tmp_abstract);
   return scalar_to_tensor;
@@ -195,8 +194,6 @@ CNodePtr ScalarOpPass::GenerateTensorShape(const FuncGraphPtr &func_graph, const
     } else {
       auto elem = std::make_shared<abstract::AbstractScalar>(std::make_shared<ValueAny>(), std::make_shared<Int>(64));
       auto abs_tensor = std::make_shared<abstract::AbstractTensor>(elem, std::make_shared<abstract::Shape>(tensor_shp));
-      auto shape_value = MakeValue(shape);
-      abs_tensor->set_shape_value(shape_value);
       tmp_abstract = abs_tensor;
     }
   } else {
@@ -223,6 +220,14 @@ ValueNodePtr ScalarOpPass::GenerateScalarValueTuple(const FuncGraphPtr &func_gra
   return tuple_node;
 }
 
+ValueNodePtr ScalarOpPass::GenerateScalarValue(const FuncGraphPtr &func_graph, int64_t value) {
+  auto scalar_value = MakeValue(value);
+  auto scalar_node = NewValueNode(scalar_value);
+  scalar_node->set_abstract(scalar_value->ToAbstract());
+  func_graph->AddValueNode(scalar_node);
+  return scalar_node;
+}
+
 CNodePtr ScalarOpPass::GenerateStridedSlice(const FuncGraphPtr &func_graph, const AnfNodePtr &shape_node,
                                             const AnfNodePtr &tuple_get_node, const FuncGraphManagerPtr &manager) {
   auto begin_index = GetTupleGetItemOutIndex(tuple_get_node->cast<CNodePtr>());
@@ -247,9 +252,21 @@ CNodePtr ScalarOpPass::GenerateStridedSlice(const FuncGraphPtr &func_graph, cons
   auto tmp_abstract = abstract::MakeAbstract(std::make_shared<abstract::Shape>(tensor_shape), TypeIdToType(infer_type));
   MS_CHECK_TRUE_MSG(tmp_abstract != nullptr, nullptr, "make AbstractTensor failed");
 
+  auto begin_mask = GenerateScalarValue(func_graph, 0);
+  MS_CHECK_TRUE_MSG(begin_mask != nullptr, nullptr, "generate StridedSlice begin_mask node failed.");
+  auto end_mask = GenerateScalarValue(func_graph, 0);
+  MS_CHECK_TRUE_MSG(end_mask != nullptr, nullptr, "generate StridedSlice end_mask node failed.");
+  auto ellipsis_mask = GenerateScalarValue(func_graph, 0);
+  MS_CHECK_TRUE_MSG(ellipsis_mask != nullptr, nullptr, "generate StridedSlice ellipsis_mask node failed.");
+  auto new_axis_mask = GenerateScalarValue(func_graph, 0);
+  MS_CHECK_TRUE_MSG(new_axis_mask != nullptr, nullptr, "generate StridedSlice new_axis_mask node failed.");
+  auto shrink_axis_mask = GenerateScalarValue(func_graph, 0);
+  MS_CHECK_TRUE_MSG(shrink_axis_mask != nullptr, nullptr, "generate StridedSlice shrink_axis_mask node failed.");
+
   auto prim = NewValueNode(std::make_shared<Primitive>(kStridedSliceOpName));
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  AnfNodePtrList inputs = {prim, shape_node, begin_node, end_node, strides_node};
+  AnfNodePtrList inputs = {prim,       shape_node, begin_node,    end_node,      strides_node,
+                           begin_mask, end_mask,   ellipsis_mask, new_axis_mask, shrink_axis_mask};
   CNodePtr strided_slice = func_graph->NewCNode(inputs);
   MS_CHECK_TRUE_RET(strided_slice != nullptr, nullptr);
   strided_slice->set_fullname_with_scope(tuple_get_node->fullname_with_scope() + "_strided_slice");
@@ -258,12 +275,6 @@ CNodePtr ScalarOpPass::GenerateStridedSlice(const FuncGraphPtr &func_graph, cons
   // set attrs, all defaults to zero
   auto primitive = GetCNodePrimitive(strided_slice);
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
-  primitive->set_attr("new_axis_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("shrink_axis_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("end_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("begin_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("ellipsis_mask", MakeValue<int64_t>(0));
-
   return strided_slice;
 }
 
@@ -371,7 +382,7 @@ STATUS ScalarOpPass::ReplaceMakeTuple(const FuncGraphPtr &func_graph, const AnfN
                                    anf_node->cast<CNodePtr>()->fullname_with_scope() + "_concat_make_tuple");
   auto primitive = GetCNodePrimitive(concat_node);
   MS_CHECK_TRUE_RET(primitive != nullptr, lite::RET_ERROR);
-  int64_t num_of_inputs = anf_node->cast<CNodePtr>()->inputs().size() - kSizeOne;
+  int64_t num_of_inputs = SizeToInt(anf_node->cast<CNodePtr>()->size() - kSizeOne);
   primitive->set_attr("N", MakeValue<int64_t>(num_of_inputs));
   primitive->set_attr("inputNums", MakeValue<int64_t>(num_of_inputs));
 

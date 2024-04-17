@@ -12,6 +12,11 @@ mindspore.ops.mish
 
     更多详细信息请参见 `A Self Regularized Non-Monotonic Neural Activation Function <https://arxiv.org/abs/1908.08681>`_ 。
 
+    Mish函数图：
+
+    .. image:: ../images/Mish.png
+        :align: center
+
     参数：
         - **x** (Tensor) - 输入Tensor。
           支持数据类型：

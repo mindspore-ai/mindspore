@@ -105,6 +105,8 @@ class MS_CORE_API ValueSequence : public Value {
   /// \return The description of the ValueSequence object.
   std::string DumpText() const override;
 
+  bool ContainsValueAny() const override;
+
  protected:
   ValuePtrList elements_;
 };
@@ -196,8 +198,9 @@ class MS_CORE_API ValueNamedTuple : public ValueTuple {
   /// \brief Constructor of ValueNamedTuple.
   ///
   /// \param[in] elements Define the elements of the object.
-  ValueNamedTuple(const std::string &type_name, const std::vector<ValuePtr> &keys, const std::vector<ValuePtr> &values)
-      : ValueTuple(values), type_name_(type_name), keys_(keys) {}
+  ValueNamedTuple(const std::string &sub_class_name, const std::vector<ValuePtr> &keys,
+                  const std::vector<ValuePtr> &values)
+      : ValueTuple(values), sub_class_name_(sub_class_name), keys_(keys) {}
 
   /// \brief Destructor of ValueNamedTuple.
   ~ValueNamedTuple() override = default;
@@ -209,7 +212,7 @@ class MS_CORE_API ValueNamedTuple : public ValueTuple {
   /// \brief Show the type name of namedtuple.
   ///
   /// \return The type name of the namedtuple object.
-  std::string name() const { return type_name_; }
+  const std::string &sub_class_name() const { return sub_class_name_; }
   /// \brief Show the label of namedtuple.
   ///
   /// \return The Label of the namedtuple object.
@@ -223,8 +226,10 @@ class MS_CORE_API ValueNamedTuple : public ValueTuple {
   /// \return The description of the ValueNamedTuple object.
   std::string DumpText() const override { return ToString(); }
 
+  bool ContainsValueAny() const override;
+
  private:
-  std::string type_name_;
+  std::string sub_class_name_;
   std::vector<ValuePtr> keys_;
 };
 using ValueNamedTuplePtr = std::shared_ptr<ValueNamedTuple>;
@@ -281,6 +286,8 @@ class MS_CORE_API ValueSlice : public Value {
   /// \return The step position of the slice object.
   ValuePtr step() const { return step_; }
 
+  bool ContainsValueAny() const override;
+
  private:
   ValuePtr start_;
   ValuePtr stop_;
@@ -333,6 +340,8 @@ class MS_CORE_API KeywordArg : public Value {
   ///
   /// \return The description of the KeywordArg object.
   std::string DumpText() const override { return ToString(); }
+
+  bool ContainsValueAny() const override { return value_->ContainsValueAny(); }
 
  private:
   std::string key_;
@@ -407,6 +416,8 @@ class MS_CORE_API ValueDictionary : public Value {
   ///
   /// \return The description of the ValueDictionary object.
   std::string DumpText() const override { return ToString(); }
+
+  bool ContainsValueAny() const override;
 
  private:
   std::vector<std::pair<ValuePtr, ValuePtr>> key_values_;
@@ -506,6 +517,8 @@ class MS_CORE_API ValueAny final : public Value {
   ///
   /// \return The abstract of the ValueAny object.
   abstract::AbstractBasePtr ToAbstract() override;
+
+  bool ContainsValueAny() const override { return true; }
 };
 
 GVAR_DEF(ValuePtr, kValueAny, std::make_shared<ValueAny>());

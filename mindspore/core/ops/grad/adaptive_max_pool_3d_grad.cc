@@ -45,7 +45,7 @@ abstract::ShapePtr AdaptiveMaxPool3DGradInferShape(const PrimitivePtr &primitive
   auto input_grad_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
   auto argmax_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 2);
-  if (!x_shape_ptr->IsDynamic() && !argmax_shape_ptr->IsDynamic() && !argmax_shape_ptr->IsDynamic()) {
+  if (!x_shape_ptr->IsDynamic() && !argmax_shape_ptr->IsDynamic()) {
     auto input_grad_shape = input_grad_shape_ptr->shape();
     auto x_shape = x_shape_ptr->shape();
     auto argmax_shape = argmax_shape_ptr->shape();
@@ -67,9 +67,9 @@ abstract::ShapePtr AdaptiveMaxPool3DGradInferShape(const PrimitivePtr &primitive
 
 TypePtr AdaptiveMaxPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_grad_dtype = input_args[0]->BuildType();
-  auto x_dtype = input_args[1]->BuildType();
-  auto argmax_dtype = input_args[2]->BuildType();
+  auto input_grad_dtype = input_args[0]->GetType();
+  auto x_dtype = input_args[1]->GetType();
+  auto argmax_dtype = input_args[2]->GetType();
   const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                                 kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> argmax_valid_types = {kInt32, kInt64};

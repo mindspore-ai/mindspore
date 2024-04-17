@@ -51,7 +51,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderLargeRowsPerBuffer) {
 
   std::shared_ptr<TFReaderOp> my_tfreader_op =
     std::make_shared<TFReaderOp>(num_workers, worker_connector_size, 0, files, std::move(schema), op_connector_size,
-                                 columns_to_load, false, 1, 0, false);
+                                 columns_to_load, false, 1, 0, false, CompressionType::NONE, true);
   rc = my_tfreader_op->Init();
   ASSERT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
@@ -111,7 +111,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderSmallRowsPerBuffer) {
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   std::shared_ptr<TFReaderOp> my_tfreader_op =
     std::make_shared<TFReaderOp>(num_workers, worker_connector_size, 0, files, std::move(schema), op_connector_size,
-                                 columns_to_load, false, 1, 0, false);
+                                 columns_to_load, false, 1, 0, false, CompressionType::NONE, true);
   rc = my_tfreader_op->Init();
   ASSERT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
@@ -171,7 +171,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderLargeQueueSize) {
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   std::shared_ptr<TFReaderOp> my_tfreader_op =
     std::make_shared<TFReaderOp>(num_workers, worker_connector_size, 0, files, std::move(schema), op_connector_size,
-                                 columns_to_load, false, 1, 0, false);
+                                 columns_to_load, false, 1, 0, false, CompressionType::NONE, true);
   rc = my_tfreader_op->Init();
   ASSERT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
@@ -231,7 +231,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderOneThread) {
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   std::shared_ptr<TFReaderOp> my_tfreader_op =
     std::make_shared<TFReaderOp>(num_workers, worker_connector_size, 0, files, std::move(schema), op_connector_size,
-                                 columns_to_load, false, 1, 0, false);
+                                 columns_to_load, false, 1, 0, false, CompressionType::NONE, true);
   rc = my_tfreader_op->Init();
   ASSERT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
@@ -294,7 +294,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderTake1Buffer) {
 
   std::shared_ptr<TFReaderOp> my_tfreader_op =
     std::make_shared<TFReaderOp>(num_workers, worker_connector_size, 0, files, std::move(schema), op_connector_size,
-                                 columns_to_load, false, 1, 0, false);
+                                 columns_to_load, false, 1, 0, false, CompressionType::NONE, true);
   rc = my_tfreader_op->Init();
   ASSERT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
@@ -334,7 +334,6 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderTake1Buffer) {
 
   ASSERT_EQ(row_count, 5);
 }
-
 
 /// Feature: TFReader op
 /// Description: Test TFReaderOp::CountTotalRows basic cases

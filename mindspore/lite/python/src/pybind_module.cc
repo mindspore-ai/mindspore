@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "include/api/types.h"
+#include "src/extendrt/session/single_op_session.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
 #include "pybind11/stl.h"
@@ -54,5 +55,9 @@ PYBIND11_MODULE(_c_lite_wrapper, m) {
   m.def("create_tensor", &create_tensor);
   m.def("create_tensor_by_tensor", &create_tensor_by_tensor);
   m.def("create_tensor_by_numpy", &create_tensor_by_numpy);
+
+  // call aclFinalize manually before exit.
+  (void)py::module::import("atexit").attr("register")(
+    py::cpp_function{[&]() -> void { SingleOpInferSession::AscendFinalize(); }});
 }
 }  // namespace mindspore::lite

@@ -37,9 +37,10 @@ SomasTensor::SomasTensor(size_t id, size_t source_node_id, size_t source_stream_
     : aligned_size_(aligned_size),
       lifelong_value_(lifelong_value),
       contiguous_(false),
+      is_peak_(false),
+      can_reuse_peak_mem_(0),
       type_(kUnknown),
       offset_(0),
-      num_constraints_(0),
       id_(id),
       source_node_id_(source_node_id),
       source_stream_id_(source_stream_id),
@@ -49,9 +50,9 @@ SomasTensor::SomasTensor(size_t id, size_t source_node_id, size_t source_stream_
 
 SomasSolverTensorDescPtr SomasTensor::GetSolverTensorDesc() {
   if (contiguous_) {
-    solver_tensor_desc_->Update(id_, aligned_size_, offset_, false, num_constraints_);
+    solver_tensor_desc_->Update(id_, aligned_size_, offset_, can_reuse_peak_mem_, false);
   } else {
-    solver_tensor_desc_->Update(id_, aligned_size_, offset_, lifelong_value_ == kLifeLongGraphAll, num_constraints_);
+    solver_tensor_desc_->Update(id_, aligned_size_, offset_, can_reuse_peak_mem_, lifelong_value_ == kLifeLongGraphAll);
   }
   if (aligned_size_ == 0) {  // ignore zero-size tensors for solver
     return nullptr;

@@ -85,6 +85,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
+  KernelGraphPtr NewPynativeKernelGraph();
   void SetKernelGraphId(const KernelGraphPtr &kernel_graph);
   AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph) const;
 
@@ -98,12 +99,18 @@ class BACKEND_EXPORT KernelGraphMgr {
 
   mindspore::HashMap<FuncGraph *, KernelGraphPtr> GetFrontBackendGraphMap() const { return front_backend_graph_map_; }
   void CacheKernelGraph(const KernelGraphPtr &kg);
+  // do inline
+  static AnfNodePtr DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
+                             const AnfNodePtrList &func_graph_args, const ScopePtr &scope,
+                             const uint32_t &target_graph_id,
+                             const std::map<session::AnfWithOutIndex, session::AnfWithOutIndex> &ref_map,
+                             const KernelGraphPtr &graph, bool is_switch_inline);
 
  private:
   void GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
   void GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
-  ValueNodePtr GetChildGraph(KernelGraph *graph, const AnfNodePtr &child_func_graph);
+  AnfNodePtr GetChildGraph(KernelGraph *graph, const AnfNodePtr &child_func_graph);
   void HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
                             const FuncGraphManagerPtr &front_func_graph_manager,
                             const std::shared_ptr<KernelGraph> &backend_graph);
@@ -141,6 +148,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   mindspore::HashSet<AnfNodePtr> need_flatten_;
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> need_flatten_tuple_map_;
   static GraphId graph_sum_;
+  static GraphId pynative_graph_sum_;
   // record all graphs's backend params unique name to its weak_ptr
   // graph can come from different frontend graph
   static mindspore::HashMap<std::string, std::weak_ptr<AnfNode>> name_to_params_;

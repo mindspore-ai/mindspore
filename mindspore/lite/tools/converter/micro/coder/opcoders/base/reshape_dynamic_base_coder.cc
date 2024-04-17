@@ -29,14 +29,15 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::lite::micro {
 int ReshapeDynamicBaseCoder::Prepare(CoderContext *const context) {
-  MS_CHECK_TRUE_MSG(input_tensors_.size() == C2NUM, RET_ERROR, "Reshape's input-num must be 2.");
   MS_CHECK_TRUE_MSG(input_tensors_[FIRST_INPUT]->data_type() == kNumberTypeFloat16, RET_INPUT_PARAM_INVALID,
                     "Input tensor data type is invalid.");
-  MS_CHECK_TRUE_MSG(input_tensors_[SECOND_INPUT]->IsConst(), RET_NOT_SUPPORT,
-                    "Currently, only support the first input of reshape is non-const when shape is dynamic.");
-  MS_CHECK_TRUE_MSG(input_tensors_[SECOND_INPUT]->data_type() == kNumberTypeInt32 ||
-                      input_tensors_[SECOND_INPUT]->data_type() == kNumberTypeInt,
-                    RET_ERROR, "The data-type of Reshape's second input must be int.");
+  if (input_tensors_.size() == C2NUM) {
+    MS_CHECK_TRUE_MSG(input_tensors_[SECOND_INPUT]->IsConst(), RET_NOT_SUPPORT,
+                      "Currently, only support the first input of reshape is non-const when shape is dynamic.");
+    MS_CHECK_TRUE_MSG(input_tensors_[SECOND_INPUT]->data_type() == kNumberTypeInt32 ||
+                        input_tensors_[SECOND_INPUT]->data_type() == kNumberTypeInt,
+                      RET_ERROR, "The data-type of Reshape's second input must be int.");
+  }
   MS_CHECK_TRUE_MSG(output_tensor_->data_type() == kNumberTypeFloat16, RET_INPUT_PARAM_INVALID,
                     "Output tensor data type is invalid.");
   return RET_OK;
@@ -47,7 +48,7 @@ int ReshapeDynamicBaseCoder::DoCode(CoderContext *const context) {
 
   int data_item_size = static_cast<int>(lite::DataTypeSize(input_tensor_->data_type()));
   auto in_shape = shape_info_container_->GetTemplateShape(input_tensor_);
-  std::string size = AccumulateShape(in_shape) + " * " + std::to_string(data_item_size);
+  std::string size = AccumulateShape(in_shape, 0, in_shape.size()) + " * " + std::to_string(data_item_size);
   std::string input_data = dynamic_mem_manager_->GetVarTensorAddr(input_tensor_);
   MS_CHECK_TRUE_MSG(!input_data.empty(), RET_ERROR, "pointer is not allocated by the allocator");
   std::string output_data = dynamic_mem_manager_->GetVarTensorAddr(output_tensor_);

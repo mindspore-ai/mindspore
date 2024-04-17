@@ -350,7 +350,7 @@ class CacheClient {
     TaskGroup vg_;
     CacheClient *cc_;
     int64_t offset_addr_;
-    AsyncWriter buf_arr_[kNumAsyncBuffer];
+    std::vector<AsyncWriter> buf_arr_;
     int32_t cur_;
   };
   std::shared_ptr<AsyncBufferStream> async_buffer_stream_;

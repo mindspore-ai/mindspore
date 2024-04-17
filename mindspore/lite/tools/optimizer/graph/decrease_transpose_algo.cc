@@ -414,11 +414,6 @@ STATUS DecreaseTransposeAlgo::DoPreInsert(const FuncGraphPtr &func_graph, const 
           return lite::RET_ERROR;
         }
       }
-      auto status = node_infer_shape_.InferShape(input_make_tuple);
-      if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
-        MS_LOG(ERROR) << "infer shape failed.";
-        return lite::RET_ERROR;
-      }
       continue;
     }
     if (HandleFunc(func_graph, cnode, i, trans_type) != lite::RET_OK) {
@@ -456,12 +451,6 @@ STATUS DecreaseTransposeAlgo::InsertPostTransNode(const FuncGraphPtr &func_graph
           MS_CHECK_TRUE_RET(tuple_get_item != nullptr, lite::RET_ERROR);
           post_node = tuple_get_item;
           (void)manager->Replace(cnode, tuple_get_item);
-        }
-      } else {
-        auto status = node_infer_shape_.InferShape(post_node->cast<CNodePtr>());
-        if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
-          MS_LOG(ERROR) << "infer shape failed.";
-          return lite::RET_ERROR;
         }
       }
       MS_CHECK_TRUE_RET(manager->node_users().find(post_node) != manager->node_users().end(), lite::RET_ERROR);
@@ -592,9 +581,9 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
     }
   }
   (void)std::for_each(in_nodes.begin(), in_nodes.end(),
-                      [&manager](const CNodePtr &in_cnode) { manager->Replace(in_cnode, in_cnode->input(1)); });
+                      [&manager](const CNodePtr &in_cnode) { (void)manager->Replace(in_cnode, in_cnode->input(1)); });
   (void)std::for_each(out_nodes.begin(), out_nodes.end(),
-                      [&manager](const CNodePtr &out_node) { manager->Replace(out_node, out_node->input(1)); });
+                      [&manager](const CNodePtr &out_node) { (void)manager->Replace(out_node, out_node->input(1)); });
 
   if (InsertPreTransForNonTransInOut(func_graph, not_trans_in_nodes, not_trans_out_nodes, trans_info) != lite::RET_OK) {
     MS_LOG(ERROR) << "Insert pre transpose failed for non-transpose inputs or outputs.";
@@ -602,7 +591,7 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
   }
 
   for (auto &middle_cnode : middle_ops_vec) {
-    if (CheckPrimitiveType(cnode, prim::kPrimDepend) || CheckPrimitiveType(cnode, prim::kPrimReturn)) {
+    if (IsSpecialType(middle_cnode)) {
       continue;
     }
     status = HandleGraphSingleNode(func_graph, trans_info, middle_cnode);
@@ -691,6 +680,7 @@ int DecreaseTransposeAlgo::SetSubGraphOutput(const FuncGraphPtr &sub_graph) {
   MS_ASSERT(return_node != nullptr);
   auto origin_input = return_node->inputs();
   lite::RemoveIfDepend(return_node);
+  lite::RemoveIfMakeTuple(return_node);
   for (size_t i = 1; i < return_node->size(); ++i) {
     if (!CheckPrimitiveType(return_node->input(i), prim::kPrimTranspose)) {
       continue;

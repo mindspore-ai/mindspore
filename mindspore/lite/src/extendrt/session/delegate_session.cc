@@ -240,6 +240,23 @@ Status GraphSinkSession::RunGraph(uint32_t graph_id, const std::vector<tensor::T
   MS_EXCEPTION_IF_NULL(outputs);
   graph_executor_->SetBefore(before);
   graph_executor_->SetAfter(after);
+  auto input_infos = GetInputs(graph_id);
+  if (inputs.size() != input_infos.size()) {
+    MS_LOG(ERROR) << "Input size not match, graph input size " << input_infos.size() << ", given input size "
+                  << inputs.size();
+    return kCoreFailed;
+  }
+  for (size_t i = 0; i < inputs.size(); i++) {
+    if (input_infos[i] == nullptr) {
+      MS_LOG(ERROR) << "Input " << i << " info is nullptr";
+      return kCoreFailed;
+    }
+    if (inputs[i].data_type() != static_cast<TypeId>(input_infos[i]->DataType())) {
+      MS_LOG(ERROR) << "Input " << i << " data type not match, graph input type " << input_infos[i]->DataType()
+                    << ", given input type " << inputs[i].data_type();
+      return kCoreFailed;
+    }
+  }
   bool ret = graph_executor_->RunGraph(graph_id, inputs, outputs, options_);
   if (!ret) {
     MS_LOG(ERROR) << "GraphSinkSession::RunGraph run graph failed";
@@ -332,6 +349,17 @@ std::vector<std::string> GraphSinkSession::GetInputNames(uint32_t graph_id) {
   auto &info = info_it->second;
   return info.input_names;
 }
+
+Status GraphSinkSession::UpdateWeights(const std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> &weights) {
+  MS_LOG(INFO) << "UpdateWeights..";
+  bool ret = graph_executor_->UpdateWeights(weights);
+  if (!ret) {
+    MS_LOG(ERROR) << "UpdateWeights failed.";
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
 MutableTensorImplPtr GraphSinkSession::GetOutputByTensorName(uint32_t graph_id, const std::string &tensorName) {
   auto info_it = graph_infos_.find(graph_id);
   if (info_it == graph_infos_.end()) {

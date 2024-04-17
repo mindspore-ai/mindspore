@@ -1,0 +1,13 @@
+approvers:
+- chujinjin #
+- hwcaifubi
+- zjun3021
+
+reviewers:
+- caikairui
+- luochao60
+- wangchangheng
+
+
+options:
+    no_parent_owners: true

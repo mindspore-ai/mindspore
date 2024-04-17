@@ -1,0 +1,53 @@
+net: FasterRCNN
+backbone:
+  name: "det_resnet50"
+  pretrained: True
+  in_channels: [256, 512, 1024, 2048]
+  out_channels: 256
+  frozen_2stage: True
+  frozen_bn: False
+  frozen: False
+  fpn:
+    num_outs: 5
+    level_index: [ 0, 1, 2, 3 ]
+    norm: 'none'
+    act: 'none'
+    upsample_mode: "bilinear"
+rpn_head:
+  feat_channel: 256
+  anchor_generator:
+    aspect_ratios: [0.5, 1.0, 2.0]
+    anchor_sizes: [[32], [64], [128], [256], [512]]
+    strides: [4, 8, 16, 32, 64]
+  rpn_label_assignment:
+    rnp_sample_batch: 256
+    fg_fraction: 0.5
+    negative_overlap: 0.3
+    positive_overlap: 0.7
+    use_random: True
+  train_proposal:
+    min_size: 1.0
+    nms_thresh: 0.7
+    pre_nms_top_n: 2000
+    post_nms_top_n: 1000
+  test_proposal:
+    min_size: 1.0
+    nms_thresh: 0.7
+    pre_nms_top_n: 1000
+    post_nms_top_n: 1000
+bbox_head:
+  resolution: 7
+  bbox_loss: None
+  add_gt_as_proposals: True
+  head:
+    name: RCNNBBoxTwoFCHead
+    in_channel: 256
+    out_channel: 1024
+  roi_extractor:
+    featmap_strides: [4, 8, 16, 32]
+  bbox_assigner:
+    name: BBoxAssigner
+    rois_per_batch: 512
+    bg_thresh: 0.5
+    fg_thresh: 0.5
+    fg_fraction: 0.25

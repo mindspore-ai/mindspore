@@ -78,7 +78,7 @@ if(ENABLE_MINDDATA)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/jpeg_turbo.cmake)
 endif()
 
-if(ENABLE_TESTCASES OR ENABLE_CPP_ST OR ENABLE_C_ST)
+if(ENABLE_TESTCASES OR ENABLE_CPP_ST)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/gtest.cmake)
 endif()
 

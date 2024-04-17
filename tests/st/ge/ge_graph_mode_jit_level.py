@@ -16,7 +16,6 @@
 import pytest  # pylint: disable=unused-import
 import numpy as np
 
-import ge_infer_env  # pylint: disable=unused-import
 from mindspore import nn
 from mindspore import ops
 from mindspore import context, Tensor

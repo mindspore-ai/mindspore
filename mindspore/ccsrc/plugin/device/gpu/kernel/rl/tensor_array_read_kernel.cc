@@ -25,27 +25,26 @@ using mindspore::device::TensorArrayMgr;
 using mindspore::device::TensorArrayPtr;
 TensorArrayReadKernelMod::TensorArrayReadKernelMod() : value_size_(0), type_(nullptr) {}
 
-bool TensorArrayReadKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  shapes_ = GetAttr<std::vector<int64_t>>(kernel_node, "element_shape");
-  type_ = GetAttr<TypePtr>(kernel_node, "dtype");
+bool TensorArrayReadKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  return true;
+}
+
+int TensorArrayReadKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  shapes_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("element_shape"));
+  type_ = GetValue<TypePtr>(primitive_->GetAttr("dtype"));
   value_size_ = GetTypeByte(type_);
   for (auto i : shapes_) {
     value_size_ *= i;
   }
-  InitSizeLists();
-  return true;
-}
-
-void TensorArrayReadKernelMod::InitSizeLists() {
-  input_size_list_.push_back(sizeof(int64_t));
-  input_size_list_.push_back(sizeof(int64_t));
+  output_size_list_.clear();
   output_size_list_.push_back(value_size_);
+  return KRET_OK;
 }
 
-bool TensorArrayReadKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs, void *stream) {
+bool TensorArrayReadKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs, void *stream) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_ERROR_IF_NULL(handle_addr);
   auto index = GetDeviceAddress<int64_t>(inputs, 1);
@@ -55,12 +54,12 @@ bool TensorArrayReadKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   MS_ERROR_IF_NULL(cuda_stream);
   int64_t index_host = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
-                             "For 'TensorArrayRead', get index to host failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+    "For 'TensorArrayRead', get index to host failed");
   int64_t handle = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(
-    kernel_node_, cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
     "For 'TensorArrayRead', get handle to host failed");
   if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "cuda Stream Sync Failed");
@@ -72,8 +71,8 @@ bool TensorArrayReadKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
   }
   auto value_addr = tensors_->Read(index_host);
   MS_LOG(DEBUG) << "Read value index:" << index_host;
-  CHECK_CUDA_RET_WITH_EXCEPT(
-    kernel_node_, cudaMemcpyAsync(out_value, value_addr->addr, value_size_, cudaMemcpyDeviceToDevice, cuda_stream),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(out_value, value_addr->addr, value_size_, cudaMemcpyDeviceToDevice, cuda_stream),
     "Get value failed");
   return true;
 }

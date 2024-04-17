@@ -39,8 +39,8 @@ STATUS UpsampleMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Get value node and primitive from cnode failed.";
     return lite::RET_ERROR;
   }
-  if (cnode->inputs().size() != kInputNum) {
-    MS_LOG(ERROR) << "Upsample input num should be " << kInputNum << ", real size: " << cnode->inputs().size();
+  if (cnode->size() != kInputNum) {
+    MS_LOG(ERROR) << "Upsample input num should be " << kInputNum << ", real size: " << cnode->size();
     return RET_ERROR;
   }
   TypeId type_id;

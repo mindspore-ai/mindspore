@@ -1,0 +1,9 @@
+omegaconf           # for st test
+einops              # for st test
+ftfy                # for st test
+regex               # for st test
+albumentations      # for st test
+pandas              # for st test
+imagesize           # for st test
+toolz               # for st test
+tqdm                # for st test

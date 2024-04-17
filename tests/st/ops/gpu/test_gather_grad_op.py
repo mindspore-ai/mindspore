@@ -129,14 +129,15 @@ def test_gather_grad_graph_int64_fp16():
 @pytest.mark.env_onecard
 def test_gather_grad_pynative_int32_fp32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    x_shape = (2, 5)
+    x = Tensor(np.zeros((2, 5)), ms.float32)
     dim = 0
     index = Tensor(np.array([[0, 1, 1, 0, 0], [1, 0, 0, 1, 1]]), ms.int32)
     grad = Tensor(np.array([[0.9031, 0.0890, 0.2779, 0.3198, 0.5710],
                             [0.6949, 0.8439, 0.2003, 0.6868, 0.4437]]), ms.float32)
     expect = np.array([[0.9031, 0.8439, 0.2003, 0.3198, 0.5710],
                        [0.6949, 0.0890, 0.2779, 0.6868, 0.4437]], np.float32)
-    output = G.GatherDGrad(dim, x_shape)(index, grad)
+    # GatherDGrad has been abandoned
+    output = G.GatherDGradV2()(x, dim, index, grad)
     error = 1e-4
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
@@ -147,14 +148,14 @@ def test_gather_grad_pynative_int32_fp32():
 @pytest.mark.env_onecard
 def test_gather_grad_pynative_int64_fp32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    x_shape = (2, 5)
+    x = Tensor(np.zeros((2, 5)), ms.float32)
     dim = 0
     index = Tensor(np.array([[0, 1, 1, 0, 0], [1, 0, 0, 1, 1]]), ms.int64)
     grad = Tensor(np.array([[0.9031, 0.0890, 0.2779, 0.3198, 0.5710],
                             [0.6949, 0.8439, 0.2003, 0.6868, 0.4437]]), ms.float32)
     expect = np.array([[0.9031, 0.8439, 0.2003, 0.3198, 0.5710],
                        [0.6949, 0.0890, 0.2779, 0.6868, 0.4437]], np.float32)
-    output = G.GatherDGrad(dim, x_shape)(index, grad)
+    output = G.GatherDGradV2()(x, dim, index, grad)
     error = 1e-4
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
@@ -165,14 +166,14 @@ def test_gather_grad_pynative_int64_fp32():
 @pytest.mark.env_onecard
 def test_gather_grad_pynative_int32_fp16():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    x_shape = (2, 5)
+    x = Tensor(np.zeros((2, 5)), ms.float16)
     dim = 0
     index = Tensor(np.array([[0, 1, 1, 0, 0], [1, 0, 0, 1, 1]]), ms.int32)
     grad = Tensor(np.array([[0.9031, 0.0890, 0.2779, 0.3198, 0.5710],
                             [0.6949, 0.8439, 0.2003, 0.6868, 0.4437]]), ms.float16)
     expect = np.array([[0.9031, 0.8439, 0.2003, 0.3198, 0.5710],
                        [0.6949, 0.0890, 0.2779, 0.6868, 0.4437]], np.float16)
-    output = G.GatherDGrad(dim, x_shape)(index, grad)
+    output = G.GatherDGradV2()(x, dim, index, grad)
     error = 1e-4
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
@@ -183,14 +184,14 @@ def test_gather_grad_pynative_int32_fp16():
 @pytest.mark.env_onecard
 def test_gather_grad_pynative_int64_fp16():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    x_shape = (2, 5)
+    x = Tensor(np.zeros((2, 5)), ms.float16)
     dim = 0
     index = Tensor(np.array([[0, 1, 1, 0, 0], [1, 0, 0, 1, 1]]), ms.int64)
     grad = Tensor(np.array([[0.9031, 0.0890, 0.2779, 0.3198, 0.5710],
                             [0.6949, 0.8439, 0.2003, 0.6868, 0.4437]]), ms.float16)
     expect = np.array([[0.9031, 0.8439, 0.2003, 0.3198, 0.5710],
                        [0.6949, 0.0890, 0.2779, 0.6868, 0.4437]], np.float16)
-    output = G.GatherDGrad(dim, x_shape)(index, grad)
+    output = G.GatherDGradV2()(x, dim, index, grad)
     error = 1e-4
     diff = output.asnumpy() - expect
     assert np.all(diff < error)

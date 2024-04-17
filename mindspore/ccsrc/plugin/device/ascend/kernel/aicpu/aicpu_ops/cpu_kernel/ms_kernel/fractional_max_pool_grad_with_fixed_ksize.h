@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_FRACTIONAL_MAX_POOL_GRAD_WITH_FIXED_KSIZE_H_
 
 #include <vector>
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 
 namespace aicpu {
@@ -34,9 +34,9 @@ class FractionalMaxPoolGradWithFixedKsize : public CpuKernel {
                                                       const int input_w, const int output_h, const int output_w,
                                                       CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ComputeSingleBatch(T *out_backprop_single_batch_addr, int64_t *argmax_single_batch_addr,
-                              T *y_single_batch_addr, const int c_size, const int input_h, const int input_w,
-                              const int output_h, const int output_w);
+  uint32_t ComputeSingleBatch(CpuKernelContext &ctx, T *out_backprop_single_batch_addr,
+                              int64_t *argmax_single_batch_addr, T *y_single_batch_addr, const int c_size,
+                              const int input_h, const int input_w, const int output_h, const int output_w);
 };
 }  // namespace aicpu
 #endif

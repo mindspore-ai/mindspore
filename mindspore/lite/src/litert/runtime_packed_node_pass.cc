@@ -18,6 +18,7 @@
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/nnacl_kernel.h"
 #include "nnacl/kernel/matmul_struct.h"
+#include "common/string_utils.h"
 
 using RecoveryWeightFunc = void (*)(void *, void *, int, int, bool);
 namespace mindspore {
@@ -27,6 +28,8 @@ constexpr auto kActivationType = "activation_type";
 constexpr auto kTransposeA = "transpose_a";
 constexpr auto kTransposeB = "transpose_b";
 constexpr auto kArm64SimdDot = "ARM64SIMD_DOT";
+const std::vector<std::string> kAttrString = {"activation_type", "transpose_a", "transpose_b", "b_batch", "col", "deep",
+                                              "col_align",       "deep_align"};
 }  // namespace
 
 namespace lite {
@@ -38,9 +41,12 @@ PackedNodePass::~PackedNodePass() {
 }
 
 void PackedNodePass::Run(Model *model, const std::vector<Tensor *> &tensors) {
+  CHECK_NULL_RETURN_VOID(model);
+  LiteModel *lite_model = reinterpret_cast<LiteModel *>(model);
+  CHECK_NULL_RETURN_VOID(lite_model);
   for (auto &node : model->graph_.all_nodes_) {
     MS_ASSERT(node != nullptr);
-    if (node->node_type_ != schema::PrimitiveType_Custom) {
+    if (node->node_type_ != static_cast<int>(schema::PrimitiveType_Custom)) {
       continue;
     }
     auto *primitive = reinterpret_cast<const schema::Primitive *>(node->primitive_);
@@ -61,25 +67,26 @@ void PackedNodePass::Run(Model *model, const std::vector<Tensor *> &tensors) {
 
     auto custom_attr = custom->attr();
     std::map<std::string, std::string> attr_map;
-    for (size_t i = 0; i < custom_attr->size(); ++i) {
+    for (uint32_t i = 0; i < custom_attr->size(); ++i) {
       auto attr = custom_attr->Get(i);
       auto attr_key = attr->name()->str();
       auto data_bytes = attr->data();
-      int data_size = static_cast<int>(data_bytes->size());
+      uint32_t data_size = data_bytes->size();
       std::string attr_value;
-      for (int j = 0; j < data_size; j++) {
+      for (uint32_t j = 0; j < data_size; j++) {
         attr_value.push_back(static_cast<char>(data_bytes->Get(j)));
       }
       attr_map[attr_key] = attr_value;
     }
-    if (attr_map.find(kActivationType) == attr_map.end() || attr_map.find(kTransposeA) == attr_map.end() ||
-        attr_map.find(kTransposeB) == attr_map.end()) {
-      MS_LOG(ERROR) << "Custom attr error.";
-      return;
+    for (auto &str : kAttrString) {
+      if (attr_map.find(str) == attr_map.end() || !IsStrNumeric(attr_map[str])) {
+        MS_LOG(ERROR) << "Custom attr error.";
+        return;
+      }
     }
-    auto val_offset =
-      schema::CreateMatMulFusion(fbb, std::stoi(attr_map[kTransposeA]), std::stoi(attr_map[kTransposeB]),
-                                 static_cast<schema::ActivationType>(std::stoi(attr_map[kActivationType])));
+    auto val_offset = schema::CreateMatMulFusion(
+      fbb, static_cast<bool>(std::stoi(attr_map[kTransposeA])), static_cast<bool>(std::stoi(attr_map[kTransposeB])),
+      static_cast<schema::ActivationType>(std::stoi(attr_map[kActivationType])));
     auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_MatMulFusion, val_offset.o);
     fbb.Finish(prim_offset);
     void *prim = malloc(fbb.GetSize());
@@ -87,7 +94,7 @@ void PackedNodePass::Run(Model *model, const std::vector<Tensor *> &tensors) {
       MS_LOG(ERROR) << "malloc primitive failed.";
       return;
     }
-    memcpy(prim, fbb.GetBufferPointer(), fbb.GetSize());
+    (void)memcpy(prim, reinterpret_cast<void *>(fbb.GetBufferPointer()), fbb.GetSize());
     auto custom_primitive = flatbuffers::GetRoot<schema::Primitive>(prim);
     fbb.Clear();
     PackInfo *pack_info = new (std::nothrow) PackInfo();
@@ -96,6 +103,7 @@ void PackedNodePass::Run(Model *model, const std::vector<Tensor *> &tensors) {
       MS_LOG(ERROR) << "new PackInfo failed.";
       return;
     }
+    lite_model->node_bufs_.push_back(prim);
     node->primitive_ = custom_primitive;
     pack_info->is_packed_ = true;
     pack_info->b_batch_ = std::stoi(attr_map["b_batch"]);
@@ -103,24 +111,24 @@ void PackedNodePass::Run(Model *model, const std::vector<Tensor *> &tensors) {
     pack_info->deep_ = std::stoi(attr_map["deep"]);
     pack_info->col_align_ = std::stoi(attr_map["col_align"]);
     pack_info->deep_align_ = std::stoi(attr_map["deep_align"]);
-    pack_info->b_transpose_ = std::stoi(attr_map[kTransposeB]);
+    pack_info->b_transpose_ = static_cast<bool>(std::stoi(attr_map[kTransposeB]));
     pack_info->cpu_option_ = attr_map["cpu_option"];
     AddNodePackInfo(node->name_, pack_info);
-    if (node->quant_type_ == schema::QuantType_QUANT_DYNAMIC) {
-      pack_info->weight_sums_index_ = node->input_indices_.back();
+    if (node->quant_type_ == static_cast<int>(schema::QuantType_QUANT_DYNAMIC)) {
+      pack_info->weight_sums_index_ = static_cast<int>(node->input_indices_.back());
       node->input_indices_.pop_back();
-      if (!(reinterpret_cast<lite::LiteModel *>(model)->keep_model_buf())) {
-        auto index = static_cast<size_t>(pack_info->weight_sums_index_);
-        if (index > tensors.size()) {
+      if (!(lite_model->keep_model_buf())) {
+        auto index = pack_info->weight_sums_index_;
+        if (index < 0 || index > static_cast<int>(tensors.size())) {
           MS_LOG(ERROR) << "weight sums tensor index is error.";
           return;
         }
-        auto tensor = tensors[index];
+        auto tensor = tensors[static_cast<size_t>(index)];
         CopyWeightBiasSumsTensor(tensor);
       }
     }
 
-    node->node_type_ = schema::PrimitiveType_MatMulFusion;
+    node->node_type_ = static_cast<int>(schema::PrimitiveType_MatMulFusion);
   }
 }
 
@@ -237,12 +245,12 @@ void MatmulFp32BaseUnpack(void *src, void *dst, int row, int col, bool transpose
 
 RecoveryWeightFunc GetRecoveryWeightFunc(const int quant_type, const TypeId data_type, const int node_type,
                                          const std::string &cpu_option) {
-  if (cpu_option == kArm64SimdDot && node_type == schema::PrimitiveType_MatMulFusion &&
-      quant_type == schema::QuantType_QUANT_DYNAMIC && data_type == kNumberTypeInt8) {
+  if (cpu_option == kArm64SimdDot && node_type == static_cast<int>(schema::PrimitiveType_MatMulFusion) &&
+      quant_type == static_cast<int>(schema::QuantType_QUANT_DYNAMIC) && data_type == kNumberTypeInt8) {
     return MatmulDynamicSdotInt8Unpack;
   }
 
-  if (cpu_option == kArm64SimdDot && node_type == schema::PrimitiveType_MatMulFusion &&
+  if (cpu_option == kArm64SimdDot && node_type == static_cast<int>(schema::PrimitiveType_MatMulFusion) &&
       data_type == kNumberTypeFloat32) {
     return MatmulFp32BaseUnpack;
   }
@@ -259,34 +267,35 @@ int PackedMatmulKernelExec(kernel::KernelExec *kernel_exec, const std::vector<Te
   auto dst_tensor = kernel_exec->in_tensors()[SECOND_INPUT];
   auto kernel = reinterpret_cast<Kernel *>(kernel_exec->kernel());
   MS_CHECK_TRUE_MSG(kernel != nullptr, lite::RET_NULL_PTR, "kernel is nullptr.");
+  MS_CHECK_TRUE_MSG(kernel_exec->op_parameter() != nullptr, lite::RET_NULL_PTR, "kernel parameter is nullptr.");
   auto param = reinterpret_cast<MatMulParameter *>(kernel_exec->op_parameter());
   const KernelBase *kernel_base = reinterpret_cast<const nnacl::NNACLKernel *>(kernel_exec->kernel())->Kernel();
   if (dst_tensor->data_type() == kNumberTypeFloat32) {
     const MatmulStruct *matmul = reinterpret_cast<const MatmulStruct *>(kernel_base);
     if (matmul->matmul_type_ == kNotImplemented) {
       return RecoveryPackedWeight(dst_tensor, static_cast<int>(kernel->quant_type()), dst_tensor->data_type(),
-                                  schema::PrimitiveType_MatMulFusion, pack_info);
+                                  static_cast<int>(schema::PrimitiveType_MatMulFusion), *pack_info);
     }
   }
 
   if (dst_tensor->data_type() == kNumberTypeInt8 && param->matmul_type_ != kMatmulDynamicSdotInt8Cpu &&
       pack_info->cpu_option_ == kArm64SimdDot) {
     return RecoveryPackedWeight(dst_tensor, static_cast<int>(kernel->quant_type()), dst_tensor->data_type(),
-                                schema::PrimitiveType_MatMulFusion, pack_info);
+                                static_cast<int>(schema::PrimitiveType_MatMulFusion), *pack_info);
   }
 
   auto lite_kernel = static_cast<kernel::LiteKernel *>(kernel);
   lite::Tensor *weight_sums = nullptr;
-  auto index = static_cast<size_t>(pack_info->weight_sums_index_);
-  if (index < tensors.size()) {
+  auto index = pack_info->weight_sums_index_;
+  if (index >= 0 && static_cast<size_t>(index) < tensors.size()) {
     weight_sums = tensors.at(index);
   }
   return lite_kernel->PreparePackedWeight(weight_sums);
 }
 
 int RecoveryPackedWeight(Tensor *weight, const int quant_type, const TypeId data_type, const int node_type,
-                         PackInfo *pack_info) {
-  auto recovery_func = GetRecoveryWeightFunc(quant_type, data_type, node_type, pack_info->cpu_option_);
+                         const PackInfo &pack_info) {
+  auto recovery_func = GetRecoveryWeightFunc(quant_type, data_type, node_type, pack_info.cpu_option_);
   if (recovery_func == nullptr) {
     MS_LOG(ERROR) << "unsupported recovery func.";
     return RET_NULL_PTR;
@@ -297,23 +306,23 @@ int RecoveryPackedWeight(Tensor *weight, const int quant_type, const TypeId data
     return RET_NULL_PTR;
   }
   void *pack_b_ptr = weight->data();
-  for (int i = 0; i < pack_info->b_batch_; i++) {
+  for (int i = 0; i < pack_info.b_batch_; i++) {
     void *current_weight;
     void *current_b_pack;
     if (weight->data_type() == kNumberTypeInt8) {
-      current_weight = static_cast<void *>(static_cast<int8_t *>(unpack_data) + i * pack_info->deep_ * pack_info->col_);
+      current_weight = static_cast<void *>(static_cast<int8_t *>(unpack_data) + i * pack_info.deep_ * pack_info.col_);
       current_b_pack =
-        static_cast<void *>(static_cast<int8_t *>(pack_b_ptr) + i * pack_info->col_align_ * pack_info->deep_align_);
+        static_cast<void *>(static_cast<int8_t *>(pack_b_ptr) + i * pack_info.col_align_ * pack_info.deep_align_);
     } else if (weight->data_type() == kNumberTypeFloat32) {
-      current_weight = static_cast<void *>(static_cast<float *>(unpack_data) + i * pack_info->deep_ * pack_info->col_);
+      current_weight = static_cast<void *>(static_cast<float *>(unpack_data) + i * pack_info.deep_ * pack_info.col_);
       current_b_pack =
-        static_cast<void *>(static_cast<float *>(pack_b_ptr) + i * pack_info->col_align_ * pack_info->deep_);
+        static_cast<void *>(static_cast<float *>(pack_b_ptr) + i * pack_info.col_align_ * pack_info.deep_);
     } else {
       free(unpack_data);
       MS_LOG(ERROR) << "unsupported data type.";
       return RET_ERROR;
     }
-    recovery_func(current_weight, current_b_pack, pack_info->deep_, pack_info->col_, pack_info->b_transpose_);
+    recovery_func(current_weight, current_b_pack, pack_info.deep_, pack_info.col_, pack_info.b_transpose_);
   }
   weight->FreeData();
   weight->set_data(unpack_data);

@@ -1,0 +1,15 @@
+#operator relu_grad
+relu_grad:
+    args:
+        y_backprop:
+            dtype: tensor
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: ReluGradAscend

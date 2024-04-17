@@ -1,0 +1,15 @@
+tensor_shape:
+    description: |
+        Returns the shape of the input tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
+            >>> output = ops.TensorShape()(input_x)
+            >>> print(output)
+            [3 2 1]

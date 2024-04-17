@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ class ArithmeticBase : public OperatorInfo {
  protected:
   Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status BaseCheckStrategy(const StrategyPtr &strategy);
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
@@ -62,6 +63,16 @@ class AddInfo : public ArithmeticBase {
   AddInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<TensorAddCost>()) {}
   ~AddInfo() override = default;
+
+ protected:
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputTensorInfo() override;
+  Status InferForwardCommunicationByLayout() override { return SUCCESS; }
+
+ private:
+  TensorLayout InferOutputLayout();
+  TensorLayout output_infer_tensor_layout_;
 };
 
 class MulInfo : public ArithmeticBase {
@@ -351,6 +362,7 @@ class MaskedFillInfo : public ArithmeticBase {
   Status GetAttrs() override;
   Status InferTensorMap() override;
   Status InferMirrorOps() override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
 
  private:
   size_t input_size_ = 0;

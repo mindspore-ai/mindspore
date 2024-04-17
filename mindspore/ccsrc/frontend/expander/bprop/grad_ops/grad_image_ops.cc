@@ -21,14 +21,14 @@
 
 namespace mindspore::expander::bprop {
 REG_BPROP_BUILDERS_BEGIN(GradImageOps)
-REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i1, i4}).SetBody(BODYFUNC(ib) {
   auto images = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit(
-    "ResizeBicubicGrad", {dout, images},
-    {{"align_corners", ib->GetAttr("align_corners")}, {"half_pixel_centers", ib->GetAttr("half_pixel_centers")}});
-  return {dx, ib->OutZeros(size)};
+  auto align_corners = ib->GetInput(kIndex2);
+  auto half_pixel_centers = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("ResizeBicubicGrad", {dout, images, align_corners, half_pixel_centers});
+  return {dx, ib->OutZeros(size), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 
 REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {
@@ -53,14 +53,18 @@ REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib
   auto x_shape = ib->GetShape(x);
   NodePtr image_size{nullptr};
   if (IsDynamic(x_shape)) {
-    image_size = ib->Emit("TupleToTensor", {ib->Shape(x), ib->EmitValue(kInt32)});
+    image_size = ib->Emit("TupleToTensor", {ib->Shape(x), ib->Value<int64_t>(kInt32->type_id())});
   } else {
     image_size = ib->Tensor(x_shape, kInt32);
   }
   const auto max_byte = static_cast<int64_t>(2e9);  // max bytes of image gradient
-  auto dimage = ib->Emit("CropAndResizeGradImage", {dout, boxes, box_index, image_size},
-                         {{"method", MakeValue(method)}, {"T", image_type}, {"max_Byte", MakeValue(max_byte)}});
-  auto dbox = ib->Emit("CropAndResizeGradBoxes", {dout, x, boxes, box_index}, {{"method", MakeValue("bilinear")}});
+  NodePtr dimage = x->need_compute_grad_out()
+                     ? ib->Emit("CropAndResizeGradImage", {dout, boxes, box_index, image_size},
+                                {{"method", MakeValue(method)}, {"T", image_type}, {"max_Byte", MakeValue(max_byte)}})
+                     : ib->OutZeros(x);
+  NodePtr dbox = boxes->need_compute_grad_out() ? ib->Emit("CropAndResizeGradBoxes", {dout, x, boxes, box_index},
+                                                           {{"method", MakeValue("bilinear")}})
+                                                : ib->OutZeros(boxes);
   return {dimage, dbox, ib->OutZeros(box_index), ib->OutZeros(crop_size)};
 });
 

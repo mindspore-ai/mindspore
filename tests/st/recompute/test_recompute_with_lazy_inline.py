@@ -18,7 +18,9 @@ import re
 import subprocess
 import pytest
 
-match_dyn_mem = re.compile(r'Total Dynamic memory size: (.*?)M', re.S)
+from tests.st.utils import test_utils
+
+match_dyn_mem = re.compile(r'Total Static Memory size: (.*?)M', re.S)
 
 
 def get_max(mem_uses):
@@ -35,14 +37,14 @@ def run_testcase(testcase_name, expect_memory_usage):
         os.remove(log_filename)
     assert not os.path.exists(log_filename)
 
-    cmd = f"export GLOG_v=1; pytest -s test_recompute.py::" + testcase_name + " > " \
+    cmd = f"export GLOG_v=1; export GRAPH_OP_RUN=0; pytest -s test_recompute.py::" + testcase_name + " > " \
           + log_filename + " 2>&1"
     subprocess.check_output(cmd, shell=True)
     assert os.path.exists(log_filename)
     with open(log_filename, "r") as f:
         data = f.read()
     mem_uses = re.findall(match_dyn_mem, data)
-    assert len(mem_uses) == 3
+    assert len(mem_uses) == 2
     max_mem = get_max(mem_uses)
     assert max_mem == expect_memory_usage
     # Clear log file
@@ -59,20 +61,21 @@ def test_recompute_cell_recompute():
     Description: Each block is set recompute by the cell recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-    run_testcase("test_recompute_block_recompute", 34)
+    run_testcase("test_recompute_block_recompute", 33)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_recompute_op_recompute1():
     """
     Feature: Recompute with lazy inline.
     Description: Each block is set recompute by the primitive recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-    run_testcase("test_recompute_op_recompute1", 58)
+    run_testcase("test_recompute_op_recompute1", 45)
 
 
 @pytest.mark.level0
@@ -85,7 +88,20 @@ def test_recompute_op_recompute2():
     Description: Each block is set recompute by the primitive recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-    run_testcase("test_recompute_op_recompute2", 49)
+    run_testcase("test_recompute_op_recompute2", 19)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_recompute_op_recompute3():
+    """
+    Feature: Recompute with lazy inline.
+    Description: Each block is set recompute by the primitive recompute api.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    run_testcase("test_recompute_op_recompute3", 112)
 
 
 @pytest.mark.level0
@@ -98,7 +114,7 @@ def test_recompute_cell_and_op_recompute1():
     Description: Each block is set recompute by both the primitive and cell recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-    run_testcase("test_recompute_cell_and_op_recompute1", 58)
+    run_testcase("test_recompute_cell_and_op_recompute1", 45)
 
 
 @pytest.mark.level0
@@ -111,4 +127,31 @@ def test_recompute_cell_and_op_recompute2():
     Description: Each block is set recompute by both the primitive and cell recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-    run_testcase("test_recompute_cell_and_op_recompute2", 64)
+    run_testcase("test_recompute_cell_and_op_recompute2", 51)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@test_utils.run_test_with_On
+def test_recompute_cell_and_op_recompute_with_tuple_outputs1():
+    """
+    Feature: Recompute with lazy inline.
+    Description: Each block is set recompute by both the primitive and cell recompute api and return a tuple.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    run_testcase("test_recompute_cell_and_op_recompute_with_tuple_outputs1", 53)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_recompute_cell_and_op_recompute_with_tuple_outputs2():
+    """
+    Feature: Recompute with lazy inline.
+    Description: Each block is set recompute by both the primitive and cell recompute api and return a tuple.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    run_testcase("test_recompute_cell_and_op_recompute_with_tuple_outputs2", 53)

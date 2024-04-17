@@ -12,62 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""train process"""
-
+"""burgers pinns"""
+import time
+import os
 import pytest
 
 import numpy as np
 from mindspore import context, nn, ops, jit, set_seed, Tensor
+from mindspore import load_checkpoint, load_param_into_net
 import mindspore.common.dtype as mstype
-from src.burgers import Burgers1D
 
+from src.burgers import Burgers1D
+from src.utils import calculate_l2_error
 
 set_seed(123456)
 np.random.seed(123456)
 
 
-def _calculate_error(label, prediction):
-    error = label - prediction
-    l2_error = np.sqrt(
-        np.sum(np.square(error[..., 0]))) / np.sqrt(np.sum(np.square(label[..., 0])))
-
-    return l2_error
-
-
-def _get_prediction(model, inputs, label_shape, batch_size):
-    prediction = np.zeros(label_shape)
-    prediction = prediction.reshape((-1, label_shape[1]))
-    inputs = inputs.reshape((-1, inputs.shape[1]))
-
-    index = 0
-    while index < inputs.shape[0]:
-        index_end = min(index + batch_size, inputs.shape[0])
-        test_batch = Tensor(inputs[index: index_end, :], mstype.float32)
-        prediction[index: index_end, :] = model(test_batch).asnumpy()
-        index = index_end
-
-    prediction = prediction.reshape(label_shape)
-    prediction = prediction.reshape((-1, label_shape[1]))
-    return prediction
-
-
-def calculate_l2_error(model, inputs, label, batch_size):
-    label_shape = label.shape
-    prediction = _get_prediction(model, inputs, label_shape, batch_size)
-    label = label.reshape((-1, label_shape[1]))
-    l2_error = _calculate_error(label, prediction)
-    return l2_error
-
 
 class Net(nn.Cell):
-    def __init__(self, in_channels=2, hidden_channels=128, out_channels=1, act=nn.Tanh()):
+    def __init__(self, in_channels=2, hidden_channels=128, out_channels=1):
         super().__init__()
-        self.act = act
+        act = nn.Tanh()
         self.layers = nn.SequentialCell(
-            nn.Dense(in_channels, hidden_channels, activation=self.act),
-            nn.Dense(hidden_channels, hidden_channels, activation=self.act),
-            nn.Dense(hidden_channels, hidden_channels, activation=self.act),
-            nn.Dense(hidden_channels, hidden_channels, activation=self.act),
+            nn.Dense(in_channels, hidden_channels, activation=act),
+            nn.Dense(hidden_channels, hidden_channels, activation=act),
+            nn.Dense(hidden_channels, hidden_channels, activation=act),
+            nn.Dense(hidden_channels, hidden_channels, activation=act),
             nn.Dense(hidden_channels, out_channels)
         )
 
@@ -86,8 +57,11 @@ def test_mindflow_burgers_pinns():
     Description: test train and eval
     Expectation: success
     """
+    os.environ['GRAPH_OP_RUN'] = "0"
     context.set_context(mode=context.GRAPH_MODE)
     model = Net()
+    param_dict = load_checkpoint("/home/workspace/mindspore_ckpt/ckpt/burgers.ckpt")
+    load_param_into_net(model, param_dict)
     optimizer = nn.Adam(model.trainable_params(), 0.0001)
     problem = Burgers1D(model)
     use_ascend = context.get_context(attr_key='device_target') == "Ascend"
@@ -149,10 +123,18 @@ def test_mindflow_burgers_pinns():
     epochs = 10
     for epoch in range(1, 1 + epochs):
         model.set_train(True)
+        time_beg = time.time()
         train_loss = train_step(pde_data, ic_data, bc_data)
-        print(f"epoch: {epoch} train loss: {train_loss}")
+        epoch_time = time.time() - time_beg
+        print(f"epoch: {epoch} train loss: {train_loss} epoch time: {epoch_time}s")
+
     model.set_train(False)
     eval_error = calculate_l2_error(model, inputs, label, 5)
-
-    assert 0.3 < train_loss < 0.8
-    assert 0.3 < eval_error < 0.8
+    print("eval_error:", eval_error)
+    if context.get_context("device_target") == 'GPU':
+        assert epoch_time < 0.03
+    else:
+        assert epoch_time < 0.02
+    assert train_loss < 0.6
+    assert eval_error < 0.8
+    del os.environ['GRAPH_OP_RUN']

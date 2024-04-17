@@ -118,9 +118,8 @@ abstract::ShapePtr MaxUnpool3DInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   constexpr int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input_num", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
-  auto argmax_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto data_format = GetValue<std::string>(primitive->GetAttr("format"));
   auto attr_output_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr("output_shape"));
   constexpr size_t output_shape_size = 0;
@@ -174,8 +173,8 @@ TypePtr MaxUnpool3DInferType(const PrimitivePtr &prim, const std::vector<Abstrac
     MS_EXCEPTION_IF_NULL(item);
   }
   const std::set<TypePtr> argmax_valid_types = {kInt32, kInt64};
-  auto input_x_type = input_args[kInputIndex0]->BuildType();
-  auto argmax_type = input_args[kInputIndex1]->BuildType();
+  auto input_x_type = input_args[kInputIndex0]->GetType();
+  auto argmax_type = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", argmax_type, argmax_valid_types, prim->name());
   return input_x_type;

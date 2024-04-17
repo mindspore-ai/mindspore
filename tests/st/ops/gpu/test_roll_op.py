@@ -18,6 +18,7 @@ import pytest
 import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
+from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore import Tensor
 
@@ -30,7 +31,7 @@ class Roll(nn.Cell):
         super(Roll, self).__init__()
         self.shift = shift
         self.axis = axis
-        self.roll = nn.Roll(self.shift, self.axis)
+        self.roll = P.Roll(self.shift, self.axis)
 
     def construct(self, x):
         return self.roll(x)
@@ -70,6 +71,7 @@ def test_roll_1d():
 
     assert np.allclose(except_output, output_ms.asnumpy())
     assert np.allclose(except_grad_output, output_grad_ms[0].asnumpy())
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training

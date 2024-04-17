@@ -31,15 +31,14 @@ class ScaleGradCpuKernelMod : public NativeCpuKernelMod {
   ScaleGradCpuKernelMod() = default;
   ~ScaleGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  void LaunchScaleGradPerGrad(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+  void LaunchScaleGradPerGrad(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                               const float16 *scale_addr_half, const float *scale_addr_float, size_t index);
   std::vector<TypeId> input_info_;
 };

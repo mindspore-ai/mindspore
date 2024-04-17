@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import types
 from collections import namedtuple
 from typing import NamedTuple
 from textwrap import dedent
+import builtins
 import numpy
 
 import asttokens
@@ -37,16 +38,16 @@ from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
 from mindspore import context
+from mindspore import tensor
 from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.common import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore._checkparam import is_stub_tensor
-from mindspore.ops._tracefunc import _PackSourceBuilder
 from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
-from .resources import SYMBOL_UNDEFINE
+from .resources import SYMBOL_UNDEFINE, constant_fold_functions
 from ...common.api import _convert_python_data
 
 # Define resolve type
@@ -68,6 +69,8 @@ RESOLVE_TYPE_INVALID = 0xFF             # Resolve invalid.
 CLASS_INSTANCE_TYPE_CELL = 0            # Class instance type is Cell
 CLASS_INSTANCE_TYPE_PRIMITIVE = 1       # Class instance type is Primitive
 CLASS_INSTANCE_TYPE_NUMPY_ARRAY = 2     # Class instance type is Numpy Array
+CLASS_INSTANCE_TYPE_TENSOR = 3          # Class instance type is Tensor
+CLASS_INSTANCE_TYPE_ADAPTER_TENSOR = 4  # Class instance type is Adapter Tensor
 CLASS_INSTANCE_TYPE_INVALID = 0xFF
 
 # Ast main type
@@ -85,6 +88,7 @@ AST_SUB_TYPE_LIST = 7                  # ast.List
 AST_SUB_TYPE_SUBSCRIPT = 8             # ast.Subscript
 AST_SUB_TYPE_STARRED = 9               # ast.Starred
 AST_SUB_TYPE_ATTRIBUTE = 10            # ast.Attribute
+AST_SUB_TYPE_DICT = 11                 # ast.Dict
 AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 
 # Syntax support
@@ -111,14 +115,6 @@ _builtin_function_or_method_type = type(abs)
 # Unsupported python builtin type in graph mode.
 _unsupported_python_builtin_type = (
     set, dict, slice, complex, reversed, type,
-)
-
-_unsupported_internal_type = (
-    Tensor,
-)
-
-_hybrid_type = (
-    print, enumerate, zip, map, filter, abs, round, max, min, sum, getattr, hasattr, list, tuple
 )
 
 # Unsupported python builtin type in JIT Fallback.
@@ -168,6 +164,27 @@ def get_attr_from_object(obj, attr_name=None):
     if obj is not None and attr_name is not None and hasattr(obj, attr_name):
         return getattr(obj, attr_name)
     return None
+
+
+def check_attr_is_property(obj, attr_name):
+    """
+    Check if the attribute is decorated by @property.
+
+    Args:
+        obj(Object): Instance of a class.
+        attr_name(str): Attribute name to check.
+
+    Returns:
+        obj(bool): If the attribute is decorated by @property.
+    """
+    logger.debug(f"attr_name:{attr_name}")
+    logger.debug(f"obj.__class__.__dict__.keys():{obj.__class__.__dict__.keys()}")
+    if attr_name in obj.__class__.__dict__.keys() and isinstance(obj.__class__.__dict__[attr_name], property):
+        attr_obj = obj.__class__.__dict__[attr_name]
+        if (hasattr(attr_obj, 'fget')) and hasattr(attr_obj.fget, '__code__'):
+            logger.debug(f'The attribute {attr_name} is decorated by @property.')
+            return True
+    return False
 
 
 def get_parse_method_of_class(obj, parse_method=None):
@@ -233,6 +250,8 @@ def resolve_symbol(namespace, symbol):
         # The list and dict is not hashable, it can not be key for the map, just return the result
         if isinstance(resolve_, (tuple, list, dict)):
             return resolve_
+        if hasattr(resolve_, "__self__") and isinstance(resolve_.__self__, (tuple, list, dict)):
+            return resolve_
         if getattr(resolve_, "__hash__") is None:
             return resolve_
 
@@ -294,7 +313,10 @@ def get_object_key(obj):
     if isinstance(obj, types.MethodType):
         method_instance = obj.__self__
         instance_id = "%s_ID%d" % (str(method_instance.__class__.__name__), id(method_instance))
-        obj_id = instance_id + obj_id + str(obj.__hash__())
+        if isinstance(method_instance, (tuple, list, dict)):
+            obj_id = instance_id + obj_id
+        else:
+            obj_id = instance_id + obj_id + str(obj.__hash__())
     return obj_id, obj_key
 
 
@@ -327,6 +349,14 @@ def is_class_member_recursive(node):
 def get_obj_id(obj):
     """Get the obj id."""
     return str(id(obj))
+
+
+def is_lambda_function(obj):
+    """Determine whether is a lambda function."""
+    if isinstance(obj, types.FunctionType):
+        source_code = inspect.getsource(obj)
+        return "lambda" in source_code and "<function" in str(obj) and "<lambda>" in str(obj)
+    return False
 
 
 def get_obj_type(obj):
@@ -456,7 +486,7 @@ def convert_class_to_function(cls_str, cls_obj):
                          f"supported in 'construct' or @jit decorated function. Try to create {cls_str} "
                          f"instances external such as initialized in the method '__init__' before assigning. "
                          f"For more details, please refer to "
-                         f"https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n")
+                         f"https://www.mindspore.cn/docs/zh-CN/r2.3.q1/design/dynamic_graph_and_static_graph.html \n")
     return convert_class_to_function_map.get(cls_str)
 
 
@@ -495,7 +525,7 @@ def is_cell_list(obj):
 
 def convert_cell_list_to_sequence(obj):
     """Convert nn.CellList to sequence."""
-    if not isinstance(obj, nn.CellList):
+    if not hasattr(obj, "__cell_as_list__"):
         raise TypeError(f"Obj should be nn.CellList, but got {obj}")
     if not hasattr(obj, "_cells"):
         raise AttributeError(f"nn.CellList is missing _cells property.")
@@ -676,7 +706,6 @@ def get_operation_namespace_symbol(var: str):
     logger.debug("get operation ops info: %r", ops_info)
     return ops_info
 
-
 def get_ast_type(node):
     """Get the ast type."""
     ast_type = AST_SUB_TYPE_UNKNOWN
@@ -696,6 +725,8 @@ def get_ast_type(node):
         ast_type = AST_SUB_TYPE_STARRED
     elif isinstance(node, ast.Attribute):
         ast_type = AST_SUB_TYPE_ATTRIBUTE
+    elif isinstance(node, ast.Dict):
+        ast_type = AST_SUB_TYPE_DICT
     else:
         ast_type = AST_SUB_TYPE_UNKNOWN
     return ast_type
@@ -776,12 +807,12 @@ def _convert_stub_tensor(data):
             fields = data_dict.keys()
             return namedtuple(type_name, fields)(**_convert_stub_tensor(data_dict))
         return tuple(_convert_stub_tensor(x) for x in data)
-    if isinstance(data, list):
+    if data.__class__ is list:
         # Keep the list object not change.
         for i in range(len(data)):
             data[i] = _convert_stub_tensor(data[i])
         return data
-    if isinstance(data, dict):
+    if data.__class__ is dict:
         # Keep the dict object not change.
         keys = tuple(data.keys())
         for key in keys:
@@ -830,6 +861,11 @@ def get_script_id_attrs(script):
     return res
 
 
+def generate_lambda_object(script):
+    """Generate lambda expression object using script"""
+    return eval(script, {}, {})
+
+
 def get_global_params():
     """Get the global parameter."""
     logger.debug(f"get global_dict: {_global_params}")
@@ -839,6 +875,28 @@ def get_global_params():
 def get_dtype(name: str):
     """get mstype from name"""
     return get_attr_from_object(mstype, name)
+
+
+def check_attrs(target_object, func_name: str):
+    """Check if attr is overridden."""
+    if isinstance(target_object, Tensor):
+        return False
+    if hasattr(target_object, func_name):
+        if not hasattr(target_object.__class__.__base__, func_name):
+            if target_object.__class__.__base__ is object:
+                return False
+            return True
+        if getattr(target_object.__class__, func_name) is not getattr(target_object.__class__.__base__, func_name):
+            return True
+    return False
+
+
+def check_is_subclass(target_object, parent):
+    """Check if target_object is a subclass."""
+    if issubclass(target_object.__class__, parent):
+        if target_object.__class__ is not parent:
+            return True
+    return False
 
 
 class ThirdPartyLibraryChecker:
@@ -947,7 +1005,12 @@ class ThirdPartyLibraryChecker:
             module = value
         elif (isinstance(value, types.FunctionType) and not hasattr(value, "__jit_function__")) or \
             (isinstance(value, types.MethodType) and not hasattr(value.__func__, "__jit_function__")):
-            if value in _convert_map():
+            value_hashable = True
+            try:
+                hash(value)
+            except TypeError:
+                value_hashable = False
+            if value_hashable and value in _convert_map():
                 return False
             module = inspect.getmodule(value)
             if module is None:
@@ -984,6 +1047,26 @@ def get_const_len(obj):
     return len(obj)
 
 
+def get_method_info(obj):
+    """Get the class name of the object from its method."""
+    if not (inspect.ismethod(obj) or 'built-in method' in repr(obj)):
+        return None, None
+    class_name_and_method_name = obj.__qualname__.split('.')
+    return class_name_and_method_name[0], class_name_and_method_name[1]
+
+
+def is_ms_tensor_method(obj):
+    """Check if the obj is a method of MindSpore Tensor"""
+    if not hasattr(obj, "__self__"):
+        return False
+    return type(obj.__self__) == Tensor
+
+
+def can_constant_fold(obj):
+    """Check if the obj is the function can be constantly folded."""
+    return obj in constant_fold_functions
+
+
 class Parser:
     """
     Parser python code to ast tree.
@@ -997,13 +1080,14 @@ class Parser:
 
     def __init__(self, fn: (types.FunctionType, types.MethodType), parse_method=None) -> None:
         self.fn = inspect.unwrap(fn.__func__ if isinstance(fn, types.MethodType) else fn)
-        self.pack_builder = _PackSourceBuilder(fn) if hasattr(fn, "pack_fn") else None
         self.parse_method = parse_method
         self.line_offset = 0
         self.filename: str = self.fn.__code__.co_filename
 
         # Used to resolve the function's globals namespace.
         self.global_namespace = CellNamespace(self.fn.__module__)
+        self.global_namespace.dicts[0]["__ms_tensor_func__"] = tensor
+
         self.function_module = self.fn.__module__
         # Used to resolve the function's nonlocals.
         self.closure_namespace = ClosureNamespace(self.fn)
@@ -1028,23 +1112,32 @@ class Parser:
         return unsupported
 
     @staticmethod
-    def is_unsupported_internal_type(value):
-        """To check if not supported internal type, such as Tensor"""
-        for item in _unsupported_internal_type:
-            if value == item:
-                logger.debug(f"Found unsupported internal type: '{value}'.")
-                return True
-        if ms_adapter_registry.is_registered and value == ms_adapter_registry.tensor:
-            return True
-        return False
+    def get_tensor_class_type(value):
+        """To check if is class Tensor type"""
+        if value == Tensor:
+            return CLASS_INSTANCE_TYPE_TENSOR
+        if issubclass(value, ms_adapter_registry.tensor):
+            return CLASS_INSTANCE_TYPE_ADAPTER_TENSOR
+        return CLASS_INSTANCE_TYPE_INVALID
 
     @staticmethod
-    def is_hybrid_type(value):
-        """To check if hybrid type, such as print"""
-        for item in _hybrid_type:
-            if value == item:
-                logger.debug(f"Found hybrid type: '{value}'.")
-                return True
+    def get_adapter_convert_function(class_object):
+        """Get convert function for adapter tensor"""
+        class_object_name = class_object.__name__
+        if class_object_name in ms_adapter_registry.convert_adapter_tensor_map:
+            return ms_adapter_registry.convert_adapter_tensor_map[class_object_name]
+        return None
+
+    @staticmethod
+    def is_unsupported_internal_type(value):
+        """To check if not supported internal type, such as Tensor"""
+        if not inspect.isclass(value):
+            return False
+        if value == Tensor:
+            logger.debug(f"Found unsupported internal type: '{value}'.")
+            return True
+        if ms_adapter_registry.is_registered and issubclass(value, ms_adapter_registry.tensor):
+            return True
         return False
 
     @staticmethod
@@ -1068,9 +1161,16 @@ class Parser:
                 return SYNTAX_UNSUPPORTED_NAMESPACE
             if self.is_unsupported_python_builtin_type(value):
                 return SYNTAX_UNSUPPORTED_EXTERNAL_TYPE
-            if self.is_hybrid_type(value):
-                return SYNTAX_HYBRID_TYPE
         return SYNTAX_SUPPORTED
+
+    def check_lambda(self, src):
+        obj_type = get_obj_type(self.fn)
+        if (obj_type != RESOLVE_TYPE_FUNCTION or src[:4] == "def ") and is_lambda_function(self.fn):
+            logger.debug("fn is lambda: %r", self.fn)
+            raise ValueError("An error occurred while parsing the positional information of the lambda expression. "
+                             "Please write the lambda expression on a separate line.\nFor example, "
+                             "the code 'def __init__(self, combine_fn=lambda x: x + 1):' rewritten as\n"
+                             "'def __init__(self, combine_fn=\nlambda x: x + 1\n):' will solve the problem.")
 
     def parse(self):
         """Parse the function or method."""
@@ -1107,9 +1207,8 @@ class Parser:
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
                 logger.debug("Get source: %s", src)
+                self.check_lambda(src)
                 try:
-                    if self.pack_builder:
-                        src = self.pack_builder.get_code_source()
                     ast_tokens = asttokens.ASTTokens(src, parse=True)
                 except IndentationError as idt_err:
                     idt_err.filename = self.filename
@@ -1126,21 +1225,25 @@ class Parser:
         logger.error("Fn type is invalid")
         return None, None
 
-    def is_jit_supported_attribute(self, var, attr):
-        """Check whether the value is a constant."""
-        if var in self.global_namespace:
-            module = self.global_namespace[var]
-            if hasattr(module, attr):
-                value = getattr(module, attr)
-                # Check if value is constant.
-                if isinstance(value, (int, float, bool)):
-                    return True
-                # Check if value in convert_map.
-                if isinstance(value, (tuple, list, dict)) or getattr(value, "__hash__") is None:
-                    return False
-                if inspect.ismodule(module) and value in _convert_map():
-                    return True
+    def get_name_from_namespace(self, value):
+        try:
+            value_str = value.__name__
+            logger.debug(
+                f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
+        except:
+            value_str = str(value)
+            logger.debug(f"value: {type(value)}, '{value_str}'.")
+        return value_str
+
+
+    def is_builtin_function_name(self, var):
+        """Check if the var is builtin_function name."""
+        logger.debug(f"Check if the var'{var}' is builtin function.")
+        builtin_function_names = vars(builtins).keys()
+        if var in builtin_function_names:
+            return True
         return False
+
 
     def get_namespace_symbol(self, var: str):
         """Get mindspore builtin namespace and symbol."""
@@ -1154,8 +1257,7 @@ class Parser:
         if var in self.global_namespace:
             logger.debug(f"Found '{var}' in global_namespace {self.global_namespace.__str__()}.")
             value = self.global_namespace[var]
-            value_str = value.__name__ if hasattr(value, '__name__') else str(value)
-            logger.debug(f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
+            self.get_name_from_namespace(value)
             # To check if allowed to support.
             value = self.get_convert_object_for_mutable(value)
             support_type = self.get_syntax_support_type(value)
@@ -1190,8 +1292,7 @@ class Parser:
         if var in self.global_namespace:
             logger.debug(f"Found '{var}' in global_namespace {self.global_namespace.__str__()}.")
             value = self.global_namespace[var]
-            value_str = value.__name__ if hasattr(value, '__name__') else str(value)
-            logger.debug(f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
+            value_str = self.get_name_from_namespace(value)
             value = self.get_convert_object_for_mutable(value)
             if is_from_third_party_library(value):
                 logger.debug(f"value: '{value}' is from third party library.")

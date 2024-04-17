@@ -527,8 +527,10 @@ def test_concat_18():
     class DS:
         def __init__(self, i, j):
             self.data = [i for i in range(i, j)]
+
         def __getitem__(self, index):
             return self.data[index]
+
         def __len__(self):
             return len(self.data)
 
@@ -563,8 +565,10 @@ def test_concat_19():
     class DS:
         def __init__(self, i, j):
             self.data = [i for i in range(i, j)]
+
         def __getitem__(self, index):
             return self.data[index]
+
         def __len__(self):
             return len(self.data)
 
@@ -572,7 +576,7 @@ def test_concat_19():
     ds2 = ds.GeneratorDataset(DS(20, 25), "data1", shuffle=True)
     ds3 = ds1.concat([ds2])
     ds3.use_sampler(ds.RandomSampler())
-    ds3 = ds3.map(lambda x: x+1)
+    ds3 = ds3.map(lambda x: x + 1)
 
     # check data distribution in debug mode
     ds.config.set_debug_mode(True)

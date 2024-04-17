@@ -44,13 +44,10 @@ using complex128 = std::complex<double>;
 constexpr size_t kMaxTransposeSerialSize = 50331648;
 }  // namespace
 
-bool ConjugateTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
-  perm_type_ = inputs.at(kIndex1)->GetDtype();
+bool ConjugateTransposeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs.at(kIndex0)->dtype_id();
+  perm_type_ = inputs.at(kIndex1)->dtype_id();
   launch_map_[kNumberTypeBool] = &ConjugateTransposeCpuKernelMod::LaunchKernel<bool>;
   launch_map_[kNumberTypeInt8] = &ConjugateTransposeCpuKernelMod::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &ConjugateTransposeCpuKernelMod::LaunchKernel<int16_t>;
@@ -74,23 +71,21 @@ bool ConjugateTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int ConjugateTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ConjugateTransposeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  output_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  output_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
 
   return KRET_OK;
 }
 
-bool ConjugateTransposeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool ConjugateTransposeCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConjugateTransposeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConjugateTransposeOutputsNum, kernel_name_);
   launch_func_(this, inputs, outputs);
@@ -98,13 +93,13 @@ bool ConjugateTransposeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
 }
 
 template <typename T>
-void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &outputs) {
-  const auto *input_addr = static_cast<T *>(inputs[0]->addr);
+void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  const auto *input_addr = static_cast<T *>(inputs[0]->device_ptr());
 
   if (perm_type_ == kNumberTypeInt32) {
-    auto perm_addr = static_cast<int32_t *>(inputs[1]->addr);
-    auto perm_size = SizeToInt(inputs[1]->size / sizeof(int32_t));
+    auto perm_addr = static_cast<int32_t *>(inputs[1]->device_ptr());
+    auto perm_size = SizeToInt(inputs[1]->size() / sizeof(int32_t));
     for (int i = 0; i < perm_size; ++i) {
       auto p = perm_addr[i];
       p = (p >= 0) ? p : (perm_size + p);
@@ -115,8 +110,8 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
       (void)axes_.emplace_back(p);
     }
   } else if (perm_type_ == kNumberTypeInt64) {
-    auto perm_addr = static_cast<int64_t *>(inputs[1]->addr);
-    auto perm_size = SizeToInt(inputs[1]->size / sizeof(int64_t));
+    auto perm_addr = static_cast<int64_t *>(inputs[1]->device_ptr());
+    auto perm_size = SizeToInt(inputs[1]->size() / sizeof(int64_t));
     for (int i = 0; i < perm_size; ++i) {
       auto p = perm_addr[i];
       p = (p >= 0) ? p : (perm_size + p);
@@ -148,13 +143,13 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     transpose_param_.out_strides_[i - 1] = SizeToInt(output_shape_[i]) * transpose_param_.out_strides_[i];
   }
 
-  auto *output_addr = static_cast<T *>(outputs[0]->addr);
-  transpose_param_.data_num_ = SizeToInt(inputs[0]->size / sizeof(T));
+  auto *output_addr = static_cast<T *>(outputs[0]->device_ptr());
+  transpose_param_.data_num_ = SizeToInt(inputs[0]->size() / sizeof(T));
   std::vector<int> output_shape(SizeToInt(output_shape_.size()));
   for (size_t i = 0; i < output_shape_.size(); ++i) {
     output_shape[i] = SizeToInt(output_shape_[i]);
   }
-  size_t data_count = (inputs[0]->size) / sizeof(T);
+  size_t data_count = (inputs[0]->size()) / sizeof(T);
   if (axes_.size() > kIndex7 || data_count >= kMaxTransposeSerialSize) {
     ParallelRun(input_addr, output_addr, output_shape.data(), data_count, &transpose_param_);
     return;
@@ -174,13 +169,13 @@ void ConjugateTransposeCpuKernelMod::ConjComplexFunc(T *input, T *output, size_t
 }
 
 template <typename T>
-void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &outputs) {
-  auto *input_addr = static_cast<T *>(inputs[0]->addr);
+void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
+  auto *input_addr = static_cast<T *>(inputs[0]->device_ptr());
 
   if (perm_type_ == kNumberTypeInt32) {
-    auto perm_addr = static_cast<int32_t *>(inputs[1]->addr);
-    auto perm_size = SizeToInt(inputs[1]->size / sizeof(int32_t));
+    auto perm_addr = static_cast<int32_t *>(inputs[1]->device_ptr());
+    auto perm_size = SizeToInt(inputs[1]->size() / sizeof(int32_t));
     for (int i = 0; i < perm_size; ++i) {
       auto p = perm_addr[i];
       p = (p >= 0) ? p : (perm_size + p);
@@ -191,8 +186,8 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
       (void)axes_.emplace_back(p);
     }
   } else if (perm_type_ == kNumberTypeInt64) {
-    auto perm_addr = static_cast<int64_t *>(inputs[1]->addr);
-    auto perm_size = SizeToInt(inputs[1]->size / sizeof(int64_t));
+    auto perm_addr = static_cast<int64_t *>(inputs[1]->device_ptr());
+    auto perm_size = SizeToInt(inputs[1]->size() / sizeof(int64_t));
     for (int i = 0; i < perm_size; ++i) {
       auto p = perm_addr[i];
       p = (p >= 0) ? p : (perm_size + p);
@@ -224,8 +219,8 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
     transpose_param_.out_strides_[i - 1] = SizeToInt(output_shape_[i]) * transpose_param_.out_strides_[i];
   }
 
-  auto *output_addr = static_cast<T *>(outputs[0]->addr);
-  transpose_param_.data_num_ = SizeToInt(inputs[0]->size / sizeof(T));
+  auto *output_addr = static_cast<T *>(outputs[0]->device_ptr());
+  transpose_param_.data_num_ = SizeToInt(inputs[0]->size() / sizeof(T));
   auto task = std::bind(ConjComplexFunc<T>, input_addr, input_addr, 0, transpose_param_.data_num_);
   ParallelLaunchAutoSearch(task, transpose_param_.data_num_, this, &parallel_search_info_);
 
@@ -233,7 +228,7 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
   for (size_t i = 0; i < output_shape_.size(); ++i) {
     output_shape[i] = SizeToInt(output_shape_[i]);
   }
-  size_t data_count = (inputs[0]->size) / sizeof(T);
+  size_t data_count = (inputs[0]->size()) / sizeof(T);
   if (axes_.size() > kIndex7 || data_count >= kMaxTransposeSerialSize) {
     ParallelRun(input_addr, output_addr, output_shape.data(), data_count, &transpose_param_);
     return;

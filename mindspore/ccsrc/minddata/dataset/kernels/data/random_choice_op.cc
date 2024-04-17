@@ -21,6 +21,9 @@
 
 namespace mindspore {
 namespace dataset {
+RandomChoiceOp::RandomChoiceOp(const std::vector<std::shared_ptr<TensorOp>> &ops)
+    : ops_(ops), rand_int_(0, ops.size() - 1) {}
+
 uint32_t RandomChoiceOp::NumInput() {
   uint32_t num_input = ops_.front()->NumInput();
   for (auto &op : ops_) {
@@ -77,21 +80,10 @@ Status RandomChoiceOp::OutputType(const std::vector<DataType> &inputs, std::vect
 
 Status RandomChoiceOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  size_t rand_num = rand_int_(gen_);
+  size_t rand_num = rand_int_(random_generator_);
   CHECK_FAIL_RETURN_UNEXPECTED(rand_num < ops_.size(), "invalid rand_num:" + std::to_string(rand_num));
   RETURN_IF_NOT_OK(ops_[rand_num]->Compute(input, output));
   return Status::OK();
-}
-
-RandomChoiceOp::RandomChoiceOp(const std::vector<std::shared_ptr<TensorOp>> &ops)
-    : ops_(ops), gen_(GetSeed()), rand_int_(0, ops.size() - 1) {
-  if (ops_.empty()) {
-    MS_LOG(ERROR) << "input 'transforms'(op_list) in RandomChoiceOp is empty.";
-  }
-  if (ops_.size() == 1) {
-    MS_LOG(WARNING) << "input 'transforms'(op_list) has only 1 op, this op would be picked every time.";
-  }
-  is_deterministic_ = false;
 }
 }  // namespace dataset
 }  // namespace mindspore

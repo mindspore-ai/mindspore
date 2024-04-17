@@ -15,6 +15,7 @@
  */
 
 #include "c_api/src/utils.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "c_api/src/helper.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "backend/operator/ops_backend_infer_function.h"
@@ -201,6 +202,11 @@ AbstractBasePtr GetAbstract(const TypePtr &type_ptr, const int64_t shape[], size
 
 AbstractBasePtr OpInferShapeAndType(const PrimitivePtr &prim, const mindspore::AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(prim);
+  auto abstract_opt = mindspore::abstract::InferAbstractByFuncImpl(prim, args_abs_list);
+  if (abstract_opt.has_value()) {
+    return abstract_opt.value();
+  }
+
   auto front_eval_impl = mindspore::abstract::GetFrontendPrimitiveInferImpl(prim);
   if (front_eval_impl.has_value()) {
     auto infer = front_eval_impl.value();

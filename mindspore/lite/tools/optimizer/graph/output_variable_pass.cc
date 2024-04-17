@@ -21,10 +21,10 @@
 #include <vector>
 #include <string>
 #include "mindspore/core/ops/lite_ops.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "mindspore/lite/include/errorcode.h"
 #include "ops/op_utils.h"
-#include "ops/assign.h"
 #include "ops/depend.h"
 #include "ops/sequence_ops.h"
 #include "tools/common/func_graph_utils.h"
@@ -42,7 +42,7 @@ bool OutputVariablePass::Run(const FuncGraphPtr &graph) {
     MS_LOG(ERROR) << "Return node is nullptr";
     return false;
   }
-  if (return_node->inputs().size() < kInputNumber) {
+  if (return_node->size() < kInputNumber) {
     MS_LOG(ERROR) << "return node input size less than 2";
     return false;
   }
@@ -52,8 +52,8 @@ bool OutputVariablePass::Run(const FuncGraphPtr &graph) {
     return false;
   }
 
-  if (make_tuple->inputs().size() - 1 < static_cast<size_t>(outputs_variable_index_.back()) + 1) {
-    MS_LOG(ERROR) << "The output number  " << make_tuple->inputs().size() - 1 << " is less than "
+  if (make_tuple->size() - 1 < static_cast<size_t>(outputs_variable_index_.back()) + 1) {
+    MS_LOG(ERROR) << "The output number  " << make_tuple->size() - 1 << " is less than "
                   << outputs_variable_index_.back() + 1;
     return false;
   }

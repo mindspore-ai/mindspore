@@ -78,6 +78,8 @@ class AscendStreamAssign {
   const std::map<CNodePtr, CNodePtr> &get_event_map() const { return event_map_; }
   static uint32_t GetHcomTaskNum(const CNodePtr &cnode);
   const uint32_t max_task_count() const { return max_task_count_; }
+  // insert event for kernel by kernel
+  void InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) const;
 
  private:
   AscendStreamAssign() = default;
@@ -222,8 +224,6 @@ class AscendStreamAssign {
   uint32_t max_stream_count_ = 0;
   uint32_t max_task_count_ = 0;
 
-  // insert event for kernel by kernel
-  void InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) const;
   void GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kernel_graph,
                               HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_send,
                               HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv) const;

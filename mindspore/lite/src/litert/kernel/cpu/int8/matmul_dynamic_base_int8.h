@@ -58,6 +58,8 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   int b_batch_ = 1;
   std::vector<int> a_offset_;
   std::vector<int> b_offset_;
+  int a_quant_offset_ = 0;
+  int b_quant_offset_ = 0;
   typedef void (*PackFunc)(const int8_t *src, int8_t *dst, int row, int col);
   virtual void InitParameter() = 0;
   int TransferA();
@@ -69,14 +71,15 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   int InitMatrixABuffer();
   void FreeMatrixABuffer();
 
- protected:
   MatMulParameter *param_ = nullptr;
   MatmulDynamicQuantParameter *quant_param_ = nullptr;
   int8_t *pack_a_ptr_ = nullptr;
   int8_t *pack_b_ptr_ = nullptr;
 
   bool input_per_channel_ = false;
-  bool filter_per_channel_ = true;
+  bool input_per_batch_channel_ = false;
+  bool filter_per_channel_ = false;
+  bool filter_per_batch_channel_ = false;
   int8_t *batch_input_ptr_ = nullptr;
   int8_t *batch_weight_ptr_ = nullptr;
   int8_t *batch_a_ptr_ = nullptr;

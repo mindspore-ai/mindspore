@@ -18,7 +18,7 @@
 #include <memory>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "src/common/log_util.h"
-#include "ops/shape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {

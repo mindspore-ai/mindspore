@@ -25,15 +25,7 @@ class AnfNodeHolder : public Node {
  public:
   explicit AnfNodeHolder(const AnfNodePtr &node) : node_(node) {}
   ~AnfNodeHolder() override = default;
-
-  ValuePtr GetValue() override {
-    auto v = node_->cast<ValueNodePtr>();
-    if (v == nullptr) {
-      MS_LOG(EXCEPTION) << "Node " << node_->DebugString() << " is not a ValueNode.";
-    }
-    return v->value();
-  }
-
+  ValuePtr GetValue() override;
   const void *obj() override { return static_cast<void *>(&node_); }
 
  protected:

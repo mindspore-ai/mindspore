@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/bitwise_ops.h"
+#include "op_proto/inc/bitwise_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 

@@ -1,0 +1,22 @@
+hshrink_grad:
+    description: |
+        Computes gradients for HShrinkGrad operation.
+
+        Args:
+            Gradients (Tensor) - the gradients of loss to output of HShrink function.
+            Currently gradients data type only support float16 and float32.
+            Features (Tensor) - Must be the input `input_x` of the forward operator HSHrink.
+            Currently features data type only support float16 and float32.
+            lambd (float): the lambda value for the Hardshrink formulation. Default: 0.5
+
+        Returns:
+            backprops - Tensor, with the same shape and data type as `features`.
+
+        Rasise:
+            ValueError: If `lambd` is not a float.
+            ValueError: If shape of `gradients` is not the same as `features`.
+            TypeError: If dtype of `gradients` is not the same as `features`.
+            TypeError: If dtype of `gradients` or `features` is neither float16 nor float32.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``

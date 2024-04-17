@@ -93,7 +93,7 @@ def test_ms_syntax_operator_logic_tensor_1_int():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -128,7 +128,7 @@ def test_ms_syntax_operator_logic_not_tensor_2x2_int():
         print(ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -146,7 +146,7 @@ def test_ms_syntax_operator_logic_not_tensor_2x2_float():
         print(ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -162,7 +162,7 @@ def test_ms_syntax_operator_logic_not_str():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -194,7 +194,7 @@ def test_ms_syntax_operator_logic_not_list_float():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -210,7 +210,7 @@ def test_ms_syntax_operator_logic_not_list_str():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -226,7 +226,7 @@ def test_ms_syntax_operator_logic_not_list_combine():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -242,7 +242,7 @@ def test_ms_syntax_operator_logic_not_tuple_int():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -258,7 +258,7 @@ def test_ms_syntax_operator_logic_not_tuple_float():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -274,7 +274,7 @@ def test_ms_syntax_operator_logic_not_tuple_str():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -30,49 +30,27 @@
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "include/backend/visible.h"
-#include "runtime/pynative/async/device_task.h"
-#include "runtime/pynative/async/async_queue.h"
+#include "runtime/pipeline/task/device_task.h"
+#include "runtime/pipeline/async_rqueue.h"
 
 namespace mindspore::runtime {
 class BACKEND_EXPORT OpExecutor {
  public:
   static OpExecutor &GetInstance();
 
-  class ExecuteGuard {
-   public:
-    ExecuteGuard() { OpExecutor::GetInstance().executing_ = true; }
-    ~ExecuteGuard() { OpExecutor::GetInstance().executing_ = false; }
-  };
-
   void RegisterForwardCallback(const std::function<void()> &callback);
 
-  // Register build callback function
-  void Register(const std::function<void()> &callback);
+  void PushOpRunTask(const std::shared_ptr<DeviceOpRunTask> &op_run_task);
 
-  void PushOpBuildTask(const std::shared_ptr<pynative::DeviceOpBuildTask> &op_build_task);
+  void PushOpRunTask(const std::shared_ptr<PyBoostDeviceTask> &op_run_task);
 
-  void PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> &op_run_task);
+  void PushSimpleOpRunTask(const std::shared_ptr<AsyncTask> &op_run_task);
 
-  void PushSimpleOpRunTask(const std::shared_ptr<pynative::AsyncTask> &op_run_task);
-
-  const std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> &GetOpBuildTasks() const { return op_build_tasks_; }
-
-  bool BuildQueueEmpty();
   bool RunQueueEmpty();
-
-  // If the build queue is full, we can compile the kernels in parallel.
-  bool BuildQueueFull();
-
-  std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> PopOpBuildTasks();
 
   // When an exception occurs, the state needs to be reset.
   // Because we may sometimes have to ignore the exception and continue to run other tasks
   void Reset();
-
-  // Determine if there is another task with the same name in execution.
-  // Tasks with the same name use the same CNode cache. So we need to wait.
-  bool ActorInQueue(GraphId graph_id);
-  bool BuildInQueue(GraphId graph_id);
 
   // Wait for all OpRunTasks to finish executing.
   void Wait();
@@ -82,22 +60,17 @@ class BACKEND_EXPORT OpExecutor {
   // Thread join before the process exit.
   void WorkerJoin();
 
+  // Child process reinitialize resource after fork.
+  void ChildAfterFork();
+
+  static bool NeedSync();
+
  private:
   OpExecutor();
   ~OpExecutor();
   DISABLE_COPY_AND_ASSIGN(OpExecutor);
 
-  void WaitForBuild();
   void WaitForRun();
-  void ClearResources();
-
-  pynative::AsyncQueue async_queue_{"runop_device", pynative::kThreadWaitLevel::kLevelDevice};
-
-  std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> op_build_tasks_;
-  std::function<void()> batch_build_callback_{nullptr};
-  inline static size_t kMaxQueueSize = 20;
-  bool executing_{false};
-  std::mutex build_mutex_;
   std::function<void()> forward_callback_{nullptr};
 };
 }  // namespace mindspore::runtime

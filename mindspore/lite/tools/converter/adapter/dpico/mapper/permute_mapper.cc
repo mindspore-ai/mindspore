@@ -23,7 +23,7 @@
 #include "common/data_transpose_utils.h"
 #include "common/fetch_content.h"
 #include "common/op_attr.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "op/permute_operator.h"
 
 namespace mindspore {
@@ -51,8 +51,7 @@ STATUS PermuteMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPt
   permute_operator->SetOpType(mapper::OpType::PERMUTE);
   std::vector<int32_t> perm_val;
   DataInfo data_info;
-  if (cnode->inputs().size() > kInputIndex2 &&
-      FetchDataFromParameterNode(cnode, kInputIndex2, &data_info) == lite::RET_OK) {
+  if (cnode->size() > kInputIndex2 && FetchDataFromParameterNode(cnode, kInputIndex2, &data_info) == lite::RET_OK) {
     if (data_info.data_type_ != static_cast<int>(kNumberTypeInt32)) {
       MS_LOG(ERROR) << "data_type not correct";
       return RET_ERROR;

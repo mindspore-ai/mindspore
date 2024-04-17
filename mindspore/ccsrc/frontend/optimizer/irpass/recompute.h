@@ -31,11 +31,9 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-constexpr auto kAddedRecomputeDependAttr = "added_recompute_depend";
 constexpr auto kHandledNotRecomputeNodeFlag = "handled_not_recompute_node";
 constexpr auto kPrimalFgCallerUserDataKey = "primal_fg_caller";
-
-bool EnableGraphReuse();
+bool EnableCellReuse();
 
 bool HasBpropGetter(const OptimizerPtr &opt, const AnfNodePtr &k_fg_caller);
 
@@ -46,7 +44,7 @@ bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt);
 class RemoveNotRecomputeNode : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &opt, const AnfNodePtr &node) override {
-    if (!EnableGraphReuse()) {
+    if (!EnableCellReuse()) {
       return nullptr;
     }
     Reset();

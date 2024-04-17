@@ -28,6 +28,8 @@ gamma_op_info = AiCPURegOp("Gamma") \
     .attr("seed2", "int") \
     .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.I64_Default,
                   DataType.I64_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I64_Default, DataType.F32_Default, DataType.F32_Default, DataType.I64_Default,
+                  DataType.I64_Default, DataType.F32_Default) \
     .get_op_info()
 
 @op_info_register(gamma_op_info)

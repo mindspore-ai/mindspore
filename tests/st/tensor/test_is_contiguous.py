@@ -26,7 +26,7 @@ class Net(nn.Cell):
         return x.is_contiguous()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -48,7 +48,7 @@ def test_is_contiguous_false(mode):
     assert np.allclose(output, False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -65,7 +65,7 @@ def test_is_contiguous_true(mode):
     ms.set_context(mode=mode)
     x = ms.Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
     y = ops.transpose(x, (1, 0))
-    y.contiguous()
+    z = y.contiguous()
     net = Net()
-    output = net(y)
+    output = net(z)
     assert np.allclose(output, True)

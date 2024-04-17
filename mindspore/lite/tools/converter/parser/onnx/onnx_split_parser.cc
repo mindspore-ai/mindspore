@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
-#include "ops/split.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -36,7 +36,7 @@ PrimitiveCPtr OnnxSplitParser::Parse(const onnx::GraphProto &onnx_graph, const o
     } else if (attribute_name == kAttrSplit) {
       size_splits.resize(onnx_node_attr.ints_size());
       std::copy(onnx_node_attr.ints().begin(), onnx_node_attr.ints().end(), size_splits.begin());
-      prim->set_size_splits(size_splits);
+      prim->AddAttr("size_splits", api::MakeValue(size_splits));
       split_num = onnx_node_attr.ints_size();
     }
   }

@@ -36,8 +36,8 @@ class SoftmaxCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     const int64_t kInputNum = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-    auto logits_shape = input_args[0]->BuildShape();
-    auto label_shape = input_args[1]->BuildShape();
+    auto logits_shape = input_args[0]->GetShape();
+    auto label_shape = input_args[1]->GetShape();
     auto logits_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape)[kShape];
     auto label_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(label_shape)[kShape];
     const int64_t input_rank = 2;
@@ -71,8 +71,8 @@ class SoftmaxCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     const int64_t kInputNum = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-    auto logits_type = input_args[0]->BuildType();
-    auto label_type = input_args[1]->BuildType();
+    auto logits_type = input_args[0]->GetType();
+    auto label_type = input_args[1]->GetType();
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
     std::map<std::string, TypePtr> args;
     (void)args.insert(std::make_pair("logits_type", logits_type));

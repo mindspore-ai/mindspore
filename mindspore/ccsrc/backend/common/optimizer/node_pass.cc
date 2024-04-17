@@ -79,13 +79,19 @@ void ModifyOutputAndCallerToMap(const CNodePtr &cnode, const FuncGraphPtr &fg,
   if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
     FuncGraphPtr switch_subgraph = nullptr;
     const auto &node = inputs.at(kSwitchBranchIndex);
+    MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>()) {
       auto partial_node = dyn_cast<CNode>(node);
       const auto &partial_inputs = partial_node->inputs();
-      if (!IsPrimitive(partial_inputs.at(0), prim::kPrimPartial)) {
+      MS_EXCEPTION_IF_NULL(partial_inputs.at(0));
+      if (IsPrimitive(partial_inputs.at(0), prim::kPrimPartial)) {
+        MS_EXCEPTION_IF_NULL(partial_inputs.at(kPartialArgsIndex));
+        switch_subgraph = GetValueNode<FuncGraphPtr>(partial_inputs.at(kPartialArgsIndex));
+      } else if (IsPrimitive(partial_inputs.at(0), prim::kPrimPartialInline)) {
+        switch_subgraph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(partial_node, kAttrKernelGraph);
+      } else {
         MS_LOG(EXCEPTION) << "Invalid switch node: " << cnode->DebugString();
       }
-      switch_subgraph = GetValueNode<FuncGraphPtr>(partial_inputs.at(kPartialArgsIndex));
     } else if (node->isa<ValueNode>()) {
       switch_subgraph = GetValueNode<FuncGraphPtr>(node);
     } else {
@@ -151,6 +157,7 @@ std::string GetCNodeKey(const AnfNodePtr &node) {
 }
 
 bool IsNeedUnfoldSubGraph(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   return !func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && !func_graph->has_flag(kFlagJitCallGraph);
 }
 
@@ -300,7 +307,7 @@ bool NodePass::ProcessPass(const FuncGraphPtr &func_graph, const FuncGraphManage
   mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> subgraph_out_caller_map = {};
   mindspore::HashMap<AnfNodePtr, FuncGraphWeakPtr> node_to_fg = {};
   mindspore::HashSet<AnfNodePtr> seen_node;
-  std::deque<std::pair<AnfNodePtr, FuncGraphPtr>> todo{{func_graph->output(), func_graph}};
+  std::deque<std::pair<AnfNodePtr, FuncGraphPtr>> todo{{func_graph->get_return(), func_graph}};
   while (!todo.empty()) {
     AnfNodePtr node = todo.front().first;
     auto fg = todo.front().second;
@@ -367,7 +374,10 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(func_graph);
-  auto func_graph_index = manager->func_graph_index(func_graph);
+  if (!func_graph->has_user_data<FuncGraphPassIndex>()) {
+    func_graph->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = func_graph->user_data<FuncGraphPassIndex>();
   MS_EXCEPTION_IF_NULL(func_graph_index);
 
   if (IsFastPass()) {

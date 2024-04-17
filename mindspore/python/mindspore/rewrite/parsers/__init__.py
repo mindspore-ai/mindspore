@@ -15,3 +15,15 @@
 """
 Parsers for resolve ast to SymbolTree
 """
+from .parser import Parser
+from .parser_register import ParserRegister, ParserRegistry, reg_parser
+from .module_parser import ModuleParser
+from .arguments_parser import ArgumentsParser
+from .assign_parser import AssignParser
+from .for_parser import ForParser
+from .function_def_parser import FunctionDefParser
+from .if_parser import IfParser
+from .return_parser import ReturnParser
+from .class_def_parser import ClassDefParser
+from .while_parser import WhileParser
+from .expr_parser import ExprParser # Rely on AssignParser

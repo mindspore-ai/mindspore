@@ -31,11 +31,13 @@
 #include "abstract/abstract_value.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/tensor_future.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
 const size_t kDefaultContainerSize = 5000;
+enum class SensType { kNormal = 0, kTuple = 1, kDict = 2 };
 
 struct BaseOpRunInfo {
   uint64_t py_prim_id_{0};
@@ -43,6 +45,7 @@ struct BaseOpRunInfo {
   bool is_mixed_precision_cast = false;
   bool use_dynamic_shape_process = false;
   bool need_earse_cache = false;
+  size_t stream_id{kDefaultStreamIndex};
   std::string op_name;
   std::string next_op_name;
   std::string device_target = "Unknown";
@@ -51,8 +54,8 @@ struct BaseOpRunInfo {
 #else
   size_t next_input_index = 0;
 #endif
-  std::vector<tensor::TensorPtr> input_tensor;
-  std::vector<int64_t> input_mask;
+  std::vector<ValuePtr> expanded_input_values;
+  std::vector<InputType> input_types;
   AbstractBasePtr abstract;
   std::vector<size_t> output_indexes;
   std::vector<int64_t> dyn_input_sizes;
@@ -71,17 +74,13 @@ struct OpGradInfo {
   abstract::AbstractBasePtr out_abs{nullptr};
   std::vector<ValuePtr> input_value{};
   ValuePtr out_value{nullptr};
-  std::vector<TensorGradType> input_value_grad_type{};
-  // Currently only packfunc will use the grad_graph_id, and it will not be used in other scenarios.
-  // Since the current grad process uses the prim in FrontendOpRunInfo, not the prim in BackendOpRunInfo,
-  // the grad_graph_id cannot be placed in the prim attr during the async run,
-  // and the grad_graph_id will be able to the prim attr later.
-  int64_t grad_graph_id{-1};
+  std::vector<InputType> input_value_grad_type{};
+  size_t output_size;
 };
 using OpGradInfoPtr = std::shared_ptr<OpGradInfo>;
 
 struct GradParam {
-  GradParam(OpGradInfoPtr op_grad_info, bool use_dynamic_shape_process)
+  GradParam(const OpGradInfoPtr &op_grad_info, bool use_dynamic_shape_process)
       : op_grad_info(op_grad_info), use_dynamic_shape_process(use_dynamic_shape_process) {
     input_size = op_grad_info->input_value.size();
   }
@@ -94,11 +93,13 @@ struct GradParam {
   // For other used
   bool out_used_in_bporp_graph{false};
   bool is_control_flow{false};
+  bool is_func_grad{false};
   size_t input_size{0};
 
   // For jit domain
   bool has_added_v{false};
   bool is_jit_graph{false};
+  bool jit_out_has_dict{false};
   bool is_jit_self_dynamic_shape{false};
 
   // For KPynativeWithFProp used
@@ -126,6 +127,8 @@ struct FrontendOpRunInfo {
   bool is_view_op = false;
   int mix_type{0};
   size_t input_size = 0;
+  // none_intit_inputs is the inputs those not defined in Primitive's __init__ function
+  size_t none_init_inputs_num = 0;
   // real_out return to python; out_value in OpGradInfo may be fake value;
   ValuePtr real_out{nullptr};
   std::string op_info;
@@ -136,6 +139,7 @@ struct FrontendOpRunInfo {
   std::vector<std::string> input_value_id{};
   stub::StubNodePtr stub_output{nullptr};
   std::vector<Signature> signatures{};
+  std::vector<ops::OP_DTYPE> source_type{};
   AsyncStatus async_status;
   mindspore::HashSet<size_t> input_to_attr{};
   std::vector<DeviceAddressPromisePtr> device_sync_promises;
@@ -157,7 +161,7 @@ struct InputArgsInfo {
   size_t obj_order;
 
   bool has_custom_bprop{false};
-  bool has_sens{false};
+  SensType sens_type{SensType::kNormal};
   PrimitivePyPtr custom_bprop_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string obj_id;
@@ -195,7 +199,7 @@ class FastValue {
   const std::vector<int64_t> &vec_value() const { return vec_value_; }
 
  private:
-  int64_t int_value_;
+  int64_t int_value_{0};
   std::vector<int64_t> vec_value_;
   bool is_int_{false};
 };
@@ -210,6 +214,21 @@ struct SliceOpInfo {
 };
 using SliceOpInfoPtr = std::shared_ptr<SliceOpInfo>;
 
+struct GraphCallCondition {
+  GraphCallCondition(bool is_control_flow, bool is_jit_graph, bool is_dynamic_shape_process, bool jit_out_has_dict,
+                     bool is_func_grad)
+      : is_control_flow_(is_control_flow),
+        is_jit_graph_(is_jit_graph),
+        is_dynamic_shape_process_(is_dynamic_shape_process),
+        jit_out_has_dict_(jit_out_has_dict),
+        is_func_grad_(is_func_grad) {}
+
+  bool is_control_flow_;
+  bool is_jit_graph_;
+  bool is_dynamic_shape_process_;
+  bool jit_out_has_dict_;
+  bool is_func_grad_;
+};
 }  // namespace pynative
 }  // namespace mindspore
 

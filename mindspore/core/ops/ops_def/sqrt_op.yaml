@@ -1,0 +1,12 @@
+#operator sqrt
+sqrt:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    dispatch:
+        enable: True
+
+

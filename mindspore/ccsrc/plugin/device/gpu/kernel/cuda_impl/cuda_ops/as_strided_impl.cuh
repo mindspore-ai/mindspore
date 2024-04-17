@@ -24,6 +24,6 @@
 template <typename DataType>
 CUDA_LIB_EXPORT cudaError_t CalAsStrided(const size_t &input_size, const DataType *input_ptr, DataType *output_ptr,
                                          const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                         cudaStream_t cuda_stream);
+                                         const int64_t *output_shape, const int64_t *strides, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_AS_STRIDED_IMPL_CUH_

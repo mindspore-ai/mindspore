@@ -1,0 +1,16 @@
+#operator addcdiv
+addcdiv:
+    args:
+        input: 
+            dtype: tensor
+        tensor1: 
+            dtype: tensor
+        tensor2: 
+            dtype: tensor
+        value: 
+            dtype: tensor
+    returns:
+        y: 
+            dtype: tensor
+    function:
+        disable: True

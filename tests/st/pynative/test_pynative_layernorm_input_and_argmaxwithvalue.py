@@ -15,7 +15,6 @@
 """ test_pynative_layernorm_input_and_argmaxwithvalue """
 import pytest
 import numpy as np
-import mindspore as ms
 import mindspore.ops.operations as op
 from mindspore import Tensor, context
 from mindspore.nn import LayerNorm, Cell
@@ -166,11 +165,14 @@ class ArgMaxWithValueFactory(OpsFactory):
         self.output_grad_np = None
         self.axis = axis
         self.keep_dims = keep_dims
+        self.index_dtype = None
 
     def forward_mindspore_impl(self):
         input_forward = Tensor(self.input_np)
         net = ArgMaxWithValue(axis=self.axis, keep_dims=self.keep_dims)
         index, value = net(input_forward)
+        if self.index_dtype is None:
+            self.index_dtype = index.dtype
         return index.asnumpy().reshape(1, -1), value.asnumpy()
 
     def forward_numpy_impl(self):
@@ -182,7 +184,7 @@ class ArgMaxWithValueFactory(OpsFactory):
         input_back = Tensor(self.input_np)
         np.random.seed(1)
         self.output_grad_np = np.random.randn(*input_back[0].shape).astype(self.dtype)
-        output_grad = Tensor(self.output_grad_np, ms.int32)
+        output_grad = Tensor(self.output_grad_np, self.index_dtype)
         output_grad_2 = Tensor(self.output_grad_np)
         net = ArgMaxWithValue(axis=self.axis, keep_dims=self.keep_dims)
         grad_net = GradOfFirstInput(net, real_inputs_count=1)

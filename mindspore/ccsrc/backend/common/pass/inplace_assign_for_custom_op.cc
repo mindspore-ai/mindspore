@@ -60,6 +60,7 @@ CNodePtr InplaceAssign(const FuncGraphPtr &func_graph, const AnfNodePtr &src, co
   // Insert Depend
   AnfNodePtrList depend_inputs = {NewValueNode(prim::kPrimDepend), src, dst};
   auto depend_cnode = func_graph->NewCNode(depend_inputs);
+  depend_cnode->set_scope(src->scope());
   depend_cnode->set_abstract(src->abstract());
 
   return depend_cnode;

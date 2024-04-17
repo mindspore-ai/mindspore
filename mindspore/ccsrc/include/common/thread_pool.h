@@ -31,6 +31,17 @@
 #include "utils/log_adapter.h"
 #include "include/common/visible.h"
 
+#ifdef PARALLEL_INFERENCE
+#define BIND_CORE
+#endif
+#ifdef __ANDROID__
+#define BIND_CORE
+#include <sched.h>
+#endif
+#ifdef __linux__
+#define BIND_CORE
+#endif
+
 namespace mindspore {
 namespace common {
 enum Status { FAIL = -1, SUCCESS = 0 };
@@ -38,8 +49,13 @@ using Task = std::function<Status()>;
 
 struct ThreadContext {
   std::mutex mutex;
-  std::condition_variable cond_var;
+  std::unique_ptr<std::condition_variable> cond_var{nullptr};
   const Task *task{nullptr};
+
+  ThreadContext() {
+    cond_var = std::make_unique<std::condition_variable>();
+    MS_EXCEPTION_IF_NULL(cond_var);
+  }
 };
 
 class COMMON_EXPORT ThreadPool {
@@ -48,18 +64,26 @@ class COMMON_EXPORT ThreadPool {
   ThreadPool(const ThreadPool &) = delete;
   ThreadPool &operator=(const ThreadPool &) = delete;
   static ThreadPool &GetInstance();
-  bool SyncRun(const std::vector<Task> &tasks);
+  bool SyncRun(const std::vector<Task> &tasks, const std::vector<int> &core_list = {});
   size_t GetSyncRunThreadNum() const { return max_thread_num_; }
   void ClearThreadPool();
+  void ChildAfterFork();
 
  private:
   ThreadPool();
   void SyncRunLoop(const std::shared_ptr<ThreadContext> &context);
+  bool SetCpuAffinity(const std::vector<int> &core_list);
+  bool FreeScheduleThreads(const std::vector<int> &core_list);
+#ifdef _WIN32
+  bool ThreadPool::SetAffinity() const;
+#elif defined(BIND_CORE)
+  bool SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set);
+#endif
 
   size_t max_thread_num_{1};
   std::mutex pool_mtx_;
   std::atomic_bool exit_run_ = {false};
-  std::vector<std::thread> sync_run_threads_{};
+  std::vector<std::unique_ptr<std::thread>> sync_run_threads_{};
   std::vector<std::shared_ptr<ThreadContext>> contexts_;
 };
 }  // namespace common

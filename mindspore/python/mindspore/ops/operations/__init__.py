@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ from ._ms_kernel import (ms_kernel, kernel)
 from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchToSpace,
                         BatchToSpaceNDV2, BroadcastTo, Cast, Coalesce, Concat, Cummax, DType, DepthToSpace, Diag,
                         DiagPart, EditDistance, EmbeddingLookup, ExpandDims, ExtractVolumePatches,
-                        Eye, Fill, Gather, GatherD, GatherNd, Identity, Im2Col, InvertPermutation,
+                        Eye, Fill, Gather, GatherD, GatherNd, Im2Col, InvertPermutation,
                         LowerBound, Lstsq, MaskedFill, MaskedSelect, Meshgrid, Mvlgamma, Ones, OnesLike,
                         Padding, ParallelConcat, PopulationCount, Range, Rank, Reshape, ResizeNearestNeighbor,
                         ReverseSequence, ReverseV2, Rint, ScalarToTensor, ScatterAdd,
@@ -44,7 +44,7 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         TensorScatterUpdate, TensorShape, Tile, TopK, TransShape, Transpose, TupleToArray, Unique,
                         UniqueWithPad, UnsortedSegmentMax, UnsortedSegmentMin, UnsortedSegmentProd,
                         UnsortedSegmentSum, Unstack, UpperBound, Zeros, ZerosLike, AffineGrid, Bincount, CheckNumerics,
-                        HammingWindow, IdentityN, IndexFill, LeftShift, ListDiff, LogSpace, MatrixBandPart,
+                        HammingWindow, Identity, IdentityN, IndexFill, LeftShift, ListDiff, LogSpace, MatrixBandPart,
                         MatrixDiagPartV3, MatrixDiagV3, MatrixSetDiagV3, NonZero, Expand, Col2Im, ConjugateTranspose,
                         FillDiagonal, Fills, ResizeNearestNeighborV2, RightShift, ScatterAddWithAxis,
                         ScatterNdMul, SegmentMean, SegmentProd, SegmentSum, SegmentMax, SegmentMin, Tril, Triu,
@@ -59,11 +59,11 @@ from .comm_ops import (AllGather, AllReduce, NeighborExchange, NeighborExchangeV
 from .control_ops import GeSwitch, Merge
 from .custom_ops import (Custom)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
-                        TensorSummary, HistogramSummary, Print, Assert)
+                        TensorSummary, HistogramSummary, TensorDump, Print, Assert)
 from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue, AdjustSaturation,
                         NonMaxSuppressionWithOverlaps, ResizeArea, ResizeBilinearV2, ExtractGlimpse,
                         CombinedNonMaxSuppression, RGBToHSV, ScaleAndTranslate, ResizeLinear1D, ResizeBicubic)
-from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
+from .inner_ops import (Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
                         FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay, FusedAdaFactor,
                         FusedAdaFactorWithGlobalNorm)
 from .linalg_ops import (Svd, Geqrf)
@@ -99,9 +99,8 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      LogSoftmax, MaxPool3D, AvgPool3D,
                      MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ComputeAccidentalHits,
-                     MaxPoolWithArgmaxV2, OneHot, Pad, MirrorPad, Mish, PReLU, ReLU, ReLU6, ReLUV2,
-                     HSwish, HSigmoid,
-                     ResizeBilinear, Sigmoid, SeLU, HShrink, ApplyKerasMomentum,
+                     MaxPoolWithArgmaxV2, OneHot, Pad, MirrorPad, Mish, PReLU, ReLU, ReLU6,
+                     HSwish, HSigmoid, Sigmoid, SeLU, HShrink, ApplyKerasMomentum,
                      SigmoidCrossEntropyWithLogits, NLLLoss, BCEWithLogitsLoss,
                      SmoothL1Loss, SoftMarginLoss, Softmax, Softsign, Softplus, LRN, RNNTLoss, DynamicRNN, DynamicGRUV2,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
@@ -118,9 +117,10 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      Dilation2D, DataFormatVecPermute, DeformableOffsets, Dense, FractionalAvgPool,
                      FractionalMaxPool, FractionalMaxPool3DWithFixedKsize, FractionalMaxPoolWithFixedKsize,
                      GridSampler2D, TripletMarginLoss, UpsampleNearest3D, UpsampleTrilinear3D, PadV3, ChannelShuffle,
-                     GLU, MaxUnpool3D, Pdist)
+                     GLU, MaxUnpool3D, Pdist, RmsNorm, PagedAttention, PagedAttentionMask, ReshapeAndCache,
+                     ApplyRotaryPosEmb, MatmulQkv)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
-                        ConfusionMatrix, UpdateState, Load, StopGradient,
+                        ConfusionMatrix, UpdateState, Load, StopGradient, Reusing,
                         CheckValid, Partial, Depend, Push, Pull, PyExecute, PyFunc, _DynamicLossScale,
                         SampleDistortedBoundingBoxV2)
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
@@ -132,16 +132,17 @@ from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from .sparse_ops import (
     SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd, SparseSlice)
 from .spectral_ops import (BartlettWindow, BlackmanWindow)
-from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
-                          BNTrainingReduce, BNTrainingUpdate, DropoutGenMask, Gelu, FastGelu,
+from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax, DropoutGenMask, Gelu, FastGelu,
                           TensorAdd, InplaceUpdate, ScatterNonAliasingAdd,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
+from .manually_defined._inner import ScalarCast
 
 __all__ = [
     'HSVToRGB',
     'CeLU',
     'Ger',
     'Unique',
+    'Reusing',
     'ReverseSequence',
     'Sort',
     'EditDistance',
@@ -185,8 +186,6 @@ __all__ = [
     'Flatten',
     'MaxPoolWithArgmax',
     'MaxPoolWithArgmaxV2',
-    'BNTrainingReduce',
-    'BNTrainingUpdate',
     'BatchNorm',
     'MaxPool',
     'TopK',
@@ -226,7 +225,6 @@ __all__ = [
     'EmbeddingLookup',
     'Padding',
     'GatherD',
-    'Identity',
     'UniqueWithPad',
     'Concat',
     'Pack',
@@ -292,11 +290,11 @@ __all__ = [
     'UniformReal',
     'StandardLaplace',
     'RandomCategorical',
-    'ResizeBilinear',
     'ScalarSummary',
     'ImageSummary',
     'TensorSummary',
     'HistogramSummary',
+    'TensorDump',
     "Print",
     "Assert",
     'InsertGradientOf',
@@ -495,7 +493,6 @@ __all__ = [
     "ParallelConcat",
     "Push",
     "Pull",
-    "ReLUV2",
     "SparseToDense",
     "SparseTensorDenseAdd",
     "SparseTensorDenseMatmul",
@@ -563,6 +560,7 @@ __all__ = [
     "Heaviside",
     "Histogram",
     "Hypot",
+    "Identity",
     "IdentityN",
     "IndexFill",
     "IsClose",
@@ -691,7 +689,13 @@ __all__ = [
     "IndexPut",
     "MaskedScatter",
     "Ormqr",
-    "RandpermV2"
+    "RandpermV2",
+    "PagedAttention",
+    "PagedAttentionMask",
+    "ReshapeAndCache",
+    "ApplyRotaryPosEmb",
+    "RmsNorm",
+    "MatmulQkv"
 ]
 
 __custom__ = [

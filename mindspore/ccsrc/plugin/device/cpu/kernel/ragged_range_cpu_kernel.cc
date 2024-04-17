@@ -33,10 +33,8 @@ const size_t kIndex2 = 2;
 constexpr int64_t kParallelDataNums = 16 * 1024;
 }  // namespace
 
-bool RaggedRangeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool RaggedRangeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
 
@@ -46,22 +44,21 @@ bool RaggedRangeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  input_type_ = inputs[kIndex0]->GetDtype();
-  tsplits_type_ = outputs[kIndex0]->GetDtype();
+  input_type_ = inputs[kIndex0]->dtype_id();
+  tsplits_type_ = outputs[kIndex0]->dtype_id();
   return true;
 }
 
-int RaggedRangeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int RaggedRangeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto starts_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto starts_shape = inputs[kIndex0]->GetDeviceShapeVector();
   size_t starts_dim = starts_shape.size();
-  auto limits_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto limits_shape = inputs[kIndex1]->GetDeviceShapeVector();
   size_t limits_dim = limits_shape.size();
-  auto deltas_shape = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  auto deltas_shape = inputs[kIndex2]->GetDeviceShapeVector();
   size_t deltas_dim = deltas_shape.size();
 
   broadcast_starts_ = starts_dim == 0;
@@ -79,9 +76,9 @@ int RaggedRangeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
-bool RaggedRangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool RaggedRangeCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   size_t nrows = static_cast<size_t>(in_sizes_.empty() ? 1 : in_sizes_[0]);
   if (input_type_ == kNumberTypeInt32 && tsplits_type_ == kNumberTypeInt32) {
     RaggedRangeLaunch<int32_t, int32_t>(nrows, inputs, broadcast_starts_, broadcast_limits_, broadcast_deltas_,
@@ -108,13 +105,13 @@ bool RaggedRangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T, typename TSPLITS>
-void RaggedRangeCpuKernelMod::RaggedRangeLaunch(const size_t nrows, const std::vector<kernel::AddressPtr> &inputs,
+void RaggedRangeCpuKernelMod::RaggedRangeLaunch(const size_t nrows, const std::vector<kernel::KernelTensor *> &inputs,
                                                 bool broadcast_starts, bool broadcast_limits, bool broadcast_deltas,
-                                                const std::vector<kernel::AddressPtr> &outputs) const {
-  T *starts_addr = static_cast<T *>(inputs[kIndex0]->addr);
-  T *limits_addr = static_cast<T *>(inputs[kIndex1]->addr);
-  T *deltas_addr = static_cast<T *>(inputs[kIndex2]->addr);
-  TSPLITS *rt_nested_splits_addr = static_cast<TSPLITS *>(outputs[0]->addr);
+                                                const std::vector<kernel::KernelTensor *> &outputs) const {
+  T *starts_addr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *limits_addr = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  T *deltas_addr = static_cast<T *>(inputs[kIndex2]->device_ptr());
+  TSPLITS *rt_nested_splits_addr = static_cast<TSPLITS *>(outputs[0]->device_ptr());
   rt_nested_splits_addr[0] = 0;
   for (size_t row = 0; row < nrows; ++row) {
     T start = broadcast_starts ? starts_addr[0] : starts_addr[row];
@@ -126,7 +123,7 @@ void RaggedRangeCpuKernelMod::RaggedRangeLaunch(const size_t nrows, const std::v
     rt_nested_splits_addr[row + 1] =
       rt_nested_splits_addr[row] + RaggedRangeCpuKernelMod::RangeSize<T, TSPLITS>(start, limit, delta);
   }
-  T *rt_dense_values_addr = static_cast<T *>(outputs[1]->addr);
+  T *rt_dense_values_addr = static_cast<T *>(outputs[1]->device_ptr());
   if (nrows <= kParallelDataNums) {
     int value_index = 0;
     for (size_t row = 0; row < nrows; ++row) {

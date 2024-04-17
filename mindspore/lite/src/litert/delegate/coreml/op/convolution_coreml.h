@@ -36,10 +36,10 @@ class ConvolutionCoreMLOp : public ConvolutionBaseCoreMLOp {
   int SetConvParam() override;
 
  private:
-  int stride_h_;
-  int stride_w_;
-  int dilation_h_;
-  int dilation_w_;
+  int stride_h_{0};
+  int stride_w_{0};
+  int dilation_h_{0};
+  int dilation_w_{0};
   const schema::Conv2DFusion *conv_prim_ = nullptr;
 };
 }  // namespace mindspore::lite

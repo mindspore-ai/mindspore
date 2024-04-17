@@ -29,15 +29,12 @@ constexpr size_t kADimNum_1 = 1;
 constexpr size_t kADimNum_2 = 2;
 }  // namespace
 
-bool LstsqCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool LstsqCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstsqInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstsqOutputsNum, kernel_name_);
 
-  dtype_0_ = inputs.at(kIndex0)->GetDtype();
-  dtype_1_ = inputs.at(kIndex1)->GetDtype();
+  dtype_0_ = inputs.at(kIndex0)->dtype_id();
+  dtype_1_ = inputs.at(kIndex1)->dtype_id();
   if (dtype_0_ != dtype_1_) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input's dtypes are not the same.";
     return false;
@@ -46,15 +43,13 @@ bool LstsqCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int LstsqCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LstsqCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
   if (input_0_shape_.size() != kXDimNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the input x tensor's rank must be 2 for 'Lstsq' Op, but x tensor's rank is "
@@ -75,8 +70,9 @@ int LstsqCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return KRET_OK;
 }
 
-bool LstsqCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool LstsqCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_0_ == kNumberTypeFloat16) {
     LaunchKernel<float, float16>(inputs, outputs);
   } else if (dtype_0_ == kNumberTypeFloat32) {
@@ -90,10 +86,11 @@ bool LstsqCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 template <typename T1, typename T2>
-void LstsqCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto input_0_addr = reinterpret_cast<T2 *>(inputs[0]->addr);
-  auto input_1_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<T2 *>(outputs[0]->addr);
+void LstsqCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto input_0_addr = reinterpret_cast<T2 *>(inputs[0]->device_ptr());
+  auto input_1_addr = reinterpret_cast<T2 *>(inputs[1]->device_ptr());
+  auto output_addr = reinterpret_cast<T2 *>(outputs[0]->device_ptr());
   size_t m = static_cast<size_t>(input_0_shape_[0]);
   size_t n = static_cast<size_t>(input_0_shape_[1]);
   size_t k = 0;

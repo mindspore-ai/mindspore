@@ -247,3 +247,34 @@ def test_get_symbol_tree():
     subnet_cell_container = subtree.get_node('container')
     for node in subnet_cell_container.get_handler().nodes():
         assert NodeApi(node).get_symbol_tree().get_handler() == subtree.get_handler()
+
+
+class KwargNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.add = ops.Add()
+
+    def construct(self, x):
+        x = self.add(x=x, y=x)
+        x = self.relu(x=x)
+        return x
+
+
+def test_get_kwargs():
+    """
+    Feature: Python api get_kwargs of Node of Rewrite.
+    Description: Call get_kwargs to get kwargs of node.
+    Expectation: Success.
+    """
+    net = KwargNet()
+    stree = SymbolTreeApi.create(net)
+    add_node = stree.get_node("add")
+    add_kwargs = add_node.get_kwargs()
+    assert isinstance(add_kwargs, dict)
+    assert add_kwargs.get('x') == ScopedValue.create_naming_value('x')
+    assert add_kwargs.get('y') == ScopedValue.create_naming_value('x')
+    relu_node = stree.get_node("relu")
+    relu_kwargs = relu_node.get_kwargs()
+    assert isinstance(relu_kwargs, dict)
+    assert relu_kwargs.get('x') == ScopedValue.create_naming_value('x')

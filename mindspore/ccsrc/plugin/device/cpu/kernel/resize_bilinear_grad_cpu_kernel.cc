@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kResizeBilinearGradInputsNum = 2;
+constexpr size_t kResizeBilinearGradInputsNum = 4;
 constexpr size_t kResizeBilinearGradOutputNum = 1;
 constexpr size_t kResizeBilinearGradInputsDoutShapeSize = 4;
 constexpr size_t kResizeBilinearGradNumZero = 0;
@@ -245,27 +245,20 @@ void ResizeBilinearGrad_HPC(T *float_dloss_addr, T *float_output_addr, T *output
   }
 }
 
-bool ResizeBilinearGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ResizeBilinearGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kResizeBilinearGradInputsNum || outputs.size() != kResizeBilinearGradOutputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be "
                   << kResizeBilinearGradInputsNum << " and " << kResizeBilinearGradOutputNum << ", but got "
                   << inputs.size() << " and " << outputs.size();
     return false;
   }
-  align_corners_ = GetValue<bool>(base_operator->GetAttr(kAttrAlignCorners));
-  half_pixel_centers_ = GetValue<bool>(base_operator->GetAttr(kAttrHalfPixelCenters));
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int ResizeBilinearGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ResizeBilinearGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetShapeVector());
@@ -278,42 +271,44 @@ int ResizeBilinearGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   size_t in_width = shape_[3];
   size_t out_height = size_[2];
   size_t out_width = size_[3];
+  align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+  half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
   height_scale = Scaling(out_height, in_height, align_corners_);
   width_scale = Scaling(out_width, in_width, align_corners_);
   return static_cast<int>(KRET_OK);
 }
 
 template <typename T>
-bool ResizeBilinearGradCpuKernelMod::LaunchFloat16Kernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeBilinearGradCpuKernelMod::LaunchFloat16Kernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &,
+                                                         const std::vector<kernel::KernelTensor *> &outputs) {
   auto output_addr = GetDeviceAddress<float16>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output_addr);
-  if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+  if (memset_s(output_addr, outputs[0]->size(), 0, outputs[0]->size()) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
 
   auto input_addr_T = GetDeviceAddress<float16>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(input_addr_T);
 
-  size_t input_mem_size = inputs[0]->size / sizeof(float16) * sizeof(float);
+  size_t input_mem_size = inputs[0]->size() / sizeof(float16) * sizeof(float);
   float *float_dloss_addr = reinterpret_cast<float *>(malloc(input_mem_size));
   if (float_dloss_addr == NULL) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
     return false;
   }
-  for (size_t i = 0; i < ((inputs[0]->size) / sizeof(float16)); ++i) {
+  for (size_t i = 0; i < ((inputs[0]->size()) / sizeof(float16)); ++i) {
     float_dloss_addr[i] = static_cast<float>(input_addr_T[i]);
   }
 
-  size_t output_mem_size = outputs[0]->size / sizeof(float16) * sizeof(float);
+  size_t output_mem_size = outputs[0]->size() / sizeof(float16) * sizeof(float);
   float *float_output_addr = reinterpret_cast<float *>(malloc(output_mem_size));
   if (float_output_addr == NULL) {
     free(float_dloss_addr);
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
     return false;
   }
-  size_t memset_size = outputs[0]->size / sizeof(float16) * sizeof(float);
+  size_t memset_size = outputs[0]->size() / sizeof(float16) * sizeof(float);
   if (memset_s(float_output_addr, memset_size, 0, memset_size) != EOK) {
     free(float_dloss_addr);
     free(float_output_addr);
@@ -334,12 +329,12 @@ bool ResizeBilinearGradCpuKernelMod::LaunchFloat16Kernel(const std::vector<kerne
 }
 
 template <typename T>
-bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output_addr);
-  if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+  if (memset_s(output_addr, outputs[0]->size(), 0, outputs[0]->size()) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
   auto float_dloss_addr = GetDeviceAddress<T>(inputs, kIndex0);
@@ -360,11 +355,26 @@ bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
 
 FuncVec &ResizeBilinearGradCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, ResizeBilinearGradCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat16),
      &ResizeBilinearGradCpuKernelMod::LaunchFloat16Kernel<float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat32),
      &ResizeBilinearGradCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat64),
      &ResizeBilinearGradCpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

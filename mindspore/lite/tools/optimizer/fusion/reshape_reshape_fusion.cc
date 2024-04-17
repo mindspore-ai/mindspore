@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/op_utils.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "nnacl/op_base.h"

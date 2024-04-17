@@ -27,52 +27,40 @@ namespace kernel {
 MinMaxUpdatePerChannelGpuKernelMod::MinMaxUpdatePerChannelGpuKernelMod()
     : input_size_(0), quant_num_(1), ema_(false), is_null_input_(false), ema_decay_(0), num_channels_(0) {}
 
-bool MinMaxUpdatePerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  kernel_node_ = kernel_node;
-  if (input_num != kSize3) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
-  }
+bool MinMaxUpdatePerChannelGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  ema_ = GetValue<bool>(primitive_->GetAttr("ema"));
+  ema_decay_ = GetValue<float>(primitive_->GetAttr("ema_decay"));
+  return true;
+}
 
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != kSize2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
-  }
-
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(prim);
-  ema_ = GetValue<bool>(prim->GetAttr("ema"));
-  ema_decay_ = GetValue<float>(prim->GetAttr("ema_decay"));
-
+int MinMaxUpdatePerChannelGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
+  workspace_size_list_.clear();
   // init size
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
-  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
   if (is_null_input_) {
-    InitSizeLists();
-    return true;
+    output_size_list_.push_back(sizeof(float) * num_channels_);  // output min
+    output_size_list_.push_back(sizeof(float) * num_channels_);  // output max
+    return KRET_UNKNOWN_SHAPE;
   }
   if (input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', input cannot be empty, but got empty";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input cannot be empty, but got empty";
   }
   num_channels_ = LongToInt(input_shape[0]);
   auto size = SizeOf(input_shape);
   quant_num_ = SizeToInt(size);
   input_size_ = sizeof(float) * size;
-  InitSizeLists();
-  return true;
-}
-
-void MinMaxUpdatePerChannelGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_size_);                     // input
-  input_size_list_.push_back(sizeof(float) * num_channels_);   // min
-  input_size_list_.push_back(sizeof(float) * num_channels_);   // max
   output_size_list_.push_back(sizeof(float) * num_channels_);  // output min
   output_size_list_.push_back(sizeof(float) * num_channels_);  // output max
+  return KRET_OK;
 }
 
-bool MinMaxUpdatePerChannelGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MinMaxUpdatePerChannelGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }

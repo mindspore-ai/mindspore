@@ -47,24 +47,22 @@ class FastSortGpuKernelMod : public NativeGpuKernelMod {
     delete output_value_info_;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_name = base_operator->GetPrim()->name();
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastSortInputsNum, kernel_name);
-    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastSortOutputsNum, kernel_name);
+  bool Init(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+            const std::vector<KernelTensor *> &outputs) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastSortInputsNum, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastSortOutputsNum, kernel_name_);
+    primitive_ = primitive;
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
 
-    auto kernel_name = base_operator->GetPrim()->name();
     input_shape_ = inputs[0]->GetShapeVector();
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input");
     if (is_null_input_) {
       return KRET_OK;
     }
@@ -75,20 +73,13 @@ class FastSortGpuKernelMod : public NativeGpuKernelMod {
     for (int64_t i = 0; i < input_rank_; i++) {
       input_size_ *= input_shape_[i];
     }
-
-    auto kernel_ptr = std::make_shared<ops::Sort>(base_operator->GetPrim());
-    if (kernel_ptr == nullptr) {
-      MS_LOG(ERROR) << "Malloc ops::Sort failed while Resizing.";
-      return KRET_RESIZE_FAILED;
-    }
-
-    descending_ = static_cast<bool>(kernel_ptr->get_descending());
-    axis_ = static_cast<int64_t>(kernel_ptr->get_axis());
+    descending_ = GetValue<bool>(primitive_->GetAttr("descending"));
+    axis_ = GetValue<int64_t>(primitive_->GetAttr("axis"));
     if (axis_ < 0) {
       axis_ += input_rank_;
     }
     if (axis_ >= input_rank_) {
-      MS_LOG(ERROR) << "For '" << kernel_name << "', the value of 'axis' must be less than the dimension of input"
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'axis' must be less than the dimension of input"
                     << ", but got the dimension of input: "
                     << ", got the value of 'axis': ";
       return KRET_RESIZE_FAILED;
@@ -96,7 +87,7 @@ class FastSortGpuKernelMod : public NativeGpuKernelMod {
 
     constexpr int kMaxFixedSortSize = 4096;
     if (input_shape_[axis_] > kMaxFixedSortSize) {
-      MS_LOG(ERROR) << "For '" << kernel_name << "', only support sort dim less or equal to 4096, but got: ";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', only support sort dim less or equal to 4096, but got: ";
       return KRET_RESIZE_FAILED;
     }
 
@@ -126,13 +117,13 @@ class FastSortGpuKernelMod : public NativeGpuKernelMod {
     return KRET_OK;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return LaunchKernel(inputs, workspace, outputs, stream_ptr);
   }
 
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
     if (is_null_input_) {
       return true;
@@ -162,6 +153,7 @@ class FastSortGpuKernelMod : public NativeGpuKernelMod {
   bool is_null_input_{false};
   std::vector<int64_t> input_shape_;
   int64_t input_rank_{0};
+  PrimitivePtr primitive_;
 
   TensorLayoutHelper *input_info_{nullptr};
   TensorLayoutHelper *output_index_info_{nullptr};

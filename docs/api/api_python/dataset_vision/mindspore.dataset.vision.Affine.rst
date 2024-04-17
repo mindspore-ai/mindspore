@@ -5,9 +5,11 @@ mindspore.dataset.vision.Affine
 
     对输入图像进行仿射变换，保持图像中心不动。
 
+    支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
+
     参数：
         - **degrees** (float) - 顺时针的旋转角度，取值需为-180到180之间。
-        - **translate** (Sequence[float, float]) - 水平和垂直方向上的平移长度，需为2元素序列。
+        - **translate** (Sequence[float, float]) - 水平和垂直方向上的平移长度，需为2元素序列，取值在-1和1之间。
         - **scale** (float) - 放缩因子，需为正数。
         - **shear** (Union[float, Sequence[float, float]]) - 裁切度数，取值需为-180到180之间。
           若输入单个数值，表示平行于X轴的裁切角度，不进行Y轴上的裁切；
@@ -28,4 +30,17 @@ mindspore.dataset.vision.Affine
 
     教程样例：
         - `视觉变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+
+    .. py:method:: device(device_target="CPU")
+
+        指定该变换执行的设备。
+
+        - 当执行设备是 Ascend 时，输入数据的维度限制为[4, 6]和[32768, 32768]之间。
+
+        参数：
+            - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
+
+        异常：
+            - **TypeError** - 当 `device_target` 的类型不为str。
+            - **ValueError** - 当 `device_target` 的取值不为 ``CPU`` / ``Ascend`` 。

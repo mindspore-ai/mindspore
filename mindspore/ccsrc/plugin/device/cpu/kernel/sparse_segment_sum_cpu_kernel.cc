@@ -22,42 +22,38 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseSegmentSumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseSegmentSumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 3;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int SparseSegmentSumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SparseSegmentSumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  segment_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  segment_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
 template <typename T1, typename T2>
-bool SparseSegmentSumCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                const std::vector<AddressPtr> &outputs) {
+bool SparseSegmentSumCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &,
+                                                const std::vector<KernelTensor *> &outputs) {
   constexpr size_t kMultiply = 1;
   size_t n = std::accumulate(x_shape_.begin(), x_shape_.end(), kMultiply, std::multiplies<int>()) /
              static_cast<size_t>(x_shape_[kIndex0]);
   size_t m = std::accumulate(segment_shape_.begin(), segment_shape_.end(), kMultiply, std::multiplies<int>());
   auto x_shape0 = static_cast<T2>(x_shape_[kIndex0]);
-  auto dataptr = static_cast<T1 *>(inputs[kIndex0]->addr);
-  auto indicesptr = static_cast<T2 *>(inputs[kIndex1]->addr);
-  auto segment_idsptr = static_cast<T2 *>(inputs[kIndex2]->addr);
-  auto yptr = static_cast<T1 *>(outputs[kIndex0]->addr);
+  auto dataptr = static_cast<T1 *>(inputs[kIndex0]->device_ptr());
+  auto indicesptr = static_cast<T2 *>(inputs[kIndex1]->device_ptr());
+  auto segment_idsptr = static_cast<T2 *>(inputs[kIndex2]->device_ptr());
+  auto yptr = static_cast<T1 *>(outputs[kIndex0]->device_ptr());
   if (segment_idsptr[0] != 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices should start from 0.";
   }

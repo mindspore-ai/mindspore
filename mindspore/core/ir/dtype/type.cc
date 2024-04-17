@@ -212,10 +212,12 @@ size_t GetTypeByte(const TypePtr &type_ptr) {
       return IntToSize(number->nbits() / CHAR_BIT);
     }
   } else {
-    MS_LOG(DEBUG) << "Invalid TypePtr got from ApplyKernel.";
+    MS_LOG(DEBUG) << "Invalid TypePtr got from ApplyKernel:" << (type_ptr == nullptr ? "null" : type_ptr->ToString());
     return 0;
   }
 }
+
+int64_t GetTypeId(const TypeId &type_id) { return static_cast<int64_t>(type_id); }
 
 bool Type::operator==(const Value &other) const {
   if (!other.isa<Type>()) {

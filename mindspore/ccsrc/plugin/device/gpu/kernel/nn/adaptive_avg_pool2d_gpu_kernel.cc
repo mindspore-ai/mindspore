@@ -35,8 +35,9 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &AdaptiveAvgPool2DKernel
 }
 
 template <typename T>
-bool AdaptiveAvgPool2DKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &outputs) {
+bool AdaptiveAvgPool2DKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -50,18 +51,19 @@ bool AdaptiveAvgPool2DKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   return true;
 }
 
-bool AdaptiveAvgPool2DKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AdaptiveAvgPool2DKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   stream_ptr_ = stream_ptr;
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
-bool AdaptiveAvgPool2DKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool AdaptiveAvgPool2DKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
+
   size_t input_num = inputs.size();
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
@@ -69,10 +71,9 @@ bool AdaptiveAvgPool2DKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int AdaptiveAvgPool2DKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int AdaptiveAvgPool2DKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

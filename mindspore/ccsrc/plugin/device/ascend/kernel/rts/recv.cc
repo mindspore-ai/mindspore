@@ -15,19 +15,15 @@
  */
 
 #include "plugin/device/ascend/kernel/rts/recv.h"
-#include "runtime/stream.h"
 #include "utils/ms_context.h"
-#include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "acl/acl.h"
-#include "acl/acl_rt.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace kernel {
-using mindspore::ge::model_runner::EventWaitTaskInfo;
-using EventWaitTaskInfoPtr = std::shared_ptr<EventWaitTaskInfo>;
 
 RecvKernel::~RecvKernel() {}
 
@@ -41,36 +37,27 @@ bool RecvKernel::Init(const AnfNodePtr &anf_node) {
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
 
   if (common::AnfAlgo::HasNodeAttr(kAttrWaitEvent, anf_node->cast<CNodePtr>())) {
-    event_ = reinterpret_cast<rtEvent_t>(GetValue<uintptr_t>(primitive->GetAttr(kAttrWaitEvent)));
+    event_ = reinterpret_cast<aclrtEvent>(GetValue<uintptr_t>(primitive->GetAttr(kAttrWaitEvent)));
   }
   MS_LOG(INFO) << "recv op event_id_:" << event_id_;
   return true;
 }
 
-bool RecvKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                        const std::vector<AddressPtr> &, void *stream_ptr) {
+bool RecvKernel::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                        const std::vector<KernelTensor *> &, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto status = aclrtStreamWaitEvent(stream_ptr, event_);
+  auto status = CALL_ASCEND_API(aclrtStreamWaitEvent, stream_ptr, event_);
   if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Recv aclrtStreamWaitEvent failed!";
     return false;
   }
 
-  status = aclrtResetEvent(event_, stream_ptr);
+  status = CALL_ASCEND_API(aclrtResetEvent, event_, stream_ptr);
   if (status != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtResetEvent failed, ret:" << status;
   }
   return true;
-}
-
-std::vector<TaskInfoPtr> RecvKernel::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &, uint32_t stream_id) {
-  MS_LOG(INFO) << "RecvKernel GenTask event_id_:" << event_id_ << ", stream_id_:" << stream_id;
-  stream_id_ = stream_id;
-  EventWaitTaskInfoPtr task_info_ptr = std::make_shared<EventWaitTaskInfo>(unique_name_, stream_id, event_id_);
-  MS_EXCEPTION_IF_NULL(task_info_ptr);
-  return {task_info_ptr};
 }
 }  // namespace kernel
 }  // namespace mindspore

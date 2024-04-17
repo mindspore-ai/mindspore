@@ -30,7 +30,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "kernel/graph_kernel/graph_kernel_builder_manager.h"
-#include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
+#include "backend/common/graph_kernel/symbol_engine/multi_symbol_engine.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -111,23 +111,21 @@ void SafeSplitSchemer::SplitNodes(const FuncGraphPtr &func_graph) {
 
 void GraphKernelBuild::Init() {
   // Init KernelMeta.
-  std::string kernel_generator = GraphKernelFlags::GetInstance().kernel_generator;
-  std::transform(kernel_generator.begin(), kernel_generator.end(), kernel_generator.begin(), ::tolower);
-
   if (bin_map_ == nullptr) {
     bin_map_ = kernel::KernelMeta::GetInstance();
     if (!bin_map_->initialized()) {
-      bin_map_->Initialize(kernel_generator);
+      bin_map_->Initialize();
     }
   }
 
   // Init AkgKernelBuilder.
   auto device_type = Callback::Instance()->GetTargetFromContext();
-  bool is_dynamic = GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
-  kernel_builder_ = kernel::GraphKernelBuildManager::Instance().GetGraphKernelBuilder(device_type, is_dynamic);
+  bool is_akg_v2 = (GraphKernelFlags::GetInstance().kernel_generator == "AKG_V2");
+  kernel_builder_ = kernel::GraphKernelBuildManager::Instance().GetGraphKernelBuilder(device_type, is_akg_v2);
   if (kernel_builder_ == nullptr) {
     MS_EXCEPTION(UnknownError) << "Can't find corresponding kernel builder for device: " << device_type
-                               << ", and enable_dynamic_shape_fusion flag to be: " << is_dynamic << " .";
+                               << ", and kernel_generator flag to be: "
+                               << GraphKernelFlags::GetInstance().kernel_generator << " .";
   }
 }
 
@@ -172,19 +170,18 @@ kernel::JsonNodePair GraphKernelBuild::CollectNode(const AnfNodePtr &node) const
   option.get_target_info = true;
   option.save_ptr_address = true;
   GraphKernelJsonGenerator graph_kernel_json_generator(option);
-  if (sub_func_graph->has_attr(kAttrSymbolEngine)) {
-    auto engine = sub_func_graph->get_attr(kAttrSymbolEngine)->cast<SymbolEnginePtr>();
-    MS_EXCEPTION_IF_NULL(engine);
-    graph_kernel_json_generator.set_symbol_engine(engine);
+  if (sub_func_graph->symbol_engine() != nullptr) {
+    graph_kernel_json_generator.set_symbol_engine(sub_func_graph->symbol_engine());
   } else if (common::AnfAlgo::IsDynamicShape(node)) {
-    auto engine = BuildSymbolEngine(sub_func_graph);
-    MS_EXCEPTION_IF_NULL(engine);
-    sub_func_graph->set_attr(kAttrSymbolEngine, engine);
-    graph_kernel_json_generator.set_symbol_engine(engine);
+    symshape::MultiSymbolEngine::BuildSubEngine(node);
+    graph_kernel_json_generator.set_symbol_engine(sub_func_graph->symbol_engine());
   }
   if (!graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
     MS_EXCEPTION(UnknownError) << "Collect op info file failed. op[" << node->fullname_with_scope() << "].";
   }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  sub_func_graph->set_attr("info_name", MakeValue(graph_kernel_json_generator.kernel_name()));
   return std::make_pair(graph_kernel_json_generator, node);
 }
 

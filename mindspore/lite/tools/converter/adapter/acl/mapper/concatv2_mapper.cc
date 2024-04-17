@@ -25,34 +25,13 @@ namespace lite {
 const auto kNameConcatV2 = "ConcatV2";
 
 namespace {
-constexpr auto kNameInputNums = "N";
 constexpr int64_t kInputMinNum = 2;
 }  // namespace
 
 STATUS ConcatV2Mapper::Mapper(const CNodePtr &cnode) {
-  ValueNodePtr value_node = nullptr;
-  PrimitivePtr src_prim = nullptr;
-  if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Get primitive from cnode failed.";
-    return lite::RET_ERROR;
-  }
-  auto dst_prim = std::make_shared<acl::ConcatV2>();
-  CHECK_NULL_RETURN(dst_prim);
-  dst_prim->SetAttrs(src_prim->attrs());
-  int64_t num = static_cast<int64_t>(cnode->inputs().size());
-  if (num < kInputMinNum) {
-    MS_LOG(ERROR) << "Input size " << num << " is less than " << kInputMinNum;
+  if (AddAttrForDynInputPrimitive(cnode) != RET_OK) {
+    MS_LOG(ERROR) << "ConcatV2 mapper failed.";
     return RET_ERROR;
-  }
-  dst_prim->AddAttr(kNameInputNums, MakeValue(num - 1));
-  value_node->set_value(dst_prim);
-
-  auto func_graph = cnode->func_graph();
-  CHECK_NULL_RETURN(func_graph);
-  auto status = AddIntAttrToInput(func_graph, cnode, dst_prim, ops::kAxis, false);
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "Add constant value to input failed.";
-    return lite::RET_ERROR;
   }
   return RET_OK;
 }

@@ -143,7 +143,6 @@ class NodeManager {
 
   uint32_t initial_total_node_num_;
   uint32_t total_node_num_;
-  uint32_t current_node_num_;
 
   std::atomic<uint32_t> next_worker_rank_id_;
   std::atomic<uint32_t> next_server_rank_id_;

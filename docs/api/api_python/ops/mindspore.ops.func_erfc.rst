@@ -10,7 +10,7 @@ mindspore.ops.erfc
         erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     参数：
-        - **input** (Tensor) - 互补误差函数的输入Tensor。支持数据类型：
+        - **input** (Tensor) - 互补误差函数的输入Tensor。上述公式中的 :math:`x` 。支持数据类型：
 
           - Ascend： float16、float32。
           - GPU/CPU： float16、float32、float64。

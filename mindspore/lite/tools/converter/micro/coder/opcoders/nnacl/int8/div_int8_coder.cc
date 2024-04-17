@@ -15,7 +15,6 @@
  */
 
 #include "coder/opcoders/nnacl/int8/div_int8_coder.h"
-#include <algorithm>
 #include <limits>
 #include "include/errorcode.h"
 #include "coder/log.h"

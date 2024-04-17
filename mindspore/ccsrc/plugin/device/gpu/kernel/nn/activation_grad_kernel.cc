@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,30 +18,26 @@
 #include <memory>
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "ops/auto_generate/gen_ops_name.h"
+
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr auto kReLU6Grad = "ReLU6Grad";
-constexpr auto kEluGrad = "EluGrad";
-}  // namespace
-
 std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelMod::ActivationGradFunc>>>
   ActivationGradGpuKernelMod::kernel_attr_map_ = {
-    {kReLU6Grad,
+    {ops::kNameReLU6Grad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationGradGpuKernelMod::LaunchEluRelu<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &ActivationGradGpuKernelMod::LaunchEluRelu<half>}}},
-    {kEluGrad,
+    {ops::kNameEluGrad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationGradGpuKernelMod::LaunchEluRelu<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &ActivationGradGpuKernelMod::LaunchEluRelu<half>}}},
 };
 
-bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ActivationGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
 
   auto iter = kernel_attr_map_.find(kernel_name_);
@@ -62,7 +58,7 @@ bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
 
   static const std::map<std::string, cudnnActivationMode_t> activation_mode_map = {
-    {kReLU6Grad, CUDNN_ACTIVATION_CLIPPED_RELU}, {kEluGrad, CUDNN_ACTIVATION_ELU}};
+    {ops::kNameReLU6Grad, CUDNN_ACTIVATION_CLIPPED_RELU}, {ops::kNameEluGrad, CUDNN_ACTIVATION_ELU}};
   auto mode_iter = activation_mode_map.find(kernel_name_);
   if (mode_iter == activation_mode_map.end()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', only support these activations: "
@@ -72,22 +68,17 @@ bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   }
   mode_ = mode_iter->second;
 
-  dtype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 
-int ActivationGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ActivationGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  size_t input_num = inputs.size();
-  if (input_num != 2) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
-    return KRET_RESIZE_FAILED;
-  }
-  input_shape_ = inputs.at(kIndex0)->GetShapeVector();
+
+  input_shape_ = inputs[kIndex0]->GetShapeVector();
   is_null_input_ = CHECK_NULL_INPUT(input_shape_);
   if (is_null_input_) {
     return KRET_OK;
@@ -97,7 +88,7 @@ int ActivationGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
                                       "For 'ActivationGrad', cudnnCreateTensorDescriptor failed.");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateActivationDescriptor(&activation_desc_),
                                       "For 'ActivationGrad', cudnnCreateActivationDescriptor failed.");
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   CheckTensorSize({input_shape_});
   ShapeVector shape;
   double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? ReLU6_UP_TURNING_POINT : 0.0;
@@ -108,7 +99,7 @@ int ActivationGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   const int split_dim = 4;
   if (input_shape_.size() <= split_dim) {
     ShapeNdTo4d(input_shape_, &shape);
-    if (inputs.at(kIndex0)->GetFormat() == mindspore::Format::NHWC) {
+    if (inputs[kIndex0]->format() == mindspore::Format::NHWC) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_, LongToInt(shape[0]),
                                    LongToInt(shape[3]), LongToInt(shape[1]), LongToInt(shape[2])),
@@ -142,8 +133,8 @@ std::vector<KernelAttr> ActivationGradGpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-bool ActivationGradGpuKernelMod::LaunchEluRelu(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool ActivationGradGpuKernelMod::LaunchEluRelu(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   T *dy = GetDeviceAddress<T>(inputs, kIndex0);
   T *y = GetDeviceAddress<T>(inputs, kIndex1);
   T *dx = GetDeviceAddress<T>(outputs, kIndex0);
@@ -157,8 +148,8 @@ bool ActivationGradGpuKernelMod::LaunchEluRelu(const std::vector<kernel::Address
   return true;
 }
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, ReLU6Grad,
-                                 []() { return std::make_shared<ActivationGradGpuKernelMod>(kReLU6Grad); });
+                                 []() { return std::make_shared<ActivationGradGpuKernelMod>(ops::kNameReLU6Grad); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, EluGrad,
-                                 []() { return std::make_shared<ActivationGradGpuKernelMod>(kEluGrad); });
+                                 []() { return std::make_shared<ActivationGradGpuKernelMod>(ops::kNameEluGrad); });
 }  // namespace kernel
 }  // namespace mindspore

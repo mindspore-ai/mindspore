@@ -15,7 +15,6 @@
 """channel shuffle"""
 from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
-from mindspore.ops.primitive import _primexpr
 
 __all__ = ['ChannelShuffle']
 
@@ -27,7 +26,8 @@ class ChannelShuffle(Cell):
     :math:`\frac{g}{}` and :math:`g` to restore Tensor to the original shape.
 
     Args:
-        groups (int): Number of groups to divide channels in, must be greater than 0. Refer to :math:`g`.
+        groups (int): Number of groups to divide channels in, must be greater than 0.
+            Refer to :math:`g` in the above formula.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, C_{in}, H_{in}, W_{in})`.
@@ -36,7 +36,7 @@ class ChannelShuffle(Cell):
         Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If `groups` is not an int.
+        TypeError: If `groups` is not a positive integer.
         ValueError: If `groups` is less than 1.
         ValueError: If dims of `x` is less than 3.
         ValueError: If number of channels can not be divisible by groups.
@@ -82,22 +82,9 @@ class ChannelShuffle(Cell):
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
 
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, channels, groups, cls_name):
-        """check input dim"""
-        dim = len(shape)
-        if dim < 3:
-            raise ValueError(f"For {cls_name}, the in_shape must have more than 2 dims, but got {dim}.")
-
-        if channels % groups != 0:
-            raise ValueError(f"For {cls_name}, number of channels must be divisible by groups, "
-                             f"but got {channels} channels and {groups} groups.")
-
     def construct(self, x):
         x_shape = self.shape(x)
         n, c = x_shape[0], x_shape[1]
-        self._check_input_dim(x_shape, c, self.groups, self.cls_name)
         out = self.reshape(x, (n, self.groups, c // self.groups, -1))
         out = self.transpose(out, (0, 2, 1, 3))
         return self.reshape(out, x_shape)

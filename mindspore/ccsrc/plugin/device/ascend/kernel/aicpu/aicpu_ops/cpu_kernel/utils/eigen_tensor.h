@@ -19,8 +19,8 @@
 
 #include <functional>
 #include <vector>
-#include "cpu_kernel/inc/cpu_tensor.h"
-#include "common/kernel_log.h"
+#include "cpu_tensor.h"
+#include "inc/kernel_log.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 
 namespace aicpu {

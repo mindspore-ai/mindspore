@@ -25,7 +25,6 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 if(ENABLE_D OR ENABLE_ACL)
     # build 910 and 310 code into one distro, files needed for 310 mode
     add_compile_definitions(ENABLE_ACL)
-    include_directories(${GRAPHENGINE_PATH}/ge)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 endif()
 
@@ -59,6 +58,9 @@ if(NOT BUILD_LITE)
             ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/strategy_checkpoint/strategy_checkpoint_info.cc)
     list(APPEND MSLIB_SRC_DEPEND
             ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc)
+    list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/group_manager.cc)
+    list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/device_manager.cc)
+    list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/device_matrix.cc)
     list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/array.cc)
     list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/map.cc)
     list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/arrangement.cc)
@@ -69,8 +71,6 @@ endif()
 
 if((MODE_ASCEND_ACL) AND NOT BUILD_LITE)
     list(APPEND MSLIB_SRC
-        "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.cc"
-        "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/pattern_engine.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/helper.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/node_pass.cc"
@@ -92,6 +92,7 @@ endif()
 if(BUILD_LITE)
     list(APPEND MSLIB_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../mindspore/ccsrc/utils/config_manager.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../mindspore/ccsrc/plugin/device/ascend/hal/common/ascend_utils.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/model/aoe/auto_tune_process.cc")
     file(GLOB_RECURSE ACL_REMOVE_SRC ${CMAKE_CURRENT_SOURCE_DIR}
             "model/acl/acl_vm/*.cc"
@@ -113,10 +114,12 @@ else()
     add_library(mindspore_shared_lib SHARED $<TARGET_OBJECTS:common_shared_lib_obj> ${MSLIB_SRC_DEPEND})
 endif()
 if(BUILD_LITE)
-    target_link_libraries(mslite_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
-    add_dependencies(mslite_shared_lib _mindspore_transform_graph_ir_obj)
+    target_link_libraries(mslite_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>
+    $<TARGET_OBJECTS:_mindspore_transform_symbol_obj>)
+    add_dependencies(mslite_shared_lib _mindspore_transform_graph_ir_obj _mindspore_transform_symbol_obj)
 elseif(MODE_ASCEND_ACL)
     target_link_libraries(mindspore_shared_lib PRIVATE _mindspore_transform_graph_ir_obj
+            _mindspore_transform_symbol_obj
             _mindspore_backend_graph_compiler_obj _mindspore_debug_obj mindspore_backend_static)
     if(MS_BUILD_GRPC)
         target_link_libraries(mindspore_shared_lib PRIVATE mindspore::grpc++)

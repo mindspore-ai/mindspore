@@ -18,6 +18,7 @@
 
 #include <tuple>
 #include <utility>
+#include <nlohmann/json.hpp>
 #include "include/common/utils/anfalgo.h"
 #include "include/transform/graph_ir/types.h"
 #include "include/transform/graph_ir/utils.h"
@@ -26,7 +27,6 @@
 #include "abstract/abstract_value.h"
 #include "include/backend/kernel_graph.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "runtime/dev.h"
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -85,6 +85,12 @@ OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic
   if (IsGeTrain() && GetPhasePrefix() == "train") {
     (void)options.emplace("ge.exec.variable_acc", "1");
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto max_threshold = ms_context->get_param<std::string>(MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD);
+  if (!max_threshold.empty()) {
+    (void)options.emplace("ge.exec.hostSchedulingMaxThreshold", max_threshold);
+  }
   if (!is_dynamic_shape) {
     return options;
   }
@@ -131,12 +137,67 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
                  << ", Graph name: " << graph->ToString();
     (void)option->insert(std::make_pair("ge.exec.inputReuseMemIndexes", "0"));
   }
+
+  (void)option->insert(std::make_pair("ge.featureBaseRefreshable", "1"));
 }
 
-bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map) {
+void SetPassthroughGeOptions(bool is_global, OptionMap *options) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+
+  const auto &ge_options_str = context->get_param<std::string>(MS_CTX_GE_OPTIONS);
+  if (ge_options_str.empty()) {
+    MS_LOG(DEBUG) << "The ge option for passthrough is not set.";
+    return;
+  }
+
+  string level = is_global ? "global" : "session";
+  nlohmann::json options_json = nlohmann::json::parse(ge_options_str);
+  auto options_iter = options_json.find(level);
+  if (options_iter == options_json.end()) {
+    MS_LOG(INFO) << "GE " << level << " option is not set.";
+    return;
+  }
+
+  const auto &new_options = *options_iter;
+  for (auto &[key, value] : new_options.items()) {
+    (*options)[key] = value;
+    MS_LOG(INFO) << "Set ge " << level << " option: {" << key << ", " << value << "}";
+  }
+}
+
+namespace {
+void UpdateTopoOrderOptions(const string &graph_name, OptionMap *option) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+
+  const auto &topo_order = context->get_param<std::string>(MS_CTX_TOPO_ORDER);
+  if (topo_order.empty()) {
+    return;
+  }
+
+  nlohmann::json topo_order_json = nlohmann::json::parse(topo_order);
+  auto topo_order_iter = topo_order_json.find(graph_name);
+  if (topo_order_iter == topo_order_json.end()) {
+    return;
+  }
+  MS_LOG(INFO) << "Update topo order for graph " << graph_name << " to " << topo_order_iter.value();
+  std::string topo_sorting_mode = "1";
+  if (topo_order_iter.value() == "bfs") {
+    topo_sorting_mode = "0";
+  } else if (topo_order_iter.value() == "dfs") {
+    topo_sorting_mode = "1";
+  } else if (topo_order_iter.value() == "rdfs") {
+    topo_sorting_mode = "2";
+  }
+  (*option)["ge.topoSortingMode"] = topo_sorting_mode;
+}
+}  // namespace
+
+bool AddFakeGraph(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
-  transform::GenFakeComputeGraph(anf_graph->ToString(), converter, init_inputs_map);
+  transform::GenFakeGraph(anf_graph->ToString(), converter);
   auto graph_name = GetGraphName(anf_graph);
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + graph_name;
@@ -144,28 +205,31 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap
   bool dynamic_shape_inputs = false;
   auto options = GetComputeGraphOptions(shape_array, dynamic_shape_inputs);
   GetComputeGraphReuseOptions(anf_graph, &options);
+  UpdateTopoOrderOptions(graph_name, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
   (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter));
   (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
-  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GenFakeGraph("broadcast"));
+  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
 
   if (!IsEnableRefMode()) {
-    transform::Status ret = transform::AddGraph(checkpoint_name, transform::GenFakeGraph("checkpoint"));
+    transform::Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));
     if (ret == transform::Status::SUCCESS) {
       transform::SetAnfGraph(checkpoint_name, anf_graph);
     }
   }
-  transform::AddOptimizeGraph(graph_name);
   return true;
 }
 
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
+  bool is_cloud = true;
+  bool need_aoe = false;
   if (export_air) {
     MS_LOG(INFO) << "Set DfGraphConvertor training : false";
     transform::SetTraining(converter, false);
     transform::SetExportAir(converter, true);
+    is_cloud = false;
   }
   transform::BuildGraph(anf_graph->ToString(), converter, init_inputs_map);
   transform::GenerateBroadcastGraph(converter, init_inputs_map);
@@ -176,14 +240,17 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
     MS_LOG(ERROR) << "Convert df graph failed, err:" << err_code;
     return false;
   }
-
+  if (MsContext::GetInstance()->EnableAoeOnline()) {
+    need_aoe = true;
+  }
   auto graph_name = GetGraphName(anf_graph);
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + graph_name;
   auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
   GetComputeGraphReuseOptions(anf_graph, &options);
+  UpdateTopoOrderOptions(graph_name, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
-  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
+  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options, is_cloud, need_aoe);
   if (IsEnableRefMode()) {
     (void)transform::AddGraph(init_graph, converter->GetInitGraph());
   } else {
@@ -198,7 +265,6 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
     }
   }
 
-  transform::AddOptimizeGraph(graph_name);
   return true;
 }
 }  // namespace ascend

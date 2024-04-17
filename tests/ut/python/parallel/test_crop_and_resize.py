@@ -19,6 +19,7 @@ from mindspore import Tensor, context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
+import mindspore.common.dtype as mstype
 
 
 def setup_function():
@@ -89,3 +90,17 @@ def test_crop_and_resize_strategy_error():
     with pytest.raises(RuntimeError):
         compile_net(net, _images, _boxes, _box_index)
     context.reset_auto_parallel_context()
+
+
+def test_crop_and_resize_dynamic_shape_constraint():
+    """
+    Feature: test CropAndResize dynamic shape
+    Description: data parallel
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0, full_batch=False)
+    strategy = ((4, 1, 1, 1), (2, 1), (2,))
+    net = Net(_crop_size, strategy)
+    dynamic_images = Tensor(shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS], dtype=mstype.float32)
+    with pytest.raises(RuntimeError):
+        compile_net(net, dynamic_images, _boxes, _box_index)

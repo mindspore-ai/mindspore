@@ -108,6 +108,13 @@ class MS_CORE_API TensorType : public Object {
   std::string ToReprString() const override;
   std::string DumpText() const override;
   bool operator==(const Type &other) const override;
+
+  /// \brief Overwrite the operator '==' to compare other tensor type.
+  ///
+  /// \param[in] other The other tensor type value to be compared.
+  ///
+  /// \return  A boolean, which indicates whether the type is same.
+  bool operator==(const TensorType &other) const;
   std::size_t hash() const override;
 
  private:
@@ -132,6 +139,14 @@ class MS_CORE_API AnyType : public TensorType {
 
   std::string ToString() const override;
   std::string DumpText() const override;
+  bool operator==(const Type &other) const override;
+
+  /// \brief Overwrite the operator '==' to compare other anytype.
+  ///
+  /// \param[in] other The other anytype value to be compared.
+  ///
+  /// \return  A boolean, which indicates whether the type is same.
+  bool operator==(const AnyType &other) const;
 };
 using AnyTypePtr = std::shared_ptr<AnyType>;
 

@@ -34,14 +34,12 @@ class FractionalAvgPoolCpuKernelMod : public NativeCpuKernelMod {
   FractionalAvgPoolCpuKernelMod() = default;
   ~FractionalAvgPoolCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -49,12 +47,13 @@ class FractionalAvgPoolCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool FractionalAvgPoolLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool FractionalAvgPoolLaunch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T>
   bool FractionalAvgPoolDoCompute(const T *input_ptr, T *output_ptr, size_t b, size_t hs, const int64_t height_start,
                                   int64_t height_end, std::vector<int64_t> width_cum_seq);
-  using FractionalAvgPoolFunc = std::function<bool(
-    FractionalAvgPoolCpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using FractionalAvgPoolFunc =
+    std::function<bool(FractionalAvgPoolCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, FractionalAvgPoolFunc>> func_list_;
   FractionalAvgPoolFunc kernel_func_;
   std::vector<int64_t> input_shape_;

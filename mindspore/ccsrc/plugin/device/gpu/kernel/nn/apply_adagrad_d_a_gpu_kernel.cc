@@ -22,6 +22,7 @@
 
 #include "kernel/common_utils.h"
 #include "abstract/utils.h"
+#include "ops/op_utils.h"
 
 #include "plugin/device/gpu/kernel/nn/apply_adagrad_d_a_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/apply_adagrad_d_a_impl.cuh"
@@ -30,7 +31,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kApplyAdagradDAInputsNum = 8;
-constexpr size_t kApplyAdagradDAOutputsNum = 3;
+constexpr size_t kApplyAdagradDAOutputsNum = 1;
 constexpr size_t kVarIndex = 0;
 constexpr size_t kAccumIndex = 1;
 constexpr size_t kSquaredAccumIndex = 2;
@@ -47,25 +48,17 @@ std::map<size_t, std::string> InputNames = {{kVarIndex, "var"},
                                             {kL1Index, "l1"},
                                             {kL2Index, "l2"},
                                             {kGlobalStepIndex, "global_step"}};
-std::map<size_t, std::string> OutputNames = {
-  {kVarIndex, "var"}, {kAccumIndex, "gradient_accumulator"}, {kSquaredAccumIndex, "gradient_squared_accumulator"}};
+std::map<size_t, std::string> OutputNames = {{kVarIndex, "var"}};
 }  // namespace
 
-bool ApplyAdagradDAGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+bool ApplyAdagradDAGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = ops::get_batch_rank(primitive_);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For'" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradDA>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast ApplyAdagradDA ops failed!";
-    return false;
-  }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -78,17 +71,16 @@ bool ApplyAdagradDAGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ApplyAdagradDAGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   is_null_input_ = false;
   stream_ptr_ = nullptr;
   input_elements_ = 0;
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> var_shape = inputs.at(kVarIndex)->GetShapeVector();
+  std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
   std::vector<int64_t> lr_shape = inputs[kLRIndex]->GetShapeVector();
 
   batch_size_ = 1;
@@ -118,8 +110,9 @@ std::vector<KernelAttr> ApplyAdagradDAGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool ApplyAdagradDAGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ApplyAdagradDAGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
   stream_ptr_ = stream_ptr;
@@ -130,26 +123,23 @@ bool ApplyAdagradDAGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T, typename T1, typename T2, typename T3, typename T4>
-bool ApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool ApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
-  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->addr);
-  auto *squared_accum = reinterpret_cast<T *>(inputs[kSquaredAccumIndex]->addr);
-  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  const auto *lr = reinterpret_cast<T1 *>(inputs[kLRIndex]->addr);
-  const auto *l1 = reinterpret_cast<T2 *>(inputs[kL1Index]->addr);
-  const auto *l2 = reinterpret_cast<T3 *>(inputs[kL2Index]->addr);
-  const auto *global_step = reinterpret_cast<T4 *>(inputs[kGlobalStepIndex]->addr);
+  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->device_ptr());
+  auto *squared_accum = reinterpret_cast<T *>(inputs[kSquaredAccumIndex]->device_ptr());
+  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  const auto *lr = reinterpret_cast<T1 *>(inputs[kLRIndex]->device_ptr());
+  const auto *l1 = reinterpret_cast<T2 *>(inputs[kL1Index]->device_ptr());
+  const auto *l2 = reinterpret_cast<T3 *>(inputs[kL2Index]->device_ptr());
+  const auto *global_step = reinterpret_cast<T4 *>(inputs[kGlobalStepIndex]->device_ptr());
 
-  auto *output_var = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
-  auto *output_accum = reinterpret_cast<T *>(outputs[kAccumIndex]->addr);
-  auto *output_squared_accum = reinterpret_cast<T *>(outputs[kSquaredAccumIndex]->addr);
+  auto *output_var = reinterpret_cast<T *>(outputs[kVarIndex]->device_ptr());
 
-  auto status =
-    ApplyAdagradDA(batch_size_, input_elements_, var, accum, squared_accum, grad, lr, l1, l2, global_step, output_var,
-                   output_accum, output_squared_accum, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status = ApplyAdagradDA(batch_size_, input_elements_, var, accum, squared_accum, grad, lr, l1, l2, global_step,
+                               output_var, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
@@ -165,8 +155,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, float, float, float, int32_t>},
     {KernelAttr()
@@ -178,8 +166,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, float, float, half, int32_t>},
     {KernelAttr()
@@ -191,8 +177,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, float, half, float, int32_t>},
     {KernelAttr()
@@ -204,8 +188,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, float, half, half, int32_t>},
     {KernelAttr()
@@ -217,8 +199,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, half, float, float, int32_t>},
     {KernelAttr()
@@ -230,8 +210,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, half, float, half, int32_t>},
     {KernelAttr()
@@ -243,8 +221,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, half, half, float, int32_t>},
     {KernelAttr()
@@ -256,8 +232,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, half, half, half, int32_t>},
     {KernelAttr()
@@ -269,8 +243,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, float, float, float, int64_t>},
     {KernelAttr()
@@ -282,8 +254,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, float, float, half, int64_t>},
     {KernelAttr()
@@ -295,8 +265,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, float, half, float, int64_t>},
     {KernelAttr()
@@ -308,8 +276,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, float, half, half, int64_t>},
     {KernelAttr()
@@ -321,8 +287,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, half, float, float, int64_t>},
     {KernelAttr()
@@ -334,8 +298,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, half, float, half, int64_t>},
     {KernelAttr()
@@ -347,8 +309,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, half, half, float, int64_t>},
     {KernelAttr()
@@ -360,8 +320,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<float, half, half, half, int64_t>},
     {KernelAttr()
@@ -373,8 +331,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, float, float, float, int32_t>},
     {KernelAttr()
@@ -386,8 +342,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, float, float, half, int32_t>},
     {KernelAttr()
@@ -399,8 +353,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, float, half, float, int32_t>},
     {KernelAttr()
@@ -412,8 +364,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, float, half, half, int32_t>},
     {KernelAttr()
@@ -425,8 +375,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, half, float, float, int32_t>},
     {KernelAttr()
@@ -438,8 +386,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, half, float, half, int32_t>},
     {KernelAttr()
@@ -451,8 +397,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, half, half, float, int32_t>},
     {KernelAttr()
@@ -464,8 +408,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, half, half, half, int32_t>},
     {KernelAttr()
@@ -477,8 +419,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, float, float, float, int64_t>},
     {KernelAttr()
@@ -490,8 +430,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, float, float, half, int64_t>},
     {KernelAttr()
@@ -503,8 +441,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, float, half, float, int64_t>},
     {KernelAttr()
@@ -516,8 +452,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, float, half, half, int64_t>},
     {KernelAttr()
@@ -529,8 +463,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, half, float, float, int64_t>},
     {KernelAttr()
@@ -542,8 +474,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, half, float, half, int64_t>},
     {KernelAttr()
@@ -555,8 +485,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, half, half, float, int64_t>},
     {KernelAttr()
@@ -568,8 +496,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, half, half, half, int64_t>},
 };

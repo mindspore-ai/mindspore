@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,30 +26,27 @@ constexpr size_t kNextAfterInputsNum = 2;
 constexpr size_t kNextAfterOutputsNum = 1;
 }  // namespace
 
-bool NextAfterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
+bool NextAfterCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNextAfterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNextAfterOutputsNum, kernel_name_);
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 template <typename T>
-bool NextAfterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool NextAfterCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kNextAfterInputsNum || outputs.size() != kNextAfterOutputsNum) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the operator should have 2 inputs and 1 outputs, but got "
                             << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
   }
-  T *x1 = GetDeviceAddress<T>(inputs, kIndex0);
-  T *x2 = GetDeviceAddress<T>(inputs, kIndex1);
-  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  T *x1 = static_cast<T *>(inputs[0]->device_ptr());
+  T *x2 = static_cast<T *>(inputs[1]->device_ptr());
+  T *output = static_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(x2);
   MS_EXCEPTION_IF_NULL(output);
-
-  size_t elem_num = inputs[0]->size / sizeof(T);
+  size_t elem_num = inputs[0]->size() / sizeof(T);
 
   for (size_t i = 0; i < elem_num; i++) {
     output[i] = nextafter(x1[i], x2[i]);

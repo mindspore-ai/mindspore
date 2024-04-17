@@ -265,7 +265,7 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
   }
   auto shape = param_info->parameter_shape();
   if (shape.empty()) {
-    MS_LOG(WARNING) << "The parameter " << param_node->name() << "'s parameter_shape in param_info is empty";
+    MS_LOG(INFO) << "The parameter " << param_node->name() << "'s parameter_shape in param_info is empty";
     return;
   }
   std::shared_ptr<abstract::BaseShape> base_shape = std::make_shared<abstract::Shape>(shape);
@@ -291,6 +291,10 @@ void ParallelContext::set_enable_all2all(const bool enable) { enable_all2all_ = 
 
 void ParallelContext::set_enable_micro_interleaved(const bool enable_micro_interleaved) {
   enable_micro_interleaved_ = enable_micro_interleaved;
+}
+
+void ParallelContext::set_enable_fine_grained_micro_interleaved(const bool enable_fine_grained_micro_interleaved) {
+  enable_fine_grained_micro_interleaved_ = enable_fine_grained_micro_interleaved;
 }
 
 void ParallelContext::set_pipeline_micro_size(const size_t pipeline_micro_size) {

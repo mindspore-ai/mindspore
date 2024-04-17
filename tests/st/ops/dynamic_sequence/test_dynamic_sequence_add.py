@@ -44,7 +44,7 @@ class NetAddOffset(nn.Cell):
         return self.seq_add_offset(x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -63,7 +63,7 @@ def test_seq_add():
     assert res == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -82,7 +82,7 @@ def test_seq_add_offset():
     assert res == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -100,12 +100,12 @@ def test_seq_add_grad():
     net_ms = Net()
     input_x = mutable((1, 2, 3), True)
     input_y = mutable((3, 4, 5, 6), True)
-    dout = mutable((1, 1, 1, 1, 1, 1, 1), True)
+    dout = (1, 1, 1, 1, 1, 1, 1)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out = ", grad_func(input_x, input_y, dout))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -123,6 +123,6 @@ def test_seq_add_grad_other():
     net_ms = Net()
     input_x = mutable((1, 2, 3), True)
     input_y = (3, 4, 5, 6)
-    dout = mutable((1, 1, 1, 1, 1, 1, 1), True)
+    dout = (1, 1, 1, 1, 1, 1, 1)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out1 = ", grad_func(input_x, input_y, dout))

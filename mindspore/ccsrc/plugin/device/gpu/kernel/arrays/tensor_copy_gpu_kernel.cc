@@ -21,23 +21,20 @@
 
 namespace mindspore {
 namespace kernel {
-bool TensorCopyGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  kernel_name_ = base_operator->name();
+bool TensorCopyGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   return true;
 }
-int TensorCopyGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int TensorCopyGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   int ret;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
   auto input_shapes = inputs.at(kIndex0)->GetShapeVector();
   auto output_shapes = outputs.at(kIndex0)->GetShapeVector();
-  auto input_type = inputs.at(kIndex0)->GetDtype();
-  auto output_type = outputs.at(kIndex0)->GetDtype();
+  auto input_type = inputs.at(kIndex0)->dtype_id();
+  auto output_type = outputs.at(kIndex0)->dtype_id();
   if (input_type != output_type) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the type of 'input' and the type of 'output' should be same, but 'input' type is "
@@ -53,8 +50,9 @@ int TensorCopyGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   return KRET_OK;
 }
 
-bool TensorCopyGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TensorCopyGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto input = GetDeviceAddress<void>(inputs, 0);
   auto output = GetDeviceAddress<void>(outputs, 0);
 

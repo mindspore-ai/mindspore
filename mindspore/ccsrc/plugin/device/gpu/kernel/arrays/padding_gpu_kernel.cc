@@ -28,9 +28,7 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
-bool PaddingGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool PaddingGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimPadding->name()) {
     MS_LOG(ERROR) << "For 'Padding', the kernel name must be 'Padding', but got " << kernel_name_;
     return false;
@@ -39,8 +37,8 @@ bool PaddingGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::Padding>(base_operator->GetPrim());
-  pad_dim_size_ = kernel_ptr->get_pad_dim_size();
+
+  pad_dim_size_ = GetValue<int64_t>(primitive_->GetAttr("pad_dim_size"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -51,10 +49,8 @@ bool PaddingGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int PaddingGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int PaddingGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   shapes_.clear();
@@ -81,7 +77,8 @@ int PaddingGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool PaddingGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool PaddingGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   T *input_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_ptr = GetDeviceAddress<T>(outputs, kIndex0);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

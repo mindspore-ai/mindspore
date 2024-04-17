@@ -1,0 +1,29 @@
+greater:
+    description: |
+        Compare the value of the input parameters :math:`input > other` element-wise, and the output result is a bool value.
+
+        Refer to :func:`mindspore.ops.gt` for more details.
+
+        Args:
+            input (Union[Tensor, Number]): The first input is a Number or a tensor whose data type is
+                `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+            other (Union[Tensor, Number]): The second input, which is a Number or a tensor whose data type is
+                `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> other = Tensor(np.array([1, 1, 4]), mindspore.int32)
+            >>> output = ops.greater(input, other)
+            >>> print(output)
+            [False True False]

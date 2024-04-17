@@ -5,6 +5,9 @@ mindspore.ops.diagonal_scatter
 
     `dim1` 和 `dim2` 指定 `input` 的两个维度，这两个维度上的元素将被视为矩阵的元素，并且将 `src` 嵌入到该矩阵的对角线上。
 
+    .. note::
+        目前，`input` 和 `src` 中的元素不支持 ``inf`` 值。
+
     参数：
         - **input** (Tensor) - 输入Tensor，其维度大于1。
         - **src** (Tensor) - 要嵌入的源Tensor。

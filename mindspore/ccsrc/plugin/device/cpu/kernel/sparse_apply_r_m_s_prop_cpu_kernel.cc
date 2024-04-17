@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/sparse_apply_r_m_s_prop_cpu_kernel.h"
 #include <algorithm>
 #include <iostream>
+#include <limits>
 #include "kernel/common_utils.h"
 #include "mindspore/core/ops/sparse_apply_r_m_s_prop.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -32,7 +33,7 @@ constexpr char kKernelName[] = "SparseApplyRMSProp";
 using KernelRunFunc = SparseApplyRMSPropCpuKernelMod::KernelRunFunc;
 }  // namespace
 
-bool SparseApplyRMSPropCpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
+bool SparseApplyRMSPropCpuKernelMod::ResizedInputSize(const std::vector<KernelTensor *> &inputs) {
   var_shape_ = inputs.at(kIndex0)->GetShapeVector();
   if (var_shape_.empty()) {
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
@@ -98,7 +99,7 @@ bool SparseApplyRMSPropCpuKernelMod::ResizedInputSize(const std::vector<KernelTe
   return true;
 }
 
-bool SparseApplyRMSPropCpuKernelMod::ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs) {
+bool SparseApplyRMSPropCpuKernelMod::ResizedOutputSize(const std::vector<KernelTensor *> &outputs) {
   auto output_var_shape = outputs[kIndex0]->GetShapeVector();
   if (!IsSameShape(var_shape_, output_var_shape)) {
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
@@ -127,28 +128,19 @@ bool SparseApplyRMSPropCpuKernelMod::ResizedOutputSize(const std::vector<KernelT
 }
 
 void SparseApplyRMSPropCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   indices_size_ = 0;
   var_first_dim_size_ = 0;
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+int SparseApplyRMSPropCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyRMSPropInputsNum, kKernelName);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyRMSPropOutputsNum, kKernelName);
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
-  }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyRMSProp>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast op from BaseOperator to SparseApplyRMSProp failed.";
-    return KRET_RESIZE_FAILED;
   }
   if (!ResizedInputSize(inputs)) {
     return KRET_RESIZE_FAILED;
@@ -159,47 +151,41 @@ int SparseApplyRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool SparseApplyRMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyRMSProp>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast op from BaseOperator to SparseApplyRMSProp failed.";
-    return false;
-  }
-  rho_ = kernel_ptr->get_rho();
+bool SparseApplyRMSPropCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  rho_ = GetValue<float>(primitive_->GetAttr(ops::kRho));
   if (rho_ > 1 || rho_ < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
                              << "', the argument rho should be between 0 and 1, but got the value of rho: " << rho_;
     return false;
   }
-  momentum_ = kernel_ptr->get_momentum();
+  momentum_ = GetValue<float>(primitive_->GetAttr(ops::kMomentum));
   if (momentum_ < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
                              << "', the argument momentum should be no less than 0, but got the value of momentum: "
                              << momentum_;
     return false;
   }
-  epsilon_ = kernel_ptr->get_epsilon();
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
   if (epsilon_ <= 0) {
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
                              << "', the argument momentum should be greater than 0, but got the value of epsilon: "
                              << epsilon_;
     return false;
   }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 template <typename T, typename I>
-bool SparseApplyRMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &workspace,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto *var = static_cast<T *>(inputs.at(kIndex0)->addr);
-  auto *ms = static_cast<T *>(inputs.at(kIndex1)->addr);
-  auto *mom = static_cast<T *>(inputs.at(kIndex2)->addr);
-  auto lr = static_cast<T *>(inputs.at(kIndex3)->addr)[kDim0];
-  auto *grad = static_cast<T *>(inputs.at(kIndex4)->addr);
-  auto *indices = static_cast<I *>(inputs.at(kIndex5)->addr);
+bool SparseApplyRMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &workspace,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *var = static_cast<T *>(inputs.at(kIndex0)->device_ptr());
+  auto *ms = static_cast<T *>(inputs.at(kIndex1)->device_ptr());
+  auto *mom = static_cast<T *>(inputs.at(kIndex2)->device_ptr());
+  auto lr = static_cast<T *>(inputs.at(kIndex3)->device_ptr())[kDim0];
+  auto *grad = static_cast<T *>(inputs.at(kIndex4)->device_ptr());
+  auto *indices = static_cast<I *>(inputs.at(kIndex5)->device_ptr());
   const auto rho = this->rho_;
   const auto momentum = this->momentum_;
   const auto epsilon = this->epsilon_;

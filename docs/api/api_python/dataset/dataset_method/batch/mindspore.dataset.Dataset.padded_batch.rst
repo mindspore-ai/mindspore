@@ -22,7 +22,7 @@ mindspore.dataset.Dataset.padded_batch
         - **num_parallel_workers** (int, 可选) - 指定 `padded_batch` 操作的并发线程数。
           默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **pad_info** (dict, 可选) - 对给定数据列进行填充。通过传入dict来指定列信息与填充信息，例如 `pad_info={"col1":([224,224],0)}` ，
-          则将列名为"col1"的数据列扩充到shape为(224, 224)的Tensor，缺失的值使用0填充。如果 `pad_info={}` ，则每个 `batch` 中的所有样本会补齐至当前 `batch` 中样本最大的shape。默认值： ``None`` ，不填充。
+          则将列名为"col1"的数据列扩充到shape为(224, 224)的Tensor，缺失的值使用0填充。如果 `pad_info={}` ，则每个 `batch` 中的所有样本会补齐至当前 `batch` 中样本最大的shape。如果 `pad_info={"col1": (None, 100)}` ，则每个 `batch` 中的所有样本会补齐至当前 `batch` 中样本最大的shape，缺失的值使用100填充。默认值： ``None`` ，不填充。
 
     返回：
         Dataset，应用了上述操作的新数据集对象。

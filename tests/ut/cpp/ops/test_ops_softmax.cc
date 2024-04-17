@@ -13,57 +13,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
-#include <memory>
-#include "common/common_test.h"
-#include "ops/sequence_op_name.h"
-#include "ops/softmax.h"
-#include "ir/dtype/type.h"
-#include "ir/value.h"
-#include "abstract/dshape.h"
-#include "abstract/abstract_value.h"
-#include "utils/tensor_construct_utils.h"
-#include "ops/test_ops.h"
-#include "include/backend/optimizer/helper.h"
-#include "ir/primitive.h"
 
+#include <memory>
+#include <vector>
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "common/common_test.h"
+#include "ir/dtype/type.h"
+#include "ir/primitive.h"
+#include "ops/nn_op_name.h"
+#include "ops/op_name.h"
+#include "ops/ops_func_impl/softmax.h"
+#include "ops/test_ops.h"
+#include "ops/test_value_utils.h"
+#include "utils/ms_context.h"
+#include "utils/tensor_construct_utils.h"
 
 namespace mindspore {
 namespace ops {
-struct SoftMaxParams {
-  std::vector<int64_t> axis;
+struct SoftmaxParams {
   ShapeVector x_shape;
   TypePtr x_type;
+  ValuePtr axis;
   ShapeVector out_shape;
-  TypePtr out_type;
 };
 
-class TestSoftMax: public UT::Common, public testing::WithParamInterface<SoftMaxParams> {
-  public:
-    TestSoftMax() = default;
-    ~TestSoftMax() override = default;
-    void SetUp() {}
-    void TearDown() {}
-};
+class TestSoftmax : public TestOps, public testing::WithParamInterface<SoftmaxParams> {};
 
-TEST_P(TestSoftMax, test_softmax) {
+TEST_P(TestSoftmax, dyn_shape) {
   const auto &param = GetParam();
   auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-  auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
+  auto axis = param.axis->ToAbstract();
   ASSERT_NE(x, nullptr);
-  ASSERT_NE(expect, nullptr);
-  auto prim = std::make_shared<Primitive>(kNameSoftmax);
-  ASSERT_NE(prim, nullptr);
-  prim->set_attr("axis", MakeValue<std::vector<int64_t>>(param.axis));
-  auto abstract = SoftmaxInfer(nullptr, prim, {x});
-  ASSERT_NE(abstract, nullptr);
-  ASSERT_TRUE(*abstract == *expect);
+  ASSERT_NE(axis, nullptr);
+
+  auto expect = std::make_shared<abstract::TensorShape>(param.out_shape);
+  auto prim = std::make_shared<Primitive>(kSoftmaxOpName);
+  auto infer_impl = std::make_shared<SoftmaxFuncImpl>();
+  auto out_shape = infer_impl->InferShape(prim, {x, axis});
+  ASSERT_NE(out_shape, nullptr);
+  ASSERT_TRUE(*out_shape == *expect);
 }
 
-INSTANTIATE_TEST_CASE_P(TestSoftMaxGroup, TestSoftMax,
-                        testing::Values(SoftMaxParams{{-1}, {1, 2, 3, 4, 5}, kFloat16, {1, 2, 3, 4, 5}, kFloat16},
-                                        SoftMaxParams{{-1}, {1, 2, 3, 4, 5}, kFloat32, {1, 2, 3, 4, 5}, kFloat32},
-                                        SoftMaxParams{{-1}, {1, 2, 3, 4, 5}, kFloat64, {1, 2, 3, 4, 5}, kFloat64}));
-
+INSTANTIATE_TEST_CASE_P(
+  TestSoftmax, TestSoftmax,
+  testing::Values(SoftmaxParams{ShapeVector{2, 4, 8}, kFloat32, CreateTuple({1}), ShapeVector{2, 4, 8}},
+                  SoftmaxParams{ShapeVector{2, 4, 8}, kFloat32, CreateTuple({kValueAny}), ShapeVector{2, 4, 8}},
+                  SoftmaxParams{ShapeVector{2, 4, 8}, kFloat32, CreateTuple({1}), ShapeVector{2, 4, 8}},
+                  SoftmaxParams{ShapeVector{2, 4, 8}, kFloat32, CreateTuple({kValueAny}), ShapeVector{2, 4, 8}},
+                  SoftmaxParams{ShapeVector{-1, 2, -1}, kFloat32, CreateTuple({1}), ShapeVector{-1, 2, -1}},
+                  SoftmaxParams{ShapeVector{-1, 2, -1}, kFloat32, CreateTuple({kValueAny}), ShapeVector{-1, 2, -1}},
+                  SoftmaxParams{ShapeVector{-1, 2, -1}, kFloat32, CreateTuple({1}), ShapeVector{-1, 2, -1}},
+                  SoftmaxParams{ShapeVector{-1, 2, -1}, kFloat32, CreateTuple({kValueAny}), ShapeVector{-1, 2, -1}},
+                  SoftmaxParams{ShapeVector{-2}, kFloat32, CreateTuple({1}), ShapeVector{-2}},
+                  SoftmaxParams{ShapeVector{-2}, kFloat32, CreateTuple({kValueAny}), ShapeVector{-2}},
+                  SoftmaxParams{ShapeVector{-2}, kFloat32, CreateTuple({1}), ShapeVector{-2}},
+                  SoftmaxParams{ShapeVector{-2}, kFloat32, CreateTuple({kValueAny}), ShapeVector{-2}}));
 }  // namespace ops
-}  // namespace mindspore{}
+}  // namespace mindspore

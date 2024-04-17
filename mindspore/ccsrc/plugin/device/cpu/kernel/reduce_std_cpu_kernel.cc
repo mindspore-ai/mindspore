@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/reduce_std_cpu_kernel.h"
-#include <thread>
 #include <memory>
 #include <algorithm>
 #include <utility>
-#include "mindspore/core/ops/math_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "nnacl/fp32/reduce_fp32.h"
-#include "mindspore/core/ops/reduce_std.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,10 +27,8 @@ constexpr size_t kReduceStdInputsNum = 1;
 constexpr size_t kReduceStdOutputsNum = 2;
 constexpr size_t kReduceSmallVectorSize = 200000;
 constexpr int kPowExp = 2;
-bool ReduceStdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ReduceStdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimReduceStd->name()) {
     MS_LOG(ERROR) << "For 'ReduceStd', the kernel name must be 'ReduceStd', but got " << kernel_name_;
     return false;
@@ -41,24 +37,23 @@ bool ReduceStdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::ReduceStd>(base_operator->GetPrim());
-  unbiased_ = kernel_ptr->get_unbiased();
-  axis_ = kernel_ptr->get_axis();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   if (dtype_ != kNumberTypeFloat16 && dtype_ != kNumberTypeFloat32) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', input dtype only support float16 and float32, but got ["
                             << dtype_ << "].";
   }
   return true;
 }
-int ReduceStdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+
+int ReduceStdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
   int64_t dimension = SizeToLong(input_shape_.size());
+
+  axis_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   (void)std::for_each(axis_.begin(), axis_.end(), [dimension](auto &a) {
     if (a < -dimension || a >= dimension) {
       MS_LOG(EXCEPTION) << "For reduce std, the each axis element should be in [" << -dimension << ", " << dimension
@@ -69,19 +64,20 @@ int ReduceStdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   sort(axis_.begin(), axis_.end());
   auto last = std::unique(axis_.begin(), axis_.end());
   (void)axis_.erase(last, axis_.end());
+  unbiased_ = inputs[kIndex2]->GetValueWithCheck<bool>();
   return KRET_OK;
 }
 
 template <typename T>
-void ReduceStdCpuKernelMod::RunReduceStd(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  size_t input_size = inputs[0]->size / sizeof(T);
+void ReduceStdCpuKernelMod::RunReduceStd(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
+  size_t input_size = inputs[0]->size() / sizeof(T);
   if (input_size > kReduceSmallVectorSize) {
     MS_LOG(EXCEPTION) << "For reduce std, the input size should be < " << kReduceSmallVectorSize;
   }
-  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_std_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->addr);
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output_std_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
   float mean = 0.0;
   for (size_t i = 0; i < input_size; ++i) {
     mean += static_cast<float>(input_addr[i]);
@@ -98,11 +94,11 @@ void ReduceStdCpuKernelMod::RunReduceStd(const std::vector<kernel::AddressPtr> &
 }
 
 template <typename T>
-void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_std_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->addr);
+void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output_std_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
   size_t dimension = input_shape_.size();
   size_t stride = 1;
   std::vector<size_t> axes(input_shape_.size());
@@ -121,7 +117,7 @@ void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::Addr
     axes[k] = LongToSize(it);
     ++k;
   }
-  size_t output_size = outputs[0]->size / sizeof(T);
+  size_t output_size = outputs[0]->size() / sizeof(T);
   std::vector<int64_t> transpose_shape(input_shape_.size());
   for (size_t i = 0; i < dimension; ++i) {
     transpose_shape[i] = input_shape_[axes[i]];
@@ -150,12 +146,9 @@ void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::Addr
   ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
 }
 
-bool ReduceStdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceStdInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceStdOutputsNum, kernel_name_);
-
+bool ReduceStdCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   if (axis_.empty() || input_shape_.empty() || input_shape_.size() == 1) {
     if (dtype_ == kNumberTypeFloat16) {
       RunReduceStd<float16>(inputs, outputs);
@@ -173,9 +166,20 @@ bool ReduceStdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 }
 
 std::vector<KernelAttr> ReduceStdCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+  std::vector<KernelAttr> support_list = {KernelAttr()
+                                            .AddInputAttr(kNumberTypeFloat16)
+                                            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)  // axis
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  // unbiased
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  // keep_dims
+                                            .AddOutputAttr(kNumberTypeFloat16)
+                                            .AddOutputAttr(kNumberTypeFloat16),
+                                          KernelAttr()
+                                            .AddInputAttr(kNumberTypeFloat32)
+                                            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                            .AddOutputAttr(kNumberTypeFloat32)
+                                            .AddOutputAttr(kNumberTypeFloat32)};
   return support_list;
 }
 

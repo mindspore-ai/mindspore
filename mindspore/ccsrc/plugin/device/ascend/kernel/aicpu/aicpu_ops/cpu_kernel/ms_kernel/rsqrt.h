@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_RSQRT_H
 #define AICPU_KERNELS_NORMALIZED_RSQRT_H
 
-#include "inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class RsqrtCpuKernel : public CpuKernel {
@@ -27,9 +27,9 @@ class RsqrtCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t RsqrtCompute(const Tensor *x, const Tensor *y, int64_t data_num, const CpuKernelContext &ctx) const;
+  uint32_t RsqrtCompute(const Tensor *x, const Tensor *y, int64_t data_num, CpuKernelContext &ctx) const;
   template <typename T>
-  uint32_t RsqrtComputeComplex(const Tensor *x, const Tensor *y, int64_t data_num, const CpuKernelContext &ctx) const;
+  uint32_t RsqrtComputeComplex(const Tensor *x, const Tensor *y, int64_t data_num, CpuKernelContext &ctx) const;
 };
 }  // namespace aicpu
 #endif

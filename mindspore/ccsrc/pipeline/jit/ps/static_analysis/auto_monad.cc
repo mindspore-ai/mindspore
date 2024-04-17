@@ -117,7 +117,7 @@ RefInputs GetRefInputs(const CNodePtr &cnode) {
   RefInputs ref_inputs;
   MS_EXCEPTION_IF_NULL(cnode);
   for (size_t i = 1; i < cnode->size(); ++i) {
-    auto &input = cnode->inputs().at(i);
+    auto &input = cnode->input(i);
     if (common::AnfAlgo::HasAbstractRef(input)) {
       ref_inputs[input].push_back(i);
     }
@@ -127,22 +127,23 @@ RefInputs GetRefInputs(const CNodePtr &cnode) {
 
 // Return true if cnode has ref input.
 bool HasRefInput(const CNodePtr &cnode) {
-  if (cnode == nullptr || cnode->inputs().empty()) {
+  if (cnode == nullptr || cnode->empty()) {
     return false;
   }
-  auto &inputs = cnode->inputs();
   // Return true if any of arguments is ref.
-  return std::any_of(inputs.begin() + 1, inputs.end(),
-                     [](const auto &input) { return common::AnfAlgo::HasAbstractRef(input); });
+  return std::any_of(cnode->weak_inputs().begin() + 1, cnode->weak_inputs().end(), [](const auto &weak_input) {
+    const auto &input = weak_input.lock();
+    MS_EXCEPTION_IF_NULL(input);
+    return common::AnfAlgo::HasAbstractRef(input);
+  });
 }
 
 // Return true if cnode has tuple(ref) or list(ref).
 bool HasRefSequenceInput(const CNodePtr &cnode) {
-  if (cnode == nullptr || cnode->inputs().empty()) {
+  if (cnode == nullptr || cnode->empty()) {
     return false;
   }
-  auto &inputs = cnode->inputs();
-  for (size_t index = 1; index < inputs.size(); ++index) {
+  for (size_t index = 1; index < cnode->size(); ++index) {
     const auto &input = cnode->input(index);
     MS_EXCEPTION_IF_NULL(input);
     if (common::AnfAlgo::SequenceHasAbstractRef(input)) {
@@ -162,7 +163,7 @@ bool IsKeepRef(const PrimitivePtr &prim) {
 
 // Gets func_graph from the given cnode, return nullptr if it is not a func graph call.
 FuncGraphPtr GetFuncGraph(const CNodePtr &cnode) {
-  if (cnode != nullptr && !cnode->inputs().empty()) {
+  if (cnode != nullptr && !cnode->empty()) {
     return GetValueNode<FuncGraphPtr>(cnode->input(0));
   }
   return nullptr;
@@ -171,7 +172,7 @@ FuncGraphPtr GetFuncGraph(const CNodePtr &cnode) {
 // Gets first input as cnode from the given cnode,
 // return null if input[0] is not a cnode.
 CNodePtr GetFuncCNode(const CNodePtr &cnode) {
-  if (cnode != nullptr && !cnode->inputs().empty()) {
+  if (cnode != nullptr && !cnode->empty()) {
     return dyn_cast<CNode>(cnode->input(0));
   }
   return nullptr;
@@ -180,7 +181,7 @@ CNodePtr GetFuncCNode(const CNodePtr &cnode) {
 // Gets first input as function parameter from the given cnode,
 // return null if input[0] is not a parameter.
 ParameterPtr GetFuncParameter(const CNodePtr &cnode) {
-  if (cnode != nullptr && !cnode->inputs().empty()) {
+  if (cnode != nullptr && !cnode->empty()) {
     return dyn_cast<Parameter>(cnode->input(0));
   }
   return nullptr;
@@ -227,7 +228,7 @@ FuncGraphPtr GetFuncGraphFromFuncGraphAbstract(const abstract::AbstractBasePtr &
 // Gets first input as MultitypeFuncGraph from the given cnode,
 // return null if input[0] is not a MultitypeFuncGraph.
 prim::MultitypeFuncGraphPtr GetFuncMultitypeFuncGraph(const CNodePtr &cnode) {
-  if (cnode != nullptr && !cnode->inputs().empty()) {
+  if (cnode != nullptr && !cnode->empty()) {
     return GetValueNode<prim::MultitypeFuncGraphPtr>(cnode->input(0));
   }
   return nullptr;
@@ -240,7 +241,7 @@ bool IsNonEffectRealNodeAndInputIsDynamic(const CNodePtr &cnode) {
     prim::kPrimStack,        prim::kPrimConcat,   prim::kPrimAddN,          prim::kPrimIdentityN,
     prim::kPrimSparseConcat, prim::kPrimMeshgrid, prim::kPrimDynamicStitch, prim::kPrimPyExecute,
     prim::kPrimPyInterpret,  prim::kPrimMakeDict};
-  PrimitivePtr prim = cnode->inputs().empty() ? nullptr : GetValueNode<PrimitivePtr>(cnode->input(0));
+  PrimitivePtr prim = cnode->empty() ? nullptr : GetValueNode<PrimitivePtr>(cnode->input(0));
   if (prim == nullptr) {
     return false;
   }
@@ -261,61 +262,87 @@ class SccFinder {
  public:
   explicit SccFinder(const FuncGraphPtr &root) : root_(root) {}
   ~SccFinder() = default;
-  void Run() { (void)Search(root_); }
+  void Run() { Search(root_); }
   SccMap scc_map() { return std::move(scc_map_); }
 
  private:
-  // Save state of a func graph.
-  struct State {
-    size_t index = 0;
-    size_t lowlink = 0;
-    bool in_stack = false;
-    explicit State(size_t index) : index(index), lowlink(index), in_stack(false) {}
-    ~State() = default;
+  // Store each layer of visit stack.
+  struct SccVisitInfo {
+    FuncGraphPtr graph{nullptr};
+    const FuncGraphCounterMap *func_graphs_used_ptr{nullptr};
+    FuncGraphCounterMap::const_iterator visit_iter;
   };
 
-  // Search SCCs from the given graph.
-  State &Search(const FuncGraphPtr &graph) {
-    // Create graph state, set it as visited.
+  // Tarjan algorithm. Search SCCs from the given graph.
+  // Iterative implementation.
+  void Search(const FuncGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(graph);
-    auto [inserted, ok] = visited_.emplace(graph, std::make_unique<State>(index_++));
-    if (!ok) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Already visited: " << graph->ToString();
-    }
-    auto &state = *(inserted->second);
-    // Push visited graph to stack.
+    std::stack<SccVisitInfo> visit_stack;
+    auto seen = NewFgSeenGeneration();
+    // Push the origin graph.
+    SccVisitInfo info;
+    info.graph = graph;
+    info.graph->seen_ = seen;        // If visited.
+    info.graph->extra_seen_ = seen;  // If in stack.
+    auto index = 1;
+    info.graph->set_user_data<size_t>("index", std::make_shared<size_t>(index));
+    info.graph->set_user_data<size_t>("low", std::make_shared<size_t>(index));
     stack_.push(graph);
-    state.in_stack = true;
-    // Search successor graphs.
-    for (auto &used : graph->func_graphs_used()) {
-      auto &sg = used.first;
-      auto iter = visited_.find(sg);
-      if (iter == visited_.end()) {
-        // Successor graph has not yet been visited, recurse on it.
-        auto &sg_state = Search(sg);
-        state.lowlink = std::min(state.lowlink, sg_state.lowlink);
-      } else if (iter->second && iter->second->in_stack) {
-        // Successor graph is in stack and hence in the current SCC.
-        state.lowlink = std::min(state.lowlink, iter->second->index);
+    visit_stack.push(std::move(info));
+    while (!visit_stack.empty()) {
+      auto &current_info = visit_stack.top();
+      if (current_info.func_graphs_used_ptr == nullptr) {
+        current_info.func_graphs_used_ptr = &current_info.graph->func_graphs_used();
+        current_info.visit_iter = current_info.func_graphs_used_ptr->cbegin();
       }
-    }
-    // If index == lowlink, this means it is the root of SCC.
-    if (state.index == state.lowlink) {
+      // If there's not visited used func graph, continue visiting the left used.
+      if (current_info.visit_iter != current_info.func_graphs_used_ptr->cend()) {
+        auto used_graph = current_info.visit_iter->first;
+        ++current_info.visit_iter;
+        if (used_graph->seen_ != seen) {
+          // First visit, push it.
+          MS_LOG(DEBUG) << "Push graph: " << used_graph->ToString();
+          stack_.push(used_graph);
+          SccVisitInfo used_info;
+          ++index;
+          used_info.graph = used_graph;
+          used_info.graph->set_user_data<size_t>("index", std::make_shared<size_t>(index));
+          used_info.graph->set_user_data<size_t>("low", std::make_shared<size_t>(index));
+          used_info.graph->seen_ = seen;        // If visited.
+          used_info.graph->extra_seen_ = seen;  // If in stack.
+          visit_stack.push(std::move(used_info));
+        } else if (used_graph->extra_seen_ == seen) {
+          // Visited before AND in stack, update low.
+          auto min_low = std::min(*current_info.graph->user_data<size_t>("low"), *used_graph->user_data<size_t>("low"));
+          current_info.graph->set_user_data<size_t>("low", std::make_shared<size_t>(min_low));
+          MS_LOG(DEBUG) << "Update low [" << min_low << "] for " << current_info.graph->ToString() << " by "
+                        << used_graph->ToString();
+        }
+        continue;
+      }
+      // If all used func graphs are visited, pop it and check if it's SCC root.
+      auto current_graph = current_info.graph;
+      if (*current_graph->user_data<size_t>("low") != *current_graph->user_data<size_t>("index")) {
+        // Update low when pop.
+        visit_stack.pop();
+        auto &next_info = visit_stack.top();
+        auto min_low = std::min(*next_info.graph->user_data<size_t>("low"), *current_graph->user_data<size_t>("low"));
+        next_info.graph->set_user_data<size_t>("low", std::make_shared<size_t>(min_low));
+        MS_LOG(DEBUG) << "Update low [" << min_low << "] for " << next_info.graph->ToString() << " by "
+                      << current_graph->ToString();
+        continue;
+      }
+      MS_LOG(DEBUG) << "Found SCC root: " << current_graph->ToString();
       // Pop members of the SCC from stack, they are on top of its root.
       auto scc = std::make_shared<SccVector>();
       while (!stack_.empty()) {
         auto g = stack_.top();
+        g->extra_seen_ = 0;  // Not in stack any more.
         stack_.pop();
-        auto found = visited_.find(g);
-        if (found == visited_.end()) {
-          MS_LOG(INTERNAL_EXCEPTION) << "Unexpected graph: " << g->ToString();
-        }
-        MS_EXCEPTION_IF_NULL(found->second);
-        found->second->in_stack = false;
         // Add graph to SCC, and create the map from graph to SCC.
         scc->insert(g);
         (void)scc_map_.emplace(g, scc);
-        if (g == graph) {
+        if (g == current_graph) {
           break;
         }
       }
@@ -323,18 +350,12 @@ class SccFinder {
       if (scc->empty()) {
         MS_LOG(INTERNAL_EXCEPTION) << "Invalid SCC for: " << graph->ToString();
       }
+      visit_stack.pop();
     }
-    return state;
   }
 
   // The root graph.
   FuncGraphPtr root_;
-
-  // Current index by DFS order.
-  size_t index_ = 1;
-
-  // Visited graphs and their states.
-  mindspore::HashMap<FuncGraphPtr, std::unique_ptr<State>> visited_;
 
   // The stack for Tarjan algorithm.
   std::stack<FuncGraphPtr> stack_;
@@ -386,7 +407,7 @@ class SideEffectFinder {
     // Update order list to include outer cnodes.
     UpdateOrderLists();
     // Find side effects by DFS from the top graph.
-    (void)ObtainEffectInfoForFuncGraph(root_);
+    ObtainEffectInfoForFuncGraphs(root_);
     // Check Switch calls, add monad arguments if need.
     HandleSwitchCalls();
     // Check SwitchLayer calls, add monad arguments if need.
@@ -406,27 +427,37 @@ class SideEffectFinder {
 
   static void UpdateOrderList(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
-    OrderedSet<CNodePtr> new_order_list;
+    std::list<CNodeWeakPtr> new_order_list;
     const auto &order_list = func_graph->order_list();
-    for (auto &cnode : order_list) {
-      PushToOrderList(func_graph, cnode, &new_order_list);
+    for (auto &weak_cnode : order_list) {
+      const auto &cnode = weak_cnode.lock();
+      if (cnode != nullptr) {
+        PushToOrderList(func_graph, cnode, &new_order_list);
+      }
     }
     func_graph->set_order_list(std::move(new_order_list));
   }
 
-  static void PushToOrderList(const FuncGraphPtr &fg, const CNodePtr &cnode, OrderedSet<CNodePtr> *new_order_list) {
+  static void PushToOrderList(const FuncGraphPtr &fg, const CNodePtr &cnode, std::list<CNodeWeakPtr> *new_order_list) {
     MS_EXCEPTION_IF_NULL(cnode);
     MS_EXCEPTION_IF_NULL(new_order_list);
-    if (new_order_list->contains(cnode)) {
+    // If contains.
+    auto iter = std::find_if(new_order_list->cbegin(), new_order_list->cend(), [&cnode](const CNodeWeakPtr &node) {
+      return node.lock() != nullptr && node.lock() == cnode;
+    });
+    if (iter != new_order_list->cend()) {
       return;
     }
-    for (auto &input : cnode->inputs()) {
+
+    for (auto &weak_input : cnode->weak_inputs()) {
+      auto input = weak_input.lock();
+      MS_EXCEPTION_IF_NULL(input);
       auto input_cnode = dyn_cast<CNode>(input);
       if (input_cnode != nullptr && input_cnode->func_graph() != fg) {
         PushToOrderList(fg, input_cnode, new_order_list);
       }
     }
-    new_order_list->push_back(cnode);
+    new_order_list->emplace_back(CNodeWeakPtr(cnode));
   }
 
   // Generate SCC map by SccFinder.
@@ -439,7 +470,7 @@ class SideEffectFinder {
   // Gets branch graph from a switch cnode at given input index.
   FuncGraphPtr GetSwitchBranch(const CNodePtr &cnode, size_t index) const {
     MS_EXCEPTION_IF_NULL(cnode);
-    const auto &branch_node = cnode->inputs().at(index);
+    const auto &branch_node = cnode->input(index);
     AnfNodePtr branch_fg_node = branch_node;
     if (IsPrimitiveCNode(branch_node, prim::kPrimPartial)) {
       auto branch_abs = branch_node->abstract();
@@ -590,7 +621,7 @@ class SideEffectFinder {
 
   void CheckAndFixSwitchCall(const CNodePtr &caller, const FuncGraphVector &branches) const {
     MS_EXCEPTION_IF_NULL(caller);
-    const auto caller_input_size = caller->inputs().size() - 1;
+    const auto caller_input_size = caller->size() - 1;
     for (size_t i = 0; i < branches.size(); ++i) {
       const auto &branch = branches[i];
       MS_EXCEPTION_IF_NULL(branch);
@@ -607,7 +638,7 @@ class SideEffectFinder {
       if (IsPrimitiveCNode(branch_node, prim::kPrimPartial)) {
         const auto &branch_cnode = branch_node->cast_ptr<CNode>();
         constexpr auto ignore_partial_and_fg_count = 2;
-        extra_input_size = branch_cnode->inputs().size() - ignore_partial_and_fg_count;
+        extra_input_size = branch_cnode->size() - ignore_partial_and_fg_count;
       }
 
       // Check inputs size.
@@ -661,32 +692,33 @@ class SideEffectFinder {
     if (cnode->size() <= func_tuple_index) {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid switch_layer: " << cnode->DebugString(recursive_level);
     }
-    auto func_tuple = cnode->inputs().at(func_tuple_index);
+    auto func_tuple = cnode->input(func_tuple_index);
     return GetGraphsFromTuple(func_tuple);
   }
 
   FuncGraphPtr GetGraphFromSwitchWithDeadNode(const CNodePtr &cnode) const {
     MS_EXCEPTION_IF_NULL(cnode);
-    auto node = cnode->inputs()[0];
-    MS_EXCEPTION_IF_NULL(node);
-    if (!IsPrimitiveCNode(node, prim::kPrimSwitch)) {
+    auto input = cnode->input(0);
+    MS_EXCEPTION_IF_NULL(input);
+    if (!IsPrimitiveCNode(input, prim::kPrimSwitch)) {
       return nullptr;
     }
-    const auto &inputs = node->cast<CNodePtr>()->inputs();
-    if (inputs.size() < kSwitchInputSize) {
-      MS_LOG(EXCEPTION) << "Switch inputs size: " << inputs.size() << "less than " << kSwitchInputSize;
+    auto node = input->cast_ptr<CNode>();
+    if (node->size() < kSwitchInputSize) {
+      MS_LOG(EXCEPTION) << "Switch inputs size: " << node->size() << "less than " << kSwitchInputSize;
     }
-    auto cond_node = inputs[kSwitchCondIndex];
+    auto cond_node = node->input(kSwitchCondIndex);
     auto cond_abs = cond_node->abstract();
     MS_EXCEPTION_IF_NULL(cond_abs);
     auto cond_abs_val = cond_abs->BuildValue();
     MS_EXCEPTION_IF_NULL(cond_abs_val);
-    if (cond_abs_val == kValueAny) {
+    if (cond_abs_val->ContainsValueAny()) {
       return nullptr;
     }
     auto cond_abs_bool_val = dyn_cast<BoolImm>(cond_abs_val);
     MS_EXCEPTION_IF_NULL(cond_abs_bool_val);
-    auto branch = cond_abs_bool_val->value() ? inputs[kSwitchTrueBranchIndex] : inputs[kSwitchFalseBranchIndex];
+    auto branch =
+      cond_abs_bool_val->value() ? node->input(kSwitchTrueBranchIndex) : node->input(kSwitchFalseBranchIndex);
     return GetValueNode<FuncGraphPtr>(branch);
   }
 
@@ -726,15 +758,14 @@ class SideEffectFinder {
   // Get graphs from a tuple of funcs make node for switch_layer.
   std::vector<FuncGraphPtr> GetGraphsFromMakeTuple(const CNodePtr &make_tuple) const {
     MS_EXCEPTION_IF_NULL(make_tuple);
-    auto &inputs = make_tuple->inputs();
     constexpr int recursive_level = 2;
-    if (inputs.size() <= 1) {
+    if (make_tuple->size() <= 1) {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple for switch_layer: " << make_tuple->DebugString(recursive_level);
     }
     std::vector<FuncGraphPtr> graphs;
-    graphs.reserve(inputs.size() - 1);
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      auto func_graph = GetValueNode<FuncGraphPtr>(inputs.at(i));
+    graphs.reserve(make_tuple->size() - 1);
+    for (size_t i = 1; i < make_tuple->size(); ++i) {
+      auto func_graph = GetValueNode<FuncGraphPtr>(make_tuple->input(i));
       if (func_graph == nullptr) {
         MS_LOG(WARNING) << "Non-graph found in switch_layer input: " << make_tuple->DebugString(recursive_level)
                         << ", index: " << i;
@@ -779,14 +810,14 @@ class SideEffectFinder {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid getitem: " << cnode->DebugString();
     }
     // Get item index.
-    auto &index_node = cnode->inputs().at(index_input);
+    auto &index_node = cnode->input(index_input);
     auto index_value = dyn_cast<ValueNode>(index_node);
     if (index_value == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "getitem with non-const index, cnode: " << cnode->DebugString();
     }
 
     // Get tuple, list or dict value.
-    const auto &tuple_or_list_or_dict_node = cnode->inputs().at(tuple_or_list_or_dict_input);
+    const auto &tuple_or_list_or_dict_node = cnode->input(tuple_or_list_or_dict_input);
     // Push tuple, list or dict index.
     indexes->push(index_value->value());
     return TraceTupleListOrDictEffectInfo(tuple_or_list_or_dict_node, indexes);
@@ -803,7 +834,7 @@ class SideEffectFinder {
       return TraceTupleListCNodeEffectInfo(cnode, indexes);
     }
     // Should not reach here.
-    MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: cnode is nullptr.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: cnode is nullptr. Invalid node: " << node->DebugString();
   }
 
   EffectInfo TraceTupleListParaEffectInfo(const ParameterPtr &para, const std::stack<ValuePtr> &indexes) {
@@ -852,10 +883,10 @@ class SideEffectFinder {
     auto input_index = GetInputIndex(top_index_value, cnode, cnode->size());
     if (indexes->empty()) {
       // Trace non-tuple.
-      return TraceEffectInfo(cnode->inputs().at(input_index));
+      return TraceEffectInfo(cnode->input(input_index));
     }
     // This is the tuple of tuple case.
-    return TraceTupleListOrDictEffectInfo(cnode->inputs().at(input_index), indexes);
+    return TraceTupleListOrDictEffectInfo(cnode->input(input_index), indexes);
   }
 
   EffectInfo TraceMakeDictEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
@@ -881,7 +912,7 @@ class SideEffectFinder {
       if (*(keys->value()[i]) == *top_key_value) {
         // The values_node is a make_dict.
         indexes->push(MakeValue(SizeToLong(i)));
-        return TraceTupleListOrDictEffectInfo(cnode->inputs().at(values_node_index), indexes);
+        return TraceTupleListOrDictEffectInfo(cnode->input(values_node_index), indexes);
       }
     }
     MS_LOG(WARNING) << "make_dict untraceable from: " << cnode->DebugString(recursive_level);
@@ -1044,10 +1075,9 @@ class SideEffectFinder {
 
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
       // Trace make_tuple or make_list.
-      const auto &inputs = cnode->inputs();
       EffectInfo info{EffectInfo::kDetected, false, false, false, false};
-      for (size_t i = 1; i < inputs.size(); ++i) {
-        auto input_info = TraceEffectInfo(inputs[i]);
+      for (size_t i = 1; i < cnode->size(); ++i) {
+        auto input_info = TraceEffectInfo(cnode->input(i));
         info.Merge(input_info);
       }
       return info;
@@ -1312,7 +1342,7 @@ class SideEffectFinder {
     if (cnode->size() < min_call_node_size) {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid call node: " << cnode->DebugString();
     }
-    auto func_graph = GetValueNode<FuncGraphPtr>(cnode->inputs().at(1));
+    auto func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
     if (func_graph == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid call node: " << cnode->DebugString();
     }
@@ -1412,7 +1442,7 @@ class SideEffectFinder {
   SccPtr GetScc(const FuncGraphPtr &func_graph) const {
     auto found = scc_map_.find(func_graph);
     if (found == scc_map_.end()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "SCC not found for " << (func_graph ? func_graph->ToString() : "FG(null)");
+      return nullptr;
     }
     return found->second;
   }
@@ -1426,27 +1456,45 @@ class SideEffectFinder {
     }
   }
 
+  // Gets EffectInfo for func graph's total used.
+  void ObtainEffectInfoForFuncGraphs(const FuncGraphPtr &func_graph) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto &used_func_graphs = func_graph->func_graphs_used_total();
+    for (auto iter = used_func_graphs.crbegin(); iter != used_func_graphs.crend(); ++iter) {
+      auto used_func_graph = *iter;
+      MS_EXCEPTION_IF_NULL(used_func_graph);
+      (void)ObtainEffectInfoForFuncGraph(used_func_graph);
+    }
+    ObtainEffectInfoForFuncGraph(func_graph);
+  }
+
   // Gets EffectInfo for func graph.
   EffectInfo ObtainEffectInfoForFuncGraph(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
-    const auto &effect_info = func_graph->GetEffectInfo();
+    auto effect_info = func_graph->GetEffectInfo();
     if (effect_info.state != EffectInfo::kUnknown) {
-      // Effect info already set, return it.
       return effect_info;
     }
+
     // Get SCC that this graph belongs to.
     auto scc = GetScc(func_graph);
-    MS_EXCEPTION_IF_NULL(scc);
+    if (scc == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Scc should not be null, func_graph: " << func_graph->ToString();
+    }
     // To prevent SCC members be visited again, we set effect info
     // to 'kDetecting' state before start to check cnodes.
     EffectInfo info{EffectInfo::kDetecting, false, false, false, false};
     SetSccEffectInfo(scc, info);
+
     // Check side effects for all cnodes in the SCC.
     std::vector<CNodePtr> undetected;
     for (auto &g : *scc) {
       MS_EXCEPTION_IF_NULL(g);
-      for (auto &cnode : g->order_list()) {
-        MS_EXCEPTION_IF_NULL(cnode);
+      for (auto &weak_cnode : g->order_list()) {
+        const auto &cnode = weak_cnode.lock();
+        if (cnode == nullptr) {
+          continue;
+        }
         auto cnode_effect = ObtainEffectInfoForCNode(cnode);
         if (cnode_effect.state != EffectInfo::kDetected) {
           // For side effect undetected node, it could be a call to the SCC member graph,
@@ -1465,6 +1513,7 @@ class SideEffectFinder {
     // Update effect into for all members of the SCC.
     info.state = EffectInfo::kDetected;
     SetSccEffectInfo(scc, info);
+
     // Check undetected cnodes again after side effect of the SCC is detected.
     for (auto &cnode : undetected) {
       MS_EXCEPTION_IF_NULL(cnode);
@@ -1473,12 +1522,6 @@ class SideEffectFinder {
       if (cnode_effect.state != EffectInfo::kDetected && scc->find(cnode->func_graph()) != scc->end()) {
         MS_LOG(INTERNAL_EXCEPTION) << "Side effect is undetectable: " << cnode->DebugString();
       }
-    }
-    // Graph which need PipelineSplit doesn't have effect.
-    if (func_graph->stage() != -1) {
-      info.memory = false;
-      info.load = false;
-      info.io = false;
     }
     return info;
   }
@@ -1543,7 +1586,7 @@ class SideEffectFinder {
     MS_EXCEPTION_IF_NULL(monad);
     auto monad_abs = monad->ToAbstract();
     for (size_t i = 1; i < cnode->size(); ++i) {
-      auto abs = cnode->inputs().at(i)->abstract();
+      auto abs = cnode->input(i)->abstract();
       if (abs != nullptr && *abs == *monad_abs) {
         // Skip if monad argument already existed.
         return;
@@ -1552,7 +1595,7 @@ class SideEffectFinder {
     // Add monad argument if not yet.
     auto monad_input = NewValueNode(monad);
     monad_input->set_abstract(monad_abs);
-    if ((monad == kUMonad) && cnode->size() > 1 && HasAbstractIOMonad(cnode->inputs().back())) {
+    if ((monad == kUMonad) && cnode->size() > 1 && HasAbstractIOMonad(cnode->weak_inputs().back().lock())) {
       // Insert u monad before io monad.
       size_t last_index = cnode->size() - 1;
       cnode->add_input(cnode->input(last_index));
@@ -1632,7 +1675,7 @@ class AutoMonadConverter {
     auto &effect_info = cnode->GetEffectInfo();
     if (effect_info.state != EffectInfo::kDetected) {
       // Effect info should have been set by SideEffectFinder.
-      MS_LOG(INTERNAL_EXCEPTION) << "Side effects not detected: " << cnode->DebugString();
+      MS_LOG(WARNING) << "Side effects not detected: " << cnode->DebugString();
     }
     return effect_info;
   }
@@ -1643,8 +1686,11 @@ class AutoMonadConverter {
     bool update_state = NeedUpdateState();
 
     // Check all cnodes in order list.
-    for (auto &cnode : func_graph_->order_list()) {
-      MS_EXCEPTION_IF_NULL(cnode);
+    for (auto &weak_cnode : func_graph_->order_list()) {
+      const auto &cnode = weak_cnode.lock();
+      if (cnode == nullptr) {
+        continue;
+      }
       // Process param.value()  Load(param, U) ---> Load(param, GetUniverse())
       if (IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
         const size_t param_index = 1;
@@ -1850,10 +1896,9 @@ class AutoMonadConverter {
   // params = (param1, param2, ..., value)
   // addn(params, xxx)  non-effect-node need insert load for params.
   void InsertLoadForSequenceRef(const CNodePtr &cnode, bool update_state) {
-    const auto &inputs = cnode->inputs();
     abstract::AbstractBasePtrList new_seq_abstracts;
-    for (size_t index = 1; index < inputs.size(); ++index) {
-      const auto &input = inputs[index];
+    for (size_t index = 1; index < cnode->size(); ++index) {
+      const auto &input = cnode->input(index);
       const auto &input_abs = input->abstract();
       MS_EXCEPTION_IF_NULL(input_abs);
       if (!input_abs->isa<abstract::AbstractTuple>() && !input_abs->isa<abstract::AbstractList>()) {
@@ -1972,13 +2017,12 @@ class AutoMonadConverter {
     MS_EXCEPTION_IF_NULL(cnode);
     constexpr size_t max_monad_inputs = 2;
     auto monad_abs = monad->abstract();
-    auto &inputs = cnode->inputs();
-    int last = static_cast<int>(inputs.size()) - 1;
+    int last = static_cast<int>(cnode->size()) - 1;
     int stop = last - max_monad_inputs;
     // Search monad in inputs, replace it if found.
     for (int i = last; i > 0 && i > stop; --i) {
       size_t index = static_cast<size_t>(i);
-      auto input_abs = inputs[index]->abstract();
+      auto input_abs = cnode->input(index)->abstract();
       if (input_abs && *input_abs == *monad_abs) {
         manager_->SetEdge(cnode, i, monad);
         return;
@@ -2076,7 +2120,11 @@ class AutoMonadConverter {
   bool NeedUpdateState() const {
     // Search for the only one side effect cnode.
     CNodePtr side_effect_cnode = nullptr;
-    for (auto &cnode : func_graph_->order_list()) {
+    for (auto &weak_cnode : func_graph_->order_list()) {
+      const auto &cnode = weak_cnode.lock();
+      if (cnode == nullptr) {
+        continue;
+      }
       if (HasSideEffect(cnode)) {
         if (side_effect_cnode != nullptr) {
           // There are multiple side effect cnodes, update state is required.
@@ -2143,9 +2191,6 @@ bool AutoMonad(const FuncGraphPtr &func_graph) {
   for (auto &fg : fg_used_total) {
     MS_EXCEPTION_IF_NULL(fg);
     auto top_flag = fg->has_flag(mindspore::kFuncGraphFlagBackPropEntry);
-    if (fg->stage() != -1) {
-      top_flag = true;
-    }
     bool fg_has_effects = AutoMonadConverter::Handle(fg, top_flag);
     has_effects = has_effects || fg_has_effects;
   }

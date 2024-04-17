@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iostream>
 #include <stack>
+#include <list>
 #include <utility>
 #include <nlohmann/json.hpp>
 #include "mindspore/core/ops/structure_ops.h"
@@ -956,7 +957,11 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
       size_t file_size = static_cast<size_t>(fid.tellg());
       fid.clear();
       (void)fid.seekg(0);
-      auto plain_data = std::make_unique<char[]>(file_size);
+      std::unique_ptr<char[]> plain_data(new (std::nothrow) char[file_size]);
+      if (plain_data == nullptr) {
+        MS_LOG(ERROR) << "Failed to create file buffer, file size: " << file_size << " bytes";
+        return false;
+      }
       constexpr Byte is_little_endian = 1;
       constexpr int byte_order_index = 0;
       (void)fid.read(plain_data.get(), SizeToLong(file_size));
@@ -1809,7 +1814,7 @@ bool MSANFModelParser::SetEmptyTensorProtoCNodeAbstract(const AnfNodePtr &node_p
     } else {
       auto cnode_ptr = node_ptr->cast<CNodePtr>();
       AbstractBasePtrList elem;
-      for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
+      for (size_t index = 1; index < cnode_ptr->size(); ++index) {
         auto abs = cnode_ptr->input(index)->abstract();
         if (abs != nullptr) {
           if (abs->GetValueTrack() == nullptr) {
@@ -2029,9 +2034,14 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
+  const bool force_no_inline = common::GetEnv("MS_FORCE_NO_INLINE") == "1";
   if (output_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
     const bool enable_ge = context->backend_policy() == "ge";
-    const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    auto cell_reuse_level =
+      (enable_ge && !context->IsKByKExecutorMode()) ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    if (force_no_inline) {
+      cell_reuse_level = CellReuseLevel::kNoInline;
+    }
     context->SetCellReuseLevel(cell_reuse_level);
   }
   return true;
@@ -2084,6 +2094,16 @@ void MSANFModelParser::TrytoBuildCNodeAbstract() {
   }
 }
 
+bool CheckMindIRVseriosn(const mind_ir::ModelProto &model_proto) {
+  if (model_proto.has_mind_ir_version()) {
+    auto mind_ir_version = model_proto.mind_ir_version();
+    if (mind_ir_version >= 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
 FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
                                      const std::map<std::string, ValuePtr> &weights,
                                      mindspore::HashMap<std::string, AnfNodePtr> *name_to_node) {
@@ -2133,6 +2153,8 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
       return nullptr;
     }
   }
+  bool generated_from_mindir_with_prim_func = CheckMindIRVseriosn(model_proto);
+  dstGraph->set_flag("generated_from_mindir_with_prim_func", generated_from_mindir_with_prim_func);
   MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graphBuild.name() << ": " << dstGraph.get();
   top_graph_ = dstGraph;
   for (int i = 0; i < model_proto.functions_size(); ++i) {
@@ -2142,6 +2164,7 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
       MS_LOG(ERROR) << "Build funcgraph failed!";
       return nullptr;
     }
+    graph->set_flag("generated_from_mindir_with_prim_func", generated_from_mindir_with_prim_func);
     MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_proto.name() << ": " << graph.get();
   }
   TrytoBuildCNodeAbstract();
@@ -2280,6 +2303,18 @@ const LayoutMap MSANFModelParser::ParseLayout(const mind_ir::ModelProto &model_p
     cur_layout->set_uniform_split(uniform_spilt);
     cur_layout->set_opt_shard_group(opt_shard_group);
 
+    // Check optional field for backward compatibility.
+    if (layout_proto.has_pipeline_shared()) {
+      bool pipeline_shared = layout_proto.pipeline_shared();
+      bool is_send = layout_proto.is_send();
+      int64_t peer_rank = layout_proto.peer_rank();
+      int64_t sr_tag = layout_proto.sr_tag();
+
+      cur_layout->set_pipeline_shared(pipeline_shared);
+      cur_layout->set_is_send(is_send);
+      cur_layout->set_peer_rank(peer_rank);
+      cur_layout->set_sr_tag(sr_tag);
+    }
     ret[name] = cur_layout;
   }
   return ret;
@@ -2314,6 +2349,7 @@ AnfNodePtr MSANFModelParser::GetAnfNode(const std::string &node_name) {
 bool MSANFModelParser::BuildPrimitiveNode(const mind_ir::PrimitiveProto &primitive_proto) {
   static auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   auto &prim_type = primitive_proto.op_type();
+  const auto &type = primitive_proto.prim_type();
   std::shared_ptr<Primitive> prim;
 
   auto it = op_primc_fns.find(prim_type);
@@ -2324,9 +2360,12 @@ bool MSANFModelParser::BuildPrimitiveNode(const mind_ir::PrimitiveProto &primiti
       auto op_name = prim_type.substr(strlen(kDoSignaturePrimitivePrefix));
       prim = std::make_shared<prim::DoSignaturePrimitive>(op_name, std::make_shared<Primitive>(op_name));
     } else {
-      MS_LOG(DEBUG) << "Special node_type: " << prim_type;
       prim = std::make_shared<Primitive>(prim_type);
     }
+  }
+  if (type == mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION) {
+    MS_LOG(DEBUG) << "PrimitiveFunction special node_type: " << prim_type;
+    prim->AddAttr("primitive_function", MakeValue(true));
   }
 
   if (primitive_proto.has_instance_name()) {
@@ -2728,6 +2767,37 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name,
     layout_map_ = model_parser.ParseLayout(origin_model);
   }
   return dstgraph_ptr;
+}
+
+bool MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std::string &mindir_path,
+                              FuncGraphPtr *func_graph, std::string *user_info_string) {
+  mind_ir::ModelProto model;
+  auto ret = model.ParseFromArray(buffer, SizeToInt(size));
+  if (!ret) {
+    MS_LOG(ERROR) << "ParseFromArray failed.";
+    return false;
+  }
+  if (!CheckModelConfigureInfo(model)) {
+    MS_LOG(ERROR) << "Check configuration info for pb file failed!";
+    return false;
+  }
+  MSANFModelParser model_parser;
+  InitModelParser(&model_parser, this);
+  model_parser.SetMindIRPath(mindir_path);
+  *func_graph = model_parser.Parse(model);
+  std::stringstream user_info_buffer;
+  // user_info to string
+  auto user_info = model.user_info();
+  user_info_buffer << "{";
+  for (auto it = user_info.begin(); it != user_info.end(); it++) {
+    if (it != user_info.begin()) {
+      user_info_buffer << ", ";
+    }
+    user_info_buffer << "\"" << it->first << "\": \"" << it->second + "\"";
+  }
+  user_info_buffer << "}";
+  *user_info_string = user_info_buffer.str();
+  return true;
 }
 
 FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std::string &mindir_path) {

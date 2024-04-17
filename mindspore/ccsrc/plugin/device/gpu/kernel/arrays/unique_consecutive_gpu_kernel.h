@@ -33,37 +33,33 @@ class UniqueConsecutiveGpuKernelMod : public NativeGpuKernelMod {
   }
   ~UniqueConsecutiveGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
-  void SyncOutputShape() override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
   void ResetResource() noexcept {
     is_null_input_ = false;
     stream_ptr_ = nullptr;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
  protected:
   void InitSizeLists() {
-    input_size_list_ = helper_ptr_->GetInputSizeList();
     output_size_list_ = helper_ptr_->GetOutputSizeList();
     workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
-  void InitUniqueConsecutiveAttrs(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs);
+  void InitUniqueConsecutiveAttrs(const std::vector<KernelTensor *> &inputs);
 
  private:
   void *stream_ptr_;

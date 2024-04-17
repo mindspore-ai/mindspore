@@ -53,8 +53,8 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
   }
   ~LocalResponseNormGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -90,12 +90,10 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    PrimitivePtr prim = base_operator->GetPrim();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    PrimitivePtr prim = primitive_;
     MS_EXCEPTION_IF_NULL(prim);
-    kernel_name_ = prim->name();
+
     if (inputs.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << inputs.size();
     }
@@ -116,10 +114,8 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
-    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     ResetResource();
@@ -147,7 +143,7 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
       const unsigned int lrnN = 2 * depth_radius_ + 1;
       double lrnAlpha = lrnN * alpha_;
       lrn_mode_ = CUDNN_LRN_CROSS_CHANNEL_DIM1;
-      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[0]->GetDtype()));
+      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[0]->dtype_id()));
       SetCUDNNDescriptors(input_shape_, lrnN, lrnAlpha);
     }
 
@@ -158,7 +154,6 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept {
     input_shape_.clear();
     transpose_shape_.clear();
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
@@ -196,7 +191,6 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
                                             "Get output y size failed");
       }
     }
-    input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
   }
 

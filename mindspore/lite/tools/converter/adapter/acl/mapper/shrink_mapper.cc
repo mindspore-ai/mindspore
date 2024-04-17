@@ -38,7 +38,7 @@ STATUS ShrinkMapper::Mapper(const CNodePtr &cnode) {
   auto dst_prim = std::make_shared<acl::Shrink>();
   CHECK_NULL_RETURN(dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
-  int64_t num = static_cast<int64_t>(cnode->inputs().size());
+  int64_t num = static_cast<int64_t>(cnode->size());
   if (num < kInputMinNum) {
     MS_LOG(ERROR) << "Input size " << num << " is less than " << kInputMinNum;
     return RET_ERROR;

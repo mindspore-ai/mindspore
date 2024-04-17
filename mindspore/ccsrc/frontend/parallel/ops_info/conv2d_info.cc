@@ -156,15 +156,16 @@ void Conv2DInfo::AdjustPadList() {
   }
 
   if (useless_len_2th_dim > pad_list_[1]) {
-    MS_LOG(EXCEPTION) << name_ << ": The useless len for 2th dim (" << useless_len_2th_dim
-                      << ") can not larger than pad_list[1] (" << pad_list_[1] << ")";
+    pad_list_[1] = 0;
+  } else {
+    pad_list_[1] -= useless_len_2th_dim;
   }
   if (useless_len_3th_dim > pad_list_[3]) {
-    MS_LOG(EXCEPTION) << name_ << ": The useless len for 3th dim (" << useless_len_3th_dim
-                      << ") can not larger than pad_list[3] (" << pad_list_[3] << ")";
+    pad_list_[3] = 0;
+  } else {
+    pad_list_[3] -= useless_len_3th_dim;
   }
-  pad_list_[1] -= useless_len_2th_dim;
-  pad_list_[3] -= useless_len_3th_dim;
+
   pad_list_adjusted_ = true;
   MS_LOG(INFO) << name_ << ": After adjusting, the pad_list is " << pad_list_;
 }
@@ -391,6 +392,16 @@ Status Conv2DInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
+  return SUCCESS;
+}
+
+Status Conv2DInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  Strategies strategies = strategy->GetInputDim();
+  if (h_dim_need_exchange_overlap_ || w_dim_need_exchange_overlap_) {
+    MS_LOG(ERROR) << name_ << ": it does not support dynamic shape if it need to exchange overlap, the strategy is "
+                  << ShapesToString(strategies) << ", the inputs' shape: " << ShapesToString(inputs_shape_);
+    return FAILED;
+  }
   return SUCCESS;
 }
 
@@ -1177,6 +1188,12 @@ Status Conv2DBackpropInputInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_st
   }
 
   return SUCCESS;
+}
+
+Status Conv2DBackpropInputInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  MS_LOG(ERROR) << name_
+                << ": it does not support dynamic shape now, the inputs' shape: " << ShapesToString(inputs_shape_);
+  return FAILED;
 }
 
 Status Conv2DBackpropInputInfo::InferDevMatrixShape() {

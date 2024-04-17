@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_BESSEL_I0_H_
 #define AICPU_KERNELS_NORMALIZED_BESSEL_I0_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class BesselI0CpuKernel : public CpuKernel {
@@ -29,12 +29,12 @@ class BesselI0CpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ParallelForCompute(const CpuKernelContext &ctx);
+  uint32_t ParallelForCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  void BesselI0Compute(int64_t start, int64_t end, const CpuKernelContext &ctx);
+  void BesselI0Compute(int64_t start, int64_t end, CpuKernelContext &ctx);
 
-  void BesselI0ComputeFloat16(int64_t start, int64_t end, const CpuKernelContext &ctx);
+  void BesselI0ComputeFloat16(int64_t start, int64_t end, CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_BESSEL_I0_H_

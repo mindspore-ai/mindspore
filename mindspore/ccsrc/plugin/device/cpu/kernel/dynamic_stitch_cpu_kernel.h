@@ -26,26 +26,35 @@
 namespace mindspore {
 namespace kernel {
 
-class DynamicStitchCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class DynamicStitchCpuKernelMod : public NativeCpuKernelMod {
  public:
   DynamicStitchCpuKernelMod() = default;
   ~DynamicStitchCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  using DynamicStitchFunc = std::function<bool(DynamicStitchCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  using DynamicStitchFunc = std::function<bool(DynamicStitchCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, DynamicStitchFunc>> func_list_;
   DynamicStitchFunc kernel_func_;
   size_t input_tuple_num_{1};
+  ShapeVector result_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

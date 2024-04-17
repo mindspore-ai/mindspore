@@ -11,6 +11,7 @@ mindspore.dataset.debug.DebugHook
         - **prev_op_name** (str, 可选) - 上一个调试点的变换名称，默认值： ``None`` ，一般不需指定。
 
     .. py:method:: compute(*args)
+        :abstractmethod:
 
         定义该调试钩子的行为，此方法需要被子类重写。参考上述样例如何自定义一个调试钩子。
 

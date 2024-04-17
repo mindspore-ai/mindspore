@@ -32,6 +32,7 @@
 #include "ops/tensor_scatter_sub.h"
 #include "ops/tensor_scatter_update.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -58,19 +59,19 @@ bool CheckShape(const std::vector<int64_t> &updates_shape, const std::vector<int
 abstract::ShapePtr TensorScatterArithmeticInferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-  auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto indices_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(indices_shape_ptr);
-  auto updates_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto updates_shape_ptr = input_args[kInputIndex2]->GetShape();
   MS_EXCEPTION_IF_NULL(updates_shape_ptr);
   if (input_x_shape_ptr->IsDynamic() || indices_shape_ptr->IsDynamic() || updates_shape_ptr->IsDynamic()) {
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   }
 
-  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   const size_t kMinIndicesRank = 2;
   if (indices_shape.size() < kMinIndicesRank) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the dimension of 'indices' cannot be less than 2,  but got "
@@ -90,19 +91,29 @@ abstract::ShapePtr TensorScatterArithmeticInferShape(const PrimitivePtr &primiti
                              << input_x_shape_ptr->ToString() << ", indices_shape: " << indices_shape_ptr->ToString()
                              << ", updates_shape: " << updates_shape_ptr->ToString() << ".";
   }
-  auto output_shape = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  auto output_shape = input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   return output_shape;
 }
 
 TypePtr TensorScatterArithmeticInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
-  std::set<TypePtr> type_set = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
+  auto context_ptr = MsContext::GetInstance();
+  auto is_ascend_backend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend_backend &&
+      (prim_name == prim::kPrimTensorScatterAdd->name() || prim_name == prim::kPrimTensorScatterSub->name() ||
+       prim_name == prim::kPrimTensorScatterMul->name() || prim_name == prim::kPrimTensorScatterMax->name() ||
+       prim_name == prim::kPrimTensorScatterMin->name())) {
+    auto input_x_type_ptr = input_args[kInputIndex0]->GetType();
+    std::set<TypePtr> input_x_type_set = {kInt32, kFloat16, kFloat32};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type_ptr, input_x_type_set, prim_name);
+  }
+  auto indiecs_type_ptr = input_args[kInputIndex1]->GetType();
+  std::set<TypePtr> indiecs_type_set = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, indiecs_type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
-  type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
+  type_dict.emplace("input_x", input_args[kInputIndex0]->GetType());
+  type_dict.emplace("updates", input_args[kInputIndex2]->GetType());
   if (prim_name == prim::kPrimTensorScatterUpdate->name()) {
     return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_complex_and_bool, prim_name);
   }

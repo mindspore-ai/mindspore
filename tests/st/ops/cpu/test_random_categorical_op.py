@@ -35,7 +35,7 @@ class RCnet(nn.Cell):
 TARGET = "CPU"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_graph_fp16_int64():
@@ -67,7 +67,7 @@ def test_rc_graph_fp16_int64():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_graph_fp32_int64():
@@ -98,7 +98,7 @@ def test_rc_graph_fp32_int64():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_graph_fp64_int64():
@@ -129,7 +129,7 @@ def test_rc_graph_fp64_int64():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_graph_fp16_int16():
@@ -160,7 +160,7 @@ def test_rc_graph_fp16_int16():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_graph_fp16_int32():
@@ -191,7 +191,7 @@ def test_rc_graph_fp16_int32():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_pynative_fp16_int64():
@@ -222,7 +222,7 @@ def test_rc_pynative_fp16_int64():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_pynative_fp32_int64():
@@ -253,7 +253,7 @@ def test_rc_pynative_fp32_int64():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_pynative_fp64_int64():
@@ -284,7 +284,7 @@ def test_rc_pynative_fp64_int64():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_pynative_fp16_int16():
@@ -315,7 +315,7 @@ def test_rc_pynative_fp16_int16():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_pynative_fp16_int32():
@@ -346,7 +346,7 @@ def test_rc_pynative_fp16_int32():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_pynative_fp16_int32_result_random():
@@ -370,7 +370,7 @@ def test_rc_pynative_fp16_int32_result_random():
     assert np.any(diff != 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_graph_fp16_int32_result_random():
@@ -394,7 +394,7 @@ def test_rc_graph_fp16_int32_result_random():
     assert np.any(diff != 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_pynative_fp16_int32_dynamic_shape():

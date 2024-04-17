@@ -21,14 +21,15 @@
 #include <cfloat>
 #include <map>
 #include "src/litert/lite_kernel.h"
+#include "nnacl/dynamic_quant_parameter.h"
 
 namespace mindspore::kernel {
 class DynamicQuantCPUKernel : public LiteKernel {
  public:
   DynamicQuantCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), thread_num_(ctx->thread_num_) {}
-  ~DynamicQuantCPUKernel() override { freeTmpBuffer(); };
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
+  ~DynamicQuantCPUKernel() override = default;
 
   int Prepare() override;
   int ReSize() override;
@@ -40,29 +41,21 @@ class DynamicQuantCPUKernel : public LiteKernel {
  private:
   void CalculatePerlayerScaleZp();
   void CalculatePerChannelScaleZp();
-  void freeTmpBuffer();
+  int MallocTmpBuffer();
+  void FreeTmpBuffer();
 
- private:
-  int thread_num_;
-  int thread_n_num_{0};
-  int thread_n_stride_{0};
-  int num_unit_{0};
-  int8_t *int8_ptr_ = nullptr;
-  float *float32_ptr_ = nullptr;
-  float *real_min_ = nullptr;
-  float *real_max_ = nullptr;
-  float *scale_ = nullptr;
-  int32_t *zero_point_ = nullptr;
-
-  int32_t src_dtype_{0};
-  int32_t dst_dtype_{0};
-  bool symmetric_ = false;
-  bool activation_perchannel_ = false;
-  bool transpose_ = false;
-  int32_t prefer_axis_{-1};
-  int32_t channel_num_{0};
-  int32_t channel_length_{0};
-  int32_t row_length_{0};
+  DynamicQuantParameter *param_{nullptr};
+  std::vector<float> real_min_;
+  std::vector<float> real_max_;
+  std::vector<float> scale_;
+  std::vector<float> zero_point_;
+  std::vector<int> pre_perm_;
+  std::vector<int> post_perm_;
+  int8_t *int8_ptr_{nullptr};
+  float *float32_ptr_{nullptr};
+  int unit_num_{0};
+  int unit_segment_num_{0};
+  bool need_transpose_{false};
 };
 }  // namespace mindspore::kernel
 

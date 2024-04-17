@@ -16,10 +16,6 @@
 
 #include "backend/common/graph_kernel/core/graph_kernel_expander.h"
 
-#include <string>
-#include <vector>
-#include <algorithm>
-
 #include "utils/anf_utils.h"
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"

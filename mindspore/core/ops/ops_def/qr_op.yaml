@@ -1,0 +1,16 @@
+#operator qr
+qr:
+    args:
+        x:
+            dtype: tensor
+        full_matrices:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        q:
+            dtype: tensor
+        r:
+            dtype: tensor
+    function:
+        disable: True

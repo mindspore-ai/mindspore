@@ -126,28 +126,28 @@ int StridedSliceSoftCopyInputToOutput(StridedSliceStruct *strided_slice) {
   NNACL_CHECK_NULL_RETURN_ERR(out_tensor);
   NNACL_CHECK_NULL_RETURN_ERR(out_tensor->data_);
 
-  int total_size = GetSize(in_tensor);
-  NNACL_CHECK_FALSE(total_size == 0, NNACL_STRIDED_SLICE_INVALID_DATA_SIZE);
+  int total_num = GetElementNum(in_tensor);
+  NNACL_CHECK_FALSE(total_num == 0, NNACL_STRIDED_SLICE_INVALID_DATA_SIZE);
 
   strided_slice->base_.thread_nr_ =
-    NNACL_MIN(strided_slice->base_.thread_nr_, UP_DIV(total_size, MinStridedSlicePerThread));
+    NNACL_MIN(strided_slice->base_.thread_nr_, UP_DIV(total_num, MinStridedSlicePerThread));
   if (strided_slice->base_.thread_nr_ < 1) {
     strided_slice->base_.thread_nr_ = 1;
   }
 
-  int block_size = UP_DIV(total_size, strided_slice->base_.thread_nr_);
-  strided_slice->base_.thread_nr_ = UP_DIV(total_size, block_size);
+  int block_num = UP_DIV(total_num, strided_slice->base_.thread_nr_);
+  strided_slice->base_.thread_nr_ = UP_DIV(total_num, block_num);
 
   if (in_tensor->data_ != out_tensor->data_) {
     if (strided_slice->base_.thread_nr_ == 1) {
-      (void)memcpy(out_tensor->data_, in_tensor->data_, total_size);
+      (void)memcpy(out_tensor->data_, in_tensor->data_, total_num * (int)DataTypeCSize(in_tensor->data_type_));
       return NNACL_OK;
     }
     ReshapeStruct reshape;
     reshape.base_.in_ = strided_slice->base_.in_;
     reshape.base_.out_ = strided_slice->base_.out_;
-    reshape.block_size_ = block_size;
-    reshape.total_size_ = total_size;
+    reshape.block_num_ = block_num;
+    reshape.total_num_ = total_num;
     reshape.base_.thread_nr_ = strided_slice->base_.thread_nr_;
     return strided_slice->base_.env_->ParallelLaunch(strided_slice->base_.env_->thread_pool_, ParallelReshape, &reshape,
                                                      strided_slice->base_.thread_nr_);

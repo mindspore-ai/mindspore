@@ -10,3 +10,14 @@
 [submodule "mindspore/lite/src/litert/kernel/cpu/bolt/bolt"]
 	path = mindspore/lite/src/litert/kernel/cpu/bolt/bolt
 	url = https://gitee.com/mindspore/bolt.git
+[submodule "tests/st/networks/mindcv"]
+	path = tests/st/networks/mindcv
+	url = https://gitee.com/mindspore-lab/mindcv.git
+[submodule "tests/st/networks/mindocr"]
+	path = tests/st/networks/mindocr
+	url = https://gitee.com/mindspore-lab/mindocr.git
+	branch = overfit
+[submodule "tests/st/networks/mindone"]
+	path = tests/st/networks/mindone
+	url = https://gitee.com/mindspore-lab/mindone.git
+	branch = ms2.3

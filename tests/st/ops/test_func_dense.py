@@ -29,8 +29,8 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_dense(mode):
@@ -40,6 +40,8 @@ def test_ops_dense(mode):
     Expectation: success
     """
     ms.set_context(mode=mode)
+    if mode == ms.GRAPH_MODE:
+        ms.set_context(ascend_config={"precision_mode": "force_fp32"})
     x = ms.Tensor([[[195, 41, 17],
                     [-15, 26, 160],
                     [-182, -95, 104]],

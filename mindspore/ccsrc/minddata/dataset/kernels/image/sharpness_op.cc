@@ -26,55 +26,7 @@ const float SharpnessOp::kDefAlpha = 1.0;
 
 Status SharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-
-  try {
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    cv::Mat input_img = input_cv->mat();
-    if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Sharpness: load image failed.");
-    }
-
-    if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
-      RETURN_STATUS_UNEXPECTED("Sharpness: shape of input is not <H,W,C> or <H,W>, but got rank: " +
-                               std::to_string(input_cv->Rank()));
-    }
-
-    /// creating a smoothing filter. 1, 1, 1,
-    ///                              1, 5, 1,
-    ///                              1, 1, 1
-
-    const float filterMid = 5.0;
-    const float filterSum = 13.0;
-    cv::Mat filter = cv::Mat(3, 3, CV_32F, cv::Scalar::all(1.0 / filterSum));
-    filter.at<float>(1, 1) = filterMid / filterSum;
-
-    /// applying filter on channels
-    cv::Mat result = cv::Mat();
-    cv::filter2D(input_img, result, -1, filter);
-
-    auto height = static_cast<int>(input_cv->shape()[0]);
-    auto width = static_cast<int>(input_cv->shape()[1]);
-
-    /// restoring the edges
-    input_img.row(0).copyTo(result.row(0));
-    input_img.row(height - 1).copyTo(result.row(height - 1));
-    input_img.col(0).copyTo(result.col(0));
-    input_img.col(width - 1).copyTo(result.col(width - 1));
-
-    /// blend based on alpha : (alpha_ *input_img) +  ((1.0-alpha_) * result);
-    cv::addWeighted(input_img, alpha_, result, 1.0 - alpha_, 0.0, result);
-
-    std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, input_cv->Rank(), &output_cv));
-    RETURN_UNEXPECTED_IF_NULL(output_cv);
-
-    *output = std::static_pointer_cast<Tensor>(output_cv);
-  }
-
-  catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Sharpness: " + std::string(e.what()));
-  }
-  return Status::OK();
+  return AdjustSharpness(input, output, alpha_);
 }
 }  // namespace dataset
 }  // namespace mindspore

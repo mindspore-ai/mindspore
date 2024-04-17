@@ -82,13 +82,13 @@ class InferHostAndDevice : public CppInfer {
 };
 
 FallbackIRBuilder::FallbackIRBuilder(const std::string &name, const FuncGraphPtr &fg, const SelectKernelFunc &func)
-    : Emitter(fg, std::make_shared<InferHostAndDevice>(func, &success_),
-              std::make_shared<Scope>(std::string("Expand/_") + name)),
+    : IrEmitter(fg, std::make_shared<InferHostAndDevice>(func, &success_),
+                std::make_shared<Scope>(std::string("Expand/_") + name)),
       name_(name) {}
 AnfNodePtr FallbackIRBuilder::Run(const CNodePtr &cnode, const IRBuilderHandle &handle) {
   inputs_.resize(cnode->size() - 1);
-  (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), inputs_.begin(),
-                       [this](const AnfNodePtr &no) { return this->NewNode(no); });
+  (void)std::transform(cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend(), inputs_.begin(),
+                       [this](const AnfNodeWeakPtr &no) { return this->NewIrNode(no.lock()); });
   attrs_ptr_ = &(GetCNodePrimitive(cnode)->attrs());
   auto outputs = handle.func(this);
   if (!success_ || outputs.empty()) {
@@ -108,34 +108,6 @@ ValuePtr FallbackIRBuilder::GetAttr(const std::string &attr) const {
   }
   MS_LOG(WARNING) << "The attr " << attr << " does not exist in op " << name_;
   return nullptr;
-}
-
-void FallbackIRBuilder::ConvertConstInputToTensorInput(const PrimitivePtr &p, NodePtrList *inputs_ptr) {
-  static const PrimitiveSet nochange_prims = {prim::kPrimMakeTuple, prim::kPrimTupleGetItem, prim::kPrimDepend,
-                                              prim::kPrimStack};
-  if (nochange_prims.find(p) != nochange_prims.end()) {
-    return;
-  }
-  auto &inputs = *inputs_ptr;
-  for (size_t i = 0; i < inputs.size(); i++) {
-    if (!inputs[i]->isa<ValueNode>()) {
-      continue;
-    }
-    const auto &value = inputs[i]->get<ValueNodePtr>()->value();
-    if (value->isa<Scalar>()) {
-      inputs[i] = EmitValue(ScalarToTensor(value->cast<ScalarPtr>()));
-    } else if (value->isa<ValueTuple>()) {
-      inputs[i] = EmitValue(opt::CreateTupleTensor(value->cast<ValueTuplePtr>()));
-    } else if (value->isa<ValueList>()) {
-      inputs[i] = EmitValue(opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value())));
-    }
-  }
-}
-
-NodePtr FallbackIRBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
-  auto new_inputs = inputs;
-  ConvertConstInputToTensorInput(prim, &new_inputs);
-  return Emitter::EmitOp(prim, new_inputs);
 }
 }  // namespace expander
 }  // namespace mindspore

@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.function.math_func import matrix_exp
-from mindspore.ops.function.math_func import sinc
+from mindspore.ops.function import sinc
 from mindspore.ops.function.math_func import quantile
 from mindspore.ops.function.math_func import nanquantile
 from mindspore.ops.function.math_func import nan_to_num
@@ -41,7 +41,7 @@ from mindspore.ops.operations.math_ops import BesselJ0, BesselJ1, BesselK0, Bess
                                               BesselI0, BesselI1, BesselK1e, BesselY0, BesselY1, Bucketize
 from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
-from mindspore.ops.operations.math_ops import Sinc
+from mindspore.ops.operations import Sinc
 from mindspore.ops.operations.math_ops import NanToNum
 from mindspore.ops.operations.math_ops import Bernoulli
 from mindspore.ops.operations.array_ops import ConjugateTranspose
@@ -63,7 +63,7 @@ from mindspore.ops.operations.math_ops import Fmax
 from mindspore.ops.operations.math_ops import ComplexAbs
 from mindspore.ops.operations.math_ops import Orgqr
 from mindspore.ops.operations.math_ops import CompareAndBitpack
-from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
+from mindspore.ops.operations.math_ops import Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import Qr
 from mindspore.ops.operations.math_ops import Cauchy
@@ -104,7 +104,7 @@ from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import Betainc
-from mindspore.ops.operations.math_ops import Diagonal
+from mindspore.ops.auto_generate import Diagonal
 from mindspore.ops.operations.math_ops import Hypot
 from mindspore.ops.operations.math_ops import Heaviside
 from mindspore.ops.operations.math_ops import Quantile
@@ -476,7 +476,7 @@ class NanToNumFunc(nn.Cell):
 class RandpermFunc(nn.Cell):
     def __init__(self):
         super(RandpermFunc, self).__init__()
-        self.randperm = ops.function.random_func.randperm
+        self.randperm = ops.auto_generate.randperm
 
     def construct(self, n, seed, offset, dtype):
         y = self.randperm(n, seed, offset, dtype)
@@ -1827,7 +1827,7 @@ test_case_math_ops = [
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5]],
         'skip': ['backward']}),
     ('MinimumGrad', {
-        'block': G.MinimumGrad(),
+        'block': ops.auto_generate.MinimumGrad(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5]],
         'skip': ['backward']}),
     ('MaximumGradGrad', {
@@ -1929,7 +1929,7 @@ test_case_math_ops = [
         'desc_inputs': [[512, 1024], [512, 1024]],
         'desc_bprop': [[512, 1024]]}),
     ('Real', {
-        'block': Real(),
+        'block': P.Real(),
         'desc_inputs': [Tensor(np.ones(4).astype(np.complex64))],
         'desc_bprop': [Tensor(np.ones(4).astype(np.float32))]}),
     ('Imag', {
@@ -2784,10 +2784,6 @@ test_case_nn_ops = [
         'block': P.ReLU6(),
         'desc_inputs': [[1, 3, 4, 4]],
         'desc_bprop': [[1, 3, 4, 4]]}),
-    ('ReLUV2', {
-        'block': P.ReLUV2(),
-        'desc_inputs': [[1, 3, 4, 4]],
-        'desc_bprop': [[1, 3, 4, 4], ([1, 1, 4, 4, 2], {'dtype': np.uint8})]}),
     ('ReLUV3', {
         'block': ReLUV3(),
         'desc_inputs': [[1, 3, 4, 7, 9]],
@@ -3337,7 +3333,7 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 2]],
         'desc_bprop': [[3, 2]]}),
     ('Cummin', {
-        'block': inner.Cummin(axis=0),
+        'block': ops.Cummin(axis=0),
         'desc_inputs': [[1, 3, 3, 3]],
         'skip': ['backward']}),
     ('ApplyFtrl', {
@@ -3401,9 +3397,9 @@ test_case_nn_ops = [
                         Tensor([[[[1., 4., 6., 4.]]]], mstype.float32)],
         'desc_bprop': [Tensor([[[[1., 4., 6., 4.]]]], mstype.float32)],
         'skip': ['backward']}),
-    ('ResizeBilinear', {
-        'block': P.ResizeBilinear((5, 5)),
-        'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16)],
+    ('ResizeBilinearV2', {
+        'block': P.ResizeBilinearV2(),
+        'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16), Tensor([5, 5], mstype.int64)],
         'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]],
                               mstype.float16)]}),
     ('ResizeBilinearGrad', {
@@ -3500,7 +3496,7 @@ test_case_nn_ops = [
         'desc_bprop': [],
         'skip': ['backward']}),
     ('HSigmoidGrad', {
-        'block': G.HSigmoidGrad(),
+        'block': ops.auto_generate.HSigmoidGrad(),
         'desc_inputs': [Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]), mstype.float16),
                         Tensor(np.array([[-4, -3, -2], [1, 2, 4]]), mstype.float16)],
         'skip': ['backward']}),
@@ -4190,7 +4186,7 @@ test_case_array_ops = [
         'skip': ['backward'],
     }),
     ('Cummax', {
-        'block': P.Cummax(axis=0),
+        'block': ops.Cummax(axis=0),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])],
         'skip': ['backward'],
     }),
@@ -4356,8 +4352,7 @@ test_case_other_ops = [
     ('Randperm', {
         'block': RandpermFunc(),
         'desc_inputs': [Tensor(np.random.randint(1, 20, (1)).astype(np.int64), mstype.int64),
-                        Tensor(np.array([0]), mstype.int64),
-                        Tensor(np.array([0]), mstype.int64), mstype.int64],
+                        0, 0, mstype.int64],
         'skip': ['backward']}),
     ('MultinomialWithReplacement', {
         'block': MultinomialWithReplacement(numsamples=3, replacement=True),

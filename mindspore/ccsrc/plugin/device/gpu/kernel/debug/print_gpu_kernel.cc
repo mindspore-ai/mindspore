@@ -33,8 +33,8 @@ namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
-bool PrintGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PrintGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -80,22 +80,18 @@ bool PrintGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
   return true;
 }
 
-bool PrintGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Print>(base_operator);
-  if (kernel_ptr->HasAttr("string_pos")) {
-    string_value_ = kernel_ptr->get_string_value();
-    string_pos_ = kernel_ptr->get_string_pos();
-    auto value_type = kernel_ptr->get_value_type();
-    auto value_type_pos = kernel_ptr->get_value_type_pos();
+bool PrintGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (primitive_->HasAttr("string_pos")) {
+    string_value_ = GetValue<std::vector<std::string>>(primitive_->GetAttr("string_value"));
+    string_pos_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("string_pos"));
+    auto value_type = GetValue<std::vector<int64_t>>(primitive_->GetAttr("value_type"));
+    auto value_type_pos = GetValue<std::vector<int64_t>>(primitive_->GetAttr("value_type_pos"));
     for (size_t i = 0; i < value_type.size(); i++) {
       value_type_[value_type_pos[i]] = value_type[i];
       list_pos_[i] = 0;
     }
-    if (kernel_ptr->HasAttr(kFakeTensorListPos)) {
-      auto value_ptr = kernel_ptr->GetAttr(kFakeTensorListPos);
+    if (primitive_->HasAttr(kFakeTensorListPos)) {
+      auto value_ptr = primitive_->GetAttr(kFakeTensorListPos);
       auto fake_tensor_list_pos = GetValue<std::vector<int64_t>>(value_ptr);
       for (size_t i = 0; i < fake_tensor_list_pos.size(); i++) {
         list_pos_[fake_tensor_list_pos[i]] = 1;
@@ -106,10 +102,8 @@ bool PrintGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int PrintGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int PrintGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -123,7 +117,7 @@ int PrintGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     if (is_null_input_) {
       return KRET_OK;
     }
-    auto type_id = inputs[i]->GetDtype();
+    auto type_id = inputs[i]->dtype_id();
     size_t unit_size = UnitSizeInBytes(type_id);
     auto size_in_byte = std::accumulate(input_shape.begin(), input_shape.end(), unit_size, std::multiplies<size_t>());
     input_info_.push_back(std::make_tuple(size_in_byte, type_id));
@@ -133,7 +127,8 @@ int PrintGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return ret;
 }
 
-void PrintGpuKernelMod::InitDeviceData(const std::vector<AddressPtr> &inputs, std::vector<void *> *input_device_data) {
+void PrintGpuKernelMod::InitDeviceData(const std::vector<KernelTensor *> &inputs,
+                                       std::vector<void *> *input_device_data) {
   MS_EXCEPTION_IF_NULL(input_device_data);
   for (size_t i = 0; i < inputs.size(); i++) {
     TypeId type_id = std::get<1>(input_info_[i]);

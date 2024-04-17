@@ -1,9 +1,8 @@
-file(GLOB_RECURSE HARDWARE_ASCEND_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
-
-list(REMOVE_ITEM HARDWARE_ASCEND_SRC_LIST "ascend_collective_comm_lib.cc" "ascend_communication_group.cc")
 set(ASCEND_COLLECTIVE_SRCS "ascend_collective_comm_lib.cc"
         "ascend_communication_group.cc"
+        "dummy_ascend_collective_comm_lib.cc"
         ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/collective/collective_communication_lib.cc
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/collective/dummy_collective_communication_lib.cc
         ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/collective/communication_group.cc)
 set_property(SOURCE ${ASCEND_COLLECTIVE_SRCS} PROPERTY COMPILE_DEFINITIONS
         SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
@@ -22,11 +21,11 @@ file(GLOB_RECURSE MS_HARDWARE_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "ge_kernel_executor.cc"
         "ge_utils.cc"
         "ge_graph_optimization.cc"
+        "acl_somas.cc"
+        "acl_stream_assign.cc"
         )
 
-set_property(SOURCE ${HARDWARE_ASCEND_SRC_LIST} ${MS_HARDWARE_910B} PROPERTY COMPILE_DEFINITIONS
-        SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+set_property(SOURCE ${MS_HARDWARE_910B} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
 if(ENABLE_D)
-    add_library(_mindspore_plugin_device_ascend_hal_hardware_obj OBJECT ${HARDWARE_ASCEND_SRC_LIST})
     add_library(_mindspore_plugin_device_ascend_hal_hardware_910b_obj OBJECT ${MS_HARDWARE_910B})
 endif()

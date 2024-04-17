@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_EPS_H
 #define AICPU_KERNELS_EPS_H
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class EpsCpuKernel : public CpuKernel {
@@ -28,7 +28,7 @@ class EpsCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t EpsPartCompute(const CpuKernelContext &ctx);
+  uint32_t EpsPartCompute(CpuKernelContext &ctx);
 
   template <typename T>
   void SpecialEpsOutput(int64_t start, int64_t end, T *output_data, T value);

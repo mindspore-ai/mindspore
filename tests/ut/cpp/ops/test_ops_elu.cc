@@ -13,43 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
-#include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
+#include "ops/ops_func_impl/elu.h"
 #include "ops/test_ops.h"
-#include "ops/elu.h"
-#include "ops/test_ops_dyn_cases.h"
-#include "include/backend/optimizer/helper.h"
+#include "ops/test_ops_cmp_utils.h"
+#include "ops/test_value_utils.h"
 
 namespace mindspore {
 namespace ops {
-class TestElu : public TestOps,
-                public testing::WithParamInterface<std::tuple<EltwiseOpShapeParams, EltwiseOpTypeParams>> {};
+struct EluOpsParams {
+  ShapeVector x_shape;
+  TypePtr x_type;
+  ShapeVector out_shape;
+  TypePtr out_type;
+};
+
+class TestElu : public TestOps, public testing::WithParamInterface<EluOpsParams> {};
 
 TEST_P(TestElu, dyn_shape) {
-  const auto &shape_param = std::get<0>(GetParam());
-  const auto &dtype_param = std::get<1>(GetParam());
-  auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
-  auto expect = std::make_shared<abstract::AbstractTensor>(dtype_param.out_type, shape_param.out_shape);
-  ASSERT_NE(x, nullptr);
-  auto prim = std::make_shared<Primitive>(kNameElu);
-  auto out_abstract = opt::CppInferShapeAndType(prim, {x});
-  ASSERT_NE(out_abstract, nullptr);
-  ASSERT_TRUE(*out_abstract == *expect);
+  const auto &param = GetParam();
+  auto input_x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
+  auto expect_shape = std::make_shared<abstract::Shape>(param.out_shape);
+  auto expect_dtype = std::make_shared<TensorType>(param.out_type);
+  auto alpha = CreateScalar(1.f)->ToAbstract();
+
+  EluFuncImpl elu_func;
+  auto prim = std::make_shared<Primitive>("Elu");
+
+  auto out_dtype = elu_func.InferType(prim, {input_x, alpha});
+  ASSERT_TRUE(*out_dtype == *expect_dtype);
+  auto out_shape = elu_func.InferShape(prim, {input_x, alpha});
+  ASSERT_TRUE(*out_shape == *expect_shape);
 }
 
-auto EluOpTypeCases = testing::ValuesIn({
-  EltwiseOpTypeParams{kFloat16, kFloat16},
-  EltwiseOpTypeParams{kFloat32, kFloat32},
-  EltwiseOpTypeParams{kFloat64, kFloat64},
-});
-
-INSTANTIATE_TEST_CASE_P(TestElu, TestElu, testing::Combine(EltwiseDynShapeTestCases, EluOpTypeCases));
+OP_FUNC_IMPL_TEST_CASES(Elu, testing::Values(EluOpsParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
+                                             EluOpsParams{{2, -1}, kFloat32, {2, -1}, kFloat32},
+                                             EluOpsParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
+                                             EluOpsParams{{-2}, kFloat32, {-2}, kFloat32}));
 }  // namespace ops
 }  // namespace mindspore

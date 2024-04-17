@@ -17,6 +17,8 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_MICRO_PARAM_PARSER_H_
 
 #include <string>
+#include <vector>
+#include <map>
 #include "tools/converter/config_parser/config_file_parser.h"
 #include "tools/converter/micro/coder/config.h"
 #include "include/errorcode.h"
@@ -37,6 +39,9 @@ class MicroParamParser {
   STATUS ParseProjName(const std::string &debug_mode, micro::MicroParam *micro_param);
   STATUS ParseKeepOriginalWeight(const std::string &keep_weight, micro::MicroParam *micro_param);
   STATUS ParseChangeableWeightsName(const std::string &changeable_weights_name, micro::MicroParam *micro_param);
+  STATUS ParseGraphInputsShapeTemplate(const std::string &graph_inputs_shape_template,
+                                       const std::map<std::string, std::vector<int>> &dynamic_symbols_map,
+                                       micro::MicroParam *micro_param);
 };
 }  // namespace lite
 }  // namespace mindspore

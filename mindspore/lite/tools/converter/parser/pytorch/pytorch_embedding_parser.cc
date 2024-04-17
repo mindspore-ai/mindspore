@@ -16,7 +16,7 @@
 
 #include "tools/converter/parser/pytorch/pytorch_embedding_parser.h"
 #include <memory>
-#include "ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

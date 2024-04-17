@@ -26,7 +26,7 @@ from mindspore import Parameter
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_oneslike_fallback_with_tensor():
@@ -64,9 +64,9 @@ def test_oneslike_fallback_with_tensor():
     grad_net = GradNet(inner_net)
     grad_out = grad_net(x, y)
     assert np.allclose(grad_out[0][1].asnumpy(),
-                       np.array([1, 1]).astype(np.float32))
+                       np.array([13, 13]).astype(np.float32))
     assert np.allclose(grad_out[1][0][1].asnumpy(),
-                       np.array([1, 1]).astype(np.float32))
+                       np.array([7, 13]).astype(np.float32))
 
 
 class GradNet1(nn.Cell):
@@ -79,7 +79,7 @@ class GradNet1(nn.Cell):
         return self.grad_net(*x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_oneslike_fallback_with_empty_grad():

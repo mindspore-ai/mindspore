@@ -78,13 +78,13 @@ abstract::TupleShapePtr SparseApplyProximalAdagradInferShape(const PrimitivePtr 
                                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
-  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->BuildShape())[kShape];
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
+  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
+  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->GetShape())[kShape];
 
   SparseApplyProximalAdagradCheckTensorShapeAndSize(var_shape, accum_shape, grad_shape, indices_shape, prim_name);
 
@@ -107,13 +107,13 @@ TuplePtr SparseApplyProximalAdagradInferType(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var_type = input_args[0]->BuildType();
-  auto accum_type = input_args[1]->BuildType();
-  auto lr_type = input_args[2]->BuildType();
-  auto l1_type = input_args[3]->BuildType();
-  auto l2_type = input_args[4]->BuildType();
-  auto grad_type = input_args[5]->BuildType();
-  auto indices_type = input_args[6]->BuildType();
+  auto var_type = input_args[0]->GetType();
+  auto accum_type = input_args[1]->GetType();
+  auto lr_type = input_args[2]->GetType();
+  auto l1_type = input_args[3]->GetType();
+  auto l2_type = input_args[4]->GetType();
+  auto grad_type = input_args[5]->GetType();
+  auto indices_type = input_args[6]->GetType();
 
   std::set<TypePtr> tensor_valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;

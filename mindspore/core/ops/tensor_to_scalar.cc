@@ -65,7 +65,7 @@ class TensorToScalarInfer : public abstract::OpInferBase {
     const int64_t input_len = 1;
     constexpr size_t input_0_index = 0;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, op_name);
-    auto x_type = input_args[input_0_index]->BuildType();
+    auto x_type = input_args[input_0_index]->GetType();
     MS_EXCEPTION_IF_NULL(x_type);
     if (!x_type->isa<TensorType>()) {
       MS_EXCEPTION(TypeError) << "For Primitive[" << op_name << "], the input must be a Tensor but got "

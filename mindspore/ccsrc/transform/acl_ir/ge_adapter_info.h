@@ -22,11 +22,11 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <climits>
 #include <unordered_map>
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "utils/hash_map.h"
-#include "graph/op_desc.h"
 #include "include/transform/graph_ir/types.h"
 #include "transform/graph_ir/op_adapter_base.h"
 #include "mindapi/base/shape_vector.h"
@@ -56,13 +56,15 @@ struct GeTensorInfo {
 
   // Attr
   mindspore::HashMap<std::string, std::string> attr_map;
-  mindspore::HashMap<uint32_t, std::string> input_attr_map;
+  // NOTE: input index starts with 0
+  std::map<uint32_t, std::string> input_attr_map;
   mindspore::HashMap<size_t, std::string> attr_input_map;
 
   // Input/Output
   enum ParamMappingFlag : unsigned int {
-    kDynamicParam = 1 << 0,  // has dynamic input/output
-    kEmptyParam = 1 << 1     // empty input/output
+    kDynamicParam = 1 << 0,  // has only one dynamic input/output
+    kEmptyParam = 1 << 1,    // empty input/output
+    kMultiDynParam = 1 << 2  // has more than one dynamic inputs/outputs
   };
 
   // map input/output indices of operator from MindSpore frontend to GraphEngine backend
@@ -92,7 +94,7 @@ class GeAdapterInfo {
 
   const std::string &op_type() const { return info_.op_type; }
   const mindspore::HashMap<std::string, std::string> &attr_map() const { return info_.attr_map; }
-  const mindspore::HashMap<uint32_t, std::string> &input_attr_map() const { return info_.input_attr_map; }
+  const std::map<uint32_t, std::string> &input_attr_map() const { return info_.input_attr_map; }
   const mindspore::HashMap<size_t, std::string> &attr_input_map() const { return info_.attr_input_map; }
 
   // Get number of inputs in mindspore operator prototype, not the real number of inputs
@@ -100,6 +102,8 @@ class GeAdapterInfo {
     // Note: number of ms operator inputs(not real inputs) is equal to size of info_.input_idx_ms2ge
     return info_.input_idx_ms2ge.size();
   }
+
+  const mindspore::HashMap<int, Ms2GeParamInfo> &GetMs2GeInputMap() const { return info_.input_idx_ms2ge; }
 
   const Ms2GeParamInfo &GetGeInputByMsInputIndex(size_t ms_input_idx) const {
     auto iter = info_.input_idx_ms2ge.find(ms_input_idx);
@@ -123,6 +127,13 @@ class GeAdapterInfo {
     // Note: number of ms operator outputs(not real outputs) is equal to size of info_.output_idx_ms2ge
     return info_.output_idx_ms2ge.size();
   }
+
+  size_t GetNumStaticOutputsOfMsOpProto() const {
+    // Note: number of ms operator static outputs(not real outputs)
+    return adapter_->getOutputMap().size();
+  }
+
+  int GetMaxMsProtoIndexOfInputMap() { return max_input_ms_proto_idx_; }
 
   const Ms2GeParamInfo GetGeOutputByMsOutputIndex(size_t ms_output_idx) const {
     auto iter = info_.output_idx_ms2ge.find(ms_output_idx);
@@ -153,8 +164,8 @@ class GeAdapterInfo {
   mindspore::HashMap<int, std::vector<enum ::ge::DataType>> output_supported_dtypes() const {
     return info_.output_supported_dtypes;
   }
-  void GetGeAttrValueByMsAttrValue(const std::string &attr_name, const ValuePtr &ms_value, ValuePtr *ge_value);
-  void GetGeAttrValueByMsInputValue(const uint32_t &input_idx, const ValuePtr &ms_value, ValuePtr *ge_value);
+  void GetGeAttrValueByMsAttrValue(const std::string &attr_name, ValuePtr *ms_value);
+  void GetGeAttrValueByMsInputValue(const uint32_t &input_idx, ValuePtr *ms_value);
 
  private:
   void InitOpType();
@@ -174,6 +185,8 @@ class GeAdapterInfo {
 
   OpAdapterPtr adapter_{nullptr};
   GeTensorInfo info_;
+  // max MindSpore input index in op prototype of INPUT_MAP and DYN_INPUT_MAP
+  int max_input_ms_proto_idx_ = INT_MIN;
   std::unordered_map<std::pair<std::string, ValuePtr>, ValuePtr, ValuePairHasher> get_attr_cache_;
   std::unordered_map<std::pair<uint32_t, ValuePtr>, ValuePtr, ValuePairHasher> get_input_attr_cache_;
 };

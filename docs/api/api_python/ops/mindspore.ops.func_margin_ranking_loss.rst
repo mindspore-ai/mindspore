@@ -22,7 +22,7 @@ mindspore.ops.margin_ranking_loss
           - ``"sum"``：计算输出元素的总和。
 
     返回：
-        Tensor或Scalar，如果 `reduction` 为"none"，其shape与 `labels` 相同。否则，将返回为Scalar。
+        Tensor或Scalar，如果 `reduction` 为"none"，其shape与 `input1` 相同。否则，将返回为Scalar。
 
     异常：
         - **TypeError** - `margin` 不是float。

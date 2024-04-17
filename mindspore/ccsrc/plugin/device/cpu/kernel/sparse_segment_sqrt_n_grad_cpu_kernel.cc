@@ -32,35 +32,30 @@ constexpr size_t kSparseSegmentSqrtNGradOutputsNum = 1;
     .AddOutputAttr(kNumberType##t5)
 }  // namespace
 
-bool SparseSegmentSqrtNGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  x_dtype_ = inputs.at(kIndex0)->GetDtype();
+bool SparseSegmentSqrtNGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  x_dtype_ = inputs.at(kIndex0)->dtype_id();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentSqrtNGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentSqrtNGradOutputsNum, kernel_name_);
   return true;
 }
 
-int SparseSegmentSqrtNGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseSegmentSqrtNGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
-  output_dim0_shape_ = inputs.at(kIndex3)->GetDeviceShapeAdaptively();
-  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeVector();
+  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeVector();
+  output_dim0_shape_ = inputs.at(kIndex3)->GetDeviceShapeVector();
+  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   return KRET_OK;
 }
 
-bool SparseSegmentSqrtNGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &workspace,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSegmentSqrtNGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &workspace,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   if (x_dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (x_dtype_ == kNumberTypeFloat32) {
@@ -75,19 +70,19 @@ bool SparseSegmentSqrtNGradCpuKernelMod::Launch(const std::vector<kernel::Addres
 }
 
 template <typename T>
-void SparseSegmentSqrtNGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
+void SparseSegmentSqrtNGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) {
   size_t n = static_cast<size_t>(
     std::accumulate(x_shape_.begin(), x_shape_.end(), kIndex1, std::multiplies<int64_t>()) / x_shape_[kIndex0]);
   size_t m = static_cast<size_t>(
     std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kIndex1, std::multiplies<int64_t>()));
   size_t num_elements =
     static_cast<size_t>(std::accumulate(y_shape_.begin(), y_shape_.end(), kIndex1, std::multiplies<int64_t>()));
-  int32_t k = *static_cast<int32_t *>(inputs[kIndex3]->addr);
-  auto x_addr = static_cast<T *>(inputs[kIndex0]->addr);
-  auto indices_addr = static_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = static_cast<int32_t *>(inputs[kIndex2]->addr);
-  auto y_addr = static_cast<T *>(outputs[kIndex0]->addr);
+  int32_t k = *static_cast<int32_t *>(inputs[kIndex3]->device_ptr());
+  auto x_addr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto indices_addr = static_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto segment_ids_addr = static_cast<int32_t *>(inputs[kIndex2]->device_ptr());
+  auto y_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   for (size_t i = 0; i < num_elements; i++) {
     y_addr[i] = static_cast<T>(0);

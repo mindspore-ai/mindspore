@@ -15,11 +15,9 @@
 
 # This example should be run with multiple processes.
 
-# Please refer to the Programming Guide > Distributed Training -> Distributed Parallel Usage Example
+# Please refer to Learning > Tutorials > Experts > Distributed Parallel Startup Methods on mindspore.cn. Pick a
 
-# on mindspore.cn and focus on the contents of these three parts: Configuring Distributed Environment
-
-# Variables, Calling the Collective Communication Library, Running the Script.
+# supported startup method for your hardware and get more detail information on the corresponding page.
 
 import pytest
 
@@ -41,7 +39,7 @@ class NetApproximateEqual(nn.Cell):
         return output
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_approximate_equal_fp16():
@@ -59,7 +57,7 @@ def test_approximate_equal_fp16():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_approximate_equal_fp32():

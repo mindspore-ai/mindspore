@@ -13,38 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
-#include <memory>
-#include "common/common_test.h"
-#include "ops/real.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
-#include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
+#include "ops/ops_func_impl/real.h"
 #include "ops/test_ops.h"
-#include "include/backend/optimizer/helper.h"
+#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
-class TestReal : public TestOps, public testing::WithParamInterface<EltwiseOpParams> {};
+OP_FUNC_IMPL_TEST_DECLARE(Real, EltwiseOpParams);
 
-TEST_P(TestReal, dyn_shape) {
-  const auto &param = GetParam();
-  auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-  auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
-  ASSERT_NE(x, nullptr);
-  auto prim = std::make_shared<Primitive>(kNameReal);
-  auto out_abstract = opt::CppInferShapeAndType(prim, {x});
-  ASSERT_NE(out_abstract, nullptr);
-  ASSERT_TRUE(*out_abstract == *expect);
-}
-
-INSTANTIATE_TEST_CASE_P(TestReal, TestReal,
-                        testing::Values(
-                          EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                          EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                          EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+OP_FUNC_IMPL_TEST_CASES(Real, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
+                                              EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
+                                              EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
 }  // namespace ops
 }  // namespace mindspore

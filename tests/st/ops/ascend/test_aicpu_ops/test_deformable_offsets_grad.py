@@ -35,8 +35,6 @@ class NetDeformableOffsetsGrad(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
 def test_deformable_offsets_grad_nchw(data_type):
@@ -69,8 +67,6 @@ def test_deformable_offsets_grad_nchw(data_type):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
 def test_deformable_offsets_grad_nhwc(data_type):

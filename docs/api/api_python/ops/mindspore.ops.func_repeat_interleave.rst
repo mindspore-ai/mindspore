@@ -3,7 +3,7 @@ mindspore.ops.repeat_interleave
 
 .. py:function:: mindspore.ops.repeat_interleave(input, repeats, axis=None)
 
-    沿着轴重复Tensor的元素，类似 `numpy.Repeat`。
+    沿着轴重复Tensor的元素，类似 `numpy.repeat`。
 
     参数：
         - **input** (Tensor) - 进行重复操作的入参Tensor，类型必须为float16，float32，int8，uint8，int16，int32或者int64。

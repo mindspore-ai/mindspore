@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 
-from mindspore import Tensor, context
+from mindspore import Tensor, context, ops
 from mindspore.nn import Cell
 from mindspore import dtype as mstype
 
@@ -57,7 +57,47 @@ class NumpySetItemByList():
         return x
 
 
-@pytest.mark.level1
+class SetitemNet(Cell):
+    def construct(self, x, y):
+        z = x * 2
+        z[:, 1:] += y[:, 1:]
+        return z
+
+
+class SetitemGradNet(Cell):
+    def __init__(self, net):
+        super().__init__()
+        self.net = net
+        self.grad_op = ops.GradOperation(get_all=True)
+
+    def construct(self, x, y):
+        gradient_func = self.grad_op(self.net)
+        return gradient_func(x, y)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_setitem_grad():
+    """
+    Feature: Test setitem grad
+    Description: setitem should return correct grad
+    Expectation: success
+    """
+    net = SetitemNet()
+    a = Tensor(np.random.randn(2, 2, 2, 2), mstype.float32)
+    b = Tensor(np.random.randn(2, 2, 2, 2), mstype.float32)
+    b = ops.zeros_like(b)
+    output = SetitemGradNet(net)(a, b)
+    x_grad = np.ones((2, 2, 2, 2), np.float32) * 2
+    y_grad = np.array([[[[0, 0], [0, 0]], [[1, 1], [1, 1]]], [[[0, 0], [0, 0]], [[1, 1], [1, 1]]]], np.float32)
+    assert np.array_equal(output[0].asnumpy(), x_grad)
+    assert np.array_equal(output[1].asnumpy(), y_grad)
+
+
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -73,7 +113,7 @@ def test_setitem_by_list():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -90,7 +130,7 @@ def test_setitem_with_sequence():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -107,7 +147,7 @@ def test_setitem_dtype():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -125,7 +165,7 @@ def test_setitem_by_tuple_with_int():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -143,7 +183,7 @@ def test_setitem_by_tuple_with_list():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -159,7 +199,7 @@ def test_setitem_by_nested_unit_list():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -178,7 +218,7 @@ def test_setitem_with_broadcast():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -193,7 +233,7 @@ def test_setitem_mul_by_scalar():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -206,6 +246,8 @@ def test_setitem_by_slice():
         x[-3:1] = 3
         x[-10:3:2] = 4
         x[5:0:3] = 5
+        x[5:0] = 2
+        x[0:-1] = 0
         x[5:5:5] = 6
         x[-1:2] = 7
         x[1:0:-1] = 8
@@ -213,7 +255,7 @@ def test_setitem_by_slice():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -237,7 +279,7 @@ class TensorItemSetWithNumber(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
@@ -273,7 +315,7 @@ class TensorItemSetByItemWithNumber(Cell):
         return ret
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -289,7 +331,7 @@ def test_setitem_dim_expand():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -343,7 +385,7 @@ def test_itemset_by_number_with_number():
         net(input_3d_ms, index_np_4, value_np_2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

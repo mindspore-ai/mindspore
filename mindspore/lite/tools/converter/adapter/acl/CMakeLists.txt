@@ -1,15 +1,3 @@
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/ge)
-include_directories(${TOP_DIR}/graphengine/910/base)
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc/framework)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc/aoe)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc/aicpu)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc/toolchain)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN/")
@@ -30,6 +18,7 @@ set(ACL_SRC ${ACL_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/acl_pass.cc)
 set(ENABLE_ACL on)
 set(MODE_ASCEND_ACL off)
 add_subdirectory(${TOP_DIR}/mindspore/ccsrc/transform/graph_ir _mindspore_transform_graph_ir_obj)
+add_subdirectory(${TOP_DIR}/mindspore/ccsrc/transform/symbol _mindspore_transform_symbol_obj)
 add_subdirectory(${TOP_DIR}/mindspore/ccsrc/cxx_api mslite_shared_lib)
 
 

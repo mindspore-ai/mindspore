@@ -46,9 +46,9 @@ abstract::ShapePtr MatrixSolveLsInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  auto matrix_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto rhs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto matrix_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto rhs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
   if (IsDynamicRank(matrix_shape) || IsDynamicRank(rhs_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
@@ -104,9 +104,9 @@ TypePtr MatrixSolveLsInferType(const PrimitivePtr &primitive, const std::vector<
   const std::set<TypePtr> l2_valid_types = {kFloat64};
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto matrix_type = input_args[kIndex0]->BuildType();
-  auto rhs_type = input_args[kIndex1]->BuildType();
-  auto l2_type = input_args[kIndex2]->BuildType();
+  auto matrix_type = input_args[kIndex0]->GetType();
+  auto rhs_type = input_args[kIndex1]->GetType();
+  auto l2_type = input_args[kIndex2]->GetType();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("matrix", matrix_type);
   (void)types.emplace("rhs", rhs_type);

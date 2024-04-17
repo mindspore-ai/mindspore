@@ -19,8 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomAllGatherKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool HcomAllGatherKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcomAllGather launch";
   if (inputs.empty() || outputs.empty() || hccl_data_type_list_.empty()) {
     MS_LOG(ERROR) << "Invalid AllGather input, output or data type size(" << inputs.size() << ", " << outputs.size()
@@ -30,8 +30,8 @@ bool HcomAllGatherKernel::Launch(const std::vector<AddressPtr> &inputs, const st
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllGather(inputs[0]->addr, outputs[0]->addr, hccl_count_,
-                                                                    hccl_data_type_list_[0], stream_ptr, comm_);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllGather(
+    inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcclAllGather failed, ret:" << hccl_result;
     return false;

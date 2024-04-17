@@ -19,8 +19,7 @@ import mindspore as ms
 from mindspore.nn import Cell
 from mindspore import _checkparam as Validator
 from .node import Node
-from ..symbol_tree_builder import SymbolTreeBuilder
-from ..symbol_tree import Position, SymbolTree as SymbolTreeImpl
+from ..symbol_tree import Position, SymbolTreeBuilder, SymbolTree as SymbolTreeImpl
 
 ParamTypes = (int, str, float, bool, Node)
 MsDtypes = (ms.float16, ms.float32, ms.float64)
@@ -74,7 +73,7 @@ class SymbolTree:
         will parse the internal statements in the statement and generate corresponding nodes:
 
         - :class:`mindspore.nn.SequentialCell`
-        - Functions within classes
+        - Functions(Excludes Python built-in functions and third-party library functions)
         - Control flow statements, such as `if` statements
 
         Note:
@@ -91,16 +90,16 @@ class SymbolTree:
         The current rewrite module has the following syntax limitations:
 
         - Only networks of type :class:`mindspore.nn.Cell` are supported as input to the rewrite module.
-        - Parsing assignment statements with multiple output values is not currently supported.
-        - Parsing loop statements is not currently supported.
+        - Parsing one-line control flow syntax(e.g. one-line if-else, one-line for loop) is not currently supported.
         - Parsing decorator syntax is not currently supported.
-        - Parsing class variable syntax is not currently supported. If class variable uses external data,
-            the network after rewrite may be missing data.
         - Parsing local classes and embedded classes is not currently supported, that is, the definition
-            of classes need to be placed on the outermost layer.
+          of classes need to be placed on the outermost layer.
         - Parsing closure syntax is not currently supported, that is, the definition of out-of-class
-            functions need to be placed at the outermost layer.
+          functions need to be placed at the outermost layer.
         - Parsing lambda expression syntax is not currently supported.
+        - Parsing global variables is not currently supported, that is, global variables need to be converted to
+          class variables or local variables before they can be used.
+        - Parsing methods in the parent classes is not currently supported.
 
         For statements that do not support parsing, rewrite will generate nodes of type `NodeType.Python`
         for corresponding statements to ensure that the network after rewrite can run normally.
@@ -120,7 +119,7 @@ class SymbolTree:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> print(type(stree))
@@ -164,12 +163,12 @@ class SymbolTree:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> print([node.get_name() for node in stree.nodes()])
-            ['input_x', 'Expr', 'conv1', 'relu', 'max_pool2d', 'conv2', 'relu_1', 'max_pool2d_1',
-             'flatten', 'fc1', 'relu_2', 'fc2', 'relu_3', 'fc3', 'return']
+            ['input_x', 'conv1', 'relu', 'max_pool2d', 'conv2', 'relu_1', 'max_pool2d_1',
+             'unaryop_not', 'if_node', 'flatten', 'fc1', 'relu_2', 'fc2', 'relu_3', 'fc3', 'return_1']
         """
         Validator.check_value_type("all_nodes", all_nodes, [bool], "nodes")
         nodes = self._symbol_tree.all_nodes() if all_nodes else self._symbol_tree.nodes()
@@ -189,7 +188,7 @@ class SymbolTree:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node('conv1')
@@ -203,7 +202,7 @@ class SymbolTree:
         return Node(node_impl)
 
     def get_inputs(self) -> List[Node]:
-        return [Node(node_impl) for node_impl in self._symbol_tree.get_inputs()]
+        return [Node(node_impl) for node_impl in self._symbol_tree.get_input_nodes()]
 
     def before(self, node: Union[Node, str]):
         """
@@ -217,12 +216,12 @@ class SymbolTree:
             A `Position` to indicate where to insert node.
 
         Raises:
-            TypeError: if `node` is not a `Node`.
+            TypeError: if `node` is not a Node or str.
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> for node in stree.nodes():
@@ -246,12 +245,12 @@ class SymbolTree:
             A `Position` to indicate where to insert node.
 
         Raises:
-            TypeError: If `node` is not a `Node`.
+            TypeError: If `node` is not a Node or str.
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> for node in stree.nodes():
@@ -277,7 +276,7 @@ class SymbolTree:
             An instance of Node being inserted.
 
         Raises:
-            RuntimeError: If `position` is not belong to current `SymbolTree`.
+            ValueError: If `position` is not belong to current `SymbolTree`.
             TypeError: If `position` is not a `Position`.
             TypeError: If `node` is not a `Node`.
 
@@ -285,7 +284,7 @@ class SymbolTree:
             >>> from mindspore.rewrite import SymbolTree, ScopedValue
             >>> import mindspore.nn as nn
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
@@ -309,12 +308,12 @@ class SymbolTree:
             An instance of `Node` being erased if node is in `SymbolTree` else None.
 
         Raises:
-            TypeError: The type of `node` is not Node.
+            TypeError: The type of `node` is not Node or str.
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
@@ -345,7 +344,6 @@ class SymbolTree:
             An instance of Node represents root of node_tree been replaced in.
 
         Raises:
-            RuntimeError: Old node is not isolated.
             TypeError: If `old_node` is not a `Node`.
             TypeError: If `new_nodes` is not a `list` or node in `new_nodes` is not a `Node`.
 
@@ -353,7 +351,7 @@ class SymbolTree:
             >>> from mindspore.rewrite import SymbolTree, ScopedValue
             >>> import mindspore.nn as nn
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
@@ -383,7 +381,7 @@ class SymbolTree:
 
         - **node type** (str): The type of node, refer to class:`mindspore.rewrite.NodeType` .
         - **name** (str): The name of node.
-        - **codes** (str): The source code statement corresponding to the node.
+        - **codes** (str): The code statement in the SymbolTree corresponding to the node.
         - **arg providers** (Dict[int, Tuple[str, int]]): The format is `{[idx, (n, k)]}` , which means the
           `idx` th parameter of the node is provided by the `k` th output of node `n` .
         - **target users** (Dict[int, List[Tuple[str, int]]]): The format is '{[idx, [(n, k)]]}' , which means
@@ -399,13 +397,14 @@ class SymbolTree:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> stree.print_node_tabulate()
         """
         Validator.check_value_type("all_nodes", all_nodes, [bool], "print_node_tabulate")
-        self._symbol_tree.print_node_tabulate(all_nodes)
+        dump_str = self._symbol_tree.get_node_tabulate(all_nodes)
+        print(dump_str)
 
     def get_code(self) -> str:
         """
@@ -418,7 +417,7 @@ class SymbolTree:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> codes = stree.get_code()
@@ -445,7 +444,7 @@ class SymbolTree:
         Examples:
             >>> from mindspore.rewrite import SymbolTree
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> new_net = stree.get_network()
@@ -479,3 +478,20 @@ class SymbolTree:
         """
         Validator.check_value_type("name", name, [str], "SymbolTree")
         return self._symbol_tree.unique_name(name)
+
+    def flatten_nodes(self, node, erase_nodes_after_return: bool = False):
+        Validator.check_value_type("node", node, [Node], "flatten_nodes")
+        Validator.check_value_type("erase_nodes_after_return", erase_nodes_after_return, [bool], "flatten_nodes")
+        return self._symbol_tree.flatten_nodes(node.get_handler(), erase_nodes_after_return)
+
+    def flatten_static_if_control_flow(self):
+        return self._symbol_tree.flatten_static_if_control_flow()
+
+    # pylint: disable=missing-docstring
+    def get_origin_network(self):
+        return self._symbol_tree.get_origin_network()
+
+    # pylint: disable=missing-docstring
+    def all_nodes(self, subtree_nodes: bool = True):
+        Validator.check_value_type("subtree_nodes", subtree_nodes, [bool], "all_nodes")
+        return [Node(n) for n in self._symbol_tree.all_nodes(subtree_nodes)]

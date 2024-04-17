@@ -19,10 +19,8 @@
 #include "include/backend/kernel_graph.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "backend/common/session/session_basic.h"
-#include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "backend/common/mem_reuse/kernel_refcount.h"
 #include "include/backend/kernel_info.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -185,7 +183,7 @@ static KernelGraphPtr CreateGraphWithExecOrder() {
 
   std::vector<AnfNodePtr> lst = {original_add, original_mul};
   std::vector<AnfNodePtr> outputs = {original_mul};
-  session::SessionPtr sess = std::make_shared<session::AscendSession>();
+  session::SessionPtr sess = session::SessionFactory::Get().Create(kSessionBasic);
   sess->Init(0);
   auto kernel_graph = sess->ConstructKernelGraph(lst, outputs);
   EXPECT_NE(kernel_graph, nullptr);

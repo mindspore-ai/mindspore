@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ def get_expect_value(res):
     if res[0] == '[]':
         if res[1] == 'Bool':
             return expect_scalar.get('Bool')
-        if res[1] in ['Uint8', 'Uint16', 'Uint32', 'Uint64']:
+        if res[1] in ['UInt8', 'UInt16', 'UInt32', 'UInt64']:
             return expect_scalar.get('UInt')
         if res[1] in ['Int8', 'Int16', 'Int32', 'Int64']:
             return expect_scalar.get('Int')
@@ -55,7 +55,8 @@ def num_to_asterisk(data):
     # Convert number and +/- to asterisk
     return re.sub(r'\d|\+|\-', '*', data.group())
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

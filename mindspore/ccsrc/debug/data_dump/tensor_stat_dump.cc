@@ -16,8 +16,6 @@
 
 #include "include/backend/debug/data_dump/tensor_stat_dump.h"
 
-#include <memory>
-#include <map>
 #include "include/common/debug/common.h"
 #include "debug/debug_services.h"
 #include "include/backend/debug/debugger/debugger.h"
@@ -28,7 +26,7 @@ constexpr auto kInput = "input";
 constexpr auto kOutput = "output";
 constexpr auto kCsvHeader =
   "Op Type,Op Name,Task ID,Stream ID,Timestamp,IO,Slot,Data Size,Data Type,Shape,Max Value,Min Value,Avg Value,"
-  "Count,Negative Zero Count,Positive Zero Count,NaN Count,Negative Inf Count,Positive Inf Count,Zero Count\n";
+  "Count,Negative Zero Count,Positive Zero Count,NaN Count,Negative Inf Count,Positive Inf Count,Zero Count,MD5\n";
 constexpr auto kCsvFileName = "statistic.csv";
 }  // namespace
 
@@ -52,7 +50,7 @@ TensorStatDump::TensorStatDump(const std::string &op_type, const std::string &op
 
 TensorStatDump::TensorStatDump(const std::string &op_type, const std::string &op_name, const std::string &task_id,
                                const std::string &stream_id, const std::string &timestamp, const std::string &io,
-                               size_t slot, size_t tensor_loader_slot)
+                               size_t slot, size_t tensor_loader_slot, const mindspore::TypeId data_type)
     : op_type_{op_type},
       op_name_{op_name},
       task_id_{task_id},
@@ -60,7 +58,8 @@ TensorStatDump::TensorStatDump(const std::string &op_type, const std::string &op
       timestamp_{timestamp},
       io_{io},
       slot_{slot},
-      tensor_loader_slot_{tensor_loader_slot} {
+      tensor_loader_slot_{tensor_loader_slot},
+      data_type_{data_type} {
   if (io_ != kInput && io_ != kOutput) {
     MS_LOG(EXCEPTION) << "Cannot instantiate TensorStatDump, io needs to be either " << kInput << " or " << kOutput;
   }
@@ -130,7 +129,11 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   csv.WriteToCsv(io_);
   csv.WriteToCsv(slot_);
   csv.WriteToCsv(stat.data_size);
-  csv.WriteToCsv(type);
+  if (data_type_ != mindspore::TypeId::kTypeUnknown) {
+    csv.WriteToCsv(TypeIdToString(data_type_, true));
+  } else {
+    csv.WriteToCsv(type);
+  }
   csv.WriteToCsv(shape.str());
   if (stat.count == stat.nan_count + stat.neg_inf_count + stat.pos_inf_count) {
     csv.WriteToCsv(std::string("null"));
@@ -147,7 +150,8 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   csv.WriteToCsv(stat.nan_count);
   csv.WriteToCsv(stat.neg_inf_count);
   csv.WriteToCsv(stat.pos_inf_count);
-  csv.WriteToCsv(stat.zero_count, true);
+  csv.WriteToCsv(stat.zero_count);
+  csv.WriteToCsv(stat.md5, true);
   csv.CloseFile();
   return true;
 }

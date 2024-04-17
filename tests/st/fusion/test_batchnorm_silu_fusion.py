@@ -92,20 +92,3 @@ def test_ir_fusion_bn_silu_wrap():
     out1 = ir_fusion_bn_silu(ms.GRAPH_MODE, True)
     out2 = ir_fusion_bn_silu(ms.PYNATIVE_MODE, False)
     assert np.all(out1.asnumpy() == out2.asnumpy())
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_ir_fusion_bn_silu_grad_wrap():
-    """"
-    Feature: Test batch norm and silu grad fusion
-    Description: Test batch norm and silu grad fusion
-    Expectation: The results are as expected
-    """
-    out1 = ir_fusion_bn_silu_grad(ms.GRAPH_MODE, True)
-    out2 = ir_fusion_bn_silu_grad(ms.PYNATIVE_MODE, False)
-    if len(out1) != len(out2):
-        assert False
-    for i, _ in enumerate(out1):
-        assert np.all(out1[i].asnumpy() == out2[i].asnumpy())

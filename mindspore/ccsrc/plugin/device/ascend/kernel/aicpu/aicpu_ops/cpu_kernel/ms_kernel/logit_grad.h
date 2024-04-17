@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LOGIT_GRAD_H
 #define AICPU_KERNELS_NORMALIZED_LOGIT_GRAD_H
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -30,7 +30,7 @@ class LogitGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t LogitGradCompute(const CpuKernelContext &ctx);
+  uint32_t LogitGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

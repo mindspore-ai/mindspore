@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_LITE_INCLUDE_MODEL_H_
 #define MINDSPORE_LITE_INCLUDE_MODEL_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>

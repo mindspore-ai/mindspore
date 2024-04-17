@@ -15,20 +15,7 @@
  */
 
 #include "tools/graph_kernel/converter/akg/cpu_kernel_builder.h"
-
-#include <dirent.h>
-#include <unistd.h>
-#include <iostream>
 #include <fstream>
-#include <sstream>
-#include <utility>
-#include <algorithm>
-#include <set>
-#include <map>
-#include <string>
-#include <vector>
-#include <memory>
-
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "utils/anf_utils.h"

@@ -28,6 +28,7 @@ class GraphKernelOptimizer {
   void Run(const KernelGraphPtr &kernel_graph);
 
  private:
+  void Init() const;
   // Pre-process
   PassManagerPtr PreProcess() const;
   // Cluster kernels
@@ -49,6 +50,7 @@ class GraphKernelOptimizer {
   bool is_ascend{false};
   bool is_cpu{false};
   bool is_ge{false};
+  bool is_dvm{false};
 };
 
 BACKEND_EXPORT void GraphKernelOptimize(const KernelGraphPtr &kernel_graph);

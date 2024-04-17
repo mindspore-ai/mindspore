@@ -19,13 +19,13 @@
 #include <dlfcn.h>
 #include <sys/wait.h>
 #include <fstream>
-#include "runtime/kernel.h"
 #include "utils/log_adapter.h"
 #include "utils/file_utils.h"
 #include "include/common/debug/common.h"
-#include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 namespace {
@@ -140,8 +140,8 @@ void BiShengKernelMod::DoTiling(std::vector<void *> *workspace_addrs) {
   }
 
   // CopyHostToDevice
-  auto rt_ret =
-    aclrtMemcpy(tiling_addr_, tiling_data.size(), tiling_data.data(), tiling_data.size(), ACL_MEMCPY_HOST_TO_DEVICE);
+  auto rt_ret = CALL_ASCEND_API(aclrtMemcpy, tiling_addr_, tiling_data.size(), tiling_data.data(), tiling_data.size(),
+                                ACL_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api aclrtMemcpy failed, ret: " << rt_ret;
   }
@@ -157,13 +157,13 @@ std::vector<TaskInfoPtr> BiShengKernelMod::GenTask(const std::vector<AddressPtr>
   rtDevBinary_t binary = {RT_DEV_BINARY_MAGIC_ELF, 0, static_cast<void *>(device_o.data()), device_o.size()};
   void *dev_binary_handle = nullptr;
   auto rt_ret = rtDevBinaryRegister(&binary, &dev_binary_handle);
-  if (rt_ret != RT_ERROR_NONE) {
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtDevBinaryRegister failed, error code: " << rt_ret;
   }
   const auto &binary_func = FunctionName();
   rt_ret = rtFunctionRegister(dev_binary_handle, reinterpret_cast<void *>(kBiShengStartAddr), binary_func.c_str(),
                               binary_func.c_str(), 0);
-  if (rt_ret != RT_ERROR_NONE) {
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtFunctionRegister failed, error code: " << rt_ret;
   }
   kBiShengStartAddr += 1;

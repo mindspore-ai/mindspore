@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ from mindspore import Tensor
 from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
+
+from tests.st.utils import test_utils
 
 context.set_context(device_target="Ascend")
 
@@ -45,6 +47,26 @@ def test_net():
     print(x1)
     print(x2)
     print(output.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@test_utils.run_test_with_On
+def test_net_bf16(mode):
+    """
+    Feature: Test matmul bfloat16.
+    Description: Test matmul tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    x = Tensor(np.arange(1 * 3).reshape(1, 3), mstype.bfloat16)
+    y = Tensor(np.arange(3 * 4).reshape(3, 4), mstype.bfloat16)
+    matmul = Net()
+    output = matmul(x, y)
+    except_out = np.array([20., 23., 26., 29.], np.float32)
+    assert np.allclose(output.float().asnumpy(), except_out, 0.004, 0.004)
 
 
 @pytest.mark.level1
@@ -90,7 +112,7 @@ def test_matmul_dtypes():
     x_np.shape = m, k
     y_np.shape = k, n
     matmul = Net()
-    valid_dtypes = (mstype.uint8, mstype.int32, mstype.int64, mstype.float16, mstype.float32)
+    valid_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
     all_dtypes = mstype.all_types
     for dtype in all_dtypes:
         # bfloat16 is not supported yet
@@ -99,7 +121,11 @@ def test_matmul_dtypes():
         x_ms = Tensor(x_np).astype(dtype)
         y_ms = Tensor(y_np).astype(dtype)
         if dtype in valid_dtypes:
-            matmul(x_ms, y_ms)
+            out = matmul(x_ms, y_ms)
+            if x_ms.dtype == mstype.int8:
+                assert out.dtype == mstype.int32
+            else:
+                assert out.dtype == x_ms.dtype
         else:
-            with pytest.raises(TypeError):
+            with pytest.raises((RuntimeError, TypeError)):
                 matmul(x_ms, y_ms)

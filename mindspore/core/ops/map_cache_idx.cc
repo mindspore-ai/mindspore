@@ -46,9 +46,9 @@ abstract::TupleShapePtr MapCacheIdxInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   constexpr int64_t kInputNum = 5;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
-  auto hashmap_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto hashmap_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto hashmap_shape = hashmap_shape_map[kShape];
-  auto indices_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto indices_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto indices_shape = indices_shape_map[kShape];
 
   auto cache_idx_output = std::make_shared<abstract::Shape>(indices_shape);
@@ -73,8 +73,8 @@ TuplePtr MapCacheIdxInferType(const PrimitivePtr &prim, const std::vector<Abstra
   auto prim_name = prim->name();
   constexpr int64_t kInputNum = 5;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
-  auto hashmap_type = input_args[0]->BuildType();
-  auto indices_type = input_args[1]->BuildType();
+  auto hashmap_type = input_args[0]->GetType();
+  auto indices_type = input_args[1]->GetType();
 
   const std::set<TypePtr> valid_types = {kInt64, kInt32, kInt16, kInt8};
   std::map<std::string, TypePtr> input_types;

@@ -1,0 +1,21 @@
+#operator reshape_and_cache
+reshape_and_cache:
+  args:
+    key:
+      dtype: tensor
+    value:
+      dtype: tensor
+    key_cache:
+      dtype: tensor
+    value_cache:
+      dtype: tensor
+    slot_mapping:
+      dtype: tensor
+  args_signature:
+    rw_write: key_cache, value_cache
+    dtype_group: (key, value, key_cache, value_cache)
+  labels:
+    side_effect_mem: True
+  returns:
+    out:
+      dtype: tensor

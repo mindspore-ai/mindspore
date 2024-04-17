@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,10 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_
 
-#include "inc/ops/array_ops.h"
-#include "inc/ops/selection_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_array_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_other_ops.h"
-#include "inc/ops/transformation_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
-#include "inc/ops/data_flow_ops.h"
 
 DECLARE_OP_ADAPTER(Shape)
 DECLARE_OP_USE_OUTPUT(Shape)
@@ -97,7 +93,6 @@ DECLARE_OP_ADAPTER(Where)
 DECLARE_OP_USE_OUTPUT(Where)
 
 DECLARE_OP_ADAPTER(Unique)
-DECLARE_OP_ATTR(Unique)
 DECLARE_OP_USE_OUTPUT(Unique)
 
 DECLARE_OP_ADAPTER(BroadcastGradientArgs)
@@ -109,9 +104,9 @@ DECLARE_OP_USE_OUTPUT(QueueData)
 DECLARE_OP_ADAPTER(Size)
 DECLARE_OP_USE_OUTPUT(Size)
 
-DECLARE_CUST_OP_ADAPTER(Meshgrid)
-DECLARE_CUST_OP_USE_DYN_INPUT(Meshgrid)
-DECLARE_CUST_OP_USE_DYN_OUTPUT(Meshgrid)
+DECLARE_OP_ADAPTER(Meshgrid)
+DECLARE_OP_USE_DYN_INPUT(Meshgrid)
+DECLARE_OP_USE_DYN_OUTPUT(Meshgrid)
 
 DECLARE_CUST_OP_ADAPTER(SliceGrad)
 DECLARE_CUST_OP_USE_OUTPUT(SliceGrad)
@@ -155,6 +150,9 @@ DECLARE_CUST_OP_USE_OUTPUT(LogSpace)
 DECLARE_OP_ADAPTER(UniqueConsecutive)
 DECLARE_OP_USE_OUTPUT(UniqueConsecutive)
 
+DECLARE_OP_ADAPTER(UniqueWithPad)
+DECLARE_OP_USE_OUTPUT(UniqueWithPad)
+
 DECLARE_OP_ADAPTER(UpperBound)
 DECLARE_OP_USE_OUTPUT(UpperBound)
 
@@ -164,9 +162,24 @@ DECLARE_OP_USE_OUTPUT(UnravelIndex)
 DECLARE_CUST_OP_ADAPTER(NoRepeatNGram)
 DECLARE_CUST_OP_USE_OUTPUT(NoRepeatNGram)
 
+DECLARE_CUST_OP_ADAPTER(GenerateEodMask)
+DECLARE_CUST_OP_USE_OUTPUT(GenerateEodMask)
+
 DECLARE_OP_ADAPTER(NonZero)
 DECLARE_OP_USE_OUTPUT(NonZero)
 
 DECLARE_OP_ADAPTER(OutfeedEnqueueOpV2)
 DECLARE_OP_USE_DYN_INPUT(OutfeedEnqueueOpV2)
+
+DECLARE_CUST_OP_ADAPTER(Coalesce)
+DECLARE_CUST_OP_USE_OUTPUT(Coalesce)
+
+DECLARE_CUST_OP_ADAPTER(Padding)
+DECLARE_CUST_OP_USE_OUTPUT(Padding)
+
+DECLARE_OP_ADAPTER(MatrixBandPart)
+DECLARE_OP_USE_OUTPUT(MatrixBandPart)
+
+DECLARE_OP_ADAPTER(EmbeddingLookup)
+DECLARE_OP_USE_OUTPUT(EmbeddingLookup)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_

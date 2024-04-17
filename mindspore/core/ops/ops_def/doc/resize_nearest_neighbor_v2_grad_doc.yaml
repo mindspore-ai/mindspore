@@ -1,0 +1,13 @@
+resize_nearest_neighbor_v2_grad:
+  description: |
+    Compute gradient of `ResizeNearestNeighborV2` operator.
+
+    Args:
+        grads (Tensor): A 4-D Tensor with shape [batch, channel, height, width].
+        size (Union[tuple[int], Tensor]): The size for the input image. 2 elements: [`height, width`].
+        align_corners (bool): Whether the centers of the 4 corner pixels of the input
+            and output tensors are aligned. Default: ``False``.
+        half_pixel_centers (bool): Default: ``False``.
+
+    Outputs:
+        A 4-D Tensor , with the same shape and data type as `image`.

@@ -1,0 +1,25 @@
+#operator reduce_std
+reduce_std:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      default: []
+      prim_init: True
+      type_cast: int, list[int], tensor
+    unbiased:
+      dtype: bool
+      default: True
+      prim_init: True
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output_std:
+      dtype: tensor
+    output_mean:
+      dtype: tensor
+  function:
+    disable: True

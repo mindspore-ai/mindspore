@@ -178,7 +178,7 @@ bool CoreInferShapePass::Run(const FuncGraphPtr &func_graph) {
   return true;
 }
 
-STATUS CoreInferShapePass::InferProcessSubGraph(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS CoreInferShapePass::InferProcessSubGraph(const CNodePtr &cnode) {
   auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
   if (sub_func_graph == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -234,7 +234,7 @@ STATUS CoreInferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
     auto cnode = node->cast<CNodePtr>();
     MS_ASSERT(cnode != nullptr);
     if (opt::CheckPrimitiveType(node, prim::kPrimIf) || opt::CheckPrimitiveType(node, prim::kPrimWhile)) {
-      auto ret = InferProcessSubGraph(func_graph, cnode);
+      auto ret = InferProcessSubGraph(cnode);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "InferProcessSubGraph failed: " << ret;
         return ret;

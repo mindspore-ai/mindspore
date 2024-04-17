@@ -75,7 +75,7 @@ const AnfNodePtr ConvertConstScalarToTensor::Process(const FuncGraphPtr &func_gr
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   bool input_changed = false;
-  for (size_t i = 0; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 0; i < cnode->size(); ++i) {
     if (!AnfAlgo::IsScalarConvertToTensor(cnode->inputs()[i], cnode)) {
       continue;
     }

@@ -1,0 +1,21 @@
+#operator resize_bilinear_v2
+resize_bilinear_v2:
+  args:
+    image:
+      dtype: tensor
+    size:
+      dtype: tuple[int]
+      type_cast: list[int], tensor
+    align_corners:
+      dtype: bool
+      default: False
+      prim_init: True
+    half_pixel_centers:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

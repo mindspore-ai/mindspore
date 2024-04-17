@@ -9,7 +9,7 @@
 
     输入：
         - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是Number或bool，也可以是数据类型为Number或bool的Tensor。
-        - **y** (Union[Tensor, Number, bool]) - 第二个输入可以是数据类型为Number或bool的Tensor，当第一个输入是Tensor时，也可以是bool或Number。
+        - **y** (Union[Tensor, Number, bool]) - 第二个输入可以是Number或bool，也可以是数据类型为Number或bool的Tensor。
 
     输出：
         一个Tensor，其shape与广播后的shape相同，其数据类型为两个输入中精度较高的类型。

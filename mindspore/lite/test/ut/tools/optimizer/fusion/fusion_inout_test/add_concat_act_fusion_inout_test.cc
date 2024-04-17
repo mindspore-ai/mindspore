@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 #include "tools/optimizer/fusion/add_concat_activation_fusion.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "ops/fusion/activation.h"
-#include "ops/concat.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/add_fusion.h"
 
 namespace mindspore {
@@ -94,7 +94,6 @@ class ConcatActFusionInoutTest : public FusionInoutTest {
     MS_CHECK_TRUE_MSG(concat_primitive != nullptr, nullptr, "create concat primitivec failed");
     auto prim_c = concat_primitive->GetPrim();
     MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
-    concat_primitive->Init();
     concat_primitive->set_axis(1);
     auto concat_primc = NewValueNode(prim_c);
     MS_CHECK_TRUE_RET(concat_primc != nullptr, nullptr);

@@ -79,30 +79,23 @@ uint32_t MultinomialWithReplacementCpuKernelMod::GenerateSingle() {
   return unused_results_[used_result_index_++];
 }
 
-bool MultinomialWithReplacementCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto op = std::dynamic_pointer_cast<ops::MultinomialWithReplacement>(base_operator);
-  kernel_name_ = op->name();
+bool MultinomialWithReplacementCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  kernel_ptr_ = std::make_shared<ops::MultinomialWithReplacement>(base_operator->GetPrim());
   if (!is_match) {
     MS_LOG(ERROR) << "MultinomialWithReplacement does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  numsamples_ = op->get_numsamples();
-  replacement_ = op->get_replacement();
+  numsamples_ = GetValue<int64_t>(primitive_->GetAttr("numsamples"));
+  replacement_ = GetValue<bool>(primitive_->GetAttr("replacement"));
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
-int MultinomialWithReplacementCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                   const std::vector<KernelTensorPtr> &inputs,
-                                                   const std::vector<KernelTensorPtr> &outputs,
-                                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MultinomialWithReplacementCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   x_shape_ = inputs[0]->GetShapeVector();
@@ -110,8 +103,8 @@ int MultinomialWithReplacementCpuKernelMod::Resize(const BaseOperatorPtr &base_o
 }
 
 template <typename T>
-bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMultinomialWithReplacementInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMultinomialWithReplacementOutputsNum, kernel_name_);
 
@@ -119,9 +112,9 @@ bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kern
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'numsamples' should be a nonnegative number, but got "
                              << numsamples_ << ".";
   }
-  auto x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto seed = *reinterpret_cast<int64_t *>(inputs[1]->addr);
-  auto offset = *reinterpret_cast<int64_t *>(inputs[2]->addr);
+  auto x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto seed = *reinterpret_cast<int64_t *>(inputs[1]->device_ptr());
+  auto offset = *reinterpret_cast<int64_t *>(inputs[2]->device_ptr());
   if (init_state_) {
     init_seed_ = seed;
     init_offset_ = offset;
@@ -160,7 +153,7 @@ bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kern
   for (int64_t i = 0; i < output_size; i++) {
     RandomData[i] = static_cast<T>(RandFloat());
   }
-  auto y = reinterpret_cast<int64_t *>(outputs[0]->addr);
+  auto y = reinterpret_cast<int64_t *>(outputs[0]->device_ptr());
   for (int64_t i = 0; i < num_row_; i++) {
     if (replacement_ == true) {
       auto out = y + i * numsamples_;

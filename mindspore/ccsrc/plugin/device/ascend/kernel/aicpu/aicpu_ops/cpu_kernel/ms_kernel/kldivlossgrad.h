@@ -18,8 +18,8 @@
 #define EIGEN_USE_THREADS
 #define EIGEN_USE_SIMPLE_THREAD_POOL
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -36,7 +36,7 @@ class KlDivLossGradCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t KlDivLossGradCompute(const CpuKernelContext &ctx);
+  uint32_t KlDivLossGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_KLDIVLOSSGRAD_H

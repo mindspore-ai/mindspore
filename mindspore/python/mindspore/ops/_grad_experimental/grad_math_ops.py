@@ -18,10 +18,12 @@
 import numpy as np
 import mindspore.numpy as mnp
 from mindspore.common import dtype as mstype
+import mindspore.ops as ops
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore import Tensor
-from mindspore.ops.operations.math_ops import Polar
+from mindspore.ops.operations.math_ops import SilentCheck
+from mindspore.ops.operations._inner_ops import _MirrorSilentCheck
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import MatrixSolveLs
@@ -30,10 +32,8 @@ from mindspore.ops.operations.math_ops import NanToNum
 from mindspore.ops.operations.math_ops import FFTWithSize
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
-from mindspore.ops.operations.math_ops import TridiagonalSolve
-from mindspore.ops.operations.math_ops import Diagonal
 from mindspore.ops.operations.math_ops import EuclideanNorm
-from mindspore.ops.operations.array_ops import Transpose, MatrixSetDiagV3
+from mindspore.ops.operations.array_ops import Transpose
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import _primexpr
@@ -277,7 +277,7 @@ def get_bprop_matrix_solve_ls(self):
             else:
                 l2_regularizer = cast(l2, matrix.dtype)
             chol = cast(regularized_gramian_cholesky(matrix, l2_regularizer, first_kind=True), matrix.dtype)
-            #CholeskySolve not support complex dtype and just support 2D or 3D matrices for now
+            # CholeskySolve not support complex dtype and just support 2D or 3D matrices for now
             z = cholesky_solve(dout, chol)
 
             matrix_dim = rank(matrix)
@@ -372,53 +372,6 @@ def get_bprop_nan_to_num(self):
     return bprop
 
 
-@bprop_getters.register(Polar)
-def get_bprop_polar(self):
-    """Grad definition for `Polar` operation."""
-    complex_op = Complex()
-    conj = P.Conj()
-    real = P.Real()
-    sig = P.Sign()
-    ones = P.Ones()
-    zeros = P.Zeros()
-
-    def bprop(input1, angle, out, dout):
-        grad_conj = conj(dout)
-        zero = zeros(dout.shape, input1.dtype)
-        one = ones(dout.shape, input1.dtype)
-        i = complex_op(zero, one)
-        grad_abs = real(grad_conj * sig(out))
-        result_mul_1_j = out * i
-        grad_angle = real(grad_conj * result_mul_1_j)
-        return (grad_abs, grad_angle)
-
-    return bprop
-
-
-@bprop_getters.register(TridiagonalSolve)
-def get_bprop_tridiagonalsolve(self):
-    """Grad definition for 'TridiagonalSolve' operation"""
-    tridiagonalsolve = TridiagonalSolve()
-
-    def bprop(diagonals, rhs, out, dout):
-        diags = diagonals
-        diag1 = diags[..., 1, :]
-        zeros1 = P.Zeros()(diags.shape[:-2] + (1,), diags.dtype)
-        superdiag1 = P.Concat(-1)((diags[..., 2, 1:], zeros1))
-        subdiag1 = P.Concat(-1)((zeros1, diags[..., 0, :-1]))
-        diags_transposed = P.Stack(-2)([superdiag1, diag1, subdiag1])
-        grad_rhs = tridiagonalsolve(diags_transposed, dout)
-        diag2 = P.ReduceSum()(grad_rhs * out, -1)
-        zeros2 = P.Zeros()(grad_rhs.shape[:-2] + (1, grad_rhs.shape[-1]), grad_rhs.dtype)
-        superdiag2 = P.ReduceSum()(grad_rhs * P.Concat(-2)((out[..., 1:, :], zeros2)), -1)
-        subdiag2 = P.ReduceSum()(grad_rhs * P.Concat(-2)((zeros2, out[..., :-1, :])), -1)
-        a = (P.Stack(-2)([superdiag2, diag2, subdiag2]))
-        grad_diags = 0 - a
-        return grad_diags, grad_rhs
-
-    return bprop
-
-
 @bprop_getters.register(CholeskySolve)
 def get_bprop_cholesky_solve(self):
     """Grad definition for 'CholeskySolve' operation"""
@@ -463,55 +416,6 @@ def get_bprop_cholesky_solve(self):
     return bprop
 
 
-@bprop_getters.register(Diagonal)
-def get_bprop_diagonal(self):
-    """Grad definition for 'Diagonal' operation"""
-    offset = self.offset
-    dim1 = self.dim1
-    dim2 = self.dim2
-    zeros_op = P.FillV2()
-    size_op = P.Size()
-    transpose_op = Transpose()
-    matrix_set_diag_op = MatrixSetDiagV3(align="LEFT_RIGHT")
-
-    def bprop(x, out, dout):
-        x_shape = x.shape
-        x_dtype = x.dtype
-        x_dim = len(x_shape)
-        if dim1 < 0:
-            dim1_ = dim1 + x_dim
-        else:
-            dim1_ = dim1
-        if dim2 < 0:
-            dim2_ = dim2 + x_dim
-        else:
-            dim2_ = dim2
-        if size_op(out):
-            batch_dim = out.shape[:-1]
-            diag_plane = (x_shape[dim1_], x_shape[dim2_])
-            dx_trans_shape = batch_dim + diag_plane
-            value = Tensor(0, x_dtype)
-            dx = zeros_op(dx_trans_shape, value)
-            k = F.cast(offset, mstype.int32)
-            dx = matrix_set_diag_op(dx, dout, k)
-            dim = 0
-            perm = ()
-            for i in range(x_dim):
-                if i == dim1_:
-                    perm = perm + (x_dim - 2,)
-                elif i == dim2_:
-                    perm = perm + (x_dim - 1,)
-                else:
-                    perm = perm + (dim,)
-                    dim = dim + 1
-            dx = transpose_op(dx, perm)
-        else:
-            dx = zeros_like(x)
-        return (dx,)
-
-    return bprop
-
-
 @_primexpr
 def _fft_rank_offset(norm_shape, rank):
     """generate offset for fft with rank"""
@@ -522,8 +426,22 @@ def _fft_rank_offset(norm_shape, rank):
 
 
 @_primexpr
+def _norm_enum_to_string(norm_mode):
+    """convert norm_mode enum to string ."""
+    norm_mode_str = ""
+    if norm_mode == 0:
+        norm_mode_str = "backward"
+    elif norm_mode == 1:
+        norm_mode_str = "forward"
+    elif norm_mode == 2:
+        norm_mode_str = "ortho"
+    return norm_mode_str
+
+
+@_primexpr
 def _fft_with_size_back_norm(norm_shape, norm, inverse, rank):
     """generate reverse term for fft_with_size"""
+    norm_ = 1
     if inverse is False:
         if norm == "forward":
             norm_ = 1 / _fft_rank_offset(norm_shape, rank)
@@ -611,34 +529,11 @@ def _batch_matmul_shape_decrease(matrix_shape):
 @bprop_getters.register(FFTWithSize)
 def get_bprop_fft_with_size(self):
     """Grad definition for `FFTWithSize` operation."""
-    signal_ndim = self.signal_ndim
-    inverse = self.inverse
-    real = self.real
-    norm = self.norm
-    onesided = self.onesided
-    fft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                         inverse=False,
-                         real=False,
-                         norm=norm)
-    ifft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                          inverse=True,
-                          real=False,
-                          norm=norm)
-    rfft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                          inverse=False,
-                          real=True,
-                          norm=norm,
-                          onesided=onesided)
-    irfft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                           inverse=True,
-                           real=True,
-                           norm=norm,
-                           onesided=onesided)
-
     complex_op = P.Complex()
     to_tensor_op = P.ScalarToTensor()
     type_op = P.DType()
     concat_op = P.Concat()
+    concat_op_last = P.Concat(axis=-1)
     ones_op = P.Ones()
     zeros_op = P.Zeros()
     real_op = P.Real()
@@ -652,7 +547,31 @@ def get_bprop_fft_with_size(self):
     conj_op = P.Conj()
     batch_matmul_op = P.BatchMatMul()
 
-    def bprop(x, out, dout):
+    def reverse_branch(dx, onesided, dout_shape, offset_shape,
+                       output_type, dout, norm, inverse, signal_ndim, offset_size):
+        if onesided is True:
+            is_odd = dout_shape[-1] % 2
+            last_shape = offset_shape[-1]
+            mask = concat_op((ones_op(1, output_type), 2.0 * ones_op(
+                (last_shape - 2 + is_odd,), output_type), ones_op((1 - is_odd,), output_type)))
+            dx = dx * \
+                complex_op(mask, zeros_op(shape_op(mask), output_type))
+            irfft_offset_size = to_tensor_op(
+                _fft_with_size_back_norm(
+                    shape_op(dout), norm, inverse, signal_ndim),
+                output_type)
+            dx = dx * complex_op(irfft_offset_size,
+                                 zeros_op(1, output_type))
+        else:
+            dx = dx * complex_op(offset_size, zeros_op(1, output_type))
+        return dx
+
+    def bprop(x, signal_ndim, inverse, real, norm_enum, onesided, signal_sizes, out, dout):
+        norm = _norm_enum_to_string(norm_enum)
+        fft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=False, real=False, norm=norm)
+        ifft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=True, real=False, norm=norm)
+        rfft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=False, real=True, norm=norm, onesided=onesided)
+        irfft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=True, real=True, norm=norm, onesided=onesided)
         dx = 0
         input_type = type_op(x)
         output_type = type_op(out)
@@ -670,8 +589,7 @@ def get_bprop_fft_with_size(self):
                                  signal_sizes=offset_shape[-1:])
             irfft2d_ = FFTWithSize(signal_ndim=2, inverse=True, real=True, norm="backward", onesided=onesided,
                                    signal_sizes=offset_shape[-2:])
-            irfft3d_ = FFTWithSize(signal_ndim=3, inverse=True, real=True, norm="backward", onesided=onesided,
-                                   signal_sizes=offset_shape[-3:])
+            irfft3d_ = FFTWithSize(signal_ndim=3, inverse=True, real=False, norm="backward", onesided=onesided)
             if inverse is False:
                 if onesided is True:
                     terms = 0
@@ -687,6 +605,7 @@ def get_bprop_fft_with_size(self):
                         vec_mask = complex_op(1 - 2 * (mnp.arange(0, input_shape[-1], 1, input_type) % 2),
                                               zeros_op(input_shape[-1], input_type))
                         terms = real_op(dout_first) + is_even * real_op(dout_last * vec_mask)
+                        dx = to_tensor_op(0.5, input_type) * (dx * rfft_offset_size + terms) * rfft_norm_offset
                     elif signal_ndim == 2:
                         dx = irfft2d_(dout)
                         arange_inner = mnp.arange(0, input_shape[-2], 1, input_type)
@@ -728,28 +647,19 @@ def get_bprop_fft_with_size(self):
                                                         dout_shape, [input_shape[-1]])))
                         dout_last_term = dout_last_term * vec_mask
                         terms = real_op(dout_first_term) + is_even * real_op(dout_last_term)
+                        dx = to_tensor_op(0.5, input_type) * (dx * rfft_offset_size + terms) * rfft_norm_offset
                     elif signal_ndim == 3:
-                        dx = irfft3d_(dout) * real_op(offset_size)
-                    dx = to_tensor_op(0.5, input_type) * (dx * rfft_offset_size + terms) * rfft_norm_offset
+                        zeros_shape = offset_shape[:-1] + (offset_shape[-1] - dout_shape[-1],)
+                        zeros_values = zeros_op(zeros_shape, input_type)
+                        zeros_padding = complex_op(zeros_values, zeros_values)
+                        dout = concat_op_last((dout, zeros_padding))
+                        dx = real_op(irfft3d_(dout)) * real_op(offset_size)
                 else:
                     dx = irfft_fn(dout) * real_op(offset_size)
             else:
                 dx = rfft_fn(dout)
-                if onesided is True:
-                    if signal_ndim != 3:
-                        is_odd = dout_shape[-1] % 2
-                        last_shape = offset_shape[-1]
-                        mask = concat_op((ones_op(1, output_type), 2.0 * ones_op(
-                            (last_shape - 2 + is_odd,), output_type), ones_op((1 - is_odd,), output_type)))
-                        dx = dx * complex_op(mask, zeros_op(shape_op(mask), output_type))
-                        irfft_offset_size = to_tensor_op(
-                            _fft_with_size_back_norm(shape_op(dout), norm, inverse, signal_ndim),
-                            output_type)
-                        dx = dx * complex_op(irfft_offset_size, zeros_op(1, output_type))
-                    else:
-                        dx = dx * complex_op(offset_size, zeros_op(1, output_type))
-                else:
-                    dx = dx * complex_op(offset_size, zeros_op(1, output_type))
+                dx = reverse_branch(dx, onesided, dout_shape, offset_shape,
+                                    output_type, dout, norm, inverse, signal_ndim, offset_size)
         return (dx,)
 
     return bprop
@@ -893,3 +803,22 @@ def get_bprop_tensor_add(self):
         return binop_grad_common(x, y, dout, dout)
 
     return bprop
+
+
+@bprop_getters.register(_MirrorSilentCheck)
+def get_bprop_mirror_silent_check(self):
+    """Grad definition for '_MirrorSilentCheck' op"""
+    silent_check = SilentCheck(self.min_steps, self.thresh_l1, self.coeff_l1, self.thresh_l2, self.coeff_l2)
+    out_tensor = Tensor([0.0], mstype.float32)
+
+    def bporp(x, pre_val, min_val, max_val, n_step, loss_scale, out, dout):
+        if dout.dtype == mstype.float16:
+            return (dout, out_tensor, out_tensor, out_tensor, out_tensor, out_tensor)
+        if loss_scale is not None:
+            gnorm = ops.norm(dout / loss_scale)
+        else:
+            gnorm = ops.norm(dout)
+        dx, _, _, _, _ = silent_check(gnorm, dout, pre_val, min_val, max_val, n_step)
+        return (dx, out_tensor, out_tensor, out_tensor, out_tensor, out_tensor)
+
+    return bporp

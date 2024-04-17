@@ -18,18 +18,19 @@
 #define MINDSPORE_CORE_OPS_ARGMIN_FUSION_H_
 #include <memory>
 #include <vector>
-
-#include "ops/arg_min.h"
+#include "mindapi/base/type_id.h"
+#include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMinFusion = "ArgMinFusion";
 /// \brief ArgMinFusion defined ArgMin operator prototype of lite.
-class MIND_API ArgMinFusion : public ArgMin {
+class MIND_API ArgMinFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ArgMinFusion);
   /// \brief Constructor.
-  ArgMinFusion() : ArgMin(kNameArgMinFusion) { InitIOName({"x"}, {"output"}); }
+  ArgMinFusion() : BaseOperator(kNameArgMinFusion) { InitIOName({"x"}, {"output"}); }
 
   /// \brief Method to init the op's attributes.
   ///
@@ -68,6 +69,22 @@ class MIND_API ArgMinFusion : public ArgMin {
   ///
   /// \return the number of minimum value along with axis.
   int64_t get_top_k() const;
+
+  /// \brief Set axis.
+  void set_axis(const int64_t axis);
+
+  /// \brief Set output_type.
+  void set_output_type(const TypeId output_type);
+
+  /// \brief Get axis.
+  ///
+  /// \return axis.
+  int64_t get_axis() const;
+
+  /// \brief Get output_type.
+  ///
+  /// \return output_type.
+  TypeId get_output_type() const;
 };
 }  // namespace ops
 }  // namespace mindspore

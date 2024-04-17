@@ -19,7 +19,6 @@
  * \brief
  */
 #include <map>
-#include "common/util/error_manager/error_manager.h"
 #include "error_util.h"
 #include "error_code.h"
 #include "op_log.h"
@@ -108,31 +107,5 @@ std::string GetParamOutRangeErrMsg(const std::string &param_name, const std::str
 std::string OtherErrMsg(const std::string &error_detail) {
   std::string msg = error_detail;
   return msg;
-}
-
-void TbeInputDataTypeErrReport(const std::string &op_name, const std::string &param_name,
-                               const std::string &expected_dtype_list, const std::string &dtype) {
-  map<string, string> err_map;
-  err_map["op_name"] = op_name;
-  err_map["param_name"] = param_name;
-  err_map["expected_dtype_list"] = expected_dtype_list;
-  err_map["dtype"] = dtype;
-  std::string report_error_code = "E50034";
-  ErrorManager::GetInstance().ReportErrMessage(report_error_code, err_map);
-}
-
-void GeInfershapeErrReport(const std::string &op_name, const std::string &op_type, const std::string &value,
-                           const std::string &reason) {
-  std::string report_error_code = GetViewErrorCodeStr(ViewErrorCode::INVALID_INFER_SHAPE);
-  ErrorManager::GetInstance().ATCReportErrMessage(report_error_code, {"opname", "optype", "value", "reason"},
-                                                  {op_name, op_type, value, reason});
-}
-
-void CommonRuntimeErrLog(const std::string &opname, const std::string &description) {
-  map<string, string> err_map;
-  err_map["op_name"] = opname;
-  err_map["description"] = description;
-  OP_LOGE_WITHOUT_REPORT(opname.c_str(), description);
-  (void)ErrorManager::GetInstance().ReportErrMessage("E50058", err_map);
 }
 }  // namespace ge

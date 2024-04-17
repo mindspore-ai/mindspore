@@ -108,8 +108,8 @@ TEST_F(TestOptLib, test_inline) {
   AbstractBasePtr abstract_v2 = abstract::FromValue(y_tensor, true);
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
-  AnalysisResult result = pipeline::AbstractAnalyze(res, before1, args_spec_list);
-  FuncGraphPtr new_graph = pipeline::ProgramSpecialize(res, before1, result.context);
+  AnalysisResult result = pipeline::AbstractAnalyze(res->engine(), before1, args_spec_list, res->is_load());
+  FuncGraphPtr new_graph = pipeline::ProgramSpecialize(res->engine(), before1, result.context);
   auto patterns = std::vector<SubstitutionPtr>({irpass.arithmetic_simplify_, irpass.switch_simplify_, irpass.inline_});
   ASSERT_TRUE(CheckOpt(new_graph, after, patterns));
 }
@@ -595,6 +595,16 @@ TEST_F(TestOptLib, test_sparse_tensor) {
   ASSERT_TRUE(CheckOpt(before_get_indices, after_get_indices, patterns));
   ASSERT_TRUE(CheckOpt(before_get_values, after_get_values, patterns));
   ASSERT_TRUE(CheckOpt(before_get_dense_shape, after_get_dense_shape, patterns));
+}
+
+// Feature: Eliminate the unused args of partial inputs.
+// Description: Construct a partial call.
+// Expectation: The unused args are eliminated.
+TEST_F(TestOptLib, test_partial_unused_args_eliminate) {
+  FuncGraphPtr before_fg = getPyFun.CallAndParseRet("test_partial_unused_args_eliminate", "before");
+  FuncGraphPtr after_fg = getPyFun.CallAndParseRet("test_partial_unused_args_eliminate", "after");
+  auto patterns = std::vector<SubstitutionPtr>({irpass.partial_unused_args_eliminate_});
+  ASSERT_TRUE(CheckOpt(before_fg, after_fg, patterns));
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -17,12 +17,17 @@
 #define MINDSPORE_TESTS_UT_CPP_OPS_TEST_OPS_H_
 
 #include <string>
+#include <vector>
 #include "common/common_test.h"
 #include "utils/ms_context.h"
 #include "mindapi/base/shape_vector.h"
 #include "base/base.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore::ops {
+namespace{
+constexpr int64_t kUnknown = 0;
+}
 class TestOps : public UT::Common {
  public:
   TestOps() {}
@@ -47,6 +52,7 @@ struct EltwiseOpParams {
   TypePtr x_type;
   ShapeVector out_shape;
   TypePtr out_type;
+  std::vector<ValuePtr> attr_list;
 };
 
 struct BroadcastOpParams {
@@ -58,12 +64,32 @@ struct BroadcastOpParams {
   TypePtr out_type;
 };
 
+struct MultiInputOpParams {
+  std::vector<ShapeVector> in_shape_array;
+  std::vector<TypePtr> in_type_list;
+  std::vector<ShapeVector> out_shape_array;
+  std::vector<TypePtr> out_type_list;
+  std::vector<ValuePtr> attr_list;
+};
+
 struct EltwiseOpShapeParams {
   ShapeVector x_shape;
   ShapeVector out_shape;
 };
 
 struct EltwiseOpTypeParams {
+  TypePtr x_type;
+  TypePtr out_type;
+};
+
+struct EltwiseGradOpShapeParams {
+  ShapeVector grad_shape;
+  ShapeVector x_shape;
+  ShapeVector out_shape;
+};
+
+struct EltwiseGradOpTypeParams {
+  TypePtr grad_type;
   TypePtr x_type;
   TypePtr out_type;
 };

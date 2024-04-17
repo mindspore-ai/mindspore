@@ -251,10 +251,23 @@ inline cudaError_t BinaryTransit(Factory factory, uint n, OUT *out, const IN *in
   return DoLaunch<Factory, OUT, IN, IN2>::Launch(factory, n, out, in, in2, stream);
 }
 
+template <typename Factory, typename OUT, typename IN, typename IN2, typename IN3>
+inline cudaError_t BinaryExtTransit(Factory factory, uint n, OUT *out, const IN *in, const IN2 *in2, const IN3 *alpha,
+                                    cudaStream_t stream) {
+  return DoLaunch<Factory, OUT, IN, IN2, IN3>::Launch(factory, n, out, in, in2, alpha, stream);
+}
+
 // API elementwise for input: [a, b], output: out.
 template <typename FunctorT, typename OUT, typename IN, typename IN2>
 inline cudaError_t Binary(FunctorT functor, uint n, OUT *out, const IN *in, const IN2 *in2, cudaStream_t stream) {
   return BinaryTransit(TransitFactory<FunctorT>(functor), n, out, in, in2, stream);
+}
+
+// API elementwise for input: [a, b, alpha], output: out.
+template <typename FunctorT, typename OUT, typename IN, typename IN2, typename IN3>
+inline cudaError_t BinaryExt(FunctorT functor, uint n, OUT *out, const IN *in, const IN2 *in2, const IN3 *alpha,
+                             cudaStream_t stream) {
+  return BinaryExtTransit(TransitFactory<FunctorT>(functor), n, out, in, in2, alpha, stream);
 }
 
 template <typename Factory, typename OUT, typename IN, typename IN2, typename IN3>

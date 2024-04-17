@@ -72,7 +72,7 @@ TEST_F(TestMindApi, test_graph_construction) {
   ASSERT_TRUE(output_node->isa<CNode>());
 
   auto output_cnode = output_node->cast<CNodePtr>();
-  ASSERT_EQ(output_cnode->inputs().size(), 3);
+  ASSERT_EQ(output_cnode->size(), 3);
   ASSERT_TRUE(output_cnode->input(0)->isa<ValueNode>());
   ASSERT_TRUE(output_cnode->input(0)->cast<ValueNodePtr>()->value()->isa<Primitive>());
   ASSERT_EQ(output_cnode->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>()->name(), "myprim");

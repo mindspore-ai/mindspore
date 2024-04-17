@@ -30,13 +30,8 @@ constexpr size_t kSmoothL1LossGradInputsNum = 3;
 constexpr size_t kSmoothL1LossGradOutputsNum = 1;
 }  // namespace
 
-bool SmoothL1LossGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SmoothL1LossGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool SmoothL1LossGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kSmoothL1LossGradInputsNum || outputs.size() != kSmoothL1LossGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kSmoothL1LossGradInputsNum
                   << " and " << kSmoothL1LossGradOutputsNum << ", but got " << inputs.size() << " and "
@@ -44,13 +39,13 @@ bool SmoothL1LossGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  beta_ = kernel_ptr->get_beta();
+  beta_ = GetValue<float>(primitive_->GetAttr(ops::kBeta));
   if (std::equal_to<float>()(beta_, 0)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << ", the 'beta' can not be 0.";
     return false;
   }
 
-  std::string reduction = kernel_ptr->get_reduction();
+  std::string reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   if (reduction == "none") {
     reduction_ = ReductionType::NONE;
   } else if (reduction == "mean") {
@@ -62,18 +57,16 @@ bool SmoothL1LossGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int SmoothL1LossGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SmoothL1LossGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -151,15 +144,15 @@ bool SmoothL1LossGradCpuKernelMod::CalSum(const T *predict_addr, const T *target
 }
 
 template <typename T>
-bool SmoothL1LossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool SmoothL1LossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSmoothL1LossGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSmoothL1LossGradOutputsNum, kernel_name_);
-  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  const auto *dloss_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  const auto *dloss_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto *result_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   switch (reduction_) {
     case ReductionType::NONE:
       return CalNoReduce(predict_addr, target_addr, dloss_addr, result_addr);

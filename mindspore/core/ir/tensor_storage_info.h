@@ -66,7 +66,6 @@ struct TensorStorageInfo {
     buf << "  ori_shape=" << VectorToString(ori_shape);
     buf << "  ori_strides=" << VectorToString(ori_strides);
     buf << "  is_contiguous=" << std::to_string(is_contiguous);
-    buf << "  data_type=" << std::to_string(data_type);
     buf << ")";
     return buf.str();
   }
@@ -77,7 +76,6 @@ struct TensorStorageInfo {
   std::vector<int64_t> ori_shape;
   std::vector<int64_t> ori_strides;
   bool is_contiguous{false};
-  TypeId data_type{kTypeUnknown};
 };
 using TensorStorageInfoPtr = std::shared_ptr<TensorStorageInfo>;
 using TensorStorageInfoPtrList = std::vector<TensorStorageInfoPtr>;

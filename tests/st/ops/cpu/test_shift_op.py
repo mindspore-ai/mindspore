@@ -102,7 +102,7 @@ def compare(arr: np.ndarray, periods: int, axis: int, fill_value=np.nan):
     assert np.allclose(numpy_result, mindspore_result, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype, fill_value',
@@ -117,7 +117,7 @@ def test_no_shift(fill_value, dtype, axis):
     compare(arr, axis=axis, periods=0, fill_value=fill_value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype, fill_value',
@@ -138,7 +138,7 @@ def test_fancy_1d(fill_value, dtype, periods):
     compare(arr, axis=3, periods=periods, fill_value=fill_value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype, fill_value',
@@ -154,7 +154,7 @@ def test_2d(fill_value, dtype, axis, periods):
     compare(arr, axis=axis, periods=periods, fill_value=fill_value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype, fill_value',

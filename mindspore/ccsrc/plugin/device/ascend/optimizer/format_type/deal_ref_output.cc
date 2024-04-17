@@ -22,7 +22,9 @@
 #include "ops/sequence_ops.h"
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
+#include "ops/op_def.h"
 #include "plugin/device/ascend/optimizer/format_type/utils.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "kernel/oplib/oplib.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -33,20 +35,46 @@
 namespace mindspore {
 namespace opt {
 namespace {
-AnfNodePtr GetRefInfo(const std::string &op_name, const CNodePtr &cnode, const size_t cur_out_index) {
-#ifdef ASCEND_910B
-  auto info = transform::GeAdapterManager::GetInstance().GetInfo(op_name, true);
-  auto ref_infos = info->GetRefMappingInfo();
+std::unordered_map<size_t, size_t> GetRefInfoMaps(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::unordered_map<size_t, size_t> ref_infos;
+  auto kernel_type = AnfAlgo::GetKernelType(cnode);
+  if (kernel_type == KernelType::UNKNOWN_KERNEL_TYPE) {
+    return ref_infos;
+  }
+
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
+  if (kernel_type == KernelType::ACL_KERNEL) {
+    auto info = transform::GeAdapterManager::GetInstance().GetInfo(op_name, true);
+    if (info == nullptr) {
+      return ref_infos;
+    }
+
+    ref_infos = info->GetRefMappingInfo();
+  } else if (kernel_type == KernelType::OPAPI_KERNEL) {
+    mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+    if (op_def == nullptr) {
+      return ref_infos;
+    }
+    for (size_t i = 0; i < op_def->returns_.size(); ++i) {
+      if (op_def->returns_[i].inplace_input_index_ != -1) {
+        ref_infos[i] = op_def->returns_[i].inplace_input_index_;
+      }
+    }
+  }
+
+  return ref_infos;
+}
+
+AnfNodePtr GetRefInputNode(const CNodePtr &cnode, const size_t cur_out_index) {
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  auto ref_infos = GetRefInfoMaps(cnode);
   if (!ref_infos.empty()) {
-#else
-  auto op_info = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
-  if (op_info != nullptr && op_info->is_ref()) {
-    auto ref_infos = op_info->ref_infos();
-#endif
     if (ref_infos.count(cur_out_index) != 0) {
       auto in_index = ref_infos.at(cur_out_index);
-      if (in_index > cnode->inputs().size()) {
-        MS_LOG(EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->inputs().size() << ", ref info is "
+      if (in_index > cnode->size()) {
+        MS_LOG(EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->size() << ", ref info is "
                           << cur_out_index;
       }
       return cnode->input(in_index + 1);
@@ -69,11 +97,11 @@ session::KernelWithIndex FindRefOriginNode(const AnfNodePtr &node) {
     if (op_name == prim::kPrimCast->name() || op_name == prim::kPrimTranspose->name() ||
         op_name == prim::kPrimTransposeD->name() || op_name == prim::kPrimReshape->name() ||
         op_name == kTransDataOpName || common::AnfAlgo::IsNopNode(cnode)) {
-      AnfNodePtr next_node = cnode->input(1);
+      AnfNodePtr next_node = cnode->input(kIndex1);
       return FindRefOriginNode(next_node);
     }
 
-    AnfNodePtr next_node = GetRefInfo(op_name, cnode, cur_out_index);
+    AnfNodePtr next_node = GetRefInputNode(cnode, cur_out_index);
     if (next_node) {
       return FindRefOriginNode(next_node);
     }
@@ -121,67 +149,15 @@ AnfNodePtr DealRefOutput::AddAdditionalToRefOutput(const FuncGraphPtr &func_grap
                                                    size_t output_index, size_t input_index,
                                                    const AnfNodePtr &get_item) const {
   AnfNodePtr final_node = (get_item == nullptr ? cnode : get_item);
-  size_t final_index = output_index;
   AnfNodePtr input_node = common::AnfAlgo::GetInputNode(cnode, input_index);
   session::KernelWithIndex origin_pair = FindRefOriginNode(input_node);
   MS_EXCEPTION_IF_NULL(origin_pair.first);
   MS_LOG(DEBUG) << "DealRefTransAndCast the node input index " << input_index << ", find origin op is "
                 << origin_pair.first->DebugString() << ", index is " << origin_pair.second;
 
-#ifndef ASCEND_910B
-  bool need_refresh_ref_addr = false;
-  auto origin_format = AnfAlgo::GetOutputFormat(origin_pair.first, origin_pair.second);
-  auto origin_type = AnfAlgo::GetOutputDeviceDataType(origin_pair.first, origin_pair.second);
-  auto cur_format = AnfAlgo::GetOutputFormat(cnode, output_index);
-  auto cur_type = AnfAlgo::GetOutputDeviceDataType(cnode, output_index);
-  auto cur_shape = common::AnfAlgo::GetOutputInferShape(cnode, output_index);
-  auto detail_shape = AnfAlgo::GetOutputDetailShape(cnode, output_index);
-  // insert trans
-  if (origin_format != cur_format && cur_shape.size() > 1) {
-    auto kernel_select = std::make_shared<KernelSelect>();
-    if (cur_format != kOpFormat_DEFAULT) {
-      auto cur_reshape_type = AnfAlgo::GetOutputReshapeType(cnode, output_index);
-      final_node = AddTransOpNodeToGraphWithFormat(func_graph, final_node, final_node, kernel_select, cur_format,
-                                                   kOpFormat_DEFAULT, cur_reshape_type, cur_type);
-    }
-    if (origin_format != kOpFormat_DEFAULT) {
-      int64_t groups = common::AnfAlgo::GetAttrGroups(origin_pair.first, origin_pair.second);
-      auto origin_reshape_type = AnfAlgo::GetOutputReshapeType(origin_pair.first, origin_pair.second);
-      final_node = AddTransOpNodeToGraphWithFormat(func_graph, final_node, final_node, kernel_select, kOpFormat_DEFAULT,
-                                                   origin_format, origin_reshape_type, cur_type, groups);
-    }
-    final_index = 0;
-    need_refresh_ref_addr = true;
-    MS_EXCEPTION_IF_NULL(final_node);
-    MS_LOG(INFO) << "DealRefTransAndCast add trans op, op debug info is " << final_node->DebugString();
-  }
-  // insert cast
-  if (origin_type != cur_type) {
-    final_node =
-      AddCastOpNodeToGraph(func_graph, final_node, cnode, origin_format, cur_type, origin_type, detail_shape, cur_type);
-    MS_EXCEPTION_IF_NULL(final_node);
-    final_node->set_scope(cnode->scope());
-    final_index = 0;
-    need_refresh_ref_addr = true;
-    MS_LOG(INFO) << "DealRefTransAndCast add cast op, op debug info is " << final_node->DebugString();
-  }
-#endif
-
   // add ref pair
-  auto ref_final_node =
-    common::AnfAlgo::GetCNodeName(final_node) == kReshapeOpName ? final_node->cast<CNodePtr>()->input(1) : final_node;
-  AddRefPairToKernelGraph(func_graph, cnode, get_item, ref_final_node, final_index, origin_pair);
+  AddRefPairToKernelGraph(func_graph, cnode, get_item, final_node, output_index, origin_pair);
 
-#ifndef ASCEND_910B
-  if (need_refresh_ref_addr) {
-    AddRefNodePairToKernelGraph(func_graph, cnode, output_index, input_index);
-  }
-  // insert depend
-  if (origin_format != cur_format || origin_type != cur_type) {
-    final_node = MakeDependency(get_item, final_node, cnode, func_graph);
-    MS_LOG(INFO) << "DealRefTranshwAndCast add denpend, op debug info is " << final_node->DebugString();
-  }
-#endif
   return final_node;
 }
 
@@ -239,9 +215,9 @@ AnfNodePtr DealRefOutput::DealRefSingleOutput(const FuncGraphPtr &func_graph, co
                                               const std::unordered_map<size_t, size_t> &ref_infos) const {
   MS_EXCEPTION_IF_NULL(cnode);
   auto ref_info = *(ref_infos.begin());
-  if (ref_info.second > cnode->inputs().size()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->inputs().size()
-                               << ", ref info is " << ref_info.second;
+  if (ref_info.second > cnode->size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->size() << ", ref info is "
+                               << ref_info.second;
   }
   return AddAdditionalToRefOutput(func_graph, cnode, ref_info.first, ref_info.second, nullptr);
 }
@@ -276,26 +252,16 @@ const AnfNodePtr DealRefOutput::Process(const FuncGraphPtr &graph, const AnfNode
     return nullptr;
   }
 
+  if (AnfAlgo::IsKernelSelectBackoffOp(cnode)) {
+    return nullptr;
+  }
+
   DealBroadCastAsRef(graph, cnode);
 
-  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-
-#ifdef ASCEND_910B
-  auto info = transform::GeAdapterManager::GetInstance().GetInfo(op_name, true);
-  auto ref_infos = info->GetRefMappingInfo();
+  auto ref_infos = GetRefInfoMaps(cnode);
   if (ref_infos.empty()) {
     return nullptr;
   }
-#else
-  auto op_info = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
-  if (op_info == nullptr || !op_info->is_ref()) {
-    return nullptr;
-  }
-  auto ref_infos = op_info->ref_infos();
-  if (ref_infos.empty()) {
-    return nullptr;
-  }
-#endif
 
   auto type = cnode->Type();
   MS_EXCEPTION_IF_NULL(type);

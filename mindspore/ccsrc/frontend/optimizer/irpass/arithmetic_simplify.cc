@@ -16,6 +16,7 @@
 
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
 
+#include "include/common/utils/parallel_context.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
@@ -75,7 +76,7 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
     MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarMul, x, one_scalar_, true), x);           // Scalar Mul by one
   }
   // Prim Eliminate (identity)
-  MATCH_REPLACE(node, PPrimitive(prim::kPrimIdentity, x), x);
+  MATCH_REPLACE(node, PPrimitive(prim::kPrimidentity, x), x);
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return nullptr;
   }
@@ -85,6 +86,10 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
     auto new_mul_tensor = const_.MulByPatternConst(const_2, x.GetNode(node));
     auto mul_node = node->cast<CNodePtr>()->inputs()[0];
     if (new_mul_tensor == nullptr) {
+      auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+      if (parallel_mode == parallel::kAutoParallel || parallel_mode == parallel::kSemiAutoParallel) {
+        return nullptr;
+      }
       auto ttmul = NewCNode({mul_node, const_.GetNode(node), const_2.GetNode(node)}, node->func_graph());
       return NewCNode({mul_node, x.GetNode(node), ttmul}, node->func_graph());
     }

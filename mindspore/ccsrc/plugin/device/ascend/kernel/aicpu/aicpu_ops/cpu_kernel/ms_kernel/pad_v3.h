@@ -20,11 +20,11 @@
 #include <utility>
 #include <vector>
 
-#include "cpu_ops_kernel.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/kernel_log.h"
 #include "securec.h"
-#include "status.h"
+#include "context/common/status.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -49,7 +49,7 @@ class PadV3CpuKernel : public CpuKernel {
   uint32_t CheckAndInitParams(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t GetPaddingsAndSetOuputShape(CpuKernelContext &ctx);
+  uint32_t GetPaddingsAndSetOutputShape(CpuKernelContext &ctx);
 
   template <typename T>
   uint32_t DoCompute(CpuKernelContext &ctx);
@@ -83,7 +83,7 @@ class PadV3CpuKernel : public CpuKernel {
   int64_t ReflectIndexCaculate(int64_t pad_value, int64_t now, int64_t input_value, int64_t o_start, int64_t i_start);
 
   template <typename T>
-  void CircularModeCompute(const CpuKernelContext &ctx, int64_t p);
+  void CircularModeCompute(CpuKernelContext &ctx, int64_t p);
 
   template <typename T>
   void CircularCompute3D(T *input, T *output, int64_t p) const;

@@ -29,27 +29,25 @@ namespace device {
 namespace cpu {
 class CPUDeviceResManager : public DeviceResManager {
  public:
-  CPUDeviceResManager() : mem_manager_(nullptr) {}
+  CPUDeviceResManager() {}
   ~CPUDeviceResManager() override = default;
 
   void Initialize() override;
 
   void Destroy() override;
 
-  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
+  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                               uint32_t stream_id = kDefaultStreamIndex) const override;
 
-  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape = ShapeVector(),
-                                       const UserDataPtr &user_data = nullptr) const override;
+  DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
 
   bool LoadCollectiveCommLib() override;
 
   // Relevant function to allocate and free device memory of raw ptr.
-  void *AllocateMemory(size_t size) const override;
+  void *AllocateMemory(size_t size, uint32_t stream_id = kDefaultStreamIndex) const override;
   void FreeMemory(void *ptr) const override;
-
- private:
-  std::shared_ptr<MemoryManager> mem_manager_;
+  void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                       const std::vector<size_t> &keep_addr_sizes) const override;
 };
 
 class CPUKernelExecutor : public KernelExecutor {
@@ -60,6 +58,7 @@ class CPUKernelExecutor : public KernelExecutor {
   void OptimizeGraph(const FuncGraphPtr &graph) const override;
 
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
+  kernel::KernelModPtr CreateKernelMod(const std::string &op_name) const override;
 
   // Kernel that is not supported by other device can be backed off and rebuilt on the CPU.
   // The function will set kernel info and create kernel mod.
@@ -67,13 +66,12 @@ class CPUKernelExecutor : public KernelExecutor {
 
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 
-  bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                    size_t /* stream_id */) const override;
+  bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                    const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
+                    KernelMod *kernel_mod, void * /*stream*/) const override;
 
-  bool ExecuteKernelTask(const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
-                         const TensorStorageInfoPtrList &input_storage_list,
-                         const device::DeviceAddressPtrList &output_addr_list) const override;
+  bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
+                         const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
 
  private:
   // Select the matching backend kernels according to the data type and format of input and output for all
@@ -85,14 +83,14 @@ class CPUKernelExecutor : public KernelExecutor {
   void OptimizeMindIR(const KernelGraphPtr &graph) const;
 #ifndef ENABLE_SECURITY
   // Launch a kernel and record the elapsed time end to end.
-  bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                 const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs) const;
+  bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &workspace,
+                                 const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod) const;
 #endif
   // Launch a kernel by 'KernelMod' of the kernel.
-  bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const;
-
+  bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                      const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
+                      KernelMod *kernel_mod) const;
   void UpdateKernelRefInfo(const KernelGraphPtr &graph) const;
 
   mutable std::mutex launch_mutex_;
@@ -100,8 +98,7 @@ class CPUKernelExecutor : public KernelExecutor {
 
 class CPUDeviceContext : public DeviceInterface<CPUKernelExecutor, CPUDeviceResManager> {
  public:
-  explicit CPUDeviceContext(const DeviceContextKey &device_context_key)
-      : DeviceInterface(device_context_key), initialized_(false) {}
+  explicit CPUDeviceContext(const DeviceContextKey &device_context_key) : DeviceInterface(device_context_key) {}
   ~CPUDeviceContext() override = default;
 
   void Initialize() override;
@@ -112,7 +109,6 @@ class CPUDeviceContext : public DeviceInterface<CPUKernelExecutor, CPUDeviceResM
 
  private:
   DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);
-  bool initialized_;
 };
 }  // namespace cpu
 }  // namespace device

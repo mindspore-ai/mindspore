@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,17 +243,19 @@ BaseRef VM::Evaluate(const FuncGraphPtr &graph, const VectorRef &args, const Anf
 }
 
 SuccFunc VM::SuccVm(const FuncGraphPtr &graph) {
-  auto fn = [&, this](const AnfNodePtr &node) -> AnfNodePtrList {
+  auto fn = [&, this](const AnfNodePtr &node) -> AnfNodeWeakPtrList {
     MS_EXCEPTION_IF_NULL(node);
-    AnfNodePtrList ret;
+    AnfNodeWeakPtrList res;
 
     // Follow node.incoming
     if (node->isa<CNode>()) {
-      auto &inputs = node->cast<CNodePtr>()->inputs();
-      for (auto &i : inputs) {
+      auto &inputs = node->cast<CNodePtr>()->weak_inputs();
+      for (auto &weak_input : inputs) {
+        auto i = weak_input.lock();
+        MS_EXCEPTION_IF_NULL(i);
         if (i->func_graph() == node->func_graph() ||
             (IsValueNode<FuncGraph>(i) && GetValueNode<FuncGraphPtr>(i)->parent() == graph)) {
-          ret.push_back(i);
+          res.push_back(i);
         }
       }
     }
@@ -261,11 +263,11 @@ SuccFunc VM::SuccVm(const FuncGraphPtr &graph) {
     // for subgraph input, add their fvs as succ nodes
     if (IsValueNode<FuncGraph>(node) && GetValueNode<FuncGraphPtr>(node)->parent() == graph) {
       auto fvs = utils::cast<SetRef>(vars_[GetValueNode<FuncGraphPtr>(node)]);
-      (void)std::transform(fvs.begin(), fvs.end(), std::back_inserter(ret),
+      (void)std::transform(fvs.begin(), fvs.end(), std::back_inserter(res),
                            [](const BaseRef &value) -> AnfNodePtr { return utils::cast<AnfNodePtr>(value); });
     }
 
-    return ret;
+    return res;
   };
   return fn;
 }
@@ -445,8 +447,8 @@ VectorRef VM::RunGraph(const FuncGraphPtr &g, const VectorRef &args) {
 }
 
 BaseRef RunOperation(const PrimitivePtr &prim, const VectorRef &args) {
-  MS_LOG(DEBUG) << "Operation start " << prim->name();
   MS_EXCEPTION_IF_NULL(prim);
+  MS_LOG(DEBUG) << "Operation start " << prim->name();
   auto result = prim->RunComputeFunction(args);
   if (result.is_null()) {
     result = RunComputeFunctionWithoutPyObj(prim, args);

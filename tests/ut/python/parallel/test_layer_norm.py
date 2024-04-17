@@ -33,7 +33,8 @@ class Net(Cell):
         self.begin_norm_axis = 2
         self.begin_params_axis = 1
         self.mul = P.Mul().shard(strategy1)
-        self.layer_norm = P.LayerNorm(self.begin_norm_axis, self.begin_params_axis).shard(strategy2)
+        self.layer_norm = P.LayerNorm(begin_norm_axis=self.begin_norm_axis,
+                                      begin_params_axis=self.begin_params_axis).shard(strategy2)
         self.mul2 = P.Mul().shard(strategy3)
         self.mul_weight = Parameter(mul_weight, "w1")
         self.normalized_shape = [64, 32, 16]

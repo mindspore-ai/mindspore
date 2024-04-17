@@ -285,6 +285,11 @@ def _get_local_rank_helper(group):
     Returns:
         Integer. The local rank id of the calling process.
     """
+    if _check_bypass_rank_id_and_size():
+        local_rank_id = 0
+        return local_rank_id
+    if _hccl_test():
+        return hccl.get_local_rank_id(group)
     rank_id = CollectiveManager.get_instance().get_local_rank_id(group)
     return rank_id
 

@@ -49,13 +49,13 @@ TypePtr OpaquePredicateInferType(const PrimitivePtr &prim, const std::vector<Abs
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 0);
-  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 1);
+  auto x = CheckAndConvertUtils::CheckArgsType(prim->name(), input_args, 0, kObjectTypeTensorType);
+  auto y = CheckAndConvertUtils::CheckArgsType(prim->name(), input_args, 1, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim->name(), x, y);
   const std::set<TypePtr> valid_types = {kInt8,    kInt16, kInt32, kInt64,     kFloat,      kFloat16, kUInt16,
                                          kFloat64, kUInt8, kBool,  kComplex64, kComplex128, kUInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("y", input_args[1]->BuildType(), valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("y", input_args[1]->GetType(), valid_types, prim->name());
   return std::make_shared<TensorType>(kBool);
 }
 

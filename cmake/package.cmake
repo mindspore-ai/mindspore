@@ -290,12 +290,15 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/boost
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/common
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/ops
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/ops_generate
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/communication
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/profiler
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/rewrite
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/safeguard
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/run_check
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/experimental
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/multiprocessing
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/hal
     DESTINATION ${INSTALL_PY_DIR}
     COMPONENT mindspore
 )
@@ -333,6 +336,17 @@ if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux")
                 TARGETS akg
                 DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
                 COMPONENT mindspore
+        )
+    endif()
+endif()
+
+if(ENABLE_D)
+    if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+        set(_MS_INTERNAL_KERNEL_HOME $ENV{MS_INTERNAL_KERNEL_HOME})
+        install(
+            DIRECTORY ${_MS_INTERNAL_KERNEL_HOME}
+            DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+            COMPONENT mindspore
         )
     endif()
 endif()
@@ -389,7 +403,6 @@ install(
 ## config files
 install(
     FILES ${CMAKE_SOURCE_DIR}/config/op_info.config
-          ${CMAKE_SOURCE_DIR}/config/super_bar_config.json
     DESTINATION ${INSTALL_CFG_DIR}
     COMPONENT mindspore
 )

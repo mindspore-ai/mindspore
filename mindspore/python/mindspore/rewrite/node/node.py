@@ -13,23 +13,34 @@
 # limitations under the License.
 # ============================================================================
 """Node class define of Rewrite. See detail in Node class docstring."""
-from typing import Optional, Union
+from typing import Optional, Union, List, Dict
 import ast
 import inspect
 from types import FunctionType
+import sys
 
 from mindspore.nn import Cell
 from mindspore.ops import Primitive
 from mindspore import log as logger
-from ... import _checkparam as Validator
-from ..ast_helpers import AstModifier
 from ..api.scoped_value import ScopedValue, ValueType
 from ..api.node_type import NodeType
-from ..namespace import is_subtree
-from ..ast_helpers.ast_replacer import AstReplacer
-from ..ast_creator_register import ast_creator_registry
+from ..common.namespace import is_subtree
+from ..common.error_log import error_str
+from ..ast_helpers import AstModifier, AstReplacer, AstConverter
+from ... import _checkparam as Validator
 
-PASS_THROUGH_METHOD = ScopedValue.create_naming_value("PassThrough")
+
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
+
+
+class LocalPrim(Primitive):
+    """This class is used to indicate a local primitive instance"""
+    def __init__(self, prim_obj: type):
+        super().__init__("rewrite_local_prim")
+        self.prim_obj = prim_obj
 
 
 class Node:
@@ -63,7 +74,7 @@ class Node:
     """
 
     def __init__(self, node_type: NodeType, ast_node: Optional[ast.AST], targets: [ScopedValue],
-                 func_name: Optional[ScopedValue], args: [ScopedValue], kwargs: {str: ScopedValue}, name: str,
+                 func_name: Optional[ScopedValue], args: List[ScopedValue], kwargs: Dict[str, ScopedValue], name: str,
                  instance):
         """
         Constructor of Node. Rewrite recommend invoking class method of Node to instantiate an instance of Node such
@@ -77,7 +88,7 @@ class Node:
             targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
             func_name (ScopedValue, optional): An instance of ScopedValue. See detail in docstring of Node class.
             args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            kwargs (Dict[str, ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
             instance: Object in network corresponding to this node.
@@ -90,7 +101,7 @@ class Node:
         self._instance = instance
         self._name = name
         self._func_name: Optional[ScopedValue] = func_name
-        self._targets: [ScopedValue] = targets
+        self._targets: [ScopedValue] = targets if targets is not None else []
         self._args_num = len(args) if args is not None else 0
         self._kwargs_num = len(kwargs) if kwargs is not None else 0
         self._normalized_args_keys = []  # for saving args' order
@@ -107,6 +118,10 @@ class Node:
         self._arg_providers: {int: (Node, int)} = {}
         # A dict that records which argument of which Node uses current Node's target
         self._target_users: {int: [(Node, int)]} = {}
+        # Indicate this node represent a class type object, e.g. abs_ops = _get_cache_prim(P.Abs)
+        self._type_cls = None
+        # Indicate this node represent the initialize of a class type, e.g. abs_inst = P.Abs()
+        self._init_cls = None
 
     @classmethod
     def create_call_method(cls, ast_node: Optional[ast.AST], targets: [Union[ScopedValue, str]],
@@ -136,12 +151,6 @@ class Node:
         if ast_node is None:
             raise RuntimeError("Input ast_node is None")
         return cls(NodeType.CallMethod, ast_node, new_targets, func_name, args, kwargs, name, None)
-
-    @classmethod
-    def create_call_pass_through_method(cls, ast_node: Optional[ast.AST], targets: [Union[ScopedValue, str]],
-                                        args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None, name: str = ""):
-        """Create pass through node."""
-        return Node.create_call_method(ast_node, targets, PASS_THROUGH_METHOD, args, kwargs, name)
 
     @classmethod
     def create_python_node(cls, ast_node: ast.AST, name: str = "", instance=None):
@@ -177,11 +186,11 @@ class Node:
         else:
             args = [default]
         if ast_node is None:
-            ast_node = ast.arg(arg_name)
+            ast_node = ast.arg(arg_name, annotation="")
         return cls(NodeType.Input, ast_node, [target], None, args, {}, name, None)
 
     @classmethod
-    def create_output_node(cls, ast_node: ast.AST, return_values: [str], name: str = "return"):
+    def create_output_node(cls, ast_node: ast.AST, return_value: [ScopedValue], name: str = "return"):
         """
         Class method of Node. Instantiate an instance of node whose type is Output. An Output node represents output of
         SymbolTree which is corresponding to return statement of forward function.
@@ -189,17 +198,14 @@ class Node:
         Args:
             ast_node (ast.AST): An instance of ast.AST represents corresponding node in ast.
             return_values (list[str]): A list of string represents name of return values.
-            name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
-                Name of node also used as field name in network class.
+            name (ScopedValue): An instance of ScopedValue represents name of node.
         """
-        real_return_values = ScopedValue.create_name_values(return_values)
-        return cls(NodeType.Output, ast_node, None, ScopedValue.create_naming_value("return"), real_return_values, {},
+        return cls(NodeType.Output, ast_node, None, ScopedValue.create_naming_value("return"), return_value, {},
                    name, None)
 
     @classmethod
     def create_mathops_node(cls, ast_node: ast.AST, targets: [ScopedValue],
-                            op_type: ScopedValue, args: [ScopedValue],
-                            ops: {str: list}, name: str = ""):
+                            op_type: ScopedValue, args: [ScopedValue], name: str = ""):
         """
         Class method of Node. Instantiate an instance of node whose type is `MathOps` .
         A mathops node is used to represent a node with mathematical operations, such as
@@ -214,27 +220,11 @@ class Node:
             op_type (ScopedValue): The type of ast_node.value saved by string. A ScopedValue with NamingValue type.
             args (list[ScopedValue]): Values participating in the mathematical operations. All values are saved
                 sequentially in the list.
-            ops (dict[str:ScopedValue]): Operators participating in the mathematical operations. All operators are
-                saved sequentially in the dict, and keys are numbers in string format, such as {'0':'add', '1':'sub'}.
             name (str): A string represents name of node. Name of node will be unique when inserted into `SymbolTree`.
                 Name of node also used as field name in network class. The format of mathops node name
                 is 'AstNodeName_AstOpName_n'.
         """
-        return cls(NodeType.MathOps, ast_node, targets, op_type, args, ops, name, None)
-
-    @staticmethod
-    def create_assign_node(targets, func_name, args, kwargs):
-        """Create a ast.Assign type node."""
-        # create targets
-        ast_targets = [ast_creator_registry.get("Name")(targets)]
-        # create call
-        ast_func = ast_creator_registry.get("Attribute")(func_name)
-        ast_args = ast_creator_registry.get("Args")(args)
-        ast_kwargs = ast_creator_registry.get("KwArgs")(kwargs) if kwargs else []
-        ast_value = ast_creator_registry.get("Call")(func=ast_func, args=ast_args, keywords=ast_kwargs)
-        # create assign
-        ast_node = ast_creator_registry.get("Assign")(targets=ast_targets, value=ast_value)
-        return ast_node
+        return cls(NodeType.MathOps, ast_node, targets, op_type, args, None, name, None)
 
     @staticmethod
     def _create_call_function(function: FunctionType, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None,
@@ -259,34 +249,30 @@ class Node:
         if kwargs is None:
             kwargs = {}
         targets = Node._handle_targets(targets)
-        _package = None
-        if isinstance(function, FunctionType):
-            _package = function.__globals__['__package__']
-        func_full_name = ".".join([_package, function.__name__]) if _package else function.__name__
-        func_scope = ''
-        func_name = func_full_name.split('.')[-1]
-        if func_full_name.count('.') > 0:
-            func_scope = func_full_name.rsplit('.')[0]
-        func_scope_name = ScopedValue.create_naming_value(func_name, func_scope)
+        func_name = function.__name__
+        func_scope_name = ScopedValue.create_naming_value(func_name)
         node = Node.inner_create_call_function(func_name, None, func_scope_name, function, targets, args, kwargs)
         return node
 
     @classmethod
-    def inner_create_call_function(cls, node_name, ast_node, func_name, function, targets, args, kwargs):
+    def inner_create_call_function(cls, node_name: str, ast_node: ast.Assign, func_name: ScopedValue, func_obj: object,
+                                   targets: List[ScopedValue], args: List[ScopedValue], kwargs: Dict[str, ScopedValue]):
         '''
         Instantiate an instance of node whose type is `CallFunction`.
 
         Args:
             node_name (str): Name of node.
-            func_name (str): Name of function.
+            func_name (ScopedValue): Name of function.
             ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast.
-            targets (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
-            function (Object): An instance of function. See detail in docstring of Node class.
-            args (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
-            kwargs (dict{str: ScopedValue}): A list of instance of `ScopedValue`. See detail in docstring of `Node`
+            func_obj (Object): An object of function. See detail in docstring of Node class.
+            targets (List[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
+            args (List[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
+            kwargs (Dict[str, ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of `Node`
                 class.
         '''
-        return cls(NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, node_name, function)
+        from . import CallFunction
+        # create CallFunction node
+        return CallFunction(targets, func_name, args, kwargs, node_name, ast_node, None, None, func_obj, False)
 
     @staticmethod
     def create_call_op(op: Union[Cell, Primitive], ast_node: Optional[ast.AST], targets: [Union[ScopedValue, str]],
@@ -329,7 +315,7 @@ class Node:
         else:
             func_name = node_name
         if is_sub_net and is_subtree(op):
-            from ..symbol_tree_builder import SymbolTreeBuilder
+            from ..symbol_tree import SymbolTreeBuilder
             stb = SymbolTreeBuilder(op)
             stree = stb.build()
             replacer = AstReplacer(stree.get_class_ast())
@@ -401,7 +387,7 @@ class Node:
             elif para.kind == inspect.Parameter.VAR_KEYWORD:  # corresponds to a '**kwargs'
                 var_keyword_name = name
             else:
-                raise RuntimeError("invalid para kind", para.kind)
+                raise RuntimeError("invalid parameter kind:", para.kind)
         if "self" in position_only_names:
             position_only_names.remove("self")
         if "self" in positional_or_keyword_names:
@@ -528,7 +514,11 @@ class Node:
         results = []
         for target in targets:
             if isinstance(target, str):
-                results.append(ScopedValue.create_naming_value(target))
+                scope = ""
+                name = target
+                if target.count('.') > 0:
+                    scope, name = target.rsplit('.', 1)
+                results.append(ScopedValue.create_naming_value(name, scope))
             elif isinstance(target, ScopedValue):
                 results.append(target)
             else:
@@ -555,6 +545,22 @@ class Node:
             attributes[k] = v
         attributes["cls"] = obj.__class__
         return attributes
+
+    def get_type_cls(self) -> object:
+        """Get the class type object this node represented, e.g. abs_ops = _get_cache_prim(P.Abs)"""
+        return self._type_cls
+
+    def set_type_cls(self, x):
+        """Set the class type object this node represented, e.g. abs_ops = _get_cache_prim(P.Abs)"""
+        self._type_cls = x
+
+    def get_init_cls(self) -> object:
+        """Get the class type object initialized by this node, e.g. abs_inst = P.Abs()"""
+        return self._init_cls
+
+    def set_init_cls(self, x):
+        """Set the class type object initialized by this node"""
+        self._init_cls = x
 
     def get_prev(self) -> 'Node':
         """
@@ -683,6 +689,22 @@ class Node:
             inputs.append(arg_provider[0])
         return inputs
 
+    def get_users(self) -> ['Node']:
+        """
+        Get user nodes of current node in topological order.
+
+        Returns:
+            A list of instances of Node as user nodes.
+        """
+        users = []
+        for target_users in self.get_target_users().values():
+            if not target_users:
+                continue
+            for (user, _) in target_users:
+                if user not in users:
+                    users.append(user)
+        return users
+
     def get_targets(self) -> [ScopedValue]:
         """
         Getter of _targets.
@@ -748,7 +770,7 @@ class Node:
         """
         self._func_name = func_name
         if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive):
-            self._sync_assign_func_to_ast()
+            self._sync_assign_func_name_to_ast()
 
     def get_name(self) -> str:
         """
@@ -789,6 +811,10 @@ class Node:
         Returns:
             A type.
         """
+        if isinstance(self._instance, LocalPrim):
+            return self._instance.prim_obj
+        if inspect.isfunction(self._instance):
+            return self._instance
         return type(self._instance)
 
     def get_instance(self):
@@ -824,7 +850,7 @@ class Node:
         Validator.check_int_range(arg_idx, 0, self._args_num, Validator.INC_LEFT, "arg_idx")
         if out_idx is None:
             if len(node.get_targets()) != 1:
-                raise RuntimeError("node should has one output when out_idx is not provided")
+                raise ValueError("node should has one output when out_idx is not provided")
             out_idx = 0
         Validator.check_int_range(out_idx, 0, len(node.get_targets()), Validator.INC_LEFT, "arg_idx")
         new_arg = node.get_targets()[out_idx]
@@ -1076,6 +1102,33 @@ class Node:
         self.set_ast(ast_assign)
         return ast_assign
 
+    def get_source_code(self) -> str:
+        """Get source code of node from ast of node."""
+        return astunparse.unparse(self._ast_node).strip()
+
+    def append_kwarg(self, kwarg: Dict[str, ScopedValue]):
+        """
+        Append a new keyword arg to node.
+
+        Args:
+            kwarg (Dict[str, ScopedValue]): The new keyword arg.
+
+        """
+        if self.get_node_type() not in [NodeType.Tree, NodeType.CallFunction]:
+            raise TypeError(f"For append_new_kwarg, the type of node can only be one of [Tree, CallFunction], "
+                            f"but got {self.get_node_type()}")
+        Validator.check_element_type_of_dict("kwarg", kwarg, [str], [ScopedValue], "append_new_kwarg")
+        for arg_key, value in kwarg.items():
+            # add keyword into _normalized_args
+            self._normalized_args[arg_key] = value
+            self._normalized_args_keys.append(arg_key)
+            self._kwargs_num += 1
+            # add keyword ast into ast.Call
+            ast_assign: ast.Assign = self._ast_node
+            ast_call: ast.Call = ast_assign.value
+            new_keyword = ast.keyword(arg=arg_key, value=AstModifier.get_ast_by_value(value, None))
+            ast_call.keywords.append(new_keyword)
+
     def _get_normalized_args(self, args: [ScopedValue], kwargs: {str: ScopedValue}) -> dict:
         """
         Merge args and kwargs to normalized args.
@@ -1097,7 +1150,7 @@ class Node:
         if not kwargs:
             kwargs = {}
         normalized_args: dict = dict()
-        if self._instance and hasattr(type(self._instance), "construct"):
+        if (args or kwargs) and self._instance and hasattr(type(self._instance), "construct"):
             parameters = inspect.signature(type(self._instance).construct).parameters
             names = Node._get_construct_arg_names(parameters)
             Node._map_args_names(names, args, kwargs, self._normalized_args_keys, normalized_args)
@@ -1116,12 +1169,9 @@ class Node:
                 self._normalized_args_keys.append(arg_key)
         return normalized_args
 
-    ##########################################################################################################
     # Synchronize rewrite node args to ast node
-    ##########################################################################################################
-
-    def _sync_assign_func_to_ast(self):
-        """Sync func of ast.Call of ast.Assign from self._name when NodeType is CallCell or CallPrimitive."""
+    def _sync_assign_func_name_to_ast(self):
+        """Sync func_name of ast.Call of ast.Assign from self._name when NodeType is CallCell or CallPrimitive."""
         if self._ast_node is None:
             return
         assign_ast = self._ast_node
@@ -1130,18 +1180,20 @@ class Node:
         call_ast = assign_ast.value
         if not isinstance(call_ast, ast.Call):
             raise TypeError("call_ast should be ast.Call, got: ", type(call_ast))
+        if self._func_name.type == ValueType.UnsupportedValue:
+            return
         func_ast = call_ast.func
-        if not self._func_name.value:
+        if not self._func_name.scope:
             if isinstance(func_ast, ast.Name):
                 func_ast.id = self._func_name.value
             else:
                 call_ast.func = ast.Name(self._func_name.value, ast.Store())
         else:
             if isinstance(func_ast, ast.Attribute):
-                func_value = func_ast.value
-                if not isinstance(func_value, ast.Name):
-                    raise RuntimeError("Only support ast.Name as value of attribute ", type(func_ast.value))
-                func_value.id = self._func_name.scope
+                if not isinstance(func_ast.value, ast.Name):
+                    func_ast.value = ast.Name(self._func_name.scope, ast.Load())
+                else:
+                    func_ast.value.id = self._func_name.scope
                 func_ast.attr = self._func_name.value
             else:
                 call_ast.func = ast.Attribute(ast.Name(self._func_name.scope, ast.Load()),
@@ -1154,45 +1206,42 @@ class Node:
             return
         assign_ast = self._ast_node
         if not isinstance(assign_ast, ast.Assign):
-            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
+            raise TypeError(error_str(f"assign_ast should be ast.Assign, but got: {type(assign_ast)}",
+                                      father_node=assign_ast))
         # update targets
-        targets_ast = assign_ast.targets
-        if isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast[0].elts):
-            raise RuntimeError("self._targets should have the same length as targets_ast's elts")
-        if not isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast):
-            raise RuntimeError("self._targets should have targets_ast same length")
-        for i, _ in enumerate(self._targets):
-            target = self._targets[i]
-            target_ast = targets_ast[0]
-            if isinstance(target_ast, ast.Name):
-                target_ast.id = target.value
-            elif isinstance(target_ast, ast.Tuple):
-                if not isinstance(target_ast.elts[i], ast.Name):
-                    raise TypeError("target should be ast.Name, got:", type(target_ast.elts[i]))
-                target_ast.elts[i].id = target.value
-            else:
-                raise TypeError("target_ast should be ast.Name or ast.Tuple, got: ", type(target_ast))
-            target_ast.id = target.value
-        ast.fix_missing_locations(assign_ast)
+        target_ast_elems = AstConverter.get_ast_target_elems(assign_ast.targets[0])
+        if len(self._targets) != len(target_ast_elems):
+            raise ValueError(error_str(f"The number of targets should be {len(target_ast_elems)}, "
+                                       f"but got {len(self._targets)}", father_node=assign_ast))
+        for i, target_ast in enumerate(target_ast_elems):
+            target_ast_elems[i] = AstModifier.get_ast_by_value(self._targets[i], target_ast)
 
-    def _sync_call_cell_args_to_ast(self):
-        """Sync args of ast.Cell of ast.Assign from self._normalized_args when NodeType is CallCell or CallPrimitive."""
+    def _sync_call_args_to_ast(self):
+        """Sync args of ast.Call from self._normalized_args."""
         if self._ast_node is None:
             return
         assign_ast = self._ast_node
         if not isinstance(assign_ast, ast.Assign):
-            raise TypeError(f"assign_ast should be ast.Assign, got: {type(assign_ast)}")
+            raise TypeError(f"When synchronizing args for '{self._name}'({self._node_type}), _ast_node should be "
+                            f"ast.Assign, but got: {type(assign_ast)}")
         assign_value = assign_ast.value
         if not isinstance(assign_value, ast.Call):
-            return
+            if isinstance(assign_value, ast.Attribute) and self._node_type in (NodeType.CellContainer,
+                                                                               NodeType.CallCell):
+                # CellContainers in control flow may be flatten to ast.Attribute: blocks_var = self.blocks
+                # In this case, no args exist in node, so we don't need to sync.
+                # CellContainers may be type of CallCell when share one implementation
+                return
+            raise TypeError(f"When synchronizing args for '{self._name}'({self._node_type}), _ast_node.value should "
+                            f"be ast.Call, but got: {type(assign_value)}")
         keywords_ast = assign_value.keywords
         args_ast = assign_value.args
         if len(self._normalized_args_keys) != (len(keywords_ast) + len(args_ast)):
-            raise RuntimeError("ast keywords plus args len is not equal to self._normalized_args value")
-
+            raise ValueError("ast keywords plus args len is not equal to self._normalized_args value")
         for arg_index in range(self._args_num):
             arg_ast = args_ast[arg_index]
-            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[arg_index]), arg_ast)
+            args_ast[arg_index] = \
+                AstModifier.get_ast_by_value(self._normalized_args.get(self._normalized_args_keys[arg_index]), arg_ast)
 
         # the order of kwargs may not the same as that in keywords_ast
         keyword_map_index = {}
@@ -1200,117 +1249,61 @@ class Node:
             keyword_map_index[keyword_ast.arg] = index
         for keyword_index in range(self._kwargs_num):
             key = self._normalized_args_keys[keyword_index + self._args_num]
-            AstModifier.update_arg_value(self._normalized_args.get(key),
-                                         keywords_ast[keyword_map_index.get(key)].value)
-
-    def _sync_call_pass_through_method_args_to_ast(self, assign_value):
-        """
-        Sync args of PASS_THROUGH_METHOD type ast.Cell of ast.Assign from self._normalized_args when NodeType is
-        CallMethod.
-        """
-        if isinstance(assign_value, ast.Name):
-            if len(self._normalized_args_keys) != 1:
-                raise RuntimeError("self._normalized_args_keys should have 1 elements")
-            arg = self._normalized_args.get(self._normalized_args_keys[0])
-            if arg.type != ValueType.NamingValue:
-                raise RuntimeError("arg.type should equal to ValueType.NamingValue")
-            if arg.scope != "":
-                raise RuntimeError("arg.scope should be empty")
-            assign_value.id = arg.value
-        elif isinstance(assign_value, ast.Attribute):
-            if len(self._normalized_args_keys) != 1:
-                raise RuntimeError("self._normalized_args_keys should have 1 elements")
-            arg = self._normalized_args.get(self._normalized_args_keys[0])
-            if arg.type != ValueType.NamingValue:
-                raise RuntimeError("arg.type should equal to ValueType.NamingValue")
-            assign_value.attr = arg.value
-            assign_value_value = assign_value.value
-            if not isinstance(assign_value_value, ast.Name):
-                raise RuntimeError("Only support ast.Name as value of attribute ", type(assign_value_value))
-            assign_value_value.id = arg.scope
-        else:
-            if len(self._normalized_args_keys) != 1:
-                raise RuntimeError("self._normalized_args_keys should have 1 elements")
-            arg = self._normalized_args.get(self._normalized_args_keys[0])
-            if arg.type != ValueType.ConstantValue:
-                raise RuntimeError("arg should be an ConstantValue")
-            if arg.scope != "":
-                raise RuntimeError("arg.scope should be empty")
-            assign_value.value = arg.value
+            keywords_ast[keyword_map_index.get(key)].value = \
+                AstModifier.get_ast_by_value(self._normalized_args.get(key),
+                                             keywords_ast[keyword_map_index.get(key)].value)
 
     def _sync_call_method_args_to_ast(self):
         """
         Sync args to value of ast.Assign from self._normalized_args when NodeType is CallMethod.
-
         For node with type of CallMethod, the value of ast.Assign is one of:
-        - ast.Tuple
-        - ast.Name
-        - ast.ast.Attribute
-        - ...
+        | func_name      | data_type   | value of ast.Assign     |
+        |:---------------|:------------|:------------------------|
+        | 'pass_through' | constants   | ast.Constant, ast.NameConstant, ast.Num, ast.Bytes, ast.Str |
+        | 'pass_through' | variables   | ast.Name, ast.Attribute |
+        | 'tuple'        | tuple       | ast.Tuple               |
+        | 'list'         | list        | ast.List                |
+        | 'dict'         | dict        | ast.Dict                |
         """
         if self._ast_node is None:
             return
         assign_ast = self._ast_node
         if not isinstance(assign_ast, ast.Assign):
-            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
+            raise TypeError(f"For node '{self.get_name()}', assign_ast should be ast.Assign, got: ", type(assign_ast))
         assign_value = assign_ast.value
-        if self._func_name == PASS_THROUGH_METHOD:
-            self._sync_call_pass_through_method_args_to_ast(assign_value)
-        elif self._func_name.value == "tuple":
-            tuple_ast: ast.Tuple = assign_value
-            if len(self._normalized_args_keys) != len(tuple_ast.elts):
-                raise RuntimeError("size of self._normalized_args_keys should be equal to size of elements of tuple")
-            for index, elt in enumerate(tuple_ast.elts):
+        if self._func_name.value == "pass_through":
+            # update constants/variables
+            assign_ast.value = \
+                AstModifier.get_ast_by_value(self._normalized_args.get(self._normalized_args_keys[0]), assign_value)
+        elif self._func_name.value in ("tuple", "list", "dict"):
+            # update tuple/list/dict
+            ast_elts = assign_value.values if isinstance(assign_value, ast.Dict) else assign_value.elts
+            if len(self._normalized_args_keys) != len(ast_elts):
+                raise ValueError(f"For node '{self.get_name()}', size of self._normalized_args_keys"
+                                 f"({len(self._normalized_args_keys)}) should be equal to size of elements of "
+                                 f"ast_elts({len(ast_elts)})")
+            for index, elt in enumerate(ast_elts):
                 scoped_value: ScopedValue = self._normalized_args.get(self._normalized_args_keys[index])
-                if isinstance(elt, ast.Constant):
-                    elt.value = scoped_value.value
-                elif isinstance(elt, (ast.Str, ast.Bytes)):
-                    elt.s = scoped_value.value
-                elif isinstance(elt, ast.Num):
-                    elt.n = scoped_value.value
-                elif isinstance(elt, ast.Name):
-                    elt.id = scoped_value.value
-                elif isinstance(elt, ast.Attribute) and isinstance(elt.value, ast.Name):
-                    elt.value.id = scoped_value.scope
-                    elt.attr = scoped_value.value
-                else:
-                    raise RuntimeError("Only support constant or symbol in tuple now")
+                ast_elts[index] = AstModifier.get_ast_by_value(scoped_value, elt)
         else:
-            raise RuntimeError("Only support pass_through or tuple method as call_method now, ", self._func_name.value)
+            raise TypeError(f"For node '{self.get_name()}', only support (pass_through, tuple or dict method) as "
+                            f"call_method, but got {self._func_name.value}")
 
     def _sync_return_node_to_ast(self):
         """
         Sync args to value of ast.Return from self._normalized_args when NodeType is Output.
 
         For node with type of CallMethod, the value of ast.Assign is one of:
-        - ast.Name
-        - ast.Tuple
+        (ast.Name, ast.Attribute)
         """
         if self._ast_node is None:
             return
         return_ast = self._ast_node
         if not isinstance(return_ast, ast.Return):
-            raise TypeError("return_ast should be ast.Return, got: ", type(return_ast))
-        # update args
+            raise TypeError(f"For node '{self.get_name()}', return_ast should be ast.Return, got: {type(return_ast)}")
         return_value_ast = return_ast.value
-        if isinstance(return_value_ast, ast.Name):
-            if len(self._normalized_args_keys) != 1:
-                raise RuntimeError("self._normalized_args_keys should have 1 elements")
-            return_value_ast.id = self._normalized_args.get(self._normalized_args_keys[0]).value
-        elif isinstance(return_value_ast, ast.Tuple):
-            elements = return_value_ast.elts
-            if len(self._normalized_args.values()) != len(elements):
-                raise RuntimeError("self._normalized_args.values() should have elements same length")
-            for elt_index, elt in enumerate(elements):
-                if not isinstance(elt, ast.Name):
-                    raise RuntimeError("Only support ast.Name as return value: ", elt)
-                arg = self._normalized_args.get(self._normalized_args_keys[elt_index])
-                if not isinstance(arg, ScopedValue):
-                    raise TypeError("arg should be ScopedValue, got: ", type(arg))
-                elt.id = arg.value
-        else:
-            raise RuntimeError("Unsupported return value type: ", return_value_ast)
-        ast.fix_missing_locations(return_ast)
+        return_ast.value = AstModifier.get_ast_by_value(self._normalized_args.get(self._normalized_args_keys[0]),
+                                                        return_value_ast)
 
     def _sync_mathops_node_args_to_ast(self):
         """
@@ -1324,44 +1317,67 @@ class Node:
         if isinstance(mathops_node, ast.BinOp):
             left = mathops_node.left
             right = mathops_node.right
-            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[0]), left)
-            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[1]), right)
+            mathops_node.left = AstModifier.get_ast_by_value(self._normalized_args.get(self._normalized_args_keys[0]),
+                                                             left)
+            mathops_node.right = AstModifier.get_ast_by_value(self._normalized_args.get(self._normalized_args_keys[1]),
+                                                              right)
         elif isinstance(mathops_node, ast.UnaryOp):
             operand = mathops_node.operand
-            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[0]), operand)
+            mathops_node.operand = \
+                AstModifier.get_ast_by_value(self._normalized_args.get(self._normalized_args_keys[0]), operand)
         elif isinstance(mathops_node, ast.BoolOp):
             values = mathops_node.values
             for arg_index in range(self._args_num):
                 arg_value = self._normalized_args.get(self._normalized_args_keys[arg_index])
-                AstModifier.update_arg_value(arg_value, values[arg_index])
+                values[arg_index] = AstModifier.get_ast_by_value(arg_value, values[arg_index])
         elif isinstance(mathops_node, ast.Compare):
             left = mathops_node.left
-            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[0]), left)
+            mathops_node.left = AstModifier.get_ast_by_value(self._normalized_args.get(self._normalized_args_keys[0]),
+                                                             left)
             comparators = mathops_node.comparators
             for arg_index in range(1, self._args_num):
                 arg_value = self._normalized_args.get(self._normalized_args_keys[arg_index])
-                AstModifier.update_arg_value(arg_value, comparators[arg_index - 1])
+                comparators[arg_index - 1] = AstModifier.get_ast_by_value(arg_value, comparators[arg_index - 1])
         else:
             raise TypeError("The type of 'mathops_node' must be one of (ast.BinOp, ast.UnaryOp, "
                             "ast.BoolOp, ast.Compare), but got ", type(mathops_node))
+
+    def _sync_control_flow_args_to_ast(self):
+        """
+        Sync values from self._normalized_args to the ast node of control flow.
+        """
+        if self._ast_node is None:
+            return
+        normalized_args_num = len(self._normalized_args_keys)
+        if normalized_args_num == 0:
+            return
+        if normalized_args_num > 1:
+            raise ValueError("self._normalized_args_keys should have less than 1 elements")
+        arg_value = self._normalized_args.get(self._normalized_args_keys[0])
+        if isinstance(self._ast_node, (ast.If, ast.IfExp, ast.While)):
+            self._ast_node.test = AstModifier.get_ast_by_value(arg_value, self._ast_node.test)
+        elif isinstance(self._ast_node, ast.For):
+            self._ast_node.iter = AstModifier.get_ast_by_value(arg_value, self._ast_node.iter)
+        else:
+            raise ValueError(f"For Control Flow, ast_node should be one of [ast.If, ast.IfExp, "
+                             f"ast.While, ast.For], but got {type(self._ast_node)}")
 
     def _sync_arg(self):
         """Sync _normalized_args to corresponding ast node when updated."""
         if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree, \
                                NodeType.CellContainer, NodeType.CallFunction):
-            self._sync_call_cell_args_to_ast()
+            self._sync_call_args_to_ast()
         elif self._node_type == NodeType.Output:
             self._sync_return_node_to_ast()
         elif self._node_type == NodeType.CallMethod:
             self._sync_call_method_args_to_ast()
         elif self._node_type == NodeType.MathOps:
             self._sync_mathops_node_args_to_ast()
+        elif self._node_type == NodeType.ControlFlow:
+            self._sync_control_flow_args_to_ast()
 
 
-##########################################################################################################
 # Child classes
-##########################################################################################################
-
 class TreeNode(Node):
     """Tree type Node who holds a handler of SymbolTree."""
 

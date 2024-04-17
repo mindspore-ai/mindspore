@@ -49,6 +49,10 @@ int DoStack(const CNodePtr &cnode, const ShapeVector &out_shape, ShapeVector *ou
     return lite::RET_NOT_SUPPORT;
   }
   RemoveIfMonad(cnode);
+  if (lite::RemoveIfMakeTuple(cnode) != RET_OK) {
+    cnode->set_inputs(origin_inputs);
+    return lite::RET_NOT_SUPPORT;
+  }
   auto current_inputs = cnode->inputs();
   for (size_t i = 1; i < current_inputs.size(); ++i) {
     if (utils::isa<CNode>(current_inputs[i])) {
@@ -792,6 +796,10 @@ int DynamicShapePreprocessor::ProcessOps(const FuncGraphPtr &func_graph) {
       continue;
     }
     RemoveIfMonad(cnode);
+    if (lite::RemoveIfMakeTuple(cnode) != RET_OK) {
+      cnode->set_inputs(origin_inputs);
+      continue;
+    }
     auto current_inputs = cnode->inputs();
     bool can_infer = std::any_of(current_inputs.begin(), current_inputs.end(), [this](AnfNodePtr &anf_node) {
       return op_shape_infos_.find(anf_node) != op_shape_infos_.end() || !utils::isa<CNode>(anf_node);

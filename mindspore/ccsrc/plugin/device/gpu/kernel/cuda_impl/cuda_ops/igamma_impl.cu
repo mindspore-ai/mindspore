@@ -240,7 +240,7 @@ static __device__ T igammac_cf_impl(T a, T x) {
   const T biginv = cephes_helper<T>::biginv();
 
   if (isinf(x)) {
-    return zero;
+    return std::numeric_limits<T>::quiet_NaN();
   }
 
   T ax = main_igamma_term<T>(a, x);

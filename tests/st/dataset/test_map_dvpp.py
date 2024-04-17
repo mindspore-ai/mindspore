@@ -26,7 +26,6 @@ import mindspore as ms
 import mindspore.dataset as ds
 from mindspore.dataset.transforms import transforms
 import mindspore.dataset.vision as vision
-from utils import ascend910b
 
 # pylint: disable=W0212
 # W0212: protected-access
@@ -34,6 +33,87 @@ from utils import ascend910b
 
 data_dir = "/home/workspace/mindspore_dataset/910B_dvpp/testImageNetData2/train"
 result_data_dir = "/home/workspace/mindspore_dataset/910B_dvpp/testAscend910BDvpp"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_map_with_pyfunc_with_multi_op_process_mode():
+    """
+    Feature: Map op with pyfunc contains dvpp ops & cpu ops
+    Description: Test map with dvpp resize operation
+    Expectation: The result is equal to the expected
+    """
+    ms.set_context(device_target="Ascend")
+
+    # can resolve tbe error when map with pyfun in process mode
+    os.environ["MIN_COMPILE_RESOURCE_USAGE_CTRL"] = "ub_fusion,coretype_check,op_compile"
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # testcase2 : map with process mode
+    data2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+
+    def pyfunc2(img_bytes):
+        ms.set_context(max_device_memory="2GB")
+
+        length = len(img_bytes)
+        print("image len: {}".format(length), flush=True)
+
+        img_decode = vision.Decode().device("Ascend")(img_bytes)
+
+        # resize(cpu)
+        img_resize = vision.Resize(size=(64, 32))(img_decode)
+
+        # normalize(dvpp)
+        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+        img_normalize = vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_resize)
+        return img_normalize
+
+    # multi process mode
+    data2 = data2.map(pyfunc2, input_columns="image", python_multiprocessing=True)
+    for item in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        assert item[0].shape == (64, 32, 3)
+        assert item[0].dtype == np.float32
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_map_with_pyfunc_with_multi_op_thread_mode():
+    """
+    Feature: Map op with pyfunc contains dvpp ops & cpu ops
+    Description: Test map with dvpp resize operation
+    Expectation: The result is equal to the expected
+    """
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # testcase1 : map with thread mode
+    data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+
+    def pyfunc(img_bytes):
+        length = len(img_bytes)
+        print("image len: {}".format(length), flush=True)
+
+        img_decode = vision.Decode().device("Ascend")(img_bytes)
+
+        # resize(cpu)
+        img_resize = vision.Resize(size=(64, 32))(img_decode)
+
+        # normalize(dvpp)
+        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+        img_normalize = vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_resize)
+        return img_normalize
+
+    # multi thread mode
+    data1 = data1.map(pyfunc, input_columns="image")
+    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        assert item[0].shape == (64, 32, 3)
+        assert item[0].dtype == np.float32
 
 
 def map_with_dvpp_resize(num_workers=1, python_multiprocess=False):
@@ -220,16 +300,14 @@ def map_with_dvpp_resize(num_workers=1, python_multiprocess=False):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_resize():
     """
     Feature: Map op
     Description: Test map with dvpp resize operation
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -241,20 +319,16 @@ def test_map_with_dvpp_resize():
     map_with_dvpp_resize(3, True)
     map_with_dvpp_resize(8, True)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_resize_mixed_op():
     """
     Feature: Map op
     Description: Test map with dvpp resize operation and mixed op
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -337,20 +411,16 @@ def test_map_with_dvpp_resize_mixed_op():
         assert item[0].shape == (3, 64, 48)
     assert count == 6
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_resize_with_exception():
     """
     Feature: Map op
     Description: Test map with dvpp resize operation when exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -549,8 +619,6 @@ def test_map_with_dvpp_resize_with_exception():
             count += 1
     assert "The current InterpolationMode is not supported by DVPP." in str(info.value)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 def map_with_dvpp_decode(num_workers=1, python_multiprocess=False):
     """
@@ -581,16 +649,14 @@ def map_with_dvpp_decode(num_workers=1, python_multiprocess=False):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_decode():
     """
     Feature: Map op
     Description: Test map with dvpp decode operation
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -602,20 +668,16 @@ def test_map_with_dvpp_decode():
     map_with_dvpp_decode(3, True)
     map_with_dvpp_decode(8, True)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_decode_with_pre_pyfun():
     """
     Feature: Map op
     Description: Test map with dvpp decode operation and with pre pyfunc
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -640,20 +702,16 @@ def test_map_with_dvpp_decode_with_pre_pyfun():
         print("count: {}".format(count), flush=True)
     assert count == 6
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_decode_mixed_op():
     """
     Feature: Map op
     Description: Test map with dvpp decode operation and mixed op
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -737,20 +795,16 @@ def test_map_with_dvpp_decode_mixed_op():
         assert item[0].shape == (3, 64, 48)
     assert count == 6
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_decode_with_exception():
     """
     Feature: Map op
     Description: Test map with dvpp decode operation when exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -765,7 +819,7 @@ def test_map_with_dvpp_decode_with_exception():
         count = 0
         for _ in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "Invalid image type. Currently only support JPG." in str(info.value)
+    assert "Invalid data shape. Currently only support 1D." in str(info.value)
 
     # bmp
     class RandomAccessDatasetBMP:
@@ -825,8 +879,6 @@ def test_map_with_dvpp_decode_with_exception():
     with pytest.raises(ValueError) as error_info:
         _ = data1.map(vision.Decode().device("Ascennd"), input_columns="image")
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
-
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
 
 
 def map_with_dvpp_normalize(num_workers=1, python_multiprocess=False):
@@ -1111,16 +1163,14 @@ def map_with_dvpp_normalize(num_workers=1, python_multiprocess=False):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_normalize():
     """
     Feature: Map op
     Description: Test map with dvpp normalize operation
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -1132,20 +1182,16 @@ def test_map_with_dvpp_normalize():
     map_with_dvpp_normalize(3, True)
     map_with_dvpp_normalize(8, True)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_normalize_mixed_op():
     """
     Feature: Map op
     Description: Test map with dvpp mixed operation
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -1229,20 +1275,16 @@ def test_map_with_dvpp_normalize_mixed_op():
         assert item[0].shape == (3, 64, 48)
     assert count == 6
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_normalize_exception():
     """
     Feature: Map op
     Description: Test map with dvpp normalize operation and exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -1418,97 +1460,324 @@ def test_map_with_dvpp_normalize_exception():
         assert count == 6
     assert "The input data's channel is not 3 or 1." in str(info.value)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
-def test_map_with_pyfunc_with_multi_op_thread_mode():
+def test_map_with_dvpp_horizontal_flip_with_exception():
     """
-    Feature: Map op with pyfunc contains dvpp ops & cpu ops
-    Description: Test map with dvpp resize operation
+    Feature: Map op
+    Description: Test map with dvpp horizontal flip operation when exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
 
-    # testcase1 : map with thread mode
-    data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+    # the input is HW2
+    class RandomAccessDatasetHW2:
+        def __init__(self):
+            self._data = np.ones((6, 224, 224, 2), dtype=np.uint8)
+            self._label = np.zeros((6,))
 
-    def pyfunc(img_bytes):
-        length = len(img_bytes)
-        print("image len: {}".format(length), flush=True)
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
 
-        img_decode = vision.Decode().device("Ascend")(img_bytes)
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDatasetHW2()
+    dataset1 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
 
-        # resize(cpu)
-        img_resize = vision.Resize(size=(64, 32))(img_decode)
+    dataset1 = dataset1.map(vision.HorizontalFlip().device("Ascend"), input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
 
-        # normalize(dvpp)
-        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
-        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
-        img_normalize = vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_resize)
-        return img_normalize
+    # the input is HW4
+    class RandomAccessDatasetHW4:
+        def __init__(self):
+            self._data = np.ones((6, 224, 224, 4), dtype=np.uint8)
+            self._label = np.zeros((6,))
 
-    # multi thread mode
-    data1 = data1.map(pyfunc, input_columns="image")
-    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        assert item[0].shape == (64, 32, 3)
-        assert item[0].dtype == np.float32
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDatasetHW4()
+    dataset2 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
+
+    dataset2 = dataset2.map(vision.HorizontalFlip().device("Ascend"), input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+
+    # the input is 23HW4
+    class RandomAccessDataset23HW4:
+        def __init__(self):
+            self._data = np.ones((6, 2, 3, 224, 224, 4), dtype=np.uint8)
+            self._label = np.zeros((6,))
+
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDataset23HW4()
+    dataset3 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
+
+    dataset3 = dataset3.map(vision.HorizontalFlip().device("Ascend"), input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset3.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
-def test_map_with_pyfunc_with_multi_op_process_mode():
+def test_map_with_dvpp_vertical_flip_with_exception():
     """
-    Feature: Map op with pyfunc contains dvpp ops & cpu ops
-    Description: Test map with dvpp resize operation
+    Feature: Map op
+    Description: Test map with dvpp vertical flip operation when exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
-
-    # can resolve tbe error when map with pyfun in process mode
-    os.environ["MIN_COMPILE_RESOURCE_USAGE_CTRL"] = "ub_fusion,coretype_check,op_compile"
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
 
-    # testcase2 : map with process mode
-    data2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+    # the input is HW2
+    class RandomAccessDatasetHW2:
+        def __init__(self):
+            self._data = np.ones((6, 224, 224, 2), dtype=np.uint8)
+            self._label = np.zeros((6,))
 
-    def pyfunc2(img_bytes):
-        ms.set_context(max_device_memory="2GB")
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
 
-        length = len(img_bytes)
-        print("image len: {}".format(length), flush=True)
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDatasetHW2()
+    dataset1 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
 
-        img_decode = vision.Decode().device("Ascend")(img_bytes)
+    dataset1 = dataset1.map(vision.VerticalFlip().device("Ascend"), input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
 
-        # resize(cpu)
-        img_resize = vision.Resize(size=(64, 32))(img_decode)
+    # the input is HW4
+    class RandomAccessDatasetHW4:
+        def __init__(self):
+            self._data = np.ones((6, 224, 224, 4), dtype=np.uint8)
+            self._label = np.zeros((6,))
 
-        # normalize(dvpp)
-        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
-        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
-        img_normalize = vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_resize)
-        return img_normalize
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
 
-    # multi process mode
-    data2 = data2.map(pyfunc2, input_columns="image", python_multiprocessing=True)
-    for item in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        assert item[0].shape == (64, 32, 3)
-        assert item[0].dtype == np.float32
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDatasetHW4()
+    dataset2 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
+    dataset2 = dataset2.map(vision.VerticalFlip().device("Ascend"), input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+
+    # the input is 23HW4
+    class RandomAccessDataset23HW4:
+        def __init__(self):
+            self._data = np.ones((6, 2, 3, 224, 224, 4), dtype=np.uint8)
+            self._label = np.zeros((6,))
+
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDataset23HW4()
+    dataset3 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
+
+    dataset3 = dataset3.map(vision.VerticalFlip().device("Ascend"), input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset3.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_map_with_dvpp_resize_crop_with_exception():
+    """
+    Feature: Map op
+    Description: Test map with dvpp resize crop operation when exception
+    Expectation: The result is equal to the expected
+    """
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # the input is HW2
+    class RandomAccessDatasetHW2:
+        def __init__(self):
+            self._data = np.ones((6, 224, 224, 2), dtype=np.uint8)
+            self._label = np.zeros((6,))
+
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDatasetHW2()
+    dataset1 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
+
+    dataset1 = dataset1.map(vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend"), input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+
+    # the input is HW4
+    class RandomAccessDatasetHW4:
+        def __init__(self):
+            self._data = np.ones((6, 224, 224, 4), dtype=np.uint8)
+            self._label = np.zeros((6,))
+
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDatasetHW4()
+    dataset2 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
+
+    dataset2 = dataset2.map(vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend"), input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+
+    # the input is 23HW4
+    class RandomAccessDataset23HW4:
+        def __init__(self):
+            self._data = np.ones((6, 2, 3, 224, 224, 4), dtype=np.uint8)
+            self._label = np.zeros((6,))
+
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDataset23HW4()
+    dataset3 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
+
+    dataset3 = dataset3.map(vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend"), input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset3.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_map_with_dvpp_perspective_with_exception():
+    """
+    Feature: Map op
+    Description: Test map with dvpp perspective operation when exception
+    Expectation: The result is equal to the expected
+    """
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
+    end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
+
+    # the input is HW2
+    class RandomAccessDatasetHW2:
+        def __init__(self):
+            self._data = np.ones((6, 224, 224, 2), dtype=np.uint8)
+            self._label = np.zeros((6,))
+
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDatasetHW2()
+    dataset1 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
+
+    dataset1 = dataset1.map(vision.Perspective(start_points, end_points).device("Ascend").device("Ascend"),
+                            input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+
+    # the input is HW4
+    class RandomAccessDatasetHW4:
+        def __init__(self):
+            self._data = np.ones((6, 224, 224, 4), dtype=np.uint8)
+            self._label = np.zeros((6,))
+
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDatasetHW4()
+    dataset2 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
+
+    dataset2 = dataset2.map(vision.Perspective(start_points, end_points).device("Ascend"),
+                            input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+
+    # the input is 23HW4
+    class RandomAccessDataset23HW4:
+        def __init__(self):
+            self._data = np.ones((6, 2, 3, 224, 224, 4), dtype=np.uint8)
+            self._label = np.zeros((6,))
+
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+    loader = RandomAccessDataset23HW4()
+    dataset3 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
+
+    dataset3 = dataset3.map(vision.Perspective(start_points, end_points).device("Ascend"),
+                            input_columns="image")
+    with pytest.raises(RuntimeError) as info:
+        count = 0
+        for _ in dataset3.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
 
 if __name__ == '__main__':
+    test_map_with_pyfunc_with_multi_op_process_mode()
+    test_map_with_pyfunc_with_multi_op_thread_mode()
     test_map_with_dvpp_resize()
     test_map_with_dvpp_resize_mixed_op()
     test_map_with_dvpp_resize_with_exception()
@@ -1519,5 +1788,7 @@ if __name__ == '__main__':
     test_map_with_dvpp_normalize()
     test_map_with_dvpp_normalize_mixed_op()
     test_map_with_dvpp_normalize_exception()
-    test_map_with_pyfunc_with_multi_op_thread_mode()
-    test_map_with_pyfunc_with_multi_op_process_mode()
+    test_map_with_dvpp_horizontal_flip_with_exception()
+    test_map_with_dvpp_vertical_flip_with_exception()
+    test_map_with_dvpp_resize_crop_with_exception()
+    test_map_with_dvpp_perspective_with_exception()

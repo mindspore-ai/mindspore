@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MATRIXINVERSE_H_
 #define AICPU_KERNELS_NORMALIZED_MATRIXINVERSE_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -31,7 +31,7 @@ class MatrixInverseCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  static uint32_t MatrixInverseCompute(const CpuKernelContext &ctx);
+  static uint32_t MatrixInverseCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -38,7 +38,7 @@ class JoinedStrInfer : public abstract::OpInferBase {
   ValuePtr InferValue(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
     std::string res;
     for (const auto &arg : input_args) {
-      auto arg_value = arg->BuildValue();
+      auto arg_value = arg->GetValue();
       MS_EXCEPTION_IF_NULL(arg_value);
       res += arg_value->ToString();
     }

@@ -27,7 +27,7 @@ class NetDenseToCSR(nn.Cell):
         return csr.indptr, csr.indices, csr.values
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -73,7 +73,7 @@ class NetCSRToCOO(nn.Cell):
         return coo.indices, coo.values
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -97,7 +97,7 @@ class NetCSRToDense(nn.Cell):
         return x.to_dense()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -116,7 +116,7 @@ def test_csr_to_dense_dshape():
     test_dynamic.test_dynamic_grad_net(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

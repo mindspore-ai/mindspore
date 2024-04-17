@@ -20,10 +20,10 @@
 #define EIGEN_USE_SIMPLE_THREAD_POOL
 
 #include <Eigen/Dense>
-#include "inc/cpu_ops_kernel.h"
-#include "inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
-#include "common/cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -36,13 +36,13 @@ class RsqrtGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t RsqrtGradCompute(const CpuKernelContext &ctx);
+  uint32_t RsqrtGradCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t RsqrtGradComputeComplex(const CpuKernelContext &ctx);
+  uint32_t RsqrtGradComputeComplex(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t RsqrtGradComputeFP16(const CpuKernelContext &ctx);
+  uint32_t RsqrtGradComputeFP16(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_MUL_H_

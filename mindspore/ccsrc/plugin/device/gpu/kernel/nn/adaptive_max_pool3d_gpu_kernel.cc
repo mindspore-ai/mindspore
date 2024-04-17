@@ -28,8 +28,8 @@ constexpr size_t kDimNum4 = 4;
 constexpr size_t kDimNum5 = 5;
 
 template <typename T>
-bool AdaptiveMaxPool3DKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
+bool AdaptiveMaxPool3DKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -45,9 +45,8 @@ bool AdaptiveMaxPool3DKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   return true;
 }
 
-bool AdaptiveMaxPool3DKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool AdaptiveMaxPool3DKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -58,10 +57,9 @@ bool AdaptiveMaxPool3DKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int AdaptiveMaxPool3DKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int AdaptiveMaxPool3DKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -71,8 +69,8 @@ int AdaptiveMaxPool3DKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     return KRET_RESIZE_FAILED;
   }
 
-  ShapeVector input_shape = inputs.at(kIndex0)->GetShapeVector();
-  ShapeVector output_shape = outputs.at(kIndex0)->GetShapeVector();
+  ShapeVector input_shape = inputs[kIndex0]->GetShapeVector();
+  ShapeVector output_shape = outputs[kIndex0]->GetShapeVector();
   const size_t dim_num = input_shape.size();
   if (!(dim_num == kDimNum4 || dim_num == kDimNum5)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the input 'x' dimensions should be equal to 4 or 5, but got "

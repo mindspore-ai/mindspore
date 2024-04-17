@@ -102,10 +102,10 @@ class MSE(Metric):
     Measures the mean squared error(MSE).
 
     Creates a criterion that measures the MSE (squared L2 norm) between
-    each element in the prediction and the ground truth: :math:`x` and: :math:`y`.
+    each element in the prediction and the ground truth: :math:`y\_pred` and: :math:`y`.
 
     .. math::
-        \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n({y\_pred}_i - y_i)^2}{n}
+        \text{MSE}(y\_pred,\ y) = \frac{\sum_{i=1}^n({y\_pred}_i - y_i)^2}{n}
 
     where :math:`n` is batch size.
 

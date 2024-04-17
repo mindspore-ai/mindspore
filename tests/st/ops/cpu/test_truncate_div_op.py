@@ -142,7 +142,7 @@ def test_truncatediv_dtype_not_supported():
         _ = TruncateDiv()(input_x, input_y).asnumpy()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_truncate_div():

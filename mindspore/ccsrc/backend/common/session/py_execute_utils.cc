@@ -72,8 +72,41 @@ tensor::TensorPtr ScalarToValue(const py::object &obj) {
   return ScalarToTensor(value->cast<ScalarPtr>());
 }
 
+template <typename T>
+bool CheckSequenceElementSame(const py::sequence &obj) {
+  // Check from second element, the type of first element is determined by T.
+  for (size_t i = 1; i < py::len(obj); ++i) {
+    if (!py::isinstance<T>(obj[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CheckSequenceToMemory(const py::sequence &obj) {
+  // A sequence object can be passed to raw memory and used by other operator if:
+  //   1. The length of sequence is not empty.
+  //   2. The sequence is not nested.
+  //   3. The sequence only contains Scalar or Tensor elements.
+  //   4. All the elements in sequence should be the same.
+  if (py::len(obj) == 0) {
+    return false;
+  }
+  auto first_obj = obj[0];
+  if (py::isinstance<py::bool_>(first_obj)) {
+    return CheckSequenceElementSame<py::bool_>(obj);
+  } else if (py::isinstance<py::int_>(first_obj)) {
+    return CheckSequenceElementSame<py::int_>(obj);
+  } else if (py::isinstance<py::float_>(first_obj)) {
+    return CheckSequenceElementSame<py::float_>(obj);
+  } else if (py::isinstance<tensor::Tensor>(first_obj)) {
+    return CheckSequenceElementSame<tensor::Tensor>(obj);
+  }
+  return false;
+}
+
 tensor::TensorPtr SequenceToValue(const py::sequence &obj) {
-  if (!fallback::CheckSequenceToMemory(obj)) {
+  if (!CheckSequenceToMemory(obj)) {
     MS_LOG(EXCEPTION) << "Invalid py object.";
   }
 
@@ -90,24 +123,30 @@ tensor::TensorPtr SequenceToValue(const py::sequence &obj) {
   return AnfAlgo::SequenceToTensor(std::make_shared<ValueTuple>(values));
 }
 
-tensor::TensorPtr GetValueByPyObj(const py::object &obj) {
-  py::gil_scoped_acquire gil_acquire;
-  if (py::isinstance<tensor::Tensor>(obj)) {
-    return obj.cast<tensor::TensorPtr>();
-  } else if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
-    return SequenceToValue(py::sequence(obj));
-  } else if (py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj)) {
-    return ScalarToValue(obj);
-  }
-  MS_LOG(EXCEPTION) << "Invalid object.";
-}
-
 bool IsValidObj(const py::object &obj) {
   py::gil_scoped_acquire gil_acquire;
   return py::isinstance<tensor::Tensor>(obj) ||
          ((py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) &&
-          fallback::CheckSequenceToMemory(py::sequence(obj))) ||
+          CheckSequenceToMemory(py::sequence(obj))) ||
          py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj);
+}
+
+TypeId GetTypeIdByAbstract(const AbstractBasePtr &abstract) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (abstract->isa<abstract::AbstractScalar>()) {
+    const auto &type = abstract->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    return type->type_id();
+  } else if (abstract->isa<abstract::AbstractTensor>()) {
+    const auto &tensor_abstract = abstract->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_abstract);
+    MS_EXCEPTION_IF_NULL(tensor_abstract->element());
+    const auto &type = tensor_abstract->element()->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    return type->type_id();
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid abstract:" << abstract->ToString();
+  }
 }
 
 bool IsValidAbstract(const abstract::AbstractBasePtr &abstract) {
@@ -128,23 +167,6 @@ bool IsValidAbstract(const abstract::AbstractBasePtr &abstract) {
       ((!sub_abstracts[0]->isa<abstract::AbstractScalar>()) && (!sub_abstracts[0]->isa<abstract::AbstractTensor>()))) {
     return false;
   }
-  auto get_type_id_by_abstract = [](const AbstractBasePtr &abstract) {
-    MS_EXCEPTION_IF_NULL(abstract);
-    if (abstract->isa<abstract::AbstractScalar>()) {
-      const auto &type = abstract->BuildType();
-      MS_EXCEPTION_IF_NULL(type);
-      return type->type_id();
-    } else if (abstract->isa<abstract::AbstractTensor>()) {
-      const auto &tensor_abstract = abstract->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor_abstract);
-      MS_EXCEPTION_IF_NULL(tensor_abstract->element());
-      const auto &type = tensor_abstract->element()->BuildType();
-      MS_EXCEPTION_IF_NULL(type);
-      return type->type_id();
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid abstract:" << abstract->ToString();
-    }
-  };
 
   auto get_shape_vector_by_abstract = [](const AbstractBasePtr &abstract) -> ShapeVector {
     MS_EXCEPTION_IF_NULL(abstract);
@@ -164,14 +186,14 @@ bool IsValidAbstract(const abstract::AbstractBasePtr &abstract) {
     }
   };
 
-  const auto &base_type_id = get_type_id_by_abstract(sub_abstracts[0]);
+  const auto &base_type_id = GetTypeIdByAbstract(sub_abstracts[0]);
   const auto &base_shape_vector = get_shape_vector_by_abstract(sub_abstracts[0]);
   for (size_t i = 1; i < sub_abstracts.size(); ++i) {
     MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
     if (sub_abstracts[i] == nullptr ||
         ((!sub_abstracts[i]->isa<abstract::AbstractScalar>()) &&
          (!sub_abstracts[i]->isa<abstract::AbstractTensor>())) ||
-        base_type_id != get_type_id_by_abstract(sub_abstracts[i]) ||
+        base_type_id != GetTypeIdByAbstract(sub_abstracts[i]) ||
         base_shape_vector != get_shape_vector_by_abstract(sub_abstracts[i])) {
       return false;
     }
@@ -191,6 +213,7 @@ size_t GetSizeForAbstract(const abstract::AbstractBasePtr &abstract) {
     const auto &shape = base_shape->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
     const auto &shape_vector = shape->shape();
+    MS_EXCEPTION_IF_NULL(tensor_abstract->element());
     const auto &type = tensor_abstract->element()->BuildType();
     return std::accumulate(shape_vector.begin(), shape_vector.end(), GetTypeByte(type), std::multiplies<size_t>());
   }
@@ -205,13 +228,25 @@ size_t GetSizeForAbstract(const abstract::AbstractBasePtr &abstract) {
 }
 }  // namespace
 
+tensor::TensorPtr GetValueByPyObj(const py::object &obj) {
+  py::gil_scoped_acquire gil_acquire;
+  if (py::isinstance<tensor::Tensor>(obj)) {
+    return obj.cast<tensor::TensorPtr>();
+  } else if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
+    return SequenceToValue(py::sequence(obj));
+  } else if (py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj)) {
+    return ScalarToValue(obj);
+  }
+  MS_LOG(EXCEPTION) << "Invalid object:" << obj;
+}
+
 abstract::AbstractBasePtr GenerateAbstractFromPyObject(const py::object &obj) {
   // This function will be moved to runtime compile pass later.
   py::gil_scoped_acquire gil_acquire;
   if (py::isinstance<tensor::Tensor>(obj) || IsStubTensor(obj)) {
     const auto &tensor = IsStubTensor(obj) ? ConvertStubTensor(obj) : obj.cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-    MS_LOG(DEBUG) << "tensor:" << tensor->ToString();
+    MS_LOG(DEBUG) << "tensor:" << tensor->ToString() << " is stub tensor:" << IsStubTensor(obj);
     return tensor->ToAbstract();
   }
 
@@ -223,10 +258,6 @@ abstract::AbstractBasePtr GenerateAbstractFromPyObject(const py::object &obj) {
     return MakeValue(py::cast<float>(obj))->ToAbstract();
   }
 
-  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-  if (!allow_inplace_ops) {
-    return nullptr;
-  }
   // obj is tuple will add later.
   if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
     ValuePtr converted_res = nullptr;

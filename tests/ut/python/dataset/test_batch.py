@@ -561,6 +561,7 @@ def test_batch_exception_16():
     Description: Test Batch op with mismatched batch type
     Expectation: Error is raised as expected
     """
+
     def gen(num):
         for i in range(num):
             if i % 2 == 0:
@@ -589,6 +590,7 @@ def test_batch_exception_17():
     Description: Test Batch op with mismatched batch size
     Expectation: Error is raised as expected
     """
+
     def gen(num):
         for i in range(1, num + 1):
             yield np.array([i] * i)
@@ -611,6 +613,7 @@ def test_no_input_columns_01():
     Description: Test with per_batch_map has value but input_columns has no value
     Expectation: Output is equal to the expected output
     """
+
     def gen_2_cols(num):
         for i in range(1, 1 + num):
             yield (np.array([i]), np.array([i ** 2]))
@@ -639,6 +642,7 @@ def test_no_input_columns_02():
     Description: Test per_batch_map has value but input_columns has no value and given output_columns parameter
     Expectation: Output is equal to the expected output
     """
+
     def gen_2_cols(num):
         for i in range(1, 1 + num):
             yield (np.array([i]), np.array([i ** 2]))
@@ -669,6 +673,7 @@ def test_batch_exception_18():
     Description: Test batch with parameter column_order
     Expectation: Output is equal to the expected output
     """
+
     def gen(num):
         for i in range(num):
             if i % 2 == 0:

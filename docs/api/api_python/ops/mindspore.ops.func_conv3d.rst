@@ -15,11 +15,11 @@ mindspore.ops.conv3d
     其中， :math:`bias` 为输出偏置，:math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ 操作， 
     :math:`weight` 为卷积核的值， :math:`X` 为输入的特征图。
 
-    :math:`i` 对应batch数，其范围为 :math:`[0, N-1]` ，其中 :math:`N` 为输入batch。
+    - :math:`i` 对应batch数，其范围为 :math:`[0, N-1]` ，其中 :math:`N` 为输入batch。
 
-    :math:`j` 对应输出通道，其范围为 :math:`[0, C_{out}-1]` ，其中 :math:`C_{out}` 为输出通道数，该值也等于卷积核的个数。
+    - :math:`j` 对应输出通道，其范围为 :math:`[0, C_{out}-1]` ，其中 :math:`C_{out}` 为输出通道数，该值也等于卷积核的个数。
 
-    :math:`k` 对应输入通道数，其范围为 :math:`[0, C_{in}-1]` ，其中 :math:`C_{in}` 为输入通道数，该值也等于卷积核的通道数。
+    - :math:`k` 对应输入通道数，其范围为 :math:`[0, C_{in}-1]` ，其中 :math:`C_{in}` 为输入通道数，该值也等于卷积核的通道数。
 
     因此，上面的公式中， :math:`{bias}(C_{\text{out}_j})` 为第 :math:`j` 个输出通道的偏置， :math:`{weight}(C_{\text{out}_j}, k)` 表示第 :math:`j` 个
     卷积核在第 :math:`k` 个输入通道的卷积核切片， :math:`{X}(N_i, k)` 为特征图第 :math:`i` 个batch第 :math:`k` 个输入通道的切片。
@@ -49,7 +49,7 @@ mindspore.ops.conv3d
         
         - **padding** (Union[int, tuple[int], list[int]]，可选) - 输入 `input` 的深度、高度和宽度方向上填充的数量。数据类型为int或包含3个int组成的tuple。如果 `padding` 是一个int，那么前、后、上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有3个int组成的tuple，那么前、后的填充为 `padding[0]` ，上、下的填充为 `padding[1]` ，左、右的填充为 `padding[2]` 。值必须大于等于0，默认值： ``0`` 。
         - **dilation** (Union[int, tuple[int]]，可选) - 卷积核膨胀尺寸。数据类型为int或由3个int组成的tuple： :math:`(dilation_d, dilation_h, dilation_w)`。目前在Ascend后端， 只支持该值为1。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。前后、垂直和水平方向上，其取值范围分别为[1, D]、[1, H]和[1, W]。默认值： ``1`` 。
-        - **groups** (int，可选) - 将过滤器拆分的组数， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值： ``1`` 。
+        - **groups** (int，可选) - 将过滤器拆分的组数。默认值： ``1`` 。
 
     返回：
         Tensor，卷积后的值。shape为 :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})` 。

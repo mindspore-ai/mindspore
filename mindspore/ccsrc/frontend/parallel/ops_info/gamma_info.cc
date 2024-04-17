@@ -27,19 +27,6 @@ namespace mindspore {
 namespace parallel {
 int64_t GammaInfo::SEED_NUM = 1;
 
-Status GammaInfo::InferAttrs() {
-  if (infer_attrs_completed_) {
-    return SUCCESS;
-  }
-
-  if (GetAttrs() != SUCCESS) {
-    return FAILED;
-  }
-  ResetInputsShape();
-  infer_attrs_completed_ = true;
-  return SUCCESS;
-}
-
 Status GammaInfo::GetAttrs() {
   seed_ = GetIntAttr(SEED);
   if (seed_ < 0) {
@@ -51,6 +38,7 @@ Status GammaInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": Seed2 must be greater or equal to zero, bug got " << seed2_;
     return FAILED;
   }
+  ResetInputsShape();
   return SUCCESS;
 }
 

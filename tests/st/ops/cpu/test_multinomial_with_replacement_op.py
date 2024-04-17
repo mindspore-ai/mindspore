@@ -34,7 +34,7 @@ class Net(nn.Cell):
         return self.multinomialwithreplacement(x, seed, offset)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_multinomial_with_replacement_net():
@@ -57,7 +57,7 @@ def test_multinomial_with_replacement_net():
     assert out2.asnumpy().shape == (10, 15)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_multinomial_with_replacement_functional():

@@ -20,10 +20,11 @@
  */
 #include "axis_util.h"
 #include <memory>
-#include "framework/omg/omg_inner_types.h"
-#include "framework/common/types.h"
 
 namespace ge {
+namespace {
+constexpr size_t DIM_DEFAULT_SIZE = 4;
+}
 AxisUtil::AxisUtil()
     : getAxisValueFuncMap({{FORMAT_NCHW, std::make_shared<GetAxisValueInfoByFormat>(GetAxisValueByNCHW)},
                            {FORMAT_NHWC, std::make_shared<GetAxisValueInfoByFormat>(GetAxisValueByNHWC)},
@@ -65,7 +66,7 @@ bool AxisUtil::CheckParams(const vector<int64_t> &originalDimVec, const uint32_t
                            vector<int64_t> &ndValue) {
   ndValue = originalDimVec;
   auto dimSize = originalDimVec.size();
-  if (dimSize < ge::DIM_DEFAULT_SIZE) {
+  if (dimSize < DIM_DEFAULT_SIZE) {
     /* Before this function, we should call function PadDimensionTo4. */
     LOG_INFO("Dimension size %zu is invalid.", dimSize);
     return false;
@@ -90,7 +91,8 @@ bool AxisUtil::GetAxisValueByND(const vector<int64_t> &originalDimVec, const uin
     axisValue[static_cast<uint64_t>(AXIS_C)] = originalDimVec[AXIS_NCHW_DIM_C];
     axisValue[static_cast<uint64_t>(AXIS_H)] = originalDimVec[AXIS_NCHW_DIM_H];
     axisValue[static_cast<uint64_t>(AXIS_W)] = originalDimVec[AXIS_NCHW_DIM_W];
-    axisValue[static_cast<uint64_t>(AXIS_C1)] = DivisionCeiling(originalDimVec[AXIS_NCHW_DIM_C], (int64_t)c0);
+    axisValue[static_cast<uint64_t>(AXIS_C1)] =
+      DivisionCeiling(originalDimVec[AXIS_NCHW_DIM_C], static_cast<int64_t>(c0));
     axisValue[static_cast<uint64_t>(AXIS_Co)] = c0;
   }
   return true;
@@ -109,7 +111,8 @@ bool AxisUtil::GetAxisValueByNCHW(const vector<int64_t> &originalDimVec, const u
   axisValue[static_cast<uint64_t>(AXIS_C)] = originalDimVec[AXIS_NCHW_DIM_C];
   axisValue[static_cast<uint64_t>(AXIS_H)] = originalDimVec[AXIS_NCHW_DIM_H];
   axisValue[static_cast<uint64_t>(AXIS_W)] = originalDimVec[AXIS_NCHW_DIM_W];
-  axisValue[static_cast<uint64_t>(AXIS_C1)] = DivisionCeiling(originalDimVec[AXIS_NCHW_DIM_C], (int64_t)c0);
+  axisValue[static_cast<uint64_t>(AXIS_C1)] =
+    DivisionCeiling(originalDimVec[AXIS_NCHW_DIM_C], static_cast<int64_t>(c0));
   axisValue[static_cast<uint64_t>(AXIS_Co)] = c0;
   return true;
 }
@@ -127,7 +130,8 @@ bool AxisUtil::GetAxisValueByNHWC(const vector<int64_t> &originalDimVec, const u
   axisValue[static_cast<uint64_t>(AXIS_C)] = originalDimVec[AXIS_NHWC_DIM_C];
   axisValue[static_cast<uint64_t>(AXIS_H)] = originalDimVec[AXIS_NHWC_DIM_H];
   axisValue[static_cast<uint64_t>(AXIS_W)] = originalDimVec[AXIS_NHWC_DIM_W];
-  axisValue[static_cast<uint64_t>(AXIS_C1)] = DivisionCeiling(originalDimVec[AXIS_NHWC_DIM_C], (int64_t)c0);
+  axisValue[static_cast<uint64_t>(AXIS_C1)] =
+    DivisionCeiling(originalDimVec[AXIS_NHWC_DIM_C], static_cast<int64_t>(c0));
   axisValue[static_cast<uint64_t>(AXIS_Co)] = c0;
   return true;
 }
@@ -140,13 +144,14 @@ bool AxisUtil::GetAxisValueByNC1HWC0(const vector<int64_t> &originalDimVec, cons
         return false);
 
   auto dimSize = originalDimVec.size();
-  if (dimSize == ge::DIM_DEFAULT_SIZE + 1) {
+  if (dimSize == DIM_DEFAULT_SIZE + 1) {
     axisValue[static_cast<uint64_t>(AXIS_C1)] = originalDimVec[AXIS_NC1HWC0_DIM_C1];
     axisValue[static_cast<uint64_t>(AXIS_C0)] = originalDimVec[AXIS_NC1HWC0_DIM_C0];
     axisValue[static_cast<uint64_t>(AXIS_C)] =
       axisValue[static_cast<uint64_t>(AXIS_C1)] * axisValue[static_cast<uint64_t>(AXIS_C0)];
   } else {
-    axisValue[static_cast<uint64_t>(AXIS_C1)] = DivisionCeiling(originalDimVec[AXIS_NCHW_DIM_C], (int64_t)c0);
+    axisValue[static_cast<uint64_t>(AXIS_C1)] =
+      DivisionCeiling(originalDimVec[AXIS_NCHW_DIM_C], static_cast<int64_t>(c0));
     axisValue[static_cast<uint64_t>(AXIS_C0)] = c0;
     axisValue[static_cast<uint64_t>(AXIS_C)] = originalDimVec[AXIS_NCHW_DIM_C];
   }
@@ -170,7 +175,8 @@ bool AxisUtil::GetAxisValueByHWCN(const vector<int64_t> &originalDimVec, const u
   axisValue[static_cast<uint64_t>(AXIS_C)] = originalDimVec[AXIS_HWCN_DIM_C];
   axisValue[static_cast<uint64_t>(AXIS_H)] = originalDimVec[AXIS_HWCN_DIM_H];
   axisValue[static_cast<uint64_t>(AXIS_W)] = originalDimVec[AXIS_HWCN_DIM_W];
-  axisValue[static_cast<uint64_t>(AXIS_C1)] = DivisionCeiling(originalDimVec[AXIS_HWCN_DIM_C], (int64_t)c0);
+  axisValue[static_cast<uint64_t>(AXIS_C1)] =
+    DivisionCeiling(originalDimVec[AXIS_HWCN_DIM_C], static_cast<int64_t>(c0));
   axisValue[static_cast<uint64_t>(AXIS_Co)] = c0;
   return true;
 }

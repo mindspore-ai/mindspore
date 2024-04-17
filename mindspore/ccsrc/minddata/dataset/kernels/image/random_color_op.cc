@@ -21,9 +21,7 @@
 
 namespace mindspore {
 namespace dataset {
-RandomColorOp::RandomColorOp(float t_lb, float t_ub) : rnd_(GetSeed()), dist_(t_lb, t_ub), t_lb_(t_lb), t_ub_(t_ub) {
-  is_deterministic_ = false;
-}
+RandomColorOp::RandomColorOp(float t_lb, float t_ub) : dist_(t_lb, t_ub), t_lb_(t_lb), t_ub_(t_ub) {}
 
 Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
@@ -34,7 +32,7 @@ Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   }
   // 0.5 pixel precision assuming an 8 bit image
   const auto eps = 0.00195;
-  const auto t = dist_(rnd_);
+  const auto t = dist_(random_generator_);
   if (abs(t - 1.0) < eps) {
     // Just return input? Can we do it given that input would otherwise get consumed in CVTensor constructor anyway?
     *output = input;

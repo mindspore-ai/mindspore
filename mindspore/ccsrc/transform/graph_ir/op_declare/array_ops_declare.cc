@@ -19,6 +19,7 @@
 #include <vector>
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
 
 namespace mindspore::transform {
@@ -39,7 +40,6 @@ ATTR_MAP(Summary) = EMPTY_ATTR_MAP;
 REG_ADPT_DESC(Debug, prim::kPrimDebug->name(), ADPT_DESC(Summary))
 
 // OutfeedEnqueueOpV2
-#ifndef ENABLE_SECURITY
 DYN_INPUT_MAP(OutfeedEnqueueOpV2) = {{2, DYN_INPUT_DESC(x)}};
 INPUT_MAP(OutfeedEnqueueOpV2) = {{1, INPUT_DESC(tensor_name)}};
 ATTR_MAP(OutfeedEnqueueOpV2) = {{"channel_name", ATTR_DESC(channel_name, AnyTraits<std::string>())}};
@@ -48,7 +48,8 @@ REG_ADPT_DESC(TensorSummary, "TensorSummary", ADPT_DESC(OutfeedEnqueueOpV2))
 REG_ADPT_DESC(ScalarSummary, "ScalarSummary", ADPT_DESC(OutfeedEnqueueOpV2))
 REG_ADPT_DESC(ImageSummary, "ImageSummary", ADPT_DESC(OutfeedEnqueueOpV2))
 REG_ADPT_DESC(HistogramSummary, "HistogramSummary", ADPT_DESC(OutfeedEnqueueOpV2))
-#endif
+REG_ADPT_DESC(TensorDump, kNameTensorDump, ADPT_DESC(OutfeedEnqueueOpV2))
+REG_ADPT_DESC(Print, kNamePrint, ADPT_DESC(OutfeedEnqueueOpV2))
 
 // Data
 INPUT_MAP(Data) = EMPTY_INPUT_MAP;
@@ -58,7 +59,7 @@ REG_ADPT_DESC(Data, kNameParam, ADPT_DESC(Data))
 
 // Shape
 INPUT_MAP(Shape) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Shape) = {{"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>())}};
+ATTR_MAP(Shape) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
 OUTPUT_MAP(Shape) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Shape, kNameShape, ADPT_DESC(Shape))
 
@@ -175,6 +176,7 @@ REG_ADPT_DESC(IdentityNMakeTuple, kNameMakeTuple, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNMakeList, kNameMakeList, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNDepend, kNameDepend, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNReturn, kNameReturn, ADPT_DESC(IdentityN))
+REG_ADPT_DESC(IdentityN, kNameIdentityN, ADPT_DESC(IdentityN))
 // TupleGetItem's output may be a tuple when input is a nested tuple
 REG_ADPT_DESC(IdentityNTupleGetItem, kNameTupleGetItem, ADPT_DESC(IdentityN))
 
@@ -218,11 +220,11 @@ OUTPUT_MAP(Size) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Size, kNameSize, ADPT_DESC(Size))
 
 // Meshgrid
-CUST_INPUT_MAP(Meshgrid) = EMPTY_INPUT_MAP;
-CUST_DYN_INPUT_MAP(Meshgrid) = {{1, DYN_INPUT_DESC(x)}};
-CUST_ATTR_MAP(Meshgrid) = {{"indexing", ATTR_DESC(indexing, AnyTraits<std::string>())}};
-CUST_DYN_OUTPUT_MAP(Meshgrid) = {{0, DYN_OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Meshgrid, prim::kPrimMeshgrid->name(), CUST_ADPT_DESC(Meshgrid))
+INPUT_MAP(Meshgrid) = EMPTY_INPUT_MAP;
+DYN_INPUT_MAP(Meshgrid) = {{1, DYN_INPUT_DESC(x)}};
+ATTR_MAP(Meshgrid) = {{"indexing", ATTR_DESC(indexing, AnyTraits<std::string>())}};
+DYN_OUTPUT_MAP(Meshgrid) = {{0, DYN_OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Meshgrid, prim::kPrimMeshgrid->name(), ADPT_DESC(Meshgrid))
 
 // SliceGrad
 CUST_INPUT_MAP(SliceGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(begin)}, {4, INPUT_DESC(size)}};
@@ -237,8 +239,9 @@ CUST_OUTPUT_MAP(MaskedSelectGrad) = {{0, OUTPUT_DESC(dx)}};
 REG_ADPT_DESC(MaskedSelectGrad, prim::kPrimMaskedSelectGrad->name(), CUST_ADPT_DESC(MaskedSelectGrad))
 
 // GradDGradV2
-CUST_INPUT_MAP(GatherDGradV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(index)}, {3, INPUT_DESC(grad)}};
-CUST_ATTR_MAP(GatherDGradV2) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())}};
+CUST_INPUT_MAP(GatherDGradV2) = {{1, INPUT_DESC(x)}, {3, INPUT_DESC(index)}, {4, INPUT_DESC(grad)}};
+CUST_INPUT_ATTR_MAP(GatherDGradV2) = {{2, ATTR_DESC(dim, AnyTraits<int64_t>())}};
+CUST_ATTR_MAP(GatherDGradV2) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(GatherDGradV2) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(GatherDGradV2, prim::kPrimGatherDGradV2->name(), CUST_ADPT_DESC(GatherDGradV2))
 
@@ -310,7 +313,8 @@ REG_ADPT_DESC(MvlgammaGrad, prim::kPrimMvlgammaGrad->name(), CUST_ADPT_DESC(Mvlg
 // LogSpace
 CUST_INPUT_MAP(LogSpace) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(end)}};
 CUST_ATTR_MAP(LogSpace) = {{"steps", ATTR_DESC(steps, AnyTraits<int64_t>())},
-                           {"base", ATTR_DESC(base, AnyTraits<int64_t>())}};
+                           {"base", ATTR_DESC(base, AnyTraits<int64_t>())},
+                           {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 CUST_OUTPUT_MAP(LogSpace) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LogSpace, prim::kPrimLogSpace->name(), CUST_ADPT_DESC(LogSpace));
 
@@ -321,6 +325,12 @@ ATTR_MAP(UniqueConsecutive) = {{"return_idx", ATTR_DESC(return_idx, AnyTraits<bo
                                {"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(UniqueConsecutive) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(idx)}, {2, OUTPUT_DESC(count)}};
 REG_ADPT_DESC(UniqueConsecutive, prim::kPrimUniqueConsecutive->name(), ADPT_DESC(UniqueConsecutive));
+
+// UniqueWithPad
+INPUT_MAP(UniqueWithPad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(pad_num)}};
+ATTR_MAP(UniqueWithPad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UniqueWithPad) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(idx)}};
+REG_ADPT_DESC(UniqueWithPad, prim::kPrimUniqueWithPad->name(), ADPT_DESC(UniqueWithPad));
 
 // UpperBound
 INPUT_MAP(UpperBound) = {{1, INPUT_DESC(sorted_x)}, {2, INPUT_DESC(values)}};
@@ -340,9 +350,43 @@ CUST_ATTR_MAP(NoRepeatNGram) = {{"ngram_size", ATTR_DESC(ngram_size, AnyTraits<i
 CUST_OUTPUT_MAP(NoRepeatNGram) = {{0, OUTPUT_DESC(out)}};
 REG_ADPT_DESC(NoRepeatNGram, prim::kPrimNoRepeatNGram->name(), CUST_ADPT_DESC(NoRepeatNGram));
 
+// GenerateEodMask
+CUST_INPUT_MAP(GenerateEodMask) = {{1, INPUT_DESC(inputs_ids)}};
+CUST_ATTR_MAP(GenerateEodMask) = {{"n_pos", ATTR_DESC(n_pos, AnyTraits<int64_t>())},
+                                  {"eod_token_id", ATTR_DESC(eod_token_id, AnyTraits<int64_t>())},
+                                  {"n_step", ATTR_DESC(n_step, AnyTraits<std::vector<int64_t>>())},
+                                  {"n_error_mode", ATTR_DESC(n_error_mode, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(GenerateEodMask) = {{0, OUTPUT_DESC(position_ids)}};
+REG_ADPT_DESC(GenerateEodMask, prim::kPrimGenerateEodMask->name(), CUST_ADPT_DESC(GenerateEodMask));
+
 // NonZero
 INPUT_MAP(NonZero) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(NonZero) = {{"transpose", ATTR_DESC(transpose, AnyTraits<bool>())}};
 OUTPUT_MAP(NonZero) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(NonZeroV2, kNameNonZeroV2, ADPT_DESC(NonZero))
+REG_ADPT_DESC(NonZero, kNameNonZero, ADPT_DESC(NonZero))
+
+// Coalesce
+CUST_INPUT_MAP(Coalesce) = {{1, INPUT_DESC(x_indices)}, {2, INPUT_DESC(x_values)}, {3, INPUT_DESC(x_shape)}};
+CUST_ATTR_MAP(Coalesce) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Coalesce) = {{0, OUTPUT_DESC(y_indices)}, {1, OUTPUT_DESC(y_values)}, {2, OUTPUT_DESC(y_shape)}};
+REG_ADPT_DESC(Coalesce, prim::kPrimCoalesce->name(), CUST_ADPT_DESC(Coalesce))
+
+// Padding
+CUST_INPUT_MAP(Padding) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Padding) = {{"pad_dim_size", ATTR_DESC(pad_dim_size, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(Padding) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Padding, prim::kPrimPadding->name(), CUST_ADPT_DESC(Padding));
+
+// MatrixBandPart
+INPUT_MAP(MatrixBandPart) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(num_lower)}, {3, INPUT_DESC(num_upper)}};
+ATTR_MAP(MatrixBandPart) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MatrixBandPart) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixBandPart, prim::kPrimMatrixBandPart->name(), ADPT_DESC(MatrixBandPart));
+
+// EmbeddingLookup
+INPUT_MAP(EmbeddingLookup) = {{1, INPUT_DESC(param)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(offset)}};
+ATTR_MAP(EmbeddingLookup) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(EmbeddingLookup) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(EmbeddingLookup, prim::kPrimEmbeddingLookup->name(), ADPT_DESC(EmbeddingLookup));
 }  // namespace mindspore::transform

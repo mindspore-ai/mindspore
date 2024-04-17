@@ -284,6 +284,21 @@ def test_np_logspace():
     assert np.all(res.asnumpy() == except_res)
 
 
+def test_np_logspace_2():
+    """
+    Feature: JIT Fallback
+    Description: Test numpy with logspace in graph mode.
+    Expectation: No exception.
+    """
+    @jit
+    def np_logspace_2():
+        a = np.logspace(0, 9, 2, endpoint=True, base=2)
+        return Tensor(a)
+    res = np_logspace_2()
+    except_res = np.array([1., 512.])
+    assert np.all(res.asnumpy() == except_res)
+
+
 def test_np_array_shape():
     """
     Feature: JIT Fallback

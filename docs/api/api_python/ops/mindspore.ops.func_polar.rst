@@ -17,6 +17,7 @@ mindspore.ops.polar
 
     返回：
         Tensor，其shape与 `abs` 一致。
+        
         - 如果输入数据类型是float32，则输出类型为complex64。
         - 如果输入数据类型是float64，则输出类型为complex128。
 

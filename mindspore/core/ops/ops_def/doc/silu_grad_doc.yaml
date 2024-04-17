@@ -1,0 +1,3 @@
+silu_grad:
+    description: |
+        Performs grad of SiLU operation.

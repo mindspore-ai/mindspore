@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import json
+import os
+import subprocess
+import shutil
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -21,7 +25,7 @@ from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.train import Model
-from mindspore.nn.wrap.cell_wrapper import PipelineCell
+from mindspore.nn.wrap.cell_wrapper import PipelineCell, GradAccumulationCell
 import mindspore.common.lazy_inline as lazy_inline
 
 
@@ -113,6 +117,39 @@ class LazyInlineNet(nn.Cell):
         return out
 
 
+class LazyInlineRecomputeNet(nn.Cell):
+    @lazy_inline
+    def __init__(self, stra1, stra2, param=None):
+        super().__init__()
+        self.cell1 = MatMulCell(stra1, stra2)
+        self.softmax1 = P.Softmax(-1)
+        self.abs1 = P.Abs()
+        self.cell1.pipeline_stage = 0
+        self.softmax1.pipeline_stage = 0
+        self.abs1.pipeline_stage = 0
+        self.cell1.recompute()
+        self.softmax1.recompute()
+        self.abs1.recompute()
+        self.cell2 = MatMulCell2(stra1, stra2)
+        self.softmax2 = P.Softmax(-1)
+        self.abs2 = P.Abs()
+        self.cell2.pipeline_stage = 1
+        self.softmax2.pipeline_stage = 1
+        self.abs2.pipeline_stage = 1
+        self.cell2.recompute()
+        self.softmax2.recompute()
+        self.abs2.recompute()
+
+    def construct(self, x, label):
+        out, param = self.cell1(x)
+        out = self.abs1(out)
+        out = self.softmax1(out)
+        out = self.cell2(out, param)
+        out = self.softmax2(out)
+        out = self.abs2(out)
+        return out
+
+
 def test_pipeline_split_stage0():
     context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -156,6 +193,27 @@ def test_pipeline_lazy_inline_stage0():
     stra1 = ((16, 1), (1, 1))
     stra2 = ((8, 1), (1, 1))
     net = PipelineCell(LazyInlineNet(stra1, stra2), 4)
+    params = net.network.cell1.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_lazy_inline_overlap_grad_comm_nodes_stage0():
+    """
+    Feature: overlap recompute and grad comm nodes in lazy inline
+    Description: test overlap recompute and grad comm nodes in lazy_inline
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_context(recompute_comm_overlap=True)
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    stra1 = ((4, 1), (1, 4))
+    stra2 = ((4, 1), (1, 4))
+    net = PipelineCell(LazyInlineRecomputeNet(stra1, stra2), 4)
     params = net.network.cell1.trainable_params()
     dataset = DatasetLenet(data, label, 3)
     optim = nn.Lamb(params, learning_rate=0.01)
@@ -221,3 +279,123 @@ def test_pipeline_auto_parallel_lazy_inline_stage1():
     optim = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optim)
     model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_dump_parallel_info():
+    """
+    Feature: dump parallel info to json
+    Description: dump parallel info with pipeline lazy inline mode
+    Expectation: success
+    """
+    context.set_auto_parallel_context(
+        device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    os.environ["DUMP_PARALLEL_INFO"] = "1"
+    os.environ["MA_LOG_DIR"] = os.getcwd()
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    stra1 = ((16, 1), (1, 1))
+    stra2 = ((8, 1), (1, 1))
+    net = PipelineCell(LazyInlineNet(stra1, stra2), 4)
+    params = net.network.cell1.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
+    file = "./rank_0/dump_parallel_info_0.json"
+    para = "\"comm_group_rank_ids\": \"(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)\""
+    output = subprocess.check_output(
+        ["grep '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "4"
+    if os.path.exists("./rank_0"):
+        shutil.rmtree("./rank_0")
+    os.environ["DUMP_PARALLEL_INFO"] = ""
+    os.environ["MA_LOG_DIR"] = ""
+
+
+def test_pipeline_with_begin_end_inline():
+    """
+    Feature: parallel subgraph inline
+    Description: parallel subgraph inline in pipeline parallel mode
+    Expectation: success
+    """
+    context.set_auto_parallel_context(
+        device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_context(save_graphs=True)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    if os.path.exists("./speed_up.json"):
+        os.remove("./speed_up.json")
+    a = {"enable_begin_end_inline_opt": True}
+    f = open("speed_up.json", "w")
+    f.write(json.dumps(a))
+    f.close()
+    context.set_context(ascend_config={"parallel_speed_up_json_path": "speed_up.json"})
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    stra1 = ((16, 1), (1, 1))
+    stra2 = ((8, 1), (1, 1))
+    net = PipelineCell(LazyInlineNet(stra1, stra2), 4)
+    params = net.network.cell1.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    if os.path.exists("./rank_0"):
+        shutil.rmtree("./rank_0")
+    model.train(2, dataset, dataset_sink_mode=False)
+    file = "./rank_0/*validate*.ir"
+    para = " call @"
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "3"
+    if os.path.exists("./rank_0"):
+        shutil.rmtree("./rank_0")
+    if os.path.exists("./speed_up.json"):
+        os.remove("./speed_up.json")
+    context.set_context(save_graphs=False)
+
+
+def test_grad_accumulation_with_begin_end_inline():
+    """
+    Feature: parallel subgraph inline
+    Description: parallel subgraph inline in grad parallel
+    Expectation: success
+    """
+    context.set_auto_parallel_context(
+        device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_context(save_graphs=True)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    if os.path.exists("./speed_up.json"):
+        os.remove("./speed_up.json")
+    a = {"enable_begin_end_inline_opt": True}
+    f = open("speed_up.json", "w")
+    f.write(json.dumps(a))
+    f.close()
+    context.set_context(ascend_config={"parallel_speed_up_json_path": "speed_up.json"})
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    stra1 = ((16, 1), (1, 1))
+    stra2 = ((8, 1), (1, 1))
+    net = GradAccumulationCell(LazyInlineNet(stra1, stra2), 4)
+    params = net.network.cell1.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    if os.path.exists("./rank_0"):
+        shutil.rmtree("./rank_0")
+    model.train(2, dataset, dataset_sink_mode=False)
+    file = "./rank_0/*validate*.ir"
+    para = " call @"
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "3"
+    if os.path.exists("./rank_0"):
+        shutil.rmtree("./rank_0")
+    if os.path.exists("./speed_up.json"):
+        os.remove("./speed_up.json")
+    context.set_context(save_graphs=False)

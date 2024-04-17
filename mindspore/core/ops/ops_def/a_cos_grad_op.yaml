@@ -1,0 +1,12 @@
+#operator acos_grad
+a_cos_grad:
+  args:
+    x:
+      dtype: tensor
+    dout:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True

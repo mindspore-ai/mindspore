@@ -77,11 +77,11 @@ TuplePtr SyncBatchNormInferType(const PrimitivePtr &prim, const std::vector<Abst
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  auto x_dtype = input_args[0]->BuildType();
-  auto scale_dtype = input_args[1]->BuildType();
-  auto bias_dtype = input_args[2]->BuildType();
-  auto mean_dtype = input_args[3]->BuildType();
-  auto variance_dtype = input_args[4]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
+  auto scale_dtype = input_args[1]->GetType();
+  auto bias_dtype = input_args[2]->GetType();
+  auto mean_dtype = input_args[3]->GetType();
+  auto variance_dtype = input_args[4]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim_name);
   // scale and bias must have the same type.
   std::map<std::string, TypePtr> args1;
@@ -101,11 +101,11 @@ abstract::TupleShapePtr SyncBatchNormInferShape(const PrimitivePtr &primitive,
   CheckSyncBatchNormInputNum(primitive, input_args);
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape_ptr = input_args[0]->BuildShape();
-  auto scale_shape_ptr = input_args[1]->BuildShape();
-  auto bias_shape_ptr = input_args[2]->BuildShape();
-  auto mean_shape_ptr = input_args[3]->BuildShape();
-  auto variance_shape_ptr = input_args[4]->BuildShape();
+  auto x_shape_ptr = input_args[0]->GetShape();
+  auto scale_shape_ptr = input_args[1]->GetShape();
+  auto bias_shape_ptr = input_args[2]->GetShape();
+  auto mean_shape_ptr = input_args[3]->GetShape();
+  auto variance_shape_ptr = input_args[4]->GetShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(scale_shape_ptr)[kShape];
   auto bias_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(bias_shape_ptr)[kShape];

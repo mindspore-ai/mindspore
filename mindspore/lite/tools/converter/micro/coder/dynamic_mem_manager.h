@@ -36,8 +36,8 @@ class DynamicMemManager {
   std::string GetVarTensorAddr(const Tensor *tensor) const;
   std::string AllocWorkSpace(size_t size, int index);
   const std::map<int, std::vector<size_t>> &GetOffsetAllScenes() { return offsets_all_scenes_; }
-  const std::vector<size_t> GetBufferSizes() { return buffer_sizes_; }
-  const std::vector<size_t> GetWorkSpaces() { return workspaces_; }
+  const std::vector<size_t> &GetBufferSizes() { return buffer_sizes_; }
+  const std::vector<size_t> &GetWorkSpaces() { return workspaces_; }
 
  private:
   int AllocDynamicMemCore(const std::vector<std::unique_ptr<OperatorCoder>> &nodes,

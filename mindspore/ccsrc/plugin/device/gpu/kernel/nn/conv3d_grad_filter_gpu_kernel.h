@@ -70,8 +70,8 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
   Conv3dGradFilterGpuKernelMod() { ResetResource(); }
   ~Conv3dGradFilterGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *x = GetDeviceAddress<T>(inputs, 0);
     T *dy = GetDeviceAddress<T>(inputs, 1);
     T *work_space = GetPossiblyNullDeviceAddress<T>(workspace, 0);
@@ -117,16 +117,8 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3DBackpropFilter>(base_operator);
-    if (kernel_ptr == nullptr) {
-      MS_EXCEPTION(ValueError)
-        << "For primitive[Conv3DBackpropFilter], cast op from BaseOperator to Conv3DBackpropFilter failed.";
-    }
-    kernel_name_ = kernel_ptr->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     InitResource();
-
     size_t input_num = inputs.size();
     if (input_num != kDynamicInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
@@ -136,24 +128,17 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
 
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
     data_format_ = kOpFormat_NCDHW;
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3DBackpropFilter>(base_operator);
-    if (kernel_ptr == nullptr) {
-      MS_EXCEPTION(ValueError)
-        << "For primitive[Conv3DBackpropFilter], cast op from BaseOperator to Conv3DBackpropFilter failed.";
-    }
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
     workspace_size_list_.clear();
-    input_size_list_.clear();
     output_size_list_.clear();
 
     auto input_shape = inputs[kIndex0]->GetShapeVector();
@@ -179,27 +164,30 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
     old_height_ = LongToInt(input_shape[kInDimIdxForH]);
     old_width_ = LongToInt(input_shape[kInDimIdxForW]);
     SetNDDesc(dy_shape, input_shape, filter_shape);
-    group_ = kernel_ptr->get_group();
+    group_ = GetValue<int64_t>(primitive_->GetAttr("group"));
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionGroupCount(conv_desc_, group_),
                                         "cudnnSetConvGroupCount failed");
 
-    pad_mode_ = GetValue<std::string>(base_operator->GetAttr("pad_mode"));
+    pad_mode_ = GetValue<std::string>(primitive_->GetAttr("pad_mode"));
     std::vector<int> pad_list;
     std::vector<int64_t> pad_list_me;
     if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
       pad_list_me = {0, 0, 0, 0, 0, 0};
     } else if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
-      pad_list_me = base_operator->HasAttr("pad_list")
-                      ? GetValue<std::vector<int64_t>>(base_operator->GetAttr("pad_list"))
-                      : GetSameModePadList(dy_shape, input_shape, kernel_ptr->get_stride(), kernel_ptr->get_dilation(),
-                                           kernel_ptr->get_kernel_size());
+      pad_list_me =
+        primitive_->HasAttr("pad_list")
+          ? GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad_list"))
+          : GetSameModePadList(dy_shape, input_shape, GetValue<std::vector<int64_t>>(primitive_->GetAttr("stride")),
+                               GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation")),
+                               GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size")));
     } else if (pad_mode_ == "PAD" || pad_mode_ == "pad") {
-      pad_list_me = kernel_ptr->get_pad();
+      pad_list_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad"));
     }
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
     SetPad(pad_list);
-    SetStrideAndDilation(kernel_ptr->get_stride(), kernel_ptr->get_dilation());
+    SetStrideAndDilation(GetValue<std::vector<int64_t>>(primitive_->GetAttr("stride")),
+                         GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation")));
     auto x_desc_real = GetXDescReal(pad_list);
 
     SetConvolutionMathType(conv_desc_, cudnn_data_type_);
@@ -271,8 +259,6 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
                                         "cudnnGetTensorSizeInBytes failed");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetFilterSizeInBytes(dw_desc_, reinterpret_cast<size_t *>(&output_size_)),
                                         "cudnnGetFilterSizeInBytes failed");
-    input_size_list_.push_back(dy_size_);
-    input_size_list_.push_back(input_size_);
 
     if (use_pad_) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(

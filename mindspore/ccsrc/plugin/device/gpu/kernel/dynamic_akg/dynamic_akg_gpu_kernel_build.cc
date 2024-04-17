@@ -15,15 +15,13 @@
  */
 
 #include "plugin/device/gpu/kernel/dynamic_akg/dynamic_akg_gpu_kernel_build.h"
-#include <memory>
-#include <string>
+
 #include "kernel/framework_utils.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_build.h"
 #include "plugin/device/gpu/kernel/dynamic_akg/dynamic_akg_gpu_kernel_mod.h"
 
@@ -32,22 +30,26 @@ namespace kernel {
 void DynamicAkgGpuKernelBuilder::SetKernelMod(const KernelPackPtr &kernel_pack,
                                               const GraphKernelJsonGenerator &json_generator,
                                               const AnfNodePtr &anf_node) {
-  const auto &flags = graphkernel::GraphKernelFlags::GetInstance();
-  auto kernel_mod_ptr = flags.enable_debug_mode ? std::make_shared<DynamicAkgGpuKernelModDebug>(kernel_pack)
-                                                : std::make_shared<DynamicAkgGpuKernelMod>(kernel_pack);
+  auto kernel_mod_ptr = std::make_shared<DynamicAkgGpuKernelMod>(kernel_pack);
   auto kernel_json_info = kernel_pack->kernel_json_info();
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
   kernel_mod_ptr->SetWorkspaceSizeList(kernel_json_info.workspaces);
 
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto args = kernel::AbstractArgsFromCNode(cnode);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
   bool is_dynamic_kernel =
-    std::any_of(args.inputs.begin(), args.inputs.end(), [](KernelTensorPtr item) { return item->IsDynamicShape(); }) ||
-    std::any_of(args.outputs.begin(), args.outputs.end(), [](KernelTensorPtr item) { return item->IsDynamicShape(); });
+    std::any_of(input_kernel_tensors.begin(), input_kernel_tensors.end(),
+                [](const KernelTensor *item) {
+                  MS_EXCEPTION_IF_NULL(item);
+                  return item->IsDynamicShape();
+                }) ||
+    std::any_of(output_kernel_tensors.begin(), output_kernel_tensors.end(), [](const KernelTensor *item) {
+      MS_EXCEPTION_IF_NULL(item);
+      return item->IsDynamicShape();
+    });
   kernel_mod_ptr->SetKernelDynamicStatus(is_dynamic_kernel);
-  kernel_mod_ptr->UpdateShapeList(args.inputs, args.outputs);
+  kernel_mod_ptr->Initialize();
   AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
 }
 

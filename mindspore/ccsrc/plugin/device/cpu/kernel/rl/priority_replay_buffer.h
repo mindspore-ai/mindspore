@@ -60,7 +60,7 @@ class PriorityReplayBuffer {
   PriorityReplayBuffer(uint32_t seed, float alpha, size_t capacity, const std::vector<size_t> &schema);
 
   // Push an experience transition to the buffer which will be given the highest priority.
-  bool Push(const std::vector<AddressPtr> &items);
+  bool Push(const std::vector<KernelTensor *> &items);
 
   // Sample a batch transitions with indices and bias correction weights.
   std::tuple<std::vector<size_t>, std::vector<float>, std::vector<std::vector<AddressPtr>>> Sample(size_t batch_size,

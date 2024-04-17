@@ -50,7 +50,7 @@ def layer_norm_np(begin_norm_axis, begin_params_axis, x, gamma, beta):
     return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_layernorm0():
@@ -94,7 +94,7 @@ def test_layernorm1():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_layernorm3d_1():
@@ -116,7 +116,7 @@ def test_layernorm3d_1():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_layernorm3d_2():
@@ -202,7 +202,7 @@ def test_layernorm2d_4():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_layernorm_vmap():
@@ -251,7 +251,7 @@ def test_layernorm_vmap():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_layernorm_vmap2():
@@ -299,7 +299,7 @@ def test_layernorm_vmap2():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_layernorm_vmap3():
@@ -374,7 +374,7 @@ def test_layernorm_dynamic_shape():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_layernorm_double():

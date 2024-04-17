@@ -99,8 +99,8 @@ class DebugInfoManager {
                     const mindspore::lite::Tensor *origin_tensor, const quant::DebugMode &debug_mode);
 
   int AddComparedInfo(const mindspore::MSCallBackParam &call_back_param,
-                      const std::vector<mindspore::lite::Tensor *> &inputs, OpParameter *op_parameter, bool is_input,
-                      size_t tensor_index, const mindspore::lite::Tensor *compared_tensor,
+                      const std::vector<mindspore::lite::Tensor *> &inputs, const OpParameter *op_parameter,
+                      bool is_input, size_t tensor_index, const mindspore::lite::Tensor *compared_tensor,
                       const quant::DebugMode &debug_mode);
 
   void PrintAllDebugInfo();

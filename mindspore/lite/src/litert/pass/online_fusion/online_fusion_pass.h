@@ -36,7 +36,7 @@ namespace mindspore::lite {
 class OnlineFusionPass {
  public:
   explicit OnlineFusionPass(SearchSubGraph *search_subgrap);
-  ~OnlineFusionPass();
+  virtual ~OnlineFusionPass();
 
  public:
   void DoOnlineFusionPass();

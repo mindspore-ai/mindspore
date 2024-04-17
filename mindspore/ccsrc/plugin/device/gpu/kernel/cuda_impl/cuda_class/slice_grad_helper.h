@@ -56,9 +56,7 @@ class SliceGradHelperGpuKernel : public GpuKernelHelperBase {
     for (auto shape : attr_ptr_->input_shape) {
       input_size_ = input_size_ * static_cast<size_t>(shape);
     }
-    size_t output_size = sizeof(T) * attr_ptr_->output_num;
-    input_size_list_.push_back(output_size);
-    input_size_list_.push_back(input_size_);
+
     output_size_list_.push_back(input_size_);
     return 0;
   }

@@ -36,16 +36,13 @@ constexpr size_t kPolarOutputsNum = 1;
 
 namespace mindspore {
 namespace kernel {
-bool PolarCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  input1_dtype_ = inputs[0]->GetDtype();
+bool PolarCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  input1_dtype_ = inputs[0]->dtype_id();
   return true;
 }
 
-bool PolarCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &outputs) {
+bool PolarCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                               const std::vector<KernelTensor *> &outputs) {
   bool ret = true;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPolarInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPolarOutputsNum, kernel_name_);
@@ -60,11 +57,12 @@ bool PolarCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
 }
 
 template <typename T>
-bool PolarCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto abs = static_cast<T *>(inputs[0]->addr);
-  const auto angle = static_cast<T *>(inputs[1]->addr);
-  auto output_addr = static_cast<std::complex<T> *>(outputs[0]->addr);
-  size_t output_size = outputs[0]->size / sizeof(std::complex<T>);
+bool PolarCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  const auto abs = static_cast<T *>(inputs[0]->device_ptr());
+  const auto angle = static_cast<T *>(inputs[1]->device_ptr());
+  auto output_addr = static_cast<std::complex<T> *>(outputs[0]->device_ptr());
+  size_t output_size = outputs[0]->size() / sizeof(std::complex<T>);
   auto task = [output_addr, abs, angle](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       output_addr[i].real(abs[i] * cos(angle[i]));

@@ -23,11 +23,7 @@ constexpr int64_t kNumTwo = 2;
 constexpr int INPUT_NUM = 9;
 constexpr int OUTPUT_NUM = 3;
 
-bool SspaddmmGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_ptr_ = std::dynamic_pointer_cast<ops::Sspaddmm>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool SspaddmmGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -48,9 +44,8 @@ bool SspaddmmGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int SspaddmmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int SspaddmmGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -59,16 +54,14 @@ int SspaddmmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     }
   }
   ResetResource();
-  std::vector<int64_t> x1_indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                               inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> x2_indices_shape = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                                               inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> x3_dense_shape = std::vector<int64_t>(inputs.at(kIndex6)->GetDeviceShapeAdaptively().begin(),
-                                                             inputs.at(kIndex6)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> y_indices_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  int64_t x3_dense_elements_ =
-    std::accumulate(x3_dense_shape.begin(), x3_dense_shape.end(), int64_t(1), std::multiplies<int64_t>());
+  std::vector<int64_t> x1_indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                               inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> x2_indices_shape = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
+                                                               inputs.at(kIndex3)->GetDeviceShapeVector().end());
+  std::vector<int64_t> x3_dense_shape = std::vector<int64_t>(inputs.at(kIndex6)->GetDeviceShapeVector().begin(),
+                                                             inputs.at(kIndex6)->GetDeviceShapeVector().end());
+  std::vector<int64_t> y_indices_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                              outputs.at(kIndex0)->GetDeviceShapeVector().end());
   x1_values_num_ = x1_indices_shape[1];
   x2_values_num_ = x2_indices_shape[1];
   y_values_num_ = y_indices_shape[1];
@@ -76,27 +69,19 @@ int SspaddmmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (y_values_num_ == 0) {
     is_null_input_ = true;
   }
-  // InitSizeLists
-  input_size_list_.emplace_back(x1_values_num_ * unit_indices_size_ * kNumTwo);  // x1_indices
-  input_size_list_.emplace_back(x1_values_num_ * unit_values_size_);             // x1_values
-  input_size_list_.emplace_back(kNumTwo * unit_indices_size_);                   // x1_shape
-  input_size_list_.emplace_back(x2_values_num_ * unit_indices_size_ * kNumTwo);  // x2_indices
-  input_size_list_.emplace_back(x2_values_num_ * unit_values_size_);             // x2_values
-  input_size_list_.emplace_back(kNumTwo * unit_indices_size_);                   // x2_shape
-  input_size_list_.emplace_back(x3_dense_elements_ * unit_values_size_);         // x3_dense
-  input_size_list_.emplace_back(unit_values_size_);                              // alpha
-  input_size_list_.emplace_back(unit_values_size_);                              // beta
-  workspace_size_list_.emplace_back(x2_values_num_ * sizeof(int64_t));           // index
-  output_size_list_.emplace_back(y_values_num_ * sizeof(int64_t) * kNumTwo);     // y_indices
-  output_size_list_.emplace_back(y_values_num_ * unit_values_size_);             // y_values
-  output_size_list_.emplace_back(kNumTwo * sizeof(int64_t));                     // y_shape
+
+  workspace_size_list_.emplace_back(x2_values_num_ * sizeof(int64_t));        // index
+  output_size_list_.emplace_back(y_values_num_ * sizeof(int64_t) * kNumTwo);  // y_indices
+  output_size_list_.emplace_back(y_values_num_ * unit_values_size_);          // y_values
+  output_size_list_.emplace_back(kNumTwo * sizeof(int64_t));                  // y_shape
 
   return KRET_OK;
 }
 
 template <typename T, typename S>
-bool SspaddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool SspaddmmGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   S *x1_indices = GetDeviceAddress<S>(inputs, 0);
   T *x1_values = GetDeviceAddress<T>(inputs, 1);
   S *x1_shape = GetDeviceAddress<S>(inputs, 2);

@@ -14,12 +14,12 @@
 
     参数：
         - **network** (Cell) - 用于训练或推理的神经网络。
-        - **loss_fn** (Cell) - 损失函数。如果 `loss_fn` 为None，`network` 中需要进行损失函数计算，必要时也需要进行并行计算。默认值： ``None`` 。
-        - **optimizer** (Cell) - 用于更新网络权重的优化器。如果 `optimizer` 为None， `network` 中需要进行反向传播和网络权重更新。默认值： ``None`` 。
+        - **loss_fn** (Cell) - 损失函数。如果 `loss_fn` 为None，`network` 中需要进行损失函数计算。默认值： ``None`` 。
+        - **optimizer** (Cell) - 用于更新网络权重的优化器。如果 `optimizer` 为None， 那么 `network` 的网络结构里需要包括反向传播和权重更新逻辑。默认值： ``None`` 。
         - **metrics** (Union[dict, set]) - 用于模型评估的一组评价函数。例如：{'accuracy', 'recall'}。默认值： ``None`` 。
         - **eval_network** (Cell) - 用于评估的神经网络。未定义情况下，`Model` 会使用 `network` 和 `loss_fn` 封装一个 `eval_network` 。默认值： ``None`` 。
         - **eval_indexes** (list) - 在定义 `eval_network` 的情况下使用。如果 `eval_indexes` 为默认值None，`Model` 会将 `eval_network` 的所有输出传给 `metrics` 。如果配置 `eval_indexes` ，必须包含三个元素，分别为损失值、预测值和标签在 `eval_network` 输出中的位置，此时，损失值将传给损失评价函数，预测值和标签将传给其他评价函数。推荐使用评价函数的 :func:`mindspore.train.Metric.set_indexes` 代替 `eval_indexes` 。默认值： ``None`` 。
-        - **amp_level** (str) - `mindspore.amp.build_train_network` 的可选参数 `level` ， `level` 为混合精度等级，该参数支持["O0", "O1", "O2", "O3", "auto"]。默认值： ``"O0"`` 。
+        - **amp_level** (str) - `mindspore.amp.build_train_network <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/amp/mindspore.amp.build_train_network.html>`_ 的可选参数 `level` ， `level` 为混合精度等级，该参数支持["O0", "O1", "O2", "O3", "auto"]。默认值： ``"O0"`` 。
 
           - "O0": 不变化。
           - "O1": 将白名单中的算子转为float16，剩余算子保持float32。白名单中的算子如下列表：[Conv1d, Conv2d, Conv3d, Conv1dTranspose, Conv2dTranspose, Conv3dTranspose, Dense, LSTMCell, RNNCell, GRUCell, MatMul, BatchMatMul, PReLU, ReLU, Ger]。
@@ -75,7 +75,7 @@
 
         教程样例：
             - `高阶封装：Model - 训练及保存模型
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model.html#训练及保存模型>`_
+              <https://mindspore.cn/tutorials/zh-CN/r2.3.q1/advanced/model.html#训练及保存模型>`_
 
     .. py:method:: eval_network
         :property:
@@ -106,7 +106,7 @@
 
         教程样例：
             - `高阶封装：Model - 训练及保存模型
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model.html#训练及保存模型>`_
+              <https://mindspore.cn/tutorials/zh-CN/r2.3.q1/advanced/model.html#训练及保存模型>`_
 
     .. py:method:: infer_predict_layout(*predict_data, skip_backend_compile=False)
 
@@ -154,10 +154,10 @@
               .. code-block::
 
                   [ascend_context]
-                  rank_table_file=[path_a](storage initial path of the rank table file)
+                  rank_table_file=[path_a]（存储rank table文件的初始路径）
                   [execution_plan]
-                  [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为Float16）
-                  [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为Float32）
+                  [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为float16）
+                  [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为float32）
 
               当只配置config_path的方式如下：
 

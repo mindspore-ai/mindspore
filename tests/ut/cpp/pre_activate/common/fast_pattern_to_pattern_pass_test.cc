@@ -135,7 +135,10 @@ TEST_F(TestFastPatternToPatternPass, Mul0) {
     manager->AddFuncGraph(fg_);
     fg_->set_manager(manager);
   }
-  auto func_graph_index = manager->func_graph_index(fg_);
+  if (!fg_->has_user_data<FuncGraphPassIndex>()) {
+    fg_->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = fg_->user_data<FuncGraphPassIndex>();
   GenIndex(fg_, func_graph_index);
 
   ASSERT_TRUE(func_graph_index->node_degree_.at(add) == 1);
@@ -198,12 +201,12 @@ TEST_F(TestFastPatternToPatternPass, Mul0) {
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("a"), a));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("b"), b));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("c"), c));
-  ASSERT_EQ(check.m_->Get("bc")->cast<CNodePtr>()->inputs().size(), 3);
+  ASSERT_EQ(check.m_->Get("bc")->cast<CNodePtr>()->size(), 3);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("bc")->cast<CNodePtr>()->input(0),
                             NewValueNode(std::make_shared<Primitive>(kAddOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("bc")->cast<CNodePtr>()->input(1), b));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("bc")->cast<CNodePtr>()->input(2), c));
-  ASSERT_EQ(check.m_->Get("mul")->cast<CNodePtr>()->inputs().size(), 3);
+  ASSERT_EQ(check.m_->Get("mul")->cast<CNodePtr>()->size(), 3);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("mul")->cast<CNodePtr>()->input(0),
                             NewValueNode(std::make_shared<Primitive>(kMulOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("mul")->cast<CNodePtr>()->input(1), a));
@@ -239,7 +242,10 @@ TEST_F(TestFastPatternToPatternPass, Mul0NotRoot) {
     manager->AddFuncGraph(fg_);
     fg_->set_manager(manager);
   }
-  auto func_graph_index = manager->func_graph_index(fg_);
+  if (!fg_->has_user_data<FuncGraphPassIndex>()) {
+    fg_->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = fg_->user_data<FuncGraphPassIndex>();
   GenIndex(fg_, func_graph_index);
 
   ASSERT_TRUE(func_graph_index->node_degree_.at(add1) == 1);
@@ -312,19 +318,19 @@ TEST_F(TestFastPatternToPatternPass, Mul0NotRoot) {
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("c"), c));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("d"), d));
 
-  ASSERT_EQ(check.m_->Get("bc")->cast<CNodePtr>()->inputs().size(), 3);
+  ASSERT_EQ(check.m_->Get("bc")->cast<CNodePtr>()->size(), 3);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("bc")->cast<CNodePtr>()->input(0),
                             NewValueNode(std::make_shared<Primitive>(kAddOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("bc")->cast<CNodePtr>()->input(1), b));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("bc")->cast<CNodePtr>()->input(2), c));
 
-  ASSERT_EQ(check.m_->Get("mul")->cast<CNodePtr>()->inputs().size(), 3);
+  ASSERT_EQ(check.m_->Get("mul")->cast<CNodePtr>()->size(), 3);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("mul")->cast<CNodePtr>()->input(0),
                             NewValueNode(std::make_shared<Primitive>(kMulOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("mul")->cast<CNodePtr>()->input(1), a));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("mul")->cast<CNodePtr>()->input(2), check.m_->Get("bc")));
 
-  ASSERT_EQ(check.m_->Get("add1")->cast<CNodePtr>()->inputs().size(), 3);
+  ASSERT_EQ(check.m_->Get("add1")->cast<CNodePtr>()->size(), 3);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("add1")->cast<CNodePtr>()->input(0),
                             NewValueNode(std::make_shared<Primitive>(kAddOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("add1")->cast<CNodePtr>()->input(1), check.m_->Get("mul")));
@@ -367,7 +373,10 @@ TEST_F(TestFastPatternToPatternPass, Mul1) {
     manager->AddFuncGraph(fg_);
     fg_->set_manager(manager);
   }
-  auto func_graph_index = manager->func_graph_index(fg_);
+  if (!fg_->has_user_data<FuncGraphPassIndex>()) {
+    fg_->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = fg_->user_data<FuncGraphPassIndex>();
   GenIndex(fg_, func_graph_index);
 
   ASSERT_TRUE(func_graph_index->node_degree_.at(b_add_d) == 1);
@@ -447,13 +456,13 @@ TEST_F(TestFastPatternToPatternPass, Mul1) {
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("d"), d));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("e"), e));
 
-  ASSERT_EQ(check.m_->Get("ad")->cast<CNodePtr>()->inputs().size(), 3);
+  ASSERT_EQ(check.m_->Get("ad")->cast<CNodePtr>()->size(), 3);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("ad")->cast<CNodePtr>()->input(0),
                             NewValueNode(std::make_shared<Primitive>(kMulOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("ad")->cast<CNodePtr>()->input(1), a));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("ad")->cast<CNodePtr>()->input(2), d));
 
-  ASSERT_EQ(check.m_->Get("add1")->cast<CNodePtr>()->inputs().size(), 3);
+  ASSERT_EQ(check.m_->Get("add1")->cast<CNodePtr>()->size(), 3);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("add1")->cast<CNodePtr>()->input(0),
                             NewValueNode(std::make_shared<Primitive>(kAddOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get("add1")->cast<CNodePtr>()->input(1), check.m_->Get("ad")));
@@ -521,25 +530,25 @@ void Check2(const CheckPattern &check, const std::map<std::string, AnfNodePtr> &
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kD), node_map.at(kD)));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kE), node_map.at(kE)));
 
-  ASSERT_EQ(check.m_->Get(kAAddB)->cast<CNodePtr>()->inputs().size(), kThree);
+  ASSERT_EQ(check.m_->Get(kAAddB)->cast<CNodePtr>()->size(), kThree);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kAAddB)->cast<CNodePtr>()->input(kZero),
                             NewValueNode(std::make_shared<Primitive>(kAddOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kAAddB)->cast<CNodePtr>()->input(kOne), node_map.at(kA)));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kAAddB)->cast<CNodePtr>()->input(kTwo), node_map.at(kB)));
 
-  ASSERT_EQ(check.m_->Get(kCAddD)->cast<CNodePtr>()->inputs().size(), kThree);
+  ASSERT_EQ(check.m_->Get(kCAddD)->cast<CNodePtr>()->size(), kThree);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kCAddD)->cast<CNodePtr>()->input(kZero),
                             NewValueNode(std::make_shared<Primitive>(kAddOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kCAddD)->cast<CNodePtr>()->input(kOne), node_map.at(kC)));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kCAddD)->cast<CNodePtr>()->input(kTwo), node_map.at(kD)));
 
-  ASSERT_EQ(check.m_->Get(kMul)->cast<CNodePtr>()->inputs().size(), kThree);
+  ASSERT_EQ(check.m_->Get(kMul)->cast<CNodePtr>()->size(), kThree);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kMul)->cast<CNodePtr>()->input(kZero),
                             NewValueNode(std::make_shared<Primitive>(kMulOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kMul)->cast<CNodePtr>()->input(kOne), node_map.at(kCAddD)));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kMul)->cast<CNodePtr>()->input(kTwo), node_map.at(kAAddB)));
 
-  ASSERT_EQ(check.m_->Get(kAdd)->cast<CNodePtr>()->inputs().size(), kThree);
+  ASSERT_EQ(check.m_->Get(kAdd)->cast<CNodePtr>()->size(), kThree);
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kAdd)->cast<CNodePtr>()->input(kZero),
                             NewValueNode(std::make_shared<Primitive>(kAddOpName))));
   ASSERT_TRUE(opt::AnfEqual(check.m_->Get(kAdd)->cast<CNodePtr>()->input(kOne), check.m_->Get(kMul)));
@@ -589,7 +598,10 @@ TEST_F(TestFastPatternToPatternPass, Mul2) {
     manager->AddFuncGraph(fg_);
     fg_->set_manager(manager);
   }
-  auto func_graph_index = manager->func_graph_index(fg_);
+  if (!fg_->has_user_data<FuncGraphPassIndex>()) {
+    fg_->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = fg_->user_data<FuncGraphPassIndex>();
   GenIndex(fg_, func_graph_index);
 
   Check0(func_graph_index, node_map);

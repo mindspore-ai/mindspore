@@ -17,7 +17,6 @@ from __future__ import absolute_import, division
 
 import numpy as np
 
-from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 from mindspore.common.api import jit
@@ -39,12 +38,12 @@ _scaler_one = Tensor(1, mstype.int32)
 _scaler_ten = Tensor(10, mstype.float32)
 
 
-@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                         "Tensor", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor", "Bool",
-                         "Bool", "Function", "Bool", "Function", "Bool")
-def _run_lazy_opt_with_sparse_dist(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power,
-                                   beta2_power, beta1, beta2, eps, lr, gradient, params, m, v, ps_parameter,
-                                   cache_enable, distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
+@_lazy_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+                         "Tensor", "Tensor", "Tensor", "Tensor",
+                         "RowTensor", "Tensor", "Tensor", "Tensor", "Function", "Bool", "Function", "Bool")
+def _run_lazy_opt_with_sparse_dist(opt, sparse_opt, use_locking, use_nesterov, target, beta1_power,
+                                   beta2_power, beta1, beta2, eps, lr, gradient, params, m, v,
+                                   distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
     """Apply sparse lazy adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices
@@ -52,14 +51,6 @@ def _run_lazy_opt_with_sparse_dist(opt, sparse_opt, push, pull, use_locking, use
     if use_sparse_flag:
         success = F.depend(success, distributed_sparse_opt(params, m, v, beta1_power, beta2_power, lr, beta1, beta2,
                                                            eps, values, indices))
-        return success
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        shapes = (op_shape(params), op_shape(m), op_shape(v),
-                  op_shape(beta1_power), op_shape(beta2_power), op_shape(lr), op_shape(beta1),
-                  op_shape(beta2), op_shape(eps), op_shape(values), op_shape(indices))
-        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2,
-                                               eps, values, indices), shapes), params))
         return success
 
     if not target:
@@ -92,12 +83,12 @@ def _run_lazy_opt_with_sparse_dist(opt, sparse_opt, push, pull, use_locking, use
     return success
 
 
-@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+@_lazy_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
                          "Tensor", "Tensor", "Tensor", "Tensor", "MapTensor", "MapTensor", "MapTensor", "MapTensor",
-                         "Bool", "Bool", "Function", "Bool", "Function", "Bool")
-def _run_map_tensor_lazy_opt_with_sparse_dist(opt, sparse_opt, push, pull, use_locking, use_nesterov, target,
+                         "Function", "Bool", "Function", "Bool")
+def _run_map_tensor_lazy_opt_with_sparse_dist(opt, sparse_opt, use_locking, use_nesterov, target,
                                               beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params, m, v,
-                                              ps_parameter, cache_enable, distributed_opt, use_flag,
+                                              distributed_opt, use_flag,
                                               distributed_sparse_opt, use_sparse_flag):
     """Apply sparse lazy adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
@@ -132,46 +123,32 @@ def _run_map_tensor_lazy_opt_with_sparse_dist(opt, sparse_opt, push, pull, use_l
     return success
 
 
-@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                         "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool",
+@_lazy_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+                         "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
                          "Function", "Bool", "Function", "Bool")
-def _run_lazy_opt_with_one_number_dist(opt, sparse_opt, push, pull, use_locking, use_nesterov, target,
+def _run_lazy_opt_with_one_number_dist(opt, sparse_opt, use_locking, use_nesterov, target,
                                        beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params, moment1,
-                                       moment2, ps_parameter, cache_enable, distributed_opt, use_flag,
+                                       moment2, distributed_opt, use_flag,
                                        distributed_sparse_opt, use_sparse_flag):
     """Apply lazy adam optimizer to the weight parameter using Tensor."""
     success = True
     if use_flag:
         success = F.depend(success, distributed_opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1,
                                                     beta2, eps, gradient))
-    elif ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
-                                              (op_shape(params), op_shape(moment1), op_shape(moment2))), params))
     else:
         success = F.depend(success, opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
                                         eps, gradient))
     return success
 
 
-@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                         "Tensor", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor", "Bool",
-                         "Bool")
-def _run_lazy_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power, beta2_power,
-                              beta1, beta2, eps, lr, gradient, params, m, v, ps_parameter, cache_enable):
+@_lazy_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+                         "Tensor", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor")
+def _run_lazy_opt_with_sparse(opt, sparse_opt, use_locking, use_nesterov, target, beta1_power, beta2_power,
+                              beta1, beta2, eps, lr, gradient, params, m, v):
     """Apply sparse lazy adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices
     values = gradient.values
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        shapes = (op_shape(params), op_shape(m), op_shape(v),
-                  op_shape(beta1_power), op_shape(beta2_power), op_shape(lr), op_shape(beta1),
-                  op_shape(beta2), op_shape(eps), op_shape(values), op_shape(indices))
-        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2,
-                                               eps, values, indices), shapes), params))
-        return success
-
     if not target:
         success = F.depend(success, sparse_opt(params, m, v, beta1_power, beta2_power, lr, beta1, beta2,
                                                eps, values, indices))
@@ -202,12 +179,10 @@ def _run_lazy_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nest
     return success
 
 
-@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                         "Tensor", "Tensor", "Tensor", "Tensor", "MapTensor", "MapTensor", "MapTensor", "MapTensor",
-                         "Bool", "Bool")
-def _run_map_tensor_lazy_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power,
-                                         beta2_power, beta1, beta2, eps, lr, gradient, params, m, v, ps_parameter,
-                                         cache_enable):
+@_lazy_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+                         "Tensor", "Tensor", "Tensor", "Tensor", "MapTensor", "MapTensor", "MapTensor", "MapTensor")
+def _run_map_tensor_lazy_opt_with_sparse(opt, sparse_opt, use_locking, use_nesterov, target, beta1_power,
+                                         beta2_power, beta1, beta2, eps, lr, gradient, params, m, v):
     """Apply sparse lazy adam optimizer to the weight parameter when the gradient is sparse(MapTensor)."""
     success = True
     indices, values = gradient.get_data()
@@ -236,20 +211,14 @@ def _run_map_tensor_lazy_opt_with_sparse(opt, sparse_opt, push, pull, use_lockin
     return success
 
 
-@_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                         "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
-def _run_lazy_opt_with_one_number(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power,
-                                  beta2_power, beta1, beta2, eps, lr, gradient, params, moment1, moment2, ps_parameter,
-                                  cache_enable):
+@_lazy_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+                         "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+def _run_lazy_opt_with_one_number(opt, sparse_opt, use_locking, use_nesterov, target, beta1_power,
+                                  beta2_power, beta1, beta2, eps, lr, gradient, params, moment1, moment2):
     """Apply lazy adam optimizer to the weight parameter using Tensor."""
     success = True
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
-                                              (op_shape(params), op_shape(moment1), op_shape(moment2))), params))
-    else:
-        success = F.depend(success, opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
-                                        eps, gradient))
+    success = F.depend(success, opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
+                                    eps, gradient))
     return success
 
 
@@ -309,11 +278,11 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay, param, m, v, gradient, d
     return op_cast(gradient, F.dtype(param))
 
 
-@_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool",
+@_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+                    "Tensor", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor",
                     "Function", "Bool", "Function", "Bool")
-def _run_opt_with_sparse_dist(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power,
-                              beta2_power, beta1, beta2, eps, lr, gradient, param, m, v, ps_parameter, cache_enable,
+def _run_opt_with_sparse_dist(opt, sparse_opt, use_locking, use_nesterov, target, beta1_power,
+                              beta2_power, beta1, beta2, eps, lr, gradient, param, m, v,
                               distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
     """Apply sparse adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
@@ -323,14 +292,6 @@ def _run_opt_with_sparse_dist(opt, sparse_opt, push, pull, use_locking, use_nest
         success = F.depend(success, distributed_sparse_opt(param, m, v, beta1_power, beta2_power, lr, beta1, beta2,
                                                            eps, values, indices))
         return success
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        shapes = (op_shape(param), op_shape(m), op_shape(v),
-                  op_shape(beta1_power), op_shape(beta2_power), op_shape(lr), op_shape(beta1),
-                  op_shape(beta2), op_shape(eps), op_shape(values), op_shape(indices))
-        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2,
-                                               eps, values, indices), shapes), param))
-        return success
 
     if not target:
         success = F.depend(success, sparse_opt(param, m, v, beta1_power, beta2_power, lr, beta1, beta2,
@@ -376,49 +337,33 @@ def _run_opt_with_sparse_dist(opt, sparse_opt, push, pull, use_locking, use_nest
     return success
 
 
-@_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool",
+@_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
                     "Function", "Bool", "Function", "Bool")
-def _run_opt_with_one_number_dist(opt, sparse_opt, push, pull, use_locking, use_nesterov, target,
-                                  beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, param,
-                                  moment1, moment2, ps_parameter, cache_enable,
+def _run_opt_with_one_number_dist(opt, sparse_opt, use_locking, use_nesterov, target,
+                                  beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, param, moment1, moment2,
                                   distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
     """Apply adam optimizer to the weight parameter using Tensor."""
     success = True
     if use_flag:
         success = F.depend(success, distributed_opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
                                                     eps, gradient))
-    elif ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
-                                              (op_shape(param), op_shape(moment1), op_shape(moment2))), param))
     else:
         success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
                                         eps, gradient))
     return success
 
 
-@_adam_opt.register("Function", "Function", "Function", "Function",
-                    "Bool", "Bool", "Bool",
+@_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool",
                     "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                    "RowTensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
-def _run_opt_with_sparse(opt, sparse_opt, push, pull,
-                         use_locking, use_nesterov, target,
+                    "RowTensor", "Tensor", "Tensor", "Tensor")
+def _run_opt_with_sparse(opt, sparse_opt, use_locking, use_nesterov, target,
                          beta1_power, beta2_power, beta1, beta2, eps, lr,
-                         gradient, param, m, v, ps_parameter, cache_enable):
+                         gradient, param, m, v):
     """Apply sparse adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices
     values = gradient.values
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        shapes = (op_shape(param), op_shape(m), op_shape(v),
-                  op_shape(beta1_power), op_shape(beta2_power), op_shape(lr), op_shape(beta1),
-                  op_shape(beta2), op_shape(eps), op_shape(values), op_shape(indices))
-        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2,
-                                               eps, values, indices), shapes), param))
-        return success
-
     if not target:
         success = F.depend(success, sparse_opt(param, m, v, beta1_power, beta2_power, lr, beta1, beta2,
                                                eps, values, indices))
@@ -463,44 +408,30 @@ def _run_opt_with_sparse(opt, sparse_opt, push, pull,
     return success
 
 
-@_adam_opt.register("Function", "Function", "Function", "Function",
-                    "Bool", "Bool", "Bool",
+@_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool",
                     "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
-def _run_opt_with_one_number(opt, sparse_opt, push, pull,
-                             use_locking, use_nesterov, target,
+                    "Tensor", "Tensor", "Tensor", "Tensor")
+def _run_opt_with_one_number(opt, sparse_opt, use_locking, use_nesterov, target,
                              beta1_power, beta2_power, beta1, beta2, eps, lr,
-                             gradient, param, moment1, moment2, ps_parameter, cache_enable):
+                             gradient, param, moment1, moment2):
     """Apply adam optimizer to the weight parameter using Tensor."""
     success = True
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
-                                              (op_shape(param), op_shape(moment1), op_shape(moment2))), param))
-    else:
-        success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
-                                        eps, gradient))
+    success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
+                                    eps, gradient))
     return success
 
 
-@_adam_opt.register("Function", "Function", "Function", "Function",
-                    "Bool", "Bool", "Bool",
+@_adam_opt.register("Function", "Function", "Bool", "Bool", "Bool",
                     "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
-def _run_opt_with_one_number_use_amsgrad(opt, sparse_opt, push, pull,
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+def _run_opt_with_one_number_use_amsgrad(opt, sparse_opt,
                                          use_locking, use_nesterov, target,
                                          beta1_power, beta2_power, beta1, beta2, eps, lr,
-                                         gradient, param, moment1, moment2, vhat, ps_parameter, cache_enable):
+                                         gradient, param, moment1, moment2, vhat):
     """Apply adam optimizer to the weight parameter using Tensor and use amsgrad."""
     success = True
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, gradient),
-                                              (op_shape(param), op_shape(moment1), op_shape(moment2),
-                                               op_shape(vhat))), param))
-    else:
-        success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power,
-                                        lr, beta1, beta2, eps, gradient))
+    success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power,
+                                    lr, beta1, beta2, eps, gradient))
     return success
 
 
@@ -647,7 +578,9 @@ class Adam(Optimizer):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              `LearningRateSchedule
+              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              with step as the input to get the learning rate of current step.
 
         beta1 (float): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
                        Default: ``0.9`` .
@@ -708,8 +641,8 @@ class Adam(Optimizer):
         ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
         ValueError: If `weight_decay` is less than 0.
         ValueError: If `use_lazy` and `use_offload` are both ``true`` .
-        ValueError: If `use_amsgrad` is ``true`` and (`use_lazy` or `use_offload` is ``true`` ).
-        ValueError: If `use_amsgrad` while using distributed training.
+        ValueError: If `use_amsgrad` is ``true``, `use_lazy` or `use_offload` is ``true`` .
+        ValueError: If `use_amsgrad` is ``True`` while using distributed training.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
@@ -719,7 +652,7 @@ class Adam(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Adam(params=net.trainable_params())
@@ -790,9 +723,6 @@ class Adam(Optimizer):
             self.opt = P.Adam(use_locking, use_nesterov)
             self.sparse_opt = P.FusedSparseLazyAdam(use_locking, use_nesterov)
             self.sparse_opt.set_device("CPU")
-            self._ps_pull = P.Pull()
-            self._ps_push = P.Push("Adam", [0, 1, 2])
-            self._ps_push.add_prim_attr("use_nesterov", use_nesterov)
             self._init_distributed_opts(use_locking, use_nesterov)
 
         else:
@@ -803,13 +733,6 @@ class Adam(Optimizer):
                 self.opt = P.Adam(use_locking, use_nesterov)
             self.sparse_opt = P.FusedSparseAdam(use_locking, use_nesterov)
             self.sparse_opt.set_device("CPU")
-            self._ps_pull = P.Pull()
-            if use_amsgrad:
-                self._ps_push = P.Push("ApplyAdamWithAmsgrad", [0, 1, 2, 3])
-            else:
-                self._ps_push = P.Push("Adam", [0, 1, 2])
-                self._ps_push.add_prim_attr("use_nesterov", use_nesterov)
-
             self._init_distributed_opts(use_locking, use_nesterov)
 
     def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):
@@ -830,79 +753,76 @@ class Adam(Optimizer):
                 if self.is_group_lr:
                     if self.use_lazy:
                         success = self.map_reverse(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt,
-                                                             self._ps_push, self._ps_pull, self.use_locking,
-                                                             self.use_nesterov,
+                                                             self.use_locking, self.use_nesterov,
                                                              self._is_device, beta1_power, beta2_power,
                                                              self.beta1, self.beta2, self.eps),
                                                    lr, gradients, self._parameters, self.moment1, self.moment2,
-                                                   self.ps_parameters, self.cache_enable, self.dense_lazyadam_opts,
+                                                   self.dense_lazyadam_opts,
                                                    self.use_dense_opt_flags, self.sparse_lazyadam_opts,
                                                    self.use_sparse_opt_flags)
                     # Normal Adam
                     else:
-                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                      self._ps_pull, self.use_locking, self.use_nesterov,
-                                                      self._is_device, beta1_power, beta2_power, self.beta1, self.beta2,
-                                                      self.eps), lr, gradients, params, moment1, moment2,
-                                            self.ps_parameters, self.cache_enable, self.dense_adam_opts,
-                                            self.use_dense_opt_flags, self.sparse_adam_opts, self.use_sparse_opt_flags)
+                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self.use_locking,
+                                                      self.use_nesterov, self._is_device, beta1_power, beta2_power,
+                                                      self.beta1, self.beta2, self.eps),
+                                            lr, gradients, params, moment1, moment2,
+                                            self.dense_adam_opts, self.use_dense_opt_flags,
+                                            self.sparse_adam_opts, self.use_sparse_opt_flags)
                 else:
                     if self.use_lazy:
-                        success = self.map_reverse(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                             self._ps_pull, self.use_locking, self.use_nesterov,
+                        success = self.map_reverse(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt,
+                                                             self.use_locking, self.use_nesterov,
                                                              self._is_device, beta1_power, beta2_power, self.beta1,
                                                              self.beta2, self.eps, lr), gradients, self._parameters,
-                                                   self.moment1, self.moment2, self.ps_parameters, self.cache_enable,
+                                                   self.moment1, self.moment2,
                                                    self.dense_lazyadam_opts, self.use_dense_opt_flags,
                                                    self.sparse_lazyadam_opts, self.use_sparse_opt_flags)
                     else:
-                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                      self._ps_pull, self.use_locking, self.use_nesterov,
+                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,
+                                                      self.use_locking, self.use_nesterov,
                                                       self._is_device, beta1_power, beta2_power, self.beta1, self.beta2,
                                                       self.eps, lr), gradients, params, moment1, moment2,
-                                            self.ps_parameters, self.cache_enable, self.dense_adam_opts,
+                                            self.dense_adam_opts,
                                             self.use_dense_opt_flags, self.sparse_adam_opts, self.use_sparse_opt_flags)
             else:
                 if self.is_group_lr:
                     if self.use_lazy:
-                        success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                      self._ps_pull, self.use_locking, self.use_nesterov,
+                        success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt,
+                                                      self.use_locking, self.use_nesterov,
                                                       self._is_device, beta1_power, beta2_power, self.beta1, self.beta2,
-                                                      self.eps), lr, gradients, params, moment1, moment2,
-                                            self.ps_parameters, self.cache_enable)
+                                                      self.eps), lr, gradients, params, moment1, moment2)
                     else:
                         if self.use_amsgrad:
-                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                          self._ps_pull, self.use_locking, self.use_nesterov,
+                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,
+                                                          self.use_locking, self.use_nesterov,
                                                           self._is_device, beta1_power, beta2_power,
                                                           self.beta1, self.beta2, self.eps), lr, gradients, params,
-                                                moment1, moment2, self.vhat, self.ps_parameters, self.cache_enable)
+                                                moment1, moment2, self.vhat)
                         else:
-                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                          self._ps_pull, self.use_locking, self.use_nesterov,
+                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,
+                                                          self.use_locking, self.use_nesterov,
                                                           self._is_device, beta1_power, beta2_power,
                                                           self.beta1, self.beta2, self.eps), lr, gradients, params,
-                                                moment1, moment2, self.ps_parameters, self.cache_enable)
+                                                moment1, moment2)
                 else:
                     if self.use_lazy:
-                        success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                      self._ps_pull, self.use_locking, self.use_nesterov,
+                        success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt,
+                                                      self.use_locking, self.use_nesterov,
                                                       self._is_device, beta1_power, beta2_power, self.beta1, self.beta2,
-                                                      self.eps, lr), gradients, params, moment1, moment2,
-                                            self.ps_parameters, self.cache_enable)
+                                                      self.eps, lr), gradients, params, moment1, moment2)
                     else:
                         if self.use_amsgrad:
-                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                          self._ps_pull, self.use_locking, self.use_nesterov,
+                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,
+                                                          self.use_locking, self.use_nesterov,
                                                           self._is_device, beta1_power, beta2_power,
                                                           self.beta1, self.beta2, self.eps, lr), gradients, params,
-                                                moment1, moment2, self.vhat, self.ps_parameters, self.cache_enable)
+                                                moment1, moment2, self.vhat)
                         else:
-                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                          self._ps_pull, self.use_locking, self.use_nesterov,
+                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,
+                                                          self.use_locking, self.use_nesterov,
                                                           self._is_device, beta1_power, beta2_power,
                                                           self.beta1, self.beta2, self.eps, lr), gradients, params,
-                                                moment1, moment2, self.ps_parameters, self.cache_enable)
+                                                moment1, moment2)
 
         return success
 
@@ -967,8 +887,8 @@ class AdamWeightDecay(Optimizer):
              \boldsymbol{g}_{t} \\
             &\hspace{5mm}\boldsymbol{v}_{t} \leftarrow \beta_{2} \boldsymbol{v}_{t-1}+\left(1-\beta_{2}\right)
              \boldsymbol{g}_{t}^{2} \\
-            &\hspace{5mm}\boldsymbol{w}_{t} \leftarrow \boldsymbol{w}_{t-1}-\left(\gamma \hat{\boldsymbol{m}}_{t}
-             /\left(\sqrt{\hat{\boldsymbol{v}}_{t}}+\epsilon\right)+\lambda \boldsymbol{w}_{t-1}\right) \\
+            &\hspace{5mm}\boldsymbol{w}_{t} \leftarrow \boldsymbol{w}_{t-1}-\gamma\left({\boldsymbol{m}}_{t}
+             /\left(\sqrt{{\boldsymbol{v}}_{t}}+\epsilon\right)+\lambda \boldsymbol{w}_{t-1}\right) \\
             &\textbf{until}\text { stopping criterion is met } \\[-1.ex]
             &\newline
             &\hline \\[-1.ex]
@@ -986,7 +906,7 @@ class AdamWeightDecay(Optimizer):
         There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used
         and `drop_overflow_update` in `FixedLossScaleManager` is set to False, optimizer needs to set the 'loss_scale'.
         As this optimizer has no argument of `loss_scale`, so `loss_scale` needs to be processed by other means, refer
-        document `LossScale <https://www.mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_ to
+        document `LossScale <https://www.mindspore.cn/tutorials/en/r2.3.q1/advanced/mixed_precision.html>`_ to
         process `loss_scale` correctly.
 
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
@@ -1029,7 +949,9 @@ class AdamWeightDecay(Optimizer):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              `LearningRateSchedule
+              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              with step as the input to get the learning rate of current step.
 
         beta1 (float): The exponential decay rate for the 1st moment estimations. Default: ``0.9`` .
             Should be in range (0.0, 1.0).
@@ -1070,7 +992,7 @@ class AdamWeightDecay(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdamWeightDecay(params=net.trainable_params())
@@ -1100,10 +1022,7 @@ class AdamWeightDecay(Optimizer):
         self.moments1 = self._parameters.clone(prefix="adam_m", init='zeros')
         self.moments2 = self._parameters.clone(prefix="adam_v", init='zeros')
         self.fused_opt = P.AdamWeightDecay()
-        if context.get_context("device_target") == "Ascend":
-            self.use_fused_opt = False
-        else:
-            self.use_fused_opt = True
+        self.use_fused_opt = True
 
     @jit
     def construct(self, gradients):
@@ -1230,7 +1149,9 @@ class AdamOffload(Optimizer):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              `LearningRateSchedule
+              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              with step as the input to get the learning rate of current step.
 
         beta1 (float): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
                        Default: ``0.9`` .
@@ -1284,7 +1205,7 @@ class AdamOffload(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdamOffload(params=net.trainable_params())

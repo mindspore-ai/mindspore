@@ -30,10 +30,10 @@ mindspore.nn.PolynomialDecayLR
         - **update_decay_steps** (bool) - 如果为 ``True`` ，则学习率每 `decay_steps` 次衰减一次。默认值： ``False`` 。
 
     输入：
-        - **global_step** (Tensor) - 当前step数，即current_step，shape为 :math:`()`。
+        - **global_step** (Tensor) - 当前step数，即current_step。shape为 :math:`()`。
 
     输出：
-        标量Tensor。当前step的学习率值。
+        标量Tensor。当前step的学习率值，shape为 :math:`()`。
 
     异常：
         - **TypeError** - `learning_rate`, `end_learning_rate` 或 `power` 不是float。

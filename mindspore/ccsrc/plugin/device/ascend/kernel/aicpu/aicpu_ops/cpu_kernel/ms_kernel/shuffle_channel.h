@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SHUFFLE_CHANNEL_H_
 #define AICPU_KERNELS_NORMALIZED_SHUFFLE_CHANNEL_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -30,10 +30,10 @@ class ShuffleChannelCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ShuffleChannelParamCheck(const CpuKernelContext &ctx);
+  uint32_t ShuffleChannelParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t ShuffleChannelCompute(const CpuKernelContext &ctx);
+  uint32_t ShuffleChannelCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

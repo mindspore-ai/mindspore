@@ -218,8 +218,6 @@ def hybrid_custom_inplace_assign_two_outputs():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_hybrid_ascend_graph_mode():
     """
@@ -233,8 +231,6 @@ def test_hybrid_ascend_graph_mode():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_hybrid_ascend_pynative_mode():
     """
@@ -335,8 +331,6 @@ def irbuilder_case():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_irbuilder_ascend_graph_mode():
     """
@@ -349,8 +343,6 @@ def test_irbuilder_ascend_graph_mode():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_irbuilder_ascend_pynative_mode():
     """

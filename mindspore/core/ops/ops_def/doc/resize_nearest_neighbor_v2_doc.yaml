@@ -1,0 +1,48 @@
+resize_nearest_neighbor_v2:
+  description: |
+    Resizes the input tensor to specific size by using the nearest neighbor algorithm.
+
+    The nearest neighbor algorithm selects the value of the nearest point and does not consider the
+    values of neighboring points at all, yielding a piecewise-constant interpolant.
+
+    Args:
+        align_corners (bool, optional): If ``True`` , the centers of the 4 corner pixels of the input and output
+            tensors are aligned, preserving the values at the corner pixels. Default: ``False`` .
+        half_pixel_centers (bool, optional): Whether half pixel center. If set to ``True`` ,
+            `align_corners` should be False. Default: ``False`` .
+
+    Inputs:
+        - **x** (Tensor) - 4-D with shape :math:`(batch, channels, height, width)` .
+        - **size** (Tensor) - The new size for the images. A 1-D int32 Tensor
+          of 2 elements: [`new_height, new_width`].
+
+    Outputs:
+        - **y** (Tensor) - The resized images. A 4-D with shape
+          :math:`(batch, channels, new\_height, new\_width)`. It has the same dtype as `x`.
+
+    Raises:
+        TypeError: If `x` or `size` is not a Tensor.
+        TypeError: If the data type  of `size` is not int32.
+        TypeError: If `align_corners` or `half_pixel_centers` is not bool.
+        ValueError: If any value of `size` is non positive.
+        ValueError: If the dimension of `x` is not 4.
+        ValueError: If the dimension of `size` is not 1.
+        ValueError: If the elements number of `size` is not 2.
+        ValueError: If attr `half_pixel_centers` and `align_corners` are True at the same time.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
+        >>> input_tensor = Tensor(np.ones((1, 1, 4, 4)), mstype.float32)
+        >>> size = Tensor([2, 2], mstype.int32)
+        >>> resize = ops.ResizeNearestNeighborV2()
+        >>> output = resize(input_tensor, size)
+        >>> print(output)
+        [[[[1. 1.]
+           [1. 1.]]]]
+        >>> print(output.shape)
+        (1, 1, 2, 2)

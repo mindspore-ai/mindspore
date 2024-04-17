@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,8 @@
 
 #include "minddata/dataset/engine/ir/datasetops/cache_node.h"
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/datasetops/cache_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {

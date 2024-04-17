@@ -29,7 +29,7 @@ def _stub_member(var, init):
         if stub.tensor is not None:
             return getattr(stub.tensor, var)
         if hasattr(stub, "member_cache"):
-            return getattr(stub.member_cache, var, init)
+            return stub.member_cache.get(var, init)
         return init
 
     def setx(stub, value):
@@ -61,6 +61,11 @@ class StubTensor:
     index_of_parent_ = _stub_member("index_of_parent_", None)
     slice_num_of_persistent_data_ = _stub_member("slice_num_of_persistent_data_", None)
     slice_shape_of_persistent_data_ = _stub_member("slice_shape_of_persistent_data_", None)
+    # auto gradient information
+    _grad = _stub_member("_grad", None)
+    _grad_fn = _stub_member("_grad_fn", None)
+    _requires_grad = _stub_member("_requires_grad", False)
+    _retain_grad = _stub_member("_retain_grad", False)
 
     def __init__(self, stub=None, tensor=None):
         self.stub = stub

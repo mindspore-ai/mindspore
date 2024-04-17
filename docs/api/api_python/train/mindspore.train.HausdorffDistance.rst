@@ -8,9 +8,11 @@ mindspore.train.HausdorffDistance
     给定两个集合A和B，A和B之间的Hausdorff距离定义如下：
 
     .. math::
-        H(A, B) = \text{max}[h(A, B), h(B, A)]
-        h(A, B) = \underset{a \in A}{\text{max}}\{\underset{b \in B}{\text{min}} \rVert a - b \rVert \}
-        h(B, A) = \underset{b \in B}{\text{max}}\{\underset{a \in A}{\text{min}} \rVert b - a \rVert \}
+        \begin{array}{ll} \\
+                H(A, B) = \text{max}[h(A, B), h(B, A)]\\
+                h(A, B) = \underset{a \in A}{\text{max}}\{\underset{b \in B}{\text{min}} \rVert a - b \rVert \}\\
+                h(B, A) = \underset{b \in B}{\text{max}}\{\underset{a \in A}{\text{min}} \rVert b - a \rVert \}
+        \end{array}
 
     其中 :math:`h(A, B)` 表示，对A中的每个点a找到B集合里的最近点，这些最短距离的最大值为从A到B的单向Hausdorff距离，同理，:math:`h(B, A)` 为集合B到集合A中最近点的最大距离。Hausdoff距离是有方向性的，通常情况下 :math:`h(A, B)` 不等于 :math:`h(B, A)`。:math:`H(A, B)` 为双向Hausdorff距离。
 

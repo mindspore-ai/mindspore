@@ -1,12 +1,12 @@
 approvers:
-- limingqi107 #
+- ZPaC #
+- limingqi107
+- zyli2020
 - wilfchen
 - guoqi1024
 - baochong
 - kingxian
-
-reviewers:
-- ZPaC
+- zhaizhiqiang
 
 options:
     no_parent_owners: true

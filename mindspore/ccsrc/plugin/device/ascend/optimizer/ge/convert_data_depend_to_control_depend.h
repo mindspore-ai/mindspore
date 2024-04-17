@@ -26,8 +26,6 @@ class ConvertDataDependToControlDepend : public PatternProcessPass {
   explicit ConvertDataDependToControlDepend(bool multigraph = true)
       : PatternProcessPass("convert_data_depend_to_control_depend", multigraph) {}
   ~ConvertDataDependToControlDepend() override = default;
-
-  const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt

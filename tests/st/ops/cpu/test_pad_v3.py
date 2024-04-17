@@ -38,7 +38,7 @@ class NetDynamic(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_padv3_circular_dynamic_shape_3d():
@@ -64,7 +64,7 @@ def test_padv3_circular_dynamic_shape_3d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_padv3_circular_dynamic_shape_4d():
@@ -89,7 +89,7 @@ def test_padv3_circular_dynamic_shape_4d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_padv3_circular_dynamic_shape_5d():
@@ -115,7 +115,7 @@ def test_padv3_circular_dynamic_shape_5d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_padv3_x_padding_dynamic_shape():
@@ -147,7 +147,7 @@ def test_padv3_x_padding_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_padv3_x_dynamic_shape():
@@ -178,7 +178,7 @@ def test_padv3_x_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_padv3_padding_dynamic_shape():
@@ -209,7 +209,7 @@ def test_padv3_padding_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_padv3_padding_list():

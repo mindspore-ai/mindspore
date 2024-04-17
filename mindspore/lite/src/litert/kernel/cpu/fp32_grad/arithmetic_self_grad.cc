@@ -75,7 +75,7 @@ int ArithmeticSelfGradCPUKernel::DoArithmeticSelfGrad(int task_id) {
   auto dy = reinterpret_cast<float *>(in_tensors_.at(kDyIdx)->MutableData());
   auto in_x = reinterpret_cast<float *>(in_tensors_.at(kXIdx)->MutableData());
   auto dx = reinterpret_cast<float *>(out_tensors_.at(kDxIdx)->MutableData());
-  int length = in_tensors_.at(kDyIdx)->ElementsNum();
+  int length = static_cast<int>(in_tensors_.at(kDyIdx)->ElementsNum());
   CHECK_NULL_RETURN(dy);
   CHECK_NULL_RETURN(in_x);
   CHECK_NULL_RETURN(dx);

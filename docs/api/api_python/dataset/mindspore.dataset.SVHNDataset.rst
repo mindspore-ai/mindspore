@@ -29,7 +29,7 @@ mindspore.dataset.SVHNDataset
 
     教程样例：
         - `使用数据Pipeline加载 & 处理数据集
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
 
     .. note:: 入参 `num_samples` 、 `shuffle` 、 `num_shards` 、 `shard_id` 可用于控制数据集所使用的采样器，其与入参 `sampler` 搭配使用的效果如下。
 

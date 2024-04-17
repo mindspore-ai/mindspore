@@ -23,17 +23,23 @@
 #include "utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/distributed/ps/ps_context.h"
+#ifndef BUILD_LITE
+#include "runtime/graph_scheduler/actor/kernel_async_launch_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_infer_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_resize_actor.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
 bool ActorDispatcher::is_multi_thread_execution_ = true;
+bool ActorDispatcher::enable_multi_stream_ = false;
+bool ActorDispatcher::has_kernel_need_user_data_ = false;
 bool ActorDispatcher::is_memory_allocation_sync_ = true;
 bool ActorDispatcher::is_memory_free_sync_ = true;
+bool ActorDispatcher::enable_runtime_multi_pipeline_ = false;
+bool ActorDispatcher::enable_async_launch_kernel_ = false;
 
-bool IsRunningFailed(const OpContext<DeviceTensor> *context) {
-  MS_EXCEPTION_IF_NULL(context);
-  return (context->error_info_ != "");
-}
+bool IsRunningFailed(const OpContext<DeviceTensor> *context) { return (context->error_info_ != ""); }
 
 void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num) {
   MS_EXCEPTION_IF_NULL(actor_thread_num);
@@ -68,17 +74,7 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread
   }
 }
 
-bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (strategy == GraphExecutionStrategy::kStep) {
-    return false;
-  }
-
-  if (node->isa<CNode>() && (common::AnfAlgo::GetCNodeName(node) == kGetNextOpName)) {
-    return true;
-  }
-  return false;
-}
+bool IsDeviceQueueDSActor(const AnfNodePtr &, GraphExecutionStrategy) { return false; }
 
 bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
                         const std::vector<AnfNodePtr> &host_parameters, GraphExecutionStrategy strategy) {
@@ -136,7 +132,7 @@ bool IsCustomActor(const AnfNodePtr &node) {
   return AnfUtils::IsCustomActorNode(node);
 }
 
-bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
+bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy) {
   MS_EXCEPTION_IF_NULL(node);
   if (IsCustomActor(node)) {
     return false;
@@ -146,11 +142,7 @@ bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
     return false;
   }
 
-  if (strategy == GraphExecutionStrategy::kStep) {
-    return true;
-  }
-
-  return (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName);
+  return true;
 }
 
 bool IsSkippedKernelActor(const AnfNodePtr &node) {
@@ -165,6 +157,15 @@ bool IsRpcActor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (IsKernelActor(node) && (common::AnfAlgo::GetCNodeName(node) == kRpcSendOpName ||
                               common::AnfAlgo::GetCNodeName(node) == kRpcRecvOpName)) {
+    return true;
+  }
+  return false;
+}
+
+bool IsInnerControlFlowActor(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (IsKernelActor(node) && (common::AnfAlgo::GetCNodeName(node) == "ConditionSwitch" ||
+                              common::AnfAlgo::GetCNodeName(node) == "ConditionGather")) {
     return true;
   }
   return false;
@@ -201,6 +202,9 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
   if (first_get_launch_skipped_env) {
     launch_skipped = common::GetEnv(kLaunchSkippedEnv);
     first_get_launch_skipped_env = false;
+    if (launch_skipped.empty() && !common::GetEnv(kSimulationLevel).empty()) {
+      launch_skipped = "ALL";
+    }
   }
 
   if (launch_skipped.empty()) {
@@ -226,6 +230,32 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
   }
 
   return false;
+}
+
+bool EnableAsyncInfer() {
+  static const char kEnableAsyncInferdEnv[] = "MS_ENABLE_ASYNC_INFER";
+  static bool ret = common::GetEnv(kEnableAsyncInferdEnv) == "1";
+  return ret;
+}
+
+bool WaitRuntimePipelineFinish(const OpContext<DeviceTensor> *context, bool wait_kernel_launch_finish) {
+#ifndef BUILD_LITE
+  if (ActorDispatcher::enable_runtime_multi_pipeline()) {
+    KernelAsyncInferActor::GetInstance()->Wait();
+    KernelAsyncResizeActor::GetInstance()->Wait();
+  }
+
+  if (ActorDispatcher::enable_async_launch_kernel() && wait_kernel_launch_finish) {
+    KernelAsyncLaunchActor::GetInstance()->Wait();
+  }
+
+  if (ActorDispatcher::enable_async_launch_kernel() && IsRunningFailed(context)) {
+    return false;
+  }
+  return true;
+#else
+  return true;
+#endif
 }
 
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor) {
@@ -387,6 +417,14 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
     case KernelTransformType::kKernelActor:
       MS_EXCEPTION_IF_NULL(real_node);
       actor_name = real_node->fullname_with_scope();
+      break;
+    case KernelTransformType::kKernelInferActor:
+      MS_EXCEPTION_IF_NULL(real_node);
+      actor_name = kKernelInferActorNamePrefix + real_node->fullname_with_scope();
+      break;
+    case KernelTransformType::kKernelResizeActor:
+      MS_EXCEPTION_IF_NULL(real_node);
+      actor_name = kKernelResizeActorNamePrefix + real_node->fullname_with_scope();
       break;
     default:
       break;

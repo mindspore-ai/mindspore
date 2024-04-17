@@ -70,7 +70,7 @@ class NetFractionalAvgPoolGradOverlapping(nn.Cell):
                                              col_pooling_sequence)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -136,7 +136,7 @@ def test_fractionalavgpool_graph():
         assert np.allclose(output_grad_y, expect_output_grad_y)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -201,7 +201,7 @@ def test_fractionalavgpool_pynative():
         assert np.allclose(output_grad.asnumpy(), expect_output_grad_y)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -232,7 +232,7 @@ def test_fractionalavgpool_pynative_dynamic():
         assert np.allclose(output_col_pooling_sequence, expect_output_col_pooling_sequence)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -308,7 +308,7 @@ def test_fractionalavgpoolgrad_graph_dynamic():
         assert np.allclose(output_grad_y, expect_output_grad_y)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard

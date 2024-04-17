@@ -17,7 +17,7 @@
 #include "tools/converter/parser/tflite/tflite_strided_slice_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/strided_slice.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

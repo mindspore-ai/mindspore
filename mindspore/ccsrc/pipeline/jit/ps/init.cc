@@ -44,6 +44,7 @@
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
+#include "runtime/hardware/device_context_manager.h"
 #include "frontend/parallel/tensor_layout/tensor_transform.h"
 
 #include "pybind_api/gil_scoped_long_running.h"
@@ -51,11 +52,11 @@
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/profiler/profiling.h"
 #endif
-#include "frontend/expander/pack/pack_expander.h"
 #include "include/common/profiler.h"
 
-namespace py = pybind11;
+#include "pipeline/jit/pi/external.h"
 
+namespace py = pybind11;
 using GraphExecutorPy = mindspore::pipeline::GraphExecutorPy;
 using Pipeline = mindspore::pipeline::Pipeline;
 using PrimitivePy = mindspore::PrimitivePy;
@@ -72,6 +73,8 @@ using mindspore::MsCtxParam;
 using PSContext = mindspore::ps::PSContext;
 using CollectiveManager = mindspore::distributed::collective::CollectiveManager;
 using RecoveryContext = mindspore::distributed::recovery::RecoveryContext;
+using DeviceContextManager = mindspore::device::DeviceContextManager;
+using DeviceContext = mindspore::device::DeviceContext;
 
 constexpr int PROFILER_RECORD_STAMP = 2;
 
@@ -106,7 +109,9 @@ void RegProfilerManager(const py::module *m) {
 void RegHostProfile(py::module *m) {
   m->def("_collect_host_info", &CollectHostInfo, py::arg("module_name"), py::arg("event"), py::arg("stage"),
          py::arg("level") = py::int_(0), py::arg("profile_framework") = py::int_(0),
-         py::arg("start_end") = py::int_(PROFILER_RECORD_STAMP), py::arg("custom_info") = py::dict());
+         py::arg("start_end") = py::int_(PROFILER_RECORD_STAMP), py::arg("custom_info") = py::dict())
+    .def("get_clock_time", &GetClockTime)
+    .def("get_clock_syscnt", &GetClockSyscnt);
 }
 
 void RegFrameworkProfiler(py::module *m) {
@@ -117,6 +122,15 @@ void RegFrameworkProfiler(py::module *m) {
       "_framework_profiler_step_end", []() { runtime::ProfilerAnalyzer::GetInstance().EndStep(); },
       "Profiler step end");
 }
+
+void RegFrameworkPythonProfileRecorder(py::module *m) {
+  (void)py::class_<runtime::PythonProfilerRecorder, std::shared_ptr<runtime::PythonProfilerRecorder>>(
+    *m, "PythonProfilerRecorder")
+    .def(py::init<const std::string &>())
+    .def("record_start", &runtime::PythonProfilerRecorder::record_start, "record_start")
+    .def("record_end", &runtime::PythonProfilerRecorder::record_end, "record_end");
+}
+
 }  // namespace profiler
 }  // namespace mindspore
 #endif  // ENABLE_SECURITY
@@ -131,6 +145,7 @@ void RegModule(py::module *m) {
   RegUpdateFuncGraphHyperParams(m);
   RegParamInfo(m);
   RegPrimitive(m);
+  RegPrimitiveFunction(m);
   RegSignatureEnumRW(m);
   mindspore::tensor::RegMetaTensor(m);
   mindspore::tensor::RegCSRTensor(m);
@@ -141,18 +156,24 @@ void RegModule(py::module *m) {
   mindspore::initializer::RegRandomNormal(m);
   RegMsContext(m);
   RegSecurity(m);
+  RegForkUtils(m);
+  mindspore::hal::RegStream(m);
+  mindspore::hal::RegEvent(m);
   mindspore::pynative::RegPyNativeExecutor(m);
+  mindspore::pynative::RegisterPyBoostFunction(m);
+  mindspore::pijit::RegPIJitInterface(m);
   mindspore::prim::RegCompositeOpsGroup(m);
 #ifndef ENABLE_SECURITY
   mindspore::profiler::RegProfilerManager(m);
   mindspore::profiler::RegProfiler(m);
   mindspore::profiler::RegHostProfile(m);
   mindspore::profiler::RegFrameworkProfiler(m);
+  mindspore::profiler::RegFrameworkPythonProfileRecorder(m);
 #endif
 #ifdef _MSC_VER
   mindspore::abstract::RegPrimitiveFrontEval();
 #endif
-  mindspore::expander::RegPackExpanderPy(m);
+  mindspore::ops::RegOpEnum(m);
 }
 
 void RegModuleHelper(py::module *m) {
@@ -172,6 +193,7 @@ PYBIND11_MODULE(_c_expression, m) {
   mindspore::ScopedLongRunning::SetHook(std::make_unique<mindspore::GilScopedLongRunningHook>());
 
   // Class Pipeline interface
+  MS_LOG(INFO) << "Start GraphExecutorPy...";
   (void)py::class_<GraphExecutorPy, std::shared_ptr<GraphExecutorPy>>(m, "GraphExecutor_")
     .def_static("get_instance", &GraphExecutorPy::GetInstance, "Executor get_instance.")
     .def("__call__", &GraphExecutorPy::Run, py::arg("args"), py::arg("phase") = py::str(""), "Executor run function.")
@@ -225,7 +247,9 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_optimize_graph_proto", &GraphExecutorPy::GetOptimizeGraphProto, py::arg("phase") = py::str(""),
          "Get the optimize graph proto string.")
     .def("set_jit_config", &GraphExecutorPy::SetJitConfig, py::arg("jit_config") = py::dict(), "Set the jit config.")
-    .def("generate_arguments_key", &GraphExecutorPy::GenerateArgumentsKey, "Generate unique key of argument.");
+    .def("generate_arguments_key", &GraphExecutorPy::GenerateArgumentsKey, "Generate unique key of argument.")
+    .def("clear_compile_arguments_resource", &GraphExecutorPy::ClearCompileArgumentsResource,
+         "Clear resource when phase cached.");
 
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");
   (void)m.def("reset_op_id_with_offset", &mindspore::pipeline::ResetOpIdWithOffset, "Reset Operator Id With Offset");
@@ -263,7 +287,7 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)py::class_<TensorTransform, std::shared_ptr<TensorTransform>>(m, "TensorTransform")
     .def_static("get_instance", &TensorTransform::GetInstance, "Get tensor_transform instance.")
     .def("transform_tensor_sharding", &TensorTransform::TransformOperators, "Transform the tensor sharding.");
-
+  MS_LOG(INFO) << "Start ParallelContext...";
   (void)py::class_<ParallelContext, std::shared_ptr<ParallelContext>>(m, "AutoParallelContext")
     .def_static("get_instance", &ParallelContext::GetInstance, "Get auto parallel context instance.")
     .def("get_device_num", &ParallelContext::device_num, "Get device num.")
@@ -335,6 +359,9 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_pipeline_stage_split_num", &ParallelContext::set_pipeline_stage_split_num,
          "Set pipeline stage split num.")
     .def("get_pipeline_stage_split_num", &ParallelContext::pipeline_stage_split_num, "Get pipeline stage split num.")
+    .def("set_pipeline_result_broadcast", &ParallelContext::set_pipeline_result_broadcast,
+         "Set pipeline result broadcast")
+    .def("get_pipeline_result_broadcast", &ParallelContext::pipeline_result_broadcast, "Get pipeline result broadcast")
     .def("set_pipeline_segment_split_num", &ParallelContext::set_pipeline_segment_split_num,
          "Set pipeline segment split num.")
     .def("get_pipeline_segment_split_num", &ParallelContext::pipeline_segment_split_num,
@@ -371,7 +398,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_ops_strategy_json_config", &ParallelContext::set_ops_strategy_json_config,
          "Set ops strategy save&load config.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
-
+  MS_LOG(INFO) << "Start CostModelContext...";
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")
     .def_static("get_instance", &CostModelContext::GetInstance, "Get cost_model context instance.")
     .def("set_device_memory_capacity", &CostModelContext::set_device_memory_capacity,
@@ -473,7 +500,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get the flag of whether or not generating a single suite of OperatorInfos in for-loop.")
     .def("reset_cost_model", &CostModelContext::ResetCostModel, "Reset the CostModelContext.")
     .def("reset_algo_parameters", &CostModelContext::ResetAlgoParameters, "Reset the AlgoParameters.");
-
+  MS_LOG(INFO) << "Start OffloadContext...";
   (void)py::class_<OffloadContext, std::shared_ptr<OffloadContext>>(m, "OffloadContext")
     .def_static("get_instance", &OffloadContext::GetInstance, "Get offload context instance.")
     .def("set_offload_param", &OffloadContext::set_offload_param, "Set the param for offload destination, cpu or disk.")
@@ -507,9 +534,11 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("hbm_ratio", &OffloadContext::hbm_ratio, "Get the hbm usage ratio of offload strategy");
 
   (void)py::module::import("atexit").attr("register")(py::cpp_function{[&]() -> void {
+    MS_LOG(INFO) << "Start register...";
     mindspore::MsContext::GetInstance()->RegisterCheckEnv(nullptr);
     mindspore::MsContext::GetInstance()->RegisterSetEnv(nullptr);
 #ifndef ENABLE_SECURITY
+    MS_LOG(INFO) << "Start mindspore.profiler...";
     try {
       py::module profiler = py::module::import("mindspore.profiler").attr("EnvProfiler")();
       (void)profiler.attr("analyse")();
@@ -517,7 +546,7 @@ PYBIND11_MODULE(_c_expression, m) {
       MS_LOG(ERROR) << "Failed to parse profiler data." << e.what();
     }
 #endif
-
+    MS_LOG(INFO) << "Start EmbeddingCacheScheduler...";
 #if defined(__linux__) && defined(WITH_BACKEND)
     mindspore::runtime::EmbeddingCacheScheduler::GetInstance().Finalize(
       !mindspore::distributed::cluster_exit_with_exception());
@@ -620,6 +649,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Store warm up host cache by tensor list");
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
   (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");
+  (void)m.def("_decrypt_data", &mindspore::pipeline::PyDecryptData, "Decrypt the bytes data.");
   (void)m.def("_is_cipher_file", &mindspore::pipeline::PyIsCipherFile, "Determine whether the file is encrypted");
 
   (void)py::class_<RecoveryContext, std::shared_ptr<RecoveryContext>>(m, "RecoveryContext")
@@ -636,6 +666,14 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get the recovery path used to save that need to be persisted.")
     .def("ckpt_path", &RecoveryContext::GetCkptPath, "Get the recovery path used to save checkpoint.")
     .def("set_ckpt_path", &RecoveryContext::SetCkptPath, "Set the recovery path used to save checkpoint.");
+
+  (void)py::class_<DeviceContextManager, std::shared_ptr<DeviceContextManager>>(m, "DeviceContextManager")
+    .def_static("get_instance", &DeviceContextManager::GetInstance, py::return_value_policy::reference,
+                "Get device context manager instance.")
+    .def("get_device_context", &DeviceContextManager::GetDeviceContext, "Return device context object.");
+  (void)py::class_<DeviceContext, std::shared_ptr<DeviceContext>>(m, "DeviceContext")
+    .def("initialized", &DeviceContext::initialized, "Return whether this device backend is successfully initialized.");
+  DeviceContextManager::GetInstance().RegisterDeviceStatelessFunc(&m);
 
   (void)m.def("_ms_memory_recycle", &mindspore::pipeline::MemoryRecycle, "Recycle memory used by mindspore.");
   (void)m.def("_bind_device_ctx", &mindspore::pipeline::BindDeviceCtx, "Bind device context to current thread");

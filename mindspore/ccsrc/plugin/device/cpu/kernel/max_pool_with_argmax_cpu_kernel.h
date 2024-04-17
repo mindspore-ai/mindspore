@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/max_pool_with_argmax.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "mindspore/core/ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,27 +32,26 @@ class MaxPoolWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
   MaxPoolWithArgmaxCpuKernelMod() {}
   ~MaxPoolWithArgmaxCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
-  void ResizedInputSize(const std::vector<KernelTensorPtr> &inputs);
-  void ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  void ResizedInputSize(const std::vector<KernelTensor *> &inputs);
+  void ResizedOutputSize(const std::vector<KernelTensor *> &outputs);
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
-  using MaxPoolWithArgmaxFunc = std::function<bool(
-    MaxPoolWithArgmaxCpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using MaxPoolWithArgmaxFunc =
+    std::function<bool(MaxPoolWithArgmaxCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
 
   static std::vector<std::pair<KernelAttr, MaxPoolWithArgmaxFunc>> func_list_;
   MaxPoolWithArgmaxFunc kernel_func_;

@@ -137,14 +137,11 @@ constexpr auto kClipBoxesDOpName = "kClipBoxesD";
 constexpr auto kPartialOpName = "partial";
 constexpr auto kRandomCache = "random_cache";
 
-constexpr auto kNcclWorldGroup = "nccl_world_group";
-constexpr auto kHcclWorldGroup = "hccl_world_group";
-constexpr auto kSyncBnGroup = "sync_bn_group";
-constexpr auto kRankID = "RANK_ID";
-
 constexpr auto kHcomOpTypeAllToAllV = "HcomAllToAllV";
 constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";
 constexpr auto kHcomOpTypeReduce = "HcomReduce";
+constexpr auto kHcomOpTypeScatter = "HcomScatter";
+constexpr auto kHcomOpTypeGather = "HcomGather";
 constexpr auto kHcomOpTypeAllGather = "HcomAllGather";
 constexpr auto kHcomOpTypeBroadcast = "HcomBroadcast";
 constexpr auto kHcomOpTypeSend = "HcomSend";

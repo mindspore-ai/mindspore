@@ -20,9 +20,6 @@
         .. note::
             请参考 :class:`mindspore.mindrecord.CsvToMR` 类的样例代码。
 
-        返回：
-            MSRStatus，SUCCESS或FAILED。
-
         异常：
             - **ParamTypeError** - 设置MindRecord索引字段失败。
             - **MRMOpenError** - 新建MindRecord文件失败。

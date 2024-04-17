@@ -56,12 +56,8 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
   if (input_args.size() < 1) {
     MS_LOG(ERROR) << "Invalid input size " << input_args.size();
   }
-  const auto &prim_name = primitive->name();
   AbstractBasePtrList elements = input_args;
-  if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
-    }
+  if (input_args.size() == 1 && input_args[0]->isa<abstract::AbstractSequence>()) {
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("stack element num", SizeToLong(elements.size()), kGreaterEqual, 1,
@@ -72,7 +68,7 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
   size_t element_rank = 0;
   for (size_t i = 0; i < elements.size(); ++i) {
     MS_EXCEPTION_IF_NULL(elements[i]);
-    auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape())[kShape];
     if (IsDynamicRank(input_shape_tmp)) {
       continue;
     }
@@ -126,11 +122,11 @@ TypePtr StackInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   if (element0 == nullptr) {
     MS_EXCEPTION(TypeError) << "Infer type failed.";
   }
-  auto infer_type0 = element0->BuildType();
+  auto infer_type0 = element0->GetType();
   for (size_t i = 1; i < elements.size(); i++) {
     auto elementi = elements[i]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(elementi);
-    auto infer_typei = elementi->BuildType();
+    auto infer_typei = elementi->GetType();
     MS_EXCEPTION_IF_NULL(infer_typei);
     if (infer_typei->ToString() != infer_type0->ToString()) {
       MS_EXCEPTION(TypeError) << "All input must have the same data type!input[" << i << "] data type = " << infer_typei

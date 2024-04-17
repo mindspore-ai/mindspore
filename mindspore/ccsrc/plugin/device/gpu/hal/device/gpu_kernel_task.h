@@ -22,22 +22,22 @@
 #include "include/backend/device_address.h"
 #include "ir/tensor_storage_info.h"
 #include "runtime/hardware/device_context.h"
-#include "runtime/pynative/async/kernel_task.h"
+#include "runtime/pipeline/task/kernel_task.h"
 
 namespace mindspore::device::gpu {
-class GpuContiguousKernelTask : public pynative::KernelTask {
+class GpuContiguousKernelTask : public runtime::KernelTask {
  public:
-  explicit GpuContiguousKernelTask(std::shared_ptr<pynative::KernelTaskContext> context)
-      : pynative::KernelTask(std::move(context)) {}
+  explicit GpuContiguousKernelTask(std::shared_ptr<runtime::KernelTaskContext> context)
+      : runtime::KernelTask(std::move(context)) {}
   ~GpuContiguousKernelTask() = default;
 
   bool RunWithRet() override;
 };
 
-class GpuCopyWithSliceKernelTask : public pynative::KernelTask {
+class GpuCopyWithSliceKernelTask : public runtime::KernelTask {
  public:
-  explicit GpuCopyWithSliceKernelTask(std::shared_ptr<pynative::KernelTaskContext> context)
-      : pynative::KernelTask(std::move(context)) {}
+  explicit GpuCopyWithSliceKernelTask(std::shared_ptr<runtime::KernelTaskContext> context)
+      : runtime::KernelTask(std::move(context)) {}
   ~GpuCopyWithSliceKernelTask() = default;
 
   bool RunWithRet() override;

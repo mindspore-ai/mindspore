@@ -18,11 +18,6 @@
 #include <string>
 
 namespace mindspore::transform {
-// PrintV2
-INPUT_MAP(PrintV2) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(PrintV2) = {{"output_stream", ATTR_DESC(output_stream, AnyTraits<std::string>())}};
-REG_ADPT_DESC(PrintV2, kNamePrint, ADPT_DESC(PrintV2))
-
 INPUT_MAP(Assert) = {{1, INPUT_DESC(input_condition)}};
 DYN_INPUT_MAP(Assert) = {{2, DYN_INPUT_DESC(input_data)}};
 ATTR_MAP(Assert) = {{"summarize", ATTR_DESC(summarize, AnyTraits<int64_t>())}};

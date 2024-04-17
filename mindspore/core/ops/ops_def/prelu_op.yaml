@@ -1,0 +1,12 @@
+#operator prelu
+prelu:
+    args:
+        x:
+            dtype: tensor
+        weight:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: PReLU

@@ -225,71 +225,73 @@ set(MSLITE_GE_LITERT_SRC
 
 #set(LITE_SRC ${LITE_SRC} ${MSLITE_GE_LITERT_SRC})
 
-add_library(unified_runtime_lite_src_mid OBJECT ${LITE_SRC})
-add_dependencies(unified_runtime_lite_src_mid fbs_src fbs_inner_src)
-add_dependencies(unified_runtime_lite_src_mid lite_src_common_mid)
+if(NOT MSLITE_SIMPLEST_CLOUD_INFERENCE)
+    add_library(unified_runtime_lite_src_mid OBJECT ${LITE_SRC})
+    add_dependencies(unified_runtime_lite_src_mid fbs_src fbs_inner_src)
+    add_dependencies(unified_runtime_lite_src_mid lite_src_common_mid)
 
-add_library(lite-unified-executor SHARED $<TARGET_OBJECTS:unified_runtime_lite_src_mid>)
+    add_library(lite-unified-executor SHARED $<TARGET_OBJECTS:unified_runtime_lite_src_mid>)
 
-target_link_libraries(lite-unified-executor lite_src_common_mid)
-add_dependencies(lite-unified-executor mindspore_converter)
-target_link_libraries(lite-unified-executor mindspore_converter)
+    target_link_libraries(lite-unified-executor lite_src_common_mid)
+    add_dependencies(lite-unified-executor mindspore_converter)
+    target_link_libraries(lite-unified-executor mindspore_converter)
 
-if(MSVC)
-    set_target_properties(lite-unified-executor PROPERTIES PREFIX lib)
-    set_target_properties(lite-unified-executor PROPERTIES IMPORT_PREFIX lib)
-    set_target_properties(lite-unified-executor PROPERTIES IMPORT_SUFFIX .dll.lib)
-endif()
-
-target_link_libraries(lite-unified-executor cpu_kernel_mid nnacl_mid cpu_ops_mid)
-
-if(SUPPORT_TRAIN)
-    target_link_libraries(lite-unified-executor train_cpu_kernel_mid)
-endif()
-
-if(MSLITE_ENABLE_MINDRT)
-    target_link_libraries(lite-unified-executor mindrt_mid)
-endif()
-
-if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX
-        AND NOT TARGET_MIX210 AND NOT TARGET_OHOS_LITE AND NOT MACHINE_LINUX_ARM64)
-    target_link_libraries(lite-unified-executor log)
-endif()
-if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite")
-    target_link_libraries(lite-unified-executor minddata_eager_mid minddata-lite)
-endif()
-
-########################## build optimize and float16 library #################################
-if(PLATFORM_ARM)
-    if(PLATFORM_ARM64 AND NOT TARGET_HIMIX AND NOT TARGET_MIX210 AND NOT MACHINE_LINUX_ARM64)
-        target_link_libraries(lite-unified-executor cpu_opt_kernel_mid nnacl_optimize_mid)
+    if(MSVC)
+        set_target_properties(lite-unified-executor PROPERTIES PREFIX lib)
+        set_target_properties(lite-unified-executor PROPERTIES IMPORT_PREFIX lib)
+        set_target_properties(lite-unified-executor PROPERTIES IMPORT_SUFFIX .dll.lib)
     endif()
-    if(MSLITE_ENABLE_FP16)
-        target_link_libraries(lite-unified-executor cpu_fp16_kernel_mid nnacl_fp16_mid)
+
+    target_link_libraries(lite-unified-executor cpu_kernel_mid nnacl_mid cpu_ops_mid)
+
+    if(SUPPORT_TRAIN)
+        target_link_libraries(lite-unified-executor train_cpu_kernel_mid)
     endif()
-endif()
 
-if(MSLITE_ENABLE_RUNTIME_CONVERT)
-    target_link_libraries(lite-unified-executor
-            quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
-            cpu_kernel_mid ccsrc_src_mid converter_src_mid lite_exporter_mid
-            config_parser_mid mslite_converter_plugin mindspore_core coder_mid
-            mindir_serializer_mid mindspore::protobuf ${SECUREC_LIBRARY})
-    target_link_libraries(lite-unified-executor
-            ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
-endif()
+    if(MSLITE_ENABLE_MINDRT)
+        target_link_libraries(lite-unified-executor mindrt_mid)
+    endif()
+
+    if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX
+            AND NOT TARGET_MIX210 AND NOT TARGET_OHOS_LITE AND NOT MACHINE_LINUX_ARM64)
+        target_link_libraries(lite-unified-executor log)
+    endif()
+    if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite")
+        target_link_libraries(lite-unified-executor minddata_eager_mid minddata-lite)
+    endif()
+
+    ########################## build optimize and float16 library #################################
+    if(PLATFORM_ARM)
+        if(PLATFORM_ARM64 AND NOT TARGET_HIMIX AND NOT TARGET_MIX210 AND NOT MACHINE_LINUX_ARM64)
+            target_link_libraries(lite-unified-executor cpu_opt_kernel_mid nnacl_optimize_mid)
+        endif()
+        if(MSLITE_ENABLE_FP16)
+            target_link_libraries(lite-unified-executor cpu_fp16_kernel_mid nnacl_fp16_mid)
+        endif()
+    endif()
+
+    if(MSLITE_ENABLE_RUNTIME_CONVERT)
+        target_link_libraries(lite-unified-executor
+                quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
+                cpu_kernel_mid ccsrc_src_mid converter_src_mid lite_exporter_mid
+                config_parser_mid mslite_converter_plugin mindspore_core coder_mid
+                mindir_serializer_mid mindspore::protobuf ${SECUREC_LIBRARY})
+        target_link_libraries(lite-unified-executor
+                ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
+    endif()
 
 
-target_link_libraries(lite-unified-executor mindspore::protobuf)
+    target_link_libraries(lite-unified-executor mindspore::protobuf)
 
-if(MSLITE_ENABLE_RUNTIME_GLOG)
-    target_link_libraries(lite-unified-executor mindspore::glog)
-endif()
+    if(MSLITE_ENABLE_RUNTIME_GLOG)
+        target_link_libraries(lite-unified-executor mindspore::glog)
+    endif()
 
-if(NOT WIN32)
-    target_link_libraries(lite-unified-executor dl)
-endif()
+    if(NOT WIN32)
+        target_link_libraries(lite-unified-executor dl)
+    endif()
 
-if(ENABLE_MODEL_OBF)
-    target_link_libraries(lite-unified-executor ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
+    if(ENABLE_MODEL_OBF)
+        target_link_libraries(lite-unified-executor ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
+    endif()
 endif()

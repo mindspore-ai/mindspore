@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
-from mindspore import context, nn, ops
+from mindspore import context, nn, ops, jit
 from mindspore import Tensor, ParameterTuple, mutable
 from mindspore.ops.composite import GradOperation
 from mindspore.nn import Cell
@@ -153,7 +153,7 @@ class TensorSetItem(nn.Cell):
         return tensor1, tensor2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -174,7 +174,7 @@ def test_dynamic_setitem_int_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -196,7 +196,7 @@ def test_dynamic_setitem_int_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -217,7 +217,7 @@ def test_dynamic_setitem_int_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -239,7 +239,7 @@ def test_dynamic_setitem_tensor_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -262,7 +262,7 @@ def test_dynamic_setitem_tensor_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -284,7 +284,7 @@ def test_dynamic_setitem_tensor_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -305,7 +305,7 @@ def test_dynamic_setitem_none_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -327,7 +327,7 @@ def test_dynamic_setitem_none_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -348,7 +348,7 @@ def test_dynamic_setitem_none_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -391,7 +391,7 @@ def test_dynamic_setitem_ellipsis_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -412,7 +412,7 @@ def test_dynamic_setitem_ellipsis_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -433,7 +433,7 @@ def test_dynamic_setitem_bool_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -455,7 +455,7 @@ def test_dynamic_setitem_bool_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -476,7 +476,7 @@ def test_dynamic_setitem_bool_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -497,7 +497,7 @@ def test_dynamic_setitem_list_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -519,7 +519,7 @@ def test_dynamic_setitem_list_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -561,7 +561,7 @@ def test_dynamic_setitem_slice_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -612,11 +612,10 @@ def test_dynamic_rank_setitem_with_single_basic_index():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.skip(reason="Need to be fixed.")
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_rank_setitem_tuple_with_basic_index():
     """
@@ -662,11 +661,10 @@ def test_dynamic_rank_setitem_tuple_with_basic_index():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.skip(reason="Need to be fixed.")
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_rank_setitem_tuple_with_mix_index():
     """
@@ -710,7 +708,7 @@ def test_dynamic_rank_setitem_tuple_with_mix_index():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -719,7 +717,7 @@ def test_dynamic_rank_setitem_tuple_with_mix_index():
 def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
-    Description: The input shape is dynamic and the tensor index is multy tensors.
+    Description: The input shape is dynamic and the tensor index is multi tensors.
     Expectation: Assert the result is equal the numpy result.
     """
     class Net(Cell):
@@ -750,7 +748,7 @@ def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -759,7 +757,7 @@ def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
 def test_dynamic_rank_setitem_tuple_with_empty_bool_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
-    Description: The input shape is dynamic and the tensor index is multy tensors.
+    Description: The input shape is dynamic and the tensor index is multi tensors.
     Expectation: Assert the result is equal the numpy result.
     """
     class Net(Cell):
@@ -789,7 +787,7 @@ def test_dynamic_rank_setitem_tuple_with_empty_bool_tensor_index():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -826,7 +824,7 @@ def test_dynamic_rank_setitem_with_list_index():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -857,3 +855,43 @@ def test_dynamic_rank_setitem_slice_int():
     fact = DynamicRankCommonFunc(ms_net, np_net, input_np, axis_np)
     fact.forward_cmp()
     fact.grad_impl()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_setitem_with_tensor_index_tensor_value():
+    """
+    Feature: Test index value assignment for dynamic shape Tensor in feed mode.
+    Description: The input shape is dynamic, the tensor index is a slice, value is a int.
+    Expectation: Assert the result is equal the numpy result.
+    """
+    @jit
+    def foo(data, index):
+        data[index] = Tensor([5])
+        return data
+
+    data = [Tensor([1]), Tensor([2]), Tensor([3])]
+    ret = foo(data, Tensor([0]))
+    assert ret == [Tensor([5]), Tensor([2]), Tensor([3])]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_setitem_with_tensor_index_tensor_value_2():
+    """
+    Feature: Test index value assignment for dynamic shape Tensor in feed mode.
+    Description: The input shape is dynamic, the tensor index is a slice, value is a int.
+    Expectation: Assert the result is equal the numpy result.
+    """
+    @jit
+    def foo(data, index, value):
+        data[index] = value
+        return data
+
+    data = [Tensor([1]), Tensor([2]), Tensor([3])]
+    ret = foo(data, Tensor([0]), Tensor([5]))
+    assert ret == [Tensor([5]), Tensor([2]), Tensor([3])]

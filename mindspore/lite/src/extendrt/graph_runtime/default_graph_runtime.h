@@ -50,7 +50,7 @@ class DefaultGraphRuntime : public mindspore::infer::abstract::GraphRuntime {
 
  private:
   std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan_ = nullptr;
-  std::shared_ptr<infer::abstract::Executor> default_executor_ = nullptr;
+  std::shared_ptr<infer::abstract::Executor> executor_ = nullptr;
 };
 }  // namespace mindspore
 

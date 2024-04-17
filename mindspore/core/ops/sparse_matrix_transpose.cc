@@ -41,6 +41,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -56,19 +57,19 @@ abstract::TupleShapePtr SparseMatrixTransposeInferShape(const PrimitivePtr &prim
   const int64_t kInputWithBatch = 3;
   const int64_t ktwo = 2;
   std::vector<int64_t> dense_shape_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   const int64_t rank_x = dense_shape_shape[0];
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   const int64_t max_length = GetValue<int64_t>(max_length_ptr);
   std::vector<int64_t> batch_pointers_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   std::vector<int64_t> row_pointers_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   std::vector<int64_t> col_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   std::vector<int64_t> values_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
   if (!IsDynamic(dense_shape_shape) && rank_x != kInputNoBatch && rank_x != kInputWithBatch) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ",the rank of input must be 2 or 3, but got "
                              << dense_shape_shape.size() << "!";
@@ -91,12 +92,13 @@ abstract::TupleShapePtr SparseMatrixTransposeInferShape(const PrimitivePtr &prim
   }
   ShapeVector transpose_row_pointers_shape{abstract::Shape::kShapeDimAny};
   auto dense_shape = input_args[kInputIndex0];
-  if (dense_shape->isa<abstract::AbstractTensor>() && dense_shape->BuildValue()->isa<tensor::Tensor>()) {
-    auto dense_shape_ = dense_shape->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(dense_shape_);
-    auto dense_shape_value = dense_shape->BuildValue();
+  if (CheckAndConvertUtils::IsTensor(dense_shape) && IsValueKnown(dense_shape->GetValue())) {
+    auto dense_shape_value = dense_shape->GetValue();
     MS_EXCEPTION_IF_NULL(dense_shape_value);
-    auto dense_shape_tensor = CheckAndConvertUtils::CheckTensorIntValue("dense_shape", dense_shape_value, prim_name);
+    auto dense_shape_type = dense_shape->GetType();
+    MS_EXCEPTION_IF_NULL(dense_shape_type);
+    auto dense_shape_tensor =
+      CheckAndConvertUtils::CheckTensorIntValue("dense_shape", dense_shape_value, prim_name, dense_shape_type);
     if (rank_x == kInputNoBatch) {
       transpose_row_pointers_shape[0] = dense_shape_tensor[1] + 1;
     } else {
@@ -129,11 +131,11 @@ TuplePtr SparseMatrixTransposeInferType(const PrimitivePtr &prim, const std::vec
   const std::set<TypePtr> index_valid_types = {kInt32, kInt64};
   const std::set<TypePtr> values_valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                                 kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  auto dense_shape_type = input_args[kInputIndex0]->BuildType();
-  auto batch_type = input_args[kInputIndex1]->BuildType();
-  auto row_type = input_args[kInputIndex2]->BuildType();
-  auto col_type = input_args[kInputIndex3]->BuildType();
-  auto value_type = input_args[kInputIndex4]->BuildType();
+  auto dense_shape_type = input_args[kInputIndex0]->GetType();
+  auto batch_type = input_args[kInputIndex1]->GetType();
+  auto row_type = input_args[kInputIndex2]->GetType();
+  auto col_type = input_args[kInputIndex3]->GetType();
+  auto value_type = input_args[kInputIndex4]->GetType();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x_dense_shape", dense_shape_type);
   (void)types.emplace("x_batch_pointers", batch_type);
@@ -141,9 +143,9 @@ TuplePtr SparseMatrixTransposeInferType(const PrimitivePtr &prim, const std::vec
   (void)types.emplace("x_col_indices", col_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, index_valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_values", value_type, values_valid_types, prim->name());
-  std::vector<TypePtr> types_list = {input_args[kInputIndex0]->BuildType(), input_args[kInputIndex1]->BuildType(),
-                                     input_args[kInputIndex2]->BuildType(), input_args[kInputIndex3]->BuildType(),
-                                     input_args[kInputIndex4]->BuildType()};
+  std::vector<TypePtr> types_list = {input_args[kInputIndex0]->GetType(), input_args[kInputIndex1]->GetType(),
+                                     input_args[kInputIndex2]->GetType(), input_args[kInputIndex3]->GetType(),
+                                     input_args[kInputIndex4]->GetType()};
   return std::make_shared<Tuple>(types_list);
 }
 }  // namespace

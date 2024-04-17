@@ -146,6 +146,11 @@ int PropagateQuantParamPass::ForwardPropagate(const std::list<CNodePtr> &nodes) 
         MS_LOG(ERROR) << cnode->fullname_with_scope() << " RemoveIfDepend failed.";
         return ret;
       }
+      ret = RemoveIfMakeTuple(cnode);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " RemoveIfMakeTuple failed.";
+        return ret;
+      }
       opt::RemoveIfMonad(cnode);
       auto before_cnode_map = opt::GetRealCertainVarInput(cnode, index);
       cnode->set_inputs(origin_inputs);
@@ -248,6 +253,11 @@ int PropagateQuantParamPass::FindNodeDepends(const std::list<CNodePtr> &nodes,
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " RemoveIfDepend failed.";
       return ret;
     }
+    ret = RemoveIfMakeTuple(cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " RemoveIfMakeTuple failed.";
+      return ret;
+    }
     opt::RemoveIfMonad(cnode);
 
     for (size_t i = 1; i < cnode->size(); i++) {
@@ -314,7 +324,7 @@ int PropagateQuantParamPass::BackwardPerNode(const CNodePtr &post_cnode, const C
     MS_LOG(INFO) << cnode->fullname_with_scope() << "find backward node failed!";
     return RET_NOT_SUPPORT;
   } else {
-    input_index = std::distance(post_cnode->inputs().cbegin(), iter) - kPrimOffset;
+    input_index = static_cast<size_t>(std::distance(post_cnode->inputs().cbegin(), iter) - kPrimOffset);
   }
 
   auto post_quant_holder = GetCNodeQuantHolder(post_cnode);

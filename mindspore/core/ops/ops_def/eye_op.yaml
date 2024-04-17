@@ -1,0 +1,15 @@
+#operator eye
+eye:
+  args:
+    n:
+      dtype: int
+    m:
+      dtype: int
+    dtype:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

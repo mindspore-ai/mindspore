@@ -39,8 +39,8 @@ abstract::ShapePtr SparseToDenseInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
 
   std::vector<ShapeVector> all_shapes = {indice_shape, values_shape};
   auto is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
@@ -62,8 +62,8 @@ abstract::ShapePtr SparseToDenseInferShape(const PrimitivePtr &primitive,
 TypePtr SparseToDenseInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto indice_type = input_args[kInputIndex0]->BuildType();
-  auto values_type = input_args[kInputIndex1]->BuildType();
+  auto indice_type = input_args[kInputIndex0]->GetType();
+  auto values_type = input_args[kInputIndex1]->GetType();
 
   const std::set<TypePtr> valid_types = {kInt64, kInt32};
   (void)CheckAndConvertUtils::CheckTensorTypeSame({{"indices", indice_type}}, valid_types, op_name);

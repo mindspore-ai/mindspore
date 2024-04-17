@@ -16,12 +16,10 @@
 from __future__ import absolute_import
 
 import math
-import numpy as np
 
 from mindspore import context
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
-from mindspore.ops.primitive import _primexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, HeUniform, Uniform, _calculate_fan_in_and_fan_out
 from mindspore.common.tensor import Tensor
@@ -29,6 +27,7 @@ from mindspore import _checkparam as Validator
 from mindspore._checkparam import twice, _check_3d_int_or_tuple
 from mindspore._extends import cell_attr_register
 from mindspore.nn.cell import Cell
+from mindspore.ops.primitive import _primexpr
 
 __all__ = ['Conv2d', 'Conv2dTranspose', 'Conv1d', 'Conv1dTranspose', 'Conv3d', 'Conv3dTranspose']
 
@@ -155,24 +154,29 @@ class Conv2d(_Conv):
 
     where :math:`bias` is the output channel bias, :math:`ccor` is
     the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
+    :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
-    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
 
-    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
+      where :math:`N` is the batch size of the input.
+
+    - :math:`j` corresponds to the output channel, the range is :math:`[0, C_{out}-1]`,
+      where :math:`C_{out}` is the number of
       output channels, which is also equal to the number of kernels.
 
-    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+    - :math:`k` corresponds to the input channel, the range is :math:`[0, C_{in}-1]`,
+      where :math:`C_{in}` is the number of
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
-    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
-    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    Therefore, in the above formula, :math:`{bias}(C_{\text{out}_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{\text{out}_j}, k)` represents the slice of the :math:`j`-th convolutional
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel\_size[0], kernel\_size[1])`,
-    where :math:`kernel\_size[0]` and :math:`kernel\_size[1]` are the height and width of the kernel, respectively.
+    The shape of the convolutional kernel is given by :math:`(\text{kernel_size[0]},\text{kernel_size[1]})`,
+    where :math:`\text{kernel_size[0]}`
+    and :math:`\text{kernel_size[1]}` are the height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -238,14 +242,14 @@ class Conv2d(_Conv):
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
             lowercase are both acceptable. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
-            Default: ``'NCHW'`` .
+            Default: ``'NCHW'`` . (NHWC is only supported in GPU now.)
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
@@ -291,7 +295,7 @@ class Conv2d(_Conv):
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
         ValueError: If `padding` is a tuple whose length is not equal to 4.
         ValueError: If `pad_mode` is not equal to 'pad' and `padding` is not equal to (0, 0, 0, 0).
-        ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -364,12 +368,6 @@ class Conv2d(_Conv):
         return output
 
 
-@_primexpr
-def _check_input_3d(input_shape, op_name):
-    if len(input_shape) != 3:
-        raise ValueError(f"For '{op_name}', the dimension of input must be 3d, but got {len(input_shape)}.")
-
-
 class Conv1d(_Conv):
     r"""
     1D convolution layer.
@@ -386,24 +384,28 @@ class Conv1d(_Conv):
 
     where :math:`bias` is the output channel bias, :math:`ccor` is
     the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
+    :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
-    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
 
-    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
+      where :math:`N` is the batch size of the input.
+
+    - :math:`j` corresponds to the output channel, the range is :math:`[0, C_{out}-1]`,
+      where :math:`C_{out}` is the number of
       output channels, which is also equal to the number of kernels.
 
-    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+    - :math:`k` corresponds to the input channel, the range is :math:`[0, C_{in}-1]`,
+      where :math:`C_{in}` is the number of
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
-    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
-    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    Therefore, in the above formula, :math:`{bias}(C_{\text{out}_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{\text{out}_j}, k)` represents the slice of the :math:`j`-th convolutional
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel\_size)`,
-    where :math:`kernel\_size` is the width of the kernel.
+    The shape of the convolutional kernel is given by :math:`(\text{kernel_size})`,
+    where :math:`\text{kernel_size}` is the width of the kernel.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -456,11 +458,11 @@ class Conv1d(_Conv):
             distributions as well as constant 'One' and 'Zero' distributions are possible. Alias ``'xavier_uniform'`` ,
             ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and lowercase are both acceptable.
             Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'``.
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
@@ -539,14 +541,10 @@ class Conv1d(_Conv):
         stride = (1, stride)
         dilation = (1, dilation)
         get_shape = P.Shape()
-        get_dtype = P.DType()
         if isinstance(weight_init, Tensor):
             weight_init_shape = get_shape(weight_init)
             Validator.check_equal_int(len(weight_init_shape), 3, 'weight_init_shape', self.cls_name)
-            weight_init_dtype = get_dtype(weight_init)
-            weight_init_value = weight_init.asnumpy()
-            weight_init_value = np.expand_dims(weight_init_value, 2)
-            weight_init = Tensor(weight_init_value, weight_init_dtype)
+            weight_init = weight_init.expand_dims(2)
 
         super(Conv1d, self).__init__(
             in_channels,
@@ -577,8 +575,6 @@ class Conv1d(_Conv):
         self.shape = P.Shape()
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
         output = self.conv2d(x, self.weight)
         if self.has_bias:
@@ -588,19 +584,13 @@ class Conv1d(_Conv):
         return output
 
 
-@_primexpr
-def _check_input_5dims(input_shape, op_name):
-    if len(input_shape) != 5:
-        raise ValueError(f"For '{op_name}', the dimension of input must be 5d, but got {len(input_shape)}.")
-
-
 class Conv3d(_Conv):
     r"""
     3D convolution layer.
 
     Applies a 3D convolution over an input tensor which is typically of shape
     :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`, where :math:`N` is batch size, :math:`C` is channel number,
-    :math:`D` is feature depth, :math:`H` is feature height, :math:`W` is feature width.
+    :math:`D, H, W` are the depth, height and width of the feature map, respectively.
 
     The output is calculated based on formula:
 
@@ -611,15 +601,19 @@ class Conv3d(_Conv):
 
     where :math:`bias` is the output channel bias, :math:`ccor` is
     the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
+    :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
-    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
 
-    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
+      where :math:`N` is the batch size of the input.
+
+    - :math:`j` corresponds to the output channel, the range is :math:`[0, C_{out}-1]`,
+      where :math:`C_{out}` is the number of
       output channels, which is also equal to the number of kernels.
 
-    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+    - :math:`k` corresponds to the input channel, the range is :math:`[0, C_{in}-1]`,
+      where :math:`C_{in}` is the number of
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
     Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
@@ -629,7 +623,7 @@ class Conv3d(_Conv):
 
     The shape of the convolutional kernel is given by
     :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`
-    where :math:`kernel\_size[0]` , :math:`kernel\_size[1]` and :math:`kernel\_size[2]` are the depth,
+    where :math:`\text{kernel_size[0]}` , :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are the depth,
     height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]},
@@ -697,11 +691,11 @@ class Conv3d(_Conv):
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
             lowercase are both acceptable. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format. Currently only support ``'NCDHW'`` .
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
@@ -812,7 +806,7 @@ class Conv3d(_Conv):
             bias_init,
             data_format,
             dtype=dtype)
-        out_channels = self.out_channels
+        out_channels = self.out_channels // group
         self.conv3d = P.Conv3D(out_channel=out_channels,
                                kernel_size=self.kernel_size,
                                mode=1,
@@ -820,17 +814,31 @@ class Conv3d(_Conv):
                                pad=self.padding,
                                stride=self.stride,
                                dilation=self.dilation,
-                               group=group,
+                               group=1,
                                data_format=self.data_format)
         self.bias_add = P.BiasAdd(data_format=self.data_format)
         self.shape = P.Shape()
+        self.concat = P.Concat(1)
+        self.split_0 = P.Split(0, self.group)
+        self.split_1 = P.Split(1, self.group)
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_5dims(x_shape, self.cls_name)
-        out = self.conv3d(x, self.weight)
-        if self.has_bias:
-            out = self.bias_add(out, self.bias)
+        if self.group == 1:
+            out = self.conv3d(x, self.weight)
+            if self.has_bias:
+                out = self.bias_add(out, self.bias)
+        else:
+            features = self.split_1(x)
+            weights = self.split_0(self.weight)
+            outputs = ()
+            for i in range(self.group):
+                output = self.conv3d(features[i], weights[i])
+                outputs = outputs + (output,)
+            out = self.concat(outputs)
+            if self.bias is not None:
+                new_shape = [1 for _ in range(out.ndim)]
+                new_shape[1] = self.out_channels
+                out = out + self.bias.reshape(new_shape)
         return out
 
 
@@ -882,10 +890,16 @@ class Conv3dTranspose(_Conv):
             If `padding` is a tuple of six integers, then the head, tail, top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, `padding[3]`, `padding[4]` and `padding[5]`
             respectively. The value should be greater than or equal to 0. Default: ``0`` .
-        dilation (Union[int, tuple[int]]): Dilation size of 3D convolution kernel.
-            The data type is an integer or a tuple of three integers. If :math:`k > 1`, the kernel is sampled
-            every `k` elements. The value of `k` on the depth, height and width directions is in range of
-            [1, D], [1, H] and [1, W] respectively. Default: ``1`` .
+        dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. The data type
+            can be a single int or a tuple of 3 integers. A single int means the dilation size is the same in the
+            depth, height and width directions. A tuple of 3 ints represents the dilation size in the depth, height
+            and width directions, respectively.
+            Assuming :math:`dilation=(d0, d1, d2)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the depth direction, :math:`d1-1` elements in the height direction,
+            :math:`d2-1` elements in the width direction respectively.
+            The values in the depth, height and width dimensions are in
+            the ranges [1, D], [1, H] and [1, W], respectively.
+            Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by `group`. Default: ``1`` .
         output_padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of
@@ -954,7 +968,7 @@ class Conv3dTranspose(_Conv):
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
         TypeError: If `kernel_size`, `stride`, `padding` , `dilation` or `output_padding`
-                   is neither an int not a tuple of three.
+                   is neither an int nor a tuple of three.
         TypeError: If input data type is not float16 or float32.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
@@ -1036,8 +1050,6 @@ class Conv3dTranspose(_Conv):
         self.shape = P.Shape()
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_5dims(x_shape, self.cls_name)
         output = self.conv3d_transpose(x, self.weight)
         if self.has_bias:
             output = self.bias_add(output, self.bias)
@@ -1115,9 +1127,13 @@ class Conv2dTranspose(_Conv):
             respectively. If `output_padding` is not equal to 0, `pad_mode` must be `pad`.
             The value should be in range of `[0, max(stride, dilation))` . Default: ``0`` .
         dilation (Union[int, tuple[int]]): Dilation size of 2D convolution kernel.
-            The data type is an integer or a tuple of two integers. If :math:`k > 1`, the kernel is sampled
-            every `k` elements. The value of `k` on the height and width directions is in range of [1, H]
-            and [1, W] respectively. Default: ``1`` .
+            It can be a single int or a tuple of 2 integers. A single int means the dilation size is the same
+            in both the height and width directions. A tuple of two ints represents the dilation size in
+            the height and width directions, respectively.
+            Assuming :math:`dilation=(d0, d1)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the height direction and :math:`d1-1` elements in the width direction.
+            The values in the height and width dimensions are in the ranges [1, H] and [1, W], respectively.
+            Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be divisible by `group`.
             Default: ``1`` .
         has_bias (bool): Whether the Conv2dTranspose layer has a bias parameter. Default: ``False`` .
@@ -1171,7 +1187,7 @@ class Conv2dTranspose(_Conv):
 
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
-        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int not a tuple.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
@@ -1295,6 +1311,12 @@ class Conv2dTranspose(_Conv):
         return pad(conv2d_trans_ret)
 
 
+@_primexpr
+def _check_input_3d(input_shape, op_name):
+    if len(input_shape) != 3:
+        raise ValueError(f"For '{op_name}', the dimension of input must be 3d, but got {len(input_shape)}.")
+
+
 class Conv1dTranspose(_Conv):
     r"""
     Calculates a 1D transposed convolution, which can be regarded as Conv1d for the gradient of the input,
@@ -1410,14 +1432,10 @@ class Conv1dTranspose(_Conv):
         stride = (1, stride)
         dilation = (1, dilation)
         get_shape = P.Shape()
-        get_dtype = P.DType()
         if isinstance(weight_init, Tensor):
             weight_init_shape = get_shape(weight_init)
             Validator.check_equal_int(len(weight_init_shape), 3, 'weight_init_shape', self.cls_name)
-            weight_init_dtype = get_dtype(weight_init)
-            weight_init_value = weight_init.asnumpy()
-            weight_init_value = np.expand_dims(weight_init_value, 2)
-            weight_init = Tensor(weight_init_value, weight_init_dtype)
+            weight_init = weight_init.expand_dims(2)
         # out_channels and in_channels swap.
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel,
         # then Conv1dTranspose's out_channel refers to Conv2DBackpropInput's in_channel.
@@ -1465,9 +1483,7 @@ class Conv1dTranspose(_Conv):
         x_shape = self.shape(x)
         _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
-
         n, _, h, w = self.shape(x)
-
         h_out = _deconv_output_length(self.is_valid, self.is_same, self.is_pad, h, self.kernel_size[0],
                                       self.stride[0], self.dilation[0], self.padding[0] + self.padding[1])
         w_out = _deconv_output_length(self.is_valid, self.is_same, self.is_pad, w, self.kernel_size[1],

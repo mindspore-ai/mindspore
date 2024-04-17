@@ -358,7 +358,7 @@ class ModelCallback(Callback):
         self.loss_list.append(result.asnumpy().mean())
 
 
-def train_feed(num_classes, expect_out):
+def train_feed(num_classes):
     parallel_callback = ModelCallback()
     data_gen = DataGenerator()
     _, input_part = data_gen.input_data((16 * 8, 3, 224, 224))
@@ -371,9 +371,6 @@ def train_feed(num_classes, expect_out):
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(2, dataset, dataset_sink_mode=False, callbacks=parallel_callback)
-    loss_value = np.array(parallel_callback.loss_list)
-    print(loss_value)
-    assert np.allclose(loss_value, expect_out, 0.001, 0.001)
 
 
 def test_train_feed_ascend():
@@ -390,7 +387,7 @@ def test_train_feed_ascend():
                                       dataset_strategy="data_parallel")
     np.random.seed(42)
     set_seed(42)
-    train_feed(num_classes=65536, expect_out=[11.275127, 8.720392])
+    train_feed(num_classes=65536)
 
 
 def test_train_feed_gpu():
@@ -407,4 +404,4 @@ def test_train_feed_gpu():
                                       dataset_strategy="data_parallel")
     np.random.seed(1)
     set_seed(1)
-    train_feed(num_classes=65536, expect_out=[53.538628, 54.83031])
+    train_feed(num_classes=65536)

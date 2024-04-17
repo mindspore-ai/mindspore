@@ -101,3 +101,45 @@ def test_parser_raise_error_in_for_condition():
         net(input_me_x)
     assert "the 0th input should be a int scalar" in str(error_log.value)
     assert "for _ in range(x)" in str(error_log.value)
+
+
+def test_range_with_empty_result():
+    """
+    Feature: range()
+    Description: Test range() in graph mode.
+    Expectation: No exception
+    """
+    @jit
+    def foo():
+        a = range(-1)
+        return tuple(a)
+
+    assert foo() == ()
+
+
+def test_range_with_empty_result_2():
+    """
+    Feature: range()
+    Description: Test range() in graph mode.
+    Expectation: No exception
+    """
+    @jit
+    def foo():
+        a = range(5, 2)
+        return tuple(a)
+
+    assert foo() == ()
+
+
+def test_range_with_empty_result_3():
+    """
+    Feature: range()
+    Description: Test range() in graph mode.
+    Expectation: No exception
+    """
+    @jit
+    def foo():
+        a = range(2, 5, -1)
+        return tuple(a)
+
+    assert foo() == ()

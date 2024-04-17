@@ -19,8 +19,8 @@
 
 #include <string.h>
 
-#include "inc/cpu_ops_kernel.h"
-#include "inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -32,10 +32,10 @@ class ScatterNdCpuKernel : public CpuKernel {
 
  private:
   template <typename data_type0>
-  uint32_t DTYPE_CHOOSE(const CpuKernelContext &ctx);
+  uint32_t DTYPE_CHOOSE(CpuKernelContext &ctx);
 
-  template <typename indices_type, typename data_type0>
-  uint32_t ScatterNdComputeRealKernel(const CpuKernelContext &ctx);
+  template <typename indices_type, typename shape_type, typename data_type0>
+  uint32_t ScatterNdComputeRealKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

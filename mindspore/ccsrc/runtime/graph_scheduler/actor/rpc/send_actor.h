@@ -60,7 +60,7 @@ class SendActor : public RpcActor {
   void EraseInput(const OpContext<DeviceTensor> *context) override;
 
   // Client only supports to send MessageBase, so build MessageBase with data and url.
-  std::unique_ptr<MessageBase> BuildRpcMessage(const kernel::AddressPtrList &data_list, const std::string &server_url);
+  std::unique_ptr<MessageBase> BuildRpcMessage(const std::string &server_url);
 
   /**
    * @description: Free message after it's sent to remote.
@@ -97,11 +97,11 @@ class SendActor : public RpcActor {
    * @param {RpcDataPtr} &rpc_data: A piece of memory which is allocated by the caller for serialized data to copy to.
    * @param {ShapeVector} &shape_vec: Input data's shape vector.
    * @param {TypeId} &data_type: Input data's type.
-   * @param {AddressPtr} &addr: Input data's address and size.
+   * @param {DeviceTensor} *addr: Input data's device tensor.
    * @return {size_t}: Size of the serialized data.
    */
   size_t SerializeSingleDynamicShapeInput(RpcDataPtr rpc_data, const ShapeVector &shape_vec, const TypeId &data_type,
-                                          const kernel::AddressPtr &addr) const;
+                                          const DeviceTensor *addr) const;
 
   // Serialize dynamic shape data. The format is shown below:
   // |--------22 bytes------|---4 bytes--|PB data size bytes| data size bytes |
@@ -111,21 +111,19 @@ class SendActor : public RpcActor {
    * like data shape, data type will be serialized as protobuffer and copied to message.
    *
    * @param {MessageBase} *message: MessageBase object.
-   * @param {AddressPtrList} &data_list: The inputs data of rpc send kernel.
+   * @param {DeviceTensor} *workspace_addr: Workspace device tensor.
    * @return {void}
    */
-  void SerializeDynamicShapeMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
-                                    const kernel::AddressPtr &workspace_addr) const;
+  void SerializeDynamicShapeMessage(MessageBase *message, const DeviceTensor *workspace_addr) const;
 
   /**
    * @description: Serialize common message without extra info, which means: the data of raw pointer will be directly
    * copied to the message.
    * @param {MessageBase} *message: MessageBase object.
-   * @param {AddressPtrList} &data_list: The inputs data of rpc send kernel.
+   * @param {DeviceTensor} *workspace_addr: Workspace device tensor.
    * @return {void}
    */
-  void SerializeCommonMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
-                              const kernel::AddressPtr &workspace_addr) const;
+  void SerializeCommonMessage(MessageBase *message, const DeviceTensor *workspace_addr) const;
 
   friend class GraphScheduler;
 

@@ -90,7 +90,7 @@ bool IsPartialSuccNode(const AnfNodePtr node) {
   }
   auto cnode = node->cast<CNodePtr>();
   if (!cnode->inputs().empty()) {
-    for (size_t i = 0; i < cnode->inputs().size(); i++) {
+    for (size_t i = 0; i < cnode->size(); i++) {
       if (IsPartialCNode(cnode->input(i))) {
         return true;
       }
@@ -164,6 +164,7 @@ bool IsWhileNode(const AnfNodePtr &node) {
 }
 
 bool IsCallNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
   }
@@ -171,7 +172,9 @@ bool IsCallNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   bool in_kg = graph->type_name() == kKernelGraphTypeName;
   auto cnode = node->cast<CNodePtr>();
-  if (in_kg && IsPrimitiveCNode(node, prim::kPrimCall) && cnode->input(1)->isa<ValueNode>()) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (in_kg && IsPrimitiveCNode(node, prim::kPrimCall) && cnode->input(1) != nullptr &&
+      cnode->input(1)->isa<ValueNode>()) {
     return true;
   }
   return false;
@@ -322,9 +325,26 @@ GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options) {
 
 void SetGraphRunner(const GraphRunnerPtr &runner) { DfGraphManager::GetInstance().SetGraphRunner(runner); }
 void ClearGraph() { DfGraphManager::GetInstance().ClearGraph(); }
-Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options) {
-  return DfGraphManager::GetInstance().AddGraph(name, graph, options);
+
+Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options, const bool &is_cloud,
+                const bool &need_aoe) {
+  auto ret = DfGraphManager::GetInstance().AddGraph(name, graph, options, is_cloud);
+  if (ret != Status::SUCCESS) {
+    return ret;
+  }
+  if (need_aoe) {
+    transform::AddOptimizeGraph(name);
+    transform::DfGraphManager::GetInstance().AoeGeGraph();
+  }
+  auto graph_runner = transform::GetGraphRunner();
+  if (graph_runner == nullptr) {
+    // lite may not use graph_runner
+    MS_LOG(INFO) << "There is no GraphRunner.";
+    return ret;
+  }
+  return graph_runner->AddGraph(name);
 }
+
 void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr) {
   DfGraphManager::GetInstance().SetAnfGraph(name, anf_graph_ptr);
 }
@@ -343,9 +363,11 @@ void EnableAoeOffline() { AoeUtil::GetInstance().SetOfflineEnvDumpGeGraph(); }
 
 // convert
 
-DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix,
-                                 RefModeFlag ref_mode_type) {
-  auto converter = std::make_shared<transform::DfGraphConvertor>(graph, phase_prefix, ref_mode_type);
+DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix, RefModeFlag ref_mode_type,
+                                 bool offline_convert) {
+  std::vector<std::string> extra_variables_names = {};
+  auto converter = std::make_shared<transform::DfGraphConvertor>(graph, phase_prefix, ref_mode_type,
+                                                                 extra_variables_names, nullptr, offline_convert);
   return converter;
 }
 
@@ -378,13 +400,10 @@ int ErrCode(const DfGraphConvertorPtr &converter) {
   return converter->ErrCode();
 }
 
-void GenFakeComputeGraph(const std::string &name, const DfGraphConvertorPtr &converter,
-                         const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps) {
+void GenFakeGraph(const std::string &name, const DfGraphConvertorPtr &converter) {
   MS_EXCEPTION_IF_NULL(converter);
-  (void)converter->ConvertAllNode().InitParam(maps).GenFakeComputeGraph(name);
+  converter->GenFakeGraph(name);
 }
-
-DfGraphPtr GenFakeGraph(const std::string &name) { return GenExampleGraph(name); }
 
 DfGraphPtr GetComputeGraph(const DfGraphConvertorPtr &converter) {
   MS_EXCEPTION_IF_NULL(converter);
@@ -462,8 +481,27 @@ bool SinkGraphCheck(const AnfNodePtr &node, bool train) {
   auto input_attr_map = adpt->getInputAttrMap();
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  auto input_size = cnode->size();
   for (auto &it : input_attr_map) {
+    if (it.first >= input_size) {
+      continue;
+    }
     if (!cnode->input(it.first)->isa<ValueNode>()) {
+      MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "]"
+                    << " is not a ValueNode";
+      return false;
+    }
+  }
+  auto input_map = adpt->getInputMap();
+  for (auto &it : input_map) {
+    if (static_cast<size_t>(it.first) >= input_size) {
+      continue;
+    }
+    auto abs = cnode->input(it.first)->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractAny>()) {
+      MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "]"
+                    << " is a AbstractAny";
       return false;
     }
   }

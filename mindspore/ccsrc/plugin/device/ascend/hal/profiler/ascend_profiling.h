@@ -22,6 +22,7 @@
 #include "acl/acl_prof.h"
 #include "include/backend/kernel_graph.h"
 #include "kernel/kernel.h"
+#include "plugin/device/ascend/hal/profiler/profiling_data_dumper.h"
 
 namespace mindspore {
 namespace profiler {
@@ -38,14 +39,14 @@ class AscendProfiler : public Profiler {
   void Finalize() override;
   void Start() override;
   void Stop() override;
+  void StepStart(uint64_t step_id, void *stream) override;
+  void StepStop() override;
   void StepProfilingEnable(const bool enable_flag) override;
   void OpDataProducerEnd() override { return; }
   uint64_t GetOptionsMask() const;
   void MsprofInitProfiler() const;
   void MsprofStopProfiler() const;
   aclprofAicoreMetrics GetAicMetrics() const;
-  void GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id, const KernelType kernel_type,
-                             int32_t kernel_mod_task_id);
   std::map<std::thread::id, uint32_t> last_tid_;
   std::map<std::thread::id, uint32_t> last_streamid_;
 
@@ -57,6 +58,8 @@ class AscendProfiler : public Profiler {
   uint32_t device_id_ = 0;
   uint32_t max_op_taskid_limit_ = 65536;
   aclprofConfig *acl_config_{nullptr};
+  aclprofStepInfo *acl_prof_step_info_{nullptr};
+  aclrtStream acl_stream_{nullptr};
 };
 }  // namespace ascend
 }  // namespace profiler

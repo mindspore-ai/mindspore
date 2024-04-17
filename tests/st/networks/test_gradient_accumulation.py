@@ -1,13 +1,8 @@
-import os
-
-import pytest
-
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as CT
 import mindspore.dataset.vision as CV
 import mindspore.nn as nn
 from mindspore import ParameterTuple
-from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import Normal
 from mindspore.dataset.vision import Inter
@@ -203,20 +198,3 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     mnist_ds = mnist_ds.repeat(repeat_size)
 
     return mnist_ds
-
-
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_gradient_accumulation():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    ds_train = create_dataset(os.path.join("/home/workspace/mindspore_dataset/mnist", "train"), 32)
-
-    network = LeNet5(10)
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-    net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
-    model = GradientAccumulation(network, net_loss, net_opt)
-
-    print("============== Starting Training ==============")
-    model.train_process(2, ds_train, mini_steps=4)

@@ -19,7 +19,8 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import jit
-
+from mindspore import ops
+from mindspore.common import dtype as mstype
 context.set_context(device_target="CPU")
 
 
@@ -33,7 +34,7 @@ class Net(nn.Cell):
         return self.bidense(x1, x2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net():
@@ -50,7 +51,7 @@ def test_net():
     assert output.shape == (128, 40)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_nd():
@@ -67,7 +68,7 @@ def test_net_nd():
     assert output.shape == (128, 4, 40)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_1d():
@@ -82,3 +83,20 @@ def test_net_1d():
     output = net(Tensor(x1), Tensor(x2))
     print(output.asnumpy())
     assert output.shape == (40,)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_int8_inputs():
+    """
+    Feature: Bidense with int8 inputs.
+    Description: Test the result of bidense with int8 inputs.
+    Expectation: Not raise error.
+    """
+    input_x1 = Tensor(np.random.randint(-20, 20, (2,)), mstype.int8)
+    input_x2 = Tensor(np.random.randint(-20, 20, (3,)), mstype.int8)
+    weight = Tensor(np.random.randint(-20, 20, (1, 2, 3)), mstype.int8)
+    bias = Tensor(np.random.randint(-20, 20, (1,)), mstype.int8)
+    output = ops.bidense(input_x1, input_x2, weight, bias)
+    assert output.shape == (1,)

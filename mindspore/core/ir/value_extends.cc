@@ -62,7 +62,7 @@ abstract::AbstractBasePtr ValueNamedTuple::ToAbstract() {
     MS_EXCEPTION_IF_NULL(ele);
     return ele->ToAbstract();
   });
-  return std::make_shared<abstract::AbstractNamedTuple>(type_name_, key_list, ele_list);
+  return std::make_shared<abstract::AbstractNamedTuple>(sub_class_name_, key_list, ele_list);
 }
 
 abstract::AbstractBasePtr ValueSlice::ToAbstract() {
@@ -73,6 +73,10 @@ abstract::AbstractBasePtr ValueSlice::ToAbstract() {
   abstract::AbstractBasePtr end = stop_->ToAbstract();
   abstract::AbstractBasePtr step = step_->ToAbstract();
   return std::make_shared<abstract::AbstractSlice>(start, end, step);
+}
+
+bool ValueSlice::ContainsValueAny() const {
+  return start_->ContainsValueAny() || stop_->ContainsValueAny() || step_->ContainsValueAny();
 }
 
 abstract::AbstractBasePtr KeywordArg::ToAbstract() {
@@ -88,6 +92,12 @@ abstract::AbstractBasePtr ValueDictionary::ToAbstract() {
                          return std::make_pair(item.first->ToAbstract(), item.second->ToAbstract());
                        });
   return std::make_shared<abstract::AbstractDictionary>(kv);
+}
+
+bool ValueDictionary::ContainsValueAny() const {
+  return std::any_of(key_values_.cbegin(), key_values_.cend(), [](const std::pair<ValuePtr, ValuePtr> &key_value) {
+    return key_value.first->ContainsValueAny() || key_value.second->ContainsValueAny();
+  });
 }
 
 abstract::AbstractBasePtr UMonad::ToAbstract() { return std::make_shared<abstract::AbstractUMonad>(); }

@@ -58,8 +58,8 @@ class InTopKInfer : public abstract::OpInferBase {
     const int64_t kInputx1ShapeSize = 2;
     const int64_t kInputx2ShapeSize = 1;
     auto prim_name = primitive->name();
-    auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+    auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     if (IsDynamicRank(x1_shape) || IsDynamicRank(x2_shape)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
@@ -72,7 +72,7 @@ class InTopKInfer : public abstract::OpInferBase {
                                << "', the size of x2 should be equal to x1's first diemnsion, but got x1 shape: "
                                << x1_shape << ", x2 shape: " << x2_shape;
     }
-    auto x2 = input_args[kInputIndex1]->BuildShape();
+    auto x2 = input_args[kInputIndex1]->GetShape();
     MS_EXCEPTION_IF_NULL(x2);
     auto shape_element = x2->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape_element);
@@ -82,10 +82,10 @@ class InTopKInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto prim_name = primitive->name();
     const std::set<TypePtr> x1_valid_types = {kFloat16, kFloat32};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("x1", input_args[kInputIndex0]->BuildType(), x1_valid_types,
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x1", input_args[kInputIndex0]->GetType(), x1_valid_types,
                                                      prim_name);
     const std::set<TypePtr> x2_valid_types = {kInt32, kInt64};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", input_args[kInputIndex1]->BuildType(), x2_valid_types,
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", input_args[kInputIndex1]->GetType(), x2_valid_types,
                                                      prim_name);
     return std::make_shared<TensorType>(kBool);
   }

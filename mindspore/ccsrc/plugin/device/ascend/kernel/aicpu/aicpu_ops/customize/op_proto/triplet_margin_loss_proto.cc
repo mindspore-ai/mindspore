@@ -78,7 +78,7 @@ IMPLEMT_COMMON_INFERFUNC(TripletMarginLossInferShape) {
   std::reverse(shape_xp.begin(), shape_xp.end());
   std::reverse(shape_xn.begin(), shape_xn.end());
   for (int32_t i = 0; i < dims; i++) {
-    y_shape.push_back((int64_t)std::max(std::max(shape_x[i], shape_xp[i]), shape_xn[i]));
+    y_shape.push_back(static_cast<int64_t>(std::max(std::max(shape_x[i], shape_xp[i]), shape_xn[i])));
     if ((shape_x[i] != y_shape[i] && shape_x[i] != 1) || (shape_xp[i] != y_shape[i] && shape_xp[i] != 1) ||
         (shape_xn[i] != y_shape[i] && shape_xn[i] != 1)) {
       std::string err_msg = OtherErrMsg("Inputs' shape can't broadcast");

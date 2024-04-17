@@ -5,6 +5,9 @@ mindspore.ops.Eye
 
     创建一个主对角线上元素为1，其余元素为0的Tensor。
 
+    .. note::
+        Ascend平台支持返回Tensor的数据类型包括float16, float32, int8, int16, int32, int64, uint8和bool。
+
     更多参考详见 :func:`mindspore.ops.eye`。
 
     输入：

@@ -21,6 +21,7 @@
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
+#include "ops/op_utils.h"
 
 namespace {
 const size_t kZero = 0;
@@ -46,18 +47,16 @@ bool CheckShapeIsScalar(const ShapeVector &shape) { return shape.empty() || (sha
 
 namespace mindspore {
 namespace kernel {
-bool ApplyAdaMaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
-  batch_rank_ = base_operator->get_batch_rank();
+bool ApplyAdaMaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[0]->dtype_id();
+  batch_rank_ = ops::get_batch_rank(primitive_);
   return true;
 }
 
-int ApplyAdaMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyAdaMaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -114,26 +113,26 @@ int ApplyAdaMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return ret;
 }
 
-bool ApplyAdaMaxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool ApplyAdaMaxCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdaMaxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdaMaxOutputsNum, kernel_name_);
-  if (inputs[kIndexVar]->size != inputs[kIndexM]->size) {
+  if (inputs[kIndexVar]->size() != inputs[kIndexM]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype and shape of 'm' and 'var' must be the same, but got the memory size of 'm': "
-                      << inputs[kIndexM]->size << " and 'var': " << inputs[kIndexVar]->size;
+                      << inputs[kIndexM]->size() << " and 'var': " << inputs[kIndexVar]->size();
   }
-  if (inputs[kIndexVar]->size != inputs[kIndexV]->size) {
+  if (inputs[kIndexVar]->size() != inputs[kIndexV]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype and shape of 'v' and 'var' must be the same, but got the memory size of 'v': "
-                      << inputs[kIndexV]->size << " and 'var': " << inputs[kIndexVar]->size;
+                      << inputs[kIndexV]->size() << " and 'var': " << inputs[kIndexVar]->size();
   }
-  if (inputs[kIndexVar]->size != inputs[kIndexGrad]->size) {
+  if (inputs[kIndexVar]->size() != inputs[kIndexGrad]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype and shape of 'grad' and 'var' must be the same, "
                          "but got the memory size of 'grad': "
-                      << inputs[kIndexGrad]->size << " and 'var': " << inputs[kIndexVar]->size;
+                      << inputs[kIndexGrad]->size() << " and 'var': " << inputs[kIndexVar]->size();
   }
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
@@ -147,17 +146,17 @@ bool ApplyAdaMaxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
-void ApplyAdaMaxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &outputs) {
-  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
-  T *m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
-  T *v = reinterpret_cast<T *>(inputs[kIndexV]->addr);
-  T *beta1_power = reinterpret_cast<T *>(inputs[kIndexBeta1Power]->addr);
-  T *lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
-  T *beta1 = reinterpret_cast<T *>(inputs[kIndexBeta1]->addr);
-  T *beta2 = reinterpret_cast<T *>(inputs[kIndexBeta2]->addr);
-  T *epsilon = reinterpret_cast<T *>(inputs[kIndexEpsilon]->addr);
-  T *grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
+void ApplyAdaMaxCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->device_ptr());
+  T *m = reinterpret_cast<T *>(inputs[kIndexM]->device_ptr());
+  T *v = reinterpret_cast<T *>(inputs[kIndexV]->device_ptr());
+  T *beta1_power = reinterpret_cast<T *>(inputs[kIndexBeta1Power]->device_ptr());
+  T *lr = reinterpret_cast<T *>(inputs[kIndexLr]->device_ptr());
+  T *beta1 = reinterpret_cast<T *>(inputs[kIndexBeta1]->device_ptr());
+  T *beta2 = reinterpret_cast<T *>(inputs[kIndexBeta2]->device_ptr());
+  T *epsilon = reinterpret_cast<T *>(inputs[kIndexEpsilon]->device_ptr());
+  T *grad = reinterpret_cast<T *>(inputs[kIndexGrad]->device_ptr());
 
   auto one = static_cast<T>(1);
   if (beta1_power[kScalarIndex] == one) {

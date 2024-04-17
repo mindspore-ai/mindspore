@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,11 +37,11 @@ class Net(Cell):
         self.conv2d = P.Conv2D(out_channel=out_channel, kernel_size=kernel_size,
                                pad_mode=pad_mode, stride=stride).shard(strategy1)
         self.conv2d_weight = Parameter(conv2d_weight, "w1")
-        self.resize_bilinear = P.ResizeBilinear((16, 16)).shard(strategy2)
+        self.resize_bilinear = P.ResizeBilinearV2().shard(strategy2)
 
     def construct(self, x):
         out = self.conv2d(x, self.conv2d_weight)
-        out = self.resize_bilinear(out)
+        out = self.resize_bilinear(out, (16, 16))
         return out
 
 
@@ -78,11 +78,11 @@ class Net3(Cell):
         self.conv2d = P.Conv2D(out_channel=out_channel, kernel_size=kernel_size,
                                pad_mode=pad_mode, stride=stride).shard(strategy1)
         self.conv2d_weight = Parameter(conv2d_weight, "w1")
-        self.resize_bilinear = P.ResizeBilinear((16, 16))
+        self.resize_bilinear = P.ResizeBilinearV2()
 
     def construct(self, x):
         out = self.conv2d(x, self.conv2d_weight)
-        out = self.resize_bilinear(out)
+        out = self.resize_bilinear(out, (16, 16))
         return out
 
 
@@ -277,3 +277,19 @@ def test_resizebilinear_shard_W_in_GPU():
               strategy1=strategy1, strategy2=strategy2)
     with pytest.raises(RuntimeError):
         compile_net(net)
+
+
+def test_bilinear_dynamic_shape_constraint():
+    """
+    Feature: test ResizeBilinear W dimension dynamic shape
+    Description: shard N/C
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0, full_batch=False)
+    strategy1 = ((2, 2, 1, 1), (2, 2, 1, 1))
+    strategy2 = ((4, 2, 1, 1),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1,
+              strategy1=strategy1, strategy2=strategy2)
+    input_x = Tensor(shape=[32, 16, 8, None], dtype=ms.float32)
+    with pytest.raises(RuntimeError):
+        compile_net(net, input_x)

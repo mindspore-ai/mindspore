@@ -16,14 +16,12 @@
 
 #ifndef MINDSPORE_CORE_UTILS_FORK_UTILS_H
 #define MINDSPORE_CORE_UTILS_FORK_UTILS_H
-#if !defined(_WIN32) && !defined(BUILD_LITE)
-#include <pthread.h>
-#endif
 #include <cstdio>
 #include <vector>
 #include <string>
 #include <functional>
 #include <mutex>
+#include <memory>
 #include "utils/ms_utils.h"
 
 #ifdef FORK_UTILS_DEBUG
@@ -41,9 +39,6 @@ struct fork_callback_info {
   std::function<void()> child_atfork_func;
 };
 
-MS_CORE_API void ForkUtilsBeforeFork();
-MS_CORE_API void ForkUtilsParentAtFork();
-MS_CORE_API void ForkUtilsChildAtFork();
 MS_CORE_API void EmptyFunction();
 
 class MS_CORE_API ForkUtils {
@@ -51,10 +46,14 @@ class MS_CORE_API ForkUtils {
   static ForkUtils &GetInstance() noexcept;
 
   template <class T>
+  void RegisterCallbacks(std::shared_ptr<T> obj, void (T::*before_fork)(), void (T::*parent_atfork)(),
+                         void (T::*child_atfork)()) {
+    RegisterCallbacks(obj.get(), before_fork, parent_atfork, child_atfork);
+  }
+
+  template <class T>
   void RegisterCallbacks(T *obj, void (T::*before_fork)(), void (T::*parent_atfork)(), void (T::*child_atfork)()) {
 #if !defined(_WIN32) && !defined(BUILD_LITE)
-    RegisterOnce();
-
     FORK_UTILS_LOG("Register fork callback info.");
 
     struct fork_callback_info callback_info = {obj, EmptyFunction, EmptyFunction, EmptyFunction};
@@ -84,6 +83,8 @@ class MS_CORE_API ForkUtils {
 #endif
   }
 
+  // Note: Do not call this deregistration interface in the destructor of a global object or a singleton object,
+  // because fork_utils object may be destructed before them.
   template <class T>
   void DeregCallbacks(const T *obj) noexcept {
 #if !defined(_WIN32) && !defined(BUILD_LITE)
@@ -105,33 +106,27 @@ class MS_CORE_API ForkUtils {
 
   std::vector<fork_callback_info> GetCallbacks() { return fork_callbacks_; }
 
-  void set_gil_hold_before_fork(bool gil_hold_before_fork) { hold_gil_before_fork_ = gil_hold_before_fork; }
+  void SetGilHoldBeforeFork(bool gil_hold_before_fork) { hold_gil_before_fork_ = gil_hold_before_fork; }
 
-  bool is_gil_hold_before_fork() const { return hold_gil_before_fork_; }
+  bool IsGilHoldBeforeFork() const { return hold_gil_before_fork_; }
 
-  void set_gil_state(int gil_state) { gil_state_ = gil_state; }
+  void SetGilState(int gil_state) { gil_state_ = gil_state; }
 
-  int get_gil_state() const { return gil_state_; }
+  int GetGilState() const { return gil_state_; }
+
+  void BeforeFork();
+
+  void ParentAtFork();
+
+  void ChildAtFork();
 
  private:
   ForkUtils() = default;
   ~ForkUtils() = default;
   std::vector<fork_callback_info> fork_callbacks_;
-  std::once_flag once_flag_;
   // Record whether forked thread holds the gil lock when the fork occurs.
   bool hold_gil_before_fork_ = false;
   int gil_state_ = 0;
-  void RegisterOnce() {
-#if !defined(_WIN32) && !defined(BUILD_LITE)
-    std::call_once(once_flag_, []() {
-      FORK_UTILS_LOG("Register fork callback functions.");
-      int ret = pthread_atfork(ForkUtilsBeforeFork, ForkUtilsParentAtFork, ForkUtilsChildAtFork);
-      if (ret != 0) {
-        FORK_UTILS_LOG("pthread_atfork failed, ret = %d", ret)
-      }
-    });
-#endif
-  }
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_FORK_UTILS_H

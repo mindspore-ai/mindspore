@@ -16,6 +16,7 @@ import time
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.nn as nn
 from mindspore import context, Tensor, ParameterTuple
 from mindspore.common import dtype as mstype
@@ -27,7 +28,6 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
 np.random.seed(1)
-
 
 grad_by_list = C.GradOperation(get_by_list=True)
 
@@ -128,7 +128,7 @@ class GradWrap(nn.Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu
@@ -136,6 +136,8 @@ class GradWrap(nn.Cell):
 @pytest.mark.env_onecard
 def test_ascend_pynative_lenet():
     context.set_context(mode=context.PYNATIVE_MODE)
+    np.random.seed(42)
+    mindspore.set_seed(42)
 
     epoch_size = 20
     batch_size = 32
@@ -162,11 +164,10 @@ def test_ascend_pynative_lenet():
         total_time = total_time + cost_time
 
         print("======epoch: ", epoch, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
-    assert loss_output.asnumpy() < 0.004
-    assert loss_output.asnumpy() > 0.003
+    assert np.allclose(loss_output.asnumpy(), 0.00183057, rtol=1e-5, atol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu

@@ -26,7 +26,6 @@
 
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
-#include "pipeline/jit/ps/debug/anf_ir_utils.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

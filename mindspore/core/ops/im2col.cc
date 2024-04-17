@@ -73,7 +73,7 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
   auto op_name = primitive->name();
   constexpr size_t size_2 = 2;
   constexpr size_t size_4 = 4;
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (IsDynamic(in_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>(size_4, abstract::Shape::kShapeDimAny));
   }
@@ -171,7 +171,7 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
 TypePtr Im2ColInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   const std::set<TypePtr> valid_types = {kUInt8,   kInt8,    kInt16,   kInt32,     kInt64,
                                          kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);

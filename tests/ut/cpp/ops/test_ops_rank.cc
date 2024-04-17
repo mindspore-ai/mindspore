@@ -13,54 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
+
 #include <memory>
 #include "common/common_test.h"
-#include "ops/rank.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
-#include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
 #include "ops/test_ops.h"
-#include "include/backend/optimizer/helper.h"
-#include "ops/op_utils.h"
+#include "abstract/dshape.h"
+#include "ops/ops_func_impl/rank.h"
 
 namespace mindspore {
 namespace ops {
 struct RankOpParams {
   ShapeVector input_shape;
   TypePtr input_type;
+  std::shared_ptr<abstract::NoShape> out_shape;
   TypePtr out_type;
 };
 
 class TestRank : public TestOps, public testing::WithParamInterface<RankOpParams> {};
 
-TEST_P(TestRank, dyn_shape) {
+TEST_P(TestRank, Rank_DynamicShape) {
   const auto &param = GetParam();
   auto input = std::make_shared<abstract::AbstractTensor>(param.input_type, param.input_shape);
   ASSERT_NE(input, nullptr);
-  auto expect = abstract::MakeAbstract(abstract::kNoShape, param.out_type);
+  std::vector<abstract::AbstractBasePtr> input_args{std::move(input)};
 
-  ValuePtr expect_value;
-  if (IsDynamicRank(param.input_shape)) {
-    expect_value = kValueAny;
-  } else {
-    auto x_shape_rank = SizeToLong(param.input_shape.size());
-    expect_value = MakeValue(x_shape_rank);
-  }
-  expect->set_value(expect_value);
+  auto primitive = std::make_shared<Primitive>("Rank");
+  OpFuncImplPtr infer_impl = std::make_shared<RankFuncImpl>();
+  ASSERT_NE(infer_impl, nullptr);
+  auto infer_shape = infer_impl->InferShape(primitive, input_args);
+  ASSERT_NE(infer_shape, nullptr);
+  auto infer_type = infer_impl->InferType(primitive, input_args);
+  ASSERT_NE(infer_type, nullptr);
 
-  auto prim = std::make_shared<Primitive>(kNameRank);
-  auto out_abstract = opt::CppInferShapeAndType(prim, {input});
-  ASSERT_NE(out_abstract, nullptr);
-  ASSERT_TRUE(*out_abstract == *expect);
+  ASSERT_TRUE(infer_shape == param.out_shape);
+  ASSERT_TRUE(infer_type == param.out_type);
 }
 
-INSTANTIATE_TEST_CASE_P(TestRankGroup, TestRank,
-                        testing::Values(RankOpParams{{2, 3}, kFloat32, kInt64},
-                                        RankOpParams{{-1, -1}, kFloat32, kInt64},
-                                        RankOpParams{{-2}, kFloat32, kInt64}));
+INSTANTIATE_TEST_CASE_P(TestOpsFuncImpl, TestRank,
+                        testing::Values(RankOpParams{{2, 3}, kFloat32, abstract::kNoShape, kInt64},
+                                        RankOpParams{{-1, -1}, kFloat32, abstract::kNoShape, kInt64},
+                                        RankOpParams{{-2}, kFloat32, abstract::kNoShape, kInt64}));
 }  // namespace ops
 }  // namespace mindspore

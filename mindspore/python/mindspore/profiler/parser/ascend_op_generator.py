@@ -18,15 +18,20 @@ import json
 import logging
 import os
 import stat
+from typing import Optional, List
 
 import numpy as np
+from mindspore import log as logger
 from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException
 
 
 class AscendOPGenerator:
     """Generate ascend op data from DataFrame."""
 
-    def __init__(self, op_summary, op_statistic, dynamic_status=False):
+    def __init__(
+            self, op_summary: np.ndarray, op_statistic: np.ndarray,
+            dynamic_status: bool = False, launch_ops: Optional[List] = None
+        ):
         self.op_summary = op_summary
         self.op_statistic = op_statistic
         self.dynamic_status = dynamic_status
@@ -35,27 +40,35 @@ class AscendOPGenerator:
         self.aicpu_detail = None
         self.framework_raw = None
         self.output_timeline_data = None
+        self.launch_ops = launch_ops if launch_ops else []
+        self.aclnn_status = bool(launch_ops)
+        self._full_kernel_name = None
+        self._sub_graph = None
+        self._op_name = None
+        self._kernel_name = None
 
         self.op_detail_dt = np.dtype(
-            [('full_op_name', object), ('task_duration', float), ('execution_frequency', int), ('task_type', object)])
+            [('full_kernel_name', object), ('task_duration', float),
+             ('execution_frequency', int), ('task_type', object)])
 
         self.op_type_dt = np.dtype(
-            [('op_type', object), ('total_time', float), ('execution_frequency', int), ('percent', float)])
+            [('kernel_type', object), ('total_time', float), ('execution_frequency', int), ('percent', float)])
 
         self.aicpu_detail_dt = np.dtype(
-            [('serial_number', int), ('op_type', object), ('total_time', float), ('dispatch_time', float),
+            [('serial_number', int), ('kernel_type', object), ('total_time', float), ('dispatch_time', float),
              ('execution_time', float), ('run_start', float), ('run_end', float)])
 
         self.framwork_raw_dt = np.dtype(
-            [('task_id', int), ('stream_id', int), ('block_dim', int), ('full_op_name', object), ('op_name', object),
-             ('op_type', object), ('subgraph', object), ('op_info', object), ('model_id', int),
-             ('kernel_type', object)])
+            [('task_id', int), ('stream_id', int), ('block_dim', int), ('full_kernel_name', object),
+             ('op_name', object), ('kernel_name', object), ('kernel_type', object), ('subgraph', object),
+             ('op_info', object), ('model_id', int), ('task_type', object)])
 
     def parse(self):
         """
         Analyse op summary op statistic generate op data.
         """
 
+        self._combine_op_and_kernel(self.op_summary, self.launch_ops)
         # aicore intermediation detail
         self.op_detail = self._parse_op_detail(self.op_summary)
 
@@ -150,13 +163,34 @@ class AscendOPGenerator:
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
                                'w') as output_timeline_data:
                     writer = csv.writer(output_timeline_data)
-                    writer.writerow(['op_name', 'stream_id', 'start_time(us)', 'duration(ms)'])
+                    writer.writerow(['kernel_name', 'stream_id', 'start_time(us)', 'duration(ms)'])
                     writer.writerows(self.output_timeline_data.tolist())
             except (IOError, OSError) as err:
                 logging.critical('Error occurred when write output timeline data file: %s', err)
                 raise ProfilerIOException() from err
             if os.path.exists(aicpu_intermediate_detail_path):
                 os.chmod(aicpu_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
+
+    def _combine_op_and_kernel(self, op_summary, launch_ops):
+        """update op name, kernel name etc."""
+        self._full_kernel_name = op_summary['Op Name'].copy()
+        self._op_name = op_summary['Op Name'].copy()
+        self._kernel_name = np.array(
+            [x[-1] for x in np.char.split(op_summary['Op Name'].astype(str), sep='/')], dtype=object)
+        self._sub_graph = np.array(
+            [x[0] for x in np.char.split(op_summary['Op Name'].astype(str), sep='/')], dtype=object)
+
+        if launch_ops and len(launch_ops) != len(op_summary):
+            logger.error("Size mismatch between op_summary and launch_ops!")
+            launch_ops = []
+
+        for index, launch_op in enumerate(launch_ops):
+            if not launch_op:
+                continue
+            self._op_name[index] = launch_op
+            self._kernel_name[index] = self._full_kernel_name[index]
+            self._full_kernel_name[index] = f"{launch_op}/{self._full_kernel_name[index]}"
+            self._sub_graph[index] = launch_op.split("/")[0]
 
     def _parse_op_detail(self, op_summary):
         """
@@ -165,17 +199,23 @@ class AscendOPGenerator:
         Args:
             op_summary(DataFrame): op summary data.
         """
-        groups, index, inverse, counts = np.unique(op_summary['Op Name'], return_index=True, return_inverse=True,
-                                                   return_counts=True)
+        if self.aclnn_status:
+            op_detail = np.empty((len(op_summary),), dtype=self.op_detail_dt)
+            op_detail['task_type'] = op_summary['Task Type']
+            op_detail['execution_frequency'] = np.ones((len(op_summary),), dtype=int)
+            op_detail['task_duration'] = op_summary['Task Duration']
+            op_detail['full_kernel_name'] = self._full_kernel_name
+        else:
+            groups, index, inverse, counts = np.unique(op_summary['Op Name'], return_index=True,
+                                                       return_inverse=True, return_counts=True)
 
-        op_detail = np.empty((len(groups),), dtype=self.op_detail_dt)
-        op_detail['full_op_name'] = groups
-        op_detail['task_type'] = op_summary[index]['Task Type']
-        nonzero_duration = np.bincount(inverse) != 0
-        op_detail['task_duration'] = np.where(nonzero_duration,
-                                              np.bincount(inverse, weights=op_summary['Task Duration']) / np.bincount(
-                                                  inverse), 0)
-        op_detail['execution_frequency'] = counts
+            op_detail = np.empty((len(groups),), dtype=self.op_detail_dt)
+            op_detail['full_kernel_name'] = groups
+            op_detail['task_type'] = op_summary[index]['Task Type']
+            nonzero_duration = np.bincount(inverse) != 0
+            op_detail['task_duration'] = np.where(nonzero_duration, np.bincount(
+                inverse, weights=op_summary['Task Duration']) / np.bincount(inverse), 0)
+            op_detail['execution_frequency'] = counts
 
         return op_detail
 
@@ -191,7 +231,7 @@ class AscendOPGenerator:
                                           return_counts=True)
 
         op_type = np.empty((len(groups),), dtype=self.op_type_dt)
-        op_type['op_type'] = groups
+        op_type['kernel_type'] = groups
         op_type['total_time'] = np.bincount(inverse, weights=op_statistic['Total Time'])
         op_type['execution_frequency'] = np.bincount(inverse, weights=op_statistic['Count'])
         op_type['percent'] = op_type['total_time'] / np.sum(op_statistic['Total Time']) if np.sum(
@@ -212,7 +252,7 @@ class AscendOPGenerator:
         aicpu_detail = np.empty((len(op_summary),), dtype=self.aicpu_detail_dt)
 
         aicpu_detail['serial_number'] = [i for i in range(1, op_summary.shape[0] + 1)]
-        aicpu_detail['op_type'] = op_summary['Op Type']
+        aicpu_detail['kernel_type'] = op_summary['Op Type']
         aicpu_detail['total_time'] = op_summary['Task Duration'] + op_summary['Task Wait Time']
         aicpu_detail['dispatch_time'] = op_summary['Task Wait Time']
         aicpu_detail['execution_time'] = op_summary['Task Duration']
@@ -256,7 +296,7 @@ class AscendOPGenerator:
                     }
             return json.dumps(op_info)
 
-        if self.dynamic_status:
+        if self.dynamic_status or self.aclnn_status:
             index = list(range(op_summary.shape[0]))
         else:
             _, index, _, _ = np.unique(op_summary['Op Name'], return_index=True, return_inverse=True,
@@ -265,12 +305,13 @@ class AscendOPGenerator:
 
         framwork_raw['task_id'] = op_summary[index]['Task ID']
         framwork_raw['stream_id'] = op_summary[index]['Stream ID']
-        framwork_raw['full_op_name'] = op_summary[index]['Op Name']
-        framwork_raw['op_name'] = [x[-1] for x in np.char.split(op_summary[index]['Op Name'].astype(str), sep='/')]
-        framwork_raw['op_type'] = op_summary[index]['Op Type']
-        framwork_raw['subgraph'] = [x[0] for x in np.char.split(op_summary[index]['Op Name'].astype(str), sep='/')]
+        framwork_raw['full_kernel_name'] = self._full_kernel_name[index]
+        framwork_raw['op_name'] = self._op_name[index]
+        framwork_raw['kernel_name'] = self._kernel_name[index]
+        framwork_raw['kernel_type'] = op_summary[index]['Op Type']
+        framwork_raw['subgraph'] = self._sub_graph[index]
         framwork_raw['op_info'] = [op_info_analyse(x) for x in op_summary[index]]
         framwork_raw['model_id'] = op_summary[index]['Model ID']
-        framwork_raw['kernel_type'] = op_summary[index]['Task Type']
+        framwork_raw['task_type'] = op_summary[index]['Task Type']
 
         return framwork_raw

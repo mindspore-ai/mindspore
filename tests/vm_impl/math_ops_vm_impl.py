@@ -16,7 +16,6 @@
 import copy
 import numpy as np
 
-from mindspore.common.dtype import dtype_to_nptype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
@@ -241,7 +240,7 @@ def vm_impl_div(self):
 def vm_impl_reduce_mean(self):
     """Generate vm_impl function for ReduceMean."""
 
-    def vm_impl(x, axis):
+    def vm_impl(x, axis, keep_dims):
         x = x.asnumpy()
         out = vm.mean(x, axis)
         return Tensor(out)
@@ -287,7 +286,7 @@ def vm_impl_not_equal(self):
     return vm_impl
 
 
-@vm_impl_getters.register(P.Greater)
+@vm_impl_getters.register("Greater")
 def vm_impl_greater(self):
     """Generate vm_impl function for Greater."""
 
@@ -335,18 +334,5 @@ def vm_impl_less(self):
         y = y.asnumpy()
         out = vm.less(x, y)
         return Tensor(np.array(out))
-
-    return vm_impl
-
-
-@vm_impl_getters.register(P.ScalarCast)
-def vm_impl_scalar_cast(self):
-    """Generate vm_impl function for ScalarCast"""
-
-    def vm_impl(x, t):
-        np_type = dtype_to_nptype(t)
-        value = np_type(x)
-        cast_value = value.item()
-        return cast_value
 
     return vm_impl

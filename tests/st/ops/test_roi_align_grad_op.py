@@ -76,8 +76,6 @@ def roi_align_grad_case(data_type=np.float16, is_dyn_shape=False, is_dyn_rank=Fa
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_roi_align_grad_float16():
     """
@@ -109,7 +107,7 @@ def test_roi_align_grad_float32():
     roi_align_grad_case(np.float32)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -125,7 +123,7 @@ def test_roi_align_grad_float16_dynamic_shape():
     roi_align_grad_case(np.float16, True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

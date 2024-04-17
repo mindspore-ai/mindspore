@@ -121,7 +121,7 @@ STATUS FunctionalizeCond::BranchSubGraphAddNodes(const FuncGraphPtr &graph, cons
     }
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->size(); i++) {
         auto inputi = cnode->input(i);
         if (vis.find(inputi) == vis.end()) {
           q.push_back(cnode->input(i));
@@ -297,7 +297,7 @@ STATUS FunctionalizeCond::DegenerateNonControlFlow(const FuncGraphPtr &else_grap
 }
 
 STATUS FunctionalizeCond::Process() {
-  if (fg_ == nullptr || merge_node_ == nullptr || merge_node_->inputs().size() != kInputSizeThree) {
+  if (fg_ == nullptr || merge_node_ == nullptr || merge_node_->size() != kInputSizeThree) {
     MS_LOG(ERROR) << "fg or merge is not correct";
     return RET_ERROR;
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "utils/ms_context.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "distributed/persistent/storage/json_utils.h"
+#include "runtime/collective/dummy_collective_communication_lib.h"
 
 namespace mindspore {
 namespace distributed {
@@ -43,7 +44,7 @@ CollectiveManager::CollectiveManager()
       comm_lib_instance_(nullptr),
       global_rank_id_(0),
       local_rank_id_(0),
-      global_rank_size_(0),
+      global_rank_size_(1),
       global_group_ranks_({}),
       device_lib_supported_(true),
       need_host_collective_(false) {}
@@ -75,7 +76,9 @@ std::shared_ptr<CollectiveManager> CollectiveManager::instance() {
 
 namespace {
 // The wrapper to provide a timeout mechanism for executing functions.
-bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeout) {
+// We also need to log the functionality of the function.
+bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeout, const std::string &func_name,
+                         const std::string &functionality) {
   bool execute_success = false;
   bool execute_fail = false;
   std::mutex exec_ret_mutex;
@@ -83,7 +86,8 @@ bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeou
 
   std::unique_ptr<std::thread> executive_thread = std::make_unique<std::thread>([&] {
     if (!func()) {
-      MS_LOG(ERROR) << "Failed to execute function asynchronously";
+      MS_LOG(ERROR) << "Failed to execute function: " << func_name << " " << functionality
+                    << ". Please check error log above.";
       std::unique_lock<std::mutex> lock(exec_ret_mutex);
       execute_fail = true;
       thread_blocker.notify_one();
@@ -105,7 +109,8 @@ bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeou
   if (!execute_success && !execute_fail) {
     std::string node_id = common::GetEnv("MS_NODE_ID");
 #if !defined(_WIN32) && !defined(_WIN64)
-    MS_LOG(WARNING) << "Execute function asynchronously timeout, node id: " << node_id << " exit process";
+    MS_LOG(ERROR) << "Execute function: " << func_name << " " << functionality << " timeout, this node id: " << node_id
+                  << " exit process";
     (void)kill(getpid(), SIGTERM);
 #endif
   }
@@ -146,8 +151,25 @@ bool CollectiveManager::Initialize() {
   if (inited_ && !need_reinit_) {
     return true;
   }
+
   need_host_collective_ = common::UseHostCollective();
   std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (!common::GetEnv(kSimulationLevel).empty()) {
+    MS_LOG(WARNING) << "This is simulation mode with level " << common::GetEnv(kSimulationLevel)
+                    << ". Process's RANK_ID: " << common::GetEnv("RANK_ID")
+                    << ", RANK_SIZE: " << common::GetEnv("RANK_SIZE");
+    if (device_type != kAscendDevice) {
+      return InitializeDummyCommLib();
+    }
+    RETURN_IF_FALSE_WITH_LOG(InitDeviceCommLib(), "Failed to initialize device communication library.");
+    comm_lib_instance_ = device_comm_lib_instance_;
+    string group_name = "dummy_group_name";
+    RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(group_name, {0}), "Failed to create group " + group_name);
+    inited_ = true;
+    finalized_ = false;
+    need_reinit_ = false;
+    return true;
+  }
   // need_host_collective_ means using rank_table to initialize collective communication, which is only supported by
   // Ascend. On other types of devices, exception should be thrown.
   if (device_type != kAscendDevice && !need_host_collective_) {
@@ -180,6 +202,23 @@ bool CollectiveManager::Initialize() {
   }
 
   MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type;
+  inited_ = true;
+  finalized_ = false;
+  need_reinit_ = false;
+  return true;
+}
+
+bool CollectiveManager::InitializeDummyCommLib() {
+  MS_LOG(INFO) << "Initializing dummy collective communication.";
+  dummy_comm_lib_instance_ = std::make_shared<device::DummyCollectiveCommunicationLib>();
+  device_comm_lib_instance_ = dummy_comm_lib_instance_.get();
+  comm_lib_instance_ = device_comm_lib_instance_;
+  MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
+  RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->Initialize(0, 1, local_rank_id_),
+                           "Failed to initialize communication library on device side.");
+
+  global_rank_id_ = device_comm_lib_instance_->global_rank_id();
+  global_rank_size_ = device_comm_lib_instance_->global_rank_size();
   inited_ = true;
   finalized_ = false;
   need_reinit_ = false;
@@ -222,8 +261,26 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
     MS_LOG(WARNING) << "This rank: " << global_rank_id_ << " is not in the group ranks: " << group_ranks
                     << ". This may cause some exception when initializing the group.";
   }
-
+  group_map_[group_name] = group_ranks;
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
+  std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (!common::GetEnv(kSimulationLevel).empty()) {
+    RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->CreateDeviceCommunicationGroup(group_name, group_ranks),
+                             "Failed to create device communication group " + group_name);
+    if (device_type == kAscendDevice) {
+      CommunicationGroupPtr group = device_comm_lib_instance_->GetGroup(group_name);
+      host_comm_lib_instance_ = device_comm_lib_instance_;
+      size_t root_info_size = 0;
+      void *root_info = group->GenerateRootInfo(&root_info_size);
+      MS_EXCEPTION_IF_NULL(device_ctx_);
+      device_ctx_->Initialize();
+      auto ret = group->Initialize(root_info);
+      if (!ret) {
+        MS_LOG(ERROR) << "Failed to create comm group on device side for " << group_name;
+      }
+    }
+    return true;
+  }
   if (!need_host_collective_) {
     RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->CreateDeviceCommunicationGroup(group_name, group_ranks),
                              "Failed to create device communication group " + group_name);
@@ -280,7 +337,8 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   // Timeout limit 600 seconds to wait finish initializing device communication group.
   const int64_t kTimeToWait = 600;
   // Initialize communication group on the device side in thread with timeout limit.
-  ret = ExecuteFuncInThread(init_device_comm_group_func, kTimeToWait);
+  ret = ExecuteFuncInThread(init_device_comm_group_func, kTimeToWait, "init_device_comm_group_func",
+                            "to initialize communicator for group " + group_name);
   if (!ret) {
     MS_LOG(ERROR) << "Failed to create comm group on device side for " << group_name;
   }
@@ -290,7 +348,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
 
 bool CollectiveManager::DestroyCommunicationGroup(const std::string &group_name) {
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
-  if (!need_host_collective_) {
+  if (!need_host_collective_ || !common::GetEnv(kSimulationLevel).empty()) {
     RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->DestroyDeviceCommunicationGroup(group_name),
                              "Failed to destroy device communication group " + group_name);
     return true;
@@ -352,7 +410,7 @@ bool CollectiveManager::Finalize() {
     return true;
   }
 
-  std::function<bool()> finalize_func = [&, this]() {
+  std::function<bool()> finalize_comm_lib_func = [&, this]() {
     if (need_host_collective_) {
       MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
       MS_LOG(INFO) << "Start finalizing host communication lib.";
@@ -381,7 +439,8 @@ bool CollectiveManager::Finalize() {
   // Timeout limit 30 seconds to wait to finish finalizing device communication group.
   const int64_t kTimeToWait = 30;
   // Finalize collective manager in thread with timeout limit.
-  bool ret = ExecuteFuncInThread(finalize_func, kTimeToWait);
+  bool ret = ExecuteFuncInThread(finalize_comm_lib_func, kTimeToWait, "finalize_comm_lib_func",
+                                 "to destroy communication groups and finalize communication lib");
 
   MS_LOG(INFO) << "End finalize collective manager.";
   return ret;
@@ -390,6 +449,8 @@ bool CollectiveManager::Finalize() {
 void CollectiveManager::set_global_rank_id(uint32_t global_rank_id) { global_rank_id_ = global_rank_id; }
 
 void CollectiveManager::set_global_rank_size(uint32_t global_rank_size) { global_rank_size_ = global_rank_size; }
+
+uint32_t CollectiveManager::global_rank_id() const { return global_rank_id_; }
 
 uint32_t CollectiveManager::local_rank_id() const { return local_rank_id_; }
 

@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MULIT_MARGIN_LOSS_H_
 #define AICPU_KERNELS_NORMALIZED_MULTI_MARGIN_LOSS_H_
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class MultiMarginLossCpuKernel : public CpuKernel {

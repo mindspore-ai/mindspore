@@ -4,7 +4,9 @@
  * limitations under the License.
  */
 
-#include "inc/ops/transformation_ops.h"
+#include <numeric>
+
+#include "op_proto/inc/transformation_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/op_const.h"
@@ -12,13 +14,16 @@
 #include "utils/vector_proto_profiling.h"
 
 namespace ge {
+namespace {
+constexpr int kChannelDim = 3;
+}
 // ------------------DepthToSpace------------------
 static bool VerifyDepthToSpaceInputShape(const Operator &op, const int64_t &block_size,
                                          const std::vector<int64_t> &input_dims, const std::string &data_format) {
   bool check_format = (data_format == "NCHW" || data_format == "NHWC");
   if (check_format && !IsUnknown(input_dims)) {
     int64_t c_dim = 3;
-    c_dim = data_format == "NHWC" ? 3 : 1;
+    c_dim = data_format == "NHWC" ? kChannelDim : 1;
     auto mod_res = input_dims[c_dim] % (block_size * block_size);
     if (mod_res != 0) {
       OP_LOGE(TbeGetName(op),
@@ -33,12 +38,10 @@ static bool VerifyDepthToSpaceInputShape(const Operator &op, const int64_t &bloc
 
 IMPLEMT_VERIFIER(DepthToSpace, DepthToSpaceVerify) {
   // verify input shape size
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
-  auto input_desc = op_info->MutableInputDesc("x");
-  auto input_dims = input_desc->MutableShape().GetDims();
+  auto input_desc = op.GetInputDesc("x");
+  auto input_dims = input_desc.GetShape().GetDims();
   if (!IsUnknownRankShape(input_dims) && (input_dims.size() < 4)) {
     std::string err_msg = GetAttrValueErrMsg("input_dims", std::to_string(input_dims.size()), ConcatString(">=4"));
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
   }
   // verify block size
@@ -89,14 +92,13 @@ IMPLEMT_VERIFIER(DepthToSpace, DepthToSpaceVerify) {
 }
 
 IMPLEMT_COMMON_INFERFUNC(DepthToSpaceInfer) {
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
-  auto input_desc = op_info->MutableInputDesc("x");
-  auto input_dims = input_desc->MutableShape().GetDims();
-  auto input_dtype = input_desc->GetDataType();
-  auto input_format = static_cast<ge::Format>(ge::GetPrimaryFormat(input_desc->GetFormat()));
+  auto input_desc = op.GetInputDesc("x");
+  auto input_dims = input_desc.GetShape().GetDims();
+  auto input_dtype = input_desc.GetDataType();
+  auto input_format = static_cast<ge::Format>(ge::GetPrimaryFormat(input_desc.GetFormat()));
 
-  auto output_desc = op_info->MutableOutputDesc("y");
-  output_desc->SetDataType(input_dtype);
+  auto output_desc = op.GetOutputDesc("y");
+  output_desc.SetDataType(input_dtype);
 
   // get attr block_size
   int64_t block_size;
@@ -119,20 +121,20 @@ IMPLEMT_COMMON_INFERFUNC(DepthToSpaceInfer) {
       output_dims.push_back(input_dims[2] * block_size);
       output_dims.push_back(input_dims[3] / block_size / block_size);
     }
-    output_desc->SetShape(GeShape(output_dims));
+    output_desc.SetShape(Shape(output_dims));
     return GRAPH_SUCCESS;
   }
 
   // dynamic case, input shape is -2, output is -2
   if (IsUnknownRankShape(input_dims)) {
-    output_desc->SetShape(GeShape(input_dims));
+    output_desc.SetShape(Shape(input_dims));
     OP_LOGW(TbeGetName(op).c_str(), "input shape is UnknownRank, set output is UnknownRank.");
     return GRAPH_SUCCESS;
   }
 
   // dynamic case, input shape is -1, output is -1
   std::vector<std::pair<int64_t, int64_t>> input_range;
-  input_desc->GetShapeRange(input_range);
+  input_desc.GetShapeRange(input_range);
   MakeUpShapeRange(input_dims, input_range);
 
   // infer output shape and range
@@ -179,8 +181,9 @@ IMPLEMT_COMMON_INFERFUNC(DepthToSpaceInfer) {
     output_range.push_back(std::pair<int64_t, int64_t>(range_min, range_max));
   }
 
-  output_desc->SetShape(GeShape(output_dims));
-  output_desc->SetShapeRange(output_range);
+  output_desc.SetShape(Shape(output_dims));
+  output_desc.SetShapeRange(output_range);
+  op.UpdateOutputDesc("y", output_desc);
   return GRAPH_SUCCESS;
 }
 
@@ -188,148 +191,22 @@ COMMON_INFER_FUNC_REG(DepthToSpace, DepthToSpaceInfer);
 VERIFY_FUNC_REG(DepthToSpace, DepthToSpaceVerify);
 // -------------------DepthToSpace END-----------------
 
-// -------------------Transpose-----------------
-static graphStatus TransposeCommonInferShape(const std::vector<int64_t> &perm_list, Operator &op) {
-  PROFILING_PROTO_INIT(TbeGetName(op).c_str());
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
-  const int64_t input_x_idx = 0;
-  auto input_desc = op_info->MutableInputDesc(input_x_idx);
-  const int64_t output_y_idx = 0;
-  auto output_desc = op_info->MutableOutputDesc(output_y_idx);
-
-  auto input_dtype = input_desc->GetDataType();
-  const GeShape &input_ge_shape = input_desc->MutableShape();
-
-  int64_t input_shape_len = input_ge_shape.GetDimNum();
-
-  PROFILING_PROTO_AFTER_GET_SHAPE_REG();
-
-  if (IsUnknownRankShape(input_ge_shape)) {
-    // UnknownRankShape, set shape is -1, -1, -1....
-    std::vector<int64_t> out_vec(perm_list.size(), -1);
-    output_desc->SetShape(GeShape(out_vec));
-    output_desc->SetDataType(input_dtype);
-    return GRAPH_SUCCESS;
+// ----------------Flatten-----------------------
+IMPLEMT_INFERFUNC(Flatten, FlattenInfer) {
+  auto input_desc = op.GetInputDescByName("x");
+  auto input_shape = input_desc.GetShape().GetDims();
+  auto input_type = input_desc.GetDataType();
+  Shape output_shape({UNKNOWN_DIM, UNKNOWN_DIM});
+  if (!IsUnknown(input_shape)) {
+    auto batchsize = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int64_t>());
+    output_shape.SetDim(0, input_shape[0]);
+    output_shape.SetDim(1, batchsize);
   }
-
-  // infer the shape
-  GeShape &output_ge_shape = output_desc->MutableShape();
-  output_ge_shape.SetDimNum(input_shape_len);
-  for (size_t i = 0; i < perm_list.size(); ++i) {
-    // verify perm_list begin
-    int64_t perm_value = perm_list[i] < 0 ? perm_list[i] + input_shape_len : perm_list[i];
-    if (perm_value >= input_shape_len) {
-      std::string err_msg = GetAttrValueErrMsg("perm", ConcatString(perm_value),
-                                               ConcatString("less than input shape size[", input_shape_len, "]"));
-      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
-      return GRAPH_FAILED;
-    }
-    // verify perm_list end
-
-    // set the output shape
-    output_ge_shape.SetDim(i, input_ge_shape.GetDim(perm_value));
-  }
-  PROFILING_PROTO_AFTER_INFER_SHAPE_REG();
-  // set output dtype as the same with input x
-  output_desc->SetDataType(input_dtype);
-
-  // infer the range, when need
-  if (output_ge_shape.IsUnknownShape()) {
-    output_desc->SetOriginShape(output_ge_shape);
-    std::vector<std::pair<int64_t, int64_t>> input_range;
-    std::vector<std::pair<int64_t, int64_t>> output_range;
-    input_desc->GetShapeRange(input_range);
-    MakeUpShapeRange(input_ge_shape, input_range);
-    for (size_t i = 0; i < perm_list.size(); ++i) {
-      output_range.push_back(input_range[perm_list[i]]);
-    }
-    output_desc->SetShapeRange(output_range);
-    return GRAPH_SUCCESS;
-  }
-  PROFILING_PROTO_END();
-  return GRAPH_SUCCESS;
+  auto out_desc = op.GetOutputDescByName("y");
+  out_desc.SetShape(output_shape);
+  out_desc.SetDataType(input_type);
+  return op.UpdateOutputDesc("y", out_desc);
 }
-IMPLEMT_COMMON_INFERFUNC(TransposeInferShape) {
-  const vector<string> depend_names = {"perm"};
-  PREPARE_DYNAMIC_SHAPE(depend_names);
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-
-  bool perm_done = true;
-  std::vector<int64_t> perm_list;
-  static const int64_t perm_input_index = 1;
-  if (!(ops::GetConstIntData(op, perm_input_index, perm_list))) {
-    perm_done = false;
-    OP_LOGW(TbeGetName(op), "Get Const perm value failed ");
-  }
-
-  // perm is const node , will do infer use function TransposeCommonInferShape
-  if (perm_done) {
-    if (GRAPH_SUCCESS != TransposeCommonInferShape(perm_list, op)) {
-      return GRAPH_FAILED;
-    }
-    return GRAPH_SUCCESS;
-  }
-
-  // perm is not const node, infer for aicpu
-  static const int64_t x_input_index = 0;
-  static const int64_t y_output_index = 0;
-  auto input_desc = op_desc->MutableInputDesc(x_input_index);
-  auto input_shape = input_desc->MutableShape().GetDims();
-  auto input_dtype = input_desc->GetDataType();
-  auto output_desc = op_desc->MutableOutputDesc(y_output_index);
-
-  // set output dtype as the same with input x
-  output_desc->SetDataType(input_dtype);
-
-  if (IsUnknownRankShape(input_shape)) {
-    auto perm_desc = op_desc->MutableInputDesc("perm");
-    auto perm_shape = perm_desc->MutableShape().GetDims();
-    if (IsUnknown(perm_shape)) {
-      // set output is -2 UnknownRank
-      OP_LOGW(TbeGetName(op), "the output will be set to -2");
-      output_desc->SetShape(GeShape(input_shape));
-      output_desc->SetOriginShape(GeShape(input_shape));
-      return GRAPH_SUCCESS;
-    }
-
-    // pert is not dynamic shape, will update the input shape
-    if (perm_shape.empty()) {
-      perm_shape.push_back(1);
-    }
-    input_shape.clear();
-    for (auto i = 0; i < perm_shape[0]; ++i) {
-      input_shape.push_back(-1);
-    }
-  }
-
-  // begin to infer shape and range
-  std::vector<std::pair<int64_t, int64_t>> input_range;
-  std::vector<std::pair<int64_t, int64_t>> output_range;
-  vector<int64_t> out_vec;
-  input_desc->GetShapeRange(input_range);
-  MakeUpShapeRange(input_shape, input_range);
-
-  int64_t range_first = input_range[0].first;
-  int64_t range_second = input_range[0].second;
-
-  for (size_t i = 0; i < input_range.size(); ++i) {
-    // all range is the same and get the shape range
-    range_first = std::min(range_first, input_range[i].first);
-    range_second =
-      (range_second == -1 || input_range[i].second == -1) ? -1 : std::max(range_second, input_range[i].second);
-  }
-
-  for (size_t i = 0; i < input_range.size(); ++i) {
-    out_vec.push_back(-1);
-    output_range.push_back(std::pair<int64_t, int64_t>(range_first, range_second));
-  }
-  output_desc->SetShape(GeShape(out_vec));
-  output_desc->SetOriginShape(GeShape(out_vec));
-  output_desc->SetShapeRange(output_range);
-
-  return GRAPH_SUCCESS;
-}
-
-COMMON_INFER_FUNC_REG(Transpose, TransposeInferShape);
-// -------------------Transpose END-----------------
+INFER_FUNC_REG(Flatten, FlattenInfer);
+// ----------------Flatten END-----------------------
 }  // namespace ge

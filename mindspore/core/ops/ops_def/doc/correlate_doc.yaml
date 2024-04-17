@@ -1,0 +1,55 @@
+correlate:
+    description: |
+        Cross-correlation of two 1-dimensional sequences.
+
+        This function computes the correlation as generally defined in signal processing texts:
+
+        :math:`c_{av}[k] = \sum_{n}{a[n+k] * conj(v[n])}`
+
+        with `a` and `v` sequences being zero-padded where necessary and conj being the conjugate.
+
+        Note:
+            - `correlate` is currently only used in `mindscience` scientific computing scenarios and
+              dose not support other usage scenarios.
+            - `correlate` is not supported on Windows platform yet.
+
+        Args:
+            a (Union[list, tuple, Tensor]): First input sequence.
+            v (Union[list, tuple, Tensor]): Second input sequence.
+            mode (str, optional): Specifies padding mode. The optional values are
+                ``"same"`` , ``"valid"`` and ``"full"`` . Default: ``"valid"`` .
+
+                - ``"same"``: it returns output of length :math:`max(M, N)`. Boundary
+                  effects are still visible.
+
+                - ``"valid"``: it returns output of length :math:`max(M, N) - min(M, N) + 1`.
+                  The convolution product is only given for points where the signals overlap
+                  completely. Values outside the signal boundary have no effect.
+
+                - ``"full"``: it returns the convolution at each point of overlap, with
+                  an output shape of :math:`(N + M - 1,)`.At the end-points of the convolution,
+                  the signals do not overlap completely, and boundary effects may be seen.
+
+        Returns:
+            Tensor, Discrete cross-correlation of `a` and `v`.
+
+        Raises:
+            TypeError: If `a` or `v` is not a tensor.
+            TypeError: If `a` and `v` is of different dtype.
+            ValueError: If `a` and `v` are empty or have wrong dimensions
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore.ops.auto_generate import correlate
+            >>> from mindspore import Tensor
+            >>> output = correlate(Tensor([1., 2., 3.]), Tensor([0., 1., 0.5]))
+            >>> print(output)
+            [3.5]
+            >>> output = correlate(Tensor([1., 2., 3.]), Tensor([0., 1., 0.5]), mode="same")
+            >>> print(output)
+            [2.  3.5 3. ]
+            >>> output = correlate(Tensor([1., 2., 3., 4., 5.]), Tensor([1., 2.]), mode="full")
+            >>> print(output)
+            [ 2.  5.  8. 11. 14.  5.]

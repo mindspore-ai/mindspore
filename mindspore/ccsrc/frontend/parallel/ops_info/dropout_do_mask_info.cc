@@ -26,6 +26,7 @@
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"
@@ -54,6 +55,12 @@ Status DropoutDoMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
   // only check the input[0]
   Shapes input_shape = {inputs_shape_[0]};
   return CheckStrategyValue(strategy, input_shape);
+}
+
+Status DropoutDoMaskInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  MS_LOG(ERROR) << name_
+                << ": it does not support dynamic shape now, the inputs's shape: " << ShapesToString(inputs_shape_);
+  return FAILED;
 }
 
 Status DropoutDoMaskInfo::InferDevMatrixShape() {
@@ -189,7 +196,7 @@ void SetGenMaskShape(const CNodePtr &cnode, const Shape &input_slice_shape) {
   }
   ValuePtr new_shape = MakeValue(input_slice_shape);
   AnfNodePtr val = NewValueNode(new_shape);
-  dropout_gen_mask_cnode->set_input(kIndex1, val);
+  manager->SetEdge(dropout_gen_mask_cnode, kIndex1, val);
 }
 
 // DropoutDoMask needs to be used together with DropoutGenMask. Only the first input tensor of DropoutGenMask is
@@ -205,7 +212,7 @@ std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodeP
     MS_LOG(EXCEPTION) << "The tensor info of dropout do mask is empty";
   }
 
-  if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+  if (cnode->size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
     MS_LOG(EXCEPTION) << "The size of dropout do mask cnode's inputs must be " << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
   }
 
@@ -256,7 +263,7 @@ static void ReplaceOneOp(const Operator &replace_op, const CNodePtr &node) {
   std::string instance_name = CreateInstanceName(node, 0);
   std::vector<AnfNodePtr> replace_input;
   replace_input = ReplaceOpInput(replace_op, instance_name, node);
-  if (node->inputs().size() == DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+  if (node->size() == DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
     replace_input.push_back(node->input(3));
   }
   CNodePtr replace_node = func_graph->NewCNode(replace_input);
@@ -280,7 +287,7 @@ void DropoutDoMaskInfo::ReplaceNodeInputOrAttrs() {
       MS_LOG(DEBUG) << name_ << ": No need to replace dropout_gen_mask";
       return;
     }
-    if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+    if (cnode->size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
       MS_LOG(EXCEPTION) << name_ << ": The size of drop out do mask cnode's input is not "
                         << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
     }

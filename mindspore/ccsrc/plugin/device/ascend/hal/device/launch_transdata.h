@@ -47,7 +47,7 @@ class LaunchTransData {
   void ConstructKernelGraph();
   void SetKernelBuildInfo();
   uint8_t *AllocDeviceMem(size_t size);
-  std::vector<kernel::AddressPtr> CreateOutputAddr(const std::vector<size_t> &outputs_list);
+  void CreateOutputAddr(const std::vector<size_t> &outputs_list, std::vector<kernel::KernelTensorPtr> *kernel_tensors);
   void *stream_;
   TypeId dtype_;
   size_t total_size_;

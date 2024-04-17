@@ -55,9 +55,8 @@ STATUS LSTMMapper::Mapper(const CNodePtr &cnode) {
   }
   int fmk_type = GetValue<int64_t>(fmk_attr);
   if (fmk_type == converter::kFmkTypeOnnx) {
-    if (cnode->inputs().size() < kNumOnnxInputSize) {
-      MS_LOG(ERROR) << "onnx lstm op input size is: " << cnode->inputs().size()
-                    << ", but export size is: " << kNumOnnxInputSize;
+    if (cnode->size() < kNumOnnxInputSize) {
+      MS_LOG(ERROR) << "onnx lstm op input size is: " << cnode->size() << ", but export size is: " << kNumOnnxInputSize;
       return lite::RET_ERROR;
     }
     auto bidirectional_attr = src_prim->GetAttr("bidirectional");

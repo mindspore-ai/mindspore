@@ -27,11 +27,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_public/cusolver.h"
 namespace mindspore {
 namespace kernel {
-bool OrmqrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Ormqr>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool OrmqrGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -40,17 +36,15 @@ bool OrmqrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     return false;
   }
   launch_kernel_func_ = func_list_[index].second;
-  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  left_ = kernel_ptr->get_left();
-  transpose_ = kernel_ptr->get_transpose();
+  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  left_ = GetValue<bool>(primitive_->GetAttr(ops::kAttrLeft));
+  transpose_ = GetValue<bool>(primitive_->GetAttr(ops::kAttrTranspose));
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
   return true;
 }
 
-int OrmqrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int OrmqrGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -64,7 +58,7 @@ int OrmqrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   }
   side_ = left_ ? CUBLAS_SIDE_LEFT : CUBLAS_SIDE_RIGHT;
   bool is_complex =
-    (inputs[kIndex0]->GetDtype() == kNumberTypeComplex64) || (inputs[kIndex0]->GetDtype() == kNumberTypeComplex128);
+    (inputs[kIndex0]->dtype_id() == kNumberTypeComplex64) || (inputs[kIndex0]->dtype_id() == kNumberTypeComplex128);
   trans_ = transpose_ ? (is_complex ? CUBLAS_OP_C : CUBLAS_OP_T) : CUBLAS_OP_N;
   m_ = other_shape_[other_shape_.size() - kDim2];
   n_ = other_shape_[other_shape_.size() - kDim1];
@@ -107,9 +101,10 @@ void OrmqrGpuKernelMod::RunOrmqr(T *d_x, T *tau, T *d_other, int *info) {
 }
 
 template <typename T>
-bool OrmqrGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
-  if (outputs[0]->size == 0) {
+bool OrmqrGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (outputs[0]->size() == 0) {
     return true;
   }
   CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),

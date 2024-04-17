@@ -29,6 +29,10 @@ _centered_rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
 def _rmsprop_opt_(opt, decay, epsilon, momentum, learning_rate, weight, ms, mom, grad):
     """Apply rmsprop optimizer to the weight parameter using dynamic learning rate."""
     success = True
+    learning_rate = F.cast(learning_rate, grad.dtype)
+    decay = F.cast(decay, grad.dtype)
+    momentum = F.cast(momentum, grad.dtype)
+    epsilon = F.cast(epsilon, grad.dtype)
     success = F.depend(success, opt(weight, ms, mom, learning_rate, grad, decay, momentum, epsilon))
     return success
 
@@ -132,7 +136,9 @@ class RMSProp(Optimizer):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of the current step.
+              `LearningRateSchedule
+              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              with step as the input to get the learning rate of the current step.
 
         decay (float): Decay rate. Should be equal to or greater than 0. Default: ``0.9`` .
         momentum (float): Hyperparameter of type float, means momentum for the moving average. Should be equal to or
@@ -161,7 +167,7 @@ class RMSProp(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
 
     Outputs:
-        Tensor[bool], the value is True.
+        Tensor[bool], the value is ``True``.
 
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
@@ -180,7 +186,7 @@ class RMSProp(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.RMSProp(params=net.trainable_params(), learning_rate=0.1)

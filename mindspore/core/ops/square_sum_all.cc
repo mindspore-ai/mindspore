@@ -50,8 +50,8 @@ abstract::TupleShapePtr SquareSumAllInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto input_y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto input_y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   bool is_x_dynamic_shape = IsDynamicShape(input_x_shape);
   bool is_y_dynamic_shape = IsDynamicShape(input_y_shape);
   if (is_x_dynamic_shape && !is_y_dynamic_shape) {
@@ -79,8 +79,8 @@ TuplePtr SquareSumAllInferType(const PrimitivePtr &prim, const std::vector<Abstr
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   // x must have the same type as y and is either float16 or float32.
-  auto input_x_type = input_args[kInputIndex0]->BuildType();
-  auto input_y_type = input_args[kInputIndex1]->BuildType();
+  auto input_x_type = input_args[kInputIndex0]->GetType();
+  auto input_y_type = input_args[kInputIndex1]->GetType();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_x_type);
   (void)types.emplace("y", input_y_type);

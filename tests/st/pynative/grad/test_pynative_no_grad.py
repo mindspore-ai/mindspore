@@ -106,7 +106,7 @@ def test_no_grad_with_parameter():
     np.testing.assert_almost_equal(gradients.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_no_grad_with_nested_network():
@@ -124,7 +124,7 @@ def test_no_grad_with_nested_network():
     np.testing.assert_almost_equal(gradients.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_no_grad_decorator():

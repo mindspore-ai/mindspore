@@ -56,8 +56,6 @@ using PartialPtr = std::shared_ptr<Partial>;
 using RunFunc = std::function<VectorRef(const VectorRef &args)>;
 using RunFuncPtr = std::shared_ptr<RunFunc>;
 
-using SuccFunc = std::function<AnfNodePtrList(AnfNodePtr node)>;
-
 class VMImpl {
  public:
   virtual VectorRef RunGraph(const FuncGraphPtr &fg, const VectorRef &args) = 0;

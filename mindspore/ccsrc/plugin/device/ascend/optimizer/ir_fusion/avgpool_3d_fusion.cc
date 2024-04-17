@@ -297,8 +297,8 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
     return nullptr;
   }
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAvgPool3DD->name()))};
-  (void)new_inputs.insert(new_inputs.cend(), avg_pool_3d_node->inputs().cbegin() + 1,
-                          avg_pool_3d_node->inputs().cend());
+  auto avg_pool_3d_node_inputs = avg_pool_3d_node->inputs();
+  (void)new_inputs.insert(new_inputs.cend(), avg_pool_3d_node_inputs.cbegin() + 1, avg_pool_3d_node_inputs.cend());
   // assist node 1
   auto filter_node = ConstructFilter(func_graph, pad_list, fc, kd, kh, kw, ceil_mode, divisor_override);
   new_inputs.push_back(filter_node);

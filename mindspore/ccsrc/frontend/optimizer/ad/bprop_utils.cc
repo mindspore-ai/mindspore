@@ -56,14 +56,18 @@ FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr 
   py::function fn;
   if (prim->is_base()) {
     fn = GetBpropFunction(prim_name);
-  } else {
+  } else if (mindspore::ops::IsPrimitiveFunction(prim_name)) {
+    fn = GetBpropFunction(prim_name);
+  } else if (prim->isa<PrimitivePy>()) {
     fn = prim->cast_ptr<PrimitivePy>()->GetBpropFunction();
     if (py::isinstance<py::none>(fn)) {
       fn = GetBpropFunction(prim_name);
     }
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "Unexpected prim: " << prim->ToString();
   }
   if (!fn || py::isinstance<py::none>(fn)) {
-    MS_LOG(INFO) << "Fail to find bprop function for " << prim_name << ". fn: " << py::str(fn);
+    MS_LOG(DEBUG) << "Fail to find bprop function for " << prim_name << ". fn: " << py::str(fn);
     return nullptr;
   }
   func_graph = parse::ParsePythonCode(fn);

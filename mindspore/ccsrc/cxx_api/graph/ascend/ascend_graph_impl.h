@@ -22,11 +22,10 @@
 #include <memory>
 #include "include/api/status.h"
 #include "include/api/graph.h"
-#include "backend/graph_compiler/backend.h"
 #include "cxx_api/graph/graph_impl.h"
 #include "ir/anf.h"
 #include "cxx_api/model/model_impl.h"
-#include "runtime/context.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 class AscendGraphImpl : public GraphCell::GraphImpl {
@@ -48,20 +47,8 @@ class AscendGraphImpl : public GraphCell::GraphImpl {
   std::vector<tensor::TensorPtr> RunGraph(const std::vector<tensor::TensorPtr> &inputs);
   Status ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply);
 
-  std::shared_ptr<compile::MindRTBackend> backend_;
-  std::string actor_info_;
-  std::weak_ptr<KernelGraph> kernel_graph_;
-  std::weak_ptr<FuncGraph> func_graph_;
   std::string device_type_;
-  uint32_t device_id_;
-  rtContext_t context_;
-  std::vector<tensor::TensorPtr> inputs_info_;
-  std::vector<tensor::TensorPtr> outputs_info_;
-  std::vector<tensor::TensorPtr> last_inputs_;
-  std::vector<tensor::TensorPtr> last_outputs_;
-  std::vector<std::string> input_names_;
-  std::vector<std::string> output_names_;
-  bool load_flag_;
+  aclrtContext context_;
 
   std::shared_ptr<MsEnvGuard> env_guard_;
 };

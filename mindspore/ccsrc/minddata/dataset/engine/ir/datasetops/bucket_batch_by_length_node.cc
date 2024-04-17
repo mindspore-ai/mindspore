@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,11 @@
 
 #include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
 
-#include <map>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "minddata/dataset/engine/datasetops/bucket_batch_by_length_op.h"
-
 #include "minddata/dataset/util/status.h"
+
 namespace mindspore {
 namespace dataset {
-
 BucketBatchByLengthNode::BucketBatchByLengthNode(
   std::shared_ptr<DatasetNode> child, const std::vector<std::string> &column_names,
   const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,

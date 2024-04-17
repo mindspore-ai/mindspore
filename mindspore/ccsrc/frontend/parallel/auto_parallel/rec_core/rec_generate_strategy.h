@@ -30,6 +30,7 @@
 namespace mindspore {
 namespace parallel {
 static std::map<std::string, Dimensions> param_strategy_;
+constexpr char BATCH_DIMS[] = "batch_dims";
 class RecStrategyPropagator {
  public:
   typedef std::list<size_t> prop_list_t;
@@ -81,6 +82,7 @@ class RecStrategyPropagator {
   size_t PropagateFromOutputs();
 
   void GenerateNoStraList();
+  void ExtraShardMatmulOnBatchDim();
 
   void GenerateStrategyV1();
   void GenerateStrategyV3();
@@ -119,7 +121,7 @@ Strategies MakeFullBatchStrategy(Graph::NodeType *node, const std::vector<std::s
                                  const size_t iter_ops);
 void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op);
 Strategies PrepareStrategy(Graph::NodeType *node, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                           const size_t iter_ops);
+                           const size_t iter_ops, const bool dyn_shape_tmp_fix);
 bool HasStrategy(std::shared_ptr<OperatorInfo> op);
 size_t FindIndexOfOperatorIncoming(const std::vector<std::vector<std::string>> &input_tensor_names, size_t iter_ops);
 std::pair<size_t, size_t> FindIndexOfOperatorOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
@@ -136,8 +138,6 @@ Dimensions PrepareIncomingOperatorInputStrategy(const std::shared_ptr<OperatorIn
 Dimensions GetAxisList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const int64_t iter_ops);
 Dimensions ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                            const size_t incoming_op_index, Dimensions strategy);
-bool GetKeepDims(const std::shared_ptr<OperatorInfo> &op);
-Dimensions GetDimList(const std::shared_ptr<OperatorInfo> &op);
 Dimensions ModifyStrategyIfReduceIncoming(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy);
 Dimensions GetDimListFromAttrs(const std::shared_ptr<OperatorInfo> &op);
 Dimensions ModifyStrategyIfArgIncoming(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy);
@@ -147,8 +147,8 @@ Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<O
 Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                           Dimensions basic_stra, bool dyn_shape_tmp_fix);
 Strategies CheckBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy);
-Dimensions ApplyBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy, size_t first_tensor_dim,
-                          size_t second_tensor_dim, bool broadcast_first_tensor);
+Dimensions ApplyBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy,
+                          bool broadcast_first_tensor);
 Strategies CheckDivisible(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy);
 Dimensions ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                            Dimensions strategy);

@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/csr_sparse_matrix_to_dense_cpu_kernel.h"
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -33,20 +34,16 @@ constexpr size_t kCSRSparseMatrixToDenseInputsNum = 5;
 constexpr size_t kCSRSparseMatrixToDenseOutputsNum = 1;
 }  // namespace
 
-bool CSRSparseMatrixToDenseCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  indices_type = inputs[kInputIndex0]->GetDtype();
-  values_type = inputs[kInputIndex4]->GetDtype();
+bool CSRSparseMatrixToDenseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  indices_type = inputs[kInputIndex0]->dtype_id();
+  values_type = inputs[kInputIndex4]->dtype_id();
   return true;
 }
 
-int CSRSparseMatrixToDenseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int CSRSparseMatrixToDenseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -56,9 +53,9 @@ int CSRSparseMatrixToDenseCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   return KRET_OK;
 }
 
-bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCSRSparseMatrixToDenseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCSRSparseMatrixToDenseOutputsNum, kernel_name_);
   switch (indices_type) {
@@ -115,19 +112,24 @@ bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::Addres
   return true;
 }
 
-void CSRSparseMatrixToDenseCpuKernelMod::SyncOutputShape() { outputs_[kIndex0]->SetShapeVector(y_dims_); }
+void CSRSparseMatrixToDenseCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                  const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(y_dims_);
+  outputs[kIndex0]->set_size(LongToSize(std::accumulate(
+    y_dims_.begin(), y_dims_.end(), UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
+}
 
 template <typename indiceT, typename valueT>
-void CSRSparseMatrixToDenseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
+void CSRSparseMatrixToDenseCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
   const size_t shift = (rank_ == kDefaultRank) ? kZero : kOne;
-  num_rows_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->addr) + shift));
-  num_cols_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->addr) + shift + kOne));
-  indiceT *batch_ptrs = static_cast<indiceT *>(inputs[kInputIndex1]->addr);
-  indiceT *row_ptrs = static_cast<indiceT *>(inputs[kInputIndex2]->addr);
-  indiceT *col_ind = static_cast<indiceT *>(inputs[kInputIndex3]->addr);
-  valueT *values = static_cast<valueT *>(inputs[kInputIndex4]->addr);
-  valueT *y_data = static_cast<valueT *>(outputs[kOutputIndex]->addr);
+  num_rows_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->device_ptr()) + shift));
+  num_cols_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->device_ptr()) + shift + kOne));
+  indiceT *batch_ptrs = static_cast<indiceT *>(inputs[kInputIndex1]->device_ptr());
+  indiceT *row_ptrs = static_cast<indiceT *>(inputs[kInputIndex2]->device_ptr());
+  indiceT *col_ind = static_cast<indiceT *>(inputs[kInputIndex3]->device_ptr());
+  valueT *values = static_cast<valueT *>(inputs[kInputIndex4]->device_ptr());
+  valueT *y_data = static_cast<valueT *>(outputs[kOutputIndex]->device_ptr());
   for (size_t batch_idx = kZero; batch_idx < batch_size_; batch_idx++) {
     const size_t dense_offset = batch_idx * num_rows_ * num_cols_;
     for (size_t i = kZero; i < num_rows_ * num_cols_; ++i) {

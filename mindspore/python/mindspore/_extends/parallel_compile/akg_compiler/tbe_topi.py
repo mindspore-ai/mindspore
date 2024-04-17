@@ -114,7 +114,8 @@ def _add(x0, x1, attrs=None):
         return tbe.dsl.vadds(x1, x0)
     x0, x1 = _broadcast(x0, x1)
     from impl.add import add_compute
-    return add_compute(x0, x1, None, kernel_name=attrs["fusion_op_name"])
+    output_desc = {"dtype": x1.dtype, "shape": x1.shape}
+    return add_compute(x0, x1, output_desc, kernel_name=attrs["fusion_op_name"])
 
 
 @reg_op("Asin", pattern=OpPattern.ELEMWISE)

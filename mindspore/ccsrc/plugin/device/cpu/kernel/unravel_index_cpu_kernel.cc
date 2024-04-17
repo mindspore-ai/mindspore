@@ -25,12 +25,10 @@ namespace {
 constexpr int64_t kParallelDataNums = 1024;
 }  // namespace
 
-bool UnravelIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool UnravelIndexCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
-  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -44,23 +42,20 @@ bool UnravelIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs) const {
-  T *IndicesData = GetDeviceAddress<T>(inputs, kIndex0);
-  T *DimsData = GetDeviceAddress<T>(inputs, kIndex1);
-  T *OutputData = GetDeviceAddress<T>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(IndicesData);
-  MS_EXCEPTION_IF_NULL(DimsData);
-  MS_EXCEPTION_IF_NULL(OutputData);
+bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs) const {
+  auto *IndicesData = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *DimsData = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *OutputData = reinterpret_cast<T *>(outputs[0]->device_ptr());
   T DimsMulti = 1;
-  for (size_t i = 0; i < (inputs[kIndex1]->size) / sizeof(T); i++) {
+  for (size_t i = 0; i < (inputs[kIndex1]->size()) / sizeof(T); i++) {
     if (DimsData[i] <= 0) {
       MS_EXCEPTION(ValueError) << "All dimensions must be greater than 0.";
     }
     DimsMulti = DimsMulti * (DimsData[i]);
   }
-  for (size_t i = 0; i < (inputs[kIndex0]->size) / sizeof(T); i++) {
+  for (size_t i = 0; i < (inputs[kIndex0]->size()) / sizeof(T); i++) {
     if (IndicesData[i] < 0) {
       MS_EXCEPTION(ValueError) << "Index must be greater than 0.";
     }
@@ -68,11 +63,11 @@ bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
       MS_EXCEPTION(ValueError) << "Index out of boundary.";
     }
   }
-  if ((inputs[kIndex0]->size) / sizeof(T) <= kParallelDataNums) {
-    for (size_t j = 0; j < (inputs[kIndex0]->size) / sizeof(T); j++) {
+  if ((inputs[kIndex0]->size()) / sizeof(T) <= kParallelDataNums) {
+    for (size_t j = 0; j < (inputs[kIndex0]->size()) / sizeof(T); j++) {
       T Quotient = IndicesData[j];
-      for (int i = SizeToInt((inputs[kIndex1]->size) / sizeof(T) - 1); i >= 0; i--) {
-        OutputData[IntToSize(i) * ((inputs[kIndex0]->size) / sizeof(T)) + IntToSize(j)] =
+      for (int i = SizeToInt((inputs[kIndex1]->size()) / sizeof(T) - 1); i >= 0; i--) {
+        OutputData[IntToSize(i) * ((inputs[kIndex0]->size()) / sizeof(T)) + IntToSize(j)] =
           Quotient % DimsData[IntToSize(i)];
         Quotient = (Quotient / DimsData[IntToSize(i)]);
       }
@@ -81,14 +76,14 @@ bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     auto task = [&](size_t start, size_t end) {
       for (size_t j = start; j < end; j++) {
         T Quotient = IndicesData[j];
-        for (int i = SizeToInt((inputs[kIndex1]->size) / sizeof(T) - 1); i >= 0; i--) {
-          OutputData[IntToSize(i) * ((inputs[kIndex0]->size) / sizeof(T)) + IntToSize(j)] =
+        for (int i = SizeToInt((inputs[kIndex1]->size()) / sizeof(T) - 1); i >= 0; i--) {
+          OutputData[IntToSize(i) * ((inputs[kIndex0]->size()) / sizeof(T)) + IntToSize(j)] =
             Quotient % DimsData[IntToSize(i)];
           Quotient = (Quotient / DimsData[IntToSize(i)]);
         }
       }
     };
-    CPUKernelUtils::ParallelFor(task, (inputs[kIndex0]->size) / sizeof(T));
+    CPUKernelUtils::ParallelFor(task, (inputs[kIndex0]->size()) / sizeof(T));
   }
   return true;
 }

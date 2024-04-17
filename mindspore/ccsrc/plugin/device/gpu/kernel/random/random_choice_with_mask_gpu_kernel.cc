@@ -20,14 +20,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool RandomChoiceWithMaskGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
+bool RandomChoiceWithMaskGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 2;
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -38,20 +35,19 @@ bool RandomChoiceWithMaskGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   }
   kernel_func_ = func_list_[index].second;
   // init seed_
-  auto random_choice_with_mask_ptr = std::dynamic_pointer_cast<ops::RandomChoiceWithMask>(base_operator);
-  uint64_t seed = random_choice_with_mask_ptr->get_seed();
-  uint64_t seed2 = random_choice_with_mask_ptr->get_seed2();
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
-  count_ = random_choice_with_mask_ptr->get_count();
-  batch_rank_ = base_operator->get_batch_rank();
+  count_ = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr("count")));
+  if (primitive_->HasAttr("batch_rank")) {
+    batch_rank_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("batch_rank")));
+  }
   return true;
 }
 
-int RandomChoiceWithMaskGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int RandomChoiceWithMaskGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape_with_batch = inputs[kIndex0]->GetShapeVector();
@@ -84,9 +80,9 @@ int RandomChoiceWithMaskGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename T, typename S>
-bool RandomChoiceWithMaskGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspaces,
-                                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool RandomChoiceWithMaskGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspaces,
+                                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   S *output_index = GetDeviceAddress<S>(outputs, 0);
   T *output_mask = GetDeviceAddress<T>(outputs, 1);

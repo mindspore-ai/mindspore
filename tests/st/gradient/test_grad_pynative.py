@@ -360,7 +360,7 @@ def test_grad_if_with_weights_has_aux_pynative():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -485,7 +485,7 @@ def test_value_and_grad_nest_with_weights_pynative():
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -675,7 +675,7 @@ def test_grad_with_weights_with_return_ids_pynative():
     assert res[1][1][0] == weights[1].name
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_jit_function_grad_with_weights_return_ids():
@@ -941,7 +941,7 @@ def test_grad_squence_out():
     np.testing.assert_almost_equal(gradients.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_value_and_grad_nest_with_weights_graph_return_ids():
@@ -998,7 +998,7 @@ def test_value_and_grad_nest_with_weights_graph_return_ids():
     assert gradient[1][1][0] == net.z.name
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_value_and_grad_nest_with_weights_graph_get_grad():

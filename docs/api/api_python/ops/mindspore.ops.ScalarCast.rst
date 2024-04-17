@@ -3,6 +3,4 @@ mindspore.ops.ScalarCast
 
 .. py:class:: mindspore.ops.ScalarCast
 
-    将输入Scalar转换为其他类型。
-
-    详情请参考 :func:`mindspore.ops.scalar_cast` 。
+    `ops.ScalarCast` 从2.3版本开始已被弃用，并将在未来版本中被移除，建议使用 `int(x)` 或 `float(x)` 代替。

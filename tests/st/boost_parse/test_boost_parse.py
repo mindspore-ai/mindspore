@@ -97,3 +97,34 @@ def test_constant_condition_comment():
     x = Tensor(2)
     assert f1(x) == 1
     assert f2(x) == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_nested_if_with_raise():
+    """
+    Feature: Support constant folding for parse.
+    Description: Nested if and there is a raise statement in the inner if while the outer if can not be folded.
+    Expectation: Get the correct result.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = Tensor(2)
+            self.y = 1
+
+        def construct(self):
+            z = 2
+            if self.x > 1:
+                if self.y == 1:  # pylint: disable=no-else-raise
+                    raise RuntimeError('Some error')
+                else:
+                    z = z + 1
+            return z
+
+    with pytest.raises(RuntimeError) as raise_info:
+        net = Net()
+        net()
+    assert "Some error" in str(raise_info)

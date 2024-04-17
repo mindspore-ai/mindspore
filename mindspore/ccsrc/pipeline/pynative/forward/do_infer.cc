@@ -21,8 +21,7 @@
 #include "include/common/profiler.h"
 #include "ops/nn_op_name.h"
 #include "ops/framework_op_name.h"
-#include "frontend/expander/pack/packfunc.h"
-#include "frontend/expander/pack/packfunc_grad.h"
+#include "ops/ops_frontend_func_impl.h"
 
 namespace mindspore {
 namespace pynative {
@@ -89,46 +88,33 @@ std::optional<abstract::StandardPrimitiveImplReg> GetPyNativePrimitiveInferImpl(
 
   return abstract::GetPrimitiveInferImpl(primitive);
 }
+}  // namespace
 
-void AddWeightsToInput(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &graph) {
-  const auto &original_params = graph->parameters();
-  for (const auto &param_node : original_params) {
-    if (param_node->abstract()->isa<abstract::AbstractRefTensor>()) {
-      // Must weight param
-      const auto &param = param_node->cast<ParameterPtr>();
-      const auto tensor_value = PyNativeAlgo::Common::GetTensorFromParam(param_node);
-      MS_EXCEPTION_IF_NULL(tensor_value);
-      (void)op_run_info->op_grad_info->input_value.emplace_back(tensor_value);
-      op_run_info->input_value_id.push_back(PyNativeAlgo::Common::GetIdByValue(tensor_value));
-      if (op_run_info->requires_grad) {
-        (void)op_run_info->op_grad_info->input_value_grad_type.emplace_back(
-          PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, nullptr));
-      }
-      (void)op_run_info->op_grad_info->input_abs.emplace_back(param->abstract());
-      MS_LOG(DEBUG) << "Set graph weight parameter " << param->DebugString() << ". Its default value is "
-                    << tensor_value->ToString() << ". Its name is: " << param->name();
+bool InferByOpDef(const FrontendOpRunInfoPtr &op_run_info) {
+  const auto &prim = op_run_info->op_grad_info->op_prim;
+  auto frontend_func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name());
+  if (frontend_func_impl) {
+    op_run_info->base_op_run_info.abstract =
+      frontend_func_impl->InferAbstract(prim, op_run_info->op_grad_info->input_abs);
+    if (op_run_info->base_op_run_info.abstract != nullptr) {
+      MS_LOG(DEBUG) << "Pynative Infer by InferAbstract, got abstract: "
+                    << op_run_info->base_op_run_info.abstract->ToString();
+      return true;
     }
   }
-  op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
-}
 
-void SetGradInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &graph) {
-  const auto &graph_id = graph->debug_info()->get_id();
-  op_run_info->op_grad_info->grad_graph_id = graph_id;
-  // SetInputUnusedInBprop
-  static mindspore::HashMap<int64_t, std::vector<bool>> graph_unused_inputs;
-  if (graph_unused_inputs.find(graph_id) != graph_unused_inputs.end()) {
-    op_run_info->input_unused_in_bprop = graph_unused_inputs[graph_id];
-    return;
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  if (op_def) {
+    (void)op_def->func_impl_.CheckValidation(prim, op_run_info->op_grad_info->input_abs);
+    auto shape = op_def->func_impl_.InferShape(prim, op_run_info->op_grad_info->input_abs);
+    auto type = op_def->func_impl_.InferType(prim, op_run_info->op_grad_info->input_abs);
+    op_run_info->base_op_run_info.abstract = mindspore::abstract::MakeAbstract(shape, type);
+    MS_LOG(DEBUG) << "Pynative Infer by OpDef, got abstract: " << op_run_info->base_op_run_info.abstract->ToString();
+    return true;
   }
-  const auto &unused_inputs = expander::GetUnusedInputs(graph);
-  op_run_info->input_unused_in_bprop.resize(op_run_info->input_size, false);
-  for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    op_run_info->input_unused_in_bprop[i] = (unused_inputs.find(i) != unused_inputs.end());
-  }
-  graph_unused_inputs[graph_id] = op_run_info->input_unused_in_bprop;
+
+  return false;
 }
-}  // namespace
 
 void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -137,50 +123,41 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   const auto &prim = op_run_info->op_grad_info->op_prim;
   MS_EXCEPTION_IF_NULL(prim);
   op_run_info->base_op_run_info.abstract = nullptr;
-  auto eval_impl = GetPyNativePrimitiveInferImpl(prim);
-  // Only cache the abstract when the primitive should call the python code.
-  if (!eval_impl.has_value() && GetOutputAbstractByCache(op_run_info)) {
-    return;
-  }
 
-  // Cache miss to call the infer function
   prim->BeginRecordAddAttr();
 
-  // Cannot find any c++ infer
-  if (!eval_impl.has_value()) {
-    py::gil_scoped_acquire acquire;
-    CallPyInferFunc(prim, op_run_info);
-    MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
+  if (InferByOpDef(op_run_info)) {
     prim->EndRecordAddAttr();
     return;
   }
 
-  // the WhileList ops should be constant fold in Pynative mode.
-  if (!eval_impl->IsInWhiteList() && eval_impl->IsImplInferValue()) {
-    auto value = eval_impl->InferValue(prim, op_run_info->op_grad_info->input_abs);
-    if (value != nullptr && !value->isa<ValueAny>()) {
-      op_run_info->base_op_run_info.abstract = value->ToAbstract();
-      prim->EndRecordAddAttr();
-      return;
-    }
-  }
-
-  // Call Cpp infer
-  op_run_info->base_op_run_info.abstract =
-    eval_impl->InferShapeAndType(nullptr, prim, op_run_info->op_grad_info->input_abs);
-  if (op_run_info->base_op_run_info.abstract == nullptr) {
-    if (prim->name() == kPackFuncOpName) {
-      const auto &func_graph =
-        expander::ExpandPackFuncPynative(prim, op_run_info->op_grad_info->input_abs, op_run_info->requires_grad);
-      MS_EXCEPTION_IF_NULL(func_graph);
-      op_run_info->base_op_run_info.abstract = func_graph->output()->abstract();
-      prim->set_attr("recent_graph", func_graph);
-      AddWeightsToInput(op_run_info, func_graph);
-      if (op_run_info->requires_grad) {
-        SetGradInfo(op_run_info, func_graph);
+  auto eval_impl = GetPyNativePrimitiveInferImpl(prim);
+  if (eval_impl.has_value()) {
+    // the WhileList ops should be constant fold in Pynative mode.
+    if (!eval_impl->IsInWhiteList() && eval_impl->IsImplInferValue()) {
+      auto value = eval_impl->InferValue(prim, op_run_info->op_grad_info->input_abs);
+      if (value != nullptr && !value->isa<ValueAny>()) {
+        op_run_info->base_op_run_info.abstract = value->ToAbstract();
+        prim->EndRecordAddAttr();
+        return;
       }
     }
+
+    op_run_info->base_op_run_info.abstract =
+      eval_impl->InferShapeAndType(nullptr, prim, op_run_info->op_grad_info->input_abs);
+    prim->EndRecordAddAttr();
+    return;
   }
+
+  // Only cache the abstract when the primitive should call the python code.
+  if (GetOutputAbstractByCache(op_run_info)) {
+    prim->EndRecordAddAttr();
+    return;
+  }
+
+  // call python infer
+  py::gil_scoped_acquire acquire;
+  CallPyInferFunc(prim, op_run_info);
   MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
   prim->EndRecordAddAttr();
 }
@@ -254,6 +231,7 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
 
 AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t input_index,
                                                    const std::string &input_id) {
+  MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
     auto cache_abs = GetNodeAbsById(input_id);
     if (cache_abs != nullptr) {
@@ -263,7 +241,6 @@ AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t
   }
 
   // Get abstract by input value.
-  MS_EXCEPTION_IF_NULL(value);
   const auto &abs = value->ToAbstract();
   if (value->isa<tensor::Tensor>()) {
     SetNodeAbsById(input_id, PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs));
@@ -275,10 +252,10 @@ void InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info
   // Step 1 : Infer output abstract.
   MS_EXCEPTION_IF_NULL(op_run_info);
   PynativeInfer(op_run_info);
+  MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
   MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name
                 << " infer result: " << op_run_info->base_op_run_info.abstract->ToString();
   // Step 2: Check whether output shape is dynamic.
-  MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
   const auto &shape = op_run_info->base_op_run_info.abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
   op_run_info->base_op_run_info.has_dynamic_output = shape->IsDynamic();
@@ -288,7 +265,7 @@ void InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info
   // Step 3: Get infer value from output abstract.
   auto infer_value = GetInferValueFromAbstract(op_run_info->base_op_run_info.abstract);
   MS_EXCEPTION_IF_NULL(infer_value);
-  if (!infer_value->isa<ValueAny>()) {
+  if (!infer_value->ContainsValueAny()) {
     MS_LOG(DEBUG) << "Get output by constant folding, output is " << infer_value->ToString();
     op_run_info->output_get_by_infer_value = true;
     op_run_info->should_be_cache = false;
@@ -361,7 +338,7 @@ void InferOperation::SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_i
   }
   // If Just call run op and have no cell or function running, node_abs_cache_ will not be clear.
   // So, set a threshold for clear it.
-  if (only_single_op_run_ && node_abs_cache_.size() > kCacheThreshold) {
+  if (node_abs_cache_.size() > kCacheThreshold) {
     std::unique_lock lock(abs_mutex_);
     node_abs_cache_.clear();
   }
@@ -412,7 +389,7 @@ py::object InferOperation::CallConstantFolding(const py::args &args) const {
   (void)op_run_info->op_grad_info->input_abs.emplace_back(v->ToAbstract());
   PynativeInfer(op_run_info);
   auto infer_value = GetInferValueFromAbstract(op_run_info->base_op_run_info.abstract);
-  if (infer_value->isa<ValueAny>()) {
+  if (infer_value->ContainsValueAny()) {
     MS_LOG(EXCEPTION) << "Can not get value from abstract";
   }
   return PyNativeAlgo::DataConvert::ValueToPyObj(infer_value);

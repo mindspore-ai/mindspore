@@ -12,6 +12,11 @@
 
     其中 :math:`x` 是输入元素。
 
+    FastGelu函数图：
+
+    .. image:: ../images/FastGelu.png
+        :align: center
+
     参数：
         - **x** (Tensor) - 计算FastGeLU的输入，数据类型为float16或者float32。
 

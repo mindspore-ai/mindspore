@@ -22,6 +22,7 @@
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ir/primal_attr.h"
 
 namespace mindspore {
 namespace ops {
@@ -41,6 +42,11 @@ class MIND_API BinaryCrossEntropy : public BaseOperator {
   ///
   /// \return reduction.
   Reduction get_reduction() const;
+
+  /// \brief Get reduction in static.
+  ///
+  /// \return reduction.
+  static Reduction get_reduction(const ValuePtr &reduction_ptr);
 };
 }  // namespace ops
 }  // namespace mindspore

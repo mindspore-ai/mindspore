@@ -26,16 +26,17 @@ adam_weight_decay_op_info = CpuRegOp("AdamWeightDecay") \
     .input(6, "epsilon", "required") \
     .input(7, "decay", "required") \
     .input(8, "gradient", "required") \
+    .input(9, "use_locking", "required") \
     .output(0, "output0", "required") \
     .output(1, "output1", "required") \
     .output(2, "output2", "required") \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.BOOL_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F16_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F16_Default, DataType.BOOL_Default,
                   DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
     .get_op_info()
 

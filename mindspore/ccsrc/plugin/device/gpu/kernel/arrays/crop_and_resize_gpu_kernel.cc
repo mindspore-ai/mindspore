@@ -19,11 +19,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool CropAndResizeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
+bool CropAndResizeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 4;
   constexpr size_t output_num = 1;
-  kernel_name_ = base_operator->GetPrim()->name();
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -34,10 +34,10 @@ bool CropAndResizeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   }
   kernel_func_ = func_list_[index].second;
   // get op parameters
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CropAndResize>(base_operator);
+
   // suppose use kernel_ptr->get_method(), but the definition in lite is enumeration, not std::string. So we use this
   // for the moment to support dynamic shape.
-  std::string method = GetValue<std::string>(kernel_ptr->GetAttr("method"));
+  std::string method = GetValue<std::string>(primitive_->GetAttr("method"));
   if (method == "bilinear") {
     method_ = kMethodBilinear;
   } else if (method == "nearest") {
@@ -45,14 +45,13 @@ bool CropAndResizeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   } else {  //  bilinear-v2
     method_ = kMethodBilinearV2;
   }
-  extrapolation_value_ = kernel_ptr->get_extrapolation_value();
+  extrapolation_value_ = GetValue<float>(primitive_->GetAttr("extrapolation_value"));
   return true;
 }
 
-int CropAndResizeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CropAndResizeGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // input image
@@ -117,9 +116,9 @@ int CropAndResizeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool CropAndResizeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CropAndResizeGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_image = GetDeviceAddress<T>(inputs, 0);
   float *input_boxes = GetDeviceAddress<float>(inputs, 1);
   int *input_box_index = GetDeviceAddress<int>(inputs, 2);

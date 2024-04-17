@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include "mindspore/core/ops/lite_ops.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/primitive_c.h"
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -129,7 +129,7 @@ bool OnnxPadAdjust::Adjust(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     if (!opt::CheckPrimitiveType(cnode, prim::kPrimPadFusion) ||
-        (cnode->inputs().size() != kTripleNum && cnode->inputs().size() != kQuadraNum)) {
+        (cnode->size() != kTripleNum && cnode->size() != kQuadraNum)) {
       continue;
     }
     // get the second input node whose output is the padding parameter of pad.

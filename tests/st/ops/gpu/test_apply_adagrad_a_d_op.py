@@ -54,7 +54,7 @@ class ApplyAdagradDANetVmap(nn.Cell):
                                                       name="gradient_squared_accumulator")
 
         self.vmap_adagrad_da = vmap(self.net, in_axes=(
-            0, 0, 0, 0, None, None, None, None), out_axes=(0, 0, 0))
+            0, 0, 0, 0, None, None, None, None), out_axes=0)
 
     def construct(self, grad, lr, l1, l2, global_step):
         return self.vmap_adagrad_da(self.var, self.gradient_accumulator,
@@ -74,8 +74,8 @@ class ApplyAdagradDANetVmap2(nn.Cell):
         self.gradient_squared_accumulator = Parameter(Tensor(np.array([[0.2, 0.1],
                                                                        [0.1, 0.2]]).astype(data_type)),
                                                       name="gradient_squared_accumulator")
-        self.vmap2_adagrad_da = vmap(vmap(self.net, in_axes=(0, 0, 0, 0, None, None, None, None), out_axes=(0, 0, 0)),
-                                     in_axes=(0, 0, 0, 0, None, None, None, None), out_axes=(0, 0, 0))
+        self.vmap2_adagrad_da = vmap(vmap(self.net, in_axes=(0, 0, 0, 0, None, None, None, None), out_axes=0),
+                                     in_axes=(0, 0, 0, 0, None, None, None, None), out_axes=0)
 
     def construct(self, grad, lr, l1, l2, global_step):
         return self.vmap2_adagrad_da(self.var, self.gradient_accumulator,
@@ -96,7 +96,7 @@ def numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type):
     y_value = np_l2 * np_global_step * np_lr + np.sqrt(np_grad_squared_accum)
     np_var = x_value / y_value
 
-    return np_var, np_grad_accum, np_grad_squared_accum
+    return np_var
 
 
 def ms_forward_impl(grad, np_lr, np_l1, np_l2, np_global_step, data_type):
@@ -141,7 +141,7 @@ def ms_forward_impl_vmap2(grad, np_lr, np_l1, np_l2, np_global_step, data_type):
     return output
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float():
@@ -160,17 +160,15 @@ def test_apply_adagrad_da_float():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     ms_out = ms_forward_impl(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
 
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     ms_out = ms_forward_impl(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float16():
@@ -190,18 +188,16 @@ def test_apply_adagrad_da_float16():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     ms_out = ms_forward_impl(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
 
-    for i in range(3):
-        np.allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     ms_out = ms_forward_impl(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float16_vmap():
@@ -221,17 +217,15 @@ def test_apply_adagrad_da_float16_vmap():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     #MindSpore
     ms_out = ms_forward_impl_vmap(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     ms_out = ms_forward_impl_vmap(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float_vmap():
@@ -250,17 +244,15 @@ def test_apply_adagrad_da_float_vmap():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     # MindSpore
     ms_out = ms_forward_impl_vmap(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     ms_out = ms_forward_impl_vmap(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float16_vmap2():
@@ -280,17 +272,15 @@ def test_apply_adagrad_da_float16_vmap2():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     #MindSpore
     ms_out = ms_forward_impl_vmap2(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     ms_out = ms_forward_impl_vmap2(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_apply_adagrad_da_float_vmap2():
@@ -309,11 +299,9 @@ def test_apply_adagrad_da_float_vmap2():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     # MindSpore
     ms_out = ms_forward_impl_vmap2(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     ms_out = ms_forward_impl_vmap(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)

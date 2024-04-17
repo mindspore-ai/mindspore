@@ -127,9 +127,9 @@ std::vector<PrimitivePtr> GkUtils::FilterExcludedOps(const std::vector<Primitive
   if (!give_hint && final_filter_ops.size() > 0) {
     give_hint = true;
     for (size_t i = 0; i < final_filter_ops.size(); ++i) {
-      MS_LOG(WARNING) << "For op : " << final_filter_ops[i]
-                      << " can not be enabled in GraphKernel because the current device's computing capacity is "
-                      << major_compute_capability << ", which is != " << limited_capacity_ops[final_filter_ops[i]];
+      MS_LOG(INFO) << "For op : " << final_filter_ops[i]
+                   << " can not be enabled in GraphKernel because the current device's computing capacity is "
+                   << major_compute_capability << ", which is != " << limited_capacity_ops[final_filter_ops[i]];
     }
   }
   return dst_ops;
@@ -168,7 +168,8 @@ bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
                   [&prim](const std::string &attr_name) -> bool { return prim->HasAttr(attr_name); })) {
     return true;
   }
-  return false;
+  auto cnode = node->cast<CNodePtr>();
+  return (cnode != nullptr && cnode->HasAttr("keep_basic"));
 }
 
 CNodePtr GkUtils::NewRealCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph,
@@ -416,7 +417,8 @@ void GkUtils::GetValidKernelNodes(const FuncGraphPtr &func_graph, AnfNodePtrList
     if (IsPrimitiveCNode(todos.back(), prim::kPrimMakeTuple)) {
       auto fg_output = todos.back()->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(fg_output);
-      (void)output_list->insert(output_list->cend(), fg_output->inputs().cbegin() + 1, fg_output->inputs().cend());
+      auto output_inputs = fg_output->inputs();
+      (void)output_list->insert(output_list->cend(), output_inputs.cbegin() + 1, output_inputs.cend());
     } else {
       (void)output_list->emplace_back(func_graph->output());
     }
@@ -438,5 +440,16 @@ AnfNodePtrList GkUtils::GetGraphKernelNodes(const FuncGraphPtr &func_graph) {
   AnfNodePtrList node_list;
   (void)std::copy_if(todos.cbegin(), todos.cend(), std::back_inserter(node_list), AnfUtils::IsGraphKernel);
   return node_list;
+}
+
+bool GkUtils::UseAkgCceLib(const AnfNodePtr &node) {
+  if (node->isa<CNode>()) {
+    auto cnode = dyn_cast_ptr<CNode>(node);
+    if (cnode == nullptr) {
+      return false;
+    }
+    return cnode->HasAttr("use_akg_cce");
+  }
+  return false;
 }
 }  // namespace mindspore::graphkernel

@@ -18,8 +18,8 @@
 #define AICPU_KERNELS_NORMALIZED_TENSORSCATTERUPDATE_H_
 
 #include <string>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -31,10 +31,10 @@ class TensorScatterUpdateCpuKernel : public CpuKernel {
 
  private:
   template <typename var_type>
-  uint32_t DTypeChoose(const CpuKernelContext &ctx);
+  uint32_t DTypeChoose(CpuKernelContext &ctx);
 
   template <typename var_type, typename indices_type>
-  uint32_t TensorScatterUpdateComputeRealKernel(const CpuKernelContext &ctx);
+  uint32_t TensorScatterUpdateComputeRealKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -1,0 +1,28 @@
+angle:
+    description: |
+        Returns the element-wise argument of a complex tensor.
+        The elements in input are considered to be complex numbers of the form a+bj, where a is the real part and b
+        is the imaginary part. The argument returned by this function is of the form :math:`atan2(b, a)`.
+
+        Args:
+          input (Tensor):
+            The input tensor. types: complex64, complex128.
+
+        Returns:
+          Tensor, has the float32 or float64 type and the same shape as input.
+
+        Raises:
+          TypeError: If `input` is not a Tensor.
+          TypeError:
+            If the dtype of `input` is not one of: complex64, complex128.
+
+        Supported Platforms:
+          ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+          >>> import mindspore
+          >>> from mindspore import Tensor, ops
+          >>> input = Tensor([-1.5 + 7.8j, 3 + 5.75j], mindspore.complex64)
+          >>> output = ops.angle(input)
+          >>> print(output)
+          [1.7607845 1.0899091]

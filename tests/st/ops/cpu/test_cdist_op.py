@@ -147,7 +147,7 @@ def test_cdist_p_2_float32_func():
     print(output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap():
@@ -193,7 +193,7 @@ def test_vmap():
     np.testing.assert_allclose(output.asnumpy(), expect_m.asnumpy(), rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap2():

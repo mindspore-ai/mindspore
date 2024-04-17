@@ -27,7 +27,6 @@
 #include "infer/graph_runtime.h"
 
 namespace mindspore {
-/// \brief Default Infer Session Implementation, using kernelmod, not implemented now.
 class DefaultInferSession : public InferSession {
  public:
   explicit DefaultInferSession(const std::shared_ptr<Context> &context) : context_(context) {}

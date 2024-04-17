@@ -14,7 +14,6 @@
 # ============================================================================
 """ test graph raise """
 # pylint: disable=R1705
-import os
 import pytest
 import numpy as np
 import mindspore as ms
@@ -23,6 +22,7 @@ import mindspore.ops.operations as P
 from mindspore import Tensor, context, jit
 from mindspore import dtype as mstype
 from mindspore.ops.operations._inner_ops import TopTypeof
+from mindspore._extends.parse import compile_config
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -41,14 +41,14 @@ def test_raise_with_variable_1():
             if x > 10:
                 raise ValueError(f"The input can not be {x}.")
 
-    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE"] = "1"
+    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 1
     with pytest.raises(ValueError) as raise_info_9:
         net = RaiseNet()
         x = Tensor(11)
         res = net(x)
         print("res:", res)
     assert "The input can not be 11." in str(raise_info_9.value)
-    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE"] = "0"
+    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
 
 
 @pytest.mark.level1
@@ -221,7 +221,7 @@ def test_raise_with_variable_dic():
             raise_info_list.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_variable_control_flow1():
@@ -333,7 +333,7 @@ def test_list_in_control_flow():
     assert "The input maybe [" in str(raise_info_list.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_none_join():
@@ -358,7 +358,7 @@ def test_raise_with_none_join():
         raise_info_joinedstr_tensor.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_raise_join():
@@ -385,7 +385,7 @@ def test_raise_with_raise_join():
         raise_info_joinedstr_tensor.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_parse_with_interpret():
@@ -476,7 +476,7 @@ def test_raise_with_input_error_type_2():
     assert "The input can not be 11." in str(raise_info.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -499,7 +499,7 @@ def test_raise_join_in_control_flow():
     assert res == 3
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -547,7 +547,7 @@ class CellInList(nn.Cell):
         return self.cell_list[index](x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -568,7 +568,7 @@ def test_cell_in_list():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -592,7 +592,7 @@ def test_raise_constant_folding():
     assert "The input can not be 11." in str(raise_info_constant.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -616,7 +616,7 @@ def test_raise_constant_folding_int64():
     assert "The input can not be 11." in str(raise_info_constant_int64.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -641,9 +641,8 @@ def test_assert_tensor_join_assert():
     y = Tensor(3, ms.int32)
     with pytest.raises(AssertionError) as err:
         net = Net()
-        output = net(x, y)
-        print("output:", output)
-    assert "The output is 5, y is 3." in str(err)
+        net(x, y)
+    assert "The output is 5, y is 3" in str(err)
 
 
 def judge_tuple_index_dim_check_error(index_dim, data_dim, x):

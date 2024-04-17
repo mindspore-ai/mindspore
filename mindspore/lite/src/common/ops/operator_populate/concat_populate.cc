@@ -15,7 +15,7 @@
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "nnacl/concat_parameter.h"
-#include "ops/concat.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 using mindspore::ops::kNameConcat;
 using mindspore::schema::PrimitiveType_Concat;
 namespace mindspore {

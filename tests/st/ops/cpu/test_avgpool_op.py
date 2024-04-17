@@ -125,7 +125,7 @@ def test_avgpool2d_same():
     assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_avgpool3d_1():
@@ -172,7 +172,7 @@ def test_avgpool3d_1():
     assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_avgpool3d_2():

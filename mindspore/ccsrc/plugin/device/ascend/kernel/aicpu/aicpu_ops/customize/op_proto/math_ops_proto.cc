@@ -3,15 +3,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "inc/ops/math_ops.h"
-#include "inc/ops/ragged_math_ops.h"
+#include "custom_op_proto/cust_math_ops.h"
+#include <unordered_map>
+#include "op_proto/inc/math_ops.h"
+#include "op_proto/inc/ragged_math_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
 #include "utils/reduce_infer_util.h"
 
 namespace ge {
+
+ONE_IN_ONE_OUT_INFER(Conj, input, output);
+ONE_IN_ONE_OUT_INFER(Digamma, x, y);
+CUST_ONE_IN_ONE_OUT_INFER(Polygamma, x, y);
+TWO_IN_ONE_OUT_INFER(Igamma, a, x, z);
+TWO_IN_ONE_OUT_INFER(Igammac, a, x, z);
+
+// ----------------Angle-------------------
+IMPLEMT_INFERFUNC(Angle, AngleInfer) {
+  TensorDesc x_desc = op.GetInputDescByName("input");
+  DataType x_type = x_desc.GetDataType();
+  DataType out_type;
+  switch (x_type) {
+    case DT_COMPLEX64:
+      out_type = DT_FLOAT;
+      break;
+    case DT_COMPLEX128:
+      out_type = DT_DOUBLE;
+      break;
+    default:
+      OP_LOGE(TbeGetName(op).c_str(), "Invalid input dtype: %s", DTypeStr(x_type).c_str());
+      return GRAPH_FAILED;
+  }
+  x_desc.SetDataType(out_type);
+  return op.UpdateOutputDesc("output", x_desc);
+}
+
+INFER_FUNC_REG(Angle, AngleInfer);
+// ----------------Angle End-------------------
+
 // ----------------ComplexAbs-------------------
 IMPLEMT_INFERFUNC(ComplexAbs, ComplexAbsInfer) {
   TensorDesc x_desc = op.GetInputDescByName("x");
@@ -35,10 +66,10 @@ IMPLEMT_INFERFUNC(ComplexAbs, ComplexAbsInfer) {
 INFER_FUNC_REG(ComplexAbs, ComplexAbsInfer);
 // ----------------ComplexAbs End-------------------
 
-// ----------------ComplexAbs-------------------
+// ----------------Complex-------------------
 IMPLEMT_INFERFUNC(Complex, ComplexInfer) {
   bool is_dynamic_output = true;
-  if (!InferShapeAndTypeTwoInOneOutBroadcast(op, 0, 1, 0, is_dynamic_output)) {
+  if (!InferShapeAndTypeTwoInOneOutBroadcast(op, "real", "imag", "out", is_dynamic_output)) {
     return GRAPH_FAILED;
   }
   TensorDesc x_desc = op.GetInputDescByName("real");
@@ -60,7 +91,7 @@ IMPLEMT_INFERFUNC(Complex, ComplexInfer) {
   return op.UpdateOutputDesc("out", out_desc);
 }
 INFER_FUNC_REG(Complex, ComplexInfer);
-// ----------------ComplexAbs-------------------
+// ----------------Complex End-------------------
 
 // ----------------IsNan-------------------
 IMPLEMT_INFERFUNC(IsNan, IsNanInfer) {
@@ -216,11 +247,11 @@ INFER_FUNC_REG(IsInf, IsInfInfer);
 // ----------------IsInf END------------------------
 
 // ----------------ReduceOp-------------------
-static bool InferReduceShapeProcess(const Operator &op, const int64_t input_x_idx, const int64_t output_y_idx,
-                                    const int64_t input_axes_idx) {
+static bool InferReduceShapeProcess(Operator op, const int64_t input_x_idx, const int64_t output_y_idx,
+                                    const std::string &input_axes_name) {
   bool keep_dims = false;
   op.GetAttr("keep_dims", keep_dims);
-  reduce_ops::CommonReduceInferWithInputAxes(op, input_x_idx, output_y_idx, input_axes_idx, keep_dims);
+  reduce_ops::CommonReduceInferWithInputAxes(op, input_x_idx, output_y_idx, input_axes_name, keep_dims);
   return true;
 }
 
@@ -228,8 +259,7 @@ IMPLEMT_COMMON_INFERFUNC(TypicalReduceInferShape) {
   OP_LOGD(TbeGetName(op), "Enter %s InferShape", TbeGetOpType(op).c_str());
   const int64_t input_x_idx = 0;
   const int64_t output_y_idx = 0;
-  const int64_t input_axes_idx = 1;
-  if (InferReduceShapeProcess(op, input_x_idx, output_y_idx, input_axes_idx)) {
+  if (InferReduceShapeProcess(op, input_x_idx, output_y_idx, "axes")) {
     return GRAPH_SUCCESS;
   }
   return GRAPH_FAILED;
@@ -323,4 +353,222 @@ IMPLEMT_INFERFUNC(RaggedRange, RaggedRangeInfer) {
 
 INFER_FUNC_REG(RaggedRange, RaggedRangeInfer);
 // ----------------RaggedRange END-------------------
+
+// ----------------Correlate-------------------
+CUST_IMPLEMT_INFERFUNC(Correlate, CorrelateInfer) {
+  TensorDesc output_desc = op.GetOutputDescByName("output");
+  // infer type
+  DataType a_type = op.GetInputDescByName("a").GetDataType();
+  DataType v_type = op.GetInputDescByName("v").GetDataType();
+  if (a_type != v_type) {
+    OP_LOGE(TbeGetName(op).c_str(), "the type of a is different from that of v!");
+    return GRAPH_FAILED;
+  }
+  DataType out_type;
+
+  static const std::vector<DataType> type_to_float32 = {DT_INT16,  DT_INT32,  DT_INT8, DT_BOOL,
+                                                        DT_UINT16, DT_UINT32, DT_UINT8};
+  static const std::vector<DataType> type_to_float64 = {DT_INT64, DT_UINT64};
+  bool is_type_to_float32 = std::any_of(type_to_float32.begin(), type_to_float32.end(),
+                                        [&a_type](const DataType &dtype) { return a_type == dtype; });
+  bool is_type_to_float64 = std::any_of(type_to_float64.begin(), type_to_float64.end(),
+                                        [&a_type](const DataType &dtype) { return a_type == dtype; });
+  if (is_type_to_float32)
+    out_type = DT_FLOAT;
+  else if (is_type_to_float64)
+    out_type = DT_DOUBLE;
+  else
+    out_type = a_type;
+  output_desc.SetDataType(out_type);
+  // infer shape
+  Shape a_shape = op.GetInputDescByName("a").GetShape();
+  Shape v_shape = op.GetInputDescByName("v").GetShape();
+  if (IsUnknownShape(a_shape) || IsUnknownShape(v_shape)) {
+    std::vector<int64_t> unknow_dim_vec(1, UNKNOWN_DIM);
+    output_desc.SetShape(Shape(unknow_dim_vec));
+  } else {
+    auto a_dimension = a_shape.GetDimNum();
+    auto v_dimension = v_shape.GetDimNum();
+    if ((a_dimension != 1) || (v_dimension != 1)) {
+      string error_msg = ConcatString("'Correlate' only support 1-dimensional inputs , but got a at ", a_dimension,
+                                      "-dimensional and got v at ", v_dimension, "-dimensional");
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), error_msg);
+      return GRAPH_FAILED;
+    }
+    int64_t a_size = a_shape.GetDim(0);
+    int64_t v_size = v_shape.GetDim(0);
+    if (a_shape.GetDim(0) == 0 || v_shape.GetDim(0) == 0) {
+      string error_msg =
+        ConcatString("all inputs of 'Correlate' cannot be empty , got a at (", a_size, ") and got v at (", v_size, ")");
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), error_msg);
+      return GRAPH_FAILED;
+    }
+    int64_t out_size;
+    int64_t long_size = max(a_size, v_size);
+    int64_t short_size = min(a_size, v_size);
+    std::string mode;
+    if (op.GetAttr("mode", mode) != GRAPH_SUCCESS) {
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), std::string("get attr[mode] failed"));
+      return GRAPH_FAILED;
+    }
+    if (mode == "valid") {
+      out_size = long_size - short_size + 1;
+    } else if (mode == "same") {
+      out_size = long_size;
+    } else if (mode == "full") {
+      out_size = long_size + short_size - 1;
+    } else {
+      string error_msg =
+        ConcatString("the mode of 'Correlate' should be one of [valid, same, full], but got ", mode, ".");
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), error_msg);
+      return GRAPH_FAILED;
+    }
+    std::vector<int64_t> out_dim_vec(1, out_size);
+    output_desc.SetShape(Shape(out_dim_vec));
+  }
+
+  if (op.UpdateOutputDesc("output", output_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Update output desc failed.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+CUST_INFER_FUNC_REG(Correlate, CorrelateInfer);
+// ----------------Correlate END-------------------
+
+// ----------------FFTWithSize-------------------
+graphStatus FFTWithSizeInferType(const Operator &op, TensorDesc &y_desc, DataType input_type, bool real, bool inverse) {
+  enum class FFTType { RFFT, FFT, IRFFT };
+  const static std::unordered_map<DataType, DataType> kRfftTypes{
+    {DT_FLOAT, DT_COMPLEX64}, {DT_DOUBLE, DT_COMPLEX128}, {DT_UINT8, DT_COMPLEX64}, {DT_INT8, DT_COMPLEX64},
+    {DT_INT16, DT_COMPLEX64}, {DT_INT32, DT_COMPLEX64},   {DT_INT64, DT_COMPLEX64}, {DT_BOOL, DT_COMPLEX64}};
+  const static std::unordered_map<DataType, DataType> kFftTypes{{DT_COMPLEX64, DT_COMPLEX64},
+                                                                {DT_COMPLEX128, DT_COMPLEX128}};
+  const static std::unordered_map<DataType, DataType> kIrfftTypes{{DT_COMPLEX64, DT_FLOAT}, {DT_COMPLEX128, DT_DOUBLE}};
+  const static std::unordered_map<FFTType, std::unordered_map<DataType, DataType>> kTypeMap{
+    {FFTType::RFFT, kRfftTypes}, {FFTType::FFT, kFftTypes}, {FFTType::IRFFT, kIrfftTypes}};
+  FFTType fft_type;
+  if (real) {
+    if (!inverse) {
+      fft_type = FFTType::RFFT;
+    } else {
+      fft_type = FFTType::IRFFT;
+    }
+  } else {
+    fft_type = FFTType::FFT;
+  }
+  auto &type_map = kTypeMap.at(fft_type);
+  if (type_map.find(input_type) == type_map.end()) {
+    OP_LOGE(TbeGetName(op), "Infer data type failed.");
+    return GRAPH_FAILED;
+  }
+  auto out_type = type_map.at(input_type);
+  y_desc.SetDataType(out_type);
+  return GRAPH_SUCCESS;
+}
+
+CUST_IMPLEMT_INFERFUNC(FFTWithSize, FFTWithSizeInfer) {
+  auto x_desc = op.GetInputDescByName("x");
+  auto x_shape = x_desc.GetShape().GetDims();
+  auto x_type = x_desc.GetDataType();
+  auto y_shape = x_shape;
+
+  int64_t signal_ndim;
+  bool inverse;
+  bool real;
+  bool onesided;
+  std::vector<int64_t> signal_sizes;
+  RETURN_IF_FAILURE(op.GetAttr("inverse", inverse));
+  RETURN_IF_FAILURE(op.GetAttr("signal_ndim", signal_ndim));
+  RETURN_IF_FAILURE(op.GetAttr("onesided", onesided));
+  RETURN_IF_FAILURE(op.GetAttr("real", real));
+  // acl would fail to set attr if signal_sizes is empty
+  if (op.GetAttr("signal_sizes", signal_sizes) == GRAPH_FAILED) {
+    signal_sizes = {};
+  }
+
+  constexpr int64_t kDimNum = 2;
+  if (!real && !onesided) {
+    if (!inverse) {
+      y_shape.back() = x_shape.back() / kDimNum + 1;
+    } else {
+      if (signal_sizes.size() == 0) {
+        y_shape.back() = (x_shape.back() - 1) * kDimNum;
+      } else {
+        y_shape.back() = signal_sizes.back();
+      }
+    }
+  }
+
+  auto y_desc = op.GetOutputDescByName("y");
+  y_desc.SetShape(Shape(y_shape));
+  FFTWithSizeInferType(op, y_desc, x_type, real, inverse);
+  return op.UpdateOutputDesc("y", y_desc);
+}
+
+CUST_INFER_FUNC_REG(FFTWithSize, FFTWithSizeInfer);
+// ----------------ReduceOp END-------------------
+
+// ----------------Trilindices-------------------
+// ----------------Triuindices-------------------
+IMPLEMT_COMMON_INFERFUNC(TriluIndicesInfer) {
+  int64_t row;
+  int64_t col;
+  int64_t offset;
+  DataType dtype;
+  RETURN_IF_FAILURE(op.GetAttr("row", row));
+  RETURN_IF_FAILURE(op.GetAttr("col", col));
+  RETURN_IF_FAILURE(op.GetAttr("offset", offset));
+  RETURN_IF_FAILURE(op.GetAttr("dtype", dtype));
+  int64_t tril_size{0};
+  if (row != 0 && col != 0) {
+    auto m_first_row = offset > 0 ? std::min<int64_t>(col, 1 + offset) : row + offset > 0;
+    auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col, row + offset));
+    auto n_row_all = std::max<int64_t>(0, std::min<int64_t>(row, row + offset));
+    auto n_row_trapezoid = (m_last_row - m_first_row + 1);
+    tril_size = (m_first_row + m_last_row) * n_row_trapezoid >> 1;
+    auto diff_row = n_row_all - n_row_trapezoid;
+    if (diff_row > 0) {
+      tril_size += diff_row * col;
+    }
+  }
+  auto output_desc = op.GetOutputDescByName("output");
+  if (TbeGetName(op).find("TrilIndices") != std::string::npos) {
+    output_desc.SetShape(Shape({2, tril_size}));
+  } else {  // TriuIndices
+    auto triu_size = row * col - tril_size;
+    output_desc.SetShape(Shape({2, triu_size}));
+  }
+  output_desc.SetDataType(dtype);
+  return op.UpdateOutputDesc("output", output_desc);
+}
+
+CUST_COMMON_INFER_FUNC_REG(TrilIndices, TriluIndicesInfer);
+CUST_COMMON_INFER_FUNC_REG(TriuIndices, TriluIndicesInfer);
+// ----------------Trilindices End-------------------
+// ----------------Triuindices End-------------------
+
+// -----------------------CholeskyInverse---------------------
+IMPLEMT_COMMON_INFERFUNC(CholeskyInverseInferShape) {
+  TensorDesc out_desc = op.GetInputDescByName("x");
+  if (op.UpdateOutputDesc("y", out_desc) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_COMMON_INFER_FUNC_REG(CholeskyInverse, CholeskyInverseInferShape);
+
+// -----------------------CholeskyInverse END---------------------
+
+// ----------------Logit-------------------
+CUST_IMPLEMT_INFERFUNC(Logit, LogitInfer) {
+  TensorDesc out_desc = op.GetInputDescByName("x");
+  if (op.UpdateOutputDesc("output", out_desc) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+CUST_INFER_FUNC_REG(Logit, LogitInfer);
+// ----------------Logit END-------------------
 }  // namespace ge

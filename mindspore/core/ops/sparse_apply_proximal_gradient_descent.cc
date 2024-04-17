@@ -31,12 +31,12 @@ abstract::ShapePtr SparseApplyProximalGradientDescentInferShape(const PrimitiveP
                                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
+  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShape())[kShape];
 
   std::vector<ShapeVector> scalar_shapes = {alpha_shape, l1_shape, l2_shape};
   auto is_dynamic_scalar = std::any_of(scalar_shapes.begin(), scalar_shapes.end(), IsDynamic);
@@ -81,12 +81,12 @@ TypePtr SparseApplyProximalGradientDescentInferType(const PrimitivePtr &primitiv
                                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var_type = input_args[0]->BuildType();
-  auto alpha_type = input_args[1]->BuildType();
-  auto l1_type = input_args[2]->BuildType();
-  auto l2_type = input_args[3]->BuildType();
-  auto grad_type = input_args[4]->BuildType();
-  auto indices_type = input_args[5]->BuildType();
+  auto var_type = input_args[0]->GetType();
+  auto alpha_type = input_args[1]->GetType();
+  auto l1_type = input_args[2]->GetType();
+  auto l2_type = input_args[3]->GetType();
+  auto grad_type = input_args[4]->GetType();
+  auto indices_type = input_args[5]->GetType();
 
   std::map<std::string, TypePtr> args;
   (void)args.emplace("var", var_type);

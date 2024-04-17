@@ -37,7 +37,12 @@ constexpr char kDetailedFailureReason[] =
   "Maybe you are trying to call 'mindspore.communication.init()' without using 'mpirun', which will make MindSpore "
   "load several environment variables and check their validation. Please use 'mpirun' to launch this process to fix "
   "this issue, or refer to this link if you want to run distributed training without using 'mpirun': "
-  "https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html";
+  "https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/dynamic_cluster.html";
+
+constexpr char kWorkerProcessNotEnoughError[] = "Spawned worker process number is not as expected.";
+constexpr char kSchedPortOccupiedError[] = "Configured scheduler port MS_SCHED_PORT is occupied by other processes.";
+constexpr char kSchedWorkerAddrNotConsistentError[] =
+  "Scheduler and worker's configured MS_SCHED_HOST or MS_SCHED_PORT is not consistent with each other.";
 
 constexpr char kEnvServerNum[] = "MS_SERVER_NUM";
 constexpr char kEnvWorkerNum[] = "MS_WORKER_NUM";

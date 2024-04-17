@@ -15,5 +15,5 @@ mindspore.ops.csr_ceil
         CSRTensor，shape与 `x` 相同。
 
     异常：
-        - **TypeError** - `x` 的不是CSRTensor。
+        - **TypeError** - `x` 不是CSRTensor。
         - **TypeError** - `x` 的数据类型既不是float16也不是float32。

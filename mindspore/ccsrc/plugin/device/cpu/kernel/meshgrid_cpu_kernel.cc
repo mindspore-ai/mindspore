@@ -17,14 +17,13 @@
 #include "plugin/device/cpu/kernel/meshgrid_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
+#include <string>
 #include "mindspore/core/ops/meshgrid.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-bool MeshgridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MeshgridCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != outputs.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be equal, but get " << inputs.size()
                   << " and " << outputs.size();
@@ -43,12 +42,7 @@ bool MeshgridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   }
   kernel_func_ = func_list_[pair.second].second;
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Meshgrid>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', Cast Meshgrid ops failed!";
-    return false;
-  }
-  auto indexing = kernel_ptr->get_indexing();
+  auto indexing = GetValue<std::string>(primitive_->GetAttr(ops::kIndexing));
   if (indexing == "xy") {
     swap_indexing_ = true;
   } else if (indexing == "ij") {
@@ -58,22 +52,17 @@ bool MeshgridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
                   << indexing;
     return false;
   }
-  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   return true;
 }
 
-int MeshgridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MeshgridCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != output_size_list_.size()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be equal, but get "
-                  << input_size_list_.size() << " and " << output_size_list_.size();
-    return static_cast<int>(KRET_RESIZE_FAILED);
-  }
+
   input_shape_.clear();
   output_shape_.clear();
 
@@ -125,9 +114,10 @@ void MeshgridCpuKernelMod::Mul(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-bool MeshgridCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
-  auto *ones_addr = reinterpret_cast<T *>(workspace[kIndex0]->addr);
+bool MeshgridCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto *ones_addr = reinterpret_cast<T *>(workspace[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(ones_addr, false);
   auto task = [&ones_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -144,9 +134,9 @@ bool MeshgridCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   for (size_t i = 0; i < inputs.size(); i++) {
     auto input_index = (i <= 1 && swap_indexing_ == true) ? 1 - i : i;
     input_shape_[input_index] = output_shape_[input_index];
-    auto *input = reinterpret_cast<T *>(inputs[i]->addr);
+    auto *input = reinterpret_cast<T *>(inputs[i]->device_ptr());
     MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-    auto *output = reinterpret_cast<T *>(outputs[i]->addr);
+    auto *output = reinterpret_cast<T *>(outputs[i]->device_ptr());
     MS_ERROR_IF_NULL_W_RET_VAL(output, false);
     Mul<T>(input, ones_addr, output);
     input_shape_[input_index] = 1;

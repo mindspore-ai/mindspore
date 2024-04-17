@@ -25,25 +25,20 @@ constexpr size_t kNthElementOutputsNum = 1;
 constexpr size_t kParallelDataNums = 32 * 1024;
 }  // namespace
 
-bool NthElementCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool NthElementCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNthElementInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNthElementOutputsNum, kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NthElement>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  reverse_ = kernel_ptr->get_reverse();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  reverse_ = GetValue<bool>(primitive_->GetAttr(ops::kReverse));
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int NthElementCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int NthElementCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   input_elements_ = SizeOf(input_shape_);
   output_elements_ = SizeOf(output_shape_);
@@ -51,9 +46,10 @@ int NthElementCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool NthElementCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
-  auto *n_data = static_cast<int32_t *>(inputs[1]->addr);
+bool NthElementCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto *n_data = static_cast<int32_t *>(inputs[1]->device_ptr());
   input_n_val_ = *n_data;
   if (input_n_val_ < 0 || input_n_val_ >= static_cast<int>(input_shape_.back())) {
     MS_LOG(ERROR) << "For NthElement, the value of input n must be in [0, input.shape[-1]), "
@@ -65,8 +61,8 @@ bool NthElementCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     input_n_val_ = static_cast<int32_t>(last_dim - input_n_val_ - 1);
   }
   size_t index = IntToSize(input_n_val_);
-  T *input_addrs = static_cast<T *>(inputs[0]->addr);
-  T *output_addrs = static_cast<T *>(outputs[0]->addr);
+  T *input_addrs = static_cast<T *>(inputs[0]->device_ptr());
+  T *output_addrs = static_cast<T *>(outputs[0]->device_ptr());
   if (input_elements_ <= kParallelDataNums) {
     std::vector<T> buf(last_dim);
     for (size_t i = 0; i < output_elements_; i++) {

@@ -290,7 +290,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
     return RET_ERROR;
   }
   status = InitParameterFromTensorInfo(new_shape_node, tensor_info);
-  new_shape_node->set_name(resize_shape_node->fullname_with_scope());
+  new_shape_node->set_name(cnode->fullname_with_scope() + "_" + resize_shape_node->fullname_with_scope());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "init parameter from tensor info failed";
     return RET_ERROR;
@@ -330,7 +330,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &
 
 STATUS UnifyFormatToNHWC::ResizeNodeProcess(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  if (fmk_type_ != converter::kFmkTypeOnnx || cnode->inputs().size() <= kNumInputSize) {
+  if (fmk_type_ != converter::kFmkTypeOnnx || cnode->size() <= kNumInputSize) {
     return RET_OK;
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));

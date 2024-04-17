@@ -13,27 +13,23 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree nodes manager."""
-import sys
-from typing import Optional
+from typing import Optional, Union
 import ast
 from .node import Node
 from .node_topological_manager import TopoManager
 from ..api.node_type import NodeType
+from ..api.scoped_value import ScopedValue
 
-if sys.version_info >= (3, 9):
-    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
-else:
-    import astunparse
 
 class NodeManager:
     """
     NodeManager saves nodes and manager nodes' topological relationship.
     """
-    def __init__(self, node_namer):
+    def __init__(self):
         """Initializer of NodeManager"""
         self._topo_mgr = TopoManager()
         self._nodes: {str, Node} = {}
-        self._manager_node_namer = node_namer
+        self._manager_node_namer = None
         # record all tree nodes, which is used when generating codes
         self._tree_nodes: [Node] = []
         # head node is always point to the first node of nodes
@@ -44,8 +40,12 @@ class NodeManager:
         self._inputs: [Node] = []
         # nodes of Output type
         self._returns: [Node] = []
-        # ast of ast.FunctionDef
-        self._ast_functiondef = None
+        # ast of node manager
+        # SymbolTree    -> ast.FunctionDef
+        # CallFunction  -> ast.FunctionDef
+        # ControlFlow   -> list
+        # CellContainer -> ast.Assign
+        self._node_manager_ast: Union[ast.AST, list] = None
         # name of manager
         self._manager_name = "OriginNodeManager"
 
@@ -113,7 +113,7 @@ class NodeManager:
         Erase a node from nodes.
 
         Args:
-            node (Node): _description_
+            node (Node): Node to be erased.
         """
         self._topo_mgr.on_erase_node(node)
         for key, value in self._nodes.items():
@@ -186,15 +186,15 @@ class NodeManager:
                 tree_nodes.extend(node.get_tree_nodes())
         return tree_nodes
 
-    def set_ast_functiondef(self, ast_functiondef: ast.FunctionDef):
-        """Set _ast_functiondef."""
-        self._ast_functiondef = ast_functiondef
+    def set_manager_ast(self, node_manager_ast: Union[ast.AST, list]):
+        """Set _node_manager_ast."""
+        self._node_manager_ast = node_manager_ast
 
-    def get_ast_functiondef(self):
-        """Get _ast_functiondef."""
-        return self._ast_functiondef
+    def get_manager_ast(self):
+        """Get _node_manager_ast."""
+        return self._node_manager_ast
 
-    def get_inputs(self):
+    def get_input_nodes(self):
         """Get _inputs"""
         return self._inputs
 
@@ -210,6 +210,18 @@ class NodeManager:
         """Get _manager_name"""
         return self._manager_name
 
+    def on_update_arg(self, node: Node, arg_idx: int, old_arg: ScopedValue, new_arg: ScopedValue):
+        """
+        Update node topological when node arg is modified.
+        """
+        self._topo_mgr.on_update_arg(node, arg_idx, old_arg, new_arg)
+
+    def on_update_arg_by_node(self, dst_node: Node, arg_idx: int, src_node: Node, out_idx: int):
+        """
+        Update node topological when node arg is modified by another node.
+        """
+        self._topo_mgr.on_update_arg_by_node(dst_node, arg_idx, src_node, out_idx)
+
     def dump(self, title="") -> str:
         """
         Dump topological relation.
@@ -220,11 +232,11 @@ class NodeManager:
             from tabulate import tabulate # pylint: disable=unused-import,reportMissingModuleSource
         except ImportError:
             return ""
-        dump_str = "=" * 40 + title + "=" * 40 + '\n'
+        dump_str = f"\n[{title}]\n"
         node_specs = [[
             n.get_node_type(),
             n.get_name(),
-            astunparse.unparse(n.get_ast()).strip(),
+            n.get_source_code(),
             [[key, ((value[0].get_name(), value[1]) if value else ())]
              for key, value in n.get_arg_providers().items()],
             [[
@@ -234,8 +246,25 @@ class NodeManager:
             ] for key, value in n.get_target_users().items()]
         ] for n in NodeManager.nodes(self)]
         dump_str += tabulate(node_specs, headers=['node type', 'name', 'codes', 'arg providers', 'target users'])
-        dump_str += '\n' + "=" * (82 + len(title)) + '\n'
+        dump_str += '\n'
         return dump_str
+
+    def get_top_manager(self) -> 'NodeManager':
+        """
+        Get the top node_manager with type of no-method CallFunction or SymbolTree this
+        node_manager belongs to.
+        """
+        from .call_function import CallFunction
+        from ..symbol_tree import SymbolTree
+        if isinstance(self, SymbolTree):
+            return self
+        if isinstance(self, CallFunction) and not self.is_method():
+            return self
+        return self.get_node_manager().get_top_manager()
+
+    def set_manager_node_namer(self, node_namer):
+        """Set manager node namer"""
+        self._manager_node_namer = node_namer
 
     def _add_node_to_nodes(self, node: Node):
         """
@@ -245,7 +274,7 @@ class NodeManager:
             node (Node): A Node to be added into `_nodes`.
 
         Raises:
-            RuntimeError: If name of the node is duplicated.
+            ValueError: If name of the node is duplicated.
         """
         node_name = node.get_name()
         if self._nodes.get(node_name) is not None:

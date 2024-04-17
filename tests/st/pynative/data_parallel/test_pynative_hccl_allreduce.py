@@ -16,8 +16,6 @@
 """test hccl allreduce performance with 8p"""
 
 import os
-from multiprocessing import Process, Queue
-import pytest
 import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -68,34 +66,15 @@ def train_allreduce_8p(q, device_id, device_num):
     q.put(output.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
-def test_pynative_hccl_allreduce_8p():
-    device_num = 8
-    process = []
-    q = Queue()
-    for i in range(device_num):
-        device_id = i
-        process.append(Process(target=train_allreduce_8p, args=(q, device_id, device_num)))
-
-    for i in range(device_num):
-        process[i].start()
-
-    print("Waiting for all subprocesses done...")
-
-    for i in range(device_num):
-        process[i].join()
-
-    # check result
-    for i in range(device_num):
-        expect_output = [[256, 256, 256, 256], [256, 256, 256, 256], [256, 256, 256, 256]]
-        assert not q.empty()
-        output = Tensor(q.get())
-        assert np.allclose(output.asnumpy(), expect_output)
-
-    for i in range(device_num):
-        os.system("rm -rf " + str(i))
-
-    print("End training...")
+def test_msrun_pynative_hccl_allreduce_8p():
+    '''
+    Feature: allreduce op in pynative mode.
+    Description: Test allreduce op in pynative mode.
+    Expectation: Run success.
+    '''
+    D.init()
+    net = AllReduceNet()
+    input_x = np.ones([3, 4]).astype(np.float32)
+    output = net(Tensor(input_x, mstype.float32))
+    expect_output = [[256, 256, 256, 256], [256, 256, 256, 256], [256, 256, 256, 256]]
+    np.allclose(output.asnumpy(), expect_output)

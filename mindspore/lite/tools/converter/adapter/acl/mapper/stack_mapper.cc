@@ -19,12 +19,8 @@
 
 namespace mindspore {
 namespace lite {
-namespace {
-constexpr auto kNameNum = "num";
-}  // namespace
-
 STATUS StackMapper::Mapper(const CNodePtr &cnode) {
-  if (AddAttrForDynInputPrimitive(cnode, kNameNum) != RET_OK) {
+  if (AddAttrForDynInputPrimitive(cnode) != RET_OK) {
     MS_LOG(ERROR) << "Stack mapper failed.";
     return RET_ERROR;
   }

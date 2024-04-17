@@ -1,0 +1,12 @@
+#operator scalar_log
+scalar_log:
+    args:
+        x:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true

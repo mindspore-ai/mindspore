@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import numpy as np
 import mindspore.nn as nn
 
@@ -44,7 +43,7 @@ def expand_tensor(a, b):
     return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -66,7 +65,7 @@ def test_tile_eliminate():
     assert out.shape == (1, 1, 448, 448)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -116,7 +115,7 @@ class Abs(nn.Cell):
         return self.abs(inputs)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_primitive_abs():
@@ -160,7 +159,7 @@ class Net2(nn.Cell):
         return int_type, none_type
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_primitive_avgpool():
@@ -272,15 +271,36 @@ def test_cumprod_with_acl():
     Description: Test CumProd with acl.
     Expectation: No exception.
     """
-    os.environ['MS_DEV_FORCE_ACL'] = '1'
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     fact = CumProdTest((1024, 2048), False, False, 0, np.float32)
     fact.forward_mindspore_impl()
     fact.grad_mindspore_impl()
-    del os.environ['MS_DEV_FORCE_ACL']
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_single_ops():
+    """
+    Feature: PyNative forward RunOp.
+    Description: Test PyNative forward RunOp.
+    Expectation: No exception.
+    """
+    class ReluAddNet(nn.Cell):
+        def construct(self, x):
+            y = ops.relu(x)
+            z = ops.add(y, y)
+            w = ops.add(x, z)
+            return w
+
+    x = Tensor(-1, dtype=ms.float32)
+    net = ReluAddNet()
+    net.set_inputs(Tensor(shape=[None], dtype=ms.float32))
+    output = net(x)
+    assert np.allclose(output.asnumpy(), np.array([-1]))
+
+
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_jit_graph_has_no_parameter():
@@ -315,3 +335,18 @@ def test_jit_graph_has_no_parameter():
     inputx = [ops.randn(2, 2), ops.randn(2,)]
     ms_output = net(*inputx)
     GradNetWrtX(net)(*inputx, ms_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pyboost_cache():
+    """
+    Feature: PyNative PyBoost.
+    Description: Test PyBoost ring buffer cache.
+    Expectation: No exception.
+    """
+    x = Tensor(1, dtype=ms.float32)
+    for _ in range(9999):
+        output = ops.sin(x)
+    assert np.allclose(output.asnumpy(), np.array([0.84147096]))

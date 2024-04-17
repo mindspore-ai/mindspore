@@ -10,17 +10,17 @@ mindspore.ops.Select
     .. math::
 
         out_i = \begin{cases}
-        x_i, & \text{if } condition_i \\
+        x_i, & \text{if } cond_i \\
         y_i, & \text{otherwise}
         \end{cases}
 
     输入：
-        - **condition** (Tensor[bool]) - 条件Tensor，决定选择哪一个元素，shape是 :math:`(x_1, x_2, ..., x_N, ..., x_R)`。
+        - **cond** (Tensor[bool]) - 条件Tensor，决定选择哪一个元素，shape是 :math:`(x_1, x_2, ..., x_N, ..., x_R)`。
         - **x** (Tensor) - 第一个被选择的Tensor，shape是 :math:`(x_1, x_2, ..., x_N, ..., x_R)`。
         - **y** (Tensor) - 第二个被选择的Tensor，shape是 :math:`(x_1, x_2, ..., x_N, ..., x_R)`。
 
     输出：
-        Tensor，具有与输入 `condition` 相同的shape。
+        Tensor，具有与输入 `cond` 相同的shape。
 
     异常：
         - **TypeError** - 如果 `x` 或者 `y` 不是Tensor。

@@ -3,7 +3,9 @@ mindspore.dataset.vision.Decode
 
 .. py:class:: mindspore.dataset.vision.Decode(to_pil=False)
 
-    将输入的压缩图像解码为RGB格式。当前支持的图片类型：JPEG, BMP, PNG, TIFF, GIF(需要指定 `to_pil=True`), WEBP(需要指定 `to_pil=True`)。
+    将输入的压缩图像解码为RGB格式。当前支持的图片类型：JPEG、BMP、PNG、TIFF、GIF(需要指定 `to_pil=True`)、WEBP(需要指定 `to_pil=True`)。
+
+    支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
 
     参数：
         - **to_pil** (bool，可选) - 是否将图像解码为PIL数据类型。若为 ``True`` ，图像将被解码为PIL数据类型，否则解码为NumPy数据类型。默认值： ``False`` 。
@@ -15,7 +17,7 @@ mindspore.dataset.vision.Decode
 
     教程样例：
         - `视觉变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
 
     .. py:method:: device(device_target="CPU")
 
@@ -24,8 +26,8 @@ mindspore.dataset.vision.Decode
         - 当执行设备是 Ascend 时，输入数据仅支持 `uint8` 类型。
 
         参数：
-            - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 。默认值： ``CPU`` 。
+            - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
 
         异常：
             - **TypeError** - 当 `device_target` 的类型不为str。
-            - **ValueError** - 当 `device_target` 的取值不为 ``CPU`` 。
+            - **ValueError** - 当 `device_target` 的取值不为 ``CPU`` / ``Ascend`` 。

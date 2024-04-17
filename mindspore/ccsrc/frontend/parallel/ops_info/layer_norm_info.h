@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,12 +57,21 @@ class LayerNormInfo : public OperatorInfo {
   Status CreateInputTensorMap(size_t input_index);
   Status GenerateGammaAndBetaStrategies(const std::vector<StrategyPtr> &sp_vector);
   Status InitShapes();
+  Status InferMirrorOps() override;
+  Status InferOutputTensorInfo() override;
+  Status InferForwardCommunicationByLayout() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
 
  private:
   size_t begin_norm_axis_;
   Shape input_shape_;
   Shape gamma_shape_;
   Shape beta_shape_;
+  Status InferOutputLayout();
+  TensorLayout output_infer_tensor_layout_;
+  TensorLayout mean_infer_tensor_layout_;
+  TensorLayout var_infer_tensor_layout_;
 };
 }  // namespace parallel
 }  // namespace mindspore

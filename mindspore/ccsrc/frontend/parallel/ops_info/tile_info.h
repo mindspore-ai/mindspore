@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ class TileInfo : public OperatorInfo {
  private:
   std::vector<int64_t> full_multiples_;
   std::vector<int64_t> slice_multiples_;
+  void UpdateDynamicMultiples(const AnfNodePtr &multiples_input_node);
 };
 
 using TileInfoPtr = std::shared_ptr<TileInfo>;

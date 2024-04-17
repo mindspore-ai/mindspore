@@ -3,7 +3,7 @@ mindspore.ops.batch_dot
 
 .. py:function:: mindspore.ops.batch_dot(x1, x2, axes=None)
 
-    当输入的两个Tensor是批量数据时，对其进行批量点积操作。
+    当输入的两个Tensor是批量数据时，对其进行批量点积操作。其中 `x1` 和 `x2` 的第一维度为batch维。
 
     .. math::
         output = x1[batch, :] * x2[batch, :]
@@ -20,9 +20,9 @@ mindspore.ops.batch_dot
         - **TypeError** - `x1` 和 `x2` 的类型不相同。
         - **TypeError** - `x1` 或 `x2` 的数据类型不是float32。
         - **ValueError** - `x1` 或 `x2` 的秩小于2。
-        - **ValueError** - 在轴中使用了代表批量的维度。
+        - **ValueError** - 在 `axes` 中使用了代表批量的维度。
         - **ValueError** - `axes` 的长度小于2。
         - **ValueError** - `axes` 不是其一：None，int，或(int, int)。
         - **ValueError** - 如果 `axes` 为负值，低于输入数组的维度。
         - **ValueError** - 如果 `axes` 的值高于输入数组的维度。
-        - **ValueError** - `x1` 和 `x2` 的批处理大小不相同。
+        - **ValueError** - `x1` 和 `x2` 的第一维度batch维的大小不相同。

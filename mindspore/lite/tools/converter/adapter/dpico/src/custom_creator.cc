@@ -58,7 +58,7 @@ int CheckOmDataCoreInfo(const mapper::DataCoreInfo &data_core_info) {
 
 bool CheckInputCNodeSize(const api::CNodePtr &cnode, size_t *next_idx) {
   int target_valid_input_size = 1;
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     if (api::utils::isa<api::ParameterPtr>(cnode->input(i))) {
       auto param_node = input_node->cast<api::ParameterPtr>();
@@ -82,8 +82,8 @@ bool IsCorrespondOutput(const api::AnfNodePtr &node, const std::string &target_n
     MS_LOG(INFO) << "cur node isn't a cnode, will stop recursive search. " << node->fullname_with_scope();
     return false;
   }
-  MS_CHECK_TRUE_MSG(cnode->inputs().size() >= kInputIndex2, false,
-                    node->fullname_with_scope() << " inputs size " << cnode->inputs().size() << " is invalid.");
+  MS_CHECK_TRUE_MSG(cnode->size() >= kInputIndex2, false,
+                    node->fullname_with_scope() << " inputs size " << cnode->size() << " is invalid.");
   size_t next_idx = 1;
   if (!CheckInputCNodeSize(cnode, &next_idx)) {
     return false;

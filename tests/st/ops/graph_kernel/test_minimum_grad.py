@@ -18,13 +18,13 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
-import mindspore.ops.operations._grad_ops as G
+from mindspore.ops import auto_generate as gen
 
 
 class MinmumGradNet(Cell):
     def __init__(self):
         super(MinmumGradNet, self).__init__()
-        self.minimum_grad = G.MinimumGrad()
+        self.minimum_grad = gen.MinimumGrad()
 
     def construct(self, x, y, dy):
         return self.minimum_grad(x, y, dy)

@@ -18,16 +18,12 @@
 #include <string>
 #include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/one_hot.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kOneHotInputsNum = 4;
+constexpr size_t kOneHotInputsNum = 5;
 constexpr size_t kOneHotOutputsNum = 1;
-constexpr size_t kIndex1 = 1;
-constexpr size_t kIndex2 = 2;
-constexpr size_t kIndex3 = 3;
 #define INPUT_COMPUTE_CASE(DTYPE, TYPE, ODTYPE, INPUTS, OUTPUTS)             \
   case (DTYPE): {                                                            \
     switch (ODTYPE) {                                                        \
@@ -65,23 +61,12 @@ constexpr size_t kIndex3 = 3;
   }
 }  // namespace
 
-inline void check_input_num(size_t input_num, const std::string &kernel_name) {
-  if (input_num != kOneHotInputsNum) {
-    MS_LOG_EXCEPTION << "For " << kernel_name << ", input num must be " << kOneHotInputsNum << ", but got "
-                     << input_num;
-  }
-}
+bool OneHotCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOneHotInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOneHotOutputsNum, kernel_name_);
 
-bool OneHotCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  constexpr size_t output_num = 1;
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto input_size = inputs.size();
-  check_input_num(input_size, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-
-  input_dtype_ = inputs[kIndex0]->GetDtype();
-  output_dtype_ = outputs[kIndex0]->GetDtype();
+  input_dtype_ = inputs[kIndex0]->dtype_id();
+  output_dtype_ = outputs[kIndex0]->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
@@ -91,17 +76,13 @@ bool OneHotCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int OneHotCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int OneHotCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
   auto output_shape = outputs[kIndex0]->GetShapeVector();
-  auto one_hot_ptr = std::dynamic_pointer_cast<ops::OneHot>(base_operator);
-  MS_EXCEPTION_IF_NULL(one_hot_ptr);
-  int64_t axis = one_hot_ptr->get_axis();
+  int64_t axis = inputs[axis_index_]->GetValueWithCheck<int64_t>();
   if (axis != -1 && LongToSize(axis) >= output_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the 'axis' must be -1, or an int which is less than the dimension of output, but got "
@@ -120,9 +101,10 @@ int OneHotCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   return KRET_OK;
 }
 
-bool OneHotCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
-  check_input_num(inputs.size(), kernel_name_);
+bool OneHotCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOneHotInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOneHotOutputsNum, kernel_name_);
   switch (input_dtype_) {
     INPUT_COMPUTE_CASE(kNumberTypeUInt8, uint8_t, output_dtype_, inputs, outputs);
@@ -137,12 +119,13 @@ bool OneHotCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 }
 
 template <typename ID, typename OD>
-void OneHotCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto *indices = reinterpret_cast<ID *>(inputs[0]->addr);
+void OneHotCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *indices = reinterpret_cast<ID *>(inputs[0]->device_ptr());
   auto on_value = GetDeviceAddress<OD>(inputs, kIndex2)[0];
   auto off_value = GetDeviceAddress<OD>(inputs, kIndex3)[0];
-  auto *output = reinterpret_cast<OD *>(outputs[0]->addr);
-  size_t elem_num = inputs[0]->size / sizeof(ID);
+  auto *output = reinterpret_cast<OD *>(outputs[0]->device_ptr());
+  size_t elem_num = inputs[0]->size() / sizeof(ID);
   auto task = [this, &indices, &on_value, &off_value, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       size_t stride_num = i / stride_;
@@ -171,499 +154,318 @@ void OneHotCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
 
 std::vector<KernelAttr> OneHotCpuKernelMod::support_list_ = {KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt8)
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt8),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt16)
                                                                .AddInputAttr(kNumberTypeUInt16)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt16),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt32)
                                                                .AddInputAttr(kNumberTypeUInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt32),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt64)
                                                                .AddInputAttr(kNumberTypeUInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt8)
                                                                .AddInputAttr(kNumberTypeInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt8),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt16)
                                                                .AddInputAttr(kNumberTypeInt16)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt16),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt32)
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt32),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeFloat16)
                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeFloat16),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeFloat32)
                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeFloat32),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeFloat64)
                                                                .AddInputAttr(kNumberTypeFloat64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeFloat64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeBool)
                                                                .AddInputAttr(kNumberTypeBool)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeBool),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeComplex64)
                                                                .AddInputAttr(kNumberTypeComplex64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeComplex64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeComplex128)
                                                                .AddInputAttr(kNumberTypeComplex128)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeComplex128),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kObjectTypeString)
                                                                .AddInputAttr(kObjectTypeString)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kObjectTypeString),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt8)
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt8),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt16)
                                                                .AddInputAttr(kNumberTypeUInt16)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt16),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt32)
                                                                .AddInputAttr(kNumberTypeUInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt32),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt64)
                                                                .AddInputAttr(kNumberTypeUInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt8)
                                                                .AddInputAttr(kNumberTypeInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt8),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt16)
                                                                .AddInputAttr(kNumberTypeInt16)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt16),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt32)
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt32),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeFloat16)
                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeFloat16),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeFloat32)
                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeFloat32),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeFloat64)
                                                                .AddInputAttr(kNumberTypeFloat64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeFloat64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeBool)
                                                                .AddInputAttr(kNumberTypeBool)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeBool),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeComplex64)
                                                                .AddInputAttr(kNumberTypeComplex64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeComplex64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeComplex128)
                                                                .AddInputAttr(kNumberTypeComplex128)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeComplex128),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kObjectTypeString)
                                                                .AddInputAttr(kObjectTypeString)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kObjectTypeString),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt8)
                                                                .AddInputAttr(kNumberTypeUInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt8),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt16)
                                                                .AddInputAttr(kNumberTypeUInt16)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt16),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt32)
                                                                .AddInputAttr(kNumberTypeUInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt32),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeUInt64)
                                                                .AddInputAttr(kNumberTypeUInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeUInt64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt8)
                                                                .AddInputAttr(kNumberTypeInt8)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt8),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt16)
                                                                .AddInputAttr(kNumberTypeInt16)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt16),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt32)
                                                                .AddInputAttr(kNumberTypeInt32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt32),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeInt64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeFloat16)
                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeFloat16),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeFloat32)
                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeFloat32),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeFloat64)
                                                                .AddInputAttr(kNumberTypeFloat64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeFloat64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeBool)
                                                                .AddInputAttr(kNumberTypeBool)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeBool),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeComplex64)
                                                                .AddInputAttr(kNumberTypeComplex64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeComplex64),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kNumberTypeComplex128)
                                                                .AddInputAttr(kNumberTypeComplex128)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kNumberTypeComplex128),
                                                              KernelAttr()
                                                                .AddInputAttr(kNumberTypeInt64)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddInputAttr(kObjectTypeString)
                                                                .AddInputAttr(kObjectTypeString)
-                                                               .AddOutputAttr(kObjectTypeString),
-                                                             // depth is a input with int64 type:
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddOutputAttr(kNumberTypeUInt8),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt16)
-                                                               .AddInputAttr(kNumberTypeUInt16)
-                                                               .AddOutputAttr(kNumberTypeUInt16),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt32)
-                                                               .AddInputAttr(kNumberTypeUInt32)
-                                                               .AddOutputAttr(kNumberTypeUInt32),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt64)
-                                                               .AddInputAttr(kNumberTypeUInt64)
-                                                               .AddOutputAttr(kNumberTypeUInt64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt8)
-                                                               .AddInputAttr(kNumberTypeInt8)
-                                                               .AddOutputAttr(kNumberTypeInt8),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt16)
-                                                               .AddInputAttr(kNumberTypeInt16)
-                                                               .AddOutputAttr(kNumberTypeInt16),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddOutputAttr(kNumberTypeInt32),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddOutputAttr(kNumberTypeInt64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeFloat16)
-                                                               .AddInputAttr(kNumberTypeFloat16)
-                                                               .AddOutputAttr(kNumberTypeFloat16),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeFloat32)
-                                                               .AddInputAttr(kNumberTypeFloat32)
-                                                               .AddOutputAttr(kNumberTypeFloat32),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeFloat64)
-                                                               .AddInputAttr(kNumberTypeFloat64)
-                                                               .AddOutputAttr(kNumberTypeFloat64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeBool)
-                                                               .AddInputAttr(kNumberTypeBool)
-                                                               .AddOutputAttr(kNumberTypeBool),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeComplex64)
-                                                               .AddInputAttr(kNumberTypeComplex64)
-                                                               .AddOutputAttr(kNumberTypeComplex64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeComplex128)
-                                                               .AddInputAttr(kNumberTypeComplex128)
-                                                               .AddOutputAttr(kNumberTypeComplex128),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kObjectTypeString)
-                                                               .AddInputAttr(kObjectTypeString)
-                                                               .AddOutputAttr(kObjectTypeString),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddOutputAttr(kNumberTypeUInt8),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt16)
-                                                               .AddInputAttr(kNumberTypeUInt16)
-                                                               .AddOutputAttr(kNumberTypeUInt16),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt32)
-                                                               .AddInputAttr(kNumberTypeUInt32)
-                                                               .AddOutputAttr(kNumberTypeUInt32),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt64)
-                                                               .AddInputAttr(kNumberTypeUInt64)
-                                                               .AddOutputAttr(kNumberTypeUInt64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt8)
-                                                               .AddInputAttr(kNumberTypeInt8)
-                                                               .AddOutputAttr(kNumberTypeInt8),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt16)
-                                                               .AddInputAttr(kNumberTypeInt16)
-                                                               .AddOutputAttr(kNumberTypeInt16),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddOutputAttr(kNumberTypeInt32),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddOutputAttr(kNumberTypeInt64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeFloat16)
-                                                               .AddInputAttr(kNumberTypeFloat16)
-                                                               .AddOutputAttr(kNumberTypeFloat16),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeFloat32)
-                                                               .AddInputAttr(kNumberTypeFloat32)
-                                                               .AddOutputAttr(kNumberTypeFloat32),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeFloat64)
-                                                               .AddInputAttr(kNumberTypeFloat64)
-                                                               .AddOutputAttr(kNumberTypeFloat64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeBool)
-                                                               .AddInputAttr(kNumberTypeBool)
-                                                               .AddOutputAttr(kNumberTypeBool),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeComplex64)
-                                                               .AddInputAttr(kNumberTypeComplex64)
-                                                               .AddOutputAttr(kNumberTypeComplex64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeComplex128)
-                                                               .AddInputAttr(kNumberTypeComplex128)
-                                                               .AddOutputAttr(kNumberTypeComplex128),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kObjectTypeString)
-                                                               .AddInputAttr(kObjectTypeString)
-                                                               .AddOutputAttr(kObjectTypeString),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddInputAttr(kNumberTypeUInt8)
-                                                               .AddOutputAttr(kNumberTypeUInt8),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt16)
-                                                               .AddInputAttr(kNumberTypeUInt16)
-                                                               .AddOutputAttr(kNumberTypeUInt16),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt32)
-                                                               .AddInputAttr(kNumberTypeUInt32)
-                                                               .AddOutputAttr(kNumberTypeUInt32),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeUInt64)
-                                                               .AddInputAttr(kNumberTypeUInt64)
-                                                               .AddOutputAttr(kNumberTypeUInt64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt8)
-                                                               .AddInputAttr(kNumberTypeInt8)
-                                                               .AddOutputAttr(kNumberTypeInt8),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt16)
-                                                               .AddInputAttr(kNumberTypeInt16)
-                                                               .AddOutputAttr(kNumberTypeInt16),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddInputAttr(kNumberTypeInt32)
-                                                               .AddOutputAttr(kNumberTypeInt32),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddOutputAttr(kNumberTypeInt64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeFloat16)
-                                                               .AddInputAttr(kNumberTypeFloat16)
-                                                               .AddOutputAttr(kNumberTypeFloat16),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeFloat32)
-                                                               .AddInputAttr(kNumberTypeFloat32)
-                                                               .AddOutputAttr(kNumberTypeFloat32),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeFloat64)
-                                                               .AddInputAttr(kNumberTypeFloat64)
-                                                               .AddOutputAttr(kNumberTypeFloat64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeBool)
-                                                               .AddInputAttr(kNumberTypeBool)
-                                                               .AddOutputAttr(kNumberTypeBool),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeComplex64)
-                                                               .AddInputAttr(kNumberTypeComplex64)
-                                                               .AddOutputAttr(kNumberTypeComplex64),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeComplex128)
-                                                               .AddInputAttr(kNumberTypeComplex128)
-                                                               .AddOutputAttr(kNumberTypeComplex128),
-                                                             KernelAttr()
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kNumberTypeInt64)
-                                                               .AddInputAttr(kObjectTypeString)
-                                                               .AddInputAttr(kObjectTypeString)
+                                                               .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                                .AddOutputAttr(kObjectTypeString)};
 std::vector<KernelAttr> OneHotCpuKernelMod::GetOpSupport() { return support_list_; }
 

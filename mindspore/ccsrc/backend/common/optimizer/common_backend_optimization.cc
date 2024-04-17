@@ -30,38 +30,17 @@
 #include "backend/common/pass/convert_attr_to_unify_mindir.h"
 #include "backend/common/pass/optimize_updatestate.h"
 #include "backend/common/pass/conv_transpose_to_conv_bp.h"
-#include "backend/common/pass/reduce_optimizer.h"
 #include "backend/common/pass/add_dynamic_shape_attr.h"
 #include "backend/common/pass/add_akg_kernel_attrs.h"
 #include "backend/common/pass/inplace_assign_for_custom_op.h"
 #include "backend/common/pass/flatten_concat_fission.h"
-#include "backend/common/pass/add_dropout_attrs.h"
 #include "backend/common/optimizer/dynamic_shape/convert_custom_op.h"
 #include "backend/common/optimizer/dynamic_shape/link_custom_op.h"
 #include "backend/common/pass/convert_unused_tuple_para_to_make_tuple.h"
 #include "backend/common/pass/convert_dynamic_broadcast_to.h"
 #include "backend/common/pass/broadcast_to_fusion.h"
-#include "backend/common/pass/accumulate_n_v2_fusion.h"
-#include "backend/common/pass/addn_fusion.h"
-#include "backend/common/pass/argmax_min_with_value_fusion.h"
-#include "backend/common/pass/batch_matmul_attr_fusion.h"
-#include "backend/common/pass/concat_offset_v1_fusion.h"
-#include "backend/common/pass/dynamic_rnn_fusion.h"
-#include "backend/common/pass/gather_fusion.h"
-#include "backend/common/pass/im2col_fusion.h"
-#include "backend/common/pass/iou_fusion.h"
-#include "backend/common/pass/log_fusion.h"
-#include "backend/common/pass/max_pool_with_argmax_v2_fusion.h"
-#include "backend/common/pass/nan_to_num_fusion.h"
-#include "backend/common/pass/parallel_concat_fusion.h"
-#include "backend/common/pass/ragged_tensor_to_sparse_fusion.h"
-#include "backend/common/pass/resize_v2_fusion.h"
-#include "backend/common/pass/sparse_concat_fusion.h"
-#include "backend/common/pass/sparse_cross_fusion.h"
-#include "backend/common/pass/sparse_tensor_dense_mat_mul_fusion.h"
-#include "backend/common/pass/split_fusion.h"
-#include "backend/common/pass/standard_normal_fusion.h"
-#include "backend/common/pass/conv3d_backprop_input_padlist_fusion.h"
+#include "backend/common/pass/add_attr_to_node/add_attr_to_node.h"
+#include "backend/common/pass/replace_addn_fusion.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
 #ifdef ENABLE_DUMP_IR
@@ -77,43 +56,22 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &gr
   auto common_pm = std::make_shared<PassManager>("common_pm");
   common_pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
   common_pm->AddPass(std::make_shared<ConvertDynamicBroadcastTo>());
-  common_pm->AddPass(std::make_shared<ReduceOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());
-  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  // Disable const to tensor pass, ascend platform need to match the change in the future.
+  auto context = MsContext::GetInstance();
+  int execution_mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (execution_mode == kPynativeMode) {
+    common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  }
+  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInputForPrint>());
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
-  common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
-  if (graph->has_flag(kAttrMutableKernel) || graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
-    common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
-  }
   common_pm->AddPass(std::make_shared<FlattenConcatFission>());
-  common_pm->AddPass(std::make_shared<AddDropoutAttrs>());
   common_pm->AddPass(std::make_shared<AddInputStructuralForPyExecute>());
   common_pm->AddPass(std::make_shared<BroadcastToFusion>());
-  common_pm->AddPass(std::make_shared<AccumulateNV2Fusion>());
-  common_pm->AddPass(std::make_shared<AddNFusion>());
-  common_pm->AddPass(std::make_shared<ArgMaxWithValueFusion>());
-  common_pm->AddPass(std::make_shared<ArgMinWithValueFusion>());
-  common_pm->AddPass(std::make_shared<BatchMatMulAttrFusion>());
-  common_pm->AddPass(std::make_shared<ConcatOffsetV1Fusion>());
-  common_pm->AddPass(std::make_shared<DynamicRNNFusion>());
-  common_pm->AddPass(std::make_shared<GatherFusion>());
-  common_pm->AddPass(std::make_shared<Im2ColFusion>());
-  common_pm->AddPass(std::make_shared<IOUFusion>());
-  common_pm->AddPass(std::make_shared<LogFusion>());
-  common_pm->AddPass(std::make_shared<MaxPoolWithArgmaxV2Fusion>());
-  common_pm->AddPass(std::make_shared<NanToNumFusion>());
-  common_pm->AddPass(std::make_shared<ParallelConcatFusion>());
-  common_pm->AddPass(std::make_shared<RaggedTensorToSparseFusion>());
-  common_pm->AddPass(std::make_shared<ResizeV2Fusion>());
-  common_pm->AddPass(std::make_shared<SparseConcatFusion>());
-  common_pm->AddPass(std::make_shared<SparseCrossFusion>());
-  common_pm->AddPass(std::make_shared<SparseTensorDenseMatMulFusion>());
-  common_pm->AddPass(std::make_shared<SplitFusion>());
-  common_pm->AddPass(std::make_shared<StandardNormalFusion>());
-  common_pm->AddPass(std::make_shared<Conv3DBackpropInputPadListFusion>());
-  common_pm->AddPass(std::make_shared<Conv3DBackpropFilterPadListFusion>());
+  common_pm->AddPass(std::make_shared<AddAttrToNode>());
+  common_pm->AddPass(std::make_shared<ReplaceAddNFusion>());
   return common_pm;
 }
 
@@ -149,35 +107,9 @@ void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &ke
   MS_LOG(INFO) << "Status record: start op common optimization. graph id: " << kernel_graph->graph_id();
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("op_common_pm");
-  common_pm->AddPass(std::make_shared<ReduceOptimizer>());
-  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInputForPrint>());
   common_pm->AddPass(std::make_shared<BroadcastToFusion>());
-  common_pm->AddPass(std::make_shared<AccumulateNV2Fusion>());
-  common_pm->AddPass(std::make_shared<AddNFusion>());
-  common_pm->AddPass(std::make_shared<ArgMaxWithValueFusion>());
-  common_pm->AddPass(std::make_shared<ArgMinWithValueFusion>());
-  common_pm->AddPass(std::make_shared<BatchMatMulAttrFusion>());
-  common_pm->AddPass(std::make_shared<ConcatOffsetV1Fusion>());
-  common_pm->AddPass(std::make_shared<DynamicRNNFusion>());
-  common_pm->AddPass(std::make_shared<GatherFusion>());
-  common_pm->AddPass(std::make_shared<Im2ColFusion>());
-  common_pm->AddPass(std::make_shared<IOUFusion>());
-  common_pm->AddPass(std::make_shared<LogFusion>());
-  common_pm->AddPass(std::make_shared<MaxPoolWithArgmaxV2Fusion>());
-  common_pm->AddPass(std::make_shared<NanToNumFusion>());
-  common_pm->AddPass(std::make_shared<ParallelConcatFusion>());
-  common_pm->AddPass(std::make_shared<RaggedTensorToSparseFusion>());
-  common_pm->AddPass(std::make_shared<ResizeV2Fusion>());
-  common_pm->AddPass(std::make_shared<SparseConcatFusion>());
-  common_pm->AddPass(std::make_shared<SparseCrossFusion>());
-  common_pm->AddPass(std::make_shared<SparseTensorDenseMatMulFusion>());
-  common_pm->AddPass(std::make_shared<SplitFusion>());
-  common_pm->AddPass(std::make_shared<StandardNormalFusion>());
-  common_pm->AddPass(std::make_shared<Conv3DBackpropInputPadListFusion>());
-  common_pm->AddPass(std::make_shared<Conv3DBackpropFilterPadListFusion>());
-  if (kernel_graph->has_attr(kAttrPackFunction)) {
-    common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
-  }
+  common_pm->AddPass(std::make_shared<AddAttrToNode>());
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -201,31 +133,6 @@ void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel
   if (context->CanDump(kIntroductory)) {
     std::string filename = "hwopt_common_final_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(filename, kernel_graph);
-  }
-  std::string device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  int execution_mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (device_target != kAscendDevice || execution_mode != kPynativeMode) {
-    // Here dump graphs only for Ascend pynative mode.
-    return;
-  }
-  std::string final_graph = "trace_code_graph_" + std::to_string(kernel_graph->graph_id());
-  auto &json_parser = DumpJsonParser::GetInstance();
-  if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
-    uint32_t rank_id = GetRankId();
-    std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id);
-    MS_LOG(INFO) << "Dump graph and exeorder for graph: " << kernel_graph->graph_id()
-                 << "root_graph_id: " << kernel_graph->root_graph_id();
-    std::string target_dir = root_dir + "/graphs";
-    std::string cst_file_dir = GenerateDumpPath(kernel_graph->root_graph_id(), rank_id, true);
-    std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
-    DumpIRProtoWithSrcInfo(kernel_graph, final_graph, target_dir, kDebugWholeStack);
-    if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-      // Dump constant data for old runtime ascend.
-      DumpConstantInfo(kernel_graph, cst_file_dir);
-    }
-    DumpIR("trace_code_graph", kernel_graph, true, kWholeStack, ir_file_path);
-    DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(kernel_graph->graph_id()) + ".csv", root_dir,
-                      kernel_graph->execution_order());
   }
 #endif
 }
@@ -361,7 +268,7 @@ void OptimizationForAnyTypeKernelGraph(const std::shared_ptr<session::KernelGrap
   common_pm->AddPass(std::make_shared<ConvertListToTuple>("convert_list_to_tuple"));
   common_pm->AddPass(std::make_shared<EliminateFuncDataType>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
-  common_pm->AddPass(std::make_shared<opt::ConvertConstInputToTensorInput>());
+  common_pm->AddPass(std::make_shared<opt::ConvertConstInputToTensorInputForPrint>());
   common_pm->AddPass(std::make_shared<opt::ConvertTupleOutputToMaketuple>());
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   optimizer->AddPassManager(common_pm);

@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LESS_H_
 #define AICPU_KERNELS_NORMALIZED_LESS_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class TraceCpuKernel : public CpuKernel {
@@ -29,7 +29,7 @@ class TraceCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  static uint32_t TraceCompute(Tensor *input, Tensor *output, const CpuKernelContext &ctx);
+  static uint32_t TraceCompute(Tensor *input, Tensor *output, CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

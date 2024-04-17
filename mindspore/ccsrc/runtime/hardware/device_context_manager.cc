@@ -172,78 +172,11 @@ bool GetVersionFromFileName(const std::string &file_name, size_t *major, size_t 
 float VersionToFloat(size_t major, size_t minor) {
   return SizeToFloat(major) + SizeToFloat(minor) / (SizeToFloat(std::to_string(minor).size()) + 1);
 }
-
-// dlopen-ing a shared library will find dependency and then relocate for symbols, when relocate failed and a
-// "undefined reference to xxxx" occurred, glibc will not rollback the relocation, some relocated symbols will be bound
-// to a un-dlopen-ed library when dlopen other libraries in the future, which will cause incomprehensible errors.
-// So fork a child process to test whether the library can be loaded, and exit the child process if failed.
-bool TestLoadDynamicLib(const std::string &plugin_file, std::string *err_msg) {
-  MS_EXCEPTION_IF_NULL(err_msg);
-  int pipe_fd[2];
-  if (pipe2(pipe_fd, O_NONBLOCK) != 0) {
-    MS_LOG(WARNING) << "Create pipe failed, ret = " << errno << ", reason = " << strerror(errno);
-    return false;
-  }
-  FdScope fd0(pipe_fd[0]);
-  FdScope fd1(pipe_fd[1]);
-  pid_t pid = fork();
-  if (pid < 0) {
-    MS_LOG(WARNING) << "Fork child process failed, ret = " << errno << ", reason = " << strerror(errno);
-    return false;
-  } else if (pid == 0) {  // child process
-    // don't care logs of child process, dup stdout/stderr to /dev/null
-    int null_fd = open("/dev/null", O_RDWR, 0);
-    if (null_fd == -1) {
-      MS_LOG(WARNING) << "Child process open /dev/null failed, ret = " << errno << ", reason = " << strerror(errno);
-      exit(-1);
-    }
-    FdScope null(null_fd);
-    (void)dup2(null_fd, STDOUT_FILENO);
-    (void)dup2(null_fd, STDERR_FILENO);
-    // try to dlopen, dlopne can not catch the std::exception in cpp code.
-    void *handle = dlopen(plugin_file.c_str(), RTLD_LAZY | RTLD_LOCAL);
-    if (handle == nullptr) {
-      std::string err_msg_str = GetDlErrorMsg();
-      auto ret = write(pipe_fd[1], err_msg_str.c_str(), err_msg_str.size());
-      (void)ret;  // write(...) has __wur attr, get return value to make compiler happy.
-      exit(-1);
-    }
-    (void)dlclose(handle);
-    if (write(pipe_fd[1], kSuccessKeyWord, kSuccessKeyWordSize) <= 0) {
-      exit(-1);
-    }
-    exit(0);
-  } else {  // parent process
-    MS_LOG(DEBUG) << "Child process dlopen pid = " << pid;
-    int status;
-    std::string buffer(kBufferSize, 0);
-    if (waitpid(pid, &status, 0) == -1) {
-      MS_LOG(ERROR) << "Wait child process failed, ret = " << errno << ", reason = " << strerror(errno);
-      return false;
-    }
-    auto read_size = read(pipe_fd[0], buffer.data(), buffer.size());
-    if (read_size <= 0) {
-      MS_LOG(INFO) << "Read from pipe failed, ret = " << errno << ", reason = " << strerror(errno);
-      return false;
-    } else {
-      buffer.resize(read_size);
-    }
-
-    MS_LOG(DEBUG) << "Child process return: " << buffer;
-    if (std::string(buffer.c_str()) == kSuccessKeyWord) {
-      return true;
-    } else {
-      *err_msg = buffer;
-      return false;
-    }
-  }
-  return false;  // useless code makes static checking tools happy.
-}
 #endif  // #ifdef __linux__
 }  // namespace
 namespace plugin_loader {
 bool PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::string, void *> *all_handles,
-                                  std::stringstream *err_msg) {
+                                  std::stringstream *err_msg, const bool gpu_env) {
   MS_EXCEPTION_IF_NULL(all_handles);
   MS_EXCEPTION_IF_NULL(err_msg);
   void *handle = nullptr;
@@ -252,11 +185,7 @@ bool PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::
 #if defined(_WIN32) || defined(_WIN64)
   handle = LoadLibraryEx(plugin_file.c_str(), NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
   err_msg_str = std::to_string(GetLastError());
-#elif defined(__linux__)
-  if (TestLoadDynamicLib(plugin_file, &err_msg_str)) {
-    handle = dlopen(plugin_file.c_str(), RTLD_LAZY | RTLD_LOCAL);
-  }
-#else  // macos
+#else
   handle = dlopen(plugin_file.c_str(), RTLD_LAZY | RTLD_LOCAL);
   err_msg_str = GetDlErrorMsg();
 #endif
@@ -428,11 +357,14 @@ void DeviceContextManager::LoadPlugin() {
   }
 
   for (const auto &[plugin_name, file_names] : multi_version_plugin_map) {
+    // if we can confirm the platform is gpu, we should directly dlopen gpu_plugin file instead of trying.
     if (plugin_name == kGpuPluginName) {
       std::string cuda_home = common::GetEnv(kCudaHomeEnv);
-      if (!cuda_home.empty() && file_names.size() > 1) {
-        SelectGpuPlugin(cuda_home, file_names);
+      if (cuda_home.empty()) {
+        MS_LOG(INFO) << "Please set env CUDA_HOME to path of cuda, if you want to enable gpu backend.";
         continue;
+      } else if (SelectGpuPlugin(cuda_home, file_names)) {
+        break;
       }
     }
     for (auto iter = file_names.rbegin(); iter != file_names.rend();) {
@@ -470,7 +402,15 @@ void DeviceContextManager::ClearDeviceContexts() {
     MS_EXCEPTION_IF_NULL(iter.second);
     iter.second->Destroy();
   }
+  backend_to_device_context_.clear();
   device_contexts_.clear();
+}
+
+void DeviceContextManager::ChildAfterFork() {
+  MS_LOG(DEBUG) << "DeviceContextManager reinitialize after fork.";
+  MS_LOG(DEBUG) << "Clear device_contexts_.";
+  device_contexts_.clear();
+  MS_LOG(DEBUG) << "DeviceContextManager reinitialize after fork done.";
 }
 
 void DeviceContextManager::BindDeviceCtx() const {
@@ -483,23 +423,24 @@ void DeviceContextManager::BindDeviceCtx() const {
   }
 }
 
-namespace {
-bool IsNotAscend(const std::string &device_name) {
-  static const std::set<std::string> dev = {kCPUDevice, kGPUDevice};
-  return dev.find(device_name) != dev.end();
+void DeviceContextManager::SetRegisterDeviceStatelessFuncCb(const std::string &backend,
+                                                            const RegisterStatelessFuncCb &register_func_cb) {
+  register_func_cbs_[backend] = register_func_cb;
 }
-}  // namespace
+
+void DeviceContextManager::RegisterDeviceStatelessFunc(py::module *m) {
+  for (const auto &f : register_func_cbs_) {
+    const auto &register_cb = f.second;
+    if (register_cb) {
+      register_cb(m);
+    }
+  }
+}
 
 DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContextKey &device_context_key) {
   std::string device_context_key_str = device_context_key.ToString();
   std::string name = device_context_key.device_name_;
 
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (!IsNotAscend(name) && ms_context->backend_policy() == "ge") {
-    name = "GE";
-    device_context_key_str = "GE_0";
-  }
   auto device_context_iter = device_contexts_.find(device_context_key_str);
   if (device_context_iter != device_contexts_.end()) {
     return device_context_iter->second.get();
@@ -511,12 +452,21 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
     device_context = (creator_iter->second)(device_context_key);
     MS_EXCEPTION_IF_NULL(device_context);
     device_contexts_[device_context_key_str] = device_context;
+    backend_to_device_context_[name] = device_context;
   } else {
     MS_LOG(EXCEPTION) << "Create device context failed, please make sure target device:" << name
                       << " is available, error message of loading plugins: " << std::endl
                       << GetErrorMsg();
   }
   return device_context.get();
+}
+
+DeviceContextPtr DeviceContextManager::GetDeviceContext(const std::string &device_target) {
+  if (backend_to_device_context_.count(device_target) == 0) {
+    MS_LOG(WARNING) << "Device context of device " << device_target << " is not created yet.";
+    return nullptr;
+  }
+  return backend_to_device_context_[device_target];
 }
 
 void DeviceContextManager::UpdateDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key) {
@@ -547,68 +497,84 @@ void DeviceContextManager::WaitTaskFinishOnDevice() const {
   }
 }
 
-std::string DeviceContextManager::GetErrorMsg() const { return dlopen_error_msg_.str(); }
-
-void DeviceContextManager::SelectGpuPlugin(const std::string &cuda_home, const std::set<std::string> &file_names) {
-#ifdef __linux__
-  auto nvcc_path = GetNvccRealPath(cuda_home);
-  if (nvcc_path.empty()) {
-    return;
-  }
-  auto cuda_version = GetCudaVersionFromNvcc(nvcc_path);
-  if (cuda_version.empty()) {
-    return;
-  }
-  size_t target_major = 0;
-  size_t target_minor = 0;
-  if (!GetIntVersionFromVersionStr(cuda_version, &target_major, &target_minor)) {
-    MS_LOG(EXCEPTION) << "Get version num from version string " << cuda_version << " failed.";
-  }
-
-  std::string selected_plugin = "";
-  std::vector<std::pair<size_t, size_t>> all_plugin_version;
-  std::vector<std::string> all_plugin_path;
-  std::for_each(file_names.begin(), file_names.end(),
-                [&selected_plugin, &all_plugin_version, &all_plugin_path, target_major,
-                 target_minor](const std::string &file_name) {
-                  size_t current_major = 0;
-                  size_t current_minor = 0;
-                  if (GetVersionFromFileName(file_name, &current_major, &current_minor)) {
-                    all_plugin_version.emplace_back(current_major, current_minor);
-                    all_plugin_path.emplace_back(file_name);
-                  }
-                  if (current_major == target_major && current_minor == target_minor) {
-                    selected_plugin = file_name;
-                  }
-                });
-
-  if (selected_plugin.empty()) {
-    for (size_t i = 0; i < all_plugin_version.size(); ++i) {
-      if (target_major != all_plugin_version[i].first) {
-        continue;
-      }
-      if (VersionToFloat(target_major, target_minor) >
-            VersionToFloat(all_plugin_version[i].first, all_plugin_version[i].second) &&
-          (i + 1 >= all_plugin_version.size() ||
-           VersionToFloat(target_major, target_minor) <
-             VersionToFloat(all_plugin_version[i + 1].first, all_plugin_version[i + 1].second))) {
-        selected_plugin = all_plugin_path[i];
-      }
+void DeviceContextManager::SyncAllStreams() const {
+  for (const auto &item : device_contexts_) {
+    auto device_context = item.second;
+    if (device_context != nullptr && !device_context->device_res_manager_->SyncAllStreams()) {
+      MS_LOG(EXCEPTION) << "SyncStream failed, device info: " << device_context->device_context_key().ToString();
     }
   }
+}
 
-  if (selected_plugin.empty()) {
-    MS_LOG(WARNING) << "Env CUDA_HOME is " << cuda_home << ", but can not find suitable gpu plugin.";
-    return;
+std::string DeviceContextManager::GetErrorMsg() const { return dlopen_error_msg_.str(); }
+
+bool DeviceContextManager::SelectGpuPlugin(const std::string &cuda_home, const std::set<std::string> &file_names) {
+#ifdef __linux__
+  bool ret;
+  if (file_names.size() == 1) {
+    ret = plugin_loader::PluginLoader::LoadDynamicLib(*file_names.begin(), &plugin_maps_, &dlopen_error_msg_, true);
+  } else {
+    auto nvcc_path = GetNvccRealPath(cuda_home);
+    if (nvcc_path.empty()) {
+      return false;
+    }
+    auto cuda_version = GetCudaVersionFromNvcc(nvcc_path);
+    if (cuda_version.empty()) {
+      return false;
+    }
+    size_t target_major = 0;
+    size_t target_minor = 0;
+    if (!GetIntVersionFromVersionStr(cuda_version, &target_major, &target_minor)) {
+      MS_LOG(EXCEPTION) << "Get version num from version string " << cuda_version << " failed.";
+    }
+
+    std::string selected_plugin = "";
+    std::vector<std::pair<size_t, size_t>> all_plugin_version;
+    std::vector<std::string> all_plugin_path;
+    std::for_each(file_names.begin(), file_names.end(),
+                  [&selected_plugin, &all_plugin_version, &all_plugin_path, target_major,
+                   target_minor](const std::string &file_name) {
+                    size_t current_major = 0;
+                    size_t current_minor = 0;
+                    if (GetVersionFromFileName(file_name, &current_major, &current_minor)) {
+                      all_plugin_version.emplace_back(current_major, current_minor);
+                      all_plugin_path.emplace_back(file_name);
+                    }
+                    if (current_major == target_major && current_minor == target_minor) {
+                      selected_plugin = file_name;
+                    }
+                  });
+
+    if (selected_plugin.empty()) {
+      for (size_t i = 0; i < all_plugin_version.size(); ++i) {
+        if (target_major != all_plugin_version[i].first) {
+          continue;
+        }
+        if (VersionToFloat(target_major, target_minor) >
+              VersionToFloat(all_plugin_version[i].first, all_plugin_version[i].second) &&
+            (i + 1 >= all_plugin_version.size() ||
+             VersionToFloat(target_major, target_minor) <
+               VersionToFloat(all_plugin_version[i + 1].first, all_plugin_version[i + 1].second))) {
+          selected_plugin = all_plugin_path[i];
+        }
+      }
+    }
+
+    if (selected_plugin.empty()) {
+      MS_LOG(WARNING) << "Env CUDA_HOME is " << cuda_home << ", but can not find suitable gpu plugin.";
+      return false;
+    }
+
+    ret = plugin_loader::PluginLoader::LoadDynamicLib(selected_plugin, &plugin_maps_, &dlopen_error_msg_, true);
   }
-
-  auto ret = plugin_loader::PluginLoader::LoadDynamicLib(selected_plugin, &plugin_maps_, &dlopen_error_msg_);
   if (!ret) {
     MS_LOG(WARNING) << "Env CUDA_HOME is " << cuda_home
                     << ", but dlopen file_name failed, reason: " << dlopen_error_msg_.str();
-    return;
+    return false;
   }
+  return true;
 #endif  // #ifdef __linux__
+  return false;
 }
 }  // namespace device
 }  // namespace mindspore

@@ -105,3 +105,9 @@ def _logical_not_list(x):
        bool, Return logical not operation result of x.
    """
     return x.__len__() == 0
+
+
+@logical_not.register_default()
+def default_logical_not(x):
+    """Default function for logical not."""
+    return not x

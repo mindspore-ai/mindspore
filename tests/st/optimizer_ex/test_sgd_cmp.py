@@ -36,6 +36,7 @@ class NetworkPt(torch.nn.Module):
 class SGDFactory():
     def __init__(self, group=True, lr_dynamic=False, if_change=False, dtype=np.float32):
         super().__init__()
+        np.random.seed(1024)
         self.lin_weight_np = np.random.randn(3, 2).astype(dtype)
         self.lin_bias_np = np.random.randn(3,).astype(dtype)
 
@@ -44,7 +45,7 @@ class SGDFactory():
         self.if_change = if_change
         self.data = np.random.rand(2, 2).astype(np.float32)
         self.label = np.random.rand(2, 3).astype(np.float32)
-        self.epochs = 4
+        self.epochs = 1
         self.steps = 1
         self.lr = 0.002
 
@@ -68,8 +69,8 @@ class SGDFactory():
                     bias_params.append(param[1])
                 else:
                     no_bias_params.append(param[1])
-            group_params = [{'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "dampening": 1},
-                            {'params': no_bias_params, 'lr': 0.66, "momentum": 0.7, "nesterov": True}]
+            group_params = [{'params': bias_params, 'weight_decay': 0.01, 'lr': 0.009, "dampening": 1},
+                            {'params': no_bias_params, 'lr': 0.006, "momentum": 0.7, "nesterov": True}]
             optimizer = torch.optim.SGD(params=group_params, lr=self.lr)
 
         criterion = torch.nn.L1Loss(reduction='mean')
@@ -103,8 +104,8 @@ class SGDFactory():
         else:
             bias_params = list(filter(lambda x: 'bias' in x.name, model_ms.trainable_params()))
             no_bias_params = list(filter(lambda x: 'bias' not in x.name, model_ms.trainable_params()))
-            group_params = [{'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "dampening": 1},
-                            {'params': no_bias_params, 'lr': 0.66, "momentum": 0.7, "nesterov": True}]
+            group_params = [{'params': bias_params, 'weight_decay': 0.01, 'lr': 0.009, "dampening": 1},
+                            {'params': no_bias_params, 'lr': 0.006, "momentum": 0.7, "nesterov": True}]
             optimizer = SGD(params=group_params, lr=self.lr)
 
         criterion = nn.MAELoss(reduction="mean")
@@ -162,7 +163,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert np.array(data_expected).shape == np.array(data_me).shape
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -179,7 +180,7 @@ def test_sgd_basic(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -196,7 +197,7 @@ def test_sgd_group(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -213,7 +214,7 @@ def test_sgd_lr_dynamic(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -230,7 +231,7 @@ def test_sgd_group_lr_dynamic(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

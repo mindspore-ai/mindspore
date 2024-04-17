@@ -35,7 +35,7 @@ namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
-using mindspore::kernel::KernelLaunchInfo;
+using mindspore::kernel::KernelLaunchAddr;
 
 // The data source actor is used to fetch data from data source and process them into device tensors,
 // and then send them to kernel actor. The processing flow is FetchData -> FillDataBuffer -> SendMemoryAllocReq
@@ -47,7 +47,7 @@ class DataSourceActor : public DebugAwareActor {
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid), buffer_capacity_(buffer_capacity) {}
   ~DataSourceActor() override = default;
 
-  virtual void ReleaseDataNodeAddress() {}
+  virtual void ReleaseData() {}
 
  protected:
   friend class GraphScheduler;
@@ -106,8 +106,16 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
   CNodePtr data_kernel_{nullptr};
   KernelInfo *kernel_info_{nullptr};
 
-  // The kernel launch info is fetched by the device tensors.
-  KernelLaunchInfo launch_info_;
+  bool is_dynamic_shape_;
+
+  // The kernel mem info is needed for recording info.
+  KernelLaunchAddr mem_info_;
+
+  // The kernel tensors for resize and launch.
+  std::vector<KernelTensor *> output_kernel_tensors_;
+
+  // The stream resource of the Actor to launch kernel.
+  void *stream_{nullptr};
 };
 
 // The class represents that the data source is host queue.
@@ -130,7 +138,7 @@ class HostQueueDataSourceActor : public DataSourceActor {
   KernelWithIndex FetchNode(size_t node_position) const;
   const std::vector<KernelWithIndex> &data_nodes() const { return data_node_with_indexs_; }
 
-  void ReleaseDataNodeAddress() override;
+  void ReleaseData() override;
 
  protected:
   void FillDataBuffer() override;

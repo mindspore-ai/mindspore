@@ -16,8 +16,8 @@
 #include "cpu_kernel/ms_kernel/log1p.h"
 
 #include <algorithm>
-
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include <limits>
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -27,31 +27,31 @@ const uint32_t kInputNum = 1;
 const char *const kLog1p = "Log1p";
 constexpr int64_t kParallelDataNums = 16 * 1024;
 
-#define LOG1P_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                       \
-    uint32_t result = Log1pCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("Log1p kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define LOG1P_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                 \
+    uint32_t result = Log1pCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "Log1p kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 
-#define LOG1P_COMPUTE_CASE2(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                       \
-    uint32_t result = Log1pComputeComplex<TYPE>(CTX);   \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("Log1p kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define LOG1P_COMPUTE_CASE2(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                                 \
+    uint32_t result = Log1pComputeComplex<TYPE>(CTX);             \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "Log1p kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t Log1pCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kLog1p);
-  KERNEL_HANDLE_ERROR(Log1pCheck(ctx), "[%s] check params failed.", kLog1p);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kLog1p);
+  CUST_KERNEL_HANDLE_ERROR(ctx, Log1pCheck(ctx), "[%s] check params failed.", kLog1p);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     LOG1P_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
@@ -60,32 +60,36 @@ uint32_t Log1pCpuKernel::Compute(CpuKernelContext &ctx) {
     LOG1P_COMPUTE_CASE2(DT_COMPLEX64, std::complex<float>, ctx)
     LOG1P_COMPUTE_CASE2(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Log1p kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Log1p kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t Log1pCpuKernel::Log1pCheck(const CpuKernelContext &ctx) const {
+uint32_t Log1pCpuKernel::Log1pCheck(CpuKernelContext &ctx) const {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
-  KERNEL_CHECK_NULLPTR(input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input tensor shape failed.")
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t Log1pCpuKernel::Log1pCompute(const CpuKernelContext &ctx) {
+uint32_t Log1pCpuKernel::Log1pCompute(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   int64_t data_num = ctx.Input(0)->NumElements();
   int64_t data_size = data_num * static_cast<int64_t>(sizeof(T));
   if (data_size <= kParallelDataNums) {
     for (int64_t i = 0; i < data_num; i++) {
-      KERNEL_CHECK_FALSE(*(input_x + i) >= static_cast<T>(-1), KERNEL_STATUS_PARAM_INVALID,
-                         "[%llu] must be at least more than -1.", i);
-      *(output_y + i) = Eigen::numext::log1p(*(input_x + i));
+      auto val = *(input_x + i);
+      if (val < static_cast<T>(-1)) {
+        *(output_y + i) = std::numeric_limits<T>::quiet_NaN();
+      } else {
+        *(output_y + i) = Eigen::numext::log1p(val);
+      }
     }
   } else {
     uint32_t min_core_num = 1;
@@ -95,20 +99,23 @@ uint32_t Log1pCpuKernel::Log1pCompute(const CpuKernelContext &ctx) {
     }
     auto shard_log1p = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
-        KERNEL_CHECK_FALSE(*(input_x + i) >= static_cast<T>(-1), KERNEL_STATUS_PARAM_INVALID,
-                           "[%llu] must be at least more than -1.", i);
-        *(output_y + i) = Eigen::numext::log1p(*(input_x + i));
+        auto val = *(input_x + i);
+        if (val < static_cast<T>(-1)) {
+          *(output_y + i) = std::numeric_limits<T>::quiet_NaN();
+        } else {
+          *(output_y + i) = Eigen::numext::log1p(val);
+        }
       }
       return KERNEL_STATUS_OK;
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_log1p),
-                        "Log1p Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_log1p),
+                             "Log1p Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t Log1pCpuKernel::Log1pComputeComplex(const CpuKernelContext &ctx) {
+uint32_t Log1pCpuKernel::Log1pComputeComplex(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto data_type = ctx.Input(0)->GetDataType();
@@ -120,15 +127,15 @@ uint32_t Log1pCpuKernel::Log1pComputeComplex(const CpuKernelContext &ctx) {
     if (data_type == DT_COMPLEX64) {
       for (int64_t i = 0; i < data_num; i++) {
         array_x(0, i) = *(input_x + i);
-        KERNEL_CHECK_FALSE(array_x(0, i).real() >= static_cast<float>(-1), KERNEL_STATUS_PARAM_INVALID,
-                           "[%llu] must be at least more than -1.", i);
+        CUST_KERNEL_CHECK_FALSE(ctx, array_x(0, i).real() >= static_cast<float>(-1), KERNEL_STATUS_PARAM_INVALID,
+                                "[%llu] must be at least more than -1.", i);
         *(output_y + i) = Eigen::numext::log1p(*(input_x + i));
       }
     } else {
       for (int64_t i = 0; i < data_num; i++) {
         array_x(0, i) = *(input_x + i);
-        KERNEL_CHECK_FALSE(array_x(0, i).real() >= static_cast<double>(-1), KERNEL_STATUS_PARAM_INVALID,
-                           "[%llu] must be at least more than -1.", i);
+        CUST_KERNEL_CHECK_FALSE(ctx, array_x(0, i).real() >= static_cast<double>(-1), KERNEL_STATUS_PARAM_INVALID,
+                                "[%llu] must be at least more than -1.", i);
         *(output_y + i) = Eigen::numext::log1p(*(input_x + i));
       }
     }
@@ -143,22 +150,22 @@ uint32_t Log1pCpuKernel::Log1pComputeComplex(const CpuKernelContext &ctx) {
       for (size_t i = start; i < end; i++) {
         if (data_type == DT_COMPLEX64) {
           array_x(0, i) = *(input_x + i);
-          KERNEL_CHECK_FALSE(array_x(0, i).real() >= static_cast<float>(-1), KERNEL_STATUS_PARAM_INVALID,
-                             "[%llu] must be at least more than -1.", i);
+          CUST_KERNEL_CHECK_FALSE(ctx, array_x(0, i).real() >= static_cast<float>(-1), KERNEL_STATUS_PARAM_INVALID,
+                                  "[%llu] must be at least more than -1.", i);
           *(output_y + i) = Eigen::numext::log1p(*(input_x + i));
         } else {
           array_x(0, i) = *(input_x + i);
-          KERNEL_CHECK_FALSE(array_x(0, i).real() >= static_cast<double>(-1), KERNEL_STATUS_PARAM_INVALID,
-                             "[%llu] must be at least more than -1.", i);
+          CUST_KERNEL_CHECK_FALSE(ctx, array_x(0, i).real() >= static_cast<double>(-1), KERNEL_STATUS_PARAM_INVALID,
+                                  "[%llu] must be at least more than -1.", i);
           *(output_y + i) = Eigen::numext::log1p(*(input_x + i));
         }
       }
       return KERNEL_STATUS_OK;
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_log1p),
-                        "Log1p Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_log1p),
+                             "Log1p Compute failed.");
     return KERNEL_STATUS_OK;
   }
 }
-REGISTER_CPU_KERNEL(kLog1p, Log1pCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLog1p, Log1pCpuKernel);
 }  // namespace aicpu

@@ -41,38 +41,48 @@
 namespace mindspore {
 namespace ops {
 namespace {
+const int64_t kAxisRank = 0;
+const int64_t kXTensorRankOrElemNum = 1;
+const int64_t kXTensorNum = 2;
 abstract::TupleShapePtr ConcatOffsetV1InferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t kAxisRank = 0;
-  const int64_t kXTensorRankOrElemNum = 1;
-  const int64_t kXTensorNum = 2;
   // check axis shape
-  auto axis = input_args[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(axis);
-  auto axis_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(axis->BuildShape())[kShape];
+  auto axis_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto axis_rank = axis_shape.size();
   (void)CheckAndConvertUtils::CheckInteger("input axis shape rank", SizeToLong(axis_rank), kEqual, kAxisRank,
                                            prim_name);
   // check x shape and infer y shape
-  auto tensors = input_args[1]->isa<abstract::AbstractTuple>()
-                   ? input_args[1]->cast<abstract::AbstractTuplePtr>()->elements()
-                   : input_args[1]->cast<abstract::AbstractListPtr>()->elements();
-  (void)CheckAndConvertUtils::CheckInteger("input x tensor num", SizeToLong(tensors.size()), kGreaterEqual, kXTensorNum,
+  auto idx_shape_ptr = input_args[kInputIndex1]->GetShape();
+  MS_EXCEPTION_IF_NULL(idx_shape_ptr);
+  size_t idx_size;
+  abstract::BaseShapePtrList idx_shapes{};
+  if (CheckAndConvertUtils::IsTuple(input_args[kInputIndex1])) {
+    auto shape_tuple = idx_shape_ptr->cast<abstract::TupleShapePtr>();
+    idx_shapes = shape_tuple->shape();
+    idx_size = shape_tuple->size();
+  } else if (CheckAndConvertUtils::IsList(input_args[kInputIndex1])) {
+    auto shape_list = idx_shape_ptr->cast<abstract::ListShapePtr>();
+    idx_shapes = shape_list->shape();
+    idx_size = shape_list->size();
+  } else {
+    MS_EXCEPTION(TypeError) << "For [" << prim_name << "] should have ListTensor or TupleTensor input but get "
+                            << input_args[kInputIndex1]->GetType()->ToString();
+  }
+
+  (void)CheckAndConvertUtils::CheckInteger("input x tensor num", SizeToLong(idx_size), kGreaterEqual, kXTensorNum,
                                            prim_name);
-  auto tensor0 = tensors[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(tensor0);
-  auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensor0->BuildShape())[kShape];
+  auto tensor0_shape = idx_shapes[0]->GetShapeVector();
   auto tensor0_rank = tensor0_shape.size();
   (void)CheckAndConvertUtils::CheckInteger("input x tensor0 shape rank", SizeToLong(tensor0_rank), kEqual,
                                            kXTensorRankOrElemNum, prim_name);
   auto tensor0_numelement = tensor0_shape[0];
   (void)CheckAndConvertUtils::CheckInteger("element num in input x tensor0", SizeToLong(tensor0_numelement),
                                            kGreaterEqual, kXTensorRankOrElemNum, prim_name);
-  for (size_t i = 1; i < tensors.size(); ++i) {
+  for (size_t i = 1; i < idx_size; ++i) {
     std::string tensori = "tensor" + std::to_string(i);
-    auto tensori_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[i]->BuildShape())[kShape];
+    auto tensori_shape = idx_shapes[i]->GetShapeVector();
     auto tensori_rank = tensori_shape.size();
     (void)CheckAndConvertUtils::CheckInteger("input x " + tensori + " shape rank", SizeToLong(tensori_rank), kEqual,
                                              kXTensorRankOrElemNum, prim_name);
@@ -83,8 +93,7 @@ abstract::TupleShapePtr ConcatOffsetV1InferShape(const PrimitivePtr &primitive,
                                << ", but got " << tensori_numelement << ".";
     }
   }
-  return std::make_shared<abstract::TupleShape>(
-    std::vector<abstract::BaseShapePtr>(tensors.size(), tensor0->BuildShape()));
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>(idx_size, idx_shapes[0]));
 }
 
 TuplePtr ConcatOffsetV1InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -92,21 +101,39 @@ TuplePtr ConcatOffsetV1InferType(const PrimitivePtr &primitive, const std::vecto
   auto prim_name = primitive->name();
   const std::set<TypePtr> valid_types = {kInt32};
   // check axis type
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[0]->BuildType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[0]->GetType(), valid_types, prim_name);
   // check x type and infer y type
-  if (!input_args[1]->isa<abstract::AbstractTuple>() && !input_args[1]->isa<abstract::AbstractList>()) {
+  if (!CheckAndConvertUtils::IsTuple(input_args[kInputIndex1]) &&
+      !CheckAndConvertUtils::IsList(input_args[kInputIndex1])) {
     MS_EXCEPTION(TypeError) << "For 'ConcatOffsetV1', the input x must be list or tuple of tensors.";
   }
-  auto tensors = input_args[1]->isa<abstract::AbstractTuple>()
-                   ? input_args[1]->cast<abstract::AbstractTuplePtr>()->elements()
-                   : input_args[1]->cast<abstract::AbstractListPtr>()->elements();
+  bool is_tuple_x = CheckAndConvertUtils::IsTuple(input_args[kInputIndex1]);
+  bool is_list_x = CheckAndConvertUtils::IsList(input_args[kInputIndex1]);
+  if ((!is_tuple_x) && (!is_list_x)) {
+    MS_EXCEPTION(TypeError) << "For [" << prim_name << "] should have ListTensor or TupleTensor input but get "
+                            << input_args[kInputIndex1]->GetType()->ToString();
+  }
+  auto idx_type = input_args[kInputIndex1]->GetType();
+  TypePtrList type_list;
+  size_t idx_size;
+  if (is_tuple_x) {
+    auto type_tuple_ptr = idx_type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(type_tuple_ptr);
+    type_list = type_tuple_ptr->elements();
+    idx_size = type_list.size();
+  } else {
+    auto type_list_ptr = idx_type->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(type_list_ptr);
+    type_list = type_list_ptr->elements();
+    idx_size = type_list.size();
+  }
   std::map<std::string, TypePtr> types;
-  for (size_t i = 0; i < tensors.size(); ++i) {
+  for (size_t i = 0; i < idx_size; ++i) {
     std::string tensori = "tensor" + std::to_string(i);
-    (void)types.emplace(tensori, tensors[i]->BuildType());
+    (void)types.emplace(tensori, type_list[i]);
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-  return std::make_shared<Tuple>(std::vector<TypePtr>(tensors.size(), tensors[0]->BuildType()));
+  return std::make_shared<Tuple>(std::vector<TypePtr>(idx_size, type_list[0]));
 }
 }  // namespace
 

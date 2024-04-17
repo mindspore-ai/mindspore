@@ -39,13 +39,18 @@ _partial = ops.Partial()
 
 
 @constexpr
-def _ascend_910A_target():
+def _ascend_target():
+    return context.get_context("device_target") == "Ascend"
+
+
+@constexpr
+def _ascend_910a_target():
     return MSContext.get_instance().get_ascend_soc_version() == "ascend910"
 
 
 @constexpr
-def _ascend_910B_target():
-    return MSContext.get_instance().get_ascend_soc_version() == "ascend910b"
+def _ascend_910bc_target():
+    return MSContext.get_instance().get_ascend_soc_version() in ["ascend910b", "ascend910c"]
 
 
 @constexpr
@@ -81,16 +86,17 @@ def _overflow(inputs):
 @jit
 def _all_finite(inputs, check_overflow_mode):
     """all finite check"""
-    if (_ascend_910A_target()) or \
-       (_ascend_910B_target() and check_overflow_mode != "INFNAN_MODE"):
-        status = Tensor([0] * 8, mstype.int32)
-        status = ops.depend(status, inputs)
-        get_status = _get_cache_prim(NPUGetFloatStatusV2)()(status)
-        status = ops.depend(status, get_status)
-        clear_status = _get_cache_prim(NPUClearFloatStatusV2)()(status)
-        get_status = ops.depend(get_status, clear_status)
-        status_finite = get_status.equal(Tensor(0, mstype.int32)).all()
-        return status_finite
+    if _ascend_target():
+        if (_ascend_910a_target()) or \
+           (_ascend_910bc_target() and check_overflow_mode == "SATURATION_MODE"):
+            status = Tensor([0] * 8, mstype.int32)
+            status = ops.depend(status, inputs)
+            get_status = _get_cache_prim(NPUGetFloatStatusV2)()(status)
+            status = ops.depend(status, get_status)
+            clear_status = _get_cache_prim(NPUClearFloatStatusV2)()(status)
+            get_status = ops.depend(get_status, clear_status)
+            status_finite = get_status.equal(Tensor(0, mstype.int32)).all()
+            return status_finite
 
     outputs = _hypermap(_partial(_overflow), inputs)
     flag_sum = ops.addn(outputs).reshape(())
@@ -126,7 +132,7 @@ def all_finite(inputs):
 
     Tutorial Examples:
         - `Automatic Mix Precision - Loss Scaling
-          <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
+          <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/mixed_precision.html#loss-scaling>`_
     """
     inputs = mutable(inputs)
     _check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
@@ -142,7 +148,7 @@ class LossScaler(ABC):
     to scale and unscale the loss value and gradients to avoid overflow, `adjust` is used to update the
     loss scale value.
 
-    For more information, refer to the `tutorials  <https://mindspore.cn/tutorials/en/master/advanced/
+    For more information, refer to the `tutorials  <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/
     mixed_precision.html#loss-scaling>`_.
 
     .. warning::
@@ -334,7 +340,7 @@ class DynamicLossScaler(LossScaler):
 
         Tutorial Examples:
             - `Automatic Mix Precision - Loss Scaling
-              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
+              <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/mixed_precision.html#loss-scaling>`_
         """
         inputs = mutable(inputs)
         return _grad_scale_map(self.scale_value, inputs)
@@ -351,7 +357,7 @@ class DynamicLossScaler(LossScaler):
 
         Tutorial Examples:
             - `Automatic Mix Precision - Loss Scaling
-              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
+              <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/mixed_precision.html#loss-scaling>`_
         """
         inputs = mutable(inputs)
         return _grad_unscale_map(self.scale_value, inputs)
@@ -365,7 +371,7 @@ class DynamicLossScaler(LossScaler):
 
         Tutorial Examples:
             - `Automatic Mix Precision - Loss Scaling
-              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
+              <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/mixed_precision.html#loss-scaling>`_
         """
         one = ops.ones((), self.scale_value.dtype)
         scale_mul_factor = self.scale_value * self.scale_factor

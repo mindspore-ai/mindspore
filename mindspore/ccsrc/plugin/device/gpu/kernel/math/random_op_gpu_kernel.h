@@ -51,14 +51,12 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
   explicit RandomOpGpuKernelMod(const std::string &kernel_name) : kernel_type_(kernel_name) {}
   ~RandomOpGpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cuda_stream_ = stream_ptr;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -67,11 +65,12 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
-  using OpFunc =
-    std::function<bool(RandomOpGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &workspace, const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using OpFunc = std::function<bool(RandomOpGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &workspace,
+                                    const std::vector<kernel::KernelTensor *> &)>;
   static std::map<std::string, std::vector<std::pair<KernelAttr, RandomOpGpuKernelMod::OpFunc>>> kernel_attr_map_;
   RandomOptype random_op_type_{RANDOM_OP_INVALID_TYPE};
   size_t input_num_{0};

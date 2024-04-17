@@ -38,7 +38,7 @@ __global__ void CalculateCeluKernel(const half *input, const size_t input_elemen
 
 template <typename T>
 cudaError_t CalculateCelu(const T *input, size_t input_elements, double alpha, T *output, const uint32_t &device_id,
-                   cudaStream_t cuda_stream) {
+                          cudaStream_t cuda_stream) {
   CalculateCeluKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_elements, alpha, output);
   return GetCudaStatus();

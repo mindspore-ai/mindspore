@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_UPSAMPLE_NEAREST3D_GRAD_H
 #define AICPU_KERNELS_NORMALIZED_UPSAMPLE_NEAREST3D_GRAD_H
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 namespace aicpu {
 class UpsampleNearest3dGradCpuKernel : public CpuKernel {
  public:
@@ -29,7 +29,7 @@ class UpsampleNearest3dGradCpuKernel : public CpuKernel {
   uint32_t UpsampleNearest3dGradParamCheck(CpuKernelContext &ctx);
 
   template <typename T, typename S>
-  uint32_t UpsampleNearest3dGradCompute(const CpuKernelContext &ctx);
+  uint32_t UpsampleNearest3dGradCompute(CpuKernelContext &ctx);
 
   template <typename T, typename S>
   void InnerCompute(int64_t c, const T *grad_output_data, S *grad_input_ptr);

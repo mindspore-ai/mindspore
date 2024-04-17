@@ -143,6 +143,11 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::cosine_distance_threshold_, "cosineDistanceThreshold", "cosine distance threshold", -1.1);
     AddFlag(&BenchmarkFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
+    AddFlag(&BenchmarkFlags::resize_dims_in_v2_, "inputShape",
+            "Shape of input data. Specify input names followed by their shapes. Wrap the whole string in "
+            "double-quotes(\"\"). e.g. "
+            "\"inTensor1:1,32,32,32;inTensor2:1,1,32,32,4\"",
+            "");
 #ifdef ENABLE_CLOUD_FUSION_INFERENCE
     // Distributed Infer
     AddFlag(&BenchmarkFlags::device_id_, "deviceId", "Set device id for distributed inference", -1);
@@ -176,7 +181,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
 
   void InitInputDataList();
 
-  void InitResizeDimsList();
+  int InitResizeDimsList();
 
   void InitCoreList();
 
@@ -212,6 +217,8 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   float cosine_distance_threshold_ = -1.1;
   // Resize
   std::string resize_dims_in_;
+  std::string resize_dims_in_v2_;
+  std::map<std::string, std::vector<int64_t>> graph_input_shape_map_;
   std::vector<std::vector<int>> resize_dims_;
   // Distributed Infer
   int device_id_;

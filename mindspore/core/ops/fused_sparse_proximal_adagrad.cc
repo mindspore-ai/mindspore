@@ -55,23 +55,22 @@ constexpr size_t kGradIndex = 5;
 constexpr size_t kIndicesIndex = 6;
 constexpr size_t kFusedSparseProximalAdagradInputNum = 7;
 
-abstract::TupleShapePtr FusedSparseProximalAdagradInferShape(const PrimitivePtr &primitive,
-                                                             const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr FusedSparseProximalAdagradInferShapeCommon(const PrimitivePtr &primitive,
+                                                                   const std::vector<AbstractBasePtr> &input_args,
+                                                                   const abstract::BaseShapePtr &var_shape_r,
+                                                                   const abstract::BaseShapePtr &accum_shape_r) {
   auto prim_name = primitive->name();
-  // the output is useless, so we don't have to focus on the output shape, cannot return 1
-  auto var_shape_r = input_args[kVarIndex]->Broaden()->BuildShape();
-  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->BuildShape();
   auto outputs =
     std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>({var_shape_r, accum_shape_r}));
   for (auto &input : input_args) {
-    if (input->BuildShape()->IsDynamic()) {
+    if (input->GetShape()->IsDynamic()) {
       return outputs;
     }
   }
-  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVarIndex]->BuildShape())[kShape];
-  auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kAccumIndex]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->BuildShape())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->BuildShape())[kShape];
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVarIndex]->GetShape())[kShape];
+  auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kAccumIndex]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->GetShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->GetShape())[kShape];
 
   (void)CheckAndConvertUtils::CheckValue("var shape", var_shape, kEqual, "accum shape", accum_shape, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("indices rank", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
@@ -91,17 +90,33 @@ abstract::TupleShapePtr FusedSparseProximalAdagradInferShape(const PrimitivePtr 
   return outputs;
 }
 
+abstract::TupleShapePtr FusedSparseProximalAdagradInferShapeIner(const PrimitivePtr &primitive,
+                                                                 const std::vector<AbstractBasePtr> &input_args) {
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
+  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->GetShape();
+  return FusedSparseProximalAdagradInferShapeCommon(primitive, input_args, var_shape_r, accum_shape_r);
+}
+
+abstract::TupleShapePtr FusedSparseProximalAdagradInferShape(const PrimitivePtr &primitive,
+                                                             const std::vector<AbstractBasePtr> &input_args) {
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->GetShape();
+  auto accum_shape_r = input_args[kAccumIndex]->GetShape();
+  return FusedSparseProximalAdagradInferShapeCommon(primitive, input_args, var_shape_r, accum_shape_r);
+}
+
 TypePtr FusedSparseProximalAdagradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->BuildType()},
-                                          {"accum", input_args[kAccumIndex]->BuildType()},
-                                          {"grad", input_args[kGradIndex]->BuildType()}};
+  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->GetType()},
+                                          {"accum", input_args[kAccumIndex]->GetType()},
+                                          {"grad", input_args[kGradIndex]->GetType()}};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat32}, prim_name);
 
-  auto lr_dtype = input_args[kLrIndex]->BuildType();
-  auto l1_dtype = input_args[kL1Index]->BuildType();
-  auto l2_dtype = input_args[kL2Index]->BuildType();
-  auto indices_dtype = input_args[kIndicesIndex]->BuildType();
+  auto lr_dtype = input_args[kLrIndex]->GetType();
+  auto l1_dtype = input_args[kL1Index]->GetType();
+  auto l2_dtype = input_args[kL2Index]->GetType();
+  auto indices_dtype = input_args[kIndicesIndex]->GetType();
 
   (void)CheckAndConvertUtils::CheckTensorTypeValid("lr", lr_dtype, {kFloat32}, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("l1", l1_dtype, {kFloat32}, prim_name);
@@ -110,7 +125,7 @@ TypePtr FusedSparseProximalAdagradInferType(const PrimitivePtr &prim, const std:
   auto valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_dtype, valid_types, prim_name);
 
-  auto type = input_args[kVarIndex]->BuildType();
+  auto type = input_args[kVarIndex]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
 }
 }  // namespace fused_sparse_proximal_adagrad
@@ -137,7 +152,7 @@ AbstractBasePtr FusedSparseProximalAdagradInfer(const abstract::AnalysisEnginePt
     "input numbers", SizeToLong(input_args.size()), kGreaterEqual,
     SizeToLong(fused_sparse_proximal_adagrad::kFusedSparseProximalAdagradInputNum), op_name);
   auto types = fused_sparse_proximal_adagrad::FusedSparseProximalAdagradInferType(primitive, input_args);
-  auto shapes = fused_sparse_proximal_adagrad::FusedSparseProximalAdagradInferShape(primitive, input_args);
+  auto shapes = fused_sparse_proximal_adagrad::FusedSparseProximalAdagradInferShapeIner(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 

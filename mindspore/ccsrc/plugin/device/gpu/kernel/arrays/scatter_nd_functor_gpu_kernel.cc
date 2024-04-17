@@ -38,9 +38,9 @@ static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMa
 }  // namespace
 using KernelRunFunc = ScatterNdFunctorGPUKernelMod::KernelRunFunc;
 template <typename T, typename S>
-bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
+bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices = GetDeviceAddress<S>(inputs, kIndex1);
   T *updates = GetDeviceAddress<T>(inputs, kIndex2);
@@ -78,17 +78,14 @@ bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   CHECK_CUDA_STATUS(status, kernel_name_);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(output, input, inputs[0]->size, cudaMemcpyDeviceToDevice, cuda_stream),
+    cudaMemcpyAsync(output, input, inputs[0]->size(), cudaMemcpyDeviceToDevice, cuda_stream),
     "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync output failed")
 
   return true;
 }
 
-bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ScatterNdFunctorGPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   auto iter = kScatterNdFunctorTypeMap.find(kernel_name_);
   if (iter == kScatterNdFunctorTypeMap.end()) {
     MS_LOG(EXCEPTION) << "Only support these scatter functors: "
@@ -97,10 +94,10 @@ bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
   scatter_nd_functor_type_ = iter->second;
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  if (scatter_nd_functor_type_ != SCATTER_ND_FUNC_UPDATE && (inputs[kIndex0]->GetDtype() == kNumberTypeBool)) {
+  if (scatter_nd_functor_type_ != SCATTER_ND_FUNC_UPDATE && (inputs[kIndex0]->dtype_id() == kNumberTypeBool)) {
     const auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     return false;
@@ -109,11 +106,9 @@ bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ScatterNdFunctorGPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -159,7 +154,7 @@ int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   work_shape_.clear();
   work_shape_ = std::vector<int32_t>(input_shape.begin(), input_shape.end());
 
-  const auto index_size = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  const auto index_size = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
   workspace_size_list_ = {
     out_strides_.size() * index_size,
     work_shape_.size() * index_size,

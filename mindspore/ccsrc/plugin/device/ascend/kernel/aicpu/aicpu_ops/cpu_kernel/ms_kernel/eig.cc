@@ -31,7 +31,7 @@ const char *Eig = "Eig";
 
 namespace aicpu {
 uint32_t EigCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Eig check input and output failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Eig check input and output failed.");
   Tensor *input = ctx.Input(0);
   auto input_dtype = static_cast<DataType>(input->GetDataType());
   switch (input_dtype) {
@@ -44,12 +44,12 @@ uint32_t EigCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return ComputeKernel<std::complex<double>, std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("Eig kernel data type [%s] not support.", DTypeStr(input_dtype).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Eig kernel data type [%s] not support.", DTypeStr(input_dtype).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
-REGISTER_CPU_KERNEL(Eig, EigCpuKernel);
+REGISTER_MS_CPU_KERNEL(Eig, EigCpuKernel);
 
 template <typename T, typename C>
 uint32_t EigCpuKernel::ComputeKernel(CpuKernelContext &ctx) {

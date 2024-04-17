@@ -46,9 +46,6 @@
 #include "plugin/device/gpu/optimizer/remove_redundant_format_transform.h"
 #include "plugin/device/gpu/optimizer/reduce_precision_fusion.h"
 #include "plugin/device/gpu/optimizer/insert_cast_gpu.h"
-#include "plugin/device/gpu/optimizer/relu_v2_pass.h"
-#include "plugin/device/gpu/optimizer/add_relu_v2_fusion.h"
-#include "plugin/device/gpu/optimizer/add_relu_grad_v2_fusion.h"
 #include "plugin/device/gpu/optimizer/matmul_biasadd_fusion.h"
 #include "plugin/device/gpu/optimizer/neighbor_exchange_v2_fusion.h"
 #include "plugin/device/gpu/optimizer/clip_by_norm_fission.h"
@@ -193,9 +190,6 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   // Remove node only used by UpdateState, in order to ensure the correct execution sequence in CudnnInplaceAggregate.
   pm->AddPass(std::make_shared<opt::OptimizeUpdateState>());
   pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
-  pm->AddPass(std::make_shared<opt::ReluV2Pass>());
-  pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
-  pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::AdjustDependForParallelOptimizerRecomputeAllGather>());
   pm->AddPass(std::make_shared<opt::AllGatherFusion>());
@@ -294,7 +288,7 @@ bool UpdatedByAssign(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node)
     MS_EXCEPTION_IF_NULL(user.first);
     auto output_cnode = user.first->cast<CNodePtr>();
     return output_cnode != nullptr && IsPrimitiveCNode(output_cnode, prim::kPrimAssign) &&
-           user.second == kAssignUpdateIndex && output_cnode->inputs().size() > kAssignInputSize;
+           user.second == kAssignUpdateIndex && output_cnode->size() > kAssignInputSize;
   });
 }
 
@@ -634,71 +628,6 @@ void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const
   MS_EXCEPTION_IF_NULL(runtime_instance);
   if (!runtime_instance->Run(*kernel_graph, false)) {
     MS_LOG(EXCEPTION) << "GPU execute graph failed!";
-  }
-}
-
-KernelGraphPtr GPUSession::BuildOpImpl(const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
-                                       const std::vector<tensor::TensorPtr> &input_tensors,
-                                       const std::vector<int64_t> &tensors_mask) {
-  // Check if the graph cache exists.
-  auto it = run_op_graphs_.find(graph_info);
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  if (it != run_op_graphs_.end() && !IsOneOfCacheBlackList(op_run_info->base_op_run_info.op_name)) {
-    return it->second;
-  }
-
-  // Prepare the graph
-  const auto &kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  RunOpOptimize(kernel_graph);
-  SelectKernel(kernel_graph);
-  RunOpHardwareOptimize(kernel_graph);
-  StartKernelRT();
-  RunOpHideNopNode(kernel_graph);
-  BuildKernel(kernel_graph);
-  auto enable_op_graph_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-  if (enable_op_graph_cache) {
-    run_op_graphs_[graph_info] = kernel_graph;
-  }
-  return kernel_graph;
-}
-
-void GPUSession::RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                                 std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                                 const std::vector<int64_t> &tensors_mask) {
-  RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
-}
-
-void GPUSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                           std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                           const std::vector<int64_t> &tensors_mask) {
-  MS_EXCEPTION_IF_NULL(input_tensors);
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  ProcessInputTensorsForHeterogeneous("GPU", *input_tensors);
-  const auto &kernel_graph = BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
-  EraseValueNodeTensor(tensors_mask, input_tensors);
-  // wait for allreduce
-  for (auto &tensor : *input_tensors) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    if (tensor->NeedWaitDevice()) {
-      tensor->WaitDevice();
-    }
-  }
-
-  // run op
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  RunOpRemoveNopNode(kernel_graph);
-  RunOpAllocateMemory(*input_tensors, kernel_graph.get(), op_run_info->is_gradient_out);
-  RunOpGenKernelEvent(kernel_graph.get());
-  // Execute the computation
-  LoadInputData(kernel_graph, *input_tensors);
-  Execute(kernel_graph);
-  // Fetch outputs
-  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
-  UpdateOutputs(kernel_graph, outputs, *input_tensors, &tensor_to_node);
-  RunOpClearMemory(kernel_graph.get());
-  if (IsOneOfCacheBlackList(op_run_info->base_op_run_info.op_name)) {
-    run_op_graphs_.erase(graph_info);
   }
 }
 

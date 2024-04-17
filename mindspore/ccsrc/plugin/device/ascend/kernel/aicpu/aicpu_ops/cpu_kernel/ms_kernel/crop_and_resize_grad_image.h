@@ -20,7 +20,7 @@
 
 #include "Eigen/Core"
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -33,12 +33,12 @@ class CropAndResizeGradImageCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t cheakInputTypeAndGetDatas(const CpuKernelContext &ctx);
+  uint32_t cheakInputTypeAndGetDatas(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t GradOfImageCompute(const CpuKernelContext &ctx, int64_t start, int64_t end);
+  uint32_t GradOfImageCompute(CpuKernelContext &ctx, int64_t start, int64_t end);
   template <typename T>
-  uint32_t GradOfImageComputeShared(const CpuKernelContext &ctx);
+  uint32_t GradOfImageComputeShared(CpuKernelContext &ctx);
 
   std::vector<int64_t> grads_shape_;
   std::vector<int64_t> image_size_shape_;

@@ -1,0 +1,17 @@
+#operator silu_grad
+silu_grad:
+    args:
+        dout:
+            dtype: tensor
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: SiLUGrad
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        CPU: SiLUGradCPU

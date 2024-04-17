@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,42 @@
 
 #include "cxx_api/model/acl/model_converter.h"
 #include <memory>
-#include "acl/acl.h"
 #include "include/transform/graph_ir/utils.h"
 #include "cxx_api/model/model_converter_utils/multi_process.h"
-#include "graph/model.h"
-#include "graph/utils/graph_utils_ex.h"
-#include "acl/acl_rt.h"
+#include "graph/graph_buffer.h"
+#include "graph/graph.h"
 #include "cxx_api/model/aoe/auto_tune_process.h"
 #include "plugin/device/ascend/optimizer/ge_optimization.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/acl_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace {
+std::string GetAscendPath() {
+  Dl_info info;
+  if (dladdr(reinterpret_cast<void *>(aclrtMalloc), &info) == 0) {
+    MS_LOG(ERROR) << "Get dladdr failed.";
+    return "";
+  }
+  auto path_tmp = std::string(info.dli_fname);
+  const std::string kLatest = "latest";
+  auto pos = path_tmp.find(kLatest);
+  if (pos == std::string::npos) {
+    MS_EXCEPTION(ValueError) << "Get ascend path failed, please check the run package.";
+  }
+  return path_tmp.substr(0, pos);
+}
+
 // todo: acl doesn't support to clear current context
 void ClearCurrentRtCtx() {
   aclrtContext tmp_ctx = nullptr;
-  auto ret = aclrtCreateContext(&tmp_ctx, 0);
+  auto ret = CALL_ASCEND_API(aclrtCreateContext, &tmp_ctx, 0);
   if (ret != ACL_RT_SUCCESS) {
     MS_LOG(WARNING) << "Call aclrtCreateContext failed, ret = " << ret;
     return;
   }
-  ret = aclrtDestroyContext(tmp_ctx);
+  ret = CALL_ASCEND_API(aclrtDestroyContext, tmp_ctx);
   if (ret != ACL_RT_SUCCESS) {
     MS_LOG(WARNING) << "Call aclrtDestroyContext failed, ret = " << ret;
     return;
@@ -58,29 +74,6 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   }
   return res;
 }
-
-bool CreateSessionAndGraphRunner() {
-  std::shared_ptr<ge::Session> sess = transform::GetGeSession();
-  if (sess == nullptr) {
-    transform::SessionOptions options;
-    options["ge.trainFlag"] = "0";
-    options["ge.enablePrintOpPass"] = "0";
-    sess = transform::NewSession(options);
-    transform::SetGeSession(sess);
-  }
-
-  transform::GraphRunnerOptions options;
-  options.sess_ptr = sess;
-  auto graph_runner = transform::NewGraphRunner(options);
-  if (graph_runner == nullptr) {
-    MS_LOG(ERROR) << "Create new graph runner failed";
-    return false;
-  } else {
-    transform::SetGraphRunner(graph_runner);
-  }
-
-  return true;
-}
 }  // namespace
 
 transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) const {
@@ -88,9 +81,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
 #ifndef BUILD_LITE
   opt::ReduceOptimization(anf_graph);
 #endif
-  auto converter = transform::NewConverter(anf_graph, "", transform::RefModeFlag::kRefModeNone);
-  std::string net_id = "0";
-  std::string checkpoint_name = "save." + net_id;
+  auto converter = transform::NewConverter(anf_graph, "", transform::RefModeFlag::kRefModeNone, true);
   std::string compute_graph_name = anf_graph->ToString();
   auto option = options_.lock();
   if (option != nullptr && !option->GetDumpModelName().empty()) {
@@ -99,45 +90,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
   transform::SetTraining(converter, false);
 
   transform::BuildGraph(compute_graph_name, converter, GetParams(anf_graph));
-
-  transform::GenerateCheckpointGraph(converter);
-  auto err_code = transform::ErrCode(converter);
-  if (err_code != 0) {
-    transform::ClearGraph();
-    MS_LOG(ERROR) << "Convert df graph failed, err:" << err_code;
-    return nullptr;
-  }
-  (void)transform::AddGraph(anf_graph->ToString(), transform::GetComputeGraph(converter));
-  if (!IsEnableRefMode()) {
-    std::string init_graph = "init_subgraph." + net_id;
-    (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
-  }
-  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
-
-  transform::Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));
-  if (ret == transform::Status::SUCCESS) {
-    transform::SetAnfGraph(checkpoint_name, anf_graph);
-  }
-
-  (void)setenv("GE_TRAIN", "0", 1);
-
-  if (!CreateSessionAndGraphRunner()) {
-    MS_LOG(ERROR) << "Create GE Session or GraphRunner failed.";
-    return nullptr;
-  }
-
-  auto wrap_ptr = transform::GetGraphByName(anf_graph->ToString());
-  if (wrap_ptr == nullptr) {
-    MS_LOG(ERROR) << "Get graph form DfGraphManager failed!";
-    return nullptr;
-  }
-  transform::DfGraphPtr &ge_graph = wrap_ptr->graph_ptr_;
-  if (ge_graph == nullptr) {
-    MS_LOG(ERROR) << "The export graph is null";
-    return nullptr;
-  }
-
-  return ge_graph;
+  return transform::GetComputeGraph(converter);
 }
 
 Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
@@ -146,13 +99,13 @@ Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
   ge::ModelBufferData model;
   auto ret = ge::aclgrphBuildInitialize(init_options);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call aclgrphBuildInitialize fail: " << aclGetRecentErrMsg();
+    MS_LOG(ERROR) << "Call aclgrphBuildInitialize fail: " << CALL_ASCEND_API(aclGetRecentErrMsg);
     return Buffer();
   }
 
   ret = ge::aclgrphBuildModel(*graph, build_options, model);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call aclgrphBuildModel fail: " << aclGetRecentErrMsg();
+    MS_LOG(ERROR) << "Call aclgrphBuildModel fail: " << CALL_ASCEND_API(aclGetRecentErrMsg);
     ge::aclgrphBuildFinalize();
     return Buffer();
   }
@@ -186,24 +139,33 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
   MultiProcess multi_process;
   Buffer buffer_ret;
   ClearCurrentRtCtx();
+  auto ascend_path = GetAscendPath();
+#ifdef MACHINE_LINUX_ARM64
+  std::string lib_opsproto_file = ascend_path + "latest/opp/built-in/op_proto/lib/linux/aarch64/libopsproto.so";
+#else
+  std::string lib_opsproto_file = ascend_path + "latest/opp/built-in/op_proto/lib/linux/x86_64/libopsproto.so";
+#endif
+  static void *handler = dlopen(lib_opsproto_file.c_str(), RTLD_LAZY);
+  if (handler == nullptr) {
+    MS_LOG(ERROR) << "dlopen opsproto library failed: " << lib_opsproto_file;
+    return buffer_ret;
+  }
   auto df_graph = ConvertFuncGraphToAIR(func_graph);
   if (df_graph == nullptr) {
     MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
     return buffer_ret;
   }
-  auto parent_process = [&df_graph, &buffer_ret, this](MultiProcess *multi_process) -> Status {
+  auto parent_process = [&df_graph, &buffer_ret](MultiProcess *multi_process) -> Status {
     MS_EXCEPTION_IF_NULL(multi_process);
-    ge::Model model;
-    ge::Buffer model_data;
-    model.SetGraph(::ge::GraphUtilsEx::GetComputeGraph(*df_graph));
-    auto ge_ret = model.Save(model_data);
+    ge::GraphBuffer model_data;
+    auto ge_ret = df_graph->SaveToMem(model_data);
     if (ge_ret != ge::SUCCESS) {
       MS_LOG(ERROR) << "Save ge model to buffer failed.";
       return kMCFailed;
     }
 
     // send original model to child
-    auto status = multi_process->SendMsg(model_data.data(), model_data.size());
+    auto status = multi_process->SendMsg(model_data.GetData(), model_data.GetSize());
     if (status != kSuccess) {
       MS_LOG_ERROR << "Send original model to child process failed";
       return status;
@@ -256,18 +218,14 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
 }
 
 Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
-  ge::Model load_model = ge::Model("loadmodel", "version2");
-  ge::Status ret = ge::Model::Load(static_cast<const uint8_t *>(model_data.Data()), model_data.DataSize(), load_model);
-  if (ret != ge::GRAPH_SUCCESS) {
-    MS_LOG(ERROR) << "Load AscendIR failed, ret = " << ret;
-    return Buffer();
-  }
-
-  transform::DfGraphPtr df_graph =
-    std::make_shared<transform::DfGraph>(::ge::GraphUtilsEx::CreateGraphFromComputeGraph(load_model.GetGraph()));
+  transform::DfGraphPtr df_graph = std::make_shared<transform::DfGraph>("tmp");
   if (df_graph == nullptr) {
     MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
-    return Buffer();
+    return {};
+  }
+  auto ret = df_graph->LoadFromMem(static_cast<const uint8_t *>(model_data.Data()), model_data.DataSize());
+  if (ret != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
   }
 
   std::map<std::string, std::string> init_options;

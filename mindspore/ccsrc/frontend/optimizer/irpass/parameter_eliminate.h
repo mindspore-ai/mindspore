@@ -34,7 +34,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 static inline void CheckSwitchCallValid(const CNodePtr &switch_call) {
-  if (switch_call->inputs().size() > 1) {
+  if (switch_call->size() > 1) {
     // Means call switch(arg1, ...) has args.
     constexpr auto recursive_count = 2;
     MS_LOG(INTERNAL_EXCEPTION) << "After switch_call_monad_eliminater pass, the call switch node should not has args."
@@ -153,8 +153,8 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
         // Erase the unused element in returned MakeTuple CNode.
         auto user_cnode = dyn_cast<CNode>(user);
         MS_EXCEPTION_IF_NULL(user_cnode);
-        auto zero_value = NewValueNode(MakeValue(0));
-        zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
+        auto zero_value = NewValueNode(MakeValue<int64_t>(0));
+        zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(0)));
         user_cnode->set_input(IntToSize(pos), zero_value);
       }
     }
@@ -165,6 +165,7 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
   const auto &var_arg_node = fg->GetVariableArgParameter();
   const auto &kw_arg_node = fg->GetVariableKwargParameter();
   const auto &kw_only_args = fg->GetKwOnlyArgsParameters();
+  const size_t fv_position = parameters.size() - fg->fv_param_count();
   for (size_t i = 0; i < parameters.size(); i++) {
     const auto &param_i = parameters[i];
     if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
@@ -187,6 +188,9 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
           fg->set_kwonlyargs_count(fg->kwonlyargs_count() - 1);
           (void)unused_parameter_indexes.erase(i);
         }
+      }
+      if (i >= fv_position) {
+        fg->set_fv_param_count(fg->fv_param_count() - 1);
       }
       MS_LOG(DEBUG) << "Erase parameter: " << param_i->DebugString() << ", index: " << i;
     }
@@ -223,6 +227,10 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
       caller->size() > (1 + IntToSize(called->GetPositionalArgsCount()) + called->fv_param_count())) {
     size_t start_offset = IntToSize(called->GetPositionalArgsCount()) + arg_start_index;
     size_t end_offset = called->fv_param_count();
+    if (start_offset > new_args.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The start_offset is " << start_offset << ", which exceeds the number of new args "
+                                 << new_args.size() << ".";
+    }
     (void)new_args.erase(new_args.cbegin() + SizeToLong(start_offset), new_args.cend() - SizeToLong(end_offset));
   }
 

@@ -24,10 +24,8 @@
 #include "graph/tensor.h"
 #include "graph/operator_reg.h"
 #include "graph/operator.h"
-#include "graph/utils/tensor_utils.h"
-#include "graph/utils/tensor_adapter.h"
 
-#include "external/ge/ge_api.h"
+#include "ge/ge_api.h"
 
 namespace ge {
 

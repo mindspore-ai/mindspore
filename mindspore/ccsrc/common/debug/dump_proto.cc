@@ -530,7 +530,7 @@ void ProtoExporter::ExportFuncGraphOutput(const FuncGraphPtr &func_graph, const 
   }
   // ret node has two input 1 ret op + 1 value
   const size_t ret_input_size = 2;
-  if (ret_node->inputs().size() != ret_input_size) {
+  if (ret_node->size() != ret_input_size) {
     return;
   }
   AnfNodePtr arg = ret_node->input(1);

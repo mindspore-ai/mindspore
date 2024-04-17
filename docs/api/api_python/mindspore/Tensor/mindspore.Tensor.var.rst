@@ -19,3 +19,9 @@ mindspore.Tensor.var
 
     返回：
         含有方差值的Tensor。
+
+    其他API参考：
+        - :func:`mindspore.Tensor.mean` ：通过对Tensor中的所有元素求平均值来减少Tensor的维数。
+        - :func:`mindspore.Tensor.std` ：计算沿指定轴的标准差。
+
+        

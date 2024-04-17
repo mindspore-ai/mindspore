@@ -16,8 +16,8 @@
 #include "backend/common/graph_kernel/model/graph_builder.h"
 
 #include <vector>
-#include <memory>
 
+#include "utils/ms_context.h"
 #include "mindapi/base/type_id.h"
 #include "mindapi/base/shape_vector.h"
 #include "backend/common/graph_kernel/model/node.h"
@@ -30,8 +30,8 @@ NodePtr GraphBuilder::Reshape(const NodePtr &input, const ShapeVector &shape) co
 }
 
 NodePtr GraphBuilder::BroadcastTo(const NodePtr &input, const ShapeVector &shape) const {
-  auto shape_value = MakeValue(shape);
-  return Emit("BroadcastTo", {input}, {{"shape", shape_value}});
+  auto shape_value = Tensor(shape);
+  return Emit("BroadcastTo", {input, shape_value});
 }
 
 NodePtr GraphBuilder::Gather(const NodePtr &param, const NodePtr &indice, int64_t axis, int64_t batch_dims) const {
@@ -52,7 +52,7 @@ NodePtr GraphBuilder::Transpose(const NodePtr &input, const ShapeVector &perm) c
 NodePtr GraphBuilder::ReduceSum(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims) const {
   auto reduce_axis = Tensor(axis);
   auto keep_dims_value = MakeValue(keep_dims);
-  return Emit("ReduceSum", {input, reduce_axis}, {{"keep_dims", keep_dims_value}});
+  return Emit("ReduceSum", {input, reduce_axis}, {{"keep_dims", keep_dims_value}, {"skip_mode", MakeValue(false)}});
 }
 NodePtr GraphBuilder::ReduceMax(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims) const {
   auto reduce_axis = Tensor(axis);
@@ -81,5 +81,19 @@ NodePtr GraphBuilder::StridedSlice(const NodePtr &input, const std::vector<int64
                {"ellipsis_mask", MakeValue(static_cast<int64_t>(0))},
                {"new_axis_mask", MakeValue(static_cast<int64_t>(0))},
                {"end_mask", MakeValue(static_cast<int64_t>(0))}});
+}
+NodePtr GraphBuilder::Tanh(const NodePtr &input) const {
+  auto device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target == kAscendDevice) {
+    // Tanh(x) = 1 - 2/(e^{2x}+1)
+    auto tanh_exp = Exp(Mul(input, Tensor(2, input->type)));
+    auto tanh_add_0 = Add(tanh_exp, Tensor(1, input->type));
+    auto tanh_rec = Reciprocal(tanh_add_0);
+    auto tanh_neg = Mul(tanh_rec, Tensor(-2, input->type));
+    auto tanh_add_1 = Add(tanh_neg, Tensor(1, input->type));
+    return tanh_add_1;
+  } else {
+    return Emit("Tanh", {input});
+  }
 }
 }  // namespace mindspore::graphkernel::inner

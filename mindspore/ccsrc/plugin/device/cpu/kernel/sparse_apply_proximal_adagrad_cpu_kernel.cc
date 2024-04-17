@@ -85,10 +85,8 @@ void SparseApplyProximalAdagradCpuKernelMod::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
 }
 
-bool SparseApplyProximalAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseApplyProximalAdagradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -98,14 +96,13 @@ bool SparseApplyProximalAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_op
                   << ", but got " << inputs.size();
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
 void SparseApplyProximalAdagradCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
@@ -114,12 +111,10 @@ void SparseApplyProximalAdagradCpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                   const std::vector<KernelTensorPtr> &inputs,
-                                                   const std::vector<KernelTensorPtr> &outputs,
-                                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyProximalAdagradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -189,7 +184,7 @@ int SparseApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_o
                   << l2_shape;
     return KRET_RESIZE_FAILED;
   }
-  indices_data_type_ = inputs[kIndicesIndex]->GetDtype();
+  indices_data_type_ = inputs[kIndicesIndex]->dtype_id();
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else if (indices_data_type_ == kNumberTypeInt64) {
@@ -232,20 +227,20 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyProximalAdag
 }
 
 template <typename T>
-bool SparseApplyProximalAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &workspace,
-                                                          const std::vector<kernel::AddressPtr> &) const {
-  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
-  auto accum = reinterpret_cast<float *>(inputs[kAccIndex]->addr);
-  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr)[0];
-  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->addr)[0];
-  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->addr)[0];
-  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
-  auto indices = reinterpret_cast<T *>(inputs[kIndicesIndex]->addr);
-  auto new_grad = reinterpret_cast<float *>(workspace[kWorkSpaceIndex0]->addr);
-  auto new_indices = reinterpret_cast<T *>(workspace[kWorkSpaceIndex1]->addr);
-  auto workspace_grad = reinterpret_cast<float *>(workspace[kWorkSpaceIndex2]->addr);
-  auto workspace_indices = reinterpret_cast<T *>(workspace[kWorkSpaceIndex3]->addr);
+bool SparseApplyProximalAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                          const std::vector<kernel::KernelTensor *> &workspace,
+                                                          const std::vector<kernel::KernelTensor *> &) const {
+  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->device_ptr());
+  auto accum = reinterpret_cast<float *>(inputs[kAccIndex]->device_ptr());
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->device_ptr())[0];
+  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->device_ptr())[0];
+  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->device_ptr())[0];
+  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->device_ptr());
+  auto indices = reinterpret_cast<T *>(inputs[kIndicesIndex]->device_ptr());
+  auto new_grad = reinterpret_cast<float *>(workspace[kWorkSpaceIndex0]->device_ptr());
+  auto new_indices = reinterpret_cast<T *>(workspace[kWorkSpaceIndex1]->device_ptr());
+  auto workspace_grad = reinterpret_cast<float *>(workspace[kWorkSpaceIndex2]->device_ptr());
+  auto workspace_indices = reinterpret_cast<T *>(workspace[kWorkSpaceIndex3]->device_ptr());
 
   SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
   SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});

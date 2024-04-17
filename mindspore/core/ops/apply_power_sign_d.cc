@@ -54,15 +54,13 @@ abstract::TupleShapePtr ApplyPowerSignDInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_shape = input_args[kInputIndex0]->BuildShape();
-  auto m_shape = input_args[kInputIndex1]->BuildShape();
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
-  auto logbase_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShapeTrack())[kShape];
-  auto sign_decay_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShapeTrack())[kShape];
-  auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShapeTrack())[kShape];
-  auto grad_shape = input_args[kInputIndex6]->BuildShape();
+  auto var_shape = input_args[kInputIndex0]->GetShape();
+  auto m_shape = input_args[kInputIndex1]->GetShape();
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto logbase_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto sign_decay_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+  auto grad_shape = input_args[kInputIndex6]->GetShape();
   int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
     auto value_ptr = primitive->GetAttr(kBatchRank);
@@ -113,13 +111,13 @@ TuplePtr ApplyPowerSignDInferType(const PrimitivePtr &prim, const std::vector<Ab
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto m_type = input_args[kInputIndex1]->BuildType();
-  auto lr_type = input_args[kInputIndex2]->BuildType();
-  auto logbase_type = input_args[kInputIndex3]->BuildType();
-  auto sign_decay_type = input_args[kInputIndex4]->BuildType();
-  auto beta_type = input_args[kInputIndex5]->BuildType();
-  auto grad_type = input_args[kInputIndex6]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto m_type = input_args[kInputIndex1]->GetType();
+  auto lr_type = input_args[kInputIndex2]->GetType();
+  auto logbase_type = input_args[kInputIndex3]->GetType();
+  auto sign_decay_type = input_args[kInputIndex4]->GetType();
+  auto beta_type = input_args[kInputIndex5]->GetType();
+  auto grad_type = input_args[kInputIndex6]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
   (void)args.insert(std::make_pair("var", var_type));

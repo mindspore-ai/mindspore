@@ -28,6 +28,7 @@
 #include "utils/log_adapter.h"
 #include "utils/file_utils.h"
 #include "include/common/utils/utils.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 bool Common::NeedMapping(const std::string &origin_name) {
@@ -54,6 +55,9 @@ std::string Common::GetRandomStr(size_t str_len) {
 
 std::string Common::GetRandomStr() {
   std::string npy_suffix = ".npy";
+#if defined(SYSTEM_ENV_POSIX)
+  std::lock_guard<std::mutex> guard(random_data_lock_);
+#endif
 #ifndef _MSC_VER
   unsigned int seed = static_cast<unsigned int>(GetTimeStamp());
   std::string random_name = std::to_string(rand_r(&seed)) + npy_suffix;
@@ -293,21 +297,20 @@ bool Common::IsFilenameValid(const std::string &filename, size_t length_limit, c
 }
 
 std::string Common::AddId(const std::string &filename, const std::string &suffix) {
-  static size_t g_id = 0;
   std::ostringstream s;
   auto i = filename.rfind(suffix);
   const int spaces = 4;
   if (i >= filename.size()) {
     s << filename;
-    s << "_" << std::setfill('0') << std::setw(spaces) << g_id;
+    s << "_" << std::setfill('0') << std::setw(spaces) << (g_id_);
   } else {
     s << filename.substr(0, i);
-    s << "_" << std::setfill('0') << std::setw(spaces) << g_id;
+    s << "_" << std::setfill('0') << std::setw(spaces) << (g_id_);
     if (i + 1 < filename.size()) {
       s << filename.substr(i);
     }
   }
-  g_id++;
+  ++g_id_;
   return s.str();
 }
 
@@ -400,6 +403,52 @@ uint64_t Common::GetTimeStamp() {
   auto cur_sys_time = std::chrono::system_clock::now();
   auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(cur_sys_time.time_since_epoch()).count();
   return static_cast<uint64_t>(timestamp);
+}
+
+bool Common::CheckInterval() {
+  int interval = 1;
+  static std::string interval_str = common::GetEnv("MS_DEV_DUMP_IR_INTERVAL");
+  if (interval_str.size() >= 1) {
+    try {
+      interval = std::stoi(interval_str);
+    } catch (const std::invalid_argument &ia) {
+      MS_LOG(EXCEPTION) << "Invalid argument: " << ia.what() << " when parse " << interval_str
+                        << ". Please set this env variable to int value.";
+    }
+  } else {
+    return true;
+  }
+  if (interval < 1) {
+    MS_LOG(EXCEPTION) << "Dump IR interval should be greater than 0.";
+  }
+  const int check = SizeToInt(g_id_ % interval);
+  if (check == 0) {
+    return true;
+  }
+  return false;
+}
+
+bool Common::CheckIfPrintIrPass(const std::string &pass_name) {
+  static const auto input_name = common::GetEnv("MS_DEV_DUMP_IR_PASSES");
+  static std::set<std::string> tokens;
+  if (input_name.size() == 0) {
+    return CheckInterval();
+  }
+  if (tokens.empty()) {
+    const char split = ',';
+    std::istringstream iss(input_name);
+    std::string token;
+    while (std::getline(iss, token, split)) {
+      (void)tokens.emplace(token);
+    }
+  }
+  for (const auto &element : tokens) {
+    auto sub_len = pass_name.find(element);
+    if (sub_len != std::string::npos) {
+      return true;
+    }
+  }
+  return false;
 }
 
 struct GlogLogDirRegister {

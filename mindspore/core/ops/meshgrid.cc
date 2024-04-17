@@ -42,14 +42,19 @@ std::string Meshgrid::get_indexing() const {
 namespace {
 abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
-  auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
+  AbstractBasePtrList elements = input_args;
+  if (input_args.size() == 1 && input_args[0]->isa<abstract::AbstractSequence>()) {
+    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
+  }
   (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            primitive->name());
   ShapeVector output_shape;
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape());
-
-    auto input_shape = shape_map[kShape];
+    auto shape = elements[i]->GetShape();
+    ShapeVector input_shape;
+    if (shape->isa<abstract::TensorShape>()) {
+      input_shape = shape->GetShapeVector();
+    }
     if (IsDynamicRank(input_shape)) {
       auto shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
       return std::make_shared<abstract::TupleShape>(
@@ -70,16 +75,16 @@ abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
 }
 
 TuplePtr MeshgridInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
+  auto elements = input_args[0]->GetType()->cast<TuplePtr>()->elements();
   (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            prim->name());
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
-    (void)types.emplace(elementi, elements[i]->BuildType());
+    (void)types.emplace(elementi, elements[i]);
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, prim->name());
-  return std::make_shared<Tuple>(std::vector<TypePtr>(SizeToLong(elements.size()), elements[0]->BuildType()));
+  return std::make_shared<Tuple>(std::vector<TypePtr>(SizeToLong(elements.size()), elements[0]));
 }
 }  // namespace
 
@@ -90,10 +95,10 @@ AbstractBasePtr MeshgridInfer(const abstract::AnalysisEnginePtr &, const Primiti
   (void)CheckAndConvertUtils::CheckInteger("input_args tuple size", SizeToLong(input_args.size()), kEqual, 1,
                                            prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  if (!input_args[0]->isa<abstract::AbstractTuple>()) {
+  if (input_args[0]->GetType()->object_type() != kObjectTypeTuple) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input must be tuple of tensors.";
   }
-  auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
+  auto elements = input_args[0]->GetShape()->cast<abstract::TupleShapePtr>()->shape();
   (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            prim_name);
   auto infer_type = MeshgridInferType(primitive, input_args);

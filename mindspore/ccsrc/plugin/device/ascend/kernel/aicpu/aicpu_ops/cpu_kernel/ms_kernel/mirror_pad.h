@@ -20,11 +20,11 @@
 #include <utility>
 #include <vector>
 
-#include "cpu_ops_kernel.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/kernel_log.h"
 #include "securec.h"
-#include "status.h"
+#include "context/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 
 namespace aicpu {
@@ -52,7 +52,7 @@ class MirrorPadCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t MirrorPadCompute(T *input_data_ptr, T *output_data_ptr);
+  uint32_t MirrorPadCompute(CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr);
 
   template <typename T>
   uint32_t DoCompute(CpuKernelContext &ctx);

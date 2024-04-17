@@ -30,6 +30,10 @@
 #ifdef _WIN32
 #define BIND_CORE
 #endif
+// Lite not support bind core.
+#if !defined(BUILD_LITE) && defined(__linux__)
+#define BIND_CORE
+#endif
 
 namespace mindspore {
 enum BindMode {

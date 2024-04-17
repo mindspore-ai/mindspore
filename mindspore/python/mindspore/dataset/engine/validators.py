@@ -1021,7 +1021,7 @@ def check_minddataset(method):
         dataset_file = param_dict.get('dataset_files')
         if isinstance(dataset_file, list):
             if len(dataset_file) > 4096:
-                raise ValueError("length of dataset_file should be less than or equal to {}.".format(4096))
+                log.warning("The number of MindRecord files greater than 4096 may cause slow dataset initialization.")
             for f in dataset_file:
                 check_file(f)
         else:

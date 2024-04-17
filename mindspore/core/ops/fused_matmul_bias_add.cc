@@ -49,9 +49,9 @@ class FusedMatMulBiasAddInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     const auto prim_name = primitive->name();
-    auto a_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto a_shape_ptr = input_args[kInputIndex0]->GetShape();
     auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(a_shape_ptr)[kShape];
-    auto b_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto b_shape_ptr = input_args[kInputIndex1]->GetShape();
     auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(b_shape_ptr)[kShape];
 
     if (a_shape_ptr->IsDimUnknown() || b_shape_ptr->IsDimUnknown()) {
@@ -84,9 +84,9 @@ class FusedMatMulBiasAddInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     const std::set valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64, kComplex64};
     std::map<std::string, TypePtr> types;
-    auto a_type = input_args[kInputIndex0]->BuildType();
+    auto a_type = input_args[kInputIndex0]->GetType();
     (void)types.emplace("a", a_type);
-    (void)types.emplace("b", input_args[kInputIndex1]->BuildType());
+    (void)types.emplace("b", input_args[kInputIndex1]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
     return a_type;
   }

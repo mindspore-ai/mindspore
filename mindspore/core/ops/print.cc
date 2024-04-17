@@ -32,6 +32,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace ops {
@@ -80,7 +81,7 @@ std::string PrintValueToString(const ValuePtr &value) {
   if (value == nullptr) {
     return "UnknownValue";
   }
-  if (value == kValueAny) {
+  if (value->ContainsValueAny()) {
     return "UnknownValue";
   }
   if (value->isa<StringImm>()) {
@@ -96,15 +97,15 @@ std::string PrintValueToString(const ValuePtr &value) {
 
 std::string PrintAbstractToString(const AbstractBasePtr &abstract) {
   if (abstract->isa<abstract::AbstractScalar>()) {
-    auto value = abstract->BuildValue();
+    auto value = abstract->GetValue();
     return PrintValueToString(value);
   }
   if (abstract->isa<abstract::AbstractTensor>()) {
     std::ostringstream buffer;
     auto abs_tensor = abstract->cast<abstract::AbstractTensorPtr>();
-    buffer << "Tensor(shape:" << abs_tensor->GetShapeTrack()->ToString()
+    buffer << "Tensor(shape:" << abs_tensor->GetShape()->ToString()
            << ", dtype:" << abs_tensor->GetTypeTrack()->ToString()
-           << ", value:" << PrintValueToString(abs_tensor->BuildValue()) << ")";
+           << ", value:" << PrintValueToString(abs_tensor->GetValue()) << ")";
     return buffer.str();
   }
   if (abstract->isa<abstract::AbstractSequence>()) {
@@ -136,14 +137,21 @@ class PrintInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    return std::make_shared<TensorType>(kInt32);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    auto shape = InferShape(primitive, input_args);
+    auto type = InferType(primitive, input_args);
     std::ostringstream buffer;
-    if (common::GetEnv("MS_DEV_COMPILE_PRINT") == "1") {
+    if (common::GetCompileConfig("COMPILE_PRINT") == "1") {
       for (const auto &input_arg : input_args) {
         buffer << PrintAbstractToString(input_arg);
       }
       std::cout << buffer.str() << std::endl;
     }
-    return std::make_shared<TensorType>(kInt32);
+    return abstract::MakeAbstract(shape, type);
   }
 };
 

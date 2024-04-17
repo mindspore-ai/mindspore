@@ -142,7 +142,8 @@ uint32_t QuantDTypeCastKernel::ParseKernelParam() {
 
   // get input tensors shape
   if (node_def_.inputs_size() != C5NUM) {
-    AICPU_LOGE("For 'QuantDTypeCast', input tensor number must be 1, but got %d", node_def_.inputs_size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'QuantDTypeCast', input tensor number must be 1, but got %d",
+                    node_def_.inputs_size());
     return kAicpuKernelStateInvalid;
   }
   aicpuops::Tensor input_tensor = node_def_.inputs(0);
@@ -150,7 +151,8 @@ uint32_t QuantDTypeCastKernel::ParseKernelParam() {
   quant_param_size_ = node_def_.inputs(1).tensor_shape().dim(0).size();
   // get output tensor shape
   if (node_def_.outputs_size() != 1) {
-    AICPU_LOGE("For 'QuantDTypeCast', output tensor number must be 1, but got %d", node_def_.outputs_size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'QuantDTypeCast', output tensor number must be 1, but got %d",
+                    node_def_.outputs_size());
     return kAicpuKernelStateInvalid;
   }
 

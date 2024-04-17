@@ -45,7 +45,7 @@ class LogicOrSpec(nn.Cell):
         return or_v
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -61,7 +61,7 @@ def test_ms_syntax_operator_logic_int_or_int():
     assert ret == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -77,7 +77,7 @@ def test_ms_syntax_operator_logic_float_or_float():
     assert ret == 1.89
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -130,7 +130,7 @@ def test_ms_syntax_operator_logic_tensor_1_float_or_tensor_1_int():
         print(ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -166,7 +166,7 @@ def test_ms_syntax_operator_logic_int_or_str():
     assert ret == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -182,7 +182,7 @@ def test_ms_syntax_operator_logic_int_or_str_2():
     assert ret == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -198,7 +198,7 @@ def test_ms_syntax_operator_logic_str_or_str():
     assert ret == "abc"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -214,7 +214,7 @@ def test_ms_syntax_operator_logic_list_int_or_list_int():
     assert ret == [1, 2, 3]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

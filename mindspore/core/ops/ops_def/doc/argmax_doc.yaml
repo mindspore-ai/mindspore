@@ -1,0 +1,29 @@
+argmax:
+    description: |
+        Returns the indices of the maximum value along a specified `axis` of a Tensor.
+
+        Refer to :func:`mindspore.ops.argmax` for more details.
+
+        Args:
+            axis (int): Axis where the Argmax operation applies to. Default: ``-1`` .
+            output_type (:class:`mindspore.dtype`): Output data type.
+                Supported types: ``mstype.int32`` , ``mstype.int64`` . Default: ``mstype.int32`` .
+
+        Inputs:
+            - **input_x** (Tensor) - The input tensor. :math:`(N, *)` where :math:`*` means, any number of additional
+              dimensions.
+
+        Outputs:
+            Tensor, indices of the max value of input tensor across the axis.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
+            >>> output = ops.Argmax(output_type=mindspore.int32)(input_x)
+            >>> print(output)
+            [1 0 0]

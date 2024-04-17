@@ -1,0 +1,16 @@
+#operator less_equal
+less_equal:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number, bool
+    other:
+      dtype: tensor
+      type_cast: number, bool
+  args_signature:
+      dtype_group: (input, other)
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True

@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <type_traits>
 #include <utility>
-#include <map>
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "utils/ms_utils.h"
 #include "Eigen/Eigenvalues"
@@ -26,8 +25,13 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kInputsNum = 1;
-constexpr size_t kOutputsNum = 2;
+#define EIG_KERNEL_CPU_REGISTER(IN_DT, OUT_DT, IN_T, OUT_T) \
+  KernelAttr()                                              \
+    .AddInputAttr(IN_DT)                                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)       \
+    .AddOutputAttr(OUT_DT)                                  \
+    .AddOutputAttr(OUT_DT),                                 \
+    &EigCpuKernelMod::LaunchKernel<IN_T, OUT_T>
 }  // namespace
 
 void EigCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape) {
@@ -49,14 +53,8 @@ void EigCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape) {
   batch_size_ /= (row_size_ * col_size_);
 }
 
-bool EigCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  if (base_operator->HasAttr(COMPUTE_V)) {
-    compute_v_ = GetValue<bool>(base_operator->GetAttr(COMPUTE_V));
-  }
+bool EigCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  compute_v_ = inputs[kIndex1]->GetValueWithCheck<bool>();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -67,10 +65,8 @@ bool EigCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   return true;
 }
 
-int EigCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int EigCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -81,11 +77,11 @@ int EigCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T, typename C>
-bool EigCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs) {
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_w_addr = reinterpret_cast<C *>(outputs[0]->addr);
-  auto output_v_addr = compute_v_ ? reinterpret_cast<C *>(outputs[1]->addr) : nullptr;
+bool EigCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                   const std::vector<KernelTensor *> &outputs) {
+  auto input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_w_addr = reinterpret_cast<C *>(outputs[0]->device_ptr());
+  auto output_v_addr = compute_v_ ? reinterpret_cast<C *>(outputs[1]->device_ptr()) : nullptr;
 
   for (size_t batch = 0; batch < batch_size_; ++batch) {
     T *a_addr = input_addr + batch * row_size_ * col_size_;
@@ -109,26 +105,10 @@ bool EigCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
 }
 
 std::vector<std::pair<KernelAttr, EigCpuKernelMod::EigFunc>> EigCpuKernelMod::func_list_ = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeComplex64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   &EigCpuKernelMod::LaunchKernel<float, float_complex>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeComplex128)
-     .AddOutputAttr(kNumberTypeComplex128),
-   &EigCpuKernelMod::LaunchKernel<double, double_complex>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddOutputAttr(kNumberTypeComplex64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   &EigCpuKernelMod::LaunchKernel<float_complex, float_complex>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddOutputAttr(kNumberTypeComplex128)
-     .AddOutputAttr(kNumberTypeComplex128),
-   &EigCpuKernelMod::LaunchKernel<double_complex, double_complex>}};
+  {EIG_KERNEL_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeComplex64, float, float_complex)},
+  {EIG_KERNEL_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeComplex128, double, double_complex)},
+  {EIG_KERNEL_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeComplex64, float_complex, float_complex)},
+  {EIG_KERNEL_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeComplex128, double_complex, double_complex)}};
 
 std::vector<KernelAttr> EigCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

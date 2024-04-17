@@ -1,0 +1,18 @@
+#operator tile
+tile:
+    args:
+        input:
+            dtype: tensor
+        dims:
+            dtype: tuple[int]
+            type_cast: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        disable: True
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: TileAscend

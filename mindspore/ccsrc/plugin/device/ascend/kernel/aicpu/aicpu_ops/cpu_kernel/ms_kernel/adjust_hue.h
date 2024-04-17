@@ -18,7 +18,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ADJUST_HUE_H_
 #define AICPU_KERNELS_NORMALIZED_ADJUST_HUE_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 struct ComputeOptions {
@@ -49,9 +49,9 @@ class AdjustHueCpuKernel final : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx, const ComputeOptions &options);
+  uint32_t DoCompute(CpuKernelContext &ctx, const ComputeOptions &options);
   template <typename T>
-  uint32_t DoComputeHalf(const CpuKernelContext &ctx, const ComputeOptions &options);
+  uint32_t DoComputeHalf(CpuKernelContext &ctx, const ComputeOptions &options);
 };
 }  // namespace aicpu
 #endif

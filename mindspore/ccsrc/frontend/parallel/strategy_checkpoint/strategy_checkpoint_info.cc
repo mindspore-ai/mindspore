@@ -16,7 +16,6 @@
 
 #include "frontend/parallel/strategy_checkpoint/strategy_checkpoint_info.h"
 
-#include <fstream>
 #include <vector>
 #include <utility>
 

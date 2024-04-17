@@ -1,0 +1,17 @@
+#operator bias_add
+bias_add:
+    args:
+        input_x:
+            dtype: tensor
+        bias:
+            dtype: tensor
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    function:
+        disable: True
+    returns:
+        output:
+            dtype: tensor

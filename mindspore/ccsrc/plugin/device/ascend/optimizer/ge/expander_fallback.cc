@@ -19,15 +19,25 @@
 #include "backend/common/expander/fallback/expander_fallback.h"
 #include "include/transform/graph_ir/utils.h"
 #include "backend/common/graph_kernel/value_graph_binder.h"
+#include "include/backend/device_type.h"
+#include "include/backend/kernel_graph.h"
+#include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 
 namespace mindspore {
 namespace opt {
 bool ExpanderFallback::Run(const FuncGraphPtr &graph) {
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto is_kbk = kernel_graph->RunMode() == device::RunMode::kKernelMode;
+
+  auto IsEnableAclnn = [&is_kbk](const AnfNodePtr &node) { return is_kbk && kernel::IsRegisteredAclnnOp(node); };
+  auto IsRegisteredAdapter = [](const AnfNodePtr &node) { return transform::ConvertCheck(node); };
+
   bool changed = false;
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
-    if (!transform::ConvertCheck(node)) {
+    if (!(IsRegisteredAdapter(node) || IsEnableAclnn(node))) {
       auto f = [](const CNodePtr &n) { return true; };
       changed = expander::TryExpandCNode(node, f) || changed;
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifndef ENABLE_ANDROID
@@ -59,21 +60,33 @@ class DATASET_API TensorShape {
 
   /// \brief Create a Shape from an initialization list (e.g., TensorShape s = {2,2}).
   ///     If one of the dims is set to DIM_UNKNOWN, the shape will flagged as unKnown
-  /// \param[in] list
-  explicit TensorShape(const std::initializer_list<dsize_t> &list);
+  /// \param[in] list Length list of each axis.
+  TensorShape(const std::initializer_list<dsize_t> &list);
 
   /// \brief Create a Shape from a vector (e.g., TensorShape s = std::vector<dsize_t>({2,2}) ).
   ///     If one of the dims is set to DIM_UNKNOWN, the shape will flagged as unKnown
   /// \param[in] list
   explicit TensorShape(const std::vector<dsize_t> &list);
 
-  /// \brief Copy constructor
-  /// \param[in] shape
+  /// \brief Copy constructor.
+  /// \param[in] shape TensorShape to copy from.
   TensorShape(const TensorShape &shape);
 
+  /// \brief Move constructor.
+  /// \param[in] shape TensorShape to copy from.
+  TensorShape(TensorShape &&shape) noexcept;
+
+  /// \brief Copy assignment.
+  /// \param[in] shape TensorShape to move from.
+  TensorShape &operator=(const TensorShape &shape);
+
+  /// \brief Move assignment.
+  /// \param[in] shape TensorShape to move from.
+  TensorShape &operator=(TensorShape &&shape) noexcept;
+
 #ifdef ENABLE_PYTHON
-  /// \brief construct a TensorShape via a python list
-  /// \param[in] py::list l - a list object from python
+  /// \brief Construct a TensorShape via a python list.
+  /// \param[in] l A py::list of the shape.
   explicit TensorShape(py::list l);
 #endif
 
@@ -81,7 +94,10 @@ class DATASET_API TensorShape {
 
   /// \brief Create a scalar Shape (i.e., empty shape with mKnown = true)
   /// \return TensorShape
-  static TensorShape CreateScalar() { return TensorShape({}); }
+  static TensorShape CreateScalar() {
+    static std::vector<dsize_t> empty_shape{};
+    return TensorShape(empty_shape);
+  }
 
   /// \brief Create a shape with an unknown rank.
   /// \return TensorShape
@@ -182,12 +198,12 @@ class DATASET_API TensorShape {
   Status ToFlatIndex(const std::vector<dsize_t> &index, dsize_t *flat_index) const;
 
  private:
+  // Vector to keep the dims of the shape.
+  std::vector<dsize_t> raw_shape_;
+  // Vector to keep the strides of the shape. The size is rank+1
+  std::vector<dsize_t> strides_;
   // True if known and valid shape, false otherwise
   bool known_;
-  // Vector to keep the dims of the shape.
-  std::vector<dsize_t, IntAlloc> raw_shape_;
-  // Vector to keep the strides of the shape. The size is rank+1
-  std::vector<dsize_t, IntAlloc> strides_;
 
   /// \brief Internal utility function to iterate over a list,
   ///     check if the dim is valid and then insert it into the shape.

@@ -188,7 +188,7 @@ void BindAndInitCacheTensor(const ParamMap &param_pair_list, const ParameterPtr 
     // init cache tensor data
     auto host_shape = host_tensor->shape_c();
     auto cache_shape = cache_tensor->shape_c();
-    if (host_shape.size() != 2 && host_shape.size() != 2 && host_shape[1] != cache_shape[1]) {
+    if (host_shape.size() != 2 && cache_shape.size() != 2 && host_shape[1] != cache_shape[1]) {
       MS_LOG(EXCEPTION) << "Got host shape and cache shape invalid."
                         << "host shape:" << host_shape << ", cache shape:" << cache_shape;
     }
@@ -662,7 +662,7 @@ void CacheEmbeddingForTrain(const FuncGraphPtr &graph, bool is_pipe, const CNode
   if (!IsPrimitiveCNode(return_node, prim::kPrimReturn)) {
     MS_LOG(EXCEPTION) << "The last cnode after sorting, not return cnode.";
   }
-  if (return_node->inputs().size() < 2) {
+  if (return_node->size() < 2) {
     MS_LOG(EXCEPTION) << "Number of return node inputs should be greater than or equal to 2.";
   }
 

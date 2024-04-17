@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <cmath>
 #include <string>
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 
 namespace aicpu {
 // Defines functions for different types of sampling kernels.

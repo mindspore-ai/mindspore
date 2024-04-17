@@ -20,6 +20,7 @@
 #include "plugin/device/cpu/kernel/apply_adadelta_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/intrinsics/ms_simd_instructions.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,12 +33,11 @@ constexpr size_t kRhoIndex = 4;
 constexpr size_t kEpsilonIndex = 5;
 constexpr size_t kGradIndex = 6;
 
-bool ApplyAdadeltaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+bool ApplyAdadeltaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = ops::get_batch_rank(primitive_);
 
-  auto input_type_id = inputs[0]->GetDtype();
+  auto input_type_id = inputs[0]->dtype_id();
   if (input_type_id != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "',  does not support " << TypeIdToString(input_type_id);
     return false;
@@ -47,7 +47,7 @@ bool ApplyAdadeltaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int ApplyAdadeltaCpuKernelMod::CheckInputShape(const std::vector<KernelTensorPtr> &inputs) {
+int ApplyAdadeltaCpuKernelMod::CheckInputShape(const std::vector<KernelTensor *> &inputs) {
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
   std::vector<int64_t> accum_shape = inputs[kAccumIndex]->GetShapeVector();
   std::vector<int64_t> accum_update_shape = inputs[kAccumUpdateIndex]->GetShapeVector();
@@ -99,17 +99,13 @@ int ApplyAdadeltaCpuKernelMod::CheckShapeSize(std::vector<int64_t> var_shape, st
   return KRET_OK;
 }
 
-int ApplyAdadeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyAdadeltaCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  if (input_size_list_.size() != kApplyAdadeltaInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 7.";
-    return KRET_RESIZE_FAILED;
-  }
+
   ret = CheckInputShape(inputs);
   if (ret != KRET_OK) {
     return ret;
@@ -134,17 +130,17 @@ int ApplyAdadeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return ret;
 }
 
-bool ApplyAdadeltaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &) {
+bool ApplyAdadeltaCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdadeltaInputsNum, kernel_name_);
-  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
-  auto accum = reinterpret_cast<float *>(inputs[kAccumIndex]->addr);
-  auto accum_update = reinterpret_cast<float *>(inputs[kAccumUpdateIndex]->addr);
-  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr);
-  auto rho = reinterpret_cast<float *>(inputs[kRhoIndex]->addr);
-  auto epsilon = reinterpret_cast<float *>(inputs[kEpsilonIndex]->addr);
-  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
+  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->device_ptr());
+  auto accum = reinterpret_cast<float *>(inputs[kAccumIndex]->device_ptr());
+  auto accum_update = reinterpret_cast<float *>(inputs[kAccumUpdateIndex]->device_ptr());
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->device_ptr());
+  auto rho = reinterpret_cast<float *>(inputs[kRhoIndex]->device_ptr());
+  auto epsilon = reinterpret_cast<float *>(inputs[kEpsilonIndex]->device_ptr());
+  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->device_ptr());
 
   for (int64_t b = 0; b < batch_size_; b++) {
     auto task = [&](size_t start, size_t end) {

@@ -35,24 +35,26 @@ class FractionalAvgPoolGradCpuKernelMod : public NativeCpuKernelMod {
   FractionalAvgPoolGradCpuKernelMod() : kernel_func_(nullptr) {}
   ~FractionalAvgPoolGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
  protected:
-  void SyncOutputShape() override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool FractionalAvgPoolGradLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool FractionalAvgPoolGradLaunch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs);
   template <typename T>
   void FractionalAvgPoolGradCompute(
     const int64_t out_cols, const int64_t *col_seq, const int64_t height_start, int64_t height_end, int64_t b,
@@ -60,8 +62,8 @@ class FractionalAvgPoolGradCpuKernelMod : public NativeCpuKernelMod {
     const Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> &out_backprop_mat,
     Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> in_backprop_tensor_temp_mat);
   using FractionalAvgPoolGradFunc =
-    std::function<bool(FractionalAvgPoolGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(FractionalAvgPoolGradCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, FractionalAvgPoolGradFunc>> func_list_;
   FractionalAvgPoolGradFunc kernel_func_;
   std::vector<int64_t> orig_input_shape_;

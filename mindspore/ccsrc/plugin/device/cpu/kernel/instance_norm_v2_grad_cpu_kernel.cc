@@ -25,8 +25,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr auto kInstanceNormV2GradInputsNum = 7;
-constexpr auto kInstanceNormV2GradOutputNum = 3;
 // GRAIN_SIZE for Parallel
 constexpr size_t kGrainSize = 4 * 1024;
 constexpr float float_init_zero = 0.0;
@@ -34,18 +32,20 @@ constexpr float float_init_one = 1.0;
 constexpr double double_init_zero = 0.0;
 }  // namespace
 
-void InstanceNormV2GradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  in_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kIndex0);
-  std::vector<int64_t> dy_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  std::vector<int64_t> batch_channels_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
+int InstanceNormV2GradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  in_type_ = inputs[kIndex0]->dtype_id();
+  std::vector<int64_t> dy_shape_ = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> batch_channels_ = inputs[kIndex2]->GetShapeVector();
   if (dy_shape_.size() != kDim4 && dy_shape_.size() != kDim5) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'dy' should be 4D or 5D, but got "
                              << dy_shape_.size() << "D.";
   }
-  is_training_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kAttrIsTraining);
-  epsilon_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, kAttrEpsilon);
+  is_training_ = GetValue<bool>(primitive_->GetAttr(kAttrIsTraining));
+  epsilon_ = GetValue<float>(primitive_->GetAttr(kAttrEpsilon));
   dy_is_4d_ = (dy_shape_.size() == kDim4);
   // Format NCHW could be considered as a situation of format NC1HWC0 when C0 = 1.
   if (dy_is_4d_) {
@@ -59,14 +59,12 @@ void InstanceNormV2GradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   // consider (N, C1, C0) as (N*C1, C0), similar to (N, C)
   batch_channels_2d_ = {batch_channels_[kIndex0] * batch_channels_[kIndex1], batch_channels_[kIndex4]};
   instance_num = CPUKernelUtils::CalcElementNum(batch_channels_2d_);
+  return KRET_OK;
 }
 
-bool InstanceNormV2GradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInstanceNormV2GradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInstanceNormV2GradOutputNum, kernel_name_);
-
+bool InstanceNormV2GradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   bool res = false;
   switch (in_type_) {
     case kNumberTypeFloat16:
@@ -83,23 +81,23 @@ bool InstanceNormV2GradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
 }
 
 template <typename T>
-bool InstanceNormV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool InstanceNormV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   const int64_t batch = dy_shape_4d_[kIndex0];
   const int64_t channel = dy_shape_4d_[kIndex3];
   const int64_t image_size = dy_shape_4d_[kIndex1] * dy_shape_4d_[kIndex2];
   std::vector<int64_t> dy_shape_3d_ = {batch, image_size, channel};
-  auto dy_3d = EigenTensor(dy_shape_3d_, inputs[kIndex0]->addr).tensor<T, kDim3>();
-  auto in_x_3d = EigenTensor(dy_shape_3d_, inputs[kIndex1]->addr).tensor<T, kDim3>();
-  auto weight_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex2]->addr).matrix<float>();
-  auto running_mean_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex3]->addr).matrix<float>();
-  auto running_var_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex4]->addr).matrix<float>();
-  auto save_mean_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex5]->addr).matrix<float>();
-  auto save_invstd_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex6]->addr).matrix<float>();
+  auto dy_3d = EigenTensor(dy_shape_3d_, inputs[kIndex0]->device_ptr()).tensor<T, kDim3>();
+  auto in_x_3d = EigenTensor(dy_shape_3d_, inputs[kIndex1]->device_ptr()).tensor<T, kDim3>();
+  auto weight_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex2]->device_ptr()).matrix<float>();
+  auto running_mean_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex3]->device_ptr()).matrix<float>();
+  auto running_var_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex4]->device_ptr()).matrix<float>();
+  auto save_mean_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex5]->device_ptr()).matrix<float>();
+  auto save_invstd_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex6]->device_ptr()).matrix<float>();
 
-  auto dx_3d = EigenTensor(dy_shape_3d_, outputs[kIndex0]->addr).tensor<T, kDim3>();
-  auto grad_weight_matrix = EigenTensor(batch_channels_2d_, outputs[kIndex1]->addr).matrix<float>();
-  auto grad_bias_matrix = EigenTensor(batch_channels_2d_, outputs[kIndex2]->addr).matrix<float>();
+  auto dx_3d = EigenTensor(dy_shape_3d_, outputs[kIndex0]->device_ptr()).tensor<T, kDim3>();
+  auto grad_weight_matrix = EigenTensor(batch_channels_2d_, outputs[kIndex1]->device_ptr()).matrix<float>();
+  auto grad_bias_matrix = EigenTensor(batch_channels_2d_, outputs[kIndex2]->device_ptr()).matrix<float>();
 
   auto loop_batch = [&](int64_t begin, int64_t end) {
     for (int64_t idx = begin; idx < end; ++idx) {

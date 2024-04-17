@@ -24,7 +24,7 @@ namespace opt {
 class AdjustPrintForGe : public PatternProcessPass {
  public:
   explicit AdjustPrintForGe(bool multigraph = true)
-      : PatternProcessPass("convert_print_input_to_maketuple", multigraph) {}
+      : PatternProcessPass("print_insert_placeholder_for_tensor_name", multigraph) {}
   ~AdjustPrintForGe() override = default;
 
   const BaseRef DefinePattern() const override;

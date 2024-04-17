@@ -50,15 +50,11 @@ class NthElementHelperGpuKernel : public GpuKernelHelperBase {
 
     input_shape_ = input_shapes[0];
     input_n_shape_ = input_shapes[1];
-    int32_t last_dim_num = input_shape_[static_cast<int64_t>(input_shape_.size() - 1)];
     int64_t outer_size = 1;
     for (int64_t i = 0; i < static_cast<int64_t>(input_shape_.size() - 1); i++) {
       outer_size *= input_shape_[i];
     }
-    int64_t inner_size = outer_size * last_dim_num;
-    int64_t inner_n_size = 1;
-    input_size_list_.emplace_back(inner_size * sizeof(T));
-    input_size_list_.emplace_back(inner_n_size * sizeof(int32_t));
+
     output_size_list_.emplace_back(outer_size * sizeof(T));
     return CheckKernelParam();
   }

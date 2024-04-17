@@ -255,7 +255,6 @@ getCommonFile() {
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/errorcode.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/common_func.h
-    mindspore/lite/src/expression/ops_utils.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c_utils.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensorlist_c.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensorlist_c_utils.h
@@ -315,7 +314,6 @@ getCommonFile() {
     mindspore/lite/src/litert/kernel/cpu/fp32/shape_fusion_fp32.cc
     mindspore/core/utils/status.cc
     mindspore/core/utils/log_adapter.cc
-    mindspore/lite/src/expression/ops_utils.cc
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel.c
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c_utils.c
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensorlist_c_utils.c

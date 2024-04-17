@@ -1,0 +1,22 @@
+#operator decoder_k_v_cache
+decoder_k_v_cache:
+  args:
+    cache:
+      dtype: tensor
+    update:
+      dtype: tensor
+    valid_seq_len:
+      dtype: tensor
+    batch_index:
+      dtype: tensor
+    seq_len_axis:
+      dtype: tensor
+    new_max_seq_len:
+      dtype: tensor
+    cur_max_seq_len:
+      dtype: tensor
+  labels:
+    side_effect_mem: True
+  returns:
+    out:
+      dtype: tensor

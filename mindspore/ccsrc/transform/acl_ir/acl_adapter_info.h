@@ -25,10 +25,13 @@
 #include "utils/hash_map.h"
 #include "include/transform/graph_ir/types.h"
 #include "mindapi/base/shape_vector.h"
+#include "kernel/kernel.h"
 
 namespace mindspore {
 namespace transform {
 using AclFormatSelector = std::function<std::string(TypeId, const std::vector<ShapeVector> &shape)>;
+using KernelTensor = mindspore::kernel::KernelTensor;
+using AclCheckSkipSelector = std::function<bool(const std::vector<KernelTensor *> &inputs)>;
 
 struct AclSpecialInfo {
   std::vector<std::string> ori_format{};
@@ -69,6 +72,11 @@ class AclAdapterInfo {
     return *this;
   }
 
+  AclAdapterInfo &InputCheckSelector(const AclCheckSkipSelector &selector) {
+    input_check_selector_ = selector;
+    return *this;
+  }
+
   AclAdapterInfo &set_is_3d_ops() {
     is_3d_ops_ = true;
     return *this;
@@ -85,6 +93,7 @@ class AclAdapterInfo {
   }
 
   AclAdapterInfo &set_run_mode(bool is_dynamic) {
+    set_dynamic_mode = true;
     is_dynamic_ = is_dynamic;
     return *this;
   }
@@ -104,6 +113,11 @@ class AclAdapterInfo {
     return *this;
   }
 
+  AclAdapterInfo &set_complex_parallel_concerned() {
+    is_complex_parallel_concerned_ = true;
+    return *this;
+  }
+
   const std::map<size_t, AclSpecialInfo> &inputs() const { return input_info_; }
   bool no_special_outputs() const { return (output_info_.empty() && output_index_info_.empty()); }
   std::string output_format(size_t index, const std::vector<std::string> &input_formats) const;
@@ -111,12 +125,14 @@ class AclAdapterInfo {
   const bool &is_3d() const { return is_3d_ops_; }
   const bool &is_need_pad_no_shape() const { return is_need_pad_no_shape_; }
   const bool &is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
-  const bool &is_dynamic() const { return is_dynamic_; }
+  const bool &is_dynamic(bool is_dynamic) const { return set_dynamic_mode ? is_dynamic_ : is_dynamic; }
   const bool &is_const_input() const { return is_const_input_; }
+  const bool &is_complex_parallel_concerned() const { return is_complex_parallel_concerned_; }
   const AclPrecisionMode &precision_mode() const { return precision_mode_; }
   const std::vector<ge::DataType> &extra_supported_datatype() const { return extra_supported_datatype_; }
   const std::map<size_t, AclFormatSelector> &input_selector() const { return input_selector_; }
   const AclFormatSelector &output_selector() const { return output_selector_; }
+  const AclCheckSkipSelector &input_check_selector() const { return input_check_selector_; }
 
  private:
   std::string SelectFormatFromIndex(size_t index, const std::vector<std::string> &input_formats) const;
@@ -125,14 +141,17 @@ class AclAdapterInfo {
   bool is_3d_ops_{false};
   bool is_need_pad_no_shape_{false};
   bool is_need_retrieve_output_shape_{false};
+  bool set_dynamic_mode{false};
   bool is_dynamic_{true};
   bool is_const_input_{false};
-  AclPrecisionMode precision_mode_{ALLOW_FP32_TO_FP16};  // 910 default mix precision.
+  bool is_complex_parallel_concerned_{false};
+  AclPrecisionMode precision_mode_{DEFAULT_MODE};
   std::map<size_t, AclSpecialInfo> input_info_{};
   std::map<size_t, std::vector<std::string>> output_info_{};
   std::map<size_t, size_t> output_index_info_{};
   std::vector<ge::DataType> extra_supported_datatype_{};
   std::map<size_t, AclFormatSelector> input_selector_{};
+  AclCheckSkipSelector input_check_selector_{nullptr};
   AclFormatSelector output_selector_{nullptr};
 };
 

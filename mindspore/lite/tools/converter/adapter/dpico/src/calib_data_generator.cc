@@ -253,7 +253,7 @@ int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::
       dump_op_info.output_index = 0;
       if (CheckPrimitiveType(node, api::MakeShared<ops::TupleGetItem>())) {
         auto tuple_get_item_cnode = node->cast<api::CNodePtr>();
-        if (tuple_get_item_cnode == nullptr || tuple_get_item_cnode->inputs().size() < kInputIndex2) {
+        if (tuple_get_item_cnode == nullptr || tuple_get_item_cnode->size() < kInputIndex2) {
           MS_LOG(ERROR) << "tuple_get_item_node is invalid. " << node->fullname_with_scope();
           return RET_ERROR;
         }

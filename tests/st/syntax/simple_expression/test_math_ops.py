@@ -44,15 +44,12 @@ def test_number_add_number():
     Description: test add operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="For 'Add', the element of 'x' must be one of Tensor"):
-        input_x = 0.1
-        input_y = -3.2
-        result1 = input_x + input_y
-        add_net = Add()
-        result2 = add_net(input_x, input_y)
-        expect = -3.1
-        assert result1 == expect
-        assert result2 == expect
+    input_x = 0.1
+    input_y = -3.2
+    result1 = input_x + input_y
+    add_net = Add()
+    result2 = add_net(input_x, input_y)
+    assert np.allclose(result1, result2.asnumpy(), 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -76,7 +73,7 @@ def test_tensor_add_tensor_int8():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -97,7 +94,7 @@ def test_tensor_add_tensor_int16():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -139,7 +136,7 @@ def test_tensor_add_tensor_int64():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -217,7 +214,7 @@ def test_tensor_add_tensor_uint64():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -238,7 +235,7 @@ def test_tensor_add_tensor_float16():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -259,7 +256,7 @@ def test_tensor_add_tensor_float32():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -280,7 +277,7 @@ def test_tensor_add_tensor_float64():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -333,7 +330,7 @@ def test_tuple_add_tuple_shape():
     Description: test add operator.
     Expectation: No exception
     """
-    with pytest.raises(ValueError, match="For 'Add', x.shape and y.shape need to broadcast."):
+    with pytest.raises(ValueError):
         input_x = (Tensor(np.ones(shape=[3])).astype(np.float32))
         input_y = (Tensor(np.ones(shape=[4])).astype(np.float32) * 2)
 
@@ -345,7 +342,7 @@ def test_tuple_add_tuple_shape():
         assert np.all(result2.asnumpy() == expect.astype(np.float32))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -363,7 +360,7 @@ def test_string_add_string():
     assert result == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -391,7 +388,7 @@ class Sub(nn.Cell):
         return z
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -434,7 +431,7 @@ def test_tensor_sub_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -497,23 +494,15 @@ def test_number_mul_number():
     Description: test mul operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="For 'Mul', the element of 'x' must be one of Tensor"):
-        input_x = 4.91
-        input_y = 0.16
-        result1 = input_x * input_y
-        mul_net = Mul()
-        result2 = mul_net(input_x, input_y)
-        expect = 0.7856
-        diff1 = result1 - expect
-        diff2 = result2 - expect
-        error = 1.0e-6
-        assert np.all(diff1 < error)
-        assert np.all(-diff1 < error)
-        assert np.all(diff2 < error)
-        assert np.all(-diff2 < error)
+    input_x = 4.91
+    input_y = 0.16
+    result1 = input_x * input_y
+    mul_net = Mul()
+    result2 = mul_net(input_x, input_y)
+    assert np.allclose(result1, result2.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -534,7 +523,7 @@ def test_tensor_mul_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -555,7 +544,7 @@ def test_tensor_mul_number():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -586,7 +575,7 @@ class Div(nn.Cell):
         return z
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -597,16 +586,13 @@ def test_number_div_number():
     Description: test div operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError) as err:
-        input_x = 4
-        input_y = -1
-        result1 = input_x / input_y
-        div_net = Div()
-        result2 = div_net(input_x, input_y)
-        expect = -4
-        assert np.all(result1 == expect)
-        assert np.all(result2 == expect)
-    assert "The primitive[Div]'s input arguments[x] must be Tensor, but got Int64" in str(err)
+    input_x = 4
+    input_y = -1
+    result1 = input_x / input_y
+    div_net = Div()
+    result2 = div_net(input_x, input_y)
+    assert np.allclose(result1, result2.asnumpy(), 0.00001, 0.00001)
+
 
 
 @pytest.mark.level1
@@ -630,7 +616,7 @@ def test_tensor_div_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -647,8 +633,8 @@ def test_tensor_div_number():
     div_net = Div()
     result2 = div_net(input_x, input_y)
     expect = Tensor(np.array([[1, 1], [1.5, 1.5]]))
-    assert np.all(result1.asnumpy() == expect.asnumpy())
-    assert np.all(result2.asnumpy() == expect.asnumpy())
+    assert np.allclose(result1.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
+    assert np.allclose(result2.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -668,8 +654,8 @@ def test_number_div_tensor():
     div_net = Div()
     result2 = div_net(input_x, input_y)
     expect = Tensor(np.array([[1, 1], [0.5, 0.5]])).astype(np.float32)
-    assert np.all(result1.asnumpy() == expect.asnumpy())
-    assert np.all(result2.asnumpy() == expect.asnumpy())
+    assert np.allclose(result1.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
+    assert np.allclose(result2.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
 
 
 class Mod(nn.Cell):
@@ -682,7 +668,7 @@ class Mod(nn.Cell):
         return z
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -704,7 +690,7 @@ def test_number_mod_number():
         assert np.all(result2 == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -725,7 +711,7 @@ def test_tensor_mod_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -746,7 +732,7 @@ def test_tensor_mod_number():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -777,30 +763,7 @@ class Pow(nn.Cell):
         return z
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_number_pow_number():
-    """
-    Feature: simple expression
-    Description: test pow operator.
-    Expectation: No exception
-    """
-    with pytest.raises(TypeError) as err:
-        input_x = 2
-        input_y = 5
-        result1 = input_x ** input_y
-        pow_net = Pow()
-        result2 = pow_net(input_x, input_y)
-        expect = 32
-        assert np.all(result1 == expect)
-        assert np.all(result2 == expect)
-    assert "The primitive[Pow]'s input arguments[x1, x2] must be all tensor and those type must be same." in str(err)
-
-
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -821,7 +784,7 @@ def test_tensor_pow_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -857,8 +820,8 @@ def test_number_pow_tensor():
     pow_net = Pow()
     result2 = pow_net(input_x, input_y)
     expect = Tensor(np.array([[9, 9], [81, 81]])).astype(np.float32)
-    assert np.all(result1.asnumpy() == expect.asnumpy())
-    assert np.all(result2.asnumpy() == expect.asnumpy())
+    assert np.allclose(result1.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
+    assert np.allclose(result2.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
 
 
 class FloorDiv(nn.Cell):
@@ -882,18 +845,15 @@ def test_number_floordiv_number():
     Description: test floordiv operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="For FloorDiv, one of the inputs must be tensor type but got Int64 and Int64"):
-        input_x = 2
-        input_y = 5
-        result1 = input_x // input_y
-        floordiv_net = FloorDiv()
-        result2 = floordiv_net(input_x, input_y)
-        expect = 0
-        assert np.all(result1 == expect)
-        assert np.all(result2 == expect)
+    input_x = 2
+    input_y = 5
+    result1 = input_x // input_y
+    floordiv_net = FloorDiv()
+    result2 = floordiv_net(input_x, input_y)
+    assert result2.asnumpy() == result1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -914,7 +874,7 @@ def test_tensor_floordiv_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -935,7 +895,7 @@ def test_tensor_floordiv_number():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -977,15 +937,12 @@ def test_number_floormod_number():
     Description: test floormod operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="must be all tensor and those type must be same."):
-        input_x = 2
-        input_y = 5
-        result1 = input_x % input_y
-        floormod_net = FloorMod()
-        result2 = floormod_net(input_x, input_y)
-        expect = 2
-        assert np.all(result1 == expect)
-        assert np.all(result2 == expect)
+    input_x = 2
+    input_y = 5
+    result1 = input_x % input_y
+    floormod_net = FloorMod()
+    result2 = floormod_net(input_x, input_y)
+    assert result1 == result2
 
 
 @pytest.mark.level1
@@ -1009,7 +966,7 @@ def test_tensor_floormod_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1030,7 +987,7 @@ def test_tensor_floormod_number():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

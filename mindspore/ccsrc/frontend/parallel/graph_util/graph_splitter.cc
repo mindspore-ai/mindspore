@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -537,7 +537,7 @@ std::map<AnfNodePtr, AnfNodePtrSet> FilterDependencyToTargetNode(const FuncGraph
         (void)depend_matrix[node].insert(depend_matrix[input].begin(), depend_matrix[input].end());
       }
       // If input itself is in target nodes set, insert it as well.
-      if (target_nodes.count(input) != 0) {
+      if (target_nodes.contains(input)) {
         (void)depend_matrix[node].insert(input);
       }
     }
@@ -551,14 +551,14 @@ AnfNodePtrSet UpdateDependedSet(const AnfNodePtr &new_node, const AnfNodePtrSet 
   bool is_independent = true;
   for (const auto &stored_node : old_depended_set) {
     // If 'new_node' is already depended on by 'stored_node', no need to add 'new_node'.
-    if (node_dependency.count(stored_node) != 0 && node_dependency.at(stored_node).count(new_node) != 0) {
+    if (node_dependency.count(stored_node) != 0 && node_dependency.at(stored_node).contains(new_node)) {
       MS_LOG(DEBUG) << "Old node " << stored_node->fullname_with_scope() << " depends on "
                     << new_node->fullname_with_scope() << ". Do not update.";
       is_independent = false;
       break;
     }
     // If 'new_node' depends on 'stored_node', replace 'stored_node' with 'new_node' to keep minimal dependency.
-    if (node_dependency.count(new_node) != 0 && node_dependency.at(new_node).count(stored_node) != 0) {
+    if (node_dependency.count(new_node) != 0 && node_dependency.at(new_node).contains(stored_node)) {
       MS_LOG(DEBUG) << "Replace old node " << stored_node->fullname_with_scope() << " with new node "
                     << new_node->fullname_with_scope();
       (void)updated.erase(stored_node);
@@ -921,6 +921,15 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
   // Step 2: Create the new node.
   auto new_node_prim = NewValueNode(std::make_shared<Primitive>(many_to_one_node_name));
   (void)new_node_inputs.insert(new_node_inputs.cbegin(), new_node_prim);
+  if (many_to_one_node_name == kConcatOpName) {
+    // Create axis input for concat.
+    auto axis_value = MakeValue(0L);
+    MS_EXCEPTION_IF_NULL(axis_value);
+    auto axis_value_node = NewValueNode(axis_value);
+    MS_EXCEPTION_IF_NULL(axis_value_node);
+    axis_value_node->set_abstract(axis_value->ToAbstract());
+    (void)new_node_inputs.insert(new_node_inputs.cend(), axis_value_node);
+  }
 
   auto new_node = func_graph_->NewCNode(new_node_inputs);
   MS_EXCEPTION_IF_NULL(new_node);
@@ -939,10 +948,6 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
     new_shape[0] = new_shape[0] * static_cast<int64_t>(total_inputs_number);
     new_abs->shape()->set_shape(new_shape);
     new_node->set_abstract(new_abs);
-
-    // Concat node must have attribute "axis" or kernel building will fail.
-    size_t axis_index = 0;
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(UlongToLong(axis_index)), new_node);
   } else if (many_to_one_node_name == kMakeTupleOpName) {
     AbstractBasePtrList abstract_list;
     auto first_input = new_node_inputs.begin();
@@ -1069,7 +1074,7 @@ CNodePtr ParameterServerMode::FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_
   std::string fused_inter_process_edge_name = "";
   for (const auto &send_node : rpc_send_nodes) {
     MS_EXCEPTION_IF_NULL(send_node);
-    for (size_t i = 1; i < send_node->inputs().size(); i++) {
+    for (size_t i = 1; i < send_node->size(); i++) {
       auto input_i = send_node->inputs()[i];
       MS_EXCEPTION_IF_NULL(input_i);
       // If the input of send is monad, do not pass it to fused send node.
@@ -1102,7 +1107,7 @@ CNodePtr ParameterServerMode::FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_
   std::string fused_inter_process_edge_name = "";
   for (const auto &recv_node : rpc_recv_nodes) {
     MS_EXCEPTION_IF_NULL(recv_node);
-    for (size_t i = 1; i < recv_node->inputs().size(); i++) {
+    for (size_t i = 1; i < recv_node->size(); i++) {
       auto input_i = recv_node->inputs()[i];
       MS_EXCEPTION_IF_NULL(input_i);
       // If the input of recv is monad, do not pass it to fused recv node.
@@ -1693,8 +1698,8 @@ void GraphSplitter::EliminateDataSyncNode() {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kDataSyncSrcOpName) {
-      if (cnode->inputs().size() != kSizeThree) {
-        MS_LOG(EXCEPTION) << "Node DataSyncSrc's input number should be 3, but got " << cnode->inputs().size();
+      if (cnode->size() != kSizeThree) {
+        MS_LOG(EXCEPTION) << "Node DataSyncSrc's input number should be 3, but got " << cnode->size();
       }
       // The first input is parameter and the second input is side effect node.
       auto param_node = cnode->inputs()[kIndex1];
@@ -1716,8 +1721,8 @@ void GraphSplitter::EliminateDataSyncNode() {
       load_node_replace_data_sync_src->set_abstract(cnode->abstract());
       (void)func_graph_->manager()->Replace(cnode, load_node_replace_data_sync_src);
     } else if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kDataSyncDstOpName) {
-      if (cnode->inputs().size() != kSizeTwo) {
-        MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->inputs().size();
+      if (cnode->size() != kSizeTwo) {
+        MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->size();
       }
       auto input_node = cnode->inputs()[kIndex1];
       MS_EXCEPTION_IF_NULL(input_node);
@@ -1749,8 +1754,8 @@ void GraphSplitter::EliminateControlEdgeNode() {
       MS_EXCEPTION_IF_NULL(fake_value_node);
       (void)func_graph_->manager()->Replace(cnode, fake_value_node);
     } else if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kControlDstOpName) {
-      if (cnode->inputs().size() != kSizeTwo) {
-        MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->inputs().size();
+      if (cnode->size() != kSizeTwo) {
+        MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->size();
       }
       auto input_node = cnode->inputs()[kIndex1];
       MS_EXCEPTION_IF_NULL(input_node);
@@ -1809,7 +1814,7 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOpsForNodeInputs(cons
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   InterProcessOpEdgesInfo comm_edges;
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_i = cnode->inputs()[i];
     MS_EXCEPTION_IF_NULL(input_i);
 
@@ -1885,7 +1890,7 @@ std::vector<AnfNodePtr> GraphSplitter::FindInterProcessInDegree(const std::vecto
     }
 
     CNodePtr cnode = n->cast<CNodePtr>();
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->size(); i++) {
       auto input_i = cnode->inputs()[i];
       InterProcessOpEdge edge = {input_i, node_labels_[input_i], cnode, node_labels_[cnode]};
       if (comm_edges.count(edge) != 0 && edge.src_label == this_process_label_) {
@@ -2142,7 +2147,7 @@ void GraphSplitter::AddSendRecvDependency(const InterProcessOpEdgesInfo &in_degr
     AnfNodePtrSet depended_nodes;
     for (const auto &send_src_node : send_src_nodes) {
       // Get minimum send src nodes set which have dependencies with RpcRecv node.
-      if (node_dependency.count(recv_dst_node) != 0 && node_dependency.at(recv_dst_node).count(send_src_node) != 0) {
+      if (node_dependency.count(recv_dst_node) != 0 && node_dependency.at(recv_dst_node).contains(send_src_node)) {
         depended_nodes = UpdateDependedSet(send_src_node, depended_nodes, node_dependency);
       }
     }

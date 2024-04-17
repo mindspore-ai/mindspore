@@ -55,10 +55,10 @@ class EltWiseGradCpuTypeFunc : public CpuKernelFunc {
  public:
   EltWiseGradCpuTypeFunc() = default;
   ~EltWiseGradCpuTypeFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
 
  private:
   void ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
@@ -100,6 +100,14 @@ void EltWiseGradCpuTypeFunc<T>::ReluGrad(const T *input1, const T *input2, T *ou
     for (size_t i = start; i < end; i++) {
       out[i] = (input2[i] > T(0)) ? input1[i] : static_cast<T>(0);
     }
+  }
+}
+
+template <>
+void EltWiseGradCpuTypeFunc<bool>::ReluGrad(const bool *input1, const bool *input2, bool *out, size_t start,
+                                            size_t end) const {
+  for (size_t i = start; i < end; i++) {
+    out[i] = input2[i] ? input1[i] : false;
   }
 }
 
@@ -461,9 +469,9 @@ void EltWiseGradCpuTypeFunc<T>::SoftplusGrad(const T *input1, const T *input2, T
 }
 
 template <typename T>
-void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-                                         const std::vector<KernelTensorPtr> &) {
-  kernel_name_ = base_operator->name();
+void EltWiseGradCpuTypeFunc<T>::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &) {
+  kernel_name_ = primitive->name();
   if constexpr (std::is_same_v<T, double>) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
@@ -539,12 +547,23 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, c
     }
     compute_func_ = elt_map.at(kernel_name_);
   }
-  if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>)) {
+  if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
+                (std::is_same_v<T, uint64_t>)) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
       elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCpu does not support " << kernel_name_ << " with uint as input.";
+      MS_LOG(EXCEPTION) << "EltWiseGrad Cpu does not support " << kernel_name_ << " with uint as input.";
+    }
+    compute_func_ = elt_map.at(kernel_name_);
+    return;
+  }
+  if constexpr (std::is_same_v<T, bool>) {
+    static const std::map<std::string,
+                          std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad}};
+    if (elt_map.find(kernel_name_) == elt_map.end()) {
+      MS_LOG(EXCEPTION) << "EltWiseGrad Cpu does not support " << kernel_name_ << " with bool as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
     return;
@@ -571,15 +590,16 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, c
 }
 
 template <typename T>
-bool EltWiseGradCpuTypeFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  const auto input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto input1 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+bool EltWiseGradCpuTypeFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto input0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto input1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   ParallelLaunchAutoSearch(
     std::bind(compute_func_, this, input0, input1, output, std::placeholders::_1, std::placeholders::_2),
-    outputs[0]->size / sizeof(T), this, &parallel_search_info_);
+    outputs[0]->size() / sizeof(T), this, &parallel_search_info_);
   return true;
 }
 
@@ -591,7 +611,9 @@ std::shared_ptr<CpuKernelFunc> SpecializeEltWiseGradFunc() {
 using FuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> kernel_attr_list_map = {
   {kReluGrad,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   {{KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     &SpecializeEltWiseGradFunc<bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      &SpecializeEltWiseGradFunc<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
      &SpecializeEltWiseGradFunc<int16_t>},
@@ -603,6 +625,10 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> ke
      &SpecializeEltWiseGradFunc<uint8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
      &SpecializeEltWiseGradFunc<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &SpecializeEltWiseGradFunc<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &SpecializeEltWiseGradFunc<uint64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      &SpecializeEltWiseGradFunc<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -823,9 +849,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> ke
      &SpecializeEltWiseGradFunc<complex128>}}}};
 }  // namespace
 
-bool EltWiseGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool EltWiseGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto iter = kernel_attr_list_map.find(kernel_name_);
   if (iter == kernel_attr_list_map.end()) {
     MS_LOG(ERROR) << "For 'EltWiseGrad', the kernel name must be in "
@@ -842,14 +867,13 @@ bool EltWiseGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
 
   func_obj_ = kernel_attr_list_map[kernel_name_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int EltWiseGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int EltWiseGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();

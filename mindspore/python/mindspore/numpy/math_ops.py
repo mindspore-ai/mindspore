@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -295,7 +295,7 @@ def add(x1, x2, dtype=None):
     # broadcast is not fully supported in tensor_add on CPU,
     # so we use tensor_sub as a substitute solution
     if _get_device() == 'CPU':
-        return subtract(x1, F.neg_tensor(_to_tensor(x2)), dtype=dtype)
+        return subtract(x1, F.neg(_to_tensor(x2)), dtype=dtype)
     return _apply_tensor_op(F.tensor_add, x1, x2, dtype=dtype)
 
 
@@ -1552,7 +1552,7 @@ def hypot(x1, x2, dtype=None):
         if _get_device() == 'CPU':
             # broadcast is not fully supported in tensor_add on CPU,
             # so we use tensor_sub as a substitute solution
-            return F.sqrt(F.tensor_sub(F.square(x1), F.neg_tensor(F.square(x2))))
+            return F.sqrt(F.tensor_sub(F.square(x1), F.neg(F.square(x2))))
         return F.sqrt(F.tensor_add(F.square(x1), F.square(x2)))
 
     return _apply_tensor_op(_hypot, x1, x2, dtype=dtype)
@@ -1716,7 +1716,7 @@ def fix(x):
         x = F.cast(x, mstype.float32)
     floored = F.floor(x)
     # change to F.ceil once supported on CPU.
-    ceiled = F.neg_tensor(F.floor(F.neg_tensor(x)))
+    ceiled = F.neg(F.floor(F.neg(x)))
     is_neg = F.tensor_lt(x, zeros(F.shape(x), F.dtype(x)))
     return F.select(is_neg, ceiled, floored)
 
@@ -2997,11 +2997,11 @@ def cross(a, b, axisa=- 1, axisb=- 1, axisc=- 1, axis=None):
         cx = F.tensor_sub(_get_slice_product(1, 2), _get_slice_product(2, 1)) # ay*bz - az*by
         cy = F.tensor_sub(_get_slice_product(2, 0), _get_slice_product(0, 2)) # az*bx - ax*bz
     elif a_has_z:
-        cx = F.neg_tensor(_get_slice_product(2, 1)) # -az*by
+        cx = F.neg(_get_slice_product(2, 1)) # -az*by
         cy = _get_slice_product(2, 0)               # az*bx
     else: # b_has_z
         cx = _get_slice_product(1, 2)               # ay*bz
-        cy = F.neg_tensor(_get_slice_product(0, 2)) # -ax*bz
+        cy = F.neg(_get_slice_product(0, 2)) # -ax*bz
     res = _concat((cx, cy, cz)).reshape(shape_out)
     return moveaxis(res, -1, axisc).astype(dtype)
 
@@ -3035,7 +3035,7 @@ def ceil(x, dtype=None):
         >>> print(output)
         [-1. -1. -0.  1.  2.  2.  2.]
     """
-    return _apply_tensor_op(lambda x: F.neg_tensor(F.floor(F.neg_tensor(x.astype(mstype.float32)))),
+    return _apply_tensor_op(lambda x: F.neg(F.floor(F.neg(x.astype(mstype.float32)))),
                             x, dtype=dtype)
 
 
@@ -3080,8 +3080,8 @@ def positive(a, dtype=None):
         [1. -1.]
     """
     _check_input_tensor(a)
-    neg_tensor = F.neg_tensor(a)
-    return _apply_tensor_op(F.neg_tensor, neg_tensor, dtype=dtype)
+    neg_tensor = F.neg(a)
+    return _apply_tensor_op(F.neg, neg_tensor, dtype=dtype)
 
 
 def negative(a, dtype=None):
@@ -3110,7 +3110,7 @@ def negative(a, dtype=None):
         >>> print(output)
         [-1. 1.]
     """
-    return _apply_tensor_op(F.neg_tensor, a, dtype=dtype)
+    return _apply_tensor_op(F.neg, a, dtype=dtype)
 
 
 def cumsum(a, axis=None, dtype=None):
@@ -3271,12 +3271,7 @@ def log1p(x, dtype=None):
 
 def logaddexp(x1, x2, dtype=None):
     """
-    Logarithm of the sum of exponentiations of the inputs.
-
-    Calculates ``log(exp(x1) + exp(x2))``. This function is useful in statistics where the
-    calculated probabilities of events may be so small as to exceed the range of normal
-    floating point numbers. In such cases the logarithm of the calculated probability is
-    stored. This function allows adding probabilities stored in such a fashion.
+    Logarithm of the sum of exponentiations of the inputs. Calculates ``log(exp(x1) + exp(x2))``.
 
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
@@ -4554,7 +4549,7 @@ def copysign(x1, x2, dtype=None):
     else:
         pos_tensor = F.absolute(x1)
 
-    neg_tensor = F.neg_tensor(pos_tensor)
+    neg_tensor = F.neg(pos_tensor)
     less_zero = F.less(x2, 0)
     res = F.select(less_zero, neg_tensor, pos_tensor)
 
@@ -5118,7 +5113,7 @@ def polysub(a1, a2):
         >>> print(np.polysub([2, 10, -2], [3, 10, -4]))
         [-1  0  2]
     """
-    return polyadd(a1, F.neg_tensor(_to_tensor(a2)))
+    return polyadd(a1, F.neg(_to_tensor(a2)))
 
 
 def polyval(p, x):
@@ -5370,9 +5365,9 @@ def unwrap(p, discont=3.141592653589793, axis=-1):
     axis = _check_axis_in_range(axis, ndim)
     dd = diff(p, axis=axis)
     ddmod = remainder(add(dd, pi), 2*pi) - pi
-    ddmod = F.masked_fill(ddmod, F.logical_and(ddmod == -pi, dd > 0), pi)
+    ddmod = F.masked_fill(ddmod, F.logical_and(ddmod == -pi, dd > 0), F.cast(pi, ddmod.dtype))
     ph_correct = ddmod - dd
-    ph_correct = F.masked_fill(ph_correct, absolute(dd) < discont, 0)
+    ph_correct = F.masked_fill(ph_correct, absolute(dd) < discont, F.cast(0, ph_correct.dtype))
     slice_all = _list_comprehensions(F.rank(p), F.make_slice(None, None, None), True)
     slice0 = _tuple_setitem(slice_all, axis, F.make_slice(0, 1, None))
     slice1 = _tuple_setitem(slice_all, axis, F.make_slice(1, None, None))
@@ -5800,72 +5795,71 @@ def rint(x, dtype=None):
 
 
 def correlate(a, v, mode='valid'):
-    """
+    r"""
     Cross-correlation of two 1-dimensional sequences.
 
     This function computes the correlation as generally defined in signal processing texts:
 
-    :math:`c_{av}[k] = sum_n a[n+k] * conj(v[n])`
+    :math:`c_{av}[k] = \sum_{n}{a[n+k] * conj(v[n])}`
 
     with `a` and `v` sequences being zero-padded where necessary and conj being the conjugate.
 
     Note:
-        Currently, complex numbers are not supported.
+        - `correlate` is currently only used in `mindscience` scientific computing scenarios and
+          dose not support other usage scenarios.
+        - `correlate` is not supported on Windows platform yet.
 
     Args:
         a (Union[list, tuple, Tensor]): First input sequence.
         v (Union[list, tuple, Tensor]): Second input sequence.
-        mode (str, optional): By default, mode is `\'valid\'`.
-            If `mode` is `\'valid\'`, it returns output of length :math:`max(M, N) - min(M, N) + 1`.
-            The convolution product is only given for points where the signals overlap
-            completely. Values outside the signal boundary have no effect.
-            If `mode` is `\'full\'`, it returns the convolution at each point of overlap, with
-            an output shape of :math:`(N + M - 1,)`.
-            At the end-points of the convolution, the signals do not overlap completely,
-            and boundary effects may be seen.
-            If `mode` is `\'same\'`, it returns output of length :math:`max(M, N)`. Boundary
-            effects are still visible.
+        mode (str, optional): Specifies padding mode. The optional values are
+            ``"same"`` , ``"valid"`` and ``"full"`` . Default: ``"valid"`` .
+
+            - ``"same"``: it returns output of length :math:`max(M, N)`. Boundary
+              effects are still visible.
+
+            - ``"valid"``: it returns output of length :math:`max(M, N) - min(M, N) + 1`.
+              The convolution product is only given for points where the signals overlap
+              completely. Values outside the signal boundary have no effect.
+
+            - ``"full"``: it returns the convolution at each point of overlap, with
+              an output shape of :math:`(N + M - 1,)`.At the end-points of the convolution,
+              the signals do not overlap completely, and boundary effects may be seen.
 
     Returns:
-        Tensor. Discrete cross-correlation of `a` and `v`.
+        Tensor, Discrete cross-correlation of `a` and `v`.
 
     Raises:
-        TypeError: If the inputs can not be converted to tensor.
+        TypeError: If `a` or `v` is not a tensor.
+        TypeError: If `a` and `v` is of different dtype.
         ValueError: If `a` and `v` are empty or have wrong dimensions
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.numpy as np
-        >>> output = np.correlate([1, 2, 3], [0, 1, 0.5])
+        >>> import mindspore.numpy as mnp
+        >>> from mindspore import Tensor
+        >>> output = mnp.correlate(Tensor([1., 2., 3.]), Tensor([0., 1., 0.5]))
         >>> print(output)
         [3.5]
-        >>> output = np.correlate([1, 2, 3], [0, 1, 0.5], mode="same")
+        >>> output = mnp.correlate(Tensor([1., 2., 3.]), Tensor([0., 1., 0.5]), mode="same")
         >>> print(output)
         [2.  3.5 3. ]
-        >>> output = np.correlate([1, 2, 3, 4, 5], [1, 2], mode="same")
+        >>> output = mnp.correlate(Tensor([1., 2., 3., 4., 5.]), Tensor([1., 2.]), mode="full")
         >>> print(output)
-        [ 2.  5.  8. 11. 14.]
+        [ 2.  5.  8. 11. 14.  5.]
     """
-    a, v = _to_tensor(a, v)
-    if a.ndim != 1 or v.ndim != 1:
-        _raise_value_error("only support 1-dimensional inputs.")
-    if a.size == 0 or v.size == 0:
-        _raise_value_error("Inputs cannot be empty.")
+    if isinstance(a, list):
+        a = ops.auto_generate.list_to_tuple(a)
+    if isinstance(a, tuple):
+        a = ops.auto_generate.tuple_to_tensor(a)
+    if isinstance(v, list):
+        v = ops.auto_generate.list_to_tuple(v)
+    if isinstance(v, tuple):
+        v = ops.auto_generate.tuple_to_tensor(v)
+    return ops.auto_generate.correlate(a, v, mode)
 
-    promote_dtype = _promote(a.dtype, v.dtype)
-    # P.Conv2D requires that the two tensors have the same data type.
-    # If the promote data type is not supported, it will be converted to float32.
-    # The supported dtype list may vary in the future.
-    if promote_dtype not in [mstype.float32, mstype.float16]:
-        promote_dtype = mstype.float32
-    a = a.astype(promote_dtype)
-    v = v.astype(promote_dtype)
-    if a.size < v.size:
-        a, v = v, a
-        return _compute_1d_conv(a, v, mode)[::-1]
-    return _compute_1d_conv(a, v, mode)
 
 
 def _compute_1d_conv(a, v, mode):

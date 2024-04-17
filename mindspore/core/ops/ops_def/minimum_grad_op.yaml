@@ -1,0 +1,26 @@
+#operator minimum_grad
+minimum_grad:
+    args:
+        x1:
+            dtype: tensor
+            type_cast: number
+        x2:
+            dtype: tensor
+            type_cast: number
+        grads:
+            dtype: tensor
+        grad_x:
+            dtype: bool
+            default: True
+            prim_init: True
+        grad_y:
+            dtype: bool
+            default: True
+            prim_init: True
+    returns:
+        y1: 
+            dtype: tensor
+        y2: 
+            dtype: tensor
+    function:
+        disable: True

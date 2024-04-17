@@ -33,7 +33,7 @@ def runMSRun(op, bbox):
     return sel_rows, sel_score
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_nms_with_mask_check_order():
@@ -54,7 +54,7 @@ def test_nms_with_mask_check_order():
             ms_sorted_scores, np_sorted_scores)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_nms_with_mask_edge_case_1():
@@ -75,7 +75,7 @@ def test_nms_with_mask_edge_case_1():
     np.testing.assert_almost_equal(sel_score, expected_score)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_nms_with_mask_edge_case_2():
@@ -92,7 +92,7 @@ def test_nms_with_mask_edge_case_2():
     np.testing.assert_almost_equal(sel_score, expected_score)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_nms_with_mask_edge_case_3():

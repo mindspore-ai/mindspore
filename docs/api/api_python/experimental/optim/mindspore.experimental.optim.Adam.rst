@@ -1,7 +1,7 @@
 mindspore.experimental.optim.Adam
 ===================================
 
-.. py:class:: mindspore.experimental.optim.Adam(params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, amsgrad=False, *, maximize=False)
+.. py:class:: mindspore.experimental.optim.Adam(params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, amsgrad=False, *, maximize=False)
 
     Adaptive Moment Estimation (Adam)算法的实现。
 
@@ -38,7 +38,7 @@ mindspore.experimental.optim.Adam
         \end{aligned}
 
     .. warning::
-        这是一个实验性的优化器接口，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。
+        这是一个实验性的优化器接口，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。
 
     参数：
         - **params** (Union[list(Parameter), list(dict)]) - 网络参数的列表或指定了参数组的列表。
@@ -58,5 +58,5 @@ mindspore.experimental.optim.Adam
         - **ValueError** - 学习率不是int、float或Tensor。
         - **ValueError** - 学习率小于0。
         - **ValueError** - `eps` 小于0。
-        - **ValueError** - `betas` 范围不在0-1之间。
+        - **ValueError** - `betas` 范围不在[0, 1)之间。
         - **ValueError** - `weight_decay` 小于0。

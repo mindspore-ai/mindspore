@@ -23,6 +23,7 @@
 #include "ir/visitor.h"
 #include "ir/func_graph.h"
 #include "utils/anf_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -46,35 +47,17 @@ std::string CNode::fullname_with_scope() {
     return fullname_with_scope_;
   }
 
-#ifndef ENABLE_SECURITY
-  if (IsApply(prim::kPrimScalarSummary) || IsApply(prim::kPrimTensorSummary) || IsApply(prim::kPrimImageSummary) ||
-      IsApply(prim::kPrimHistogramSummary)) {
-    std::string tag = GetValue<std::string>(GetValueNode(input(1)));
-    std::string name;
-    if (IsApply(prim::kPrimScalarSummary)) {
-      name = tag + "[:Scalar]";
-    } else if (IsApply(prim::kPrimImageSummary)) {
-      name = tag + "[:Image]";
-    } else if (IsApply(prim::kPrimHistogramSummary)) {
-      name = tag + "[:Histogram]";
-    } else {
-      name = tag + "[:Tensor]";
-    }
-    fullname_with_scope_ = name;
-    return fullname_with_scope_;
-  }
-#endif
   // cnode input 0 should be primitive ptr or funcgraph ptr
   auto value_ptr = input(0)->cast<ValueNodePtr>();
   if (value_ptr == nullptr) {
     MS_LOG(DEBUG) << "Input 0 of cnode is not a value node, its type is " << input(0)->type_name() << ".";
-    fullname_with_scope_ = id_generator::get_id(shared_from_base<CNode>());
+    fullname_with_scope_ = id_generator::get_id(fullname_with_scope_);
     return fullname_with_scope_;
   }
   auto input_value = value_ptr->value();
   if (input_value == nullptr) {
     MS_LOG(WARNING) << "Value of input 0 of cnode is nullptr.";
-    fullname_with_scope_ = id_generator::get_id(shared_from_base<CNode>());
+    fullname_with_scope_ = id_generator::get_id(fullname_with_scope_);
     return fullname_with_scope_;
   }
 
@@ -96,7 +79,7 @@ std::string CNode::fullname_with_scope() {
     // For the node after parse, the value maybe ClassType or others.
     fullname_with_scope_ += input_value->ToString();
   }
-  fullname_with_scope_ += "-op" + id_generator::get_id(shared_from_base<CNode>());
+  fullname_with_scope_ += "-op" + id_generator::get_id(fullname_with_scope_);
   return fullname_with_scope_;
 }
 

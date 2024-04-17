@@ -53,6 +53,7 @@ PhotoTourOp::PhotoTourOp(const std::string &dataset_dir, const std::string &name
       usage_(usage),
       buf_cnt_(0),
       data_schema_(std::move(data_schema)),
+      train_(true),
       image_names_({}),
       image_bmps_({}),
       matches_({}),

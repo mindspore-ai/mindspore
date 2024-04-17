@@ -1,0 +1,15 @@
+#operator cummin
+cummin:
+  args:
+    input:
+      dtype: tensor
+    axis:
+      dtype: int
+      prim_init: True
+  returns:
+    values:
+      dtype: tensor
+    indices:
+      dtype: tensor
+  function:
+      disable: True

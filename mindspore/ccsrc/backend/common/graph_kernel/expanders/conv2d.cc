@@ -268,7 +268,7 @@ class Conv2D : public OpDesc {
     return {result};
   }
 
-  TypeId dst_type_;
+  TypeId dst_type_ = TypeId::kTypeUnknown;
   DFormat dst_format_{};
   bool has_pad_ = false;
   bool can_optimize_to_matmul_ = false;

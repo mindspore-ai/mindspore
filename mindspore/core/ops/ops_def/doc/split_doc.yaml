@@ -1,0 +1,49 @@
+split:
+    description: |
+        Splits the input tensor into output_num of tensors along the given axis and output numbers.
+
+        Refer to :func:`mindspore.ops.split` for more details.
+    
+        Args:
+            axis (int): Index of the split position. Default: ``0`` .
+            output_num (int): The number of output tensors. Must be positive int. Default: ``1`` .
+    
+        Inputs:
+            - **input_x** (Tensor) - The shape of tensor is :math:`(x_0, x_1, ..., x_{R-1})`, R >= 1.
+    
+        Outputs:
+            tuple[Tensor], the shape of each output tensor is the same, which is
+            :math:`(x_0, x_1, ..., x_{axis}/{output\_num}, ..., x_{R-1})`.
+            And the data type is the same as `input_x`.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> split = ops.Split(1, 2)
+            >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]), mindspore.int32)
+            >>> print(x)
+            [[1 1 1 1]
+             [2 2 2 2]]
+            >>> output = split(x)
+            >>> print(output)
+            (Tensor(shape=[2, 2], dtype=Int32, value=
+            [[1, 1],
+             [2, 2]]), Tensor(shape=[2, 2], dtype=Int32, value=
+            [[1, 1],
+             [2, 2]]))
+            >>> split = ops.Split(1, 4)
+            >>> output = split(x)
+            >>> print(output)
+            (Tensor(shape=[2, 1], dtype=Int32, value=
+            [[1],
+             [2]]), Tensor(shape=[2, 1], dtype=Int32, value=
+            [[1],
+             [2]]), Tensor(shape=[2, 1], dtype=Int32, value=
+            [[1],
+             [2]]), Tensor(shape=[2, 1], dtype=Int32, value=
+            [[1],
+             [2]]))

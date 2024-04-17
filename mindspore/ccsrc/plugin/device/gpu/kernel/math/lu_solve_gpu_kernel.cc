@@ -38,22 +38,18 @@ inline cublasStatus_t cublasXgetrsBatched(cublasHandle_t handle, cublasOperation
   return cublasDgetrsBatched(handle, trans, m, k, a_array, m, pivot_array, b_array, m, info, batch_size);
 }
 }  // namespace
-bool LuSolveGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool LuSolveGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int LuSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LuSolveGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -105,7 +101,7 @@ int LuSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 
   const size_t a_size = LongToSize(std::accumulate(a_shape.begin(), a_shape.end(), int64_t(1), std::multiplies{}));
   const size_t b_size = LongToSize(std::accumulate(b_shape.begin(), b_shape.end(), int64_t(1), std::multiplies{}));
-  const size_t type_size = GetTypeByte(TypeIdToType(inputs.at(kIndex0)->GetDtype()));
+  const size_t type_size = GetTypeByte(TypeIdToType(inputs.at(kIndex0)->dtype_id()));
 
   workspace_size_list_.clear();
   workspace_size_list_ = {
@@ -126,8 +122,9 @@ int LuSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) {
+bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs) {
   T *b = GetDeviceAddress<T>(inputs, kIndex0);
   T *a = GetDeviceAddress<T>(inputs, kIndex1);
   int *piv_array = GetDeviceAddress<int>(inputs, kIndex2);

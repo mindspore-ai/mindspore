@@ -19,6 +19,7 @@
 #include "ops/lite_op_name.h"
 #include "ops/image_ops.h"
 #include "ops/array_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"

@@ -20,34 +20,27 @@
 
 namespace mindspore {
 namespace kernel {
-bool TripletMarginLossCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool TripletMarginLossCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNumber, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNumber, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::TripletMarginLoss>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  p_ = op_prim->get_p();
-  swap_ = op_prim->get_swap();
-  eps_ = op_prim->get_eps();
-  reduction_ = op_prim->get_reduction();
+  p_ = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
+  swap_ = GetValue<bool>(primitive_->GetAttr(ops::kSwap));
+  eps_ = GetValue<float>(primitive_->GetAttr(ops::kEps));
+  reduction_ = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   return true;
 }
 
-int TripletMarginLossCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int TripletMarginLossCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  dtype_0_ = inputs[kIndex0]->GetDtype();
-  x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  positive_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  negative_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  dtype_0_ = inputs[kIndex0]->dtype_id();
+  x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  positive_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  negative_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
   auto broadcast_shape_x_and_positive = CPUKernelUtils::GetBroadcastShape(x_shape_, positive_shape_);
   broadcast_shape_ = CPUKernelUtils::GetBroadcastShape(broadcast_shape_x_and_positive, negative_shape_);
   size_t dim_x = x_shape_.size();
@@ -79,9 +72,9 @@ int TripletMarginLossCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool TripletMarginLossCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool TripletMarginLossCPUKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   switch (dtype_0_) {
     case kNumberTypeFloat16:
       TripletMarginLossCompute_realtype<float>(inputs, outputs);
@@ -130,9 +123,9 @@ bool TripletMarginLossCPUKernelMod::Launch(const std::vector<kernel::AddressPtr>
 }
 
 template <typename T>
-void TripletMarginLossCPUKernelMod::TripletMarginLossCompute_realtype(const std::vector<kernel::AddressPtr> &inputs,
-                                                                      const std::vector<kernel::AddressPtr> &outputs) {
-  auto out_data = reinterpret_cast<float *>(outputs[0]->addr);
+void TripletMarginLossCPUKernelMod::TripletMarginLossCompute_realtype(
+  const std::vector<kernel::KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &outputs) {
+  auto out_data = reinterpret_cast<float *>(outputs[0]->device_ptr());
   Eigen::Array<float, Eigen::Dynamic, 1> out(data_num_, 1);
   float *output_reduction_none_data = reinterpret_cast<float *>(out.data());
   auto task_nobroadcast = [&](size_t start, size_t end) {
@@ -182,8 +175,8 @@ void TripletMarginLossCPUKernelMod::TripletMarginLossCompute_realtype(const std:
 
 template <typename T>
 void TripletMarginLossCPUKernelMod::TripletMarginLossCompute_complextype(
-  const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
-  auto out_data = reinterpret_cast<float *>(outputs[0]->addr);
+  const std::vector<kernel::KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &outputs) {
+  auto out_data = reinterpret_cast<float *>(outputs[0]->device_ptr());
   Eigen::Array<float, Eigen::Dynamic, 1> out(data_num_, 1);
   float *output_reduction_none_data = reinterpret_cast<float *>(out.data());
   auto task_nobroadcast = [&](size_t start, size_t end) {
@@ -235,12 +228,12 @@ void TripletMarginLossCPUKernelMod::TripletMarginLossCompute_complextype(
 template <typename T>
 void TripletMarginLossCPUKernelMod::realtype_nobroadcast_task(size_t start, size_t end,
                                                               float *output_reduction_none_data,
-                                                              const std::vector<kernel::AddressPtr> &inputs,
-                                                              const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto positive_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto negative_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto margin = *(reinterpret_cast<float *>(inputs[3]->addr));
+                                                              const std::vector<kernel::KernelTensor *> &inputs,
+                                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto positive_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto negative_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto margin = *(reinterpret_cast<float *>(inputs[3]->device_ptr()));
   const size_t kNoBroadcastValue = 1;
   start *= data_num_each_batch_;
   end *= data_num_each_batch_;
@@ -312,12 +305,12 @@ void TripletMarginLossCPUKernelMod::realtype_nobroadcast_task(size_t start, size
 
 template <typename T>
 void TripletMarginLossCPUKernelMod::realtype_broadcast_task(size_t start, size_t end, float *output_reduction_none_data,
-                                                            const std::vector<kernel::AddressPtr> &inputs,
-                                                            const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto positive_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto negative_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto margin = *(reinterpret_cast<float *>(inputs[3]->addr));
+                                                            const std::vector<kernel::KernelTensor *> &inputs,
+                                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto positive_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto negative_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto margin = *(reinterpret_cast<float *>(inputs[3]->device_ptr()));
   start *= data_num_each_batch_;
   end *= data_num_each_batch_;
   float positive_distance;
@@ -389,12 +382,12 @@ void TripletMarginLossCPUKernelMod::realtype_broadcast_task(size_t start, size_t
 
 template <typename T>
 void TripletMarginLossCPUKernelMod::realtype_broadcast_compute(float *output_reduction_none_data,
-                                                               const std::vector<kernel::AddressPtr> &inputs,
-                                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto positive_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto negative_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto margin = *(reinterpret_cast<float *>(inputs[3]->addr));
+                                                               const std::vector<kernel::KernelTensor *> &inputs,
+                                                               const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto positive_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto negative_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto margin = *(reinterpret_cast<float *>(inputs[3]->device_ptr()));
   float positive_distance;
   float negative_distance;
   float swap_distance;
@@ -464,12 +457,12 @@ void TripletMarginLossCPUKernelMod::realtype_broadcast_compute(float *output_red
 
 template <typename T>
 void TripletMarginLossCPUKernelMod::realtype_nobroadcast_compute(float *output_reduction_none_data,
-                                                                 const std::vector<kernel::AddressPtr> &inputs,
-                                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto positive_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto negative_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto margin = *(reinterpret_cast<float *>(inputs[3]->addr));
+                                                                 const std::vector<kernel::KernelTensor *> &inputs,
+                                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto positive_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto negative_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto margin = *(reinterpret_cast<float *>(inputs[3]->device_ptr()));
   const size_t kNoBroadcastValue = 1;
   Eigen::Array<float, Eigen::Dynamic, 1> calculate_positive(once_compute_size_, kNoBroadcastValue);
   Eigen::Array<float, Eigen::Dynamic, 1> calculate_negative(once_compute_size_, kNoBroadcastValue);
@@ -537,12 +530,12 @@ void TripletMarginLossCPUKernelMod::realtype_nobroadcast_compute(float *output_r
 template <typename T>
 void TripletMarginLossCPUKernelMod::complextype_nobroadcast_task(size_t start, size_t end,
                                                                  float *output_reduction_none_data,
-                                                                 const std::vector<kernel::AddressPtr> &inputs,
-                                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto positive_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto negative_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto margin = *(reinterpret_cast<float *>(inputs[3]->addr));
+                                                                 const std::vector<kernel::KernelTensor *> &inputs,
+                                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto positive_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto negative_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto margin = *(reinterpret_cast<float *>(inputs[3]->device_ptr()));
   const size_t kNoBroadcastValue = 1;
   start *= data_num_each_batch_;
   end *= data_num_each_batch_;
@@ -596,12 +589,12 @@ void TripletMarginLossCPUKernelMod::complextype_nobroadcast_task(size_t start, s
 template <typename T>
 void TripletMarginLossCPUKernelMod::complextype_broadcast_task(size_t start, size_t end,
                                                                float *output_reduction_none_data,
-                                                               const std::vector<kernel::AddressPtr> &inputs,
-                                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto positive_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto negative_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto margin = *(reinterpret_cast<float *>(inputs[3]->addr));
+                                                               const std::vector<kernel::KernelTensor *> &inputs,
+                                                               const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto positive_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto negative_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto margin = *(reinterpret_cast<float *>(inputs[3]->device_ptr()));
   start *= data_num_each_batch_;
   end *= data_num_each_batch_;
   float positive_distance;
@@ -679,12 +672,12 @@ void TripletMarginLossCPUKernelMod::complextype_broadcast_task(size_t start, siz
 
 template <typename T>
 void TripletMarginLossCPUKernelMod::complextype_broadcast_compute(float *output_reduction_none_data,
-                                                                  const std::vector<kernel::AddressPtr> &inputs,
-                                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto positive_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto negative_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto margin = *(reinterpret_cast<float *>(inputs[3]->addr));
+                                                                  const std::vector<kernel::KernelTensor *> &inputs,
+                                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto positive_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto negative_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto margin = *(reinterpret_cast<float *>(inputs[3]->device_ptr()));
   float positive_distance;
   float negative_distance;
   float swap_distance;
@@ -757,13 +750,13 @@ void TripletMarginLossCPUKernelMod::complextype_broadcast_compute(float *output_
 }
 
 template <typename T>
-void TripletMarginLossCPUKernelMod::complextype_nobroadcast_compute(float *output_reduction_none_data,
-                                                                    const std::vector<kernel::AddressPtr> &inputs,
-                                                                    const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto positive_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto negative_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto margin = *(reinterpret_cast<float *>(inputs[3]->addr));
+void TripletMarginLossCPUKernelMod::complextype_nobroadcast_compute(
+  float *output_reduction_none_data, const std::vector<kernel::KernelTensor *> &inputs,
+  const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto positive_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto negative_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto margin = *(reinterpret_cast<float *>(inputs[3]->device_ptr()));
   const size_t kNoBroadcastValue = 1;
   Eigen::Array<T, Eigen::Dynamic, 1> calculate_positive(once_compute_size_, kNoBroadcastValue);
   Eigen::Array<T, Eigen::Dynamic, 1> calculate_negative(once_compute_size_, kNoBroadcastValue);
@@ -816,8 +809,9 @@ template <typename T>
 void TripletMarginLossCPUKernelMod::realtype_swap(size_t start, std::vector<T> &positive_broadcast,
                                                   std::vector<T> &negative_broadcast,
                                                   std::vector<float> &calculate_swap, size_t j, size_t k,
-                                                  float &calc_swap_sum, const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+                                                  float &calc_swap_sum,
+                                                  const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   if (swap_ == true) {
     calculate_swap[k] = abs(static_cast<float>(positive_broadcast[start + j + k * index_]) -
                             static_cast<float>(negative_broadcast[start + j + k * index_]) + eps_);
@@ -833,8 +827,8 @@ template <typename T>
 void TripletMarginLossCPUKernelMod::complextype_swap(size_t start, std::vector<T> &positive_broadcast,
                                                      std::vector<T> &negative_broadcast, std::vector<T> &calculate_swap,
                                                      size_t j, size_t k, float &calc_swap_sum,
-                                                     const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+                                                     const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   if (swap_ == true) {
     calculate_swap[k] =
       positive_broadcast[start + j + k * index_] - negative_broadcast[start + j + k * index_] + static_cast<T>(eps_);

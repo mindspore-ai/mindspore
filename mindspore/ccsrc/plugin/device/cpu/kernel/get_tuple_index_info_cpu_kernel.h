@@ -20,6 +20,7 @@
 #include <map>
 #include <utility>
 #include <string>
+#include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -30,42 +31,27 @@ class GetTupleIndexInfoCpuKernelMod : public NativeCpuKernelMod {
   GetTupleIndexInfoCpuKernelMod() = default;
   ~GetTupleIndexInfoCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  void SyncOutputShape() override {
-    for (size_t i = 0; i < out_shapes_.size(); i++) {
-      const size_t out_size = out_shapes_[i].size() * sizeof(int64_t);
-      if (i == 4) {
-        outputs_[i]->SetShapeVector(out_shapes_[i]);
-      } else if (out_size != 0) {
-        outputs_[i]->SetShapeVector({SizeToLong(out_shapes_[i].size())});
-      } else {
-        outputs_[i]->SetShapeVector({});
-      }
-    }
-  }
 
   using GetTupleIndexInfoFunc =
-    std::function<bool(GetTupleIndexInfoCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(GetTupleIndexInfoCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, GetTupleIndexInfoFunc>> func_list_;
   GetTupleIndexInfoFunc kernel_func_;
 
  private:
-  std::vector<std::vector<int64_t>> out_shapes_;
   std::vector<std::vector<int64_t>> data_shapes_;
   std::vector<int64_t> tuple_index_types_;
   string tuple_index_info_type_;

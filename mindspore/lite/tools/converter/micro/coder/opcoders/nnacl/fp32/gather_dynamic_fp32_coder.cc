@@ -61,8 +61,9 @@ int GatherDynamicFP32Coder::DoCode(CoderContext *const context) {
   }
   int64_t limit = in_shape0[axis_];
   auto in_shape1 = shape_info_container_->GetTemplateShape(input_tensors_[SECOND_INPUT]);
-  std::string byte_out_stride_str = AccumulateShape(in_shape1) + " * " + std::to_string(byte_inner_size);
-  std::string index_num_str = AccumulateShape(in_shape1);
+  std::string byte_out_stride_str =
+    AccumulateShape(in_shape1, 0, in_shape1.size()) + " * " + std::to_string(byte_inner_size);
+  std::string index_num_str = AccumulateShape(in_shape1, 0, in_shape1.size());
   std::string input0_data = MemoryAllocator::GetInstance()->GetRuntimeAddr(input_tensors_[FIRST_INPUT], true);
   MS_CHECK_TRUE_MSG(!input0_data.empty(), RET_ERROR, "pointer is not allocated by the allocator");
   std::string input1_data = dynamic_mem_manager_->GetVarTensorAddr(input_tensors_[SECOND_INPUT]);

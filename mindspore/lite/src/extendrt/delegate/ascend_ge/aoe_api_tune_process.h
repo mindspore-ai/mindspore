@@ -24,7 +24,7 @@
 #include "include/transform/graph_ir/types.h"
 #include "include/api/status.h"
 #include "cxx_api/model/acl/acl_model_options.h"
-#include "external/ge/ge_api.h"
+#include "ge/ge_api.h"
 
 namespace mindspore {
 using ConfigInfos = std::map<std::string, std::map<std::string, std::string>>;

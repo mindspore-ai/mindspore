@@ -25,27 +25,27 @@ using mindspore::device::TensorArrayMgr;
 using mindspore::device::TensorArrayPtr;
 TensorArrayClearKernelMod::TensorArrayClearKernelMod() {}
 
-bool TensorArrayClearKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  InitSizeLists();
+bool TensorArrayClearKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-void TensorArrayClearKernelMod::InitSizeLists() {
-  input_size_list_.push_back(sizeof(int64_t));
+int TensorArrayClearKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-bool TensorArrayClearKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &, void *stream) {
+bool TensorArrayClearKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &, void *stream) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_ERROR_IF_NULL(handle_addr);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   MS_ERROR_IF_NULL(cuda_stream);
   int64_t handle = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(
-    kernel_node_, cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
     "For 'TensorArrayClear', get handle to host failed");
   if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "cuda Stream Sync Failed");

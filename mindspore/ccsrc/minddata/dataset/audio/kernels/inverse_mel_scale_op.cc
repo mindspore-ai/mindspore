@@ -30,7 +30,7 @@ Status InverseMelScaleOp::Compute(const std::shared_ptr<Tensor> &input, std::sha
   RETURN_IF_NOT_OK(ValidateTensorNumeric("InverseMelScale", input));
 
   return InverseMelScale(input, output, n_stft_, n_mels_, sample_rate_, f_min_, f_max_, max_iter_, tolerance_loss_,
-                         tolerance_change_, sgd_lr_, sgd_momentum_, norm_, mel_type_, rnd_);
+                         tolerance_change_, sgd_lr_, sgd_momentum_, norm_, mel_type_, &random_generator_);
 }
 
 Status InverseMelScaleOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {

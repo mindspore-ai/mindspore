@@ -1,0 +1,19 @@
+#operator argmin
+argmin:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: int
+      default: -1
+      prim_init: True
+    output_type:
+      dtype: TypeId
+      default: mstype.int32
+      prim_init: True
+      arg_handler: dtype_to_type_id
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

@@ -84,13 +84,12 @@ class InsertQuantNodeManager {
   int MarkDynamicQuantize(const CNodePtr &cnode);
 
   int CalculateScaleZPNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
-                           ParameterPtr *scales_node, ParameterPtr *zps_node, TypeId src_dtype, TypeId dst_dtype,
-                           int axis);
+                           ParameterPtr *scales_node, ParameterPtr *zps_node, TypeId dst_dtype, int axis);
 
   int InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index,
                                   bool activation_channel = true);
 
-  int SetPreferAxis(const CNodePtr &cnode, size_t index, const std::shared_ptr<ops::DynamicQuant> &dynamic_primitive);
+  int SetPreferAxes(const CNodePtr &cnode, size_t index, const std::shared_ptr<ops::DynamicQuant> &dynamic_primitive);
 
   int SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node, const CNodePtr &cast_cnode);
 
@@ -131,8 +130,6 @@ class InsertQuantNodeManager {
   CNodePtr NewAscendAntiQuantCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, int dst_type);
 
   int SetParallelStrategy(const CNodePtr &cnode, const std::vector<std::vector<int64_t>> &in_strategy);
-
-  std::vector<std::vector<int64_t>> ExtractStrategy(const ValuePtr &stra);
 
   std::vector<std::vector<int64_t>> GetAddMulNodeParallelStrategy(ShapeVector weight_shape,
                                                                   std::vector<int64_t> weight_strategy, int axis,

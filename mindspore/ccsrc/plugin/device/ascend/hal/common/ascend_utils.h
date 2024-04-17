@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,16 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_UTILS_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_UTILS_H_
 
+#include <pthread.h>
+
+#include <atomic>
+#include <memory>
 #include <string>
 #include <set>
 #include <vector>
-#include "common/util/error_manager/error_manager.h"
+
 #include "include/backend/kernel_graph.h"
+#include "mindspore/core/utils/ms_context.h"
 
 namespace mindspore {
 namespace device {
@@ -46,25 +51,44 @@ class ErrorManagerAdapter {
   ~ErrorManagerAdapter() = default;
   static bool Init();
   static std::string GetErrorMessage(bool add_title = false);
-  static std::string GetWarningMessage(bool add_title = false);
-  static void BindToCurrentThread();
 
  private:
   static void MessageHandler(std::ostringstream *oss);
 
  private:
-  static error_message::Context context_;
   static std::mutex initialized_mutex_;
   static bool initialized_;
-  static std::vector<std::string> traceback_;
 };
 
-bool IsGraphMode();
-bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph);
-std::string GetSocVersion();
-std::string GetAICoreNumber();
-std::string GetAscendPath();
 std::string GetErrorMsg(uint32_t rt_error_code);
+
+void *callback_thread_func(void *data);
+
+// Callback thread for ascend streams.
+struct CallbackThread {
+  ~CallbackThread() { cancel(); }
+
+  // pthread_cancel may cause bug now, so just set flag to false.
+  void cancel() {
+    if (flag_.load()) {
+      flag_.store(false);
+    }
+  }
+
+  int create() {
+    flag_.store(true);
+    return pthread_create(&thread_, nullptr, &callback_thread_func, this);
+  }
+
+  pthread_t thread_;
+  std::atomic_bool flag_{true};
+  int32_t default_timeout_{100};
+};
+using CallbackThreadPtr = std::shared_ptr<CallbackThread>;
+
+void InitializeAcl();
+
+std::string GetFormatMode(const AnfNodePtr &node = nullptr);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

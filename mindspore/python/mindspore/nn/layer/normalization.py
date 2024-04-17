@@ -128,15 +128,19 @@ class _BatchNorm(Cell):
         self.assign_sub_mean = P.AssignSub().shard(data_parallel_strategy)
         self.assign_sub_var = P.AssignSub().shard(data_parallel_strategy)
 
-
     @staticmethod
     @_primexpr
     def _check_input_dim(shape, cls_name):
         raise NotImplementedError
 
-
     def construct(self, x):
         self._check_input_dim(self.shape(x), self.cls_name)
+        x_shape = self.shape(x)
+        reshaped_x = x
+        if len(x_shape) == 2:
+            reshaped_x = self.reshape(x, (x_shape[0], x_shape[1], 1, 1))
+        elif len(x_shape) == 3:
+            reshaped_x = self.reshape(x, (x_shape[0], x_shape[1], x_shape[2], 1))
         if self.use_batch_statistics is None:
             if self.training:
                 return self.bn_train(x,
@@ -145,11 +149,14 @@ class _BatchNorm(Cell):
                                      self.moving_mean,
                                      self.moving_variance)[0]
             if not self.training:
-                return self.bn_infer(x,
-                                     self.gamma,
-                                     self.beta,
-                                     self.moving_mean,
-                                     self.moving_variance)[0]
+                bn_out = self.bn_infer(reshaped_x,
+                                       self.gamma,
+                                       self.beta,
+                                       self.moving_mean,
+                                       self.moving_variance)[0]
+                if len(x_shape) < 4:
+                    bn_out = self.reshape(bn_out, x_shape)
+                return bn_out
 
         if self.use_batch_statistics:
             return self.bn_train(x,
@@ -158,11 +165,14 @@ class _BatchNorm(Cell):
                                  self.moving_mean,
                                  self.moving_variance)[0]
 
-        return self.bn_infer(x,
-                             self.gamma,
-                             self.beta,
-                             self.moving_mean,
-                             self.moving_variance)[0]
+        bn_out = self.bn_infer(reshaped_x,
+                               self.gamma,
+                               self.beta,
+                               self.moving_mean,
+                               self.moving_variance)[0]
+        if len(x_shape) < 4:
+            bn_out = self.reshape(bn_out, x_shape)
+        return bn_out
 
     def extend_repr(self):
         return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
@@ -196,19 +206,19 @@ class BatchNorm1d(_BatchNorm):
             Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'``, etc. Default: ``'zeros'`` .
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'zeros'`` .
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         use_batch_statistics (bool): If ``true`` , use the mean value and variance value of current batch data. If
             ``false`` , use the mean value and variance value of specified value. If ``None`` , the training process
@@ -292,19 +302,19 @@ class BatchNorm2d(_BatchNorm):
             Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'zeros'`` .
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'zeros'`` .
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         use_batch_statistics (bool): Default: ``None`` .
 
@@ -381,19 +391,19 @@ class BatchNorm3d(Cell):
         affine (bool): A bool value. When set to ``True`` , gamma and beta can be learned. Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'zeros'`` .
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'zeros'`` .
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If
             ``false``, use the mean value and variance value of specified value. If ``None`` , the training process
@@ -459,7 +469,6 @@ class BatchNorm3d(Cell):
     def _check_input_dim(shape, cls_name):
         dim = len(shape)
         _check_dim(dim, 5, cls_name)
-
 
     def construct(self, x):
         x_shape = self.shape(x)
@@ -549,14 +558,14 @@ class SyncBatchNorm(_BatchNorm):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -649,16 +658,6 @@ class SyncBatchNorm(_BatchNorm):
                     self.group_name = group_dict[rank_list_name]
                     logger.info("the group for {} already exists, no need to create".format(rank_list_name))
 
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        def _check(dim):
-            if dim not in (2, 4):
-                raise ValueError(f"For '{cls_name}', the must have 2 dims or 4 dims, but got {dim}.")
-        dim = len(shape)
-        _check(dim)
-
-
     def _check_rank_ids(self, process_groups, rank_size):
         seen = set()
         for rid in itertools.chain(*process_groups):
@@ -667,6 +666,15 @@ class SyncBatchNorm(_BatchNorm):
                 raise ValueError(f"For '{self.cls_name}', rank id in 'process_groups' must not be duplicated, "
                                  f"but got {process_groups}.")
             seen.add(rid)
+
+    @staticmethod
+    @_primexpr
+    def _check_input_dim(shape, cls_name):
+        def _check(dim):
+            if dim not in (2, 4):
+                raise ValueError(f"For '{cls_name}', the must have 2 dims or 4 dims, but got {dim}.")
+        dim = len(shape)
+        _check(dim)
 
 
 class LayerNorm(Cell):

@@ -15,12 +15,15 @@
  */
 
 #include "extendrt/kernel/ascend/model/acl_env_guard.h"
+#include "extendrt/kernel/ascend/model/model_infer.h"
 #include "common/log_adapter.h"
-#include "acl/acl.h"
+#include "transform/symbol/acl_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 namespace acl {
 std::shared_ptr<AclEnvGuard> AclEnvGuard::global_acl_env_ = nullptr;
+std::vector<std::shared_ptr<ModelInfer>> AclEnvGuard::model_infers_ = {};
 std::mutex AclEnvGuard::global_acl_env_mutex_;
 
 AclInitAdapter &AclInitAdapter::GetInstance() {
@@ -35,7 +38,13 @@ aclError AclInitAdapter::AclInit(const char *config_file) {
   }
 
   init_flag_ = true;
-  return aclInit(config_file);
+  transform::LoadAscendApiSymbols();
+  auto ret = CALL_ASCEND_API(aclInit, config_file);
+  if (ret == ACL_ERROR_REPEAT_INITIALIZE) {
+    MS_LOG(WARNING) << "acl is repeat init";
+    is_repeat_init_ = true;
+  }
+  return ret;
 }
 
 aclError AclInitAdapter::AclFinalize() {
@@ -47,20 +56,34 @@ aclError AclInitAdapter::AclFinalize() {
 
   MS_LOG(INFO) << "Begin to aclFinalize.";
   init_flag_ = false;
-  MS_LOG(INFO) << "AclInitAdapter::aclFinalize begin.";
-  auto rt_ret = aclFinalize();
-  if (rt_ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "aclFinalize failed.";
+  if (!is_repeat_init_) {
+    MS_LOG(INFO) << "AclInitAdapter::aclFinalize begin.";
+    auto rt_ret = CALL_ASCEND_API(aclFinalize);
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclFinalize failed.";
+    }
+    MS_LOG(INFO) << "AclInitAdapter::aclFinalize end.";
+    return rt_ret;
+  } else {
+    MS_LOG(WARNING) << "has repeat init, not aclFinalize";
   }
-  MS_LOG(INFO) << "AclInitAdapter::aclFinalize end.";
-  return rt_ret;
+  return ACL_ERROR_NONE;
 }
 
 aclError AclInitAdapter::ForceFinalize() {
   std::lock_guard<std::mutex> lock(flag_mutex_);
   MS_LOG(INFO) << "Begin to force aclFinalize.";
   init_flag_ = false;
-  return aclFinalize();
+  if (!is_repeat_init_) {
+    auto rt_ret = CALL_ASCEND_API(aclFinalize);
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclFinalize failed.";
+    }
+    return rt_ret;
+  } else {
+    MS_LOG(WARNING) << "has repeat init, not aclFinalize";
+  }
+  return ACL_ERROR_NONE;
 }
 
 AclEnvGuard::AclEnvGuard() : errno_(AclInitAdapter::GetInstance().AclInit(nullptr)) {
@@ -128,6 +151,29 @@ std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv(std::string_view cfg_file) {
     MS_LOG(INFO) << "Execute aclInit success.";
   }
   return acl_env;
+}
+
+void AclEnvGuard::AddModel(const std::shared_ptr<ModelInfer> &model_infer) {
+  std::lock_guard<std::mutex> lock(global_acl_env_mutex_);
+  model_infers_.push_back(model_infer);
+}
+
+bool AclEnvGuard::Finalize() {
+  std::lock_guard<std::mutex> lock(global_acl_env_mutex_);
+  bool model_finalized =
+    std::all_of(model_infers_.begin(), model_infers_.end(),
+                [](const std::shared_ptr<ModelInfer> &model_infer) { return model_infer->Finalize(); });
+  if (!model_finalized || global_acl_env_.use_count() > 1) {
+    MS_LOG(ERROR) << "There is model has not been unloaded, and will not finalize acl.";
+    return false;
+  }
+  auto ret = AclInitAdapter::GetInstance().AclFinalize();
+  if (ret != ACL_ERROR_NONE && ret != ACL_ERROR_REPEAT_FINALIZE) {
+    MS_LOG(ERROR) << "Execute acl env finalize failed.";
+    return false;
+  }
+  MS_LOG(INFO) << "Execute acl env finalize success.";
+  return true;
 }
 }  // namespace acl
 }  // namespace mindspore::kernel

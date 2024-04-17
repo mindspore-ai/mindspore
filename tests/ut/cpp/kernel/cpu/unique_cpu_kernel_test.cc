@@ -36,9 +36,9 @@ class UniqueCpuKernelTest : public UT::Common {
     outputs_.clear();
   }
 
-  AddressPtr CreateKernelAddress(void *addr) {
-    auto kernel_addr = std::make_shared<Address>();
-    kernel_addr->addr = addr;
+  KernelTensor *CreateKernelAddress(void *addr) {
+    auto kernel_addr = new KernelTensor();
+    kernel_addr->set_device_ptr(addr);
     return kernel_addr;
   }
 
@@ -55,9 +55,9 @@ class UniqueCpuKernelTest : public UT::Common {
   std::vector<float> y_;
   std::vector<int> idx_;
   std::vector<int64_t> workspace_idx_;
-  std::vector<AddressPtr> inputs_;
-  std::vector<AddressPtr> workspace_;
-  std::vector<AddressPtr> outputs_;
+  std::vector<KernelTensor *> inputs_;
+  std::vector<KernelTensor *> workspace_;
+  std::vector<KernelTensor *> outputs_;
   std::shared_ptr<UniqueCpuKernelMod> unique_;
 };
 

@@ -48,14 +48,14 @@ auto constexpr kEnableWeightDecay = "enable_weight_decay";
 abstract::TupleShapePtr FusedAdaFactorInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto param_shape_r = input_args[kParamIndex]->Broaden()->BuildShape();
+  auto param_shape_r = input_args[kParamIndex]->Broaden()->GetShape();
   auto outputs = std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>({param_shape_r}));
   return outputs;
 }
 
 TypePtr FusedAdaFactorInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto type = input_args[kParamIndex]->BuildType();
+  auto type = input_args[kParamIndex]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{type});
 }
 }  // namespace
@@ -108,7 +108,7 @@ class MIND_API AGFusedAdaFactorInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return FusedAdaFactorInferShape(primitive, input_args);
+    return input_args[kParamIndex]->GetShape()->Clone();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {

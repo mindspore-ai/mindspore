@@ -6,7 +6,6 @@ mindspore.ops.truncate_div
     将第一个输入Tensor与第二个输入Tensor逐元素相除，结果将向0取整。相当于C语言风格的整数除法。
 
     输入 `x` 和 `y` 应能遵循隐式类型转换规则使数据类型一致。
-    输入必须为两个Tensor或一个Tensor和一个标量。
     当输入为两个Tensor时，数据类型不能同时为bool类型。
     当输入是一个Tensor和一个标量时，标量只能是一个常数。
 

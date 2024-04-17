@@ -4,6 +4,7 @@ approvers:
 - zhang_xue_tong #
 - jpc_chenjianping
 - wang_shaocong
+- yeyunpeng2020
 
 options:
   no_parent_owners: true

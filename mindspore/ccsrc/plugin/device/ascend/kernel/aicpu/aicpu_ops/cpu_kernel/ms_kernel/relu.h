@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_RELU_H_
 #define AICPU_KERNELS_NORMALIZED_RELU_H_
 
-#include "inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -33,7 +33,7 @@ class ReluCpuKernel : public CpuKernel {
   template <typename T>
   void DoCompute(int64_t start, int64_t end, const T *input1, T *output);
   template <typename T>
-  uint32_t ReluCompute(const CpuKernelContext &ctx);
+  uint32_t ReluCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

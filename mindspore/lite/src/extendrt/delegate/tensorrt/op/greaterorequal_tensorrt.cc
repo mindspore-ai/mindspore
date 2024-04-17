@@ -24,7 +24,7 @@
 #include "NvInferRuntimeCommon.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/logical.cuh"
-#include "ops/greater_equal.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore::lite {
 int GreaterorequalTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,

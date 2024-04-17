@@ -41,7 +41,7 @@ class ModelInfer {
   bool Init();
   bool Finalize();
   bool Load(const void *om_data, size_t om_data_size);
-  bool Inference(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
+  bool Inference(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   std::vector<Format> GetInputFormat();
   const std::vector<ShapeVector> GetOutputShape();
   const std::vector<ShapeVector> GetInputShape();

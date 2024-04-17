@@ -66,8 +66,6 @@ class EmbeddingLookupFactory(OpsFactory):
         return out.asnumpy()
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_embeddinglookup_indices_outrange():
     fact = EmbeddingLookupFactory(params_shape=(2, 4), indices_shape=(2, 3), low=1, high=3, offset=10, dtype=np.int8)

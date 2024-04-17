@@ -20,13 +20,13 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S, typename G>
-void MomentumGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, void *stream_ptr) {
+void MomentumGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, void *stream_ptr) {
   T *variable = GetDeviceAddress<T>(inputs, kIndex0);
   T *accumulation = GetDeviceAddress<T>(inputs, kIndex1);
   S *learning_rate = GetDeviceAddress<S>(inputs, kIndex2);
   G *gradient = GetDeviceAddress<G>(inputs, kIndex3);
   S *momentum = GetDeviceAddress<S>(inputs, kIndex4);
-  auto status = MomentumUpdateVariable(inputs[kIndex0]->size / sizeof(T), variable, accumulation, learning_rate,
+  auto status = MomentumUpdateVariable(inputs[kIndex0]->size() / sizeof(T), variable, accumulation, learning_rate,
                                        gradient, momentum, use_nesterov_, reinterpret_cast<cudaStream_t>(stream_ptr));
   CHECK_CUDA_STATUS(status, kernel_name_);
 }

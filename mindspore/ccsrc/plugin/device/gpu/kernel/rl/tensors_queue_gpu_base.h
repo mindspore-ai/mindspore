@@ -31,23 +31,22 @@ using mindspore::device::TensorsQueueMgr;
 using mindspore::device::gpu::GPUTensorsQueue;
 using mindspore::device::gpu::GPUTensorsQueuePtr;
 
-class TensorsQueueBaseMod : public DeprecatedNativeGpuKernelMod {
+class TensorsQueueBaseMod : public NativeGpuKernelMod {
  public:
   TensorsQueueBaseMod() = default;
   ~TensorsQueueBaseMod() = default;
 
-  virtual bool Init(const CNodePtr &kernel_node) = 0;
-  inline GPUTensorsQueuePtr GetTensorsQueue(const CNodeWeakPtr &kernel_node, const std::vector<AddressPtr> &inputs,
-                                            cudaStream_t cuda_stream) {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) { return true; }
+  inline GPUTensorsQueuePtr GetTensorsQueue(const std::vector<KernelTensor *> &inputs, cudaStream_t cuda_stream) {
     auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
     MS_EXCEPTION_IF_NULL(handle_addr);
 
     int64_t handle = 0;
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node, cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
       "Get handle to host failed");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node, cudaStreamSynchronize(cuda_stream),
-                               "TensorsQueue cudaStreamSynchronized failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream),
+                                       "TensorsQueue cudaStreamSynchronized failed");
 
     auto tensors_q = std::dynamic_pointer_cast<GPUTensorsQueue>(TensorsQueueMgr::GetInstance().GetTensorsQueue(handle));
     MS_EXCEPTION_IF_NULL(tensors_q);
@@ -55,7 +54,6 @@ class TensorsQueueBaseMod : public DeprecatedNativeGpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() {}
   // Lock the operation: Get, Pop, Size and Clear.
   static std::mutex tq_mutex_;
   static std::condition_variable read_cdv_;

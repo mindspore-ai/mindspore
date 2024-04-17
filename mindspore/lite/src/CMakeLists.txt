@@ -293,6 +293,8 @@ endif()
 set(TRAIN_SRC
         ${API_TRAIN_SRC}
         ${TRAIN_SRC_WITH_MD}
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor/kernel_exec.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/metrics/accuracy.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/train/model_build.cc
@@ -388,7 +390,6 @@ add_library(lite_src_mid OBJECT ${LITE_SRC})
 add_dependencies(lite_src_mid lite_src_common_mid fbs_src fbs_inner_src)
 
 if(MSLITE_ENABLE_ACL)
-    include_directories(${TOP_DIR}/graphengine/910/inc/external)
     if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
         add_subdirectory(litert/kernel/ascend)
     else()

@@ -17,17 +17,18 @@
 from __future__ import absolute_import
 import inspect
 from functools import wraps
+from mindspore import log as logger
 
 
 def lazy_inline(fn=None, attrs=None):
     """
     Make the cell to be reusable. The corresponding sub graph will not be inline at first.
-
     Registering the decorator of the built-in function `__init__` of a cell, the decorator
     will add the parameters of `__init__` according to the `attrs` as the attributes of this cell.
 
     .. warning::
         This feature is only supported on Ascend and is not supported on other hardwares.
+        The construct parameters must be positional or key word arguments and have not default values.
 
     Args:
         fn (function): `__init__` function of a cell.
@@ -153,35 +154,75 @@ def lazy_inline(fn=None, attrs=None):
         >>> test_compile()
     """
 
-    def wrap_cell(fn):
+    def lazy_inline_wrap(fn):
+        if inspect.isclass(fn):
+            tips = "The lazy_inline should decorate the __init__ function, not the class {}.".format(fn.__name__) \
+                   + " File: " + inspect.getfile(fn)
+            raise ValueError(tips)
+        if fn.__name__ != "__init__":
+            tips = "The lazy_inline should decorate the __init__ function, not the function: {}.".format(fn.__name__) \
+                   + " line: " + str(fn.__code__.co_firstlineno) + " in " \
+                   + fn.__code__.co_filename
+            raise ValueError(tips)
+
+        def check_parameters(self):
+            if hasattr(fn, "has_tips_"):
+                return
+
+            if hasattr(self, "construct"):
+                params = inspect.signature(self.construct).parameters
+                err = False
+                tips = "The function construct's parameters: "
+                for name, parm in params.items():
+                    if parm.default != inspect.Parameter.empty:
+                        if err:
+                            tips += " , " + name
+                        else:
+                            err = True
+                            tips += " " + name
+
+                if err:
+                    tips += " must be  key word or positional arguments and can't have default values." \
+                            + " line: " + str(self.construct.__code__.co_firstlineno) \
+                            + " in " + self.construct.__code__.co_filename
+                    logger.info(tips)
+                    fn.has_tips_ = True
+
+            else:
+                tips = "The " + self.__class__.__name__ + " must be a cell and must has a construct function." \
+                       + " line: " + str(fn.__code__.co_firstlineno) + " in " + fn.__code__.co_filename
+                logger.warning(tips)
+                fn.has_tips_ = True
+
         @wraps(fn)
-        def deco(self, *args, **kwargs):
-            arguments = []
+        def lazy_inline_deco(self, *args, **kwargs):
+            check_parameters(self)
+            new_args = []
             if attrs is None:
                 bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
-                arguments = bound_args.arguments
-                del arguments['self']
-                arguments = arguments.values()
+                new_args = bound_args.arguments
+                del new_args['self']
+                new_args = new_args.values()
             fn(self, *args, **kwargs)
             if attrs is None:
-                self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(arguments)
+                self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(new_args)
                 return
 
             if isinstance(attrs, list):
-                for item in attrs:
-                    if not isinstance(item, str):
+                for attr in attrs:
+                    if not isinstance(attr, str):
                         raise ValueError(f"attr must be a string")
-                    if hasattr(self, item):
-                        arguments.append(getattr(self, item))
+                    if hasattr(self, attr):
+                        new_args.append(getattr(self, attr))
             elif isinstance(attrs, str):
                 if hasattr(self, attrs):
-                    arguments = getattr(self, attrs)
+                    new_args = getattr(self, attrs)
             else:
                 raise ValueError(f"attrs must be list or string")
-            self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(arguments)
+            self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(new_args)
 
-        return deco
+        return lazy_inline_deco
 
     if fn is not None:
-        return wrap_cell(fn)
-    return wrap_cell
+        return lazy_inline_wrap(fn)
+    return lazy_inline_wrap

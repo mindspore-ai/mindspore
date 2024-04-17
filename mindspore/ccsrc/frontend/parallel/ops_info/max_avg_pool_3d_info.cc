@@ -363,6 +363,16 @@ Status MaxPool3DInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+Status MaxPool3DInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  Strategies strategies = strategy->GetInputDim();
+  if (h_dim_need_exchange_overlap_ || w_dim_need_exchange_overlap_) {
+    MS_LOG(ERROR) << name_ << ": it does not support dynamic shape if it need to exchange overlap, the strategy is "
+                  << ShapesToString(strategies) << ", the inputs' shape: " << ShapesToString(inputs_shape_);
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status MaxPool3DInfo::InferDevMatrixShape() {
   MS_EXCEPTION_IF_NULL(strategy_);
   std::vector<Dimensions> stra = strategy_->GetInputDim();

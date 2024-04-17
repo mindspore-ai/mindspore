@@ -31,10 +31,8 @@ constexpr size_t kIdxIndex = 1;
 constexpr size_t kValueIndex = 2;
 }  // namespace
 
-bool SequenceSetItemCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SequenceSetItemCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -45,14 +43,22 @@ bool SequenceSetItemCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int SequenceSetItemCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SequenceSetItemCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
+
+  auto user_data = inputs[kDataIndex]->user_data();
+  if (user_data != nullptr && user_data->has(kRealElementsSize)) {
+    auto real_elem_sizes = user_data->get<std::vector<size_t>>(kRealElementsSize);
+    MS_EXCEPTION_IF_NULL(real_elem_sizes);
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << ", only support all same inner elements now, but got inner elements size: " << (*real_elem_sizes);
+    return KRET_RESIZE_FAILED;
+  }
+
   seq_shape_ = inputs[kDataIndex]->GetShapeVector();
   ele_shape_ = inputs[kValueIndex]->GetShapeVector();
   if (seq_shape_.empty()) {
@@ -69,16 +75,17 @@ int SequenceSetItemCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   const auto data_addr = GetDeviceAddress<T>(inputs, kDataIndex);
   const auto idx_addr = GetDeviceAddress<int64_t>(inputs, kIdxIndex);
   MS_EXCEPTION_IF_NULL(idx_addr);
   const auto value_addr = GetDeviceAddress<T>(inputs, kValueIndex);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   int64_t idx = idx_addr[0];
-  auto input_size = inputs[kDataIndex]->size;
-  auto output_size = outputs[0]->size;
+  auto input_size = inputs[kDataIndex]->size();
+  auto output_size = outputs[0]->size();
   auto len = seq_shape_[0];
 
   if (input_size != output_size) {
@@ -114,9 +121,9 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   return true;
 }
 
-bool SequenceSetItemCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool SequenceSetItemCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSequenceSetItemInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSequenceSetItemOutputNum, kernel_name_);
   return kernel_func_(this, inputs, workspace, outputs);

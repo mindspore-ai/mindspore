@@ -36,7 +36,7 @@ class NumberNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -54,7 +54,7 @@ def test_change_net_number():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -84,7 +84,7 @@ class ListNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -102,7 +102,7 @@ def test_change_net_list():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -120,7 +120,7 @@ def test_change_net_list_2():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -150,7 +150,7 @@ class ListNet2(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -168,7 +168,7 @@ def test_change_net_list_4():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -196,7 +196,7 @@ class TensorNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -214,7 +214,7 @@ def test_change_net_tensor():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -245,7 +245,7 @@ class ExternalNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -263,7 +263,7 @@ def test_change_net_external_object():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -291,7 +291,7 @@ class ChangeNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -309,7 +309,7 @@ def test_change_net_attr_type_number_to_list():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -327,7 +327,7 @@ def test_change_net_attr_type_tuple_to_number():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -345,7 +345,7 @@ def test_change_net_attr_type_tuple_to_tensor():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -374,7 +374,7 @@ class ChangeNet2(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -392,7 +392,7 @@ def test_change_net_attr_type_tensor_to_list_with_cal():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -429,7 +429,7 @@ class HybridNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -450,7 +450,7 @@ def test_change_net_attr():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

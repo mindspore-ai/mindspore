@@ -17,8 +17,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LIST_DIFF_H_
 #define AICPU_KERNELS_NORMALIZED_LIST_DIFF_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 
 namespace aicpu {
 class ListDiffCpuKernel : public CpuKernel {
@@ -33,7 +33,7 @@ class ListDiffCpuKernel : public CpuKernel {
   uint32_t ParamCheck(CpuKernelContext &ctx);
 
   template <typename T, typename Tidx>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
   // default DT_INT32
   DataType out_idx = DT_INT32;
 };

@@ -18,6 +18,7 @@
 #include <complex>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/op_utils.h"
 
 namespace {
 const size_t kZero = 0;
@@ -34,13 +35,10 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-bool ApplyGradientDescentCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
-  dtype_ = inputs[kZero]->GetDtype();
+bool ApplyGradientDescentCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = ops::get_batch_rank(primitive_);
+  dtype_ = inputs[kZero]->dtype_id();
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyGradientDescentInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyGradientDescentOutputsNum, kernel_name_);
@@ -55,11 +53,9 @@ bool ApplyGradientDescentCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int ApplyGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyGradientDescentCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -75,12 +71,12 @@ int ApplyGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename T>
-bool ApplyGradientDescentCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &outputs) {
-  auto var_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto alpha_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
-  auto delta_addr = reinterpret_cast<T *>(inputs[kTwo]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
+bool ApplyGradientDescentCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
+  auto var_addr = reinterpret_cast<T *>(inputs[kZero]->device_ptr());
+  auto alpha_addr = reinterpret_cast<T *>(inputs[kOne]->device_ptr());
+  auto delta_addr = reinterpret_cast<T *>(inputs[kTwo]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[kZero]->device_ptr());
   auto task = [this, &var_addr, &alpha_addr, &delta_addr, &output_addr](size_t start, size_t end) {
     for (size_t pos = start; pos < end; pos++) {
       size_t batch_index = inner_input_size_ <= 0 ? 0 : pos / inner_input_size_;

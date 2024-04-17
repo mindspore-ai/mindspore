@@ -28,21 +28,14 @@ constexpr size_t kBesselJ0InputsNum = 1;
 constexpr size_t kBesselJ0OutputsNum = 1;
 }  // namespace
 
-bool BesselJ0CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BesselJ0>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "For 'BesselJ0CpuKernelMod', BaseOperatorPtr can not dynamic cast to BesselJ0 before initialize!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool BesselJ0CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kBesselJ0InputsNum || outputs.size() != kBesselJ0OutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "': input and output size should be " << kBesselJ0InputsNum << " and "
                   << kBesselJ0OutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
 
   switch (input_dtype_) {
     case kNumberTypeFloat64:
@@ -61,11 +54,10 @@ bool BesselJ0CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int BesselJ0CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
+int BesselJ0CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   input_shape_ = inputs[0]->GetShapeVector();
@@ -74,12 +66,12 @@ int BesselJ0CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool BesselJ0CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool BesselJ0CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   int block_size = 1000;
-  size_t tensor_size = inputs[0]->size / sizeof(T);
-  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> input(static_cast<T *>(inputs[0]->addr), tensor_size);
-  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> output(static_cast<T *>(outputs[0]->addr), tensor_size);
+  size_t tensor_size = inputs[0]->size() / sizeof(T);
+  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> input(static_cast<T *>(inputs[0]->device_ptr()), tensor_size);
+  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> output(static_cast<T *>(outputs[0]->device_ptr()), tensor_size);
 
   auto task = [this, &input, &output](size_t start, size_t end) {
     Eigen::array<Eigen::Index, 1> offsets = {static_cast<int64_t>(start)};

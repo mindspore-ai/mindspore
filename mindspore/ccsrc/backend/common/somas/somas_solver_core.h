@@ -33,7 +33,7 @@ namespace somas {
 class SomasSolverCore {
  public:
   /// Interface Function: receive parameters, creates the model to solve and then save the result
-  SomasSolverCore(const TensorsDescMap &tensors, const std::vector<DynamicBitSet> *constraints, uint32_t sol,
+  SomasSolverCore(const TensorsDescMap &tensors, const std::vector<VectorBitSet> *constraints, uint32_t sol,
                   bool isMultiThreadValid = true)
       : best_sol_(0),
         sort_strategy_(kGreaterSizeSmallerIndex),
@@ -70,7 +70,7 @@ class SomasSolverCore {
  private:
   const TensorsDescMap &tensors_;
   vector<BlockTensor> block_tensors_;
-  const std::vector<DynamicBitSet> &constraints_;
+  const std::vector<VectorBitSet> &constraints_;
   size_t upperbound_{0};
   size_t lifelong_memory_{0};
   bool verify_{false};

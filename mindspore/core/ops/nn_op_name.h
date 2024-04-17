@@ -30,6 +30,8 @@ constexpr auto kTripletMarginLossOpName = "TripletMarginLoss";
 
 constexpr auto kLayerNormOpName = "LayerNorm";
 constexpr auto kLayerNormGradOpName = "LayerNormGrad";
+constexpr auto kLayerNormV3OpName = "LayerNormV3";
+constexpr auto kLayerNormGradV3OpName = "LayerNormGradV3";
 constexpr auto kPadV3OpName = "PadV3";
 constexpr auto kPadV3GradOpName = "PadV3Grad";
 constexpr auto kMirrorPadGradOpName = "MirrorPadGrad";
@@ -136,9 +138,21 @@ constexpr auto kSparseSoftmaxCrossEntropyWithLogitsV2OpName = "SparseSoftmaxCros
 constexpr auto kSoftMarginLossOpName = "SoftMarginLoss";
 constexpr auto kSoftplusOpName = "Softplus";
 constexpr auto kSoftsignOpName = "Softsign";
+constexpr auto kApplyCamePart1OpName = "ApplyCamePart1";
+constexpr auto kApplyCamePart2OpName = "ApplyCamePart2";
+constexpr auto kApplyCamePart3OpName = "ApplyCamePart3";
+constexpr auto kApplyCamePart4OpName = "ApplyCamePart4";
 constexpr auto kFlashPromptFlashAttentionOpName = "PromptFlashAttention";
+constexpr auto kFlashIncreFlashAttentionOpName = "IncreFlashAttention";
 constexpr auto kFlashAttentionScoreOpName = "FlashAttentionScore";
 constexpr auto kFlashAttentionScoreGradOpName = "FlashAttentionScoreGrad";
+constexpr auto kPagedAttentionOpName = "PagedAttention";
+constexpr auto kPagedAttentionMaskOpName = "PagedAttentionMask";
+constexpr auto kReshapeAndCacheOpName = "ReshapeAndCache";
+constexpr auto kRmsNormOpName = "RmsNorm";
+constexpr auto kRmsNormGradOpName = "RmsNormGrad";
+constexpr auto kRNNTLossOpName = "RNNTLoss";
+constexpr auto kMatmulQkvOpName = "MatmulQkv";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_NN_OP_NAME_H_

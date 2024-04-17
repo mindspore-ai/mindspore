@@ -24,26 +24,23 @@ namespace {
 using KernelRunFunc = CTCLossV2GradGpuKernelMod::KernelRunFunc;
 constexpr int64_t kInterval = 2;
 }  // namespace
-bool CTCLossV2GradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool CTCLossV2GradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   // Getting values
-  auto kernel_ptr = std::make_shared<ops::CTCLossV2Grad>(base_operator->GetPrim());
-  blank_ = kernel_ptr->get_blank();
-  zero_infinity_ = kernel_ptr->get_zero_infinity();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  blank_ = GetValue<int64_t>(primitive_->GetAttr("blank"));
+  zero_infinity_ = GetValue<bool>(primitive_->GetAttr("zero_infinity"));
+
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int CTCLossV2GradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CTCLossV2GradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto log_probs_shape = inputs[kIndex1]->GetShapeVector();
@@ -61,7 +58,7 @@ int CTCLossV2GradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   log_alpha_shape_.y = LongToSize(time_series_);
   log_alpha_shape_.z = LongToSize(kInterval * max_target_length_ + 1);
 
-  const size_t scalar_type_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  const size_t scalar_type_size = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   workspace_size_list_.clear();
   workspace_size_list_ = {
     LongToSize(batch_size_ * time_series_ * (kInterval * max_target_length_ + 1)) * scalar_type_size,
@@ -70,19 +67,19 @@ int CTCLossV2GradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename scalar_t, typename target_t>
-bool CTCLossV2GradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &workspace,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
-  auto grad_out = reinterpret_cast<scalar_t *>(inputs[kIndex0]->addr);
-  auto log_probs = reinterpret_cast<scalar_t *>(inputs[kIndex1]->addr);
-  auto targets = reinterpret_cast<target_t *>(inputs[kIndex2]->addr);
-  auto input_lengths = reinterpret_cast<target_t *>(inputs[kIndex3]->addr);
-  auto target_lengths = reinterpret_cast<target_t *>(inputs[kIndex4]->addr);
-  auto neg_log_likelihood = reinterpret_cast<scalar_t *>(inputs[kIndex5]->addr);
-  auto log_alpha = reinterpret_cast<scalar_t *>(inputs[kIndex6]->addr);
+bool CTCLossV2GradGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &workspace,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
+  auto grad_out = reinterpret_cast<scalar_t *>(inputs[kIndex0]->device_ptr());
+  auto log_probs = reinterpret_cast<scalar_t *>(inputs[kIndex1]->device_ptr());
+  auto targets = reinterpret_cast<target_t *>(inputs[kIndex2]->device_ptr());
+  auto input_lengths = reinterpret_cast<target_t *>(inputs[kIndex3]->device_ptr());
+  auto target_lengths = reinterpret_cast<target_t *>(inputs[kIndex4]->device_ptr());
+  auto neg_log_likelihood = reinterpret_cast<scalar_t *>(inputs[kIndex5]->device_ptr());
+  auto log_alpha = reinterpret_cast<scalar_t *>(inputs[kIndex6]->device_ptr());
 
-  auto log_beta = reinterpret_cast<scalar_t *>(workspace[kIndex0]->addr);
-  auto grad = reinterpret_cast<scalar_t *>(outputs[kIndex0]->addr);
+  auto log_beta = reinterpret_cast<scalar_t *>(workspace[kIndex0]->device_ptr());
+  auto grad = reinterpret_cast<scalar_t *>(outputs[kIndex0]->device_ptr());
 
   CalCTCLossGradV2<scalar_t, target_t>(grad_out, log_probs, targets, input_lengths, target_lengths, neg_log_likelihood,
                                        log_alpha, log_beta, batch_size_, time_series_, num_labels_, max_target_length_,

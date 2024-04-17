@@ -38,7 +38,7 @@ bool InnerAbsEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) con
       }
       auto const_abstract_value = ele->cast_ptr<AbstractScalar>();
       MS_EXCEPTION_IF_NULL(const_abstract_value);
-      if (const_abstract_value->BuildValue() == kValueAny) {
+      if (const_abstract_value->BuildValue()->ContainsValueAny()) {
         return false;
       }
     }
@@ -47,7 +47,7 @@ bool InnerAbsEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) con
   if (args_abs_list[0]->isa<AbstractScalar>()) {
     auto const_abstract_value = args_abs_list[0]->cast_ptr<AbstractScalar>();
     MS_EXCEPTION_IF_NULL(const_abstract_value);
-    return const_abstract_value->BuildValue() != kValueAny;
+    return !const_abstract_value->BuildValue()->ContainsValueAny();
   }
   return false;
 }
@@ -75,7 +75,7 @@ EvalResultPtr InnerAbsEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   // Process constants.
   if (CheckConst(args_abs_list)) {
     auto const_value = args_abs_list[0]->BuildValue();
-    if (const_value != kValueAny) {
+    if (!const_value->ContainsValueAny()) {
       auto type = args_abs_list[0]->BuildType();
       MS_EXCEPTION_IF_NULL(type);
       auto py_x_data = ValueToPyData(const_value);
@@ -110,7 +110,7 @@ bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) c
       }
       auto const_abstract_value = ele->cast_ptr<AbstractScalar>();
       MS_EXCEPTION_IF_NULL(const_abstract_value);
-      if (const_abstract_value->BuildValue() == kValueAny) {
+      if (const_abstract_value->BuildValue()->ContainsValueAny()) {
         return false;
       }
     }
@@ -123,7 +123,7 @@ bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) c
     auto const_abstract_value = args_abs_list[0]->cast_ptr<AbstractScalar>();
     MS_EXCEPTION_IF_NULL(const_abstract_value);
     if (args_abs_list.size() == 1) {
-      return const_abstract_value->BuildValue() != kValueAny;
+      return !const_abstract_value->BuildValue()->ContainsValueAny();
     }
   }
   if (args_abs_list.size() == 1) {
@@ -133,7 +133,7 @@ bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) c
   if (args_abs_list[1]->isa<AbstractScalar>()) {
     auto const_abstract_value = args_abs_list[1]->cast_ptr<AbstractScalar>();
     MS_EXCEPTION_IF_NULL(const_abstract_value);
-    return const_abstract_value->BuildValue() != kValueAny;
+    return !const_abstract_value->BuildValue()->ContainsValueAny();
   }
   return args_abs_list[1]->isa<AbstractNone>();
 }
@@ -186,66 +186,6 @@ EvalResultPtr InnerRoundEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   // Convert round ops.
   auto new_cnode = std::make_shared<CNode>(*cnode);
   new_cnode->set_input(0, NewValueNode(prim::kPrimRound));
-  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
-  return engine->ForwardConfig(out_conf, fn_conf);
-}
-
-EvalResultPtr InnerLenEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
-                                          const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
-  // len([1, 2]]) = 2
-  if (args_abs_list.empty()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "len() requires 1 argument.";
-  }
-  MS_EXCEPTION_IF_NULL(out_conf->node());
-  auto cnode = out_conf->node()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
-  MS_LOG(DEBUG) << "args_abs_list[0]:" << args_abs_list[0]->ToString();
-
-  // Process constants.
-  if (args_abs_list[0]->isa<AbstractScalar>()) {
-    auto const_value = args_abs_list[0]->BuildValue();
-    MS_EXCEPTION_IF_NULL(const_value);
-    auto const_type = args_abs_list[0]->BuildType();
-    MS_EXCEPTION_IF_NULL(const_type);
-    if (const_value == kValueAny) {
-      MS_EXCEPTION(TypeError) << "object of type " << const_type->ToString() << " has no len().";
-    }
-    auto py_x_data = ValueToPyData(const_value);
-    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-    py::object len_data = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_CONST_LEN, py_x_data);
-    ValuePtr len_value = parse::data_converter::PyDataToValue(len_data);
-    MS_EXCEPTION_IF_NULL(len_value);
-    auto res = std::make_shared<AbstractScalar>(len_value);
-    auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
-    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
-    return infer_result;
-  }
-
-  // Process list, tuple, dict and tensor(pyexecute).
-  auto new_cnode = std::make_shared<CNode>(*cnode);
-  if (args_abs_list[0]->isa<AbstractSequence>()) {
-    new_cnode->set_input(0, NewValueNode(prim::kPrimSequenceLen));
-  } else if (args_abs_list[0]->isa<AbstractDictionary>()) {
-    new_cnode->set_input(0, NewValueNode(prim::kPrimDictLen));
-  } else if (args_abs_list[0]->isa<AbstractAny>()) {
-    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    // Convert pyexecute.
-    if (allow_fallback_runtime) {
-      auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "len");
-      MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
-      AnfNodeConfigPtr fn_conf = engine->MakeConfig(pyexecute_node, out_conf->context(), out_conf->func_graph());
-      return engine->ForwardConfig(out_conf, fn_conf);
-    } else {
-      MS_EXCEPTION(TypeError) << "The len() only supports types such as Tensor, list, tuple, dict, scalar in JIT "
-                              << "kStrict mode, but got " << args_abs_list[0]->ToString() << ".";
-    }
-  } else if (args_abs_list[0]->isa<AbstractTensor>()) {
-    new_cnode->set_input(0, NewValueNode(prim::kPrimArrayLen));
-  } else {
-    MS_EXCEPTION(TypeError) << "The len() only supports types such as Tensor, list, tuple, dict, scalar, and numpy"
-                            << " ndarray, but got " << args_abs_list[0]->ToString() << ".";
-  }
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   return engine->ForwardConfig(out_conf, fn_conf);
 }

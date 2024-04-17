@@ -1,0 +1,47 @@
+apply_came_part3:
+    description: |
+        Computes Part 3 of the CAME Optimizer.
+
+        Args:
+            - **u** (Parameter) - The shape = 2D :math:`(..., n, m)`.
+              A Tensor of types: float16, float32, bfloat16.
+            - **m** (Parameter) - The shape = 2D :math:`(..., n, m)`.
+              A Tensor of types: float16, float32, bfloat16.
+            - **eps** (float) - data type must be float.
+            - **beta1** (float) - data type must be float.
+            - **clip_threshold** (float) - data type must be float.
+            - **sum_square_u** (Tensor) - The shape = 1D :math:`(1)`.
+              A Tensor of types: float32.
+            - **global_shape** (Tensor) - the shape = 1D :math:`(2)`.
+              'None' is currently supported. A Tensor of types: int64.
+            - **use_first_moment** (bool).
+
+        Returns:
+            - **m** (Tensor) - A Tensor of shape :math:`(..., n, m)`
+            - **sum_u_r** (Tensor) - A Tensor of shape :math:`(..., n)`
+            - **sum_u_c** (Tensor) - A Tensor of of shape:math:`(..., m)`
+            - **sum_u_rc** (Tensor) - A Tensor of of shape:math:`(...)`
+
+        Raises:
+            TypeError: If `u` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` 
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore.ops.operations import _inner_ops as P
+            >>> apply_came_part3 = P.ApplyCamePart3()
+            >>> u = Tensor(np.ones([1024, 64]), dtype=ms.float32)
+            >>> m = Tensor(np.ones([1024, 64]), dtype=ms.float32)
+            >>> eps = 0.8
+            >>> beta1 = 0.5
+            >>> clip_threshold = 0.5
+            >>> sum_square_u = Tensor(np.array([128]), dtype=ms.float32)
+            >>> global_shape = (1024, 64)
+            >>> use_first_moment = False
+            >>> output = apply_came_part3(u, m, eps, beta1, clip_threshold, sum_square_u, global_shape, use_first_moment)
+            >>> print(output[0].shape)
+            (1024, 64)

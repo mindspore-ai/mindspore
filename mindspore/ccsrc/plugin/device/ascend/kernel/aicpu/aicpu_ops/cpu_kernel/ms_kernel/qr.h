@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_QR_H_
 #define AICPU_KERNELS_NORMALIZED_QR_H_
 
-#include "inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class QrCpuKernel : public CpuKernel {
@@ -28,10 +28,10 @@ class QrCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t QrCheck(const CpuKernelContext &ctx);
+  uint32_t QrCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t QrCompute(const CpuKernelContext &ctx);
+  uint32_t QrCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

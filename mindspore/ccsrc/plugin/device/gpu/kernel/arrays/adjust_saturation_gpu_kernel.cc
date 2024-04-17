@@ -26,9 +26,8 @@ namespace kernel {
 constexpr size_t INPUT_BUM = 2;
 constexpr size_t OUTPUT_NUM = 1;
 
-bool AdjustSaturationGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
+bool AdjustSaturationGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_BUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -41,21 +40,19 @@ bool AdjustSaturationGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int AdjustSaturationGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  return KernelMod::Resize(base_operator, inputs, outputs);
+int AdjustSaturationGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  return KernelMod::Resize(inputs, outputs);
 }
 
 template <typename T>
-bool AdjustSaturationGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AdjustSaturationGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_image = GetDeviceAddress<T>(inputs, 0);
   float *saturation_scale = GetDeviceAddress<float>(inputs, 1);
   T *output_image = GetDeviceAddress<T>(outputs, 0);
-  int input_element = inputs[0]->size / sizeof(T);
+  int input_element = inputs[0]->size() / sizeof(T);
   auto status = CalAdjustSaturation(input_element, input_image, output_image, saturation_scale, device_id_,
                                     reinterpret_cast<cudaStream_t>(stream_ptr));
   CHECK_CUDA_STATUS(status, kernel_name_);

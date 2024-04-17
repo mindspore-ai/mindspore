@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@
 
 #include <algorithm>
 #include <vector>
+#include <utility>
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
+#include "frontend/parallel/step_parallel_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -37,19 +39,16 @@ Status LayerNormInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": Init Shape failed";
     return FAILED;
   }
+  std::string op_name = GetPrimNameFromInfoName(this->name_);
 
-  auto iter = attrs_.find(BEGIN_NORM_AXIS);
-  if (iter == attrs_.end()) {
-    MS_LOG(ERROR) << name_ << ": Can not find the attr of begin norm axis";
-    return FAILED;
-  }
-  if ((iter->second == nullptr) || !iter->second->isa<Int64Imm>()) {
-    MS_LOG(ERROR) << name_ << ": The axis type is not int64_t";
+  std::optional<int64_t> axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, op_name, BEGIN_NORM_AXIS);
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << ": Can not find the attr of begin_norm_axis.";
     return FAILED;
   }
 
   int64_t dim = SizeToLong(inputs_shape_[0].size());
-  auto axis = GetValue<int64_t>(iter->second);
+  auto axis = axis_opt.value();
   if ((axis >= dim) || (axis < -dim)) {
     MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << (-dim) << ", " << (dim - 1) << "]";
     return FAILED;
@@ -125,6 +124,25 @@ Status LayerNormInfo::InferDevMatrixShape() {
     return FAILED;
   }
   dev_matrix_shape_ = stra[0];
+  return SUCCESS;
+}
+
+Status LayerNormInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": InferMirrorOps failed.";
+    return FAILED;
+  }
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+
+  OperatorVector op_for_begin_norm_axis;
+  OperatorVector op_for_begin_params_axis;
+  OperatorVector op_for_epsilon;
+  (void)mirror_ops_.emplace_back(std::move(op_for_begin_norm_axis));
+  (void)mirror_ops_.emplace_back(std::move(op_for_begin_params_axis));
+  (void)mirror_ops_.emplace_back(std::move(op_for_epsilon));
   return SUCCESS;
 }
 
@@ -245,6 +263,131 @@ Status LayerNormInfo::InitShapes() {
   input_shape_ = inputs_shape_[LAYER_NORM_INPUT_INDEX];
   gamma_shape_ = inputs_shape_[LAYER_NORM_GAMMA_INDEX];
   beta_shape_ = inputs_shape_[LAYER_NORM_BETA_INDEX];
+  return SUCCESS;
+}
+
+Status LayerNormInfo::CheckInputLayout() {
+  // Check all device matrix should be the same
+  if (inputs_tensor_info_.size() != kSizeThree) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for layernorm is " << inputs_tensor_info_.size()
+                  << " rather than 3.";
+    return FAILED;
+  }
+  auto in_layout = inputs_tensor_info_[kIndex0].tensor_layout();
+  auto gamma_layout = inputs_tensor_info_[kIndex1].tensor_layout();
+  auto beta_layout = inputs_tensor_info_[kIndex2].tensor_layout();
+
+  // check input layout
+  // [begin_norm_axis_, -1] should not shard after begin_norm_axis
+  const std::vector<int64_t> np_split_map = {-1};
+  for (size_t i = begin_norm_axis_; i < in_layout.tensor_map_before().size(); ++i) {
+    if (in_layout.tensor_map_before()[i] != np_split_map) {
+      MS_LOG(ERROR) << "Layernorm Invalid input layout " << in_layout.tensor_map_before();
+      return FAILED;
+    }
+  }
+
+  // check gamma and beta layout
+  if (gamma_layout.tensor_map_before() != beta_layout.tensor_map_before()) {
+    MS_LOG(ERROR) << "The tensor map of gamma " << gamma_layout.tensor_map_before()
+                  << " dose not equal to tensor map of beta " << beta_layout.tensor_map_before();
+    return FAILED;
+  }
+
+  size_t gamma_diff = in_layout.tensor_map_before().size() - gamma_layout.tensor_map_before().size();
+  for (size_t j = 0; j < gamma_layout.tensor_map_before().size(); ++j) {
+    if (gamma_layout.tensor_map_before()[j] != in_layout.tensor_map_before()[gamma_diff + j]) {
+      MS_LOG(ERROR) << "Layernorm Invalid gamma layout " << gamma_layout.tensor_map_before();
+      return FAILED;
+    }
+  }
+
+  size_t beta_diff = in_layout.tensor_map_before().size() - beta_layout.tensor_map_before().size();
+  for (size_t j = 0; j < beta_layout.tensor_map_before().size(); ++j) {
+    if (beta_layout.tensor_map_before()[j] != in_layout.tensor_map_before()[beta_diff + j]) {
+      MS_LOG(ERROR) << "Layernorm Invalid beta layout " << beta_layout.tensor_map_before();
+      return FAILED;
+    }
+  }
+
+  return SUCCESS;
+}
+
+Status LayerNormInfo::CheckOutputLayout() {
+  // Check all device matrix should be the same
+  if (outputs_tensor_info_.size() != kSizeThree) {
+    MS_LOG(ERROR) << "The size of output_tensor_layout for layernorm is " << outputs_tensor_info_.size()
+                  << " rather than 3.";
+    return FAILED;
+  }
+  if (output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
+    MS_LOG(ERROR) << "Parameter of output tensor layout for layernorm is not allowed to be set by users.";
+    return FAILED;
+  }
+  MS_LOG(INFO) << "Using output tensor layout infer by input tensor layout.";
+  return SUCCESS;
+}
+
+Status LayerNormInfo::InferOutputLayout() {
+  auto input_layout = inputs_tensor_info_[kIndex0].tensor_layout();
+
+  TensorLayout output_tensor_layout;
+  TensorLayout mean_tensor_layout;
+  TensorLayout var_tensor_layout;
+  output_tensor_layout = input_layout;
+  mean_tensor_layout = output_tensor_layout;
+  std::vector<Shape> mean_extended_tensor_map;
+  Shape mean_tensor_shape;
+
+  for (size_t i = 0; i < mean_tensor_layout.tensor_shape_before().array().size(); ++i) {
+    auto map_dim = input_layout.tensor_map_before()[i];
+    auto shp_dim = input_layout.tensor_shape_before().array()[i];
+    mean_extended_tensor_map.push_back(map_dim);
+    if (i < begin_norm_axis_) {
+      mean_tensor_shape.push_back(shp_dim);
+    } else {
+      mean_tensor_shape.push_back(1);
+    }
+  }
+  mean_tensor_layout.InitFromExtendVector(mean_tensor_layout.device_arrangement_origin().array(),
+                                          mean_extended_tensor_map, mean_tensor_shape);
+  var_tensor_layout = mean_tensor_layout;
+
+  output_infer_tensor_layout_ = output_tensor_layout;
+  mean_infer_tensor_layout_ = mean_tensor_layout;
+  var_infer_tensor_layout_ = var_tensor_layout;
+
+  return SUCCESS;
+}
+
+Status LayerNormInfo::InferOutputTensorInfo() {
+  InferOutputLayout();
+  if (output_infer_tensor_layout_.tensor_shape_before().array() != outputs_shape_[kIndex0]) {
+    MS_LOG(ERROR) << "The infer output shape " << output_infer_tensor_layout_.tensor_shape_before().array()
+                  << " dose not match the output shape " << outputs_shape_[kIndex0];
+    return FAILED;
+  }
+  if (mean_infer_tensor_layout_.tensor_shape_before().array() != outputs_shape_[kIndex1]) {
+    MS_LOG(ERROR) << "The infer output mean shape " << mean_infer_tensor_layout_.tensor_shape_before().array()
+                  << " dose not match the output shape " << outputs_shape_[kIndex1];
+    return FAILED;
+  }
+  if (var_infer_tensor_layout_.tensor_shape_before().array() != outputs_shape_[kIndex2]) {
+    MS_LOG(ERROR) << "The infer output var shape " << var_infer_tensor_layout_.tensor_shape_before().array()
+                  << " dose not match the output shape " << outputs_shape_[kIndex2];
+    return FAILED;
+  }
+  TensorInfo output_tensor_info(output_infer_tensor_layout_);
+  TensorInfo mean_tensor_info(mean_infer_tensor_layout_);
+  TensorInfo var_tensor_info(var_infer_tensor_layout_);
+  outputs_tensor_info_.push_back(output_tensor_info);
+  outputs_tensor_info_.push_back(mean_tensor_info);
+  outputs_tensor_info_.push_back(var_tensor_info);
+  return SUCCESS;
+}
+
+Status LayerNormInfo::InferForwardCommunicationByLayout() {
+  // for layernorm, no ForwardCommunication
   return SUCCESS;
 }
 

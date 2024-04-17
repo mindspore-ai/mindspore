@@ -1,0 +1,12 @@
+#operator relu
+relu:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ReLU
+  dispatch:
+    enable: True

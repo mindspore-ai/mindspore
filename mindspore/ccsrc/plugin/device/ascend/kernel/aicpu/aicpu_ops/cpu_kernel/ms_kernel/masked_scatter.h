@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MASKED_SCATTER_H_
 #define AICPU_KERNELS_NORMALIZED_MASKED_SCATTER_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class MaskedScatterCpuKernel : public CpuKernel {
@@ -31,8 +31,8 @@ class MaskedScatterCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t MaskedScatterCompute(const CpuKernelContext &ctx);
-  uint32_t InputCheck(const CpuKernelContext &ctx);
+  uint32_t MaskedScatterCompute(CpuKernelContext &ctx);
+  uint32_t InputCheck(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

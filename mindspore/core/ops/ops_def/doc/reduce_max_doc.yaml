@@ -1,0 +1,81 @@
+reduce_max:
+    description: |
+        Reduces a dimension of a tensor by the maximum value in this dimension, by default. And also can
+        reduce a dimension of `x` along the `axis`. Determine whether the dimensions of the output and input are the
+        same by controlling `keep_dims`.
+
+        Note:
+            The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
+
+        Args:
+            keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                If ``False`` , don't keep these dimensions. Default: ``False`` .
+        
+        Inputs:
+            - **x** (Tensor[Number]) - The input tensor.
+            - **axis** (Union[int, tuple(int), list(int), tensor]) - The dimensions to reduce. Default: ``()`` ,
+              reduce all dimensions. Must be in the range [-r, r).
+        
+        Outputs:
+            output(Tensor): has the same dtype as the `x`.
+        
+            - If `axis` is ``()`` , and `keep_dims` is ``False`` ,
+              the output is a 0-D tensor representing the maximum of all elements in the input tensor.
+            - If `axis` is int, set as 1, and `keep_dims` is ``False`` ,
+              the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+            - If `axis` is tuple(int) or list(int), set as (1, 2), and `keep_dims` is ``False`` ,
+              the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+            - If `axis` is 1-D Tensor, set as [1, 2], and `keep_dims` is ``False`` ,
+              the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+
+        Raises:
+            TypeError: If `keep_dims` is not a bool.
+            TypeError: If `x` is not a Tensor.
+            TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
+            ValueError: If `axis` is out of range.
+        
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+        
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+            >>> output = ops.ReduceMax(keep_dims=True)(x, 1)
+            >>> result = output.shape
+            >>> print(result)
+            (3, 1, 5, 6)
+            >>> # case 1: Reduces a dimension by the maximum value of all elements in the dimension.
+            >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+            ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+            ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
+            >>> output = ops.ReduceMax(keep_dims=True)(x, ())
+            >>> print(output)
+            [[[9.]]]
+            >>> print(output.shape)
+            (1, 1, 1)
+            >>> # case 2: Reduces a dimension along axis 0.
+            >>> output = ops.ReduceMax(keep_dims=True)(x, 0)
+            >>> print(output)
+            [[[7. 7. 7. 7. 7. 7.]
+            [8. 8. 8. 8. 8. 8.]
+            [9. 9. 9. 9. 9. 9.]]]
+            >>> # case 3: Reduces a dimension along axis 1.
+            >>> output = ops.ReduceMax(keep_dims=True)(x, 1)
+            >>> print(output)
+            [[[3. 3. 3. 3. 3. 3.]]
+            [[6. 6. 6. 6. 6. 6.]]
+            [[9. 9. 9. 9. 9. 9.]]]
+            >>> # case 4: Reduces a dimension along axis 2.
+            >>> output = ops.ReduceMax(keep_dims=True)(x, 2)
+            >>> print(output)
+            [[[1.]
+            [2.]
+            [3.]]
+            [[4.]
+            [5.]
+            [6.]]
+            [[7.]
+            [8.]
+            [9.]]]

@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ADAPTIVE_MAX_POOL_3D_GRAD_H_
 #define AICPU_KERNELS_NORMALIZED_ADAPTIVE_MAX_POOL_3D_GRAD_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 
@@ -29,9 +29,9 @@ class AdaptiveMaxPool3dGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t AdaptiveMaxPool3dGradCheck(const CpuKernelContext &ctx);
+  uint32_t AdaptiveMaxPool3dGradCheck(CpuKernelContext &ctx);
   template <typename T1, typename T2>
-  uint32_t AdaptiveMaxPool3dGradCompute(const CpuKernelContext &ctx);
+  uint32_t AdaptiveMaxPool3dGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

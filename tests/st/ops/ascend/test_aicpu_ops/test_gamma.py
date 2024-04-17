@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import numpy as np
 
 import mindspore.context as context
@@ -19,8 +20,6 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
@@ -33,7 +32,18 @@ class Net(nn.Cell):
         return self.gamma(self.shape, alpha, beta)
 
 
-def test_net_1D():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net_1D(context_mode):
+    """
+    Feature: aicpu ops Gamma.
+    Description: test Gamma forward.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=context_mode, device_target="Ascend")
     seed = 10
     shape = (3, 2, 4)
     alpha = 1.0
@@ -44,7 +54,18 @@ def test_net_1D():
     assert output.shape == (3, 2, 4)
 
 
-def test_net_ND():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net_ND(context_mode):
+    """
+    Feature: aicpu ops Gamma.
+    Description: test Gamma forward.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=context_mode, device_target="Ascend")
     seed = 10
     shape = (3, 1, 2)
     alpha = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)

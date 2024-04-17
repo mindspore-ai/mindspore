@@ -46,12 +46,14 @@ class BACKEND_EXPORT CPUMemoryManager : public MemoryManager {
   void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) const;
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
 
-  void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false) override {
-    return CPUMemoryPool::GetInstance().AllocTensorMem(size, from_persistent_mem);
+  void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false,
+                             uint32_t stream_id = kDefaultStreamIndex) override {
+    return CPUMemoryPool::GetInstance().AllocTensorMem(size, from_persistent_mem, false, stream_id);
   }
   void FreeMemFromMemPool(void *device_ptr) override { CPUMemoryPool::GetInstance().FreeTensorMem(device_ptr); }
-  std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) override {
-    return CPUMemoryPool::GetInstance().AllocContinuousTensorMem(size_list);
+  std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list,
+                                                     uint32_t stream_id = kDefaultStreamIndex) override {
+    return CPUMemoryPool::GetInstance().AllocContinuousTensorMem(size_list, stream_id);
   }
 
  protected:

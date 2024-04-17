@@ -14,9 +14,10 @@
 
 import pytest
 import numpy as np
-from mindspore import context, nn, Tensor, jit
+from mindspore import context, nn, Tensor, jit, ops
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
+from tests.st.utils import test_utils
 
 
 class NetValueNodeWithDepend(nn.Cell):
@@ -103,6 +104,7 @@ def test_runtime_heter():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_runtime_fallback_heter():
     """
     Feature: Runtime heter.
@@ -117,4 +119,24 @@ def test_runtime_fallback_heter():
         return res
 
     ret = foo()
+    assert ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_runtime_value_tuple_output():
+    """
+    Feature: Runtime tuple output to make tuple.
+    Description: value tuple used more than once.
+    Expectation: Not throw exception.
+    """
+
+    @jit
+    def foo(a):
+        b = (2, 3)
+        return (ops.reshape(a, b), b)
+
+    b = Tensor([1, 2, 3, 4, 5, 6])
+    ret = foo(b)
     assert ret

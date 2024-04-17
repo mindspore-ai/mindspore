@@ -53,7 +53,7 @@ def test_data_formata_dim_map(data_type):
     assert np.allclose(output_3.asnumpy(), output_3_expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.int32, np.int64])

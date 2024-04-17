@@ -70,9 +70,7 @@ class Net1(nn.Cell):
         self.select = P.Select()
         self.reshape = P.Reshape()
         self.xlogy = P.Xlogy()
-        self.logit = P.Logit(eps=1e-5)
         self.tril = P.Tril(10)
-        self.hsigmoid = P.HSigmoid()
         self.cast = P.Cast()
         self.expand_dims = P.ExpandDims()
         self.dense = nn.Dense(1, 3, activation='relu')
@@ -85,9 +83,7 @@ class Net1(nn.Cell):
         a = self.select(input_cond, a, b)
         a = self.reshape(a, shape)
         b = self.reshape(b, shape)
-        a = self.logit(a)
         a = self.tril(a)
-        a = self.hsigmoid(a)
 
         output = self.xlogy(a, b)
         output = self.expand_dims(output, -1)
@@ -110,8 +106,8 @@ def test_ascend_profiling():
         add = Net()
         add(Tensor(x), Tensor(y))
         profiler.analyse()
-        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/summary/op_summary*")) == 1
-        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/summary/op_statistic*")) == 1
+        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_output/op_summary*")) == 1
+        assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_output/op_statistic*")) == 1
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/l2_cache.data*")) >= 2
 
 
@@ -179,10 +175,10 @@ def test_collect_custom_aicpu():
         profiler.analyse()
         aicpu_intermediate_file_list = glob.glob(f"{tmpdir}/profiler/aicpu_intermediate_*.csv")
         assert len(aicpu_intermediate_file_list) == 1
-        s1 = {'Select', 'Logit', 'Tril', 'HSigmoid', 'Xlogy', 'Cast'}
+        s1 = {'Select', 'Xlogy', 'Cast'}
         s2 = set()
         with open(aicpu_intermediate_file_list[0], 'r') as fr:
             reader = csv.DictReader(fr)
             for row in reader:
-                s2.add(row.get('op_type'))
+                s2.add(row.get('kernel_type'))
         assert s1 == s2

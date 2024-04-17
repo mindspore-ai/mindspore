@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ from . import (
     nn_func,
     linalg_func,
     clip_func,
+    fft_func
 )
 from .array_func import (
     unique,
@@ -86,7 +87,6 @@ from .array_func import (
     gather_elements,
     gather_nd,
     is_tensor,
-    scalar_cast,
     masked_fill,
     narrow,
     tensor_scatter_add,
@@ -111,8 +111,8 @@ from .array_func import (
     is_nonzero,
     space_to_batch_nd,
     batch_to_space_nd,
-    range,
     arange,
+    range,
     select,
     one_hot,
     matrix_diag,
@@ -162,7 +162,7 @@ from .array_func import (
     aminmax,
     sort,
     top_k,
-    deepcopy
+    deepcopy,
 )
 from .parameter_func import (
     assign,
@@ -185,7 +185,6 @@ from .math_func import (
     add,
     addcdiv,
     addcmul,
-    neg_tensor,
     neg,
     negative,
     tensor_lt,
@@ -434,12 +433,6 @@ from .math_func import (
     trace,
     zeta,
     histc,
-    fft,
-    fft2,
-    fftn,
-    ifft,
-    ifft2,
-    ifftn,
     count_nonzero,
     tensor_dot,
     vecdot,
@@ -716,10 +709,24 @@ from .clip_func import (
     clip,
     clip_by_global_norm,
 )
+from .fft_func import (
+    fft,
+    fft2,
+    fftn,
+    fftshift,
+    ifft,
+    ifft2,
+    ifftn,
+    ifftshift,
+    rfft,
+    irfft,
+)
 from .other_func import (
     depend,
     partial,
 )
+
+from ..operations.manually_defined import (rank, scalar_cast)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -736,5 +743,6 @@ __all__.extend(spectral_func.__all__)
 __all__.extend(vmap_func.__all__)
 __all__.extend(sparse_unary_func.__all__)
 __all__.extend(clip_func.__all__)
+__all__.extend(fft_func.__all__)
 __all__.extend(other_func.__all__)
 __all__.sort()

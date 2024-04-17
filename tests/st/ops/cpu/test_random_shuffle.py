@@ -34,7 +34,7 @@ class RandomShuffleNet(nn.Cell):
         return self.random_shuffle(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

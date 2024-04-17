@@ -19,7 +19,7 @@
 #include <utility>
 #include <limits>
 #include <vector>
-#include "ops/batch_norm.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "common/anf_util.h"
 #include "common/op_enum.h"
 #include "op/batch_norm_operator.h"
@@ -33,7 +33,7 @@ STATUS SetBnDataInfo(const api::CNodePtr &cnode, mapper::BatchNormOperator *batc
     MS_LOG(ERROR) << "batch_norm_operator is nullptr.";
     return RET_ERROR;
   }
-  for (size_t i = 2; i < cnode->inputs().size(); i++) {
+  for (size_t i = 2; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
     auto param_node = input_node->cast<api::ParameterPtr>();
@@ -72,7 +72,7 @@ STATUS SetFusedBnDataInfo(const api::CNodePtr &cnode, mapper::BatchNormOperator 
     MS_LOG(ERROR) << "batch_norm_operator is nullptr.";
     return RET_ERROR;
   }
-  for (size_t i = 2; i < cnode->inputs().size(); i++) {
+  for (size_t i = 2; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
     auto param_node = input_node->cast<api::ParameterPtr>();

@@ -19,6 +19,7 @@ from abc import ABC
 from typing import Dict
 
 import mindspore_lite as mslite
+from mindspore_lite import DataType
 import numpy as np
 
 from mslite_bench.infer_base.abs_infer_session import AbcInferSession
@@ -31,7 +32,7 @@ class MsliteSession(AbcInferSession, ABC):
     def __init__(self,
                  model_file,
                  cfg=None):
-        super(MsliteSession, self).__init__(model_file, cfg)
+        super().__init__(model_file, cfg)
         self.thread_num = cfg.thread_num
         mslite_model_type = self._set_ms_model_type()
         self.model_type = mslite.ModelType(mslite_model_type)
@@ -40,6 +41,20 @@ class MsliteSession(AbcInferSession, ABC):
         self.context = self._init_context()
         self.model_session = self._create_infer_session()
         self.model_inputs = self.model_session.get_inputs()
+        self.dtype_map = {
+            DataType.BOOL: np.bool_,
+            DataType.INT8: np.int8,
+            DataType.INT16: np.int16,
+            DataType.INT32: np.int32,
+            DataType.INT64: np.int64,
+            DataType.UINT8: np.uint8,
+            DataType.UINT16: np.uint16,
+            DataType.UINT32: np.uint32,
+            DataType.UINT64: np.uint64,
+            DataType.FLOAT16: np.float16,
+            DataType.FLOAT32: np.float32,
+            DataType.FLOAT64: np.float64,
+        }
 
     def infer(self, input_data_map: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         """model infer"""
@@ -47,6 +62,14 @@ class MsliteSession(AbcInferSession, ABC):
         for model_input in self.model_inputs:
             tensor_name = model_input.name.rstrip()
             input_data = input_data_map.get(tensor_name, None)
+            if self.dtype_map[model_input.dtype] != input_data.dtype:
+                self.logger.warning('Input data type %s  is different '
+                                    'from input tensor dtype %s, would convert'
+                                    'input data type to %s ',
+                                    input_data.dtype,
+                                    model_input.dtype,
+                                    model_input.dtype)
+                input_data = input_data.astype(self.dtype_map[model_input.dtype])
             model_input.set_data_from_numpy(input_data)
         outputs = self.model_session.predict(self.model_inputs)
         predict_results = {
@@ -66,9 +89,9 @@ class MsliteSession(AbcInferSession, ABC):
             if input_data is None:
                 raise ValueError(f'{tensor_name} is not in model inputs')
             if model_input.shape != list(input_data.shape):
-                self.logger.warning(f'model input shape: {model_input.shape} is not equal'
-                                    f'with input data shape: {input_data.shape}, model input shape'
-                                    f'would be reshaped')
+                self.logger.warning('model input shape: %s is not equal'
+                                    'with input data shape: %s, model input shape'
+                                    'would be reshaped', model_input.shape, input_data.shape)
                 is_need_reshape = True
             input_shape_list.append(list(input_data.shape))
 
@@ -100,8 +123,6 @@ class MsliteSession(AbcInferSession, ABC):
             input_tensor_infos[tensor_name] = (shape, dtype)
 
         if not resize_tensor_list:
-            self.logger.info(f'resize model input tensor '
-                             f'shape {resize_tensor_list} to {tensor_shape_list}')
             self.model_session.resize(resize_tensor_list, tensor_shape_list)
             self.model_inputs = self.model_session.get_inputs()
 
@@ -123,5 +144,5 @@ class MsliteSession(AbcInferSession, ABC):
         if self.model_file.endswith('ms'):
             mslite_model_type = 4
         else:
-            self.mslite_model_type = 0
+            mslite_model_type = 0
         return mslite_model_type

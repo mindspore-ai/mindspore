@@ -16,7 +16,7 @@ mindspore.ops.TensorScatterElements
 
     参数：
         - **axis** (int，可选) - 指定进行操作的轴。默认值： ``0`` 。
-        - **reduction** (str，可选) - 指定进行的reduction操作。默认值是"none"，可选"add"。
+        - **reduction** (str，可选) - 指定进行的reduction操作。默认值是 ``"none"`` ，可选 ``"add"`` 。
 
     输入：
         - **data** (Tensor) - 输入Tensor。 其rank必须至少为1。

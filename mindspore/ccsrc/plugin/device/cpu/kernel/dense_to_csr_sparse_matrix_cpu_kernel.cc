@@ -36,20 +36,16 @@ constexpr size_t kDenseToCSRSparseMatrixOutputsNum = 5;
 constexpr int64_t kInitPrevBatch = -1;
 }  // namespace
 
-bool DenseToCSRSparseMatrixCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  indices_type_ = inputs[kInputIndex1]->GetDtype();
-  values_type_ = inputs[kInputIndex0]->GetDtype();
+bool DenseToCSRSparseMatrixCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  indices_type_ = inputs[kInputIndex1]->dtype_id();
+  values_type_ = inputs[kInputIndex0]->dtype_id();
   return true;
 }
 
-int DenseToCSRSparseMatrixCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DenseToCSRSparseMatrixCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -66,9 +62,9 @@ int DenseToCSRSparseMatrixCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   return KRET_OK;
 }
 
-bool DenseToCSRSparseMatrixCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool DenseToCSRSparseMatrixCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDenseToCSRSparseMatrixInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDenseToCSRSparseMatrixOutputsNum, kernel_name_);
   switch (indices_type_) {
@@ -127,15 +123,15 @@ inline void CheckIndicesInRange(const size_t total_ele, const size_t idx, const 
 }
 
 template <typename indiceT, typename valueT>
-void DenseToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) const {
-  auto dense_input_ptr = reinterpret_cast<valueT *>(inputs[kInputIndex0]->addr);
-  auto indices_ptr = reinterpret_cast<indiceT *>(inputs[kInputIndex1]->addr);
-  auto y_dense_shape_ptr = reinterpret_cast<indiceT *>(outputs[kOutputIndex0]->addr);
-  auto y_batch_pointers_ptr = reinterpret_cast<indiceT *>(outputs[kOutputIndex1]->addr);
-  auto y_row_pointers_ptr = reinterpret_cast<indiceT *>(outputs[kOutputIndex2]->addr);
-  auto y_col_indices_ptr = reinterpret_cast<indiceT *>(outputs[kOutputIndex3]->addr);
-  auto y_values_ptr = reinterpret_cast<valueT *>(outputs[kOutputIndex4]->addr);
+void DenseToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) const {
+  auto dense_input_ptr = reinterpret_cast<valueT *>(inputs[kInputIndex0]->device_ptr());
+  auto indices_ptr = reinterpret_cast<indiceT *>(inputs[kInputIndex1]->device_ptr());
+  auto y_dense_shape_ptr = reinterpret_cast<indiceT *>(outputs[kOutputIndex0]->device_ptr());
+  auto y_batch_pointers_ptr = reinterpret_cast<indiceT *>(outputs[kOutputIndex1]->device_ptr());
+  auto y_row_pointers_ptr = reinterpret_cast<indiceT *>(outputs[kOutputIndex2]->device_ptr());
+  auto y_col_indices_ptr = reinterpret_cast<indiceT *>(outputs[kOutputIndex3]->device_ptr());
+  auto y_values_ptr = reinterpret_cast<valueT *>(outputs[kOutputIndex4]->device_ptr());
   if (rank_ == kDefaultRank) {
     y_dense_shape_ptr[kZero] = indiceT(num_rows_);
     y_dense_shape_ptr[kOne] = indiceT(num_cols_);

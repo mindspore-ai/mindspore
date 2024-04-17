@@ -81,3 +81,31 @@ int ScatterNDUpdate(void *output, const void *update, int *output_unit_offsets, 
   }
   return NNACL_OK;
 }
+
+int ScatterNDMax(const void *update, void *output, int *output_unit_offsets, const ScatterNDParameter *param, int type,
+                 int task_id) {
+  if (update == NULL || output == NULL || output_unit_offsets == NULL || param == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  if (param->op_parameter.thread_num_ == 0) {
+    return NNACL_ERR;
+  }
+  int unit_per_thread = UP_DIV(param->num_unit, param->op_parameter.thread_num_);
+  int begin = unit_per_thread * task_id;
+  int end = MSMIN(begin + unit_per_thread, param->num_unit);
+  if (type == 0) {
+    float *update_fp32 = (float *)update;
+    float *output_fp32 = (float *)output;
+    for (int i = begin; i < end; i++) {
+      const float *update_data = update_fp32 + i * param->unit_size;
+      float *output_data = output_fp32 + output_unit_offsets[i];
+      int j = 0;
+
+      SIMD_RUN_NO_SCALAR(ScatterNDMaxFp32, j, update_data, param->unit_size, output_data);
+      for (; j < param->unit_size; j++) {
+        output_data[j] = fmaxf(update_data[j], output_data[j]);
+      }
+    }
+  }
+  return NNACL_OK;
+}

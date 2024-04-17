@@ -1,0 +1,19 @@
+#operator gather_d_grad_v2
+gather_d_grad_v2:
+    args:
+        x:
+            dtype: tensor
+        dim:
+            dtype: int
+        index:
+            dtype: tensor
+        dout:
+            dtype: tensor
+    returns:
+        dx:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: GatherDGradAscend

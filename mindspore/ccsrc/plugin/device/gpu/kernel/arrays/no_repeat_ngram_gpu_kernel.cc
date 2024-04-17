@@ -28,16 +28,9 @@ namespace kernel {
 namespace {
 constexpr size_t kNoRepeatNGramInputNum = 2;
 }  // namespace
-bool NoRepeatNGramGpuKernelMode::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NoRepeatNGram>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' executing dynamic_pointer_cast failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-
-  ngram_ = kernel_ptr->get_ngram();
+bool NoRepeatNGramGpuKernelMode::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  ngram_ = GetValue<int64_t>(primitive_->GetAttr("ngram_size"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -51,15 +44,14 @@ bool NoRepeatNGramGpuKernelMode::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int NoRepeatNGramGpuKernelMode::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int NoRepeatNGramGpuKernelMode::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  if (input_size_list_.size() != kNoRepeatNGramInputNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 2 , but got " << input_size_list_.size();
+  if (inputs.size() != kNoRepeatNGramInputNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 2 , but got " << inputs.size();
     return KRET_RESIZE_FAILED;
   }
   state_seq_shape_ = inputs[kIndex0]->GetShapeVector();
@@ -73,8 +65,8 @@ int NoRepeatNGramGpuKernelMode::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename StateType, typename LogProbType>
-bool NoRepeatNGramGpuKernelMode::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
+bool NoRepeatNGramGpuKernelMode::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   StateType *input_state = GetDeviceAddress<StateType>(inputs, kIndex0);
   LogProbType *log_probs = GetDeviceAddress<LogProbType>(inputs, kIndex1);
   LogProbType *output = GetDeviceAddress<LogProbType>(outputs, kIndex0);
@@ -85,7 +77,7 @@ bool NoRepeatNGramGpuKernelMode::LaunchKernel(const std::vector<AddressPtr> &inp
   auto mem_size = (seq_len_ + 1) * sizeof(StateType);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(output, log_probs, input_size_list_[kIndex1], cudaMemcpyDeviceToDevice,
+    cudaMemcpyAsync(output, log_probs, inputs[kIndex1]->size(), cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'no_repeat_ngram', it launch memcopy failed.");
 

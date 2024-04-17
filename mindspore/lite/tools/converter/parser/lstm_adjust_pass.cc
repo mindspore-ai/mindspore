@@ -20,7 +20,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "ops/lstm.h"
 #include "ops/reshape.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "src/common/utils.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "tools/common/tensor_util.h"
@@ -265,7 +265,7 @@ bool LstmAdjustPass::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr || cnode->inputs().size() != kTupleGetItemInputSize || cnode->input(1) == nullptr) {
+    if (cnode == nullptr || cnode->size() != kTupleGetItemInputSize || cnode->input(1) == nullptr) {
       return false;
     }
     if (!CheckPrimitiveType(cnode->input(1)->cast<CNodePtr>(), prim::kPrimLstm)) {

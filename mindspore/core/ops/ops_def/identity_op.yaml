@@ -1,0 +1,15 @@
+#operator identity
+identity:
+  args:
+    input_x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    name: deepcopy
+  dispatch:
+    enable: False
+    Ascend: IdentityAscend
+    CPU: IdentityCPU
+    GPU: IdentityGPU

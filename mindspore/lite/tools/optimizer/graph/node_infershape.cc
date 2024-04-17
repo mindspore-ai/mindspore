@@ -303,9 +303,7 @@ STATUS NodeInferShape::InferShapeByNNACL(const CNodePtr &cnode) {
 STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   STATUS status;
-  if (JudgeOpSupportOpsInfer(cnode)) {
-    status = InferShapeByOps(cnode, true);
-  } else if (JudgeOpSupportNNACLInfer(cnode)) {
+  if (JudgeOpSupportNNACLInfer(cnode)) {
     status = InferShapeByNNACL(cnode);
   } else {
     MS_LOG(ERROR) << "Unsupported node: " << cnode->fullname_with_scope() << " for infershape.";
@@ -437,7 +435,7 @@ STATUS NodeInferShape::SetCNodeAbstractByConvert(const CNodePtr &cnode, const Ab
     return lite::RET_ERROR;
   }
 
-  std::vector<int64_t> outputs_format(output_size, format);
+  std::vector<int64_t> outputs_format(output_size, static_cast<int64_t>(format));
   auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
   if (anf_prim == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";

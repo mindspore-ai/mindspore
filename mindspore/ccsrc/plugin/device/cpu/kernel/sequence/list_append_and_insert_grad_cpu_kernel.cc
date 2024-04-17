@@ -27,21 +27,16 @@ namespace {
 constexpr int kInputsNum = 2;
 constexpr int kOutputsNum = 1;
 }  // namespace
-bool ListAppendAndInsertGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ListAppendAndInsertGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int ListAppendAndInsertGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ListAppendAndInsertGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -53,17 +48,17 @@ int ListAppendAndInsertGradCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T, typename S>
-bool ListAppendAndInsertGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &,
-                                                       const std::vector<AddressPtr> &outputs) {
+bool ListAppendAndInsertGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &,
+                                                       const std::vector<KernelTensor *> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   MS_EXCEPTION_IF_NULL(input_addr);
   const auto index_addr = GetDeviceAddress<S>(inputs, 1);
   MS_EXCEPTION_IF_NULL(index_addr);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
   auto len_list = list_shape_[0];
-  auto output_size = outputs[0]->size;
-  auto input_size = inputs[0]->size;
+  auto output_size = outputs[0]->size();
+  auto input_size = inputs[0]->size();
   int64_t index = *index_addr;
 
   if (index < -len_list || index >= len_list) {

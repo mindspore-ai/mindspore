@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <memory>
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "mindspore/core/ops/betainc.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,22 +26,13 @@ constexpr size_t kBetaincInputsNum = 3;
 constexpr size_t kBetaincOutputsNum = 1;
 }  // namespace
 
-bool BetaincCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::Betainc>(base_operator->GetPrim());
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Betainc ops failed!";
-    return false;
-  }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool BetaincCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int BetaincCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &others) {
+int BetaincCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   input0_shape_ = inputs[kIndex0]->GetShapeVector();
@@ -73,16 +63,16 @@ inline T ScalarBetainc(T a, T b, T x) {
 }
 
 template <typename T>
-bool BetaincCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool BetaincCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBetaincInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBetaincOutputsNum, kernel_name_);
-  T *input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
-  T *input2 = reinterpret_cast<T *>(inputs[2]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  auto total = inputs[0]->size / sizeof(T);
+  T *input0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *input1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *input2 = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto total = inputs[0]->size() / sizeof(T);
   auto task = [&input0, &input1, &input2, &output](std::int64_t begin, std::int64_t end) {
     for (std::int64_t i = begin; i < end; i++) {
       output[i] = ScalarBetainc(input0[i], input1[i], input2[i]);

@@ -88,7 +88,7 @@ int SplitSharedBias::Run() {
     if (!quant::CheckNodeInSet(cnode, kHasBiasOperator)) {
       continue;
     }
-    if (cnode->inputs().size() <= (THIRD_INPUT + kPrimOffset)) {
+    if (cnode->size() <= (THIRD_INPUT + kPrimOffset)) {
       MS_LOG(WARNING) << "bias input not exist, cnode name: " << cnode->fullname_with_scope();
       continue;
     }

@@ -42,6 +42,9 @@ std::string ArrayToString(std::vector<T> array) {
   return "{" + result + "}";
 }
 
-std::string AccumulateShape(const std::vector<std::string> &shape_template);
+std::string AccumulateShape(const std::vector<std::string> &shape_template, size_t start_index, size_t end_index);
+
+std::string GetTensorAddr(lite::Tensor *tensor, bool is_const, DynamicMemManager *dynamic_mem_manager,
+                          MemoryAllocator *allocator);
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_CODER_UTILS_H_

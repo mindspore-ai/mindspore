@@ -235,7 +235,8 @@ class DebugServices {
   struct TensorStat {
     TensorStat(uint64_t data_size, int dtype, const std::vector<int64_t> &shape, bool is_bool, double max_value,
                double min_value, double avg_value, uint64_t count, uint64_t neg_zero_count, uint64_t pos_zero_count,
-               uint64_t nan_count, uint64_t neg_inf_count, uint64_t pos_inf_count, uint64_t zero_count)
+               uint64_t nan_count, uint64_t neg_inf_count, uint64_t pos_inf_count, uint64_t zero_count,
+               std::string md5 = "")
         : data_size(data_size),
           dtype(dtype),
           shape(shape),
@@ -249,7 +250,8 @@ class DebugServices {
           nan_count(nan_count),
           neg_inf_count(neg_inf_count),
           pos_inf_count(pos_inf_count),
-          zero_count(zero_count) {}
+          zero_count(zero_count),
+          md5(md5) {}
 
     TensorStat() = default;
 
@@ -267,6 +269,7 @@ class DebugServices {
     uint64_t neg_inf_count = 0;
     uint64_t pos_inf_count = 0;
     uint64_t zero_count = 0;
+    std::string md5 = "";
   };
 
   struct ChunkData {

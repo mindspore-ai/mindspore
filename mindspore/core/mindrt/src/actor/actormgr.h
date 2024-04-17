@@ -26,6 +26,7 @@
 #ifndef MS_COMPILE_IOS
 #include <shared_mutex>
 #endif
+#include <vector>
 #include "actor/actor.h"
 #include "thread/actor_threadpool.h"
 #include "thread/hqueue.h"
@@ -54,7 +55,7 @@ class MS_CORE_API ActorMgr {
   void Finalize();
   // initialize actor manager resource, do not create inner thread pool by default
   int Initialize(bool use_inner_pool = false, size_t actor_thread_num = 1, size_t max_thread_num = 1,
-                 size_t actor_queue_size = kMaxHqueueSize);
+                 size_t actor_queue_size = kMaxHqueueSize, const std::vector<int> &core_list = {});
 
   void RemoveActor(const std::string &name);
   ActorReference GetActor(const AID &id);
@@ -71,6 +72,11 @@ class MS_CORE_API ActorMgr {
   inline void SetDelegate(const std::string &d) { delegate = d; }
   void SetActorReady(const ActorReference &actor) const;
 
+  void ChildAfterFork();
+
+  // Quit and reset mailbox for actors after process fork, and prepare to spawn.
+  void ResetActorAfterFork(const ActorReference &actor);
+
  private:
   inline bool IsLocalAddres(const AID &id) {
     if (id.Url() == "" || id.Url().empty() || urls.find(id.Url()) != urls.end()) {
@@ -81,7 +87,7 @@ class MS_CORE_API ActorMgr {
   }
   int EnqueueMessage(const ActorReference actor, std::unique_ptr<MessageBase> msg);
   // in order to avoid being initialized many times
-  std::atomic_bool initialized_{false};
+  bool initialized_{false};
 
   // actor manager support running on inner thread pool,
   // or running on other thread pool created independently externally

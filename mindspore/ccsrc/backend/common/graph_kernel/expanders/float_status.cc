@@ -27,6 +27,12 @@ class FloatStatus : public OpDesc {
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
+    if (processor_ == "aicore") {
+      auto res1 = gb.Emit("IsFinite", {input_x});
+      auto res2 = gb.Emit("LogicalNot", {res1});
+      auto res4 = gb.Emit("ElemAny", {res2}, {{"dst_type", kFloat32}});
+      return {res4};
+    }
     auto res1 = gb.IsInf(input_x);
     auto res2 = gb.IsNan(input_x);
     auto res3 = gb.LogicalOr(res1, res2);

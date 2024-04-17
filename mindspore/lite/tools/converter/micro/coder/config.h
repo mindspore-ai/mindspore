@@ -18,6 +18,8 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_CONFIG_H_
 
 #include <string>
+#include <map>
+#include <vector>
 
 namespace mindspore::lite::micro {
 enum Target { kX86 = 0, kCortex_M = 1, kARM32 = 2, kARM64 = 3, kAllTargets = 4, kTargetUnknown = 99 };
@@ -34,6 +36,13 @@ struct MicroParam {
   std::string project_name;
   bool is_last_model{false};
   bool keep_original_weight{false};
+  std::vector<std::vector<std::string>> graph_inputs_template;
+  std::map<std::string, std::vector<std::string>> graph_inputs_origin_info;
+  std::vector<std::string> dynamic_symbols;
+  std::vector<size_t> dynamic_symbols_num;
+  std::map<std::string, std::vector<int>> dynamic_symbols_map;
+  std::vector<std::vector<std::vector<int>>> graph_inputs_shape_infos;
+  std::map<std::string, std::vector<std::vector<int>>> inputs_shape_by_scenes;
 };
 
 class Configurator {
@@ -67,6 +76,34 @@ class Configurator {
   void set_changeable_weights_name(const std::string &weights_name) { changeable_weights_name_ = weights_name; }
   const std::string &changeable_weights_name() const { return changeable_weights_name_; }
 
+  void set_dynamic_shape(bool dynamic_shape) { dynamic_shape_ = dynamic_shape; }
+  bool dynamic_shape() const { return dynamic_shape_; }
+
+  void set_dynamic_symbols(const std::vector<std::string> &dynamic_symbols) { dynamic_symbols_ = dynamic_symbols; }
+  const std::vector<std::string> &dynamic_symbols() const { return dynamic_symbols_; }
+
+  void set_dynamic_symbols_num(const std::vector<size_t> &dynamic_symbols_num) {
+    dynamic_symbols_num_ = dynamic_symbols_num;
+  }
+  const std::vector<size_t> &dynamic_symbols_num() const { return dynamic_symbols_num_; }
+
+  void set_dynamic_symbols_map(const std::map<std::string, std::vector<int>> &dynamic_symbols_map) {
+    dynamic_symbols_map_ = dynamic_symbols_map;
+  }
+  const std::map<std::string, std::vector<int>> &dynamic_symbols_map() const { return dynamic_symbols_map_; }
+
+  void set_user_graph_inputs_template(const std::vector<std::vector<std::string>> &graph_inputs_template) {
+    user_graph_inputs_template_ = graph_inputs_template;
+  }
+  const std::vector<std::vector<std::string>> &user_graph_inputs_template() const {
+    return user_graph_inputs_template_;
+  }
+
+  void set_graph_inputs_shape_infos(const std::vector<std::vector<std::vector<int>>> &graph_inputs_shape_infos) {
+    graph_inputs_shape_infos_ = graph_inputs_shape_infos;
+  }
+  const std::vector<std::vector<std::vector<int>>> &graph_inputs_shape_infos() { return graph_inputs_shape_infos_; }
+
  private:
   Configurator() = default;
   ~Configurator() = default;
@@ -76,8 +113,14 @@ class Configurator {
   bool support_parallel_{false};
   bool debug_mode_{false};
   bool keep_original_weight_{false};
+  bool dynamic_shape_{false};
   std::string proj_dir_;
   std::string changeable_weights_name_;
+  std::vector<std::string> dynamic_symbols_;
+  std::vector<size_t> dynamic_symbols_num_;
+  std::map<std::string, std::vector<int>> dynamic_symbols_map_;
+  std::vector<std::vector<std::vector<int>>> graph_inputs_shape_infos_;
+  std::vector<std::vector<std::string>> user_graph_inputs_template_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MICRO_CODER_CONFIG_H

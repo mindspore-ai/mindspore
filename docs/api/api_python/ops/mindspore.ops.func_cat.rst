@@ -21,4 +21,5 @@
         - **TypeError** - `axis` 不是int。
         - **ValueError** - `tensors` 是不同维度的Tensor。
         - **ValueError** - `axis` 的值不在区间 :math:`[-R, R)` 内。
-        - **RuntimeError** - 除了 `axis` 之外， `tensors` 的shape不相同。
+        - **ValueError** - 除了 `axis` 之外， `tensors` 的shape不相同。
+        - **ValueError** - `tensors` 为空tuple或list。

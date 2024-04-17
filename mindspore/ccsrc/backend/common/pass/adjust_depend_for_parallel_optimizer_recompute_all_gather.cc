@@ -141,6 +141,7 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
       auto cast_cnode = depend_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cast_cnode);
       auto cast_depend_node = common::AnfAlgo::GetInputNode(cast_cnode, 0);
+      MS_EXCEPTION_IF_NULL(cast_depend_node);
       auto cast_depend_cnode = cast_depend_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cast_depend_cnode);
       AnfNodeIndexSet allgather_node_set = manager->node_users()[cnode];

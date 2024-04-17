@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,14 @@
 namespace mindspore {
 namespace parallel {
 
+bool IsDynamicShapeInput(const CNodePtr &node, const AnfNodePtr &input);
 // maybe the input value is dynamic for these ops
-static const std::set<std::string> CANDIDATE_DYNAMIC_VALUE_OPS = {RESHAPE, STRIDED_SLICE, PAD_V3};
+static const std::set<std::string> CANDIDATE_DYNAMIC_VALUE_OPS = {RESHAPE, STRIDED_SLICE, PAD_V3,
+                                                                  TILE,    FILLV2,        UNIFORM_REAL};
 // split tensor only for first input
 static const std::set<std::string> SPLIT_TENSOR_ONLY_FOR_FIRST_INPUT_OPS = {PAD_V3};
+// the input is tuple or list
+static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK, ADDN, INCRE_FLASH_ATTENTION};
 
 const int64_t TWO_INPUT_SIZE = 2;
 
@@ -43,6 +47,7 @@ constexpr char KAttrAsLossDivisor[] = "as_loss_divisor";
 constexpr char KAttrDevMatrixShape[] = "dev_matrix_shape";
 constexpr char KAttrInputsTensorMap[] = "inputs_tensor_map";
 constexpr char KAttrOutputsTensorMap[] = "outputs_tensor_map";
+constexpr int64_t DYNAMIC_DIM_VAL = -1;
 
 extern size_t TOTAL_OPS;
 extern std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
@@ -52,8 +57,9 @@ struct CommInfo {
   std::string world_group;
   std::string communication_backend;
 };
-const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER,       ALL_TO_ALL,         REDUCE_SCATTER,
-                                                 BROADCAST,  NEIGHBOREXCHANGE, NEIGHBOREXCHANGEV2, SYNC_BATCH_NORM};
+const std::set<std::string> COMMUNICATION_OPS = {
+  ALL_REDUCE,       ALL_GATHER,         ALL_TO_ALL,      REDUCE_SCATTER,     BROADCAST,
+  NEIGHBOREXCHANGE, NEIGHBOREXCHANGEV2, SYNC_BATCH_NORM, COLLECTIVE_SCATTER, COLLECTIVE_GATHER};
 // common method
 CommInfo GetCommInfo();
 ShapeVector ToFullShape(const ShapeVector &input_shape, size_t index);
@@ -65,14 +71,13 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode);
 Shapes GetNodeShape(const AnfNodePtr &node);
 // Extract shape from anfnode
 std::vector<Shapes> ExtractShape(const CNodePtr &node);
+std::vector<Shapes> ExtractRealDivisor(const CNodePtr &node);
 // Generate and init parallel operator
 OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
                                  const std::vector<Shapes> &shape_list);
 OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode);
 std::string GetPrimName(const CNodePtr &node);
 std::shared_ptr<Value> GetAttrsFromAnfNode(const std::shared_ptr<AnfNode> &node, const string &key);
-std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
-                                       const CNodePtr &node);
 std::string CreateInstanceName(const CNodePtr &node, size_t index);
 TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info);
 AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr &manager);
@@ -99,10 +104,10 @@ bool HasBackward(const FuncGraphPtr &root);
 void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input);
 void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes);
 AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, const TypePtr &compute_node_type);
-TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMap &node_users_map);
+TypePtr FindChildCastWithFP32ToFP16(const std::pair<AnfNodePtr, int> &res, const NodeUsersMap &node_users_map);
 void LabelGenMaskMicro(const FuncGraphPtr &root);
 void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const std::string &backward_comm_name,
-                       int32_t fusion_id);
+                       const std::string &param_name, int32_t fusion_id);
 void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes);
 bool IsPynativeParallel();
 bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph);
@@ -139,7 +144,30 @@ Shape mirror_group_list(const TensorLayoutPtr &layout);
 // Transfer number to serial number string
 std::string GetSerialNumberString(size_t number);
 bool IsIgnoreSplitTensor(const CNodePtr &node, int64_t index);
+bool MergeConcatSlice(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
 void UpdateMicroBatchInterleavedStatus(const std::vector<AnfNodePtr> &all_nodes);
+Status ExtractUserConfigLayout(const mindspore::HashMap<std::string, ValuePtr> &prim_attrs, const Shapes &inputs_shape,
+                               const Shapes &outputs_shape,
+                               std::vector<std::shared_ptr<TensorLayout>> *in_tensor_layouts,
+                               std::vector<std::shared_ptr<TensorLayout>> *out_tensor_layouts);
+inline bool IsMakeSequence(const AnfNodePtr &node) {
+  return AnfNodeIsPrimitive(node, MAKE_TUPLE) || AnfNodeIsPrimitive(node, MAKE_LIST);
+}
+inline bool IsValueSequence(const AnfNodePtr &node) {
+  return IsValueNode<ValueList>(node) || IsValueNode<ValueTuple>(node);
+}
+bool IsCellReuseForwardGraph(const FuncGraphPtr &graph);
+FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph);
+bool IsCommunicationOp(const PrimitivePtr &prim);
+
+inline void SetReserved(const FuncGraphPtr &root) {
+  // Keep all func graph for parallel before save result.
+  root->set_reserved(true);
+  for (auto &fg : root->func_graphs_used_total()) {
+    MS_EXCEPTION_IF_NULL(fg);
+    fg->set_reserved(true);
+  }
+}
 }  // namespace parallel
 }  // namespace mindspore
 

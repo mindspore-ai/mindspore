@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,17 +28,51 @@ namespace {
 void CheckDictKey(const AbstractBasePtr &key, const std::string &op_name) {
   auto key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
-  if (!(key_value->isa<StringImm>() || key_value->isa<Scalar>() ||
-        (key->isa<abstract::AbstractTensor>() && key_value != kValueAny) || key->isa<abstract::AbstractTuple>())) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator key only supports string, number, constant tensor and tuple, but got "
-                      << key->BuildValue()->ToString();
+  if (!(key_value->isa<StringImm>() || key_value->isa<Scalar>() || key_value->isa<Type>() || key_value->isa<None>() ||
+        (key->isa<AbstractTensor>() && !key_value->ContainsValueAny()) || key->isa<AbstractTuple>())) {
+    MS_LOG(EXCEPTION) << op_name << " evaluator key only supports string, number, type, none, "
+                      << "constant tensor and tuple, but got " << key->BuildValue()->ToString();
   }
-  if (key->isa<abstract::AbstractTuple>() && !key->cast_ptr<abstract::AbstractTuple>()->ContainsAllConstants()) {
+  if (key->isa<AbstractTuple>() && key_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should not be tuple that contains variables, but got "
                       << key->BuildValue()->ToString();
   }
 }
 }  // namespace
+
+void ProcessUnpackDict(const AbstractTuplePtr &key_tuple, const AbstractTuplePtr &value_tuple,
+                       std::unordered_map<std::string, AbstractBasePtr> *key_str_value_set,
+                       std::vector<AbstractBasePtr> *key_set) {
+  // The size of need unpack tuple must be 1
+  const auto &key_elements = key_tuple->elements();
+  const auto &value_elements = value_tuple->elements();
+  if (key_elements.size() != 1) {
+    MS_LOG(EXCEPTION) << "The size of need unpack key tuple must be 1, but got " << key_elements.size();
+  }
+  if (value_elements.size() != 1) {
+    MS_LOG(EXCEPTION) << "The size of need unpack value tuple must be 1, but got " << value_elements.size();
+  }
+
+  auto unpack_keys = key_elements[0];
+  auto unpack_keys_tuple = unpack_keys->cast<AbstractTuplePtr>();
+  const auto &unpack_keys_elements = unpack_keys_tuple->elements();
+
+  auto unpack_values = value_elements[0];
+  auto unpack_values_tuple = unpack_values->cast<AbstractTuplePtr>();
+  const auto &unpack_values_elements = unpack_values_tuple->elements();
+
+  if (unpack_keys_elements.size() != unpack_values_elements.size()) {
+    MS_LOG(EXCEPTION) << "The keys' size should be equal to values' size, but the keys' size is "
+                      << unpack_keys_elements.size() << ", the values' size is " << unpack_values_elements.size();
+  }
+
+  for (size_t inner_index = 0; inner_index < unpack_keys_elements.size(); ++inner_index) {
+    auto inner_key = unpack_keys_elements[inner_index];
+    auto key_str = inner_key->BuildValue()->ToString();
+    (void)key_str_value_set->emplace(key_str, unpack_values_elements[inner_index]);
+    (void)key_set->emplace_back(inner_key);
+  }
+}
 
 AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_abs_list) {
@@ -46,8 +80,8 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 2;
   CheckArgsSize(op_name, args_abs_list, args_spec_size);
-  AbstractTuplePtr keys = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
-  AbstractTuplePtr values = CheckArg<AbstractTuple>(op_name, args_abs_list, 1);
+  AbstractSequencePtr keys = CheckArg<AbstractSequence>(op_name, args_abs_list, 0);
+  AbstractSequencePtr values = CheckArg<AbstractSequence>(op_name, args_abs_list, 1);
 
   size_t keys_size = keys->size();
   if (values->size() != keys_size) {
@@ -55,14 +89,41 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
   }
 
   AbstractBasePtrList key_list = keys->elements();
-  for (size_t index = 0; index < keys_size; index++) {
-    const auto &key = key_list[index];
-    CheckDictKey(key, op_name);
-  }
+  std::unordered_map<std::string, AbstractBasePtr> key_str_value_set;
+  std::vector<AbstractBasePtr> key_set;
   std::vector<AbstractElementPair> key_value;
   AbstractBasePtrList value_list = values->elements();
+  constexpr auto need_unpack = "need_unpack";
   for (size_t index = 0; index < keys_size; index++) {
-    (void)key_value.emplace_back(key_list[index], value_list[index]);
+    const auto &key = key_list[index];
+    bool is_need_unpack = false;
+    if (key->isa<AbstractTuple>()) {
+      auto key_tuple = key->cast<AbstractTuplePtr>();
+      if (key_tuple->HasData(need_unpack)) {
+        is_need_unpack = *key_tuple->GetData<bool>(need_unpack);
+        if (is_need_unpack) {
+          auto value_tuple = value_list[index]->cast<AbstractTuplePtr>();
+          MS_EXCEPTION_IF_NULL(value_tuple);
+          ProcessUnpackDict(key_tuple, value_tuple, &key_str_value_set, &key_set);
+        }
+      }
+    }
+    CheckDictKey(key, op_name);
+    auto key_val = key->BuildValue()->ToString();
+    auto iter = key_str_value_set.find(key_val);
+    // Remove duplicate keys.
+    // {Tensor[1]: x, Tensor[1}: y} the length of dict is 2, means the two keys are not duplicate.
+    if (iter != key_str_value_set.end() && !key->isa<AbstractTensor>()) {
+      iter->second = value_list[index];
+    } else if (!is_need_unpack) {
+      auto key_str = key->BuildValue()->ToString();
+      key_str_value_set.insert(std::pair<std::string, AbstractBasePtr>(key_str, value_list[index]));
+      key_set.push_back(key);
+    }
+  }
+  for (auto &key : key_set) {
+    auto key_str = key->BuildValue()->ToString();
+    (void)key_value.emplace_back(key, key_str_value_set[key_str]);
   }
   return std::make_shared<AbstractDictionary>(key_value);
 }
@@ -151,7 +212,7 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
     CheckDynamicLengthSequenceSetItem(op_name, queue, target);
     return queue->Clone();
   }
-  if (index_value == kValueAny) {
+  if (index_value->ContainsValueAny()) {
     // If the index is variable and the sequence is constant length, then all of the element within the sequence
     // should have the same type and shape with the target input. The element within the return sequence should
     // be all broadened.
@@ -318,45 +379,50 @@ void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
     return;
   }
   if (abs->isa<AbstractScalar>()) {
-    auto abs_type = abs->BuildType();
-    if (abs_type->type_id() != kBool->type_id()) {
+    auto type_ptr = abs->GetType();
+    if (type_ptr->isa<Number>()) {
       return;
     }
   }
-  MS_EXCEPTION(TypeError)
-    << "For mutable api in graph, the input arg should be one of (int, float, Tensor, tuple, list, dict) or their"
-       " nested structures, but got "
-    << abs->ToString();
+  MS_EXCEPTION(TypeError) << "For 'mutable', the 'input_data' should be one of (bool, int, float, Tensor, "
+                             "tuple, list, dict) or their nested structures, but got "
+                          << abs->ToString();
 }
 }  // namespace
 
-AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &,
                                  const AbstractBasePtrList &args_abs_list) {
-  const std::string &op_name = primitive->name();
-  constexpr int max_args_spec_size = 2;
+  constexpr int min_args_abs_size = 1;
+  constexpr int max_args_abs_size = 2;
   auto arg_size = args_abs_list.size();
-  (void)CheckAndConvertUtils::CheckValue<size_t>("input size", arg_size, kLessEqual, max_args_spec_size, op_name);
+  if (arg_size != min_args_abs_size && arg_size != max_args_abs_size) {
+    MS_LOG(EXCEPTION) << "For 'mutable', the number of inputs should be 1 or 2, but got " << args_abs_list.size();
+  }
   bool variable_len = false;
-  if (arg_size == max_args_spec_size) {
-    auto arg_value = args_abs_list[1]->BuildValue();
+  if (arg_size == max_args_abs_size) {
+    auto arg_value = args_abs_list[1]->GetValue();
     MS_EXCEPTION_IF_NULL(arg_value);
     if (!arg_value->isa<BoolImm>()) {
-      MS_EXCEPTION(TypeError) << "The second argument to mutable should be boolean value.";
+      MS_EXCEPTION(TypeError) << "For 'mutable', the second input should be bool, but got: "
+                              << args_abs_list[1]->ToString();
     }
     variable_len = arg_value->cast<BoolImmPtr>()->value();
   }
   auto data = args_abs_list[0];
   MS_EXCEPTION_IF_NULL(data);
   if (!variable_len) {
-    if (data->isa<abstract::AbstractSequence>() && data->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
-      MS_LOG(EXCEPTION) << "Can not convert a dynamic length sequence to constant length.";
+    if (data->isa<AbstractSequence>() && data->cast<AbstractSequencePtr>()->dynamic_len()) {
+      MS_LOG(EXCEPTION) << "For 'mutable', can not convert a dynamic length sequence to constant length.";
     }
     CheckMutableArgAbstract(data);
     return AbstractBroaden(data);
   }
   auto ret = data->Clone();
-  if (!ret->isa<abstract::AbstractSequence>()) {
-    MS_EXCEPTION(TypeError) << "For mutable, when the variable_len is True, the first input should be"
+  if (ret->isa<AbstractAny>()) {
+    return ret;
+  }
+  if (!ret->isa<AbstractSequence>()) {
+    MS_EXCEPTION(TypeError) << "For 'mutable', when the variable_len is True, the first input should be"
                             << " list or tuple, but got: " << ret->ToString();
   }
   auto ret_seq = ret->cast<AbstractSequencePtr>();
@@ -365,7 +431,7 @@ AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &
   }
   if (ret->isa<AbstractList>()) {
     // Dynamic length list should not attach python object.
-    auto ret_list = ret->cast<abstract::AbstractListPtr>();
+    auto ret_list = ret->cast<AbstractListPtr>();
     ret_list->ClearExtraInfo();
   }
   return ret;

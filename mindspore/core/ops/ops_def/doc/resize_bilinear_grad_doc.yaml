@@ -1,0 +1,13 @@
+resize_bilinear_grad:
+  description: |
+    Performs grad of ResizeBilinear operation.
+    
+    Args:
+        grads (Tensor): A 4-D Tensor with shape [batch, channel, height, width].
+        image (Tensor): A 4-D Tensor with shape [batch, channel, height, width], The origin image tensor that was resized.
+        align_corners (bool): If true, the centers of the 4 corner pixels of the input and output tensors are 
+            aligned, preserving the values at the corner pixels.Default: ``False``.
+        half_pixel_centers (bool): An optional bool. Default: ``False``.
+
+    Outputs:
+        A 4-D Tensor , with the same shape and data type as `image`.

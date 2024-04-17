@@ -63,7 +63,7 @@ context.set_context(device_target="CPU", mode=context.GRAPH_MODE)
 dtypes = [mstype.float16, mstype.float32]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_prelu_single_weight():
@@ -87,7 +87,7 @@ def test_prelu_single_weight():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_prelu_multiple_weight():
@@ -133,7 +133,7 @@ def test_prelu_multiple_weight():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_prelu_single_weight_scalar():
@@ -157,7 +157,7 @@ def test_prelu_single_weight_scalar():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_prelu_single_weight_1d():
@@ -181,7 +181,7 @@ def test_prelu_single_weight_1d():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_prelu_single_weight_2d():
@@ -205,7 +205,7 @@ def test_prelu_single_weight_2d():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_prelu_multiple_weight_2d():

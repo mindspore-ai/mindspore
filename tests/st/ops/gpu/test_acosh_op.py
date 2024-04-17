@@ -21,7 +21,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acosh_fp32():
@@ -51,7 +51,7 @@ def test_acosh_fp16():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-3, 1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acosh_fp64():

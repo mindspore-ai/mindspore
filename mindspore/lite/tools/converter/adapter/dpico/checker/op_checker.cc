@@ -110,9 +110,9 @@ bool HasOfflineData(const api::AnfNodePtr &node) {
 }
 
 bool CheckInputW(const api::CNodePtr &op, size_t index, mindspore::Format format, int limit_w) {
-  if (index >= op->inputs().size()) {
+  if (index >= op->size()) {
     MS_LOG(ERROR) << "index:" << index << " is greater than " << op->fullname_with_scope()
-                  << " inputs size:" << op->inputs().size();
+                  << " inputs size:" << op->size();
     return false;
   }
   std::vector<int64_t> input_shape;

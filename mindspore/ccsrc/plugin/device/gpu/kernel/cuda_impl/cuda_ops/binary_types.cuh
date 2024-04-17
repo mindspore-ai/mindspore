@@ -53,6 +53,9 @@ enum class BinaryOpType {
   kXdivy = 30,
   // complex
   kComplex = 31,
+  // Ext
+  kAddExt = 32,
+  kSubExt = 33,
   kInvalid = INT_MAX,
 };
 

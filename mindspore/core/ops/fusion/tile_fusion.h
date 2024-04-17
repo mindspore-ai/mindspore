@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,17 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
-#include "ops/tile.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTileFusion = "TileFusion";
 /// \brief TileFusion defined Tile operator prototype of lite.
-class MIND_API TileFusion : public Tile {
+class MIND_API TileFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TileFusion);
   /// \brief Constructor.
-  TileFusion() : Tile(kNameTileFusion) {}
+  TileFusion() : BaseOperator(kNameTileFusion) { InitIOName({"x", "multiples"}, {"output"}); }
 
   /// \brief Method to init the op's attributes.
   ///

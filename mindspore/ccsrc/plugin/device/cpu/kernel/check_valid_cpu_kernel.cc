@@ -31,9 +31,8 @@ constexpr size_t kIndex1 = 1;
 constexpr size_t kIndex2 = 2;
 }  // namespace
 
-bool CheckValidCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool CheckValidCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimCheckValid->name()) {
     MS_LOG(ERROR) << "For 'CheckValid', the kernel name must be 'CheckValid', but got " << kernel_name_;
     return false;
@@ -52,10 +51,9 @@ bool CheckValidCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int CheckValidCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CheckValidCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto anchor_box_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -78,13 +76,13 @@ int CheckValidCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool CheckValidCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool CheckValidCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CheckParams<T>(inputs, outputs);
-  auto anchor_box = reinterpret_cast<T *>(inputs[0]->addr);
-  auto img_metas = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output = reinterpret_cast<bool *>(outputs[0]->addr);
-  const size_t elem_num = inputs[0]->size / sizeof(T) / COORDINATE;
+  auto anchor_box = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto img_metas = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
+  const size_t elem_num = inputs[0]->size() / sizeof(T) / COORDINATE;
 
   const double offset = 1.0;
   auto height = static_cast<double>(img_metas[kIndex0]);
@@ -115,8 +113,8 @@ bool CheckValidCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
 }
 
 template <typename T>
-void CheckValidCpuKernelMod::CheckParams(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+void CheckValidCpuKernelMod::CheckParams(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   //  inputs: anchor_box, img_metas
   if (inputs.size() != kInputSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kInputSize << ", but got "
@@ -128,7 +126,7 @@ void CheckValidCpuKernelMod::CheckParams(const std::vector<AddressPtr> &inputs,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be " << kOutputSize << ", but got "
                       << outputs.size();
   }
-  if (outputs[0]->size / sizeof(bool) != inputs[0]->size / sizeof(T) / COORDINATE) {
+  if (outputs[0]->size() / sizeof(bool) != inputs[0]->size() / sizeof(T) / COORDINATE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output must be the same as 'img_metas', but got the shape of output: "
                       << output_shape_ << ", the shape of 'img_metas': " << img_metas_shape_;

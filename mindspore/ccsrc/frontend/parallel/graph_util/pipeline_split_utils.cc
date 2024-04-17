@@ -26,6 +26,7 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/graph_util/fold_pipeline_split_utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/value.h"
@@ -75,7 +76,7 @@ static ValuePtr GetReceiveMicro(const CNodePtr &cnode) {
     auto front = que.front();
     que.pop();
     (void)(visited.insert(front));
-    for (size_t i = 1; i < front->inputs().size(); ++i) {
+    for (size_t i = 1; i < front->size(); ++i) {
       auto input = front->input(i);
       if (!input->isa<CNode>()) {
         continue;
@@ -101,7 +102,7 @@ static ValuePtr GetReceiveSegment(const CNodePtr &cnode) {
     auto front = que.front();
     que.pop();
     (void)(visited.insert(front));
-    for (size_t i = 1; i < front->inputs().size(); ++i) {
+    for (size_t i = 1; i < front->size(); ++i) {
       auto input = front->input(i);
       if (!input->isa<CNode>()) {
         continue;
@@ -312,7 +313,14 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
   auto dev_num = g_device_manager->stage_device_num();
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  std::vector<Shapes> shape_list = ExtractShape(cnode);
+  std::vector<Shapes> shape_list;
+  if (InDynamicGraph(cnode)) {
+    shape_list = ExtractRealDivisor(cnode);
+    MS_LOG(INFO) << "the node is in dynamic shape graph, the divisor is " << ShapesToString(shape_list[0]);
+  } else {
+    shape_list = ExtractShape(cnode);
+  }
+
   if (shape_list.empty()) {
     MS_LOG(EXCEPTION) << "Failure:node " << cnode->ToString() << " failed to extract shape";
   }
@@ -327,7 +335,12 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
     }
     static const auto skip_redis = (common::GetEnv("PIPELINE_SLICE_SKIP_REDISTRIBUTION") == "1");
     if (skip_redis && !full_batch && input_strategy.size() > 0) {
-      input_strategy[0] = dev_num < shape_list[1][0][0] ? dev_num : shape_list[1][0][0];
+      auto dim = shape_list[1][0][0];
+      if (dev_num <= dim && ((dim % dev_num) == 0)) {
+        input_strategy[0] = dev_num;
+      } else if (dim < dev_num && ((dev_num % dim) == 0)) {
+        input_strategy[0] = dim;
+      }
       auto prim = GetCNodePrimitive(node);
       if (prim->HasAttr("out_shard_size")) {
         auto out_shard_size = GetValue<int64_t>(prim->GetAttr("out_shard_size"));
@@ -369,7 +382,7 @@ CNodePtr FindNodeWithMircoSize(const AnfNodePtr &node_user, const NodeUsersMap &
 }
 
 bool IsSourceUsedByMirror(const CNodePtr &node, const NodeUsersMap &node_user_map) {
-  if (node->inputs().size() < 2) {
+  if (node->size() < 2) {
     return false;
   }
   auto parameter_node = node->input(1);
@@ -467,12 +480,12 @@ AnfNodePtr FindGradAccuParameter(const std::vector<AnfNodePtr> &parameters, cons
 
 // If the graph likes the followings:
 // 1. MicroStepAllGather->MirrorMicro->load, we need to visit the param after the load
-std::vector<std::pair<AnfNodePtr, int>> FindNextNode(const std::pair<AnfNodePtr, int> &node_ptr,
-                                                     const NodeUsersMap &node_users_map) {
+std::vector<std::pair<AnfNodePtr, int>> FindNextNode(
+  const std::pair<AnfNodePtr, int> &node_ptr, const NodeUsersMap &node_users_map,
+  const std::set<string> &check_list = {prim::kPrimMirrorMicroStep->name(), prim::kPrimMicroStepAllGather->name(),
+                                        prim::kPrimLoad->name()}) {
   std::vector<std::pair<AnfNodePtr, int>> to_be_visited_set;
-  if (!IsSomePrimitiveList(
-        node_ptr.first->cast<CNodePtr>(),
-        {prim::kPrimMirrorMicroStep->name(), prim::kPrimMicroStepAllGather->name(), prim::kPrimLoad->name()})) {
+  if (!IsSomePrimitiveList(node_ptr.first->cast<CNodePtr>(), check_list)) {
     (void)to_be_visited_set.emplace_back(node_ptr);
     return to_be_visited_set;
   }
@@ -484,9 +497,7 @@ std::vector<std::pair<AnfNodePtr, int>> FindNextNode(const std::pair<AnfNodePtr,
   while (visited.size() >= 1) {
     auto node = visited.front();
     visited.pop();
-    if (!IsSomePrimitiveList(
-          node.first->cast<CNodePtr>(),
-          {prim::kPrimMirrorMicroStep->name(), prim::kPrimMicroStepAllGather->name(), prim::kPrimLoad->name()})) {
+    if (!IsSomePrimitiveList(node.first->cast<CNodePtr>(), check_list)) {
       (void)to_be_visited_set.emplace_back(node);
     } else {
       auto next_node_set = node_users_map.at(node.first);
@@ -505,7 +516,10 @@ std::set<std::pair<AnfNodePtr, int>> FuncNodeUsersSet(const AnfNodePtr &paramete
   auto node_users = node_users_map[parameter];
   std::set<std::pair<AnfNodePtr, int>> all_node_users;
   for (auto &n_pair : node_users) {
-    auto users_skip_virtual_nodes = FindNextNode(n_pair, node_users_map);
+    auto users_skip_virtual_nodes =
+      FindNextNode(n_pair, node_users_map,
+                   {prim::kPrimMirrorMicroStep->name(), prim::kPrimMicroStepAllGather->name(), prim::kPrimLoad->name(),
+                    prim::kPrimCast->name()});
     for (const auto &node_pair : users_skip_virtual_nodes) {
       auto func_node_users = FuncGraphNodeUsers(node_pair);
       if (func_node_users.empty()) {
@@ -513,7 +527,7 @@ std::set<std::pair<AnfNodePtr, int>> FuncNodeUsersSet(const AnfNodePtr &paramete
         continue;
       }
       for (const auto &func_node_user : func_node_users) {
-        all_node_users.insert(func_node_user);
+        (void)all_node_users.insert(func_node_user);
       }
     }
   }
@@ -659,6 +673,7 @@ void InsertDepend(const AnfNodePtr &prior_node, const AnfNodePtr &post_node, con
   MS_EXCEPTION_IF_NULL(post_cnode);
   std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), post_cnode->input(1), prior_node};
   auto depend_node = root->NewCNode(depend_input);
+  depend_node->set_abstract(post_cnode->input(1)->abstract());
   if (!attr_tag.empty()) {
     depend_node->AddAttr(attr_tag, MakeValue<bool>(true));
   }
@@ -906,7 +921,7 @@ void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphM
     }
     auto prim = GetCNodePrimitive(node);
     if (prim && prim->HasAttr(PIPELINE_END)) {
-      for (size_t i = 0; i < cnode->inputs().size(); ++i) {
+      for (size_t i = 0; i < cnode->size(); ++i) {
         auto temp_node = GetRealKernelNode(cnode->input(i), -1, nullptr).first;
         if (!temp_node->isa<CNode>()) {
           continue;
@@ -954,6 +969,9 @@ void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
     if (prim && prim->HasAttr(PARAMETER_START)) {
       auto micro = Micro(cnode, &node_users_map, 0);
       MS_EXCEPTION_IF_NULL(micro);
+      auto new_prim = prim->Clone();
+      new_prim->SetAttrs(prim->attrs());
+      manager->SetEdge(cnode, 0, NewValueNode(new_prim));
       cnode->AddPrimalAttr(MICRO, micro);
       cnode->AddPrimalAttr(PARAMETER_START, micro);
       int64_t seg = 0;
@@ -1104,8 +1122,7 @@ void Reorder(const FuncGraphPtr &root) {
     if (!node->isa<CNode>()) {
       continue;
     }
-    if (IsSomePrimitive(node->cast<CNodePtr>(), kNPUClearFloatStatusOpName) ||
-        IsSomePrimitive(node->cast<CNodePtr>(), kNPUClearFloatStatusV2OpName)) {
+    if (IsSomePrimitive(node->cast<CNodePtr>(), kNPUClearFloatStatusOpName)) {
       InsertDepend(node, forward_end.front(), manager, root);
       break;
     }
@@ -1120,12 +1137,17 @@ void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &mana
   std::vector<AnfNodePtr> forward_end;
   std::vector<AnfNodePtr> forward_start;
   std::vector<AnfNodePtr> forward_params;
+  int64_t slice_index = 0;
   for (auto &node : root->nodes()) {
     if (!node->isa<CNode>()) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     if (cnode->HasPrimalAttr(PIPELINE_BEGIN)) {
+      if (IsPrimitiveCNode(cnode, prim::kPrimStridedSlice)) {
+        cnode->AddPrimalAttr(SLICE_INDEX, MakeValue(slice_index));
+        slice_index += 1;
+      }
       forward_start.push_back(node);
     }
     if (cnode->HasPrimalAttr(PIPELINE_END)) {
@@ -1147,6 +1169,21 @@ void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &mana
   if (!forward_start.empty() && !forward_params.empty()) {
     InsertDepend(forward_params_pair.second[0], forward_start_pair.first[0], manager, root);
   }
+}
+
+std::string GetWorldGroup() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string world_group;
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend == kAscendDevice) {
+    world_group = parallel::HCCL_WORLD_GROUP;
+  } else if (backend == kGPUDevice) {
+    world_group = parallel::NCCL_WORLD_GROUP;
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
+  }
+  return world_group;
 }
 }  // namespace parallel
 }  // namespace mindspore

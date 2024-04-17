@@ -103,9 +103,9 @@ class GruGradInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputNum,
                                              prim_name);
-    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kYIdx]->BuildShape())[kShape];
-    auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDyIdx]->BuildShape())[kShape];
-    auto dhy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDhyIdx]->BuildShape())[kShape];
+    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kYIdx]->GetShape())[kShape];
+    auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDyIdx]->GetShape())[kShape];
+    auto dhy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDhyIdx]->GetShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("dhy_shape size", SizeToLong(dhy_shape.size()), kEqual, kShapeSize,
                                              prim_name);
     (void)CheckAndConvertUtils::CheckInteger("dy_shape size", SizeToLong(dy_shape.size()), kEqual, kShapeSize,
@@ -129,8 +129,8 @@ class GruGradInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto hx_type_ptr = input_args[kHxIdx]->BuildType();
-    auto dy_type_ptr = input_args[kDyIdx]->BuildType();
+    auto hx_type_ptr = input_args[kHxIdx]->GetType();
+    auto dy_type_ptr = input_args[kDyIdx]->GetType();
     std::vector<TypePtr> types = {dy_type_ptr, dy_type_ptr, hx_type_ptr};
     return std::make_shared<Tuple>(types);
   }

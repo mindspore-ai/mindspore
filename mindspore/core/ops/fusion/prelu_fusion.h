@@ -19,17 +19,17 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
-#include "ops/prelu.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePReLUFusion = "PReLUFusion";
 /// \brief PReLUFusion defined PReLU operator prototype of lite.
-class MIND_API PReLUFusion : public PReLU {
+class MIND_API PReLUFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(PReLUFusion);
   /// \brief Constructor.
-  PReLUFusion() : PReLU(kNamePReLUFusion) {}
+  PReLUFusion() : BaseOperator(kNamePReLUFusion) { InitIOName({"x", "weight"}, {"output"}); }
 
   /// \brief Method to init the op's attributes.
   ///

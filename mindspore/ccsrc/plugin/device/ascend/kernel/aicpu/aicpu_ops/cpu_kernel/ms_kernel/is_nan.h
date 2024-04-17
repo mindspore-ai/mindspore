@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_IS_NAN_H_
 #define AICPU_KERNELS_NORMALIZED_IS_NAN_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -27,10 +27,10 @@ class IsNanCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t IsNanCheck(const CpuKernelContext &ctx) const;
+  uint32_t IsNanCheck(CpuKernelContext &ctx) const;
 
   template <typename T>
-  uint32_t IsNanCompute(const CpuKernelContext &ctx) const;
+  uint32_t IsNanCompute(CpuKernelContext &ctx) const;
 };
 }  // namespace aicpu
 #endif

@@ -65,7 +65,7 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
     }
 
     // Collect the inputs from device tensor store.
-    FetchInputByTensorStore(&input_device_tensors_, &memory_free_list_, ctx);
+    FetchInputByTensorStore(&input_device_tensors_, nullptr, nullptr, &memory_free_list_, ctx);
 
     // Launch custom func
     MS_EXCEPTION_IF_NULL(node);
@@ -85,8 +85,6 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
       MS_EXCEPTION_IF_NULL(base_node);
       auto kernel_info = dynamic_cast<KernelInfo *>(base_node->kernel_info());
       AnfAlgo::UpdateOutputAddrSize(kernel_info, base_node);
-      // Update the shape of internal parameter.
-      AnfAlgo::UpdateInternalParameterShape(internal_parameters_);
     }
   } catch (const std::exception &e) {
     if (strategy_ == GraphExecutionStrategy::kPipeline) {

@@ -45,16 +45,13 @@ const size_t kInputsDimIndexW = 3;
     .AddOutputAttr(kNumberType##t4)
 }  // namespace
 
-bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                           const std::vector<KernelTensorPtr> &inputs,
-                                                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  out_backprop_type_ = inputs[kInputIndex1]->GetDtype();
+  out_backprop_type_ = inputs[kInputIndex1]->dtype_id();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -62,26 +59,22 @@ bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPoolGradWithFixedKsize>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  data_format_ = kernel_ptr->get_data_format();
+  data_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kFormat));
   if (data_format_ != "NCHW") {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the attr data_format must be NCHW.";
   }
   return true;
 }
 
-int FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                            const std::vector<KernelTensorPtr> &inputs,
-                                                            const std::vector<KernelTensorPtr> &outputs,
-                                                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  out_backprop_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  argmax_shape_ = inputs[kInputIndex2]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  out_backprop_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  argmax_shape_ = inputs[kInputIndex2]->GetDeviceShapeVector();
   if (input_shape_.size() != kInputsDimSize) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', The dim of input origin_input must be 4, but got "
                              << input_shape_.size() << ".";
@@ -116,9 +109,9 @@ int FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPt
   return ret;
 }
 
-bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &workspace,
-                                                             const std::vector<AddressPtr> &outputs) {
+bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &workspace,
+                                                             const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   switch (out_backprop_type_) {
@@ -141,10 +134,10 @@ bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Launch(const std::vector<A
 
 template <typename backprop_t>
 bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(
-  const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const {
-  backprop_t *out_backprop_ptr = static_cast<backprop_t *>(inputs[1]->addr);
-  int64_t *argmax_ptr = static_cast<int64_t *>(inputs[2]->addr);
-  backprop_t *output_ptr = static_cast<backprop_t *>(outputs[0]->addr);
+  const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) const {
+  backprop_t *out_backprop_ptr = static_cast<backprop_t *>(inputs[1]->device_ptr());
+  int64_t *argmax_ptr = static_cast<int64_t *>(inputs[2]->device_ptr());
+  backprop_t *output_ptr = static_cast<backprop_t *>(outputs[0]->device_ptr());
 
   auto shard_fractional_max_pool_grad_with_fixed_ksize = [&](size_t start, size_t end) {
     for (size_t n = start; n < end; n++) {

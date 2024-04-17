@@ -35,18 +35,18 @@ const size_t tensor_max_size_utils = 0x1000000;
 
 void *RuntimeUtils::GetAddressPtr(device::DeviceAddressPtr address_ptr) {
   MS_EXCEPTION_IF_NULL(address_ptr);
-  return address_ptr->ptr_;
+  return address_ptr->GetDevicePtr();
 }
 
 void RuntimeUtils::SetAddressPtr(device::DeviceAddressPtr address_ptr, void *ptr) {
   MS_EXCEPTION_IF_NULL(address_ptr);
-  address_ptr->ptr_ = ptr;
+  address_ptr->SetDevicePtr(ptr);
 }
 
 void RuntimeUtils::AllocAddressPtr(device::DeviceAddressPtr address_ptr) {
   MS_EXCEPTION_IF_NULL(address_ptr);
-  if (address_ptr->ptr_ == nullptr) {
-    address_ptr->ptr_ = malloc(address_ptr->size_);
+  if (address_ptr->GetDevicePtr() == nullptr) {
+    address_ptr->SetDevicePtr(malloc(address_ptr->GetSize()));
   }
 }
 
@@ -54,12 +54,12 @@ kernel::AddressPtr RuntimeUtils::GetAddressFromDevice(device::DeviceAddressPtr d
   MS_EXCEPTION_IF_NULL(device_address);
   kernel::AddressPtr kernel_address = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(kernel_address);
-  if (device_address->ptr_ == nullptr) {
-    device_address->ptr_ = malloc(device_address->size_);
+  if (device_address->GetDevicePtr() == nullptr) {
+    device_address->SetDevicePtr(malloc(device_address->GetSize()));
   }
-  MS_EXCEPTION_IF_NULL(device_address->ptr_);
-  kernel_address->addr = device_address->ptr_;
-  kernel_address->size = device_address->size_;
+  MS_EXCEPTION_IF_NULL(device_address->GetDevicePtr());
+  kernel_address->addr = device_address->GetDevicePtr();
+  kernel_address->size = device_address->GetSize();
   return kernel_address;
 }
 
@@ -96,11 +96,12 @@ void RuntimeUtils::UpdateKernelNodeOutputInfo(const AnfNodePtr &kernel_node,
       MS_LOG(DEBUG) << "There is no need to update output shape.";
       return;
     }
-    // update output shape
+
+    auto output_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel_node);
+    auto input_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel_node);
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    auto kernel_tensors = kernel_mod->RetrieveOutputShape();
-    if (kernel_tensors.empty()) {
+    kernel_mod->UpdateOutputShapeAndSize(input_tensors, output_tensors);
+    if (output_tensors.empty()) {
       MS_LOG(ERROR) << "The output shape size of custom ascend is empty.";
       return;
     }
@@ -109,20 +110,20 @@ void RuntimeUtils::UpdateKernelNodeOutputInfo(const AnfNodePtr &kernel_node,
     if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
       auto abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
       MS_EXCEPTION_IF_NULL(abstract_tuple);
-      if (abstract_tuple->elements().size() != kernel_tensors.size()) {
+      if (abstract_tuple->elements().size() != output_tensors.size()) {
         MS_LOG(ERROR) << "Abstract size[" << abstract_tuple->elements().size() << "] is not equal to output shape size["
-                      << kernel_tensors.size() << "]";
+                      << output_tensors.size() << "]";
         return;
       }
       for (size_t i = 0; i < abstract_tuple->elements().size(); ++i) {
         auto tmp_abstract = abstract_tuple->elements()[i];
         MS_EXCEPTION_IF_NULL(tmp_abstract);
-        MS_EXCEPTION_IF_NULL(kernel_tensors[i]);
-        tmp_abstract->set_shape(std::make_shared<abstract::Shape>(kernel_tensors[i]->GetShapeVector()));
+        MS_EXCEPTION_IF_NULL(output_tensors[i]);
+        tmp_abstract->set_shape(std::make_shared<abstract::Shape>(output_tensors[i]->GetShapeVector()));
       }
     } else {
-      MS_EXCEPTION_IF_NULL(kernel_tensors[0]);
-      abstract->set_shape(std::make_shared<abstract::Shape>(kernel_tensors[0]->GetShapeVector()));
+      MS_EXCEPTION_IF_NULL(output_tensors[0]);
+      abstract->set_shape(std::make_shared<abstract::Shape>(output_tensors[0]->GetShapeVector()));
     }
   }
 }

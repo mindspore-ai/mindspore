@@ -23,8 +23,8 @@ static const std::map<std::string, ScatterFunctorType> kScatterFunctorTypeMap = 
   {"ScatterMax", SCATTER_FUNC_MAX},       {"ScatterMin", SCATTER_FUNC_MIN},
 };
 
-bool ScatterFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
+bool ScatterFunctorGPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto iter = kScatterFunctorTypeMap.find(kernel_type_);
   if (iter == kScatterFunctorTypeMap.end()) {
     MS_LOG(EXCEPTION)
@@ -42,9 +42,8 @@ bool ScatterFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ScatterFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
+int ScatterFunctorGPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   const size_t correct_input_num = 3;
   if (input_num != correct_input_num) {
@@ -54,7 +53,7 @@ int ScatterFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', the number of outputs must be 1, but got " << output_num;
   }
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
@@ -65,11 +64,11 @@ int ScatterFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   auto updates_shape_null = CheckNullInput(updates_shape);
   has_null_input_ = (input_shape_null || indices_shape_null || updates_shape_null);
   if (has_null_input_) {
-    input_size_list_[kIndex0] = input_shape_null ? 0 : input_size_list_[kIndex0];
-    input_size_list_[kIndex1] = indices_shape_null ? 0 : input_size_list_[kIndex1];
-    input_size_list_[kIndex2] = updates_shape_null ? 0 : input_size_list_[kIndex2];
-    output_size_list_.clear();
-    output_size_list_.push_back(input_size_list_[kIndex0]);
+    if (output_size_list_.size() != 1) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', the number of outputs must be 1, but got "
+                        << output_size_list_.size();
+    }
+    output_size_list_[0] = input_shape_null ? 0 : output_size_list_[0];
     return KRET_OK;
   }
   first_dim_size_ = 1;
@@ -88,9 +87,9 @@ int ScatterFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T, typename S>
-bool ScatterFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool ScatterFunctorGPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   if (has_null_input_) {
     return true;
   }
@@ -108,7 +107,7 @@ bool ScatterFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   // are different. Therefore, in order to adapt to the old runtime, the content of the input needs to be copied to
   // output. After removing the old runtime, the following copy logic code can be deleted.
   if (input != output) {
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output, input, inputs[0]->size, cudaMemcpyDeviceToDevice,
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output, input, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                                                        reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                        "cudaMemcpyAsync output failed");
   }

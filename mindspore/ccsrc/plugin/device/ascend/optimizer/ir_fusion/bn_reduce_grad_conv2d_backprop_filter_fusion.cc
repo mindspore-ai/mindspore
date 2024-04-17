@@ -27,7 +27,6 @@
 #include "utils/trace_base.h"
 #include "abstract/abstract_value.h"
 #include "include/backend/optimizer/helper.h"
-#include "plugin/device/ascend/hal/common/platform_info_util.h"
 
 namespace mindspore {
 namespace opt {

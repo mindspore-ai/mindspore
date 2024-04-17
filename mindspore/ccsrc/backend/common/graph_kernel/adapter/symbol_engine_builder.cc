@@ -16,24 +16,15 @@
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
 #include <memory>
 #include "include/common/utils/anfalgo.h"
+#include "backend/common/graph_kernel/symbol_engine/multi_symbol_engine.h"
 
 namespace mindspore::graphkernel {
 bool SymbolEngineBuilder::Run(const FuncGraphPtr &func_graph) {
-  auto todos = TopoSort(func_graph->output());
-  bool changed = false;
-  for (auto &node : todos) {
-    auto fg = GetCNodeFuncGraph(node);
-    if (fg != nullptr && common::AnfAlgo::IsDynamicShape(node)) {
-      fg->set_attr(kAttrSymbolEngine, BuildSymbolEngine(fg));
-      changed = true;
-    }
+  if (multi_engine_) {
+    symshape::MultiSymbolEngine::Build(func_graph);
+  } else {
+    symshape::SymbolEngineImpl::Build(func_graph);
   }
-  return changed;
-}
-
-SymbolEnginePtr BuildSymbolEngine(const FuncGraphPtr &fg) {
-  auto engine = std::make_shared<symbol::SymbolEngineImpl>(fg->ToString());
-  engine->Build(fg);
-  return engine;
+  return true;
 }
 }  // namespace mindspore::graphkernel

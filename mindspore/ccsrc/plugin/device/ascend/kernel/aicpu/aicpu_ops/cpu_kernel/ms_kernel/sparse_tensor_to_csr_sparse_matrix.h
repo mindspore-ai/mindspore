@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_TO_CSR_SPARSE_MATRIX_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_TO_CSR_SPARSE_MATRIX_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class SparseTensorToCSRSparseMatrixCpuKernel : public CpuKernel {
@@ -29,7 +29,7 @@ class SparseTensorToCSRSparseMatrixCpuKernel : public CpuKernel {
 
  private:
   template <typename indicesT, typename dataT>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx);
+  uint32_t ComputeKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

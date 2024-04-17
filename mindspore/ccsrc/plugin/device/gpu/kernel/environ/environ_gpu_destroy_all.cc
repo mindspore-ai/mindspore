@@ -19,24 +19,22 @@
 
 namespace mindspore {
 namespace kernel {
-bool EnvironDestroyAllGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
+int EnvironDestroyAllGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   // Check the output type.
-  auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
+  auto output_type = outputs[kIndex0]->dtype_id();
   if (output_type != TypeId::kNumberTypeBool) {
     MS_LOG(ERROR) << "The output type is invalid: " << output_type;
-    return false;
+    return KRET_RESIZE_FAILED;
   }
 
-  InitSizeLists();
-  return true;
+  output_size_list_.clear();
+  output_size_list_.push_back(sizeof(bool));
+  return KRET_OK;
 }
 
-void EnvironDestroyAllGpuKernelMod::InitSizeLists() { output_size_list_.push_back(sizeof(bool)); }
-
-bool EnvironDestroyAllGpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &, void *) {
+bool EnvironDestroyAllGpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &, void *) {
   MS_LOG(INFO) << "Clear the global environ data.";
   // Clear the global data which are generated in the kernel running.
   EnvironMgr::GetInstance().Clear();

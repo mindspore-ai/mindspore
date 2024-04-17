@@ -16,6 +16,7 @@
 
 #include "include/common/thread_pool.h"
 #include <exception>
+#include "thread/threadlog.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
 
@@ -36,11 +37,12 @@ void ThreadPool::SyncRunLoop(const std::shared_ptr<ThreadContext> &context) {
     }
 
     if (!context->task) {
+      MS_EXCEPTION_IF_NULL(context->cond_var);
       ++yield_count;
       if (yield_count > kYieldThreshold) {
         yield_count = 0;
         std::unique_lock<std::mutex> lock(context->mutex);
-        context->cond_var.wait(lock, [&context, this] { return context->task != nullptr || exit_run_; });
+        context->cond_var->wait(lock, [&context, this] { return context->task != nullptr || exit_run_; });
       } else {
         std::this_thread::yield();
         continue;
@@ -61,8 +63,83 @@ void ThreadPool::SyncRunLoop(const std::shared_ptr<ThreadContext> &context) {
     context->task = nullptr;
   }
 }
+#ifdef _WIN32
+bool ThreadPool::SetAffinity() const { return false; }
+#elif defined(BIND_CORE)
+bool ThreadPool::SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set) {
+  if (cpu_set == nullptr) {
+    return false;
+  }
+#ifdef __ANDROID__
+#if __ANDROID_API__ >= 21
+  THREAD_INFO("thread: %d, mask: %lu", pthread_gettid_np(thread_id), cpu_set->__bits[0]);
+  int ret = sched_setaffinity(pthread_gettid_np(thread_id), sizeof(cpu_set_t), cpu_set);
+  if (ret != THREAD_OK) {
+    THREAD_ERROR("bind thread %d to cpu failed. ERROR %d", pthread_gettid_np(thread_id), ret);
+    return false;
+  }
+  return true;
+#endif
+#else
+#if defined(__APPLE__)
+  THREAD_ERROR("not bind thread to apple's cpu.");
+  return false;
+#else
+  int ret = pthread_setaffinity_np(thread_id, sizeof(cpu_set_t), cpu_set);
+  if (ret != THREAD_OK) {
+    THREAD_ERROR("set thread: %lu to cpu failed", thread_id);
+    return false;
+  }
+  return true;
+#endif  // __APPLE__
+#endif  // __ANDROID__
+  return false;
+}
+#endif  // __BIND_CORE__
 
-bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
+bool ThreadPool::FreeScheduleThreads(const std::vector<int> &core_list) {
+  if (core_list.empty()) {
+    return false;
+  }
+#ifdef _WIN32
+  return false;
+#elif defined(BIND_CORE)
+  for (const auto &sync_run_thread : sync_run_threads_) {
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    for (auto core_id : core_list) {
+      CPU_SET(core_id, &mask);
+    }
+    if (!SetAffinity(sync_run_thread->native_handle(), &mask)) {
+      return false;
+    }
+  }
+  return true;
+#endif  // BIND_CORE
+  return false;
+}
+
+bool ThreadPool::SetCpuAffinity(const std::vector<int> &core_list) {
+  if (core_list.empty()) {
+    return false;
+  }
+#ifdef _WIN32
+  return false;
+#elif defined(BIND_CORE)
+  for (size_t i = 0; i < sync_run_threads_.size(); i++) {
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    CPU_SET(core_list[i % core_list.size()], &mask);
+    if (!SetAffinity(sync_run_threads_[i]->native_handle(), &mask)) {
+      return false;
+    }
+  }
+  return true;
+#endif  // BIND_CORE
+  return false;
+}
+
+bool ThreadPool::SyncRun(const std::vector<Task> &tasks, const std::vector<int> &core_list) {
   if (tasks.empty()) {
     return true;
   }
@@ -82,11 +159,17 @@ bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
     contexts_.resize(new_thread_num);
     for (size_t i = thread_num; i < new_thread_num; ++i) {
       contexts_[i] = std::make_shared<ThreadContext>();
-      sync_run_threads_.emplace_back(std::thread(&ThreadPool::SyncRunLoop, this, contexts_[i]));
+      sync_run_threads_.emplace_back(std::make_unique<std::thread>(&ThreadPool::SyncRunLoop, this, contexts_[i]));
     }
   }
   if (contexts_.empty()) {
     return true;
+  }
+  auto set_affinity_ret = SetCpuAffinity(core_list);
+  if (set_affinity_ret) {
+    MS_LOG(INFO) << "Set cpu affinity success.";
+  } else {
+    MS_LOG(DEBUG) << "Set cpu affinity failed.";
   }
   size_t used_thread_num = contexts_.size();
   if (task_num < used_thread_num) {
@@ -98,13 +181,14 @@ bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
     running = false;
     for (size_t i = 0; i < used_thread_num; ++i) {
       MS_EXCEPTION_IF_NULL(contexts_[i]);
+      MS_EXCEPTION_IF_NULL(contexts_[i]->cond_var);
       auto &task_run = contexts_[i]->task;
       if (task_run) {
         running = true;
       } else if (task_index < task_num) {
         std::lock_guard<std::mutex> task_lock(contexts_[i]->mutex);
         contexts_[i]->task = &(tasks[task_index]);
-        contexts_[i]->cond_var.notify_one();
+        contexts_[i]->cond_var->notify_one();
         running = true;
         ++task_index;
       }
@@ -112,6 +196,12 @@ bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
     if (running) {
       std::this_thread::yield();
     }
+  }
+  auto free_schedule_threads_ret = FreeScheduleThreads(core_list);
+  if (free_schedule_threads_ret) {
+    MS_LOG(INFO) << "Free schedule threads success.";
+  } else {
+    MS_LOG(DEBUG) << "Free schedule threads failed.";
   }
   return true;
 }
@@ -129,11 +219,30 @@ void ThreadPool::ClearThreadPool() {
   exit_run_ = true;
   for (auto &context : contexts_) {
     MS_EXCEPTION_IF_NULL(context);
-    context->cond_var.notify_one();
+    context->cond_var->notify_one();
   }
   for (auto &it : sync_run_threads_) {
-    if (it.joinable()) {
-      it.join();
+    MS_EXCEPTION_IF_NULL(it);
+    if (it->joinable()) {
+      it->join();
+    }
+  }
+  sync_run_threads_.clear();
+}
+
+void ThreadPool::ChildAfterFork() {
+  THREAD_INFO("common thread pool clear thread after fork in child process");
+  for (auto &context : contexts_) {
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->cond_var != nullptr) {
+      (void)context->cond_var.release();
+      context->task = nullptr;
+    }
+  }
+  contexts_.clear();
+  for (auto &it : sync_run_threads_) {
+    if (it != nullptr) {
+      (void)it.release();
     }
   }
   sync_run_threads_.clear();

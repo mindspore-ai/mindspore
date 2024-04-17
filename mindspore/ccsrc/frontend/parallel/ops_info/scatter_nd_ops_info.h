@@ -46,6 +46,7 @@ class ScatterNdOpsInfo : public OperatorInfo {
  protected:
   Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
   virtual Status CheckInputStrategy(const Dimensions &strategy_item) { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;

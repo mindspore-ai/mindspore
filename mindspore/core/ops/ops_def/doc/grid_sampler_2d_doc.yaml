@@ -1,0 +1,72 @@
+grid_sampler_2d:
+    description: |
+        This operation samples 2d `input_x` by using interpolation based on flow field grid,
+        which is usually gennerated by :func:`mindspore.ops.affine_grid`.
+    
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+    
+        Refer to :func:`mindspore.ops.grid_sample` for more details.
+    
+        Args:
+            interpolation_mode (str, optional): An optional string specifying the interpolation method.
+                The optional values are
+                ``"bilinear"`` or ``"nearest"`` . Default: ``"bilinear"`` .
+    
+                - ``"nearest"``: Nearest neighbor interpolation. Each output pixel is assigned the value of the
+                  nearest input pixel. This method is simple and fast but can result in blocky or pixelated outputs.
+                - ``"bilinear"``: Bilinear interpolation. Each output pixel is a weighted average of the four nearest input
+                  pixels, computed using bilinear interpolation. This method produces smoother results compared
+                  to nearest neighbor interpolation.
+    
+            padding_mode (str, optional): An optional string specifying the pad method.
+                The optional values are ``"zeros"`` , ``"border"`` or ``"reflection"`` . Default: ``"zeros"`` .
+                When the sampling grid is outside input's bounds, effects of various padding modes are as follows:
+    
+                - ``"zeros"``: Pads the input tensor with zeros.
+                - ``"border"``: Pads the input tensor with the values of the pixels on the border of the tensor.
+                - ``"reflection"``: Pads the input tensor by reflecting the values of the pixels at the
+                  boundary of the tensor.
+    
+            align_corners (bool, optional): An optional bool. When set to ``True`` ,
+                the centers of the corner pixels of the input
+                and output tensors are aligned. When set to ``False`` , it is not aligned. Default: ``False`` .
+    
+        Inputs:
+            - **input_x** (Tensor) - A 4-D tensor with shape
+              :math:`(N, C, H_{in}, W_{in})`. Supported dtypes:
+    
+              - Ascend: float16, float32.
+              - GPU/CPU: float16, float32, float64.
+    
+            - **grid** (Tensor) - A 4-D tensor whose dtype is the same as `input_x` and whose shape is
+              :math:`(N, H_{out}, W_{out}, 2)`.
+              Used to specify the sampling pixel locations normalized by the input spatial
+              dimensions.
+    
+        Outputs:
+            A 4-D Tensor whose dtype is the same as `input_x` and whose shape is :math:`(N, C, H_{out}, W_{out})`.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> gridsampler = ops.GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+            >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
+            >>> grid = Tensor(np.arange(-9, 9, 0.5).reshape((2, 3, 3, 2)).astype(np.float32))
+            >>> output = gridsampler(input_x, grid)
+            >>> print(output)
+            [[[[ 0.     0.     0.   ]
+               [ 0.     0.     0.   ]
+               [ 0.     0.     0.5  ]]
+              [[ 0.     0.     0.   ]
+               [ 0.     0.     0.   ]
+               [ 0.     1.5    4.5  ]]]
+             [[[10.     8.25   1.375]
+               [ 0.     0.     0.   ]
+               [ 0.     0.     0.   ]]
+              [[14.    11.25   1.875]
+               [ 0.     0.     0.   ]
+               [ 0.     0.     0.   ]]]]

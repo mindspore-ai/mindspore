@@ -229,11 +229,11 @@ class Poisson(Distribution):
         rate = self._check_param_type(rate)
         log_rate = self.log(rate)
         zeros = F.fill(self.dtypeop(value), self.shape(value), 0.0)
-        inf = F.fill(self.dtypeop(value), self.shape(value), np.inf)
+        neginf = F.fill(self.dtypeop(value), self.shape(value), -np.inf)
         safe_x = self.select(self.less(value, zeros), zeros, value)
         y = log_rate * safe_x - self.lgamma(safe_x + 1.)
         comp = self.equal(value, safe_x)
-        log_unnormalized_prob = self.select(comp, y, (-1) * inf)
+        log_unnormalized_prob = self.select(comp, y, neginf)
         log_normalization = self.exp(log_rate)
         return log_unnormalized_prob - log_normalization
 

@@ -20,16 +20,16 @@ from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as Validator
 from mindspore.experimental.optim.optimizer import Optimizer
+from mindspore import jit
 
 _sgd_opt = C.MultitypeFuncGraph("sgd_opt")
 
 
-@_sgd_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",)
+@_sgd_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
 def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, accum, stat):
     """Apply sgd optimizer to the weight parameter using Tensor."""
-    success = True
-    success = F.depend(success, opt(weight, gradient, learning_rate, accum, momentum, stat))
-    return success
+    opt(weight, gradient, learning_rate, accum, momentum, stat)
+    return True
 
 
 class SGD(Optimizer):
@@ -56,14 +56,14 @@ class SGD(Optimizer):
     .. warning::
         This is an experimental optimizer API that is subject to change.
         This module must be used with lr scheduler module in `LRScheduler Class
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
             parameter groups.
         lr (Union[int, float, Tensor]): learning rate.
         momentum (Union[int, float], optional): momentum factor. Default: ``0``.
-        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0``.
+        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
         dampening (Union[int, float], optional): dampening for momentum. Default: ``0``.
         nesterov (bool, optional): enables Nesterov momentum. Default: ``False``.
 
@@ -90,7 +90,7 @@ class SGD(Optimizer):
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optimizer = optim.SGD(net.trainable_params(), lr=0.1)
@@ -104,7 +104,8 @@ class SGD(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
-    def __init__(self, params, lr, momentum=0, dampening=0, weight_decay=0, nesterov=False, *,
+
+    def __init__(self, params, lr, momentum=0, dampening=0, weight_decay=0.0, nesterov=False, *,
                  maximize=False):
         Validator.check_value_type("lr", lr, [float, int, Tensor], self.cls_name)
         if lr < 0.0:
@@ -130,18 +131,26 @@ class SGD(Optimizer):
         self.stat = self.parameters.clone(prefix="stat", init='ones')
         self.op_cast = P.Cast()
 
+    @jit
+    def implementation(self, momentum, lr, group_id, gradients, maximize, dampening, weight_decay, nesterov):
+        """Extract the common computing part for acceleration"""
+        start_id = self.group_start_id[group_id]
+        end_id = self.group_start_id[group_id + 1]
+        momentum = self.op_cast(momentum, mstype.float32)
+        opt = P.SGD(dampening, weight_decay, nesterov)
+        grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
+        self.hyper_map(F.partial(_sgd_opt, opt, momentum, lr), grads,
+                       self.parameters[start_id: end_id], self.accum[start_id: end_id],
+                       self.stat[start_id: end_id])
+        return True
+
     def construct(self, gradients):
         for group_id, group in enumerate(self.param_groups):
-            opt = P.SGD(group.get("dampening"), group.get("weight_decay"), group.get("nesterov"))
-            lr = group.get("lr")
-            if isinstance(lr, float):
+            lr = self.lrs[group_id]
+            if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
-            maximize = group.get("maximize")
-            momentum = self.op_cast(group.get("momentum"), mstype.float32)
-            start_id = self.group_start_id[group_id]
-            end_id = self.group_start_id[group_id+1]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
-            self.hyper_map(F.partial(_sgd_opt, opt, momentum, lr), grads,
-                           self.parameters[start_id: end_id], self.accum[start_id: end_id],
-                           self.stat[start_id: end_id])
+
+            self.implementation(group.get("momentum"), lr, group_id, gradients, group.get("maximize"),
+                                group.get("dampening"),
+                                group.get("weight_decay"), group.get("nesterov"))
         return True

@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,38 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
-NodePtrList SequenceToTensorGrad(BpropIRBuilder *ib) {
+namespace {
+TypePtr GetRealType(const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->isa<Tuple>()) {
+    return GetRealType(type->cast<TuplePtr>()->elements()[0]);
+  }
+  if (type->isa<List>()) {
+    return GetRealType(type->cast<ListPtr>()->elements()[0]);
+  }
+  if (type->isa<TensorType>()) {
+    return type->cast<TensorTypePtr>()->element();
+  }
+  return type;
+}
+}  // namespace
+
+NodePtrList SequenceToTensorGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
-  dout = ib->Cast(dout, ib->GetDtype(x));
+  dout = ib->Cast(dout, GetRealType(ib->GetDtype(x)));
   auto dx = ib->TensorToSequence(dout, x->abstract());
   return {dx, ib->OutZeros(ib->GetInput(kIndex1))};
 }
 
-NodePtrList TensorToSequenceGrad(BpropIRBuilder *ib) {
+NodePtrList TensorToSequenceGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex2);
   auto dx = ib->SequenceToTensor(dout, ib->GetDtype(x));
   return {dx};
 }
 
-NodePtrList SequenceSetItemGrad(BpropIRBuilder *ib) {
+NodePtrList SequenceSetItemGrad(BpropBuilder *ib) {
   auto idx = ib->GetInput(kIndex1);
   auto value = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
@@ -42,11 +58,11 @@ NodePtrList SequenceSetItemGrad(BpropIRBuilder *ib) {
   return {dx, ib->OutZeros(idx), dvalue};
 }
 
-NodePtrList SequenceMaxMinGrad(BpropIRBuilder *ib) {
+NodePtrList SequenceMaxMinGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto index = ib->Emit("SequenceIndex", {x, out});
+  auto index = ib->Emit("SequenceIndex", {x, out, ib->Value<int64_t>(0), ib->Len(x)});
   auto dx = ib->SequenceSetItem(ib->ZerosLike(x), index, dout);
   return {dx};
 }
@@ -60,9 +76,12 @@ REG_BPROP_BUILDER("SequenceAdd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto out_offset = ib->Emit("SequenceAddOffset", {x, y});
-  auto dx = ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 0), ib->Len(x), ib->Value<int64_t>(1));
-  auto dy = ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 1), ib->ScalarAdd(ib->Len(x), ib->Len(y)),
-                              ib->Value<int64_t>(1));
+  auto dx = x->need_compute_grad_out()
+              ? ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 0), ib->Len(x), ib->Value<int64_t>(1))
+              : ib->OutZeros(x);
+  auto dy = y->need_compute_grad_out() ? ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 1),
+                                                           ib->ScalarAdd(ib->Len(x), ib->Len(y)), ib->Value<int64_t>(1))
+                                       : ib->OutZeros(y);
   return {dx, dy};
 });
 
@@ -117,8 +136,20 @@ REG_BPROP_BUILDER("ListInsert").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("TupleToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(SequenceToTensorGrad);
 REG_BPROP_BUILDER("ListToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(SequenceToTensorGrad);
-REG_BPROP_BUILDER("TensorToTuple").SetUnusedInputs({i0, i1, i2}).SetBody(TensorToSequenceGrad);
-REG_BPROP_BUILDER("ListToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(TensorToSequenceGrad);
+REG_BPROP_BUILDER("TensorToTuple").SetUnusedInputs({i0, i1}).SetBody(TensorToSequenceGrad);
+REG_BPROP_BUILDER("TensorToList").SetUnusedInputs({i0, i1}).SetBody(TensorToSequenceGrad);
+
+REG_BPROP_BUILDER("ListToTuple").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("TupleToList", {dout});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("TupleToList").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("ListToTuple", {dout});
+  return {dx};
+});
 
 REG_BPROP_BUILDER("ScalarToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
@@ -128,10 +159,10 @@ REG_BPROP_BUILDER("ScalarToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFU
   return {dx, ib->OutZeros(ib->GetInput(kIndex1))};
 });
 
-REG_BPROP_BUILDER("TensorToScalar").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("TensorToScalar").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("ScalarToTensor", {dout, ib->Value(ib->GetDtype(x))});
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("ScalarToTensor", {dout, ib->Value<int64_t>(ib->GetDtype(x)->type_id())});
   return {dx};
 });
 

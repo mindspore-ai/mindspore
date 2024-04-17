@@ -194,20 +194,27 @@ bool FuncGraphAbstractClosure::operator==(const AbstractFunction &other) const {
     return false;
   }
   const auto &other_fg = static_cast<const FuncGraphAbstractClosure &>(other);
-  return func_graph_ == other_fg.func_graph_ && context_ == other_fg.context_ && tracking_id_ == other_fg.tracking_id_;
+  MS_EXCEPTION_IF_NULL(func_graph());
+  MS_EXCEPTION_IF_NULL(other_fg.func_graph());
+  return func_graph() == other_fg.func_graph() && context_ == other_fg.context_ &&
+         tracking_id_ == other_fg.tracking_id_;
 }
 
 bool FuncGraphAbstractClosure::IsEqualExceptTrackingId(const FuncGraphAbstractClosure &other) const {
-  return (this == &other) || (func_graph_ == other.func_graph_ && context_ == other.context_);
+  MS_EXCEPTION_IF_NULL(func_graph());
+  MS_EXCEPTION_IF_NULL(other.func_graph());
+  return (this == &other) || (func_graph() == other.func_graph() && context_ == other.context_);
 }
 
 std::size_t FuncGraphAbstractClosure::HashWithoutTrackingId() const {
-  auto hash_value = hash_combine(tid(), PointerHash<FuncGraphPtr>{}(func_graph_));
+  MS_EXCEPTION_IF_NULL(func_graph());
+  auto hash_value = hash_combine(tid(), PointerHash<FuncGraphPtr>{}(func_graph()));
   return hash_combine(hash_value, PointerHash<AnalysisContextPtr>{}(context_));
 }
 
 std::size_t FuncGraphAbstractClosure::hash() const {
-  auto hash_value = hash_combine(tid(), PointerHash<FuncGraphPtr>{}(func_graph_));
+  MS_EXCEPTION_IF_NULL(func_graph());
+  auto hash_value = hash_combine(tid(), PointerHash<FuncGraphPtr>{}(func_graph()));
   hash_value = hash_combine(hash_value, PointerHash<AnalysisContextPtr>{}(context_));
   if (tracking_id_ != 0) {
     hash_value = hash_combine(hash_value, static_cast<size_t>(tracking_id_));
@@ -217,10 +224,10 @@ std::size_t FuncGraphAbstractClosure::hash() const {
 
 std::string FuncGraphAbstractClosure::ToString() const {
   std::stringstream ss;
-  MS_EXCEPTION_IF_NULL(func_graph_);
+  MS_EXCEPTION_IF_NULL(func_graph());
   MS_EXCEPTION_IF_NULL(context_);
   ss << "FuncGraphAbstractClosure: "
-     << "FuncGraph: " << func_graph_->ToString() << "; Context: " << context_->ToString();
+     << "FuncGraph: " << func_graph()->ToString() << "; Context: " << context_->ToString();
   return ss.str();
 }
 
@@ -229,8 +236,8 @@ std::string FuncGraphAbstractClosure::ToString(bool verbose) const {
     return ToString();
   }
   std::stringstream ss;
-  MS_EXCEPTION_IF_NULL(func_graph_);
-  ss << type_name() << "(" << func_graph_->ToString() << ")";
+  MS_EXCEPTION_IF_NULL(func_graph());
+  ss << type_name() << "(" << func_graph()->ToString() << ")";
   return ss.str();
 }
 

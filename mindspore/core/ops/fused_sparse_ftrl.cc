@@ -52,25 +52,24 @@ constexpr size_t kGradIndex = 3;
 constexpr size_t kIndicesIndex = 4;
 constexpr size_t kFusedSparseFtrlInputNum = 5;
 
-abstract::TupleShapePtr FusedSparseFtrlInferShape(const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr FusedSparseFtrlInferShapeCommon(const PrimitivePtr &primitive,
+                                                        const std::vector<AbstractBasePtr> &input_args,
+                                                        const abstract::BaseShapePtr &var_shape_r,
+                                                        const abstract::BaseShapePtr &accum_shape_r,
+                                                        const abstract::BaseShapePtr &linear_shape_r) {
   auto prim_name = primitive->name();
-  // the output is useless, so we don't have to focus on the output shape, cannot return 1
-  auto var_shape_r = input_args[kVarIndex]->Broaden()->BuildShape();
-  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->BuildShape();
-  auto linear_shape_r = input_args[kLinearIndex]->Broaden()->BuildShape();
   auto outputs = std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>({var_shape_r, accum_shape_r, linear_shape_r}));
   for (auto &input : input_args) {
-    if (input->BuildShape()->IsDynamic()) {
+    if (input->GetShape()->IsDynamic()) {
       return outputs;
     }
   }
-  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVarIndex]->BuildShape())[kShape];
-  auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kAccumIndex]->BuildShape())[kShape];
-  auto linear_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kLinearIndex]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->BuildShape())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->BuildShape())[kShape];
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVarIndex]->GetShape())[kShape];
+  auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kAccumIndex]->GetShape())[kShape];
+  auto linear_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kLinearIndex]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->GetShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->GetShape())[kShape];
 
   (void)CheckAndConvertUtils::CheckValue("var shape", var_shape, kEqual, "accum shape", accum_shape, prim_name);
   (void)CheckAndConvertUtils::CheckValue("var shape", var_shape, kEqual, "linear shape", linear_shape, prim_name);
@@ -92,18 +91,36 @@ abstract::TupleShapePtr FusedSparseFtrlInferShape(const PrimitivePtr &primitive,
   return outputs;
 }
 
+abstract::TupleShapePtr FusedSparseFtrlInferShapeIner(const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args) {
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
+  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->GetShape();
+  auto linear_shape_r = input_args[kLinearIndex]->Broaden()->GetShape();
+  return FusedSparseFtrlInferShapeCommon(primitive, input_args, var_shape_r, accum_shape_r, linear_shape_r);
+}
+
+abstract::TupleShapePtr FusedSparseFtrlInferShape(const PrimitivePtr &primitive,
+                                                  const std::vector<AbstractBasePtr> &input_args) {
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->GetShape();
+  auto accum_shape_r = input_args[kAccumIndex]->GetShape();
+  auto linear_shape_r = input_args[kLinearIndex]->GetShape();
+  return FusedSparseFtrlInferShapeCommon(primitive, input_args, var_shape_r, accum_shape_r, linear_shape_r);
+}
+
 TypePtr FusedSparseFtrlInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->BuildType()},
-                                          {"accum", input_args[kAccumIndex]->BuildType()},
-                                          {"linear", input_args[kLinearIndex]->BuildType()},
-                                          {"grad", input_args[kGradIndex]->BuildType()}};
+  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->GetType()},
+                                          {"accum", input_args[kAccumIndex]->GetType()},
+                                          {"linear", input_args[kLinearIndex]->GetType()},
+                                          {"grad", input_args[kGradIndex]->GetType()}};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat32}, prim_name);
 
-  auto indices_dtype = input_args[kIndicesIndex]->BuildType();
+  auto indices_dtype = input_args[kIndicesIndex]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_dtype, {kInt32}, prim_name);
 
-  auto type = input_args[kVarIndex]->BuildType();
+  auto type = input_args[kVarIndex]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type});
 }
 }  // namespace fused_sparse_ftrl
@@ -175,7 +192,7 @@ AbstractBasePtr FusedSparseFtrlInfer(const abstract::AnalysisEnginePtr &, const 
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
                                            SizeToLong(fused_sparse_ftrl::kFusedSparseFtrlInputNum), op_name);
   auto types = fused_sparse_ftrl::FusedSparseFtrlInferType(primitive, input_args);
-  auto shapes = fused_sparse_ftrl::FusedSparseFtrlInferShape(primitive, input_args);
+  auto shapes = fused_sparse_ftrl::FusedSparseFtrlInferShapeIner(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 

@@ -19,11 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseFillEmptyRowsGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SparseFillEmptyRowsGrad>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool SparseFillEmptyRowsGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -35,17 +32,15 @@ bool SparseFillEmptyRowsGradGpuKernelMod::Init(const BaseOperatorPtr &base_opera
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_ptr_->name()
-                            << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
-int SparseFillEmptyRowsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseFillEmptyRowsGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -54,16 +49,16 @@ int SparseFillEmptyRowsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     }
   }
   ResetResource();
-  reverse_map_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  reverse_map_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
   int64_t reverse_map_dims = reverse_map_shape_.size();
   if (reverse_map_dims != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'reverse_index_map' must be 1-D, but got "
                   << reverse_map_dims << "-D.";
     return false;
   }
-  std::vector<int64_t> grad_values_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                                inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> grad_values_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                                inputs.at(kIndex1)->GetDeviceShapeVector().end());
   int64_t grad_values_dims = grad_values_shape.size();
   if (grad_values_dims != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'grad_values' must be 1-D, but got "
@@ -80,16 +75,14 @@ int SparseFillEmptyRowsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     is_null_input_ = true;
   }
 
-  output_dvalues_size_ = reverse_map_num_ * abstract::TypeIdSize(outputs[kIndex0]->GetDtype());
-  output_ddefault_value_size_ = abstract::TypeIdSize(outputs[kIndex1]->GetDtype());
-  reverse_map_size_ = reverse_map_num_ * abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  grad_values_size_ = grad_values_num_ * abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  output_dvalues_size_ = reverse_map_num_ * abstract::TypeIdSize(outputs[kIndex0]->dtype_id());
+  output_ddefault_value_size_ = abstract::TypeIdSize(outputs[kIndex1]->dtype_id());
+  reverse_map_size_ = reverse_map_num_ * abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  grad_values_size_ = grad_values_num_ * abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   workspace_flag_size_ = grad_values_num_ * sizeof(bool);
   workspace_sum_val_size_ =
-    grad_values_num_ * abstract::TypeIdSize(inputs[kIndex1]->GetDtype());  // Precision need auxlilary memory
+    grad_values_num_ * abstract::TypeIdSize(inputs[kIndex1]->dtype_id());  // Precision need auxlilary memory
 
-  input_size_list_.push_back(reverse_map_size_);
-  input_size_list_.push_back(grad_values_size_);
   workspace_size_list_.push_back(workspace_flag_size_);
   workspace_size_list_.push_back(workspace_sum_val_size_);
   output_size_list_.push_back(output_dvalues_size_);
@@ -98,9 +91,9 @@ int SparseFillEmptyRowsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T>
-bool SparseFillEmptyRowsGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &workspace,
-                                                       const std::vector<AddressPtr> &outputs, void *cuda_stream) {
+bool SparseFillEmptyRowsGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &workspace,
+                                                       const std::vector<KernelTensor *> &outputs, void *cuda_stream) {
   int64_t *reverse_index_map = GetDeviceAddress<int64_t>(inputs, 0);
   T *grad_values = GetDeviceAddress<T>(inputs, 1);
   bool *workspace_flag = GetDeviceAddress<bool>(workspace, 0);

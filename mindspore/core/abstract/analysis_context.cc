@@ -92,26 +92,20 @@ std::size_t AnalysisContext::ChildHash::operator()(const ChildKey &key) const no
   return hash_combine(hash_value, AbstractBasePtrListHash(key.second));
 }
 
+// Not call directly. Call NewContext(AnalysisContextPtr, FuncGraphPtr, AbstractBasePtrList) instead.
 AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &fg, const AbstractBasePtrList &args_abs_list) {
   // Find func graph's parent and its parent context firstly.
   MS_EXCEPTION_IF_NULL(fg);
   FuncGraphPtr parent_graph = fg->parent();
-  if (IS_OUTPUT_ON(mindspore::kDebug)) {
-    MS_LOG(DEBUG) << "fg: " << ((fg != nullptr) ? fg->ToString() : "nullptr")
-                  << ", parent_graph: " << ((parent_graph != nullptr) ? parent_graph->ToString() : "nullptr");
-  }
   auto parent_context = FindContext(parent_graph);
   if (parent_context == nullptr) {
-    // If parent context is not found, we'll raise exception.
-    MS_LOG(INTERNAL_EXCEPTION) << "BUG: Failed to find parent context in current context: " << this->ToString()
-                               << ", func_graph: " << fg->ToString()
-                               << ", parent_graph: " << (parent_graph == nullptr ? "null" : parent_graph->ToString())
-                               << " " << trace::GetDebugInfoStr(fg->debug_info());
+    // If parent context is not found, we'll raise exception later.
+    return nullptr;
   }
   // Create or find child context from the parent context.
   auto result = parent_context->children_.emplace(std::make_pair(fg, args_abs_list), nullptr);
   if (result.second) {
-    // If exist child not found, create a new context for the func graph with its absific arguments.
+    // If child not found, create a new context for the func graph with its absific arguments.
     result.first->second = CreateContext(parent_context, fg, args_abs_list);
   }
   return result.first->second;

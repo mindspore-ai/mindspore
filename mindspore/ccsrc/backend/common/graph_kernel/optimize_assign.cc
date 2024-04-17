@@ -136,8 +136,8 @@ void UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const AnfNodePtr &
 }
 
 bool RepalceOutputByParameter(const FuncGraphPtr &func_graph) {
-  auto todos = TopoSort(func_graph->get_return());
   MS_EXCEPTION_IF_NULL(func_graph);
+  auto todos = TopoSort(func_graph->get_return());
 
   bool changed = false;
   for (const auto &n : todos) {

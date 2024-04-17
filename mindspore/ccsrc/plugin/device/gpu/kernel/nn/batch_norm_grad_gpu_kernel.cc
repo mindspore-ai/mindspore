@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <utility>
-#include "ops/grad/batch_norm_grad.h"
 #include "ops/nn_op_name.h"
 #include "ops/op_name.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
@@ -30,59 +29,36 @@ namespace {
 constexpr size_t kBatchNormGradInputShapeMaxSize = 4;
 constexpr size_t kBatchNormGradInputShapeMinSize = 2;
 }  // namespace
-bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNormGrad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast BatchNormGrad failed!";
-    return false;
-  }
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto activation_type_attr = prim->GetAttr(mindspore::ops::kActivationType);
-  if (activation_type_attr != nullptr) {
-    activation_type_ = ActivationType(GetValue<int64_t>(activation_type_attr));
-  }
-
+bool BatchNormGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ == kBatchNormGradOpName) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-  } else if (kernel_name_ == kBatchNormGradWithActivationOpName &&
-             activation_type_ == mindspore::ActivationType::RELU) {
-    bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
-  } else if (kernel_name_ == kBatchNormGradWithActivationOpName &&
-             activation_type_ == mindspore::ActivationType::SWISH) {
-    // batch_norm grad + silu grad fusion
-    bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-  } else if (kernel_name_ == kBatchNormGradWithAddAndActivationOpName) {
-    bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
   } else {
-    MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNormGradOpName << ", "
-                      << kBatchNormGradWithActivationOpName << ", " << kBatchNormGradWithAddAndActivationOpName
-                      << ", but got " << kernel_name_;
+    auto activation_type_attr = primitive_->GetAttr(mindspore::ops::kActivationType);
+    if (activation_type_attr != nullptr) {
+      activation_type_ = ActivationType(GetValue<int64_t>(activation_type_attr));
+    }
+    if (kernel_name_ == kBatchNormGradWithActivationOpName && activation_type_ == mindspore::ActivationType::RELU) {
+      bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
+    } else if (kernel_name_ == kBatchNormGradWithActivationOpName &&
+               activation_type_ == mindspore::ActivationType::SWISH) {
+      // batch_norm grad + silu grad fusion
+      bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
+    } else if (kernel_name_ == kBatchNormGradWithAddAndActivationOpName) {
+      bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
+    } else {
+      MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNormGradOpName << ", "
+                        << kBatchNormGradWithActivationOpName << ", " << kBatchNormGradWithAddAndActivationOpName
+                        << ", but got " << kernel_name_;
+    }
   }
+
+  const auto &inplace_algo_attr = primitive_->GetAttr("inplace_algo");
+  auto inplace_algo_value = inplace_algo_attr == nullptr ? "cover" : GetValue<std::string>(inplace_algo_attr);
+  beta_data_diff_ = inplace_algo_value == "cover" ? 0 : 1;
 
   InitResource();
-  epsilon_ = kernel_ptr->get_epsilon();
-  is_train_ = kernel_ptr->get_is_training();
-  format_ = kernel_ptr->get_format();
-  beta_data_diff_ = kernel_ptr->get_inplace_algo() == "cover" ? 0 : 1;
-
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-  size_t input_num = inputs.size();
-  if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN) {
-    if (input_num != CUDNN_BATCHNORM_OPS_BN_INPUT_NUM && activation_type_ != mindspore::ActivationType::SWISH) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
-                        << CUDNN_BATCHNORM_OPS_BN_INPUT_NUM << ", but got " << input_num;
-    }
-  } else {
-    if (input_num != NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
-                        << NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM << ", but got " << input_num;
-    }
-  }
-
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -90,24 +66,24 @@ bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     return false;
   }
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
-
+  attrs_pos0_ = kernel_name_ == kBatchNormGradOpName ? 6 : 8;
   return true;
 }
 
-int BatchNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BatchNormGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
 
-  beta_data_diff_ = 0;
+  is_train_ = inputs[attrs_pos0_]->GetValueWithCheck<bool>();
+  epsilon_ = inputs[attrs_pos0_ + kIndex1]->GetValueWithCheck<float>();
+  format_ = static_cast<mindspore::Format>(inputs[attrs_pos0_ + kIndex2]->GetValueWithCheck<int64_t>());
 
-  auto x_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto x_shape = inputs[kIndex0]->GetDeviceShapeVector();
   const size_t x_shape_size = x_shape.size();
-
-  auto format = inputs[kIndex0]->GetFormat();
+  auto format = inputs[kIndex0]->format();
   if (x_shape_size == kBatchNormGradInputShapeMinSize) {
     format = Format::NCHW;
   } else if (format_ == Format::NHWC) {
@@ -161,10 +137,6 @@ void BatchNormGradGpuKernelMod::InitSizeLists() {
                                         handle_, mode_, bn_ops_, x_desc_, y_desc_, dy_desc_, dz_desc_, dx_desc_,
                                         scale_bias_diff_desc_, activation_desc_, &workspace_size_),
                                       "cudnnGetBatchNormalizationBackwardExWorkspaceSize failed");
-  if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-    input_size_list_.push_back(para_size_);
-    input_size_list_.push_back(x_size_);
-  }
 
   workspace_size_list_.push_back(workspace_size_);
 }
@@ -186,9 +158,9 @@ void BatchNormGradGpuKernelMod::DestroyResource() noexcept {
 }
 
 template <typename T>
-bool BatchNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool BatchNormGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   VARIABLE_NOT_USED(workspace);
   VARIABLE_NOT_USED(stream_ptr);
   if (is_null_input_) {
@@ -220,7 +192,7 @@ bool BatchNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   }
   if (is_train_) {
     auto reserve_addr = GetPossiblyNullDeviceAddress<float>(inputs, kIndex5);
-    reserve_size_ = inputs[kIndex5]->size;
+    reserve_size_ = inputs[kIndex5]->size();
     void *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, kIndex0);
 
     const float alpha_data_diff = 1;
@@ -292,86 +264,69 @@ void BatchNormGradGpuKernelMod::SetTensorDescriptor(const Format &format, const 
   }
 }
 
+#define BATCH_NORM_GRAD_GPU_REG(MS, S)                   \
+  KernelAttr()                                           \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)   \
+    .AddOutputAttr(MS)                                   \
+    .AddOutputAttr(kNumberTypeFloat32)                   \
+    .AddOutputAttr(kNumberTypeFloat32),                  \
+    &BatchNormGradGpuKernelMod::LaunchKernel<S>
+
+#define BATCH_NORM_GRAD_WITH_ACTIVATION_GPU_REG(MS, S)   \
+  KernelAttr()                                           \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)   \
+    .AddOutputAttr(MS)                                   \
+    .AddOutputAttr(kNumberTypeFloat32)                   \
+    .AddOutputAttr(kNumberTypeFloat32),                  \
+    &BatchNormGradGpuKernelMod::LaunchKernel<S>
+
+#define BATCH_NORM_GRAD_WITH_ADD_AND_ACTIVATIONGPU_REG(MS, S) \
+  KernelAttr()                                                \
+    .AddInputAttr(MS)                                         \
+    .AddInputAttr(MS)                                         \
+    .AddInputAttr(kNumberTypeFloat32)                         \
+    .AddInputAttr(kNumberTypeFloat32)                         \
+    .AddInputAttr(kNumberTypeFloat32)                         \
+    .AddInputAttr(kNumberTypeFloat32)                         \
+    .AddInputAttr(kNumberTypeFloat32)                         \
+    .AddInputAttr(MS)                                         \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)         \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)      \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)        \
+    .AddOutputAttr(MS)                                        \
+    .AddOutputAttr(kNumberTypeFloat32)                        \
+    .AddOutputAttr(kNumberTypeFloat32)                        \
+    .AddOutputAttr(MS),                                       \
+    &BatchNormGradGpuKernelMod::LaunchKernel<S>
+
 std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGradGpuKernelMod::BatchNormGradFunc>>>
-  BatchNormGradGpuKernelMod::kernel_attr_map_ = {{kBatchNormGradOpName,
-                                                  {{KernelAttr()
-                                                      .AddInputAttr(kNumberTypeFloat32)    // dy
-                                                      .AddInputAttr(kNumberTypeFloat32)    // x
-                                                      .AddInputAttr(kNumberTypeFloat32)    // scale
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_mean
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_variance
-                                                      .AddInputAttr(kNumberTypeFloat32)    // reserve
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dx
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dscale
-                                                      .AddOutputAttr(kNumberTypeFloat32),  // dbias
-                                                    &BatchNormGradGpuKernelMod::LaunchKernel<float>},
-                                                   {KernelAttr()
-                                                      .AddInputAttr(kNumberTypeFloat16)    // dy
-                                                      .AddInputAttr(kNumberTypeFloat16)    // x
-                                                      .AddInputAttr(kNumberTypeFloat32)    // scale
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_mean
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_variance
-                                                      .AddInputAttr(kNumberTypeFloat32)    // reserve
-                                                      .AddOutputAttr(kNumberTypeFloat16)   // dx
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dscale
-                                                      .AddOutputAttr(kNumberTypeFloat32),  // dbias
-                                                    &BatchNormGradGpuKernelMod::LaunchKernel<half>}}},
-                                                 {kBatchNormGradWithActivationOpName,
-                                                  {{KernelAttr()
-                                                      .AddInputAttr(kNumberTypeFloat32)    // dy
-                                                      .AddInputAttr(kNumberTypeFloat32)    // x
-                                                      .AddInputAttr(kNumberTypeFloat32)    // scale
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_mean
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_variance
-                                                      .AddInputAttr(kNumberTypeFloat32)    // reserve
-                                                      .AddInputAttr(kNumberTypeFloat32)    // b
-                                                      .AddInputAttr(kNumberTypeFloat32)    // y
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dx
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dscale
-                                                      .AddOutputAttr(kNumberTypeFloat32),  // dbias
-                                                    &BatchNormGradGpuKernelMod::LaunchKernel<float>},
-                                                   {KernelAttr()
-                                                      .AddInputAttr(kNumberTypeFloat16)    // dy
-                                                      .AddInputAttr(kNumberTypeFloat16)    // x
-                                                      .AddInputAttr(kNumberTypeFloat32)    // scale
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_mean
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_variance
-                                                      .AddInputAttr(kNumberTypeFloat32)    // reserve
-                                                      .AddInputAttr(kNumberTypeFloat32)    // b
-                                                      .AddInputAttr(kNumberTypeFloat16)    // y
-                                                      .AddOutputAttr(kNumberTypeFloat16)   // dx
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dscale
-                                                      .AddOutputAttr(kNumberTypeFloat32),  // dbias
-                                                    &BatchNormGradGpuKernelMod::LaunchKernel<half>}}},
-                                                 {kBatchNormGradWithAddAndActivationOpName,
-                                                  {{KernelAttr()
-                                                      .AddInputAttr(kNumberTypeFloat32)    // dy
-                                                      .AddInputAttr(kNumberTypeFloat32)    // x
-                                                      .AddInputAttr(kNumberTypeFloat32)    // scale
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_mean
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_variance
-                                                      .AddInputAttr(kNumberTypeFloat32)    // reserve
-                                                      .AddInputAttr(kNumberTypeFloat32)    // b
-                                                      .AddInputAttr(kNumberTypeFloat32)    // y
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dx
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dscale
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dbias
-                                                      .AddOutputAttr(kNumberTypeFloat32),  // dz
-                                                    &BatchNormGradGpuKernelMod::LaunchKernel<float>},
-                                                   {KernelAttr()
-                                                      .AddInputAttr(kNumberTypeFloat16)    // dy
-                                                      .AddInputAttr(kNumberTypeFloat16)    // x
-                                                      .AddInputAttr(kNumberTypeFloat32)    // scale
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_mean
-                                                      .AddInputAttr(kNumberTypeFloat32)    // save_variance
-                                                      .AddInputAttr(kNumberTypeFloat32)    // reserve
-                                                      .AddInputAttr(kNumberTypeFloat32)    // b
-                                                      .AddInputAttr(kNumberTypeFloat16)    // y
-                                                      .AddOutputAttr(kNumberTypeFloat16)   // dx
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dscale
-                                                      .AddOutputAttr(kNumberTypeFloat32)   // dbias
-                                                      .AddOutputAttr(kNumberTypeFloat16),  // dz
-                                                    &BatchNormGradGpuKernelMod::LaunchKernel<half>}}}};
+  BatchNormGradGpuKernelMod::kernel_attr_map_ = {
+    {kBatchNormGradOpName,
+     {{BATCH_NORM_GRAD_GPU_REG(kNumberTypeFloat32, float)}, {BATCH_NORM_GRAD_GPU_REG(kNumberTypeFloat16, half)}}},
+    {kBatchNormGradWithActivationOpName,
+     {{BATCH_NORM_GRAD_WITH_ACTIVATION_GPU_REG(kNumberTypeFloat32, float)},
+      {BATCH_NORM_GRAD_WITH_ACTIVATION_GPU_REG(kNumberTypeFloat16, half)}}},
+    {kBatchNormGradWithAddAndActivationOpName,
+     {{BATCH_NORM_GRAD_WITH_ADD_AND_ACTIVATIONGPU_REG(kNumberTypeFloat32, float)},
+      {BATCH_NORM_GRAD_WITH_ADD_AND_ACTIVATIONGPU_REG(kNumberTypeFloat16, half)}}}};
 
 std::vector<KernelAttr> BatchNormGradGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map_.find(kernel_name_);

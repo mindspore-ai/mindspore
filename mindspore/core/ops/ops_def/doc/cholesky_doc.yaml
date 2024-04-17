@@ -1,0 +1,32 @@
+cholesky:
+    description: |
+        Performs the Cholesky decomposition on a single or a batch of symmetric positive-definite matrices.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        Refer to :func:`mindspore.ops.cholesky` for more details.
+
+        Args:
+            upper (bool, optional): Flag that indicates whether to return a upper or lower triangular matrix.
+                Default: ``False`` .
+
+        Inputs:
+            - **input_x**  (Tensor) - Tensor of shape :math:`(*, N, N)`, where :math:`*` is zero or more batch dimensions
+              consisting of symmetric positive-definite matrices, with float32 or float64 data type.
+        
+        Outputs:
+            Tensor, has the same shape and data type as `input_x`.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.array([[1.0, 1.0], [1.0, 2.0]]), mindspore.float32)
+            >>> output = ops.Cholesky()(input_x)
+            >>> print(output)
+            [[1. 0.]
+             [1. 1.]]

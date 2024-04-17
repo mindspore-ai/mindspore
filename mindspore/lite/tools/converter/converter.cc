@@ -1058,8 +1058,8 @@ int ConverterImpl::ExecuteMicro(const schema::MetaGraphT *meta_graph, const std:
   }
   auto status =
     meta_graph != nullptr
-      ? micro::Coder::MicroSourceCodeGeneration(*meta_graph, output_path, param->microParam, param->weight_fp16)
-      : micro::Coder::MicroSourceCodeGeneration(param->model_file, output_path, param->microParam, param->weight_fp16);
+      ? micro::Coder::MicroSourceCodeGeneration(*meta_graph, output_path, &param->microParam, param->weight_fp16)
+      : micro::Coder::MicroSourceCodeGeneration(param->model_file, output_path, &param->microParam, param->weight_fp16);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Execute Micro failed.";
   }

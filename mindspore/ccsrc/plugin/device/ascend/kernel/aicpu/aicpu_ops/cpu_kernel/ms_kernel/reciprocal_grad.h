@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_RECIPROCALGRAD_H_
 #define AICPU_KERNELS_NORMALIZED_RECIPROCALGRAD_H_
 
-#include "inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class ReciprocalGradCpuKernel : public CpuKernel {
@@ -27,10 +27,9 @@ class ReciprocalGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t ReciprocalGradCompute(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num, const CpuKernelContext &ctx);
+  uint32_t ReciprocalGradCompute(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num, CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ReciprocalGradComputeComplex(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num,
-                                        const CpuKernelContext &ctx);
+  uint32_t ReciprocalGradComputeComplex(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num, CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -15,8 +15,6 @@
  */
 #include "minddata/dataset/audio/kernels/riaa_biquad_op.h"
 
-#include <map>
-
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 #include "minddata/dataset/util/status.h"
 

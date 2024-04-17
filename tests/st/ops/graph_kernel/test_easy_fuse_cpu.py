@@ -55,7 +55,7 @@ def easy_fuse():
     assert np.allclose(expect1_np, output1_np, rtol=1.e-4, atol=1.e-4, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_easy_fuse_cpu():

@@ -47,16 +47,11 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   const int64_t kDimOne = 1;
   const uint32_t kMinShapeDim = 2;
-  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("shape's rank", SizeToLong(shape_shape.size()), kEqual, kDimOne, prim_name);
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  const uint32_t kShapeShpaeDim = 1;
-  if (input_args[0]->cast<abstract::AbstractTensorPtr>()->shape()->shape().size() != kShapeShpaeDim) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', 'Shape of shape value only could be one-dimensional";
-  }
   auto shape_v = GetShapeValue(primitive, input_args[0]);
   if (!IsDynamic(shape_v)) {
     if (shape_v.size() < kMinShapeDim) {
@@ -79,7 +74,7 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
 TypePtr NonDeterministicIntsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   const int64_t input_num = 1;
-  auto shape_type = input_args[0]->BuildType();
+  auto shape_type = input_args[0]->GetType();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   const std::set<TypePtr> valid_input_types = {kInt32, kInt64, kUInt32, kUInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type, valid_input_types, prim_name);

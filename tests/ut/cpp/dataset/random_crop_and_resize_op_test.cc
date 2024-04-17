@@ -36,16 +36,9 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest1) {
   TensorShape s_in = input_tensor_->shape();
   TensorRow output_tensor_row;
   std::shared_ptr<Tensor> output_tensor;
-  int h_out = 1024;
-  int w_out = 2048;
-  float aspect_lb = 2;
-  float aspect_ub = 2.5;
-  float scale_lb = 0.2;
-  float scale_ub = 2.0;
+  TensorShape s_out({1024, 2048, s_in[2]});
 
-  TensorShape s_out({h_out, w_out, s_in[2]});
-
-  auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
+  auto op = std::make_unique<RandomCropAndResizeOp>(1024, 2048, 0.2, 2.0, 2.0, 2.5, InterpolationMode::kLinear, 10);
   Status s;
   for (auto i = 0; i < 100; i++) {
     TensorRow input_tensor_row;
@@ -70,16 +63,9 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest2) {
   TensorShape s_in = input_tensor_->shape();
   TensorRow output_tensor_row;
   std::shared_ptr<Tensor> output_tensor;
-  int h_out = 1024;
-  int w_out = 2048;
-  float aspect_lb = 1;
-  float aspect_ub = 1.5;
-  float scale_lb = 0.2;
-  float scale_ub = 2.0;
+  TensorShape s_out({1024, 2048, s_in[2]});
 
-  TensorShape s_out({h_out, w_out, s_in[2]});
-
-  auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
+  auto op = std::make_unique<RandomCropAndResizeOp>(1024, 2048, 0.2, 2.0, 1.0, 1.5, InterpolationMode::kLinear, 10);
   Status s;
   for (auto i = 0; i < 100; i++) {
     TensorRow input_tensor_row;
@@ -104,16 +90,9 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest3) {
   TensorShape s_in = input_tensor_->shape();
   TensorRow output_tensor_row;
   std::shared_ptr<Tensor> output_tensor;
-  int h_out = 1024;
-  int w_out = 2048;
-  float aspect_lb = 0.2;
-  float aspect_ub = 3;
-  float scale_lb = 0.2;
-  float scale_ub = 2.0;
+  TensorShape s_out({1024, 2048, s_in[2]});
 
-  TensorShape s_out({h_out, w_out, s_in[2]});
-
-  auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
+  auto op = std::make_unique<RandomCropAndResizeOp>(1024, 2048, 0.2, 2.0, 0.2, 3.0, InterpolationMode::kLinear, 10);
   Status s;
   for (auto i = 0; i < 100; i++) {
     TensorRow input_tensor_row;

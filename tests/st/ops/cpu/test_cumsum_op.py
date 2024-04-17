@@ -165,7 +165,7 @@ class CumSum(nn.Cell):
                 self.cumsum_op(self.x35, self.axis35))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cumsum():
@@ -281,7 +281,7 @@ class Net(nn.Cell):
         return self.op(x, 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cumsum_dshape():

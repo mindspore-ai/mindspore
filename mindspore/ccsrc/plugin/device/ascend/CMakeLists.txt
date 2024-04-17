@@ -28,7 +28,6 @@ endif()
 
 ### cxx api need file ###
 if(ENABLE_ACL)
-    include_directories(${GRAPHENGINE_PATH}/ge)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
     file(GLOB_RECURSE API_INFER_D
             "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/cxx_api/graph/ascend/*.cc"
@@ -40,6 +39,28 @@ if(ENABLE_ACL)
     add_library(mindspore_axx_api_d_obj OBJECT ${API_INFER_D})
     list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:mindspore_axx_api_d_obj>)
     list(APPEND ASCEND_910B_OBJ_SRC $<TARGET_OBJECTS:mindspore_axx_api_d_obj>)
+endif()
+
+### check dvm binary file ###
+set(DVM_LIB)
+if(ENABLE_DVM)
+    set(DVM_LIB $ENV{DVM_LIB})
+    message(STATUS "DVM module is enabled")
+    message(STATUS "DVM library file: ${DVM_LIB}")
+else()
+    message(WARNING "The binary files tracked by git lfs have not been downloaded, and Graph Kernel Fusion can not "
+            "be enabled on Ascend! Please perform the following steps:\n"
+            "1. Install git lfs, refer https://github.com/git-lfs/git-lfs/wiki/installation\n"
+            "2. After installing git lfs, do not forget executing the following command:\n"
+            "   git lfs install\n"
+            "3. Download the files tracked by git lfs, executing the following commands:\n"
+            "   cd ${CMAKE_SOURCE_DIR}\n"
+            "   git lfs pull\n"
+            "4. Re-compile the source codes")
+endif()
+
+if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+    add_compile_definitions(ENABLE_INTERNAL_KERNELS)
 endif()
 
 ########### mindspore_ascend.so #####
@@ -78,21 +99,26 @@ foreach(a_comp ${ASCEND_COMMON_SUB})
     endif()
 endforeach()
 
+if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+    MESSAGE(STATUS "MS_INTERNAL_KERNEL_HOME=$ENV{MS_INTERNAL_KERNEL_HOME} found.")
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME})
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/internal_kernel/include)
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/asdops/include)
+
+    link_directories($ENV{MS_INTERNAL_KERNEL_HOME}/internal_kernel/lib)
+endif()
+
 list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_ir_obj>)
 list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_declare_obj>)
+list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_symbol_obj>)
 
-if(${ASCEND_VERSION} STREQUAL "910")
-    #==============910a==========
-    list(APPEND ASCEND_SUB_OBJECTS_SRC ${ASCEND_COMMON_OBJECTS_SRC})
-    add_library(mindspore_ascend SHARED ${ASCEND_SUB_OBJECTS_SRC})
-    set_target_properties(mindspore_ascend PROPERTIES VERSION 1)
-elseif(${ASCEND_VERSION} STREQUAL "910b")
-    #==============910b==========
-    list(APPEND ASCEND_910B_OBJ_SRC ${ASCEND_COMMON_OBJECTS_SRC})
-    add_library(mindspore_ascend SHARED ${ASCEND_910B_OBJ_SRC})
-    set_target_properties(mindspore_ascend PROPERTIES VERSION 2)
-endif()
+list(APPEND ASCEND_910B_OBJ_SRC ${ASCEND_COMMON_OBJECTS_SRC})
+add_library(mindspore_ascend SHARED ${ASCEND_910B_OBJ_SRC})
+set_target_properties(mindspore_ascend PROPERTIES VERSION 2)
+
+set(MS_KERNELS_INTERNAL_LIB_PATH
+    ${ORIGIN_PATH}/ascend/ms_kernels_internal/internal_kernel/lib)
 
 target_link_libraries(mindspore_ascend PRIVATE mindspore_backend mindspore_core mindspore_common)
 target_link_libraries(mindspore_ascend PRIVATE mindspore_shared_lib)
@@ -100,7 +126,15 @@ target_link_libraries(mindspore_ascend PRIVATE proto_input mindspore::protobuf)
 target_link_libraries(mindspore_ascend PRIVATE securec d_collective)
 target_link_libraries(mindspore_ascend PRIVATE mindspore::ssl mindspore::crypto)
 set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH
-        ${ORIGIN_PATH}:${ORIGIN_PATH}/ascend:${ORIGIN_PATH}/../:${ASCEND_RPATH})
+        ${ORIGIN_PATH}:${ORIGIN_PATH}/ascend:${ORIGIN_PATH}/../:${MS_KERNELS_INTERNAL_LIB_PATH}:${ASCEND_RPATH})
+
+if(DVM_LIB)
+    target_link_libraries(mindspore_ascend PRIVATE ${DVM_LIB})
+endif()
+
+if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+    target_link_libraries(mindspore_ascend PRIVATE ms_kernels_internal)
+endif()
 
 if(ENABLE_DEBUGGER)
     # debugger: link grpc
@@ -125,13 +159,11 @@ if(MODE_ASCEND_ALL)
     find_library(RUNTIME_LIB runtime ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(TSDCLIENT tsdclient HINTS ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(DATATRANSFER datatransfer HINTS ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(PROFILING msprofiler ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(ACL ascendcl ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(ACL_DVPP acl_dvpp ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(ACL_NNOPBASE nnopbase ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(ACL_DVPP_OP acl_dvpp_op ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(ACL_DVPP_MPI acl_dvpp_mpi ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(ACL_TDT_CHANNEL acl_tdt_channel ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(PLATFORM platform ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(OPT_FEATURE opt_feature ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(adump_server libadump_server.a ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
@@ -142,7 +174,6 @@ if(MODE_ASCEND_ALL)
         find_library(OPTILING optiling ${ASCEND_CANN_OPP_AARCH64_PATH} ${ASCEND_TOOLKIT_OPP_AARCH64_PATH})
         find_library(OPMASTER_RT2 opmaster_rt2.0 ${ASCEND_CANN_OPP_AARCH64_PATH} ${ASCEND_TOOLKIT_OPP_AARCH64_PATH})
     endif()
-    find_library(ACL_OP_COMPILER acl_op_compiler ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(CANN_KB cann_kb ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(COMPRESS compress ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(OPSKERNEL opskernel ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
@@ -154,9 +185,9 @@ if(MODE_ASCEND_ALL)
     find_library(AOE_EXECUTOR aoe_executor ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
     target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
-            -Wl,--no-as-needed ${OPTILING} ${OPMASTER_RT2} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE}
-            ${PROFILING} ${ACL_OP_COMPILER} ${CANN_KB} ${COMPRESS} ${OPSKERNEL} ${AICPU_ASCEND_ENGINE}
-            ${HOST_CPU_ENGINE} ${AICPU_TF_ENGINE} ${SLICE} ${AOE_EXECUTOR})
+            -Wl,--no-as-needed ${OPTILING} ${OPMASTER_RT2} ${PLATFORM} ${ACL} ${OPT_FEATURE}
+            ${CANN_KB} ${COMPRESS} ${OPSKERNEL} ${AICPU_ASCEND_ENGINE}
+            ${HOST_CPU_ENGINE} ${AICPU_TF_ENGINE} ${SLICE} ${AOE_EXECUTOR} ${ACL_DVPP_OP} ${ACL_DVPP_MPI})
     target_link_libraries(mindspore_ascend PRIVATE ${adump_server})
 endif()
 

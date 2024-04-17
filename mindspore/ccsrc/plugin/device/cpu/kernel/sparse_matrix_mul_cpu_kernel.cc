@@ -42,22 +42,18 @@ constexpr size_t bShapeNum1 = 1;
 constexpr size_t bShapeNum2 = 2;
 using KernelRunFunc = SparseMatrixMulCpuKernelMod::KernelRunFunc;
 }  // namespace
-bool SparseMatrixMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixMul>(base_operator);
-  kernel_name_ = kernel_ptr->name();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool SparseMatrixMulCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int SparseMatrixMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseMatrixMulCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }
@@ -73,31 +69,31 @@ int SparseMatrixMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-const bool SparseMatrixMulCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &,
-                                                     const std::vector<AddressPtr> &outputs) {
+const bool SparseMatrixMulCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &,
+                                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  const auto a_shape = reinterpret_cast<T *>(inputs[kAShapeIdx]->addr);
-  const auto a_batch_pointers = reinterpret_cast<T *>(inputs[kABatchPointersIdx]->addr);
-  const auto a_indptr = reinterpret_cast<T *>(inputs[kAIndptrIdx]->addr);
-  const auto a_indices = reinterpret_cast<T *>(inputs[kAIndicesIdx]->addr);
-  const auto a_values = reinterpret_cast<S *>(inputs[kAValuesIdx]->addr);
-  const auto b_dense = reinterpret_cast<S *>(inputs[kBDenseIdx]->addr);
+  const auto a_shape = reinterpret_cast<T *>(inputs[kAShapeIdx]->device_ptr());
+  const auto a_batch_pointers = reinterpret_cast<T *>(inputs[kABatchPointersIdx]->device_ptr());
+  const auto a_indptr = reinterpret_cast<T *>(inputs[kAIndptrIdx]->device_ptr());
+  const auto a_indices = reinterpret_cast<T *>(inputs[kAIndicesIdx]->device_ptr());
+  const auto a_values = reinterpret_cast<S *>(inputs[kAValuesIdx]->device_ptr());
+  const auto b_dense = reinterpret_cast<S *>(inputs[kBDenseIdx]->device_ptr());
 
-  auto c_shape = reinterpret_cast<T *>(outputs[kOutShapeIdx]->addr);
-  auto c_batch_pointers = reinterpret_cast<T *>(outputs[kOutBatchPointersIdx]->addr);
-  auto c_indptr = reinterpret_cast<T *>(outputs[kOutIndptrIdx]->addr);
-  auto c_indices = reinterpret_cast<T *>(outputs[kOutIndicesIdx]->addr);
-  auto c_values = reinterpret_cast<S *>(outputs[kOutValuesIdx]->addr);
-  const int64_t a_indices_num = SizeToLong(inputs[kAIndicesIdx]->size / (sizeof(T)));
-  const int64_t b_dense_num = SizeToLong(inputs[kBDenseIdx]->size / (sizeof(S)));
+  auto c_shape = reinterpret_cast<T *>(outputs[kOutShapeIdx]->device_ptr());
+  auto c_batch_pointers = reinterpret_cast<T *>(outputs[kOutBatchPointersIdx]->device_ptr());
+  auto c_indptr = reinterpret_cast<T *>(outputs[kOutIndptrIdx]->device_ptr());
+  auto c_indices = reinterpret_cast<T *>(outputs[kOutIndicesIdx]->device_ptr());
+  auto c_values = reinterpret_cast<S *>(outputs[kOutValuesIdx]->device_ptr());
+  const int64_t a_indices_num = SizeToLong(inputs[kAIndicesIdx]->size() / (sizeof(T)));
+  const int64_t b_dense_num = SizeToLong(inputs[kBDenseIdx]->size() / (sizeof(S)));
 
-  errno_t ret =
-    memcpy_s(c_batch_pointers, inputs[kABatchPointersIdx]->size, a_batch_pointers, inputs[kABatchPointersIdx]->size);
-  ret += memcpy_s(c_shape, inputs[kAShapeIdx]->size, a_shape, inputs[kAShapeIdx]->size);
-  ret += memcpy_s(c_indptr, inputs[kAIndptrIdx]->size, a_indptr, inputs[kAIndptrIdx]->size);
-  ret += memcpy_s(c_indices, inputs[kAIndicesIdx]->size, a_indices, inputs[kAIndicesIdx]->size);
+  errno_t ret = memcpy_s(c_batch_pointers, inputs[kABatchPointersIdx]->size(), a_batch_pointers,
+                         inputs[kABatchPointersIdx]->size());
+  ret += memcpy_s(c_shape, inputs[kAShapeIdx]->size(), a_shape, inputs[kAShapeIdx]->size());
+  ret += memcpy_s(c_indptr, inputs[kAIndptrIdx]->size(), a_indptr, inputs[kAIndptrIdx]->size());
+  ret += memcpy_s(c_indices, inputs[kAIndicesIdx]->size(), a_indices, inputs[kAIndicesIdx]->size());
   if (ret != EOK) {
     MS_LOG(ERROR) << kernel_name_ << "memcpy_s failed.";
   }

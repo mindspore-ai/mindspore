@@ -3,7 +3,7 @@ mindspore.nn.HSwish
 
 .. py:class:: mindspore.nn.HSwish
 
-    对输入的每个元素计算Hard Swish。input是具有任何有效形状的张量。
+    逐元素计算Hard Swish。
 
     Hard Swish定义如下：
 
@@ -12,14 +12,14 @@ mindspore.nn.HSwish
 
     HSwish函数图：
 
-    .. image:: images/HSwish.png
+    .. image:: ../images/HSwish.png
         :align: center
 
     输入：
-        - **x** (Tensor) - 用于计算Hard Swish的Tensor。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。
+        - **x** (Tensor) - 用于计算Hard Swish的Tensor。数据类型必须为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。
 
     输出：
         Tensor，具有与 `x` 相同的数据类型和shape。
 
     异常：
-        - **TypeError** - `x` 的数据类型不为Tensor。
+        - **TypeError** - `x` 的数据类型既不是float16也不是float32。

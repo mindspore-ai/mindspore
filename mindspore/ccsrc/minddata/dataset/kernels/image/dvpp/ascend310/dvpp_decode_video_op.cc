@@ -16,9 +16,6 @@
 
 #include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_decode_video_op.h"
 
-#include <string>
-#include <vector>
-
 #include "include/api/context.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/data_type.h"

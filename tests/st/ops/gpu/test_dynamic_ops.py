@@ -148,69 +148,6 @@ def comm_func(dyn_range, input_shp, data_type, op_net, num=None, output_compare_
         assert compare(gradient[output_compare_idx], gradient_cmp[output_compare_idx])
 
 
-class ConcatNet(nn.Cell):
-    def __init__(self, axis):
-        super(ConcatNet, self).__init__()
-        self.op = ops.Concat(axis)
-
-    def construct(self, x1, x2):
-        return self.op((x1, x2))
-
-
-def dynamic_concat_run(is_grad):
-    axis = 1
-    dtype = np.float32
-    data_list = []
-    for i in [2, 64]:
-        data = []
-        data.append(np.random.rand(16, i).astype(dtype))
-        data.append(np.random.rand(16, i).astype(dtype))
-        data_list.append(tuple(data))
-    column_names = get_columns(len(data_list[0]))
-    dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
-    dynamic_columns = {column_names[0]: [
-        16, None], column_names[1]: [16, None]}
-    if is_grad:
-        dynamic_columns[column_names[-1]] = [16, None]
-
-    dyn_tensors = []
-    for val in dynamic_columns.values():
-        dyn_tensors.append(Tensor(dtype=ms.float32, shape=val))
-
-    net = ConcatNet(axis)
-    if is_grad:
-        net = GradNetWrtX(net)
-
-    net.set_inputs(*dyn_tensors)
-    output = dynamic_shape_sink_process(net, dataset)
-    output_cmp = fixed_shape_process(net, dataset)
-    assert compare(output, output_cmp)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_dynamic_concat_forward():
-    """
-    Feature: Test Concat.
-    Description:  The shape of inputs is dynamic.
-    Expectation: Assert that results are consistent with fixed shape.
-    """
-    dynamic_concat_run(False)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_dynamic_concat_backward():
-    """
-    Feature: Test backward of Concat.
-    Description:  The shape of inputs is dynamic.
-    Expectation: Assert that results are consistent with fixed shape.
-    """
-    dynamic_concat_run(True)
-
-
 class BatchNormNet(nn.Cell):
     def __init__(self, c):
         super(BatchNormNet, self).__init__()

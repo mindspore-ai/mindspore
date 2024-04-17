@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include "base/base.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -63,17 +64,31 @@ CNodePtr NewFlattenNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_
 CNodePtr NewConcatNode(const FuncGraphPtr &func_graph, const std::pair<std::vector<AnfNodePtr>, int64_t> &node_info,
                        TypeId type_id) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto concat_node = NewCNode(node_info.first, func_graph);
+  std::vector<AnfNodePtr> cnode_inputs(node_info.first.begin(), node_info.first.end());
+  auto axis_value = MakeValue<int64_t>(0);
+  auto axis = NewValueNode(axis_value);
+  axis->set_abstract(axis_value->ToAbstract());
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  axis->set_kernel_info(kernel_info);
+  cnode_inputs.push_back(axis);
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  builder.SetOutputsFormat({kOpFormat_DEFAULT});
+  MS_EXCEPTION_IF_NULL(axis_value->type());
+  builder.SetOutputsDeviceType({axis_value->type()->type_id()});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::SCALAR});
+  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), axis.get());
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  kernel_graph->AddValueNodeToGraph(axis);
+  auto concat_node = NewCNode(cnode_inputs, func_graph);
 
   ShapeVector shape{node_info.second};
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape);
   MS_EXCEPTION_IF_NULL(concat_node);
   concat_node->set_abstract(abstract);
 
-  size_t input_num = node_info.first.size() - 1;
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(0), concat_node);
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue<int64_t>(UlongToLong(input_num)), concat_node);
-  std::vector<int64_t> dyn_input_size{UlongToLong(input_num)};
+  size_t input_num = node_info.first.size() - 1;  // One for primitive.
+  std::vector<int64_t> dyn_input_size{UlongToLong(input_num), -1};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat_node);
   return concat_node;
 }
@@ -119,7 +134,7 @@ void ExpandFlattenConcatTupleInput(const FuncGraphPtr &graph, const CNodePtr &cn
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int64_t> dyn_input_sizes;
   plant_inputs.push_back(common::AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
-  size_t input_num = cnode_ptr->inputs().size() - 1;
+  size_t input_num = cnode_ptr->size() - 1;
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = common::AnfAlgo::GetInputNode(cnode_ptr, i);
     MS_EXCEPTION_IF_NULL(input_node);
@@ -168,7 +183,7 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
   size_t block_size = GetFusionSize(node);
 
   std::vector<AnfNodePtr> concat_nodes;
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     auto input_node = cnode->input(i);
     MS_EXCEPTION_IF_NULL(input_node);
     int64_t elem_num = GetElemNum(input_node);

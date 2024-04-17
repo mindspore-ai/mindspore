@@ -33,16 +33,14 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
   SoftmaxGradGpuKernelMod() = default;
   ~SoftmaxGradGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -53,13 +51,11 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void ResetResource() {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
   void InitSizeLists() {
-    input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
     if (use_workspace_) {
       workspace_size_list_.push_back(input_size_);
@@ -70,13 +66,12 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   using SoftmaxGradGpuLaunchFunc =
-    std::function<bool(SoftmaxGradGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(SoftmaxGradGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
 
- private:
   void InitSizeByAxis(const std::vector<size_t> input_shape, const int axis) {
     axis_ = axis;
     if (axis_ < 0) {
@@ -110,9 +105,6 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
     output_size_ = input_size_;
   }
 
-  SoftmaxGradGpuLaunchFunc kernel_func_;
-  static std::vector<std::pair<KernelAttr, SoftmaxGradGpuLaunchFunc>> func_list_;
-
   cudnnHandle_t cudnn_handle_{nullptr};
   cudnnTensorDescriptor_t y_desc_{nullptr};
   cudnnSoftmaxAlgorithm_t algo_{CUDNN_SOFTMAX_ACCURATE};
@@ -132,6 +124,10 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
   size_t height_{0};
   size_t width_{0};
   size_t type_id_size_{0};
+  SoftmaxGradGpuLaunchFunc kernel_func_;
+
+ private:
+  static std::vector<std::pair<KernelAttr, SoftmaxGradGpuLaunchFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

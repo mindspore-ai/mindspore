@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/engine/perf/info_collector.h"
+#include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
 
 #define IO_CHECK(input, output)                             \
@@ -85,8 +86,16 @@ constexpr char kDvppAdjustBrightnessOp[] = "DvppAdjustBrightnessOp";
 constexpr char kDvppAdjustContrastOp[] = "DvppAdjustContrastOp";
 constexpr char kDvppAdjustHueOp[] = "DvppAdjustHueOp";
 constexpr char kDvppAdjustSaturationOp[] = "DvppAdjustSaturationOp";
+constexpr char kDvppAffineOp[] = "DvppAffineOp";
+constexpr char kDvppCropOp[] = "DvppCropOp";
 constexpr char kDvppDecodeOp[] = "DvppDecodeOp";
+constexpr char kDvppGaussianBlurOp[] = "DvppGaussianBlurOp";
+constexpr char kDvppHorizontalFlipOp[] = "DvppHorizontalFlipOp";
+constexpr char kDvppPadOp[] = "DvppPadOp";
+constexpr char kDvppPerspectiveOp[] = "DvppPerspectiveOp";
 constexpr char kDvppResizeOp[] = "DvppResizeOp";
+constexpr char kDvppResizedCropOp[] = "DvppResizedCropOp";
+constexpr char kDvppVerticalFlipOp[] = "DvppVerticalFlipOp";
 constexpr char kEqualizeOp[] = "EqualizeOp";
 constexpr char kEraseOp[] = "EraseOp";
 constexpr char kGaussianBlurOp[] = "GaussianBlurOp";
@@ -99,6 +108,7 @@ constexpr char kNormalizePadOp[] = "NormalizePadOp";
 constexpr char kPadOp[] = "PadOp";
 constexpr char kPadToSizeOp[] = "PadToSizeOp";
 constexpr char kPerspectiveOp[] = "PerspectiveOp";
+constexpr char kPosterizeOp[] = "PosterizeOp";
 constexpr char kRandAugmentOp[] = "RandAugmentOp";
 constexpr char kRandomAdjustSharpnessOp[] = "RandomAdjustSharpnessOp";
 constexpr char kRandomAffineOp[] = "RandomAffineOp";
@@ -115,6 +125,7 @@ constexpr char kRandomHorizontalFlipWithBBoxOp[] = "RandomHorizontalFlipWithBBox
 constexpr char kRandomHorizontalFlipOp[] = "RandomHorizontalFlipOp";
 constexpr char kRandomInvertOp[] = "RandomInvertOp";
 constexpr char kRandomLightingOp[] = "RandomLightingOp";
+constexpr char kRandomPosterizeOp[] = "RandomPosterizeOp";
 constexpr char kRandomResizeOp[] = "RandomResizeOp";
 constexpr char kRandomResizeWithBBoxOp[] = "RandomResizeWithBBoxOp";
 constexpr char kRandomRotationOp[] = "RandomRotationOp";
@@ -167,7 +178,7 @@ constexpr char kWhitespaceTokenizerOp[] = "WhitespaceTokenizerOp";
 constexpr char kWordpieceTokenizerOp[] = "WordpieceTokenizerOp";
 constexpr char kRandomChoiceOp[] = "RandomChoiceOp";
 constexpr char kRandomApplyOp[] = "RandomApplyOp";
-constexpr char kComposeOp[] = "Compose";
+constexpr char kComposeOp[] = "ComposeOp";
 constexpr char kRandomSelectSubpolicyOp[] = "RandomSelectSubpolicyOp";
 constexpr char kSentencepieceTokenizerOp[] = "SentencepieceTokenizerOp";
 
@@ -231,6 +242,7 @@ constexpr char kFillOp[] = "FillOp";
 constexpr char kMaskOp[] = "MaskOp";
 constexpr char kOneHotOp[] = "OneHotOp";
 constexpr char kPadEndOp[] = "PadEndOp";
+constexpr char kParseExampleOp[] = "ParseExampleOp";
 constexpr char kSliceOp[] = "SliceOp";
 constexpr char kToFloat16Op[] = "ToFloat16Op";
 constexpr char kTypeCastOp[] = "TypeCastOp";
@@ -337,8 +349,22 @@ class TensorOp {
   // Currently, it's used by PyFuncOp which can release global executor when map with thread/process mode
   virtual Status ReleaseResource() { return Status::OK(); }
 
+  virtual void SetSeed(uint32_t seed) {}
+
  protected:
   bool is_deterministic_{true};
+};
+
+class RandomTensorOp : public TensorOp {
+ public:
+  RandomTensorOp();
+
+  ~RandomTensorOp() override = default;
+
+ protected:
+  void SetSeed(uint32_t seed) override;
+
+  std::mt19937 random_generator_;
 };
 }  // namespace dataset
 }  // namespace mindspore

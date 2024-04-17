@@ -15,28 +15,30 @@
  */
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_STROAGE_FORMAT_CONFIG_FACTORY_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_STROAGE_FORMAT_CONFIG_FACTORY_H_
+#include <cstddef>
 #include <string>
 #include <utility>
 #include <vector>
 #include <memory>
 #include <map>
+#include <optional>
 
 #include "include/transform/graph_ir/types.h"
 
 namespace mindspore::transform {
-using DimsCheckFunc = std::function<bool(const std::shared_ptr<GeTensorDesc> &)>;
+using GetFormatFunc =
+  std::function<std::optional<std::string>(const AnfNodePtr &, const std::shared_ptr<GeTensorDesc> &)>;
+
 struct StorageFormatInfo {
-  std::string format_;
   std::string expand_dims_;
-  DimsCheckFunc func_;
+  GetFormatFunc func_;
 };
 
 class StorageFormatConfig {
  public:
   explicit StorageFormatConfig(std::string op_type) : op_type_(std::move(op_type)) {}
   ~StorageFormatConfig() = default;
-  StorageFormatConfig &set_index_format(size_t index, const std::string &format, const DimsCheckFunc &func_,
-                                        const std::string &expend_dims = "");
+  StorageFormatConfig &set_index_format(size_t index, const GetFormatFunc &func, const std::string &expend_dims = "");
   std::optional<StorageFormatInfo> GetStorageFormatInfo(size_t index);
 
  private:

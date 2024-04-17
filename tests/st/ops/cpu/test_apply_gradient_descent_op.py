@@ -86,7 +86,7 @@ def test_apply_gradient_descent_dynamic_shape():
     assert outputs.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_apply_gradient_descent_float32():
@@ -111,7 +111,7 @@ def test_apply_gradient_descent_float32():
     run_net(var, alpha, delta, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_apply_gradient_descent_float16():
@@ -145,7 +145,7 @@ class VmapNet(nn.Cell):
         return self.apply_gradient_descent(var, alpha, delta)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_apply_gradient_descent():

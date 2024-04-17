@@ -15,7 +15,7 @@ class NetMod(nn.Cell):
         return self.mod(x1, x2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -32,7 +32,7 @@ def test_dynamic_mod_shape():
     test_dynamic.test_dynamic_grad_net([x, y])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

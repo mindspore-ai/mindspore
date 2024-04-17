@@ -105,16 +105,15 @@ TypePtr MaxPoolGradWithArgmaxV2InferType(const PrimitivePtr &prim,
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", input_args[kInputIndex2]->BuildType(), {kUInt16},
-                                                     op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", input_args[kInputIndex2]->GetType(), {kUInt16}, op_name);
   } else {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", input_args[kInputIndex2]->BuildType(), {kInt64, kInt32},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", input_args[kInputIndex2]->GetType(), {kInt64, kInt32},
                                                      op_name);
   }
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, op_name);
-  return input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->GetType(), valid_types, op_name);
+  return input_args[0]->GetType();
 }
 
 abstract::ShapePtr MaxPoolGradWithArgmaxV2InferShape(const PrimitivePtr &prim,
@@ -128,8 +127,8 @@ abstract::ShapePtr MaxPoolGradWithArgmaxV2InferShape(const PrimitivePtr &prim,
   }
   constexpr int64_t kInputDims = 4;
   constexpr size_t kAttrsSize = 4;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(
       std::vector<int64_t>{abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,

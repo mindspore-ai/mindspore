@@ -17,13 +17,11 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "utils/ms_context.h"
-#include "runtime/mem.h"
-#include "acl/acl_rt.h"
 #ifndef ENABLE_SECURITY
-#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
-using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
 
@@ -45,10 +43,11 @@ uint64_t AscendMemoryManager::GetMsMaxMemSize() const { return AscendMemAdapter:
 
 uint64_t AscendMemoryManager::GetMsUsedHbmSize() const { return AscendMemAdapter::GetInstance().GetMsUsedHbmSize(); }
 
-void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle) {
+void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle,
+                                                uint32_t stream_id) {
   auto align_size = GetCommonAlignSize(size);
   const auto device_addr =
-    AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem, need_recycle);
+    AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem, need_recycle, stream_id);
   return device_addr;
 }
 
@@ -110,9 +109,10 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
 
 // communication memory: [512align_size + data + 512align_size]
 // return the pointer to the start of data address.
-uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
+uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size, uint32_t stream_id) {
   auto align_size = GetCommunicationAlignSize(size);
-  uint8_t *base_ptr = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
+  uint8_t *base_ptr =
+    reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size, false, false, stream_id));
   if (base_ptr != nullptr) {
     return base_ptr + kMemAlignSize;
   }
@@ -121,8 +121,8 @@ uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
 }
 
 bool AscendMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t /* total_size */,
-                                                         std::vector<size_t> size_list) {
-  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list);
+                                                         std::vector<size_t> size_list, uint32_t stream_id) {
+  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list, stream_id);
   if (device_ptr_list.empty()) {
     return false;
   }
@@ -133,8 +133,8 @@ bool AscendMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrL
   for (size_t i = 0; i < addr_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(device_ptr_list[i]);
     MS_EXCEPTION_IF_NULL(addr_list[i]);
-    addr_list[i]->ptr_ = device_ptr_list[i];
-    addr_list[i]->from_mem_pool_ = true;
+    addr_list[i]->SetDevicePtr(device_ptr_list[i]);
+    addr_list[i]->set_from_mem_pool(true);
   }
   return true;
 }
@@ -148,16 +148,18 @@ size_t AscendMemoryManager::GetAvailableMemSize() {
 
 void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
   if (stream == nullptr) {
-    auto ret_rt_memcpy = aclrtMemcpy(device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE);
-    if (ret_rt_memcpy != RT_ERROR_NONE) {
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpy, device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE);
+    if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpy failed.";
     }
   } else {
-    auto ret_rt_memcpy = aclrtMemcpyAsync(device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
-    if (ret_rt_memcpy != RT_ERROR_NONE) {
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpyAsync, device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
+    if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpyAsync failed.";
     }
-    if (aclrtSynchronizeStreamWithTimeout(stream, -1) != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream, -1) != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     }
   }
@@ -165,16 +167,18 @@ void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t 
 
 void AscendMemoryManager::SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
   if (stream == nullptr) {
-    auto ret_rt_memcpy = aclrtMemcpy(host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST);
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpy, host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST);
     if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpy failed.";
     }
   } else {
-    auto ret_rt_memcpy = aclrtMemcpyAsync(host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
     if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpyAsync failed.";
     }
-    if (aclrtSynchronizeStreamWithTimeout(stream, -1) != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream, -1) != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     }
   }

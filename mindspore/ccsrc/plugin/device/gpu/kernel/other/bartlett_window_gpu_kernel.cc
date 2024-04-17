@@ -15,13 +15,12 @@
  */
 
 #include "plugin/device/gpu/kernel/other/bartlett_window_gpu_kernel.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace kernel {
-bool BartlettWindowGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::BartlettWindow>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool BartlettWindowGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -36,13 +35,12 @@ bool BartlettWindowGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   kernel_func_ = func_list_[index].second;
   unit_input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
-  periodic_ = kernel_ptr_->get_periodic();
+  periodic_ = GetValue<bool>(primitive_->GetAttr(ops::kPeriodic));
   return true;
 }
 
-int BartlettWindowGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
+int BartlettWindowGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -51,29 +49,28 @@ int BartlettWindowGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeVector().end());
   int64_t input_dims = input_shape.size();
   if (input_dims != 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' must be 0-D, but got " << input_dims << "-D.";
     return false;
   }
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeVector().end());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
   size_t output_size = output_elements_ * unit_output_size_;
-  input_size_list_.push_back(unit_input_size_);
   output_size_list_.push_back(output_size);
   return KRET_OK;
 }
 
 template <typename T, typename S>
-bool BartlettWindowGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool BartlettWindowGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   S *output = GetDeviceAddress<S>(outputs, 0);
   auto status = CalBartlettWindow(output_elements_, input, periodic_, output, device_id_,

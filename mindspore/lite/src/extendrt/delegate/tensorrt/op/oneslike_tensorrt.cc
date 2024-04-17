@@ -17,7 +17,7 @@
 #include <memory>
 #include <functional>
 #include "src/extendrt/delegate/tensorrt/op/oneslike_tensorrt.h"
-#include "ops/ones_like.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore::lite {
 int OneslikeTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,

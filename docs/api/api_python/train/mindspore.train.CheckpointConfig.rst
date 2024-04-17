@@ -31,7 +31,7 @@ mindspore.train.CheckpointConfig
         获取需要额外保存到checkpoint中的字典的值。
 
         返回：
-            Dict: 字典中的值。
+            dict: 字典中的值。
 
     .. py:method:: async_save
         :property:
@@ -39,7 +39,7 @@ mindspore.train.CheckpointConfig
         获取是否异步保存checkpoint。
 
         返回：
-            Bool: 是否异步保存checkpoint。
+            bool: 是否异步保存checkpoint。
 
     .. py:method:: enc_key
         :property:
@@ -62,7 +62,7 @@ mindspore.train.CheckpointConfig
         获取checkpoint的保存策略。
 
         返回：
-            Dict: checkpoint的保存策略。
+            dict: checkpoint的保存策略。
 
     .. py:method:: integrated_save
         :property:
@@ -70,7 +70,7 @@ mindspore.train.CheckpointConfig
         获取是否合并保存拆分后的Tensor。
 
         返回：
-            Bool: 获取是否合并保存拆分后的Tensor。
+            bool: 获取是否合并保存拆分后的Tensor。
 
     .. py:method:: keep_checkpoint_max
         :property:
@@ -78,7 +78,7 @@ mindspore.train.CheckpointConfig
         获取最多保存checkpoint文件的数量。
 
         返回：
-            Int: 最多保存checkpoint文件的数量。
+            int: 最多保存checkpoint文件的数量。
 
     .. py:method:: keep_checkpoint_per_n_minutes
         :property:
@@ -86,7 +86,7 @@ mindspore.train.CheckpointConfig
         获取每隔多少分钟保存一个checkpoint文件。
 
         返回：
-            Int: 每隔多少分钟保存一个checkpoint文件。
+            int: 每隔多少分钟保存一个checkpoint文件。
 
     .. py:method:: map_param_inc
         :property:
@@ -94,7 +94,7 @@ mindspore.train.CheckpointConfig
         获取是否增量保存MapParameter。
 
         返回：
-            Bool: 是否增量保存MapParameter。
+            bool: 是否增量保存MapParameter。
 
     .. py:method:: save_checkpoint_seconds
         :property:
@@ -102,7 +102,7 @@ mindspore.train.CheckpointConfig
         获取每隔多少秒保存一次checkpoint文件。
 
         返回：
-            Int: 每隔多少秒保存一次checkpoint文件。
+            int: 每隔多少秒保存一次checkpoint文件。
 
     .. py:method:: save_checkpoint_steps
         :property:
@@ -110,7 +110,7 @@ mindspore.train.CheckpointConfig
         获取每隔多少个step保存一次checkpoint文件。
 
         返回：
-            Int: 每隔多少个step保存一次checkpoint文件。
+            int: 每隔多少个step保存一次checkpoint文件。
 
     .. py:method:: saved_network
         :property:

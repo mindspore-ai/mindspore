@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/optimizer/ir_fusion/remove_reshape_pair.h"
-#include <memory>
 #include "mindspore/core/ops/array_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

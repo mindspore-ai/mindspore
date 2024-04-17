@@ -125,7 +125,9 @@ Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto tuple_getitem_0 = gen_g.PushBack({gen_g.NewOpInst(tuple_getitem_op), unique, CreatInt64Imm(0)});
   auto tuple_getitem_1 = gen_g.PushBack({gen_g.NewOpInst(tuple_getitem_op), unique, CreatInt64Imm(1)});
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), tuple_getitem_1});
-  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
+  auto dtype_id =
+    gen_g.PushBack({gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_id});
   auto mul = gen_g.PushBack({gen_g.NewOpInst(MUL), tuple_getitem_1, cast});
 
   Attr attr_op = std::make_pair(OP, MakeValue(REDUCE_OP_SUM));

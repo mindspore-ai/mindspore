@@ -27,8 +27,8 @@ def test_eager_concatenate():
     Description: Test eager support for Concatenate op with valid input
     Expectation: Output is equal to the expected output
     """
-    prepend_tensor = np.array([1.4, 2., 3., 4., 4.5], dtype=np.float)
-    append_tensor = np.array([9., 10.3, 11., 12.], dtype=np.float)
+    prepend_tensor = np.array([1.4, 2., 3., 4., 4.5], dtype=float)
+    append_tensor = np.array([9., 10.3, 11., 12.], dtype=float)
     concatenate_op = data_trans.Concatenate(0, prepend_tensor, append_tensor)
     expected = np.array([1.4, 2., 3., 4., 4.5, 5., 6., 7., 8., 9., 10.3,
                          11., 12.])

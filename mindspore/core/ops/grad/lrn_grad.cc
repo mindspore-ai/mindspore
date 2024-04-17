@@ -49,11 +49,11 @@ abstract::ShapePtr LrnGradInferShape(const PrimitivePtr &primitive, const std::v
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto input_shape_ptr = input_args[kInputIndex1]->GetShape();
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
   auto input_shape = input_shape_map[kShape];
 
-  auto grad_out_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto grad_out_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto grad_out_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_out_shape_ptr);
   auto grad_out_shape = grad_out_shape_map[kShape];
 
@@ -76,7 +76,7 @@ abstract::ShapePtr LrnGradInferShape(const PrimitivePtr &primitive, const std::v
 TypePtr LrnGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(input_args[1]);
-  auto x_type = input_args[1]->BuildType();
+  auto x_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()

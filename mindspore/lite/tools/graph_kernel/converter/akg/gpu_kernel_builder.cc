@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 #include "tools/graph_kernel/converter/akg/gpu_kernel_builder.h"
-#include <vector>
-#include <memory>
 #include <fstream>
-#include <set>
 #include "utils/anf_utils.h"
 #include "kernel/graph_kernel/graph_kernel_json_flags.h"
 #include "tools/graph_kernel/converter/akg/utils.h"

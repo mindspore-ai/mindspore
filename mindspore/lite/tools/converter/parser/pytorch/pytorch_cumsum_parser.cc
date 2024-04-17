@@ -16,7 +16,7 @@
 
 #include "tools/converter/parser/pytorch/pytorch_cumsum_parser.h"
 #include <memory>
-#include "ops/cumsum.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

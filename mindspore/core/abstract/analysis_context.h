@@ -47,6 +47,7 @@ class MS_CORE_API AnalysisContext : public std::enable_shared_from_this<Analysis
   const AbstractBasePtrList &args_abs_list() const { return args_abs_list_; }
 
   // Extend this context with values for another graph.
+  // Not call directly. Call NewContext(AnalysisContextPtr, FuncGraphPtr, AbstractBasePtrList) instead.
   AnalysisContextPtr NewContext(const FuncGraphPtr &fg, const AbstractBasePtrList &args_abs_list);
 
   AnalysisContextPtr GetCachedContext(const FuncGraphPtr &fg, const AbstractBasePtrList &args_abs_list);

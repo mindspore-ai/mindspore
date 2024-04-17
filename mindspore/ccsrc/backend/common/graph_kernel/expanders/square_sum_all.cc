@@ -40,7 +40,7 @@ class SquareSumAll : public OpDesc {
 
     ShapeVector axis;
     for (size_t i = 0; i < x->shape.size(); ++i) {
-      axis.emplace_back(i);
+      axis.push_back(SizeToLong(i));
     }
 
     auto square_x = gb.Mul(x, x);

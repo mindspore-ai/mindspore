@@ -15,4 +15,4 @@ mindspore.ops.atleast_3d
         例如，一个shape为 :math:`(N,)` 的Tensor，操作后shape变成 :math:`(1, N, 1)` ，shape为 :math:`(M, N)` 的2-D Tensor shape变成 :math:`(M, N, 1)` 。
 
     异常：
-        - **TypeError** - `input` 不是一个Tensor或Tensor列表。
+        - **TypeError** - `inputs` 不是一个Tensor或Tensor列表。

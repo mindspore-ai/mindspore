@@ -42,8 +42,14 @@ const char kAndroidArmCpuBackendOption[] = "ANDROID_ARM_CPU";
 mindspore::lite::InnerContext *InitInnerContextForAndroidArmCpu() {
   // if the operation use thread_pool in inner context will throw exception.
   auto inner_context = new (std::nothrow) lite::InnerContext();
-  inner_context->Init();
   MS_CHECK_TRUE_MSG(inner_context != nullptr, nullptr, "Create InnerContext failed.");
+  auto ret = inner_context->Init();
+  if (ret != RET_OK) {
+    delete inner_context;
+    MS_LOG(ERROR) << "InnerContext init failed.";
+    return nullptr;
+  }
+
   inner_context->thread_num_ = kSingleThread;
   inner_context->instructions_ctx_.support_sdot = true;
   return inner_context;
@@ -128,7 +134,7 @@ STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors
   mindspore::TypeId type_id = TypeId::kTypeUnknown;
 
   // Generate input tensor.
-  for (size_t i = kPrimIndex + 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = kPrimIndex + 1; i < cnode->size(); i++) {
     if (opt::GetDataTypeFromAnfNode(cnode->input(i), &type_id) != RET_OK) {
       MS_LOG(ERROR) << "Cannot get data type from " << cnode->input(i)->fullname_with_scope();
       return RET_ERROR;
@@ -179,7 +185,7 @@ STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors
   MS_CHECK_TRUE_MSG(out_tensor != nullptr, RET_ERROR, "Create output tensor failed.");
   (void)out_tensors->emplace_back(out_tensor);
 
-  if (in_tensors->size() != cnode->inputs().size() - 1 || out_tensors->empty()) {
+  if (in_tensors->size() != cnode->size() - 1 || out_tensors->empty()) {
     MS_LOG(ERROR) << "Failed to populate input tensors for " << cnode->fullname_with_scope() << ".";
     return RET_ERROR;
   }

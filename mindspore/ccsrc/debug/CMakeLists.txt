@@ -45,10 +45,12 @@ if(NOT ENABLE_SECURITY)
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/overflow_dumper.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_json_parser.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_utils.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/data_dumper.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/npy_header.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/utils.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/common/csv_writer.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/summary/summary.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/acl_dump_json_writer.cc"
         )
     if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         list(APPEND _DEBUG_SRC_LIST
@@ -77,6 +79,7 @@ if(ENABLE_DEBUGGER)
         target_link_libraries(_mindspore_offline_debug PRIVATE
             mindspore::pybind11_module
             mindspore_core
+            mindspore::ssl mindspore::crypto
             )
         set_target_properties(_mindspore_offline_debug PROPERTIES
             PREFIX "${PYTHON_MODULE_PREFIX}"

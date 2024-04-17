@@ -30,9 +30,10 @@ class GEGraphOptimization {
     static GEGraphOptimization instance;
     return instance;
   }
-  void OptimizeGEGraph(const KernelGraphPtr &graph);
-  void OptimizeACLGraph(const KernelGraphPtr &graph);
-  void OptimizeACLGraphAfterKernelSelect(const KernelGraphPtr &graph);
+  void OptimizeGEGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *const memo);
+  void OptimizeACLGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *const memo);
+  void OptimizeACLGraphAfterKernelSelect(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *const memo);
+  void OptimizeACLGraphAfterInline(const KernelGraphPtr &graph);
   void UnifyMindIR(const KernelGraphPtr &graph);
   void GEMindIRPass(const KernelGraphPtr &graph) const;
 

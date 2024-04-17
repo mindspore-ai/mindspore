@@ -51,11 +51,26 @@ float16 GetTruncModDivZeroVal(const float16 &v) {
   }
 }
 
-bool TruncateModCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+template <typename T>
+T SafeModOp(const T &a, const T &b) {
+  if (b != 0) {
+    return std::fmod(a, b);
+  } else {
+    return 0;
+  }
+}
 
+float16 SafeModOp(const float16 &a, const float16 &b) {
+  float ret_float = std::fmod(static_cast<float>(a), static_cast<float>(b));
+  return static_cast<float16>(ret_float);
+}
+
+float SafeModOp(const float &a, const float &b) { return std::fmod(a, b); }
+
+double SafeModOp(const double &a, const double &b) { return std::fmod(a, b); }
+
+bool TruncateModCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -65,10 +80,9 @@ bool TruncateModCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int TruncateModCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int TruncateModCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -80,30 +94,21 @@ int TruncateModCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool TruncateModCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool TruncateModCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTruncateModInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTruncateModOutputsNum, kernel_name_);
-  auto *input_addr_a = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto *input_addr_b = reinterpret_cast<T *>(inputs[kOne]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
-  size_t output_size = outputs[0]->size / sizeof(T);
+  auto *input_addr_a = reinterpret_cast<T *>(inputs[kZero]->device_ptr());
+  auto *input_addr_b = reinterpret_cast<T *>(inputs[kOne]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[kZero]->device_ptr());
+  size_t output_size = outputs[0]->size() / sizeof(T);
   if (input_shape_1_ == input_shape_2_) {
     auto task = [output_addr, input_addr_a, input_addr_b](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
         auto dividend = input_addr_a[i];
         auto divisor = input_addr_b[i];
-        auto zero = static_cast<T>(0);
-        if (divisor == zero) {
-          if (dividend == zero) {
-            output_addr[i] = std::numeric_limits<T>::quiet_NaN();
-            continue;
-          }
-          output_addr[i] = GetTruncModDivZeroVal(dividend);
-          continue;
-        }
-        output_addr[i] = static_cast<T>(dividend - static_cast<int>(dividend / divisor) * divisor);
+        output_addr[i] = SafeModOp(dividend, divisor);
       }
     };
     ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
@@ -115,73 +120,7 @@ bool TruncateModCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
       for (size_t i = start; i < end; ++i) {
         auto dividend = input_addr_a[iter.GetInputPosA()];
         auto divisor = input_addr_b[iter.GetInputPosB()];
-        auto zero = (T)0;
-        if (divisor == zero) {
-          if (dividend == zero) {
-            output_addr[i] = std::numeric_limits<T>::quiet_NaN();
-            continue;
-          }
-          output_addr[i] = GetTruncModDivZeroVal(dividend);
-          continue;
-        }
-        output_addr[i] = static_cast<T>(dividend - static_cast<int>(dividend / divisor) * divisor);
-        iter.GenNextPos();
-      }
-    };
-    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
-  }
-  return true;
-}
-
-bool TruncateModCpuKernelMod::LaunchKernelHalf(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTruncateModInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTruncateModOutputsNum, kernel_name_);
-  auto *input_addr_a = reinterpret_cast<float16 *>(inputs[kZero]->addr);
-  auto *input_addr_b = reinterpret_cast<float16 *>(inputs[kOne]->addr);
-  auto *output_addr = reinterpret_cast<float16 *>(outputs[kZero]->addr);
-  size_t output_size = outputs[0]->size / sizeof(float16);
-  if (input_shape_1_ == input_shape_2_) {
-    auto task = [output_addr, input_addr_a, input_addr_b](size_t start, size_t end) {
-      for (size_t i = start; i < end; ++i) {
-        auto dividend = input_addr_a[i];
-        auto divisor = input_addr_b[i];
-        auto zero = static_cast<float16>(0);
-        if (divisor == zero) {
-          if (dividend == zero) {
-            output_addr[i] = std::numeric_limits<float16>::quiet_NaN();
-            continue;
-          }
-          output_addr[i] = GetTruncModDivZeroVal(dividend);
-          continue;
-        }
-        output_addr[i] = static_cast<float16>(
-          static_cast<float>(dividend) -
-          static_cast<int>(static_cast<float>(dividend) / static_cast<float>(divisor)) * static_cast<float>(divisor));
-      }
-    };
-    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
-  } else {  // For Broadcast
-    BroadcastIterator base_iter(input_shape_1_, input_shape_2_, output_shape_);
-    auto task = [&base_iter, output_addr, input_addr_a, input_addr_b](size_t start, size_t end) {
-      auto iter = base_iter;
-      iter.SetPos(start);
-      for (size_t i = start; i < end; ++i) {
-        auto dividend = input_addr_a[iter.GetInputPosA()];
-        auto divisor = input_addr_b[iter.GetInputPosB()];
-        auto zero = static_cast<float16>(0);
-        if (divisor == zero) {
-          if (dividend == zero) {
-            output_addr[i] = std::numeric_limits<float16>::quiet_NaN();
-            continue;
-          }
-          output_addr[i] = GetTruncModDivZeroVal(dividend);
-          continue;
-        }
-        output_addr[i] = static_cast<float16>(
-          static_cast<float>(dividend) -
-          static_cast<int>(static_cast<float>(dividend) / static_cast<float>(divisor)) * static_cast<float>(divisor));
+        output_addr[i] = SafeModOp(dividend, divisor);
         iter.GenNextPos();
       }
     };
@@ -212,7 +151,7 @@ std::vector<std::pair<KernelAttr, TruncateModCpuKernelMod::TruncateModFunc>> Tru
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &TruncateModCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &TruncateModCpuKernelMod::LaunchKernelHalf}};
+   &TruncateModCpuKernelMod::LaunchKernel<float16>}};
 
 std::vector<KernelAttr> TruncateModCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

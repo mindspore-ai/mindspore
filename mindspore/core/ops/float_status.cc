@@ -52,7 +52,7 @@ class FloatStatusInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1L, prim->name());
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat16, kFloat32, kFloat64},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), {kFloat16, kFloat32, kFloat64},
                                                      prim->name());
     return std::make_shared<TensorType>(kFloat32);
   }

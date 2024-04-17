@@ -35,24 +35,15 @@ constexpr size_t kGradIndex = 8;
 constexpr size_t kIndicesIndex = 9;
 }  // namespace
 
-bool SparseApplyCenteredRMSPropGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseApplyCenteredRMSPropGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimSparseApplyCenteredRMSProp->name()) {
     MS_LOG(ERROR) << "For 'SparseApplyCenteredRMSProp', the kernel name must be 'SparseApplyCenteredRMSProp', but got "
                   << kernel_name_;
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyCenteredRMSProp>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "SparseApplyCenteredRMSProp ops failed!";
-    return false;
-  }
-  use_locking_ = kernel_ptr->get_use_locking();
+  use_locking_ = GetValue<bool>(primitive_->GetAttr("use_locking"));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -69,16 +60,14 @@ bool SparseApplyCenteredRMSPropGpuKernelMod::Init(const BaseOperatorPtr &base_op
   return true;
 }
 
-int SparseApplyCenteredRMSPropGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                   const std::vector<KernelTensorPtr> &inputs,
-                                                   const std::vector<KernelTensorPtr> &outputs,
-                                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SparseApplyCenteredRMSPropGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kSparseApplyCenteredRMSPropInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 10 but got " << input_size_list_.size();
+  if (inputs.size() != kSparseApplyCenteredRMSPropInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 10 but got " << inputs.size();
     return KRET_RESIZE_FAILED;
   }
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
@@ -162,27 +151,27 @@ int SparseApplyCenteredRMSPropGpuKernelMod::Resize(const BaseOperatorPtr &base_o
                   << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size;
     return KRET_RESIZE_FAILED;
   }
-  input_elements_ = input_size_list_[0] / unit_size_;
+  input_elements_ = inputs[0]->size() / unit_size_;
   return ret;
 }
 
 template <typename T, typename S>
-bool SparseApplyCenteredRMSPropGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                          const std::vector<AddressPtr> &workspace,
-                                                          const std::vector<AddressPtr> &outputs) {
+bool SparseApplyCenteredRMSPropGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &workspace,
+                                                          const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyCenteredRMSPropInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyCenteredRMSPropOutputsNum, kernel_name_);
-  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto mg = reinterpret_cast<T *>(inputs[kMgIndex]->addr);
-  auto ms = reinterpret_cast<T *>(inputs[kMsIndex]->addr);
-  auto mom = reinterpret_cast<T *>(inputs[kMomIndex]->addr);
-  auto lr = reinterpret_cast<T *>(inputs[kLrIndex]->addr);
-  auto rho = reinterpret_cast<T *>(inputs[kRhoIndex]->addr);
-  auto momentum = reinterpret_cast<T *>(inputs[kMomentumIndex]->addr);
-  auto epsilon = reinterpret_cast<T *>(inputs[kEpsilonIndex]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
-  auto var_out = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
+  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto mg = reinterpret_cast<T *>(inputs[kMgIndex]->device_ptr());
+  auto ms = reinterpret_cast<T *>(inputs[kMsIndex]->device_ptr());
+  auto mom = reinterpret_cast<T *>(inputs[kMomIndex]->device_ptr());
+  auto lr = reinterpret_cast<T *>(inputs[kLrIndex]->device_ptr());
+  auto rho = reinterpret_cast<T *>(inputs[kRhoIndex]->device_ptr());
+  auto momentum = reinterpret_cast<T *>(inputs[kMomentumIndex]->device_ptr());
+  auto epsilon = reinterpret_cast<T *>(inputs[kEpsilonIndex]->device_ptr());
+  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->device_ptr());
+  auto var_out = reinterpret_cast<T *>(outputs[kVarIndex]->device_ptr());
 
   auto status = CalSparseApplyCenteredRMSProp(input_elements_, sizeof(S) / sizeof(int), use_locking_, lr, rho, epsilon,
                                               momentum, grad, indices, var, mg, ms, mom, var_out,

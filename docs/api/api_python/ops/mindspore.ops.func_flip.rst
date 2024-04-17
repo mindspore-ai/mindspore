@@ -17,4 +17,4 @@ mindspore.ops.flip
     异常：
         - **TypeError** - `input` 不是Tensor。
         - **ValueError** - `dims` 为None。
-        - **ValueError** - `dims` 不为int组成的tuple。
+        - **ValueError** - `dims` 不为int组成的list或tuple。

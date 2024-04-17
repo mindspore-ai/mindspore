@@ -470,7 +470,7 @@ class LogConfigLexer {
     auto iter = single_char_map.find(ch);
     if (iter != single_char_map.end()) {
       if (ptr != nullptr) {
-        *ptr = std::string() + ch;
+        *ptr = std::string(1, ch);
       }
       ++cur_idx_;
       return iter->second;
@@ -666,6 +666,7 @@ const std::string GetSubModuleName(SubModuleId module_id) {
     "VM",                 // SM_VM
     "PROFILER",           // SM_PROFILER
     "PS",                 // SM_PS
+    "PI",                 // SM_PI
     "FL",                 // SM_FL
     "DISTRIBUTED",        // SM_DISTRIBUTED
     "LITE",               // SM_LITE
@@ -674,6 +675,7 @@ const std::string GetSubModuleName(SubModuleId module_id) {
     "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
     "GE",                 // SM_GE
     "API",                // SM_API
+    "SYMBOLIC_SHAPE",     // SM_SYMBOLIC_SHAPE
   };
   return sub_module_names[IntToSize(module_id % NUM_SUBMODUES)];
 }

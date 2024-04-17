@@ -27,15 +27,12 @@
 
 namespace mindspore {
 namespace kernel {
-bool LuGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool LuGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
@@ -43,12 +40,11 @@ bool LuGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vecto
   return true;
 }
 
-int LuGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LuGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   auto in_shape = inputs.at(kIndex0)->GetShapeVector();
   if (in_shape.size() <= 1) {
     MS_LOG(ERROR) << kernel_name_ << " input shape is " << in_shape.size() << " which is invalid.";
@@ -79,7 +75,6 @@ int LuGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
 
 void LuGpuKernelMod::ResetResource() noexcept {
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -104,9 +99,9 @@ void LuGpuKernelMod::BufferSize(T *batch_output_addr, int *lwork) {
 }
 
 template <typename T, typename S>
-void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
+void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs) {
   CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                 "cusolverDnSetStream failed");
   T *batch_input_addr = GetDeviceAddress<T>(inputs, kDim0);
@@ -192,9 +187,9 @@ void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T, typename S>
-void LuGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+void LuGpuKernelMod::LaunchKernel_Cublas(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *batch_input_addr = GetDeviceAddress<T>(inputs, kDim0);
   T *batch_output_addr = GetDeviceAddress<T>(outputs, kDim0);
   S *batch_piv_output_addr = nullptr;
@@ -280,8 +275,9 @@ void LuGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T, typename S>
-bool LuGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs) {
+bool LuGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs) {
   // If m_ / batch_size_ <= 128 :
   // We use batched cublas api is faster by empiricism, for small matrices or large batch.
   // Otherwise:

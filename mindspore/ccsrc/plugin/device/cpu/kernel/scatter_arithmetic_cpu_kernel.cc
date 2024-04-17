@@ -41,27 +41,21 @@ void UpdateOutputData(T *output, size_t sz_out, T *input, size_t sz_in, const st
 constexpr size_t kScatterArithmeticInputsNum = 3;
 constexpr size_t kScatterArithmeticOutputsNum = 1;
 
-bool ScatterArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
-  if (base_operator->HasAttr(kAttrEnableEmbeddingStorage)) {
-    enable_embedding_storage_ = GetValue<bool>(base_operator->GetAttr(kAttrEnableEmbeddingStorage));
+bool ScatterArithmeticCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (primitive_->HasAttr(kAttrEnableEmbeddingStorage)) {
+    enable_embedding_storage_ = GetValue<bool>(primitive_->GetAttr(kAttrEnableEmbeddingStorage));
   }
-  if (base_operator->HasAttr(kAttrParameterKey)) {
-    parameter_key_ = GetValue<int32_t>(base_operator->GetAttr(kAttrParameterKey));
+  if (primitive_->HasAttr(kAttrParameterKey)) {
+    parameter_key_ = GetValue<int32_t>(primitive_->GetAttr(kAttrParameterKey));
   }
 
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int ScatterArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterArithmeticInputsNum, kernel_name_);
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ScatterArithmeticCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
@@ -72,11 +66,11 @@ int ScatterArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto updates_shape_null = CheckNullInput(updates_shape);
   has_null_input_ = (input_shape_null || indices_shape_null || updates_shape_null);
   if (has_null_input_) {
-    input_size_list_[kIndex0] = input_shape_null ? 0 : input_size_list_[kIndex0];
-    input_size_list_[kIndex1] = indices_shape_null ? 0 : input_size_list_[kIndex1];
-    input_size_list_[kIndex2] = updates_shape_null ? 0 : input_size_list_[kIndex2];
-    output_size_list_.clear();
-    output_size_list_.push_back(input_size_list_[kIndex0]);
+    if (output_size_list_.size() != 1) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got "
+                        << output_size_list_.size();
+    }
+    output_size_list_[0] = input_shape_null ? 0 : output_size_list_[0];
     return KRET_OK;
   }
 
@@ -99,9 +93,9 @@ int ScatterArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
   if (has_null_input_) {
     return true;
   }
@@ -116,10 +110,10 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   };
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterArithmeticInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterArithmeticOutputsNum, kernel_name_);
-  auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *indices = static_cast<S *>(inputs[1]->addr);
-  auto *updates = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *indices = static_cast<S *>(inputs[1]->device_ptr());
+  auto *updates = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto func_iter = scatter_arithmetic_func_map.find(kernel_name_);
   if (func_iter == scatter_arithmetic_func_map.end()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
@@ -145,7 +139,7 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
     if (enable_embedding_storage_) {
       auto embedding_storage = embedding_storage_manager.Get(parameter_key_);
       MS_ERROR_IF_NULL(embedding_storage);
-      if (!embedding_storage->Put({indices, inputs[1]->size}, {updates, inputs[2]->size})) {
+      if (!embedding_storage->Put({indices, inputs[kIndex1]->size()}, {updates, inputs[kIndex2]->size()})) {
         MS_LOG(ERROR) << "For '" << kernel_name_
                       << "', Update embedding storage failed, parameter key: " << parameter_key_;
         return false;
@@ -172,8 +166,11 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   // are different. Therefore, in order to adapt to the old runtime, the content of the input needs to be copied to
   // output. After removing the old runtime, the following copy logic code can be deleted.
   if (input != output) {
-    auto bufferSize = outputs[0]->size;
-    UpdateOutputData<T>(output, bufferSize, input, input_size_ * sizeof(T), kernel_name_);
+    auto bufferSize = outputs[0]->size();
+    auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
+    }
   }
   return true;
 }

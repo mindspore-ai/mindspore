@@ -34,7 +34,7 @@ abstract::ShapePtr HypotInferShape(const PrimitivePtr &primitive, const std::vec
 
 TypePtr HypotInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> hypot_valid_types = {kFloat32, kFloat64};
-  TypePtr x1_type = input_args[0]->BuildType();
+  TypePtr x1_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_type, hypot_valid_types, prim->name());
   return x1_type;
 }

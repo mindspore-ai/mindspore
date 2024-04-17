@@ -11,7 +11,7 @@ mindspore.ops.BiasAdd
     输入：
         - **input_x** (Tensor) -输入Tensor。shape可以有2~5个维度。支持数据类型：
 
-          - Ascend/CPU： all Number type。
+          - Ascend/CPU： 所有数值类型。
           - GPU： float16、float32、int8。
 
         - **bias** (Tensor) - 偏置Tensor，shape为 :math:`(C)`。C必须与 `input_x` 的通道维度C相同。其数据类型与 `input_x` 一致。

@@ -37,8 +37,8 @@ class SspaddmmGpuKernelMod : public NativeGpuKernelMod {
   SspaddmmGpuKernelMod() { ResetResource(); }
   ~SspaddmmGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -46,11 +46,9 @@ class SspaddmmGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -61,18 +59,17 @@ class SspaddmmGpuKernelMod : public NativeGpuKernelMod {
     y_values_num_ = 0;
     x3_dense_col_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
   }
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   using SspaddmmFunc =
-    std::function<bool(SspaddmmGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(SspaddmmGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
  private:
   int64_t unit_indices_size_{1};
@@ -82,7 +79,6 @@ class SspaddmmGpuKernelMod : public NativeGpuKernelMod {
   int64_t y_values_num_{};
   int64_t x3_dense_col_{};
   SspaddmmFunc kernel_func_{};
-  BaseOperatorPtr kernel_ptr_{nullptr};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
   static std::vector<std::pair<KernelAttr, SspaddmmFunc>> func_list_;

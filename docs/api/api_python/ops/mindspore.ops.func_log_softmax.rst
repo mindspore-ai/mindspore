@@ -11,7 +11,7 @@ mindspore.ops.log_softmax
     其中， :math:`N` 为Tensor长度。
 
     参数：
-        - **logits** (Tensor) - shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，其数据类型为float16或float32。
+        - **logits** (Tensor) - 输入Tensor，上述公式中的 :math:`x` ，shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，其数据类型为float16或float32。
         - **axis** (int) - 指定进行运算的轴。默认值： ``-1`` 。
 
     返回：

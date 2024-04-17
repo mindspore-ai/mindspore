@@ -21,10 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool SvdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Svd>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool SvdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -32,17 +29,15 @@ bool SvdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
     return false;
   }
   launch_kernel_func_ = func_list_[index].second;
-  compute_uv_ = kernel_ptr->compute_uv();
-  full_matrices_ = kernel_ptr->full_matrices();
+  compute_uv_ = GetValue<bool>(primitive_->GetAttr("compute_uv"));
+  full_matrices_ = GetValue<bool>(primitive_->GetAttr("full_matrices"));
   job_ = compute_uv_ ? (full_matrices_ ? 'A' : 'S') : 'N';
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
   return true;
 }
 
-int SvdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SvdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
@@ -67,15 +62,13 @@ int SvdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   if (m_ <= kBatchedMaxRowCol && n_ <= kBatchedMaxRowCol && batch_size_ > 1 && (full_matrices_ || m_ == n_)) {
     batched_ = true;
   }
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   ResetResource();
   InitSizeLists();
   return 0;
 }
 
 void SvdGpuKernelMod::InitSizeLists() {
-  // input a
-  input_size_list_.push_back(total_size_ * unit_size_);
   // output s, u, v
   output_size_list_.push_back(batch_size_ * p_ * unit_size_);
   if (compute_uv_) {
@@ -260,8 +253,9 @@ void SvdGpuKernelMod::LaunchSvd(const size_t m, const size_t n, T *d_input, T *o
 }
 
 template <typename T>
-bool SvdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+bool SvdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                 "CusolverDnSetStream failed");
 

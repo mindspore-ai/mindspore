@@ -101,8 +101,8 @@ int SgdCPUKernel::DoExecute(int task_id) {
   int start = stride * task_id;
   int end = start + count;
 
-  DoSgd(weight, accumulate, gradient, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_,
-        sgd_param_->weight_decay_, start, end);
+  (void)DoSgd(weight, accumulate, gradient, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_,
+              sgd_param_->weight_decay_, start, end);
 
   return RET_OK;
 }
@@ -239,15 +239,15 @@ int SgdCPUKernel::OptimizerStep() {
     size_t start = 0;
     size_t end = length;
     if (*stat > 0) {
-      DoSgd(weight, accumulate, grad_sum_, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_,
-            sgd_param_->weight_decay_, start, end);
+      (void)DoSgd(weight, accumulate, grad_sum_, learning_rate, sgd_param_->dampening_, moment,
+                  sgd_param_->use_nesterov_, sgd_param_->weight_decay_, static_cast<int>(start), static_cast<int>(end));
     } else {
       (void)DoSgdInit(weight, accumulate, grad_sum_, learning_rate, moment, sgd_param_->use_nesterov_,
-                      sgd_param_->weight_decay_, start, end);
+                      sgd_param_->weight_decay_, static_cast<int>(start), static_cast<int>(end));
       *stat = 0.0f;
     }
     std::fill(grad_sum_, grad_sum_ + length, 0);
-    OptimizerKernel::OptimizerStep();
+    (void)OptimizerKernel::OptimizerStep();
   }
 
   return RET_OK;

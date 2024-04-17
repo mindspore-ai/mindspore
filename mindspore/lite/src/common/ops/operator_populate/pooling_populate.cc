@@ -113,11 +113,11 @@ OpParameter *PopulateAvgPoolOpParameter(const BaseOperatorPtr &base_operator) {
     param->window_h_ = static_cast<int>(*(kernel_size.begin()));
   }
 
-  UpdateOpRoundMode(op->get_round_mode(), param);
+  UpdateOpRoundMode(RoundMode(op->get_round_mode()), param);
   auto act_type = static_cast<ActivationType>(
     GetAttrWithDefault<int64_t>(base_operator, ops::kActivationType, ActivationType::NO_ACTIVATION));
   UpdateOpActivationType(act_type, param);
-  UpdateOpPadMode(op->get_pad_mode(), param);
+  UpdateOpPadMode(PadMode(op->get_pad_mode()), param);
 
   if (CheckOpPoolingParam(param) != RET_OK) {
     MS_LOG(ERROR) << "param is invalid!";

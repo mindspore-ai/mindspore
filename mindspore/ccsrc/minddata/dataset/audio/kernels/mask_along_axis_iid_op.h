@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace dataset {
-class MaskAlongAxisIIDOp : public TensorOp {
+class MaskAlongAxisIIDOp : public RandomTensorOp {
  public:
   /// \brief Constructor.
   /// \param[in] mask_param Number of columns to be masked, will be uniformly sampled from [0, mask_param],
@@ -36,10 +36,7 @@ class MaskAlongAxisIIDOp : public TensorOp {
   /// \param[in] mask_value Value to assign to the masked columns.
   /// \param[in] axis Axis to apply masking on (1 for frequency and 2 for time).
   MaskAlongAxisIIDOp(int32_t mask_param, float mask_value, int32_t axis)
-      : mask_param_(mask_param), mask_value_(mask_value), axis_(axis) {
-    rnd_.seed(GetSeed());
-    is_deterministic_ = false;
-  }
+      : mask_param_(mask_param), mask_value_(mask_value), axis_(axis) {}
 
   ~MaskAlongAxisIIDOp() override = default;
 
@@ -53,7 +50,6 @@ class MaskAlongAxisIIDOp : public TensorOp {
   int32_t mask_param_;
   float mask_value_;
   int32_t axis_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

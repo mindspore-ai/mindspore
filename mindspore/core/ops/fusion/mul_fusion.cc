@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(MulFusion, Mul);
+MIND_API_OPERATOR_IMPL(MulFusion, BaseOperator);
 void MulFusion::set_activation_type(const ActivationType &activation_type) {
   int64_t swi = activation_type;
   (void)this->AddAttr(kActivationType, api::MakeValue(swi));

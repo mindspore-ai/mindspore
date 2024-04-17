@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,10 @@
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "graph/operator_reg.h"
-#include "external/ge/ge_api.h"
+#include "ge/ge_api.h"
 #include "graph/tensor.h"
 #include "graph/types.h"
+#include "mindapi/base/format.h"
 
 namespace ge {
 class CustomOperator : public Operator {
@@ -139,7 +140,7 @@ class BaseOpAdapter {
  public:
   virtual ~BaseOpAdapter() {}
   virtual OperatorPtr generate(const AnfNodePtr &anf) = 0;
-  virtual OperatorPtr generate(const std::string &type) { return std::make_shared<::ge::Operator>(type); }
+  virtual OperatorPtr generate(const std::string &type) const { return std::make_shared<::ge::Operator>(type); }
   virtual OperatorPtr generateDynOutputOp(const AnfNodePtr &anf) { return nullptr; }
   virtual void setDynamicOutputNum(const OperatorPtr &op, size_t dyn_output_size) { return; }
   virtual void setSubgraph(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) = 0;
@@ -209,6 +210,42 @@ enum AttrType {
 struct GeEnum {};
 struct TFType {};
 struct GEType {};
+struct GEEnumToStr {};
+
+class GEDataFormat {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    const auto &enum_string = FormatEnumToString(static_cast<mindspore::Format>(id));
+    if (enum_string.empty()) {
+      MS_LOG(EXCEPTION) << "Invalid data format " << id;
+    }
+    return enum_string;
+  }
+};
+
+class GEPadMod {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    static const std::vector<std::string> pad_mods = {"PAD", "SAME", "VALID"};
+    if (id < 0 || id >= static_cast<int64_t>(pad_mods.size())) {
+      MS_LOG(EXCEPTION) << "Invalid pad mod " << id;
+      return "";
+    }
+    return pad_mods[id];
+  }
+};
+
+class GEReduction {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    static const std::vector<std::string> reductions = {"sum", "mean", "none"};
+    if (id < 0 || id >= static_cast<int64_t>(reductions.size())) {
+      MS_LOG(EXCEPTION) << "Invalid reduction " << id;
+      return "";
+    }
+    return reductions[id];
+  }
+};
 
 // declare Any type
 template <typename T>

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,11 +73,17 @@ class MatMul : public MatMulBase {
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status CheckOutputStrategy(const StrategyPtr &out_strategy) override;
   Status InferOutputTensorMap() override;
+  Status InferOutputTensorInfo() override;
+  Status InferForwardCommunicationByLayout() override;
   Status CheckLayoutConfig() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
 
  private:
   void CheckPCLMatMul(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
   Status CheckInputStrategy(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
+  TensorLayout InferOutputLayout();
+  TensorLayout output_infer_tensor_layout_;
 };
 
 class MatMulInfo : public MatMul {

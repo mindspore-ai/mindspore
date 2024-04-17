@@ -27,7 +27,7 @@
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace opt {

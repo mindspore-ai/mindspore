@@ -20,8 +20,8 @@
 #include <functional>
 #include "kernel/ops_utils.h"
 #include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/grad/maximum_grad.h"
-#include "mindspore/core/ops/grad/minimum_grad.h"
+#include "mindspore/core/ops/ops_func_impl/maximum_grad.h"
+#include "mindspore/core/ops/ops_func_impl/minimum_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -43,9 +43,8 @@ bool BroadcastOpGradGpuKernelMod::GetOpType() {
   return true;
 }
 
-bool BroadcastOpGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool BroadcastOpGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -53,31 +52,22 @@ bool BroadcastOpGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   if (!GetOpType()) {
     return false;
   }
-  if (op_type_ == BROADCAST_GRAD_TYPE_MAXIMUM) {
-    auto kernel_ptr = std::make_shared<ops::MaximumGrad>(base_operator->GetPrim());
-    grad_x_ = kernel_ptr->get_grad_x();
-    grad_y_ = kernel_ptr->get_grad_y();
-  } else {
-    auto kernel_ptr = std::make_shared<ops::MinimumGrad>(base_operator->GetPrim());
-    grad_x_ = kernel_ptr->get_grad_x();
-    grad_y_ = kernel_ptr->get_grad_y();
-  }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int BroadcastOpGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int BroadcastOpGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   x1_shape_ = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   x2_shape_ = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
   dy_shape_ = LongVecToSizeVec(inputs.at(kIndex2)->GetShapeVector());
+  grad_x_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
+  grad_y_ = inputs.at(kIndex4)->GetValueWithCheck<bool>();
   output_num_ = std::accumulate(dy_shape_.begin(), dy_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = CHECK_SHAPE_NULL(x1_shape_, kernel_name_, "x1") || CHECK_SHAPE_NULL(x2_shape_, kernel_name_, "x2") ||
                    CHECK_SHAPE_NULL(dy_shape_, kernel_name_, "dy");
@@ -97,16 +87,17 @@ int BroadcastOpGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool BroadcastOpGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool BroadcastOpGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   auto x1 = GetDeviceAddress<T>(inputs, kIndex0);
   auto x2 = GetDeviceAddress<T>(inputs, kIndex1);
   auto dy = GetDeviceAddress<T>(inputs, kIndex2);
   auto dx1 = GetDeviceAddress<T>(outputs, kIndex0);
   auto dx2 = GetDeviceAddress<T>(outputs, kIndex1);
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(dx1, 0, outputs[kIndex0]->size, cuda_stream_),
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(dx1, 0, outputs[kIndex0]->size(), cuda_stream_),
                                     "BroadcastOpGradGpuKernelMod cudaMemSet Failed");
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(dx2, 0, outputs[kIndex1]->size, cuda_stream_),
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(dx2, 0, outputs[kIndex1]->size(), cuda_stream_),
                                     "BroadcastOpGradGpuKernelMod cudaMemSet Failed");
   cudaError_t status = cudaErrorNotReady;
   if (need_broadcast_) {
@@ -125,6 +116,8 @@ const BroadcastOpGradGpuKernelMod::KernelFunc &BroadcastOpGradGpuKernelMod::GetF
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeInt32),
      &BroadcastOpGradGpuKernelMod::LaunchKernel<int>},
@@ -132,6 +125,8 @@ const BroadcastOpGradGpuKernelMod::KernelFunc &BroadcastOpGradGpuKernelMod::GetF
        .AddInputAttr(kNumberTypeInt64)
        .AddInputAttr(kNumberTypeInt64)
        .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeInt64),
      &BroadcastOpGradGpuKernelMod::LaunchKernel<int64_t>},
@@ -139,6 +134,8 @@ const BroadcastOpGradGpuKernelMod::KernelFunc &BroadcastOpGradGpuKernelMod::GetF
        .AddInputAttr(kNumberTypeInt16)
        .AddInputAttr(kNumberTypeInt16)
        .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeInt16)
        .AddOutputAttr(kNumberTypeInt16),
      &BroadcastOpGradGpuKernelMod::LaunchKernel<int16_t>},
@@ -146,6 +143,8 @@ const BroadcastOpGradGpuKernelMod::KernelFunc &BroadcastOpGradGpuKernelMod::GetF
        .AddInputAttr(kNumberTypeUInt32)
        .AddInputAttr(kNumberTypeUInt32)
        .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeUInt32)
        .AddOutputAttr(kNumberTypeUInt32),
      &BroadcastOpGradGpuKernelMod::LaunchKernel<uint32_t>},
@@ -153,6 +152,8 @@ const BroadcastOpGradGpuKernelMod::KernelFunc &BroadcastOpGradGpuKernelMod::GetF
        .AddInputAttr(kNumberTypeUInt64)
        .AddInputAttr(kNumberTypeUInt64)
        .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeUInt64)
        .AddOutputAttr(kNumberTypeUInt64),
      &BroadcastOpGradGpuKernelMod::LaunchKernel<uint64_t>},
@@ -160,6 +161,8 @@ const BroadcastOpGradGpuKernelMod::KernelFunc &BroadcastOpGradGpuKernelMod::GetF
        .AddInputAttr(kNumberTypeUInt16)
        .AddInputAttr(kNumberTypeUInt16)
        .AddInputAttr(kNumberTypeUInt16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeUInt16)
        .AddOutputAttr(kNumberTypeUInt16),
      &BroadcastOpGradGpuKernelMod::LaunchKernel<uint16_t>},
@@ -167,6 +170,8 @@ const BroadcastOpGradGpuKernelMod::KernelFunc &BroadcastOpGradGpuKernelMod::GetF
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &BroadcastOpGradGpuKernelMod::LaunchKernel<half>},
@@ -174,6 +179,8 @@ const BroadcastOpGradGpuKernelMod::KernelFunc &BroadcastOpGradGpuKernelMod::GetF
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &BroadcastOpGradGpuKernelMod::LaunchKernel<float>},
@@ -181,6 +188,8 @@ const BroadcastOpGradGpuKernelMod::KernelFunc &BroadcastOpGradGpuKernelMod::GetF
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeFloat64)
        .AddOutputAttr(kNumberTypeFloat64),
      &BroadcastOpGradGpuKernelMod::LaunchKernel<double>},

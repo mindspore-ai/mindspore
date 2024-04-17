@@ -61,6 +61,8 @@ void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext
       << "#include <string.h>\n"
       << "extern unsigned char *" << ctx->buffer_name() << ";\n"
       << "extern uint8_t *" << ctx->weight_name() << ";\n"
+      << "extern int *" << kShapePrefixName << ";\n"
+      << "extern int *" << kOffsetPrefixName << ";\n"
       << "enum STATUS {\n"
          "  RET_OK = 0,\n"
          "  RET_ERROR = 1,\n"

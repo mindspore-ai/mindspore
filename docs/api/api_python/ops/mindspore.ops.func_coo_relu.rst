@@ -10,12 +10,9 @@ mindspore.ops.coo_relu
     .. math::
         ReLU(x) = (x)^+ = \max(0, x)
 
-    .. note::
-        一般来说，与 `ReLUV2` 相比，此算子更常用。且 `ReLUV2` 会多输出一个掩码。
-
     参数：
         - **x** (COOTensor) - coo_relu的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，
-          其数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_。
+          其数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_。
 
     返回：
         COOTensor，数据类型和shape与 `x` 相同。

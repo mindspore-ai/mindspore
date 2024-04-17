@@ -15,7 +15,6 @@
 """
 Test generic support of Python dictionaries in dataset pipeline
 """
-import gc
 import math
 from time import sleep
 import numpy as np
@@ -95,7 +94,6 @@ def test_dict_generator(my_iterator, output_numpy):
         itr = data1.create_dict_iterator(
             num_epochs=1, output_numpy=output_numpy)
     for d in itr:
-        gc.collect()  # to make sure python objects are not garbage collected
         if my_iterator == "tuple":
             data = d[0]
         else:
@@ -135,7 +133,6 @@ def test_dict_generator_map_1():
     itr = data1.create_dict_iterator(num_epochs=2, output_numpy=True)
     for _ in range(2):
         for i, d in enumerate(itr):
-            gc.collect()
             count += 1
             assert isinstance(d["renamed_col1"], np.ndarray)
             assert d["renamed_col1"] == np.array([i])
@@ -159,7 +156,6 @@ def test_dict_generator_map_2():
     itr = data1.create_dict_iterator(num_epochs=2, output_numpy=True)
     for _ in range(2):
         for d in itr:
-            gc.collect()
             count += 1
             assert isinstance(d["renamed_col1"], dict)
             assert isinstance(d["renamed_col1"]["integer"], np.ndarray)
@@ -210,7 +206,6 @@ def test_dict_generator_batch_1():
     count = 0
     for _ in range(2):
         for i, d in enumerate(itr):
-            gc.collect()
             count += 1
             assert isinstance(d["renamed_col1"], dict)
             assert isinstance(d["renamed_col1"]["integer"], np.ndarray)
@@ -248,7 +243,6 @@ def test_dict_generator_batch_2():
     count = 0
     for _ in range(2):
         for d in itr:
-            gc.collect()
             count += 1
             assert isinstance(d["col1"], dict)
             assert isinstance(d["col1"]["value"], list)
@@ -277,7 +271,6 @@ def test_dict_generator_batch_3():
     counter = 0
     for _ in range(2):
         for d in itr:
-            gc.collect()
             counter += 1
             assert isinstance(d["renamed_col1"], dict)
             assert isinstance(d["renamed_col1"]["integer"], list)
@@ -434,7 +427,6 @@ def test_dict_generator_batch_8(batch_size):
     count = 0
     for _ in range(2):
         for i, d in enumerate(itr):
-            gc.collect()
             count += 1
             assert isinstance(d["renamed_col1"], dict)
             assert isinstance(d["renamed_col1"]["integer"], np.ndarray)
@@ -462,7 +454,6 @@ def test_dict_generator_batch_8(batch_size):
     assert count == 2 * math.ceil(dataset_size / batch_size)
 
 
-@pytest.mark.skip(reason="random failure")
 def test_dict_advanced_pyfunc_dict():
     """
     Feature: Dataset pipeline contains Python dict objects.
@@ -476,7 +467,6 @@ def test_dict_advanced_pyfunc_dict():
         return (x1, x2, x3)
 
     def my_delay_f(x1, x2, x3):
-        gc.collect()
         sleep(0.01)  # sleep for 0.01s
         return (x1, x2, x3)
 
@@ -501,7 +491,6 @@ def test_dict_advanced_pyfunc_dict():
 
     count = 0
     for d in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
-        gc.collect()
         count += 1
         assert len(d) == 3  # 3 columns
         assert isinstance(d["data1new"], dict)
@@ -533,7 +522,6 @@ def test_dict_generator_mixed(my_iterator, output_numpy):
             num_epochs=1, output_numpy=output_numpy)
     count = 0
     for data in itr:
-        gc.collect()  # to make sure python objects are not garbage collected
         count += 1
         if my_iterator == "tuple":
             if output_numpy:
@@ -608,7 +596,6 @@ def test_dict_generator_nested_dicts(output_numpy):
     itr = data1.create_dict_iterator(num_epochs=2, output_numpy=output_numpy)
     for _ in range(2):
         for d in itr:
-            gc.collect()
             count += 1
             if output_numpy:
                 assert isinstance(d["col1"], dict)

@@ -114,3 +114,19 @@ def test_lin_space_parallel_strategy_wrong():
     net = Net(strategy)
     with pytest.raises(RuntimeError):
         compile_net(net, start, end, x)
+
+
+def test_lin_space_dynamic_shape_constraint():
+    """
+    Feature: test LinSpace parallel with dynamic shape
+    Description: strategy > 1
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    start = Tensor(shape=[None], dtype=mstype.float32)
+    end = Tensor(10, mstype.float32)
+    x = 6
+    strategy = ((4,),)
+    net = Net(strategy)
+    with pytest.raises(RuntimeError):
+        compile_net(net, start, end, x)

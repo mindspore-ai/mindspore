@@ -30,7 +30,7 @@ class TFSession(AbcInferSession, ABC):
     def __init__(self,
                  model_file,
                  cfg=None):
-        super(TFSession, self).__init__(model_file, cfg)
+        super().__init__(model_file, cfg)
         self.graph = None
         self.model_session = self._create_infer_session()
 
@@ -38,7 +38,6 @@ class TFSession(AbcInferSession, ABC):
             tensor_name: self.graph.get_tensor_by_name(tensor_name + ': 0') for
             tensor_name in self.input_tensor_shapes.keys()
         }
-        self.logger.info(f'[TF INFER]:input tensor is {self.input_tensor_map}')
 
         self.output_tensor_map = {
             tensor_name: self.graph.get_tensor_by_name(tensor_name + ': 0') for
@@ -62,27 +61,24 @@ class TFSession(AbcInferSession, ABC):
         """create infer session"""
         if not os.path.exists(self.model_file):
             raise ValueError(f'TF model {self.model_file} does not exist')
-        with tf.gfile.GFile(self.model_file, 'rb') as f:
-            self.logger.info(f'tf_session_create: Read {self.model_file} successfully')
-            graph_def = tf.GraphDef()
+        with tf.io.gfile.GFile(self.model_file, 'rb') as f:
+            graph_def = tf.compat.v1.GraphDef()
             graph_def.ParseFromString(f.read())
             input_tensor_map = self._get_tf_input_tensor_map(graph_def)
-            self.logger.info(f'[TF INFER] input tensor map is {input_tensor_map}')
             tf.import_graph_def(graph_def, input_map=input_tensor_map, name='')
-            self.logger.info('Tensor map done')
-            self.graph = tf.get_default_graph()
-        model_session = tf.Session(graph=self.graph)
+            self.logger.debug('Tensor map done')
+            self.graph = tf.compat.v1.get_default_graph()
+        model_session = tf.compat.v1.Session(graph=self.graph)
         return model_session
 
     def _get_tf_input_tensor_map(self, graph_def):
         """get tensorflow input tensor map"""
         input_tensor_map = {}
         tf.import_graph_def(graph_def, name='')
-        default_graph = tf.get_default_graph()
+        default_graph = tf.compat.v1.get_default_graph()
         for key, shape in self.input_tensor_shapes.items():
             tensor_name = f'{key}:0'
             input_tensor = default_graph.get_tensor_by_name(tensor_name)
-            self.logger.info(f'input tensor info {input_tensor}')
             input_tensor.set_shape(shape)
             input_tensor_map[key] = input_tensor
         return input_tensor_map

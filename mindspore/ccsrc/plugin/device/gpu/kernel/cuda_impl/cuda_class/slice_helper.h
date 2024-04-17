@@ -42,26 +42,12 @@ class SliceHelperGpuKernel : public GpuKernelHelperBase {
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     ResetResource();
-    std::vector<std::vector<int64_t>> input_tensor_shapes{input_shapes[0]};
-    int inp_flag = CalShapesSizeInBytes<T>(input_tensor_shapes, 1, kernel_name_, "input_shapes", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
-    constexpr size_t kDynamicSliceInputNum = 3;
-    if (input_shapes.size() == kDynamicSliceInputNum) {
-      std::vector<std::vector<int64_t>> input_attr_shapes{input_shapes[1], input_shapes[2]};
-      int inp_flag = CalShapesSizeInBytes<S>(input_attr_shapes, input_attr_shapes.size(), kernel_name_, "input_shapes",
-                                             &input_size_list_);
-      if (inp_flag == -1) {
-        return inp_flag;
-      }
-    }
     input_shape_.assign(input_shapes[0].begin(), input_shapes[0].end());
     int out_flag = CalShapesSizeInBytes<T>(output_shapes, 1, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {
       return out_flag;
     }
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     return CheckKernelParam();
   }
 

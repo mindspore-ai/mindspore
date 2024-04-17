@@ -78,7 +78,6 @@ def test_if_after_for_01():
 
 @case_register.level1
 @case_register.target_gpu
-@case_register.target_ascend
 def test_if_after_for_02():
     class IfAfterForNet(nn.Cell):
         def __init__(self):

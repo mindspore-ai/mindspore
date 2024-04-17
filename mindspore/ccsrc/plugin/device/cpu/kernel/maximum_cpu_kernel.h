@@ -31,16 +31,12 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   MaximumCpuKernelMod() = default;
   ~MaximumCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -59,10 +55,11 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   // Broadcast Arithmetic
   template <typename T>
   void BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3, const size_t l4,
-                            const size_t l5, const size_t l6, const size_t r0, const size_t r1, const size_t r2,
-                            const size_t r3, const size_t r4, const size_t r5, const size_t r6, const size_t d0,
-                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const size_t d6, const T *input_x, const T *input_y, T *output);
+                            const size_t l5, const size_t l6, const size_t l7, const size_t r0, const size_t r1,
+                            const size_t r2, const size_t r3, const size_t r4, const size_t r5, const size_t r6,
+                            const size_t r7, const size_t d0, const size_t d1, const size_t d2, const size_t d3,
+                            const size_t d4, const size_t d5, const size_t d6, const size_t d7, const T *input_x,
+                            const T *input_y, T *output);
   template <typename T>
   T MaximumFunc(const T &lhs, const T &rhs) const {
     return lhs > rhs ? lhs : rhs;
@@ -74,8 +71,8 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   template <typename T>
   void BroadcastArith(const T *input_x, const T *input_y, T *output);
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   bool need_broadcast_{false};
   size_t input_x_num_{1};
@@ -87,7 +84,7 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   std::vector<size_t> broadcast_input_x_shape_;
   std::vector<size_t> broadcast_input_y_shape_;
   std::vector<size_t> broadcast_output_shape_;
-  const size_t max_dims_{7};
+  const size_t max_dims_{8};
 };
 }  // namespace kernel
 }  // namespace mindspore

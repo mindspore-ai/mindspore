@@ -20,9 +20,8 @@
 namespace mindspore {
 namespace kernel {
 static std::unordered_map<std::string, int> op_type_map = {{"InplaceUpdateV2", INPLACE_OP_TYPE_UPDATE}};
-bool InplaceOpV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool InplaceOpV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto iter = op_type_map.find(kernel_name_);
   if (iter == op_type_map.end()) {
     MS_LOG(ERROR) << "For InplaceOpV2 kernel, Can only support InplaceUpdateV2, but got " << kernel_name_;
@@ -43,14 +42,13 @@ bool InplaceOpV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_size_ = abstract::TypeIdSize(inputs[0]->GetDtype());
-  indices_size_ = abstract::TypeIdSize(inputs[1]->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs[0]->dtype_id());
+  indices_size_ = abstract::TypeIdSize(inputs[1]->dtype_id());
   return true;
 }
 
-int InplaceOpV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+int InplaceOpV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -59,12 +57,12 @@ int InplaceOpV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape_x = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> input_shape_indices = std::vector<int64_t>(
-    inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> input_shape_v = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape_x = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> input_shape_indices = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                                  inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<int64_t> input_shape_v = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex2)->GetDeviceShapeVector().end());
   band_size_ = 1;
   for (size_t i = 1; i < input_shape_x.size(); ++i) {
     band_size_ *= input_shape_x[i];
@@ -74,10 +72,6 @@ int InplaceOpV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   input_elements_v = std::accumulate(input_shape_v.begin(), input_shape_v.end(), 1, std::multiplies<int64_t>());
   size_t input_size_x = input_elements_x * unit_size_;
   size_t indices_size = (input_shape_indices.empty() ? kSizeOne : input_shape_indices[kIndex0]) * indices_size_;
-  size_t input_size_v = input_elements_v * unit_size_;
-  input_size_list_.push_back(input_size_x);
-  input_size_list_.push_back(indices_size);
-  input_size_list_.push_back(input_size_v);
   output_size_list_.push_back(input_size_x);
   if (kernel_name_ == ops::kNameInplaceUpdateV2) {
     workspace_size_list_.push_back(indices_size);
@@ -90,15 +84,14 @@ void InplaceOpV2GpuKernelMod::ResetResource() noexcept {
   input_elements_x = 0;
   input_elements_v = 0;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 template <typename T, typename S>
-bool InplaceOpV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool InplaceOpV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
   T *input_x = GetDeviceAddress<T>(inputs, kIndex0);
   S *input_indices = GetDeviceAddress<S>(inputs, kIndex1);
   T *input_v = GetDeviceAddress<T>(inputs, kIndex2);

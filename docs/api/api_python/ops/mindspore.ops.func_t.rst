@@ -10,6 +10,3 @@ mindspore.ops.t
 
     返回：
         Tensor，`input` 的转置。
-
-    异常：
-        - **ValueError** - `input` 的维度大于2。

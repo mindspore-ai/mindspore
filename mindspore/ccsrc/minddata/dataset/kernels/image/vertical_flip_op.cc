@@ -16,8 +16,6 @@
 
 #include "minddata/dataset/kernels/image/vertical_flip_op.h"
 
-#include <vector>
-
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 

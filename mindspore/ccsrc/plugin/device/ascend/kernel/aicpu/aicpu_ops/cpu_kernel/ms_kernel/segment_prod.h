@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SEGMENTPROD_H_
 #define AICPU_KERNELS_NORMALIZED_SEGMENTPROD_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class SegmentProdCpuKernel : public CpuKernel {
@@ -31,9 +31,9 @@ class SegmentProdCpuKernel : public CpuKernel {
   template <typename T>
   static T ComputeMul(T num_1, T num_2);
   template <typename T1, typename T2>
-  static uint32_t SegmentProdCompute(const CpuKernelContext &ctx);
+  static uint32_t SegmentProdCompute(CpuKernelContext &ctx);
   template <typename T1, typename T2>
-  static uint32_t SegmentProdCompute_Complex(const CpuKernelContext &ctx);
+  static uint32_t SegmentProdCompute_Complex(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

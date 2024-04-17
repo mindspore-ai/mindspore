@@ -30,9 +30,9 @@ const std::vector<int32_t> kDimMapNHWC2NCHW = {0, 3, 1, 2};
 const std::vector<int32_t> kDimMapNCHW2NHWC = {0, 2, 3, 1};
 
 template <typename T>
-bool DataFormatDimMapGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &workspace,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool DataFormatDimMapGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &workspace,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDataFormatDimMapInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDataFormatDimMapOutputsNum, kernel_name_);
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
@@ -64,15 +64,10 @@ const std::vector<dataFormatPair> &DataFormatDimMapGpuKernelMod::GetFuncList() c
   return func_list;
 }
 
-bool DataFormatDimMapGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DataFormatDimMap>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
-  src_format_ = kernel_ptr->get_src_format();
-  dst_format_ = kernel_ptr->get_dst_format();
+bool DataFormatDimMapGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  src_format_ = GetValue<std::string>(primitive_->GetAttr("src_format"));
+  dst_format_ = GetValue<std::string>(primitive_->GetAttr("dst_format"));
   if (inputs.size() != kDataFormatDimMapInputsNum || outputs.size() != kDataFormatDimMapOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kDataFormatDimMapInputsNum
                   << " and " << kDataFormatDimMapOutputsNum << ", but got " << inputs.size() << " and "
@@ -80,7 +75,7 @@ bool DataFormatDimMapGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
@@ -99,18 +94,16 @@ bool DataFormatDimMapGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int DataFormatDimMapGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+int DataFormatDimMapGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
-  input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                     inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                      outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                     inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                      outputs.at(kIndex0)->GetDeviceShapeVector().end());
   auto in_shape_size = input_shape_.size();
   if (in_shape_size > max_dims_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

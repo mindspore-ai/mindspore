@@ -53,7 +53,7 @@ class SourceNet(nn.Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensorsqueue_gpu():
@@ -81,7 +81,7 @@ def test_tensorsqueue_gpu():
     assert np.allclose(ans[2].asnumpy(), [2.0])
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensorsqueue_cpu():

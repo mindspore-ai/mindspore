@@ -20,7 +20,7 @@
 #include <memory>
 #include <functional>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
-#include "ops/gather_d.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(GatherDPluginCreater);
@@ -84,15 +84,15 @@ int GatherDPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nv
     auto index = static_cast<const int *>(inputs[1]);
     auto output = static_cast<int *>(outputs[0]);
     Reshape(inputDesc, outputDesc);
-    GatherD<int, int>(input, index, output, dim_before_axis_, dim_at_axis_input_, dim_at_axis_output_, dim_after_axis_,
-                      stream, device_id_);
+    GatherD<int, int>(input, index, output, static_cast<size_t>(axis_), num_, input_dims.nbDims, input_shape_helper_,
+                      index_shape_helper_, stream, device_id_);
   } else if (inputDesc->type == nvinfer1::DataType::kFLOAT) {
     auto input = static_cast<const float *>(inputs[0]);
     auto index = static_cast<const int *>(inputs[1]);
     auto output = static_cast<float *>(outputs[0]);
     Reshape(inputDesc, outputDesc);
-    GatherD<float, int>(input, index, output, dim_before_axis_, dim_at_axis_input_, dim_at_axis_output_,
-                        dim_after_axis_, stream, device_id_);
+    GatherD<float, int>(input, index, output, static_cast<size_t>(axis_), num_, input_dims.nbDims, input_shape_helper_,
+                        index_shape_helper_, stream, device_id_);
   } else {
     MS_LOG(ERROR) << "unsupported data type gatherd" << layer_name_;
   }
@@ -118,21 +118,18 @@ nvinfer1::DimsExprs GatherDPlugin::getOutputDimensions(int outputIndex, const nv
 void GatherDPlugin::Reshape(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc) {
   nvinfer1::Dims input_dims = inputDesc[0].dims;
   nvinfer1::Dims output_dims = outputDesc[0].dims;
-  size_t dim_before_axis = 1;
-  for (size_t i = 0; i < IntToSize(axis_); i++) {
-    dim_before_axis *= output_dims.d[i];
+
+  if (input_dims.nbDims > static_cast<int64_t>(kMaxShapeRank)) {
+    MS_LOG(EXCEPTION) << "The rank of input should be less than " << kMaxShapeRank << ", but got " << input_dims.nbDims
+                      << ".";
   }
-  size_t dim_at_axis_input = input_dims.d[IntToSize(axis_)];
-  size_t dim_at_axis_output = output_dims.d[IntToSize(axis_)];
-  size_t dim_after_axis = 1;
-  for (size_t i = IntToSize(axis_) + 1; i < IntToSize(output_dims.nbDims); i++) {
-    dim_after_axis *= output_dims.d[i];
+  num_ = 1;
+  for (size_t i = 0; i < static_cast<size_t>(input_dims.nbDims); i++) {
+    input_shape_helper_.shape[i] = static_cast<size_t>(input_dims.d[i]);
+    index_shape_helper_.shape[i] = static_cast<size_t>(output_dims.d[i]);
+    num_ *= static_cast<size_t>(output_dims.d[i]);
   }
 
-  dim_before_axis_ = dim_before_axis;
-  dim_at_axis_input_ = dim_at_axis_input;
-  dim_at_axis_output_ = dim_at_axis_output;
-  dim_after_axis_ = dim_after_axis;
   return;
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameGatherD, GatherDTensorRT)

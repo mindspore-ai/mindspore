@@ -77,9 +77,8 @@ namespace {
 abstract::ShapePtr ReduceFusionInferShape(const PrimitivePtr &primitive,
                                           const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(primitive->name(), input_args, 0);
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  auto x_shape = shape_ptr->shape();
+  CheckAndConvertUtils::CheckArgsType(primitive->name(), input_args, 0, kObjectTypeTensorType);
+  auto x_shape = input_args[0]->GetShape()->GetShapeVector();
 
   auto keep_dims_value_ptr = primitive->GetAttr(kKeepDims);
   MS_EXCEPTION_IF_NULL(keep_dims_value_ptr);
@@ -143,7 +142,7 @@ class ReduceFusionInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     return x_type;
   }
 };

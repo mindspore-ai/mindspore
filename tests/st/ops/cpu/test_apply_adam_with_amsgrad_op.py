@@ -98,7 +98,7 @@ class AmsgradNetVmap(nn.Cell):
         return self.vmap_amsgrad(self.var, self.m, self.v, self.vhat, beta1_power, beta2_power, lr, grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_apply_adam_witm_amsgrad_op_vmap():
@@ -145,7 +145,7 @@ class AmsgradNetVmap2(nn.Cell):
         return self.vmap_amsgrad(self.var, self.m, self.v, self.vhat, beta1_power, beta2_power, lr, grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_apply_adam_with_amsgrad_grad_op_vmap2():

@@ -63,8 +63,9 @@ bool ComputeGraphNode::Initialize() {
   // Register itself to meta server node.
   bool success = false;
   if (!enable_ssl) {
-    success = ReconnectIfNeeded(std::bind(&ComputeGraphNode::Register, this),
-                                "Failed to register and try to reconnect to the meta server.", kCgnExecuteRetryNum);
+    success =
+      ReconnectWithTimeoutWindow(std::bind(&ComputeGraphNode::Register, this),
+                                 "Failed to register and try to reconnect to the meta server.", GetClusterTimeout());
   } else {
     const auto &server_url = meta_server_addr_.GetUrl();
     size_t retry = 10;
@@ -209,8 +210,8 @@ bool ComputeGraphNode::Register() {
     MS_LOG(INFO) << "The compute graph node: " << node_id_ << " has been registered successfully.";
     return true;
   } else {
-    MS_LOG(INFO) << "Failed to register the compute graph node: " << node_id_;
-    return false;
+    MS_LOG(EXCEPTION) << "Failed to register the compute graph node: " << node_id_
+                      << ". Reason: " << reg_resp_msg.error_reason();
   }
 }
 
@@ -249,9 +250,6 @@ bool ComputeGraphNode::Heartbeat() {
     uint32_t timeout = 10;
 
     while (enable_hb_) {
-      if (topo_state_ == TopoState::kInitializing && ElapsedTime(start_time_) > kTopoInitTimeout) {
-        MS_LOG(EXCEPTION) << "Building networking for " << role_ << " failed.";
-      }
       HeartbeatMessage hb_msg;
       hb_msg.set_node_id(node_id_);
 
@@ -318,6 +316,23 @@ bool ComputeGraphNode::ReconnectIfNeeded(const std::function<bool(void)> &func, 
       (void)Reconnect();
     }
     --retry;
+  }
+  return success;
+}
+
+bool ComputeGraphNode::ReconnectWithTimeoutWindow(const std::function<bool(void)> &func, const std::string &error,
+                                                  size_t time_out) {
+  size_t time_out_in_milli = time_out * 1000;
+  size_t start_tick = LongToSize(CURRENT_TIMESTAMP_MILLI.count());
+  bool success = false;
+  while (!success && LongToSize(CURRENT_TIMESTAMP_MILLI.count()) - start_tick <= time_out_in_milli) {
+    success = func();
+    if (!success) {
+      // Retry to reconnect to the meta server.
+      MS_LOG(WARNING) << error;
+      (void)sleep(kExecuteInterval);
+      (void)Reconnect();
+    }
   }
   return success;
 }

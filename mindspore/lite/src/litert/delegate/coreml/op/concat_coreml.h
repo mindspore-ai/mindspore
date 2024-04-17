@@ -37,7 +37,7 @@ class ConcatCoreMLOp : public CoreMLOp {
   void SetMLOpInOut() override;
 
  private:
-  int axis_;
+  int axis_{0};
   const schema::Concat *concat_prim_ = nullptr;
 };
 }  // namespace mindspore::lite

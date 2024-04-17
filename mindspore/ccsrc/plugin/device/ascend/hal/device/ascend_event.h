@@ -17,28 +17,35 @@
 #ifndef MINDSPORE_ASCEND_EVENT_H
 #define MINDSPORE_ASCEND_EVENT_H
 
-#include "runtime/base.h"
 #include "ir/device_event.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore::device::ascend {
+constexpr uint32_t ACL_EVENT_DEFAULT = 0x0000000Eu;
+
 class AscendEvent : public DeviceEvent {
  public:
   AscendEvent();
+  explicit AscendEvent(uint32_t flag);
   ~AscendEvent() override;
 
   void WaitEvent() override;
+  void WaitEventWithoutReset() override;
   void RecordEvent() override;
   bool NeedWait() override;
   void SyncEvent() override;
+  bool QueryEvent() override;
   void ElapsedTime(float *cost_time, const DeviceEvent *other) override;
-  void set_wait_stream(rtStream_t wait_stream) override { wait_stream_ = wait_stream; }
-  void set_record_stream(rtStream_t record_stream) override { record_stream_ = record_stream; }
+  bool DestroyEvent() override;
+  void set_wait_stream(aclrtStream wait_stream) override { wait_stream_ = wait_stream; }
+  void set_record_stream(aclrtStream record_stream) override { record_stream_ = record_stream; }
 
  protected:
-  rtEvent_t event_{nullptr};
-  rtStream_t wait_stream_{nullptr};
-  rtStream_t record_stream_{nullptr};
+  aclrtEvent event_{nullptr};
+  aclrtStream wait_stream_{nullptr};
+  aclrtStream record_stream_{nullptr};
   bool need_wait_{false};
+  bool event_destroyed_{false};
 };
 
 class AscendTimeEvent : public AscendEvent {

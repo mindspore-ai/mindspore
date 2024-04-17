@@ -43,16 +43,16 @@ namespace {
 TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto m_type = input_args[kInputIndex1]->BuildType();
-  auto v_type = input_args[kInputIndex2]->BuildType();
-  auto lr_type = input_args[kInputIndex3]->BuildType();
-  auto beta1_type = input_args[kInputIndex4]->BuildType();
-  auto beta2_type = input_args[kInputIndex5]->BuildType();
-  auto epsilon_type = input_args[kInputIndex6]->BuildType();
-  auto decay_type = input_args[kInputIndex7]->BuildType();
-  auto global_step_type = input_args[kInputIndex8]->BuildType();
-  auto gradient_type = input_args[kInputIndex9]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto m_type = input_args[kInputIndex1]->GetType();
+  auto v_type = input_args[kInputIndex2]->GetType();
+  auto lr_type = input_args[kInputIndex3]->GetType();
+  auto beta1_type = input_args[kInputIndex4]->GetType();
+  auto beta2_type = input_args[kInputIndex5]->GetType();
+  auto epsilon_type = input_args[kInputIndex6]->GetType();
+  auto decay_type = input_args[kInputIndex7]->GetType();
+  auto global_step_type = input_args[kInputIndex8]->GetType();
+  auto gradient_type = input_args[kInputIndex9]->GetType();
 
   std::map<std::string, TypePtr> type_dict;
   (void)type_dict.emplace("var", var_type);
@@ -75,13 +75,13 @@ TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
 
   return var_type;
 }
-abstract::ShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto m_shape_ptr = input_args[kInputIndex1]->BuildShape();
-  auto v_shape_ptr = input_args[kInputIndex2]->BuildShape();
-  auto grad_shape_ptr = input_args[kInputIndex9]->BuildShape();
+  auto var_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto m_shape_ptr = input_args[kInputIndex1]->GetShape();
+  auto v_shape_ptr = input_args[kInputIndex2]->GetShape();
+  auto grad_shape_ptr = input_args[kInputIndex9]->GetShape();
   MS_EXCEPTION_IF_NULL(var_shape_ptr);
   MS_EXCEPTION_IF_NULL(m_shape_ptr);
   MS_EXCEPTION_IF_NULL(v_shape_ptr);
@@ -90,21 +90,17 @@ abstract::ShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vect
       grad_shape_ptr->IsDynamic()) {
     MS_LOG(WARNING) << "var is dynamic" << var_shape_ptr->IsDynamic() << "m is dynamic" << m_shape_ptr->IsDynamic()
                     << "v is dynamic" << v_shape_ptr->IsDynamic() << "grad is dynamic" << grad_shape_ptr->IsDynamic();
-    auto var_shape_output = var_shape_ptr->cast<abstract::ShapePtr>();
-    MS_EXCEPTION_IF_NULL(var_shape_output);
-    return var_shape_output;
+    return var_shape_ptr;
   }
-  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex9]->BuildShape())[kShape];
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex9]->GetShape())[kShape];
   CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, m_shape, prim_name);
   CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, v_shape, prim_name);
   CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, grad_shape, prim_name);
 
-  auto var_shape_output = var_shape_ptr->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(var_shape_output);
-  return var_shape_output;
+  return var_shape_ptr;
 }
 }  // namespace
 

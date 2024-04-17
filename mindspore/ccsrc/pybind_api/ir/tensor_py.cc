@@ -113,8 +113,6 @@ static std::string GetPyTypeFormat(TypeId data_type) {
   switch (data_type) {
     case TypeId::kNumberTypeFloat16:
       return "e";
-    case TypeId::kNumberTypeBFloat16:
-      return "f";
     case TypeId::kNumberTypeFloat32:
       return py::format_descriptor<float>::format();
     case TypeId::kNumberTypeFloat64:
@@ -432,7 +430,7 @@ void TensorPy::FlushFromCache(const Tensor &tensor) {
       auto hashmap_size = hashmap_tensor_ptr->shape_c()[0];
       auto host_shape = tensor.shape_c();
       auto cache_shape = cache_tensor_ptr->shape_c();
-      if (host_shape.size() != 2 && host_shape.size() != 2 && host_shape[1] != cache_shape[1]) {
+      if (host_shape.size() != 2 && cache_shape.size() != 2 && host_shape[1] != cache_shape[1]) {
         MS_LOG(EXCEPTION) << "Got host shape and cache shape invalid."
                           << "host shape:" << host_shape << ", cache shape:" << cache_shape;
       }
@@ -453,12 +451,59 @@ void TensorPy::FlushFromCache(const Tensor &tensor) {
 }
 
 py::bytes TensorPy::GetBytes(const Tensor &tensor) {
-  py::gil_scoped_release gil_release;
+  py::gil_scoped_acquire acquire;
   if (tensor.NeedWait()) {
     tensor.Wait();
   }
   tensor.data_sync();
   return py::bytes(static_cast<const char *>(tensor.data_c()), tensor.Size());
+}
+
+void CopyFromBuffer(char *dst, size_t dst_size, const char *src, size_t src_size, TypeId data_type) {
+  bool fp16_in_fp32 = (data_type == TypeId::kNumberTypeBFloat16) && (dst_size * 2 == src_size);
+  if (fp16_in_fp32) {
+    int elem_num = static_cast<int>(src_size / sizeof(float));
+    for (int i = 0; i < elem_num; ++i) {
+      auto dst_ptr = static_cast<char *>(dst + i * sizeof(bfloat16));
+      auto src_ptr = static_cast<const char *>(src + sizeof(bfloat16) + i * sizeof(float));
+      errno_t ret = memcpy_s(dst_ptr, sizeof(bfloat16), src_ptr, sizeof(bfloat16));
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "Failed to copy the memory to new tensor:" << ret;
+      }
+    }
+  } else {
+    size_t remain_size = src_size;
+    auto dst_ptr = dst;
+    auto src_ptr = src;
+    while (remain_size > SECUREC_MEM_MAX_LEN) {
+      auto ret = memcpy_s(dst_ptr, SECUREC_MEM_MAX_LEN, src_ptr, SECUREC_MEM_MAX_LEN);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "Failed to copy the memory to new tensor" << ret;
+      }
+      remain_size -= SECUREC_MEM_MAX_LEN;
+      dst_ptr += SECUREC_MEM_MAX_LEN;
+      src_ptr += SECUREC_MEM_MAX_LEN;
+    }
+    if (remain_size != 0U) {
+      auto ret = memcpy_s(dst_ptr, remain_size, src_ptr, remain_size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "Failed to copy the memory to new tensor" << ret;
+      }
+    }
+  }
+}
+
+TensorPtr TensorPy::ConvertBytesToTensor(const py::bytes &bytes_obj, const py::tuple &dims, const TypePtr &type_ptr) {
+  ShapeVector shape;
+  for (size_t i = 0; i < dims.size(); ++i) {
+    shape.push_back(dims[i].cast<int>());
+  }
+  TypeId data_type = type_ptr ? type_ptr->type_id() : TypeId::kTypeUnknown;
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(data_type, shape);
+  const char *tensor_buf = PYBIND11_BYTES_AS_STRING(bytes_obj.ptr());
+  char *tensor_data_buf = reinterpret_cast<char *>(tensor->data_c());
+  CopyFromBuffer(tensor_data_buf, tensor->Size(), tensor_buf, PYBIND11_BYTES_SIZE(bytes_obj.ptr()), data_type);
+  return tensor;
 }
 
 py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
@@ -473,6 +518,12 @@ py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
     // Release device address of graph output tensor.
     if (tensor.need_release_device_mem()) {
       const_cast<Tensor &>(tensor).set_device_address(nullptr);
+    }
+
+    // BFloat16 is not supported in numpy.
+    if (tensor.data_type() == kNumberTypeBFloat16) {
+      MS_EXCEPTION(TypeError) << "For asnumpy, the type of tensor cannot be BFloat16, but got "
+                              << TypeIdLabel(tensor.data_type());
     }
   }
   return AsNumpy(tensor);
@@ -540,7 +591,8 @@ void RegMetaTensor(const py::module *m) {
         return py::make_tuple(static_cast<int>(t.data_type()), t.shape());
       },
       [](const py::tuple &t) {  // __setstate__
-        if (t.size() != 2) {
+        constexpr size_t expect_size = 2;
+        if (t.size() != expect_size) {
           throw std::runtime_error("Invalid state!");
         }
         /* Create a new C++ instance */
@@ -717,6 +769,20 @@ void RegMetaTensor(const py::module *m) {
                                  >>> print(x.get_bytes())
                                  b'\x01\x00\x02\x00\x03\x00'
                              )mydelimiter")
+    .def("convert_bytes_to_tensor", &TensorPy::ConvertBytesToTensor, R"mydelimiter(
+                             Convert raw data to tensor.
+
+                             Returns:
+                                 Tensor.
+
+                             Examples:
+                                 >>> import mindspore as ms
+                                 >>> from mindspore import Tensor
+                                 >>> x = Tensor([1, 2, 3], ms.int16)
+                                 >>> out = Tensor.convert_bytes_to_tensor(x.get_bytes(), x.shape, x.dtype)
+                                 >>> print(x.asnumpy())
+                                 [1 2 3]
+                             )mydelimiter")
     .def("asnumpy", TensorPy::SyncAsNumpy, R"mydelimiter(
                              Convert tensor to numpy.ndarray.
 
@@ -838,8 +904,9 @@ void RegMetaTensor(const py::module *m) {
                               )mydelimiter")
     .def("set_cast_dtype", &Tensor::set_cast_dtype, py::arg("dtype") = nullptr)
     .def("data_sync", &Tensor::data_sync)
-    .def("contiguous", &Tensor::contiguous)
     .def("is_contiguous", &Tensor::is_contiguous)
+    .def("stride", &Tensor::stride)
+    .def("storage_offset", &Tensor::storage_offset)
     .def("__str__", &Tensor::ToString)
     .def("__repr__", &Tensor::ToStringRepr)
     .def("_offload", &TensorPy::Offload)

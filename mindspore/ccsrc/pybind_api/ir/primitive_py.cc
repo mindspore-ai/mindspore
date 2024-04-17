@@ -184,11 +184,6 @@ PrimitivePy::~PrimitivePy() {
   backward_hook_fn_.clear();
 }
 
-void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
-  signatures_ = signatures;
-  set_has_signature(!signatures.empty());
-}
-
 py::function PrimitivePy::GetVmapRuleFunction(const bool, int axis_size) {
   constexpr char get_vmap_rule_func_name[] = "get_vmap_rule";
   if (py::hasattr(python_obj_, get_vmap_rule_func_name)) {
@@ -357,7 +352,6 @@ BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
   if (backward_hook_fn_.size() > 1) {
     MS_LOG(EXCEPTION) << "Multiple registration of bprop function is not supported.";
   }
-  SyncData(py_args);
   py::tuple converted_args(py_args.size());
   ConvertCTensorToPyTensor(py_args, &converted_args);
   constexpr size_t non_inp_args_size = 2;  // out and dout.
@@ -444,8 +438,10 @@ BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
 }
 
 BaseRef PrimitivePy::RunVariableHookFunction(const py::tuple &py_args) const {
+  py::tuple converted_args(py_args.size());
+  ConvertCTensorToPyTensor(py_args, &converted_args);
   constexpr size_t grad_output_index = 2;
-  py::object grad_output = py_args[grad_output_index];
+  py::object grad_output = converted_args[grad_output_index];
   for (const auto &elem : backward_hook_fn_) {
     py::object code_obj = py::getattr(elem.second, "__code__");
     py::object co_name = py::getattr(code_obj, "co_name");
@@ -495,6 +491,9 @@ py::function PrimitivePy::GetComputeFunction() const {
   MS_LOG(DEBUG) << name() << ": get_vm_impl_fn";
   py::function get_fn = python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
   py::function vm_fn = get_fn(python_obj_);
+  if (py::isinstance<py::none>(vm_fn)) {
+    vm_fn = get_fn(name());
+  }
   if (py::isinstance<py::none>(vm_fn)) {
     MS_LOG(DEBUG) << "Cannot find " << python_obj_.attr("__class__").attr("__name__").cast<std::string>();
     vm_fn = mindspore::GetComputeFunction(Primitive::name());
@@ -643,13 +642,13 @@ PrimitivePyAdapter &PrimitivePyAdapter::operator=(const PrimitivePyAdapter &othe
 
 void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
   std::string attr_name = name;
-  ValuePtr converted_ret = nullptr;
+  ValuePtr converted_res = nullptr;
   if (py::isinstance<py::module>(obj)) {
     MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive failed,"
                       << " not support py::module to be attribute value; primitive name: " << this->name_
                       << ", attribute name: " << attr_name << " attribute value: " << py::str(obj);
   }
-  bool converted = parse::ConvertData(obj, &converted_ret);
+  bool converted = parse::ConvertData(obj, &converted_res);
   if (!converted) {
     MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive failed,"
                       << " convert python obj to MindSpore obj failed; primitive name: " << this->name_
@@ -659,15 +658,15 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
   if (kOpAttrNameReplaceMap.find(attr_name) != kOpAttrNameReplaceMap.end()) {
     attr_name = kOpAttrNameReplaceMap[attr_name];
   }
-  (void)CheckAndConvertUtils::ConvertAttrValueToInt(this->name_, name, &converted_ret);
+  (void)CheckAndConvertUtils::ConvertAttrValueToInt(this->name_, name, &converted_res);
   if (attr_name == "primitive_target") {
-    MS_EXCEPTION_IF_NULL(converted_ret);
-    if (!converted_ret->isa<StringImm>()) {
+    MS_EXCEPTION_IF_NULL(converted_res);
+    if (!converted_res->isa<StringImm>()) {
       MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive '" << this->name_
                         << "' failed, value of attribute 'primitive_target' must be CPU|GPU|Ascend but got "
                         << py::str(obj);
     }
-    auto target = GetValue<std::string>(converted_ret);
+    auto target = GetValue<std::string>(converted_res);
     if (!target.empty() && target != kCPUDevice && target != kGPUDevice && target != kAscendDevice &&
         target != "Device") {
       MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive '" << this->name_
@@ -676,10 +675,22 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
     }
   }
 
-  attrs_[attr_name] = converted_ret;
+  // If it's func graph, to reserve all used func graphs.
+  if (converted_res->isa<FuncGraph>()) {
+    const auto &fg = dyn_cast<FuncGraph>(converted_res);
+    MS_EXCEPTION_IF_NULL(fg);
+    fg->set_reserved(true);
+    auto manager = Manage({fg}, false);
+    const auto &total_used_fg = manager->func_graphs_used_total(fg);
+    for (const auto &used_fg : total_used_fg) {
+      used_fg->set_reserved(true);
+    }
+  }
+
+  attrs_[attr_name] = converted_res;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
-    (void)prim->AddAttr(attr_name, converted_ret);
+    (void)prim->AddAttr(attr_name, converted_res);
   }
 }
 
@@ -807,6 +818,23 @@ py::object PrimitivePyAdapter::GetUserData(const py::str &key) const {
   return primitive_data->obj;
 }
 
+void PrimitiveFunctionAdapter::set_label(const std::string &label, const py::object &value) {
+  ValuePtr converted_value = nullptr;
+  if (!parse::ConvertData(value, &converted_value)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For '" << PrimitiveFunctionAdapter::name() << "', Convert data failed.";
+  }
+  attached_primitive_function_->AddAttr(label, converted_value);
+}
+
+py::object PrimitiveFunctionAdapter::clone() {
+  const auto op_path = "mindspore.ops.primitive";
+  const auto func = "_create_primitive_function_obj";
+  py::object prim_func_adapter_obj = python_adapter::CallPyFn(op_path, func);
+  prim_func_adapter_obj.cast<PrimitiveFunctionAdapterPtr>()->set_attached_primitive_function(
+    attached_primitive_function_->Clone());
+  return prim_func_adapter_obj;
+}
+
 void RegPrimitive(const py::module *m) {
   (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
     .value("unknown", PrimType::kPrimTypeUnknown)
@@ -831,5 +859,16 @@ void RegPrimitive(const py::module *m) {
     .def("set_instance_name", &PrimitivePyAdapter::set_instance_name, "Set primitive instance name.")
     .def("set_user_data", &PrimitivePyAdapter::SetUserData, "Set primitive user data.")
     .def("get_user_data", &PrimitivePyAdapter::GetUserData, "Get primitive user data.");
+}
+
+void RegPrimitiveFunction(const py::module *m) {
+  (void)py::class_<PrimitiveFunctionAdapter, std::shared_ptr<PrimitiveFunctionAdapter>>(*m, "PrimitiveFunction_")
+    .def_readonly(PYTHON_PRIMITIVE_FUNCTION_FLAG, &PrimitiveFunctionAdapter::parse_info_)
+    .def(py::init<>())
+    .def_property_readonly("name", &PrimitiveFunctionAdapter::name, "Get function name.")
+    .def("has_label", &PrimitiveFunctionAdapter::has_label, "Has function attr.")
+    .def("set_label", &PrimitiveFunctionAdapter::set_label, "Set function attr.")
+    .def("get_label", &PrimitiveFunctionAdapter::get_label, "Get function attr.")
+    .def("clone", &PrimitiveFunctionAdapter::clone, "Clone a Primitive and create a PrimitiveFunctionAdapter.");
 }
 }  // namespace mindspore

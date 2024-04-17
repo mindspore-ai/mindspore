@@ -16,10 +16,10 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_SEGMENT_MEAN_GRAD_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_SEGMENT_MEAN_GRAD_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
-#include "cpu_kernel/common/status.h"
+#include "context/common/status.h"
 
 namespace aicpu {
 class SparseSegmentMeanGradCpuKernel : public CpuKernel {
@@ -29,13 +29,13 @@ class SparseSegmentMeanGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  KernelStatus CheckDataPara(const CpuKernelContext &ctx) const;
-  KernelStatus CheckShapePara(const CpuKernelContext &ctx) const;
+  KernelStatus CheckDataPara(CpuKernelContext &ctx) const;
+  KernelStatus CheckShapePara(CpuKernelContext &ctx) const;
   template <typename T>
-  KernelStatus ComputeKernel(const CpuKernelContext &ctx);
+  KernelStatus ComputeKernel(CpuKernelContext &ctx);
 
   template <typename T, typename T1, typename T2>
-  KernelStatus ComputeKernelWithType(const CpuKernelContext &ctx);
+  KernelStatus ComputeKernelWithType(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_NEXTAFTER_H_
 #define AICPU_KERNELS_NORMALIZED_NEXTAFTER_H_
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -33,7 +33,8 @@ class NextAfterCpuKernel : public CpuKernel {
   uint32_t NextAfterParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *input1, const T *input2, T *output);
+  void SpecialCompute(CpuKernelContext &ctx, BcastShapeType type, int64_t start, int64_t end, const T *input1,
+                      const T *input2, T *output);
 
   template <typename T>
   uint32_t NoBcastCompute(CpuKernelContext &ctx);

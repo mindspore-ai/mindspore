@@ -78,6 +78,13 @@ void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<Dev
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input data:" << input_data->data_
+                << " input index:" << input_data->index_ << ", size:" << input_data->data_->GetSize()
+                << " ptr:" << input_data->data_->GetMutablePtr()
+                << ", origin ref count:" << input_data->data_->original_ref_count()
+                << ", current ref count:" << input_data->data_->ref_count()
+                << ", dynamic ref count:" << input_data->data_->dynamic_ref_count()
+                << ", flag:" << input_data->data_->flag() << " user data:" << input_data->data_->user_data();
   // The parameters from the inside of the subgraph need to be put into the stack.
   if (IntToSize(input_data->index_) < input_stack_data_num_ + device_tensor_store_keys_.size() +
                                         input_stack_partials_num_ + local_device_tensors_.size()) {

@@ -22,8 +22,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include <utility>
-#include "ops/cast.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/return.h"
 #include "ops/depend.h"
 #include "common/format_utils.h"
@@ -44,7 +43,7 @@ namespace dpico {
 namespace {
 const size_t kMinimumNumbOfSegments = 1;
 bool CheckInputDimSize(const api::CNodePtr &cnode) {
-  for (size_t i = 0; i < cnode->inputs().size(); i++) {
+  for (size_t i = 0; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     if (!api::utils::isa<api::CNodePtr>(input_node) &&
         (input_node->cast<api::ParameterPtr>() == nullptr || input_node->cast<api::ParameterPtr>()->has_default())) {

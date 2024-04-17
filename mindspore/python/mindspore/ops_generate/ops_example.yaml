@@ -1,0 +1,106 @@
+#see blow example first when you want to define an operator
+##operator sample_op
+# sample_op:
+#     args:
+#         input_x: 
+#             dtype: tensor
+#         bias: 
+#             dtype: tensor
+#         data_format: 
+#             dtype: str
+#             #mark it if this is a primitive init arg.
+#             default: "NCHW"
+#             prim_init: True
+#     returns:
+#         output_x: 
+#             dtype: tensor
+#     function: #optional
+#          name: _sample_op_ #if function name is not set, operator name will be use as operator function name.
+#          disable: true 
+#     class: #optional
+#          name: SampleOp_ #if class name is not set, operator name with upper camel format will be use as class name.
+#     args_signature: #optional
+#          rw_write: x
+#          rw_read: y
+#          rw_ref:
+#          dtype_group: (x, y) #if input x and y should has same dtype.
+#
+#operator args support one or multiple kind of below dtype:
+#bool, int, float, tensor, str, tuple, list
+
+#operator bias_add
+bias_add:
+    args:
+        input_x: 
+            dtype: tensor
+        bias: 
+            dtype: tensor
+        data_format: 
+            dtype: str
+            default: "NCHW"
+            prim_init: True
+    returns:
+        output_x: 
+            dtype: tensor
+    #if func_name is not set, operator name will be use as operator function name.
+    function: 
+        name: _bias_add
+    #     disable: true
+    # class:
+    #     name: BiasAdd       
+
+#operator batch_norm
+batch_norm:
+    args:
+        input_x: 
+            dtype: tensor
+        running_mean: 
+            dtype: tensor
+        running_var: 
+            dtype: tensor
+        weight: 
+            dtype: tensor
+        bias: 
+            dtype: tensor
+        training: 
+            dtype: bool
+            default: False
+            prim_init: True
+        momentum:
+            dtype: float
+            default: 0.1
+            prim_init: True
+        eps: 
+            dtype: float
+            default: 1e-5
+            prim_init: True
+    returns:
+        output_x: 
+            dtype: tensor
+
+#operator avg_pool
+avg_pool:
+    args:
+        x:
+            dtype: tensor
+        kernel_size:
+            dtype: tuple[int]
+            default: 1
+            prim_init: True
+            type_cast: int
+        strides:
+            dtype: tuple[int]
+            default: 1
+            prim_init: True
+            type_cast: int
+        pad_mode:
+            dtype: str
+            default: "valid"
+            prim_init: True
+        data_format:
+            dtype: str
+            default: "NCHW"
+            prim_init: True
+    returns:
+        output: 
+            dtype: tensor

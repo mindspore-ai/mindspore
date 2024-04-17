@@ -62,6 +62,7 @@ class GraphSinkSession : public InferSession {
   MutableTensorImplPtr GetOutputByTensorName(uint32_t graph_id, const std::string &tensorName) override;
   MutableTensorImplPtr GetInputByTensorName(uint32_t graph_id, const std::string &name) override;
   void SetConfigInfo(ConfigInfos config_infos) { config_infos_ = config_infos; }
+  Status UpdateWeights(const std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> &weights) override;
 
  private:
   Status InitGraphInfo(DelegateGraphInfo *graph_info_ptr, uint32_t graph_id);

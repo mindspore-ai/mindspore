@@ -47,12 +47,13 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const size_t kDefalutRank = 2;
-  const size_t kBatchRank = 1;
   const size_t kBatchIndex = 3;
   const size_t kRowIndex = 2;
   const size_t kColIndex = 1;
-  auto x1_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
-  auto x2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  const size_t kRank = 2;
+  const size_t kBatchRank = 3;
+  auto x1_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
+  auto x2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto x1_shape = x1_shape_map[kShape];
   auto x2_shape = x2_shape_map[kShape];
   ShapeVector out_shape = {};
@@ -61,13 +62,8 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
     out_shape.push_back(abstract::Shape::kShapeRankAny);
     return std::make_shared<abstract::Shape>(out_shape);
   }
-  if (x1_shape.size() <= kBatchRank) {
-    MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x1 have at least 2 dimensions"
-                             << ", while got x1 rank " << x1_shape.size() << ".";
-  }
-  if (x2_shape.size() <= kBatchRank) {
-    MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x2 have at least 2 dimensions"
-                             << ", while got x2 rank " << x2_shape.size() << ".";
+  if (x1_shape.size() != kRank && x1_shape.size() != kBatchRank) {
+    MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x1 must be 2 or 3, but got rank " << x1_shape.size();
   }
   if (x1_shape.size() != x2_shape.size()) {
     MS_EXCEPTION(ValueError) << "For CholeskySolve, ranks of inputs should be equal"
@@ -119,10 +115,10 @@ TypePtr CholeskySolveInferType(const PrimitivePtr &primitive, const std::vector<
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
-  (void)args.emplace("x1", input_args[kInputIndex0]->BuildType());
-  (void)args.emplace("x2", input_args[kInputIndex1]->BuildType());
+  (void)args.emplace("x1", input_args[kInputIndex0]->GetType());
+  (void)args.emplace("x2", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, op_name);
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

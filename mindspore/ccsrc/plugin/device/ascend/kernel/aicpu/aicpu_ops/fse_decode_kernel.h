@@ -35,7 +35,7 @@ class FSEDecodeKernel : public KernelBase {
   uint32_t FixedBitFloatDequantTask();
   uint64_t Pop(const uint64_t *chunks, uint64_t bit_count);
   std::vector<int> output_shape_;
-  int64_t input_shape_size_;
+  int64_t input_shape_size_{0};
 
   int64_t dst_type_{0};
   uint64_t curr_chunk_{0};

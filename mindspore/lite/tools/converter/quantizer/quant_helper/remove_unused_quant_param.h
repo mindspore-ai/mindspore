@@ -27,7 +27,6 @@ class RemoveQuantParam {
   explicit RemoveQuantParam(const FuncGraphPtr &funcGraph) : func_graph_(funcGraph) {}
   ~RemoveQuantParam() = default;
 
- public:
   int Remove();
 
  private:

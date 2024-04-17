@@ -1,0 +1,15 @@
+#operator log
+log:
+    args:
+        input:
+            dtype: tensor
+    labels:
+        cust_aicpu: "'Log'"
+        base: -1.0
+        scale: 1.0
+        shift: 0.0
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True

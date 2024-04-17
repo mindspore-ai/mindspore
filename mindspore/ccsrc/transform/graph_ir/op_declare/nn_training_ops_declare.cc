@@ -310,17 +310,16 @@ INPUT_MAP(ApplyAdagradDA) = {{1, INPUT_DESC(var)},
                              {8, INPUT_DESC(global_step)}};
 ATTR_MAP(ApplyAdagradDA) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdagradDA) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyAdagradDA, kApplyAdagradDADOpName, ADPT_DESC(ApplyAdagradDA))
+REG_ADPT_DESC(ApplyAdagradDA, kApplyAdagradDAOpName, ADPT_DESC(ApplyAdagradDA))
 
 // ApplyRMSProp
 INPUT_MAP(ApplyRMSProp) = {
   {1, INPUT_DESC(var)}, {2, INPUT_DESC(ms)},       {3, INPUT_DESC(mom)},     {4, INPUT_DESC(lr)},
-  {5, INPUT_DESC(rho)}, {6, INPUT_DESC(momentum)}, {7, INPUT_DESC(epsilon)}, {8, INPUT_DESC(grad)},
+  {6, INPUT_DESC(rho)}, {7, INPUT_DESC(momentum)}, {8, INPUT_DESC(epsilon)}, {5, INPUT_DESC(grad)},
 };
-ATTR_INPUT_MAP(ApplyRMSProp) = {{"rho", "rho"}, {"momentum", "momentum"}, {"epsilon", "epsilon"}};
 ATTR_MAP(ApplyRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyRMSProp) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyRMSProp, kApplyRMSPropDOpName, ADPT_DESC(ApplyRMSProp))
+REG_ADPT_DESC(ApplyRMSProp, kApplyRMSPropOpName, ADPT_DESC(ApplyRMSProp))
 
 // ApplyProximalAdagrad
 INPUT_MAP(ApplyProximalAdagrad) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},
@@ -352,4 +351,47 @@ ATTR_INPUT_MAP(SparseApplyAdadelta) = {{"epsilon", "epsilon"}};
 ATTR_MAP(SparseApplyAdadelta) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyAdadelta) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(SparseApplyAdadelta, kSparseApplyAdadeltaDOpName, ADPT_DESC(SparseApplyAdadelta))
+
+// FusedSparseProximalAdagrad
+CUST_INPUT_MAP(FusedSparseProximalAdagrad) = {{1, INPUT_DESC(var)},    {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},
+                                              {4, INPUT_DESC(l1)},     {5, INPUT_DESC(l2)},    {6, INPUT_DESC(grad)},
+                                              {7, INPUT_DESC(indices)}};
+CUST_ATTR_MAP(FusedSparseProximalAdagrad) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(FusedSparseProximalAdagrad) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
+REG_ADPT_DESC(FusedSparseProximalAdagrad, prim::kPrimFusedSparseProximalAdagrad->name(),
+              CUST_ADPT_DESC(FusedSparseProximalAdagrad));
+
+// FusedSparseFtrl
+CUST_INPUT_MAP(FusedSparseFtrl) = {{1, INPUT_DESC(var)},
+                                   {2, INPUT_DESC(accum)},
+                                   {3, INPUT_DESC(linear)},
+                                   {4, INPUT_DESC(grad)},
+                                   {5, INPUT_DESC(indices)}};
+CUST_ATTR_MAP(FusedSparseFtrl) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())},
+                                  {"l1", ATTR_DESC(l1, AnyTraits<float>())},
+                                  {"l2", ATTR_DESC(l2, AnyTraits<float>())},
+                                  {"lr_power", ATTR_DESC(lr_power, AnyTraits<float>())},
+                                  {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(FusedSparseFtrl) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}, {2, OUTPUT_DESC(linear)}};
+REG_ADPT_DESC(FusedSparseFtrl, prim::kPrimFusedSparseFtrl->name(), CUST_ADPT_DESC(FusedSparseFtrl));
+
+// FusedSparseAdam
+CUST_INPUT_MAP(FusedSparseAdam) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},
+                                   {4, INPUT_DESC(beta1_power)}, {5, INPUT_DESC(beta2_power)}, {6, INPUT_DESC(lr)},
+                                   {7, INPUT_DESC(beta1)},       {8, INPUT_DESC(beta2)},       {9, INPUT_DESC(epsilon)},
+                                   {10, INPUT_DESC(grad)},       {11, INPUT_DESC(indices)}};
+CUST_ATTR_MAP(FusedSparseAdam) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
+                                  {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(FusedSparseAdam) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
+REG_ADPT_DESC(FusedSparseAdam, prim::kPrimFusedSparseAdam->name(), CUST_ADPT_DESC(FusedSparseAdam));
+
+// FusedSparseLazyAdam
+CUST_INPUT_MAP(FusedSparseLazyAdam) = {
+  {1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},     {3, INPUT_DESC(v)},       {4, INPUT_DESC(beta1_power)},
+  {5, INPUT_DESC(beta2_power)}, {6, INPUT_DESC(lr)},    {7, INPUT_DESC(beta1)},   {8, INPUT_DESC(beta2)},
+  {9, INPUT_DESC(epsilon)},     {10, INPUT_DESC(grad)}, {11, INPUT_DESC(indices)}};
+CUST_ATTR_MAP(FusedSparseLazyAdam) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
+                                      {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(FusedSparseLazyAdam) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
+REG_ADPT_DESC(FusedSparseLazyAdam, prim::kPrimFusedSparseLazyAdam->name(), CUST_ADPT_DESC(FusedSparseLazyAdam));
 }  // namespace mindspore::transform

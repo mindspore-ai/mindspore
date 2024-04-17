@@ -48,14 +48,14 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
   const int64_t kNumber2 = 2;
   const int64_t kNumber1 = 1;
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto rank = SizeToLong(x_shape.size());
 
-  auto diagonal_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto diagonal_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto diagonal_rank = SizeToLong(diagonal_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("diagonal rank", diagonal_rank, kGreaterEqual, kNumber1, prim_name);
 
-  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto k_rank = SizeToLong(k_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
 
@@ -65,7 +65,7 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
 
   std::vector<ShapeVector> shapes = {x_shape, diagonal_shape, k_shape};
   auto is_dynamic = std::any_of(shapes.begin(), shapes.end(), IsDynamic);
-  auto value_ptr = input_args[kInputIndex2]->BuildValue();
+  auto value_ptr = input_args[kInputIndex2]->GetValue();
   MS_EXCEPTION_IF_NULL(value_ptr);
   if (is_dynamic || !IsValueKnown(value_ptr)) {
     ShapeVector out_shape(x_shape.size(), -1);
@@ -86,7 +86,8 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
     }
   }
 
-  auto k_val = CheckAndConvertUtils::CheckTensorIntValue("k", value_ptr, prim_name);
+  auto k_val =
+    CheckAndConvertUtils::CheckTensorIntValue("k", value_ptr, prim_name, input_args[kInputIndex2]->GetType());
   auto k_val_size = k_val.size();
   CheckAndConvertUtils::CheckInRange<int64_t>("k size", SizeToLong(k_val_size), kIncludeBoth, {kNumber1, kNumber2},
                                               prim_name);
@@ -137,15 +138,15 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
 
 TypePtr MatrixSetDiagV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto x_arg = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto diagonal_arg = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  auto k_arg = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
+  auto x_arg = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto diagonal_arg = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+  auto k_arg = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim_name, x_arg, diagonal_arg);
-  auto x_type = x_arg->BuildType();
+  auto x_type = x_arg->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
   const std::set<TypePtr> valid_type = {kInt32};
-  auto k_type = k_arg->BuildType();
+  auto k_type = k_arg->GetType();
   MS_EXCEPTION_IF_NULL(k_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("k", k_type, valid_type, prim_name);
   return x_type;

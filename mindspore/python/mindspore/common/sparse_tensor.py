@@ -226,7 +226,7 @@ class COOTensor(COOTensor_):
 
     Common arithmetic operations include: addition (+), subtraction (-), multiplication (*),
     and division (/). For details about operations supported by `COOTensor`, see
-    `operators <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#operators>`_.
+    `operators <https://www.mindspore.cn/docs/en/r2.3.q1/note/static_graph_syntax_support.html#operators>`_.
 
     .. warning::
         - This is an experimental API that is subject to change or deletion.
@@ -240,7 +240,7 @@ class COOTensor(COOTensor_):
             Please make sure that the indices are in range of the given shape.
         values (Tensor): A 1-D tensor of any type and shape :math:`(N)`, which
             supplies the values for each element in `indices`. Default: ``None`` .
-        shape (tuple(int)): An integer tuple of size `ndims`,
+        shape (tuple(int)): An integer tuple of shape :math:`(ndims)`,
             which specifies the dense_shape of the sparse tensor. Default: ``None`` .
         coo_tensor (COOTensor): A COOTensor object. Default: ``None`` .
 
@@ -351,22 +351,69 @@ class COOTensor(COOTensor_):
 
     @property
     def dtype(self) -> mstype:
-        """Return the dtype of the values of COOTensor (:class:`mindspore.dtype`)."""
+        """
+        Return the dtype of the values of COOTensor (:class:`mindspore.dtype`).
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, COOTensor
+            >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (3, 4)
+            >>> coo_tensor = COOTensor(indices, values, shape)
+            >>> print(coo_tensor.dtype)
+            Float32
+        """
         return self._dtype
 
     @property
     def size(self) -> int:
-        """Return the number of non-zero values."""
+        """
+        Return the number of non-zero values.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, COOTensor
+            >>> indices = Tensor([[0, 1, 2], [1, 0, 2]], dtype=ms.int32)
+            >>> values = Tensor([1, 5, 4], dtype=ms.float32)
+            >>> shape = (3, 3)
+            >>> coo_tensor = COOTensor(indices.transpose(), values, shape)
+            >>> print(coo_tensor.size)
+            3
+        """
         return self.values.size
 
     @property
     def itemsize(self) -> int:
-        """Return the length of one tensor element in bytes."""
+        """
+        Return the length of one tensor element in bytes.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, COOTensor
+            >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float64)
+            >>> shape = (3, 4)
+            >>> coo_tensor = COOTensor(indices, values, shape)
+            >>> print(coo_tensor.itemsize)
+            8
+        """
         return self.values.itemsize
 
     @property
     def ndim(self) -> int:
-        """Return the number of tensor dimensions."""
+        """
+        Return the number of tensor dimensions.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, COOTensor
+            >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> coo_tensor = COOTensor(indices, values, (3, 4))
+            >>> print(coo_tensor.ndim)
+            2
+        """
         return len(self.shape)
 
     def coalesce(self) -> COOTensor:
@@ -408,6 +455,17 @@ class COOTensor(COOTensor_):
 
         Supported Platforms:
             ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, COOTensor
+            >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.int32)
+            >>> shape = (3, 4)
+            >>> coo_tensor = COOTensor(indices, values, shape)
+            >>> print(coo_tensor.to_csr())
+            CSRTensor(shape=[3, 4], dtype=Int32, indptr=Tensor(shape=[4], dtype=Int32, value=[0 1 2 2]),
+                indices=Tensor(shape=[2], dtype=Int32, value=[1 2]), values=Tensor(shape=[2], dtype=Int32, value=[1 2]))
         """
         row_indices = self.indices[:, 0]
         col_indices = self.indices[:, 1]
@@ -429,6 +487,18 @@ class COOTensor(COOTensor_):
 
         Supported Platforms:
             ``GPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, COOTensor
+            >>> indices = Tensor([[0, 1, 2], [1, 0, 2]], dtype=ms.int32)
+            >>> values = Tensor([1, 5, 4], dtype=ms.float32)
+            >>> shape = (3, 3)
+            >>> coo_tensor = COOTensor(indices.transpose(), values, shape)
+            >>> print(coo_tensor.to_dense())
+            [[0. 1. 0.]
+             [5. 0. 0.]
+             [0. 0. 4.]]
         """
         zeros_tensor = tensor_operator_registry.get("zeros")(self.shape, self.values.dtype)
         return tensor_operator_registry.get("tensor_scatter_add")(
@@ -469,6 +539,18 @@ class COOTensor(COOTensor_):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, COOTensor
+            >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (3, 4)
+            >>> coo_tensor = COOTensor(indices, values, shape)
+            >>> print(coo_tensor.to_tuple())
+            (Tensor(shape=[2, 2], dtype=Int32, value=
+            [[0, 1],
+             [1, 2]]), Tensor(shape=[2], dtype=Float32, value= [ 1.00000000e+00,  2.00000000e+00]), (3, 4))
         """
         return self.indices, self.values, self.shape
 
@@ -481,6 +563,17 @@ class COOTensor(COOTensor_):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, COOTensor
+            >>> indices = Tensor([[0, 1, 2], [1, 0, 2]], dtype=ms.int32)
+            >>> values = Tensor([1, -5, -4], dtype=ms.float32)
+            >>> shape = (3, 3)
+            >>> coo_tensor = COOTensor(indices.transpose(), values, shape)
+            >>> res = coo_tensor.abs()
+            >>> print(res.values)
+            [1. 5. 4.]
         """
         data = self.values.abs()
         return COOTensor(self.indices, data, self.shape)
@@ -544,7 +637,7 @@ class COOTensor(COOTensor_):
 
 
 class CSRTensor(CSRTensor_):
-    """
+    r"""
     Constructs a sparse tensor in CSR (Compressed Sparse Row) format, with specified
     values indicated by `values` and row and column positions indicated by `indptr`
     and `indices`.
@@ -560,12 +653,12 @@ class CSRTensor(CSRTensor_):
 
     Common arithmetic operations include: addition (+), subtraction (-), multiplication (*),
     and division (/). For details about operations supported by `CSRTensor`, see
-    `operators <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#operators>`_.
+    `operators <https://www.mindspore.cn/docs/en/r2.3.q1/note/static_graph_syntax_support.html#operators>`_.
 
     .. warning::
         - This is an experimental API that is subjected to change.
         - If the values given by `indptr` or `indices` are invalid, the results may be undefined. Invalid values include
-          when the length of `values` or `indices` exceeds the range indicated by indptr, and when the columns
+          when the length of `values` or `indices` exceeds the range indicated by `indptr`, and when the columns
           indicated by `indices` are repeated on the same row.
 
     Args:
@@ -577,10 +670,10 @@ class CSRTensor(CSRTensor_):
             must be int16, int32 or int64.
         values (Tensor): Tensor, which has the same length as `indices` (values.shape[0] == indices.shape[0]).
             `values`  stores the data for CSRTensor. Default: ``None``.
-        shape (tuple(int)): A tuple indicates the shape of the CSRTensor, and `shape[0]` must equal to `M - 1`,
+        shape (tuple(int)): An integer tuple of shape :math:`(ndims)`, and `shape[0]` must equal to `M - 1`,
             which all equal to number of rows of the CSRTensor. Default: ``None``.
         csr_tensor (CSRTensor): A CSRTensor object.  Values' feature dimension should match with
-            CSRTensor's feature dimension (values.shape[1:] == csr_tensor.shape[2:]). Default: ``None``.
+            CSRTensor's feature dimension :math:`(values.shape[1:] == csr\_tensor.shape[2:])` . Default: ``None``.
 
     Outputs:
         CSRTensor, with shape defined by `shape`, and dtype inferred from `value`.
@@ -668,37 +761,128 @@ class CSRTensor(CSRTensor_):
 
     @property
     def indices(self) -> Tensor:
-        """Return CSRTensor's column indices."""
+        """
+        Return CSRTensor's column indices.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.indices)
+            [0 1]
+        """
         return Tensor(self._indices)
 
     @property
     def values(self) -> Tensor:
-        """Return CSRTensor's non-zero values."""
+        """
+        Return CSRTensor's non-zero values.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.values)
+            [1. 2.]
+        """
         return Tensor(self._values)
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        """Return CSRTensor's shape."""
+        """
+        Return CSRTensor's shape.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.shape)
+            (2, 4)
+        """
         return self._shape
 
     @property
     def dtype(self) -> mstype:
-        """Return the dtype of the values of CSRTensor (:class:`mindspore.dtype`)."""
+        """
+        Return the dtype of the values of CSRTensor (:class:`mindspore.dtype`).
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.dtype)
+            Float32
+        """
         return self._dtype
 
     @property
     def size(self) -> int:
-        """Return the number of non-zero values."""
+        """
+        Return the number of non-zero values.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.size)
+            2
+        """
         return self.values.size
 
     @property
     def itemsize(self) -> int:
-        """Return the length of one tensor element in bytes."""
+        """
+        Return the length of one tensor element in bytes.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float64)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.itemsize)
+            8
+        """
         return self.values.itemsize
 
     @property
     def ndim(self) -> int:
-        """Return the number of tensor dimensions."""
+        """
+        Return the number of tensor dimensions.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.ndim)
+            2
+        """
         return len(self.shape)
 
     def to_tuple(self) -> Tuple[Tensor, Tensor, Tensor, Tuple[int, ...]]:
@@ -710,6 +894,19 @@ class CSRTensor(CSRTensor_):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.to_tuple())
+            (Tensor(shape=[3], dtype=Int32, value= [0, 1, 2]), Tensor(shape=[2], dtype=Int32, value= [0, 1]),
+                Tensor(shape=[2], dtype=Float32, value= [ 1.00000000e+00,  2.00000000e+00]), (2, 4))
+
         """
         return self.indptr, self.indices, self.values, self.shape
 
@@ -725,6 +922,19 @@ class CSRTensor(CSRTensor_):
 
         Supported Platforms:
             ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.int32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.to_coo())
+            COOTensor(shape=[2, 4], dtype=Int32, indices=Tensor(shape=[2, 2], dtype=Int32, value=
+            [[0 0]
+             [1 1]]), values=Tensor(shape=[2], dtype=Int32, value=[1 2]))
         """
         if self.ndim != 2:
             raise ValueError("Currently only support 2-D CSRTensor when converting to COOTensor.")
@@ -741,6 +951,18 @@ class CSRTensor(CSRTensor_):
 
         Supported Platforms:
             ``GPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.to_dense())
+            [[1. 0. 0. 0.]
+             [0. 2. 0. 0.]]
         """
         return tensor_operator_registry.get("csr_to_dense")(self)
 
@@ -883,6 +1105,17 @@ class CSRTensor(CSRTensor_):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> values = Tensor([-1, -2], dtype=ms.float32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(csr_tensor.abs().values)
+            [1. 2.]
         """
         data = self.values.abs()
         return CSRTensor(self.indptr, self.indices, data, self.shape)

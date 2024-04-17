@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ class Net(nn.Cell):
         return ops.arange(start, end, step, dtype=dtype)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -50,4 +50,4 @@ def test_arange_normal(mode):
     assert np.allclose(output2.asnumpy(), np.array([0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]))
     assert output2.dtype == ms.int32
     assert np.allclose(output3.asnumpy(), np.array([12., 11., 10., 9., 8., 7., 6., 5., 4., 3.]))
-    assert output3.dtype == ms.float64
+    assert output3.dtype == ms.float32

@@ -16,14 +16,21 @@
 
 #include "transform/acl_ir/acl_utils.h"
 #include <algorithm>
+#include <mutex>
 #include <set>
 #include "utils/ms_context.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "transform/acl_ir/acl_allocator.h"
 #include "include/common/debug/common.h"
 #include "utils/file_utils.h"
-#include "acl/acl.h"
-#include "acl/acl_mdl.h"
+#include "include/common/profiler.h"
+#include "transform/acl_ir/op_api_util.h"
+#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_compiler_symbol.h"
+#include "transform/symbol/acl_mdl_symbol.h"
+#include "transform/symbol/acl_op_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace {
 /*
@@ -78,30 +85,13 @@ python3 print_data.py /tmp/npy_acl_data/xxx*.npy
 
 constexpr auto kAclDumpConfigPath = "MS_ACL_DUMP_CFG_PATH";
 
-bool g_acl_initialized = false;
-std::mutex g_acl_init_mutex;
-
-void InitializeAcl() {
-  std::lock_guard<std::mutex> lock(g_acl_init_mutex);
-  if (g_acl_initialized) {
-    return;
-  }
-
-  if (aclInit(nullptr) != ACL_ERROR_NONE) {
-    MS_LOG(WARNING) << "Call aclInit failed, acl data dump function will be unusable.";
-  } else {
-    MS_LOG(INFO) << "Call aclInit successfully";
-  }
-  g_acl_initialized = true;
-}
-
 class AclDumper {
  public:
   AclDumper(AclDumper const &) = delete;             // disable copy constructor
   AclDumper &operator=(AclDumper const &) = delete;  // disable assignment operator
 
   // constructor
-  AclDumper() : acl_dump_config_(mindspore::common::GetEnv(kAclDumpConfigPath)) {
+  AclDumper() : acl_dump_config_("") {
     // acl dump config path is not set
     if (acl_dump_config_.empty()) {
       return;
@@ -109,9 +99,9 @@ class AclDumper {
 
     // NOTE: function `aclmdlInitDump` must be called after `aclInit` to take effect, MindSpore never call `aclInit`
     // before, so here call it once
-    InitializeAcl();
+    mindspore::device::ascend::InitializeAcl();
 
-    if (aclmdlInitDump() != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclmdlInitDump) != ACL_ERROR_NONE) {
       acl_dump_config_ = "";
       MS_LOG(WARNING) << "Call aclmdlInitDump failed, , acl data dump function will be unusable.";
     }
@@ -123,7 +113,7 @@ class AclDumper {
       return;
     }
 
-    if (aclmdlFinalizeDump() != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclmdlFinalizeDump) != ACL_ERROR_NONE) {
       MS_LOG(WARNING) << "Call aclmdlFinalizeDump failed.";
     }
   }
@@ -133,7 +123,7 @@ class AclDumper {
     if (acl_dump_config_.empty()) {
       return;
     }
-    if (aclmdlSetDump(acl_dump_config_.c_str()) != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclmdlSetDump, acl_dump_config_.c_str()) != ACL_ERROR_NONE) {
       MS_LOG(WARNING)
         << "Call aclmdlSetDump failed, acl data dump function will be unusable. Please check whether the config file `"
         << acl_dump_config_ << "` set by environment variable `" << kAclDumpConfigPath
@@ -149,49 +139,49 @@ class AclDumper {
 namespace mindspore {
 namespace transform {
 void AclAttrMaker::SetAttr(const string &attr_name, const bool value, aclopAttr *attr) {
-  auto ret = aclopSetAttrBool(attr, attr_name.c_str(), value);
+  auto ret = CALL_ASCEND_API(aclopSetAttrBool, attr, attr_name.c_str(), value);
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
   }
 }
 
 void AclAttrMaker::SetAttr(const string &attr_name, const int64_t value, aclopAttr *attr) {
-  auto ret = aclopSetAttrInt(attr, attr_name.c_str(), value);
+  auto ret = CALL_ASCEND_API(aclopSetAttrInt, attr, attr_name.c_str(), value);
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
   }
 }
 
 void AclAttrMaker::SetAttr(const string &attr_name, const float value, aclopAttr *attr) {
-  auto ret = aclopSetAttrFloat(attr, attr_name.c_str(), value);
+  auto ret = CALL_ASCEND_API(aclopSetAttrFloat, attr, attr_name.c_str(), value);
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
   }
 }
 
 void AclAttrMaker::SetAttr(const string &attr_name, const std::string &value, aclopAttr *attr) {
-  auto ret = aclopSetAttrString(attr, attr_name.c_str(), value.c_str());
+  auto ret = CALL_ASCEND_API(aclopSetAttrString, attr, attr_name.c_str(), value.c_str());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
   }
 }
 
 void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<uint8_t> &value, aclopAttr *attr) {
-  auto ret = aclopSetAttrListBool(attr, attr_name.c_str(), value.size(), value.data());
+  auto ret = CALL_ASCEND_API(aclopSetAttrListBool, attr, attr_name.c_str(), value.size(), value.data());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
   }
 }
 
 void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<int64_t> &value, aclopAttr *attr) {
-  auto ret = aclopSetAttrListInt(attr, attr_name.c_str(), value.size(), value.data());
+  auto ret = CALL_ASCEND_API(aclopSetAttrListInt, attr, attr_name.c_str(), value.size(), value.data());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
   }
 }
 
 void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<float> &value, aclopAttr *attr) {
-  auto ret = aclopSetAttrListFloat(attr, attr_name.c_str(), value.size(), value.data());
+  auto ret = CALL_ASCEND_API(aclopSetAttrListFloat, attr, attr_name.c_str(), value.size(), value.data());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
   }
@@ -201,7 +191,7 @@ void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<std::strin
   std::vector<const char *> convert_list;
   (void)std::transform(value.begin(), value.end(), std::back_inserter(convert_list),
                        [](const std::string &s) { return s.c_str(); });
-  auto ret = aclopSetAttrListString(attr, attr_name.c_str(), value.size(), convert_list.data());
+  auto ret = CALL_ASCEND_API(aclopSetAttrListString, attr, attr_name.c_str(), value.size(), convert_list.data());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
   }
@@ -215,15 +205,27 @@ void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<std::vecto
     values[i] = const_cast<int64_t *>(value[i].data());
     (void)num_values.emplace_back(SizeToInt(value[i].size()));
   }
-  auto ret = aclopSetAttrListListInt(attr, attr_name.c_str(), list_size, num_values.data(), values);
+  auto ret = CALL_ASCEND_API(aclopSetAttrListListInt, attr, attr_name.c_str(), list_size, num_values.data(), values);
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
   }
 }
 
 void AclAttrMaker::SetAttr(const string &attr_name, const ::ge::DataType value, aclopAttr *attr) {
-  auto ret =
-    aclopSetAttrDataType(attr, attr_name.c_str(), AclConverter::ConvertType(TransformUtil::ConvertGeDataType(value)));
+  auto ret = CALL_ASCEND_API(aclopSetAttrDataType, attr, attr_name.c_str(),
+                             AclConverter::ConvertType(TransformUtil::ConvertGeDataType(value)));
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
+  }
+}
+
+void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<::ge::DataType> value, aclopAttr *attr) {
+  auto list_size = value.size();
+  std::vector<aclDataType> data;
+  (void)std::transform(value.begin(), value.end(), std::back_inserter(data), [](const ::ge::DataType &val) {
+    return AclConverter::ConvertType(TransformUtil::ConvertGeDataType(val));
+  });
+  auto ret = CALL_ASCEND_API(aclopSetAttrListDataType, attr, attr_name.c_str(), list_size, data.data());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
   }
@@ -232,27 +234,19 @@ void AclAttrMaker::SetAttr(const string &attr_name, const ::ge::DataType value, 
 AclRunner::~AclRunner() { Reset(); }
 
 void AclRunner::Reset() {
-  (void)std::for_each(acl_param_.input_desc.begin(), acl_param_.input_desc.end(), aclDestroyTensorDesc);
-  (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), aclDestroyTensorDesc);
-  (void)std::for_each(acl_param_.input_buffer.begin(), acl_param_.input_buffer.end(), aclDestroyDataBuffer);
-  (void)std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(), aclDestroyDataBuffer);
-  if (acl_param_.attr != nullptr) {
-    aclopDestroyAttr(acl_param_.attr);
-    acl_param_.attr = nullptr;
-  }
-
-  acl_param_.input_desc.clear();
-  acl_param_.input_buffer.clear();
+  (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(),
+                      [&](const aclTensorDesc *desc) { CALL_ASCEND_API(aclDestroyTensorDesc, desc); });
+  (void)std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(),
+                      [&](const aclDataBuffer *dataBuffer) { CALL_ASCEND_API(aclDestroyDataBuffer, dataBuffer); });
 
   acl_param_.output_desc.clear();
   acl_param_.output_buffer.clear();
 
-  op_type_ = "";
   is_dynamic_ = true;
 }
 
 void AclRunner::SetStaticMode() {
-  auto set_compile_flag = aclSetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, "enable");
+  auto set_compile_flag = AclUtil::SetCompileMode(0);
   if (set_compile_flag != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
@@ -261,7 +255,7 @@ void AclRunner::SetStaticMode() {
 }
 
 void AclRunner::SetDynamicMode() {
-  auto set_compile_flag = aclSetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, "disable");
+  auto set_compile_flag = AclUtil::SetCompileMode(1);
   if (set_compile_flag != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
@@ -270,26 +264,19 @@ void AclRunner::SetDynamicMode() {
 }
 
 void AclRunner::SetPrecisionMode(const AclPrecisionMode mode) {
-  int ret = -1;
-  static std::string precision_mode = "not_inited";
-  if (precision_mode == "not_inited") {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
+  auto real_mode = mode;
+  if (mode == DEFAULT_MODE) {
+    real_mode = (AclUtil::KeepOriginDType() == 1) ? MUST_KEEP_ORIGIN_DTYPE : ALLOW_FP32_TO_FP16;
   }
-  if (!precision_mode.empty()) {
-    ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, precision_mode.c_str());
-  } else if (mode == ALLOW_FP32_TO_FP16) {
-    static const std::string allow_fp32_to_fp16 = "allow_fp32_to_fp16";
-    ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, allow_fp32_to_fp16.c_str());
-  } else if (mode == FORCE_FP32) {
-    static const std::string force_fp32 = "force_fp32";
-    ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, force_fp32.c_str());
-  } else {
-    MS_LOG(EXCEPTION) << "Acl set run mode failed! op_name is " << op_type_ << " and error mode is " << mode;
+  auto iter = acl_precision_map.find(real_mode);
+  if (iter == acl_precision_map.end()) {
+    MS_LOG(EXCEPTION) << "Acl set run mode failed! op_name is " << op_type_ << " and error mode is " << real_mode;
   }
+
+  auto ret = AclUtil::SetPrecisionMode(iter->second);
   if (ret != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Acl set precision mode failed! op_name is " << op_type_ << " and error flag is " << ret;
+    MS_LOG(EXCEPTION) << "Acl set precision mode failed! mode is " << iter->second << ", op_name is " << op_type_
+                      << " and error flag is " << ret;
   }
 }
 
@@ -304,17 +291,17 @@ void AclRunner::AoeDump() {
       MS_LOG(EXCEPTION) << "Get real path failed. path=" << file_path;
     }
     MS_LOG(INFO) << "Start aclGenGraphAndDumpForOp of op_type: " << op_type_;
-    auto set_compile_flag = aclopSetCompileFlag(ACL_OP_COMPILE_DEFAULT);
+    auto set_compile_flag = CALL_ASCEND_API(aclopSetCompileFlag, ACL_OP_COMPILE_DEFAULT);
     if (set_compile_flag != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                         << set_compile_flag;
     }
-    auto dump_ret = aclGenGraphAndDumpForOp(
-      const_cast<char *>(op_type_.c_str()), GetNumRealInputs(),
-      const_cast<aclTensorDesc **>(acl_param_.input_desc.data()),
-      const_cast<aclDataBuffer **>(acl_param_.input_buffer.data()), GetNumRealOutputs(),
-      const_cast<aclTensorDesc **>(acl_param_.output_desc.data()), acl_param_.output_buffer.data(), acl_param_.attr,
-      ACL_ENGINE_SYS, const_cast<char *>(real_path.value().c_str()), nullptr);
+    auto dump_ret =
+      CALL_ASCEND_API(aclGenGraphAndDumpForOp, const_cast<char *>(op_type_.c_str()), GetNumRealInputs(),
+                      const_cast<aclTensorDesc **>(acl_param_.input_desc.data()),
+                      const_cast<aclDataBuffer **>(acl_param_.input_buffer.data()), GetNumRealOutputs(),
+                      const_cast<aclTensorDesc **>(acl_param_.output_desc.data()), acl_param_.output_buffer.data(),
+                      acl_param_.attr, ACL_ENGINE_SYS, const_cast<char *>(real_path.value().c_str()), nullptr);
     if (dump_ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Acl dump graph failed!";
     }
@@ -322,6 +309,37 @@ void AclRunner::AoeDump() {
       SetDynamicMode();
     } else {
       SetStaticMode();
+    }
+  }
+}
+
+void AclRunner::FillOptInputWithPlaceHolder() {
+  if (acl_param_.input_desc.empty()) {
+    return;
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(acl_param_.input_desc.size() == acl_param_.input_buffer.size(),
+                             "Acl param input_desc size is not equal to acl param input_buffer size");
+  bool effective_flag = false;
+  for (int i = static_cast<int>(acl_param_.input_desc.size()) - 1; i >= 0; --i) {
+    if (acl_param_.input_desc[i] != nullptr && acl_param_.input_buffer[i] != nullptr) {
+      if (!effective_flag) {
+        effective_flag = true;
+      }
+      continue;
+    }
+    if (!effective_flag) {
+      continue;
+    }
+
+    // create placeholder for input_desc
+    if (acl_param_.input_desc[i] == nullptr) {
+      acl_param_.input_desc[i] =
+        CALL_ASCEND_API(aclCreateTensorDesc, ACL_DT_UNDEFINED, 0, nullptr, ACL_FORMAT_UNDEFINED);
+    }
+
+    // create placeholder for input_buffer
+    if (acl_param_.input_buffer[i] == nullptr) {
+      acl_param_.input_buffer[i] = CALL_ASCEND_API(aclCreateDataBuffer, nullptr, 0);
     }
   }
 }
@@ -336,24 +354,27 @@ void AclRunner::Run(void *stream_ptr, bool is_sync) {
 
   MS_LOG(DEBUG) << "Start aclopCompileAndExecute of op_type: " << op_type_;
   if (is_sync) {
-    bool ret = aclrtSynchronizeStreamWithTimeout(stream_ptr, -1);
+    bool ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream_ptr, -1);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Acl syncsteam failed, op_type_:" << op_type_;
     }
-    ret = aclopCompileAndExecuteV2(const_cast<char *>(op_type_.c_str()), GetNumRealInputs(),
-                                   const_cast<aclTensorDesc **>(acl_param_.input_desc.data()),
-                                   const_cast<aclDataBuffer **>(acl_param_.input_buffer.data()), GetNumRealOutputs(),
-                                   const_cast<aclTensorDesc **>(acl_param_.output_desc.data()),
-                                   acl_param_.output_buffer.data(), acl_param_.attr, ACL_ENGINE_SYS, ACL_COMPILE_SYS,
-                                   nullptr, stream_ptr);
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunchInner,
+                                       "aclopCompileAndExecuteV2", true);
+    ret = CALL_ASCEND_API(aclopCompileAndExecuteV2, const_cast<char *>(op_type_.c_str()), GetNumRealInputs(),
+                          const_cast<aclTensorDesc **>(acl_param_.input_desc.data()),
+                          const_cast<aclDataBuffer **>(acl_param_.input_buffer.data()), GetNumRealOutputs(),
+                          const_cast<aclTensorDesc **>(acl_param_.output_desc.data()), acl_param_.output_buffer.data(),
+                          acl_param_.attr, ACL_ENGINE_SYS, ACL_COMPILE_SYS, nullptr, stream_ptr);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Acl compile and execute failed, op_type_:" << op_type_;
     }
   } else {
-    bool ret = aclopCompileAndExecute(const_cast<char *>(op_type_.c_str()), GetNumRealInputs(),
-                                      acl_param_.input_desc.data(), acl_param_.input_buffer.data(), GetNumRealOutputs(),
-                                      acl_param_.output_desc.data(), acl_param_.output_buffer.data(), acl_param_.attr,
-                                      ACL_ENGINE_SYS, ACL_COMPILE_SYS, nullptr, stream_ptr);
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunchInner,
+                                       "aclopCompileAndExecute", true);
+    bool ret = CALL_ASCEND_API(aclopCompileAndExecute, const_cast<char *>(op_type_.c_str()), GetNumRealInputs(),
+                               acl_param_.input_desc.data(), acl_param_.input_buffer.data(), GetNumRealOutputs(),
+                               acl_param_.output_desc.data(), acl_param_.output_buffer.data(), acl_param_.attr,
+                               ACL_ENGINE_SYS, ACL_COMPILE_SYS, nullptr, stream_ptr);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Acl compile and execute failed, op_type_:" << op_type_;
     }
@@ -366,13 +387,14 @@ std::vector<std::vector<int64_t>> AclRunner::SyncData() {
   // 2. get output shape
   std::vector<std::vector<int64_t>> outputs_shape;
   for (size_t out_idx = 0; out_idx < acl_param_.output_desc.size(); ++out_idx) {
-    size_t output_dim = aclGetTensorDescNumDims(acl_param_.output_desc.data()[out_idx]);
+    size_t output_dim = CALL_ASCEND_API(aclGetTensorDescNumDims, acl_param_.output_desc.data()[out_idx]);
     if (output_dim == ACL_UNKNOWN_RANK) {
       MS_LOG(EXCEPTION) << "Acl get output shape dims failed, op_type_:" << op_type_;
     }
     std::vector<int64_t> output_shape(output_dim);
     for (size_t index = 0; index < output_dim; ++index) {
-      auto ret = aclGetTensorDescDimV2(acl_param_.output_desc.data()[out_idx], index, &output_shape[index]);
+      auto ret =
+        CALL_ASCEND_API(aclGetTensorDescDimV2, acl_param_.output_desc.data()[out_idx], index, &output_shape[index]);
       if (ret != ACL_SUCCESS) {
         MS_LOG(EXCEPTION) << "Acl get output shape failed, op_type_:" << op_type_;
       }

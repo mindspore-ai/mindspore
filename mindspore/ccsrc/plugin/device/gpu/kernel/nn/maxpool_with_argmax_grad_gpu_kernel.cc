@@ -36,9 +36,9 @@ constexpr size_t Index2 = 2;
 }  // namespace
 
 template <typename T, typename S>
-bool MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *dy_addr = GetDeviceAddress<T>(inputs, 1);
   S *index_addr = GetDeviceAddress<S>(inputs, Index2);
   T *dx_addr = GetDeviceAddress<T>(outputs, 0);
@@ -48,20 +48,17 @@ bool MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPt
   return true;
 }
 
-bool MaxPoolGradWithArgmaxGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MaxPoolGradWithArgmaxGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
   return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
 }
 
-bool MaxPoolGradWithArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MaxPoolGradWithArgmaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaxPoolGradWithArgmaxInputsNum || outputs.size() != kMaxPoolGradWithArgmaxOutputsNum) {
     MS_LOG(EXCEPTION) << kernel_name_ << ": input and output size must be " << kMaxPoolGradWithArgmaxInputsNum
                       << " and " << kMaxPoolGradWithArgmaxOutputsNum << ", but get " << inputs.size() << " and "
@@ -79,13 +76,11 @@ bool MaxPoolGradWithArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int MaxPoolGradWithArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MaxPoolGradWithArgmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   // modified
   int ret = 0;
-  if (ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

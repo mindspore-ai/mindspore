@@ -111,8 +111,8 @@ cudaError_t CalUpsampleTrilinear3DGrad(const T *grad, const int n, const int c, 
       <<<CUDA_BLOCKS(device_id, dinput_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(dinput_size, grad, dinput);
   } else {
     (void)cudaMemset(dinput, 0, sizeof(T) * dinput_size);
-    const int blockSize = std::min(CUDA_THREADS(device_id), 256);
-    const int gridSize = (grad_dhw + blockSize - 1) / blockSize;
+    const size_t blockSize = std::min(CUDA_THREADS(device_id), static_cast<size_t>(256));
+    const size_t gridSize = (grad_dhw + blockSize - 1) / blockSize;
     UpsampleTrilinear3DGradKernel<T, S><<<gridSize, blockSize, 0, cuda_stream>>>(
       dinput_size, grad, n, c, grad_d, grad_h, grad_w, grad_dhw, dinput_d, dinput_h, dinput_w, dinput_dhw, d_scale,
       h_scale, w_scale, align_corner, dinput);

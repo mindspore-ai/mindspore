@@ -1,0 +1,11 @@
+# operator ScalarCast
+scalar_cast:
+  args:
+    input_x:
+      dtype: number
+    input_y:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+  returns:
+    output_data:
+      dtype: number

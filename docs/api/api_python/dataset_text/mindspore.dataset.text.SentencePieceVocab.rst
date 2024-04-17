@@ -6,6 +6,7 @@
     用于执行分词的SentencePiece对象。
 
     .. py:method:: from_dataset(dataset, col_names, vocab_size, character_coverage, model_type, params)
+        :classmethod:
 
         从数据集构建SentencePiece。
 
@@ -21,6 +22,7 @@
             SentencePieceVocab，从数据集构建的Vocab对象。
 
     .. py:method:: from_file(file_path, vocab_size, character_coverage, model_type, params)
+        :classmethod:
 
         从文件中构建一个SentencePiece对象。
 
@@ -35,6 +37,7 @@
             SentencePieceVocab，表示从文件中构建的Vocab对象。
 
     .. py:method:: save_model(vocab, path, filename)
+        :classmethod:
 
         将模型保存到给定的文件路径。
 

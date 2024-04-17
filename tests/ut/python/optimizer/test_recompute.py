@@ -69,9 +69,9 @@ def test_set_recompute_in_pynative_mode():
     """
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
-    net.pool.recompute()
-    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
     try:
+        net.pool.recompute()
+        x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
         net(x)
     except TypeError as e:
         assert "Recompute is not supported in PyNative mode currently" in str(e)

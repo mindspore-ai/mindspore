@@ -47,8 +47,8 @@ class ScalarBitwiseInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    auto x_type = input_args[0]->BuildType();
-    auto y_type = input_args[kIndex1]->BuildType();
+    auto x_type = input_args[0]->GetType();
+    auto y_type = input_args[kIndex1]->GetType();
     std::set<TypePtr> check_types = {kInt32, kInt64, kBool};
     (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_type, check_types, prim_name);
     (void)CheckAndConvertUtils::CheckSubClass("y_dtype", y_type, check_types, prim_name);
@@ -63,7 +63,7 @@ class ScalarBitwiseInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, op_name);
     auto elem_x = input_args[0];
     auto elem_y = input_args[kIndex1];
-    if (!elem_x->isa<abstract::AbstractScalar>() && !elem_y->isa<abstract::AbstractScalar>()) {
+    if (!CheckAndConvertUtils::IsScalar(elem_x) && !CheckAndConvertUtils::IsScalar(elem_y)) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem_x->ToString()
                               << " and y: " << elem_y->ToString();
     }
@@ -82,14 +82,14 @@ class ScalarBitwiseInfer : public abstract::OpInferBase {
     constexpr size_t y_index = 1;
     auto x_elem = input_args[x_index];
     auto y_elem = input_args[y_index];
-    if (!x_elem->isa<abstract::AbstractScalar>() && !y_elem->isa<abstract::AbstractScalar>()) {
+    if (!CheckAndConvertUtils::IsScalar(x_elem) && !CheckAndConvertUtils::IsScalar(y_elem)) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << x_elem->ToString()
                               << " and y: " << y_elem->ToString();
     }
 
-    auto x_value = x_elem->BuildValue();
-    auto y_value = y_elem->BuildValue();
-    if (x_value == kValueAny || y_value == kValueAny) {
+    auto x_value = x_elem->GetValue();
+    auto y_value = y_elem->GetValue();
+    if (x_value->ContainsValueAny() || y_value->ContainsValueAny()) {
       return nullptr;
     }
     auto res_type = InferType(primitive, input_args);

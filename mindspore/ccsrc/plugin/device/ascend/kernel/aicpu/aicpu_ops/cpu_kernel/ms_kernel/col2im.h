@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_COL2IM_H_
 #define AICPU_KERNELS_NORMALIZED_COL2IM_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -30,9 +30,9 @@ class Col2imCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t Col2imParamCheck(const CpuKernelContext &ctx);
+  uint32_t Col2imParamCheck(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t Col2imCompute(const CpuKernelContext &ctx);
+  uint32_t Col2imCompute(CpuKernelContext &ctx);
   template <typename T>
   void InnerCompute(int64_t c_col, int64_t input_offset, int64_t output_offset, T *input_data, T *output_data);
 

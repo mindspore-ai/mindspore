@@ -26,6 +26,7 @@ class SplitModelAscend : public SplitModel {
  protected:
   AreaMode GetDefaultAreaMode(const PrimOpPtr &node) const override;
   void InitFusePatterns() override;
+  bool is_dvm_{true};
 };
 }  // namespace mindspore::graphkernel::inner
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_ADAPTER_SPLIT_MODEL_ASCEND_H_

@@ -44,9 +44,9 @@ constexpr auto kNameSizeFour = 4;
 }  // namespace
 
 STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
-  if (cnode->inputs().size() != kNameInputNum) {
-    MS_LOG(WARNING) << "Input of resize must be " << kNameInputNum << ", real size: " << cnode->inputs().size()
-                    << ", cnode " << cnode->fullname_with_scope();
+  if (cnode->size() != kNameInputNum) {
+    MS_LOG(WARNING) << "Input of resize must be " << kNameInputNum << ", real size: " << cnode->size() << ", cnode "
+                    << cnode->fullname_with_scope();
     return lite::RET_OK;
   }
   ValueNodePtr value_node = nullptr;
@@ -95,11 +95,13 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
   if (coordinate_transformation_mode_ptr != nullptr &&
       GetValue<int64_t>(coordinate_transformation_mode_ptr) == mindspore::CoordinateTransformMode::HALF_PIXEL) {
     dst_prim->set_attr("half_pixel_centers", MakeValue(true));
+    dst_prim->set_attr("align_corners", MakeValue(false));
   }
   if (coordinate_transformation_mode_ptr != nullptr &&
       GetValue<int64_t>(coordinate_transformation_mode_ptr) == mindspore::CoordinateTransformMode::ALIGN_CORNERS) {
     dst_prim->set_attr("align_corners", MakeValue(true));
     dst_prim->set_attr("coordinate_transformation_mode", MakeValue("align_corners"));
+    dst_prim->set_attr("half_pixel_centers", MakeValue(false));
   }
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
@@ -177,8 +179,9 @@ STATUS ResizeMapper::CalResizeShape(const CNodePtr &cnode, const PrimitivePtr &p
   auto gather_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeInt32), gather_shape);
   gather_cnode->set_abstract(gather_abstract);
 
-  auto cast_fp32_node = NewCNode(cnode, prim::kPrimCast, {gather_cnode, NewValueNode(TypeIdToType(kNumberTypeFloat32))},
-                                 {DIMENSION_2D}, kNumberTypeFloat32, cnode->fullname_with_scope() + "_shape_cast_fp32");
+  auto cast_fp32_node =
+    NewCNode(cnode, prim::kPrimCast, {gather_cnode, NewValueNode(static_cast<int64_t>(kNumberTypeFloat32))},
+             {DIMENSION_2D}, kNumberTypeFloat32, cnode->fullname_with_scope() + "_shape_cast_fp32");
   if (!cast_fp32_node) {
     MS_LOG(ERROR) << "Failed to create cast node for node " << cnode->fullname_with_scope();
     return RET_ERROR;
@@ -190,8 +193,9 @@ STATUS ResizeMapper::CalResizeShape(const CNodePtr &cnode, const PrimitivePtr &p
     MS_LOG(ERROR) << "Failed to create mul node for node " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  auto cast_int32_node = NewCNode(cnode, prim::kPrimCast, {mul_node, NewValueNode(TypeIdToType(kNumberTypeInt32))},
-                                  {DIMENSION_2D}, kNumberTypeInt32, cnode->fullname_with_scope() + "_shape_cast_int32");
+  auto cast_int32_node =
+    NewCNode(cnode, prim::kPrimCast, {mul_node, NewValueNode(static_cast<int64_t>(kNumberTypeInt32))}, {DIMENSION_2D},
+             kNumberTypeInt32, cnode->fullname_with_scope() + "_shape_cast_int32");
   cnode->set_input(kResizeShapeInputIndex, cast_int32_node);
   return RET_OK;
 }

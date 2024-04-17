@@ -51,7 +51,7 @@ bool AutotuneCallback::IsEpochEndNeeded() { return false; }
 bool AutotuneCallback::IsNStepEndNeeded() { return false; }
 
 Status AutotuneCallback::PushChangeRequest(ChangeRequestPtr change_request) {
-  RETURN_IF_NOT_OK(change_request_queue_->Add(change_request));
+  RETURN_IF_NOT_OK(change_request_queue_->Add(std::move(change_request)));
   return Status::OK();
 }
 

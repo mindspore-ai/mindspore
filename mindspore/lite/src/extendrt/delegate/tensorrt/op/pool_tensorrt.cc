@@ -134,7 +134,7 @@ int PoolTensorRT::ParseParams(TensorRTContext *ctx) {
       padding_ = std::vector<int64_t>(padding.begin(), padding.end());
     }
 
-    pad_mode_ = pool_primitive->get_pad_mode();
+    pad_mode_ = static_cast<PadMode>(pool_primitive->get_pad_mode());
     if (pool_primitive->HasAttr(ops::kActivationType)) {
       activation_type_ = pool_primitive->get_activation_type();
     }

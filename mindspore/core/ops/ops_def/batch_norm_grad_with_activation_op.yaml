@@ -1,0 +1,42 @@
+batch_norm_grad_with_activation:
+    args:
+        dy:
+            dtype: tensor
+        x:
+            dtype: tensor
+        scale:
+            dtype: tensor
+        saved_mean:
+            dtype: tensor
+        saved_variance:
+            dtype: tensor
+        reserve:
+            dtype: tensor
+        bias:
+            dtype: tensor
+        y:
+            dtype: tensor
+        is_training:
+            dtype: bool
+            default: False
+            prim_init: True
+        epsilon:
+            dtype: float
+            default: 1e-5
+            prim_init: True
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        dx:
+            dtype: tensor
+        dscale:
+            dtype: tensor
+        dbias:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        disable: True

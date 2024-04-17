@@ -47,6 +47,8 @@ class OptimizeIRPassLib {
   SubstitutionPtr tuple_list_set_item_eliminator_;
   SubstitutionPtr tuple_list_get_set_item_eliminator_;
   SubstitutionPtr tuple_list_get_item_depend_reorder_;
+  SubstitutionPtr list_to_tuple_eliminator_;
+  SubstitutionPtr tuple_to_list_eliminator_;
   SubstitutionPtr tuple_list_convert_item_index_to_positive_;
   SubstitutionPtr make_slice_get_slice_eliminator_;
   SubstitutionPtr dict_get_item_eliminator_;
@@ -63,6 +65,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr same_eliminate_;
   SubstitutionPtr check_bprop_eliminate_;
   SubstitutionPtr reset_defer_inline_;
+  SubstitutionPtr const_output_eliminate_;
   SubstitutionPtr depend_value_elim_;
   SubstitutionPtr all_reduce_const_elim_;
   SubstitutionPtr mini_step_allgather_replace_;
@@ -109,6 +112,7 @@ class OptimizeIRPassLib {
 
   // inline
   SubstitutionPtr inline_;
+  SubstitutionPtr halfway_inline_;
   SubstitutionPtr inline_without_move_;
   SubstitutionPtr replace_applicator_;
   SubstitutionPtr specialize_transform_;
@@ -142,6 +146,9 @@ class OptimizeIRPassLib {
   // tuple parameter graph transform
   SubstitutionPtr call_graph_tuple_transform_;
 
+  // Eliminate the unused input of partial
+  SubstitutionPtr partial_unused_args_eliminate_;
+
   // RowTensor Eliminate
   SubstitutionPtr row_tensor_eliminate_;
 
@@ -172,6 +179,12 @@ class OptimizeIRPassLib {
   // Recompute
   SubstitutionPtr set_cell_output_no_recompute_;
   SubstitutionPtr remove_not_recompute_node_;
+
+  // Optimize with SymbolEngine
+  SubstitutionPtr elim_not_effective_node_;
+  SubstitutionPtr elim_shapecalc_of_broadcastargs_;
+  SubstitutionPtr opt_reshape_;
+  SubstitutionPtr fold_const_symbol_;
 };
 
 // the collection of irpass for resolve action

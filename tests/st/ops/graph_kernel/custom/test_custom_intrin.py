@@ -186,8 +186,6 @@ def ms_kernel_bin_inputs_test(dtype, kernel_fn):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ms_kernel_ascend_scheduling_intrin():
     """

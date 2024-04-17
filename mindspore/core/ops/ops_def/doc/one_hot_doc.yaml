@@ -1,0 +1,51 @@
+one_hot:
+    description: |
+        Computes a one-hot tensor.
+
+        The locations represented by indices in `indices` take value `on_value`, while all
+        other locations take value `off_value`.
+    
+        Note:
+            If the input indices is rank `N`, the output will have rank `N+1`. The new axis is created at dimension `axis`. 
+            On Ascend, if `on_value` is Int64 dtype, `indices` must be Int64 dtype, and the value for `on_value` and 
+            `off_value` can only be 1 and 0.
+            
+        Args:
+            axis (int): Position to insert the value. e.g. If shape of `indices` is :math:`(N, C)`, and `axis` is -1,
+                the output shape will be :math:`(N, C, D)`, If `axis` is 0, the output shape will be :math:`(D, N, C)`.
+                Default: ``-1`` .
+    
+        Inputs:
+            - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
+              Data type must be int32 or int64.
+            - **depth** (Union[int, Tensor]) - A scalar defining the depth of the one-hot dimension.
+            - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`.
+            - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.
+              It has the same data type as `on_value`.
+    
+        Outputs:
+            Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
+    
+        Raises:
+            TypeError: If `axis` or `depth` is not an int.
+            TypeError: If dtype of `on_value` is not int32, int64, float16 or float32.
+            TypeError: If dtype of `indices` is not int32 or int64.
+            TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
+            ValueError: If `axis` is not in range [-1, len(indices_shape)].
+            ValueError: If `depth` is less than 0.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> indices = Tensor(np.array([0, 1, 2]), mindspore.int32)
+            >>> depth, on_value, off_value = 3, Tensor(1.0, mindspore.float32), Tensor(0.0, mindspore.float32)
+            >>> onehot = ops.OneHot()
+            >>> output = onehot(indices, depth, on_value, off_value)
+            >>> print(output)
+            [[1. 0. 0.]
+             [0. 1. 0.]
+             [0. 0. 1.]]

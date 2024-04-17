@@ -24,6 +24,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ops/fused_sparse_ftrl.h"
 #include "ops/sparse_apply_ftrl.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -93,9 +94,8 @@ void FusedSparseFtrlCpuKernelMod::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
 }
 
-bool FusedSparseFtrlCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool FusedSparseFtrlCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -105,35 +105,33 @@ bool FusedSparseFtrlCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
                   << inputs.size();
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::FusedSparseFtrl>(base_operator->GetPrim());
-  lr_ = kernel_ptr->get_lr();
+  lr_ = GetValue<float>(primitive_->GetAttr(kAttrLr));
   if (lr_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr' must be a positive scalar, but got " << lr_;
     return false;
   }
-  l1_ = kernel_ptr->get_l1();
+  l1_ = GetValue<float>(primitive_->GetAttr(ops::kL1));
   if (l1_ < 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'l1' must be a non-negative scalar, but got " << l1_;
     return false;
   }
-  l2_ = kernel_ptr->get_l2();
+  l2_ = GetValue<float>(primitive_->GetAttr(ops::kL2));
   if (l2_ < 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'l2' must be a non-negative scalar, but got " << l2_;
     return false;
   }
-  lr_power_ = kernel_ptr->get_lr_power();
+  lr_power_ = GetValue<float>(primitive_->GetAttr(ops::kLrPower));
   if (lr_power_ > 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr_power' must be a non-negative scalar, but got " << lr_power_;
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
 void FusedSparseFtrlCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
@@ -142,12 +140,10 @@ void FusedSparseFtrlCpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int FusedSparseFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+int FusedSparseFtrlCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -203,7 +199,7 @@ int FusedSparseFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                   << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size_;
     return KRET_RESIZE_FAILED;
   }
-  indices_data_type_ = inputs[kIndicesIndex]->GetDtype();
+  indices_data_type_ = inputs[kIndicesIndex]->dtype_id();
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else if (indices_data_type_ == kNumberTypeInt64) {
@@ -245,18 +241,18 @@ const std::vector<std::pair<KernelAttr, FusedKernelRunFunc>> &FusedSparseFtrlCpu
 }
 
 template <typename T>
-bool FusedSparseFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &workspace,
-                                               const std::vector<kernel::AddressPtr> &) const {
-  auto *var = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *accum = reinterpret_cast<float *>(inputs[1]->addr);
-  auto *linear = reinterpret_cast<float *>(inputs[2]->addr);
-  auto *grad = reinterpret_cast<float *>(inputs[3]->addr);
-  auto *indices = reinterpret_cast<T *>(inputs[4]->addr);
-  auto *new_grad = reinterpret_cast<float *>(workspace[0]->addr);
-  auto *new_indices = reinterpret_cast<T *>(workspace[1]->addr);
-  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
+bool FusedSparseFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &workspace,
+                                               const std::vector<kernel::KernelTensor *> &) const {
+  auto *var = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *accum = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  auto *linear = reinterpret_cast<float *>(inputs[2]->device_ptr());
+  auto *grad = reinterpret_cast<float *>(inputs[3]->device_ptr());
+  auto *indices = reinterpret_cast<T *>(inputs[4]->device_ptr());
+  auto *new_grad = reinterpret_cast<float *>(workspace[0]->device_ptr());
+  auto *new_indices = reinterpret_cast<T *>(workspace[1]->device_ptr());
+  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->device_ptr());
+  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->device_ptr());
 
   SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
   SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
@@ -284,9 +280,8 @@ bool FusedSparseFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   return true;
 }
 
-bool SparseApplyFtrlCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseApplyFtrlCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -296,36 +291,34 @@ bool SparseApplyFtrlCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
                   << inputs.size();
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::SparseApplyFtrl>(base_operator->GetPrim());
-  lr_ = kernel_ptr->get_lr();
+  lr_ = GetValue<float>(primitive_->GetAttr(kAttrLr));
   if (lr_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr' must be a positive scalar, but got " << lr_;
     return false;
   }
-  l1_ = kernel_ptr->get_l1();
+  l1_ = GetValue<float>(primitive_->GetAttr(ops::kL1));
   if (l1_ < 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'l1' must be a non-negative scalar, but got " << l1_;
     return false;
   }
-  l2_ = kernel_ptr->get_l2();
+  l2_ = GetValue<float>(primitive_->GetAttr(ops::kL2));
   if (l2_ < 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'l2' must be a non-negative scalar, but got " << l2_;
     return false;
   }
-  lr_power_ = kernel_ptr->get_lr_power();
+  lr_power_ = GetValue<float>(primitive_->GetAttr(ops::kLrPower));
   if (lr_power_ > 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr_power' must be a non-negative scalar, but got " << lr_power_;
     return false;
   }
-  batch_rank_ = base_operator->get_batch_rank();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  batch_rank_ = ops::get_batch_rank(primitive_);
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
 void SparseApplyFtrlCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
   indices_size_ = 0;
@@ -333,12 +326,10 @@ void SparseApplyFtrlCpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyFtrlCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -443,14 +434,14 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyFtrlCpuKerne
 }
 
 template <typename T, typename S>
-bool SparseApplyFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &workspace,
-                                               const std::vector<kernel::AddressPtr> &) const {
-  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->addr);
-  auto *linear = reinterpret_cast<T *>(inputs[kLinearIndex]->addr);
-  auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  auto *indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
+bool SparseApplyFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &workspace,
+                                               const std::vector<kernel::KernelTensor *> &) const {
+  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->device_ptr());
+  auto *linear = reinterpret_cast<T *>(inputs[kLinearIndex]->device_ptr());
+  auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  auto *indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->device_ptr());
 
   for (int64_t index = 0; index < batch_size_; index++) {
     SparseGradient<S> input_sparse_grad({grad, indices, indices_size_});

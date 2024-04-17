@@ -380,8 +380,8 @@ NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, Grap
     }
     auto body_func_call = body_fg->NewCNodeInOrder(sub_input_nodes);
     MS_EXCEPTION_IF_NULL(src_cond_graph->output());
-    body_func_call->set_abstract(src_cond_graph->output()->abstract());
     MS_EXCEPTION_IF_NULL(body_func_call);
+    body_func_call->set_abstract(src_cond_graph->output()->abstract());
     body_fg->set_output(body_func_call);
     return main_func_call;
   } catch (const std::exception &e) {
@@ -581,7 +581,7 @@ size_t MSOpGetInputsNum(ResMgrHandle res_mgr, ConstNodeHandle op, STATUS *error)
   try {
     auto src_cnode = GetSrcPtr<CNodePtr>(res_mgr, op);
     MS_EXCEPTION_IF_NULL(src_cnode);
-    input_num = src_cnode->inputs().size() - 1;
+    input_num = src_cnode->size() - 1;
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "FuncGraph get input number failed. Error info: " << e.what();
     *error = RET_ERROR;
@@ -1760,8 +1760,8 @@ STATUS MSRunOpWithInfo(ResMgrHandle res_mgr, const char *op_type, TensorHandle c
     }
 
     // clear used input tensor
-    op_run_info->base_op_run_info.input_tensor.clear();
-    op_run_info->base_op_run_info.input_mask.clear();
+    op_run_info->base_op_run_info.expanded_input_values.clear();
+    op_run_info->base_op_run_info.input_types.clear();
 
     // get output tensor
     const std::vector<TensorPtr> &ref_outputs = ConvertOutputToTensor(op_run_info->real_out);

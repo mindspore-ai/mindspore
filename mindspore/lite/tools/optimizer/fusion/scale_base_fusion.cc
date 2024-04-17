@@ -234,7 +234,7 @@ const AnfNodePtr ScaleBaseFusion::Process(const FuncGraphPtr &func_graph, const 
 
   auto fusion_cnode = func_graph->NewCNode(fusion_cnode_inputs);
   auto manager = func_graph->manager();
-  for (size_t i = 0; i < fusion_cnode->inputs().size(); ++i) {
+  for (size_t i = 0; i < fusion_cnode->size(); ++i) {
     manager->SetEdge(fusion_cnode, i, fusion_cnode_inputs[i]);
   }
   MS_CHECK_TRUE_RET(fusion_cnode != nullptr, nullptr);

@@ -19,7 +19,6 @@
 #include <memory>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
-#include "ops/batch_norm.h"
 #include "ops/fused_batch_norm.h"
 #include "include/common/utils/utils.h"
 #include "ops/fusion/scale_fusion.h"
@@ -295,7 +294,7 @@ bool BatchNormToScaleFusion::Run(const FuncGraphPtr &func_graph) {
       free(trans_scale);
       return false;
     }
-    auto ret = CalculateScaleAndBiasFromBN(cnode, channel, trans_scale, trans_bias);
+    auto ret = CalculateScaleAndBiasFromBN(cnode, static_cast<int>(channel), trans_scale, trans_bias);
     if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "Calculate scale and bias failed.";
       free(trans_scale);

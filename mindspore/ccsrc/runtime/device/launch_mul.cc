@@ -39,7 +39,7 @@ std::shared_ptr<session::KernelGraph> LaunchMul::ObtainMulKernelGraph() const {
   return mul_graph;
 }
 
-kernel::KernelMod *LaunchMul::ObtainLaunchMulKernelMod() {
+CNodePtr LaunchMul::ObtainLaunchMulKernelMod() {
   if (mul_graph_ == nullptr) {
     // construct mul kernel graph
     mul_graph_ = ObtainMulKernelGraph();
@@ -54,7 +54,7 @@ kernel::KernelMod *LaunchMul::ObtainLaunchMulKernelMod() {
     MS_LOG(ERROR) << "the execution order of the mul graph should have only one node, however, it has "
                   << mul_graph_->execution_order().size() << " nodes.";
   }
-  return AnfAlgo::GetKernelMod(mul_graph_->execution_order()[0]);
+  return mul_graph_->execution_order()[0];
 }
 
 void LaunchMul::ObtainMulInputsAddr() {

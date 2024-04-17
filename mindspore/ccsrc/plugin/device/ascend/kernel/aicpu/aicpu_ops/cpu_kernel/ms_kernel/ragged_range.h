@@ -16,8 +16,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_RAGGED_RANGE_H_
 #define AICPU_KERNELS_NORMALIZED_RAGGED_RANGE_H_
 
-#include "inc/cpu_ops_kernel.h"
-#include "inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 
 namespace aicpu {
 
@@ -31,7 +31,7 @@ class RaggedRange : public CpuKernel {
   template <typename T, typename TSPLITS>
   uint32_t RaggedRangeCompute(const uint32_t nrows, Tensor *starts, Tensor *limits, Tensor *deltas,
                               bool broadcast_starts, bool broadcast_limits, bool broadcast_deltas,
-                              Tensor *rt_nested_splits, Tensor *rt_dense_values, const CpuKernelContext &ctx);
+                              Tensor *rt_nested_splits, Tensor *rt_dense_values, CpuKernelContext &ctx);
 
   template <typename T, typename TSPLITS>
   TSPLITS RangeSize(T start, T limit, T delta);

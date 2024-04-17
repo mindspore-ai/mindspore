@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@
 #include <functional>
 #include <map>
 #include <utility>
-#include "mindspore/core/ops/resize_bilinear.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kInputsNum = 1;
-constexpr size_t kDynamicInputsNum = 2;
+constexpr size_t kResizeBilinearV2InputsNum = 4;
+constexpr size_t kResizeBilinearExpectedRank = 4;
 constexpr size_t kOutputsNum = 1;
 constexpr size_t kZero = 0;
 constexpr size_t kOne = 1;
@@ -35,41 +35,33 @@ constexpr size_t kThree = 3;
 
 using FuncVec = std::vector<std::pair<KernelAttr, ResizeBilinearGpuKernelMod::ResizeBilinearFunc>>;
 
-bool ResizeBilinearGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  if (inputs.size() != kInputsNum && inputs.size() != kDynamicInputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or 2"
-                      << ", but got " << inputs.size();
+bool ResizeBilinearGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (inputs.size() != kResizeBilinearV2InputsNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kInputsNum << ", but got "
+                      << inputs.size();
   }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For 'ResizeBilinear', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For 'ResizeBilinearV2', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto align_corners_ptr = base_operator->GetAttr(kAttrAlignCorners);
-  MS_EXCEPTION_IF_NULL(align_corners_ptr);
-  align_corners_ = GetValue<bool>(align_corners_ptr);
-  auto half_pixel_centers_ptr = base_operator->GetAttr(kAttrHalfPixelCenters);
-  MS_EXCEPTION_IF_NULL(half_pixel_centers_ptr);
-  half_pixel_centers_ = GetValue<bool>(half_pixel_centers_ptr);
-
   return true;
 }
 
-int ResizeBilinearGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ResizeBilinearGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  auto output_shape = outputs[kIndex0]->GetShapeVector();
+  if (input_shape.size() != kResizeBilinearExpectedRank || output_shape.size() != kResizeBilinearExpectedRank) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", input and output should be 4-D Tensor.";
+  }
   auto input_element_num =
     std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
@@ -82,13 +74,16 @@ int ResizeBilinearGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   input_w_ = LongToInt(input_shape[kThree]);
   output_h_ = LongToInt(output_shape[kTwo]);
   output_w_ = LongToInt(output_shape[kThree]);
+
+  align_corners_ = inputs[kIndex2]->GetValueWithCheck<bool>();
+  half_pixel_centers_ = inputs[kIndex3]->GetValueWithCheck<bool>();
   return KRET_OK;
 }
 
 template <typename T>
-bool ResizeBilinearGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ResizeBilinearGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input = GetDeviceAddress<T>(inputs, kZero);
   MS_EXCEPTION_IF_NULL(input);
   T *output = GetDeviceAddress<T>(outputs, kZero);
@@ -108,17 +103,26 @@ FuncVec ResizeBilinearGpuKernelMod::func_list_ = {
    &ResizeBilinearGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
    &ResizeBilinearGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat16),
    &ResizeBilinearGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32),
    &ResizeBilinearGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-   &ResizeBilinearGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-   &ResizeBilinearGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-   &ResizeBilinearGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64),
    &ResizeBilinearGpuKernelMod::LaunchKernel<double>},
 };
 
@@ -129,7 +133,6 @@ std::vector<KernelAttr> ResizeBilinearGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ResizeBilinear, ResizeBilinearGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ResizeBilinearV2, ResizeBilinearGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

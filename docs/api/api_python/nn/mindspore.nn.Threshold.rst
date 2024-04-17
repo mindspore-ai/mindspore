@@ -3,7 +3,7 @@ mindspore.nn.Threshold
 
 .. py:class:: mindspore.nn.Threshold(threshold, value)
 
-    Threshold激活函数，按元素计算输出。
+    逐元素计算Threshold激活函数。
 
     Threshold定义为：
 

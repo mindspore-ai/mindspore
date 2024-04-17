@@ -36,11 +36,11 @@ class TensorToTupleInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return TensorToSequenceInfer<abstract::AbstractTuple>(primitive, input_args)->BuildShape();
+    return TensorToSequenceInfer<abstract::AbstractTuple>(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return TensorToSequenceInfer<abstract::AbstractTuple>(primitive, input_args)->BuildType();
+    return TensorToSequenceInfer<abstract::AbstractTuple>(primitive, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

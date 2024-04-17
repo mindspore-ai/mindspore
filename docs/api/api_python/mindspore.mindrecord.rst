@@ -21,5 +21,13 @@ mindspore.mindrecord
 
 .. include:: mindrecord/mindspore.mindrecord.TFRecordToMR.rst
 
+.. include:: mindrecord/mindspore.mindrecord.set_hash_mode.rst
+
+.. include:: mindrecord/mindspore.mindrecord.set_enc_key.rst
+
+.. include:: mindrecord/mindspore.mindrecord.set_enc_mode.rst
+
+.. include:: mindrecord/mindspore.mindrecord.set_dec_mode.rst
+
 .. automodule:: mindspore.mindrecord
     :members:

@@ -47,7 +47,7 @@ TypePtr StridedSliceGradInferType(const PrimitivePtr &primitive, const std::vect
   (void)valid_types.insert(kComplex64);
   (void)valid_types.insert(kBool);
 
-  auto dy_type = input_args[dy_index]->BuildType();
+  auto dy_type = input_args[dy_index]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("dy", dy_type, valid_types, prim_name);
   return dy_type;
 }

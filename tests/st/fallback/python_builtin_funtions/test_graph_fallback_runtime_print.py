@@ -127,7 +127,7 @@ def test_fallback_print_asnumpy_custom_class():
 
 
 @pytest.mark.skip(reason="print mutalble is not supported")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -188,7 +188,7 @@ def test_fallback_print_pyinterpret():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -220,7 +220,7 @@ def test_np_init():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

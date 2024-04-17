@@ -44,7 +44,7 @@ using CondVarPtr = std::shared_ptr<CondVar>;
 using SVarPtr = std::shared_ptr<SeqVar>;
 const int kInvalidVarIndex = -2;
 
-using ConditionFunc = std::function<bool(const BaseRef &)>;
+using PatternConditionFunc = std::function<bool(const BaseRef &)>;
 
 // Base wildcard variable which could match any anf node.
 class BACKEND_EXPORT Var : public Base {
@@ -100,8 +100,8 @@ using VarNodePtr = std::shared_ptr<VarNode>;
 // Condition Var, match an anf node when condition function return true.
 class CondVar : public Var {
  public:
-  explicit CondVar(const ConditionFunc &cond) : cond_fn_(cond) {}
-  explicit CondVar(const ConditionFunc &cond, std::string tag) : Var(tag), cond_fn_(cond) {}
+  explicit CondVar(const PatternConditionFunc &cond) : cond_fn_(cond) {}
+  explicit CondVar(const PatternConditionFunc &cond, std::string tag) : Var(tag), cond_fn_(cond) {}
   ~CondVar() override = default;
   MS_DECLARE_PARENT(CondVar, Var);
   bool matches(const BaseRef &value) override {
@@ -113,7 +113,7 @@ class CondVar : public Var {
   }
 
  private:
-  ConditionFunc cond_fn_;
+  PatternConditionFunc cond_fn_;
 };
 
 using Seq = VectorRef;
@@ -126,7 +126,7 @@ class BACKEND_EXPORT SeqVar : public Var {
   ~SeqVar() override = default;
   MS_DECLARE_PARENT(SeqVar, Var);
   explicit SeqVar(const VarPtr subvar) : subvar_(nullptr) { subvar_ = subvar; }
-  explicit SeqVar(const ConditionFunc &cond) { subvar_ = std::make_shared<CondVar>(cond); }
+  explicit SeqVar(const PatternConditionFunc &cond) { subvar_ = std::make_shared<CondVar>(cond); }
   bool matches(const BaseRef &value) override {
     // match Seq.
     if (utils::isa<Seq>(value)) {

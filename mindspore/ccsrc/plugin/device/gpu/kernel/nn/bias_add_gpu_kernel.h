@@ -26,7 +26,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "mindspore/core/ops/bias_add.h"
+#include "mindspore/core/ops/ops_func_impl/bias_add.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/bias_add_nhwc.cuh"
 
 namespace mindspore {
@@ -36,16 +36,13 @@ class BiasAddGpuKernelMod : public NativeGpuKernelMod {
   BiasAddGpuKernelMod() { InitResource(); }
   ~BiasAddGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   void InitResource() override {
@@ -66,12 +63,12 @@ class BiasAddGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  using BiasAddLaunchFunc =
-    std::function<bool(BiasAddGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using BiasAddLaunchFunc = std::function<bool(BiasAddGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &, void *)>;
 
   std::vector<std::string> format_str_list = {"DEFAULT", "NCHW",  "NHWC", "NHWC4", "HWKC",  "HWCK",  "KCHW",
                                               "CKHW",    "KHWC",  "CHWK", "HW",    "HW4",   "NC",    "NC4",
@@ -90,7 +87,7 @@ class BiasAddGpuKernelMod : public NativeGpuKernelMod {
   cudnnOpTensorDescriptor_t op_desc_;
   void *cuda_stream_{nullptr};
   bool is_null_input_;
-  std::string format_;
+  int64_t format_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> bias_shape_;
 };

@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -290,12 +290,22 @@ def block_parallel_estimate(graphs):
     return ParalGain(fusion_type, max_weight, sum_weight - max_weight, blocks, type_info)
 
 
+def block_parallel_estimate_dvm(graphs):
+    """estimate block parallel gain when on Ascend platform"""
+    max_ops = 100
+    total_ops = 0
+    bottleneck = 1000
+    gain = 1000
+    for g in graphs:
+        total_ops += len(g.ops)
+    if total_ops > max_ops:
+        gain = 0
+        return ParalGain("block_fusion", bottleneck, gain, list(0 for _ in graphs), None)
+    return ParalGain("block_fusion", bottleneck, gain, list(1 for _ in graphs), None)
+
+
 def parallel_estimate(graphs, target):
     """Estimate parallel gain"""
     if target == "aicore":
-        fusion_type = "block_fusion"
-        type_info = None
-        fake_estimate = 1000
-        fake_blocks = list(1 for g in graphs)
-        return ParalGain(fusion_type, fake_estimate, fake_estimate, fake_blocks, type_info)
+        return block_parallel_estimate_dvm(graphs)
     return block_parallel_estimate(graphs)

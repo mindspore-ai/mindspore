@@ -1,0 +1,16 @@
+#operator masked_fill
+masked_fill:
+    args:
+        input_x:
+            dtype: tensor
+        mask:
+            dtype: tensor
+        value:
+            dtype: tensor
+            type_cast: number
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: MaskedFillAscend

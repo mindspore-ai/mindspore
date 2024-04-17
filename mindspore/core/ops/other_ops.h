@@ -27,7 +27,6 @@ namespace mindspore {
 namespace prim {
 GVAR_DEF(PrimitivePtr, kPrimInnerAbs, std::make_shared<Primitive>(kInnerAbsOpName));
 GVAR_DEF(PrimitivePtr, kPrimInnerRound, std::make_shared<Primitive>("inner_round"));
-GVAR_DEF(PrimitivePtr, kPrimInnerLen, std::make_shared<Primitive>("inner_len"));
 GVAR_DEF(PrimitivePtr, kPrimDynamicLossScale, std::make_shared<Primitive>("_DynamicLossScale"));
 GVAR_DEF(PrimitivePtr, kPrimScaleGrad, std::make_shared<Primitive>("ScaleGrad"));
 GVAR_DEF(PrimitivePtr, kPrimPopulationCount, std::make_shared<Primitive>("PopulationCount"));
@@ -45,6 +44,7 @@ GVAR_DEF(PrimitivePtr, kPrimLabelSet, std::make_shared<Primitive>("LabelSet"));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));
+GVAR_DEF(PrimitivePtr, kPrimMirrorSilentCheck, std::make_shared<Primitive>("_MirrorSilentCheck"));
 GVAR_DEF(PrimitivePtr, kPrimMirrorMiniStep, std::make_shared<Primitive>("_MirrorMiniStepOperator"));
 GVAR_DEF(PrimitivePtr, kPrimMiniStepAllGather, std::make_shared<Primitive>("_MiniStepAllGather"));
 GVAR_DEF(PrimitivePtr, kPrimMicroStepAllGather, std::make_shared<Primitive>("_MicroStepAllGather"));
@@ -54,6 +54,8 @@ GVAR_DEF(PrimitivePtr, kPrimVirtualDataset, std::make_shared<Primitive>("_Virtua
 GVAR_DEF(PrimitivePtr, kPrimVirtualOutput, std::make_shared<Primitive>("_VirtualOutput"));
 GVAR_DEF(PrimitivePtr, kPrimAllReduce, std::make_shared<Primitive>("AllReduce"));
 GVAR_DEF(PrimitivePtr, kPrimReduce, std::make_shared<Primitive>("Reduce"));
+GVAR_DEF(PrimitivePtr, kPrimCollectiveScatter, std::make_shared<Primitive>("CollectiveScatter"));
+GVAR_DEF(PrimitivePtr, kPrimCollectiveGather, std::make_shared<Primitive>("CollectiveGather"));
 GVAR_DEF(PrimitivePtr, kPrimNeighborExchange, std::make_shared<Primitive>("NeighborExchange"));
 GVAR_DEF(PrimitivePtr, kPrimNeighborExchangeV2, std::make_shared<Primitive>("NeighborExchangeV2"));
 GVAR_DEF(PrimitivePtr, kPrimNeighborExchangeV2Grad, std::make_shared<Primitive>("NeighborExchangeV2Grad"));
@@ -76,6 +78,8 @@ GVAR_DEF(PrimitivePtr, kPrimMirrorMicroStep, std::make_shared<Primitive>("_Mirro
 GVAR_DEF(PrimitivePtr, kPrimBatchNormFold, std::make_shared<Primitive>("BatchNormFold"));
 GVAR_DEF(PrimitivePtr, kPrimFakeQuantWithMinMaxVarsPerChannel,
          std::make_shared<Primitive>("FakeQuantWithMinMaxVarsPerChannel"));
+GVAR_DEF(PrimitivePtr, kPrimQuant, std::make_shared<Primitive>("Quant"));
+GVAR_DEF(PrimitivePtr, kPrimDequant, std::make_shared<Primitive>("Dequant"));
 
 // RL Ops
 GVAR_DEF(PrimitivePtr, kPrimTensorArrayStack, std::make_shared<Primitive>("TensorArrayStack"));
@@ -98,12 +102,14 @@ GVAR_DEF(PrimitivePtr, kPrimBufferAppend, std::make_shared<Primitive>("BufferApp
 GVAR_DEF(PrimitivePtr, kPrimNPUGetFloatStatus, std::make_shared<Primitive>("NPUGetFloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimNPUAllocFloatStatus, std::make_shared<Primitive>("NPUAllocFloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimNPUClearFloatStatus, std::make_shared<Primitive>("NPUClearFloatStatus"));
-GVAR_DEF(PrimitivePtr, kPrimNPUGetFloatStatusV2, std::make_shared<Primitive>("NPUGetFloatStatusV2"));
-GVAR_DEF(PrimitivePtr, kPrimNPUClearFloatStatusV2, std::make_shared<Primitive>("NPUClearFloatStatusV2"));
-GVAR_DEF(PrimitivePtr, kPrimNPUAntiQuant, std::make_shared<Primitive>("AscendAntiQuant"));
+GVAR_DEF(PrimitivePtr, kPrimAntiQuant, std::make_shared<Primitive>("AntiQuant"));
+GVAR_DEF(PrimitivePtr, kPrimAscendAntiQuant, std::make_shared<Primitive>("AscendAntiQuant"));
 
 // Fusion Inference OP
-GVAR_DEF(PrimitivePtr, kPrimMoeFFN, std::make_shared<Primitive>("MoeFFN"));
+GVAR_DEF(PrimitivePtr, kPrimFFN, std::make_shared<Primitive>("FFN"));
+
+// ToEnum OP
+GVAR_DEF(PrimitivePtr, kPrimStringToEnum, std::make_shared<Primitive>("StringToEnum"));
 }  // namespace prim
 }  // namespace mindspore
 

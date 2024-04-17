@@ -1,0 +1,18 @@
+#operator logical_or
+logical_or:
+    args:
+        x:
+            dtype: tensor
+            type_cast: bool
+        y:
+            dtype: tensor
+            type_cast: bool
+    args_signature:
+        dtype_group: (x, y)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True

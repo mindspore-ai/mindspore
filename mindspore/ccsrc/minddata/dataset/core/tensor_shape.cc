@@ -61,25 +61,36 @@ void TensorShape::Print(std::ostream &out) const {
   }
 }
 
-TensorShape::TensorShape(const std::initializer_list<dsize_t> &list)
-    : raw_shape_(*GlobalContext::Instance()->int_allocator()), strides_(*GlobalContext::Instance()->int_allocator()) {
-  AddListToShape(list);
-}
+TensorShape::TensorShape(const std::initializer_list<dsize_t> &list) { AddListToShape(list); }
 
-TensorShape::TensorShape(const std::vector<dsize_t> &list)
-    : raw_shape_(*GlobalContext::Instance()->int_allocator()), strides_(*GlobalContext::Instance()->int_allocator()) {
-  AddListToShape(list);
-}
+TensorShape::TensorShape(const std::vector<dsize_t> &list) { AddListToShape(list); }
 
 TensorShape::TensorShape(const TensorShape &shape)
-    : raw_shape_(*GlobalContext::Instance()->int_allocator()), strides_(*GlobalContext::Instance()->int_allocator()) {
-  AddListToShape(shape.AsVector());
-  known_ = shape.known_;  // override with the input shape in case of unknown-rank tensor shape.
+    : raw_shape_(shape.raw_shape_), strides_(shape.strides_), known_(shape.known_) {}
+
+TensorShape::TensorShape(TensorShape &&shape) noexcept
+    : raw_shape_(std::move(shape.raw_shape_)), strides_(std::move(shape.strides_)), known_(shape.known_) {}
+
+TensorShape &TensorShape::operator=(const TensorShape &shape) {
+  if (this != &shape) {
+    raw_shape_ = shape.raw_shape_;
+    strides_ = shape.strides_;
+    known_ = shape.known_;
+  }
+  return *this;
+}
+
+TensorShape &TensorShape::operator=(TensorShape &&shape) noexcept {
+  if (this != &shape) {
+    raw_shape_ = std::move(shape.raw_shape_);
+    strides_ = std::move(shape.strides_);
+    known_ = shape.known_;
+  }
+  return *this;
 }
 
 #ifdef ENABLE_PYTHON
-TensorShape::TensorShape(py::list l)
-    : raw_shape_(*GlobalContext::Instance()->int_allocator()), strides_(*GlobalContext::Instance()->int_allocator()) {
+TensorShape::TensorShape(py::list l) {
   std::vector<dsize_t> list_c;
   for (auto &i : l) {
     if (!i.is_none()) {
@@ -93,10 +104,7 @@ TensorShape::TensorShape(py::list l)
 #endif
 
 #ifndef ENABLE_ANDROID
-TensorShape::TensorShape(cv::MatSize cv_size, uint32_t type)
-    : raw_shape_(*GlobalContext::Instance()->int_allocator()),
-      strides_(*GlobalContext::Instance()->int_allocator()),
-      known_(true) {
+TensorShape::TensorShape(cv::MatSize cv_size, uint32_t type) : known_(true) {
   for (int i = 0; i < cv_size.dims(); i++) {
     raw_shape_.push_back(cv_size[i]);
   }

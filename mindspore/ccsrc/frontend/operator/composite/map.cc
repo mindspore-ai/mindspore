@@ -164,13 +164,13 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
   for (auto &item : arg_pairs) {
     num++;
     auto lhs = std::dynamic_pointer_cast<Tuple>(item.second);
-    if (lhs->dynamic_len()) {
-      MS_LOG(EXCEPTION) << "For 'map', the dynamic length input is unsupported in graph mode";
-    }
     auto [error_index, next_index] = GetMapInputIndex(num);
     if (lhs == nullptr) {
       MS_LOG(EXCEPTION) << "The " << error_index << " element in Map has wrong type, expected a Tuple, but got "
                         << item.second->ToString() << ".";
+    }
+    if (lhs->dynamic_len()) {
+      MS_LOG(EXCEPTION) << "For 'map', the dynamic length input is unsupported in graph mode";
     }
     if (lhs->elements().size() != size) {
       oss << "\nThe length of the " << error_index << " element in Map is " << size << ", but the length of the "
@@ -283,17 +283,14 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
 }
 
 FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_abs_list) {
-  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-  bool has_any =
-    std::any_of(args_abs_list.begin(), args_abs_list.end(), [](const TypePtr &type) { return type->isa<AnyType>(); });
-  if (allow_fallback_runtime && has_any) {
+  bool convert_to_interpret = std::any_of(args_abs_list.begin() + 1, args_abs_list.end(), [](const TypePtr &type) {
+    MS_EXCEPTION_IF_NULL(type);
+    return type->isa<AnyType>() || type->isa<External>();
+  });
+  if (convert_to_interpret) {
     FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
-    AnfNodePtrList node_inputs{};
-    for (auto type : args_abs_list) {
-      node_inputs.push_back(func_graph->add_parameter());
-    }
-    auto ret_node =
-      fallback::GeneratePyInterpretNodeWithScriptSrc(func_graph, args_abs_list, node_inputs, node_expr_src_);
+    const std::vector<std::string> funcs_str{"map"};
+    auto ret_node = fallback::GeneratePyInterpretWithAbstract(func_graph, funcs_str, args_abs_list.size());
     func_graph->set_output(ret_node);
     return func_graph;
   }
@@ -333,6 +330,17 @@ abstract::AbstractBasePtrList Map::NormalizeArgs(const AbstractBasePtrList &args
         MS_LOG(EXCEPTION) << "The Map operator don't support Closure with free variable yet.";
       }
     }
+  }
+
+  bool convert_to_interpret =
+    std::any_of(args_abs_list.begin() + 1, args_abs_list.end(), [](const AbstractBasePtr &abs) {
+      MS_EXCEPTION_IF_NULL(abs);
+      return abs->isa<abstract::AbstractAny>() || abs->BuildValue()->isa<parse::InterpretedObject>();
+    });
+  if (convert_to_interpret) {
+    // If the map operation has interpreted object or any object, the map will be converted to PyInterpret node.
+    // So, we can not broaden the args, since the broaden will convert PyInterpret node to PyExecute automatically.
+    return args_abs_list;
   }
 
   AbstractBasePtrList broadened;

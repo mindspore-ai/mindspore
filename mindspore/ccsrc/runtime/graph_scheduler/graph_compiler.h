@@ -38,7 +38,7 @@ using device::DeviceContext;
 using session::BackendOpRunInfo;
 using session::CallBackFunc;
 using session::GraphOutputInfo;
-using session::InputTensorInfo;
+using session::InputInfo;
 using session::KernelGraph;
 using session::KernelWithIndex;
 using tensor::TensorPtr;
@@ -95,6 +95,7 @@ struct BACKEND_EXPORT GraphCompilerInfo {
         outputs_num_(outputs_num),
         name_(name),
         need_erase_(need_erase),
+        exist_flatten_concat_(false),
         strategy_(strategy),
         compile_func_(std::move(compile_func)) {}
   ~GraphCompilerInfo();
@@ -105,10 +106,13 @@ struct BACKEND_EXPORT GraphCompilerInfo {
   std::vector<AnfNodePtr> control_nodes_;
   ControlNodeParserPtr control_node_parser_;
   std::vector<AnfNodePtr> origin_parameters_order_;
+  mutable mindspore::HashMap<AnfNodePtr, std::vector<std::pair<KernelWithIndex, KernelWithIndex>>>
+    origin_parameters_to_backend_parameters_;
   KernelMapPosition origin_outputs_order_;
   size_t outputs_num_;
   std::string name_;
   bool need_erase_;
+  mutable bool exist_flatten_concat_;
   mutable GraphExecutionStrategy strategy_;
   CompileFunc compile_func_;
 };
@@ -151,15 +155,16 @@ class GraphCompiler {
   // and prev kernel node's output.
   void GetSingleOpInputTensors(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
                                const std::map<AnfNodePtr, size_t> &parameter_index,
-                               const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *const input_tensor_info);
+                               const std::vector<TensorPtr> &graph_inputs, bool is_run_pyboost,
+                               InputInfo *const input_info);
   // Get one input tensor for single control op, such as bprop_cut.
   TensorPtr GetSingleOpInputTensorByIndex(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
                                           const std::map<AnfNodePtr, size_t> &parameter_index,
-                                          const std::vector<TensorPtr> &graph_inputs,
-                                          InputTensorInfo *const input_tensor_info, size_t input_index);
+                                          const std::vector<TensorPtr> &graph_inputs, InputInfo *const input_info,
+                                          size_t input_index);
 
   // Get OpRunInfo and GraphInfo for single op compile and run.
-  void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
+  void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputInfo &input_info,
                                       bool use_dynamic_shape_process, session::BackendOpRunInfoPtr *op_run_info,
                                       const GraphOutputInfo *const graph_output_info);
 
@@ -177,7 +182,7 @@ class GraphCompiler {
                       std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) const;
 
   // Update forward op output ref count of PyNative back graph.
-  void UpdateForwardOpOutputRefCount(const std::vector<tensor::TensorPtr> &input_tensor,
+  void UpdateForwardOpOutputRefCount(const std::vector<ValuePtr> &input_values,
                                      std::map<std::string, size_t> *forward_op_output_tensor_id) const;
 
   // Handle single op output tensor and recover output of original complete kernel graph.

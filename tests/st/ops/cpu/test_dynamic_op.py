@@ -28,74 +28,6 @@ context.set_context(mode=context.GRAPH_MODE,
                     device_target="CPU")
 
 
-class TileNet(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.tile = P.Tile()
-
-    def construct(self, x, multiples):
-        out = self.tile(x, multiples)
-        return out
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_tile_multiple_tensor_cpu():
-    """
-    /// Feature: Tile op dynamic shape
-    /// Description: Tile forward with dynamic shape
-    /// Expectation: Euqal to expected value
-    """
-    if sys.platform != 'linux':
-        return
-    multiples_1 = (2, 1)
-    multiples_2 = (4, 1)
-    x = Tensor(np.array([[1, 2, 3, 4]]), mstype.float32)
-    tile_net = TileNet()
-    expect_1 = np.array([[1., 2., 3., 4.],
-                         [1., 2., 3., 4.]])
-    expect_2 = np.array([[1., 2., 3., 4.],
-                         [1., 2., 3., 4.],
-                         [1., 2., 3., 4.],
-                         [1., 2., 3., 4.]])
-    expect = [expect_1, expect_2]
-    for i, multiples in enumerate([multiples_1, multiples_2]):
-        output = tile_net(x, multiples)
-        assert (output.asnumpy() == expect[i]).all()
-
-
-class GradTile(nn.Cell):
-    def __init__(self, network):
-        super().__init__()
-        self.grad = GradOperation()
-        self.network = network
-        self.unique = P.Unique()
-        self.reshape = P.Reshape()
-
-    def construct(self, input_x, multiples):
-        return self.grad(self.network)(input_x, multiples)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_tile_multiple_tensor_grad_cpu():
-    """
-    /// Feature: Tile op dynamic shape
-    /// Description: Tile backward with dynamic shape
-    /// Expectation: Euqal to expected value
-    """
-    if sys.platform != 'linux':
-        return
-    multiples = Tensor(np.array([2, 1]), mstype.int64)
-    x0 = Tensor(np.array([[1, 2, 3, 4]]), mstype.float32)
-    tile_net = GradTile(TileNet())
-    output = tile_net(x0, multiples)
-    expect = np.array([[2., 2., 2., 2.]])
-    assert (output.asnumpy() == expect).all()
-
-
 class ConcatOffsetNet(nn.Cell):
     def __init__(self):
         super().__init__()
@@ -111,7 +43,7 @@ class ConcatOffsetNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_offset_dynamic_cpu():
@@ -136,54 +68,6 @@ def test_concat_offset_dynamic_cpu():
         assert (out.asnumpy() == expect).all()
 
 
-class ConcatNet(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.unique = P.Unique()
-        self.concat = P.Concat()
-        self.reshape = P.Reshape()
-
-    def construct(self, x, y, z, shape_tensor):
-        x = self.reshape(x, shape_tensor)
-        y = self.reshape(y, shape_tensor)
-        z = self.reshape(z, shape_tensor)
-        out = self.concat((x, y, z))
-        return out
-
-
-class GradConcat(nn.Cell):
-    def __init__(self, network):
-        super().__init__()
-        self.grad = GradOperation()
-        self.network = network
-        self.unique = P.Unique()
-        self.reshape = P.Reshape()
-
-    def construct(self, x, y, z, shape):
-        return self.grad(self.network)(x, y, z, shape)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_concat_dynamic_grad_cpu():
-    """
-    /// Feature: Concat op dynamic shape
-    /// Description: Concat backward with dynamic shape
-    /// Expectation: Euqal to expected value
-    """
-    if sys.platform != 'linux':
-        return
-    x = Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.float32)
-    x2 = Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.float32)
-    x3 = Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.float32)
-    shape = Tensor(np.array([3, 1, 2, 1]), mstype.int64)
-    net = GradConcat(ConcatNet())
-    output = net(x, x2, x3, shape)
-    expect = np.array([1., 1., 1., 1., 1., 1.])
-    assert (output.asnumpy() == expect).all()
-
-
 class SliceNet(nn.Cell):
     def __init__(self):
         super().__init__()
@@ -193,7 +77,7 @@ class SliceNet(nn.Cell):
         return self.slice(x, begin, size)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice_begin_size_tensor_cpu():
@@ -230,7 +114,7 @@ class GradSlice(nn.Cell):
         return self.grad(self.network)(input_x, begin, size)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice_begin_size_tensor_grad():
@@ -266,7 +150,6 @@ class ReduceMeanNet(nn.Cell):
         super().__init__()
         self.reduce_mean = P.ReduceMean(keep_dims=True)
         self.reshape = P.Reshape()
-        self.tile = P.Tile()
 
     def construct(self, x, shape):
         y = self.reshape(x, shape)
@@ -285,7 +168,7 @@ class GradReduceMean(nn.Cell):
         return self.grad(self.network)(input_x, shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reducemean_dynamic_cpu():
@@ -304,7 +187,7 @@ def test_reducemean_dynamic_cpu():
     assert (out.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reducemean_dynamic_grad_cpu():

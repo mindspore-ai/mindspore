@@ -16,8 +16,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_BETAINC_H
 #define AICPU_KERNELS_NORMALIZED_BETAINC_H
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -34,7 +34,7 @@ class BetaincCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t BetaincCompute(const CpuKernelContext &ctx);
+  uint32_t BetaincCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_BETAINC_H_

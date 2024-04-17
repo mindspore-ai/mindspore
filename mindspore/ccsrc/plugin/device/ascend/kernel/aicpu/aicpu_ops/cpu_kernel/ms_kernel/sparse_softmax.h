@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSESOFTMAX_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSESOFTMAX_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/sparse_tensor.h"
 
 namespace aicpu {
@@ -30,10 +30,10 @@ class SparseSoftmaxCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t SparseSoftmaxCheck(const CpuKernelContext &ctx);
+  uint32_t SparseSoftmaxCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SparseSoftmaxCompute(const CpuKernelContext &ctx);
+  uint32_t SparseSoftmaxCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

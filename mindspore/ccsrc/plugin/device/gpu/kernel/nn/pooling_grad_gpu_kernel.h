@@ -34,10 +34,9 @@ class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
   explicit PoolingGradGpuKernelMod(const std::string &kernel_name) : kernel_name_(kernel_name) { InitResource(); }
   ~PoolingGradGpuKernelMod() override { DestroyResource(); }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -45,10 +44,7 @@ class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   void DestroyResource() noexcept override;
 
@@ -60,9 +56,10 @@ class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
-  bool InitShape(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs, int *dimA,
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  bool InitShape(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs, int *dimA,
                  int *strideAin, int *dimAy, int *strideAiny, int *dimAdy, int *strideAdy, int *dimAout,
                  int *strideAout, int nbDims);
   void SetPad();
@@ -71,8 +68,8 @@ class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> GetEdgeKernelSize();
   void SetFirstInputIndex(size_t input_num);
   using PoolingGradFunc =
-    std::function<bool(PoolingGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(PoolingGradGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   PoolingGradFunc kernel_func_;
   static std::map<std::string, std::vector<std::pair<KernelAttr, PoolingGradGpuKernelMod::PoolingGradFunc>>>
     kernel_attr_map_;

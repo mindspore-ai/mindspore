@@ -18,8 +18,8 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.ops.operations._grad_ops as G
 from mindspore import Tensor
-from mindspore.ops.operations import _grad_ops as G
 
 
 class ResizeBilinearGradNet(nn.Cell):
@@ -35,6 +35,11 @@ class ResizeBilinearGradNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_bilinear_grad_align_corners():
+    """
+    Feature: test ResizeBilinearGrad op
+    Description: test ResizeBilinearGrad op
+    Expectation: test success
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     dy = np.array([[[[1, 2], [3, 4]]]]).astype(np.float16)
 
@@ -68,6 +73,11 @@ def test_resize_bilinear_grad_align_corners():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_bilinear_grad():
+    """
+    Feature: test ResizeBilinearGrad op
+    Description: test ResizeBilinearGrad op
+    Expectation: test success
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     dy = np.array([[[[1, 1, 0, 0],
                      [1, 1, 0, 0],

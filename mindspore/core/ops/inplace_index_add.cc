@@ -91,9 +91,9 @@ TypePtr InplaceIndexAddInferType(const PrimitivePtr &prim, const std::vector<Abs
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   const std::set<TypePtr> valid_types = {kUInt8, kInt8, kInt16, kInt32, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> indices_types = {kInt32};
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto updates_type = input_args[kInputIndex2]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto updates_type = input_args[kInputIndex2]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_type, indices_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("updates", updates_type, valid_types, prim->name());
   return CheckAndConvertUtils::CheckTensorTypeValid("var", var_type, valid_types, prim->name());

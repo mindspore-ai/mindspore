@@ -27,7 +27,7 @@
 #include "ops/conv2d.h"
 #include "ops/squeeze.h"
 #include "ops/unsqueeze.h"
-#include "ops/batch_norm.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/primitive_c.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
@@ -177,7 +177,7 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     squeeze->set_abstract(squeeze_node->abstract()->Clone());
     (void)manager->Replace(squeeze_node, squeeze);
 
-    MS_ASSERT(cnode->inputs().size() > kConvWeightIndex);
+    MS_ASSERT(cnode->size() > kConvWeightIndex);
     auto weight_node = cnode->input(kConvWeightIndex);
     MS_ASSERT(weight_node != nullptr);
     // expand weight tensor to 4 dimensions.

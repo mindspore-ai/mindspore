@@ -39,22 +39,22 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
   const int64_t kNumber1 = 1;
   const int64_t kNumber2 = 2;
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto rank = SizeToLong(x_shape.size());
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
 
   (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
-  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto k_rank = SizeToLong(k_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
-  auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto padding_value_rank = SizeToLong(padding_shape.size());
   if (!IsDynamic(padding_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("padding_value rank", padding_value_rank, kEqual, 0, prim_name);
   }
-  auto k_val_ptr = input_args[kInputIndex1]->BuildValue();
+  auto k_val_ptr = input_args[kInputIndex1]->GetValue();
   MS_EXCEPTION_IF_NULL(k_val_ptr);
   if (IsDynamic(x_shape) || IsDynamic(k_shape) || !IsValueKnown(k_val_ptr)) {
     ShapeVector out_shape(x_shape.size(), abstract::Shape::kShapeDimAny);
@@ -66,7 +66,8 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
 
   int64_t row = x_shape[LongToSize(rank - kNumber2)];
   int64_t col = x_shape[LongToSize(rank - 1)];
-  auto k_val = CheckAndConvertUtils::CheckTensorIntValue("k", k_val_ptr, prim_name);
+  auto k_val =
+    CheckAndConvertUtils::CheckTensorIntValue("k", k_val_ptr, prim_name, input_args[kInputIndex1]->GetType());
   size_t k_val_size = LongToSize(k_val.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("k size", SizeToLong(k_val_size), kIncludeBoth, {kNumber1, kNumber2},
                                               prim_name);
@@ -113,18 +114,18 @@ TypePtr MatrixDiagPartV3InferType(const PrimitivePtr &prim, const std::vector<Ab
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
 
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  auto padding_value = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+  auto padding_value = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
 
   (void)abstract::CheckDtypeSame(prim_name, x, padding_value);
 
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
 
   const std::set<TypePtr> valid_type = {kInt32};
-  auto k_type = input_args[kInputIndex1]->BuildType();
+  auto k_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(k_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("k", k_type, valid_type, prim_name);
 

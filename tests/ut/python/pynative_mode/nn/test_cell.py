@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -214,7 +214,8 @@ def test_exceptions():
         ModError2(t)
 
     m = nn.Cell()
-    assert m.construct() is None
+    with pytest.raises(AttributeError):
+        m()
 
 
 def test_del():

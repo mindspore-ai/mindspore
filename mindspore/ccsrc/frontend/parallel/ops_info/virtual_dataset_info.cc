@@ -127,7 +127,9 @@ Status VirtualDatasetInfo::InferTensorMap() {
 
 Status VirtualDatasetInfo::GetAttrs() { return SUCCESS; }
 
-Status VirtualDatasetInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+Status VirtualDatasetInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+                                const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
+                                const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts) {
   repeated_num_in_dev_matrix_right_ = false;
   if (ParallelContext::GetInstance()->dataset_repeat_dim_right()) {
     repeated_num_in_dev_matrix_right_ = true;

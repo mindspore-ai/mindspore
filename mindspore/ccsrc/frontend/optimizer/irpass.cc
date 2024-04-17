@@ -25,6 +25,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/cast_eliminate.h"
@@ -38,6 +39,7 @@
 #include "frontend/optimizer/irpass/stopgrad_eliminate.h"
 #include "frontend/optimizer/irpass/incorporate_call.h"
 #include "frontend/optimizer/irpass/item_tuple_or_list_eliminate.h"
+#include "frontend/optimizer/irpass/seqence_to_sequence_op_eliminate.h"
 #include "frontend/optimizer/irpass/item_dict_eliminate.h"
 #include "frontend/optimizer/irpass/merge_addn.h"
 #include "frontend/optimizer/irpass/accumulaten_eliminate.h"
@@ -66,6 +68,8 @@
 #include "frontend/optimizer/irpass/convert_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/recompute.h"
 #include "frontend/optimizer/irpass/grad_partial_transform.h"
+#include "frontend/optimizer/irpass/symbol_engine_optimizer.h"
+#include "frontend/optimizer/irpass/const_output_eliminate.h"
 
 namespace mindspore {
 namespace opt {
@@ -73,7 +77,7 @@ namespace irpass {
 OptimizeIRPassLib::OptimizeIRPassLib() {
   arithmetic_simplify_ = MakeSubstitution(std::make_shared<ArithmeticSimplify>(), "arithmetic_simplify",
                                           {prim::kPrimScalarAdd, prim::kPrimScalarMul, prim::kPrimAdd,
-                                           prim::kPrimIdentity, prim::kPrimMomentum, prim::kPrimMul, prim::kPrimPow});
+                                           prim::kPrimidentity, prim::kPrimMomentum, prim::kPrimMul, prim::kPrimPow});
   special_op_eliminate_ = MakeSubstitution(
     std::make_shared<SpecialOpEliminater>(), "special_op_eliminate",
     {prim::kPrimInsertGradientOf, prim::kPrimHookBackward, prim::kPrimCellBackwardHook, prim::kPrimPrintShapeType});
@@ -107,6 +111,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   tuple_list_get_item_depend_reorder_ =
     MakeSubstitution(std::make_shared<TupleListGetitemDependReorder>(), "tuple_list_get_item_depend_reorder",
                      {prim::kPrimTupleGetItem, prim::kPrimListGetItem});
+  list_to_tuple_eliminator_ =
+    MakeSubstitution(std::make_shared<ListToTupleEliminator>(), "list_to_tuple_eliminator_", {prim::kPrimListToTuple});
+  tuple_to_list_eliminator_ =
+    MakeSubstitution(std::make_shared<TupleToListEliminator>(), "tuple_to_list_eliminator_", {prim::kPrimTupleToList});
   tuple_list_convert_item_index_to_positive_ = MakeSubstitution(
     std::make_shared<TupleListConvertItemIndexToPositive>(), "tuple_list_convert_item_index_to_positive",
     {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem, prim::kPrimListGetItem, prim::kPrimListSetItem});
@@ -140,6 +148,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<CheckBpropEliminater>(), "check_bprop_eliminate", prim::kPrimCheckBprop);
   reset_defer_inline_ =
     MakeSubstitution(std::make_shared<ResetDeferInline>(), "reset_defer_inline", IsValueNode<FuncGraph>);
+  const_output_eliminate_ =
+    MakeSubstitution(std::make_shared<ConstOutputEliminater>(), "const_output_eliminate", IsValueNode<FuncGraph>);
   depend_value_elim_ = MakeSubstitution(std::make_shared<DependValueElim>(), "depend_value_elim", prim::kPrimDepend);
   all_reduce_const_elim_ =
     MakeSubstitution(std::make_shared<AllReduceConstElim>(), "reduce_all_const_elim", prim::kPrimAllReduce);
@@ -237,10 +247,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<VirtualOutputEliminater>(), "virtual_output_eliminate", prim::kPrimVirtualOutput);
 
   // PipelineSplit
-  parallel_virtual_node_ =
-    MakeSubstitution(std::make_shared<ParallelVirtualNodeEliminater>(), "parallel_virtual_node",
-                     {prim::kPrimVirtualAssignAdd, prim::kPrimVirtualPipelineEnd, prim::kPrimVirtualAccuGrad,
-                      prim::kPrimMirrorMicroStep, prim::kPrimVirtualAdd, prim::kPrimMirrorMiniStep});
+  parallel_virtual_node_ = MakeSubstitution(
+    std::make_shared<ParallelVirtualNodeEliminater>(), "parallel_virtual_node",
+    {prim::kPrimVirtualAssignAdd, prim::kPrimVirtualPipelineEnd, prim::kPrimVirtualAccuGrad, prim::kPrimMirrorMicroStep,
+     prim::kPrimVirtualAdd, prim::kPrimMirrorMiniStep, prim::kPrimMirrorSilentCheck});
 
   // Convert
   print_tuple_wrapper_ =
@@ -251,7 +261,11 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // tuple parameter graph transform
   call_graph_tuple_transform_ =
-    MakeSubstitution(std::make_shared<CallGraphTupleTransform>(), "graph_param_transform", IsNode);
+    MakeSubstitution(std::make_shared<CallGraphSequenceTransform>(), "graph_param_transform", IsNode);
+
+  // Eliminate the unused input of partial
+  partial_unused_args_eliminate_ =
+    MakeSubstitution(std::make_shared<PartialUnusedArgsEliminate>(), "partial_unused_args_eliminate", IsNode);
 
   // RowTensor Eliminate
   row_tensor_eliminate_ = MakeSubstitution(
@@ -287,6 +301,13 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
                                                    "set_cell_output_no_recompute", IsValueNode<FuncGraph>);
   remove_not_recompute_node_ =
     MakeSubstitution(std::make_shared<RemoveNotRecomputeNode>(), "remove_not_recompute_node", IsCNode);
+
+  // Optimize with SymbolEngine
+  elim_shapecalc_of_broadcastargs_ = MakeSubstitution(std::make_shared<ElimShapeCalcOnBroadcastArgsGrad>(),
+                                                      "elim_shapecalc_of_broadcastargs", prim::kPrimReduceSum);
+  elim_not_effective_node_ = MakeSubstitution(std::make_shared<ElimNotEffectiveNode>(), "elim_not_effective", IsCNode);
+  opt_reshape_ = MakeSubstitution(std::make_shared<OptReshape>(), "opt_reshape", prim::kPrimReshape);
+  fold_const_symbol_ = MakeSubstitution(std::make_shared<FoldConstSymbol>(), "fold_const_symbol", IsCNode);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

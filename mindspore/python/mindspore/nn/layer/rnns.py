@@ -588,13 +588,14 @@ class RNN(_RNNBase):
     Here :math:`h_t` is the hidden state at time `t`, :math:`x_t` is
     the input at time `t`, and :math:`h_{(t-1)}` is the hidden state of the
     previous layer at time :math:`t-1` or the initial hidden state at time `0`.
-    If :attr:`nonlinearity` is ``'relu'``, then :math:`\text{ReLU}` is used instead of :math:`\tanh`.
+    :math:`W_{ih}` is the learnable input-hidden weights, and :math:`b_{ih}` is the learnable input-hidden bias.
+    :math:`W_{hh}` is the learnable hidden-hidden weights, and :math:`b_{hh}` is the learnable hidden-hidden bias.
 
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         num_layers (int): Number of layers of stacked RNN. Default: ``1`` .
-        nonlinearity (str): The non-linearity to use. Can be either ``'tanh'`` or ``'relu'``. Default: ``'tanh'``
+        nonlinearity (str): The non-linearity to use. Can be either ``'tanh'`` or ``'relu'``. Default: ``'tanh'``.
         has_bias (bool): Whether the cell has bias :math:`b_{ih}` and :math:`b_{hh}`. Default: ``True`` .
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: ``False`` .
         dropout (float): If not 0.0, append `Dropout` layer on the outputs of each
@@ -696,7 +697,7 @@ class GRU(_RNNBase):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         num_layers (int): Number of layers of stacked GRU. Default: ``1`` .
-        has_bias (bool): Whether the cell has bias `b_in` and `b_hn`. Default: ``True`` .
+        has_bias (bool): Whether the cell has bias :math:`b_{in}` and :math:`b_{hn}`. Default: ``True`` .
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: ``False`` .
         dropout (float): If not 0.0, append `Dropout` layer on the outputs of each
             GRU layer except the last layer. Default ``0.0`` . The range of dropout is [0.0, 1.0).
@@ -706,7 +707,7 @@ class GRU(_RNNBase):
 
     Inputs:
         - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
-          shape (seq\_len, batch\_size, `input\_size`) or :math:`(batch\_size, seq\_len, input\_size)`.
+          shape :math:`(seq\_len, batch\_size, input\_size)` or :math:`(batch\_size, seq\_len, input\_size)`.
         - **hx** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
           shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
@@ -796,7 +797,7 @@ class LSTM(_RNNBase):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         num_layers (int): Number of layers of stacked LSTM . Default: ``1`` .
-        has_bias (bool): Whether the cell has bias :math:`b_{ih}` and :math:`b_{hh}`. Default: ``True`` .
+        has_bias (bool): Whether the cell has bias :math:`b_{ih}` and :math:`b_{fh}`. Default: ``True`` .
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: ``False`` .
         dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. Default ``0`` . The range of dropout is [0.0, 1.0).

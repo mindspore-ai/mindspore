@@ -21,16 +21,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool TrilIndicesCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-
-  row_ = GetValue<int64_t>(prim->GetAttr("row"));
-  col_ = GetValue<int64_t>(prim->GetAttr("col"));
-  offset_ = GetValue<int64_t>(prim->GetAttr("offset"));
+bool TrilIndicesCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  row_ = GetValue<int64_t>(primitive_->GetAttr("row"));
+  col_ = GetValue<int64_t>(primitive_->GetAttr("col"));
+  offset_ = GetValue<int64_t>(primitive_->GetAttr("offset"));
   if (row_ < 0) {
     MS_EXCEPTION(ValueError) << "For TrilIndices, row is " << row_ << ", but row should be greater than or equal to 0.";
   }
@@ -46,17 +41,15 @@ bool TrilIndicesCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int TrilIndicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  return KernelMod::Resize(base_operator, inputs, outputs);
+int TrilIndicesCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  return KernelMod::Resize(inputs, outputs);
 }
 
 template <typename T>
-bool TrilIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool TrilIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   auto m_first_row = offset_ > 0 ? std::min<int64_t>(col_, 1 + offset_) : row_ + offset_ > 0;
   auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col_, row_ + offset_));
   auto n_row_all = std::max<int64_t>(0, std::min<int64_t>(row_, row_ + offset_));
@@ -66,7 +59,7 @@ bool TrilIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   if (diff_row > 0) {
     tril_size += diff_row * col_;
   }
-  auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  auto *output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_addr);
   int64_t i = 0;
   int64_t r = std::max<int64_t>(0, -offset_);

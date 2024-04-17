@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/mkldnn/conv_cpu_kernel.h"
+#include <map>
 #include <string>
 #include <algorithm>
 
@@ -25,28 +26,31 @@ constexpr size_t kConvInputsNum = 2;
 constexpr size_t kConvOutputsNum = 1;
 }  // namespace
 
-bool ConvCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_ERROR_IF_NULL(prim);
-  format_ = GetValue<std::string>(prim->GetAttr(kAttrFormat));
-  group_ = GetValue<int64_t>(prim->GetAttr(kAttrGroup));
-  pad_mode_ = GetValue<std::string>(prim->GetAttr(kAttrPadMode));
+bool ConvCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  format_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(kAttrFormat));
+  group_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(kAttrGroup));
+  auto pad_mode_str = GetValue<std::string>(KernelMod::primitive_->GetAttr(kAttrPadMode));
+  std::map<std::string, mindspore::PadMode> str2padmode_map = {
+    {PAD_MODE_LOWER_SAME, PadMode::SAME},   {PAD_MODE_UPPER_SAME, PadMode::SAME},
+    {PAD_MODE_LOWER_VALID, PadMode::VALID}, {PAD_MODE_UPPER_VALID, PadMode::VALID},
+    {PAD_MODE_LOWER_PAD, PadMode::PAD},     {PAD_MODE_UPPER_PAD, PadMode::PAD}};
+  auto iter = str2padmode_map.find(pad_mode_str);
+  if (iter == str2padmode_map.end()) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", pad_mode is illegal, got " << pad_mode_str;
+  } else {
+    pad_mode_ = iter->second;
+  }
   return true;
 }
 
-int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int ConvCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  auto src_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  auto weight_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  auto dst_shape = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto src_shape = inputs[kIndex0]->GetDeviceShapeVector();
+  auto weight_shape = inputs[kIndex1]->GetDeviceShapeVector();
+  auto dst_shape = outputs[kIndex0]->GetDeviceShapeVector();
   auto src_dim = src_shape.size();
   if (src_dim != weight_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -76,10 +80,8 @@ int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   const dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
   const auto stride_attr = src_dim == SHAPE_4D ? STRIDE : STRIDES;
   const auto dilation_attr = src_dim == SHAPE_4D ? DILATION : DILATIONS;
-  auto prim = base_operator->GetPrim();
-  MS_ERROR_IF_NULL(prim);
-  const auto strides_include_nc = GetValue<std::vector<int64_t>>(prim->GetAttr(stride_attr));
-  const auto dilation_include_nc = GetValue<std::vector<int64_t>>(prim->GetAttr(dilation_attr));
+  const auto strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(stride_attr));
+  const auto dilation_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(dilation_attr));
   if (strides_include_nc.size() != src_dim) {
     MS_LOG(ERROR) << kernel_name_ << "requires strides must be " << src_dim << "D, but got "
                   << strides_include_nc.size() << "D!";
@@ -98,7 +100,7 @@ int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   (void)std::transform(dilation.begin(), dilation.end(), std::back_inserter(dilates),
                        [](const int64_t &value) { return value - 1; });
   PaddingInfo padding_info{pad_mode_, kernel_size, strides, dilation, &padding_l, &padding_r};
-  GetPadding(base_operator, src_shape, padding_info);
+  GetPadding(src_shape, padding_info);
 
   const auto desc = CreateDesc<dnnl::convolution_forward::desc>(
     dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides,
@@ -111,13 +113,14 @@ int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   return KRET_OK;
 }
 
-bool ConvCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool ConvCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                              const std::vector<kernel::KernelTensor *> &,
+                              const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConvInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConvOutputsNum, kernel_name_);
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[1]->addr);
-  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[1]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->device_ptr());
   ExecutePrimitive();
   return true;
 }

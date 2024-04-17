@@ -27,57 +27,56 @@
 #include "extendrt/graph_runtime/factory.h"
 #include "extendrt/utils/tensor_utils.h"
 #include "backend/graph_compiler/graph_partition.h"
-
+#include "common/tensor_util.h"
 #include "litert/cxx_api/tensor/tensor_impl.h"
 
 namespace mindspore {
 Status DefaultInferSession::Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
-  MS_LOG(INFO) << "DefaultInferSession::Init";
-  // Set MSContext::GetInstance param
+  MS_LOG(DEBUG) << "Init default session begin";
 
   // init compiler and runtime according to context
-  compiler_ = GraphCompilerRegistry::GetInstance().GetCompiler(kDefaultCompiler, context_);
+  compiler_ = GraphCompilerRegistry::GetInstance().GetCompiler(kDefaultCompiler, context);
   if (compiler_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::Init Get Compiler is nullptr";
+    MS_LOG(ERROR) << "Get Compiler is nullptr";
     return kLiteNullptr;
   }
 
   runtime_ = GraphRuntimeRegistry::GetInstance().GetRuntime(kDefaultRuntime);
   if (runtime_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::Init Get Runtime is nullptr";
+    MS_LOG(ERROR) << "Get Runtime is nullptr";
     return kLiteNullptr;
   }
 
+  MS_LOG(DEBUG) << "Init default session end";
   return kSuccess;
 }
-Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *) {
-  MS_LOG(INFO) << "DefaultInferSession::CompileGraph";
 
-  MS_LOG(DEBUG) << "DefaultInferSession::CompileGraph Compile Graph Begin";
+Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *) {
+  MS_LOG(DEBUG) << "Compile graph begin";
   auto compiler = this->GetGraphCompiler();
   if (compiler == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::CompileGraph Compiler in Infer Session is null";
+    MS_LOG(ERROR) << "Compiler in session is null";
     return kLiteNullptr;
   }
   auto execution_plan = compiler->Compile(graph);
   if (execution_plan == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::CompileGraph Compile Graph Failed, Execution plan is null";
+    MS_LOG(ERROR) << "Compile graph failed, execution plan is null";
     return kLiteNullptr;
   }
-  MS_LOG(DEBUG) << "DefaultInferSession::CompileGraph Compile Graph End";
+  MS_LOG(DEBUG) << "Compile graph end";
 
-  MS_LOG(DEBUG) << "DefaultInferSession::CompileGraph Prepare ExecutionPlan Begin";
+  MS_LOG(DEBUG) << "Prepare execution plan begin";
   auto runtime = this->GetGraphRuntime();
   if (runtime == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::CompileGraph Runtime in Infer Session is null";
+    MS_LOG(ERROR) << "Runtime in session is null";
     return kLiteNullptr;
   }
   auto status = runtime->Prepare(execution_plan);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "DefaultInferSession::CompileGraph Prepare Execution Plan Failed";
+    MS_LOG(ERROR) << "Prepare graph runtime failed";
     return status;
   }
-  MS_LOG(DEBUG) << "DefaultInferSession::CompileGraph Prepare ExecutionPlan End";
+  MS_LOG(DEBUG) << "Prepare execution plan end";
 
   return kSuccess;
 }
@@ -85,31 +84,58 @@ Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, s
 Status DefaultInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inputs,
                                      std::vector<tensor::Tensor> *outputs, const MSKernelCallBack &before,
                                      const MSKernelCallBack &after) {
-  MS_LOG(DEBUG) << "DefaultInferSession::RunGraph Execute ExecutionPlan Begin";
+  MS_LOG(DEBUG) << "Run execution plan begin";
   auto runtime = this->GetGraphRuntime();
   if (runtime_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::RunGraph Runtime in Infer Session is null";
+    MS_LOG(ERROR) << "Graph Runtime in session is null";
     return kLiteNullptr;
   }
-  // Convert tensor::Tensor to lite::Tensor, see litert cxx_api model
+  // Copy user input data to graph input tensor
   auto inner_inputs = runtime->GetInputs();
   auto inner_outputs = runtime->GetOutputs();
   auto status = CopyDataToInnerTensors(inputs, inner_inputs);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "DefaultInferSession::RunGraph Copy Data Pointer to input tensors failed";
+    MS_LOG(ERROR) << "Copy data pointer to input tensors failed";
     return status;
   }
-  status = runtime->Execute(inner_inputs, inner_outputs);
+
+  // Convert api kernel callback to inner callback
+  infer::abstract::KernelCallBack before_call_back = nullptr;
+  infer::abstract::KernelCallBack after_call_back = nullptr;
+  if (before != nullptr) {
+    before_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                           const std::vector<mindspore::lite::Tensor *> &before_outputs,
+                           const MSCallBackParam &call_param) {
+      std::vector<MSTensor> inputs = lite::LiteTensorsToMSTensors(before_inputs);
+      std::vector<MSTensor> outputs = lite::LiteTensorsToMSTensors(before_outputs);
+      return before(inputs, outputs, call_param);
+    };
+  }
+
+  if (after != nullptr) {
+    after_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                          const std::vector<mindspore::lite::Tensor *> &before_outputs,
+                          const MSCallBackParam &call_param) {
+      std::vector<MSTensor> inputs = lite::LiteTensorsToMSTensors(before_inputs);
+      std::vector<MSTensor> outputs = lite::LiteTensorsToMSTensors(before_outputs);
+      return after(inputs, outputs, call_param);
+    };
+  }
+
+  status = runtime->Execute(inner_inputs, inner_outputs, before_call_back, after_call_back);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "DefaultInferSession::RunGraph Execute Execution Plan Failed";
+    MS_LOG(ERROR) << "Graph runtime execute Failed";
     return status;
   }
+
+  // Convert graph output tensor to user output tensor
   *outputs = LiteTensorToTensor(inner_outputs);
   if (outputs->size() != inner_outputs.size()) {
-    MS_LOG(ERROR) << "DefaultInferSession::RunGraph Convert output tensors failed";
-    return kLiteNullptr;
+    MS_LOG(ERROR) << "Convert output tensors failed";
+    return kLiteError;
   }
-  MS_LOG(DEBUG) << "DefaultInferSession::RunGraph Execute ExecutionPlan End";
+  MS_LOG(DEBUG) << "Execute execution plan End";
+
   return kSuccess;
 }
 
@@ -120,55 +146,52 @@ Status DefaultInferSession::RunGraph(uint32_t graph_id, const std::vector<tensor
 
 Status DefaultInferSession::Resize(uint32_t, const std::vector<tensor::Tensor> &inputs,
                                    const std::vector<std::vector<int64_t>> &dims) {
-  MS_LOG(DEBUG) << "DefaultInferSession::Resize Execute ExecutionPlan Begin";
+  MS_LOG(DEBUG) << "Graph Resize begin";
   auto runtime = this->GetGraphRuntime();
   if (runtime_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::Resize Runtime in Infer Session is null";
+    MS_LOG(ERROR) << "Graph runtime in session is null";
     return kLiteNullptr;
   }
-  // Convert tensor::Tensor to lite::Tensor, see litert cxx_api model
+
   auto inner_inputs = runtime->GetInputs();
   auto status = runtime->Resize(inner_inputs, dims);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "DefaultInferSession::Resize Execute Execution Plan Failed";
+    MS_LOG(ERROR) << "Graph runtime resize failed";
     return status;
   }
+  MS_LOG(DEBUG) << "Graph Resize end";
 
-  MS_LOG(DEBUG) << "DefaultInferSession::Resize Execute ExecutionPlan End";
   return kSuccess;
 }
 
 std::vector<MutableTensorImplPtr> DefaultInferSession::GetOutputs(uint32_t) {
   auto runtime = this->GetGraphRuntime();
-  if (runtime_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::GetOutputs Runtime in Infer Session is null";
+  if (runtime == nullptr) {
+    MS_LOG(ERROR) << "Graph runtime in session is null";
     return std::vector<MutableTensorImplPtr>{};
   }
   auto lite_outputs = runtime->GetOutputs();
-  MS_LOG(DEBUG) << "DefaultInferSession::GetOutputs end";
   return AbstractTensorsToTensorImpls(lite_outputs);
 }
 
 std::vector<MutableTensorImplPtr> DefaultInferSession::GetInputs(uint32_t) {
   auto runtime = this->GetGraphRuntime();
-  if (runtime_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::GetOutputs Runtime in Infer Session is null";
+  if (runtime == nullptr) {
+    MS_LOG(ERROR) << "Graph runtime in session is null";
     return std::vector<MutableTensorImplPtr>{};
   }
   auto lite_inputs = runtime->GetInputs();
-  MS_LOG(DEBUG) << "DefaultInferSession::GetOutputs end";
   return AbstractTensorsToTensorImpls(lite_inputs);
 }
 
 std::vector<std::string> DefaultInferSession::GetOutputNames(uint32_t graph_id) {
   auto runtime = this->GetGraphRuntime();
-  if (runtime_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::GetOutputNames Runtime in Infer Session is null";
+  if (runtime == nullptr) {
+    MS_LOG(ERROR) << "Graph runtime in session is null";
     return std::vector<std::string>{};
   }
   std::vector<std::string> output_names;
   auto lite_outputs = runtime->GetOutputs();
-  MS_LOG(DEBUG) << "DefaultInferSession::GetOutputNames get runtime output tensor";
   std::transform(lite_outputs.begin(), lite_outputs.end(), std::back_inserter(output_names),
                  [](infer::abstract::Tensor *tensor) { return tensor->tensor_name(); });
   return output_names;
@@ -176,13 +199,12 @@ std::vector<std::string> DefaultInferSession::GetOutputNames(uint32_t graph_id) 
 
 std::vector<std::string> DefaultInferSession::GetInputNames(uint32_t graph_id) {
   auto runtime = this->GetGraphRuntime();
-  if (runtime_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::GetInputNames Runtime in Infer Session is null";
+  if (runtime == nullptr) {
+    MS_LOG(ERROR) << "Graph runtime in session is null";
     return std::vector<std::string>{};
   }
   std::vector<std::string> input_names;
   auto lite_inputs = runtime->GetInputs();
-  MS_LOG(DEBUG) << "DefaultInferSession::GetInputNames get runtime output tensor";
   std::transform(lite_inputs.begin(), lite_inputs.end(), std::back_inserter(input_names),
                  [](infer::abstract::Tensor *tensor) { return tensor->tensor_name(); });
   return input_names;
@@ -190,8 +212,8 @@ std::vector<std::string> DefaultInferSession::GetInputNames(uint32_t graph_id) {
 
 MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(uint32_t graph_id, const std::string &tensorName) {
   auto runtime = this->GetGraphRuntime();
-  if (runtime_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::GetOutputByTensorName Runtime in Infer Session is null";
+  if (runtime == nullptr) {
+    MS_LOG(ERROR) << "Graph runtime in session is null";
     return nullptr;
   }
   auto lite_outputs = runtime->GetOutputs();
@@ -209,8 +231,8 @@ MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(uint32_t graph_i
 
 MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(uint32_t graph_id, const std::string &name) {
   auto runtime = this->GetGraphRuntime();
-  if (runtime_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultInferSession::GetInputByTensorName Runtime in Infer Session is null";
+  if (runtime == nullptr) {
+    MS_LOG(ERROR) << "Graph runtime in session is null";
     return nullptr;
   }
   auto lite_inputs = runtime->GetInputs();
@@ -236,8 +258,9 @@ void DefaultInferSession::ResetTensorData(const std::vector<void *> &old_data,
 Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Tensor> &tensors,
                                                    std::vector<infer::abstract::Tensor *> inner_tensors) {
   if (tensors.size() != inner_tensors.size()) {
-    MS_LOG(EXCEPTION) << "user input size " << tensors.size() << " is not equal to graphp input size "
-                      << inner_tensors.size();
+    MS_LOG(ERROR) << "user input size " << tensors.size() << " is not equal to graphp input size "
+                  << inner_tensors.size();
+    return kLiteError;
   }
   std::vector<void *> old_data;
   for (size_t i = 0; i < tensors.size(); i++) {
@@ -245,12 +268,14 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
     auto input = inner_tensors.at(i);
     if (user_input.data_type() != input->data_type()) {
       ResetTensorData(old_data, inner_tensors);
-      MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has a different data type from input"
-                        << input->tensor_name() << ".";
+      MS_LOG(ERROR) << "Tensor " << user_input.id() << " has a different data type from input" << input->tensor_name()
+                    << ".";
+      return kLiteError;
     }
     if (user_input.data_c() == nullptr) {
       ResetTensorData(old_data, inner_tensors);
-      MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has no data.";
+      MS_LOG(ERROR) << "Tensor " << user_input.id() << " has no data.";
+      return kLiteError;
     }
     old_data.push_back(input->data());
     if (input->data_type() == kObjectTypeString) {
@@ -258,7 +283,8 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
         TruncateShape(user_input.shape_c(), input->data_type(), user_input.DataSize(), false);
       if (shape.empty() && !(user_input.shape_c().empty())) {
         ResetTensorData(old_data, inner_tensors);
-        MS_LOG(EXCEPTION) << "Input dims of tensor " << user_input.id() << " is invalid.";
+        MS_LOG(ERROR) << "Input dims of tensor " << user_input.id() << " is invalid.";
+        return kLiteError;
       }
       input->set_shape(shape);
       input->set_data(user_input.data_c(), false);
@@ -267,7 +293,8 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
         if (input->Size() != user_input.Size()) {
           ResetTensorData(old_data, inner_tensors);
 #ifndef ENABLE_LITE_ACL
-          MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has wrong data size.";
+          MS_LOG(ERROR) << "Tensor " << user_input.id() << " has wrong data size.";
+          return kLiteError;
 #else
           MS_LOG(WARNING) << "Please check tensor " << user_input.id()
                           << " has been modified data size by DVPP method.";
@@ -279,6 +306,7 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
       }
     }
   }
+
   return kSuccess;
 }
 
@@ -294,9 +322,10 @@ std::vector<MutableTensorImplPtr> DefaultInferSession::AbstractTensorsToTensorIm
 std::vector<mindspore::tensor::Tensor> DefaultInferSession::LiteTensorToTensor(
   const std::vector<infer::abstract::Tensor *> &abstract_tensors) {
   std::vector<mindspore::tensor::Tensor> tensors;
+
   for (auto abstract_tensor : abstract_tensors) {
     if (abstract_tensor == nullptr) {
-      MS_LOG(ERROR) << "DefaultInferSession::LiteTensorToTensor get nullptr tensor";
+      MS_LOG(ERROR) << "get nullptr tensor";
       return std::vector<mindspore::tensor::Tensor>{};
     }
     auto type_id = abstract_tensor->data_type();
@@ -308,6 +337,7 @@ std::vector<mindspore::tensor::Tensor> DefaultInferSession::LiteTensorToTensor(
     std::vector<int64_t> shape64;
     std::transform(shape.begin(), shape.end(), std::back_inserter(shape64),
                    [](int dim) { return static_cast<int64_t>(dim); });
+
     mindspore::tensor::Tensor tensor(type_id, shape64, ref_tensor_data);
     auto device_address = abstract_tensor->device_data();
     if (device_address != nullptr) {
@@ -316,6 +346,7 @@ std::vector<mindspore::tensor::Tensor> DefaultInferSession::LiteTensorToTensor(
     }
     tensors.emplace_back(std::move(tensor));
   }
+
   return tensors;
 }
 
@@ -352,7 +383,7 @@ static std::shared_ptr<InferSession> DefaultSessionCreator(const std::shared_ptr
   auto session = std::make_shared<DefaultInferSession>(ctx);
   auto ret = session->Init(ctx, config_infos);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Init session failed.";
+    MS_LOG(ERROR) << "Init default session failed.";
     return nullptr;
   }
   return session;

@@ -53,7 +53,7 @@ abstract::TupleShapePtr FractionalMaxPoolInferShape(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   const int64_t x_rank = 4;
   (void)CheckAndConvertUtils::CheckInteger("input_rank", SizeToLong(in_shape.size()), kEqual, x_rank, op_name);
   auto pooling_ratio = GetValue<std::vector<float>>(primitive->GetAttr(kPoolingRatio));
@@ -100,7 +100,7 @@ abstract::TupleShapePtr FractionalMaxPoolInferShape(const PrimitivePtr &primitiv
 TuplePtr FractionalMaxPoolInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto x_dtype = input_args[kInputIndex0]->BuildType();
+  auto x_dtype = input_args[kInputIndex0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kInt32, kInt64};
   auto type = CheckAndConvertUtils::CheckTensorTypeValid("input", x_dtype, valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, kInt64, kInt64});

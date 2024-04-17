@@ -104,7 +104,7 @@ def test_cummax_multi_dims(data_type):
     cum_minmax_compare(op, x, cummax_output, axis, data_type)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])

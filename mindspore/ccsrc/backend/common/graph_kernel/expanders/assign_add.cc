@@ -24,6 +24,13 @@ class AssignAdd : public OpDesc {
   AssignAdd() { (void)validators_.emplace_back(std::make_unique<CheckAllFormatsSame>()); }
   ~AssignAdd() = default;
 
+  bool CheckInputs() override {
+    if (inputs_info_[0].type != inputs_info_[1].type) {
+      return false;
+    }
+    return true;
+  }
+
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_param = inputs[0];

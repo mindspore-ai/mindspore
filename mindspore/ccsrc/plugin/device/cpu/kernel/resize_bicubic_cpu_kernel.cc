@@ -19,7 +19,7 @@
 #include <limits>
 #include <utility>
 #include "kernel/ops_utils.h"
-#include "mindspore/core/ops/resize_bicubic.h"
+#include "mindspore/core/ops/ops_func_impl/resize_bicubic.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -29,7 +29,7 @@ constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
 constexpr size_t kIndex2 = 2;
 constexpr size_t kIndex3 = 3;
-constexpr size_t kResizeBicubicInputsNum = 2;
+constexpr size_t kResizeBicubicInputsNum = 4;
 constexpr size_t kResizeBicubicOutputsNum = 1;
 constexpr int64_t cached_values_hand_max = 4;
 constexpr size_t caseid2 = 2;
@@ -308,10 +308,8 @@ void ResizeBicubicCPUKernelMod::interpolate_with_caching(const T1 *input_data, c
   return;
 }
 
-bool ResizeBicubicCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ResizeBicubicCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBicubicInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBicubicOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -321,29 +319,25 @@ bool ResizeBicubicCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeBicubic>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  align_corners = kernel_ptr->get_align_corners();
-  half_pixel_centers = kernel_ptr->get_half_pixel_centers();
   return true;
 }
 
-int ResizeBicubicCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ResizeBicubicCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  y_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape = inputs.at(kIndex0)->GetDeviceShapeVector();
+  y_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
+  align_corners = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+  half_pixel_centers = inputs.at(kIndex3)->GetValueWithCheck<bool>();
   sta.CalculateSize();
   return KRET_OK;
 }
 
 template <typename T1, typename T2>
-bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
+bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto out = GetDeviceAddress<T2>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(out);
   auto input = GetDeviceAddress<T1>(inputs, kIndex0);
@@ -363,11 +357,26 @@ bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 }
 
 std::vector<std::pair<KernelAttr, ResizeBicubicCPUKernelMod::ResizeBicubicFunc>> ResizeBicubicCPUKernelMod::func_list_ =
-  {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  {{KernelAttr()
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeFloat16),
     &ResizeBicubicCPUKernelMod::LaunchKernel<float16, float16>},
-   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeFloat32),
     &ResizeBicubicCPUKernelMod::LaunchKernel<float, float>},
-   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeFloat64)
+      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeFloat64),
     &ResizeBicubicCPUKernelMod::LaunchKernel<double, double>}};
 
 std::vector<KernelAttr> ResizeBicubicCPUKernelMod::GetOpSupport() {

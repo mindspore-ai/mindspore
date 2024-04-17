@@ -34,7 +34,7 @@ class BackupAndRestore(Callback):
 
     Args:
         backup_dir (str): Path to store and load the checkpoint file.
-        save_freq(Union['epoch', int]): When set to 'epoch' the callback saves the checkpoint at the end of
+        save_freq(Union["epoch", int]): When set to ``"epoch"`` the callback saves the checkpoint at the end of
                                         each epoch. When set to an integer, the callback saves the checkpoint
                                         every `save_freq` epoch. Default: ``"epoch"`` .
         delete_checkpoint(bool): If `delete_checkpoint=True`, the checkpoint will be deleted after
@@ -42,7 +42,7 @@ class BackupAndRestore(Callback):
 
     Raises:
         ValueError: If backup_dir is not str.
-        ValueError: If save_freq is not 'epoch' or int.
+        ValueError: If save_freq is not ``"epoch"`` or int.
         ValueError: If delete_checkpoint is not bool.
 
     Examples:
@@ -50,13 +50,13 @@ class BackupAndRestore(Callback):
         >>> from mindspore.train import Model, BackupAndRestore, RunContext
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> backup_ckpt = BackupAndRestore("backup")
         >>> model.train(10, dataset, callbacks=backup_ckpt)

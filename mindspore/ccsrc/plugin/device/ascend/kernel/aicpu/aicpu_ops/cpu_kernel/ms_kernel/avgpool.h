@@ -17,8 +17,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_AVGPOOL_H_
 #define AICPU_KERNELS_NORMALIZED_AVGPOOL_H_
 #include <string>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 namespace aicpu {
 struct AvgPoolCalcArgs {
   int64_t batch_size = 0;
@@ -60,10 +60,10 @@ class AvgPoolCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t AvgPoolParamCheck(const CpuKernelContext &ctx);
+  uint32_t AvgPoolParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t AvgPoolProcess(const CpuKernelContext &ctx, AvgPoolCalcArgs args);
+  uint32_t AvgPoolProcess(CpuKernelContext &ctx, AvgPoolCalcArgs args);
 
   template <typename T>
   void RealComputeNCHW(int64_t start, int64_t end, AvgPoolCalcArgs args, T *input0, T *output0);
@@ -72,7 +72,7 @@ class AvgPoolCpuKernel : public CpuKernel {
   void RealComputeNHWC(int64_t start, int64_t end, AvgPoolCalcArgs args, T *input0, T *output0);
 
   template <typename T>
-  uint32_t AvgPoolCompute(const CpuKernelContext &ctx);
+  uint32_t AvgPoolCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_AVGPOOL_H_

@@ -44,15 +44,9 @@ class SoftMarginLossHelperGpuKernel : public GpuKernelHelperBase {
   virtual ~SoftMarginLossHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
-    constexpr size_t INPUT_NUM = 2;
     constexpr size_t OUTPUT_NUM = 1;
     constexpr size_t WORKSPACE_NUM = 1;
     ResetResource();
-
-    int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
 
     std::vector<std::vector<int64_t>> work_shapes;
     work_shapes.push_back(input_shapes[0]);
@@ -78,7 +72,7 @@ class SoftMarginLossHelperGpuKernel : public GpuKernelHelperBase {
     if (out_flag == -1) {
       return out_flag;
     }
-    is_null_softmarginloss_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_softmarginloss_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     return CheckKernelParam();
   }
 

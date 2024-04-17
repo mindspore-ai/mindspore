@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NONLINEAR_FUC_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NONLINEAR_FUC_OPS_DECLARE_H_
 
-#include "inc/ops/nonlinear_fuc_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -68,9 +67,6 @@ DECLARE_OP_USE_OUTPUT(FastGeluGrad)
 
 DECLARE_OP_ADAPTER(Relu)
 DECLARE_OP_USE_OUTPUT(Relu)
-
-DECLARE_OP_ADAPTER(ReluV2)
-DECLARE_OP_USE_OUTPUT(ReluV2)
 
 DECLARE_OP_ADAPTER(PRelu)
 DECLARE_OP_USE_OUTPUT(PRelu)
@@ -128,4 +124,14 @@ DECLARE_OP_USE_OUTPUT(LogSigmoid)
 
 DECLARE_OP_ADAPTER(HardSigmoidGrad)
 DECLARE_OP_USE_OUTPUT(HardSigmoidGrad)
+
+DECLARE_OP_ADAPTER(SiluGrad)
+DECLARE_OP_USE_OUTPUT(SiluGrad)
+
+DECLARE_OP_ADAPTER(GLU)
+DECLARE_OP_USE_OUTPUT(GLU)
+
+DECLARE_OP_ADAPTER(GLUGrad)
+DECLARE_OP_USE_OUTPUT(GLUGrad)
+
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NONLINEAR_FUC_OPS_DECLARE_H_

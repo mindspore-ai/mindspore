@@ -27,7 +27,7 @@ def piecewise_constant_lr(milestone, learning_rates):
     Calculate learning rate by the given `milestone` and `learning_rates`. Let the value of `milestone` be
     :math:`(M_1, M_2, ..., M_t, ..., M_N)` and the value of `learning_rates` be :math:`(x_1, x_2, ..., x_t, ..., x_N)`.
     N is the length of `milestone`.
-    Let the output learning rate be :math:`y`, then for the :math:`i`-th step, the formula of
+    Let the output learning rate be :math:`y[i]`, then for the :math:`i`-th step, the formula of
     computing decayed_learning_rate[i] is:
 
     .. math::
@@ -360,7 +360,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): Number of epochs to decay over.
         power (float): The power of polynomial. It must be greater than 0.
-        update_decay_epoch (bool): If true, update `decay_epoch`. Default: ``False`` .
+        update_decay_epoch (bool): If ``true``, update `decay_epoch`. Default: ``False`` .
 
     Returns:
         list[float]. The size of list is `total_step`.

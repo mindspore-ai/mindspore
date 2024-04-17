@@ -46,7 +46,7 @@ class DictGetitemEliminator : public AnfVisitor {
     if (id_ != 0) {
       auto value_tuple_cnode = dyn_cast_ptr<CNode>(values_tuple_);
       MS_EXCEPTION_IF_NULL(value_tuple_cnode);
-      if (value_tuple_cnode->inputs().size() <= id_) {
+      if (value_tuple_cnode->size() <= id_) {
         MS_LOG(EXCEPTION) << "The id found is out of value tuple index.";
       }
       return value_tuple_cnode->input(id_);
@@ -78,7 +78,7 @@ class DictGetitemEliminator : public AnfVisitor {
     if (key_make_tuple == nullptr || !IsPrimitiveCNode(key_make_tuple, prim::kPrimMakeTuple)) {
       return;
     }
-    for (size_t i = 1; i < key_make_tuple->inputs().size(); ++i) {
+    for (size_t i = 1; i < key_make_tuple->size(); ++i) {
       auto input_i_value = dyn_cast_ptr<ValueNode>(key_make_tuple->input(i));
       MS_EXCEPTION_IF_NULL(input_i_value);
       if (*(input_i_value->value()) == *(vnode->value())) {
@@ -249,7 +249,7 @@ class DictSetitemEliminator : public AnfVisitor {
         if (keys_make_tuple == nullptr || !IsPrimitiveCNode(keys_make_tuple, prim::kPrimMakeTuple)) {
           return;
         }
-        for (size_t i = 1; i < keys_make_tuple->inputs().size(); ++i) {
+        for (size_t i = 1; i < keys_make_tuple->size(); ++i) {
           (void)key_tuple_inputs->emplace_back(keys_make_tuple->input(i));
           auto key_input_i_vnode = dyn_cast_ptr<ValueNode>(keys_make_tuple->input(i));
           MS_EXCEPTION_IF_NULL(key_input_i_vnode);

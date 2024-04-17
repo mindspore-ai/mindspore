@@ -20,7 +20,7 @@
 #include <vector>
 #include "common/op_enum.h"
 #include "common/anf_util.h"
-#include "ops/softmax.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "op/softmax_operator.h"
 
 namespace mindspore {

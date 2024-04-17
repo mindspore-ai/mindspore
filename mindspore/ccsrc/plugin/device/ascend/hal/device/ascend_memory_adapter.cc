@@ -19,12 +19,12 @@
 #include <algorithm>
 #include <set>
 #include "ir/func_graph.h"
-#include "runtime/mem.h"
-#include "acl/acl_rt.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -47,21 +47,12 @@ size_t AscendMemAdapter::GetRoundUpAlignSize(size_t input_size) {
   return ((input_size + kAscendMemAlignSize - 1) / kAscendMemAlignSize) * kAscendMemAlignSize;
 }
 
-bool AscendMemAdapter::IsMemoryPoolRecycle() {
-  static const char kMemoryPoolRecycle[] = "MS_MEMORY_POOL_RECYCLE";
-  static const auto memory_pool_recycle = common::GetEnv(kMemoryPoolRecycle);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto runtime_num_threads = static_cast<size_t>(context_ptr->get_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS));
-  return memory_pool_recycle == "1" && runtime_num_threads == 1 && IsEnableRefMode();
-}
-
 bool AscendMemAdapter::Initialize() {
   if (initialized_) {
     return true;
   }
 
-  auto ret = aclrtGetMemInfo(ACL_HBM_MEM, &device_hbm_free_size_, &device_hbm_total_size_);
+  auto ret = CALL_ASCEND_API(aclrtGetMemInfo, ACL_HBM_MEM, &device_hbm_free_size_, &device_hbm_total_size_);
   if (ret != ACL_ERROR_NONE || device_hbm_total_size_ == 0) {
     MS_LOG(EXCEPTION) << "Internal Error: Get Device HBM memory size failed, ret = " << ret
                       << ", total HBM size :" << device_hbm_total_size_;
@@ -223,7 +214,8 @@ std::string AscendMemAdapter::DevMemStatistics() const {
   oss << "\nTotal Static Memory size: " << (ms_used_hbm_size_ - static_mem_offset_) / kMBToByte << "M";
   oss << "\nTotal Dynamic memory size: " << history_max_dynamic_mem_offset_ / kMBToByte << "M";
   if (IsMemoryPoolRecycle()) {
-    oss << "\nActual peak memory usage: " << actual_peak_memory_ / kMBToByte << "M";
+    size_t max_actual = std::max(actual_peak_memory_, (ms_used_hbm_size_ - static_mem_offset_));
+    oss << "\nActual peak memory usage: " << max_actual / kMBToByte << "M";
   }
   oss << "\nDynamic memory size of this graph: " << cur_dynamic_mem_offset_ / kMBToByte << "M";
   oss << std::endl;
@@ -248,15 +240,15 @@ std::string AscendMemAdapter::DevMemDetailInfo() const {
 }
 
 size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
-  static const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   size_t size_from_context;
   auto max_device_memory = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
-  auto soc_version = device::ascend::GetSocVersion();
-  const float kAscendMaxDeviceMemory =
-    kAscend910BVersions.find(soc_version) != kAscend910BVersions.end() ? 64.0f : 32.0f;
-  if (max_device_memory <= kAscendMaxDeviceMemory) {
+  float total_device_memory = 32.0f;
+  if (context->ascend_soc_version() == kAscendVersion910b || context->ascend_soc_version() == kAscendVersion910c) {
+    total_device_memory = 64.0f;
+  }
+  if (max_device_memory <= total_device_memory) {
     MS_LOG(INFO) << "context max_device_memory:" << max_device_memory;
     size_from_context = FloatToSize(max_device_memory * kGBToByte);
   } else {
@@ -284,7 +276,7 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
     return AscendGmemAdapter::GetInstance().MmapMemory(size, reinterpret_cast<void *>(ptr));
   }
 
-  auto ret = rtMalloc(reinterpret_cast<void **>(&ptr), size, RT_MEMORY_HBM, 0);
+  auto ret = CALL_ASCEND_API(aclrtMalloc, reinterpret_cast<void **>(&ptr), size, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
   if (ret != ACL_RT_SUCCESS) {
     if (ret == ACL_ERROR_RT_MEMORY_ALLOCATION) {
       auto context_ptr = MsContext::GetInstance();
@@ -292,7 +284,7 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
       unsigned int device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
       size_t free = 0;
       size_t total = 0;
-      (void)aclrtGetMemInfo(ACL_HBM_MEM, &free, &total);
+      (void)CALL_ASCEND_API(aclrtGetMemInfo, ACL_HBM_MEM, &free, &total);
       MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Malloc device memory failed, size[" << size << "], ret["
                         << ret << "], "
                         << "Device " << device_id << " Available HBM size:" << total << " free size:" << free
@@ -313,8 +305,8 @@ bool AscendMemAdapter::FreeToRts(void *devPtr, const size_t size) const {
     if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
       return AscendGmemAdapter::GetInstance().MunmapMemory(devPtr, size);
     }
-    auto ret = aclrtFree(devPtr);
-    if (ret != RT_ERROR_NONE) {
+    auto ret = CALL_ASCEND_API(aclrtFree, devPtr);
+    if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclrtFree mem [" << devPtr << "] fail, ret[" << ret << "]";
       return false;
     }

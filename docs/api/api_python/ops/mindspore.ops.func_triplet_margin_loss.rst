@@ -21,7 +21,7 @@ mindspore.ops.triplet_margin_loss
           - ``"sum"``：计算输出元素的总和。
 
     返回：
-        Tensor。如果 `reduction` 为"none"，其shape为 :math:`(N)`。否则，将返回Scalar。
+        Tensor。如果 `reduction` 为 ``"none"`` ，其shape为 :math:`(N)`。否则，将返回Scalar。
 
     异常：
         - **TypeError** - `anchor` 、 `positive` 或者 `negative` 不是Tensor。

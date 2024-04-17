@@ -19,9 +19,7 @@
 #include <string>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "ops/logical_and.h"
-#include "ops/logical_or.h"
-#include "ops/logical_not.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {

@@ -30,12 +30,12 @@ using mindspore::device::TensorsQueueMgr;
 using mindspore::device::cpu::CPUTensorsQueue;
 using mindspore::device::cpu::CPUTensorsQueuePtr;
 
-class TensorsQueueCPUBaseMod : public DeprecatedNativeCpuKernelMod {
+class TensorsQueueCPUBaseMod : public NativeCpuKernelMod {
  public:
   TensorsQueueCPUBaseMod() = default;
   ~TensorsQueueCPUBaseMod() = default;
 
-  inline CPUTensorsQueuePtr GetTensorsQueue(const std::vector<AddressPtr> &inputs) {
+  inline CPUTensorsQueuePtr GetTensorsQueue(const std::vector<KernelTensor *> &inputs) {
     auto handle = GetDeviceAddress<int64_t>(inputs, 0);
     MS_EXCEPTION_IF_NULL(handle);
     auto tensors_q =

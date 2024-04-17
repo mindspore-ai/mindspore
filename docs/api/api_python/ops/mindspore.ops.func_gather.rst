@@ -12,8 +12,8 @@ mindspore.ops.gather
     其中，params代表输入 `input_params` ，indices代表要切片的索引 `input_indices` 。
 
     .. note::
-        1. input_indices的值必须在 `[0, input_param.shape[axis])` 范围内。CPU与GPU平台越界访问将会抛出异常，Ascend平台越界访问的返回结果是未定义的。
-        2. Ascend平台上，input_params的数据类型当前不能是 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
+        1. input_indices的值必须在 `[0, input_params.shape[axis])` 范围内。CPU与GPU平台越界访问将会抛出异常，Ascend平台越界访问的返回结果是未定义的。
+        2. Ascend平台上，input_params的数据类型当前不能是 `bool_ <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
 
     参数：
         - **input_params** (Tensor) - 原始Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。
@@ -29,4 +29,4 @@ mindspore.ops.gather
         - **ValueError** - `axis` 为Tensor时，size不为1。
         - **TypeError**  - `input_params` 不是Tensor。
         - **TypeError**  - `input_indices` 不是int类型的Tensor。
-        - **RuntimeError** - `input_indices` 在CPU或GPU平台超出 `[0, input_param.shape[axis])` 范围。
+        - **RuntimeError** - `input_indices` 在CPU或GPU平台超出 `[0, input_params.shape[axis])` 范围。

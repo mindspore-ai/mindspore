@@ -10,11 +10,10 @@ mindspore.SummaryRecord
     它通过执行 `record` 方法将数据写入文件。除了通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#方式二-结合summary-api和summarycollector自定义收集网络中的数据>`_ 记录网络的数据外，SummaryRecord还支持通过 `自定义回调函数和自定义训练循环 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#方式三-自定义callback记录数据>`_ 记录数据。
 
     .. note::
-        - 使用SummaryRecord时，需要将代码放置到 `if __name__ == "__main__"` 中运行。
-        - 确保在最后关闭SummaryRecord，否则进程不会退出。请参阅下面的示例部分，了解如何用两种方式正确关闭SummaryRecord。
-        - 每次训练只允许创建一个SummaryRecord实例，否则会导致数据写入异常。
-        - SummaryRecord仅支持Linux系统。
-        - 编译MindSpore时，设置 `-s on` 关闭维测功能后，SummaryRecord不可用。
+        1. 确保在最后关闭SummaryRecord，否则进程不会退出。请参阅下面的示例部分，了解如何用两种方式正确关闭SummaryRecord。
+        2. 每次训练只允许创建一个SummaryRecord实例，否则会导致数据写入异常。
+        3. SummaryRecord仅支持Linux系统。
+        4. 编译MindSpore时，设置 `-s on` 关闭维测功能后，SummaryRecord不可用。
 
     参数：
         - **log_dir** (str) - `log_dir` 是用来保存summary文件的目录。
@@ -55,13 +54,13 @@ mindspore.SummaryRecord
             - **name** (str) - 数据名称。
             - **value** (Union[Tensor, GraphProto, TrainLineage, EvaluationLineage, DatasetGraph, UserDefinedInfo，LossLandscape]) - 待存储的值。
 
-              - 当plugin为"graph"时，参数值的数据类型应为"GraphProto"对象。具体详情，请参见 `mindspore/ccsrc/anf_ir.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/anf_ir.proto>`_ 。
+              - 当plugin为"graph"时，参数值的数据类型应为"GraphProto"对象。具体详情，请参见 `mindspore/ccsrc/anf_ir.proto <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/anf_ir.proto>`_ 。
               - 当plugin为"scalar"、"image"、"tensor"或"histogram"时，参数值的数据类型应为"Tensor"对象。
-              - 当plugin为"train_lineage"时，参数值的数据类型应为"TrainLineage"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_ 。
-              - 当plugin为"eval_lineage"时，参数值的数据类型应为"EvaluationLineage"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_ 。
-              - 当plugin为"dataset_graph"时，参数值的数据类型应为"DatasetGraph"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_ 。
-              - 当plugin为"custom_lineage_data"时，参数值的数据类型应为"UserDefinedInfo"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_ 。
-              - 当plugin为"LANDSCAPE"时，参数值的数据类型应为"LossLandscape"对象。具体详情，请参见 `mindspore/ccsrc/summary.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/summary.proto>`_ 。
+              - 当plugin为"train_lineage"时，参数值的数据类型应为"TrainLineage"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_ 。
+              - 当plugin为"eval_lineage"时，参数值的数据类型应为"EvaluationLineage"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_ 。
+              - 当plugin为"dataset_graph"时，参数值的数据类型应为"DatasetGraph"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_ 。
+              - 当plugin为"custom_lineage_data"时，参数值的数据类型应为"UserDefinedInfo"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_ 。
+              - 当plugin为"LANDSCAPE"时，参数值的数据类型应为"LossLandscape"对象。具体详情，请参见 `mindspore/ccsrc/summary.proto <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/summary.proto>`_ 。
 
         异常：
             - **ValueError** - `plugin` 的值不在可选值内。
@@ -98,7 +97,7 @@ mindspore.SummaryRecord
             bool，表示记录是否成功。
 
         异常：
-            - **TypeError** - `step` 不为整型，或 `train_network` 的类型不为 `mindspore.nn.Cell <https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ 。
+            - **TypeError** - `step` 不为整型，或 `train_network` 的类型不为 `mindspore.nn.Cell <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ 。
 
     .. py:method:: set_mode(mode)
 

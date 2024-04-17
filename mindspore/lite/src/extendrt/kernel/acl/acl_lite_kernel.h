@@ -43,8 +43,8 @@ class AclLiteKernel : public BaseKernel {
  private:
   KernelModPtr kernel_mod_;
   BaseOperatorPtr base_operator_;
-  std::vector<KernelTensorPtr> inputs_;
-  std::vector<KernelTensorPtr> outputs_;
+  std::vector<KernelTensor *> inputs_;
+  std::vector<KernelTensor *> outputs_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ACL_ACL_LITE_KERNEL_H_

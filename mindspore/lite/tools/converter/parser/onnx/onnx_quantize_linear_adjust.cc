@@ -18,7 +18,7 @@
 #include <memory>
 #include <utility>
 #include "ops/primitive_c.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/scale_fusion.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "tools/converter/ops/ops_def.h"
@@ -142,7 +142,7 @@ bool OnnxQuantizeLinearAdjust::DoWeightQuantDeQuant(const FuncGraphPtr &func_gra
       continue;
     }
     // weight constant folding
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->size(); i++) {
       auto input_node = cnode->input(i);
       CHECK_NULL_RETURN(input_node);
       if (IsGraphInput(input_node) || input_node->isa<mindspore::CNode>()) {
@@ -174,7 +174,7 @@ int OnnxQuantizeLinearAdjust::DoParameterQuantDeQuant(const CNodePtr &cnode, con
     return RET_NULL_PTR;
   }
   if (tensor_info->data_type() != kNumberTypeFloat32) {
-    MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quant dequant.";
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quantify or dequantify.";
     return RET_OK;
   }
   int preferred_dim =

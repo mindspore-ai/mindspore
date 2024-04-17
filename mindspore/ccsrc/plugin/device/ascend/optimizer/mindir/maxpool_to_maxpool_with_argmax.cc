@@ -39,9 +39,9 @@ constexpr size_t kMaxPoolWithArgmaxOutputNum = 2;
 
 CNodePtr GetMaxPool(const CNodePtr &maxpool_grad) {
   MS_EXCEPTION_IF_NULL(maxpool_grad);
-  if (maxpool_grad->inputs().size() != kMaxPoolGradInputNum) {
+  if (maxpool_grad->size() != kMaxPoolGradInputNum) {
     MS_LOG(INTERNAL_EXCEPTION) << "MaxPoolGrad's input number should be " << (kMaxPoolGradInputNum - 1) << ", but got "
-                               << (maxpool_grad->inputs().size() - 1) << trace::DumpSourceLines(maxpool_grad);
+                               << (maxpool_grad->size() - 1) << trace::DumpSourceLines(maxpool_grad);
   }
   auto maxpool_anf = maxpool_grad->input(kIndex2);
   MS_EXCEPTION_IF_NULL(maxpool_anf);
@@ -52,9 +52,9 @@ CNodePtr GetMaxPool(const CNodePtr &maxpool_grad) {
 CNodePtr MaxPool2MaxPoolWithArgmax::CreateMaxPoolWithArgmax(const FuncGraphPtr &graph, const CNodePtr &maxpool) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(maxpool);
-  if (maxpool->inputs().size() != kMaxPoolInputNum) {
+  if (maxpool->size() != kMaxPoolInputNum) {
     MS_LOG(INTERNAL_EXCEPTION) << "MaxPool's input number should be " << (kMaxPoolInputNum - 1) << ", but got "
-                               << (maxpool->inputs().size() - 1) << trace::DumpSourceLines(maxpool);
+                               << (maxpool->size() - 1) << trace::DumpSourceLines(maxpool);
   }
   std::vector<AnfNodePtr> maxpool_argmax_inputs = {NewValueNode(std::make_shared<Primitive>(kMaxPoolWithArgmaxOpName)),
                                                    maxpool->input(kIndex1)};
@@ -76,9 +76,9 @@ CNodePtr MaxPool2MaxPoolWithArgmax::CreateMaxPoolGradWithArgmax(
   const std::vector<AnfNodePtr> &maxpool_argmax_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(maxpool_grad);
-  if (maxpool_grad->inputs().size() != kMaxPoolGradInputNum) {
+  if (maxpool_grad->size() != kMaxPoolGradInputNum) {
     MS_LOG(INTERNAL_EXCEPTION) << "MaxPoolGrad's input number should be " << (kMaxPoolGradInputNum - 1) << ", but got "
-                               << (maxpool_grad->inputs().size() - 1) << trace::DumpSourceLines(maxpool_grad);
+                               << (maxpool_grad->size() - 1) << trace::DumpSourceLines(maxpool_grad);
   }
   // MaxPoolGrad's inputs are {input, output, grad_input}, MaxPoolGradWithArgmax's inputs are
   // {input, grad_input, argmax_output}

@@ -22,7 +22,7 @@ mindspore.shard
         - **level** (int) - 指定搜索切分策略的目标函数，即是最大化计算通信比、最小化内存消耗、最大化执行速度等。可以为[0, 1, 2]中任意一个，默认值： ``0`` 。目前仅支持最大化计算通信比，其余模式未使能。
 
     返回：
-        Function, 返回一个在自动并行流程下执行的函数。
+        Function，返回一个在自动并行流程下执行的函数。
 
     异常：
         - **AssertionError** - 如果执行模式不是"PYNATIVE_MODE"。
@@ -38,4 +38,4 @@ mindspore.shard
         - **TypeError** - 如果 `level` 不是int。
 
     教程样例：
-        - `函数式算子切分 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/pynative_shard_function_parallel.html>`_
+        - `函数式算子切分 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.q1/parallel/pynative_shard_function_parallel.html>`_

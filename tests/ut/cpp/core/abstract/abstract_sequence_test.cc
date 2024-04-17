@@ -107,12 +107,12 @@ TEST_F(DynamicSequenceTestUtils, test_generate_dynamic_length_empty_list) {
 /// Expectation: No exception.
 TEST_F(DynamicSequenceTestUtils, test_dynamic_length_list_build_value) {
   auto abs_empty_list = BuildDynamicAbstractList(AbstractBasePtrList{});
-  ASSERT_TRUE(abs_empty_list->BuildValue() == kValueAny);
+  ASSERT_TRUE(abs_empty_list->BuildValue()->ContainsValueAny());
   AbstractScalarPtr int_num1 = std::make_shared<AbstractScalar>(1);
   AbstractScalarPtr int_num2 = std::make_shared<AbstractScalar>(2);
   AbstractBasePtrList elements1{int_num1, int_num2};
   auto abs_list = BuildDynamicAbstractList(elements1);
-  ASSERT_TRUE(abs_list->BuildValue() == kValueAny);
+  ASSERT_TRUE(abs_list->BuildValue()->ContainsValueAny());
 }
 
 /// Feature: AbstractList with dynamic length.
@@ -217,12 +217,12 @@ TEST_F(DynamicSequenceTestUtils, test_generate_dynamic_length_empty_tuple) {
 /// Expectation: No exception.
 TEST_F(DynamicSequenceTestUtils, test_dynamic_length_tuple_build_value) {
   auto abs_empty_tuple = BuildDynamicAbstractTuple(AbstractBasePtrList{});
-  ASSERT_TRUE(abs_empty_tuple->BuildValue() == kValueAny);
+  ASSERT_TRUE(abs_empty_tuple->BuildValue()->ContainsValueAny());
   AbstractScalarPtr int_num1 = std::make_shared<AbstractScalar>(1);
   AbstractScalarPtr int_num2 = std::make_shared<AbstractScalar>(2);
   AbstractBasePtrList elements1{int_num1, int_num2};
   auto abs_tuple = BuildDynamicAbstractTuple(elements1);
-  ASSERT_TRUE(abs_tuple->BuildValue() == kValueAny);
+  ASSERT_TRUE(abs_tuple->BuildValue()->ContainsValueAny());
 }
 
 /// Feature: AbstractTuple with dynamic length.

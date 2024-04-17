@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_
 
-#include "inc/ops/nn_norm_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_nn_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
@@ -38,9 +37,11 @@ DECLARE_OP_ADAPTER(SigmoidCrossEntropyWithLogitsV2)
 DECLARE_OP_USE_OUTPUT(SigmoidCrossEntropyWithLogitsV2)
 
 DECLARE_OP_ADAPTER(LogSoftmaxGrad)
+DECLARE_OP_USE_INPUT_ATTR(LogSoftmaxGrad)
 DECLARE_OP_USE_OUTPUT(LogSoftmaxGrad)
 
 DECLARE_OP_ADAPTER(LogSoftmaxV2)
+DECLARE_OP_USE_INPUT_ATTR(LogSoftmaxV2)
 DECLARE_OP_USE_OUTPUT(LogSoftmaxV2)
 
 DECLARE_OP_ADAPTER(LayerNorm)
@@ -48,6 +49,15 @@ DECLARE_OP_USE_OUTPUT(LayerNorm)
 
 DECLARE_OP_ADAPTER(LayerNormGrad)
 DECLARE_OP_USE_OUTPUT(LayerNormGrad)
+
+DECLARE_OP_ADAPTER(AddLayerNorm)
+DECLARE_OP_USE_OUTPUT(AddLayerNorm)
+
+DECLARE_OP_ADAPTER(LayerNormV3)
+DECLARE_OP_USE_OUTPUT(LayerNormV3)
+
+DECLARE_OP_ADAPTER(LayerNormGradV3)
+DECLARE_OP_USE_OUTPUT(LayerNormGradV3)
 
 DECLARE_OP_ADAPTER(LayerNormBetaGammaBackpropV2)
 DECLARE_OP_USE_OUTPUT(LayerNormBetaGammaBackpropV2)
@@ -117,6 +127,9 @@ DECLARE_OP_USE_OUTPUT(SoftMarginLoss)
 DECLARE_OP_ADAPTER(SoftmaxGradExt)
 DECLARE_OP_USE_OUTPUT(SoftmaxGradExt)
 
+DECLARE_OP_ADAPTER(SparseSoftmaxCrossEntropyWithLogits)
+DECLARE_OP_USE_OUTPUT(SparseSoftmaxCrossEntropyWithLogits)
+
 DECLARE_OP_ADAPTER(ConfusionSoftmaxGrad)
 DECLARE_OP_USE_OUTPUT(ConfusionSoftmaxGrad)
 
@@ -128,4 +141,19 @@ DECLARE_CUST_OP_USE_OUTPUT(MultiMarginLossGrad)
 
 DECLARE_CUST_OP_ADAPTER(MultiMarginLoss)
 DECLARE_CUST_OP_USE_OUTPUT(MultiMarginLoss)
+
+DECLARE_CUST_OP_ADAPTER(MultilabelMarginLossGrad)
+DECLARE_CUST_OP_USE_OUTPUT(MultilabelMarginLossGrad)
+
+DECLARE_CUST_OP_ADAPTER(LayerNormGradGrad)
+DECLARE_CUST_OP_USE_OUTPUT(LayerNormGradGrad)
+
+DECLARE_OP_ADAPTER(RmsNorm)
+DECLARE_OP_USE_OUTPUT(RmsNorm)
+
+DECLARE_OP_ADAPTER(RmsNormGrad)
+DECLARE_OP_USE_OUTPUT(RmsNormGrad)
+
+DECLARE_OP_ADAPTER(RNNTLoss)
+DECLARE_OP_USE_OUTPUT(RNNTLoss)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_

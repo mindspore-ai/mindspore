@@ -16,8 +16,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_REVERSE_SEQUENCE_H
 #define AICPU_KERNELS_NORMALIZED_REVERSE_SEQUENCE_H
 
-#include "cpu_ops_kernel.h"
-#include "status.h"
+#include "inc/ms_cpu_kernel.h"
+#include "context/common/status.h"
 
 namespace aicpu {
 class ReverseSequenceMsCpuKernel : public CpuKernel {
@@ -26,7 +26,7 @@ class ReverseSequenceMsCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  KernelStatus GetInputAndCheck(const CpuKernelContext &ctx);
+  KernelStatus GetInputAndCheck(CpuKernelContext &ctx);
 
   std::vector<void *> ioAddrs_;
   size_t seq_dim_ = 0;

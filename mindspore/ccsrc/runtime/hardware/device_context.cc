@@ -30,7 +30,7 @@ bool DeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
     return false;
   }
 
-  auto device_ptr = AllocateMemory(address->GetSize());
+  auto device_ptr = AllocateMemory(address->GetSize(), address->stream_id());
   if (!device_ptr) {
     MS_LOG(WARNING) << "Allocate memory failed for size: " << address->GetSize();
     return false;
@@ -47,11 +47,39 @@ void DeviceResManager::FreeMemory(DeviceAddress *const &address) const {
   }
 
   if (!address->from_mem_pool()) {
+    MS_LOG(DEBUG) << "device address:" << address << " ptr:" << address->GetMutablePtr() << " not from pool";
     return;
   }
-
+  MS_LOG(DEBUG) << "Free memory from device address:" << address << " ptr:" << address->GetMutablePtr();
   FreeMemory(address->GetMutablePtr());
   address->set_ptr(nullptr);
+}
+
+bool DeviceResManager::DestroyEvent(const DeviceEventPtr &event) {
+  MS_EXCEPTION_IF_NULL(event);
+  if (!event->DestroyEvent()) {
+    MS_LOG(ERROR) << "DestroyEvent failed.";
+    return false;
+  }
+
+  const auto &iter = std::find(device_events_.begin(), device_events_.end(), event);
+  if (iter == device_events_.end()) {
+    MS_LOG(ERROR) << "Can't find specified device event.";
+    return false;
+  }
+  (void)device_events_.erase(iter);
+  return true;
+}
+
+bool DeviceResManager::DestroyAllEvents() {
+  (void)std::for_each(device_events_.begin(), device_events_.end(), [this](const auto &event) {
+    MS_EXCEPTION_IF_NULL(event);
+    if (!event->DestroyEvent()) {
+      MS_LOG(ERROR) << "DestroyEvent failed.";
+    }
+  });
+  device_events_.clear();
+  return true;
 }
 
 void KernelExecutor::UnifyMindIR(const KernelGraphPtr &graph) const { opt::CommonUnifyMindIR(graph); }

@@ -18,8 +18,8 @@
 #include <unordered_set>
 #include <string>
 #include <algorithm>
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/return.h"
-#include "ops/transpose.h"
 #include "ops/make_tuple.h"
 #include "ops/tuple_get_item.h"
 #include "common/op_attr.h"
@@ -317,7 +317,7 @@ api::AnfNodePtrList GetSubgraphInputs(const Subgraph &subgraph, const api::FuncG
         continue;
       }
     }
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->size(); i++) {
       auto front_node = cnode->input(i);
       MS_CHECK_TRUE_MSG(front_node != nullptr, {}, "input node is nullptr.");
       if (api::utils::isa<api::Parameter>(front_node)) {
@@ -361,7 +361,7 @@ api::AnfNodePtrList GetSubgraphOutputs(const Subgraph &subgraph, const api::Func
         subgraph_outputs.push_back(cnode);
         break;
       }
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->size(); i++) {
         auto input_node = cnode->input(i);
         if (api::utils::isa<api::CNodePtr>(input_node) &&
             std::find(subgraph.cnodes.begin(), subgraph.cnodes.end(), input_node) != subgraph.cnodes.end() &&

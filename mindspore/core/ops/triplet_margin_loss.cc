@@ -50,10 +50,10 @@ namespace {
 abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto positive = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto negative = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto margin = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto positive = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto negative = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto margin = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   if (x.size() >= kDim8 || positive.size() >= kDim8 || negative.size() >= kDim8) {
     MS_EXCEPTION(ValueError) << "For " << op_name
                              << ", dimensions of input x positive and negative must be smaller than 8, x_dim: "
@@ -70,7 +70,7 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For " << op_name
                              << ", the dimension of input margin must be 0, margin_dim: " << margin.size() << ".";
   }
-  auto x_shape_ptr = input_args[0]->BuildShape();
+  auto x_shape_ptr = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   auto x_shape = x_shape_ptr->cast<abstract::ShapePtr>();
   if (IsDynamicShape(x_shape->shape()) || IsDynamicRank(x_shape->shape())) {
@@ -99,7 +99,7 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
   int64_t reduction;
   CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
   mindspore::Reduction reduction_ = static_cast<mindspore::Reduction>(reduction);
-  if (reduction_ == REDUCTION_SUM || reduction_ == MEAN) {
+  if (reduction_ == mindspore::REDUCTION_SUM || reduction_ == mindspore::MEAN) {
     out_shape.resize(0);
   }
   return std::make_shared<abstract::Shape>(out_shape);
@@ -111,13 +111,13 @@ TypePtr TripletMarginLossInferType(const PrimitivePtr &primitive, const std::vec
                                          kInt64,     kInt8,       kUInt16,  kUInt32,  kUInt64,  kUInt8};
   const std::set<TypePtr> valid_types2 = {kFloat32};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("positive", input_args[kInputIndex1]->BuildType());
-  (void)types.emplace("negative", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("positive", input_args[kInputIndex1]->GetType());
+  (void)types.emplace("negative", input_args[kInputIndex2]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
-  auto margin = input_args[kInputIndex3]->BuildType();
+  auto margin = input_args[kInputIndex3]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("margin", margin, valid_types2, op_name);
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   TypePtr output;
   if (x_type->isa<TensorType>()) {
     auto tensor_type = x_type->cast<TensorTypePtr>();

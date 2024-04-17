@@ -300,7 +300,7 @@ def uniform_candidate_sampler_vmap(x, num_true, num_sampled, unique, range_max, 
     return out1.shape, out2.shape, out3.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_vmap_unique_1_true():
@@ -340,7 +340,7 @@ def uniform_candidate_sampler_vmap2_int64(x, num_true, num_sampled, unique, rang
     return out1.shape, out2.shape, out3.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_vmap2_unique_1_true():

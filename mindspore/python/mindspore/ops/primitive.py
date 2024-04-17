@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@
 import functools
 import inspect
 import copy
+import numpy as np
 from mindspore.common.api import _wrap_func
 from mindspore.log import _LogActionOnce
 from mindspore import context, log as logger
 from mindspore.parallel._utils import _is_in_auto_parallel_mode, _is_in_data_parallel_mode, _is_in_hybrid_parallel_mode
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_sched
-from mindspore.common.parameter import Parameter
+from mindspore.parallel.shard import Layout
 from mindspore.common.api import _pynative_executor
 from mindspore.common._stub_tensor import _convert_stub
-from mindspore._c_expression import Primitive_, prim_type, typing
+from mindspore._c_expression import Primitive_, PrimitiveFunction_, prim_type, typing
 from mindspore import _checkparam as Validator
 from mindspore.ops import signature as sig
 
@@ -84,6 +85,24 @@ class Primitive(Primitive_):
         self.add_attr(name, value)
         return self
 
+    def _set_prim_arg(self, name, value):
+        """
+        Set primitive initialization arguments.
+
+        Different from add_prim_attr, it is used internally to store Primitive
+        initialization arguments in Python.
+        """
+        self.__dict__[name] = value
+        self.attrs[name] = value
+        return self
+
+    def _set_prim_arg_with_handler(self, name, value, arg_handler):
+        """
+        Set primitive initialization arguments and with arg_handler.
+        """
+        value = value if value is None else arg_handler(self.__class__.__name__, name, value)
+        return self._set_prim_arg(name, value)
+
     def set_device(self, device_target):
         """
         Set primitive been executed device.
@@ -138,6 +157,63 @@ class Primitive(Primitive_):
             cloned.set_prim_instance_name(self.instance_name)
         return cloned
 
+    def _check_shard_strategy(self, strategy, log_info):
+        """Check shard strategy is validate or not"""
+        is_layout = []
+        if not isinstance(strategy, tuple):
+            raise TypeError(f'{log_info} must be tuple type, but got:{type(strategy)}')
+        for in_ele in strategy:
+            if not isinstance(in_ele, tuple) and not isinstance(in_ele, Layout):
+                raise TypeError(f'The element of strategy must be tuple/Layout type, but got:{type(in_ele)}')
+            if isinstance(in_ele, tuple):
+                for in_value in in_ele:
+                    if not isinstance(in_value, int):
+                        raise TypeError(f'The {log_info}: {strategy} of {self.name} is not valid,'
+                                        f' the value of strategy must be int type, but got:{type(in_value)}')
+                is_layout.append(False)
+                continue
+            is_layout.append(True)
+        if not is_layout:
+            np_is_layout = np.array(is_layout)
+            if not (np_is_layout == np_is_layout[0]).all():
+                raise TypeError(f'{log_info} item must be all tuple type or all Layout type.')
+        return np.array(is_layout)
+
+    def _extract_layout_value(self, layout, log_info):
+        """Extract parallel layout value"""
+        layout_value = None
+        if layout is not None:
+            if not isinstance(layout, tuple):
+                raise TypeError(f'{log_info} must be tuple type, but got:{type(layout)}')
+            layout_value = ()
+            for in_ele in layout:
+                if not isinstance(in_ele, Layout):
+                    raise TypeError(f"The {log_info} item should be a object of class Layout.")
+                layout_value += (in_ele.to_dict(),)
+        return layout_value
+
+    def _check_shard_strategy_in_out_match(self, in_strategy, out_strategy):
+        """Check shard in_strategy and out_strategy"""
+        if in_strategy is None and out_strategy is not None:
+            raise ValueError(f'The out_strategy of {self.name} is {out_strategy}, need to set in_strategy,'
+                             f' but got none')
+        if not _is_in_auto_parallel_mode():
+            mode = context.get_auto_parallel_context("parallel_mode")
+            if in_strategy is not None:
+                logger.warning(f"The in_strategy/in_layout of the operator in your network "
+                               f"will not take effect in {mode} mode. "
+                               f"This means the the shard function called in the network is ignored. \n"
+                               f"If you want to enable it, please use semi auto or auto parallel mode by "
+                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
+                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
+            if out_strategy is not None:
+                logger.warning(f"The out_strategy/out_layout of the operator in your network "
+                               f"will not take effect in {mode} mode."
+                               f" This means the the shard function called in the network is ignored. \n"
+                               f"If you want to enable it, please use semi auto or auto parallel mode by "
+                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
+                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
+
     def del_prim_attr(self, name):
         """
         Delete primitive attribute.
@@ -150,7 +226,7 @@ class Primitive(Primitive_):
             >>> a = a.add_prim_attr("attr",1)
             >>> a = a.del_prim_attr("attr")
             >>> print(a.attrs)
-            {'input_names': ['x', 'y'], 'output_names' : ['output']}
+            {}
         """
         if name in self.__dict__ and name in self.attrs:
             del self.__dict__[name]
@@ -195,50 +271,52 @@ class Primitive(Primitive_):
             >>> add = ops.Add()
             >>> print(add.shard(((1, 1), (1, 1))))
             Prim[Add]<in_strategy=((1, 1), (1, 1)), out_strategy=None>
+            >>> # using layout
+            >>> from mindspore import Layout
+            >>> layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+            >>> layout_tuple = (layout("dp", "sp"), layout("sp", "mp"))
+            >>> from mindspore import ops
+            >>> matmul = ops.MatMul()
+            >>> print(matmul.shard(layout_tuple))
+            Prim[MatMul]<in_layout=({'device_matrix': (2, 2, 2), 'tensor_map': (2, 1)},
+            {'device_matrix': (2, 2, 2), 'tensor_map': (1, 0)})>
+            >>> # using layout with None
+            >>> from mindspore import Layout
+            >>> layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+            >>> layout_tuple = (layout("dp", "sp"), layout("sp", "None")) # "None" means the axis would not be split
+            >>> from mindspore import ops
+            >>> matmul = ops.MatMul()
+            >>> print(matmul.shard(layout_tuple))
+            Prim[MatMul]<in_layout=({'device_matrix': (2, 2, 2), 'tensor_map': (2, 1)},
+            {'device_matrix': (2, 2, 2), 'tensor_map': (1, -1)})>
         """
-        mode = context.get_auto_parallel_context("parallel_mode")
+        in_is_layout = None
+        out_is_layout = None
         if in_strategy is not None:
-            if not isinstance(in_strategy, tuple):
-                raise TypeError(f'in_strategy must be tuple type, but got:{type(in_strategy)}')
-            for in_ele in in_strategy:
-                if not isinstance(in_ele, tuple):
-                    raise TypeError(f'The element of strategy must be tuple type, but got:{type(in_ele)}')
-                for in_value in in_ele:
-                    if not isinstance(in_value, int):
-                        raise TypeError(f'The in_strategy: {in_strategy} of {self.name} is not valid,'
-                                        f' the value of strategy must be int type, but got:{type(in_value)}')
+            in_is_layout = self._check_shard_strategy(in_strategy, "in_strategy")
 
         if out_strategy is not None:
-            if not isinstance(out_strategy, tuple):
-                raise TypeError(f'out strategy must be tuple type, but got:{type(out_strategy)}')
-            for out_ele in out_strategy:
-                if not isinstance(out_ele, tuple):
-                    raise TypeError(f'The element of strategy must be tuple type, but got:{type(out_ele)}')
-                for out_value in out_ele:
-                    if not isinstance(out_value, int):
-                        raise TypeError(f'The in_strategy: {out_strategy} of {self.name} is not valid,'
-                                        f' the value of strategy must be int type, but got:{type(out_value)}')
+            out_is_layout = self._check_shard_strategy(out_strategy, "out_strategy")
+        self._check_shard_strategy_in_out_match(in_strategy, out_strategy)
+        if in_is_layout is not None and out_is_layout is not None and in_is_layout[0] != out_is_layout[0]:
+            raise ValueError(f'The in_strategy type must equal to the out_strategy type, '
+                             f'one using tuple(tuple) and the other using tuple(Layout) is not allowed.')
+        in_layout_value = None
+        out_layout_value = None
+        if in_is_layout is not None and in_is_layout[0]:
+            in_layout_value = self._extract_layout_value(in_strategy, "in_strategy")
+        if out_is_layout is not None and out_is_layout[0]:
+            out_layout_value = self._extract_layout_value(out_strategy, "out_strategy")
 
-        if in_strategy is None and out_strategy is not None:
-            raise ValueError(f'The out_strategy of {self.name} is {out_strategy}, need to set in_strategy,'
-                             f' but got none')
 
-        if not _is_in_auto_parallel_mode():
-            if in_strategy is not None:
-                logger.warning(f"The in_strategy of the operator in your network will not take effect in {mode} mode. "
-                               f"This means the the shard function called in the network is ignored. \n"
-                               f"If you want to enable it, please use semi auto or auto parallel mode by "
-                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
-                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
-            if out_strategy is not None:
-                logger.warning(f"The out_strategy of the operator in your network will not take effect in {mode} mode."
-                               f" This means the the shard function called in the network is ignored. \n"
-                               f"If you want to enable it, please use semi auto or auto parallel mode by "
-                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
-                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
-
-        self.add_prim_attr("in_strategy", in_strategy)
-        self.add_prim_attr("out_strategy", out_strategy)
+        if in_is_layout is not None and not in_is_layout[0]:
+            self.add_prim_attr("in_strategy", in_strategy)
+        if out_is_layout is not None and not out_is_layout[0]:
+            self.add_prim_attr("out_strategy", out_strategy)
+        if in_layout_value:
+            self.add_prim_attr("in_layout", in_layout_value)
+        if out_layout_value:
+            self.add_prim_attr("out_layout", out_layout_value)
         return self
 
     def set_prim_instance_name(self, instance_name):
@@ -469,6 +547,9 @@ class PrimitiveWithCheck(Primitive):
     If __check__() is not defined, check_shape() and check_dtype() can be defined to describe the check logic of
     the shape and type. Method infer_value() can also be defined (such as PrimitiveWithInfer) for constant propagation.
 
+    More on how to customize a Op, please refer to `Custom Operators
+    <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/operation/op_custom.html>`_.
+
     Args:
         name (str): Name of the current Primitive.
 
@@ -560,6 +641,9 @@ class PrimitiveWithInfer(Primitive):
     to be called. If __infer__() is not defined, infer_shape() and infer_dtype() can be defined to describe the infer
     logic of the shape and type. The infer_value() is used for constant propagation.
 
+    More on how to customize a Op, please refer to `Custom Operators
+    <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/operation/op_custom.html>`_.
+
     Args:
         name (str): Name of the current Primitive.
 
@@ -646,43 +730,6 @@ class PrimitiveWithInfer(Primitive):
             # fn may return None
             out[track] = fn(*(x[track] for x in args))
 
-        # output does not contain dynamic shape, no need to calculate min/max shape
-
-        def has_dynamic_shape(shp):
-            if isinstance(shp, int):
-                return shp < 0
-            if isinstance(shp, (list, tuple)):
-                return any(has_dynamic_shape(e) for e in shp)
-            return False
-
-        # calculate min/max value for output
-        def get_specified_value(elems, attr):
-            has_specified_value = False
-            ret_vals = []
-            for elem in elems:
-                if attr in elem:
-                    has_specified_value = True
-                    ret_vals.append(elem[attr])
-                else:
-                    ret_vals.append(elem['value'])
-            return has_specified_value, tuple(ret_vals)
-
-        has_min_value, min_values = get_specified_value(args, 'min_value')
-        has_max_value, max_values = get_specified_value(args, 'max_value')
-        if has_min_value and has_max_value:
-            if hasattr(self, '_infer_min_value'):
-                fn_infer_min_value = getattr(self, '_infer_min_value')
-                out['min_value'] = fn_infer_min_value(*min_values)
-            if hasattr(self, '_infer_max_value'):
-                fn_infer_max_value = getattr(self, '_infer_max_value')
-                out['max_value'] = fn_infer_max_value(*max_values)
-        has_shape_value, shape_values = get_specified_value(args, 'shape_value')
-        if has_shape_value and hasattr(self, '_infer_shape_value') and not None in shape_values:
-            fn_infer_shape_value = getattr(self, '_infer_shape_value')
-            out['shape_value'] = fn_infer_shape_value(*shape_values)
-        if not has_dynamic_shape(out['shape']):
-            return out
-
         return out
 
 
@@ -721,7 +768,7 @@ def prim_attr_register(fn):
         elif isinstance(self, PrimitiveWithCheck):
             PrimitiveWithCheck.__init__(self, class_name)
         else:
-            Primitive.__init__(self, self.__class__.__name__)
+            Primitive.__init__(self, class_name)
         bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
         bound_args.apply_defaults()
         arguments = bound_args.arguments
@@ -730,6 +777,57 @@ def prim_attr_register(fn):
         for name in arguments:
             value = arguments[name]
             self.add_prim_attr(name, value)
+            self.init_attrs[name] = value
+        fn(self, *args, **kwargs)
+
+    deco.decorated_func = fn
+    return deco
+
+
+def prim_arg_register(fn):
+    """
+    Primitive attributes register.
+
+    Register the decorator of the built-in operator primitive '__init__'.
+    The function will add all the parameters of '__init__' as operator attributes ,
+    and init primitive name.
+
+    Args:
+        fn (function): __init__ function of primitive.
+
+    Returns:
+        function, original function.
+
+    Examples:
+        >>> from mindspore.ops import prim_arg_register, PrimitiveWithCheck
+        >>> class MatMul(PrimitiveWithCheck):
+        ...     @prim_arg_register
+        ...     def __init__(self, transpose_a=False, transpose_b=False):
+        ...         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
+        ...
+        >>> # init a Primitive obj
+        >>> matmul = MatMul()
+    """
+
+    @functools.wraps(fn)
+    def deco(self, *args, **kwargs):
+        class_name = self.__class__.__name__
+        if hasattr(self.__class__, "substitute_name"):
+            class_name = self.__class__.substitute_name
+        if isinstance(self, PrimitiveWithInfer):
+            PrimitiveWithInfer.__init__(self, class_name)
+        elif isinstance(self, PrimitiveWithCheck):
+            PrimitiveWithCheck.__init__(self, class_name)
+        else:
+            Primitive.__init__(self, self.__class__.__name__)
+        bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
+        bound_args.apply_defaults()
+        arguments = bound_args.arguments
+        del arguments['self']
+        del self.init_attrs['name']
+        for name in arguments:
+            value = arguments[name]
+            self._set_prim_arg(name, value)
             self.init_attrs[name] = value
         fn(self, *args, **kwargs)
 
@@ -795,17 +893,17 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
         >>> (21428, )
     """
 
-    def deco(fn):
-        """Decorator for CompileOp."""
+    def decorator(fn):
+        """Decorator for ProxyOp."""
 
-        class CompileOp(PrimitiveWithInfer):
+        class ProxyOp(PrimitiveWithInfer):
             """
-            CompileOp is a temporary operator used to execute the constexpr function.
+            ProxyOp is a temporary operator used to execute the constexpr function.
             """
 
             def __init__(self):
                 op_name = name if name else fn.__name__
-                super(CompileOp, self).__init__(op_name)
+                super(ProxyOp, self).__init__(op_name)
                 self.set_const_prim(True)
                 self.fn = fn
                 self.add_prim_attr('constexpr_prim', True)
@@ -815,22 +913,23 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
             def __infer__(self, *args):
                 value_args = []
                 for item in args:
-                    if _check_contains_variable(item["dtype"], item["value"]) and check:
+                    item_value = item["value"]
+                    if _check_contains_variable(item["dtype"], item_value) and check:
                         logger.warning("The \"" + self.name + "\" is a constexpr function." \
                                                               " The input arguments must be all constant value.")
-                    value_args.append(item["value"])
+                    value_args.append(item_value)
                 return {'dtype': None, 'shape': None, 'value': fn(*value_args)}
 
             def __call__(self, *args, **kwargs):
                 return fn(*args, **kwargs)
 
         if get_instance:
-            return CompileOp()
-        return CompileOp
+            return ProxyOp()
+        return ProxyOp
 
     if fn is not None:
-        return deco(fn)
-    return deco
+        return decorator(fn)
+    return decorator
 
 
 def _primexpr(fn=None, get_instance=True, name=None, reuse_result=True):
@@ -907,9 +1006,6 @@ class _RunOpHook:
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
     if not _RunOpHook.current:
-        for arg in args:
-            if isinstance(arg, Parameter) and arg.has_init:
-                arg.init_data()
         stub = _pynative_executor.run_op_async(obj, op_name, args)
         return _convert_stub(stub)
     return _RunOpHook.current.hook(obj, args)
@@ -931,3 +1027,7 @@ class _PrimitiveC(Primitive):
 
 def _get_primitivec(name, attrs):
     return _PrimitiveC(name, attrs)
+
+
+def _create_primitive_function_obj():
+    return PrimitiveFunction_()

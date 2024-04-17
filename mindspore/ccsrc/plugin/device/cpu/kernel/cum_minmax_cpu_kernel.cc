@@ -20,13 +20,11 @@
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/utils/cpu_utils.h"
-#include "mindspore/core/ops/cummin.h"
-#include "mindspore/core/ops/cummax.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kCumInputsNum = 1;
+constexpr size_t kCumInputsNum = 2;
 constexpr size_t kCumOutputsNum = 2;
 constexpr size_t kMinSizeUsingMT = 1000;
 
@@ -62,9 +60,8 @@ inline void CumMinMax(const T *input_ptr, T *value_ptr, S *index_ptr, BinaryOp o
 }
 }  // namespace
 
-bool CumMinMaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CumMinMaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumOutputsNum, kernel_name_);
 
@@ -74,35 +71,18 @@ bool CumMinMaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[cum_op_type_][index].second;
-  switch (cum_op_type_) {
-    case CUMMIN: {
-      auto kernel_ptr = std::make_shared<ops::Cummin>(base_operator->GetPrim());
-      axis_ = kernel_ptr->get_axis();
-      break;
-    }
-    case CUMMAX: {
-      auto kernel_ptr = std::make_shared<ops::Cummax>(base_operator->GetPrim());
-      axis_ = kernel_ptr->get_axis();
-      break;
-    }
-    default: {
-      MS_LOG(ERROR) << "CumMin/CumMax Something unexpected happened!";
-      return false;
-    }
-  }
   return true;
 }
 
-int CumMinMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != 0) {
+int CumMinMaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != 0) {
     return ret;
   }
+  axis_ = inputs[kIndex1]->GetValueWithCheck<int64_t>();
   auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   auto rank = SizeToLong(input_shape.size());
-  auto axis_input = GetValue<int64_t>(op_->GetAttr(AXIS));
-  auto axis = axis_input < 0 ? LongToSize(axis_input + rank) : LongToSize(axis_input);
+  auto axis = axis_ < 0 ? LongToSize(axis_ + rank) : LongToSize(axis_);
   outer_size_ = inner_size_ = axis_size_ = 1;
   for (size_t i = 0; i < input_shape.size(); i++) {
     if (i < axis) {
@@ -117,15 +97,15 @@ int CumMinMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T, typename S>
-bool CumMinMaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool CumMinMaxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   auto element_size = (outer_size_ * inner_size_) * axis_size_;
   if (element_size == 0) {
     return true;
   }
-  auto input_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto value_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto index_ptr = reinterpret_cast<S *>(outputs[kIndex1]->addr);
+  auto input_ptr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto value_ptr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto index_ptr = reinterpret_cast<S *>(outputs[kIndex1]->device_ptr());
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(input_ptr, value_ptr, index_ptr)) {
     return false;
@@ -161,53 +141,140 @@ bool CumMinMaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
 // Note that in definition of primitive, Cummin return int32 as indices and Cummax return int64 as indices. (see
 // cummax.cc and cummin.cc).
 std::map<CumOpType, std::vector<std::pair<KernelAttr, CumMinMaxCpuKernelMod::CumMinMaxLaunchFunc>>>
-  CumMinMaxCpuKernelMod::func_list_ = {
-    {CUMMIN,
-     {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<int8_t, int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<int16_t, int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<int32_t, int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<int64_t, int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<uint8_t, int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<uint16_t, int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<uint32_t, int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<uint64_t, int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<float16, int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<float, int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
-       &CumMinMaxCpuKernelMod::LaunchKernel<double, int32_t>}}},
-    {CUMMAX,
-     {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<int8_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<int16_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<int32_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<int64_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<uint8_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<uint16_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<uint32_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<uint64_t, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<float16, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<float, int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
-       &CumMinMaxCpuKernelMod::LaunchKernel<double, int64_t>}}}};
+  CumMinMaxCpuKernelMod::func_list_ = {{CUMMIN,
+                                        {{KernelAttr()
+                                            .AddInputAttr(kNumberTypeInt8)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeInt8)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<int8_t, int32_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeInt16)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeInt16)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<int16_t, int32_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeInt32)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeInt32)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<int32_t, int32_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<int64_t, int32_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeUInt8)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeUInt8)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<uint8_t, int32_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeUInt16)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeUInt16)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<uint16_t, int32_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeUInt32)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeUInt32)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<uint32_t, int32_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeUInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeUInt64)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<uint64_t, int32_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeFloat16)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeFloat16)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<float16, int32_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeFloat32)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeFloat32)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<float, int32_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeFloat64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeFloat64)
+                                            .AddOutputAttr(kNumberTypeInt32),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<double, int32_t>}}},
+                                       {CUMMAX,
+                                        {{KernelAttr()
+                                            .AddInputAttr(kNumberTypeInt8)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeInt8)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<int8_t, int64_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeInt16)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeInt16)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<int16_t, int64_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeInt32)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeInt32)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<int32_t, int64_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<int64_t, int64_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeUInt8)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeUInt8)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeUInt16)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeUInt16)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeUInt32)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeUInt32)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeUInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeUInt64)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<uint64_t, int64_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeFloat16)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeFloat16)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<float16, int64_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeFloat32)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeFloat32)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<float, int64_t>},
+                                         {KernelAttr()
+                                            .AddInputAttr(kNumberTypeFloat64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddOutputAttr(kNumberTypeFloat64)
+                                            .AddOutputAttr(kNumberTypeInt64),
+                                          &CumMinMaxCpuKernelMod::LaunchKernel<double, int64_t>}}}};
 
 std::vector<KernelAttr> CumMinMaxCpuKernelMod::GetOpSupport() {
   auto iter = func_list_.find(cum_op_type_);

@@ -63,16 +63,17 @@ class GptqQuantizer {
   int FilterWeightNode(const FuncGraphPtr &func_graph, const std::set<PrimitivePtr> support_primitive_types,
                        std::map<std::string, std::unique_ptr<WeightInfo>> *weights);
 
-  int ExtractWeightParams(schema::MetaGraphT *meta_graph, std::map<std::string, std::unique_ptr<WeightInfo>> *weights);
+  void ExtractWeightParams(schema::MetaGraphT *meta_graph,
+                           std::map<std::string, std::unique_ptr<WeightInfo>> *weights) const;
 
-  int CompileModel(std::shared_ptr<DynamicSession> dynamic_session, const schema::MetaGraphT &meta_graph,
+  int CompileModel(const std::shared_ptr<DynamicSession> dynamic_session, const schema::MetaGraphT &meta_graph,
                    const std::set<std::string> &weight_names);
 
-  int GenerateInputData(lite::Tensor *tensor, const lite::preprocess::DataPreProcessParam &preprocess_param);
+  int GenerateInputData(lite::Tensor *tensor, const lite::preprocess::DataPreProcessParam &preprocess_param) const;
 
-  bool CheckTensorDtype(const lite::Tensor &input_tensor, const lite::Tensor &weight_tensor);
+  bool CheckTensorDtype(const lite::Tensor &input_tensor, const lite::Tensor &weight_tensor) const;
 
-  int GetMatMulDeep(const std::vector<int> &weight_dims, const MatMulParameter *op_param, int input_index);
+  int GetMatMulDeep(const std::vector<int> &weight_dims, const MatMulParameter *op_param, int input_index) const;
 
   int DequantWeight(WeightInfo *weight_info, const lite::Tensor *weight_tensor, int prefer_dim);
 

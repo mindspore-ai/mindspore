@@ -22,7 +22,7 @@
 #include "NvInferRuntimeCommon.h"
 #include "src/extendrt/delegate/tensorrt/op/where_tensorrt.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/where_impl.cuh"
-#include "ops/select.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/where.h"
 
 namespace mindspore::lite {

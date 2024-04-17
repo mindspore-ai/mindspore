@@ -20,7 +20,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "cpu_kernel/common/status.h"
+#include "context/common/status.h"
 
 namespace aicpu {
 class BroadcastIterator {

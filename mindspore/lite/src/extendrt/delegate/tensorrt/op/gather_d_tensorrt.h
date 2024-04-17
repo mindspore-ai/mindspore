@@ -64,10 +64,9 @@ class GatherDPlugin : public TensorRTPlugin {
 
  private:
   int axis_;
-  size_t dim_before_axis_;
-  size_t dim_at_axis_input_;
-  size_t dim_at_axis_output_;
-  size_t dim_after_axis_;
+  ShapeHelper input_shape_helper_;
+  ShapeHelper index_shape_helper_;
+  size_t num_;
   void Reshape(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc);
 };
 

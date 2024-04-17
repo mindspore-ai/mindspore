@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from tests.st.ge import ge_train_env  # pylint: disable=unused-import
 import mindspore as ms
 
 ms.set_context(mode=ms.GRAPH_MODE)
@@ -38,7 +37,7 @@ def test_fallback_np():
 
     class Net(ms.nn.Cell):
         def np_function(self, a, b):
-            return np.exp(a.asnumpy() + b.asnumpy())  # @jit.typing: () -> tensor_type[int32]
+            return np.exp(a.asnumpy() + b.asnumpy())
 
         def np_function2(self, a, b):
             x = np.exp(a.asnumpy())

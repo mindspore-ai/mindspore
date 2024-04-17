@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include "inc/ops/linalg_ops.h"
+#include "op_proto/inc/linalg_ops.h"
 #include "custom_op_proto/cust_linalg_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/linalg_ops_shape_fns.h"
 #include "utils/common_shape_fns.h"
+#include "op_proto/inc/linalg_ops.h"
 
 namespace ge {
 // ----------------MatrixSolve-------------------
@@ -52,7 +53,7 @@ IMPLEMT_INFERFUNC(MatrixDeterminant, MatrixDeterminantInfer) {
     return GRAPH_FAILED;
   }
 
-  int64_t existing = s.GetDimNum();
+  int64_t existing = static_cast<int64_t>(s.GetDimNum());
   int64_t dim1 = s.GetDim(existing - 1);
   int64_t dim2 = s.GetDim(existing - 2);
   int64_t unused_dim = 0;
@@ -109,7 +110,7 @@ CUST_IMPLEMT_INFERFUNC(Geqrf, GeqrfInfer) {
     return GRAPH_FAILED;
   }
 
-  int dim_num = input.GetDimNum();
+  int dim_num = static_cast<int>(input.GetDimNum());
   int m = input.GetDim(dim_num - 2);
   int n = input.GetDim(dim_num - 1);
   Shape r_shape;
@@ -160,7 +161,7 @@ CUST_IMPLEMT_INFERFUNC(LuUnpack, LuUnpackInferShape) {
     return GRAPH_FAILED;
   }
 
-  int64_t existing = LU_data.GetDimNum();
+  int64_t existing = static_cast<int64_t>(LU_data.GetDimNum());
   int64_t dim1 = LU_data.GetDim(existing - 2);
   int64_t dim2 = LU_data.GetDim(existing - 1);
 
@@ -418,7 +419,7 @@ IMPLEMT_INFERFUNC(Qr, QrInfer) {
     return GRAPH_FAILED;
   }
 
-  int dim_num = input.GetDimNum();
+  int dim_num = static_cast<int>(input.GetDimNum());
   int m = input.GetDim(dim_num - 2);
   int n = input.GetDim(dim_num - 1);
   Shape q_shape;
@@ -471,10 +472,9 @@ INFER_FUNC_REG(Qr, QrInfer);
 
 // -----------------------CholeskyGrad---------------------------------
 IMPLEMT_INFERFUNC(CholeskyGrad, CholeskyGradInfer) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto x_desc = op_desc->MutableInputDesc(0);
+  auto x_desc = op.GetInputDesc(0);
 
-  GeShape y_shape;
+  Shape y_shape;
   if (MakeBatchSquareMatrix(x_desc, y_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(),
             "Op CholeskyGrad first input x tensor make batch square matrix "
@@ -482,14 +482,156 @@ IMPLEMT_INFERFUNC(CholeskyGrad, CholeskyGradInfer) {
     return GRAPH_FAILED;
   }
 
-  DataType type = x_desc->GetDataType();
-  auto y_desc = op_desc->MutableOutputDesc(0);
-  y_desc->SetShape(y_shape);
-  y_desc->SetDataType(type);
-
+  DataType type = x_desc.GetDataType();
+  auto y_desc = op.GetOutputDesc(0);
+  y_desc.SetShape(y_shape);
+  y_desc.SetDataType(type);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 
 INFER_FUNC_REG(CholeskyGrad, CholeskyGradInfer);
 // -----------------------CholeskyGrad END---------------------------------
+
+// -----------------------LinearSumAssignment---------------------------------
+CUST_IMPLEMT_INFERFUNC(LinearSumAssignment, LinearSumAssignmentInfer) {
+  TensorDesc cost_matrix_tensor = op.get_input_desc_cost_matrix();
+  Shape cost_matrix_shape = cost_matrix_tensor.GetShape();
+
+  auto row_ind_desc = op.GetOutputDesc(0);
+  auto col_ind_desc = op.GetOutputDesc(1);
+  Shape row_ind_shape, col_ind_shape;
+  if (!RankKnown(cost_matrix_shape)) {
+    row_ind_shape = Shape(ge::UNKNOWN_SHAPE);
+    col_ind_shape = Shape(ge::UNKNOWN_SHAPE);
+  } else {
+    constexpr int64_t kNumber2 = 2;
+    if (cost_matrix_shape.GetDimNum() != kNumber2) {
+      OP_LOGE(TbeGetName(op).c_str(), "cost_matrix dim num should be 2. But got [%lu].", cost_matrix_shape.GetDimNum());
+      return GRAPH_FAILED;
+    }
+    int64_t row_num = cost_matrix_shape.GetDim(0);
+    int64_t col_num = cost_matrix_shape.GetDim(1);
+    int64_t out_dim = std::min(row_num, col_num);
+    std::vector<int64_t> shape_vec{out_dim};
+    row_ind_shape = Shape(shape_vec);
+    col_ind_shape = Shape(shape_vec);
+  }
+  row_ind_desc.SetShape(row_ind_shape);
+  col_ind_desc.SetShape(col_ind_shape);
+
+  TensorDesc dimension_limit_tensor = op.get_input_desc_dimension_limit();
+  TensorDesc maximize_tensor = op.get_input_desc_maximize();
+
+  DataType cost_matrix_type = cost_matrix_tensor.GetDataType();
+  DataType dimension_limit_type = dimension_limit_tensor.GetDataType();
+  DataType maximize_type = maximize_tensor.GetDataType();
+  std::vector<DataType> valid_dtypes{DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BOOL,   DT_INT16,  DT_INT32,
+                                     DT_INT64,   DT_INT8,  DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8};
+  auto iter = std::find(valid_dtypes.begin(), valid_dtypes.end(), cost_matrix_type);
+  if (iter == valid_dtypes.end()) {
+    std::string err_msg;
+    err_msg = ConcatString("Op LinearSumAssignment first input cost_matrix's data type should be of the follows: ",
+                           "DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BOOL, DT_INT16, DT_INT32, DT_INT64, DT_INT8, ",
+                           "DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8, but this type is ", cost_matrix_type, ".");
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if (dimension_limit_type != DT_INT64) {
+    std::string err_msg;
+    err_msg = ConcatString("Op LinearSumAssignment second input dimension_limit's data type should be of the follows: ",
+                           "DT_INT64,", "but this type is ", dimension_limit_type, ".");
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if (maximize_type != DT_BOOL) {
+    std::string err_msg;
+    err_msg =
+      ConcatString("Op LinearSumAssignment third input maximize's data type should be of the follows: ", "DT_BOOL,",
+                   "but this type is ", maximize_type, ".");
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  row_ind_desc.SetDataType(DT_INT64);
+  col_ind_desc.SetDataType(DT_INT64);
+  op.UpdateOutputDesc("row_ind", row_ind_desc);
+  op.UpdateOutputDesc("col_ind", col_ind_desc);
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(LinearSumAssignment, LinearSumAssignmentInfer);
+// -----------------------LinearSumAssignment END---------------------------------
+
+// -----------------------SolveTriangular---------------------------------
+CUST_IMPLEMT_INFERFUNC(SolveTriangular, SolveTriangularInfer) {
+  TensorDesc x_desc = op.GetOutputDescByName("x");
+  // infer type
+  DataType b_type = op.GetInputDescByName("b").GetDataType();
+  DataType x_type;
+  static const std::vector<DataType> type_to_float32 = {DT_INT16,  DT_INT32,  DT_INT8, DT_BOOL,
+                                                        DT_UINT16, DT_UINT32, DT_UINT8};
+  static const std::vector<DataType> type_to_float64 = {DT_INT64, DT_UINT64};
+  bool is_type_to_float32 = std::any_of(type_to_float32.begin(), type_to_float32.end(),
+                                        [&b_type](const DataType &dtype) { return b_type == dtype; });
+  bool is_type_to_float64 = std::any_of(type_to_float64.begin(), type_to_float64.end(),
+                                        [&b_type](const DataType &dtype) { return b_type == dtype; });
+  if (is_type_to_float32)
+    x_type = DT_FLOAT;
+  else if (is_type_to_float64)
+    x_type = DT_DOUBLE;
+  else
+    x_type = b_type;
+  x_desc.SetDataType(x_type);
+
+  // infer shape
+  Shape a_shape = op.GetInputDescByName("a").GetShape();
+  Shape b_shape = op.GetInputDescByName("b").GetShape();
+  x_desc.SetShape(b_shape);
+  if (op.UpdateOutputDesc("x", x_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update output desc.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(SolveTriangular, SolveTriangularInfer);
+// -----------------------SolveTriangular END---------------------------------
+
+// -----------------------SolveTriangularGrad---------------------------------
+CUST_IMPLEMT_INFERFUNC(SolveTriangularGrad, SolveTriangularGradInfer) {
+  TensorDesc da_desc = op.GetOutputDescByName("da");
+  TensorDesc db_desc = op.GetOutputDescByName("db");
+  // infer type
+  DataType a_type = op.GetInputDescByName("a").GetDataType();
+  DataType grad_type;
+  static const std::vector<DataType> type_to_float32 = {DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_FLOAT16};
+  bool is_type_to_float32 = std::any_of(type_to_float32.begin(), type_to_float32.end(),
+                                        [&a_type](const DataType &dtype) { return a_type == dtype; });
+  if (is_type_to_float32)
+    grad_type = DT_FLOAT;
+  else
+    grad_type = a_type;
+  da_desc.SetDataType(grad_type);
+  db_desc.SetDataType(grad_type);
+
+  // infer shape
+  Shape a_shape = op.GetInputDescByName("a").GetShape();
+  da_desc.SetShape(a_shape);
+  if (op.UpdateOutputDesc("da", da_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update output desc.");
+    return GRAPH_FAILED;
+  }
+  Shape b_shape = op.GetInputDescByName("b").GetShape();
+  db_desc.SetShape(b_shape);
+  if (op.UpdateOutputDesc("db", db_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update output desc.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(SolveTriangularGrad, SolveTriangularGradInfer);
+// -----------------------SolveTriangularGrad END---------------------------------
 }  // namespace ge

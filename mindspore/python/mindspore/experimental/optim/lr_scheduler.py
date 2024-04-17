@@ -25,7 +25,7 @@ from mindspore.ops import operations as P
 from mindspore import _checkparam as Validator
 
 
-__all__ = ['StepLR', 'LinearLR', 'LRScheduler', 'ExponentialLR', 'PolynomialLR', 'ChainedScheduler',
+__all__ = ['StepLR', 'LinearLR', 'LRScheduler', 'ExponentialLR', 'PolynomialLR',
            'MultiplicativeLR', 'ConstantLR', 'MultiStepLR', 'LambdaLR', 'SequentialLR', 'ReduceLROnPlateau',
            'CyclicLR', 'CosineAnnealingWarmRestarts', 'CosineAnnealingLR']
 
@@ -38,7 +38,7 @@ class LRScheduler:
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): The optimizer instance.
@@ -64,12 +64,11 @@ class LRScheduler:
         ...         super(ConstantLR, self).__init__(optimizer, last_epoch)
         ...
         ...     def get_lr(self):
-        ...         lrs = [lr.value() for lr in self._last_lr]
         ...         if self.last_epoch == 0:
-        ...             return [lr * self.factor for lr in lrs]
+        ...             return [lr * self.factor for lr in self._last_lr]
         ...         if self.last_epoch != self.total_iters:
-        ...             return lrs
-        ...         return sreturn [lr / self.factor for lr in lrs]
+        ...             return [lr * 1. for lr in self._last_lr]
+        ...         return [lr / self.factor for lr in self._last_lr]
         >>>
         >>> net = nn.Dense(8, 2)
         >>> optimizer = optim.SGD(net.trainable_params(), 0.01)
@@ -100,7 +99,7 @@ class LRScheduler:
                                    f"in param_groups[{i}] when resuming an optimizer")
         self.base_lrs = [group['initial_lr'] for group in optimizer.param_groups]
         self.optimizer = optimizer
-        self._last_lr = [group['lr'] for group in optimizer.param_groups]
+        self._last_lr = [lr for lr in optimizer.lrs]
         self.groups_num = len(optimizer.param_groups)
         self.last_epoch = Parameter(Tensor(last_epoch, dtype=mstype.float32),
                                     name='last_epoch_' + self.__class__.__name__)
@@ -136,7 +135,7 @@ class LRScheduler:
 
         for i in range(self.groups_num):
             lr = values[i]
-            ops.assign(self.optimizer.param_groups[i]["lr"], lr)
+            ops.assign(self._last_lr[i], lr)
 
         return True
 
@@ -150,7 +149,7 @@ class StepLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -167,7 +166,7 @@ class StepLR(LRScheduler):
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optimizer = optim.Adam(net.trainable_params(), lr=0.05)
@@ -187,22 +186,25 @@ class StepLR(LRScheduler):
         ...     return loss
         >>> for epoch in range(6):
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
         ...     for data, label in create_dataset():
         ...         train_step(data, label)
         ...     scheduler.step()
         ...     current_lr = scheduler.get_last_lr()
     """
     def __init__(self, optimizer, step_size, gamma=0.1, last_epoch=-1):
+        if not isinstance(step_size, int) and not isinstance(step_size, bool):
+            raise TypeError(f"For 'StepLR', the 'step_size' must be int, but got {type(step_size)}.")
+        if not isinstance(gamma, float):
+            raise TypeError(f"For 'StepLR', the 'gamma' must be float, but got {type(gamma)}.")
         self.step_size = step_size
         self.gamma = gamma
         super(StepLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch == 0 or self.last_epoch % self.step_size != 0:
-            return lrs
-        return [lr * self.gamma for lr in lrs]
+            return [lr * 1. for lr in self._last_lr]
+        return [lr * self.gamma for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [base_lr * self.gamma ** (self.last_epoch // self.step_size)
@@ -219,7 +221,7 @@ class LinearLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -244,7 +246,7 @@ class LinearLR(LRScheduler):
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optimizer = optim.Adam(net.trainable_params(), lr=0.05)
@@ -266,7 +268,7 @@ class LinearLR(LRScheduler):
         ...     return loss
         >>> for epoch in range(5):
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
         ...     for data, label in create_dataset():
         ...         train_step(data, label)
         ...     scheduler.step()
@@ -287,17 +289,16 @@ class LinearLR(LRScheduler):
         super(LinearLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
 
         if self.last_epoch == 0:
-            return [lr * self.start_factor for lr in lrs]
+            return [lr * self.start_factor for lr in self._last_lr]
 
         if self.last_epoch > self.total_iters:
-            return lrs
+            return [lr * 1. for lr in self._last_lr]
 
         factor = 1. + (self.end_factor - self.start_factor) / (
             self.total_iters * self.start_factor + (self.last_epoch - 1) * (self.end_factor - self.start_factor))
-        return [lr * factor for lr in lrs]
+        return [lr * factor for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [base_lr * (self.start_factor +
@@ -315,7 +316,7 @@ class ExponentialLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -347,14 +348,15 @@ class ExponentialLR(LRScheduler):
     """
 
     def __init__(self, optimizer, gamma, last_epoch=-1):
+        if not isinstance(gamma, float):
+            raise TypeError(f"For 'ExponentialLR', the 'gamma' must be float, but got {type(gamma)}.")
         self.gamma = gamma
         super(ExponentialLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch == 0:
-            return lrs
-        return [lr * self.gamma for lr in lrs]
+            return [lr * 1. for lr in self._last_lr]
+        return [lr * self.gamma for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [base_lr * self.gamma ** self.last_epoch
@@ -381,7 +383,7 @@ class PolynomialLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -417,6 +419,10 @@ class PolynomialLR(LRScheduler):
         [Tensor(shape=[], dtype=Float32, value= 0)]
     """
     def __init__(self, optimizer, total_iters=5, power=1.0, last_epoch=-1):
+        if not isinstance(power, float):
+            raise TypeError(f"For 'PolynomialLR', the 'power' must be float, but got {type(power)}.")
+        if power < 0:
+            raise ValueError(f"For 'PolynomialLR', the 'power' must be >= 0, but got {power}.")
         self.total_iters = total_iters
         self.power = power
         self.min = P.Minimum()
@@ -424,80 +430,16 @@ class PolynomialLR(LRScheduler):
         super(PolynomialLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
-
         if self.last_epoch == 0 or self.last_epoch > self.total_iters:
-            return lrs
+            return [lr * 1. for lr in self._last_lr]
         factor = ((1.0 - self.last_epoch / self.total_iters) / (
             1.0 - (self.last_epoch - 1) / self.total_iters)) ** self.power
-        return [lr * factor for lr in lrs]
+        return [lr * factor for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [
             (base_lr * (1.0 - self.min(self.total_iters, self.last_epoch) / self.total_iters) ** self.power)
             for base_lr in self.base_lrs]
-
-
-@jit_class
-class ChainedScheduler:
-    r"""
-    Save the learning rate scheduler chain list of multiple learning rate schedulers,
-    and call the step() function to execute the step() function of each learning rate scheduler.
-
-    .. warning::
-        This is an experimental lr scheduler module that is subject to change.
-        This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
-
-    Args:
-        schedulers (list[:class:`mindspore.experimental.optim.lr_scheduler.LRScheduler`]):
-            List of learning rate schedulers.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import nn
-        >>> from mindspore.experimental import optim
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.fc = nn.Dense(16 * 5 * 5, 120)
-        ...     def construct(self, x):
-        ...         return self.fc(x)
-        >>> net = Net()
-        >>> optimizer = optim.Adam(net.trainable_params(), 0.01)
-        >>> scheduler1 = optim.lr_scheduler.PolynomialLR(optimizer)
-        >>> scheduler2 = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
-        >>> scheduler = optim.lr_scheduler.ChainedScheduler([scheduler1, scheduler2])
-        >>> for i in range(6):
-        ...     scheduler.step()
-        ...     current_lr = scheduler.get_last_lr()
-        ...     print(current_lr)
-        [Tensor(shape=[], dtype=Float32, value= 0.004)]
-        [Tensor(shape=[], dtype=Float32, value= 0.0015)]
-        [Tensor(shape=[], dtype=Float32, value= 0.0005)]
-        [Tensor(shape=[], dtype=Float32, value= 0.000125)]
-        [Tensor(shape=[], dtype=Float32, value= 0)]
-        [Tensor(shape=[], dtype=Float32, value= 0)]
-    """
-    def __init__(self, schedulers):
-        self._schedulers = list(schedulers)
-        self.optimizer = schedulers[0].optimizer
-        self._last_lr = [lr for lr in self._schedulers[-1]._last_lr]  # pylint: disable=W0212
-
-    def step(self):
-        """
-        Sequential execution of the saved learning rate scheduler's step() function.
-        """
-        for scheduler in self._schedulers:
-            scheduler.step()
-
-    def get_last_lr(self):
-        """
-        Return last computed learning rate by current scheduler.
-        """
-        return [lr.value() for lr in self._last_lr]
 
 
 @jit_class
@@ -508,7 +450,7 @@ class LambdaLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -561,7 +503,7 @@ class MultiplicativeLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -599,11 +541,10 @@ class MultiplicativeLR(LRScheduler):
         super(MultiplicativeLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch > 0:
             return [lr * lmbda(self.last_epoch)
-                    for lmbda, lr in zip(self.lr_lambdas, lrs)]
-        return lrs
+                    for lmbda, lr in zip(self.lr_lambdas, self._last_lr)]
+        return [lr * 1. for lr in self._last_lr]
 
 
 @jit_class
@@ -616,7 +557,7 @@ class MultiStepLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -655,11 +596,10 @@ class MultiStepLR(LRScheduler):
         [Tensor(shape=[], dtype=Float32, value= 0.0005)]
         [Tensor(shape=[], dtype=Float32, value= 0.0005)]
     """
-
     def __init__(self, optimizer, milestones, gamma=0.1, last_epoch=-1):
         Validator.check_value_type('milestones', milestones, [list])
         for milestone in milestones:
-            if not isinstance(milestone, int):
+            if not isinstance(milestone, int) and not isinstance(milestone, bool):
                 raise TypeError(f"For 'MultiStepLR', elements of the 'milestones' must be type of int, "
                                 f"but got one element of 'milestones' type: {type(milestone)}.")
         Validator.check_value_type('gamma', gamma, [float, int])
@@ -693,7 +633,7 @@ class ConstantLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -734,12 +674,11 @@ class ConstantLR(LRScheduler):
         super(ConstantLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch == 0:
-            return [lr * self.factor for lr in lrs]
+            return [lr * self.factor for lr in self._last_lr]
         if self.last_epoch != self.total_iters:
-            return lrs
-        return [lr / self.factor for lr in lrs]
+            return [lr * 1. for lr in self._last_lr]
+        return [lr / self.factor for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [base_lr * (self.factor + (self.last_epoch >= self.total_iters) * (1 - self.factor))
@@ -756,7 +695,7 @@ class SequentialLR:
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -813,7 +752,7 @@ class SequentialLR:
         self._schedulers = schedulers
         self.milestones = milestones
         self.milestones_len = len(milestones)
-        self.last_epoch = Parameter(Tensor(last_epoch+1, dtype=mstype.float32),
+        self.last_epoch = Parameter(Tensor(last_epoch + 1, dtype=mstype.float32),
                                     name='last_epoch_' + self.__class__.__name__)
         self.increase_tensor = Tensor(1, mstype.int32)
 
@@ -826,7 +765,6 @@ class SequentialLR:
 
         self._schedulers[0].step()
         self._last_lr = schedulers[0]._last_lr  # pylint: disable=W0212
-
 
     def step(self):
         """
@@ -861,7 +799,7 @@ class ReduceLROnPlateau:
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -913,7 +851,7 @@ class ReduceLROnPlateau:
         >>> metrics = [1, 1.5, 1.8, 0.4, 0.5]
         >>> for i in range(5):
         ...     scheduler.step(metrics[i])
-        ...     current_lr = scheduler._last_lr
+        ...     current_lr = scheduler.get_last_lr()
         ...     print(current_lr)
         [Tensor(shape=[], dtype=Float32, value= 0.1)]
         [Tensor(shape=[], dtype=Float32, value= 0.01)]
@@ -987,7 +925,7 @@ class ReduceLROnPlateau:
         else:
             ops.assign_add(self.wait, self.increase_tensor)
 
-        if self.in_cooldown:
+        if self.in_cooldown():
             ops.assign_sub(self.cooldown_counter, self.increase_tensor)
             ops.assign(self.wait, 0)
 
@@ -1006,7 +944,6 @@ class ReduceLROnPlateau:
                 ops.assign(lr, new_lr)
         return True
 
-    @property
     def in_cooldown(self):
         """ Whether in cooldown period. """
         return self.cooldown_counter > 0
@@ -1057,7 +994,7 @@ class CyclicLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -1128,7 +1065,7 @@ class CyclicLR(LRScheduler):
 
         if last_epoch == -1:
             for lr, group in zip(base_lrs, optimizer.param_groups):
-                group['lr'] = Parameter(lr)
+                ops.assign(group['lr'], Parameter(lr))
 
         self.max_lrs = self._preprocess_input_param(optimizer, max_lr, 'max_lr')
         self.max_lrs = [Tensor(lr) for lr in self.max_lrs]
@@ -1234,7 +1171,7 @@ class CosineAnnealingWarmRestarts(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -1258,7 +1195,7 @@ class CosineAnnealingWarmRestarts(LRScheduler):
         >>> optimizer = optim.SGD(net.trainable_params(), lr=0.1, momentum=0.9)
         >>> scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2)
         >>> iters = 3
-        >>> for epoch in range(4):
+        >>> for epoch in range(2):
         ...     for i in range(iters):
         ...         scheduler.step(epoch + i / iters)
         ...         current_lr = scheduler.get_last_lr()
@@ -1347,7 +1284,7 @@ class CosineAnnealingLR(LRScheduler):
     r"""
     Set the learning rate of each parameter group using a cosine annealing lr
     schedule. Where :math:`\eta_{max}` is set to the initial lr, :math:`\eta_{min}` is the minimum value
-    for learning rate, :math:`\eta_{t}` is the current learning rate, :math:`\T_{max}` is iteration number of cosine
+    for learning rate, :math:`\eta_{t}` is the current learning rate, :math:`T_{max}` is iteration number of cosine
     function, and :math:`T_{cur}` is the number of epochs since the last restart in SGDR.
 
     .. math::
@@ -1361,17 +1298,17 @@ class CosineAnnealingLR(LRScheduler):
         \end{aligned}
 
     For more details, please refer to: `SGDR: Stochastic Gradient Descent with Warm Restarts
-    <https://arxiv.org/abs/1608.03983>`_
+    <https://arxiv.org/abs/1608.03983>`_ .
 
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         T_max (int): Maximum number of iterations.
-        eta_min (float, optional): Minimum learning rate. Default: ``0``.
+        eta_min (float, optional): Minimum learning rate. Default: ``0.0``.
         last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Supported Platforms:
@@ -1395,7 +1332,11 @@ class CosineAnnealingLR(LRScheduler):
         [Tensor(shape=[], dtype=Float32, value= 0.05)]
         [Tensor(shape=[], dtype=Float32, value= 0)]
     """
-    def __init__(self, optimizer, T_max, eta_min=0, last_epoch=-1):
+    def __init__(self, optimizer, T_max, eta_min=0.0, last_epoch=-1):
+        if not isinstance(eta_min, (float, int)):
+            raise TypeError(f"For 'CosineAnnealingLR', the 'eta_min' must be float or int, but got {type(eta_min)}.")
+        if not isinstance(T_max, int) and not isinstance(T_max, bool):
+            raise TypeError(f"For 'CosineAnnealingLR', the 'T_max' must be int, but got {type(eta_min)}.")
         self.T_max = T_max
         self.eta_min = eta_min
         self.math_pi = math.pi
@@ -1404,22 +1345,21 @@ class CosineAnnealingLR(LRScheduler):
         super(CosineAnnealingLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
 
         if self.last_epoch == 0:
-            return lrs
+            return [lr * 1. for lr in self._last_lr]
 
         if (self.last_epoch - 1 - self.T_max) % (2 * self.T_max) == 0:
             pct_pi = self.cast(self.math_pi / self.T_max, mstype.float32)
             return [lr + (base_lr - self.eta_min) *
                     (1 - self.cos(pct_pi)) / 2
                     for base_lr, lr in
-                    zip(self.base_lrs, lrs)]
+                    zip(self.base_lrs, self._last_lr)]
 
         return [(1 + self.cos(self.math_pi * self.last_epoch / self.T_max)) /
                 (1 + self.cos(self.math_pi * (self.last_epoch - 1) / self.T_max)) *
                 (lr - self.eta_min) + self.eta_min
-                for lr in lrs]
+                for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [self.eta_min + (base_lr - self.eta_min) *

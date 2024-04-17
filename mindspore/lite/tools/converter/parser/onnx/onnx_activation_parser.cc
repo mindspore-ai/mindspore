@@ -19,14 +19,12 @@
 #include <vector>
 #include "securec/include/securec.h"
 #include "ops/fusion/prelu_fusion.h"
-#include "ops/elu.h"
-#include "ops/gelu.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/activation.h"
 #include "nnacl/op_base.h"
 #include "ops/softplus.h"
 #include "ops/selu.h"
-#include "ops/celu.h"
-#include "ops/hswish.h"
+#include "ops/ops_func_impl/hswish.h"
 
 namespace mindspore {
 namespace lite {
@@ -64,7 +62,7 @@ PrimitiveCPtr OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const o
   auto node_iter = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
                                 [input_name](const onnx::TensorProto &proto) { return proto.name() == input_name; });
   if (node_iter == onnx_graph.initializer().end()) {
-    MS_LOG(WARNING) << "not find node: " << input_name.c_str();
+    MS_LOG(WARNING) << "cannot find node: " << input_name.c_str();
   } else {
     params.push_back(*node_iter);
   }

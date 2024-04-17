@@ -81,18 +81,18 @@ class LayerNormGrad : public OpDesc {
                    << begin_norm_axis << ", the dimension of x: " << ori_shape_x.size();
       return {};
     }
-    norm_axis.reserve(ori_shape_x.size() - begin_norm_axis);
-    for (int64_t i = begin_norm_axis; i < static_cast<int64_t>(ori_shape_x.size()); ++i) {
-      norm_axis.emplace_back(i);
+    norm_axis.reserve(ori_shape_x.size() - LongToSize(begin_norm_axis));
+    for (int64_t i = begin_norm_axis; i < SizeToLong(ori_shape_x.size()); ++i) {
+      norm_axis.push_back(i);
     }
     auto param_axis = ShapeVector();
     if (begin_params_axis < 0) {
       MS_LOG(INFO) << "begin_param_axis should be greater than or euqal to 0, but is: " << begin_params_axis;
       return {};
     }
-    param_axis.reserve(begin_params_axis);
+    param_axis.reserve(LongToSize(begin_params_axis));
     for (int64_t i = 0; i < static_cast<int64_t>(begin_params_axis); ++i) {
-      param_axis.emplace_back(i);
+      param_axis.push_back(i);
     }
 
     auto reduce_size = std::accumulate(norm_axis.begin(), norm_axis.end(), 1.0,

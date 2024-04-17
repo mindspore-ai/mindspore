@@ -19,12 +19,10 @@
 #include "mindspore/core/ops/math_ops.h"
 namespace mindspore {
 namespace kernel {
-bool AddNFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
+bool AddNFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto prim = primitive_;
   MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = prim->name();
+
   num_input_ = GetValue<int64_t>(prim->GetAttr("n"));
   if (num_input_ != inputs.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be  " << num_input_ << ", but got "
@@ -41,27 +39,26 @@ bool AddNFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     }
   }
   empty_tensor_input_ = false;
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int AddNFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int AddNFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   return KRET_OK;
 }
 
 template <typename T>
-bool AddNFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) {
+bool AddNFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs) {
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   cudaError_t status = cudaErrorNotReady;
   status =
-    FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    FillDeviceArray(outputs[0]->size() / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
-  std::vector<int64_t> ele_shape = {static_cast<int64_t>(outputs[0]->size / sizeof(T))};
+  std::vector<int64_t> ele_shape = {static_cast<int64_t>(outputs[0]->size() / sizeof(T))};
   for (size_t i = 0; i < num_input_; i++) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
     status = BinaryOpWithBroadcastCudaFunc<BinaryOpType::kAdd, T, T, T>(

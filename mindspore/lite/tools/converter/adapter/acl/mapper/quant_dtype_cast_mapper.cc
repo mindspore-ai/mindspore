@@ -42,7 +42,7 @@ STATUS QuantDTypeCastMapper::Mapper(const CNodePtr &cnode) {
 
   PrimitivePtr dst_prim = nullptr;
   std::vector<schema::QuantParamT> quant_param;
-  if (cnode->inputs().size() == kQuantInputNum) {
+  if (cnode->size() == kQuantInputNum) {
     // map to Quant.
     // quant param in QuantParamHolder
     if (src_prim->HasAttr("quant_params")) {
@@ -70,13 +70,14 @@ STATUS QuantDTypeCastMapper::Mapper(const CNodePtr &cnode) {
     CHECK_NULL_RETURN(dst_prim);
     dst_prim->AddAttr("scale", MakeValue(static_cast<float>(quant_param.front().scale)));
     dst_prim->AddAttr("offset", MakeValue(static_cast<float>(quant_param.front().zeroPoint)));
+    dst_prim->AddAttr(ops::kDstType, kInt8);
     MS_LOG(INFO) << cnode->fullname_with_scope() << " scale:" << quant_param.front().scale;
     MS_LOG(INFO) << cnode->fullname_with_scope() << " offset:" << quant_param.front().zeroPoint;
     if (quant_param.front().scale < 1.0) {
       MS_LOG(WARNING) << cnode->fullname_with_scope()
                       << " scale less than 1.0, scale value:" << quant_param.front().scale;
     }
-  } else if (cnode->inputs().size() == kDequantInputNum) {
+  } else if (cnode->size() == kDequantInputNum) {
     // map to Dequant.
     dst_prim = std::make_shared<acl::Dequant>();
     auto dst_type = src_prim->GetAttr(mindspore::ops::kDstT);
@@ -86,7 +87,7 @@ STATUS QuantDTypeCastMapper::Mapper(const CNodePtr &cnode) {
     }
     CHECK_NULL_RETURN(dst_prim);
   } else {
-    MS_LOG(ERROR) << "Invalid input size: " << cnode->inputs().size();
+    MS_LOG(ERROR) << "Invalid input size: " << cnode->size();
     return lite::RET_ERROR;
   }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,9 @@
 #include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
-#include "runtime/pynative/async/device_task.h"
+#include "runtime/pipeline/task/device_task.h"
 #include "runtime/pynative/op_compiler.h"
+#include "runtime/pynative/graph_adapter.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -80,15 +81,10 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   // Clear resource when python exit.
   void ClearOpExecutorResource() const;
 
-  void RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run_info, const pynative::KernelTaskType &task_type,
+  void RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run_info, const runtime::KernelTaskType &task_type,
                          bool enable_async);
 
   void RunAllocMemTask(DeviceContext *device_context, const tensor::TensorPtr &tensor, bool enable_async);
-
-  void RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async) override;
-
-  device::DeviceAddressPtr RunContiguousTaskByAddress(const device::DeviceAddressPtr &old_device_address,
-                                                      const TensorStorageInfoPtr &old_storage_info, bool enable_async);
   // Sync default stream in PyNative mode.
   void SyncStream();
 
@@ -96,18 +92,12 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
  private:
   // CreateKernel, Transform and Schedule have not been finished when LazyBuild is enabled in PyNative mode.
-  void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
+  void CompileSingleOpGraph(const OpCompilerInfoPtr &op_compiler_info, const DeviceContext *device_context,
                             bool is_dynamic_shape = false) const;
-
-  // Get saved OpBuildTask in OpExecutor and build all the kernels together in PyNative mode.
-  void CompileSingleOpGraphs(const std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> &build_tasks) const;
 
   // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
   // so the latest single op cache should be erased when cache list size exceeds threshold value.
   void EraseSingleOpCache(const GraphInfo &graph_info) const;
-
-  // Execute OpBuildTask and OpRunTask when the OpExecutor queue is full in PyNative mode.
-  void BatchBuildCallback() const;
 
   // Run op or dispatch  build task and run task.
   void RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
@@ -125,7 +115,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                            const VectorRef &args, VectorRef *outputs) override;
   // Split complete kernel graph to single op graph in PyNative back
-  // propagation, then compile and run single op graph.
+  // propagation, then compile and run single op graph or pyboost op(if op registered).
   void RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args, VectorRef *outputs);
 
   runtime::ActorSet *RealCompileGraphBeforeRunActor(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args,
@@ -141,25 +131,26 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void UpdateOutputDynamic(const session::BackendOpRunInfoPtr &op_run_info, const OpCompilerInfoPtr &op_compiler_info,
                            const vector<device::DeviceAddressPtr> &device_address_list, VectorRef *const outputs) const;
 
-  void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
+  void ReleaseForwardOutput(const std::vector<ValuePtr> &input_values);
 
-  void OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context);
+  void OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context);
 
-  void OpRunCallbackDynamic(const std::shared_ptr<pynative::OpTaskContext> &context);
+  void OpRunCallbackDynamic(const std::shared_ptr<runtime::OpTaskContext> &context);
 
   // Clean the compilation cache to avoid memory leakage in dynamic shape scenarios.
   void ClearResource();
 
-  void RunViewKernelTaskAsyncImpl(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
+  void RunViewKernelTaskAsyncImpl(const runtime::KernelTaskType &task_type, DeviceContext *device_context,
                                   const device::DeviceAddressPtrList &input_addr_list,
-                                  const TensorStorageInfoPtrList &input_storage_list,
-                                  const device::DeviceAddressPtrList &output_addr_list);
+                                  const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id);
 
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;
 
   // Cache forward op output value node tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<std::string, size_t> forward_op_output_tensor_id_;
+
+  pynative::GraphAdapter graph_adapter_;
 };
 using MindRTBackendPtr = std::shared_ptr<compile::MindRTBackend>;
 }  // namespace compile

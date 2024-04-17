@@ -93,14 +93,11 @@ class TFRecordToMR:
         ...                 "int64_list": tf.io.FixedLenFeature([6], tf.int64),
         ...                 "float_list": tf.io.FixedLenFeature([7], tf.float32)}
         >>> tfrecord_to_mr = TFRecordToMR(tfrecord_file, mindrecord_file, feature_dict, ["image_bytes"])
-        >>> status = tfrecord_to_mr.transform()
+        >>> tfrecord_to_mr.transform()
     """
 
     def __init__(self, source, destination, feature_dict, bytes_fields=None):
-        try:
-            self.tf = import_module("tensorflow")  # just used to convert tfrecord to mindrecord
-        except ModuleNotFoundError:
-            raise Exception("Module tensorflow is not found, please use pip install it.")
+        self.tf = import_module("tensorflow")  # just used to convert tfrecord to mindrecord
 
         if self.tf.__version__ < SupportedTensorFlowVersion:
             raise Exception("Module tensorflow version must be greater or equal {}.".format(SupportedTensorFlowVersion))
@@ -317,9 +314,6 @@ class TFRecordToMR:
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.TFRecordToMR` .
 
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-
         Raises:
             ParamTypeError: If index field is invalid.
             MRMOpenError: If failed to open MindRecord file.
@@ -334,7 +328,6 @@ class TFRecordToMR:
         t.join()
         if t.exitcode != 0:
             raise t.exception
-        return t.res
 
     def _cast_type(self, value):
         """

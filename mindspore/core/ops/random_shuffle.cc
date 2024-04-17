@@ -25,7 +25,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr RandomShuffleInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto input_shape = input_args[0]->BuildShape();
+  auto input_shape = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_shape);
   auto input_shape_ptr = input_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(input_shape_ptr);
@@ -36,7 +36,7 @@ TypePtr RandomShuffleInferType(const PrimitivePtr &prim, const std::vector<Abstr
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types_with_complex_and_bool,
                                                    prim_name);
   return x_type;

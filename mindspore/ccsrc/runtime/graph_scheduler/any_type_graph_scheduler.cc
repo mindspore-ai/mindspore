@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
+#include "runtime/graph_scheduler/any_type_graph_scheduler.h"
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
-#include "runtime/graph_scheduler/any_type_graph_scheduler.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
 
 namespace mindspore {
 namespace runtime {
+namespace {
+bool IsValidActorType(KernelTransformType type) {
+  return !(type == KernelTransformType::kDataPrepareActor || type == KernelTransformType::kDeviceDataSourceActor ||
+           type == KernelTransformType::kHostDataSourceActor || type == KernelTransformType::kLoopCountActor ||
+           type == KernelTransformType::kOutputActor || type == KernelTransformType::kDeviceTensorStore);
+}
+}  // namespace
 std::vector<AnyTypeKernelActorPtr> AnyTypeGraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info,
                                                                 const AID &memory_manager_aid, const AID *debug_id) {
   std::vector<AnyTypeKernelActorPtr> any_type_kernel_actors;
@@ -42,6 +49,7 @@ std::vector<AnyTypeKernelActorPtr> AnyTypeGraphScheduler::Build(const GraphCompi
     auto actor_name = graph->ToString() + kAnyTypeKernelActorNameSuffix;
     auto any_type_kernel_actor =
       std::make_shared<AnyTypeKernelActor>(actor_name, graph, device_context, memory_manager_aid, debug_id, nullptr);
+    MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
     any_type_kernel_actor->compile_func_ = graph_compiler_info.compile_func_;
     any_type_kernel_actor->transform_func_ = [this, &graph_compiler_info](const KernelGraphPtr &model_graph,
                                                                           const KernelGraphPtr &real_graph,
@@ -61,7 +69,6 @@ std::vector<AnyTypeKernelActorPtr> AnyTypeGraphScheduler::Build(const GraphCompi
         }
       }
     };
-    MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
     InsertActor(any_type_kernel_actor.get());
     (void)any_type_kernel_actors.emplace_back(any_type_kernel_actor);
   }
@@ -165,29 +172,27 @@ void AnyTypeGraphScheduler::TransArrowInDataPrepareActorToAnyTypeKernelActor(
       MS_LOG(EXCEPTION) << "Failed to get actor:" << actor_name
                         << " from data prepare actor:" << data_prepare_actor->GetAID();
     }
-    if (actor->type() == KernelTransformType::kKernelActor || actor->type() == KernelTransformType::kCustomActor ||
-        actor->type() == KernelTransformType::kSuperKernelActor || actor->type() == KernelTransformType::kFusionActor) {
-      MS_LOG(DEBUG) << "Add control arrow:" << actor_name << " for actor:" << any_type_kernel_actor->GetAID()
-                    << " id:" << id;
-      any_type_kernel_actor->graph_input_control_arrows_[id].emplace_back(control_arrow);
-      if (actor->type() == KernelTransformType::kFusionActor) {
-        auto fusion_actor = dynamic_cast<FusionActor *>(actor);
-        MS_EXCEPTION_IF_NULL(fusion_actor);
-        const auto &iter = fusion_actor->real_input_controls_.find(data_prepare_actor->GetAID().Name());
-        if (iter != fusion_actor->real_input_controls_.end()) {
-          std::vector<AbstractActor *> real_inputs;
-          for_each(iter->second.begin(), iter->second.end(), [&real_inputs](const auto &actor) {
-            if (actor->type() == KernelTransformType::kKernelActor ||
-                actor->type() == KernelTransformType::kCustomActor ||
-                actor->type() == KernelTransformType::kSuperKernelActor ||
-                actor->type() == KernelTransformType::kFusionActor) {
-              real_inputs.emplace_back(actor);
-            }
-          });
-          fusion_actor->real_input_controls_.erase(iter);
-          fusion_actor->real_input_controls_[any_type_kernel_actor->GetAID().Name()] = real_inputs;
+    if (!IsValidActorType(actor->type())) {
+      continue;
+    }
+    MS_LOG(DEBUG) << "Add control arrow:" << actor_name << " for actor:" << any_type_kernel_actor->GetAID()
+                  << " id:" << id;
+    any_type_kernel_actor->graph_input_control_arrows_[id].emplace_back(control_arrow);
+    if (actor->type() != KernelTransformType::kFusionActor) {
+      continue;
+    }
+    auto fusion_actor = dynamic_cast<FusionActor *>(actor);
+    MS_EXCEPTION_IF_NULL(fusion_actor);
+    const auto &iter = fusion_actor->real_input_controls_.find(data_prepare_actor->GetAID().Name());
+    if (iter != fusion_actor->real_input_controls_.end()) {
+      std::vector<AbstractActor *> real_inputs;
+      for_each(iter->second.begin(), iter->second.end(), [&real_inputs](const auto &actor) {
+        if (IsValidActorType(actor->type())) {
+          real_inputs.emplace_back(actor);
         }
-      }
+      });
+      fusion_actor->real_input_controls_.erase(iter);
+      fusion_actor->real_input_controls_[any_type_kernel_actor->GetAID().Name()] = real_inputs;
     }
   }
 }
@@ -228,7 +233,7 @@ void AnyTypeGraphScheduler::TransArrowInOutputActorToAnyTypeKernelActor(AnyTypeK
       if (output_data_arrow->to_op_id_.Name() == output_actor->GetAID().Name()) {
         output_data_arrow->to_op_id_ = any_type_kernel_actor->GetAID();
         MS_EXCEPTION_IF_NULL(any_type_kernel_actor->graph());
-        output_data_arrow->to_input_index_ += any_type_kernel_actor->graph()->input_nodes().size();
+        output_data_arrow->to_input_index_ += SizeToInt(any_type_kernel_actor->graph()->input_nodes().size());
         any_type_kernel_actor->graph_output_data_num_[id]++;
         MS_LOG(DEBUG) << "Add graph output data arrow for actor:" << any_type_kernel_actor->GetAID()
                       << " from actor:" << actor->GetAID() << " from index:" << output_data_arrow->from_output_index_
@@ -247,7 +252,7 @@ void AnyTypeGraphScheduler::TransArrowInOutputActorToAnyTypeKernelActor(AnyTypeK
       MS_EXCEPTION_IF_NULL(data_arrow);
       if (data_arrow->to_op_id_.Name() == output_actor->GetAID().Name()) {
         data_arrow->to_op_id_ = any_type_kernel_actor->GetAID();
-        data_arrow->to_input_index_ += any_type_kernel_actor->graph()->input_nodes().size();
+        data_arrow->to_input_index_ += SizeToInt(any_type_kernel_actor->graph()->input_nodes().size());
         MS_LOG(DEBUG) << "Add graph output batch data arrow for actor:" << any_type_kernel_actor->GetAID()
                       << " from actor:" << actor->GetAID() << " from index:" << data_arrow->from_output_index_
                       << " to index:" << data_arrow->to_input_index_;
@@ -286,7 +291,7 @@ void AnyTypeGraphScheduler::CollectBackendParameterForDynamicShape(AnyTypeKernel
                           << " front node:" << front_node->DebugString()
                           << " for actor:" << any_type_kernel_actor->GetAID();
       }
-      size_t index = iter - model_graph->input_nodes().begin();
+      size_t index = LongToSize(iter - model_graph->input_nodes().begin());
       MS_LOG(DEBUG) << "Add dynamic parameter:" << input_node->DebugString() << " in graph:" << real_graph->ToString()
                     << " for actor:" << any_type_kernel_actor->GetAID() << " id:" << id;
       dynamic_parameters[index] = input_node;
@@ -356,32 +361,14 @@ void PrepareDataForValueNode(const AnfNodePtr &node, const DeviceContext *const 
       MS_LOG(DEBUG) << "Device address:" << device_tensor << " already has ptr:" << device_tensor->GetPtr()
                     << " for value node:" << node->DebugString();
     }
-    const auto &value_node = node->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(value_node);
-    const auto &value = value_node->value();
-    MS_EXCEPTION_IF_NULL(value);
-    tensor::TensorPtr tensor = nullptr;
-    if (value->isa<tensor::Tensor>()) {
-      tensor = value->cast<TensorPtr>();
-    } else if (value->isa<Scalar>()) {
-      tensor = ScalarToTensor(value->cast<ScalarPtr>());
-    } else if (value->isa<StringImm>()) {
-      auto string_value = GetValue<std::string>(value);
-      size_t tensor_size = string_value.size();
-      ShapeVector shape = {1, SizeToLong(tensor_size)};
-      if (!device_tensor->SyncHostToDevice(shape, tensor_size, kObjectTypeString, string_value.data())) {
-        MS_LOG(EXCEPTION) << "Failed to sync data for value node:" << node->DebugString();
-      }
-      MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
-                    << " for value node:" << node->DebugString();
-      return;
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString();
-    }
 
-    if (!device_tensor->SyncHostToDevice(tensor->shape(), tensor->Size(), tensor->data_type(), tensor->data_c())) {
+    const auto &kernel_tensor = device_tensor->kernel_tensor();
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    if (!device_tensor->SyncHostToDevice(kernel_tensor->GetShapeVector(), kernel_tensor->size(),
+                                         kernel_tensor->dtype_id(), kernel_tensor->GetValuePtr())) {
       MS_LOG(EXCEPTION) << "Failed to sync data for value node:" << node->DebugString();
     }
+
     MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
                   << " for value node:" << node->DebugString();
   }
@@ -450,6 +437,8 @@ void AnyTypeGraphScheduler::FixDeviceTensorStoreKeyInActor(const std::vector<Abs
                     << any_type_kernel_actor->GetAID() << " to actor:" << actor->GetAID();
       size_t from_index = any_type_kernel_actor->FetchInputNodePosition(pair.second);
 
+      const auto &real_backend_node = real_graph->GetBackendAnfByFrontAnf(pair.second);
+      MS_EXCEPTION_IF_NULL(real_backend_node);
       if (actor->parent_fusion_actor() != nullptr) {
         auto base_actor = actor->parent_fusion_actor_;
         auto fusion_actor = dynamic_cast<FusionActor *>(base_actor);
@@ -465,10 +454,9 @@ void AnyTypeGraphScheduler::FixDeviceTensorStoreKeyInActor(const std::vector<Abs
           std::make_pair(any_type_kernel_actor->GetAID(), data_arrow.get()));
         any_type_kernel_actor->graph_input_data_arrows_[id].emplace_back(data_arrow);
         MS_LOG(DEBUG) << "Any type actor:" << any_type_kernel_actor->GetAID() << " current type:" << id
-                      << " add graph input node:" << real_graph->GetBackendAnfByFrontAnf(pair.second)->DebugString()
-                      << " from index:" << from_index << " to actor:" << actor->GetAID() << " to index:" << pair.first;
-        any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(
-          real_graph->GetBackendAnfByFrontAnf(pair.second));
+                      << " add graph input node:" << real_backend_node->DebugString() << " from index:" << from_index
+                      << " to actor:" << actor->GetAID() << " to index:" << pair.first;
+        any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(real_backend_node);
         actor->input_datas_num_++;
         (void)actor->input_data_arrow_aids_.emplace_back(
           std::make_pair(any_type_kernel_actor->GetAID(), data_arrow.get()));
@@ -477,10 +465,9 @@ void AnyTypeGraphScheduler::FixDeviceTensorStoreKeyInActor(const std::vector<Abs
         auto data = std::make_unique<OpData<DeviceTensor>>(actor->GetAID(), nullptr, pair.first);
         any_type_kernel_actor->graph_input_data_arrows_[id].emplace_back(data_arrow);
         MS_LOG(DEBUG) << "Any type actor:" << any_type_kernel_actor->GetAID() << " current type:" << id
-                      << " add graph input node:" << real_graph->GetBackendAnfByFrontAnf(pair.second)->DebugString()
-                      << " from index:" << from_index << " to actor:" << actor->GetAID() << " to index:" << pair.first;
-        any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(
-          real_graph->GetBackendAnfByFrontAnf(pair.second));
+                      << " add graph input node:" << real_backend_node->DebugString() << " from index:" << from_index
+                      << " to actor:" << actor->GetAID() << " to index:" << pair.first;
+        any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(real_backend_node);
         any_type_kernel_actor->graph_input_data_[id].emplace_back(std::make_pair(std::move(data), kOutputDataFlagInit));
         actor->input_datas_num_++;
         (void)actor->input_data_arrow_aids_.emplace_back(
@@ -498,7 +485,6 @@ std::vector<AbstractActorPtr> AnyTypeGraphScheduler::Transform(const KernelGraph
   MS_EXCEPTION_IF_NULL(model_graph);
   MS_EXCEPTION_IF_NULL(real_graph);
   auto graph_compiler_info = ConstructGraphCompilerInfo(model_graph, real_graph, device_context);
-  std::vector<AbstractActorPtr> actors;
   MS_LOG(INFO) << "Start transform for model graph:" << model_graph->ToString()
                << " and real graph:" << real_graph->ToString();
   auto actor_set = GraphScheduler::GetInstance().Transform(*graph_compiler_info);
@@ -508,16 +494,13 @@ std::vector<AbstractActorPtr> AnyTypeGraphScheduler::Transform(const KernelGraph
 
   TransArrowInActorSetToAnyTypeKernelActor(actor_set, model_graph, real_graph);
   // Collect actors.
-  std::for_each(actor_set->custom_actors_.begin(), actor_set->custom_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  std::for_each(actor_set->kernel_actors_.begin(), actor_set->kernel_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  std::for_each(actor_set->super_kernel_actors_.begin(), actor_set->super_kernel_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  std::for_each(actor_set->fusion_actors_.begin(), actor_set->fusion_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  std::for_each(actor_set->copy_actors_.begin(), actor_set->copy_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
+  auto base_actors = SchedulerHelper::CollectActors(actor_set);
+  std::vector<AbstractActorPtr> actors;
+  std::for_each(base_actors.begin(), base_actors.end(), [&actors](const AbstractActorPtr &actor) {
+    if (IsValidActorType(actor->type())) {
+      actors.emplace_back(actor);
+    }
+  });
 
   const auto &any_type_kernel_actor_name = model_graph->ToString() + kAnyTypeKernelActorNameSuffix;
   auto base_actor = FetchActor(any_type_kernel_actor_name);
@@ -527,6 +510,92 @@ std::vector<AbstractActorPtr> AnyTypeGraphScheduler::Transform(const KernelGraph
   // Prevent the device address in the graph from being freed.
   graph_compiler_info->graphs_.clear();
   return actors;
+}
+
+void AnyTypeGraphScheduler::Optimize(const ActorSetPtr &actor_set,
+                                     const std::map<KernelWithIndex, std::pair<AbstractActor *, KernelWithIndex>,
+                                                    session::KernelWithIndexCmp> &graph_output_to_actor) const {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  for (const auto &any_type_kernel_actor : actor_set->any_type_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
+    MS_EXCEPTION_IF_NULL(any_type_kernel_actor->graph());
+    for (const auto &input_node : any_type_kernel_actor->graph()->input_nodes()) {
+      MS_EXCEPTION_IF_NULL(input_node);
+      auto front_node_with_index = any_type_kernel_actor->graph()->GetOriginFrontNodeByInternalParameter(input_node);
+      auto front_node = front_node_with_index.first;
+      // Update device tensor store key in any type kernel actor for value tuple node.
+      if (front_node == nullptr || !front_node->isa<ValueNode>()) {
+        continue;
+      }
+      const auto &value_node = front_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      const auto &value = value_node->value();
+      if (value == nullptr || (!value->isa<ValueSequence>())) {
+        continue;
+      }
+      auto iter = std::find_if(any_type_kernel_actor->device_tensor_store_keys_.begin(),
+                               any_type_kernel_actor->device_tensor_store_keys_.end(),
+                               [value_node](const auto &node_pair) { return node_pair.second == value_node; });
+      if (iter == any_type_kernel_actor->device_tensor_store_keys_.end() || iter->second == nullptr) {
+        continue;
+      }
+      MS_LOG(DEBUG) << "Prepare fix device tensor store key:" << iter->second->DebugString()
+                    << " input index:" << iter->first
+                    << " in any type kernel actor:" << any_type_kernel_actor->GetAID();
+      const auto &output_pair_iter = graph_output_to_actor.find(front_node_with_index);
+      if (output_pair_iter == graph_output_to_actor.end()) {
+        MS_LOG(DEBUG) << "Failed to get device tensor store key:" << iter->second->DebugString()
+                      << " input index:" << iter->first
+                      << " in graph output any type kernel actor:" << any_type_kernel_actor->GetAID();
+        continue;
+      }
+      const auto &backend_node_with_index = output_pair_iter->second.second;
+      if (backend_node_with_index.first == nullptr || !backend_node_with_index.first->isa<ValueNode>()) {
+        MS_LOG(WARNING) << "Failed to get backend by device tensor store key:" << iter->second->DebugString()
+                        << " input index:" << iter->first
+                        << " in graph output any type kernel actor:" << any_type_kernel_actor->GetAID();
+        continue;
+      }
+      if (any_type_kernel_actor->device_contexts_.empty() || any_type_kernel_actor->device_contexts_[0] == nullptr) {
+        MS_LOG(WARNING) << "Failed to get device context in any type kernel actor:" << any_type_kernel_actor->GetAID();
+        continue;
+      }
+      const auto &device_context = any_type_kernel_actor->device_contexts_[0];
+      if (DeviceTensorStore::GetInstance().Fetch(backend_node_with_index.first.get(),
+                                                 device_context->GetDeviceType()) == nullptr) {
+        MS_LOG(DEBUG) << "Fetch no device tensor store by:" << backend_node_with_index.first->fullname_with_scope()
+                      << ", type:" << device_context->GetDeviceType()
+                      << " for actor:" << any_type_kernel_actor->GetAID();
+        const auto &device_addresses = DeviceTensorStore::GetInstance().Fetch(backend_node_with_index.first.get());
+        if (device_addresses.empty() || device_addresses[0] == nullptr ||
+            device_addresses[0]->kernel_tensor() == nullptr) {
+          MS_LOG(WARNING) << "Failed to get device tensor store by backend node:"
+                          << backend_node_with_index.first->DebugString() << " input index:" << iter->first
+                          << " in graph output any type kernel actor:" << any_type_kernel_actor->GetAID();
+          continue;
+        }
+
+        const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+          device_addresses[0]->kernel_tensor()->GetShape(), device_addresses[0]->kernel_tensor()->GetType(),
+          backend_node_with_index.first->cast<ValueNodePtr>()->value(), nullptr,
+          device_addresses[0]->kernel_tensor()->size(), device_addresses[0]->kernel_tensor()->GetStringFormat(),
+          device_addresses[0]->kernel_tensor()->dtype_id(), device_addresses[0]->kernel_tensor()->GetShapeVector(),
+          device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+        MS_LOG(INFO) << "Create kernel tensor without setting stream id.";
+        auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+        MS_LOG(DEBUG) << "Create device tensor:" << other_type_device_tensor
+                      << " device type:" << device_context->GetDeviceType()
+                      << " type:" << other_type_device_tensor->type_id()
+                      << " for actor:" << any_type_kernel_actor->GetAID();
+        SchedulerHelper::AddDeviceTensorStore(backend_node_with_index.first.get(), other_type_device_tensor);
+      }
+
+      MS_LOG(INFO) << "Get backend:" << backend_node_with_index.first->DebugString()
+                   << " by device tensor store key:" << iter->second->DebugString() << " input index:" << iter->first
+                   << " in graph output any type kernel actor:" << any_type_kernel_actor->GetAID();
+      iter->second = backend_node_with_index.first;
+    }
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore

@@ -29,33 +29,19 @@ from mindspore.nn.optim._dist_optimizer_registry import _register_dist_optimizer
 _momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 
 
-@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
-def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment, ps_parameter, cache_enable):
+@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment):
     """Apply momentum optimizer to the weight parameter using Tensor."""
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        _ps_pull = P.Pull()
-        _ps_push = P.Push("ApplyMomentum", [])
-        shapes = (op_shape(learning_rate), op_shape(gradient), op_shape(momentum))
-        success = F.depend(True, _ps_pull(_ps_push((learning_rate, gradient, momentum), shapes), weight))
-    else:
-        success = F.depend(True, opt(weight, moment, learning_rate, gradient, momentum))
+    success = F.depend(True, opt(weight, moment, learning_rate, gradient, momentum))
     return success
 
 
-@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool",
-                        "Function", "Bool")
-def _tensor_run_opt_ext_dist(opt, momentum, learning_rate, gradient, weight, moment, ps_parameter, cache_enable,
+@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Function", "Bool")
+def _tensor_run_opt_ext_dist(opt, momentum, learning_rate, gradient, weight, moment,
                              distributed_opt, use_flag):
     """Apply momentum optimizer to the weight parameter using Tensor."""
     if use_flag:
         success = F.depend(True, distributed_opt(weight, moment, learning_rate, gradient, momentum))
-    elif ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        _ps_pull = P.Pull()
-        _ps_push = P.Push("ApplyMomentum", [])
-        shapes = (op_shape(learning_rate), op_shape(gradient), op_shape(momentum))
-        success = F.depend(True, _ps_pull(_ps_push((learning_rate, gradient, momentum), shapes), weight))
     else:
         success = F.depend(True, opt(weight, moment, learning_rate, gradient, momentum))
     return success
@@ -129,7 +115,9 @@ class Momentum(Optimizer):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              `LearningRateSchedule
+              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              with step as the input to get the learning rate of current step.
 
         momentum (float): Hyperparameter of type float, means momentum for the moving average.
             It must be at least 0.0.
@@ -173,7 +161,7 @@ class Momentum(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -224,19 +212,19 @@ class Momentum(Optimizer):
         if self.use_dist_optimizer:
             if self.is_group_lr:
                 success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum),
-                                                 lr, gradients, params, moments, self.ps_parameters, self.cache_enable,
+                                                 lr, gradients, params, moments,
                                                  self.distributed_opts, self.use_distributed_opt_flags)
             else:
                 success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum, lr),
-                                                 gradients, params, moments, self.ps_parameters, self.cache_enable,
+                                                 gradients, params, moments,
                                                  self.distributed_opts, self.use_distributed_opt_flags)
         else:
             if self.is_group_lr:
                 success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum),
-                                                 lr, gradients, params, moments, self.ps_parameters, self.cache_enable)
+                                                 lr, gradients, params, moments)
             else:
                 success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum, lr),
-                                                 gradients, params, moments, self.ps_parameters, self.cache_enable)
+                                                 gradients, params, moments)
         return success
 
 

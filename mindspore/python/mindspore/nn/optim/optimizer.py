@@ -95,7 +95,10 @@ class Optimizer(Cell):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              `LearningRateSchedule
+              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              with step as the input to get the learning rate
+              of current step.
 
         parameters (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
             `parameters` is a list of `dict`, the string "params", "lr", "weight_decay", "grad_centralization" and
@@ -764,14 +767,14 @@ class Optimizer(Cell):
             param (Union[Parameter, list[Parameter]]): The `Parameter` or list of `Parameter`.
 
         Returns:
-            Parameter, single `Parameter` or `list[Parameter]` according to the input type. If learning rate is dynamic,
+            A single `Parameter` or `list[Parameter]` according to the input type. If learning rate is dynamic,
             `LearningRateSchedule` or `list[LearningRateSchedule]` that used to calculate the learning rate will be
             returned.
 
         Examples:
             >>> from mindspore import nn
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
             >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,21 +24,22 @@
 #include "include/transform/graph_ir/types.h"
 #include "include/transform/graph_ir/utils.h"
 #include "include/common/utils/scoped_long_running.h"
-#include "graph/model.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
-#include "acl/acl_rt.h"
 #include "acl/acl_base.h"
-#include "toolchain/plog.h"
-#include "framework/common/helper/model_helper.h"
+#include "graph/graph_buffer.h"
+#include "graph/graph.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
-#include "graph/utils/graph_utils_ex.h"
 #include "mindspore/core/utils/singleton.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/tensorsummary_utils.h"
+#include "plugin/device/ascend/hal/device/tensordump_utils.h"
+#include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
+#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -168,45 +169,14 @@ void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &phase) {
     // Release GIL before calling into (potentially long-running) C++ code
     ScopedLongRunning release;
     Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
-    if (ret != Status::SUCCESS) {
+    if (ret == Status::NOT_FOUND) {
+      MS_LOG(INFO) << "Exec graph:" << run_options.name << "not found, skip.";
+      return;
+    } else if (ret != Status::SUCCESS) {
       MS_LOG(WARNING) << "Exec graph:" << run_options.name << " failed";
       return;
     }
   }
-}
-
-bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, int64_t size, int64_t batch_size,
-                                                const std::vector<TypePtr> &types,
-                                                const std::vector<std::vector<int64_t>> &shapes,
-                                                const std::vector<int64_t> &input_indexes, const std::string &phase) {
-  ge_device_context_->Initialize();
-  std::vector<int64_t> ge_types;
-  (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types), [](const TypePtr &i) -> int64_t {
-    return static_cast<int64_t>(transform::ConvertDataType(i->type_id()));
-  });
-
-  ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
-  ConfigManager::GetInstance().set_iter_num(queue_name, size);
-  ConfigManager::GetInstance().set_dataset_phase(phase);
-
-  DatasetGraphParam param(queue_name, size, batch_size, ge_types, shapes, input_indexes);
-  ConfigManager::GetInstance().set_dataset_param(param);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-
-  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-    if (transform::CompileDatasetGraph(param, phase) != transform::SUCCESS) {
-      MS_LOG(ERROR) << "Build dateset graph failed.";
-      return false;
-    }
-
-    GeDeviceResManager::CreateSessionAndGraphRunner();
-
-    MS_LOG(INFO) << "DoExecNonInputGraph:" << phase;
-    DoExecNonInputGraph(phase);
-  }
-
-  return true;
 }
 
 void AscendDeprecatedInterface::ExportDFGraph(const std::string &file_name, const std::string &phase,
@@ -229,16 +199,14 @@ void AscendDeprecatedInterface::ExportDFGraph(const std::string &file_name, cons
       return;
     }
     // get model stream
-    ::ge::Model model("", "");
-    model.SetGraph(::ge::GraphUtilsEx::GetComputeGraph(*ge_graph));
-    ::ge::Buffer model_data;
-    auto ge_ret = model.Save(model_data);
+    ::ge::GraphBuffer model_data;
+    auto ge_ret = ge_graph->SaveToMem(model_data);
     if (ge_ret != ::ge::SUCCESS) {
       MS_LOG(ERROR) << "ERROR: GE model save fail";
       return;
     }
     // convert model and key into py::bytes
-    const std::string str(reinterpret_cast<char *>(model_data.GetData()), model_data.GetSize());
+    const std::string str(reinterpret_cast<const char *>(model_data.GetData()), model_data.GetSize());
     py::bytes model_bytes(str);
     py::bytes key_bytes(key);
 
@@ -311,25 +279,31 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
     }
     rank_size = IntToUint(rank_env);
   }
-
-  int log_ret = DlogReportInitialize();
-  if (log_ret != 0) {
-    MS_LOG(WARNING) << "Init slog failed, ret = " << log_ret;
-  }
-
   (void)ErrorManagerAdapter::Init();
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
-  auto ret = aclrtSetDevice(static_cast<int32_t>(device_id));
-  if (ret != RT_ERROR_NONE) {
+  auto ret = CALL_ASCEND_API(aclrtSetDevice, static_cast<int32_t>(device_id));
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret)
                       << "]. The details refer to 'Ascend Error Message'.";
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
-  auto thread_crt = [](const std::string &path, const acltdtChannelHandle *acl_handle) {
-    return std::thread(TensorPrint(path, acl_handle));
-  };
-  CreateTensorPrintThread(thread_crt);
-  TensorSummaryUtils::GetInstance().CreateTDTSummaryThread();
+
+  if (!ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+    MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
+      std::bind(&TensorPrintUtils::PrintReceiveData, &TensorPrintUtils::GetInstance(), std::placeholders::_1),
+      device_id, kChannelNameNpuLog, kPrintOpName));
+  }
+
+  if (ms_context_ptr->backend_policy() == "ge") {
+    MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
+      std::bind(&TensorDumpUtils::AsyncSaveDatasetToNpyFile, &TensorDumpUtils::GetInstance(), std::placeholders::_1),
+      device_id, tensordump_mapping.first, tensordump_mapping.second));
+    for (const std::pair<string, string> &summary_mapping : summary_mappings) {
+      MbufDataHandlerManager::GetInstance().AddHandler(
+        std::make_unique<MbufDataHandler>(std::bind(SummaryReceiveData, std::placeholders::_1, summary_mapping.first),
+                                          device_id, summary_mapping.first, summary_mapping.second));
+    }
+  }
   return true;
 }
 
@@ -344,18 +318,19 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
   if (force || ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
     pybind11::gil_scoped_release gil_release;
-    DestroyTensorPrintThread();
-    TensorSummaryUtils::GetInstance().DestroyTDTSummaryThread();
+    MbufDataHandlerManager::GetInstance().DestoryPrintHandler();
+    if (ms_context_ptr->backend_policy() == "ge") {
+      MbufDataHandlerManager::GetInstance().DestoryHandler();
+    }
     (void)ErrorManagerAdapter::Init();
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto ret = aclrtResetDevice(static_cast<int32_t>(device_id));
+    auto ret = CALL_ASCEND_API(aclrtResetDevice, static_cast<int32_t>(device_id));
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtResetDevice failed, ret[" << static_cast<int>(ret)
                         << "]. The details refer to 'Ascend Error Message'.";
     }
     ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
     MS_LOG(INFO) << "Call aclrtResetDevice, destroy and close tsd successful, ret[" << static_cast<int>(ret) << "]";
-    (void)DlogReportFinalize();
   } else {
     MS_LOG(DEBUG) << "Acltdt Dataset client is used, no need to close, tsd reference = "
                   << ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
@@ -371,17 +346,8 @@ bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &ms
   return ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) > 0;
 }
 
-void AscendDeprecatedInterface::AclOptimizer(const FuncGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto pm = std::make_shared<opt::PassManager>("310_multi_graph_pm");
-  pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
-  optimizer->AddPassManager(pm);
-  (void)optimizer->Optimize(graph);
-}
-
 bool AscendDeprecatedInterface::CheckIsAscend910Soc() {
-  const char *soc_name_c = aclrtGetSocName();
+  const char *soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     return false;
   }
@@ -392,67 +358,23 @@ bool AscendDeprecatedInterface::CheckIsAscend910Soc() {
   return true;
 }
 
-void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {
-  // check om
-  MS_EXCEPTION_IF_NULL(om_data);
-  ::ge::ModelHelper helper;
-  ::ge::ModelData model_data;
-  model_data.model_data = om_data->MutableData();
-  model_data.model_len = om_data->DataSize();
-  ::ge::Status ret = helper.LoadRootModel(model_data);
-  if (ret != ::ge::SUCCESS) {
-    MS_LOG(EXCEPTION) << "Invalid input data cannot parse to om.";
-  }
-}
-
-#ifdef WITH_BACKEND
-namespace {
-void SetContextSocVersion(MsContext *ctx) {
-  constexpr auto k910AAscendVersion = "ascend910";
-  constexpr auto k910BAscendVersion = "ascend910b";
-  const std::map<std::string, std::string> kAscendSocVersions = {
-    {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
-    {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
-    {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
-  // Get default soc version.
-  static std::string version;
-  if (version.empty()) {
-    const int kSocVersionLen = 50;
-    char soc_version[kSocVersionLen] = {0};
-    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
-    }
-    version = soc_version;
-  }
-  auto iter = kAscendSocVersions.find(version);
-  if (iter == kAscendSocVersions.end()) {
-    MS_LOG(INFO) << "The soc version is not Ascend910 or ascend910b.";
+void AscendDeprecatedInterface::UnregisterExternalAllocator() {
+  auto graph_runner = transform::GetGraphRunner();
+  if (graph_runner == nullptr) {
+    MS_LOG(INFO) << "The graph_runner is not exist";
     return;
   }
-  if (iter->second == k910BAscendVersion) {
-    ctx->set_ascend_soc_version(k910BAscendVersion);
-  } else if (iter->second == k910AAscendVersion) {
-    ctx->set_ascend_soc_version(k910AAscendVersion);
+  if (!graph_runner->IsAllocatorRegistered()) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(ge_device_context_);
+  MS_EXCEPTION_IF_NULL(ge_device_context_->device_res_manager_);
+  auto ret = transform::UnregisterExternalAllocator(
+    graph_runner, dynamic_cast<GeDeviceResManager *>(ge_device_context_->device_res_manager_.get())->GetStream());
+  if (ret != transform::Status::SUCCESS) {
+    MS_LOG(EXCEPTION) << "UnregisterExternalAllocator failed";
   }
 }
-}  // namespace
-
-MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
-  MS_EXCEPTION_IF_NULL(ctx);
-  auto enable_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
-  if (enable_ge == "1") {
-    if (ctx->backend_policy() != "ge") {
-      (void)ctx->set_backend_policy("ge");
-    }
-  } else {
-    if (ctx->backend_policy() != "ms") {
-      (void)ctx->set_backend_policy("ms");
-    }
-  }
-  SetContextSocVersion(ctx);
-});
-#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

@@ -175,7 +175,7 @@ def test_svd_net6():
     assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_svd_vmap1():
@@ -194,7 +194,7 @@ def test_svd_vmap1():
     assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_svd_vmap2():

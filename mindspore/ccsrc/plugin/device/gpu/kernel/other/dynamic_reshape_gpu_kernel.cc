@@ -47,20 +47,20 @@ std::vector<std::pair<KernelAttr, DynamicReshapeKernelMod::LaunchFunc>> DynamicR
    &DynamicReshapeKernelMod::LaunchKernel<int64_t>}};
 
 template <typename S>
-bool DynamicReshapeKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DynamicReshapeKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   auto data_addr = GetDeviceAddress<unsigned char>(inputs, 0);
   auto shape_addr = GetDeviceAddress<S>(inputs, 1);
   auto output_addr = GetDeviceAddress<unsigned char>(outputs, 0);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(output_addr, data_addr, input_size_list_[0], cudaMemcpyDeviceToDevice, cuda_stream),
+    cudaMemcpyAsync(output_addr, data_addr, inputs[0]->size(), cudaMemcpyDeviceToDevice, cuda_stream),
     "DynamicReshape cpy data failed");
-  std::vector<S> real_output_shape_ = std::vector<S>(input_size_list_[1] / sizeof(S), 0);
+  std::vector<S> real_output_shape_ = std::vector<S>(inputs[1]->size() / sizeof(S), 0);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(&real_output_shape_[0], shape_addr, input_size_list_[1], cudaMemcpyDeviceToHost, cuda_stream),
+    cudaMemcpyAsync(&real_output_shape_[0], shape_addr, inputs[1]->size(), cudaMemcpyDeviceToHost, cuda_stream),
     "DynamicReshape cpy real output shape value failed");
   std::transform(real_output_shape_.begin(), real_output_shape_.end(), std::back_inserter(output_shape_),
                  [](const S &value) { return static_cast<int64_t>(value); });

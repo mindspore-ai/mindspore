@@ -44,26 +44,49 @@ abstract::BaseShapePtr EinsumGradInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputNum2,
-                                           prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+  abstract::BaseShapePtrList elements;
+  if (input_args.size() == kInputNum2 && CheckAndConvertUtils::IsSequence(input_args[kIndex0])) {
+    auto seq_shape = input_args[kIndex0]->GetShape()->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(seq_shape);
+    elements = seq_shape->shape();
+  } else {
+    for (int64_t idx = 0; idx < SizeToLong(input_args.size()) - 1; idx++) {
+      if (CheckAndConvertUtils::IsSequence(input_args[idx])) {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+      }
+      elements.emplace_back(input_args[idx]->GetShape());
+    }
   }
-  auto shape_map = input_args[0]->BuildShape();
-  return shape_map;
+  return std::make_shared<abstract::TupleShape>(elements);
 }
 
 TypePtr EinsumGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto input_args_rank = SizeToLong(input_args.size());
-  (void)CheckAndConvertUtils::CheckInteger("einsum_grad_prim_infer", input_args_rank, kEqual, kInputNum2, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+  bool is_tuple = true;
+  TypePtrList elements;
+  if (input_args.size() == kInputNum2 && CheckAndConvertUtils::IsSequence(input_args[kIndex0])) {
+    if (CheckAndConvertUtils::IsTuple(input_args[kIndex0])) {
+      auto seq_type = input_args[kIndex0]->GetType()->cast<TuplePtr>();
+      MS_EXCEPTION_IF_NULL(seq_type);
+      elements = seq_type->elements();
+    } else {
+      auto seq_type = input_args[kIndex0]->GetType()->cast<ListPtr>();
+      MS_EXCEPTION_IF_NULL(seq_type);
+      elements = seq_type->elements();
+      is_tuple = false;
+    }
+  } else {
+    for (int64_t idx = 0; idx < SizeToLong(input_args.size()) - 1; idx++) {
+      if (CheckAndConvertUtils::IsSequence(input_args[idx])) {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+      }
+      elements.emplace_back(input_args[idx]->GetType());
+    }
   }
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type_map = input_args[0]->BuildType();
-  return x_type_map;
+  auto out_type =
+    is_tuple ? std::make_shared<Tuple>(elements)->cast<TypePtr>() : std::make_shared<List>(elements)->cast<TypePtr>();
+  return out_type;
 }
 }  // namespace
 MIND_API_OPERATOR_IMPL(EinsumGrad, BaseOperator);
@@ -78,6 +101,8 @@ std::string EinsumGrad::get_equation() const {
 
 abstract::AbstractBasePtr EinsumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<abstract::AbstractBasePtr> &input_args) {
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputNum2,
+                                           primitive->name());
   return abstract::MakeAbstract(EinsumGradInferShape(primitive, input_args),
                                 EinsumGradInferType(primitive, input_args));
 }

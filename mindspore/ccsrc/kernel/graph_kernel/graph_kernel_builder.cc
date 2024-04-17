@@ -178,7 +178,10 @@ void *KernelPool::CreateSharedMem(const std::string &path) {
   }
 
   if (is_creator_) {
-    (void)memset_s(local_addr, mem_size, 0, mem_size);
+    if (memset_s(local_addr, mem_size, 0, mem_size) != EOK) {
+      MS_LOG(ERROR) << "Failed to call memset_s.";
+      return nullptr;
+    }
   }
 
   return local_addr;

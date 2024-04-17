@@ -45,33 +45,37 @@ class GeKernelExecutor : public KernelExecutor {
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
+  kernel::KernelModPtr CreateKernelMod(const std::string &op_name) const override {
+    MS_LOG(EXCEPTION) << "Ascend Unsupported";
+  };
 
   // Adjust kernel graph before run graph, used in Graph Mode.
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 
   // Launch a kernel via 'KernelMod' of the kernel.
-  bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                    size_t stream_id) const override;
+  bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                    const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
+                    KernelMod *kernel_mod, void *stream) const override;
+  bool LaunchCallback(CallbackFunc callback_func, size_t stream_id) const;
 
   // Unify the MindIR, the default behavior uses the common unified MindIR.
   void UnifyMindIR(const KernelGraphPtr &graph) const override;
   void AddMindIRPass(const KernelGraphPtr &graph) const override;
+  void OptimizeExecutionOrder(const FuncGraphPtr &graph) const;
 
   // Get rank id for distributed training.
   uint32_t GetRankID() const override { return 0; }
 
-  bool ExecuteKernelTask(const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
-                         const TensorStorageInfoPtrList &input_storage_list,
-                         const device::DeviceAddressPtrList &output_addr_list) const override;
+  bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
+                         const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
 
  private:
-  // Launch device aicpu library
-  static void LaunchDeviceLibrary();
-
+  static void DoSomas(const FuncGraphPtr &graph);
+  static void DoStreamAssign(const KernelGraphPtr &kernel_graph);
   // launch
-  bool PySyncRuning() const;
-  bool MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs, const vector<AddressPtr> &outputs) const;
+  bool MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,
+                       const vector<KernelTensor *> &outputs) const;
+  bool PySyncRuning(void *stream) const;
 
   mutable std::set<CNodePtr> nop_op_to_memcpy_;
   // Maybe AscendDeviceResManager and GEDeviceResManager now

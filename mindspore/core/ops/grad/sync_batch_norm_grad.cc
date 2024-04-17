@@ -45,8 +45,8 @@ TuplePtr SyncBatchNormGradInferType(const PrimitivePtr &prim, const std::vector<
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual,
                                            kSyncBatchNormGradInputSize, prim_name);
-  auto x_dtype = input_args[1]->BuildType();
-  auto scale_dtype = input_args[2]->BuildType();
+  auto x_dtype = input_args[1]->GetType();
+  auto scale_dtype = input_args[2]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_dtype, scale_dtype, scale_dtype});
 }
 
@@ -56,9 +56,9 @@ abstract::TupleShapePtr SyncBatchNormGradInferShape(const PrimitivePtr &primitiv
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual,
                                            kSyncBatchNormGradInputSize, prim_name);
-  auto y_backprop_shape_ptr = input_args[0]->BuildShape();
-  auto x_shape_ptr = input_args[1]->BuildShape();
-  auto scale_shape_ptr = input_args[2]->BuildShape();
+  auto y_backprop_shape_ptr = input_args[0]->GetShape();
+  auto x_shape_ptr = input_args[1]->GetShape();
+  auto scale_shape_ptr = input_args[2]->GetShape();
   auto y_backprop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(y_backprop_shape_ptr)[kShape];
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   // y_backprop and x must have same shape

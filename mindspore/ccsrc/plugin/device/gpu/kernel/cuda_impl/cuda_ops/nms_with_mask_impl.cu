@@ -222,7 +222,7 @@ template <typename T>
 cudaError_t CalSort(const int &num, const T *data_in, T *data_out, int *index_buff, T *data_buff, int box_size,
                     const uint32_t &device_id, cudaStream_t stream) {
   int ceil_p_2 = NmsRoundUpPower2(num);
-  int thread = std::min(ceil_p_2, CUDA_THREADS(device_id));
+  size_t thread = std::min(static_cast<size_t>(ceil_p_2), CUDA_THREADS(device_id));
   NmsBitonicSortByKeyKernel<<<1, thread, 0, stream>>>(1, num, ceil_p_2, data_in, data_buff, index_buff, box_size);
   return GetCudaStatus();
 }

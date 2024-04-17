@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,23 +64,25 @@ using StringIndex = AutoIndexObj<std::string>;
 
 class TFReaderOp : public NonMappableLeafOp {
  public:
-  // Constructor of TFReaderOp (2)
-  // @note The builder class should be used to call this constructor.
-  // @param num_workers - number of worker threads reading data from TFRecord files.
-  // @param worker_connector_size - size of each internal queue.
-  // @param total_num_rows - Number of rows to read
-  // @param dataset_files_list - list of filepaths for the dataset files.
-  // @param data_schema - the data schema object.
-  // @param op_connector_size - size of each queue in the connector that the child operator pulls from.
-  // @param columns_to_load - the names of the columns to load data from.
-  // @param shuffle_files - whether or not to shuffle the files before reading data.
-  // @param equal_rows_per_shard - whether or not to get equal rows for each process.
-  // @param compression_type - the compression type of the TFRecord files
+  /// \brief Constructor.
+  /// \param num_workers The number of worker threads for reading data.
+  /// \param worker_connector_size The size of each worker queue.
+  /// \param total_num_rows The Number of rows to read.
+  /// \param dataset_files_list The list of paths of dataset files to read.
+  /// \param data_schema The data schema descributing the feature names, dtypes and shapes.
+  /// \param op_connector_size The size of connector queue for the child node to read from.
+  /// \param columns_to_load The feature names to load from the files.
+  /// \param shuffle_files Whether to shuffle the files before reading.
+  /// \param num_devices The number of shards that the dataset will be divided into.
+  /// \param device_id Which part of dataset to read among all the shards.
+  /// \param equal_rows_per_shard Whether to read equal number of rows for each shard.
+  /// \param compression_type The compression type of the dataset files.
+  /// \param decode Whether to decode the protobuf, or leave it for ParseExampleOp to parse.
   TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t total_num_rows,
              std::vector<std::string> dataset_files_list, std::unique_ptr<DataSchema> data_schema,
              int32_t op_connector_size, std::vector<std::string> columns_to_load, bool shuffle_files,
-             int32_t num_devices, int32_t device_id, bool equal_rows_per_shard,
-             const CompressionType &compression_type = CompressionType::NONE);
+             int32_t num_devices, int32_t device_id, bool equal_rows_per_shard, const CompressionType &compression_type,
+             bool decode);
 
   /// Default destructor
   ~TFReaderOp() override = default;
@@ -363,6 +365,7 @@ class TFReaderOp : public NonMappableLeafOp {
   std::vector<std::string> columns_to_load_;
   std::unique_ptr<DataSchema> data_schema_;
   bool equal_rows_per_shard_;
+  bool decode_;  // whether to parse the proto
 };
 }  // namespace dataset
 }  // namespace mindspore

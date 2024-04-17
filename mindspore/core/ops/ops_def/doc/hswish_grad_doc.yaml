@@ -1,0 +1,3 @@
+hswish_grad:
+    description: |  
+        Gets the gradient of HSwish operation.

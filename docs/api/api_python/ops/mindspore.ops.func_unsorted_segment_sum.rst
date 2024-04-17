@@ -23,8 +23,7 @@
         - **num_segments** (Union[int, Tensor], 可选) - 分段数量 :math:`z` ，可以为int或零维的Tensor。
 
     返回：
-        Tensor, shape为 :math:`(z, x_{N+1}, ..., x_R)`.
+        Tensor, shape为 :math:`(z, x_{N+1}, ..., x_R)`。
 
     异常：
         - **TypeError** - `num_segments` 不是int类型或者零维Tensor。
-        - **ValueError** - `segment_ids` 的维度不等于1。

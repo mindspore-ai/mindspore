@@ -37,9 +37,7 @@ constexpr size_t kDimensionTwo = 2;
 constexpr size_t kDimensionThree = 3;
 
 CutMixBatchOp::CutMixBatchOp(ImageBatchFormat image_batch_format, float alpha, float prob)
-    : image_batch_format_(image_batch_format), alpha_(alpha), prob_(prob) {
-  rnd_.seed(GetSeed());
-}
+    : image_batch_format_(image_batch_format), alpha_(alpha), prob_(prob) {}
 
 void CutMixBatchOp::GetCropBox(int height, int width, float lam, int *x, int *y, int *crop_width, int *crop_height) {
   const float cut_ratio = std::sqrt(1.F - lam);
@@ -47,9 +45,9 @@ void CutMixBatchOp::GetCropBox(int height, int width, float lam, int *x, int *y,
   auto cut_h = static_cast<int>(static_cast<float>(height) * cut_ratio);
   std::uniform_int_distribution<int> width_uniform_distribution(0, width);
   std::uniform_int_distribution<int> height_uniform_distribution(0, height);
-  int cx = width_uniform_distribution(rnd_);
+  int cx = width_uniform_distribution(random_generator_);
   int x2, y2;
-  int cy = height_uniform_distribution(rnd_);
+  int cy = height_uniform_distribution(random_generator_);
   constexpr int cut_half = 2;
   *x = std::clamp(cx - cut_w / cut_half, 0, width - 1);   // horizontal coordinate of left side of crop box
   *y = std::clamp(cy - cut_h / cut_half, 0, height - 1);  // vertical coordinate of the top side of crop box
@@ -207,7 +205,7 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   for (auto idx = 0; idx < images.size(); idx++) {
     rand_indx.push_back(idx);
   }
-  std::shuffle(rand_indx.begin(), rand_indx.end(), rnd_);
+  std::shuffle(rand_indx.begin(), rand_indx.end(), random_generator_);
   std::gamma_distribution<float> gamma_alpha(alpha_, 1.0);
   std::gamma_distribution<float> gamma_beta(alpha_, 1.0);
   std::uniform_real_distribution<double> uniform_distribution(0.0, 1.0);
@@ -223,13 +221,13 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
     // Calculating lambda
     // If x1 is a random variable from Gamma(a1, 1) and x2 is a random variable from Gamma(a2, 1)
     // then x = x1 / (x1+x2) is a random variable from Beta(a1, a2)
-    float x1 = gamma_alpha(rnd_);
-    float x2 = gamma_beta(rnd_);
+    float x1 = gamma_alpha(random_generator_);
+    float x2 = gamma_beta(random_generator_);
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - x1) > x2,
                                  "CutMixBatchOp: gamma_distribution x1 and x2 are too large, got x1: " +
                                    std::to_string(x1) + ", x2:" + std::to_string(x2));
     float lam = x1 / (x1 + x2);
-    double random_number = uniform_distribution(rnd_);
+    double random_number = uniform_distribution(random_generator_);
     if (random_number < prob_) {
       float label_lam;  // lambda used for labels
       // Compute image

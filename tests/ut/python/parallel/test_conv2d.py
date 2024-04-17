@@ -533,4 +533,20 @@ def test_conv2d_kernel_size_smaller_than_stride_and_split_hw():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search("ReLU", k) is not None:
-            assert v == [[1, 1, 4, 4], ]
+            assert v == [[1, 1, 4, 4],]
+
+
+def test_conv2d_dynamic_shape_constraint():
+    """
+    Feature: same mode, stride < kernel_size, need to exchange, input dynamic shape
+    Description: split n/c-in/c-out/h/w
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0,
+                                      full_batch=False)
+    strategy1 = ((2, 2, 2, 2), (2, 2, 1, 1))
+    strategy2 = ((2, 2, 2, 2),)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
+    dynamic_x = Tensor(shape=[None, 16, 8, 8], dtype=ms.float32)
+    with pytest.raises(RuntimeError):
+        compile_net(net, input_x=dynamic_x)

@@ -26,6 +26,7 @@
 #include <string>
 #include <utility>
 #include <algorithm>
+#include <map>
 #include "src/common/log_adapter.h"
 #include "tools/common/option.h"
 #include "include/errorcode.h"
@@ -129,6 +130,54 @@ std::string ShapeVectorToStr(const std::vector<T> &shape) {
     oss << x;
   }
   oss << "]";
+  return oss.str();
+}
+
+template <typename T>
+std::string VectorToStr(const std::vector<T> &list, std::function<std::string(const T &)> func) {
+  if (func == nullptr) {
+    return "";
+  }
+  std::ostringstream s_str;
+  s_str << "[";
+  for (size_t i = 0; i < list.size(); i++) {
+    s_str << func(list[i]);
+    if (i + 1 < list.size()) {
+      s_str << ", ";
+    }
+  }
+  s_str << "]";
+  return s_str.str();
+}
+
+template <typename T>
+std::string VectorToStrJoin(const std::vector<T> &shape, const std::string &sep = ",") {
+  std::ostringstream oss;
+  bool first_dim = true;
+  for (auto &x : shape) {
+    if (!first_dim) {
+      oss << sep;
+    } else {
+      first_dim = false;
+    }
+    oss << x;
+  }
+  return oss.str();
+}
+
+template <typename K, typename V>
+std::string MapToStrJoin(const std::map<K, V> &options, const std::string &kv_sep = ":",
+                         const std::string &item_sep = ";") {
+  std::ostringstream oss;
+  bool first_dim = true;
+  for (auto &x : options) {
+    if (!first_dim) {
+      oss << item_sep;
+    } else {
+      first_dim = false;
+    }
+    oss << x.first << kv_sep << x.second;
+  }
   return oss.str();
 }
 
@@ -266,6 +315,7 @@ inline size_t DataTypeSize(TypeId type) {
     case kNumberTypeUInt8:
       return sizeof(uint8_t);
     case kNumberTypeFloat16:
+    case kNumberTypeBFloat16:
     case kNumberTypeInt16:
       return sizeof(int16_t);
     case kNumberTypeInt32:

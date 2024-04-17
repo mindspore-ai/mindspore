@@ -58,8 +58,8 @@ class EinsumGpuKernelMod : public NativeGpuKernelMod {
       (*dst_ptr) = temp;
     }
   }
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *src_ptr = GetDeviceAddress<T>(workspace, 0);
     T *dst_ptr = GetDeviceAddress<T>(workspace, 1);
     T *res_ptr = GetDeviceAddress<T>(workspace, 2);
@@ -117,10 +117,8 @@ class EinsumGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    auto primitive = base_operator->GetPrim();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto primitive = primitive_;
     MS_EXCEPTION_IF_NULL(primitive);
     node_name_ = primitive->name();
     size_t input_num = inputs.size();
@@ -128,13 +126,12 @@ class EinsumGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(ERROR) << "For " << node_name_ << ", input number can not be less than 1, but got " << input_num;
       return false;
     }
-    type_id_ = inputs[0]->GetDtype();
+    type_id_ = inputs[0]->dtype_id();
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
@@ -146,7 +143,7 @@ class EinsumGpuKernelMod : public NativeGpuKernelMod {
 
     size_t input_num = inputs.size();
     for (size_t idx = 0; idx < input_num; ++idx) {
-      TypeId cur_type_id = inputs[idx]->GetDtype();
+      TypeId cur_type_id = inputs[idx]->dtype_id();
       if (cur_type_id != type_id_) {
         MS_LOG(ERROR) << "For " << node_name_ << ", input types should be the same, but it does not.";
         return KRET_RESIZE_FAILED;
@@ -155,7 +152,7 @@ class EinsumGpuKernelMod : public NativeGpuKernelMod {
       input_shapes_.push_back(in_shape);
     }
 
-    auto equation_ptr = base_operator->GetAttr("equation");
+    auto equation_ptr = primitive_->GetAttr("equation");
     MS_EXCEPTION_IF_NULL(equation_ptr);
     std::string equation = GetValue<std::string>(equation_ptr);
     single_op_ = std::vector<std::vector<OpStruct>>(input_shapes_.size());

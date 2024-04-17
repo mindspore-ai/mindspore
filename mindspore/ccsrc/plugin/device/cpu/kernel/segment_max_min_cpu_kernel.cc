@@ -66,12 +66,11 @@ bool SegmentMaxMinCPUKernelMod::GetComputeFunc() {
   return true;
 }
 
-bool SegmentMaxMinCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  input_x_dtype_ = inputs.at(kIndex0)->GetDtype();
-  segment_ids_dtype_ = inputs.at(kIndex1)->GetDtype();
-  output_dtype_ = outputs.at(kIndex0)->GetDtype();
+bool SegmentMaxMinCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  input_x_dtype_ = inputs.at(kIndex0)->dtype_id();
+  segment_ids_dtype_ = inputs.at(kIndex1)->dtype_id();
+  output_dtype_ = outputs.at(kIndex0)->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -81,10 +80,9 @@ bool SegmentMaxMinCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int SegmentMaxMinCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SegmentMaxMinCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = NativeCpuKernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_x_shape_ = inputs.at(kIndex0)->GetShapeVector();
@@ -150,9 +148,9 @@ std::vector<KernelAttr> SegmentMaxMinCPUKernelMod::GetOpSupport() {
 }
 
 template <typename T1, typename T2>
-bool SegmentMaxMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SegmentMaxMinCPUKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   if (kernel_name_ == prim::kPrimSegmentMax->name() || kernel_name_ == prim::kPrimSegmentMin->name()) {
     if constexpr (std::is_same_v<T1, std::complex<float>>) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', input_x types can not be complex64.";
@@ -164,9 +162,9 @@ bool SegmentMaxMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     return ret;
   }
   T1 init_value = GetInitValue<T1>();
-  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
-  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
+  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->device_ptr());
+  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->device_ptr());
+  auto output_data_addr = static_cast<T1 *>(outputs[0]->device_ptr());
   std::vector<int64_t> segments = CPUKernelUtils::CalcSegmentIds(segment_ids_data_addr, segment_ids_num_);
   for (size_t i = 0; i < output_num_; ++i) {
     output_data_addr[i] = init_value;

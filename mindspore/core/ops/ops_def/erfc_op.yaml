@@ -1,0 +1,8 @@
+#operator erfc
+erfc:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor

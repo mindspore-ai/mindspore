@@ -36,15 +36,14 @@ constexpr size_t kApplyAddsignInputsNum = 7;
 constexpr size_t kApplyAddsignOutputsNum = 2;
 }  // namespace
 
-bool ApplyAddsignCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
+bool ApplyAddsignCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[0]->dtype_id();
   return true;
 }
 
-bool ApplyAddsignCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
+bool ApplyAddsignCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs) {
   CheckParam(inputs, outputs);
   switch (dtype_) {
     case kNumberTypeFloat16:
@@ -63,60 +62,59 @@ bool ApplyAddsignCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
   return true;
 }
 
-int ApplyAddsignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &others) {
+int ApplyAddsignCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(WARNING) << kernel_name_ << "reinit failed.";
     return ret;
   }
   return 0;
 }
 
-void ApplyAddsignCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) const {
+void ApplyAddsignCpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) const {
   // inputs: var, m, lr, alpha, sign_decay, beta, gradient
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAddsignInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAddsignOutputsNum, kernel_name_);
-  if (inputs[kVar]->size != inputs[kM]->size) {
+  if (inputs[kVar]->size() != inputs[kM]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'var' and 'm' must be the same, "
                          "but got the memory size of 'var': "
-                      << inputs[kVar]->size << " and 'm': " << inputs[kM]->size;
+                      << inputs[kVar]->size() << " and 'm': " << inputs[kM]->size();
   }
-  if (inputs[kVar]->size != inputs[kGrad]->size) {
+  if (inputs[kVar]->size() != inputs[kGrad]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'var' and 'gradient' must be the same, "
                          "but got the memory size of 'var': "
-                      << inputs[kVar]->size << " and 'gradient': " << inputs[kGrad]->size;
+                      << inputs[kVar]->size() << " and 'gradient': " << inputs[kGrad]->size();
   }
 }
 
 template <typename T>
-void ApplyAddsignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs) {
-  auto *var = static_cast<T *>(inputs[kVar]->addr);
-  auto *m = static_cast<T *>(inputs[kM]->addr);
-  const auto *lr = static_cast<T *>(inputs[kLr]->addr);
-  const auto *alpha = static_cast<T *>(inputs[kAlpha]->addr);
-  const auto *sign_decay = static_cast<T *>(inputs[kSignDecay]->addr);
-  const auto *beta = static_cast<T *>(inputs[kBeta]->addr);
-  const auto *gradient = static_cast<T *>(inputs[kGrad]->addr);
+void ApplyAddsignCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  auto *var = static_cast<T *>(inputs[kVar]->device_ptr());
+  auto *m = static_cast<T *>(inputs[kM]->device_ptr());
+  const auto *lr = static_cast<T *>(inputs[kLr]->device_ptr());
+  const auto *alpha = static_cast<T *>(inputs[kAlpha]->device_ptr());
+  const auto *sign_decay = static_cast<T *>(inputs[kSignDecay]->device_ptr());
+  const auto *beta = static_cast<T *>(inputs[kBeta]->device_ptr());
+  const auto *gradient = static_cast<T *>(inputs[kGrad]->device_ptr());
 
-  size_t length = inputs[kVar]->size / sizeof(T);
+  size_t length = inputs[kVar]->size() / sizeof(T);
   auto task = [this, &var, &m, &lr, &alpha, &sign_decay, &beta, &gradient](size_t start, size_t end) {
     LaunchApplyAddsign(var, m, lr, alpha, sign_decay, beta, gradient, start, end);
   };
   CPUKernelUtils::ParallelForAutoSearch(task, length, &parallel_search_info_);
 
-  auto output_var = static_cast<T *>(outputs[kVar]->addr);
-  auto output_m = static_cast<T *>(outputs[kM]->addr);
-  auto ret_var = memcpy_s(output_var, outputs[kVar]->size, var, inputs[kVar]->size);
+  auto output_var = static_cast<T *>(outputs[kVar]->device_ptr());
+  auto output_m = static_cast<T *>(outputs[kM]->device_ptr());
+  auto ret_var = memcpy_s(output_var, outputs[kVar]->size(), var, inputs[kVar]->size());
   if (ret_var != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret_var;
   }
-  auto ret_m = memcpy_s(output_m, outputs[kM]->size, m, inputs[kM]->size);
+  auto ret_m = memcpy_s(output_m, outputs[kM]->size(), m, inputs[kM]->size());
   if (ret_m != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret_m;
   }

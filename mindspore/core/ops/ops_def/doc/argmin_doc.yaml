@@ -1,0 +1,34 @@
+argmin:
+    description: |
+        Returns the indices of the minimum value along a specified `axis` of a Tensor.
+
+        If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor is
+        :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+    
+        Args:
+            axis (int): Axis where the Argmin operation applies to. Default: ``-1`` .
+            output_type (:class:`mindspore.dtype`): Output data type.
+                Supported types: ``mstype.int32`` , ``mstype.int64`` . Default: ``mstype.int32`` .
+    
+        Inputs:
+            - **input_x** (Tensor) - Input tensor.
+              The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+    
+        Outputs:
+            Tensor, which is the minimum index in the specified axis of input Tensor.
+    
+        Raises:
+            TypeError: If `axis` is not an int.
+            TypeError: If `output_type` is neither int32 nor int64.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
+            >>> index = ops.Argmin()(input_x)
+            >>> print(index)
+            2

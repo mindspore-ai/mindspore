@@ -83,7 +83,7 @@ def onp_not_equal(a, b):
     return onp.not_equal(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -101,7 +101,7 @@ def onp_less_equal(a, b):
     return onp.less_equal(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -119,7 +119,7 @@ def onp_less(a, b):
     return onp.less(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -137,7 +137,7 @@ def onp_greater_equal(a, b):
     return onp.greater_equal(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -155,7 +155,7 @@ def onp_greater(a, b):
     return onp.greater(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -185,7 +185,7 @@ def onp_isfinite(x):
     return onp.isfinite(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -203,7 +203,7 @@ def onp_isnan(x):
     return onp.isnan(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -219,7 +219,7 @@ def onp_isinf(x):
     return onp.isinf(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -235,7 +235,7 @@ def onp_isposinf(x):
     return onp.isposinf(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -251,7 +251,7 @@ def onp_isneginf(x):
     return onp.isneginf(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -259,7 +259,7 @@ def test_isneginf():
     match_res(mnp_isneginf, onp_isneginf, test_case.infs)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -274,7 +274,7 @@ def test_isscalar():
     assert mnp.isscalar('numpy') == onp.isscalar('numpy')
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -298,7 +298,7 @@ def test_isclose():
     match_all_arrays(mnp.isclose(to_tensor(a), to_tensor(b)), onp.isclose(a, b))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -313,7 +313,7 @@ def test_in1d():
             match_res(mnp.in1d, onp.in1d, x, y, invert=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -390,7 +390,7 @@ def onp_logical_not(x):
     return onp.logical_not(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -403,7 +403,7 @@ def test_logical_not():
         onp.testing.assert_equal(actual.asnumpy().tolist(), expected.tolist())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -416,7 +416,7 @@ def test_array_equal():
     assert mnp.array_equal(a, b) == onp.array_equal(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -445,7 +445,7 @@ def onp_signbit(*arrs):
     return a, b
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -478,7 +478,7 @@ def onp_sometrue(x):
     return a, b, c, d, e, f
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -491,7 +491,7 @@ def test_sometrue():
         onp.testing.assert_equal(actual.asnumpy().tolist(), expected.tolist())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

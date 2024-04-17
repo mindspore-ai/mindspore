@@ -25,29 +25,25 @@ constexpr size_t kSigmoidCrossEntropyWithLogitsInputsNum = 2;
 constexpr size_t kSigmoidCrossEntropyWithLogitsOutputsNum = 1;
 }  // namespace
 
-bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   return True;
 }
 
-int SigmoidCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                      const std::vector<KernelTensorPtr> &inputs,
-                                                      const std::vector<KernelTensorPtr> &outputs,
-                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SigmoidCrossEntropyWithLogitsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs.at(0)->GetDtype();
+  dtype_ = inputs.at(0)->dtype_id();
   auto x_shape = inputs.at(0)->GetShapeVector();
   tensor_size_ = SizeOf(x_shape);
   return KRET_OK;
 }
 
-bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
@@ -60,13 +56,13 @@ bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel:
 }
 
 template <typename T>
-void SigmoidCrossEntropyWithLogitsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &outputs) const {
+void SigmoidCrossEntropyWithLogitsCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSigmoidCrossEntropyWithLogitsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSigmoidCrossEntropyWithLogitsOutputsNum, kernel_name_);
-  auto *logits_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *labels_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *logits_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *labels_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto zero = static_cast<T>(0.0);
   auto one = static_cast<T>(1.0);
   auto two = static_cast<T>(2.0);

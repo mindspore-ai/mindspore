@@ -125,7 +125,7 @@ int AdamCPUKernel::OptimizerStep() {
   auto beta1 = reinterpret_cast<float *>(in_tensors_.at(kBeta1Idx)->MutableData())[0];
   auto beta2 = reinterpret_cast<float *>(in_tensors_.at(kBeta2Idx)->MutableData())[0];
   auto eps = reinterpret_cast<float *>(in_tensors_.at(kEpsilonIdx)->MutableData())[0];
-  size_t length = in_tensors_.at(kWeightIdx)->ElementsNum();
+  size_t length = static_cast<size_t>(in_tensors_.at(kWeightIdx)->ElementsNum());
   CHECK_NULL_RETURN(weight);
   CHECK_NULL_RETURN(m);
   CHECK_NULL_RETURN(v);
@@ -139,7 +139,7 @@ int AdamCPUKernel::OptimizerStep() {
     ret = DoAdam(m, v, grad_sum_, weight, beta1, beta2, beta1_power, beta2_power, eps, learning_rate,
                  adam_param_->use_nesterov_, start, end);
     std::fill(grad_sum_, grad_sum_ + length, 0);
-    OptimizerKernel::OptimizerStep();
+    (void)OptimizerKernel::OptimizerStep();
   }
   return ret;
 }

@@ -32,7 +32,7 @@ int KVCacheMgrAssignFusion::RemoveAssignOp(const AnfNodePtr &anf_node, const Fun
                                            const CNodePtr &kv_cache_cnode) {
   const int expected_assign_input_count = 4;
   auto assign_cnode = anf_node->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(assign_cnode->inputs().size() == expected_assign_input_count, lite::RET_NO_CHANGE);
+  MS_CHECK_TRUE_RET(assign_cnode->size() == expected_assign_input_count, lite::RET_NO_CHANGE);
   const int past_input_index = 1;
   const int kv_cache_mgr_input_index = 2;
   if (kv_cache_cnode->input(past_input_index) != assign_cnode->input(past_input_index)) {

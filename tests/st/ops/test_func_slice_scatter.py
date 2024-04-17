@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return ops.slice_scatter(input_x, src, self.dim, self.start, self.end, self.step)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -66,7 +66,7 @@ def test_ops_slice_scatter(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -91,3 +91,42 @@ def test_ops_slice_scatter_error(mode):
     net = Net(1, 1, 1, 1)
     with pytest.raises(ValueError):
         net(x, y)
+
+    with pytest.raises(TypeError):
+        net(1., 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_slice_scatter_neg_end(mode):
+    """
+    Feature: ops.slice_scatter
+    Description: Verify the result of slice_scatter with neg end.
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    x = Tensor([[[[0, 1, 2],
+                  [3, 4, 5],
+                  [6, 7, 8]],
+                 [[9, 10, 11],
+                  [12, 13, 14],
+                  [15, 16, 17]]]], ms.float32)
+    y = Tensor([[[[28, 29, 30],
+                  [31, 32, 33]],
+                 [[34, 35, 36],
+                  [37, 38, 39]]]], ms.float32)
+    net = Net(2, 0, -1, 1)
+    output = net(x, y)
+    expect_output = [[[[28., 29., 30.],
+                       [31., 32., 33.],
+                       [6., 7., 8.]],
+                      [[34., 35., 36.],
+                       [37., 38., 39.],
+                       [15., 16., 17.]]]]
+    assert np.allclose(output.asnumpy(), expect_output)

@@ -38,7 +38,7 @@ constexpr size_t kIdxBeta2 = 6;
 constexpr size_t kIdxEps = 7;
 constexpr size_t kIdxWeightDecay = 8;
 constexpr size_t kIdxGradient = 9;
-constexpr size_t kAamWeightDecayInputNum = 9;
+constexpr size_t kAamWeightDecayInputNum = 10;
 
 AnfNodePtr CreateNodeOfBinaryOp(const FuncGraphPtr &graph, const string &op_name, const AnfNodePtr &node1,
                                 const AnfNodePtr &node2) {

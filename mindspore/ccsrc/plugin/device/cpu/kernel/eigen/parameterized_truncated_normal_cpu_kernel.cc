@@ -44,55 +44,48 @@ const std::map<TypeId, size_t> means_type_size_map = {
   {kNumberTypeFloat16, sizeof(float16)}, {kNumberTypeFloat32, sizeof(float)}, {kNumberTypeFloat64, sizeof(double)}};
 }  // namespace
 
-bool ParameterizedTruncatedNormalCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                    const std::vector<KernelTensorPtr> &inputs,
-                                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ParameterizedTruncatedNormalCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ParameterizedTruncatedNormal>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);
   rng_.seed(init_seed);
-  input_type_ = inputs[kInput0]->GetDtype();
-  input_means_type_ = inputs[kInput1]->GetDtype();
-  input_stdevs_type_ = inputs[kInput2]->GetDtype();
-  input_min_type_ = inputs[kInput3]->GetDtype();
-  input_max_type_ = inputs[kInput4]->GetDtype();
-  output_type_ = outputs[kOutputData]->GetDtype();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  input_type_ = inputs[kInput0]->dtype_id();
+  input_means_type_ = inputs[kInput1]->dtype_id();
+  input_stdevs_type_ = inputs[kInput2]->dtype_id();
+  input_min_type_ = inputs[kInput3]->dtype_id();
+  input_max_type_ = inputs[kInput4]->dtype_id();
+  output_type_ = outputs[kOutputData]->dtype_id();
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int ParameterizedTruncatedNormalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs,
-                                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ParameterizedTruncatedNormalCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kInput0]->GetDeviceShapeAdaptively();
-  input_means_shape_ = inputs[kInput1]->GetDeviceShapeAdaptively();
-  input_stdevs_shape_ = inputs[kInput2]->GetDeviceShapeAdaptively();
-  input_min_shape_ = inputs[kInput3]->GetDeviceShapeAdaptively();
-  input_max_shape_ = inputs[kInput4]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kInput0]->GetDeviceShapeVector();
+  input_means_shape_ = inputs[kInput1]->GetDeviceShapeVector();
+  input_stdevs_shape_ = inputs[kInput2]->GetDeviceShapeVector();
+  input_min_shape_ = inputs[kInput3]->GetDeviceShapeVector();
+  input_max_shape_ = inputs[kInput4]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
 template <typename T>
-T ParameterizedTruncatedNormalCpuKernelMod::GetBatchSizeCheckDims(const std::vector<AddressPtr> &inputs) {
-  auto output_shape = reinterpret_cast<T *>(inputs[0]->addr);
+T ParameterizedTruncatedNormalCpuKernelMod::GetBatchSizeCheckDims(const std::vector<KernelTensor *> &inputs) {
+  auto output_shape = reinterpret_cast<T *>(inputs[0]->device_ptr());
   return output_shape[0];
 }
 
 template <typename T_shape, typename T>
-bool ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &,
-                                                            const std::vector<AddressPtr> &outputs) {
-  auto output_shape = reinterpret_cast<T_shape *>(inputs[0]->addr);
-  size_t input_shape_num = inputs[0]->size / sizeof(T_shape);
+bool ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  auto output_shape = reinterpret_cast<T_shape *>(inputs[0]->device_ptr());
+  size_t input_shape_num = inputs[0]->size() / sizeof(T_shape);
   // check shape
   auto batch_size = output_shape[0];
   int sample_size = 1;
@@ -100,11 +93,11 @@ bool ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel(const std::vector<Ad
     sample_size *= output_shape[i];
   }
 
-  auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
-  auto means = reinterpret_cast<T *>(inputs[kInput1]->addr);
-  auto stdevs = reinterpret_cast<T *>(inputs[kInput2]->addr);
-  auto minvals = reinterpret_cast<T *>(inputs[kInput3]->addr);
-  auto maxvals = reinterpret_cast<T *>(inputs[kInput4]->addr);
+  auto output_data = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto means = reinterpret_cast<T *>(inputs[kInput1]->device_ptr());
+  auto stdevs = reinterpret_cast<T *>(inputs[kInput2]->device_ptr());
+  auto minvals = reinterpret_cast<T *>(inputs[kInput3]->device_ptr());
+  auto maxvals = reinterpret_cast<T *>(inputs[kInput4]->device_ptr());
 
   std::vector<T *> params = {means, stdevs, minvals, maxvals};
 

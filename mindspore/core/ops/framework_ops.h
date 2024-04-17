@@ -56,13 +56,12 @@ GVAR_DEF(PrimitivePtr, kPrimIdentityMath, std::make_shared<Primitive>("Identity"
 // Shape
 GVAR_DEF(PrimitivePtr, kPrimShapeMul, std::make_shared<Primitive>("shape_mul"));
 GVAR_DEF(PrimitivePtr, kPrimShapeMulGrad, std::make_shared<Primitive>("ShapeMulGrad"));
-GVAR_DEF(PrimitivePtr, kPrimShape, std::make_shared<Primitive>("Shape"));
 GVAR_DEF(PrimitivePtr, kPrimDType, std::make_shared<Primitive>("DType"));
 
 // SideEffectPropagate
 GVAR_DEF(PrimitivePtr, kPrimDepend, std::make_shared<Primitive>(kDependOpName, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimPartial, std::make_shared<Primitive>("Partial", kSideEffectPropagate));
-GVAR_DEF(PrimitivePtr, kPrimIdentity, std::make_shared<Primitive>(kidentityOpName, kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimidentity, std::make_shared<Primitive>(kidentityOpName, kSideEffectPropagate));
 
 // Other primitive not used by backend but used in core;
 GVAR_DEF(PrimitivePtr, kPrimStateSetItem, std::make_shared<Primitive>("state_setitem"));
@@ -70,7 +69,7 @@ GVAR_DEF(PrimitivePtr, kPrimJ, std::make_shared<Primitive>(kJOpName, kSideEffect
 GVAR_DEF(PrimitivePtr, kPrimVmap, std::make_shared<Primitive>(kVmapOpName, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimShard, std::make_shared<Primitive>("Shard", kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimTaylor, std::make_shared<Primitive>(kTaylorOpName));
-
+GVAR_DEF(PrimitivePtr, kPrimReusing, std::make_shared<Primitive>("Reusing"));
 // Control ops
 GVAR_DEF(PrimitivePtr, kPrimMerge, std::make_shared<Primitive>("Merge"));
 
@@ -126,6 +125,10 @@ GVAR_DEF(PrimitivePtr, kPrimSetAttr,
 GVAR_DEF(PrimitivePtr, kPrimExtractKeywordArg, std::make_shared<Primitive>("extract_keyword_arg"));
 GVAR_DEF(PrimitivePtr, kPrimMakeDict, std::make_shared<Primitive>("make_dict"));
 
+// GraphKernel ops
+GVAR_DEF(PrimitivePtr, kPrimGraphKernel, std::make_shared<Primitive>("GraphKernel"));
+GVAR_DEF(PrimitivePtr, kPrimKernelPacket, std::make_shared<Primitive>("KernelPacket"));
+
 // Custom
 GVAR_DEF(PrimitivePtr, kPrimCustom, std::make_shared<Primitive>("Custom"));
 
@@ -162,19 +165,20 @@ GVAR_DEF(PrimitivePtr, kPrimRpcRecv, std::make_shared<Primitive>("RpcRecv"));
 GVAR_DEF(PrimitivePtr, kPrimUpdateState, std::make_shared<Primitive>(kUpdateStateOpName));
 GVAR_DEF(PrimitivePtr, kPrimReturn, std::make_shared<Primitive>(kReturnOpName));
 GVAR_DEF(PrimitivePtr, kPrimSwitch, std::make_shared<Primitive>(kSwitchOpName));
-GVAR_DEF(PrimitivePtr, kPrimSelect, std::make_shared<Primitive>(kSelectOpName));
 GVAR_DEF(PrimitivePtr, kPrimCall, std::make_shared<Primitive>(kCallOpName));
 GVAR_DEF(PrimitivePtr, kPrimRaise,
-         std::make_shared<Primitive>("raise", mindspore::HashMap<std::string, ValuePtr>(
-                                                {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
-GVAR_DEF(PrimitivePtr, kPrimCallInline, std::make_shared<Primitive>("call_inline"));
+         std::make_shared<Primitive>(kRaiseOpName, mindspore::HashMap<std::string, ValuePtr>(
+                                                     {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
 GVAR_DEF(PrimitivePtr, kPrimSwitchLayer, std::make_shared<Primitive>("switch_layer"));
 GVAR_DEF(PrimitivePtr, kPrimStringUpper, std::make_shared<Primitive>(kStringUpperOpName));
 GVAR_DEF(PrimitivePtr, kPrimStringLower, std::make_shared<Primitive>(kStringLowerOpName));
-GVAR_DEF(PrimitivePtr, kPrimFormat, std::make_shared<Primitive>("Format"));
+GVAR_DEF(PrimitivePtr, kPrimFormat, std::make_shared<Primitive>(kFormatOpName));
 
-// Pack
-GVAR_DEF(PrimitivePtr, kPrimPackFunc, std::make_shared<Primitive>(kPackFuncOpName));
+// Backend Inline
+GVAR_DEF(PrimitivePtr, kPrimCallInline, std::make_shared<Primitive>("CallInline"));
+GVAR_DEF(PrimitivePtr, kPrimPartialInline, std::make_shared<Primitive>("PartialInline"));
+GVAR_DEF(PrimitivePtr, kPrimConditionSwitch, std::make_shared<Primitive>("ConditionSwitch"));
+GVAR_DEF(PrimitivePtr, kPrimConditionGather, std::make_shared<Primitive>("ConditionGather"));
 }  // namespace prim
 }  // namespace mindspore
 

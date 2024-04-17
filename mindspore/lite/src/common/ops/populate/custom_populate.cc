@@ -19,6 +19,10 @@
 #include "nnacl/custom_parameter.h"
 #include "nnacl/split_parameter.h"
 #include "nnacl/custom_gru_parameter.h"
+#include "nnacl/custom_masked_fill_parameter.h"
+#include "nnacl/custom_is_inf_parameter.h"
+#include "nnacl/scatter_nd_parameter.h"
+
 using mindspore::schema::PrimitiveType_Custom;
 
 namespace mindspore {
@@ -72,6 +76,39 @@ OpParameter *PopulateSplitReduceConcatFusionParam(const schema::Custom *value) {
   return reinterpret_cast<OpParameter *>(param);
 }
 
+OpParameter *CreateCustomIsInfParameter() {
+  auto *param = static_cast<CustomIsInfParameter *>(malloc(sizeof(CustomIsInfParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc CustomIsInfParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(CustomIsInfParameter));
+  param->op_parameter_.type_ = PrimType_Inner_CustomIsInf;
+  return reinterpret_cast<OpParameter *>(param);
+}
+
+OpParameter *CreateCustomTensorScatterMaxParameter() {
+  auto *param = static_cast<ScatterNDParameter *>(malloc(sizeof(ScatterNDParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc ScatterNDParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(ScatterNDParameter));
+  param->op_parameter.type_ = PrimType_Inner_CustomTensorScatterMax;
+  return reinterpret_cast<OpParameter *>(param);
+}
+
+OpParameter *CreateCustomMaskedFillParameter() {
+  auto *param = static_cast<CustomMaskedFillParameter *>(malloc(sizeof(CustomMaskedFillParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc CustomMaskedFillParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(CustomMaskedFillParameter));
+  param->op_parameter_.type_ = PrimType_Inner_CustomMaskedFill;
+  return reinterpret_cast<OpParameter *>(param);
+}
+
 OpParameter *CreateParam(PrimType param_type) {
   auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
@@ -112,8 +149,8 @@ OpParameter *PopulateCustomParameter(const void *prim) {
       MS_LOG(ERROR) << "malloc CustomParameter failed.";
       return nullptr;
     }
-    memset(param, 0, sizeof(CustomParameter));
-    param->op_parameter_.type_ = PrimType_Inner_GraphKernel;
+    (void)memset(param, 0, sizeof(CustomParameter));
+    param->op_parameter_.type_ = static_cast<int>(PrimType_Inner_GraphKernel);
     // Just use the attr_data pointer to save the prim directly, the inner value is parsed as necessary.
     param->attr_data[0] = static_cast<char *>(const_cast<void *>(prim));
     return reinterpret_cast<OpParameter *>(param);
@@ -133,6 +170,12 @@ OpParameter *PopulateCustomParameter(const void *prim) {
     return CreateCustomGruParameter();
   } else if (type == "CastGatherReduceFusion") {
     return CreateParam(PrimType_Inner_CastGatherReduceFusion);
+  } else if (type == "MaskedFill") {
+    return CreateCustomMaskedFillParameter();
+  } else if (type == "TensorScatterMax") {
+    return CreateCustomTensorScatterMaxParameter();
+  } else if (type == "IsInf") {
+    return CreateCustomIsInfParameter();
   } else {
     MS_LOG(ERROR) << "Unsupported custom type: " << type;
   }

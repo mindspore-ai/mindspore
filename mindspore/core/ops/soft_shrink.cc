@@ -77,7 +77,7 @@ TypePtr SoftShrinkInferType(const PrimitivePtr &prim, const std::vector<Abstract
                       << ", the input args used for infer shape and type is necessary, but missing it.";
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->GetType(), valid_types, prim->name());
 }
 }  // namespace
 

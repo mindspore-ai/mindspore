@@ -124,19 +124,28 @@ ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param, bool in
   sw_1x1->conv_.base_.Prepare = ConvolutionSW1x1Prepare;
   sw_1x1->conv_.base_.Release = ConvolutionSW1x1Release;
 
-  MatMulParameter *matmul_param = (MatMulParameter *)malloc(sizeof(MatMulParameter));
-  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul_param);
+  OpParameter *param = (OpParameter *)malloc(sizeof(MatMulParameter));
+  if (param == NULL) {
+    free(sw_1x1);
+    return NULL;
+  }
+  MatMulParameter *matmul_param = (MatMulParameter *)param;
   matmul_param->op_parameter_ = conv_param->op_parameter_;
   matmul_param->act_type_ = conv_param->act_type_;
   matmul_param->a_transpose_ = false;
   matmul_param->b_transpose_ = true;
 
   KernelBase *matmul = CreateMatmulKernel();
-  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul);
-  matmul->param_ = (OpParameter *)matmul_param;
+  if (matmul == NULL) {
+    free(sw_1x1);
+    free(param);
+    return NULL;
+  }
+
   ((MatmulStruct *)matmul)->is_sharing_pack_ = false;
   ((MatmulStruct *)matmul)->a_const_ = input_const;
   ((MatmulStruct *)matmul)->b_const_ = weight_const;
+  ((MatmulStruct *)matmul)->base_.param_ = param;
   sw_1x1->matmul_ = (MatmulStruct *)matmul;
   return (ConvolutionBaseStruct *)sw_1x1;
 }

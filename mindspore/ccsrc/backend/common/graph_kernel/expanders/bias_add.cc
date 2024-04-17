@@ -30,7 +30,7 @@ class BiasAdd : public OpDesc {
     support_format->AddFormat({kOpFormat_NCHW, kOpFormat_DEFAULT});
     support_format->AddFormat({kOpFormat_NHWC, kOpFormat_DEFAULT});
     (void)validators_.emplace_back(std::move(support_format));
-    auto attrs = std::initializer_list<std::string>{"format"};
+    auto attrs = std::initializer_list<std::string>{"data_format"};
     (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
   ~BiasAdd() = default;
@@ -54,7 +54,7 @@ class BiasAdd : public OpDesc {
       auto target_shape = ExpandDimsInferShape(input_y->shape, {1, 2});
       input_y = gb.Reshape(input_y, target_shape);
     } else if (input_x->format == kOpFormat_DEFAULT) {
-      auto data_format = GetValue<std::string>(attrs_["format"]);
+      auto data_format = GetValue<std::string>(attrs_["data_format"]);
       size_t channel_idx = (data_format == kOpFormat_NHWC) ? input_x->shape.size() - 1 : 1;
       std::vector<int64_t> axis((input_x->shape.size() - channel_idx) - 1, -1);
       if (!axis.empty()) {

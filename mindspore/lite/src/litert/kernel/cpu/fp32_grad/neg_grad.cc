@@ -61,7 +61,7 @@ int NegGradCPUKernel::DoNegGrad(int task_id) {
   count = (count < 0) ? 0 : count;
   int start = stride * task_id;
 
-  ElementNegative(dy + start, dx + start, count);
+  (void)ElementNegative(dy + start, dx + start, count);
   return RET_OK;
 }
 

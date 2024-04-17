@@ -24,6 +24,7 @@ class Registry:
         self._tensor = None
         self._parameter = None
         self._convert_map = {}
+        self.convert_adapter_tensor_map = {}
 
     @property
     def tensor(self):
@@ -62,6 +63,12 @@ class Registry:
         if not isinstance(value, dict):
             raise ValueError(f"Expect a dict type, but got {type(value)}.")
         self._convert_map = value
+
+    def register_convert_adapter_tensor_map(self, value):
+        """Register the convert map for adapter tensor."""
+        if not isinstance(value, dict):
+            raise ValueError(f"Expect a dict type, but got {type(value)}.")
+        self.convert_adapter_tensor_map = value
 
 
 ms_adapter_registry = Registry()

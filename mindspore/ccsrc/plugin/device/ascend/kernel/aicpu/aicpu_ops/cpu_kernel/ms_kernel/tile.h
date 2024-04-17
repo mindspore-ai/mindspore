@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <utility>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class TileCpuKernel : public CpuKernel {
@@ -39,7 +39,7 @@ class TileCpuKernel : public CpuKernel {
                                                const M *multipliers, T *out_data, int64_t dimension);
 
   template <typename T, typename M>
-  uint32_t TileCompute(const CpuKernelContext &ctx);
+  uint32_t TileCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

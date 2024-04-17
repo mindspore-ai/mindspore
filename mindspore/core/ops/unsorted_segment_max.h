@@ -19,8 +19,10 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace ops {

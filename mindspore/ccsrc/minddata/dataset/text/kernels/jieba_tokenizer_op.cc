@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,10 @@
  */
 #include "minddata/dataset/text/kernels/jieba_tokenizer_op.h"
 
-#include <vector>
-#include <memory>
-#include <string>
 #include "minddata/dataset/util/path.h"
 
 namespace mindspore {
 namespace dataset {
-
 JiebaTokenizerOp::JiebaTokenizerOp(const std::string &hmm_path, const std::string &dict_path, const JiebaMode &mode,
                                    const bool &with_offsets)
     : TokenizerOp(with_offsets), jieba_mode_(mode), hmm_model_path_(hmm_path), mp_dict_path_(dict_path) {

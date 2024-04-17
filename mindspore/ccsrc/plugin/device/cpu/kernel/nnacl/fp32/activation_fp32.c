@@ -221,7 +221,7 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
 }
 
 int Softplus(const float *src, int length, float *dst) {
-  float log_max = 88.7228;
+  float log_max = 88.0;
   int i = 0;
 
   SIMD_RUN_NO_SCALAR(Softplus, i, src, length, dst);

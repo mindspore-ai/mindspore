@@ -1,0 +1,22 @@
+#operator rfft
+rfft:
+  args:
+    input:
+      dtype: tensor
+    n:
+      dtype: int
+      default: None
+    dim:
+      dtype: int
+      default: -1
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: RFFT
+  function:
+    name: rfft

@@ -26,13 +26,13 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class CorrectionMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CorrectionMulGpuKernelMod : public NativeGpuKernelMod {
  public:
   CorrectionMulGpuKernelMod() : is_null_input_(false), batch_size_(0), channel_(0), height_(0), width_(0) {}
   ~CorrectionMulGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -46,28 +46,26 @@ class CorrectionMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    InitResource();
 
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != kSize3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
-    }
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    auto shape_signed = inputs[kIndex0]->GetShapeVector();
     if (IsDynamic(shape_signed)) {
       return true;
     }
     auto input_shape = Convert2SizeTClipNeg(shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      InitSizeLists();
-      return true;
+      output_size_list_.push_back(batch_size_ * channel_ * height_ * width_ * sizeof(T));
+      return KRET_UNKNOWN_SHAPE;
     }
     if (input_shape.size() != kSize4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
                         << input_shape.size();
     }
     batch_size_ = input_shape[kIndex0];
@@ -75,21 +73,9 @@ class CorrectionMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     height_ = input_shape[kIndex2];
     width_ = input_shape[kIndex3];
 
-    InitSizeLists();
-    return true;
+    output_size_list_.push_back(batch_size_ * channel_ * height_ * width_ * sizeof(T));
+    return KRET_OK;
   }
-
- protected:
-  void InitSizeLists() override {
-    size_t input_size = batch_size_ * channel_ * height_ * width_ * sizeof(T);
-    size_t weight_size = batch_size_ * sizeof(T);
-    input_size_list_.push_back(input_size);   // weight
-    input_size_list_.push_back(weight_size);  // gamma
-    input_size_list_.push_back(weight_size);  // running_std
-    output_size_list_.push_back(input_size);
-  }
-
-  void InitResource() override {}
 
  private:
   bool is_null_input_;

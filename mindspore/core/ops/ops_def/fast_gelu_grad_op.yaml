@@ -1,0 +1,14 @@
+#operator fast_gelu_grad
+fast_gelu_grad:
+    args:
+        dy:
+            dtype: tensor
+        x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: FastGeLUGrad
+    function:
+        disable: True

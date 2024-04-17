@@ -36,15 +36,21 @@ class MsadvisorParser:
     Data format conversion for MSAdvisor AICPU model.
     """
 
-    def __init__(self, job_id, device_id, rank_id, output_path):
+    def __init__(self, job_id, device_id, rank_id, output_path, pretty=False):
         self._job_id = job_id
         self._device_id = device_id
-        self._rank_id = rank_id
+        self._rank_id = str(rank_id)
         self._output_path = output_path
         self._aicore_path = ""
         self._aicpu_path = ""
         self._time_start = 0
         self._time_end = 0
+        self._pretty = pretty
+
+    @property
+    def indent(self):
+        indent = 1 if self._pretty else None
+        return indent
 
     @staticmethod
     def check_clear_make_dir(dir_path):
@@ -199,7 +205,7 @@ class MsadvisorParser:
                         break
                     if tid > 1:
                         output_file.write(",")
-                    json.dump(op, output_file)
+                    json.dump(op, output_file, indent=self.indent)
 
     def write_aicpu(self):
         """
@@ -221,7 +227,7 @@ class MsadvisorParser:
                     if op.get("ts") > self._time_end:
                         break
                     output_file.write(",")
-                    json.dump(op, output_file)
+                    json.dump(op, output_file, indent=self.indent)
             output_file.write("]")
 
     def parse(self):

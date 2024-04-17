@@ -25,9 +25,8 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUM = 6;
 template <typename T>
-class BatchNormFoldGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class BatchNormFoldGradGpuKernelMod : public NativeGpuKernelMod {
  public:
   BatchNormFoldGradGpuKernelMod()
       : input_size_(0),
@@ -45,8 +44,8 @@ class BatchNormFoldGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         width_(0) {}
   ~BatchNormFoldGradGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -58,12 +57,12 @@ class BatchNormFoldGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *batch_std = GetDeviceAddress<T>(inputs, kIndex4);
     int *current_step = GetDeviceAddress<int>(inputs, kIndex5);
     int current_step_host[1];
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost,
-                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "Copy gpu memoy failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaStreamSyncFailed");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+      cudaMemcpyAsync(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Copy gpu memoy failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "cudaStreamSyncFailed");
     T *dx = GetDeviceAddress<T>(outputs, kIndex0);
 
     cudaError_t status = cudaErrorNotReady;
@@ -79,34 +78,24 @@ class BatchNormFoldGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << INPUT_NUM << ", but got "
-                        << input_num;
-    }
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    epsilon_ = GetValue<T>(primitive_->GetAttr("epsilon"));
+    is_training_ = GetValue<bool>(primitive_->GetAttr("is_training"));
+    freeze_bn_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("freeze_bn")));
+    return true;
+  }
 
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
-    }
-
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-    epsilon_ = GetValue<T>(prim->GetAttr("epsilon"));
-    is_training_ = GetValue<bool>(prim->GetAttr("is_training"));
-    freeze_bn_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("freeze_bn")));
-
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    auto input_shape = inputs[kIndex2]->GetShapeVector();
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      InitSizeLists();
-      return true;
+      output_size_list_.push_back(input_size_);
+      return KRET_UNKNOWN_SHAPE;
     }
     if (input_shape.size() != kSize4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
                         << input_shape.size();
     }
     batch_ = input_shape[kIndex0];
@@ -117,21 +106,8 @@ class BatchNormFoldGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     input_size_ = sizeof(T) * batch_ * channel_ * height_ * width_;
     channel_size_ = sizeof(T) * channel_;
 
-    InitSizeLists();
-    return true;
-  }
-
- protected:
-  void InitSizeLists() override {
-    // 'd_batch_mean', 'd_batch_std', 'x', 'batch_mean', 'batch_std', 'current_step'
-    input_size_list_.push_back(channel_size_);
-    input_size_list_.push_back(channel_size_);
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(channel_size_);
-    input_size_list_.push_back(channel_size_);
-    input_size_list_.push_back(sizeof(int));
-    // 'dx'
     output_size_list_.push_back(input_size_);
+    return KRET_OK;
   }
 
  private:

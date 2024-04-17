@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <functional>
 #include <map>
-#include "mindspore/core/ops/arg_max.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/psroi_pooling_v2_impl.cuh"
@@ -34,14 +33,10 @@ class PSROIPoolingBackV2GpuKernelMod : public NativeGpuKernelMod {
   PSROIPoolingBackV2GpuKernelMod() = default;
   ~PSROIPoolingBackV2GpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -64,7 +59,7 @@ class PSROIPoolingBackV2GpuKernelMod : public NativeGpuKernelMod {
 
   static bool IsSupportedDtype(TypeId type_id);
   TypeId data_type_id_{kNumberTypeFloat32};
-  int ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs);
+  int ResizeCheckInputs(const std::vector<KernelTensor *> &inputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

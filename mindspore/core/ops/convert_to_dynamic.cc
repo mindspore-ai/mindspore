@@ -63,6 +63,22 @@ class ConvertToDynamicRankInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     CheckConvertToDynamicRankArgs(primitive, input_args);
+    const auto &input_shape = input_args[0]->GetShape()->GetShapeVector();
+    if (IsDynamic(input_shape)) {
+      MS_LOG(EXCEPTION) << "It should not be dynamic shape, but got " << input_shape;
+    }
+    return input_args[0]->GetShape()->Clone();
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    CheckConvertToDynamicRankArgs(primitive, input_args);
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    return input_args[0]->GetType()->Clone();
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    CheckConvertToDynamicRankArgs(primitive, input_args);
 
     auto is_dynamic_rank_value_ptr = primitive->GetAttr(kIsDynamicRank);
     MS_EXCEPTION_IF_NULL(is_dynamic_rank_value_ptr);
@@ -86,18 +102,12 @@ class ConvertToDynamicRankInfer : public abstract::OpInferBase {
     } else {
       if (IsDynamicRank(input_shape)) {
         MS_LOG(WARNING) << "Do not convert dynamic rank to dynamic shape!";
-        return std::make_shared<abstract::Shape>(input_shape);
       }
       int32_t input_rank = SizeToInt(input_shape.size());
       inferred_shape = ShapeVector(input_rank, abstract::Shape::kShapeDimAny);
     }
-    return std::make_shared<abstract::Shape>(inferred_shape);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    CheckConvertToDynamicRankArgs(primitive, input_args);
-    MS_EXCEPTION_IF_NULL(input_args[0]);
-    return input_args[0]->BuildType();
+    auto input_type = input_args[0]->GetType()->cast<TensorTypePtr>()->element();
+    return std::make_shared<abstract::AbstractTensor>(input_type, inferred_shape);
   }
 };
 

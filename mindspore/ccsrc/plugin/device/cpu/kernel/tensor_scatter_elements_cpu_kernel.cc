@@ -37,16 +37,12 @@ struct ReductionAssignment {
 };
 }  // namespace
 
-int TensorScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, KRET_RESIZE_FAILED);
+int TensorScatterElementsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
-  kernel_name_ = base_operator->name();
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   input_dims_ = input_shape.size();
   if (input_dims_ < 1) {
@@ -73,8 +69,8 @@ int TensorScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
     return KRET_RESIZE_FAILED;
   }
 
-  if (base_operator->HasAttr(kAttrAxis)) {
-    axis_ = GetValue<int64_t>(base_operator->GetAttr(kAttrAxis));
+  if (primitive_->HasAttr(kAttrAxis)) {
+    axis_ = GetValue<int64_t>(primitive_->GetAttr(kAttrAxis));
     if (axis_ < 0) {
       axis_ += static_cast<int64_t>(input_dims_);
     }
@@ -144,16 +140,16 @@ bool TensorScatterElementsCpuKernelMod::Scatter(const ReductionT &reduction_func
 }
 
 template <typename T, typename S>
-bool TensorScatterElementsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorScatterElementsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTensorScatterElementsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTensorScatterElementsOutputsNum, kernel_name_);
-  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *indices = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-  auto *updates = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto buffer_size = outputs[kIndex0]->size;
+  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *indices = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
+  auto *updates = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto buffer_size = outputs[kIndex0]->size();
   auto memcpy_task = [&](size_t start, size_t end) {
     size_t size = (end - start) * sizeof(T);
     auto ret = memcpy_s(output + start, size, input + start, size);
@@ -184,35 +180,38 @@ const std::vector<std::pair<KernelAttr, TensorScatterElementsCpuKernelMod::Kerne
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t)},
+    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, float16, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t)},
+    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int32_t)},
+    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t)},
+    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t, int32_t)},
 
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
+    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat16, kNumberTypeInt64, float16, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
-    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)}};
+    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)},
+    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t)},
+    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t)},
+    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t, int64_t)}};
   return func_list;
 }
 
-bool TensorScatterElementsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::TensorScatterElements>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = base_operator->name();
+bool TensorScatterElementsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kernel_type_) {
     MS_LOG(ERROR) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
     return false;
   }
 
-  std::string reduction = kernel_ptr->get_reduction();
+  std::string reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   if (reduction == "none") {
     reduction_type_ = REDUCTION_ASSIGNMENT;
   } else if (reduction == "add") {
@@ -222,7 +221,7 @@ bool TensorScatterElementsCpuKernelMod::Init(const BaseOperatorPtr &base_operato
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 

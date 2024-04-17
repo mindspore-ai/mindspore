@@ -27,8 +27,7 @@
 #include "utils/log_adapter.h"
 #include "frontend/operator/ops.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "plugin/device/ascend/hal/hardware/ascend_session.h"
-#include "plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.h"
+//#include "plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.h"
 #include "pipeline/jit/ps/resource.h"
 #include "pipeline/jit/ps/action.h"
 #include "ir/anf.h"
@@ -92,25 +91,10 @@ std::shared_ptr<session::KernelGraph> BackendCommon::GetKernelGraph(const FuncGr
   AnfNodePtrList applies = GetCNodeList(inferred_graph);
   AnfNodePtrList ins = inferred_graph->parameters();
   AnfNodePtrList outs = {inferred_graph->get_return()->input(1)};
-  auto session = std::make_shared<session::AscendSession>();
+  auto session = session::SessionFactory::Get().Create(kSessionBasic);
   session->Init(0);
   auto kernel_graph = session->ConstructKernelGraph(applies, outs);
   kernel_graph->SetExecOrderByDefault();
-
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto device = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device == kAscendDevice) {
-    auto optimizer = std::make_shared<opt::GraphOptimizer>();
-    auto pm = std::make_shared<opt::PassManager>();
-    pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
-    optimizer->AddPassManager(pm);
-    optimizer->Optimize(kernel_graph);
-
-    MS_LOG(INFO) << "New Kernel Graph infos:";
-    PrintGraphNodeList(kernel_graph);
-  }
-
   return kernel_graph;
 }
 

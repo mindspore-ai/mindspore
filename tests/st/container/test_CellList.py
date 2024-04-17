@@ -14,9 +14,13 @@
 # ============================================================================
 
 import pytest
+import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
-import numpy as np
+from mindspore import context, Tensor
+from mindspore.common import dtype as mstype
+
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class TestCellListInsertNet(nn.Cell):
@@ -30,7 +34,7 @@ class TestCellListInsertNet(nn.Cell):
         return len(self.cell_list)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -66,7 +70,7 @@ class EmbeddedCellDictNet(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -82,3 +86,54 @@ def test_celllist_embed_celldict_case(mode):
     """
     with pytest.raises(TypeError):
         EmbeddedCellDictNet()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.env_onecard
+def test_parse_cell_list():
+    """
+    Feature: Parse CellList.
+    Description: Parse CellList.
+    Expectation: success
+    """
+    class NormLayerBlock(nn.CellList):
+        def __init__(self, in_channels, out_channels):
+            norm_layer = nn.BatchNorm2d
+            _layers = [norm_layer(out_channels)] if out_channels == in_channels else []
+            super().__init__(_layers)
+
+        def construct(self):
+            return len(self)
+
+    net = NormLayerBlock(in_channels=4, out_channels=4)
+    out = net()
+    assert out == 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.env_onecard
+def test_iter_for_in_cell_list():
+    """
+    Feature: Parse CellList.
+    Description: Parse CellList.
+    Expectation: success
+    """
+    class IterNet(nn.CellList):
+        def __init__(self):
+            _layers = [nn.Conv2d(1, 1, 1)]
+            super().__init__(_layers)
+
+        def construct(self, x):
+            return sum([mod(x) for mod in self])
+
+    net = IterNet()
+    x = Tensor(np.ones([1, 1, 2, 2]), mstype.float32)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net(x)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net(x)
+    assert (pynative_out == graph_out).all()

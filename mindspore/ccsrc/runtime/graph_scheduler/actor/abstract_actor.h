@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_ABSTRACT_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_ABSTRACT_ACTOR_H_
 
+#include <chrono>
 #include <vector>
 #include <string>
 #include <memory>
@@ -33,6 +34,7 @@
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
+using mindspore::kernel::KernelTensor;
 
 // The flag of output data.
 constexpr size_t kOutputDataFlagInit = 0;
@@ -47,6 +49,48 @@ constexpr size_t kOutputDataFlagBetweenFusion = 8;
 // Indicates that the output data destination is the fusion actor, and needs to use the fusion output index.
 constexpr size_t kOutputDataFlagToFusion = 16;
 
+// Counter for callback.
+class CallbackCounter {
+ public:
+  CallbackCounter() = default;
+  ~CallbackCounter() = default;
+
+  CallbackCounter(const CallbackCounter &) = delete;
+  CallbackCounter &operator=(const CallbackCounter &) = delete;
+
+  size_t Counter() { return counter_.load(); }
+  size_t Increase() { return ++counter_; }
+  size_t Decrease() { return --counter_; }
+
+  bool expired() const { return expired_.load(); }
+  void set_expired(bool expired) { expired_ = expired; }
+
+  void Wait() {
+    std::unique_lock<std::mutex> locker(lock_);
+    MS_LOG(DEBUG) << "Wait for callback execution start.";
+    while (!cv_.wait_for(locker, std::chrono::seconds(1), [&]() { return counter_.load() == 0; })) {
+      MS_LOG(DEBUG) << "Wait cycle.";
+    }
+  }
+
+  void Notify() {
+    if (counter_.load() == 0) {
+      std::unique_lock<std::mutex> locker(lock_);
+      cv_.notify_all();
+    }
+  }
+
+  std::atomic<size_t> reserved_memory_size_{0};
+
+ private:
+  std::atomic<size_t> counter_{0};
+  std::mutex lock_;
+  std::condition_variable cv_;
+  // Callback executed within async thread, this help to indicate that actor is expired.
+  std::atomic<bool> expired_{false};
+};
+using CallbackCounterPtr = std::shared_ptr<CallbackCounter>;
+
 // The abstract common attributes of actors. The actor inheritance relationship:  OpActor --> AbstractActor -->
 // MemoryAwareActor --> DebugAwareActor --> KernelActor/DataSourceActor/CopyActor/LoopCountActor/OutputActor.
 class AbstractActor : public OpActor<DeviceTensor> {
@@ -60,7 +104,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
         running_dependent_msg_num_(0),
         parent_fusion_actor_{nullptr},
         memory_alloc_insert_position_{nullptr},
-        memory_free_insert_position_{nullptr} {}
+        memory_free_insert_position_{nullptr} {
+    static std::atomic<int64_t> gActorId;
+    actor_id_ = ++gActorId;
+  }
   ~AbstractActor() override = default;
 
   bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
@@ -78,10 +125,14 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // Get the member.
   KernelTransformType type() const { return type_; }
+  int64_t actor_id() const { return actor_id_; }
   const std::vector<const DeviceContext *> &device_contexts() const { return device_contexts_; }
   const std::vector<AnfNodePtr> &output_data_nodes() const { return output_data_nodes_; }
   const std::vector<std::pair<size_t, AnfNodePtr>> &device_tensor_store_keys() const {
     return device_tensor_store_keys_;
+  }
+  void set_device_tensor_store_keys(const std::vector<std::pair<size_t, AnfNodePtr>> &device_tensor_store_keys) {
+    device_tensor_store_keys_ = device_tensor_store_keys;
   }
   const std::vector<std::pair<AID, DataArrow *>> &input_data_arrow_aids() const { return input_data_arrow_aids_; }
   const std::vector<std::pair<AID, ControlArrow *>> &input_control_arrow_aids() const {
@@ -115,6 +166,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // Fetch input data from the device tensor store.
   void FetchInputByTensorStore(std::vector<DeviceTensor *> *const input_device_tensors,
+                               std::vector<KernelTensor *> *const input_kernel_tensors,
+                               std::vector<abstract::AbstractBasePtr> *const input_kernel_tensors_for_infer,
                                std::vector<DeviceTensor *> *const memory_free_tensors,
                                OpContext<DeviceTensor> *const context) const;
 
@@ -128,12 +181,13 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // Send recorder info to recorder actor.
   virtual void SendRecorderInfo(OpContext<DeviceTensor> *const context) const {}
   void SendOutputData(OpContext<DeviceTensor> *const context, const std::vector<AnfNodePtr> &output_data_nodes,
-                      const std::vector<DataArrowPtr> output_data_arrows,
+                      const std::vector<DataArrowPtr> &output_data_arrows,
                       const std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, size_t>> &output_data_list,
                       const mindspore::HashMap<DataArrow *, size_t> &data_arrow_to_fusion_actor_indexs,
                       mindspore::HashMap<std::string, std::vector<OpData<DeviceTensor> *>> *batch_output_data);
   // Fetch the sub actor in the fusion actor by the name.
   AbstractActor *FetchSubActorInFusionActor(const std::string &sub_actor_name) const;
+  bool IsOutputAddressPersisted(const DeviceTensor *output_device_tensor, const KernelWithIndex &output_node);
 
   KernelTransformType type_;
 
@@ -142,6 +196,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // The id of recorder actor. Send message to it for recording info.
   const AID *recorder_aid_;
+
+  // Auto increment id for actor.
+  int64_t actor_id_;
 
   // The output_data_nodes_ and output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<AnfNodePtr> output_data_nodes_;

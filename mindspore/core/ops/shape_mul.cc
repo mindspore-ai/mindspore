@@ -47,7 +47,7 @@ class ShapeMulInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     auto shape_x = input_args[0];
     MS_EXCEPTION_IF_NULL(shape_x);
-    if (!shape_x->isa<abstract::AbstractTuple>()) {
+    if (shape_x->GetType()->object_type() != kObjectTypeTuple) {
       MS_EXCEPTION(TypeError) << "For primitive '" << prim_name
                               << "', the first input must be a tuple but got: " << shape_x->ToString();
     }
@@ -63,8 +63,8 @@ class ShapeMulInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
     abstract::AbstractTuplePtr shape_x = abstract::CheckArg<abstract::AbstractTuple>(prim_name, input_args, 0);
-    auto shpx_value = shape_x->BuildValue();
-    if (shape_x->dynamic_len() || shape_x->BuildValue() == kValueAny) {
+    auto shpx_value = shape_x->GetValue();
+    if (shape_x->dynamic_len() || shape_x->GetValue()->ContainsValueAny()) {
       return nullptr;
     }
     auto shpx_data = shpx_value->cast<ValueTuplePtr>()->value();

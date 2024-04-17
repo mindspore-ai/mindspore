@@ -21,14 +21,16 @@ namespace runtime {
 void FusionActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(context);
-  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data.";
-
   if (IntToSize(input_data->index_) >= real_input_data_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is out of range.");
   }
   // Update the input data using the real input info.
   auto &real_input_data = real_input_data_[IntToSize(input_data->index_)];
   MS_EXCEPTION_IF_NULL(real_input_data.first);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data, device address:" << input_data->data_
+                << " ptr:" << (input_data->data_ == nullptr ? nullptr : input_data->data_->GetPtr())
+                << " to index:" << input_data->index_ << " to actor:" << input_data->op_id_
+                << " real to index:" << real_input_data.second << " real to actor:" << real_input_data.first->GetAID();
   input_data->index_ = SizeToInt(real_input_data.second);
 
   real_input_data.first->RunOpData(input_data, context);

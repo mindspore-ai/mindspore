@@ -45,10 +45,7 @@ RandomAffineOp::RandomAffineOp(std::vector<float_t> degrees, std::vector<float_t
       scale_range_(std::move(scale_range)),
       shear_ranges_(std::move(shear_ranges)),
       interpolation_(interpolation),
-      fill_value_(std::move(fill_value)) {
-  rnd_.seed(GetSeed());
-  is_deterministic_ = false;
-}
+      fill_value_(std::move(fill_value)) {}
 
 Status RandomAffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
@@ -73,17 +70,17 @@ Status RandomAffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   float_t min_dy = translate_range_[2] * static_cast<float_t>(height);
   float_t max_dy = translate_range_[3] * static_cast<float_t>(height);
   float_t degrees = 0.0;
-  RETURN_IF_NOT_OK(GenerateRealNumber(degrees_range_[0], degrees_range_[1], &rnd_, &degrees));
+  RETURN_IF_NOT_OK(GenerateRealNumber(degrees_range_[0], degrees_range_[1], &random_generator_, &degrees));
   float_t translation_x = 0.0;
-  RETURN_IF_NOT_OK(GenerateRealNumber(min_dx, max_dx, &rnd_, &translation_x));
+  RETURN_IF_NOT_OK(GenerateRealNumber(min_dx, max_dx, &random_generator_, &translation_x));
   float_t translation_y = 0.0;
-  RETURN_IF_NOT_OK(GenerateRealNumber(min_dy, max_dy, &rnd_, &translation_y));
+  RETURN_IF_NOT_OK(GenerateRealNumber(min_dy, max_dy, &random_generator_, &translation_y));
   float_t scale = 1.0;
-  RETURN_IF_NOT_OK(GenerateRealNumber(scale_range_[0], scale_range_[1], &rnd_, &scale));
+  RETURN_IF_NOT_OK(GenerateRealNumber(scale_range_[0], scale_range_[1], &random_generator_, &scale));
   float_t shear_x = 0.0;
-  RETURN_IF_NOT_OK(GenerateRealNumber(shear_ranges_[0], shear_ranges_[1], &rnd_, &shear_x));
+  RETURN_IF_NOT_OK(GenerateRealNumber(shear_ranges_[0], shear_ranges_[1], &random_generator_, &shear_x));
   float_t shear_y = 0.0;
-  RETURN_IF_NOT_OK(GenerateRealNumber(shear_ranges_[2], shear_ranges_[3], &rnd_, &shear_y));
+  RETURN_IF_NOT_OK(GenerateRealNumber(shear_ranges_[2], shear_ranges_[3], &random_generator_, &shear_y));
   // assign to base class variables
   degrees = fmod(degrees, 360.0F);
   std::vector<float_t> translation = {translation_x, translation_y};

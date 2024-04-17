@@ -131,9 +131,8 @@ void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_s
 }
 }  // namespace
 
-bool ROIAlignGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ROIAlignGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   //  Get the number of the input args
   constexpr size_t kInputSize = 3;
   constexpr size_t kOutputSize = 1;
@@ -142,31 +141,25 @@ bool ROIAlignGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
                       << ".";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   // Get primitive args
-  auto op = std::dynamic_pointer_cast<ops::ROIAlignGrad>(base_operator);
-  pooled_height_ = LongToInt(op->get_pooled_height());
-  pooled_width_ = LongToInt(op->get_pooled_width());
-  spatial_scale_ = op->get_spatial_scale();
-  sample_num_ = LongToInt(op->get_sample_num());
+  pooled_height_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kPooledHeight)));
+  pooled_width_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kPooledWidth)));
+  spatial_scale_ = GetValue<float>(primitive_->GetAttr(ops::kSpatialScale));
+  sample_num_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kSampleNum)));
   roi_end_mode_ = 1;
   return true;
 }
 
-int ROIAlignGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ROIAlignGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  std::vector<int64_t> xdiff_shape;
-  if (!TryGetIntValue(inputs, kIndex2, kernel_name_, &xdiff_shape, false)) {
-    MS_LOG(ERROR) << "For " << kernel_name_ << " can't get filter_sizes input!";
-    return KRET_RESIZE_FAILED;
-  }
+  std::vector<int64_t> xdiff_shape = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
 
   //  Get the input shapes
   auto dy_shape = inputs[kIndex0]->GetShapeVector();
@@ -189,10 +182,10 @@ int ROIAlignGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return KRET_RESIZE_FAILED;
   }
   // Calculate the sizes of inputs and output
-  auto dy_type_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  auto dy_type_size = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   dy_size_ = LongToSize(std::accumulate(dy_shape.begin(), dy_shape.end(), 1, std::multiplies{})) * dy_type_size;
 
-  auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   rois_size_ = LongToSize(std::accumulate(rois_shape.begin(), rois_shape.end(), 1, std::multiplies{})) * rois_type_size;
   roi_rows_ = LongToInt(rois_shape[kIndex0]);
   roi_cols_ = LongToInt(rois_shape[kIndex1]);
@@ -232,12 +225,12 @@ const ROIAlignGradCpuKernelMod::FuncList &ROIAlignGradCpuKernelMod::GetFuncList(
 }
 
 template <typename T>
-bool ROIAlignGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
-  const T *dy = static_cast<T *>(inputs[0]->addr);
-  const T *rois = static_cast<T *>(inputs[1]->addr);
-  T *dx = static_cast<T *>(outputs[0]->addr);
+bool ROIAlignGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
+  const T *dy = static_cast<T *>(inputs[0]->device_ptr());
+  const T *rois = static_cast<T *>(inputs[1]->device_ptr());
+  T *dx = static_cast<T *>(outputs[0]->device_ptr());
 
   int size_init = batch_ * channels_ * height_ * width_;
   auto task1 = [this, &dx](size_t start, size_t end) {

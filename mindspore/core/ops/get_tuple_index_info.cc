@@ -87,7 +87,7 @@ static size_t GetFancyPosition(const std::vector<int64_t> &tuple_index_types, si
     }
   }
   MS_LOG(DEBUG) << "final_tuple_index_types" << final_tuple_index_types;
-  std::bitset<8> tensor_position_mask = 0;
+  std::bitset<kMaxTensorIndexDimNums> tensor_position_mask = 0;
   for (size_t i = 0; i < final_tuple_index_types.size(); i++) {
     if (final_tuple_index_types[i] == kObjectTypeTensorType) {
       tensor_position_mask[i] = 1;
@@ -98,8 +98,7 @@ static size_t GetFancyPosition(const std::vector<int64_t> &tuple_index_types, si
     if (tensor_position_mask == 0) {
       return 0;
     }
-    const size_t max_tuple_nums = 8;
-    for (size_t i = 0; i < max_tuple_nums; i++) {
+    for (size_t i = 0; i < kMaxTensorIndexDimNums; i++) {
       if (tensor_position_mask[i] == 0) {
         continue;
       }
@@ -108,7 +107,7 @@ static size_t GetFancyPosition(const std::vector<int64_t> &tuple_index_types, si
         return 0;
       }
       if (!first_tensor_found) {
-        new_fancy_position = i;
+        new_fancy_position = static_cast<int64_t>(i);
       }
     }
     return LongToSize(new_fancy_position);
@@ -171,7 +170,8 @@ std::vector<ShapeVector> GetTupleIndexInfo::ConstGetTupleIndexInfo(
   slice_shapes = GetSliceShape(tuple_index_types, tensor_shapes, &has_zero_tensor, &slice_nums, &tensor_indices_shapes);
   MS_LOG(DEBUG) << "slice_shapes: " << slice_shapes;
   *broadcast_shape = BroadCastShape(tensor_indices_shapes);
-  if (tuple_index_info_type == kSetitemByTupleWithTensor && broadcast_shape->size() < 2) {
+  constexpr size_t min_broadcast_shape_size = 2;
+  if (tuple_index_info_type == kSetitemByTupleWithTensor && broadcast_shape->size() < min_broadcast_shape_size) {
     (void)broadcast_shape->insert(broadcast_shape->begin(), 1);
   }
   MS_LOG(DEBUG) << "broadcast_shape:" << *broadcast_shape;
@@ -239,46 +239,36 @@ std::vector<ShapeVector> GetTupleIndexInfo::ConstGetTupleIndexInfo(
   return new_slice_shapes;
 }
 
-static AbstractBasePtr VectorToAbstract(std::vector<int64_t> nums, bool to_tuple) {
-  if (to_tuple) {
-    abstract::AbstractBasePtrList elems;
-    std::transform(nums.begin(), nums.end(), std::back_inserter(elems),
-                   [](int64_t num) { return std::make_shared<abstract::AbstractScalar>(num); });
-    return std::make_shared<abstract::AbstractTuple>(elems);
-  }
-  if (nums.empty()) {
-    int64_t stub_num = 0;
-    auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, ShapeVector{}, &stub_num, sizeof(int64_t));
-    return tensor->ToAbstract();
-  }
-  ShapeVector tensor_shp({static_cast<int64_t>(nums.size())});
-  auto shp_buf_size = sizeof(int64_t) * nums.size();
-  auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, tensor_shp, nums.data(), shp_buf_size);
-  return tensor->ToAbstract();
+static AbstractBasePtr VectorToAbstract(std::vector<int64_t> nums) {
+  abstract::AbstractBasePtrList elems;
+  std::transform(nums.begin(), nums.end(), std::back_inserter(elems),
+                 [](int64_t num) { return std::make_shared<abstract::AbstractScalar>(num); });
+  return std::make_shared<abstract::AbstractTuple>(elems);
 }
 
 MIND_API_OPERATOR_IMPL(GetTupleIndexInfo, BaseOperator);
 
 AbstractBasePtr GetTupleIndexInfoInferInner(const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args, bool to_tuple) {
+                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->BuildShape())[kShape];
+  auto data_shape = input_args[kIndex0]->GetShape()->GetShapeVector();
   const AbstractBasePtr &fancy_position_abs = input_args[kIndex1];
   auto tuple_index_types = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrTupleIndexTypes));
   string tuple_index_info_type;
   if (primitive->HasAttr(kAttrTupleIndexInfoType)) {
     tuple_index_info_type = GetValue<string>(primitive->GetAttr(kAttrTupleIndexInfoType));
   }
-  const size_t max_tensor_dims = 8;
-  const size_t output_size = 13;
-  if (fancy_position_abs->BuildType()->type_id() == kObjectTypeTensorType ||
+  const size_t output_size = 12;
+  if (fancy_position_abs->GetValue()->isa<ValueAny>() ||
       std::any_of(input_args.begin() + kIndex0, input_args.end(),
-                  [](const AbstractBasePtr &shape_abs) { return shape_abs->BuildShape()->IsDynamic(); })) {
-    auto abs = std::make_shared<abstract::AbstractTensor>(kInt64, ShapeVector({abstract::Shape::kShapeRankAny}));
-    AbstractBasePtrList output_abs_list(output_size, abs);
+                  [](const AbstractBasePtr &shape_abs) { return shape_abs->GetShape()->IsDynamic(); })) {
+    auto scalar_abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
+    auto tuple_abs = std::make_shared<abstract::AbstractTuple>(std::vector<abstract::AbstractBasePtr>{scalar_abs_any});
+    AbstractBasePtrList output_abs_list(output_size - 1, tuple_abs->BroadenToDynamicLenSequence());
+    output_abs_list.insert(output_abs_list.begin(), scalar_abs_any);
     return std::make_shared<abstract::AbstractTuple>(output_abs_list);
   }
-  if (data_shape.size() < 1 || data_shape.size() > max_tensor_dims) {
+  if (data_shape.size() < 1 || data_shape.size() > kMaxTensorIndexDimNums) {
     MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, 8], but got " << data_shape.size();
   }
   std::vector<ShapeVector> tensor_indices_shapes;
@@ -287,40 +277,39 @@ AbstractBasePtr GetTupleIndexInfoInferInner(const PrimitivePtr &primitive,
   int64_t expand_dims = GetValue<int64_t>(primitive->GetAttr(kAttrExpandDimsCnt));
   for (size_t i = 0; i < tuple_index_types.size(); i++) {
     if (tuple_index_types[i] == kMetaTypeEllipsis) {
-      valid_tensor_nums = data_shape.size() + expand_dims;
+      valid_tensor_nums = data_shape.size() + LongToSize(expand_dims);
       break;
     } else if (tuple_index_types[i] != kTypeUnknown) {
       valid_tensor_nums += 1;
     }
   }
   for (size_t i = 0; i < valid_tensor_nums; i++) {
-    auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i + kIndex2]->BuildShape())[kShape];
+    auto input_shape = input_args[i + kIndex2]->GetShape()->GetShapeVector();
     (void)tensor_indices_shapes.emplace_back(input_shape);
   }
   MS_LOG(DEBUG) << "valid_tensor_nums:" << valid_tensor_nums;
   ShapeVector broadcast_shape;
   ShapeVector final_shape;
   ShapeVector index_tensor_new_shape;
-  int64_t fancy_position = GetValue<int64_t>(fancy_position_abs->BuildValue());
+  auto fancy_position_opt = GetScalarValue<int64_t>(fancy_position_abs->GetValue());
+  if (!fancy_position_opt.has_value()) {
+    MS_EXCEPTION(ValueError) << "The value of fancy_position should not be none.";
+  }
+  auto fancy_position = fancy_position_opt.value();
   auto new_slice_shapes = GetTupleIndexInfo::ConstGetTupleIndexInfo(
     data_shape, tensor_indices_shapes, tuple_index_types, &broadcast_shape, &final_shape, &index_tensor_new_shape,
     reinterpret_cast<size_t *>(&fancy_position), tuple_index_info_type);
-  int64_t stub_num = 0;
-  auto zero_dim_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, ShapeVector{1}, &stub_num, sizeof(int64_t));
-  if (std::any_of(final_shape.begin(), final_shape.end(), [](auto dim) { return dim == 0; })) {
-    zero_dim_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, final_shape, &stub_num, 0);
-  }
-  AbstractBasePtrList abs_list{
-    VectorToAbstract(broadcast_shape, to_tuple), VectorToAbstract(index_tensor_new_shape, to_tuple),
-    VectorToAbstract(final_shape, to_tuple), std::make_shared<abstract::AbstractScalar>(fancy_position),
-    zero_dim_tensor->ToAbstract()};
+
+  AbstractBasePtrList abs_list{std::make_shared<abstract::AbstractScalar>(fancy_position),
+                               VectorToAbstract(broadcast_shape), VectorToAbstract(index_tensor_new_shape),
+                               VectorToAbstract(final_shape)};
   for (auto new_slice_shape : new_slice_shapes) {
-    (void)abs_list.emplace_back(VectorToAbstract(new_slice_shape, to_tuple));
+    (void)abs_list.emplace_back(VectorToAbstract(new_slice_shape));
   }
-  const size_t indices_size = final_shape.size();
-  for (size_t i = 0; i < max_tensor_dims - new_slice_shapes.size(); i++) {
-    ShapeVector shape(indices_size, 1);
-    (void)abs_list.emplace_back(VectorToAbstract(shape, to_tuple));
+
+  for (size_t i = 0; i < kMaxTensorIndexDimNums - new_slice_shapes.size(); i++) {
+    ShapeVector shape(1);
+    (void)abs_list.emplace_back(VectorToAbstract(shape));
   }
   auto output_abs = std::make_shared<abstract::AbstractTuple>(abs_list);
   return output_abs;
@@ -330,16 +319,16 @@ class MIND_API GetTupleIndexInfoInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return GetTupleIndexInfoInferInner(primitive, input_args, false)->BuildShape();
+    return GetTupleIndexInfoInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return GetTupleIndexInfoInferInner(prim, input_args, true)->BuildType();
+    return GetTupleIndexInfoInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return GetTupleIndexInfoInferInner(primitive, input_args, true);
+    return GetTupleIndexInfoInferInner(primitive, input_args);
   }
 };
 

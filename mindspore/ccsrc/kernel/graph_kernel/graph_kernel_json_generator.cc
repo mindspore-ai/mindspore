@@ -19,6 +19,7 @@
 #include <set>
 #include <functional>
 #include <algorithm>
+#include "abstract/dshape.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "ir/func_graph.h"
@@ -166,7 +167,7 @@ class OpInfoExtractor {
     auto op_info = std::make_shared<OpInfo>();
     op_info->set_op_name(AnfUtils::GetCNodeName(cnode_));
     const auto &flags = GraphKernelFlags::GetInstance();
-    if (flags.enable_dynamic_shape_fusion) {
+    if (flags.kernel_generator == "AKG_V2") {
       op_info->set_imply_type(OpImplyType::kImplyDynamicAKG);
     } else {
       op_info->set_imply_type(OpImplyType::kImplyAKG);
@@ -318,7 +319,7 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (input_idx + 1 >= cnode->size()) {
-    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->inputs().size()
+    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->size()
                                 << ") in node [" << cnode->DebugString() << "]";
   }
 
@@ -334,7 +335,7 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
     vec.reserve(value_seq.size());
     for (auto v : value_seq) {
       if (v->isa<Int32Imm>() || v->isa<Int64Imm>()) {
-        vec.emplace_back(AnfUtils::GetIntValue(v));
+        (void)vec.emplace_back(AnfUtils::GetIntValue(v));
       } else {
         MS_LOG(EXCEPTION) << "Element in valuenode must be int" << input_node->fullname_with_scope();
       }
@@ -363,17 +364,60 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
       return true;
     }
     SetSingleValue(node_json, data, type_id, cnode, input_idx);
-    *input_shape = {1};
+    if (GraphKernelFlags::GetInstance().kernel_generator != "AKG_V2") {
+      *input_shape = {1};
+    }
     return true;
   }
   return false;
 }
 
-void GraphKernelJsonGenerator::SaveSymbolicShape(const AnfNodePtr &node, nlohmann::json *kernel_json) {
-  if (symbol_engine_ != nullptr) {
-    (*kernel_json)[kJsonKeySymbolicShape] = symbol_engine_->QuerySymbolicShape(node);
-    (void)symbol_engine_->QuerySymbolExpr(node, &symbol_calc_exprs_);
+std::vector<std::string> GraphKernelJsonGenerator::QuerySymbolicShapeStr(const AnfNodePtr &node) {
+  auto node_abs = node->abstract();
+  ListSymbolPtr sym_shape = node_abs->GetSymbolicShape();
+  if (sym_shape == nullptr) {
+    sym_shape = node_abs->GetShape()->BuildSymbolicShape();
+    MS_EXCEPTION_IF_NULL(sym_shape);
   }
+  if (sym_shape->size() == 0) {
+    return {"1"};
+  }
+  std::vector<std::string> res;
+  res.reserve(sym_shape->size());
+  (void)std::transform(sym_shape->symbols().cbegin(), sym_shape->symbols().cend(), std::back_inserter(res),
+                       [](const SymbolPtr &s) { return s->ToRawString(); });
+  return res;
+}
+
+void GraphKernelJsonGenerator::SaveShape(const AnfNodePtr &node, nlohmann::json *kernel_json,
+                                         const ShapeVector &shape) {
+  if (symbol_engine_ == nullptr) {
+    (*kernel_json)[kJsonKeyShape] = shape;
+    return;
+  }
+  std::vector<std::string> symbol_shape;
+  auto new_shape = shape;
+  if (!IsDynamic(shape)) {
+    symbol_shape.resize(shape.size());
+    (void)std::transform(shape.begin(), shape.end(), symbol_shape.begin(), [](int64_t v) { return std::to_string(v); });
+  } else {
+    symbol_shape = QuerySymbolicShapeStr(node);
+    if (shape.size() != symbol_shape.size()) {
+      MS_LOG(EXCEPTION) << "The length of tensor shape and symbol shape should be equal but got " << shape.size()
+                        << " and " << symbol_shape.size() << ". node: " << node->DebugString() << ", shape: " << shape
+                        << ", symbol_shape: " << symbol_shape;
+    }
+    for (size_t i = 0; i < new_shape.size(); i++) {
+      auto symbol = symbol_shape[i];
+      if (new_shape[i] == abstract::Shape::kShapeDimAny &&
+          std::all_of(symbol.begin(), symbol.end(), [](char c) { return std::isdigit(c); })) {
+        new_shape[i] = std::stoi(symbol);
+      }
+    }
+  }
+  (*kernel_json)[kJsonKeyShape] = new_shape;
+  (*kernel_json)[kJsonKeySymbolicShape] = symbol_shape;
+  (void)symbol_engine_->QuerySymbolExpr(node, &symbol_calc_exprs_);
 }
 
 bool GraphKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info,
@@ -410,7 +454,6 @@ bool GraphKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, c
       input_desc_json[kJsonKeyFormat] = this->cb_->GetInputFormat(anf_node, real_input_index);
       input_desc_json[kJsonKeyName] = input_ptr->name();
       input_desc_json[kJsonKeyTensorName] = "input_" + std::to_string(GetInputTensorIdxInc(anf_node, real_input_index));
-      SaveSymbolicShape(anf_node->cast<CNodePtr>()->input(real_input_index + 1), &input_desc_json);
       auto input_shape = this->cb_->GetInputShape(anf_node, real_input_index);
       if (!is_basic_op_ && GetInputTensorValue(anf_node, real_input_index, &input_shape, &input_desc_json)) {
         MS_LOG(DEBUG) << "Pick value [" << input_desc_json[kJsonKeyValue] << "] from input[" << real_input_index
@@ -419,7 +462,7 @@ bool GraphKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, c
       if (input_shape.empty()) {
         input_shape.push_back(1);
       }
-      input_desc_json[kJsonKeyShape] = input_shape;
+      SaveShape(anf_node->cast<CNodePtr>()->input(real_input_index + 1), &input_desc_json, input_shape);
       (void)input_list.emplace_back(input_desc_json);
       real_input_index++;
     }
@@ -450,12 +493,11 @@ bool GraphKernelJsonGenerator::CreateOutputDescJson(const AnfNodePtr &anf_node, 
     output_json[kJsonKeyFormat] = this->cb_->GetOutputFormat(anf_node, i);
     output_json[kJsonKeyName] = output_name;
     output_json[kJsonKeyTensorName] = "output_" + std::to_string(i) + "_" + std::to_string(GetOutputTensorIdxInc());
-    SaveSymbolicShape(anf_node, &output_json);
     auto output_shape = this->cb_->GetOutputShape(anf_node, i);
     if (output_shape.empty()) {
       output_shape.push_back(1);
     }
-    output_json[kJsonKeyShape] = output_shape;
+    SaveShape(anf_node, &output_json, output_shape);
     outputs_json->push_back(output_json);
   }
   return true;
@@ -573,8 +615,8 @@ size_t GraphKernelJsonGenerator::GetInputTensorIdxInc(const AnfNodePtr &anf_node
   MS_EXCEPTION_IF_NULL(anf_node);
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (input_idx + 1 >= cnode->inputs().size()) {
-    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->inputs().size()
+  if (input_idx + 1 >= cnode->size()) {
+    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->size()
                                 << ") in node [" << cnode->DebugString() << "]";
   }
 
@@ -681,7 +723,7 @@ OpInfoPtr GraphKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) co
     OpImplyType imply_type;
     const auto &flags = GraphKernelFlags::GetInstance();
 
-    if (flags.enable_dynamic_shape_fusion) {
+    if (flags.kernel_generator == "AKG_V2") {
       imply_type = OpImplyType::kImplyDynamicAKG;
     } else {
       imply_type = OpImplyType::kImplyAKG;
@@ -887,8 +929,8 @@ void GraphKernelJsonGenerator::GenKernelName(const FuncGraphPtr &fg, size_t hash
 
 bool GraphKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
                                                 const std::vector<AnfNodePtr> &input_list,
-                                                const std::vector<AnfNodePtr> &output_list,
-                                                nlohmann::json *kernel_json) {
+                                                const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json,
+                                                const bool is_akg_cce) {
   if (anf_nodes.empty()) {
     MS_LOG(ERROR) << "anf_nodes list is empty";
     return false;
@@ -950,6 +992,9 @@ bool GraphKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &a
     (*kernel_json)[kJsonKeyNodeName] = GetValue<std::string>(fg->get_attr(kAttrNodeName));
   }
 
+  if (is_akg_cce) {
+    (kernel_json_)["enable_cce_lib"] = true;
+  }
   GetIOSize(*kernel_json, &input_size_list_, &output_size_list_);
 
   return true;
@@ -1022,10 +1067,9 @@ nlohmann::json GraphKernelJsonGenerator::CreateInputsJson(const std::vector<AnfN
     if (input_shape.empty()) {
       input_shape.push_back(1);
     }
-    input_desc_json[kJsonKeyShape] = input_shape;
     auto cnode = tmp_input.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    SaveSymbolicShape(cnode->input(tmp_input.second.first + 1), &input_desc_json);
+    SaveShape(cnode->input(tmp_input.second.first + 1), &input_desc_json, input_shape);
     (void)inputs_json.emplace_back(std::vector<nlohmann::json>{input_desc_json});
   }
   return inputs_json;
@@ -1122,12 +1166,11 @@ nlohmann::json GraphKernelJsonGenerator::CreateOutputsJson(const std::vector<Anf
         GetTensorName(node_json_map.at(tmp_output.first), kJsonKeyOutputDesc, std::make_pair(0, tmp_output.second));
       output_desc_json[kJsonKeyDataType] = dtype;
       output_desc_json[kJsonKeyFormat] = this->cb_->GetOutputFormat(tmp_output.first, tmp_output.second);
-      SaveSymbolicShape(tmp_output.first, &output_desc_json);
       auto output_shape = this->cb_->GetOutputShape(tmp_output.first, tmp_output.second);
       if (output_shape.empty()) {
         output_shape.push_back(1);
       }
-      output_desc_json[kJsonKeyShape] = output_shape;
+      SaveShape(tmp_output.first, &output_desc_json, output_shape);
     }
     (void)outputs_json.emplace_back(output_desc_json);
   }
@@ -1141,9 +1184,10 @@ bool GraphKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node) {
 
 bool GraphKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
                                                 const std::vector<AnfNodePtr> &input_list,
-                                                const std::vector<AnfNodePtr> &output_list) {
+                                                const std::vector<AnfNodePtr> &output_list,
+                                                const bool use_akg_cce_lib) {
   kernel_json_ = nlohmann::json();
-  return CollectFusedJson(anf_nodes, input_list, output_list, &kernel_json_);
+  return CollectFusedJson(anf_nodes, input_list, output_list, &kernel_json_, use_akg_cce_lib);
 }
 
 bool GraphKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_node) {
@@ -1195,7 +1239,8 @@ bool GraphKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &
   }
 
   node_list.push_back(out_cnode);
-  (void)input_list.insert(input_list.cbegin(), out_cnode->inputs().cbegin() + 1, out_cnode->inputs().cend());
+  auto out_cnode_inputs = out_cnode->inputs();
+  (void)input_list.insert(input_list.cbegin(), out_cnode_inputs.cbegin() + 1, out_cnode_inputs.cend());
   auto output_num = static_cast<int64_t>(AnfUtils::GetOutputTensorNum(out_cnode));
   if (output_num > 1) {
     for (int64_t idx = 0; idx < output_num; idx++) {
@@ -1206,6 +1251,11 @@ bool GraphKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &
   } else {
     output_list.push_back(out_cnode);
   }
+
+  if (c_node->HasAttr("use_akg_cce")) {
+    (kernel_json_)["enable_cce_lib"] = true;
+  }
+
   return CollectFusedJson(node_list, input_list, output_list, &kernel_json_);
 }
 
@@ -1340,12 +1390,8 @@ void TargetInfoSetter::GetTargetInfo() {
     GetCpuInfo(&target_info_);
     return;
   }
-#ifdef MSLITE_ENABLE_GRAPH_KERNEL
   // ascend
   target_info_[kJsonKeyArch] = target;
-#else
-  has_info_ = false;
-#endif
 }
 
 void TargetInfoSetter::SetTargetInfo(nlohmann::json *kernel_info) const {

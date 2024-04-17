@@ -88,7 +88,7 @@ int QuantDTypeCastCPUKernel::ExtractQuantParams(const lite::Tensor *tensor, int 
   auto quant_params = tensor->quant_params();
   MS_CHECK_TRUE_RET(!quant_params.empty(), RET_ERROR);
   perchannel_ = (quant_params.size() > 1);
-  channel_num_ = quant_params.size();
+  channel_num_ = static_cast<int>(quant_params.size());
   if (perchannel_) {
     auto shapes = tensor->shape();
     if (channel_num_ != shapes.at(preferred_dim)) {
@@ -277,8 +277,9 @@ int QuantDTypeCastCPUKernel::Run() {
   return RET_OK;
 }
 
-int QuantDTypeCastCPUKernel::DoDequanInt8ToFp32ChannelRow(const int8_t *quant_values, float *real_values, float *scale,
-                                                          int32_t *zp, int channel_unit_num, int per_channel_size) {
+int QuantDTypeCastCPUKernel::DoDequanInt8ToFp32ChannelRow(const int8_t *quant_values, float *real_values,
+                                                          const float *scale, const int32_t *zp, int channel_unit_num,
+                                                          int per_channel_size) const {
   CHECK_NULL_RETURN(quant_values);
   CHECK_NULL_RETURN(real_values);
   CHECK_NULL_RETURN(scale);
@@ -296,9 +297,9 @@ int QuantDTypeCastCPUKernel::DoDequanInt8ToFp32ChannelRow(const int8_t *quant_va
   return RET_OK;
 }
 
-int QuantDTypeCastCPUKernel::DoDequanInt8ToFp32ChannelCol(const int8_t *quant_values, float *real_values, float *scale,
-                                                          int32_t *zp, int channel_num, int channel_unit_num,
-                                                          int per_channel_size) {
+int QuantDTypeCastCPUKernel::DoDequanInt8ToFp32ChannelCol(const int8_t *quant_values, float *real_values,
+                                                          const float *scale, const int32_t *zp, int channel_num,
+                                                          int channel_unit_num, int per_channel_size) const {
   CHECK_NULL_RETURN(quant_values);
   CHECK_NULL_RETURN(real_values);
   CHECK_NULL_RETURN(scale);

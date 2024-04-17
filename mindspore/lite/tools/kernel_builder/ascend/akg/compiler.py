@@ -14,17 +14,38 @@
 
 """Compile akg info"""
 import sys
-try:
-    from mindspore_lite.akg.ms import compilewithjson
-except ImportError:
-    from akg.ms import compilewithjson
 
+def clean_env():
+    """clear akg python env"""
+    import gc
+
+    imported_modules = set(sys.modules.keys())
+    for obj_key in imported_modules:
+        if "conda" in obj_key:
+            continue
+        if "akg" in obj_key or "topi" in obj_key or "tvm" in obj_key:
+            del sys.modules[obj_key]
+            try:
+                del globals()[obj_key]
+            except KeyError:
+                pass
+            try:
+                del locals()[obj_key]
+            except KeyError:
+                pass
+
+    gc.collect()
 
 def run_compiler(info_path):
     """invoke akg to compile the info"""
+    try:
+        from mindspore_lite.akg.ms import compilewithjson
+    except ImportError:
+        from akg.ms import compilewithjson
     with open(info_path, 'r') as f:
         info_str = f.read()
         compilewithjson(info_str)
+    clean_env()
 
 
 if __name__ == "__main__":

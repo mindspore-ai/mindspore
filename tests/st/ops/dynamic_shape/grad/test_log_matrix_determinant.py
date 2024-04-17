@@ -32,7 +32,7 @@ class LogMatrixDeterminantNet(nn.Cell):
         return output
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -49,7 +49,7 @@ def test_dynamic_shape_log_matrix_determinant():
         [Tensor(input_x)], False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

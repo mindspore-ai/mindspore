@@ -18,15 +18,8 @@
 #include <utility>
 namespace mindspore {
 namespace kernel {
-bool AccumulateNV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::AccumulateNV2>(base_operator);
-  if (kernel_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "Cast ops::AccumulateNV2 failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr_->name();
+bool AccumulateNV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -44,9 +37,8 @@ bool AccumulateNV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int AccumulateNV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+int AccumulateNV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -62,24 +54,23 @@ int AccumulateNV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     }
   }
   ResetResource();
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeVector().end());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
   n_ = inputs.size();
   size_t output_size = output_elements_ * unit_output_size_;
-  input_size_list_.push_back(n_ * output_size);
   output_size_list_.push_back(output_size);
   workspace_size_list_.push_back(n_ * sizeof(void *));
   return KRET_OK;
 }
 
 template <typename T>
-bool AccumulateNV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool AccumulateNV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   T *output = GetDeviceAddress<T>(outputs, 0);
   T **inputs_array = GetDeviceAddress<T *>(workspace, 0);
   std::unique_ptr<T *[]> inputs_host = std::make_unique<T *[]>(n_);

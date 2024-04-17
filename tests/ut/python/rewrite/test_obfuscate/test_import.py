@@ -56,10 +56,11 @@ def test_import():
     codes = stree.get_code()
     # the priority of class with the same name:  defined class in the current module
     # > explicitly imported class from other modules
-    assert codes.count("class MyNetUtImportOpt(nn.Cell):") == 1
-    assert codes.count("class NetUtImportOpt(FatherNet):") == 1
-    assert codes.count("class SubNetUtImportOpt(FatherNet):") == 1
-    assert codes.count("class NetBUtImportOpt(nn.Cell):") == 1
+    assert codes.count("class MyNetUtImportOpt(MyNetUtImport, nn.Cell):") == 1, codes
+    assert codes.count("class NetUtImportOpt(NetUtImport, FatherNetOpt):") == 1, codes
+    assert codes.count("class SubNetUtImportOpt(SubNetUtImport, FatherNetOpt):") == 1, codes
+    assert codes.count("class NetBUtImportOpt(NetBUtImport, nn.Cell):") == 1, codes
+    assert codes.count("class FatherNetOpt(FatherNet, nn.Cell):") == 1, codes
 
     # duplicated modules process
     assert codes.count("import mindspore.nn as nn") == 1

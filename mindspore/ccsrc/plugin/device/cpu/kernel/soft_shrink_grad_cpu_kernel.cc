@@ -24,14 +24,14 @@ namespace kernel {
   KernelAttr().AddInputAttr(DT).AddInputAttr(DT).AddOutputAttr(DT), &SoftShrinkGradCpuKernelMod::LaunchKernel<T>
 
 template <typename T>
-bool SoftShrinkGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool SoftShrinkGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   /* float optimize */
   if (std::is_same_v<T, float>) {
-    float *src0 = reinterpret_cast<float *>(inputs.at(kIndex0)->addr);
-    float *src1 = reinterpret_cast<float *>(inputs.at(kIndex1)->addr);
-    float *out = reinterpret_cast<float *>(outputs.at(kIndex0)->addr);
+    float *src0 = reinterpret_cast<float *>(inputs.at(kIndex0)->device_ptr());
+    float *src1 = reinterpret_cast<float *>(inputs.at(kIndex1)->device_ptr());
+    float *out = reinterpret_cast<float *>(outputs.at(kIndex0)->device_ptr());
 
     auto task = [src0, src1, out, this](size_t start, size_t end) {
       auto src0_tmp = src0 + start;
@@ -44,9 +44,9 @@ bool SoftShrinkGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   }
 
   /* common soft shrink grad */
-  T *dy_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  T *x_addr = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  T *dx_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  T *dy_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
+  T *x_addr = reinterpret_cast<T *>(inputs.at(kIndex1)->device_ptr());
+  T *dx_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
   T lambd_value = static_cast<T>(lambd_);
   auto task = [dy_addr, x_addr, dx_addr, lambd_value](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -58,31 +58,24 @@ bool SoftShrinkGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   return true;
 }
 
-bool SoftShrinkGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SoftShrinkGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SoftShrinkGrad>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast SoftShrinkGrad ops failed!";
-    return false;
-  }
-  lambd_ = kernel_ptr->get_lambd();
+  lambd_ = GetValue<float>(primitive_->GetAttr(ops::kLambd));
 
-  if (auto ret = MatchKernelFunc(base_operator, inputs, outputs); !ret) {
+  if (auto ret = MatchKernelFunc(kernel_name_, inputs, outputs); !ret) {
     return ret;
   }
   return true;
 }
 
-int SoftShrinkGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SoftShrinkGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

@@ -23,11 +23,7 @@
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "src/common/log_util.h"
 #include "ops/op_utils.h"
-#include "ops/reduce_sum.h"
-#include "ops/reduce_mean.h"
-#include "ops/reduce_max.h"
-#include "ops/reduce_min.h"
-#include "ops/reduce_all.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/lp_norm.h"
 
 namespace mindspore {

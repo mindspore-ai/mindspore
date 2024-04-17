@@ -35,11 +35,11 @@ namespace ops {
 namespace {
 abstract::ShapePtr ScatterArithmeticInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
-  auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-  auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto indices_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(indices_shape_ptr);
-  auto updates_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto updates_shape_ptr = input_args[kInputIndex2]->GetShape();
   MS_EXCEPTION_IF_NULL(updates_shape_ptr);
   if (input_x_shape_ptr->IsDynamic() || indices_shape_ptr->IsDynamic() || updates_shape_ptr->IsDynamic()) {
     return input_x_shape_ptr->cast<abstract::ShapePtr>();
@@ -63,9 +63,9 @@ abstract::ShapePtr ScatterArithmeticInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ScatterArithmeticInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_x_type_ptr = input_args[kInputIndex0]->BuildType();
-  auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
-  auto updates_type_ptr = input_args[kInputIndex2]->BuildType();
+  auto input_x_type_ptr = input_args[kInputIndex0]->GetType();
+  auto indiecs_type_ptr = input_args[kInputIndex1]->GetType();
+  auto updates_type_ptr = input_args[kInputIndex2]->GetType();
   auto prim_name = primitive->name();
   const std::set<TypePtr> indices_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, indices_types, prim_name);

@@ -8,6 +8,7 @@
     GloVe 是一种无监督学习算法，用于获取词的向量表示。
 
     .. py:method:: from_file(file_path, max_vectors=None)
+        :classmethod:
 
         加载 GloVe 预训练向量集文件。
 

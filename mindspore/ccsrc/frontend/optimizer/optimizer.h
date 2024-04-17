@@ -29,7 +29,6 @@
 
 #include "include/common/debug/draw.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "pipeline/jit/ps/debug/anf_ir_utils.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "frontend/optimizer/opt.h"
 #include "pipeline/jit/ps/resource.h"
@@ -159,9 +158,11 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   }
 
   void DumpStep(FuncGraphPtr func_graph, const int counter, const int index) {
-    static const auto enable_dump_pass_ir = GetDumpConfig().enable_dump_pass_ir;
+    static const auto enable_dump_pass = GetDumpConfig().enable_dump_pass_ir;
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
+    static const auto input_name = common::GetEnv("MS_DEV_DUMP_IR_PASSES");
+    auto enable_dump_pass_ir = (input_name.size() != 0) || enable_dump_pass;
     if ((enable_dump_pass_ir && context->CanDump(kIntroductory)) || context->CanDump(kFully)) {
       auto fg_name = "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(index) + "_" +
                      pass_names_[index];
@@ -206,22 +207,22 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
               if (resource != nullptr) {
                 // StepParallel may replace the AbstractValue of the parameters of func_graph,
                 // So generate the args_abs from parameters.
-                abstract::AbstractBasePtrList maybe_new_args_spec;
+                abstract::AbstractBasePtrList maybe_new_args;
                 if (is_watch_renormalize_) {
                   if (is_untyped_generated_) {
                     std::transform(func_graph->parameters().begin(), func_graph->parameters().end(),
-                                   std::back_inserter(maybe_new_args_spec),
+                                   std::back_inserter(maybe_new_args),
                                    [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
-                    func_graph = pipeline::Renormalize(resource, func_graph, maybe_new_args_spec);
+                    func_graph = pipeline::Renormalize(resource, func_graph, maybe_new_args);
                     clear_is_untyped_generated();
                   } else {
-                    MS_LOG(INFO) << "Optimizer::step: Skipping Renormalize because is_untyped_generated_ is False.";
+                    MS_LOG(DEBUG) << "Optimizer::step: Skipping Renormalize because is_untyped_generated_ is False.";
                   }
                 } else {
                   std::transform(func_graph->parameters().begin(), func_graph->parameters().end(),
-                                 std::back_inserter(maybe_new_args_spec),
+                                 std::back_inserter(maybe_new_args),
                                  [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
-                  func_graph = pipeline::Renormalize(resource, func_graph, maybe_new_args_spec);
+                  func_graph = pipeline::Renormalize(resource, func_graph, maybe_new_args);
                 }
               }
               changes_since_last_renorm = false;
@@ -232,7 +233,9 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
           };
           auto profiler_pass_name = name_ + ".r" + std::to_string(counter) + "." + pass_names_[i];
           (void)profiler::CollectHostInfo(pipeline::kCompiler, pipeline::kOptimize, profiler_pass_name, 0, 0, 0);
+          MS_LOG(INFO) << "Start " << name_ << ".r" << std::to_string(counter) << "." << pass_names_[i];
           use_profile ? ProfileExecute(MsProfile::GetProfile()->Step(pass_names_[i]), opt_func) : opt_func();
+          MS_LOG(INFO) << "End " << name_ << ".r" << std::to_string(counter) << "." << pass_names_[i];
           (void)profiler::CollectHostInfo(pipeline::kCompiler, pipeline::kOptimize, profiler_pass_name, 0, 0, 1);
 #ifdef ENABLE_DUMP_IR
           DumpStep(func_graph, counter, i);

@@ -1,0 +1,35 @@
+cosh:
+    description: |
+        Computes hyperbolic cosine of input element-wise.
+
+        .. math::
+        
+            out_i = \cosh(input_i)
+    
+        Args:
+            input (Tensor): The input tensor of hyperbolic cosine function, its data type
+                must be float16, float32, float64, complex64 or complex128.
+    
+        Returns:
+            Tensor, has the same shape as `input`.
+    
+        Raises:
+            TypeError: If the dtype of `input` is not one of the following types:
+                           float16, float32, float64, complex64, complex128.
+            TypeError: If `input` is not a Tensor.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+            >>> output = ops.cosh(x)
+            >>> print(output)
+            [1.0289385 1.364684 1.048436 1.0040528]
+            >>> x = Tensor(2.1, mindspore.float32)
+            >>> output = ops.cosh(x)
+            >>> print(output)
+            4.144313

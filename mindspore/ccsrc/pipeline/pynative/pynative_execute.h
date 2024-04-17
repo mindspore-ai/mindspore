@@ -33,7 +33,7 @@ namespace py = pybind11;
 
 class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
  public:
-  static std::shared_ptr<PyNativeExecutor> GetInstance() {
+  static const std::shared_ptr<PyNativeExecutor> &GetInstance() {
     std::lock_guard<std::mutex> i_lock(instance_lock_);
     if (executor_ == nullptr) {
       executor_ = std::shared_ptr<PyNativeExecutor>(new (std::nothrow) PyNativeExecutor());
@@ -45,11 +45,11 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   static void Init();
   PyNativeExecutor(const PyNativeExecutor &) = delete;
   PyNativeExecutor &operator=(const PyNativeExecutor &) = delete;
-  inline GradExecutorPtr grad_executor() const {
+  static inline const GradExecutorPtr &grad_executor() {
     MS_EXCEPTION_IF_NULL(grad_executor_);
     return grad_executor_;
   }
-  inline ForwardExecutorPtr forward_executor() const {
+  static inline const ForwardExecutorPtr &forward_executor() {
     MS_EXCEPTION_IF_NULL(forward_executor_);
     return forward_executor_;
   }
@@ -68,9 +68,8 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void SetHookChanged(const py::object &cell) const;
   void NewGraph(const py::object &obj, const py::args &args) const;
   void EndGraph(const py::object &obj, const py::object &out, const py::args &args) const;
-  py::object Run() const;
-  void GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
-               const py::object &grad_position, const py::args &args) const;
+  py::object RunGrad(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
+                     const py::object &grad_position, const py::args &args) const;
   py::object GradJit(const py::object &out, const py::args &args) const;
   void SetDynamicInput(const py::object &obj, const py::args &args) const;
   py::object GetDynamicInput(const py::object &actual_input) const;
@@ -83,18 +82,13 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   bool IsFirstCell() const;
   void WorkerJoin();
   void SetJitCompileStatus(bool is_compiling, const std::string &phase) const;
-  void WaitBeforeFork();
-  void ParentAfterFork();
-  void ReinitAfterFork();
+  void ParentBeforeFork();
+  void ChildAfterFork();
   py::object RunSliceOpStub(const std::vector<ValuePtr> &input_v,
                             const std::vector<SliceOpInfoPtr> &slice_op_infos) const;
 
  private:
-  PyNativeExecutor() {
-    // Register fork event callbacks.
-    ForkUtils::GetInstance().RegisterCallbacks(this, &PyNativeExecutor::WaitBeforeFork,
-                                               &PyNativeExecutor::ParentAfterFork, &PyNativeExecutor::ReinitAfterFork);
-  }
+  PyNativeExecutor() = default;
   static std::shared_ptr<PyNativeExecutor> executor_;
   static std::mutex instance_lock_;
   static ForwardExecutorPtr forward_executor_;

@@ -14,7 +14,8 @@
 # ============================================================================
 import pytest
 import numpy as np
-from mindspore import context, nn, Tensor, Parameter, ParameterTuple
+from mindspore import context, nn, Tensor, Parameter, ParameterTuple, ops
+from mindspore.common.initializer import initializer
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 
@@ -74,18 +75,12 @@ class GradOfAllInputs(_Grad):
 
 def test_multi_grad():
     class ForwardNetMul(nn.Cell):
-        def __init__(self):
-            super().__init__()
-
         def construct(self, x, y):
             a = x * x
             b = y * y
             return a * b
 
     class ForwardNetAdd(nn.Cell):
-        def __init__(self):
-            super().__init__()
-
         def construct(self, x, y):
             a = x + x + x
             b = y + y
@@ -107,18 +102,12 @@ def test_multi_grad():
 
 def test_multi_same_grad():
     class ForwardNetMul(nn.Cell):
-        def __init__(self):
-            super().__init__()
-
         def construct(self, x, y):
             a = x * x
             b = y * y
             return a * b
 
     class ForwardNetAdd(nn.Cell):
-        def __init__(self):
-            super().__init__()
-
         def construct(self, x, y):
             a = x*3
             b = y*2
@@ -140,9 +129,6 @@ def test_multi_same_grad():
 
 def test_net_inner_grad():
     class ForwardNetMul(nn.Cell):
-        def __init__(self):
-            super().__init__()
-
         def construct(self, x, y):
             a = x * x
             b = y * y
@@ -209,3 +195,42 @@ def test_net_inner_first_run_grad():
     grad_add = GradOfFirstInput(mulnet)
     grad_mul(x, y, sens)
     grad_add(x, y, sens)
+
+
+def test_define_bprop_raise_error():
+    """
+    Feature: Grad of all.
+    Description: Test grad.
+    Expectation: No exception.
+    """
+    class TwoInputWithParameter(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.op = ops.Mul()
+            self.data = Parameter(initializer(1, (2, 2), mstype.float32), name="global_step")
+
+        def construct(self, x, y):
+            x = self.data + x
+            return self.op(x, y)
+
+    class Network(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.f = TwoInputWithParameter()
+            self.inputdata = Parameter(initializer(1, (2, 2), mstype.float32), name="global_step")
+
+        def construct(self, x, y):
+            x = x + self.inputdata
+            return self.f(x, y)
+
+        def bprop(self, x, y, out, dout):
+            grads = GradOfAllInputs(self.f, False)(x, y)
+            return grads[0] * 2, grads[1] * 2
+
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(np.ones([2, 2]).astype(np.float32))
+    y = Tensor(np.ones([2, 2]).astype(np.float32))
+    net = Network()
+    with pytest.raises(RuntimeError) as err:
+        GradOfAllInputs(net, sens_param=False)(x, y)
+        assert "For 'GradOperation', the first argument must be a 'Function' or 'Cell'" in err

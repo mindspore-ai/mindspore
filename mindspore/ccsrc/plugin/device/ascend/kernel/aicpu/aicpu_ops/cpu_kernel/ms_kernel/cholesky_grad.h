@@ -20,8 +20,8 @@
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -37,7 +37,7 @@ class CholeskyGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx, const bool &reverse);
+  uint32_t ComputeKernel(CpuKernelContext &ctx, const bool &reverse);
 
   template <typename T>
   void ComputeMatrix(T *lptr, T *gradptr, T *outputptr, int64_t n);

@@ -77,6 +77,10 @@ int NNACLCheckKernelBase(KernelBase *kernel_base) {
 KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, TensorC **outs, size_t out_size,
                          int data_type, ExecEnv *env) {
   Init_MSC_VER_kernels();
+  if (param == NULL) {
+    return NULL;
+  }
+
   KernelCreator creator = g_kernelCreatorRegistry[param->type_][REGIST_DT(data_type)];
   if (creator == NULL) {
     return NULL;

@@ -73,8 +73,8 @@ bool MatMulChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Forma
       return false;
     }
   }
-  if (op->inputs().size() < kInputIndex3) {
-    MS_LOG(ERROR) << "Matmul should have 2 inputs at least, but is " << (op->inputs().size() - 1);
+  if (op->size() < kInputIndex3) {
+    MS_LOG(ERROR) << "Matmul should have 2 inputs at least, but is " << (op->size() - 1);
     return false;
   }
   bool transpose_b = false;

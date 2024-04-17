@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,15 @@ class GeLUInfo : public ActivationOther {
            const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<GeLUCost>()) {}
   ~GeLUInfo() override = default;
+
+ protected:
+  Status InferForwardCommunicationByLayout() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputTensorInfo() override;
+
+ private:
+  TensorLayout output_infer_tensor_layout_;
 };
 
 class FastGeLUInfo : public ActivationOther {
@@ -133,6 +142,9 @@ class LogSoftmaxInfo : public Softmax {
                  const PrimitiveAttrs &attrs)
       : Softmax(name, inputs_shape, outputs_shape, attrs) {}
   ~LogSoftmaxInfo() override = default;
+
+ protected:
+  Status GetAttrs() override;
 };
 
 class SortInfo : public Softmax {
@@ -145,6 +157,7 @@ class SortInfo : public Softmax {
  protected:
   Status InferTensorMap() override;
   Status InferAsLossDivisor() override;
+  Status GetAttrs() override;
 };
 
 class ReverseV2Info : public Softmax {
@@ -224,6 +237,14 @@ class ReLUInfo : public ActivationOther {
            const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReLUCost>()) {}
   ~ReLUInfo() override = default;
+};
+
+class SiLUInfo : public ActivationOther {
+ public:
+  SiLUInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<SiLUCost>()) {}
+  ~SiLUInfo() override = default;
 };
 
 class identityInfo : public ActivationOther {
@@ -358,6 +379,7 @@ class DropoutInfo : public ActivationOther {
   Status InferAsLossDivisor() override;
 
  private:
+  float keep_prob_ = 0.5;
   int64_t seed0_ = 0;
   int64_t seed1_ = 0;
   int64_t get_seed() const {
@@ -389,6 +411,15 @@ class IsFiniteInfo : public ActivationOther {
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<IsFiniteCost>()) {}
   ~IsFiniteInfo() = default;
 };
+
+class GenerateEodMaskInfo : public ActivationOther {
+ public:
+  GenerateEodMaskInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<IsFiniteCost>()) {}
+  ~GenerateEodMaskInfo() = default;
+};
+
 
 class MishInfo : public ActivationOther {
  public:

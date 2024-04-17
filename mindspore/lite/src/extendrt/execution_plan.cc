@@ -43,37 +43,36 @@ std::vector<abstract::Kernel *> ExecutionPlan::ToKernelList() { return kernel_li
 bool ExecutionPlan::PrepareKernels() {
   for (auto kernel : kernels_) {
     if (kernel == nullptr) {
-      MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels get nullptr execution flow.";
+      MS_LOG(ERROR) << "Get nullptr kernel";
       return false;
     }
     auto subgraph_kernel = dynamic_cast<kernel::SubGraphKernel *>(kernel);
     for (auto &node : subgraph_kernel->nodes()) {
       auto ret = node->Prepare();
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels node: " << node->name()
-                      << " prepare failed, type: " << node->type();
+        MS_LOG(ERROR) << "Node: " << node->name() << " prepare failed, type: " << node->type();
         return false;
       }
     }
     auto ret = subgraph_kernel->Prepare();
     if (ret != lite::RET_OK) {
-      MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels prepare subgraph failed.";
+      MS_LOG(ERROR) << "Prepare subgraph failed.";
       return false;
     }
-    if (!MallocTensorData(subgraph_kernel)) {
-      MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels malloc memory for kernel: " << subgraph_kernel->name()
-                    << " failed.";
+    if (!CalcTensorRefCount(subgraph_kernel)) {
+      MS_LOG(ERROR) << "Malloc memory for kernel: " << subgraph_kernel->name() << " failed.";
       return false;
     }
     kernel_list_.emplace_back(kernel);
   }
+
   return true;
 }
 
-bool ExecutionPlan::MallocTensorData(abstract::Kernel *subgraph_kernel) {
+bool ExecutionPlan::CalcTensorRefCount(abstract::Kernel *subgraph_kernel) {
   auto subgraph = dynamic_cast<kernel::SubGraphKernel *>(subgraph_kernel);
   if (subgraph == nullptr) {
-    MS_LOG(ERROR) << "kernel is not sub graph kernel";
+    MS_LOG(ERROR) << "Kernel is not sub graph kernel";
     return false;
   }
   auto kernel_list = subgraph->nodes();

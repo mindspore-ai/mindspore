@@ -32,9 +32,8 @@ namespace mindspore {
 namespace dataset {
 class RandomCropDecodeResizeOp : public RandomCropAndResizeOp {
  public:
-  RandomCropDecodeResizeOp(int32_t target_height, int32_t target_width, float scale_lb = kDefScaleLb,
-                           float scale_ub = kDefScaleUb, float aspect_lb = kDefAspectLb, float aspect_ub = kDefAspectUb,
-                           InterpolationMode interpolation = kDefInterpolation, int32_t max_attempts = kDefMaxIter);
+  RandomCropDecodeResizeOp(int32_t target_height, int32_t target_width, float scale_lb, float scale_ub, float aspect_lb,
+                           float aspect_ub, InterpolationMode interpolation, int32_t max_attempts);
 
   explicit RandomCropDecodeResizeOp(const RandomCropAndResizeOp &rhs) : RandomCropAndResizeOp(rhs) {}
 

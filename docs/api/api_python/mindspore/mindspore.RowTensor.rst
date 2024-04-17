@@ -5,7 +5,7 @@ mindspore.RowTensor
 
     用来表示一组指定索引的Tensor切片的稀疏表示。
 
-    若RowTensor的 `values` 的shape为 :math:`(d_0, d_1, ..., d_n)`，则该RowTensor用于表示一个有着shape为 :math:`(l_0, d_1, .., d_n)` 的更大的稠密Tensor的子集，
+    若RowTensor的 `values` 的shape为 :math:`(d_0, d_1, ..., d_n)`，则该RowTensor用于表示一个有着shape为 :math:`(l_0, d_1, ..., d_n)` 的更大的稠密Tensor的子集，
     其中 :math:`d_i` 为RowTensor第i轴的size， :math:`l_0` 为稠密Tensor在第0轴的size，并且 :math:`l_0 > d_0` 。
 
     其中，参数 `indices` 用于指定 `RowTensor` 从该稠密Tensor的第一维度的哪些位置来进行切片，

@@ -51,9 +51,9 @@ std::string KLDivLoss::get_reduction() const { return GetValue<std::string>(GetA
 
 abstract::ShapePtr KLDivLossInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto input_x_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto input_x_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto input_x_shape = input_x_map[kShape];
-  auto input_target_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto input_target_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto input_target_shape = input_target_map[kShape];
 
   if (IsDynamicRank(input_x_shape) || IsDynamicRank(input_target_shape)) {
@@ -80,8 +80,8 @@ abstract::ShapePtr KLDivLossInferShape(const PrimitivePtr &primitive, const std:
 TypePtr KLDivLossInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = prim->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  auto input_x_type = input_args[kInputIndex0]->BuildType();
-  auto input_target_type = input_args[kInputIndex1]->BuildType();
+  auto input_x_type = input_args[kInputIndex0]->GetType();
+  auto input_target_type = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, op_name);
 
   std::map<std::string, TypePtr> types;
@@ -100,11 +100,11 @@ AbstractBasePtr KLDivLossInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto input_x = input_args[kInputIndex0];
   auto input_target = input_args[kInputIndex1];
   auto op_name = primitive->name();
-  if (!input_x->isa<abstract::AbstractTensor>()) {
+  if (input_x->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For " << op_name << ", logits should be a Tensor.";
   }
 
-  if (!input_target->isa<abstract::AbstractTensor>()) {
+  if (input_target->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For " << op_name << ", labels should be a Tensor.";
   }
 

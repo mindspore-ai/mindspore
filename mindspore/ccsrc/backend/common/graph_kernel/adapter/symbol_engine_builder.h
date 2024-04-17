@@ -17,17 +17,19 @@
 #define MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_ADAPTER_SYMBOL_ENGINE_BUILDER_H_
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "include/backend/visible.h"
 #include "include/backend/optimizer/pass.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol_engine_impl.h"
 
 namespace mindspore::graphkernel {
 class SymbolEngineBuilder : public opt::Pass {
  public:
-  SymbolEngineBuilder() : Pass("symbol_engine_builder") {}
+  explicit SymbolEngineBuilder(bool multi_engine = false)
+      : Pass("symbol_engine_builder"), multi_engine_(multi_engine) {}
   ~SymbolEngineBuilder() = default;
   bool Run(const FuncGraphPtr &func_graph) override;
-};
 
-SymbolEnginePtr BuildSymbolEngine(const FuncGraphPtr &fg);
+ private:
+  bool multi_engine_;
+};
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_ADAPTER_SYMBOL_ENGINE_BUILDER_H_

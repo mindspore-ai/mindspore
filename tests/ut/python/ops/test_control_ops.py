@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test control ops """
-import os
 import numpy as np
 import pytest
 
@@ -27,6 +26,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common import jit
+from mindspore._extends.parse import compile_config
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -799,7 +799,12 @@ def test_tensor_all_construct_lack_branch():
     net(input_tensor_1, input_tensor_2)
 
 
-def test_parser_switch_layer_func_primitive():
+def test_parser_switch_layer_func_primitive_pi():
+    """
+    Feature: Switch layer.
+    Description: test switch layer.
+    Expectation: No exception.
+    """
     class FinalNet(nn.Cell):
         def __init__(self, funcs):
             super().__init__()
@@ -817,8 +822,7 @@ def test_parser_switch_layer_func_primitive():
     input1 = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
     i = Tensor(1, mstype.int32)
 
-    with pytest.raises(ValueError):
-        net(i, input1)
+    net(i, input1)
 
 
 def test_switch_layer_shape_join_failed():
@@ -900,13 +904,13 @@ def test_large_for_loop():
 
     t = Tensor(np.ones([2, 3], dtype=np.float32))
     net = Net()
-    os.environ['MS_DEV_RECURSIVE_EVAL'] = '1'
+    compile_config.RECURSIVE_EVAL = 1
     old_max_call_depth = context.get_context('max_call_depth')
     context.set_context(max_call_depth=60)
     with pytest.raises(RuntimeError) as err:
         net(t)
     context.set_context(max_call_depth=old_max_call_depth)
-    os.environ['MS_DEV_RECURSIVE_EVAL'] = '0'
+    compile_config.RECURSIVE_EVAL = 0
     assert 'Exceed function call depth limit 60' in str(err.value)
 
 
@@ -935,12 +939,12 @@ def test_large_for_loop_case2():
 
     x = Tensor(np.ones([2, 3], dtype=np.float32))
     net = Menet(axis=0, flag_boottom=True, flag_top=True)
-    os.environ['MS_DEV_RECURSIVE_EVAL'] = '1'
+    compile_config.RECURSIVE_EVAL = 1
     old_max_call_depth = context.get_context('max_call_depth')
     context.set_context(max_call_depth=80)
     with pytest.raises(RuntimeError) as err:
         net(x)
-    os.environ['MS_DEV_RECURSIVE_EVAL'] = '0'
+    compile_config.RECURSIVE_EVAL = 0
     context.set_context(max_call_depth=old_max_call_depth)
     assert 'Exceed function call depth limit 80' in str(err.value)
 
@@ -963,13 +967,13 @@ def test_large_for_loop_with_continue_break():
                 x = self.flatten(x + elem1)
             return x
 
-    os.environ['MS_DEV_RECURSIVE_EVAL'] = '1'
+    compile_config.RECURSIVE_EVAL = 1
     old_max_call_depth = context.get_context('max_call_depth')
     context.set_context(max_call_depth=2000)
     t = Tensor(np.ones([2, 3], dtype=np.float32))
     net = Net()
     net(t)
-    os.environ['MS_DEV_RECURSIVE_EVAL'] = '0'
+    compile_config.RECURSIVE_EVAL = 0
     context.set_context(max_call_depth=old_max_call_depth)
 
 
@@ -999,14 +1003,14 @@ def test_recursive_call():
             return out
 
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_RECURSIVE_EVAL'] = '1'
+    compile_config.RECURSIVE_EVAL = 1
     old_max_call_depth = context.get_context('max_call_depth')
     context.set_context(max_call_depth=80)
     input_data = Tensor(np.identity(10).astype(np.float32))
     net = Net2()
     with pytest.raises(RuntimeError):
         net(input_data)
-    os.environ['MS_DEV_RECURSIVE_EVAL'] = '0'
+    compile_config.RECURSIVE_EVAL = 0
     context.set_context(max_call_depth=old_max_call_depth)
 
 

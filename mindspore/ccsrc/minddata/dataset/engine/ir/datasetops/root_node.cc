@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,15 @@
 
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor for RootNode
 RootNode::RootNode(std::shared_ptr<DatasetNode> child) : DatasetNode() {
   // The root node's parent must remain nullptr, which is set in the constructor of DatasetNode.
   AddChild(child);
-  num_epochs_ = 0;
-  step_ = 0;
 }
 
 std::shared_ptr<DatasetNode> RootNode::Copy() {

@@ -38,8 +38,7 @@ TEST_F(MindDataTestToFloat16Op, TestOp) {
   // use compute center to use for rotation
   std::vector<float> center = {};
   bool expand = false;
-  auto op = std::make_unique<RandomRotationOp>(
-    s_degree, e_degree, InterpolationMode::kLinear, expand, center);
+  auto op = std::make_unique<RandomRotationOp>(s_degree, e_degree, InterpolationMode::kLinear, expand, center, 0, 0, 0);
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

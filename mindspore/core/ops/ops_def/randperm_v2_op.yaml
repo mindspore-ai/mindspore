@@ -1,0 +1,26 @@
+#operator randperm_v2
+randperm_v2:
+    args:
+        n:
+            dtype: int
+            type_cast: tensor
+        seed:
+            dtype: int
+            type_cast: tensor
+            default: 0
+            prim_init: True
+        offset:
+            dtype: int
+            type_cast: tensor
+            default: 0
+            prim_init: True
+        dtype:
+            dtype: TypeId
+            default: mstype.int64
+            prim_init: True
+            arg_handler: dtype_to_type_id
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: randperm

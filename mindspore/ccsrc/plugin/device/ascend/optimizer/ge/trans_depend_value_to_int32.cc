@@ -21,6 +21,7 @@
 #include <set>
 #include "ops/conv_pool_op_name.h"
 #include "ops/array_op_name.h"
+#include "ops/structure_op_name.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
@@ -75,9 +76,9 @@ const AnfNodePtr TransDependValueToInt32::Process(const FuncGraphPtr &func_graph
   // if node has depend value
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  static const std::set<std::string> kSkipNodeName = {kScatterNdOpName, kAdaptiveAvgPool2DGradOpName};
+  static const std::set<std::string> kAllowedNodeName = {kHistogramFixedWidthOpName};
   auto node_name = AnfUtils::GetCNodeName(cnode);
-  if (kSkipNodeName.find(node_name) != kSkipNodeName.end()) {
+  if (kAllowedNodeName.find(node_name) == kAllowedNodeName.end()) {
     return nullptr;
   }
   auto depend_set = abstract::GetValueDependArgIndices(cnode);
@@ -113,6 +114,8 @@ const AnfNodePtr TransDependValueToInt32::Process(const FuncGraphPtr &func_graph
     (void)new_inputs.emplace_back(new_value_node);
   }
   auto new_node = kernel_graph->NewCNodeWithInfos(new_inputs, cnode);
+  new_node->set_scope(node->scope());
+  new_node->set_fullname_with_scope(node->fullname_with_scope());
   new_node->set_abstract(cnode->abstract());
   new_node->set_inputs(new_inputs);
   return new_node;

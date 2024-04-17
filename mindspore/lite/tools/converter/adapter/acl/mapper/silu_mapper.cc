@@ -31,9 +31,9 @@ constexpr auto kNameInputNum = 1;
 }  // namespace
 
 STATUS SiLUMapper::Mapper(const CNodePtr &cnode) {
-  if (cnode->inputs().size() != kNameInputNum) {
-    MS_LOG(WARNING) << "Input of resize must be " << kNameInputNum << ", real silu: " << cnode->inputs().size()
-                    << ", cnode " << cnode->fullname_with_scope();
+  if (cnode->size() != kNameInputNum) {
+    MS_LOG(WARNING) << "Input of resize must be " << kNameInputNum << ", real silu: " << cnode->size() << ", cnode "
+                    << cnode->fullname_with_scope();
     return lite::RET_OK;
   }
   ValueNodePtr value_node = nullptr;

@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LU_H_
 #define AICPU_KERNELS_NORMALIZED_LU_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class LuCpuKernel : public CpuKernel {
@@ -26,10 +26,10 @@ class LuCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t LuCheck(const CpuKernelContext &ctx);
+  uint32_t LuCheck(CpuKernelContext &ctx);
 
   template <typename Scalar, typename Tidx>
-  uint32_t LuCompute(const CpuKernelContext &ctx);
+  uint32_t LuCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -37,7 +37,7 @@ namespace dataset {
 ///        t and 1 - t generated from a given range.
 ///        If the range is trivial then the weights are determinate and
 ///        t equals the bound of the interval
-class RandomColorOp : public TensorOp {
+class RandomColorOp : public RandomTensorOp {
  public:
   RandomColorOp() = default;
 
@@ -58,7 +58,6 @@ class RandomColorOp : public TensorOp {
   std::string Name() const override { return kRandomColorOp; }
 
  private:
-  std::mt19937 rnd_;
   std::uniform_real_distribution<float> dist_;
   float t_lb_;
   float t_ub_;

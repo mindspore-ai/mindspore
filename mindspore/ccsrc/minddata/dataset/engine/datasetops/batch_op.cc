@@ -87,7 +87,7 @@ Status BatchOp::operator()() {
         total_step++;
         RETURN_IF_NOT_OK(callback_manager_.StepBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
       }
-      (void)table->emplace_back(new_row);
+      (void)table->emplace_back(std::move(new_row));
       // if # of rows is enough to make 1 batch, send it to worker_queue
       if (table->size() == static_cast<size_t>(cur_batch_size)) {
         RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->EmplaceBack(
@@ -111,7 +111,7 @@ Status BatchOp::operator()() {
     RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(op_current_epochs_, batch_num, cnt)));
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && ENABLE_PYTHON
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && defined(ENABLE_PYTHON)
     if ((num_workers_ > 1 || batch_map_func_) && GetMemoryUsage() > MAX_MEMORY_USAGE_THRESHOLD) {
       MS_LOG(WARNING) << "Memory consumption is more than " << (GetMemoryUsage() * 100) << "%, "
                       << "which may cause OOM. Please reduce num_parallel_workers size / "
@@ -165,7 +165,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *tensor_row_dequeu
   for (size_t i = 0; i < num_columns; i++) {
     std::shared_ptr<Tensor> batched_tensor;
     RETURN_IF_NOT_OK(ConvertRowsToTensor(tensor_row_dequeue, &batched_tensor, batch_size, i, contains_per_batch_map));
-    batched_tensor_row->emplace_back(batched_tensor);
+    batched_tensor_row->emplace_back(std::move(batched_tensor));
   }
 
   return Status::OK();
@@ -198,7 +198,7 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *tensor_
   if (first_type.IsNumeric()) {  // numeric tensor
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, first_type, &new_tensor));
     for (auto row_index = 0; row_index < batch_size; ++row_index) {
-      std::shared_ptr<Tensor> old_tensor = (**tensor_row_dequeue)[row_index][column_index];
+      const std::shared_ptr<Tensor> &old_tensor = (**tensor_row_dequeue)[row_index][column_index];
       // check the newly popped rows have the same dim and type as the first
       if (old_tensor->shape() == first_shape && old_tensor->type() == first_type) {
         if (new_shape.NumOfElements() != 0) {
@@ -280,6 +280,7 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *tensor_
 #endif
   } else {  // handle string column differently
     std::vector<std::string> strings;
+    strings.reserve(batch_size);
     for (dsize_t row_index = 0; row_index < batch_size; ++row_index) {
       std::shared_ptr<Tensor> old_tensor = (**tensor_row_dequeue)[row_index][column_index];
       for (auto itr = old_tensor->begin<std::string_view>(); itr != old_tensor->end<std::string_view>(); ++itr) {

@@ -41,16 +41,21 @@ namespace parse {
 // NameSpace class for resolving python code.
 class NameSpace final : public Named {
  public:
-  NameSpace(const std::string &module, const py::object &namespace_obj, const py::object &module_obj = py::object())
+  NameSpace(const std::string &module, const py::object &namespace_obj, const py::object &module_obj = py::none())
       : Named(module + ": \'" + std::string(py::str(namespace_obj)) + "\'"),
         module_(module),
         namespace_obj_(namespace_obj),
         module_obj_(module_obj) {}
-  ~NameSpace() override = default;
+  ~NameSpace() override {
+    py::gil_scoped_acquire gil_acquire;
+    namespace_obj_ = py::none();
+    module_obj_ = py::none();
+  }
   MS_DECLARE_PARENT(NameSpace, Named);
 
   const py::object &namespace_obj() const { return namespace_obj_; }
   const py::object &module_obj() const { return module_obj_; }
+  void set_module_obj(py::object module_obj) { module_obj_ = module_obj; }
   const std::string &module() const { return module_; }
   abstract::AbstractBasePtr ToAbstract() override {
     return std::make_shared<abstract::AbstractScalar>(shared_from_base<NameSpace>(), std::make_shared<External>());
@@ -109,7 +114,10 @@ class PyObjectWrapper : public Named {
  public:
   explicit PyObjectWrapper(const py::object &obj, const std::string &name = "Python object")
       : Named(name), obj_(std::make_unique<py::object>(obj)) {}
-  ~PyObjectWrapper() override;
+  ~PyObjectWrapper() {
+    py::gil_scoped_acquire acquire_gil;
+    obj_ = nullptr;
+  }
 
   MS_DECLARE_PARENT(PyObjectWrapper, Named);
   py::object obj() const { return *obj_; }
@@ -207,7 +215,8 @@ bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBa
 bool ResolveAll(const FuncGraphManagerPtr &manager);
 
 py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node);
-bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node);
+bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node,
+                         bool is_element_obj = false);
 ValuePtr GetParameterValue(const py::object &param_obj);
 }  // namespace parse
 }  // namespace mindspore

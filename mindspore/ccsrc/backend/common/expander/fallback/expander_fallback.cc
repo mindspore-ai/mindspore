@@ -19,6 +19,7 @@
 #include <queue>
 #include <map>
 #include <memory>
+#include "base/base.h"
 #include "ops/op_name.h"
 #include "utils/ms_utils.h"
 #include "utils/anf_utils.h"
@@ -105,7 +106,7 @@ bool IbTryExpandCNode(const IRBuilderHandle &handle, const CNodePtr &cnode, cons
     }
   }
 #endif
-  if (!(*cnode->abstract() == *output->abstract())) {
+  if (!(*cnode->abstract()->Broaden() == *output->abstract())) {
     MS_LOG(WARNING) << "After expanding cnode " << cnode->fullname_with_scope() << ", the new abstract of "
                     << output->fullname_with_scope() << " does not match original cnode's abstract. "
                     << "new: " << output->abstract()->ToString() << ", old: " << cnode->abstract()->ToString();

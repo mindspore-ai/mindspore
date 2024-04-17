@@ -9,7 +9,7 @@ mindspore.ops.logical_not
         out_{i} = \neg input_{i}
 
     参数：
-        - **input** (Tensor) - 输入Tensor，数据类型必须为bool。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
         Tensor，shape与 `input` 相同，数据类型为bool。

@@ -22,6 +22,7 @@ from mindspore.ops import _constants as Constants
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import auto_generate as gen
 
 # pylint: disable=unused-variable
 
@@ -953,7 +954,7 @@ def test_convert_switch_ops(tag):
 def test_minmax_grad(tag):
     """ test_minmax_grad """
     fns = FnDict()
-    min_grad = G.MinimumGrad()
+    min_grad = gen.MinimumGrad()
 
     @fns
     def before_11(x, y, dout):
@@ -1283,5 +1284,42 @@ def test_tuple_flatten(tag):
         # TensorArg
         tensor_z_arg = pow_ops(w, p)
         return called_graph_with_tuple(tuple_x_arg, tuple_tuple_y_arg, tensor_z_arg)
+
+    return fns[tag]
+
+
+def test_partial_unused_args_eliminate(tag):
+    """
+    Feature: Eliminate the unused args of partial inputs.
+    Description: Construct a partial call.
+    Expectation: The unused args are eliminated.
+    """
+    fns = FnDict()
+    out_channel = 64
+    kernel_size = 7
+    conv = P.Conv2D(out_channel,
+                    kernel_size,
+                    mode=1,
+                    pad_mode="valid",
+                    pad=0,
+                    stride=1,
+                    dilation=1,
+                    group=1)
+
+    @fns
+    def before(x, y, z):
+        def called_graph(a, b, c):
+            return conv(a, b)
+
+        func = F.partial(called_graph, x, y, z)
+        return func
+
+    @fns
+    def after(x, y, z):
+        def called_graph(a, b):
+            return conv(a, b)
+
+        func = F.partial(called_graph, x, y)
+        return func
 
     return fns[tag]

@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/sparse_apply_adam_cpu_kernel.h"
+#include <limits>
 #include <memory>
 #include <map>
 #include <utility>
@@ -110,9 +111,8 @@ void SparseApplyAdamCpuKernelMod::InitWorkspaceSize() {
 }
 
 // Initialization for the kernel mod.
-bool SparseApplyAdamCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseApplyAdamCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -122,16 +122,14 @@ bool SparseApplyAdamCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
                   << inputs.size();
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::FusedSparseAdam>(base_operator->GetPrim());
-  use_nesterov_ = kernel_ptr->get_use_nesterov();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  use_nesterov_ = GetValue<bool>(primitive_->GetAttr(ops::kUseNesterov));
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
 void SparseApplyAdamCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
@@ -140,12 +138,10 @@ void SparseApplyAdamCpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyAdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyAdamCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -202,7 +198,7 @@ int SparseApplyAdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                   << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size_;
     return KRET_RESIZE_FAILED;
   }
-  indices_data_type_ = inputs[kIndicesIndex]->GetDtype();
+  indices_data_type_ = inputs[kIndicesIndex]->dtype_id();
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else if (indices_data_type_ == kNumberTypeInt64) {
@@ -255,29 +251,29 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyAdamCpuKerne
 }
 
 template <typename T>
-bool SparseApplyAdamCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &workspace,
-                                               const std::vector<kernel::AddressPtr> &) const {
-  auto *var = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *m = reinterpret_cast<float *>(inputs[1]->addr);
-  auto *v = reinterpret_cast<float *>(inputs[2]->addr);
-  auto beta1_power = reinterpret_cast<float *>(inputs[3]->addr)[0];
+bool SparseApplyAdamCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &workspace,
+                                               const std::vector<kernel::KernelTensor *> &) const {
+  auto *var = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *m = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  auto *v = reinterpret_cast<float *>(inputs[2]->device_ptr());
+  auto beta1_power = reinterpret_cast<float *>(inputs[3]->device_ptr())[0];
   if (std::fabs(beta1_power - 1.0f) <= std::numeric_limits<float>::epsilon()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'beta1_power' can not be 1.";
     return false;
   }
-  auto beta2_power = reinterpret_cast<float *>(inputs[4]->addr)[0];
-  auto lr = reinterpret_cast<float *>(inputs[5]->addr)[0];
-  auto beta1 = reinterpret_cast<float *>(inputs[6]->addr)[0];
-  auto beta2 = reinterpret_cast<float *>(inputs[7]->addr)[0];
-  auto epsilon = reinterpret_cast<float *>(inputs[8]->addr)[0];
-  auto *grad = reinterpret_cast<float *>(inputs[9]->addr);
-  auto *indices = reinterpret_cast<T *>(inputs[10]->addr);
-  auto *new_grad = reinterpret_cast<float *>(workspace[0]->addr);
-  auto *new_indices = reinterpret_cast<T *>(workspace[1]->addr);
-  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
-  auto *m_t = reinterpret_cast<float *>(workspace[4]->addr);
+  auto beta2_power = reinterpret_cast<float *>(inputs[4]->device_ptr())[0];
+  auto lr = reinterpret_cast<float *>(inputs[5]->device_ptr())[0];
+  auto beta1 = reinterpret_cast<float *>(inputs[6]->device_ptr())[0];
+  auto beta2 = reinterpret_cast<float *>(inputs[7]->device_ptr())[0];
+  auto epsilon = reinterpret_cast<float *>(inputs[8]->device_ptr())[0];
+  auto *grad = reinterpret_cast<float *>(inputs[9]->device_ptr());
+  auto *indices = reinterpret_cast<T *>(inputs[10]->device_ptr());
+  auto *new_grad = reinterpret_cast<float *>(workspace[0]->device_ptr());
+  auto *new_indices = reinterpret_cast<T *>(workspace[1]->device_ptr());
+  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->device_ptr());
+  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->device_ptr());
+  auto *m_t = reinterpret_cast<float *>(workspace[4]->device_ptr());
 
   SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
   SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});

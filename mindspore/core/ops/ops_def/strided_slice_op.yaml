@@ -1,0 +1,37 @@
+#operator strided_slice
+strided_slice:
+    args:
+        input_x:
+            dtype: tensor
+        begin:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        end:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        strides:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        begin_mask:
+            dtype: int
+            default: 0
+            prim_init: True
+        end_mask:
+            dtype: int
+            default: 0
+            prim_init: True
+        ellipsis_mask:
+            dtype: int
+            default: 0
+            prim_init: True
+        new_axis_mask:
+            dtype: int
+            default: 0
+            prim_init: True
+        shrink_axis_mask:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor

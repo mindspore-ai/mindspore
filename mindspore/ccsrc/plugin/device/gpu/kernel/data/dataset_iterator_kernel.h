@@ -29,20 +29,18 @@ namespace mindspore {
 namespace kernel {
 using mindspore::device::DataQueueItem;
 
-class DatasetIteratorKernelMod : public DeprecatedNativeGpuKernelMod {
+class DatasetIteratorKernelMod : public NativeGpuKernelMod {
  public:
   DatasetIteratorKernelMod();
   ~DatasetIteratorKernelMod();
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &others) override;
-
- protected:
-  void InitSizeLists() override;
-  void SyncOutputShape() override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
  private:
   bool ReadDevice(std::vector<DataQueueItem> *data);
@@ -52,7 +50,7 @@ class DatasetIteratorKernelMod : public DeprecatedNativeGpuKernelMod {
   std::shared_ptr<GetNextProfiling> profiling_op_;
   std::vector<TypeId> types_;
   std::vector<DataQueueItem> output_data_;
-  bool dynamic_shape_;
+  bool dynamic_shape_{false};
 };
 
 MS_REG_GPU_KERNEL(GetNext, DatasetIteratorKernelMod)

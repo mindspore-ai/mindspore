@@ -1,0 +1,6 @@
+logit_grad:
+    description: |
+        Computes LogitGrad of input element-wise.
+
+        Returns:
+            Tensor, has the same type as input.

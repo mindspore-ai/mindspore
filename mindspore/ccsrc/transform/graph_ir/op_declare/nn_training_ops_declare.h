@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_TRAINING_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_TRAINING_OPS_DECLARE_H_
 
-#include "inc/ops/nn_training_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_nn_training.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -132,4 +132,16 @@ DECLARE_OP_USE_OUTPUT(ApplyAdadelta)
 
 DECLARE_OP_ADAPTER(SparseApplyAdadelta)
 DECLARE_OP_USE_OUTPUT(SparseApplyAdadelta)
+
+DECLARE_CUST_OP_ADAPTER(FusedSparseProximalAdagrad)
+DECLARE_CUST_OP_USE_OUTPUT(FusedSparseProximalAdagrad)
+
+DECLARE_CUST_OP_ADAPTER(FusedSparseFtrl)
+DECLARE_CUST_OP_USE_OUTPUT(FusedSparseFtrl)
+
+DECLARE_CUST_OP_ADAPTER(FusedSparseAdam)
+DECLARE_CUST_OP_USE_OUTPUT(FusedSparseAdam)
+
+DECLARE_CUST_OP_ADAPTER(FusedSparseLazyAdam)
+DECLARE_CUST_OP_USE_OUTPUT(FusedSparseLazyAdam)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_TRAINING_OPS_DECLARE_H_

@@ -1,0 +1,14 @@
+#operator celu
+celu:
+  args:
+    x:
+      dtype: tensor
+    alpha:
+      dtype: float
+      default: 1.0
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: CeLU

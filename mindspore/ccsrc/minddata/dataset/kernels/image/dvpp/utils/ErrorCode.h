@@ -108,6 +108,13 @@ enum {
   APP_ERR_DVPP_ADJUST_CONTRAST_FAIL = APP_ERR_DVPP_BASE + 17,    // DVPP: adjust contrast fail
   APP_ERR_DVPP_ADJUST_HUE_FAIL = APP_ERR_DVPP_BASE + 18,         // DVPP: adjust hue fail
   APP_ERR_DVPP_ADJUST_SATURATION_FAIL = APP_ERR_DVPP_BASE + 19,  // DVPP: adjust saturation fail
+  APP_ERR_DVPP_HORIZONTAL_FLIP_FAIL = APP_ERR_DVPP_BASE + 20,    // DVPP: Horizontal Flip
+  APP_ERR_DVPP_VERTICAL_FLIP_FAIL = APP_ERR_DVPP_BASE + 21,      // DVPP: vertical Flip
+  APP_ERR_DVPP_PERSPECTIVE_FAIL = APP_ERR_DVPP_BASE + 22,        // DVPP: perspective fail
+  APP_ERR_DVPP_RESIZED_CROP_FAIL = APP_ERR_DVPP_BASE + 23,       // DVPP: crop and resize fail
+  APP_ERR_DVPP_PAD_FAIL = APP_ERR_DVPP_BASE + 24,                // DVPP: pad fail
+  APP_ERR_DVPP_AFFINE_FAIL = APP_ERR_DVPP_BASE + 25,             // DVPP: affine fail
+  APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL = APP_ERR_DVPP_BASE + 26,      // DVPP: gaussian blur fail
   APP_ERR_DVPP_END,  // Not an error code, define the range of common error code
 
   // define the error code of inference
@@ -136,6 +143,16 @@ enum {
   APP_ERR_QUEUE_EMPTY = APP_ERR_QUEUE_BASE + 1,   // Queue: empty queue
   APP_ERR_QUEUE_STOPED = APP_ERR_QUEUE_BASE + 2,  // Queue: queue stopped
   APP_ERROR_QUEUE_FULL = APP_ERR_QUEUE_BASE + 3,  // Queue: full queue
+
+  // define the error code of destory
+  APP_ERR_DESTORY_BASE = 6000,
+  APP_ERR_DESTORY_TENSOR = APP_ERR_DESTORY_BASE + 1,
+  APP_ERR_DESTORY_SCALAR = APP_ERR_DESTORY_BASE + 2,
+  APP_ERR_DESTORY_INT_ARRAY = APP_ERR_DESTORY_BASE + 3,
+  APP_ERR_DESTORY_FLOAT_ARRAY = APP_ERR_DESTORY_BASE + 4,
+  APP_ERR_DESTORY_BOOL_ARRAY = APP_ERR_DESTORY_BASE + 5,
+  APP_ERR_DESTORY_TENSOR_LIST = APP_ERR_DESTORY_BASE + 6,
+  APP_ERR_DESTORY_SCALAR_LIST = APP_ERR_DESTORY_BASE + 7,
 
   // define the idrecognition web error code
   APP_ERROR_FACE_WEB_USE_BASE = 10000,

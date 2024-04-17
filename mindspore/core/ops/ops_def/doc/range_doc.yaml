@@ -1,0 +1,40 @@
+range:
+    description: |
+        Creates a sequence of numbers that begins at `start` and extends by increments of
+        `step` up to but not including `end`.
+
+        The types of all 3 inputs must be all integers or floating-point numbers.
+
+        Args:
+            start (number): The first number in the sequence. Must have
+                type: int32 ,int64, float32 or float64.
+            end (number): Upper end of the sequence, exclusive. Must
+                have type: int32 ,int64, float32 or float64.
+            step (number): Number that increments `start`. Must have
+                type: int32 ,int64, float32 or float64.
+            maxlen (int, optional): Memory that can fit `maxlen` many elements
+                will be allocated for the output. Optional, must be positive. Default: 1000000.
+                If the output has more than `maxlen` elements, a runtime error will occur.
+
+        Returns:
+            A 1-D Tensor. If `start`, `end` and `step` are all integers, the type of output is int64.
+            If `start`, `end` and `step` are all floating-point numbers, the type of output is float32.
+
+        Raises:
+            TypeError: If `start`, `end`, `step` have both integers and floating-point numbers.
+            TypeError: If datatype of `start`, `end` or `step` is not supported.
+            ValueError: If `step` = 0.
+            ValueError: If `start` >= `end` when `step` > 0.
+            ValueError: If `start` <= `end` when `step` < 0.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import ops
+            >>> start = 0
+            >>> end = 10
+            >>> step = 4
+            >>> output = ops.range(start, end, step)
+            >>> print(output)
+            [0 4 8]

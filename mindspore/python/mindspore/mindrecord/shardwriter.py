@@ -167,8 +167,14 @@ class ShardWriter:
         Raises:
             MRMWriteCVError: If failed to write cv type dataset.
         """
+
+        if data == []:
+            raise RuntimeError("There is no valid data which can be written by 'write_raw_data' to mindrecord file. " +
+                               "Please check the abnormal input data indicated in the warning log above.")
+
         blob_data = []
         raw_data = []
+
         # slice data to blob data and raw data
         for item in data:
             row_blob = self._merge_blob({field: item[field] for field in self._header.blob_fields})
@@ -179,6 +185,7 @@ class ShardWriter:
                        for field in self._header.schema.keys() - self._header.blob_fields if field in item}
             if row_raw:
                 raw_data.append(row_raw)
+
         raw_data = {0: raw_data} if raw_data else {}
         ret = self._writer.write_raw_data(raw_data, blob_data, validate, parallel_writer)
         if ret != ms.MSRStatus.SUCCESS:

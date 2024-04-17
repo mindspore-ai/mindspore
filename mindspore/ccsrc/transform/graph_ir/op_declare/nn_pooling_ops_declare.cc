@@ -43,8 +43,8 @@ OUTPUT_MAP(MaxPool3D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPool3D, kNameMaxPool3D, ADPT_DESC(MaxPool3D))
 
 // MaxPool3DWithArgmax
-INPUT_MAP(MaxPool3DWithArgmax) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(MaxPool3DWithArgmax) = {
+CUST_INPUT_MAP(MaxPool3DWithArgmax) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(MaxPool3DWithArgmax) = {
   {"ksize", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
   {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
@@ -52,8 +52,8 @@ ATTR_MAP(MaxPool3DWithArgmax) = {
   {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
   {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
   {"argmax_type", ATTR_DESC(argmax_type, AnyTraits<std::string>())}};
-OUTPUT_MAP(MaxPool3DWithArgmax) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
-REG_ADPT_DESC(MaxPool3DWithArgmax, prim::kPrimMaxPool3DWithArgmax->name(), ADPT_DESC(MaxPool3DWithArgmax))
+CUST_OUTPUT_MAP(MaxPool3DWithArgmax) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
+REG_ADPT_DESC(MaxPool3DWithArgmax, prim::kPrimMaxPool3DWithArgmax->name(), CUST_ADPT_DESC(MaxPool3DWithArgmax))
 
 // MaxPool3DGrad
 INPUT_MAP(MaxPool3DGrad) = {{1, INPUT_DESC(orig_x)}, {2, INPUT_DESC(orig_y)}, {3, INPUT_DESC(grads)}};
@@ -76,12 +76,13 @@ OUTPUT_MAP(MaxPool3DGradGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPool3DGradGrad, kNameMaxPool3DGradGrad, ADPT_DESC(MaxPool3DGradGrad))
 
 // AvgPool
-INPUT_MAP(AvgPool) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(AvgPool) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                     {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                     {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
-                     {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
-OUTPUT_MAP(AvgPool) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(AvgPool) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(AvgPool) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(AvgPool) = {{kIndex2, ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                           {kIndex3, ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                           {kIndex4, ATTR_DESC(padding, AnyTraits<GEPadMod>())},
+                           {kIndex5, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
+OUTPUT_MAP(AvgPool) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AvgPool, kNameAvgPool, ADPT_DESC(AvgPool))
 
 // AvgPool3D
@@ -127,12 +128,13 @@ OUTPUT_MAP(MaxPoolGradGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPoolGradGrad, kNameMaxPoolGradGrad, ADPT_DESC(MaxPoolGradGrad))
 
 // avgpoolgrad
-INPUT_MAP(AvgPoolGrad) = {{1, INPUT_DESC(orig_input_shape)}, {2, INPUT_DESC(input_grad)}};
-ATTR_MAP(AvgPoolGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                         {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                         {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
-                         {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
-OUTPUT_MAP(AvgPoolGrad) = {{0, OUTPUT_DESC(out_grad)}};
+INPUT_MAP(AvgPoolGrad) = {{kIndex1, INPUT_DESC(orig_input_shape)}, {kIndex2, INPUT_DESC(input_grad)}};
+ATTR_MAP(AvgPoolGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(AvgPoolGrad) = {{kIndex3, ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                               {kIndex4, ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                               {kIndex5, ATTR_DESC(padding, AnyTraits<GEPadMod>())},
+                               {kIndex6, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
+OUTPUT_MAP(AvgPoolGrad) = {{kIndex0, OUTPUT_DESC(out_grad)}};
 REG_ADPT_DESC(AvgPoolGrad, kNameAvgPoolGrad, ADPT_DESC(AvgPoolGrad))
 REG_ADPT_DESC(AvgPoolGradGe, kNameAvgPoolGradGe, ADPT_DESC(AvgPoolGrad))
 
@@ -248,7 +250,7 @@ REG_ADPT_DESC(AdaptiveMaxPool2d, kAdaptiveMaxPool2dOpName, ADPT_DESC(AdaptiveMax
 REG_ADPT_DESC(AdaptiveMaxPool2D, kNameAdaptiveMaxPool2D, ADPT_DESC(AdaptiveMaxPool2d))
 
 // AvgPool3DGrad
-INPUT_MAP(AvgPool3DGrad) = {{1, INPUT_DESC(orig_input_shape)}, {2, INPUT_DESC(grads)}};
+INPUT_MAP(AvgPool3DGrad) = {{kIndex1, INPUT_DESC(orig_input_shape)}, {kIndex2, INPUT_DESC(grads)}};
 ATTR_MAP(AvgPool3DGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                            {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                            {"pad_list", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
@@ -257,7 +259,7 @@ ATTR_MAP(AvgPool3DGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>()
                            {"divisor_override", ATTR_DESC(divisor_override, AnyTraits<int64_t>())},
                            {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 ATTR_INPUT_MAP(AvgPool3DGrad) = {{"origin_input_shape", "orig_input_shape"}};
-OUTPUT_MAP(AvgPool3DGrad) = {{0, OUTPUT_DESC(output)}};
+OUTPUT_MAP(AvgPool3DGrad) = {{kIndex0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(AvgPool3DGrad, kAvgPool3DGradOpName, ADPT_DESC(AvgPool3DGrad))
 
 // Dilation2DBackpropFilter
@@ -337,7 +339,7 @@ CUST_ATTR_MAP(MaxPool3DGradWithArgmax) = {{"ksize", ATTR_DESC(ksize, AnyTraits<s
                                           {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
                                           {"dilation", ATTR_DESC(dilation, AnyTraits<std::vector<int64_t>>())},
                                           {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
-                                          {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+                                          {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
                                           {"argmax_type", ATTR_DESC(argmax_type, AnyTraits<std::string>())}};
 CUST_OUTPUT_MAP(MaxPool3DGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPool3DGradWithArgmax, prim::kPrimMaxPool3DGradWithArgmax->name(),
@@ -397,4 +399,63 @@ INPUT_MAP(AdaptiveAvgPool) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(output_size)}};
 ATTR_MAP(AdaptiveAvgPool) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(AdaptiveAvgPool) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AdaptiveAvgPool, kNameAdaptiveAvgPool, ADPT_DESC(AdaptiveAvgPool));
+
+// MaxUnpool2D
+CUST_INPUT_MAP(MaxUnpool2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(argmax)}};
+CUST_ATTR_MAP(MaxUnpool2D) = {{"ksize", ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>())},
+                              {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
+                              {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                              {"output_shape", ATTR_DESC(output_shape, AnyTraits<std::vector<int64_t>>())},
+                              {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(MaxUnpool2D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxUnpool2D, prim::kPrimMaxUnpool2D->name(), CUST_ADPT_DESC(MaxUnpool2D));
+
+// MaxUnpool3D
+CUST_INPUT_MAP(MaxUnpool3D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(argmax)}};
+CUST_ATTR_MAP(MaxUnpool3D) = {{"ksize", ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>())},
+                              {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
+                              {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                              {"output_shape", ATTR_DESC(output_shape, AnyTraits<std::vector<int64_t>>())},
+                              {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(MaxUnpool3D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxUnpool3D, prim::kPrimMaxUnpool3D->name(), CUST_ADPT_DESC(MaxUnpool3D));
+
+// MaxUnpool3DGrad
+CUST_INPUT_MAP(MaxUnpool3DGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grads)}, {3, INPUT_DESC(argmax)}};
+CUST_ATTR_MAP(MaxUnpool3DGrad) = {{"ksize", ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>())},
+                                  {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
+                                  {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                                  {"output_shape", ATTR_DESC(output_shape, AnyTraits<std::vector<int64_t>>())},
+                                  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(MaxUnpool3DGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxUnpool3DGrad, prim::kPrimMaxUnpool3DGrad->name(), CUST_ADPT_DESC(MaxUnpool3DGrad));
+
+// MaxUnpool2DGrad
+CUST_INPUT_MAP(MaxUnpool2DGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grads)}, {3, INPUT_DESC(argmax)}};
+CUST_ATTR_MAP(MaxUnpool2DGrad) = {{"ksize", ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>())},
+                                  {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
+                                  {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                                  {"output_shape", ATTR_DESC(output_shape, AnyTraits<std::vector<int64_t>>())},
+                                  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(MaxUnpool2DGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxUnpool2DGrad, prim::kPrimMaxUnpool2DGrad->name(), CUST_ADPT_DESC(MaxUnpool2DGrad));
+
+// FractionalMaxPool3DWithFixedKsize
+CUST_INPUT_MAP(FractionalMaxPool3DWithFixedKsize) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(random_samples)}};
+CUST_ATTR_MAP(FractionalMaxPool3DWithFixedKsize) = {
+  {"ksize", ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>())},
+  {"output_shape", ATTR_DESC(output_shape, AnyTraits<std::vector<int64_t>>())},
+  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(FractionalMaxPool3DWithFixedKsize) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
+REG_ADPT_DESC(FractionalMaxPool3DWithFixedKsize, prim::kPrimFractionalMaxPool3DWithFixedKsize->name(),
+              CUST_ADPT_DESC(FractionalMaxPool3DWithFixedKsize));
+
+// FractionalMaxPool3DGradWithFixedKsize
+CUST_INPUT_MAP(FractionalMaxPool3DGradWithFixedKsize) = {
+  {1, INPUT_DESC(origin_input)}, {2, INPUT_DESC(out_backprop)}, {3, INPUT_DESC(argmax)}};
+CUST_ATTR_MAP(FractionalMaxPool3DGradWithFixedKsize) = {
+  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(FractionalMaxPool3DGradWithFixedKsize) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FractionalMaxPool3DGradWithFixedKsize, prim::kPrimFractionalMaxPool3DGradWithFixedKsize->name(),
+              CUST_ADPT_DESC(FractionalMaxPool3DGradWithFixedKsize));
 }  // namespace mindspore::transform

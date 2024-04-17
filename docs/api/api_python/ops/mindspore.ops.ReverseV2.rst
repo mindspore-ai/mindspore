@@ -6,7 +6,7 @@ mindspore.ops.ReverseV2
     对输入Tensor按指定维度反转。
 
     .. warning::
-        "axis"的取值范围为[-dims, dims - 1]，"dims"表示"input_x"的维度长度。
+        `axis` 的取值范围为[-dims, dims - 1]，dims表示 `input_x` 的维度长度。
 
     参数：
         - **axis** (Union[tuple(int), list(int)]) - 指定反转的轴。

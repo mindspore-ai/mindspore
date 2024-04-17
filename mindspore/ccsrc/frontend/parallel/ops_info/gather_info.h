@@ -18,14 +18,14 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
-#include "utils/hash_map.h"
-#include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/strategy.h"
+#include "ir/value.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace parallel {
@@ -50,7 +50,10 @@ class GatherUtil {
       : name_(std::move(name)),
         inputs_shape_(std::move(inputs_shape)),
         outputs_shape_(std::move(outputs_shape)),
-        axis_(axis) {}
+        axis_(axis) {
+    inputs_shape_clone_ = inputs_shape_;
+    outputs_shape_clone_ = outputs_shape_;
+  }
   virtual ~GatherUtil() = default;
   virtual Status CheckStrategy(const Shape &param_strategy, const Shape &indices_strategy) = 0;
   virtual Status InferForwardCommunication() { return SUCCESS; }
@@ -63,6 +66,9 @@ class GatherUtil {
   void set_param_strategy(const Shape &a) { param_strategy_ = a; }
   void set_indices_strategy(const Shape &a) { indices_strategy_ = a; }
   void set_gather_mode(const GatherMode &a) { gather_mode_ = a; }
+  void set_inputs_divisor(const Shapes &a) { inputs_divisor_ = a; }
+  void set_outputs_divisor(const Shapes &a) { outputs_divisor_ = a; }
+  void set_dynamic_shape_flag(bool a) { dynamic_shape_flag_ = a; }
   GatherMode gather_mode() const { return gather_mode_; }
   Shape dev_matrix_shape() const { return dev_matrix_shape_; }
   void set_dev_matrix_shape(const Shape &a) { dev_matrix_shape_ = a; }
@@ -78,11 +84,17 @@ class GatherUtil {
   bool repeated_num_in_dev_matrix_right() const { return repeated_num_in_dev_matrix_right_; }
   Shape out_dev_matrix_shape() const { return out_dev_matrix_shape_; }
   std::string GatherModeToString() const { return gather_mode_string_[gather_mode_]; }
+  void DivisorsReplaceShapes();
+  void ResumeShapes();
 
  protected:
   std::string name_;
   Shapes inputs_shape_;
   Shapes outputs_shape_;
+  Shapes inputs_shape_clone_;
+  Shapes outputs_shape_clone_;
+  Shapes inputs_divisor_;
+  Shapes outputs_divisor_;
   int64_t axis_;
 
   Shape param_strategy_;
@@ -100,6 +112,7 @@ class GatherUtil {
   Status InferTensorInfoNoSplitAxis();
   bool repeated_num_in_dev_matrix_right_ = true;  // only for shard axis
   Shape out_dev_matrix_shape_;                    // only for shard axis
+  bool dynamic_shape_flag_ = False;
 
  private:
   const std::vector<std::string> gather_mode_string_ = {
@@ -191,14 +204,24 @@ class ManualImpl : public GatherUtil {
   void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &a) { attrs_ = a; }
   void set_replace_op_name(const std::string &a) { replace_op_name_ = a; }
 
- private:
+ protected:
   Status InferOffset();
+  std::string target_ = DEVICE;
+  mindspore::HashMap<std::string, ValuePtr> attrs_;
+  std::string replace_op_name_;
+  int64_t index_offset_ = 0;
+
+ private:
   Shape param_split_shapes_;
   Shape index_offsets_;
-  int64_t index_offset_ = 0;
-  std::string target_ = DEVICE;
-  std::string replace_op_name_;
-  mindspore::HashMap<std::string, ValuePtr> attrs_;
+};
+
+class GatherManualImpl : public ManualImpl {
+ public:
+  GatherManualImpl(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, int64_t axis)
+      : ManualImpl(name, inputs_shape, outputs_shape, axis) {}
+  ~GatherManualImpl() override = default;
+  Status InferReplaceGraph(const CNodePtr &cnode) override;
 };
 
 // SHARD_AXIS_0_DYNAMIC, SHARD_AXIS_0_STATIC and SHARD_AXIS_1 mode: batch_dims = 0, and split axis
@@ -239,6 +262,7 @@ class ShardAxisImpl : public GatherUtil {
   Status InferForwardCommunication() override;
   Status InferReplaceOps() override;
   Status InferReplaceGraph(const CNodePtr &cnode) override;
+  void set_assigned_parallel(bool is_assigned_parallel) { is_assigned_parallel_ = is_assigned_parallel; }
 
  protected:
   // use for split axis
@@ -248,6 +272,7 @@ class ShardAxisImpl : public GatherUtil {
   std::string target_ = DEVICE;
   std::string replace_op_name_;
   bool dynamic_shape_indices_ = false;
+  bool is_assigned_parallel_ = false;
   bool axis_split_forward_allreduce_ = false;  // when axis is split, use reducescatter as default in forward
   int64_t repeated_calculation_num_ = 1;
   Group group_;
@@ -295,7 +320,9 @@ class GatherInfo : public OperatorInfo {
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherCost>()),
         replace_op_name_(replace_op_name) {}
   ~GatherInfo() override = default;
-  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
+  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+              const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts = {},
+              const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts = {}) override;
   Status InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
@@ -308,12 +335,17 @@ class GatherInfo : public OperatorInfo {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status CheckOutputStrategy(const StrategyPtr &out_strategy) override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status GetAttrs() override;
+  virtual void DealWithBatchDimsMirrorOp() noexcept;
+  virtual void GetBatchDims() noexcept;
+  virtual GatherUtilPtr MakeManualUtil();
+  int64_t axis_ = 0;
 
  private:
   GatherMode GetGatherMode(const Shape &param_strategy, const Shape &indices_strategy) const;
@@ -323,7 +355,6 @@ class GatherInfo : public OperatorInfo {
   Status ComputeReplaceOp();
   bool ShardBatchAndAxis(const Shape &param_strategy, const Shape &indices_strategy) const;
 
-  int64_t axis_ = 0;
   std::string target_ = DEVICE;
   int64_t bias_ = 0;
   std::string replace_op_name_ = GATHERV2;
@@ -335,20 +366,30 @@ class GatherInfo : public OperatorInfo {
   GatherUtilPtr gather_util_;
 };
 
-class SparseGatherV2Info : public GatherInfo {
+class SparseGatherV2Info final : public GatherInfo {
  public:
   SparseGatherV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                      const PrimitiveAttrs &attrs, const std::string &replace_op_name = SPARSE_GATHERV2)
       : GatherInfo(name, inputs_shape, outputs_shape, attrs, replace_op_name) {}
   ~SparseGatherV2Info() override = default;
+
+ protected:
+  void DealWithBatchDimsMirrorOp() noexcept override {}
+  void GetBatchDims() noexcept override {}
+  GatherUtilPtr MakeManualUtil() override;
 };
 
-class EmbeddingLookupInfo : public GatherInfo {
+class EmbeddingLookupInfo final : public GatherInfo {
  public:
   EmbeddingLookupInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                       const PrimitiveAttrs &attrs)
       : GatherInfo(name, inputs_shape, outputs_shape, attrs) {}
   ~EmbeddingLookupInfo() override = default;
+
+ protected:
+  void DealWithBatchDimsMirrorOp() noexcept override {}
+  void GetBatchDims() noexcept override {}
+  GatherUtilPtr MakeManualUtil() override;
 };
 }  // namespace parallel
 }  // namespace mindspore

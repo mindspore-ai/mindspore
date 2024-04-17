@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,34 @@
 #include "transform/graph_ir/op_declare/image_ops_declare.h"
 #include <string>
 #include <vector>
-#include "ops/ascend_op_name.h"
 #include "ops/image_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
+#include "ops/ascend_op_name.h"
 
 namespace mindspore::transform {
 // ResizeNearestNeighborV2
-INPUT_MAP(ResizeNearestNeighborV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}};
-ATTR_INPUT_MAP(ResizeNearestNeighborV2) = {{"size", "size"}};
-ATTR_MAP(ResizeNearestNeighborV2) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
-                                     {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeNearestNeighborV2) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(ResizeNearestNeighborV2) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(size)}};
+ATTR_MAP(ResizeNearestNeighborV2) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(ResizeNearestNeighborV2) = {{kIndex3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                           {kIndex4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+OUTPUT_MAP(ResizeNearestNeighborV2) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeNearestNeighbor, kNameResizeNearestNeighbor, ADPT_DESC(ResizeNearestNeighborV2))
 REG_ADPT_DESC(ResizeNearestNeighborV2, kNameResizeNearestNeighborV2, ADPT_DESC(ResizeNearestNeighborV2))
 REG_ADPT_DESC(ResizeNearestNeighborV2D, kNameResizeNearestNeighborV2D, ADPT_DESC(ResizeNearestNeighborV2))
 
 // ResizeNearestNeighborV2Grad
-INPUT_MAP(ResizeNearestNeighborV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(size)}};
-ATTR_INPUT_MAP(ResizeNearestNeighborV2Grad) = {{"size", "size"}};
-ATTR_MAP(ResizeNearestNeighborV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
-                                         {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeNearestNeighborV2Grad) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(ResizeNearestNeighborV2Grad) = {{kIndex1, INPUT_DESC(grads)}, {kIndex2, INPUT_DESC(size)}};
+ATTR_MAP(ResizeNearestNeighborV2Grad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(ResizeNearestNeighborV2Grad) = {{kIndex3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                               {kIndex4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+OUTPUT_MAP(ResizeNearestNeighborV2Grad) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeNearestNeighborV2Grad, kNameResizeNearestNeighborV2Grad, ADPT_DESC(ResizeNearestNeighborV2Grad))
 REG_ADPT_DESC(ResizeNearestNeighborGrad, kNameResizeNearestNeighborGrad, ADPT_DESC(ResizeNearestNeighborV2Grad))
 
 // ResizeBilinearV2Grad
 INPUT_MAP(ResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
+INPUT_ATTR_MAP(ResizeBilinearV2Grad) = {{kIndex3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                        {kIndex4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 ATTR_MAP(ResizeBilinearV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
                                   {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeBilinearV2Grad) = {{0, OUTPUT_DESC(y)}};
@@ -50,14 +53,47 @@ REG_ADPT_DESC(ResizeBilinearV2Grad, kResizeBilinearV2GradOpName, ADPT_DESC(Resiz
 
 // ResizeBilinearV2
 INPUT_MAP(ResizeBilinearV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}};
+INPUT_ATTR_MAP(ResizeBilinearV2) = {{kIndex3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                    {kIndex4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 ATTR_INPUT_MAP(ResizeBilinearV2) = {{"size", "size"}};
-ATTR_MAP(ResizeBilinearV2) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
-                              {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())},
-                              {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+ATTR_MAP(ResizeBilinearV2) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ResizeBilinearV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ResizeBilinear, kNameResizeBilinear, ADPT_DESC(ResizeBilinearV2))
 REG_ADPT_DESC(ResizeBilinearV2, kNameResizeBilinearV2, ADPT_DESC(ResizeBilinearV2))
 REG_ADPT_DESC(ResizeBilinearV2D, kResizeBilinearV2DOpName, ADPT_DESC(ResizeBilinearV2))
+
+// UpsampleTrilinear3d
+INPUT_MAP(UpsampleTrilinear3d) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(UpsampleTrilinear3d) = {{kIndex2, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                       {kIndex3, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleTrilinear3d) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(UpsampleTrilinear3d) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleTrilinear3d, kUpsampleTrilinear3DOpName, ADPT_DESC(UpsampleTrilinear3d))
+
+// UpsampleTrilinear3dGrad
+INPUT_MAP(UpsampleTrilinear3dGrad) = {{1, INPUT_DESC(grad_output)}};
+INPUT_ATTR_MAP(UpsampleTrilinear3dGrad) = {{kIndex2, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>())},
+                                           {kIndex3, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                           {kIndex4, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleTrilinear3dGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(UpsampleTrilinear3dGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleTrilinear3dGrad, kUpsampleTrilinear3DGradOpName, ADPT_DESC(UpsampleTrilinear3dGrad))
+
+// UpsampleNearest3d
+INPUT_MAP(UpsampleNearest3d) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(UpsampleNearest3d) = {{kIndex2, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                     {kIndex3, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleNearest3d) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UpsampleNearest3d) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleNearest3d, kUpsampleNearest3DOpName, ADPT_DESC(UpsampleNearest3d))
+
+// UpsampleNearest3dGrad
+INPUT_MAP(UpsampleNearest3dGrad) = {{1, INPUT_DESC(grad_output)}};
+INPUT_ATTR_MAP(UpsampleNearest3dGrad) = {{kIndex2, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>())},
+                                         {kIndex3, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                         {kIndex4, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleNearest3dGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UpsampleNearest3dGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleNearest3dGrad, kUpsampleNearest3DGradOpName, ADPT_DESC(UpsampleNearest3dGrad))
 
 // ResizeArea
 INPUT_MAP(ResizeArea) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(size)}};
@@ -69,8 +105,9 @@ REG_ADPT_DESC(ResizeArea, kNameResizeArea, ADPT_DESC(ResizeArea))
 // ResizeBicubic
 INPUT_MAP(ResizeBicubic) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(size)}};
 ATTR_INPUT_MAP(ResizeBicubic) = {{"size", "size"}};
-ATTR_MAP(ResizeBicubic) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
-                           {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ResizeBicubic) = {{3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                 {4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+ATTR_MAP(ResizeBicubic) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ResizeBicubic) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBicubic, kNameResizeBicubic, ADPT_DESC(ResizeBicubic))
 
@@ -92,22 +129,29 @@ ATTR_MAP(CropAndResizeD) = {{"extrapolation_value", ATTR_DESC(extrapolation_valu
                             {"method", ATTR_DESC(method, AnyTraits<std::string>())},
                             {"crop_size", ATTR_DESC(crop_size, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(CropAndResizeD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CropAndResize, kNameCropAndResize, ADPT_DESC(CropAndResizeD))
+
+// CropAndResize
+CUST_INPUT_MAP(CropAndResize) = {
+  {1, INPUT_DESC(image)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}, {4, INPUT_DESC(crop_size)}};
+CUST_ATTR_MAP(CropAndResize) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())},
+                                {"extrapolation_value", ATTR_DESC(extrapolation_value, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(CropAndResize) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResize, prim::kPrimCropAndResize->name(), CUST_ADPT_DESC(CropAndResize));
 
 // CropAndResizeGradImage
-INPUT_MAP(CropAndResizeGradImage) = {
+CUST_INPUT_MAP(CropAndResizeGradImage) = {
   {1, INPUT_DESC(grads)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}, {4, INPUT_DESC(image_size)}};
-ATTR_MAP(CropAndResizeGradImage) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())},
-                                    {"T", ATTR_DESC(T, AnyTraits<GEType>())}};
-OUTPUT_MAP(CropAndResizeGradImage) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CropAndResizeGradImage, kCropAndResizeGradImageOpName, ADPT_DESC(CropAndResizeGradImage))
+CUST_ATTR_MAP(CropAndResizeGradImage) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())},
+                                         {"T", ATTR_DESC(T, AnyTraits<GEType>())}};
+CUST_OUTPUT_MAP(CropAndResizeGradImage) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResizeGradImage, kCropAndResizeGradImageOpName, CUST_ADPT_DESC(CropAndResizeGradImage))
 
 // CropAndResizeGradBoxes
-INPUT_MAP(CropAndResizeGradBoxes) = {
+CUST_INPUT_MAP(CropAndResizeGradBoxes) = {
   {1, INPUT_DESC(grads)}, {2, INPUT_DESC(images)}, {3, INPUT_DESC(boxes)}, {4, INPUT_DESC(box_index)}};
-ATTR_MAP(CropAndResizeGradBoxes) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())}};
-OUTPUT_MAP(CropAndResizeGradBoxes) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CropAndResizeGradBoxes, kCropAndResizeGradBoxesOpName, ADPT_DESC(CropAndResizeGradBoxes))
+CUST_ATTR_MAP(CropAndResizeGradBoxes) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(CropAndResizeGradBoxes) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResizeGradBoxes, kCropAndResizeGradBoxesOpName, CUST_ADPT_DESC(CropAndResizeGradBoxes))
 
 // DecodeImage
 INPUT_MAP(DecodeImage) = {{1, INPUT_DESC(contents)}};
@@ -119,8 +163,8 @@ REG_ADPT_DESC(DecodeImage, kNameDecodeImage, ADPT_DESC(DecodeImage))
 
 // SyncResizeBilinearV2Grad
 INPUT_MAP(SyncResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
-ATTR_MAP(SyncResizeBilinearV2Grad) = {{"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>())},
-                                      {"ori_image_size", ATTR_DESC(ori_image_size, AnyTraits<std::vector<int64_t>>())},
+INPUT_ATTR_MAP(SyncResizeBilinearV2Grad) = {{3, ATTR_DESC(size, AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(SyncResizeBilinearV2Grad) = {{"ori_image_size", ATTR_DESC(ori_image_size, AnyTraits<std::vector<int64_t>>())},
                                       {"src_start_w", ATTR_DESC(src_start_w, AnyTraits<int64_t>())},
                                       {"dst_start_w", ATTR_DESC(dst_start_w, AnyTraits<int64_t>())},
                                       {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
@@ -171,21 +215,43 @@ OUTPUT_MAP(CombinedNonMaxSuppression) = {{0, OUTPUT_DESC(nmsed_boxes)},
 REG_ADPT_DESC(CombinedNonMaxSuppression, prim::kPrimCombinedNonMaxSuppression->name(),
               ADPT_DESC(CombinedNonMaxSuppression))
 
+std::vector<std::string> interpolation_modes = {"bilinear", "nearest"};
+std::vector<std::string> padding_modes = {"zeros", "border", "reflection"};
 // GridSampler2D
 INPUT_MAP(GridSampler2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grid)}};
-ATTR_MAP(GridSampler2D) = {{"interpolation_mode", ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
-                           {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
-                           {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+ATTR_MAP(GridSampler2D) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GridSampler2D) = {{3, ATTR_DESC(interpolation_mode, AnyTraits<GEEnumToStr>(), interpolation_modes)},
+                                 {4, ATTR_DESC(padding_mode, AnyTraits<GEEnumToStr>(), padding_modes)},
+                                 {5, ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(GridSampler2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GridSampler2D, kNameGridSampler2D, ADPT_DESC(GridSampler2D))
 
+// GridSampler2DGrad
+INPUT_MAP(GridSampler2DGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(grid)}};
+ATTR_MAP(GridSampler2DGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GridSampler2DGrad) = {{4, ATTR_DESC(interpolation_mode, AnyTraits<GEEnumToStr>(), interpolation_modes)},
+                                     {5, ATTR_DESC(padding_mode, AnyTraits<GEEnumToStr>(), padding_modes)},
+                                     {6, ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(GridSampler2DGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(dgrid)}};
+REG_ADPT_DESC(GridSampler2DGrad, kNameGridSampler2DGrad, ADPT_DESC(GridSampler2DGrad))
+
 // GridSampler3D
 INPUT_MAP(GridSampler3D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grid)}};
-ATTR_MAP(GridSampler3D) = {{"interpolation_mode", ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
-                           {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
-                           {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+ATTR_MAP(GridSampler3D) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GridSampler3D) = {{3, ATTR_DESC(interpolation_mode, AnyTraits<GEEnumToStr>(), interpolation_modes)},
+                                 {4, ATTR_DESC(padding_mode, AnyTraits<GEEnumToStr>(), padding_modes)},
+                                 {5, ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(GridSampler3D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GridSampler3D, kNameGridSampler3D, ADPT_DESC(GridSampler3D))
+
+// GridSampler3DGrad
+INPUT_MAP(GridSampler3DGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(grid)}};
+ATTR_MAP(GridSampler3DGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GridSampler3DGrad) = {{4, ATTR_DESC(interpolation_mode, AnyTraits<GEEnumToStr>(), interpolation_modes)},
+                                     {5, ATTR_DESC(padding_mode, AnyTraits<GEEnumToStr>(), padding_modes)},
+                                     {6, ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(GridSampler3DGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(dgrid)}};
+REG_ADPT_DESC(GridSampler3DGrad, kNameGridSampler3DGrad, ADPT_DESC(GridSampler3DGrad))
 
 // NonMaxSuppressionV3
 INPUT_MAP(NonMaxSuppressionV3) = {{1, INPUT_DESC(boxes)},
@@ -228,8 +294,9 @@ REG_ADPT_DESC(ScaleAndTranslateGrad, prim::kPrimScaleAndTranslateGrad->name(), A
 
 // ResizeBicubicGrad
 INPUT_MAP(ResizeBicubicGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
-ATTR_MAP(ResizeBicubicGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
-                               {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ResizeBicubicGrad) = {{3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                     {4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+ATTR_MAP(ResizeBicubicGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ResizeBicubicGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBicubicGrad, prim::kPrimResizeBicubicGrad->name(), ADPT_DESC(ResizeBicubicGrad));
 

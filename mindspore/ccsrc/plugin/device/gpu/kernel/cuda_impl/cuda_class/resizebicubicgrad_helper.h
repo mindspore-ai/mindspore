@@ -54,7 +54,6 @@ class ResizeBicubicGradHelperGpuKernel : public GpuKernelHelperBase {
   virtual ~ResizeBicubicGradHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
-    constexpr size_t INPUT_NUM = 1;
     constexpr size_t OUTPUT_NUM = 1;
     constexpr int INPUT_C_ORDER = 1;
     constexpr int INPUT_H_ORDER = 2;
@@ -70,21 +69,9 @@ class ResizeBicubicGradHelperGpuKernel : public GpuKernelHelperBase {
     origin_width_ = 0;
     h_scale_ = 0;
     w_scale_ = 0;
-    std::vector<std::vector<int64_t>> input_shape1;
     input_grad_shape_ = input_shapes[0];
     origin_shape_ = input_shapes[1];
-    input_shape1.emplace_back(input_grad_shape_);
-    int inp_flag = CalShapesSizeInBytes<T>(input_shape1, INPUT_NUM, kernel_name_, "input_shape1", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
-    std::vector<std::vector<int64_t>> shapes2;
     output_shape_ = output_shapes[0];
-    shapes2.emplace_back(origin_shape_);
-    inp_flag = CalShapesSizeInBytes<int32_t>(shapes2, INPUT_NUM, kernel_name_, "input_shape2", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
     batch_ = input_grad_shape_[0];
     channel_ = input_grad_shape_[INPUT_C_ORDER];
     input_grad_height_ = input_grad_shape_[INPUT_H_ORDER];
@@ -101,7 +88,7 @@ class ResizeBicubicGradHelperGpuKernel : public GpuKernelHelperBase {
     if (work_flag == -1) {
       return work_flag;
     }
-    is_null_resizebicubic_grad_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_resizebicubic_grad_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     return CheckKernelParam();
   }
 

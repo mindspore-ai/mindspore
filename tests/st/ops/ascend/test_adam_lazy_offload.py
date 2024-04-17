@@ -102,8 +102,6 @@ def test_lazy_adam_acc():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_adam_offload_acc():
     """

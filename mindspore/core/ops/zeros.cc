@@ -47,7 +47,7 @@ abstract::ShapePtr ZerosInferShape(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   // check
-  auto shape_value = input_args[0]->BuildValue();
+  auto shape_value = input_args[0]->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (shape_value->isa<ValueList>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "' input must be a Int or a tuple of Int elements, but got "
@@ -62,7 +62,7 @@ TypePtr ZerosInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   // check
-  auto dtype_value = input_args[1]->BuildValue();
+  auto dtype_value = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {
     MS_EXCEPTION(TypeError)
@@ -91,8 +91,8 @@ ValuePtr ZerosInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
   auto abs = ZerosInfer(nullptr, prim, input_args);
   // check
   MS_EXCEPTION_IF_NULL(abs);
-  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->BuildShape())[kShape];
-  auto out_type = abs->BuildType();
+  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->GetShape())[kShape];
+  auto out_type = abs->GetType();
   MS_EXCEPTION_IF_NULL(out_type);
   return TensorConstructUtils::CreateZerosTensor(out_type, out_shape);
 }

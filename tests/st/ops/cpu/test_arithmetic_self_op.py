@@ -116,7 +116,7 @@ class SoftsignDynamicShapeNet(nn.Cell):
         return F.softsign(x_unique)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_square():
@@ -254,8 +254,9 @@ def test_reciprocal(shape, dtype, tol):
         # In Mac-arm platform, if x contains 0 element, 1/0 will be -1 in that platform.
         # Therefore, here we eliminate 0 uniformly.
         x[x == 0] = 1
+        x = x.astype(np.float32)
     output = net(Tensor(x))
-    expect_output = np.reciprocal(x).astype(dtype)
+    expect_output = np.reciprocal(x)
     diff = output.asnumpy() - expect_output
     error = np.ones(shape=expect_output.shape) * tol
     assert np.all(np.abs(diff) < error)
@@ -286,7 +287,7 @@ def test_inv(shape, dtype, tol):
     assert np.allclose(output.asnumpy(), expect_output, atol=tol, rtol=tol, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -354,7 +355,7 @@ def test_invert(shape, dtype):
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -422,7 +423,7 @@ def test_softsign(shape, dtype, tol):
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -558,7 +559,7 @@ def test_identity_pynative():
     assert id(input_tensor) != id(output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_identity_graph():

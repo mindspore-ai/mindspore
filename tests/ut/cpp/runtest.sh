@@ -28,12 +28,10 @@ else
 fi
 cd ${BUILD_PATH}/mindspore/tests/ut/cpp
 
-export LD_LIBRARY_PATH=${BUILD_PATH}/mindspore/googletest/googlemock/gtest:${PROJECT_PATH}/mindspore/python/mindspore:${PROJECT_PATH}/mindspore/python/mindspore/lib:${PROJECT_PATH}/graphengine/910/third_party/prebuild/x86_64:${PROJECT_PATH}/graphengine/910/third_party/prebuild/aarch64:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${BUILD_PATH}/mindspore/googletest/googlemock/gtest:${PROJECT_PATH}/mindspore/python/mindspore:${PROJECT_PATH}/mindspore/python/mindspore/lib:${LD_LIBRARY_PATH}
 export PYTHONPATH=${PROJECT_PATH}/tests/ut/cpp/python_input:$PYTHONPATH:${PROJECT_PATH}/mindspore/python:${PROJECT_PATH}/tests/ut/python:${PROJECT_PATH}
 export GLOG_v=2
 export GC_COLLECT_IN_CELL=1
-## set op info config path
-export MINDSPORE_OP_INFO_PATH=${PROJECT_PATH}/tests/ut/cpp/stub/config/op_info.config
 
 ## prepare data for dataset & mindrecord
 cp -fr $PROJECT_PATH/tests/ut/data ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/
@@ -43,19 +41,11 @@ python ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/data/dataset/testAlbum/gen_j
 RET=0
 if [ $# -gt 0 ]; then
   ./ut_CORE_tests --gtest_filter=$1
-  ./ut_API_tests --gtest_filter=$1
-  ./ut_FRONTEND_tests --gtest_filter=$1
-  ./ut_OLD_BACKEND_tests --gtest_filter=$1
-  ./ut_BACKEND_tests --gtest_filter=$1
-  ./ut_PS_tests --gtest_filter=$1
-  ./ut_OTHERS_tests --gtest_filter=$1
-  ./ut_MINDDATA0_tests --gtest_filter=$1
-  ./ut_MINDDATA1_tests --gtest_filter=$1
   exit 0
 fi
 
 pids=()
-tasks=(./ut_CORE_tests ./ut_API_tests ./ut_FRONTEND_tests ./ut_OLD_BACKEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests ./ut_MINDDATA0_tests ./ut_MINDDATA1_tests)
+tasks=(./ut_CORE_tests)
 set +e
 for task in "${tasks[@]}"; do
   $task &

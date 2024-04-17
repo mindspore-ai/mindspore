@@ -23,10 +23,8 @@ namespace kernel {
 constexpr size_t kCdistInputDimsMin = 2;
 constexpr size_t kTwo = 2;
 constexpr size_t kThree = 3;
-bool CdistGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::CdistGrad>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool CdistGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -39,16 +37,14 @@ bool CdistGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  p_ = kernel_ptr_->get_p();
-
+  p_ = GetValue<float>(primitive_->GetAttr("p"));
   batch_ = 0;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   return true;
 }
 
-int CdistGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int CdistGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -86,18 +82,14 @@ int CdistGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   l1_size_ = r0_ * m_;
   l2_size_ = r1_ * m_;
 
-  input_size_list_.push_back(grad_size_ * unit_size_);
-  input_size_list_.push_back(input0_size_ * unit_size_);
-  input_size_list_.push_back(input1_size_ * unit_size_);
-  input_size_list_.push_back(dist_size_ * unit_size_);
   output_size_list_.push_back(out_size_ * unit_size_);
   return KRET_OK;
 }
 
 template <typename T>
-bool CdistGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool CdistGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *grad_start_ = GetDeviceAddress<T>(inputs, 0);
   T *dist_start_ = GetDeviceAddress<T>(inputs, 3);
   T *t1_start_ = GetDeviceAddress<T>(inputs, 1);

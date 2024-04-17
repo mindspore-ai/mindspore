@@ -25,9 +25,8 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUM = 8;
 template <typename T>
-class BatchNormFold2GradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class BatchNormFold2GradGpuKernelMod : public NativeGpuKernelMod {
  public:
   BatchNormFold2GradGpuKernelMod()
       : cudnn_handle_(nullptr),
@@ -40,8 +39,8 @@ class BatchNormFold2GradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   ~BatchNormFold2GradGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -66,14 +65,13 @@ class BatchNormFold2GradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     int32_t current_step_host[1];
     size_t x_size = batch_size_ * channel_ * height_ * width_ * sizeof(T);
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(current_step_host, global_step, sizeof(int32_t), cudaMemcpyDeviceToHost,
-                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "Failed to copy gpu memory.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaStreamSyncFailed");
-    CHECK_CUDA_RET_WITH_ERROR(
-      kernel_node_,
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+      cudaMemcpyAsync(current_step_host, global_step, sizeof(int32_t), cudaMemcpyDeviceToHost,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Failed to copy gpu memory.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "cudaStreamSyncFailed");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(d_x, dout, x_size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "Failed to copy gpu memory.");
 
@@ -91,59 +89,16 @@ class BatchNormFold2GradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     InitResource();
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << INPUT_NUM << ", but got "
-                        << input_num;
-    }
-
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (IsDynamic(shape_signed)) {
-      return true;
-    }
-    auto input_shape = Convert2SizeTClipNeg(shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-
-    if (input_shape.size() != kSize4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
-                        << input_shape.size();
-    }
-    batch_size_ = input_shape[kIndex0];
-    channel_ = input_shape[kIndex1];
-    height_ = input_shape[kIndex2];
-    width_ = input_shape[kIndex3];
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-    freeze_bn_ = GetValue<int64_t>(prim->GetAttr("freeze_bn"));
-
-    InitSizeLists();
+    freeze_bn_ = GetValue<int64_t>(primitive_->GetAttr("freeze_bn"));
     return true;
   }
 
- protected:
-  void InitResource() override { cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle(); }
-
-  void InitSizeLists() override {
+  void SetSizeLists() {
     size_t input_size = batch_size_ * channel_ * height_ * width_ * sizeof(T);
     size_t weight_size = channel_ * sizeof(T);
     size_t workspace_size = batch_size_ * channel_ * sizeof(T);
-    input_size_list_.push_back(input_size);       // dout
-    input_size_list_.push_back(input_size);       // x
-    input_size_list_.push_back(weight_size);      // gamma
-    input_size_list_.push_back(weight_size);      // batch_std
-    input_size_list_.push_back(weight_size);      // batch_mean
-    input_size_list_.push_back(weight_size);      // running_std
-    input_size_list_.push_back(weight_size);      // running_mean
-    input_size_list_.push_back(sizeof(int32_t));  // global_step
-
     output_size_list_.push_back(weight_size);  // d_batch_std
     output_size_list_.push_back(weight_size);  // d_batch_mean
     output_size_list_.push_back(weight_size);  // d_beta
@@ -155,6 +110,36 @@ class BatchNormFold2GradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     workspace_size_list_.push_back(weight_size);     // reduce_x
     workspace_size_list_.push_back(input_size);      // tmp_x
   }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    auto shape_signed = inputs[kIndex0]->GetShapeVector();
+    if (IsDynamic(shape_signed)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+    auto input_shape = Convert2SizeTClipNeg(shape_signed);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
+    if (is_null_input_) {
+      SetSizeLists();
+      return KRET_UNKNOWN_SHAPE;
+    }
+
+    if (input_shape.size() != kSize4) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
+                        << input_shape.size();
+    }
+    batch_size_ = input_shape[kIndex0];
+    channel_ = input_shape[kIndex1];
+    height_ = input_shape[kIndex2];
+    width_ = input_shape[kIndex3];
+
+    SetSizeLists();
+    return KRET_OK;
+  }
+
+ protected:
+  void InitResource() override { cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle(); }
 
  private:
   void DestroyResource() noexcept {}

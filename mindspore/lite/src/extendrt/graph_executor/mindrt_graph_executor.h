@@ -25,6 +25,9 @@
 #include "litert/executor.h"
 
 namespace mindspore {
+/**
+ * MindRTGraphExecutor: Executor using MindRT to make the actor async execute for parallelize speedup
+ */
 class MindRTGraphExecutor : public mindspore::infer::abstract::Executor {
  public:
   MindRTGraphExecutor();
@@ -47,6 +50,7 @@ class MindRTGraphExecutor : public mindspore::infer::abstract::Executor {
   std::string name_;
   std::shared_ptr<mindspore::lite::Executor> mindrt_executor_;
   std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan_;
+  bool inited_ = false;
 };
 }  // namespace mindspore
 

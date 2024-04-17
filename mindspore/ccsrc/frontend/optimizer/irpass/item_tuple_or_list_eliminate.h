@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +79,9 @@ class TupleListConvertItemIndexToPositive : public AnfVisitor {
     if (sequeue_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
       auto idx = GetValue<int64_t>(vnode->value());
       if (idx < 0) {
+        if (sequeue_->abstract() == nullptr) {
+          return;
+        }
         auto sequeue_abstract = sequeue_->abstract()->cast<abstract::AbstractSequencePtr>();
         if (sequeue_abstract == nullptr || sequeue_abstract->dynamic_len()) {
           return;
@@ -127,7 +130,7 @@ class MakeSliceSliceGetItemEliminator : public AnfVisitor {
         MS_EXCEPTION(ValueError) << "The slice must be [start, stop, step], but got " << slice_attr_;
       }
       idx_ = iter->second;
-      if (idx_ > make_slice_->inputs().size()) {
+      if (idx_ > make_slice_->size()) {
         MS_EXCEPTION(IndexError) << "The node make_slice should has 3 inputs but got " << make_slice_->DebugString();
       }
       is_match_ = true;
@@ -462,6 +465,7 @@ class TupleListGetitemDependReorder : public AnfVisitor {
     auto item_node = NewCNode({NewValueNode(prim::kPrimTupleGetItem), x_, c_}, fg);
     item_node->set_abstract(node->abstract());
     auto depend_node = NewCNode({depend_cnode->input(0), item_node, y_}, fg);
+    depend_node->set_abstract(node->abstract());
     auto abs = x_->abstract();
     if (abs == nullptr) {
       return depend_node;
@@ -508,9 +512,10 @@ class TupleListGetitemDependReorder : public AnfVisitor {
   void Visit(const CNodePtr &cnode) override {
     // {prim::kPrimDepend, X, Y}
     constexpr auto depend_input_size = 3;
+    constexpr auto depend_index_two = 2;
     if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && cnode->size() == depend_input_size) {
       x_ = cnode->input(1);
-      y_ = cnode->input(2);
+      y_ = cnode->input(depend_index_two);
     }
   }
 
@@ -525,7 +530,6 @@ class TupleListGetitemDependReorder : public AnfVisitor {
  private:
   AnfNodePtr x_{nullptr}, y_{nullptr}, c_{nullptr};
 };
-
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

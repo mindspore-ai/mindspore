@@ -13,54 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
+
 #include <memory>
 #include "common/common_test.h"
-#include "ops/range.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
-#include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
 #include "ops/test_ops.h"
-#include "include/backend/optimizer/helper.h"
+#include "ops/test_ops_cmp_utils.h"
+#include "ops/ops_func_impl/range.h"
 
 namespace mindspore {
 namespace ops {
-struct RangeOpParams {
-  ShapeVector start_shape;
-  TypePtr start_type;
-  ShapeVector limit_shape;
-  TypePtr limit_type;
-  ShapeVector delta_shape;
-  TypePtr delta_type;
-  ShapeVector out_shape;
-  TypePtr out_type;
-};
+OP_FUNC_IMPL_TEST_DECLARE(Range, MultiInputOpParams);
 
-class TestRange : public TestOps, public testing::WithParamInterface<RangeOpParams> {};
-
-TEST_P(TestRange, dyn_shape) {
-  const auto &param = GetParam();
-  auto start = std::make_shared<abstract::AbstractTensor>(param.start_type, param.start_shape);
-  auto limit = std::make_shared<abstract::AbstractTensor>(param.limit_type, param.limit_shape);
-  auto delta = std::make_shared<abstract::AbstractTensor>(param.delta_type, param.delta_shape);
-  ASSERT_NE(start, nullptr);
-  ASSERT_NE(limit, nullptr);
-  ASSERT_NE(delta, nullptr);
-
-  auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
-
-  auto prim = std::make_shared<Primitive>(kNameRange);
-  auto out_abstract = opt::CppInferShapeAndType(prim, {start, limit, delta});
-  ASSERT_NE(out_abstract, nullptr);
-  ASSERT_TRUE(*out_abstract == *expect);
-}
-
-INSTANTIATE_TEST_CASE_P(TestRangeGroup, TestRange,
-                        testing::Values(RangeOpParams{{}, kFloat32, {}, kFloat32, {}, kFloat32, {-1}, kFloat32},
-                                        RangeOpParams{{-1}, kFloat32, {-1}, kFloat32, {-1}, kFloat32, {-1}, kFloat32},
-                                        RangeOpParams{{-2}, kFloat32, {-2}, kFloat32, {-2}, kFloat32, {-1}, kFloat32}));
+OP_FUNC_IMPL_TEST_CASES(
+  Range,
+  testing::Values(MultiInputOpParams{{{}, {}, {}}, {kInt32, kInt32, kInt32}, {{-1}}, {kInt32}, {}},
+                  MultiInputOpParams{{{-1}, {-1}, {-1}}, {kFloat32, kFloat32, kFloat32}, {{-1}}, {kFloat32}, {}},
+                  MultiInputOpParams{{{-2}, {-2}, {-2}}, {kFloat64, kFloat64, kFloat64}, {{-1}}, {kFloat64}, {}}));
 }  // namespace ops
 }  // namespace mindspore

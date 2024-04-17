@@ -20,19 +20,27 @@ minimum_grad_op_info = CpuRegOp("MinimumGrad") \
     .input(0, "grads", "required") \
     .input(1, "x1", "required") \
     .input(2, "x2", "required") \
+    .input(3, "grad_x", "required") \
+    .input(4, "grad_y", "required") \
     .output(0, "y1", "required") \
     .output(1, "y2", "required") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, \
+                  DataType.BOOL_Default, DataType.BOOL_Default,                     \
                   DataType.I32_Default, DataType.I32_Default)                       \
     .dtype_format(DataType.U32_Default, DataType.U32_Default, DataType.U32_Default, \
+                  DataType.BOOL_Default, DataType.BOOL_Default,                     \
                   DataType.U32_Default, DataType.U32_Default)                       \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, \
+                  DataType.BOOL_Default, DataType.BOOL_Default,                     \
                   DataType.F32_Default, DataType.F32_Default)                       \
     .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, \
+                  DataType.BOOL_Default, DataType.BOOL_Default,                     \
                   DataType.I64_Default, DataType.I64_Default)                       \
     .dtype_format(DataType.U64_Default, DataType.U64_Default, DataType.U64_Default, \
+                  DataType.BOOL_Default, DataType.BOOL_Default,                     \
                   DataType.U64_Default, DataType.U64_Default)                       \
     .dtype_format(DataType.F64_Default, DataType.F64_Default, DataType.F64_Default, \
+                  DataType.BOOL_Default, DataType.BOOL_Default,                     \
                   DataType.F64_Default, DataType.F64_Default)                       \
     .get_op_info()
 

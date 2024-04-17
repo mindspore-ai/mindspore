@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 #include "mindspore/core/ops/grad/median_grad.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -35,8 +36,8 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
   MedianGradGpuKernelMod() : global_median_(false), keep_dims_(false), axis_(0) {}
   ~MedianGradGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *y_grad = GetDeviceAddress<T>(inputs, kIndex0);
     T *x = GetDeviceAddress<T>(inputs, kIndex1);
     T *y = GetDeviceAddress<T>(inputs, kIndex2);
@@ -51,7 +52,7 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
     int *repeat_val = GetDeviceAddress<int>(workspace, kIndex2);
 
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemsetAsync(output0_addr, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      cudaMemsetAsync(output0_addr, 0, outputs[0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemSet Failed");
 
     if (!global_median_) {
@@ -76,22 +77,15 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::MedianGrad>(base_operator);
-    if (kernel_ptr == nullptr) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Median ops failed!";
-      return false;
-    }
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     if (((inputs.size() != kInputsNum4) && (inputs.size() != kInputsNum3)) || outputs.size() > kMedianOutputsNum) {
       MS_LOG(ERROR) << kernel_name_ << ": input size should be 4 or 3"
                     << "but get " << inputs.size() << " and output size should be 1, but get " << outputs.size();
       return false;
     }
-    global_median_ = kernel_ptr->get_global_median();
-    keep_dims_ = kernel_ptr->get_keep_dims();
-    axis_ = kernel_ptr->get_axis();
+    global_median_ = GetValue<bool>(primitive_->GetAttr(ops::kGlobalMedian));
+    keep_dims_ = GetValue<bool>(primitive_->GetAttr(ops::kKeepDims));
+    axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
     input_shape_ = inputs[1]->GetShapeVector();
     input1_dim_ = input_shape_.size();
     std::vector<int64_t> input0_shape = inputs[0]->GetShapeVector();
@@ -129,11 +123,8 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }
@@ -228,7 +219,6 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void ResetResource() noexcept {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

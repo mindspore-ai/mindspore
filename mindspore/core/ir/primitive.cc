@@ -19,6 +19,7 @@
 #include <utility>
 #include "abstract/abstract_function.h"
 #include "utils/ms_utils.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 static uint64_t MakeId() {
@@ -56,6 +57,7 @@ Primitive::Primitive(const Primitive &prim)
       prim_type_(prim.prim_type_),
       is_base_(prim.is_base_),
       has_signature_(prim.has_signature_),
+      signatures_(prim.signatures()),
       record_evaluate_add_attr_(false),
       const_prim_(false),
       inplace_prim_(prim.inplace_prim_),
@@ -121,5 +123,17 @@ std::string Primitive::GetAttrsText() const {
   oss << "]";
 
   return oss.str();
+}
+
+void Primitive::set_signatures(const std::vector<Signature> &signatures) {
+  signatures_ = signatures;
+  set_has_signature(!signatures.empty());
+}
+
+std::string Primitive::ToString() const {
+  if (mindspore::ops::IsPrimitiveFunction(name())) {
+    return "PrimFunc_" + name();
+  }
+  return name();
 }
 }  // namespace mindspore

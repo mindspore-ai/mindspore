@@ -65,7 +65,7 @@ class L2NormalizeInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto input_shape_ptr = input_args[kInputIndex0]->GetShape();
     if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr)[kShape])) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
@@ -105,7 +105,7 @@ class L2NormalizeInfer : public abstract::OpInferBase {
                                              prim_name);
     const std::set<TypePtr> valid_types = {kFloat32, kFloat16, kFloat64};
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-    auto type = input_args[kInputIndex0]->BuildType();
+    auto type = input_args[kInputIndex0]->GetType();
     MS_EXCEPTION_IF_NULL(type);
     if (!type->isa<TensorType>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << type->ToString()

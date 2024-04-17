@@ -33,7 +33,7 @@ class AbcInferSession(ABC):
         self.input_tensor_shapes = cfg.input_tensor_shapes
         self.output_tensor_names = cfg.output_tensor_names
         self.batch_size = cfg.batch_size
-        self.logger = InferLogger(file_path=cfg.log_path)
+        self.logger = InferLogger(file_path=cfg.log_path).logger
         self.data_type_class = None
         self.input_tensor_infos = None
 

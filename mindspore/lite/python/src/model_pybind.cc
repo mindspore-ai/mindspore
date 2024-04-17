@@ -90,6 +90,31 @@ std::vector<MSTensorPtr> PyModelGetOutputs(Model *model) {
   return MSTensorToMSTensorPtr(model->GetOutputs());
 }
 
+std::string PyModelGetModelInfo(Model *model, const std::string &key) {
+  std::string empty;
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return empty;
+  }
+  return model->GetModelInfo(key);
+}
+
+Status PyModelUpdateWeights(Model *model, const std::vector<std::vector<MSTensorPtr>> &weights) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  std::vector<std::vector<MSTensor>> new_weights;
+  for (auto &weight : weights) {
+    std::vector<MSTensor> new_weight = MSTensorPtrToMSTensor(weight);
+    new_weights.push_back(new_weight);
+  }
+  if (!model->UpdateWeights(new_weights).IsOk()) {
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
 void ModelPyBind(const py::module &m) {
   (void)py::enum_<ModelType>(m, "ModelType")
     .value("kMindIR", ModelType::kMindIR)
@@ -119,13 +144,33 @@ void ModelPyBind(const py::module &m) {
     .value("kLiteFormatError", StatusCode::kLiteFormatError)
     .value("kLiteInferError", StatusCode::kLiteInferError)
     .value("kLiteInferInvalid", StatusCode::kLiteInferInvalid)
-    .value("kLiteInputParamInvalid", StatusCode::kLiteInputParamInvalid);
+    .value("kLiteInputParamInvalid", StatusCode::kLiteInputParamInvalid)
+    .value("kLiteLLMKVCacheNotExist", StatusCode::kLiteLLMKVCacheNotExist)
+    .value("kLiteLLMWaitProcessTimeOut", StatusCode::kLiteLLMWaitProcessTimeOut)
+    .value("kLiteLLMRepeatRequest", StatusCode::kLiteLLMRepeatRequest)
+    .value("kLiteLLMRequestAlreadyCompleted", StatusCode::kLiteLLMRequestAlreadyCompleted)
+    .value("kLiteLLMEngineFinalized", StatusCode::kLiteLLMEngineFinalized)
+    .value("kLiteLLMNotYetLink", StatusCode::kLiteLLMNotYetLink)
+    .value("kLiteLLMAlreadyLink", StatusCode::kLiteLLMAlreadyLink)
+    .value("kLiteLLMLinkFailed", StatusCode::kLiteLLMLinkFailed)
+    .value("kLiteLLMUnlinkFailed", StatusCode::kLiteLLMUnlinkFailed)
+    .value("kLiteLLMNofiryPromptUnlinkFailed", StatusCode::kLiteLLMNofiryPromptUnlinkFailed)
+    .value("kLiteLLMClusterNumExceedLimit", StatusCode::kLiteLLMClusterNumExceedLimit)
+    .value("kLiteLLMProcessingLink", StatusCode::kLiteLLMProcessingLink)
+    .value("kLiteLLMOutOfMemory", StatusCode::kLiteLLMOutOfMemory)
+    .value("kLiteLLMPrefixAlreadyExist", StatusCode::kLiteLLMPrefixAlreadyExist)
+    .value("kLiteLLMPrefixNotExist", StatusCode::kLiteLLMPrefixNotExist)
+    .value("kLiteLLMSeqLenOverLimit", StatusCode::kLiteLLMSeqLenOverLimit)
+    .value("kLiteLLMNoFreeBlock", StatusCode::kLiteLLMNoFreeBlock)
+    .value("kLiteLLMBlockOutOfMemory", StatusCode::kLiteLLMBlockOutOfMemory);
 
   (void)py::class_<Status, std::shared_ptr<Status>>(m, "Status")
     .def(py::init<>())
+    .def(py::init<StatusCode>())
     .def("ToString", &Status::ToString)
     .def("IsOk", &Status::IsOk)
-    .def("IsError", &Status::IsError);
+    .def("IsError", &Status::IsError)
+    .def("StatusCode", &Status::StatusCode);
 
   (void)py::class_<Model, std::shared_ptr<Model>>(m, "ModelBind")
     .def(py::init<>())
@@ -145,8 +190,10 @@ void ModelPyBind(const py::module &m) {
     .def("update_config", &PyModelUpdateConfig)
     .def("resize", &PyModelResize)
     .def("predict", &PyModelPredict, py::call_guard<py::gil_scoped_release>())
+    .def("update_weights", &PyModelUpdateWeights, py::call_guard<py::gil_scoped_release>())
     .def("get_inputs", &PyModelGetInputs)
     .def("get_outputs", &PyModelGetOutputs)
+    .def("get_model_info", &PyModelGetModelInfo)
     .def("get_input_by_tensor_name",
          [](Model &model, const std::string &tensor_name) { return model.GetInputByTensorName(tensor_name); })
     .def("get_output_by_tensor_name",
@@ -173,6 +220,7 @@ std::vector<MSTensorPtr> PyModelParallelRunnerPredict(ModelParallelRunner *runne
   }
   return MSTensorToMSTensorPtr(outputs);
 }
+
 std::vector<MSTensorPtr> PyModelParallelRunnerGetInputs(ModelParallelRunner *runner) {
   if (runner == nullptr) {
     MS_LOG(ERROR) << "ModelParallelRunner object cannot be nullptr";

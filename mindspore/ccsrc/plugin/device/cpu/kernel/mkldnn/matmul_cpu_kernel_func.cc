@@ -41,28 +41,22 @@ constexpr size_t kRankMin = 2;
 using dims = dnnl::memory::dims;
 }  // namespace
 
-void MatMulCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatMul>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast MatMul ops failed!";
-  }
-  trans_a_ = kernel_ptr->get_transpose_a();
-  trans_b_ = kernel_ptr->get_transpose_b();
+void MatMulCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  prim_ = primitive;
+  trans_a_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeA));
+  trans_b_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
 }
 
-int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int MatMulCpuKernelFunc::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto a_shape = inputs[kIndex0]->GetShapeVector();
   auto b_shape = inputs[kIndex1]->GetShapeVector();
-  if (base_operator->HasAttr(kAttrWithBiasAdd)) {
-    with_bias_add_ = GetValue<bool>(base_operator->GetAttr(kAttrWithBiasAdd));
+  if (prim_->GetAttr(kAttrWithBiasAdd) != nullptr) {
+    with_bias_add_ = GetValue<bool>(prim_->GetAttr(kAttrWithBiasAdd));
   }
 
-  if (base_operator->HasAttr(kAttrWithRelu)) {
-    with_relu_ = GetValue<bool>(base_operator->GetAttr(kAttrWithRelu));
+  if (prim_->GetAttr(kAttrWithRelu) != nullptr) {
+    with_relu_ = GetValue<bool>(prim_->GetAttr(kAttrWithRelu));
   }
 
   auto o_shape = outputs[kIndex0]->GetShapeVector();
@@ -142,19 +136,19 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
   return KRET_OK;
 }
 
-bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool MatMulCpuKernelFunc::RunFunc(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatMulOutputsNum, kernel_name_);
   if (with_bias_add_) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulWithBiasAddInputsNum, kernel_name_);
-    SetArgumentHandle(DNNL_ARG_BIAS, reinterpret_cast<float *>(inputs[kBiasAddInputIndex]->addr));
+    SetArgumentHandle(DNNL_ARG_BIAS, reinterpret_cast<float *>(inputs[kBiasAddInputIndex]->device_ptr()));
   } else {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
   }
-  const auto input_a = reinterpret_cast<float *>(inputs[0]->addr);
-  const auto input_b = reinterpret_cast<float *>(inputs[1]->addr);
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  const auto input_a = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  const auto input_b = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
   SetArgumentHandle(DNNL_ARG_SRC, input_a);
   SetArgumentHandle(DNNL_ARG_WEIGHTS, input_b);

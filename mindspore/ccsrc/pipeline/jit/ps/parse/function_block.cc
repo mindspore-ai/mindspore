@@ -36,6 +36,7 @@
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "utils/hash_set.h"
 #include "utils/info.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace py = pybind11;
@@ -228,7 +229,16 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
     // need resolve to determine whether it needs to be marked with interpret.
     auto resolve_node = MakeResolveSymbol(var_name);
     MS_EXCEPTION_IF_NULL(resolve_node);
-    CheckUndefinedSymbol(var_name, resolve_node);
+    // Avoid to build phi node if current block is not matured and resolve_node is an undefined symbol.
+    if (!matured_ && resolve_node->isa<ValueNode>()) {
+      auto value = GetValuePtr<ValueProblem>(resolve_node->cast<ValueNodePtr>());
+      if (!is_dead_block() && value != nullptr && value->IsUndefined()) {
+        MS_LOG(DEBUG) << "Avoid to build phi node and return undefined node, var_name: " << var_name
+                      << ", block: " << ToString() << ", matured_: " << matured_
+                      << ", prev_blocks_.size: " << prev_blocks_.size();
+        return resolve_node;
+      }
+    }
     phi_param->set_interpret(resolve_node->interpret());
     phi_param->set_interpret_internal_type(resolve_node->interpret_internal_type());
     if (resolve_node->isa<Parameter>()) {
@@ -280,7 +290,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassObject() {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
   py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
-  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_OBJECT, namespace_var);
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_OBJECT, namespace_var, ast->obj());
   constexpr auto self_name = "self";
   SymbolPtr symbol = std::make_shared<Symbol>(self_name);  // Must be 'self'.
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
@@ -292,7 +302,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassMember(const std::string &attr_or_self
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
   py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
-  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var, ast->obj());
   SymbolPtr symbol = std::make_shared<Symbol>(attr_or_self);
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
   return MakeResolve(name_space, symbol);
@@ -340,15 +350,16 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
 
   // Handle global namespace info.
   auto syntax_support = info[flag_index].cast<int32_t>();
+  py::object py_obj = info[value_index];
   if (syntax_support != SYNTAX_SUPPORTED && syntax_support != SYNTAX_HYBRID_TYPE) {
     resolved_node->set_interpret(true);
     if (syntax_support == SYNTAX_UNSUPPORTED_INTERNAL_TYPE) {
       resolved_node->set_interpret_internal_type(true);
+      resolved_node->set_user_data<py::object>(kClassTensorObject, std::make_shared<py::object>(py_obj));
     }
   }
 
   auto symbol_name = info[symbol_index].cast<std::string>();
-  py::object py_obj = info[value_index];
   AddGlobalPyParam(symbol_name, py_obj);
   MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol_name << " : "
                << py::str(py_obj) << "}";
@@ -461,7 +472,7 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const Symb
 
 AnfNodePtr FunctionBlock::DoResolve(const AnfNodePtr &node, const std::shared_ptr<NameSpace> &name_space,
                                     const std::shared_ptr<Symbol> &resolve_symbol) {
-  static const auto boost_parse = common::GetEnv("MS_DEV_GREED_PARSE");
+  static const auto boost_parse = common::GetCompileConfig("GREED_PARSE");
   if (Parser::defer_resolve() || boost_parse != "1") {
     return node;
   }
@@ -534,15 +545,15 @@ std::string GetVariableDefinedLocation(const FunctionBlock *block, const std::st
   std::vector<FunctionBlock *> todo_list = {};
   (void)std::copy(block->prev_blocks().cbegin(), block->prev_blocks().cend(), std::back_inserter(todo_list));
   while (!todo_list.empty()) {
-    auto cur_block = todo_list.back();
-    todo_list.pop_back();
+    auto cur_block = todo_list.front();
+    (void)todo_list.erase(todo_list.begin());
     if (visited.find(cur_block) != visited.cend()) {
       continue;
     }
     (void)visited.insert(cur_block);
     (void)std::copy(cur_block->prev_blocks().cbegin(), cur_block->prev_blocks().cend(), std::back_inserter(todo_list));
     auto node = cur_block->ReadLocalVariable(var);
-    if (node != nullptr && !node->isa<Parameter>()) {
+    if (node != nullptr) {
       const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
       const auto &location = debug_info->location();
       return location->ToString(kSourceSectionTipNextLineHere, start_line);
@@ -568,7 +579,11 @@ void FunctionBlock::CheckVariableNotDefined(const std::pair<std::string, AnfNode
     oss << "The local variable '" << var << "' is not defined in " << not_defined_branch_name << ", but defined in "
         << (not_defined_branch_name == "true branch" ? "false branch" : "true branch") << ".\n";
   }
-  oss << GetVariableDefinedLocation(this, var, start_line);
+  std::string location_info = GetVariableDefinedLocation(this, var, start_line);
+  if (location_info.empty()) {
+    return;
+  }
+  oss << location_info;
   MS_EXCEPTION(UnboundLocalError) << oss.str();
 }
 
@@ -686,8 +701,8 @@ CNodePtr FunctionBlock::ForceToCondNode(const AnfNodePtr &cond, bool is_while_co
 
 // Perform a jump from this block to target block
 void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args) {
-  MS_LOG(DEBUG) << "Jump from block: " << ToString() << " to block: " << target_block->ToString();
   MS_EXCEPTION_IF_NULL(target_block);
+  MS_LOG(DEBUG) << "Jump from block: " << ToString() << " to block: " << target_block->ToString();
   if (is_dead_block_) {
     MS_LOG(DEBUG) << "Dead code block should not jump to other block! block: " << ToString();
     return;
@@ -821,7 +836,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   auto return_node = func_graph_->get_return();
   if (return_node != nullptr) {
     const size_t return_input_size = 2;
-    if (return_node->inputs().size() < return_input_size) {
+    if (return_node->size() < return_input_size) {
       MS_LOG(INTERNAL_EXCEPTION) << "Length of inputs of output node is less than 2";
     }
     old_output = return_node->input(1);

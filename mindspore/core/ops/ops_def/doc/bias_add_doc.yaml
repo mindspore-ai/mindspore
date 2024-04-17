@@ -1,0 +1,42 @@
+bias_add:
+    description: |
+        Returns the sum of the input Tensor and the bias Tensor. Before adding, the bias Tensor will be broadcasted to be
+        consistent with the shape of the input Tensor.
+    
+        Args:
+            data_format (str, optional): The format of input and output data.
+                It should be ``"NHWC"`` , ``"NCHW"`` or ``"NCDHW"`` .
+                Default is ``"NCHW"`` .
+    
+        Inputs:
+            - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions. Supported dtypes:
+    
+              - Ascend/CPU: all Number type.
+              - GPU: float16, float32, int8.
+    
+            - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
+              `input_x`. It has the same type as `input_x`.
+    
+        Outputs:
+            Tensor, with the same shape and data type as `input_x`.
+    
+        Raises:
+            TypeError: If `data_format` is not a str.
+            ValueError: If value of `data_format` is not in the range of ['NHWC','NCHW','NCDHW'].
+            TypeError: If `input_x` or `bias` is not a Tensor.
+            TypeError: If dtype of `input_x` or `bias` is inconsistent.
+            TypeError: If dimension of `input_x` is not in the range [2, 5].
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
+            >>> bias = Tensor(np.random.random(3).reshape((3,)), mindspore.float32)
+            >>> bias_add = ops.BiasAdd()
+            >>> output = bias_add(input_x, bias)
+            >>> print(output.shape)
+            (2, 3)

@@ -17,7 +17,7 @@
 #include "extendrt/delegate/ascend_native/ascend_native_less_kernel.h"
 #include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
 // #include "extendrt/delegate/ascend_native/ascend_native_impl/less.h"
-#include "ops/less.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore::kernel {

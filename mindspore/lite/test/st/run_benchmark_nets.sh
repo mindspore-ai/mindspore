@@ -253,3 +253,39 @@ if [[ $backend == "all" || $backend =~ "graph_kernel" ]]; then
       exit 1
     fi
 fi
+
+
+if [[ $backend == "all" || $backend == "mslite_large_model_inference_arm_ascend910B" ]]; then
+  echo "Run large model in ascend910B....."
+  sh $cur_path/scripts/ascend/run_large_models.sh -r $release_path -m $models_path -e $backend -l $level -d $device_id
+  ascend_status=$?
+  if [[ ascend_status -ne 0 ]]; then
+    echo "Run ${backend} failed"
+    exit 1
+  fi
+
+  echo "Run Python ST in ascend910B....."
+  sh $cur_path/scripts/ascend/run_python_api_ascend.sh -r $release_path
+  ascend_status=$?
+  if [[ ascend_status -ne 0 ]]; then
+    echo "Run MSLite Python ST on Arm Ascend failed"
+    exit 1
+  fi
+
+  #echo "Run AKG Cutsom Ops ST in ascend910B....."
+  #sh $cur_path/scripts/ascend/run_akg_custom_ops.sh -r $release_path
+  #ascend_status=$?
+  #if [[ ascend_status -ne 0 ]]; then
+  #  echo "Run AKG Cutsom Ops ST on Arm Ascend failed"
+  #  exit 1
+  #fi
+fi
+
+if [[ $backend == "all" || $backend == "mslite_large_model_cloud_infer" ]]; then
+  sh $cur_path/scripts/ascend/run_large_models_cloud_infer.sh -r $release_path -m $models_path -e $backend -l $level
+  ascend_status=$?
+  if [[ ascend_status -ne 0 ]]; then
+    echo "Run ${backend} failed"
+    exit 1
+  fi
+fi

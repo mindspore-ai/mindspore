@@ -20,6 +20,8 @@
 
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/util/log_adapter.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 const static auto g_resizeConfigDeleter = [](acldvppResizeConfig *p) { (void)acldvppDestroyResizeConfig(p); };
 const static auto g_picDescDeleter = [](acldvppPicDesc *picDesc) { (void)acldvppDestroyPicDesc(picDesc); };
@@ -125,13 +127,13 @@ APP_ERROR DvppCommon::DeInit() {
   }
 
   // Obtain the dvppContext_ allocated by AscendResource which contains the dvppStream_, they mush bind each other
-  APP_ERROR ret = aclrtSetCurrentContext(dvppContext_);
+  APP_ERROR ret = CALL_ASCEND_API(aclrtSetCurrentContext, dvppContext_);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get ACL context, ret = " << ret;
     return ret;
   }
 
-  ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);  // APP_ERROR ret
+  ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, dvppStream_, kTimeLimit);  // APP_ERROR ret
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
     return ret;
@@ -439,7 +441,7 @@ APP_ERROR DvppCommon::ResizeProcess(acldvppPicDesc &inputDesc, acldvppPicDesc &o
   }
 
   if (withSynchronize) {
-    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
+    ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
       return ret;
@@ -487,7 +489,7 @@ APP_ERROR DvppCommon::ResizeWithPadding(acldvppPicDesc &inputDesc, acldvppPicDes
     return ret;
   }
   if (withSynchronize) {
-    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
+    ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed tp synchronize stream, ret = " << ret << ".";
       return ret;
@@ -650,7 +652,8 @@ APP_ERROR DvppCommon::CombineResizeProcess(DvppDataInfo &input, const DvppDataIn
     return ret;
   }
 
-  (void)aclrtMemset(resizedImage_->data, resizedImage_->dataSize, YUV_GREYER_VALUE, resizedImage_->dataSize);
+  (void)CALL_ASCEND_API(aclrtMemset, resizedImage_->data, resizedImage_->dataSize, YUV_GREYER_VALUE,
+                        resizedImage_->dataSize);
   resizedImage_->frameId = input.frameId;
   ret = VpcResize(input, *resizedImage_, withSynchronize, processType);
   if (ret != APP_ERR_OK) {
@@ -769,7 +772,7 @@ APP_ERROR DvppCommon::CropProcess(acldvppPicDesc &inputDesc, acldvppPicDesc &out
     return ret;
   }
   if (withSynchronize) {
-    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
+    ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
       return ret;
@@ -866,7 +869,7 @@ APP_ERROR DvppCommon::JpegDecode(const DvppDataInfo &input, const DvppDataInfo &
     return ret;
   }
   if (withSynchronize) {
-    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
+    ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
       return APP_ERR_DVPP_JPEG_DECODE_FAIL;
@@ -911,7 +914,7 @@ APP_ERROR DvppCommon::PngDecode(const DvppDataInfo &input, const DvppDataInfo &o
     return ret;
   }
   if (withSynchronize) {
-    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
+    ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
       return APP_ERR_DVPP_JPEG_DECODE_FAIL;
@@ -1237,15 +1240,15 @@ APP_ERROR DvppCommon::TransferYuvDataH2D(const DvppDataInfo &imageinfo) {
     MS_LOG(ERROR) << "Failed to malloc " << imageinfo.dataSize << " bytes on dvpp, ret = " << ret << ".";
     return ret;
   }
-  ret = aclrtMemcpyAsync(device_ptr, imageinfo.dataSize, imageinfo.data, imageinfo.dataSize, ACL_MEMCPY_HOST_TO_DEVICE,
-                         dvppStream_);
+  ret = CALL_ASCEND_API(aclrtMemcpyAsync, device_ptr, imageinfo.dataSize, imageinfo.data, imageinfo.dataSize,
+                        ACL_MEMCPY_HOST_TO_DEVICE, dvppStream_);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy " << imageinfo.dataSize << " bytes from host to device, ret = " << ret << ".";
     RELEASE_DVPP_DATA(device_ptr);
     device_ptr = nullptr;
     return ret;
   }
-  ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
+  ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, dvppStream_, kTimeLimit);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
     RELEASE_DVPP_DATA(device_ptr);
@@ -1287,8 +1290,8 @@ APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shar
   }
 
   // Copy the image data from host to device
-  ret = aclrtMemcpyAsync(inDevBuff, imageInfo.lenOfByte, imageInfo.data, imageInfo.lenOfByte, ACL_MEMCPY_HOST_TO_DEVICE,
-                         dvppStream_);
+  ret = CALL_ASCEND_API(aclrtMemcpyAsync, inDevBuff, imageInfo.lenOfByte, imageInfo.data, imageInfo.lenOfByte,
+                        ACL_MEMCPY_HOST_TO_DEVICE, dvppStream_);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy " << imageInfo.lenOfByte << " bytes from host to device, ret = " << ret << ".";
     RELEASE_DVPP_DATA(inDevBuff);
@@ -1296,7 +1299,7 @@ APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shar
   }
   // Attention: We must call the aclrtSynchronizeStream to ensure the task of memory replication has been completed
   // after calling aclrtMemcpyAsync
-  ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
+  ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, dvppStream_, kTimeLimit);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
     RELEASE_DVPP_DATA(inDevBuff);
@@ -1317,7 +1320,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo, acldvppPixelFormat 
     return APP_ERR_DVPP_OBJ_FUNC_MISMATCH;
   }
 
-  APP_ERROR ret = aclrtSetCurrentContext(dvppContext_);
+  APP_ERROR ret = CALL_ASCEND_API(aclrtSetCurrentContext, dvppContext_);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get ACL context, ret = " << ret;
     return ret;
@@ -1376,7 +1379,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo) {
     return APP_ERR_DVPP_OBJ_FUNC_MISMATCH;
   }
 
-  APP_ERROR ret = aclrtSetCurrentContext(dvppContext_);
+  APP_ERROR ret = CALL_ASCEND_API(aclrtSetCurrentContext, dvppContext_);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get ACL context, ret = " << ret;
     return ret;
@@ -1442,8 +1445,8 @@ APP_ERROR DvppCommon::CreateStreamDesc(const std::shared_ptr<DvppDataInfo> &data
     return APP_ERR_ACL_BAD_ALLOC;
   }
   // copy input to device memory
-  ret = aclrtMemcpy(modelInBuff, data->dataSize, static_cast<uint8_t *>(data->data), data->dataSize,
-                    ACL_MEMCPY_HOST_TO_DEVICE);
+  ret = CALL_ASCEND_API(aclrtMemcpy, modelInBuff, data->dataSize, static_cast<uint8_t *>(data->data), data->dataSize,
+                        ACL_MEMCPY_HOST_TO_DEVICE);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory with " << data->dataSize << " bytes from host to device, ret = " << ret
                   << ".";
@@ -1641,7 +1644,7 @@ APP_ERROR DvppCommon::JpegEncode(const DvppDataInfo &input, DvppDataInfo &output
     return ret;
   }
   if (withSynchronize) {
-    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
+    ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to aclrtSynchronizeStream, ret = " << ret << ".";
       return APP_ERR_DVPP_JPEG_ENCODE_FAIL;

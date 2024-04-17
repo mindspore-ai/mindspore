@@ -18,29 +18,59 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(
-  GridSampler2D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  GridSampler2DGpuKernelMod, half)
-MS_REG_GPU_KERNEL_ONE(
-  GridSampler2D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  GridSampler2DGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(
-  GridSampler2D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  GridSampler2DGpuKernelMod, double)
-MS_REG_GPU_KERNEL_ONE(
-  GridSampler3D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  GridSampler3DGpuKernelMod, half)
-MS_REG_GPU_KERNEL_ONE(
-  GridSampler3D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  GridSampler3DGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(
-  GridSampler3D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  GridSampler3DGpuKernelMod, double)
+MS_REG_GPU_KERNEL_ONE(GridSampler2D,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      GridSampler2DGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(GridSampler2D,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      GridSampler2DGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(GridSampler2D,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      GridSampler2DGpuKernelMod, double)
+MS_REG_GPU_KERNEL_ONE(GridSampler3D,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      GridSampler3DGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(GridSampler3D,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      GridSampler3DGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(GridSampler3D,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      GridSampler3DGpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore

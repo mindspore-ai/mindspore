@@ -79,6 +79,7 @@ from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
 from ..transforms.py_transforms_util import FuncWrapper, Implementation
 from ..vision.transforms import ToNumpy
+from ...mindrecord.config import _get_enc_key, _get_enc_mode, _get_hash_mode, encrypt, append_hash_to_file
 
 try:
     context = import_module("mindspore.context")
@@ -666,15 +667,17 @@ class Dataset:
                 be dropped and not propagated to the child node.
             num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel.
                 Default: ``None``.
-            pad_info (dict, optional): The information about how to batch each column. The key
+            pad_info (dict, optional): The pad information about how to batch each column. The key
                 corresponds to the column name, and the value must be a tuple of 2 elements.
                 The first element corresponds to the shape to pad to, and the second
                 element corresponds to the value to pad with. If a column is not
                 specified, then that column will be padded to the longest in the current
-                batch, and 0 will be used as the padding value. Any None dimensions will
-                be padded to the longest in the current batch, unless if
-                pad_to_bucket_boundary is True. If no padding is wanted, set `pad_info`
-                to ``None``. Default: ``None``.
+                batch, and 0 will be used as the padding value. If ``pad_info={"col1": ([224, 224], 0)}``,
+                expand the data column named ``col1`` to shape (224, 224), and fill in the missing values with 0.
+                If ``pad_info={}``, all samples in the batch will be filled to the shape with the largest sample
+                in the current batch. If ``pad_info={"col1": (None, 100)}``, all samples in the batch will be filled
+                to the shape with the largest sample in the current batch, and fill in the missing values with 100.
+                If no padding is wanted, set `pad_info` to ``None``. Default: ``None``.
 
         Returns:
             Dataset, a new dataset with the above operation applied.
@@ -858,11 +861,11 @@ class Dataset:
         `output_columns` , and if not specified, the column name of output column is same as that of `input_columns` .
 
         - If you use transformations (
-          `vision transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
+          `vision transform <https://mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.vision>`_ ,
-          `nlp transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
+          `nlp transform <https://mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.text>`_ ,
-          `audio transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
+          `audio transform <https://mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.audio>`_ )
           provided by mindspore dataset, please use the following parameters:
 
@@ -1030,20 +1033,28 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
+            >>> # Create a dataset with 10 elements
             >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> ori_size = dataset.get_dataset_size()
             >>>
-            >>> # Create a dataset where the dataset is repeated for 50 epochs
+            >>> # Repeat the dataset 50 times.
             >>> dataset = dataset.repeat(50)
+            >>> repeated_size = dataset.get_dataset_size()
+            >>> print("ori_size", ori_size, ", repeated_size", repeated_size)
+            ori_size 10 , repeated_size 500
             >>>
-            >>> # Create a dataset where each epoch is shuffled individually
-            >>> dataset = dataset.shuffle(10)
-            >>> dataset = dataset.repeat(50)
+            >>> # Since the original dataset size is less than batch_size, thus no data is returned
+            >>> dataset1 = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> dataset1 = dataset1.batch(batch_size=20, drop_remainder=True)
+            >>> dataset1 = dataset1.repeat(6)
             >>>
-            >>> # Create a dataset where the dataset is first repeated for
-            >>> # 50 epochs before shuffling. The shuffle operation will treat
-            >>> # the entire 50 epochs as one big dataset.
-            >>> dataset = dataset.repeat(50)
-            >>> dataset = dataset.shuffle(10)
+            >>> # Repeat the original dataset to 60 elements, thus 3 batches are returned
+            >>> dataset2 = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> dataset2 = dataset2.repeat(6)
+            >>> dataset2 = dataset2.batch(batch_size=20, drop_remainder=True)
+            >>> print("dataset1 size", dataset1.get_dataset_size(), ", dataset2 size", dataset2.get_dataset_size())
+            dataset1 size 0 , dataset2 size 3
         """
         return RepeatDataset(self, count)
 
@@ -1462,14 +1473,14 @@ class Dataset:
              - Type in `mindrecord`
              - Details
            * - bool
-             - None
-             - Not supported
+             - int32
+             - transform to int32
            * - int8
              - int32
              -
            * - uint8
-             - bytes(1D uint8)
-             - Drop dimension
+             - int32
+             -
            * - int16
              - int32
              -
@@ -1486,8 +1497,8 @@ class Dataset:
              - int64
              -
            * - uint64
-             - None
-             - Not supported
+             - int64
+             - Maybe reverse
            * - float16
              - float32
              -
@@ -1500,6 +1511,9 @@ class Dataset:
            * - string
              - string
              - Multi-dimensional string not supported
+           * - bytes
+             - bytes
+             - Multi-dimensional bytes not supported
 
         Note:
             1. To save the samples in order, set dataset's `shuffle` to ``False`` and `num_files` to ``1``.
@@ -1507,8 +1521,7 @@ class Dataset:
                with random attribute in map operation.
             3. When array dimension is variable, one-dimensional arrays or
                multi-dimensional arrays with variable dimension 0 are supported.
-            4. MindRecord does not support uint64, multi-dimensional uint8(drop dimension) nor
-               multi-dimensional string.
+            4. MindRecord does not support multi-dimensional string or multi-dimensional bytes.
 
         Args:
             file_name (str): Path to dataset file.
@@ -1527,6 +1540,10 @@ class Dataset:
             >>> d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
             >>> d1.save('/path/to/save_file')
         """
+        if (_get_enc_key() is not None or _get_hash_mode() is not None) and num_files > 1:
+            raise RuntimeError("When encode mode or hash check is enabled, " +
+                               "the automatic sharding function is unavailable.")
+
         ir_tree, api_tree = self.create_ir_tree()
 
         runtime_context = cde.PythonRuntimeContext()
@@ -1536,6 +1553,15 @@ class Dataset:
         runtime_context.AssignConsumer(consumer)
 
         consumer.Save()
+
+        if _get_hash_mode() is not None:
+            append_hash_to_file(file_name)
+            append_hash_to_file(file_name + ".db")
+
+        if _get_enc_key() is not None:
+            encrypt(file_name, _get_enc_key(), _get_enc_mode())
+            encrypt(file_name + ".db", _get_enc_key(), _get_enc_mode())
+
         _set_dataset_permissions(file_name, num_files)
         del api_tree
 
@@ -3097,7 +3123,7 @@ def _main_process_already_exit():
     return False
 
 
-def _worker_loop(operations, pipe, seed=get_seed()):
+def _worker_loop(operations, pipe, worker_id):
     """
     Multiprocess worker process loop.
     """
@@ -3110,9 +3136,11 @@ def _worker_loop(operations, pipe, seed=get_seed()):
         """
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    # We set the seed here so the main process will have the same seed, while the child process
-    # will have different seed depending on what is being passed
-    set_seed(seed)
+    # If the default random seed has not been changed, there is no need to fix the randomness.
+    # Otherwise, set the random seed for each child process to "base_seed + worker_id" to ensure
+    # that the random results of each process are different.
+    if get_seed() != 5489:
+        set_seed(get_seed() + worker_id)
     while not _main_process_already_exit():
         _ignore_sigint()
 
@@ -3135,8 +3163,8 @@ def _worker_loop(operations, pipe, seed=get_seed()):
     del pipe.res_queue
 
 
-def worker_target(operations, seed=get_seed()):
-    return lambda pipe: _worker_loop(operations, pipe, seed)
+def worker_target(operations, worker_id):
+    return lambda pipe: _worker_loop(operations, pipe, worker_id)
 
 
 class _MPWorker(multiprocessing.Process):
@@ -3144,11 +3172,11 @@ class _MPWorker(multiprocessing.Process):
     Worker process for multiprocessing.
     """
 
-    def __init__(self, operations, warning_ctl, max_rowsize=16, seed=get_seed()):
+    def __init__(self, operations, warning_ctl, max_rowsize=16, worker_id=0):
         shared_memory = get_enable_shared_mem()
         self.pipe = Pipe(warning_ctl, shared_memory=shared_memory, max_rowsize=max_rowsize)
         self.check_interval = get_multiprocessing_timeout_interval()
-        super().__init__(target=worker_target(operations, seed), args=(self.pipe,), daemon=True)
+        super().__init__(target=worker_target(operations, worker_id), args=(self.pipe,), daemon=True)
 
     def execute(self, idx, *args):
         """Acquiring data from a worker in an infinite loop"""
@@ -3258,6 +3286,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.warning_ctl = None
         # cache thread (get_ident()) to worker_id mapping in Python layer
         self.python_threads_to_workers = {}
+        self.eof = None
 
     def __del__(self):
         try:
@@ -3388,17 +3417,19 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
     # When main process exit, subprocesses will be terminate
     @staticmethod
-    def _clean_process(ppid, workers):
+    def _clean_process(ppid, workers, quit_signal):
         """
             This is the execute function of clean process, if we found main process exited, we will clean subprocesses.
 
         Args:
             ppid: The process id of main process.
             workers: The list of subprocesses.
-
+            quit_signal: The flag of quit.
         """
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         while _PythonMultiprocessing.is_process_alive(ppid):
+            if quit_signal.is_set():
+                return
             time.sleep(0.1)
 
         _PythonMultiprocessing._terminate_processes(workers)
@@ -3444,8 +3475,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         # Construct python worker processes
         self.workers = []
         self.warning_ctl = multiprocessing.Value('i', 0)
-        for i in range(self.num_parallel_workers):
-            worker = _MPWorker(self.operations, self.warning_ctl, self.max_rowsize, i + get_seed())
+        for worker_id in range(self.num_parallel_workers):
+            worker = _MPWorker(self.operations, self.warning_ctl, self.max_rowsize, worker_id)
             worker.start()
             self.workers.append(worker)
 
@@ -3530,8 +3561,9 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         The cleaning subprocess will cleanup subprocesses when main process was killed.
         """
         if platform.system().lower() != 'windows':
+            self.eof = multiprocessing.Event()
             self.cleaning_process = multiprocessing.Process(target=self._clean_process,
-                                                            args=(self.ppid, self.workers),
+                                                            args=(self.ppid, self.workers, self.eof),
                                                             name="OrphanCleaner",
                                                             daemon=True)
             self.cleaning_process.start()
@@ -3552,6 +3584,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         if hasattr(self, 'watch_dog') and self.watch_dog is not None and hasattr(self, 'eot') and self.eot is not None:
             self._abort_watchdog()
         if hasattr(self, 'cleaning_process') and self.cleaning_process is not None:
+            if hasattr(self, 'eof') and self.eof is not None and not self.eof.is_set():
+                self.eof.set()
             _PythonMultiprocessing._terminate_processes([self.cleaning_process])
             del self.cleaning_process
 
@@ -4051,6 +4085,15 @@ class ConcatDataset(UnionBaseDataset):
 
             self._sampler = sampler
             self._children_sizes = [c.get_dataset_size() for c in self.children]
+
+            # Recursive access to other child concat nodes
+            def set_child(node):
+                for c in node.children:
+                    if isinstance(c, ConcatDataset):
+                        c.use_sampler(sampler)
+                    set_child(c)
+            set_child(self)
+
             return
 
         if sampler.is_shuffled():
@@ -4186,6 +4229,12 @@ class _ToDevice:
         """
         return self._to_device.GetDataInfo()
 
+    def get_mbuf_queue_size(self):
+        """
+        Get element numbers inside mbuf.
+        """
+        return self._to_device.GetMbufQueueSize()
+
     def get_send_info(self):
         """
         In sink mode, it returns the send information of dataset at this moment.
@@ -4299,6 +4348,14 @@ class TransferDataset(Dataset):
         if self._to_device is not None:
             return self._to_device.get_data_info()
         raise RuntimeError("Calling get_data_info with bad state.")
+
+    def get_mbuf_queue_size(self):
+        """
+        Get element numbers inside mbuf.
+        """
+        if self._to_device is not None:
+            return self._to_device.get_mbuf_queue_size()
+        raise RuntimeError("Device queue is not init, call get_mbuf_queue_size failed.")
 
     def get_send_info(self):
         """

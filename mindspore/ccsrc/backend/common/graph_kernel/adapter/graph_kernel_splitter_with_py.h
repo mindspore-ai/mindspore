@@ -72,9 +72,14 @@ class CostModelSplitSchemer : public SplitByJsonSchemer {
 
 class GraphKernelSplitterWithPy : public GraphKernelSplitter {
  public:
-  GraphKernelSplitterWithPy() = default;
+  explicit GraphKernelSplitterWithPy(bool is_dynamic = false)
+      : GraphKernelSplitter(is_dynamic ? "dyn_graph_kernel_splitter" : "graph_kernel_splitter"),
+        is_dynamic_(is_dynamic) {}
   ~GraphKernelSplitterWithPy() = default;
   std::shared_ptr<SplitSchemer> GetSplitSchema(const std::string &processor) override;
+
+ private:
+  bool is_dynamic_;
 };
 using GraphKernelSplitterWithPyPtr = std::shared_ptr<GraphKernelSplitterWithPy>;
 }  // namespace mindspore::graphkernel

@@ -44,23 +44,21 @@ static const char kSummaryInfoFileName[] = "RuntimeProfilerSummary";
 static const char kDetailInfoFileName[] = "RuntimeProfilerDetail";
 
 static const std::map<ProfilerStage, std::string> kProfilerStageString = {
-  {ProfilerStage::kDefault, "Default"},
-  {ProfilerStage::kPython, "Python"},
-  {ProfilerStage::kRunGraph, "RunGraph"},
-  {ProfilerStage::kRunGradGraph, "RunGradGraph"},
-  {ProfilerStage::kRunOp, "RunOp"},
-  {ProfilerStage::kAsnumpy, "Asnumpy"},
-  {ProfilerStage::kCompileGradGraph, "CompileGradGraph"},
-  {ProfilerStage::kWaitPipeline, "WaitPipeline"},
-  {ProfilerStage::kSyncStream, "SyncStream"},
+  {ProfilerStage::kDefault, "Default"},           {ProfilerStage::kPython, "Python"},
+  {ProfilerStage::kCapture, "Capture"},           {ProfilerStage::kRunGraph, "RunGraph"},
+  {ProfilerStage::kRunGrad, "RunGrad"},           {ProfilerStage::kRunOp, "RunOp"},
+  {ProfilerStage::kAsnumpy, "Asnumpy"},           {ProfilerStage::kCompileGradGraph, "CompileGradGraph"},
+  {ProfilerStage::kWaitPipeline, "WaitPipeline"}, {ProfilerStage::kSyncStream, "SyncStream"},
 };
 
 static const std::map<ProfilerModule, std::string> kProfilerModuleString = {
   {ProfilerModule::kDefault, "Default"},
+  {ProfilerModule::kGraphExecutorPy, "GraphExecutorPy"},
   {ProfilerModule::kRuntime, "RuntimeFramework"},
   {ProfilerModule::kPynative, "PynativeFramework"},
   {ProfilerModule::kKernel, "Kernel"},
   {ProfilerModule::kPython, "Python"},
+  {ProfilerModule::kCapture, "Capture"},
   {ProfilerModule::kOther, "Other"},
 };
 
@@ -68,7 +66,9 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kDefault, "Default"},
   {ProfilerEvent::kKernelInfer, "KernelInfer"},
   {ProfilerEvent::kKernelResize, "KernelResize"},
+  {ProfilerEvent::kKernelInferAndResize, "KernelInferAndResize"},
   {ProfilerEvent::kKernelLaunch, "KernelLaunch"},
+  {ProfilerEvent::kKernelLaunckCallback, "KernelLaunchCallback"},
   {ProfilerEvent::kKernelUpdate, "KernelUpdate"},
   {ProfilerEvent::kGraphLaunch, "GraphLaunch"},
   {ProfilerEvent::kInputProcess, "InputProcess"},
@@ -81,9 +81,14 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kMemoryFree, "MemoryFree"},
   {ProfilerEvent::kCopyData, "CopyData"},
   {ProfilerEvent::kStreamSync, "StreamSync"},
+  {ProfilerEvent::kWaitKernelsInferFinish, "WaitKernelsInferFinish"},
+  {ProfilerEvent::kWaitKernelsResizeFinish, "WaitKernelsResizeFinish"},
+  {ProfilerEvent::kWaitKernelsLaunchFinish, "WaitKernelsLaunchFinish"},
   // Inner event.
   {ProfilerEvent::kKernelInferInner, "KernelInferInner"},
   {ProfilerEvent::kKernelInferDataSync, "KernelInferDataSync"},
+  {ProfilerEvent::kKernelLaunchInner, "KernelLaunchInner"},
+  {ProfilerEvent::kBackendGraphRunInner, "BackendGraphRunInner"},
   // PyNative events
   {ProfilerEvent::kPyNativeFrontendTask, "FrontendTask"},
   {ProfilerEvent::kPyNativeBackendTask, "BackendTask"},
@@ -96,7 +101,22 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyNativeGradExpander, "Expander"},
   {ProfilerEvent::kPyNativeGradUpdateSens, "UpdateSens"},
   {ProfilerEvent::kPyNativeGradClearTopCell, "ClearTopCell"},
-  {ProfilerEvent::kPyNativeGradClearAutoGradCell, "ClearAutoGradCell"}};
+  {ProfilerEvent::kPyNativeGradClearAutoGradCell, "ClearAutoGradCell"},
+  // PyBoost events
+  {ProfilerEvent::kPyBoostInferOutput, "InferOutput"},
+  {ProfilerEvent::kPyBoostInferByOpDef, "InferByOpDef"},
+  {ProfilerEvent::kPyBoostCreateOutputTensor, "CreateOutputTensor"},
+  {ProfilerEvent::kPyBoostDeviceTask, "DeviceTask"},
+  {ProfilerEvent::kPyBoostMallocInput, "MallocInput"},
+  {ProfilerEvent::kPyBoostMallocOutput, "MallocOutput"},
+  {ProfilerEvent::kPyBoostLaunchAclnn, "LaunchAclnn"},
+  // python events
+  {ProfilerEvent::kPythonObserved, "PythonObserved"},
+  // Capture events
+  {ProfilerEvent::kCaptureRunGraph, "CaptureRunGraph"},
+  {ProfilerEvent::kCaptureProcess, "CaptureProcess"},
+  {ProfilerEvent::kCaptureCompile, "CaptureCompile"},
+  {ProfilerEvent::kCaptureGuard, "CaptureGuard"}};
 
 namespace {
 std::string GetRealPathName(const std::string &name) {
@@ -131,6 +151,26 @@ ProfilerRecorder::~ProfilerRecorder() {
                                    data_->start_time_, ProfilerAnalyzer::GetInstance().GetTimeStamp()));
 }
 
+PythonProfilerRecorder::PythonProfilerRecorder(const std::string &record_name)
+    : start_time_(0),
+      record_name_(record_name),
+      module_(ProfilerModule::kPython),
+      event_(ProfilerEvent::kPythonObserved) {}
+
+void PythonProfilerRecorder::record_start() {
+  if (runtime::ProfilerAnalyzer::GetInstance().profiler_enable()) {
+    start_time_ = runtime::ProfilerAnalyzer::GetInstance().GetTimeStamp();
+  }
+}
+
+void PythonProfilerRecorder::record_end() {
+  if (runtime::ProfilerAnalyzer::GetInstance().profiler_enable()) {
+    auto end_time = runtime::ProfilerAnalyzer::GetInstance().GetTimeStamp();
+    runtime::ProfilerAnalyzer::GetInstance().RecordData(
+      std::make_shared<runtime::ProfilerData>(module_, event_, record_name_, false, start_time_, end_time));
+  }
+}
+
 ProfilerStageRecorder::ProfilerStageRecorder(ProfilerStage stage) {
   if (!ProfilerAnalyzer::GetInstance().profiler_enable()) {
     return;
@@ -156,7 +196,7 @@ void ProfilerAnalyzer::Initialize() {
   if (init_) {
     return;
   }
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   init_ = true;
 
   if (common::GetEnv(kEnableRuntimeProfiler) != "1") {
@@ -189,7 +229,7 @@ std::string ProfilerAnalyzer::GetTidString(const std::thread::id &tid) const {
 }
 
 void ProfilerAnalyzer::SetThreadIdToName(const std::thread::id &id, const std::string &name) {
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   thread_id_to_name_[id] = name;
 }
 
@@ -215,7 +255,7 @@ void ProfilerAnalyzer::ProcessData() {
 }
 
 void ProfilerAnalyzer::Clear() noexcept {
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   if (!init_ || !profiler_enable_ || data_line_.empty()) {
     return;
   }
@@ -250,7 +290,7 @@ std::string ProfilerAnalyzer::GetBriefName(const std::string &scope_name) const 
 
 void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
   MS_EXCEPTION_IF_NULL(data);
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   (void)data_.emplace_back(data);
 }
 
@@ -260,7 +300,7 @@ void ProfilerAnalyzer::StartStep() {
     return;
   }
 
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   ++step_;
   // Reset the saved data.
   data_.clear();
@@ -313,7 +353,7 @@ void ProfilerAnalyzer::EndStep() {
     return;
   }
 
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   if (data_.empty()) {
     return;
   }

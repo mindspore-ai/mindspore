@@ -47,30 +47,16 @@ class MultilabelMarginLossHelperGpuKernel : public GpuKernelHelperBase {
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     ResetResource();
-    constexpr size_t INPUT_NUM_1 = 1;
-    constexpr size_t INPUT_NUM_2 = 1;
     constexpr size_t OUTPUT_NUM_1 = 1;
     constexpr size_t OUTPUT_NUM_2 = 1;
     constexpr size_t WORKSPACE_NUM = 1;
     input_shape_ = input_shapes[0];
     target_shape_ = input_shapes[1];
-    std::vector<std::vector<int64_t>> input_shapes_1, input_shapes_2;
     std::vector<std::vector<int64_t>> output_shapes_1, output_shapes_2;
     std::vector<std::vector<int64_t>> workspace_shapes_T;
-    input_shapes_1.emplace_back(input_shape_);
-    input_shapes_2.emplace_back(target_shape_);
     output_shapes_1.emplace_back(output_shapes[0]);
     output_shapes_2.emplace_back(output_shapes[1]);
-    int inp_flag1 =
-      CalShapesSizeInBytes<T>(input_shapes_1, INPUT_NUM_1, kernel_name_, "input_shapes_1", &input_size_list_);
-    if (inp_flag1 == -1) {
-      return inp_flag1;
-    }
-    int inp_flag2 =
-      CalShapesSizeInBytes<int>(input_shapes_2, INPUT_NUM_2, kernel_name_, "input_shapes_2", &input_size_list_);
-    if (inp_flag2 == -1) {
-      return inp_flag2;
-    }
+
     int out_flag1 =
       CalShapesSizeInBytes<T>(output_shapes_1, OUTPUT_NUM_1, kernel_name_, "output_shapes_1", &output_size_list_);
     if (out_flag1 == -1) {
@@ -81,7 +67,7 @@ class MultilabelMarginLossHelperGpuKernel : public GpuKernelHelperBase {
     if (out_flag2 == -1) {
       return out_flag2;
     }
-    is_null_input_ = (inp_flag1 == 1 || inp_flag2 == 1 || out_flag1 == 1 || out_flag2 == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag1 == 1 || out_flag2 == 1);
 
     int WorkplaceBytes = input_shape_.size() == 1 ? 1 : input_shape_[0];
     std::vector<int64_t> workplace_shape;

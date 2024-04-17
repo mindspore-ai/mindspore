@@ -5,9 +5,9 @@ Neural Network Cell
 
 For building predefined building blocks or computational units in neural networks.
 
-For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of nn Interface <https://mindspore.cn/docs/en/master/note/dynamic_shape_nn.html>`_ .
+For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of nn Interface <https://mindspore.cn/docs/en/r2.3.q1/note/dynamic_shape_nn.html>`_ .
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.nn` operators in MindSpore, please refer to the link `mindspore.nn API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_en.md>`_ .
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.nn` operators in MindSpore, please refer to the link `mindspore.nn API Interface Change <https://gitee.com/mindspore/docs/blob/r2.3.q1/resource/api_updates/nn_api_updates_en.md>`_ .
 
 Basic Block
 -----------
@@ -47,9 +47,11 @@ Wrapper Layer
     mindspore.nn.FixedLossScaleUpdateCell
     mindspore.nn.ForwardValueAndGrad
     mindspore.nn.GetNextSingleOp
+    mindspore.nn.GradAccumulationCell
     mindspore.nn.MicroBatchInterleaved
     mindspore.nn.ParameterUpdate
     mindspore.nn.PipelineCell
+    mindspore.nn.PipelineGradReducer
     mindspore.nn.TimeDistributed
     mindspore.nn.TrainOneStepCell
     mindspore.nn.TrainOneStepWithLossScaleCell
@@ -263,6 +265,7 @@ Loss Function
     mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss
     mindspore.nn.MarginRankingLoss
+    mindspore.nn.MAELoss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
     mindspore.nn.MultilabelMarginLoss
@@ -383,7 +386,6 @@ Image Processing Layer
 
     mindspore.nn.PixelShuffle
     mindspore.nn.PixelUnshuffle
-    mindspore.nn.ResizeBilinear
     mindspore.nn.Upsample
 
 Tools

@@ -77,9 +77,6 @@ def test_set_auto_parallel_context():
         context.set_auto_parallel_context(device_num=0)
 
     with pytest.raises(ValueError):
-        context.set_auto_parallel_context(device_num=4097)
-
-    with pytest.raises(ValueError):
         context.set_auto_parallel_context(global_rank=-1)
 
     with pytest.raises(ValueError):

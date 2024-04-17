@@ -37,21 +37,20 @@ std::condition_variable TensorsQueueBaseMod::write_cdv_;
 // Create a TensorsQueue.
 TensorsQueueCreateKernelMod::TensorsQueueCreateKernelMod() : size_(0), elements_num_(0), type_(nullptr) {}
 
-bool TensorsQueueCreateKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  shapes_ = GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
-  type_ = GetAttr<TypePtr>(kernel_node, "dtype");
-  size_ = GetAttr<int64_t>(kernel_node, "size");
-  elements_num_ = GetAttr<int64_t>(kernel_node, "elements_num");
-  name_ = GetAttr<std::string>(kernel_node, "name");
-
+int TensorsQueueCreateKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  shapes_ = GetValue<std::vector<std::vector<int64_t>>>(primitive_->GetAttr("shapes"));
+  type_ = GetValue<TypePtr>(primitive_->GetAttr("dtype"));
+  size_ = GetValue<int64_t>(primitive_->GetAttr("size"));
+  elements_num_ = GetValue<int64_t>(primitive_->GetAttr("elements_num"));
+  name_ = GetValue<std::string>(primitive_->GetAttr("name"));
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
-  return true;
+  return KRET_OK;
 }
 
-bool TensorsQueueCreateKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TensorsQueueCreateKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   // Create a TensorsQueue, and generate an unique handle.
   int64_t tensors_queue_handle = TensorsQueueMgr::GetInstance().GetHandleCount();
   auto name = "TensorsQueue_" + name_ + "_" + std::to_string(tensors_queue_handle);
@@ -61,10 +60,10 @@ bool TensorsQueueCreateKernelMod::Launch(const std::vector<AddressPtr> &, const 
   tensors_queue->CreateTensorsQueue();
   auto out_addr = GetDeviceAddress<int64_t>(outputs, 0);
   // Set handle to out_addr.
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(out_addr, &tensors_queue_handle, sizeof(int64_t), cudaMemcpyHostToDevice,
-                                             reinterpret_cast<cudaStream_t>(stream_ptr)),
-                             "Create TensorsQueue failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(out_addr, &tensors_queue_handle, sizeof(int64_t), cudaMemcpyHostToDevice,
+                    reinterpret_cast<cudaStream_t>(stream_ptr)),
+    "Create TensorsQueue failed");
   MS_LOG(DEBUG) << "Create handle id " << tensors_queue_handle;
   // Put the TensorsQueue to a saved map : map<handle, TensorsQueue> in TensorsQueue manager.
   // And increase the handle count automatically in AddTensorsQueue function.
@@ -75,36 +74,34 @@ bool TensorsQueueCreateKernelMod::Launch(const std::vector<AddressPtr> &, const 
 // Put one element into a TensorsQueue
 TensorsQueuePutKernelMod::TensorsQueuePutKernelMod() : elements_num_(0) {}
 
-bool TensorsQueuePutKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
+int TensorsQueuePutKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   // Current all the tensor in one element should have the same type.
-  type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kSecondInputIndex);
-  elements_num_ = GetAttr<int64_t>(kernel_node, "elements_num");
-
-  // Input[0] for handle.
-  input_size_list_.push_back(sizeof(int64_t));
-  // Input[1-n] : (Tensor(), Tensor(), ...)
-  for (int64_t i = 0; i < elements_num_; i++) {
-    auto shapes = AnfAlgo::GetInputDeviceShape(kernel_node, LongToSize(i + 1));
-    auto value_size =
-      std::accumulate(shapes.begin(), shapes.end(), GetTypeByte(TypeIdToType(type_)), std::multiplies<size_t>());
-    input_size_list_.push_back(value_size);
-  }
+  type_ = inputs[kSecondInputIndex]->dtype_id();
+  elements_num_ = GetValue<int64_t>(primitive_->GetAttr("elements_num"));
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
-  return true;
+  return KRET_OK;
 }
 
-bool TensorsQueuePutKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &, void *stream) {
+bool TensorsQueuePutKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &, void *stream) {
   cudaStream_t cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  GPUTensorsQueuePtr tensors_q = GetTensorsQueue(kernel_node_, inputs, cuda_stream);
+  GPUTensorsQueuePtr tensors_q = GetTensorsQueue(inputs, cuda_stream);
   std::unique_lock<std::mutex> lock_(tq_mutex_);
   int retry_times = 0;
   // If the tensors_q is full, put data will failed. So the op will sleep and waited to be notified.
   // Else if put succeed, we will notify all the warit op in read_cdv_.
   while (true) {
-    if (!tensors_q->Put(inputs, stream)) {
+    AddressPtrList dev_addr_list;
+    for (auto i : inputs) {
+      AddressPtr dev_addr = std::make_shared<kernel::Address>();
+      dev_addr->addr = i->device_ptr();
+      dev_addr->size = i->size();
+      (void)dev_addr_list.emplace_back(dev_addr);
+    }
+
+    if (!tensors_q->Put(dev_addr_list, stream)) {
       if (write_cdv_.wait_for(lock_, std::chrono::seconds(kRetryNumber),
                               [this, tensors_q] { return !tensors_q->IsFull(); })) {
         retry_times++;
@@ -125,35 +122,38 @@ bool TensorsQueuePutKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
 // Get or Pop one element from a TensorsQueue
 TensorsQueueGetKernelMod::TensorsQueueGetKernelMod() : elements_num_(0), pop_after_get_(false) {}
 
-bool TensorsQueueGetKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
+int TensorsQueueGetKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   // Current all the tensor in one element should have the same type.
-  TypePtr type = GetAttr<TypePtr>(kernel_node, "dtype");
-  elements_num_ = GetAttr<int64_t>(kernel_node, "elements_num");
-  pop_after_get_ = GetAttr<bool>(kernel_node, "pop_after_get");
-  auto shapes = GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
-
-  // Input[0] for handle.
-  input_size_list_.push_back(sizeof(int64_t));
-
+  TypePtr type = GetValue<TypePtr>(primitive_->GetAttr("dtype"));
+  elements_num_ = GetValue<int64_t>(primitive_->GetAttr("elements_num"));
+  pop_after_get_ = GetValue<bool>(primitive_->GetAttr("pop_after_get"));
+  auto shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive_->GetAttr("shapes"));
+  output_size_list_.clear();
   for (int64_t i = 0; i < elements_num_; i++) {
     size_t value_size = GetTypeByte(type) * SizeOf(shapes[i]);
     output_size_list_.push_back(value_size);
   }
-  return true;
+  return KRET_OK;
 }
 
-bool TensorsQueueGetKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs, void *stream) {
+bool TensorsQueueGetKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs, void *stream) {
   cudaStream_t cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  GPUTensorsQueuePtr tensors_q = GetTensorsQueue(kernel_node_, inputs, cuda_stream);
+  GPUTensorsQueuePtr tensors_q = GetTensorsQueue(inputs, cuda_stream);
   std::unique_lock<std::mutex> lock_(tq_mutex_);
   // Get one element from the head of tensors_q, if `pop_after_get` is true, then pop the tensors_q.
   // If the tensors_q is empty, get/pop failed, retry for max kRetryNumber times.
   int retry_times = 0;
   while (true) {
-    if (!tensors_q->Get(outputs, pop_after_get_, stream)) {
+    AddressPtrList dev_addr_list;
+    for (auto i : outputs) {
+      AddressPtr dev_addr = std::make_shared<kernel::Address>();
+      dev_addr->addr = i->device_ptr();
+      dev_addr->size = i->size();
+      (void)dev_addr_list.emplace_back(dev_addr);
+    }
+    if (!tensors_q->Get(dev_addr_list, pop_after_get_, stream)) {
       if (read_cdv_.wait_for(lock_, std::chrono::seconds(kRetryNumber)) == std::cv_status::timeout) {
         retry_times++;
         MS_LOG(WARNING) << "Retry get data from TensorsQueue [" << retry_times << "/" << kRetryNumber << "].";
@@ -173,20 +173,18 @@ bool TensorsQueueGetKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
 // Clear the TensorsQueue
 TensorsQueueClearKernelMod::TensorsQueueClearKernelMod() {}
 
-bool TensorsQueueClearKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  // Input[0] for handle.
-  input_size_list_.push_back(sizeof(int64_t));
+int TensorsQueueClearKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
-  return true;
+  return KRET_OK;
 }
 
-bool TensorsQueueClearKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs, void *stream) {
+bool TensorsQueueClearKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs, void *stream) {
   cudaStream_t cuda_stream = reinterpret_cast<cudaStream_t>(stream);
 
-  GPUTensorsQueuePtr tensors_q = GetTensorsQueue(kernel_node_, inputs, cuda_stream);
+  GPUTensorsQueuePtr tensors_q = GetTensorsQueue(inputs, cuda_stream);
   std::unique_lock<std::mutex> lock_(tq_mutex_);
   // Return all the element addr back to store, and the tensors_q will be empty.
   tensors_q->Clear();
@@ -196,24 +194,22 @@ bool TensorsQueueClearKernelMod::Launch(const std::vector<AddressPtr> &inputs, c
 // Get size of the TensorsQueue
 TensorsQueueSizeKernelMod::TensorsQueueSizeKernelMod() {}
 
-bool TensorsQueueSizeKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  // Input[0] for handle.
-  input_size_list_.push_back(sizeof(int64_t));
+int TensorsQueueSizeKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
-  return true;
+  return KRET_OK;
 }
 
-bool TensorsQueueSizeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &outputs, void *stream) {
+bool TensorsQueueSizeKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &outputs, void *stream) {
   cudaStream_t cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  GPUTensorsQueuePtr tensors_q = GetTensorsQueue(kernel_node_, inputs, cuda_stream);
+  GPUTensorsQueuePtr tensors_q = GetTensorsQueue(inputs, cuda_stream);
   std::unique_lock<std::mutex> lock_(tq_mutex_);
   auto out_addr = GetDeviceAddress<int64_t>(outputs, 0);
   int64_t host_size = SizeToLong(tensors_q->AvailableSize());
-  CHECK_CUDA_RET_WITH_EXCEPT(
-    kernel_node_, cudaMemcpyAsync(out_addr, &host_size, sizeof(int64_t), cudaMemcpyHostToDevice, cuda_stream),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(out_addr, &host_size, sizeof(int64_t), cudaMemcpyHostToDevice, cuda_stream),
     "Set host size to device failed");
   return true;
 }
@@ -221,26 +217,24 @@ bool TensorsQueueSizeKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
 // Close the TensorsQueue
 TensorsQueueCloseKernelMod::TensorsQueueCloseKernelMod() {}
 
-bool TensorsQueueCloseKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  // Input[0] for handle.
-  input_size_list_.push_back(sizeof(int64_t));
+int TensorsQueueCloseKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
-  return true;
+  return KRET_OK;
 }
 
-bool TensorsQueueCloseKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs, void *stream) {
+bool TensorsQueueCloseKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs, void *stream) {
   cudaStream_t cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_ERROR_IF_NULL(handle_addr);
   int64_t handle = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(
-    kernel_node_, cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
     "Get handle to host failed");
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(cuda_stream),
-                             "TensorsQueueClose cudaStreamSynchronized failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream),
+                                     "TensorsQueueClose cudaStreamSynchronized failed");
   auto tensors_q = std::dynamic_pointer_cast<GPUTensorsQueue>(TensorsQueueMgr::GetInstance().GetTensorsQueue(handle));
   MS_EXCEPTION_IF_NULL(tensors_q);
   // Free memory

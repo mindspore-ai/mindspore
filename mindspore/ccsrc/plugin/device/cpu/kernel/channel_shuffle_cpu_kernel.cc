@@ -32,17 +32,16 @@ constexpr size_t kChannelShuffleOutputsNum = 1;
   }
 }  // namespace
 
-bool ChannelShuffleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  input_dtype_ = inputs[0]->GetDtype();
-  group_ = GetValue<int64_t>(base_operator->GetAttr("group"));
+bool ChannelShuffleCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  input_dtype_ = inputs[0]->dtype_id();
+  group_ = GetValue<int64_t>(primitive_->GetAttr("group"));
   return true;
 }
 
-bool ChannelShuffleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool ChannelShuffleCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &workspace,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kChannelShuffleInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kChannelShuffleOutputsNum, kernel_name_);
   switch (input_dtype_) {
@@ -64,10 +63,9 @@ bool ChannelShuffleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
   return true;
 }
 
-int ChannelShuffleCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ChannelShuffleCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[0]->GetShapeVector();
@@ -91,8 +89,8 @@ std::vector<KernelAttr> ChannelShuffleCpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-bool ChannelShuffleCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
+bool ChannelShuffleCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   int64_t dims = SizeToLong(input_shape_.size());
   int64_t b = input_shape_[0];
   int64_t c = input_shape_[1];
@@ -103,8 +101,8 @@ bool ChannelShuffleCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   for (int64_t i = 2; i < dims; i++) {
     area = area * input_shape_[i];
   }
-  auto *in = static_cast<T *>(inputs[0]->addr);
-  auto *out = static_cast<T *>(outputs[0]->addr);
+  auto *in = static_cast<T *>(inputs[0]->device_ptr());
+  auto *out = static_cast<T *>(outputs[0]->device_ptr());
 
   /*
     view the shape to n g c/g h*w,and transpose dim 1 and dim 2

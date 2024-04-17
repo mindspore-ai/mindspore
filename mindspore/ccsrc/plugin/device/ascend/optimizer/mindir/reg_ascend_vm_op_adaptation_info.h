@@ -57,7 +57,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kPushWeightOpName).set_input_attr_info(1).set_i
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kROIAlignGradOpName).set_input_attr_info(2, "listInt");
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSimpleMeanGradOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSubscalarOpName).set_input_attr_info(1);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherDGradV2OpName).set_input_attr_info(1).set_is_ascend_mindir();
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kReshapeOpName).set_input_attr_info(1, "listInt");
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kTensorCopySlicesOpName)
@@ -121,7 +120,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kPReLUGradOpName).set_backend_op_name(kPReluGra
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kReLUOpName).set_backend_op_name(kReluOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kReLU6OpName).set_backend_op_name(kRelu6OpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kReLU6GradOpName).set_backend_op_name(kRelu6GradOpName);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kReLUV2OpName).set_backend_op_name(kReluV2OpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kResizeBilinearOpName)
   .set_target_op_name(kResizeBilinearV2DOpName)
   .set_need_tbe_check_supported(true);
@@ -190,13 +188,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kBatchToSpaceOpName)
   .set_input_attr_info(1, "listInt");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kBatchToSpaceNDOpName).set_backend_op_name(kBatchToSpaceNDDOpName);
-
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kCastOpName)
-  .set_target_op_name(kCastOpName)
-  .set_input_attr_info(1, "int")
-  .set_is_ascend_mindir();
-
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kScalarCastOpName).set_target_op_name(kScalarCastOpName).set_input_attr_info(1, "int");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kScalarToTensorOpName)
   .set_target_op_name(kScalarToTensorOpName)

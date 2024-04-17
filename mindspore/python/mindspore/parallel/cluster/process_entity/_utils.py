@@ -13,8 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """Utils for ms_run"""
+import os
+import json
 import requests
-import netifaces
+import mindspore.log as logger
 
 def _generate_cmd(cmd, cmd_args, output_name):
     """
@@ -22,8 +24,39 @@ def _generate_cmd(cmd, cmd_args, output_name):
     edirecting the output to a log file.
 
     """
-    command = f"python {cmd} {' '.join(cmd_args)} > {output_name}.log 2>&1 &"
+    if cmd not in ['python', 'pytest']:
+        # If user don't set binary file name, defaulty use 'python' to launch the job.
+        command = f"python {cmd} {' '.join(cmd_args)} > {output_name} 2>&1 &"
+    else:
+        command = f"{cmd} {' '.join(cmd_args)} > {output_name} 2>&1 &"
     return command
+
+
+def _generate_cmd_args_list(cmd, cmd_args):
+    """
+    Generates arguments list for 'Popen'. It consists of a binary file name and subsequential arguments.
+    """
+    if cmd not in ['python', 'pytest']:
+        # If user don't set binary file name, defaulty use 'python' to launch the job.
+        return ['python'] + [cmd] + cmd_args
+    return [cmd] + cmd_args
+
+
+def _generate_cmd_args_list_with_core(cmd, cmd_args, cpu_start, cpu_end):
+    """
+    Generates arguments list for 'Popen'. It consists of a binary file name and subsequential arguments.
+    """
+    # Bind cpu cores to this process.
+    taskset_args = ['taskset'] + ['-c'] + [str(cpu_start) + '-' + str(cpu_end)]
+    final_cmd = []
+    if cmd not in ['python', 'pytest']:
+        # If user don't set binary file name, defaulty use 'python' to launch the job.
+        final_cmd = taskset_args + ['python'] + [cmd] + cmd_args
+    else:
+        final_cmd = taskset_args + [cmd] + cmd_args
+    logger.info(f"Launch process with command: {' '.join(final_cmd)}")
+    return final_cmd
+
 
 def _generate_url(addr, port):
     """
@@ -33,23 +66,23 @@ def _generate_url(addr, port):
     url = f"http://{addr}:{port}/"
     return url
 
+
 def _is_local_ip(ip_address):
     """
     Check if the current input IP address is a local IP address.
 
     """
-    interfaces = netifaces.interfaces()
-    for interface in interfaces:
-        addresses = netifaces.ifaddresses(interface)
-        if netifaces.AF_INET in addresses:
-            for addr_info in addresses[netifaces.AF_INET]:
-                if addr_info['addr'] == ip_address:
-                    return True
-        if netifaces.AF_INET6 in addresses:
-            for addr_info in addresses[netifaces.AF_INET6]:
-                if addr_info['addr'] == ip_address:
-                    return True
+    p = os.popen("ip -j addr")
+    addr_info_str = p.read()
+    p.close()
+    addr_infos = json.loads(addr_info_str)
+    for info in addr_infos:
+        for addr in info["addr_info"]:
+            if addr["local"] == ip_address:
+                logger.info(f"IP address found on this node. Address info:{addr}.")
+                return True
     return False
+
 
 def _send_scale_num(url, scale_num):
     """
@@ -65,6 +98,7 @@ def _send_scale_num(url, scale_num):
     except requests.exceptions.RequestException:
         return None
 
+
 def _get_status_and_params(url):
     """
     Send an HTTP request to a specified URL to query status and retrieve partial parameters.
@@ -75,8 +109,8 @@ def _get_status_and_params(url):
         response.raise_for_status()
         response_data = response.json()
         network_changed = response_data.get("network_changed")
-        total_nodes = response_data.get("total_nodes")
-        local_nodes = response_data.get("local_nodes")
-        return network_changed, total_nodes, local_nodes
+        worker_num = response_data.get("worker_num")
+        local_worker_num = response_data.get("local_worker_num")
+        return network_changed, worker_num, local_worker_num
     except requests.exceptions.RequestException:
         return None

@@ -22,17 +22,10 @@
 #include <algorithm>
 #include <memory>
 #include "mindspore/core/ops/math_ops.h"
-#include "nnacl/fp32/arithmetic_self_fp32.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-void Ceil(const float *input, float *output, size_t start, size_t end) {
-  auto input_s = input + start;
-  auto output_s = output + start;
-  ElementCeil(input_s, output_s, static_cast<int>(end - start));
-}
-
 template <typename T, typename S>
 void Real(const T *input, S *output, size_t start, size_t end) {
   for (size_t i = start; i < end; ++i) {
@@ -71,14 +64,14 @@ class UnaryOpCpuKernelFunc : public CpuKernelFunc {
   ~UnaryOpCpuKernelFunc() override = default;
   using UnaryOpFunc = std::function<void(const T *, S *, size_t, size_t)>;
 
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override {
+    kernel_name_ = primitive->name();
     GetUnaryOpFunc();
   }
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override {
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override {
     auto output = outputs.front();
     const auto input_addr = GetDeviceAddress<T>(inputs, 0);
     auto output_addr = GetDeviceAddress<S>(outputs, 0);
@@ -87,7 +80,7 @@ class UnaryOpCpuKernelFunc : public CpuKernelFunc {
     }
     ParallelLaunchAutoSearch(
       std::bind(unary_op_func_, input_addr, output_addr, std::placeholders::_1, std::placeholders::_2),
-      output->size / sizeof(S), this, &parallel_search_info_);
+      output->size() / sizeof(S), this, &parallel_search_info_);
     return true;
   }
 
@@ -96,12 +89,6 @@ class UnaryOpCpuKernelFunc : public CpuKernelFunc {
     const std::map<std::string, UnaryOpFunc> kCommonSupportedMap = {{prim::kPrimReal->name(), &Real<T, S>},
                                                                     {prim::kPrimImag->name(), &Imag<T, S>},
                                                                     {prim::kPrimConj->name(), &Conj<T, S>}};
-    if constexpr (std::is_same<T, float>::value) {
-      if (kernel_name_ == prim::kPrimCeil->name()) {
-        unary_op_func_ = &Ceil;
-        return;
-      }
-    }
     auto iter = kCommonSupportedMap.find(kernel_name_);
     if (iter != kCommonSupportedMap.end()) {
       unary_op_func_ = iter->second;
@@ -142,9 +129,6 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>>
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeUnaryFunc<double, double>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>}}},
-  {prim::kPrimCeil->name(),
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     SpecializeUnaryFunc<float, float>}}},
   {prim::kPrimImag->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),
      SpecializeUnaryFunc<complex128, double>},
@@ -197,9 +181,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>>
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>}}}};
 }  // namespace
 
-bool UnaryOpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool UnaryOpCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
   if (inputs.empty() || outputs.empty() || is_null_input_) {
@@ -212,14 +194,12 @@ bool UnaryOpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     MS_LOG(EXCEPTION) << kernel_attr << " does not support this kernel data type: " << kernel_attr;
   }
   func_obj_ = kernel_attr_list[kernel_name_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int UnaryOpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  return KernelMod::Resize(base_operator, inputs, outputs);
+int UnaryOpCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return KernelMod::Resize(inputs, outputs);
 }
 
 std::vector<KernelAttr> UnaryOpCpuKernelMod::GetOpSupport() {
@@ -238,7 +218,5 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Imag,
                                  []() { return std::make_shared<UnaryOpCpuKernelMod>(prim::kPrimImag->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Conj,
                                  []() { return std::make_shared<UnaryOpCpuKernelMod>(prim::kPrimConj->name()); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Ceil,
-                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(prim::kPrimCeil->name()); });
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,0 +1,29 @@
+real_div:
+    description: |
+        Divides the first input tensor by the second input tensor in floating-point type element-wise.
+
+        Refer to :func:`mindspore.ops.div` for more details.
+    
+        Inputs:
+            - **x** (Union[Tensor, Number, bool]) - The first input is a number or
+              a bool or a tensor whose data type is number or bool.
+            - **y** (Union[Tensor, Number, bool]) - The second input is a number or
+              a bool when the first input is a tensor or a tensor whose data type is number or bool.
+    
+        Outputs:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+            >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
+            >>> realdiv = ops.RealDiv()
+            >>> output = realdiv(x, y)
+            >>> print(output)
+            [0.25 0.4  0.5 ]

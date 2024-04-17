@@ -84,7 +84,7 @@ class BACKEND_EXPORT PhiloxRandom {
     counter_[kIndex3] = static_cast<uint32_t>(seed_hi >> kMoveStepInBit);
   }
 
-  PhiloxRandom(ResultType counter, Key key) : counter_(counter), key_(key) {}
+  PhiloxRandom(const ResultType &counter, const Key &key) : counter_(counter), key_(key) {}
 
   PhiloxRandom(int64_t seed, uint64_t offset) {
     const uint32_t seed_low_index = 0;

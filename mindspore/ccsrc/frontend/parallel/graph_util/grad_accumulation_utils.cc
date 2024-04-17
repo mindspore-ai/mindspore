@@ -79,7 +79,7 @@ void TagMicroBatchEnd(const FuncGraphManagerPtr &manager, const std::vector<AnfN
     if (ParallelContext::GetInstance()->grad_accumulation_step() > 1 && !end_cnode->HasPrimalAttr(MICRO)) {
       MS_LOG(EXCEPTION) << "Cannot find micro attribute for forward_end nodes";
     }
-    for (size_t i = 0; i < end_cnode->inputs().size(); ++i) {
+    for (size_t i = 0; i < end_cnode->size(); ++i) {
       auto temp_node = GetRealKernelNode(end_cnode->input(i), -1, nullptr).first;
       if (!temp_node->isa<CNode>()) {
         continue;

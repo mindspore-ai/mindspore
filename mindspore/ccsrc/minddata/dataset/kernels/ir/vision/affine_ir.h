@@ -35,7 +35,8 @@ constexpr char kAffineOperation[] = "Affine";
 class AffineOperation : public TensorOperation {
  public:
   AffineOperation(float_t degrees, const std::vector<float> &translation, float scale, const std::vector<float> &shear,
-                  InterpolationMode interpolation, const std::vector<uint8_t> &fill_value);
+                  InterpolationMode interpolation, const std::vector<uint8_t> &fill_value,
+                  const std::string &device_target = "CPU");
 
   ~AffineOperation() override;
 
@@ -49,6 +50,8 @@ class AffineOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   float degrees_;
   std::vector<float> translation_;
@@ -56,6 +59,7 @@ class AffineOperation : public TensorOperation {
   std::vector<float> shear_;
   InterpolationMode interpolation_;
   std::vector<uint8_t> fill_value_;
+  std::string device_target_;
 };
 }  // namespace vision
 }  // namespace dataset

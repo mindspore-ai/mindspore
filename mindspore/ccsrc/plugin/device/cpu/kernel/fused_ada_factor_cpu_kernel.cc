@@ -47,25 +47,24 @@ constexpr size_t kGlobalNormIndex = 12;
 constexpr size_t kWorkSpaceUpdateIndex = 0;
 constexpr size_t kWorkSpaceRFactorIndex = 1;
 constexpr size_t kWorkSpaceCFactorIndex = 2;
+auto constexpr kEnableScaleParameter = "enable_scale_parameter";
+auto constexpr kEnableFirstMoment = "enable_first_moment";
+auto constexpr kEnableWeightDecay = "enable_weight_decay";
 }  // namespace
 
-bool FusedAdaFactorCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  param_dtype_ = inputs[kParamIndex]->GetDtype();
-  auto op_ptr = std::dynamic_pointer_cast<ops::FusedAdaFactor>(base_operator);
-  MS_EXCEPTION_IF_NULL(op_ptr);
-  enable_scale_parameter_ = op_ptr->get_enable_scale_parameter();
-  enable_first_moment_ = op_ptr->get_enable_first_moment();
-  enable_weight_decay_ = op_ptr->get_enable_weight_decay();
+bool FusedAdaFactorCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  param_dtype_ = inputs[kParamIndex]->dtype_id();
+
+  enable_scale_parameter_ = GetValue<bool>(primitive_->GetAttr(kEnableScaleParameter));
+  enable_first_moment_ = GetValue<bool>(primitive_->GetAttr(kEnableFirstMoment));
+  enable_weight_decay_ = GetValue<bool>(primitive_->GetAttr(kEnableWeightDecay));
   return true;
 }
 
-int FusedAdaFactorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int FusedAdaFactorCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -123,14 +122,14 @@ float FusedAdaFactorCpuKernelMod::CalcRMS(const T *input, size_t elem_num) const
 }
 
 template <typename T>
-void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspaces) const {
-  auto beta2t = reinterpret_cast<float *>(inputs[kBeta2tIndex]->addr)[kScalarIndex];
-  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  auto exp_avg_sq_row = reinterpret_cast<T *>(inputs[kExpAvgSQRowIndex]->addr);
-  auto exp_avg_sq_col = reinterpret_cast<T *>(inputs[kExpAvgSQColIndex]->addr);
-  auto r_factor = reinterpret_cast<float *>(workspaces[kWorkSpaceRFactorIndex]->addr);
-  auto c_factor = reinterpret_cast<float *>(workspaces[kWorkSpaceCFactorIndex]->addr);
+void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspaces) const {
+  auto beta2t = reinterpret_cast<float *>(inputs[kBeta2tIndex]->device_ptr())[kScalarIndex];
+  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  auto exp_avg_sq_row = reinterpret_cast<T *>(inputs[kExpAvgSQRowIndex]->device_ptr());
+  auto exp_avg_sq_col = reinterpret_cast<T *>(inputs[kExpAvgSQColIndex]->device_ptr());
+  auto r_factor = reinterpret_cast<float *>(workspaces[kWorkSpaceRFactorIndex]->device_ptr());
+  auto c_factor = reinterpret_cast<float *>(workspaces[kWorkSpaceCFactorIndex]->device_ptr());
   auto one_minus_beta2t = 1 - beta2t;
 
   std::function<void(size_t, size_t)> task;
@@ -202,20 +201,20 @@ void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<A
 }
 
 template <typename T>
-void FusedAdaFactorCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspaces,
-                                              const std::vector<AddressPtr> &) {
-  auto epsilon = reinterpret_cast<float *>(inputs[kEpsIndex]->addr);
-  auto clip_threshold = reinterpret_cast<float *>(inputs[kClipThresholdIndex]->addr)[kScalarIndex];
-  auto beta1 = reinterpret_cast<float *>(inputs[kBeta1Index]->addr)[kScalarIndex];
-  auto beta2t = reinterpret_cast<float *>(inputs[kBeta2tIndex]->addr)[kScalarIndex];
-  auto weight_decay = reinterpret_cast<float *>(inputs[kWeightDecayIndex]->addr)[kScalarIndex];
-  auto learning_rate = reinterpret_cast<float *>(inputs[kLearningRateIndex]->addr)[kScalarIndex];
-  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  auto param = reinterpret_cast<T *>(inputs[kParamIndex]->addr);
-  auto exp_avg = reinterpret_cast<T *>(inputs[kExpAvgIndex]->addr);
-  auto exp_avg_sq = reinterpret_cast<T *>(inputs[kExpAvgSQIndex]->addr);
-  auto update = reinterpret_cast<float *>(workspaces[kWorkSpaceUpdateIndex]->addr);
+void FusedAdaFactorCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspaces,
+                                              const std::vector<KernelTensor *> &) {
+  auto epsilon = reinterpret_cast<float *>(inputs[kEpsIndex]->device_ptr());
+  auto clip_threshold = reinterpret_cast<float *>(inputs[kClipThresholdIndex]->device_ptr())[kScalarIndex];
+  auto beta1 = reinterpret_cast<float *>(inputs[kBeta1Index]->device_ptr())[kScalarIndex];
+  auto beta2t = reinterpret_cast<float *>(inputs[kBeta2tIndex]->device_ptr())[kScalarIndex];
+  auto weight_decay = reinterpret_cast<float *>(inputs[kWeightDecayIndex]->device_ptr())[kScalarIndex];
+  auto learning_rate = reinterpret_cast<float *>(inputs[kLearningRateIndex]->device_ptr())[kScalarIndex];
+  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  auto param = reinterpret_cast<T *>(inputs[kParamIndex]->device_ptr());
+  auto exp_avg = reinterpret_cast<T *>(inputs[kExpAvgIndex]->device_ptr());
+  auto exp_avg_sq = reinterpret_cast<T *>(inputs[kExpAvgSQIndex]->device_ptr());
+  auto update = reinterpret_cast<float *>(workspaces[kWorkSpaceUpdateIndex]->device_ptr());
   auto one_minus_beta1 = 1 - beta1;
   auto one_minus_beta2t = 1 - beta2t;
   if (clip_threshold <= 0) {
@@ -285,11 +284,11 @@ void FusedAdaFactorCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   CPUKernelUtils::ParallelFor(task, elem_num_, kBatchSize);
 }
 
-bool FusedAdaFactorCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspaces,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool FusedAdaFactorCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &workspaces,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() == kStandardInputNum + 1) {
-    auto global_norm = reinterpret_cast<float *>(inputs[kGlobalNormIndex]->addr)[kScalarIndex];
+    auto global_norm = reinterpret_cast<float *>(inputs[kGlobalNormIndex]->device_ptr())[kScalarIndex];
     if (global_norm < kEps) {
       global_norm_reciprocal_ = 1.0f;
     } else {
@@ -307,89 +306,89 @@ bool FusedAdaFactorCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
   return true;
 }
 
-void FusedAdaFactorCpuKernelMod::CheckInputAddresses(const std::vector<kernel::AddressPtr> &inputs) const {
+void FusedAdaFactorCpuKernelMod::CheckInputAddresses(const std::vector<kernel::KernelTensor *> &inputs) const {
   if (inputs.size() < kStandardInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be at least " << kStandardInputNum
                       << ", but got: " << inputs.size();
   }
 
-  if (inputs[kEpsIndex]->size != kSizeFloat32 << 1) {
+  if (inputs[kEpsIndex]->size() != kSizeFloat32 << 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'epsilon' must be " << (kSizeFloat32 << 1)
-                      << ", but got " << inputs[kEpsIndex]->size;
+                      << ", but got " << inputs[kEpsIndex]->size();
   }
-  if (inputs[kClipThresholdIndex]->size != kSizeFloat32) {
+  if (inputs[kClipThresholdIndex]->size() != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'clip_threshold' must be " << kSizeFloat32
-                      << ", but got " << inputs[kClipThresholdIndex]->size;
+                      << ", but got " << inputs[kClipThresholdIndex]->size();
   }
-  if (inputs[kBeta1Index]->size != kSizeFloat32) {
+  if (inputs[kBeta1Index]->size() != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta1' must be " << kSizeFloat32
-                      << ", but got " << inputs[kBeta1Index]->size;
+                      << ", but got " << inputs[kBeta1Index]->size();
   }
-  if (inputs[kBeta2tIndex]->size != kSizeFloat32) {
+  if (inputs[kBeta2tIndex]->size() != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta2t' must be " << kSizeFloat32
-                      << ", but got " << inputs[kBeta2tIndex]->size;
+                      << ", but got " << inputs[kBeta2tIndex]->size();
   }
-  if (inputs[kWeightDecayIndex]->size != kSizeFloat32) {
+  if (inputs[kWeightDecayIndex]->size() != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'weight_decay' must be " << kSizeFloat32
-                      << ", but got " << inputs[kWeightDecayIndex]->size;
+                      << ", but got " << inputs[kWeightDecayIndex]->size();
   }
-  if (inputs[kLearningRateIndex]->size != kSizeFloat32) {
+  if (inputs[kLearningRateIndex]->size() != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'lr' must be " << kSizeFloat32
-                      << ", but got " << inputs[kLearningRateIndex]->size;
+                      << ", but got " << inputs[kLearningRateIndex]->size();
   }
 
   size_t param_size = param_dtype_ == kNumberTypeFloat16 ? elem_num_ * kSizeFloat16 : elem_num_ * kSizeFloat32;
-  if (inputs[kParamIndex]->size != param_size) {
+  if (inputs[kParamIndex]->size() != param_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'param' must be " << param_size
-                      << ", but got " << inputs[kParamIndex]->size;
+                      << ", but got " << inputs[kParamIndex]->size();
   }
-  if (inputs[kGradIndex]->size != param_size) {
+  if (inputs[kGradIndex]->size() != param_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'gradient' must be " << param_size
-                      << ", but got " << inputs[kGradIndex]->size;
+                      << ", but got " << inputs[kGradIndex]->size();
   }
 
-  if (enable_first_moment_ && inputs[kExpAvgIndex]->size != param_size) {
+  if (enable_first_moment_ && inputs[kExpAvgIndex]->size() != param_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg' must be " << param_size
-                      << ", but got " << inputs[kExpAvgIndex]->size;
+                      << ", but got " << inputs[kExpAvgIndex]->size();
   }
 
   if (!need_factor_) {
-    if (inputs[kExpAvgSQIndex]->size != param_size) {
+    if (inputs[kExpAvgSQIndex]->size() != param_size) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg_sq' must be " << param_size
-                        << ", but got " << inputs[kExpAvgSQIndex]->size;
+                        << ", but got " << inputs[kExpAvgSQIndex]->size();
     }
     return;
   }
 
-  if (inputs[kExpAvgSQRowIndex]->size != param_size / last_row_dim_size_) {
+  if (inputs[kExpAvgSQRowIndex]->size() != param_size / last_row_dim_size_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg_sq_row' must be "
-                      << param_size / last_row_dim_size_ << ", but got " << inputs[kExpAvgSQRowIndex]->size;
+                      << param_size / last_row_dim_size_ << ", but got " << inputs[kExpAvgSQRowIndex]->size();
   }
-  if (inputs[kExpAvgSQColIndex]->size != param_size / last_col_dim_size_) {
+  if (inputs[kExpAvgSQColIndex]->size() != param_size / last_col_dim_size_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg_sq_col' must be "
-                      << param_size / last_col_dim_size_ << ", but got " << inputs[kExpAvgSQColIndex]->size;
+                      << param_size / last_col_dim_size_ << ", but got " << inputs[kExpAvgSQColIndex]->size();
   }
 }
 
-void FusedAdaFactorCpuKernelMod::CheckWorkspaceAddresses(const std::vector<kernel::AddressPtr> &workspaces) const {
+void FusedAdaFactorCpuKernelMod::CheckWorkspaceAddresses(const std::vector<kernel::KernelTensor *> &workspaces) const {
   if (workspaces.size() != kWorkSpaceNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces must be " << kWorkSpaceNum
                       << ", but got: " << workspaces.size();
   }
 
   size_t update_size = elem_num_ * kSizeFloat32;
-  if (workspaces[kWorkSpaceUpdateIndex]->size != elem_num_ * kSizeFloat32) {
+  if (workspaces[kWorkSpaceUpdateIndex]->size() != elem_num_ * kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'update ' must be " << update_size
-                      << ", but got " << workspaces[kWorkSpaceUpdateIndex]->size;
+                      << ", but got " << workspaces[kWorkSpaceUpdateIndex]->size();
   }
 
-  if (workspaces[kWorkSpaceRFactorIndex]->size != update_size / last_row_dim_size_) {
+  if (workspaces[kWorkSpaceRFactorIndex]->size() != update_size / last_row_dim_size_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'r_factor' must be "
-                      << update_size / last_row_dim_size_ << ", but got " << workspaces[kWorkSpaceRFactorIndex]->size;
+                      << update_size / last_row_dim_size_ << ", but got " << workspaces[kWorkSpaceRFactorIndex]->size();
   }
-  if (workspaces[kWorkSpaceCFactorIndex]->size != update_size / last_col_dim_size_) {
+  if (workspaces[kWorkSpaceCFactorIndex]->size() != update_size / last_col_dim_size_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'c_factor' must be "
-                      << update_size / last_col_dim_size_ << ", but got " << workspaces[kWorkSpaceCFactorIndex]->size;
+                      << update_size / last_col_dim_size_ << ", but got " << workspaces[kWorkSpaceCFactorIndex]->size();
   }
 }
 

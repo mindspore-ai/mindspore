@@ -18,8 +18,14 @@
 
 namespace mindspore {
 namespace transform {
+REGISTER_ACL_OP(GatherNd).set_extra_supported_datatype({ge::DT_BOOL});
+
 REGISTER_ACL_OP(Select).set_run_mode(false);
+
 REGISTER_ACL_OP(UnsortedSegmentMax).set_run_mode(false);
+
 REGISTER_ACL_OP(UnsortedSegmentMin).set_run_mode(false);
+
+REGISTER_ACL_OP(IFMR).set_run_mode(false);
 }  // namespace transform
 }  // namespace mindspore

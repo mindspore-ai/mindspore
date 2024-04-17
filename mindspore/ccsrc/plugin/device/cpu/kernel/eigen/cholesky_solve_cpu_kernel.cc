@@ -32,26 +32,31 @@ constexpr size_t kColIndex = 1;
 constexpr size_t kCholeskySolveInputNum = 2;
 constexpr size_t kCholeskySolveOutputNum = 1;
 
-bool CholeskySolveCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CholeskySolveCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCholeskySolveInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCholeskySolveOutputNum, kernel_name_);
-  auto cholesky_solve_ptr = std::dynamic_pointer_cast<ops::CholeskySolve>(base_operator);
-  MS_ERROR_IF_NULL(cholesky_solve_ptr);
-  upper = cholesky_solve_ptr->get_upper();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  upper = GetValue<bool>(primitive_->GetAttr(ops::kUpper));
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int CholeskySolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CholeskySolveCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape = inputs[kIndex0]->GetShapeVector();
-  dtype_ = inputs[kIndex0]->GetDtype();
+  auto shape2 = inputs[kIndex1]->GetShapeVector();
+  dtype_ = inputs[kIndex0]->dtype_id();
   std::vector<size_t> x1_shape = Convert2SizeT(shape);
+  std::vector<size_t> x2_shape = Convert2SizeT(shape2);
+  if (x1_shape.size() != kDefalutRank && x1_shape.size() != kBatchRank) {
+    MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x1 must be 2 or 3, but got rank " << x1_shape.size();
+  }
+  if (x1_shape.size() != x2_shape.size()) {
+    MS_EXCEPTION(ValueError) << "For CholeskySolve, ranks of inputs should be equal"
+                             << ", while got x1 rank " << x1_shape.size() << ", x2 rank " << x2_shape.size() << ".";
+  }
   size_t rank = x1_shape.size();
   if (rank == kDefalutRank) {
     dim = x1_shape[rank - kRowIndex];
@@ -65,11 +70,12 @@ int CholeskySolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool CholeskySolveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs) {
-  T *rhsptr = reinterpret_cast<T *>(inputs[kInputIndex0]->addr);
-  T *lhsptr = reinterpret_cast<T *>(inputs[kInputIndex1]->addr);
-  T *outptr = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
+bool CholeskySolveCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &outputs) {
+  T *rhsptr = reinterpret_cast<T *>(inputs[kInputIndex0]->device_ptr());
+  T *lhsptr = reinterpret_cast<T *>(inputs[kInputIndex1]->device_ptr());
+  T *outptr = reinterpret_cast<T *>(outputs[kOutputIndex]->device_ptr());
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> RHS(dim, rhs_dim);
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> LHS(dim, dim);
   for (size_t k = 0; k < batch_size; k++) {

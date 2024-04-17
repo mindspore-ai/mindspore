@@ -67,13 +67,13 @@ def test_fillop_up_type_cast():
     """
 
     def gen():
-        yield (np.array([4, 5, 6, 7], dtype=np.float),)
+        yield (np.array([4, 5, 6, 7], dtype=float),)
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
     fill_op = data_trans.Fill(3)
 
     data = data.map(operations=fill_op, input_columns=["col"])
-    expected = np.array([3., 3., 3., 3.], dtype=np.float)
+    expected = np.array([3., 3., 3., 3.], dtype=float)
     for data_row in data:
         np.testing.assert_array_equal(data_row[0].asnumpy(), expected)
 

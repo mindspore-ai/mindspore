@@ -34,7 +34,6 @@ class BNGradCPUKernel : public LiteKernel {
   int DoExecute(int task_id);
 
  private:
-  int thread_num_ = 1;
   int stage_ = 0;
 };
 }  // namespace mindspore::kernel

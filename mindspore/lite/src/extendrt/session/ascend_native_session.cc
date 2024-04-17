@@ -224,7 +224,7 @@ Status AscendNativeSession::FindGraphInputs(const std::vector<AnfNodePtr> &node_
       continue;
     }
     auto cnode = utils::cast<CNodePtr>(node);
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->size(); i++) {
       for (size_t j = 0; j < graph_inputs.size(); j++) {
         if (cnode->input(i) == graph_inputs[j]) {
           this->inputs_[j] = kernels[kernel_id]->in_tensors().at(i - 1);

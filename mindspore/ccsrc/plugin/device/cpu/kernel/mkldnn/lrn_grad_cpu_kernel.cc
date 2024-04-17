@@ -25,30 +25,25 @@
 
 namespace mindspore {
 namespace kernel {
-bool LrnGradCpuKernelMod::GetLrnGradAttr(const BaseOperatorPtr &base_operator) {
+bool LrnGradCpuKernelMod::GetLrnGradAttr() {
   if (kernel_name_ != ops::kNameLRNGrad) {
     MS_LOG(ERROR) << "For 'LRNGrad' kernel name get failed, but got " << kernel_name_;
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::LRNGrad>(base_operator->GetPrim());
-  MS_ERROR_IF_NULL(kernel_ptr);
-  depth_radius_ = kernel_ptr->get_depth_radius();
-  bias_ = kernel_ptr->get_bias();
-  alpha_ = kernel_ptr->get_alpha();
-  beta_ = kernel_ptr->get_beta();
+  depth_radius_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kDepthRadius));
+  bias_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kBias));
+  alpha_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kAlpha));
+  beta_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kBeta));
   dnnl_algorithm_ = dnnl::algorithm::lrn_across_channels;
   return true;
 }
 
-bool LrnGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool LrnGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!GetLrnGradAttr(base_operator)) {
+  if (!GetLrnGradAttr()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got GetReductionAttr failed.";
     return false;
   }
@@ -62,12 +57,9 @@ bool LrnGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int LrnGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+int LrnGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
   constexpr size_t kInputsNum = 3;
@@ -93,17 +85,17 @@ int LrnGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool LrnGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool LrnGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   // The input order is dout, x, out.
   constexpr size_t kInputsNum = 3;
   constexpr size_t kOutputsNum = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  auto dout = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto input = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto out = reinterpret_cast<T *>(inputs.at(kIndex2)->addr);
-  auto grad_x = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  auto dout = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
+  auto input = reinterpret_cast<T *>(inputs.at(kIndex1)->device_ptr());
+  auto out = reinterpret_cast<T *>(inputs.at(kIndex2)->device_ptr());
+  auto grad_x = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
   SetArgumentHandle(DNNL_ARG_SRC, input);
   SetArgumentHandle(DNNL_ARG_DST, out);
   SetArgumentHandle(DNNL_ARG_DIFF_DST, dout);

@@ -1,0 +1,12 @@
+#operator right_shift
+right_shift:
+  args:
+    input_x:
+      dtype: tensor
+    input_y:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

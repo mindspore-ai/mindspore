@@ -1,0 +1,31 @@
+complex:
+    description: |
+        Returns a complex Tensor from the real part and the imag part.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+    
+        Inputs:
+            - **real** (Tensor) - The real input tensor. types: float32, float64.
+            - **imag** (Tensor) - The imag input tensor. types: float32, float64.
+    
+        Outputs:
+            Tensor, has the complex type.
+    
+        Raises:
+            TypeError: If the dtype of input is not one of: float32, float64.
+            TypeError: If the dtypes of two inputs are not same.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> real = Tensor(np.array([1]), mindspore.float32)
+            >>> imag = Tensor(np.array([2]), mindspore.float32)
+            >>> complex = ops.Complex()
+            >>> output = complex(real, imag)
+            >>> print(output)
+            [1.+2.j]

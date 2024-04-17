@@ -61,11 +61,11 @@ class L2NormalizeGradInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
     MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-    auto out_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto out_shape_ptr = input_args[kInputIndex1]->GetShape();
     MS_EXCEPTION_IF_NULL(out_shape_ptr);
-    auto dout_shape_ptr = input_args[kInputIndex2]->BuildShape();
+    auto dout_shape_ptr = input_args[kInputIndex2]->GetShape();
     MS_EXCEPTION_IF_NULL(dout_shape_ptr);
 
     auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_x_shape_ptr)[kShape];
@@ -75,9 +75,9 @@ class L2NormalizeGradInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
 
-    auto input_x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-    auto out = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-    auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
+    auto input_x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+    auto out = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+    auto dout = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
     abstract::CheckShapeSame(prim_name, input_x, out);
     abstract::CheckShapeSame(prim_name, input_x, dout);
 
@@ -92,12 +92,12 @@ class L2NormalizeGradInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                              prim_name);
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-    auto input_x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-    auto out = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-    auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
+    auto input_x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+    auto out = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+    auto dout = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
     (void)abstract::CheckDtypeSame(prim_name, input_x, out);
     (void)abstract::CheckDtypeSame(prim_name, input_x, dout);
-    auto input_x_type = input_args[kInputIndex0]->BuildType();
+    auto input_x_type = input_args[kInputIndex0]->GetType();
     MS_EXCEPTION_IF_NULL(input_x_type);
 
     return input_x_type;

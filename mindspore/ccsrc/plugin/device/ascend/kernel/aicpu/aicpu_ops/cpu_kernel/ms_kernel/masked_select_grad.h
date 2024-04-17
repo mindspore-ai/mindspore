@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MASKED_SELECT_GRAD_H_
 #define AICPU_KERNELS_NORMALIZED_MASKED_SELECT_GRAD_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class MaskedSelectGradCpuKernel : public CpuKernel {
@@ -31,7 +31,7 @@ class MaskedSelectGradCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t MaskedSelectGradCompute(const CpuKernelContext &ctx);
+  uint32_t MaskedSelectGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

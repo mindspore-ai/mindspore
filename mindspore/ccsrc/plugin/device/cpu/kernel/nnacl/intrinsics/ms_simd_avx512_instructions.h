@@ -363,7 +363,14 @@ static inline MS_FLOAT32X16 MS_TANHX16_F32(MS_FLOAT32X16 src) {
     MS_MUL512_F32(MS_FMADD512_F32(MS_FMADD512_F32(MS_ADD512_F32(square, data0), square, data1), square, data2), src);
   MS_FLOAT32X16 b =
     MS_FMADD512_F32(MS_FMADD512_F32(MS_FMADD512_F32(data3, square, data4), square, data5), square, data2);
-  return MS_MIN512_F32(MS_MAX512_F32(MS_DIV512_F32(a, b), neg), pos);
+  MS_FLOAT32X16 res = MS_DIV512_F32(a, b);
+  MS_FLOAT32X16 up_limit = MS_MOV512_F32(5.0f);
+  MS_FLOAT32X16 down_limit = MS_MOV512_F32(-5.0f);
+  MS_MASK512_TYPE up_mask = MS_CMPGT512_F32(src, up_limit);
+  MS_MASK512_TYPE down_mask = MS_CMPLT512_F32(src, down_limit);
+  res = MS_BLEND512_F32(res, pos, up_mask);
+  res = MS_BLEND512_F32(res, neg, down_mask);
+  return res;
 }
 
 #define MS_TANH512_F32 MS_TANHX16_F32

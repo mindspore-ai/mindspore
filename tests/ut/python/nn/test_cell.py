@@ -200,7 +200,8 @@ def test_exceptions():
         ModError2(t)
 
     m = nn.Cell()
-    assert m.construct() is None
+    with pytest.raises(AttributeError):
+        m.construct()
 
 
 def test_cell_copy():
@@ -344,28 +345,3 @@ def test_kwargs_default_value1():
     net = TestKwargsNet()
     res = net(x, y, p4=True)
     print(res)
-
-
-def test_kwargs_default_value2():
-    """
-    Feature: Supports Cell kwargs inputs.
-    Description: Pass kwargs.
-    Expectation: No exception.
-    """
-    x = Tensor([[[[1.0, 2.0], [3.0, 4.0]]]], ms.float32)
-    nn_op = nn.ResizeBilinear()
-    res = nn_op(x, (4, 4), align_corners=True)
-    print(res)
-
-
-def test_insert_none_param_to_cell():
-    """
-    Feature: Raise Error when param is None in insert_param_to_cell.
-    Description: None not allowed in insert_param_to_cell.
-    Expectation: Raise Error.
-    """
-    class Net_In(nn.Cell):
-        pass
-    net_in = Net_In()
-    with pytest.raises(TypeError):
-        net_in.insert_param_to_cell("bias", None)

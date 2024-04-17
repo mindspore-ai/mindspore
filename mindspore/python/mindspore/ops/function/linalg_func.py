@@ -24,13 +24,16 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.function.math_func import _check_input_dtype, _check_attr_dtype
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore.ops.auto_generate import geqrf
 
 from ..operations import linalg_ops
 from .._primitive_cache import _get_cache_prim
 
-
 __all__ = ['cond', 'eig', 'eigvals', 'geqrf', 'svd', 'pinv', 'qr']
 
+dtype_ = P.DType()
+geqrf_ = P.Geqrf()
+slice_ = P.Slice()
 
 def cond(A, p=None):
     r"""
@@ -58,7 +61,8 @@ def cond(A, p=None):
         Currently, complex numbers are not supported.
 
     Args:
-        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
+        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)`
+            where :math:`*` is zero or more batch dimensions.
         p (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. Refer to the table above for
             behavior. Default: ``None``.
 
@@ -84,6 +88,18 @@ def cond(A, p=None):
     matrix_inverse = _get_cache_prim(P.MatrixInverse)(adjoint=False)
     if p is None:
         p = 2
+    if A.dim() >= 3:
+        shape_ori = A.shape[0:-2]
+        A_flatten = ops.flatten(A, start_dim=0, end_dim=-3)
+        out = []
+        for i in range(A_flatten.shape[0]):
+            norm_a = F.norm(A_flatten[i], p)
+            norm_inv_a = F.norm(matrix_inverse(A_flatten[i]), p)
+            cond_i = ops.fill(mstype.float32, (1, 1), norm_a * norm_inv_a)
+            out.append(cond_i)
+        out_stacked = ops.hstack(out)
+        output = ops.reshape(out_stacked, shape_ori)
+        return output
     norm_a = F.norm(A, p)
     norm_inv_a = F.norm(matrix_inverse(A), p)
     return norm_a * norm_inv_a
@@ -165,47 +181,6 @@ def eigvals(A):
     return u
 
 
-def geqrf(input):
-    r"""
-    Decomposes a matrix into the product of an orthogonal matrix `Q` and an upper triangular matrix `R`.
-    The process is called QR decomposition: :math:`A = QR`.
-
-    Both `Q` and `R` matrices are stored in the same output tensor `y`.
-    The elements of `R` are stored on and above the diagonal, whereas elementary reflectors
-    (or Householder vectors) implicitly defining matrix `Q` are stored below the diagonal.
-
-    This function returns two tensors (`y`, `tau`).
-
-    Args:
-        input (Tensor): Tensor of shape :math:`(*, m, n)`, input must be a matrix greater than or equal to 2D,
-            with dtype of float32, float64, complex64, complex128.
-
-    Returns:
-        - **y** (Tensor) - Tensor of shape :math:`(*, m, n)`, has the same dtype as the `input`.
-        - **tau** (Tensor) - Tensor of shape :math:`(*, p)` and :math:`p = min(m, n)`,
-          has the same dtype as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If the dtype of `input` is neither float32, float64, complex64, complex128.
-        ValueError: If `input` dimension is less than 2.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
-        >>> y, tau = ops.geqrf(input_x)
-        >>> print(y)
-        [[ 2.236068   1.7888544]
-         [-0.236068   1.3416407]]
-        >>> print(tau)
-        [1.8944271 0.       ]
-    """
-    geqrf_ops = _get_cache_prim(P.Geqrf)()
-    return geqrf_ops(input)
-
-
 def svd(input, full_matrices=False, compute_uv=True):
     """
     Computes the singular value decompositions of one or more matrices.
@@ -275,7 +250,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     Batch matrices are supported. If x is a batch matrix, the output has the same batch dimension when
     atol or rtol is float.
     If atol or rtol is a Tensor, its shape must be broadcast to the singular value returned by
-    `x.svd <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.svd.html>`_ .
+    `x.svd <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/ops/mindspore.ops.svd.html>`_ .
     If x.shape is :math:`(B, M, N)`, and the shape of atol or rtol is :math:`(K, B)`, the output
     shape is :math:`(K, B, N, M)`.
     When the Hermitian is True, temporary support only real domain, x is treated as a real symmetric, so x is
@@ -285,21 +260,21 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     characteristic value), it is set to zero, and is not used in the computations.
     If rtol is not specified and x is a matrix of dimensions (M, N), then rtol is set to
     be :math:`rtol=max(M, N)*\varepsilon`, :math:`\varepsilon` is the
-    `eps <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.Eps.html>`_ value of x.dtype.
+    `eps <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/ops/mindspore.ops.Eps.html>`_ value of x.dtype.
     If rtol is not specified and atol specifies a value larger than zero, rtol is set to zero.
 
     .. note::
         This function uses
-        `svd <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.svd.html>`_ internally,
-        (or `eigh <https://www.mindspore.cn/docs/en/master/api_python/scipy/mindspore.scipy.linalg.eigh.html>`_ ,
-        when hermitian = True). So it has the same problem as these functions. For details,
+        `svd <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/ops/mindspore.ops.svd.html>`_ internally,
+        (or `eigh <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/scipy/mindspore.scipy.linalg.eigh.html>`_ ,
+        when `hermitian = True` ). So it has the same problem as these functions. For details,
         see the warnings in svd() and eigh().
 
     Args:
         x (Tensor): A matrix to be calculated. Only `float32`, `float64` are supported Tensor dtypes.
             shape is :math:`(*, M, N)`, * is zero or more batch dimensions.
 
-            - When hermitian is true, batch dimensions are not supported temporarily.
+            - When `hermitian` is ``True``, batch dimensions are not supported temporarily.
 
     Keyword args:
         atol (float, Tensor): absolute tolerance value. Default: ``None`` .
@@ -318,11 +293,13 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor([[4., 0.], [0., 5.]], mindspore.float32)
         >>> output = ops.pinv(x)
         >>> print(output)
-        [[0.25  0. ]
-        [0.  0.2 ]]
+        [[0.25 0.  ]
+         [0.   0.2 ]]
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError("The input x must be tensor")
@@ -331,7 +308,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     x_shape = F.shape(x)
     if len(x_shape) < 2:
         raise ValueError("input x should have 2 or more dimensions, " f"but got {len(x_shape)}.")
-    x_dtype = _get_cache_prim(P.DType)()(x)
+    x_dtype = dtype_(x)
     _check_input_dtype("x", x_dtype, [mstype.float32, mstype.float64], "pinv")
     _check_attr_dtype("hermitian", hermitian, [bool], "pinv")
 
@@ -421,7 +398,7 @@ def _narrow(x, axis, start, length):
     begins[axis] = start
     sizes = list(x.shape)
     sizes[axis] = length
-    return P.Slice()(x, begins, sizes)
+    return slice_(x, begins, sizes)
 
 
 def _nd_transpose(a):

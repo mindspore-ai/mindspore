@@ -16,6 +16,7 @@
 
 #include "transform/graph_ir/op_declare/matrix_calculation_ops_declare.h"
 #include <string>
+#include <vector>
 #include "ops/array_op_name.h"
 #include "ops/ascend_op_name.h"
 #include "ops/math_op_name.h"
@@ -101,11 +102,11 @@ OUTPUT_MAP(ScatterNdSub) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(ScatterNdSub, kNameScatterNdSub, ADPT_DESC(ScatterNdSub))
 
 // MatMul
-INPUT_MAP(MatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
+INPUT_MAP(MatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(MatMul) = {{"transpose_x1", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
                     {"transpose_x2", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(MatMul) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatMul, kNameMatMul, ADPT_DESC(MatMul))
+REG_ADPT_DESC(MatMul, kNameMatMul, ADPT_DESC(MatMulV2))
 
 // MatMulV2
 INPUT_MAP(MatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
@@ -216,6 +217,24 @@ ATTR_MAP(TensorScatterAdd) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(TensorScatterAdd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(TensorScatterAdd, kNameTensorScatterAdd, ADPT_DESC(TensorScatterAdd))
 
+// TensorScatterSub
+INPUT_MAP(TensorScatterSub) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(TensorScatterSub) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(TensorScatterSub) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(TensorScatterSub, kNameTensorScatterSub, ADPT_DESC(TensorScatterSub))
+
+// TensorScatterMin
+INPUT_MAP(TensorScatterMin) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(TensorScatterMin) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(TensorScatterMin) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(TensorScatterMin, kNameTensorScatterMin, ADPT_DESC(TensorScatterMin))
+
+// TensorScatterMax
+INPUT_MAP(TensorScatterMax) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(TensorScatterMax) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(TensorScatterMax) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(TensorScatterMax, kNameTensorScatterMax, ADPT_DESC(TensorScatterMax))
+
 // Triu
 INPUT_MAP(Triu) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Triu) = {{"diagonal", ATTR_DESC(diagonal, AnyTraits<int64_t>())}};
@@ -240,9 +259,9 @@ REG_ADPT_DESC(Tril, kNameTril, ADPT_DESC(Tril))
 // Eye
 INPUT_MAP(Eye) = EMPTY_INPUT_MAP;
 ATTR_MAP(Eye) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(Eye) = {{1, ATTR_DESC(num_rows, AnyTraits<int>())},
-                       {2, ATTR_DESC(num_columns, AnyTraits<int>())},
-                       {3, ATTR_DESC(dtype, AnyTraits<GEType>())}};
+INPUT_ATTR_MAP(Eye) = {{1, ATTR_DESC(num_rows, AnyTraits<int64_t>())},
+                       {2, ATTR_DESC(num_columns, AnyTraits<int64_t>())},
+                       {3, ATTR_DESC(dtype, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
 OUTPUT_MAP(Eye) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Eye, kNameEye, ADPT_DESC(Eye));
 
@@ -264,4 +283,50 @@ CUST_INPUT_MAP(TraceGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x_shape)}};
 CUST_ATTR_MAP(TraceGrad) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(TraceGrad) = {{0, OUTPUT_DESC(x_grad)}};
 REG_ADPT_DESC(TraceGrad, prim::kPrimTraceGrad->name(), CUST_ADPT_DESC(TraceGrad));
+
+// SwinAttentionFFN
+INPUT_MAP(SwinAttentionFFN) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}, {4, INPUT_DESC(x3)}};
+ATTR_MAP(SwinAttentionFFN) = {{"shifts", ATTR_DESC(shifts, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(SwinAttentionFFN) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SwinAttentionFFN, kNameSwinAttentionFFN, ADPT_DESC(SwinAttentionFFN));
+
+// SwinTransformerLnQKV
+INPUT_MAP(SwinTransformerLnQKV) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}, {4, INPUT_DESC(weight)}, {5, INPUT_DESC(bias)}};
+ATTR_MAP(SwinTransformerLnQKV) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
+                                  {"head_dim", ATTR_DESC(head_dim, AnyTraits<int64_t>())},
+                                  {"head_num", ATTR_DESC(head_num, AnyTraits<int64_t>())},
+                                  {"seq_length", ATTR_DESC(seq_length, AnyTraits<int64_t>())},
+                                  {"shifts", ATTR_DESC(shifts, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(SwinTransformerLnQKV) = {
+  {0, OUTPUT_DESC(query_output)}, {1, OUTPUT_DESC(key_output)}, {2, OUTPUT_DESC(value_output)}};
+REG_ADPT_DESC(SwinTransformerLnQKV, kNameSwinTransformerLnQKV, ADPT_DESC(SwinTransformerLnQKV));
+
+// SwinAttentionScore
+INPUT_MAP(SwinAttentionScore) = {{1, INPUT_DESC(query)},         {2, INPUT_DESC(key)},           {3, INPUT_DESC(value)},
+                                 {4, INPUT_DESC(padding_mask1)}, {5, INPUT_DESC(padding_mask2)}, {6, INPUT_DESC(scale)},
+                                 {7, INPUT_DESC(drop_mask)}};
+ATTR_MAP(SwinAttentionScore) = {{"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},
+                                {"query_transpose", ATTR_DESC(query_transpose, AnyTraits<bool>())},
+                                {"key_transpose", ATTR_DESC(key_transpose, AnyTraits<bool>())},
+                                {"bmm_score_transpose_a", ATTR_DESC(bmm_score_transpose_a, AnyTraits<bool>())},
+                                {"bmm_score_transpose_b", ATTR_DESC(bmm_score_transpose_b, AnyTraits<bool>())},
+                                {"softmax_axes", ATTR_DESC(softmax_axes, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(SwinAttentionScore) = {{0, OUTPUT_DESC(attention_score)}, {1, OUTPUT_DESC(softmax)}};
+REG_ADPT_DESC(SwinAttentionScore, kNameSwinAttentionScore, ADPT_DESC(SwinAttentionScore));
+
+// SparseTensorDenseMatMul
+INPUT_MAP(SparseTensorDenseMatMul) = {
+  {1, INPUT_DESC(x1_indices)}, {2, INPUT_DESC(x1_values)}, {3, INPUT_DESC(x1_shape)}, {4, INPUT_DESC(x2)}};
+ATTR_MAP(SparseTensorDenseMatMul) = {{"adjoint_a", ATTR_DESC(adjoint_a, AnyTraits<bool>())},
+                                     {"adjoint_b", ATTR_DESC(adjoint_b, AnyTraits<bool>())}};
+OUTPUT_MAP(SparseTensorDenseMatMul) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SparseTensorDenseMatMul, kNameSparseTensorDenseMatmul, ADPT_DESC(SparseTensorDenseMatMul));
+
+// IndexPut
+CUST_INPUT_MAP(IndexPut) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+CUST_DYN_INPUT_MAP(IndexPut) = {{3, DYN_INPUT_DESC(indices)}};
+CUST_ATTR_MAP(IndexPut) = {{"accumulate", ATTR_DESC(accumulate, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(IndexPut) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IndexPut, prim::kPrimIndexPut->name(), CUST_ADPT_DESC(IndexPut));
 }  // namespace mindspore::transform

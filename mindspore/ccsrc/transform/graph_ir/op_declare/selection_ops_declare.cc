@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,14 @@ INPUT_MAP(CumulativeLogsumexp) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
 ATTR_MAP(CumulativeLogsumexp) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
                                  {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
 OUTPUT_MAP(CumulativeLogsumexp) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CumulativeLogsumexp, kNameCumulativeLogsumexp, ADPT_DESC(CumulativeLogsumexp))
 
 // Cumsum
-INPUT_MAP(Cumsum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
-ATTR_INPUT_MAP(Cumsum) = {{"axis", "axis"}};
-ATTR_MAP(Cumsum) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
-                    {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
-OUTPUT_MAP(Cumsum) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(Cumsum) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(axis)}};
+ATTR_MAP(Cumsum) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cumsum) = {{kIndex3, ATTR_DESC(exclusive, AnyTraits<bool>())},
+                          {kIndex4, ATTR_DESC(reverse, AnyTraits<bool>())}};
+OUTPUT_MAP(Cumsum) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumsumD, kNameCumsumD, ADPT_DESC(Cumsum))
 REG_ADPT_DESC(Cumsum, kNameCumsum, ADPT_DESC(Cumsum))
 REG_ADPT_DESC(CumSum, kNameCumSum, ADPT_DESC(Cumsum))
@@ -48,11 +49,11 @@ OUTPUT_MAP(CumprodD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Cumprod, kNameCumprod, ADPT_DESC(CumprodD))
 
 // Cumprod
-INPUT_MAP(Cumprod) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
-ATTR_INPUT_MAP(Cumprod) = {{"axis", "axis"}};
-ATTR_MAP(Cumprod) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
-                     {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
-OUTPUT_MAP(Cumprod) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(Cumprod) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(axis)}};
+ATTR_MAP(Cumprod) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cumprod) = {{kIndex3, ATTR_DESC(exclusive, AnyTraits<bool>())},
+                           {kIndex4, ATTR_DESC(reverse, AnyTraits<bool>())}};
+OUTPUT_MAP(Cumprod) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumprodD, kNameCumprodD, ADPT_DESC(Cumprod))
 REG_ADPT_DESC(CumProd, kNameCumProd, ADPT_DESC(Cumprod))
 
@@ -89,20 +90,22 @@ OUTPUT_MAP(InTopKD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InTopK, kNameInTopK, ADPT_DESC(InTopKD))
 REG_ADPT_DESC(InTopKD, kNameInTopKD, ADPT_DESC(InTopKD))
 // OneHot
-INPUT_MAP(OneHot) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(depth)}, {3, INPUT_DESC(on_value)}, {4, INPUT_DESC(off_value)}};
+INPUT_MAP(OneHot) = {{kIndex1, INPUT_DESC(x)},
+                     {kIndex2, INPUT_DESC(depth)},
+                     {kIndex3, INPUT_DESC(on_value)},
+                     {kIndex4, INPUT_DESC(off_value)}};
 ATTR_INPUT_MAP(OneHot) = {{"depth", "depth"}};
-ATTR_MAP(OneHot) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
-OUTPUT_MAP(OneHot) = {{0, OUTPUT_DESC(y)}};
+ATTR_MAP(OneHot) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(OneHot) = {{kIndex5, ATTR_DESC(axis, AnyTraits<int64_t>())}};
+OUTPUT_MAP(OneHot) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(OneHot, prim::kPrimOneHot->name(), ADPT_DESC(OneHot))
 REG_ADPT_DESC(OneHotD, prim::kPrimOneHotD->name(), ADPT_DESC(OneHot))
 
 // GatherV2
 INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(axis)}};
-ATTR_INPUT_MAP(GatherV2) = {{"axis", "axis"}};
-ATTR_MAP(GatherV2) = {{"batch_dims", ATTR_DESC(batch_dims, AnyTraits<int64_t>())},
-                      {"negative_index_support", ATTR_DESC(negative_index_support, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(GatherV2) = {{kIndex4, ATTR_DESC(batch_dims, AnyTraits<int64_t>())}};
+ATTR_MAP(GatherV2) = {{"negative_index_support", ATTR_DESC(negative_index_support, AnyTraits<bool>())}};
 OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherV2, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2))
 REG_ADPT_DESC(Gather, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
 REG_ADPT_DESC(GatherV2D, kNameGatherV2D, ADPT_DESC(GatherV2))
 REG_ADPT_DESC(SparseGatherV2, prim::kPrimSparseGatherV2->name(), ADPT_DESC(GatherV2))
@@ -128,10 +131,11 @@ OUTPUT_MAP(GatherNd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherNd, kNameGatherNd, ADPT_DESC(GatherNd))
 
 // GatherD
-INPUT_MAP(GatherD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dim)}, {3, INPUT_DESC(index)}};
-ATTR_MAP(GatherD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(GatherD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherD, kNameGatherD, ADPT_DESC(GatherD))
+INPUT_MAP(GatherElements) = {{1, INPUT_DESC(x)}, {3, INPUT_DESC(index)}};
+ATTR_MAP(GatherElements) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GatherElements) = {{2, ATTR_DESC(dim, AnyTraits<int64_t>())}};
+OUTPUT_MAP(GatherElements) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GatherD, kNameGatherD, ADPT_DESC(GatherElements))
 
 // RangeV2
 INPUT_MAP(Range) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(limit)}, {3, INPUT_DESC(delta)}};
@@ -177,14 +181,14 @@ REG_ADPT_DESC(StridedSliceGrad, kNameStridedSliceGrad, ADPT_DESC(StridedSliceGra
 
 // StridedSlice
 INPUT_MAP(StridedSlice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(begin)}, {3, INPUT_DESC(end)}, {4, INPUT_DESC(strides)}};
-ATTR_MAP(StridedSlice) = {{"begin_mask", ATTR_DESC(begin_mask, AnyTraits<int64_t>())},
-                          {"end_mask", ATTR_DESC(end_mask, AnyTraits<int64_t>())},
-                          {"ellipsis_mask", ATTR_DESC(ellipsis_mask, AnyTraits<int64_t>())},
-                          {"new_axis_mask", ATTR_DESC(new_axis_mask, AnyTraits<int64_t>())},
-                          {"shrink_axis_mask", ATTR_DESC(shrink_axis_mask, AnyTraits<int64_t>())}};
+ATTR_MAP(StridedSlice) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(StridedSlice) = {{kIndex5, ATTR_DESC(begin_mask, AnyTraits<int64_t>())},
+                                {kIndex6, ATTR_DESC(end_mask, AnyTraits<int64_t>())},
+                                {kIndex7, ATTR_DESC(ellipsis_mask, AnyTraits<int64_t>())},
+                                {kIndex8, ATTR_DESC(new_axis_mask, AnyTraits<int64_t>())},
+                                {kIndex9, ATTR_DESC(shrink_axis_mask, AnyTraits<int64_t>())}};
 OUTPUT_MAP(StridedSlice) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(StridedSlice, kNameStridedSlice, ADPT_DESC(StridedSlice))
-REG_ADPT_DESC(StridedSliceD, kStridedSliceDOpName, ADPT_DESC(StridedSlice))
 
 // StridedSliceV2
 INPUT_MAP(StridedSliceV2) = {
@@ -266,10 +270,18 @@ OUTPUT_MAP(InplaceUpdate) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InplaceUpdate, kInplaceUpdateDOpName, ADPT_DESC(InplaceUpdate))
 
 // Cummin
-INPUT_MAP(Cummin) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Cummin) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
-OUTPUT_MAP(Cummin) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(indices)}};
+INPUT_MAP(Cummin) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(Cummin) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cummin) = {{kIndex2, ATTR_DESC(axis, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Cummin) = {{kIndex0, OUTPUT_DESC(y)}, {kIndex1, OUTPUT_DESC(indices)}};
 REG_ADPT_DESC(Cummin, prim::kPrimCummin->name(), ADPT_DESC(Cummin))
+
+// Cummax
+INPUT_MAP(Cummax) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(Cummax) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cummax) = {{kIndex2, ATTR_DESC(dim, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Cummax) = {{kIndex0, OUTPUT_DESC(y)}, {kIndex1, OUTPUT_DESC(indices)}};
+REG_ADPT_DESC(Cummax, prim::kPrimCummax->name(), ADPT_DESC(Cummax))
 
 // StridedRead
 INPUT_MAP(StridedRead) = {{1, INPUT_DESC(x)}};
@@ -292,6 +304,12 @@ OUTPUT_MAP(InplaceIndexAdd) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(InplaceIndexAdd, prim::kPrimInplaceIndexAdd->name(), ADPT_DESC(InplaceIndexAdd))
 REG_ADPT_DESC(IndexAdd, prim::kPrimIndexAdd->name(), ADPT_DESC(InplaceIndexAdd))
 
+// MaskedScatter
+INPUT_MAP(MaskedScatter) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(MaskedScatter) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MaskedScatter) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaskedScatter, kMaskedScatterOpName, ADPT_DESC(MaskedScatter))
+
 // UnsortedSegmentMax
 INPUT_MAP(UnsortedSegmentMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
 ATTR_INPUT_MAP(UnsortedSegmentMax) = {{"num_segments", "num_segments"}};
@@ -299,4 +317,11 @@ ATTR_MAP(UnsortedSegmentMax) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentMax) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentMax, kUnsortedSegmentMaxOpName, ADPT_DESC(UnsortedSegmentMax))
 REG_ADPT_DESC(UnsortedSegmentMaxD, kUnsortedSegmentMaxDOpName, ADPT_DESC(UnsortedSegmentMax))
+
+// SearchSorted
+INPUT_MAP(SearchSorted) = {{1, INPUT_DESC(sorted_sequence)}, {2, INPUT_DESC(values)}};
+ATTR_MAP(SearchSorted) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
+                          {"right", ATTR_DESC(right, AnyTraits<bool>())}};
+OUTPUT_MAP(SearchSorted) = {{0, OUTPUT_DESC(out)}};
+REG_ADPT_DESC(SearchSorted, prim::kPrimSearchSorted->name(), ADPT_DESC(SearchSorted));
 }  // namespace mindspore::transform

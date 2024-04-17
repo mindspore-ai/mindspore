@@ -24,31 +24,23 @@ namespace kernel {
 constexpr size_t kISRSparseMatrixToDenseInputsNum = 5;
 constexpr size_t kISRSparseMatrixToDenseOutputsNum = 1;
 
-bool CSRSparseMatrixToDenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CSRSparseMatrixToDense>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast CSRSparseMatrixToDense ops failed!";
-    return false;
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kISRSparseMatrixToDenseInputsNum, kernel_ptr->name());
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kISRSparseMatrixToDenseOutputsNum, kernel_ptr->name());
+bool CSRSparseMatrixToDenseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kISRSparseMatrixToDenseInputsNum, primitive_->name());
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kISRSparseMatrixToDenseOutputsNum, primitive_->name());
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_ptr->name()
-                      << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
-int CSRSparseMatrixToDenseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &others) {
+int CSRSparseMatrixToDenseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   dense_shape_shape_ = inputs[kIndex0]->GetShapeVector();
   batch_ptr_shape_ = inputs[kIndex1]->GetShapeVector();
@@ -78,12 +70,12 @@ int CSRSparseMatrixToDenseGpuKernelMod::Resize(const BaseOperatorPtr &base_opera
     }
     return res;
   };
-  dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * GetNums(dense_shape_shape_);
-  batch_ptr_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) * GetNums(batch_ptr_shape_);
-  row_ptr_size_ = abstract::TypeIdSize(inputs[kIndex2]->GetDtype()) * GetNums(row_ptr_shape_);
-  col_indices_size_ = abstract::TypeIdSize(inputs[kIndex3]->GetDtype()) * GetNums(col_indices_shape_);
-  values_size_ = abstract::TypeIdSize(inputs[kIndex4]->GetDtype()) * GetNums(values_shape_);
-  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * GetNums(output_shape_);
+  dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * GetNums(dense_shape_shape_);
+  batch_ptr_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * GetNums(batch_ptr_shape_);
+  row_ptr_size_ = abstract::TypeIdSize(inputs[kIndex2]->dtype_id()) * GetNums(row_ptr_shape_);
+  col_indices_size_ = abstract::TypeIdSize(inputs[kIndex3]->dtype_id()) * GetNums(col_indices_shape_);
+  values_size_ = abstract::TypeIdSize(inputs[kIndex4]->dtype_id()) * GetNums(values_shape_);
+  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * GetNums(output_shape_);
 
   InitSizeLists();
   return 0;
@@ -97,23 +89,15 @@ void CSRSparseMatrixToDenseGpuKernelMod::ResetResource() noexcept {
   col_indices_size_ = 0;
   values_size_ = 0;
   output_size_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 
-void CSRSparseMatrixToDenseGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(dense_shape_size_);
-  input_size_list_.push_back(batch_ptr_size_);
-  input_size_list_.push_back(row_ptr_size_);
-  input_size_list_.push_back(col_indices_size_);
-  input_size_list_.push_back(values_size_);
-  output_size_list_.push_back(output_size_);
-}
+void CSRSparseMatrixToDenseGpuKernelMod::InitSizeLists() { output_size_list_.push_back(output_size_); }
 
 template <typename T, typename S>
-bool CSRSparseMatrixToDenseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &,
-                                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CSRSparseMatrixToDenseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &,
+                                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }

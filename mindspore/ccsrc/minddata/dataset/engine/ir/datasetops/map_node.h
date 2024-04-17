@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,13 @@ class MapNode : public DatasetNode {
   /// \brief Constructor
   MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr<TensorOperation>> operations,
           std::vector<std::string> input_columns = {}, std::vector<std::string> output_columns = {},
-          std::shared_ptr<DatasetCache> cache = nullptr, std::vector<std::shared_ptr<DSCallback>> callbacks = {},
+          const std::shared_ptr<DatasetCache> &cache = nullptr, std::vector<std::shared_ptr<DSCallback>> callbacks = {},
           ManualOffloadMode offload = ManualOffloadMode::kUnspecified,
           std::shared_ptr<PythonMultiprocessingRuntime> python_mp = nullptr);
+
+  /// \brief Constructor used in InsertMap pass.
+  MapNode(std::vector<std::shared_ptr<TensorOperation>> operations, std::vector<std::string> input_columns,
+          std::vector<std::string> output_columns);
 
   /// \brief Destructor
   ~MapNode() override = default;

@@ -1,0 +1,8 @@
+#operator abs
+abs:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor

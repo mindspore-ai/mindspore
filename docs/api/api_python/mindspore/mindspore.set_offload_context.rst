@@ -20,8 +20,8 @@ mindspore.set_offload_context
           - enable_aio：是否开启AIO，开启后可加速DDR-NVME之间的拷贝。Bool类型。默认值： ``True`` 。
           - aio_block_size：AIO中blocksize值，格式只支持"xxGB"形式字符串。
           - aio_queue_size：AIO中depth值，刷新磁盘等待队列最大值, 取值需为整数。
-          - offload_param：参数初始位置，进行设置时只支持"disk"或"cpu"，用户不设置默认为""。
-          - offload_checkpoint：重计算点offload位置，只有开启重计算才有效，进行设置时只支持"disk"或"cpu"，用户不设置默认为""。
+          - offload_param：参数初始位置，进行设置时只支持"disk"或"cpu"，用户不设置默认为 ``""`` 。
+          - offload_checkpoint：重计算点offload位置，只有开启重计算才有效，进行设置时只支持"disk"或"cpu"，用户不设置默认为 ``""`` 。
           - auto_offload：是否自动进行offload策略生成， ``True`` 时生成自动策略， ``False`` 时配合offload_param生成强制offload策略，一般取值为 ``True`` ，默认值： ``True`` 。
           - host_mem_block_size：host侧内存池block块的大小, 格式只支持"xxGB"形式字符串。通过调整块大小，可以减少内存碎片的产生。
 

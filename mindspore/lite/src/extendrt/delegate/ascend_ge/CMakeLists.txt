@@ -1,9 +1,3 @@
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc)
 include_directories(${CCSRC_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/plugin/device/ascend)
 
@@ -20,11 +14,13 @@ endif()
 file(GLOB GE_EXECUTOR_SRC
     ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
     ${CCSRC_DIR}/utils/config_manager.cc
+    ${CCSRC_DIR}/plugin/device/ascend/hal/common/ascend_utils.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/mapper/*.cc
     ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/common/utils.cc
     )
-list(APPEND GE_EXECUTOR_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
+list(APPEND GE_EXECUTOR_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>
+    $<TARGET_OBJECTS:_mindspore_transform_symbol_obj>)
 
 
 add_library(ascend_ge_plugin SHARED ${GE_EXECUTOR_SRC})

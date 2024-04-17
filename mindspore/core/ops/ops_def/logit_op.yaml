@@ -1,0 +1,14 @@
+#operator logit
+logit:
+    args:
+        input:
+            dtype: tensor
+        eps:
+            dtype: float
+            default: -1.0
+            prim_init: True
+    function:
+        disable: True
+    returns:
+        output:
+            dtype: tensor

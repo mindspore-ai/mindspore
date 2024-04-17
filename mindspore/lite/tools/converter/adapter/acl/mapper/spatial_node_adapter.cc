@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,29 @@
 
 #define USE_DEPRECATED_API
 #include "tools/converter/adapter/acl/mapper/spatial_node_adapter.h"
-#include <vector>
-#include <set>
 #include <memory>
+#include <set>
 #include <string>
+#include <vector>
+#include "base/base.h"
+#include "include/errorcode.h"
 #include "mindspore/core/ops/sequence_ops.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+#include "ops/fused_batch_norm.h"
+#include "ops/fusion/layer_norm_fusion.h"
+#include "ops/fusion/gegluv2.h"
+#include "ops/instance_norm.h"
+#include "ops/add_layernorm.h"
+#include "ops/nn_op_name.h"
+#include "ops/stack.h"
+#include "ops/op_name.h"
+#include "ops/tuple_get_item.h"
+#include "ops/make_tuple.h"
+#include "ops/group_norm_silu.h"
+#include "tools/common/tensor_util.h"
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
-#include "tools/common/tensor_util.h"
-#include "include/errorcode.h"
-#include "base/base.h"
-#include "ops/concat.h"
-#include "ops/batch_norm.h"
-#include "ops/fused_batch_norm.h"
-#include "ops/instance_norm.h"
-#include "ops/stack.h"
-#include "ops/tuple_get_item.h"
-#include "ops/layer_norm.h"
-#include "ops/fusion/layer_norm_fusion.h"
-#include "ops/argmax_with_value.h"
+#include "include/registry/converter_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -42,12 +46,59 @@ namespace {
 constexpr size_t kCnodeInputMinNum = 2;
 constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kNamewiEltwise = "Eltwise";
-const std::set<std::string> kCNodeWithMultiOutputs = {ops::kNameBatchNorm,       ops::kNameFusedBatchNorm,
-                                                      ops::kNameInstanceNorm,    ops::kNameLayerNorm,
-                                                      ops::kNameLayerNormFusion, ops::kNameArgMaxWithValue};
+const std::set<std::string> kCNodeWithMultiOutputs = {
+  kBatchNormOpName,          ops::kNameFusedBatchNorm,  ops::kNameInstanceNorm, ops::kNameLayerNorm,
+  ops::kNameLayerNormFusion, ops::kNameArgMaxWithValue, ops::kNameGeGluV2,      ops::kNameGroupNormSilu,
+  ops::kNameAddLayerNorm,    ops::kNameLayerNormV3,
+};
+
 const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kNameConcat, ops::kNameStack,
                                                       acl::kNameConcatV2};
 }  // namespace
+
+static STATUS AdapteNodeWithDynamicInput(const CNodePtr &cnode) {
+  // For the 3rd model, the input of the multi-input operator has been expanded in the conversion tool, and no special
+  // processing is required here.
+  auto prim = GetCNodePrimitive(cnode);
+  CHECK_NULL_RETURN(prim);
+  std::string cnode_func_name = GetCNodeFuncName(cnode);
+  if (kCNodeWithDynamicInput.find(cnode_func_name) == kCNodeWithDynamicInput.end()) {
+    return lite::RET_OK;
+  }
+  auto in_node = cnode->inputs()[1];
+  if (!utils::isa<CNodePtr>(in_node)) {
+    return RET_OK;
+  }
+  auto in_node_prim = GetCNodePrimitive(in_node);
+  CHECK_NULL_RETURN(in_node_prim);
+  if (in_node_prim->name() != ops::kNameMakeTuple) {
+    MS_LOG(INFO) << "Only the inputs of a multi-input operator whose input is MakeTuple needs to be expanded.";
+    return lite::RET_OK;
+  }
+  auto tuple_node = in_node->cast<CNodePtr>();
+  std::vector<AnfNodePtr> new_inputs = {cnode->inputs()[0]};
+  new_inputs.insert(new_inputs.end(), tuple_node->inputs().begin() + 1, tuple_node->inputs().end());
+  cnode->set_inputs(new_inputs);
+  // add kAttrDynInputSizes for multi-input operator.
+  int64_t input_num = tuple_node->size() - 1;
+  auto dst_prim = prim->Clone();
+  dst_prim->AddAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{input_num, -1}));
+  ValueNodePtr value_node = cnode->input(0)->cast<ValueNodePtr>();
+  value_node->set_value(dst_prim);
+  return lite::RET_OK;
+}
+
+STATUS AdapteMuitiInputNode(const FuncGraphPtr &func_graph) {
+  auto cnodes = func_graph->GetOrderedCnodes();
+  for (const auto &cnode : cnodes) {
+    MS_CHECK_TRUE_MSG(cnode != nullptr, lite::RET_ERROR, "Cnode is nullptr.");
+    if (AdapteNodeWithDynamicInput(cnode) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Adapter node with multioutput failed.";
+      return lite::RET_ERROR;
+    }
+  }
+  return lite::RET_OK;
+}
 
 CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input_cnode) {
   CNodePtr get_item_cnode = nullptr;
@@ -89,7 +140,7 @@ static STATUS AdapteNodeWithMultiOutputs(const FuncGraphPtr &func_graph, const C
     return lite::RET_OK;
   }
 
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     auto input = cnode->input(i);
     MS_CHECK_TRUE_MSG(input != nullptr, lite::RET_ERROR, "input is nullptr.");
     if (!utils::isa<CNode>(input)) {
@@ -114,52 +165,12 @@ static STATUS AdapteNodeWithMultiOutputs(const FuncGraphPtr &func_graph, const C
   return lite::RET_OK;
 }
 
-static STATUS AdapteNodeWithDynamicInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  std::string cnode_func_name = GetCNodeFuncName(cnode);
-  if (kCNodeWithDynamicInput.find(cnode_func_name) == kCNodeWithDynamicInput.end()) {
-    return lite::RET_OK;
-  }
-  MS_LOG(DEBUG) << "Adapter cnode with dynamic input: " << cnode_func_name;
-  auto make_tuple_val_node = NewValueNode(prim::kPrimMakeTuple);
-  MS_CHECK_TRUE_MSG(make_tuple_val_node != nullptr, lite::RET_ERROR, "New make tuple val node failed.");
-  AnfNodePtrList new_inputs = {make_tuple_val_node};
-  auto cnode_inputs = cnode->inputs();
-  if (cnode_inputs.size() < kCnodeInputMinNum) {
-    MS_LOG(ERROR) << "Input size " << cnode_inputs.size() << " is less than " << kCnodeInputMinNum;
-    return lite::RET_ERROR;
-  }
-  if (cnode_func_name == acl::kNameConcatV2) {
-    new_inputs.insert(new_inputs.end(), cnode_inputs.begin() + 1, cnode_inputs.end() - 1);
-  } else {
-    new_inputs.insert(new_inputs.end(), cnode_inputs.begin() + 1, cnode_inputs.end());
-  }
-  auto make_tuple_cnode = func_graph->NewCNode(new_inputs);
-  MS_CHECK_TRUE_MSG(make_tuple_cnode != nullptr, lite::RET_ERROR, "New make tuple cnode failed.");
-  AbstractBasePtrList elem;
-  std::transform(new_inputs.begin() + 1, new_inputs.end(), std::back_inserter(elem),
-                 [](const AnfNodePtr &node) { return node->abstract(); });
-  make_tuple_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
-
-  std::vector<AnfNodePtr> replace_node;
-  if (cnode_func_name == acl::kNameConcatV2) {
-    replace_node = std::vector<AnfNodePtr>({cnode_inputs[0], make_tuple_cnode, cnode_inputs[cnode_inputs.size() - 1]});
-  } else {
-    replace_node = std::vector<AnfNodePtr>({cnode_inputs[0], make_tuple_cnode});
-  }
-  cnode->set_inputs(replace_node);
-  return lite::RET_OK;
-}
-
-STATUS AdapteSpatialNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
+STATUS AdapteMuitiOutputNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
   auto cnodes = func_graph->GetOrderedCnodes();
   for (const auto &cnode : cnodes) {
     MS_CHECK_TRUE_MSG(cnode != nullptr, lite::RET_ERROR, "Cnode is nullptr.");
     if (AdapteNodeWithMultiOutputs(func_graph, cnode, manager) != lite::RET_OK) {
       MS_LOG(ERROR) << "Adapter node with multioutput failed.";
-      return lite::RET_ERROR;
-    }
-    if (AdapteNodeWithDynamicInput(func_graph, cnode) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Adapter node with dynamic input failed.";
       return lite::RET_ERROR;
     }
   }

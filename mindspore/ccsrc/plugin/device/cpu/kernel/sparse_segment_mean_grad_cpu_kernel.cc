@@ -32,11 +32,8 @@ constexpr size_t kSparseSegmentMeanGradOutputsNum = 1;
     .AddOutputAttr(kNumberType##t5)
 }  // namespace
 
-bool SparseSegmentMeanGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseSegmentMeanGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -47,33 +44,31 @@ bool SparseSegmentMeanGradCpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int SparseSegmentMeanGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseSegmentMeanGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
-  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeVector();
+  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   return KRET_OK;
 }
 
 template <typename T>
-bool SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentMeanGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentMeanGradOutputsNum, kernel_name_);
   constexpr size_t kMultiply = 1;
   size_t n = std::accumulate(x_shape_.begin(), x_shape_.end(), kMultiply, std::multiplies<int>()) / x_shape_[kIndex0];
   size_t m = std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kMultiply, std::multiplies<int>());
   size_t num_elements = std::accumulate(y_shape_.begin(), y_shape_.end(), kMultiply, std::multiplies<int>());
-  int32_t k = *reinterpret_cast<int32_t *>(inputs[kIndex3]->addr);
-  auto x_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto indices_addr = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = reinterpret_cast<int32_t *>(inputs[kIndex2]->addr);
-  auto y_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  int32_t k = *reinterpret_cast<int32_t *>(inputs[kIndex3]->device_ptr());
+  auto x_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto indices_addr = reinterpret_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto segment_ids_addr = reinterpret_cast<int32_t *>(inputs[kIndex2]->device_ptr());
+  auto y_addr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   for (size_t i = 0; i < num_elements; i++) {
     y_addr[i] = (T)0;

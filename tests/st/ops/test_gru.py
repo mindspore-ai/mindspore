@@ -24,7 +24,7 @@ import mindspore.nn as nn
 from mindspore.ops import composite as c
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -84,7 +84,7 @@ class NetGruV2(nn.Cell):
             x, h_0, self.weights.astype(x.dtype), seq_len)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard

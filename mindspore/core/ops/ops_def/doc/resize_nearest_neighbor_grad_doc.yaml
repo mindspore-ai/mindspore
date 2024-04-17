@@ -1,0 +1,12 @@
+resize_nearest_neighbor_grad:
+    description: |
+        Compute gradient of `ResizeNearestNeighbor` operator.
+
+        Note:
+            The shape of input parameter `size` must be (height, width).
+
+        Inputs:
+            - **align_corners** (bool) - Whether the centers of the 4 corner pixels of the input
+              and output tensors are aligned. Default: ``False``.
+            - **half_pixel_centers** (bool, optional) - Whether half pixel center. If set to ``True``,
+              `align_corners` should be False. Default: ``False``.

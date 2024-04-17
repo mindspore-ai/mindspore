@@ -31,6 +31,7 @@ class GraphRunner {
  public:
   explicit GraphRunner(const GraphRunnerOptions &options);
   ~GraphRunner() { sess_ = nullptr; }
+  Status AddGraph(const std::string &name);
   Status RunGraph(const RunOptions &options, const std::vector<MeTensorPtr> &inputs, std::vector<MeTensorPtr> *outputs);
   Status RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
   Status RunGraphAsync(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,
@@ -43,6 +44,7 @@ class GraphRunner {
   static std::shared_ptr<::ge::Session> NewSession(const SessionOptions &sess_options);
   Status RegisterExternalAllocator(const void *const stream, GeAllocatorPtr allocator);
   Status UnregisterExternalAllocator(const void *const stream);
+  const bool IsAllocatorRegistered() const { return is_allocator_registered; }
 
  private:
   Status GetWrapper(const std::string &name, DfGraphWrapperPtr *wrapper) const;
@@ -50,6 +52,7 @@ class GraphRunner {
   std::shared_ptr<::ge::Session> sess_;
   transform::GraphRunnerOptions options_;
   DfGraphManager &graph_manager_;
+  bool is_allocator_registered = false;
 };
 }  // namespace transform
 }  // namespace mindspore

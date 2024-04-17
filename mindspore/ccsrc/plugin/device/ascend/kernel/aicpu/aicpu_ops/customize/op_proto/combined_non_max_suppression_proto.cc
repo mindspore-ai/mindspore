@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/image_ops.h"
+#include "op_proto/inc/image_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/op_log.h"
@@ -30,8 +30,7 @@ IMPLEMT_INFERFUNC(CombinedNonMaxSuppression, CombinedNonMaxSuppressionInfer) {
   Shape unused_shape;
 
   std::vector<std::string> input_infer_depends = {"max_total_size", "max_output_size_per_class"};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
 
   if (WithRank(op.GetInputDesc(0), 4, boxes, op) != GRAPH_SUCCESS) {
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op),

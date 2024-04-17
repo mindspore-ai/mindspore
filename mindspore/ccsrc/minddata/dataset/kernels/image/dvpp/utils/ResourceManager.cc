@@ -18,6 +18,9 @@
 
 #include <algorithm>
 #include <memory>
+#include "transform/symbol/acl_op_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 bool ResourceManager::initFlag_ = true;
 std::shared_ptr<ResourceManager> ResourceManager::ptr_ = nullptr;
@@ -52,14 +55,14 @@ void ResourceManager::Release() {
   APP_ERROR ret;
   for (size_t i = 0; i < deviceIds_.size(); i++) {
     if (contexts_[i] != nullptr) {
-      ret = aclrtDestroyContext(contexts_[i]);  // Destroy context
+      ret = CALL_ASCEND_API(aclrtDestroyContext, contexts_[i]);  // Destroy context
       if (ret != APP_ERR_OK) {
         MS_LOG(ERROR) << "Failed to destroy context, ret = " << ret << ".";
         return;
       }
       contexts_[i] = nullptr;
     }
-    ret = aclrtResetDevice(deviceIds_[i]);  // Reset device
+    ret = CALL_ASCEND_API(aclrtResetDevice, deviceIds_[i]);  // Reset device
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to reset device, ret = " << ret << ".";
       return;
@@ -88,6 +91,7 @@ std::shared_ptr<ResourceManager> ResourceManager::GetInstance() {
     ResourceManager *temp = new ResourceManager();
     ptr_.reset(temp);
   }
+  mindspore::transform::LoadAscendApiSymbols();
   return ptr_;
 }
 
@@ -107,14 +111,14 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
   // Open device and create context for each chip, note: it create one context for each chip
   for (size_t i = 0; i < deviceIds_.size(); i++) {
     deviceIdMap_[deviceIds_[i]] = i;
-    ret = aclrtSetDevice(deviceIds_[i]);
+    ret = CALL_ASCEND_API(aclrtSetDevice, deviceIds_[i]);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to open acl device: " << deviceIds_[i];
       return ret;
     }
     MS_LOG(INFO) << "Open device " << deviceIds_[i] << " successfully.";
     aclrtContext context;
-    ret = aclrtCreateContext(&context, deviceIds_[i]);
+    ret = CALL_ASCEND_API(aclrtCreateContext, &context, deviceIds_[i]);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to create acl context, ret = " << ret << ".";
       return ret;
@@ -124,7 +128,7 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
   }
   std::string singleOpPath = resourceInfo.singleOpFolderPath;
   if (!singleOpPath.empty()) {
-    ret = aclopSetModelDir(singleOpPath.c_str());  // Set operator model directory for application
+    ret = CALL_ASCEND_API(aclopSetModelDir, singleOpPath.c_str());  // Set operator model directory for application
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to aclopSetModelDir, ret = " << ret << ".";
       return ret;

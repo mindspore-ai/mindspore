@@ -17,8 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_BARTLETT_WINDOW_H_
 #define AICPU_KERNELS_NORMALIZED_BARTLETT_WINDOW_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "utils/bcast.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 
@@ -31,10 +30,10 @@ class BartlettWindowCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t BartlettWindowCheck(const CpuKernelContext &ctx);
+  static uint32_t BartlettWindowCheck(CpuKernelContext &ctx);
 
   template <typename T, typename DT_VAL>
-  static uint32_t BartlettWindowCompute(const CpuKernelContext &ctx);
+  static uint32_t BartlettWindowCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

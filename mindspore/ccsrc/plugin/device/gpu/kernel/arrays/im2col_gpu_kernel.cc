@@ -33,22 +33,18 @@ using Complex = mindspore::utils::Complex<T>;
 using Complex64 = Complex<float>;
 using Complex128 = Complex<double>;
 
-bool Im2ColGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool Im2ColGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIm2ColInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIm2ColOutputsNum, kernel_name_);
+  ksizes_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksizes"));
+  strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("strides"));
+  dilations_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilations"));
+  pads_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pads"));
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Im2Col>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast HShrink ops failed!";
-    return false;
-  }
-  ksizes_ = kernel_ptr->get_ksizes();
-  strides_ = kernel_ptr->get_strides();
-  dilations_ = kernel_ptr->get_dilations();
-  pads_ = kernel_ptr->get_pads();
+  MS_EXCEPTION_IF_CHECK_FAIL(!ksizes_.empty(), "For Im2Col, Input ksize must not be empty.");
+  MS_EXCEPTION_IF_CHECK_FAIL(!strides_.empty(), "For Im2Col, Input strides must not be empty.");
+  MS_EXCEPTION_IF_CHECK_FAIL(!dilations_.empty(), "For Im2Col, Input dilations must not be empty.");
+  MS_EXCEPTION_IF_CHECK_FAIL(!pads_.empty(), "For Im2Col, Input pads must not be empty.");
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -60,10 +56,8 @@ bool Im2ColGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int Im2ColGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int Im2ColGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -74,8 +68,8 @@ int Im2ColGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool Im2ColGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+bool Im2ColGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs, void *stream_ptr) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIm2ColInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIm2ColOutputsNum, kernel_name_);
 

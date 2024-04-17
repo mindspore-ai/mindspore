@@ -50,7 +50,6 @@ class TripletMarginLossHelperGpuKernel : public GpuKernelHelperBase {
   virtual ~TripletMarginLossHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
-    constexpr size_t INPUT_NUM_1 = 3;
     constexpr size_t OUTPUT_NUM = 1;
     constexpr int64_t kzero = 0;
     constexpr int64_t kone = 1;
@@ -58,22 +57,12 @@ class TripletMarginLossHelperGpuKernel : public GpuKernelHelperBase {
     constexpr int64_t kthree = 3;
     ResetResource();
     dst_shape_.clear();
-    std::vector<std::vector<int64_t>> input_shapes_1;
-    input_shapes_1.emplace_back(input_shapes[kzero]);
-    input_shapes_1.emplace_back(input_shapes[kone]);
-    input_shapes_1.emplace_back(input_shapes[ktwo]);
-    int inp_flag =
-      CalShapesSizeInBytes<T>(input_shapes_1, INPUT_NUM_1, kernel_name_, "input_shapes_1", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
-    input_size_list_.emplace_back(sizeof(float));
     int out_flag =
       CalShapesSizeInBytes<S>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {
       return out_flag;
     }
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     anchor_shape_ = input_shapes[kzero];
     positive_shape_ = input_shapes[kone];
     negative_shape_ = input_shapes[ktwo];

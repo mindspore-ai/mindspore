@@ -190,7 +190,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_sorted) {
   auto ret = func_graph->get_return();
   auto make_tuple = ret->input(1);
   auto make_tuple1 = make_tuple->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
-  for (size_t i = 1; i < make_tuple1->inputs().size(); ++i) {
+  for (size_t i = 1; i < make_tuple1->size(); ++i) {
     common::AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue(SizeToLong(i)), make_tuple1->input(i));
   }
   // set kernel build info

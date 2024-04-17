@@ -36,7 +36,7 @@
 #include "ops/fusion/mat_mul_fusion.h"
 #include "ops/batch_matmul.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
-#include "ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 #include "ops/op_utils.h"
 #include "src/common/utils.h"
 #include "src/common/file_utils.h"
@@ -44,6 +44,9 @@
 #include "ir/anf.h"
 #include "tools/converter/export_model.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "ops/other_ops.h"
+#include "utils/anf_utils.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/op_base.h"
 
 using std::string;
 using std::vector;
@@ -54,6 +57,8 @@ constexpr size_t kGatherAxisIndex = 3;
 constexpr int kDefaultThreadNum = 4;
 constexpr size_t kEncMaxLen = 16;
 constexpr size_t kModelSizeLimit = static_cast<size_t>(2) * 1024 * 1024 * 1024;
+constexpr int kFakeQuantMinIndex = 1;
+constexpr int kFakeQuantMaxIndex = 2;
 }  // namespace
 
 int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type) {
@@ -150,12 +155,12 @@ bool IsGraphOutDTypeCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
   if (manager == nullptr) {
     manager = Manage(func_graph, true);
   }
-  CHECK_NULL_RETURN(manager);
+  MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");
   auto node_users = manager->node_users()[cnode];
-  MS_CHECK_TRUE_RET(!node_users.empty(), RET_NULL_PTR);
+  MS_CHECK_TRUE_MSG(!node_users.empty(), false, "node_users is empty.");
   for (auto &node_user : node_users) {
     auto output_cnode = node_user.first->cast<CNodePtr>();
-    CHECK_NULL_RETURN(output_cnode);
+    MS_CHECK_TRUE_MSG(output_cnode != nullptr, false, "output_cnode is nullptr.");
     if (!opt::CheckPrimitiveType(output_cnode, prim::kPrimReturn)) {
       return false;
     }
@@ -545,6 +550,9 @@ int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<in
     return GetDeConvPreferredDim(primitive, dims);
   } else if (primitive->name() == ops::kNameGather) {
     return GetGatherPreferredDim(cnode);
+  } else if (primitive->name() == "FFN") {
+    // For FFN MatMul, transpose is false
+    return dims.size() - 1;
   }
   // The first index.
   return 0;
@@ -1124,4 +1132,180 @@ int CalBiasQuantParams(const std::vector<schema::QuantParamT> &active_params,
   }
   return RET_OK;
 }
+
+bool IsAntiQuantModeNodes(const AnfNodePtr &node) {
+  CHECK_NULL_RETURN(node);
+  if (!utils::isa<CNodePtr>(node) || !opt::CheckPrimitiveType(node, prim::kPrimMul)) {
+    MS_LOG(INFO) << "The node is not Mul node";
+    return false;
+  }
+  auto add_node = node->cast<CNodePtr>()->input(kIndexOne);
+  if (!utils::isa<CNodePtr>(add_node) || !opt::CheckPrimitiveType(add_node, prim::kPrimAdd)) {
+    MS_LOG(INFO) << "The node is not Add node. ";
+    return false;
+  }
+  auto ascend_antiquant_node = add_node->cast<CNodePtr>()->input(kIndexOne);
+  if (!utils::isa<CNodePtr>(ascend_antiquant_node) ||
+      !(opt::CheckPrimitiveType(ascend_antiquant_node, prim::kPrimAntiQuant) ||
+        GetCNodePrimitive(ascend_antiquant_node)->name() == "AscendAntiQuant")) {
+    MS_LOG(INFO) << "The node is not AscendAntiquant node";
+    return false;
+  }
+  return true;
+}
+
+STATUS GetScaleZpFromAntiQuantModeNodes(const AnfNodePtr &node, ParameterPtr *scale_param_node,
+                                        ParameterPtr *zp_param_node) {
+  CHECK_NULL_RETURN(node);
+  CHECK_NULL_RETURN(scale_param_node);
+  CHECK_NULL_RETURN(zp_param_node);
+
+  if (!utils::isa<CNodePtr>(node) || !opt::CheckPrimitiveType(node, prim::kPrimMul)) {
+    return RET_ERROR;
+  }
+  auto add_node = node->cast<CNodePtr>()->input(kIndexOne);
+  auto scale_param = node->cast<CNodePtr>()->input(kIndexTwo);
+  if (opt::CheckPrimitiveType(scale_param, prim::kPrimLoad)) {
+    scale_param = scale_param->cast<CNodePtr>()->input(kIndexOne);
+  }
+  *scale_param_node = scale_param->cast<ParameterPtr>();
+  CHECK_NULL_RETURN(*scale_param_node);
+  if (!utils::isa<CNodePtr>(add_node) || !opt::CheckPrimitiveType(add_node, prim::kPrimAdd)) {
+    return RET_ERROR;
+  }
+  auto zp_param = add_node->cast<CNodePtr>()->input(kIndexTwo);
+  if (opt::CheckPrimitiveType(zp_param, prim::kPrimLoad)) {
+    zp_param = zp_param->cast<CNodePtr>()->input(kIndexOne);
+  }
+  *zp_param_node = zp_param->cast<ParameterPtr>();
+  CHECK_NULL_RETURN(*zp_param_node);
+  return RET_OK;
+}
+
+STATUS RemoveAntiQuantModeNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int index) {
+  CHECK_NULL_RETURN(func_graph);
+  CHECK_NULL_RETURN(node);
+
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+  }
+  CHECK_NULL_RETURN(manager);
+
+  if (!utils::isa<CNodePtr>(node)) {
+    MS_LOG(ERROR) << "The node : " << node->fullname_with_scope() << ", it is not cnode";
+    return lite::RET_ERROR;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  CHECK_NULL_RETURN(cnode);
+
+  auto mul_node = cnode->input(index);
+
+  if (!utils::isa<CNodePtr>(mul_node) || !opt::CheckPrimitiveType(mul_node, prim::kPrimMul)) {
+    MS_LOG(WARNING) << "In AntiQuant mode, the node : " << cnode->fullname_with_scope() << " is not mul node";
+    return RET_OK;
+  }
+  auto add_node = mul_node->cast<CNodePtr>()->input(kIndexOne);
+  if (!opt::CheckPrimitiveType(add_node, prim::kPrimAdd)) {
+    MS_LOG(WARNING) << "In AntiQuant mode, the node : " << add_node->fullname_with_scope() << " is not add node";
+    return RET_OK;
+  }
+  auto ascend_antiquant_node = add_node->cast<CNodePtr>()->input(kIndexOne);
+  if (!(opt::CheckPrimitiveType(ascend_antiquant_node, prim::kPrimAntiQuant) ||
+        GetCNodePrimitive(ascend_antiquant_node)->name() == "AscendAntiQuant")) {
+    MS_LOG(WARNING) << "In AntiQuant mode, the node : " << ascend_antiquant_node->fullname_with_scope()
+                    << " is not antiquant node";
+    return RET_OK;
+  }
+
+  manager->Replace(mul_node, ascend_antiquant_node->cast<CNodePtr>()->input(1));
+  return lite::RET_OK;
+}
+
+std::vector<std::vector<int64_t>> ExtractStrategy(const ValuePtr &stra) {
+  if (stra == nullptr) {
+    return {};
+  }
+
+  auto var = stra->cast<ValueTuplePtr>();
+  if (var == nullptr) {
+    return {};
+  }
+  std::vector<std::vector<int64_t>> strategy;
+  MS_LOG(INFO) << "Extract information: strategy " << stra->ToString();
+  if (var->size() > 0) {
+    std::vector<ValuePtr> elements = var->value();
+    for (uint64_t index = 0; index < elements.size(); ++index) {
+      std::vector<int64_t> dim;
+      if (elements[index]->isa<ValueSequence>()) {
+        auto value_tuple = elements[index]->cast<ValueTuplePtr>();
+        std::vector<ValuePtr> value_vector = value_tuple->value();
+        (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
+                             [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+        strategy.push_back(dim);
+      } else {
+        MS_LOG(EXCEPTION) << "Failure: Strategy's format is wrong! Need ValueSequence";
+      }
+    }
+    if (strategy.empty()) {
+      MS_LOG(EXCEPTION) << "ExtractStrategy: failed to extract strategy";
+    }
+  }
+
+  return strategy;
+}
+
+std::vector<schema::QuantParamT> CalQuantParamWithMinMax(const tensor::TensorPtr &min_value,
+                                                         const tensor::TensorPtr &max_value, bool symmetric) {
+  std::vector<schema::QuantParamT> quant_params;
+  // Ascend fake quant transform support PerLayer && PerChannel quant param
+  if (min_value->ElementsNum() != max_value->ElementsNum()) {
+    MS_LOG(ERROR) << "min value size not equal max value size";
+    return {};
+  }
+  int size = min_value->ElementsNum();
+  auto min_data = reinterpret_cast<float *>(min_value->data_c());
+  auto max_data = reinterpret_cast<float *>(max_value->data_c());
+  for (int i = 0; i < size; i++) {
+    float real_min = *(min_data + i);
+    float real_max = *(max_data + i);
+    schema::QuantParamT quant_param;
+    int bit_num = k8Bit;
+
+    MS_LOG(DEBUG) << "min: " << real_min << " max: " << real_max << " bit_num: " << bit_num << " symmetric"
+                  << symmetric;
+    auto ret = CalQuantizationParams(&quant_param, real_min, real_max, bit_num, symmetric);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Failed to calculate quant params";
+      return {};
+    }
+    MS_LOG(INFO) << "quant param scale: " << quant_param.scale << " zp: " << quant_param.zeroPoint;
+    quant_params.push_back(quant_param);
+  }
+  return quant_params;
+}
+
+std::vector<schema::QuantParamT> GetQuantParamWithFakeQuantNode(const CNodePtr &fake_quant_node, bool symmetric) {
+  tensor::TensorPtr min_value;
+  tensor::TensorPtr max_value;
+  auto min_input = fake_quant_node->input(kFakeQuantMinIndex + kPrimOffset);
+  if (utils::isa<ParameterPtr>(min_input) && min_input->cast<ParameterPtr>()->has_default() &&
+      min_input->cast<ParameterPtr>()->default_param() != nullptr) {
+    min_value = min_input->cast<ParameterPtr>()->default_param()->cast<tensor::TensorPtr>();
+  } else {
+    MS_LOG(ERROR) << "Quant param get min value failed";
+    return {};
+  }
+  auto max_input = fake_quant_node->input(kFakeQuantMaxIndex + kPrimOffset);
+  if (utils::isa<ParameterPtr>(max_input) && max_input->cast<ParameterPtr>()->has_default() &&
+      max_input->cast<ParameterPtr>()->default_param() != nullptr) {
+    max_value = max_input->cast<ParameterPtr>()->default_param()->cast<tensor::TensorPtr>();
+  } else {
+    MS_LOG(ERROR) << "Quant param get max value failed";
+    return {};
+  }
+  auto quant_params = CalQuantParamWithMinMax(min_value, max_value, symmetric);
+  return quant_params;
+}
+
 }  // namespace mindspore::lite::quant

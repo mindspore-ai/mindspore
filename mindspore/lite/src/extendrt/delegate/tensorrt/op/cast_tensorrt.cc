@@ -20,7 +20,7 @@
 #include <memory>
 #include <functional>
 #include "src/extendrt/delegate/tensorrt/op/cast_plugin.h"
-#include "ops/cast.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore::lite {
 int CastTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,

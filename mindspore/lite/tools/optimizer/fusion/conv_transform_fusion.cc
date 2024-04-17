@@ -233,9 +233,9 @@ int ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const 
   MS_CHECK_TRUE_MSG(manager != nullptr, lite::RET_NULL_PTR, "manager is nullptr");
   AnfNodePtr conv_weight_node = nullptr;
   AnfNodePtr conv_bias_node = nullptr;
-  if (conv_node->inputs().size() == kConvNoBiasLen) {
+  if (conv_node->size() == kConvNoBiasLen) {
     conv_weight_node = conv_node->input(kConvWeightIndex);
-  } else if (conv_node->inputs().size() == kConvWithBiasLen) {
+  } else if (conv_node->size() == kConvWithBiasLen) {
     conv_weight_node = conv_node->input(kConvWeightIndex);
     conv_bias_node = conv_node->input(kConvBiasIndex);
   } else {
@@ -421,7 +421,7 @@ bool ConvTransformFusion::CheckCanFused(const FuncGraphPtr &func_graph, const CN
   if (IsMultiOutputTensors(func_graph, conv_node) || IsMarkedTrainOp(conv_node)) {
     return false;
   }
-  MS_ASSERT(conv_node->inputs().size() >= kConvNoBiasLen);
+  MS_ASSERT(conv_node->size() >= kConvNoBiasLen);
   auto conv_prim = GetValueNode<PrimitivePtr>(conv_node->input(kInputIndex));
   auto quant_attr = conv_prim->GetAttr("quant_params");
   if (quant_attr != nullptr) {

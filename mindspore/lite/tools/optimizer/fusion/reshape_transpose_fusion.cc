@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/op_utils.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"
@@ -90,7 +90,7 @@ bool CheckTransposeCanFused(const FuncGraphPtr &func_graph, const CNodePtr &tran
   }
   if (input_shape.empty() || std::find(input_shape.begin(), input_shape.end(), -1) != input_shape.end() ||
       output_shape.empty() || std::find(output_shape.begin(), output_shape.end(), -1) != output_shape.end()) {
-    MS_LOG(WARNING) << "The input shape or output shape of transpose is invalid.";
+    MS_LOG(DEBUG) << "The input shape or output shape of transpose is invalid.";
     return false;
   }
   int dim_size = static_cast<int>(input_shape.size());
@@ -387,7 +387,7 @@ AnfNodePtr ReshapeTransposeFusion::TransReshapeTransFusion(const FuncGraphPtr &f
   }
   if (input_shape.empty() || std::find(input_shape.begin(), input_shape.end(), -1) != input_shape.end() ||
       output_shape.empty() || std::find(output_shape.begin(), output_shape.end(), -1) != output_shape.end()) {
-    MS_LOG(WARNING) << "The input shape or output shape of reshape is invalid.";
+    MS_LOG(DEBUG) << "The input shape or output shape of reshape is invalid.";
     return nullptr;
   }
 

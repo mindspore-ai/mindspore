@@ -186,9 +186,9 @@ STATUS ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr 
 
   // whether up conv node has bias
   ParameterPtr new_bias_parameter{nullptr};
-  if (up_conv_cnode->inputs().size() == kConvWithBiasLen) {
+  if (up_conv_cnode->size() == kConvWithBiasLen) {
     ParameterPtr down_bias_parameter;
-    if (down_conv_cnode->inputs().size() == kConvWithBiasLen) {
+    if (down_conv_cnode->size() == kConvWithBiasLen) {
       down_bias_parameter = down_conv_cnode->input(kConvBiasIndex)->cast<ParameterPtr>();
     }
     auto up_bias_parameter = up_conv_cnode->input(kConvBiasIndex)->cast<ParameterPtr>();
@@ -204,7 +204,7 @@ STATUS ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr 
   MS_ASSERT(manager != nullptr);
   manager->SetEdge(down_conv_cnode, kConvWeightIndex, new_weight_paramter);
   if (new_bias_parameter != nullptr) {
-    if (down_conv_cnode->inputs().size() == kConvWithBiasLen) {
+    if (down_conv_cnode->size() == kConvWithBiasLen) {
       manager->SetEdge(down_conv_cnode, kConvBiasIndex, new_bias_parameter);
     } else {
       manager->AddEdge(down_conv_cnode, new_bias_parameter);
@@ -297,13 +297,13 @@ const AnfNodePtr ConvConvFusion::Process(const FuncGraphPtr &func_graph, const A
   }
   auto down_conv_cnode = node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(down_conv_cnode != nullptr, nullptr);
-  if (down_conv_cnode->inputs().size() != kConvWithBiasLen && down_conv_cnode->inputs().size() != kConvNoBiasLen) {
+  if (down_conv_cnode->size() != kConvWithBiasLen && down_conv_cnode->size() != kConvNoBiasLen) {
     MS_LOG(WARNING) << "conv node inputs error ,name:" << down_conv_cnode->fullname_with_scope();
     return nullptr;
   }
   auto up_conv_cnode = down_conv_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(up_conv_cnode != nullptr, nullptr);
-  if (up_conv_cnode->inputs().size() != kConvWithBiasLen && up_conv_cnode->inputs().size() != kConvNoBiasLen) {
+  if (up_conv_cnode->size() != kConvWithBiasLen && up_conv_cnode->size() != kConvNoBiasLen) {
     MS_LOG(WARNING) << "conv node inputs error ,name:" << up_conv_cnode->fullname_with_scope();
     return nullptr;
   }

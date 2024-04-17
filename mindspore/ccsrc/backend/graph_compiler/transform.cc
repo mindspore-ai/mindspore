@@ -359,7 +359,7 @@ void CompileGraph::AddSwitchLayer(const CNodePtr &node) {
 void CompileGraph::AddReturn(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   VectorRef args;
-  if (node->inputs().size() <= 1) {
+  if (node->size() <= 1) {
     MS_LOG(EXCEPTION) << "The node:" << node->DebugString() << "do not have two input.";
   }
   args.emplace_back(Ref(node->input(1)));
@@ -477,7 +477,9 @@ FuncGraphPtr WrapPrimitives(const FuncGraphPtr &graph) {
       args.push_back(prim_ct);
       MS_EXCEPTION_IF_NULL(type);
       TypedPrimitiveAbstractClosurePtr tp = dyn_cast<abstract::TypedPrimitiveAbstractClosure>(type->GetUnique());
-      MS_EXCEPTION_IF_NULL(tp);
+      if (tp == nullptr) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Not TypedPrimitiveAbstractClosure, but got " << type->GetUnique()->ToString();
+      }
       MS_EXCEPTION_IF_NULL(g);
       for (const auto &t : tp->args_abs_list()) {
         ParameterPtr p = g->add_parameter();
@@ -595,14 +597,6 @@ BackendPtr CreateBackend() {
 void SetMindRTEnable() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-
-#if defined(__linux__) && defined(WITH_BACKEND)
-  if (ps::PSContext::instance()->is_ps_mode() && !ps::PSContext::instance()->enable_distributed_mindrt()) {
-    context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
-    return;
-  }
-#endif
-
   MS_LOG(DEBUG) << "Enable mindRT.";
   context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
 }

@@ -68,29 +68,22 @@ void AdamDeltaCpuKernelMod::LaunchAdamDelta(T *delta, T *m, T *v, float lr, floa
   ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
 }
 
-bool AdamDeltaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs's size is 0!";
-  }
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  dtype_ = inputs[0]->GetDtype();
+bool AdamDeltaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[0]->dtype_id();
   return true;
 }
 
-int AdamDeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int AdamDeltaCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs's size is 0!";
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
-  auto delta_shape = outputs[0]->GetDeviceShapeAdaptively();
+  auto delta_shape = outputs[0]->GetDeviceShapeVector();
   if (delta_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'delta' must be at least 1-D, but got empty shape!";
   }
@@ -101,17 +94,15 @@ int AdamDeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (elem_num_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'delta' must be at least 1-D, but got empty shape!";
   }
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto use_nesterov_ptr = prim->GetAttr("use_nesterov");
+  auto use_nesterov_ptr = primitive_->GetAttr("use_nesterov");
   if (use_nesterov_ptr != nullptr) {
     use_nesterov_ = GetValue<bool>(use_nesterov_ptr);
   }
   return KRET_OK;
 }
 
-void AdamDeltaCpuKernelMod::CheckParams(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) const {
+void AdamDeltaCpuKernelMod::CheckParams(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamDeltaInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamDeltaOutputsNum, kernel_name_);
 
@@ -121,39 +112,38 @@ void AdamDeltaCpuKernelMod::CheckParams(const std::vector<kernel::AddressPtr> &i
   std::vector<std::string> input_names = {"m",     "v",     "beta1_power", "beta2_power", "lr",
                                           "beta1", "beta2", "epsilon",     "grad"};
   for (size_t i = 0; i < kAdamDeltaInputsNum; ++i) {
-    MS_EXCEPTION_IF_NULL(inputs[i]);
-    if (inputs[i]->size != expect_sizes[i]) {
+    if (inputs[i]->size() != expect_sizes[i]) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of input '" << input_names[i]
-                        << "' must be equal to " << expect_sizes[i] << ", but got address size: " << inputs[i]->size;
+                        << "' must be equal to " << expect_sizes[i] << ", but got address size: " << inputs[i]->size();
     }
   }
   if (outputs.size() < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of outputs must be at least 1, but got "
                       << outputs.size();
   }
-  if (outputs[0]->size != elem_size) {
+  if (outputs[0]->size() != elem_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'outputs[0]' must be equal to " << elem_size
-                      << ", but got " << outputs[0]->size;
+                      << ", but got " << outputs[0]->size();
   }
 }
 
-bool AdamDeltaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool AdamDeltaCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   CheckParams(inputs, outputs);
-  auto m = reinterpret_cast<float *>(inputs[kMIndex]->addr);
-  auto v = reinterpret_cast<float *>(inputs[kVIndex]->addr);
-  auto beta1_power = reinterpret_cast<float *>(inputs[kBeta1PowIndex]->addr)[0];
+  auto m = reinterpret_cast<float *>(inputs[kMIndex]->device_ptr());
+  auto v = reinterpret_cast<float *>(inputs[kVIndex]->device_ptr());
+  auto beta1_power = reinterpret_cast<float *>(inputs[kBeta1PowIndex]->device_ptr())[0];
   if (std::abs(beta1_power - 1) < FLT_EPSILON) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' can not be 1.";
   }
-  auto beta2_power = reinterpret_cast<float *>(inputs[kBeta2PowIndex]->addr)[0];
-  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr)[0];
-  auto beta1 = reinterpret_cast<float *>(inputs[kBeta1Index]->addr)[0];
-  auto beta2 = reinterpret_cast<float *>(inputs[kBeta2Index]->addr)[0];
-  auto epsilon = reinterpret_cast<float *>(inputs[kEpsIndex]->addr)[0];
-  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
-  auto delta = reinterpret_cast<float *>(outputs[0]->addr);
+  auto beta2_power = reinterpret_cast<float *>(inputs[kBeta2PowIndex]->device_ptr())[0];
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->device_ptr())[0];
+  auto beta1 = reinterpret_cast<float *>(inputs[kBeta1Index]->device_ptr())[0];
+  auto beta2 = reinterpret_cast<float *>(inputs[kBeta2Index]->device_ptr())[0];
+  auto epsilon = reinterpret_cast<float *>(inputs[kEpsIndex]->device_ptr())[0];
+  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->device_ptr());
+  auto delta = reinterpret_cast<float *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(m);
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(grad);
@@ -161,7 +151,7 @@ bool AdamDeltaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 
   lr = lr * std::sqrt(1 - beta2_power) / (1 - beta1_power);
   // multithreading
-  size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
+  size_t lens = inputs[0]->size() > 0 ? static_cast<size_t>(inputs[0]->size() / sizeof(float)) : 1;
   LaunchAdamDelta<float>(delta, m, v, lr, beta1, beta2, epsilon, grad, lens);
   return true;
 }

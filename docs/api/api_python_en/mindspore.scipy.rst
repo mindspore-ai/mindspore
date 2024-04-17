@@ -2,7 +2,7 @@ mindspore.scipy
 ===============
 
 .. warning::
-    These are experimental APIs that are subject to change or deletion.
+    These are experimental APIs that are subject to change or deletion. Only support Linux.
 
 .. automodule:: mindspore.scipy
 
@@ -24,6 +24,7 @@ mindspore.scipy.linalg
     mindspore.scipy.linalg.inv
     mindspore.scipy.linalg.lu
     mindspore.scipy.linalg.lu_factor
+    mindspore.scipy.linalg.solve_triangular
 
 mindspore.scipy.optimize
 ------------------------
@@ -36,4 +37,5 @@ mindspore.scipy.optimize
     :template: classtemplate_inherited.rst
 
     mindspore.scipy.optimize.line_search
+    mindspore.scipy.optimize.linear_sum_assignment
     mindspore.scipy.optimize.minimize

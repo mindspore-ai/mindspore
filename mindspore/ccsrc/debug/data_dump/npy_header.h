@@ -20,8 +20,9 @@
 #include <string>
 #include "mindspore/core/utils/shape_utils.h"
 #include "mindspore/core/ir/dtype/type_id.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
-std::string GenerateNpyHeader(const ShapeVector &shape, TypeId type_id, bool fortran_order = false);
+std::string BACKEND_EXPORT GenerateNpyHeader(const ShapeVector &shape, TypeId type_id, bool fortran_order = false);
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_NPY_HEADER_H_

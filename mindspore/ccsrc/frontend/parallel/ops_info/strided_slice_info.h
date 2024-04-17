@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,8 @@ class StridedSliceInfo : public OperatorInfo {
   int64_t ellipsis_mask_ = 0;
   int64_t new_axis_mask_ = 0;
   int64_t shrink_axis_mask_ = 0;
+  bool has_mask_ = false;
+  std::vector<bool> fully_fetch_flag_;
   bool skip_redistribution_ = false;
   std::vector<bool> begin_mask_bitmap_;
   std::vector<bool> end_mask_bitmap_;
@@ -76,6 +78,7 @@ class StridedSliceInfo : public OperatorInfo {
   void ComputeEndMask();
   void ComputeEllipsisMask();
   void ComputeNewAxisMask();
+  void ComputeFullyFetchFlag();
   void AdjustShrinkAxisMask();
   Status CheckInputStrategy(const Shape &strategy);
 };

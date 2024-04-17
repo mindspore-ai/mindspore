@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_LOGNORMALREVERSE_H_
 
 #include <vector>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class LogNormalReverseCpuKernel : public CpuKernel {
@@ -29,7 +29,7 @@ class LogNormalReverseCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
   uint32_t GetInputAndCheck(CpuKernelContext &ctx);
 
   std::vector<Tensor *> inputs_;

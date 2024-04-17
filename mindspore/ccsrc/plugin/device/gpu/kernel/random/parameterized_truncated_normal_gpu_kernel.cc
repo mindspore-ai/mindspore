@@ -34,16 +34,13 @@ namespace mindspore {
 namespace kernel {
 using KernelRunFunc = ParameterizedTruncatedNormalGpuKernelMod::KernelRunFunc;
 
-bool ParameterizedTruncatedNormalGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                    const std::vector<KernelTensorPtr> &inputs,
-                                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ParameterizedTruncatedNormalGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
@@ -52,17 +49,15 @@ bool ParameterizedTruncatedNormalGpuKernelMod::Init(const BaseOperatorPtr &base_
   unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
 
   // setup seed
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
 
   return true;
 }
 
-int ParameterizedTruncatedNormalGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs,
-                                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int ParameterizedTruncatedNormalGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
@@ -71,22 +66,22 @@ int ParameterizedTruncatedNormalGpuKernelMod::Resize(const BaseOperatorPtr &base
     }
   }
 
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeVector().end());
   if (!IsValidShape(output_shape)) {
     return KRET_UNKNOWN_SHAPE;
   }
 
   ResetResource();
 
-  std::vector<int64_t> mean_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                         inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> stdevs_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                           inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> min_shape = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                                        inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> max_shape = std::vector<int64_t>(inputs.at(kIndex4)->GetDeviceShapeAdaptively().begin(),
-                                                        inputs.at(kIndex4)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> mean_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                         inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<int64_t> stdevs_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                           inputs.at(kIndex2)->GetDeviceShapeVector().end());
+  std::vector<int64_t> min_shape = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
+                                                        inputs.at(kIndex3)->GetDeviceShapeVector().end());
+  std::vector<int64_t> max_shape = std::vector<int64_t>(inputs.at(kIndex4)->GetDeviceShapeVector().begin(),
+                                                        inputs.at(kIndex4)->GetDeviceShapeVector().end());
   int64_t mean_elements = std::accumulate(mean_shape.begin(), mean_shape.end(), 1, std::multiplies<int64_t>());
   stdevs_elements_ = std::accumulate(stdevs_shape.begin(), stdevs_shape.end(), 1, std::multiplies<int64_t>());
   int64_t min_elements = std::accumulate(min_shape.begin(), min_shape.end(), 1, std::multiplies<int64_t>());
@@ -105,19 +100,15 @@ int ParameterizedTruncatedNormalGpuKernelMod::Resize(const BaseOperatorPtr &base
     is_null_input_ = true;
   }
 
-  input_size_list_.emplace_back(mean_elements * unit_output_size_);
-  input_size_list_.emplace_back(stdevs_elements_ * unit_output_size_);
-  input_size_list_.emplace_back(min_elements * unit_output_size_);
-  input_size_list_.emplace_back(max_elements * unit_output_size_);
   output_size_list_.emplace_back(output_elements_ * unit_output_size_);
 
   return KRET_OK;
 }
 
 template <typename T>
-bool ParameterizedTruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &workspace,
-                                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool ParameterizedTruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &workspace,
+                                                            const std::vector<kernel::KernelTensor *> &outputs) {
   T *mean = GetDeviceAddress<T>(inputs, kIndex1);
   T *stdevs = GetDeviceAddress<T>(inputs, kIndex2);
   T *min = GetDeviceAddress<T>(inputs, kIndex3);

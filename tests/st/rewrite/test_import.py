@@ -3,7 +3,7 @@ import mindspore as ms
 from .test_folder import import_net, import_net2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_import(mode):
@@ -14,7 +14,7 @@ def test_import(mode):
     """
     import_net.run_net_with_import(mode)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_import2(mode):

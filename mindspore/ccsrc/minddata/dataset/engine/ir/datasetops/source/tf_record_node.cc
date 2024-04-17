@@ -167,15 +167,8 @@ Status TFRecordNode::ValidateParams() {
   return Status::OK();
 }
 
-// Function to build TFRecordNode
-Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
-  RETURN_UNEXPECTED_IF_NULL(node_ops);
-  // Sort the datasets file in a lexicographical order
-  std::vector<std::string> sorted_dir_files = dataset_files_;
-  std::sort(sorted_dir_files.begin(), sorted_dir_files.end());
-
-  // Create Schema Object
-  std::unique_ptr<DataSchema> data_schema = std::make_unique<DataSchema>();
+Status TFRecordNode::CreateDataSchema(DataSchema *data_schema) {
+  RETURN_UNEXPECTED_IF_NULL(data_schema);
   if (!schema_path_.empty()) {
     RETURN_IF_NOT_OK(ValidateDatasetFilesParam("TFRecordDataset", {schema_path_}));
     RETURN_IF_NOT_OK(data_schema->LoadSchemaFile(schema_path_, columns_list_));
@@ -183,6 +176,18 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     std::string schema_json_string = schema_obj_->to_json();
     RETURN_IF_NOT_OK(data_schema->LoadSchemaString(schema_json_string, columns_list_));
   }
+  return Status::OK();
+}
+
+// Function to build TFRecordNode
+Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
+  RETURN_UNEXPECTED_IF_NULL(node_ops);
+  // Sort the datasets file in a lexicographical order
+  std::vector<std::string> sorted_dir_files = dataset_files_;
+  std::sort(sorted_dir_files.begin(), sorted_dir_files.end());
+
+  DataSchema data_schema;
+  RETURN_IF_NOT_OK(CreateDataSchema(&data_schema));
 
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
@@ -190,9 +195,10 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   RETURN_IF_NOT_OK(HelperGetCompressType(&compression_type));
 
   // Create and initialize TFReaderOp
-  std::shared_ptr<TFReaderOp> tf_reader_op = std::make_shared<TFReaderOp>(
-    num_workers_, worker_connector_size_, num_samples_, sorted_dir_files, std::move(data_schema), connector_que_size_,
-    columns_list_, shuffle_files, num_shards_, shard_id_, shard_equal_rows_, compression_type);
+  std::shared_ptr<TFReaderOp> tf_reader_op =
+    std::make_shared<TFReaderOp>(num_workers_, worker_connector_size_, num_samples_, sorted_dir_files,
+                                 std::make_unique<DataSchema>(data_schema), connector_que_size_, columns_list_,
+                                 shuffle_files, num_shards_, shard_id_, shard_equal_rows_, compression_type, decode_);
 
   RETURN_IF_NOT_OK(tf_reader_op->Init());
 

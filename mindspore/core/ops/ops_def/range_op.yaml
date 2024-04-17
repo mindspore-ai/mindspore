@@ -1,0 +1,19 @@
+#operator range
+range:
+    args:
+        start:
+            dtype: number
+            type_cast: tensor
+        end:
+            dtype: number
+            type_cast: tensor
+        step:
+            dtype: number
+            type_cast: tensor
+        maxlen:
+            dtype: int
+            default: 1000000
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor

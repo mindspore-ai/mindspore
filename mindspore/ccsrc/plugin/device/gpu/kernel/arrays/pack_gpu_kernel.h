@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pack.cuh"
 #include "mindspore/core/ops/stack.h"
+#include "mindspore/ccsrc/kernel/format_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,8 +36,8 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
       : axis_(0), input_num_(1), output_size_(0), dims_behind_axis_(1), inputs_host_(nullptr), kernel_name_("Pack") {}
   ~PackFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *output = GetDeviceAddress<T>(outputs, 0);
     T **inputs_array = GetDeviceAddress<T *>(workspace, 0);
     for (size_t i = 0; i < inputs.size(); i++) {
@@ -52,21 +53,18 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
-    auto kernel_ptr = std::make_shared<ops::Stack>(base_operator->GetPrim());
-    axis_ = kernel_ptr->get_axis();
+    axis_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("axis")));
     if (axis_ < 0) {
       auto input_shape = inputs.at(kIndex0)->GetShapeVector();
       axis_ += (SizeToInt(input_shape.size()) + 1);
     }
     auto origin_data_format = kOpFormat_DEFAULT;
-    auto input_format = GetFormatFromEnumToStr(inputs[0]->GetFormat());
+    auto input_format = GetFormatFromEnumToStr(inputs[0]->format());
     axis_ = AxisTransform(origin_data_format, input_format, axis_);
 
     input_num_ = inputs.size();
@@ -91,9 +89,7 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
     }
     return KRET_OK;
   }
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     auto output_num = outputs.size();
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
@@ -107,7 +103,6 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
     output_size_ = 0;
     dims_behind_axis_ = 1;
     inputs_host_ = nullptr;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

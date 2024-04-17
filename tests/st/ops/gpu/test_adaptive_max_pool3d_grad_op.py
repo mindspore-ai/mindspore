@@ -31,7 +31,7 @@ class NetAdaptiveMaxPool3DGrad(nn.Cell):
         return self.adaptive_max_pool3d_grad_fun(dy, x, argmax)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adaptive_max_pool3d_grad_fp32():

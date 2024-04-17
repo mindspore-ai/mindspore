@@ -22,6 +22,7 @@
 #include <numeric>
 #include <utility>
 #include <vector>
+#include <set>
 
 #include "frontend/parallel/status.h"
 #include "utils/log_adapter.h"
@@ -101,6 +102,31 @@ Status DeviceMatrix::GetDevicesAlongDim(const uint64_t &dim, RankList *devices) 
   return Status::FAILED;
 }
 
+Status DeviceMatrix::GetDevicesAlongMultiDim(const std::vector<int64_t> &dims, RankList *devices) {
+  std::set<int64_t> repeated_rank_set;
+  for (const auto &dim : dims) {
+    if (dim != -1) {
+      auto r_dim = LongToUlong(dim);
+      if (repeated_rank_set.empty()) {
+        DeviceMatrix dev_matrix(rank_, dev_list_, dev_shape_);
+        RankList cur_dim_reduce_list;
+        dev_matrix.GetDevicesAlongDim(r_dim, &cur_dim_reduce_list);
+        repeated_rank_set.insert(cur_dim_reduce_list.begin(), cur_dim_reduce_list.end());
+      } else {
+        auto repeated_rank_set_cpy = repeated_rank_set;
+        for (const auto &rank : repeated_rank_set_cpy) {
+          DeviceMatrix dev_matrix(rank, dev_list_, dev_shape_);
+          RankList dim_reduce_list;
+          dev_matrix.GetDevicesAlongDim(r_dim, &dim_reduce_list);
+          repeated_rank_set.insert(dim_reduce_list.begin(), dim_reduce_list.end());
+        }
+      }
+    }
+  }
+  std::copy(repeated_rank_set.begin(), repeated_rank_set.end(), std::back_inserter(*devices));
+  return SUCCESS;
+}
+
 Shape ConvertRankToCoordinate(int64_t rank, const Shape &dev_shape) {
   Shape dev_coordinate;
   for (size_t i = 0; i < dev_shape.size(); ++i) {
@@ -167,6 +193,17 @@ std::string ShapeToString(const Shape &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
     str += std::to_string(shape[i]);
     if (i < shape.size() - 1) {
+      str += ", ";
+    }
+  }
+  return str + "]";
+}
+
+std::string ShapesToString(const Shapes &shapes) {
+  std::string str = "[";
+  for (size_t i = 0; i < shapes.size(); ++i) {
+    str += ShapeToString(shapes[i]);
+    if (i < shapes.size() - 1) {
       str += ", ";
     }
   }

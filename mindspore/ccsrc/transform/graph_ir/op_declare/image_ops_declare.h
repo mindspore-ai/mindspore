@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_
 
+#include "transform/graph_ir/custom_op_proto/cust_image_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
-#include "inc/ops/image_ops.h"
 
 DECLARE_OP_ADAPTER(ResizeNearestNeighborV2)
 DECLARE_OP_USE_OUTPUT(ResizeNearestNeighborV2)
@@ -39,17 +39,32 @@ DECLARE_OP_USE_OUTPUT(ResizeArea)
 DECLARE_OP_ADAPTER(ResizeBicubic)
 DECLARE_OP_USE_OUTPUT(ResizeBicubic)
 
+DECLARE_OP_ADAPTER(UpsampleTrilinear3d)
+DECLARE_OP_USE_OUTPUT(UpsampleTrilinear3d)
+
+DECLARE_OP_ADAPTER(UpsampleTrilinear3dGrad)
+DECLARE_OP_USE_OUTPUT(UpsampleTrilinear3dGrad)
+
+DECLARE_OP_ADAPTER(UpsampleNearest3d)
+DECLARE_OP_USE_OUTPUT(UpsampleNearest3d)
+
+DECLARE_OP_ADAPTER(UpsampleNearest3dGrad)
+DECLARE_OP_USE_OUTPUT(UpsampleNearest3dGrad)
+
 DECLARE_OP_ADAPTER(Resize)
 DECLARE_OP_USE_OUTPUT(Resize)
+
+DECLARE_CUST_OP_ADAPTER(CropAndResize)
+DECLARE_CUST_OP_USE_OUTPUT(CropAndResize)
 
 DECLARE_OP_ADAPTER(CropAndResizeD)
 DECLARE_OP_USE_OUTPUT(CropAndResizeD)
 
-DECLARE_OP_ADAPTER(CropAndResizeGradBoxes)
-DECLARE_OP_USE_OUTPUT(CropAndResizeGradBoxes)
+DECLARE_CUST_OP_ADAPTER(CropAndResizeGradBoxes)
+DECLARE_CUST_OP_USE_OUTPUT(CropAndResizeGradBoxes)
 
-DECLARE_OP_ADAPTER(CropAndResizeGradImage)
-DECLARE_OP_USE_OUTPUT(CropAndResizeGradImage)
+DECLARE_CUST_OP_ADAPTER(CropAndResizeGradImage)
+DECLARE_CUST_OP_USE_OUTPUT(CropAndResizeGradImage)
 
 DECLARE_OP_ADAPTER(DecodeImage)
 DECLARE_OP_USE_OUTPUT(DecodeImage)
@@ -72,8 +87,14 @@ DECLARE_OP_USE_OUTPUT(CombinedNonMaxSuppression)
 DECLARE_OP_ADAPTER(GridSampler2D)
 DECLARE_OP_USE_OUTPUT(GridSampler2D)
 
+DECLARE_OP_ADAPTER(GridSampler2DGrad)
+DECLARE_OP_USE_OUTPUT(GridSampler2DGrad)
+
 DECLARE_OP_ADAPTER(GridSampler3D)
 DECLARE_OP_USE_OUTPUT(GridSampler3D)
+
+DECLARE_OP_ADAPTER(GridSampler3DGrad)
+DECLARE_OP_USE_OUTPUT(GridSampler3DGrad)
 
 DECLARE_OP_ADAPTER(NonMaxSuppressionV3)
 DECLARE_OP_USE_OUTPUT(NonMaxSuppressionV3)

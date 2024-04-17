@@ -48,16 +48,16 @@ namespace {
 TuplePtr SparseTensorToCSRSparseMatrixInferType(const PrimitivePtr &prim,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto x_indices_type = input_args[kInputIndex0]->BuildType();
-  auto x_values_type = input_args[kInputIndex1]->BuildType();
-  auto x_dense_shape_type = input_args[kInputIndex2]->BuildType();
+  auto x_indices_type = input_args[kInputIndex0]->GetType();
+  auto x_values_type = input_args[kInputIndex1]->GetType();
+  auto x_dense_shape_type = input_args[kInputIndex2]->GetType();
   const std::set<TypePtr> common_valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_indices", x_indices_type, {kInt32, kInt64}, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_values", x_values_type, common_valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dense_shape", x_dense_shape_type, {kInt32, kInt64}, prim->name());
-  std::vector<TypePtr> types_list = {input_args[kInputIndex2]->BuildType(), input_args[kInputIndex0]->BuildType(),
-                                     input_args[kInputIndex0]->BuildType(), input_args[kInputIndex0]->BuildType(),
-                                     input_args[kInputIndex1]->BuildType()};
+  std::vector<TypePtr> types_list = {input_args[kInputIndex2]->GetType(), input_args[kInputIndex0]->GetType(),
+                                     input_args[kInputIndex0]->GetType(), input_args[kInputIndex0]->GetType(),
+                                     input_args[kInputIndex1]->GetType()};
   return std::make_shared<Tuple>(types_list);
 }
 
@@ -67,7 +67,7 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
   const int64_t kDefalutRank = 2;
   const int64_t kBatchRank = 3;
   std::vector<int64_t> x_dense_shape_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (x_dense_shape_shape.size() == 0) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input x_dense_shape should "
                              << "have rank 2 or 3, but got " << x_dense_shape_shape.size() << ".";
@@ -78,9 +78,8 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
                              << "have rank 2 or 3, but got " << rank_x << ".";
   }
   auto prim_name = primitive->name();
-  auto x_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto x_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto x_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   std::vector<ShapeVector> all_shapes = {x_indices_shape, x_values_shape, x_dense_shape_shape};
   auto is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
   const int64_t x_indices_rank = static_cast<int64_t>(x_indices_shape.size());
@@ -101,22 +100,21 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
     (void)CheckAndConvertUtils::CheckInteger("x_indices.shape[1] and x_dense_shape.shape[0]", x_indices_shape[1],
                                              kEqual, x_dense_shape_shape[0]);
   }
-  auto y_dense_shape_shape = input_args[kInputIndex2]->BuildShape();
+  auto y_dense_shape_shape = input_args[kInputIndex2]->GetShape();
   abstract::ShapePtr y_dense_shape_shape_list = y_dense_shape_shape->cast<abstract::ShapePtr>();
-  auto y_col_indices_shape = input_args[kInputIndex1]->BuildShape();
+  auto y_col_indices_shape = input_args[kInputIndex1]->GetShape();
   abstract::ShapePtr y_col_indices_shape_list = y_col_indices_shape->cast<abstract::ShapePtr>();
-  auto y_values_shape = input_args[kInputIndex1]->BuildShape();
+  auto y_values_shape = input_args[kInputIndex1]->GetShape();
   abstract::ShapePtr y_values_shape_list = y_values_shape->cast<abstract::ShapePtr>();
   abstract::ShapePtr y_batch_pointers_shape_list;
   abstract::ShapePtr y_row_pointers_shape_list;
 
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>() &&
-      !input_args[kInputIndex2]->BuildValue()->isa<ValueAny>() &&
-      !input_args[kInputIndex2]->BuildValue()->isa<None>()) {
-    auto dense_shape = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-    auto dense_shape_ptr = dense_shape->BuildValue();
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2]) &&
+      !input_args[kInputIndex2]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex2]->GetValue()->isa<None>()) {
+    auto dense_shape_ptr = input_args[kInputIndex2]->GetValue();
+    auto dense_shape_type = input_args[kInputIndex2]->GetType();
     auto dense_shape_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", dense_shape_ptr, prim_name);
+      CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", dense_shape_ptr, prim_name, dense_shape_type);
 
     ShapeVector y_batch_pointers_shape;
     ShapeVector y_row_pointers_shape;

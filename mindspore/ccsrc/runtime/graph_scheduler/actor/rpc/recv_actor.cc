@@ -209,6 +209,10 @@ void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
   // Release data allocated by AllocateMessage.
   if (recv_data_ != nullptr) {
+    if (!WaitRuntimePipelineFinish(context)) {
+      MS_LOG(INFO) << "Run failed and early stop.";
+      return;
+    }
     MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");
     MS_EXCEPTION_IF_NULL(device_contexts_[0]);
     MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
@@ -218,6 +222,10 @@ void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
 #ifdef ENABLE_RDMA
   // Release data of URPC by caller.
   if (common::GetEnv(kEnableRDMA) == "1" && rdma_buf_ != nullptr) {
+    if (!WaitRuntimePipelineFinish(context)) {
+      MS_LOG(INFO) << "Run failed and early stop.";
+      return;
+    }
     auto rdma_server = dynamic_cast<RDMAServer *>(server_.get());
     MS_EXCEPTION_IF_NULL(rdma_server);
     auto urpc_alloc = rdma_server->urpc_allocator();
@@ -320,6 +328,13 @@ void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const Sh
     MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
     device_contexts_[0]->device_res_manager_->FreeMemory(output_addr.get());
   }
+
+  // Update kernel tensor shape for dynamic shape case.
+  const auto &output_kernel_tensor = output_addr->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(output_kernel_tensor);
+  const auto &new_shape = real_abs->GetShape();
+  MS_EXCEPTION_IF_NULL(new_shape);
+  output_kernel_tensor->SetShape(new_shape->Clone());
 }
 
 size_t RecvActor::ParseDynamicShapeData(const RpcDataPtr &dynamic_shape_data, size_t data_size,
@@ -404,17 +419,6 @@ void RecvActor::PreprocessRemoteInput(const MessageBase *const msg, bool *need_f
   size_t input_size = common::AnfAlgo::GetInputTensorNum(kernel_);
   size_t dynamic_shape_data_msg_len = ParseDynamicShapeData(dynamic_shape_data, data_size, &args_spec_list, input_size);
   ParseFinalizeReqData(dynamic_shape_data_msg_len, msg, need_finalize);
-
-  // The args_spec_list is updated in ParseDynamicShapeData method. So do the Infer and Resize operation.
-  auto eval_result = opt::CppInferShapeAndType(common::AnfAlgo::GetCNodePrimitive(kernel_), args_spec_list);
-  kernel_->set_abstract(eval_result);
-  auto args = kernel::AbstractArgsFromCNode(kernel_);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel_);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  if (kernel_mod->Resize(args.inputs, args.outputs, args.depend_tensor_map) ==
-      static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
-    MS_LOG(EXCEPTION) << "Node " << kernel_->fullname_with_scope() << " Resize() failed.";
-  }
 }
 
 MessageBase *RecvActor::HandleMessage(MessageBase *const msg) {

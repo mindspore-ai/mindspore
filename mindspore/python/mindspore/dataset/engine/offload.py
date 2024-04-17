@@ -46,13 +46,11 @@ def check_concat_zip_dataset(dataset):
     """
     Check if dataset is concatenated or zipped.
     """
-    while dataset:
-        if len(dataset.children) > 1:
-            raise RuntimeError("Offload module currently does not support concatenated or zipped datasets.")
-        if dataset.children:
-            dataset = dataset.children[0]
-            continue
-        dataset = dataset.children
+    child_len = len(dataset.children)
+    if child_len == 1:
+        check_concat_zip_dataset(dataset.children[0])
+    elif child_len > 1:
+        raise RuntimeError("Offload module currently does not support concatenated or zipped datasets.")
 
 
 def get_col_idxs(node_cols, ds_cols):

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,15 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "common/util/error_manager/error_manager.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "runtime/device/ms_device_shape_transfer.h"
-#include "utils/ms_context.h"
+#include <unordered_set>
 #include "utils/dlopen_macro.h"
-#include "runtime/dev.h"
-#include "runtime/config.h"
+#include "utils/anf_utils.h"
+#include "ops/math_op_name.h"
 #include "acl/error_codes/rt_error_codes.h"
-#ifdef ASCEND_910
-#define EXPECT_ASCEND_VERSION "ascend910"
-#elif defined(ASCEND_910B)
-#define EXPECT_ASCEND_VERSION "ascend910b"
-#endif
+#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/acl_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -107,12 +102,13 @@ const std::map<uint32_t, std::string> error_msg = {
 };
 
 constexpr auto kUnknowErrorString = "Unknown error occurred";
+
+bool g_acl_initialized = false;
+std::mutex g_acl_init_mutex;
 }  // namespace
 
-error_message::Context ErrorManagerAdapter::context_;
 std::mutex ErrorManagerAdapter::initialized_mutex_;
 bool ErrorManagerAdapter::initialized_ = false;
-std::vector<std::string> ErrorManagerAdapter::traceback_;
 
 bool ErrorManagerAdapter::Init() {
   std::unique_lock<std::mutex> lock(initialized_mutex_);
@@ -120,120 +116,34 @@ bool ErrorManagerAdapter::Init() {
     MS_LOG(DEBUG) << "Ascend error manager has been initialized.";
     return true;
   }
-  const auto error_manager_init_ret = ErrorManager::GetInstance().Init();
-  if (error_manager_init_ret != 0) {
-    MS_LOG(WARNING) << "Init ascend error manager failed, some ascend error log may be left out.";
-    return false;
-  }
-  ErrorManager::GetInstance().GenWorkStreamIdDefault();
-  context_ = ErrorManager::GetInstance().GetErrorManagerContext();
-  MS_LOG(DEBUG) << "Initialize ascend error manager successfully. Work stream id: " << context_.work_stream_id;
-  initialized_ = true;
   LogWriter::SetMessageHandler(&MessageHandler);
+  initialized_ = true;
   return true;
 }
 
-void ErrorManagerAdapter::BindToCurrentThread() {
-  if (initialized_) {
-    ErrorManager::GetInstance().SetErrorContext(context_);
-  }
-}
-
 std::string ErrorManagerAdapter::GetErrorMessage(bool add_title) {
-  const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+  int32_t device_id;
+  if (CALL_ASCEND_API(aclrtGetDevice, &device_id) != ACL_SUCCESS) {
+    MS_LOG(INFO) << "The device is not set yet, no need to fetch error from device.";
+    return "";
+  }
+  const char *message = CALL_ASCEND_API(aclGetRecentErrMsg);
+  const string error_message = message == nullptr ? "" : message;
   if (error_message.empty() || error_message.find(kUnknowErrorString) != string::npos) {
     return "";
   }
   if (add_title) {
     return "#umsg#Ascend Error Message:#umsg#" + error_message +
-           "\n(Please search \"Ascend Error Message\" at https://www.mindspore.cn for error code description)";
+           "\n(Please search \"CANN Common Error Analysis\" at https://www.mindspore.cn for error code description)";
   }
   return error_message;
-}
-
-std::string ErrorManagerAdapter::GetWarningMessage(bool add_title) {
-  const string &warning_message = ErrorManager::GetInstance().GetWarningMessage();
-  if (warning_message.empty()) {
-    return "";
-  }
-  if (add_title) {
-    return "#umsg#Ascend Warning Message:#umsg#" + warning_message;
-  }
-  return warning_message;
 }
 
 void ErrorManagerAdapter::MessageHandler(std::ostringstream *oss) {
   const auto &error_message = GetErrorMessage(true);
   if (!error_message.empty()) {
-    (void)traceback_.emplace_back(error_message);
+    *oss << error_message;
   }
-  const auto &warning_message = GetWarningMessage(true);
-  if (!warning_message.empty()) {
-    (void)traceback_.emplace_back(warning_message);
-  }
-  for (const auto &message : traceback_) {
-    *oss << message;
-  }
-}
-
-bool IsGraphMode() {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  return context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
-}
-
-bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
-  return std::any_of(node_list.begin(), node_list.end(),
-                     [](const AnfNodePtr &node) { return common::AnfAlgo::IsDynamicShape(node); });
-}
-
-std::string GetSocVersion() {
-  // Get default soc version.
-  static std::string version;
-  if (version.empty()) {
-    const int kSocVersionLen = 50;
-    char soc_version[kSocVersionLen] = {0};
-    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
-    }
-    version = soc_version;
-  }
-  return version;
-}
-
-std::string GetAscendPath() {
-  Dl_info info;
-  if (dladdr(reinterpret_cast<void *>(rtGetSocVersion), &info) == 0) {
-    MS_LOG(INFO) << "Get dladdr failed, skip.";
-    return "";
-  }
-  auto path_tmp = std::string(info.dli_fname);
-  const std::string kLib64 = "lib64";
-  auto pos = path_tmp.find(kLib64);
-  if (pos == std::string::npos) {
-    MS_EXCEPTION(ValueError) << "Get ascend path failed, please check the run package.";
-  }
-  return path_tmp.substr(0, pos);
-}
-
-std::string GetAICoreNumber() {
-  constexpr int32_t kModelTypeAiCore = 4;  // enum DEV_MODULE_TYPE { MODULE_TYPE_AICORE = 4 }
-  constexpr int32_t kInfoTypeCoreNum = 3;  // enum DEV_INFO_TYPE { INFO_TYPE_CORE_NUM = 3 }
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  int64_t aicore_number = 0;
-  auto rt_ret = rtGetDeviceInfo(device_id, kModelTypeAiCore, kInfoTypeCoreNum, &aicore_number);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(WARNING) << "Get aicore number for device " << device_id
-                    << " failed, will compile tbe op with empty core_num.";
-    return "";
-  }
-  MS_LOG(DEBUG) << "AiCore number of device " << device_id << " is " << aicore_number;
-  return std::to_string(aicore_number);
 }
 
 std::string GetErrorMsg(uint32_t rt_error_code) {
@@ -244,54 +154,55 @@ std::string GetErrorMsg(uint32_t rt_error_code) {
   return find_iter->second;
 }
 
-#if defined(ASCEND_910) || defined(ASCEND_910B)
-constexpr auto k910AscendVersion = "Ascend910";
-constexpr auto k910BAscendVersion = "ascend910b";
-const std::map<std::string, std::string> kAscendSocVersions = {
-  {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
-  {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
-  {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
-
-// for unify 1980 and 1980b, when the function throw exception, it means the 910b soc version is not available.
-const bool SelectAscendPlugin = []() -> bool {
-  // for 1951, if is_heterogenous, return true
-  int32_t is_heterogenous = 0;
-  (void)rtGetIsHeterogenous(&is_heterogenous);
-  if (is_heterogenous == 1) {
-    if (std::string(EXPECT_ASCEND_VERSION) == k910BAscendVersion) {
-      exit(0);
-    } else {
-      return true;
+void *callback_thread_func(void *data) {
+  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
+  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
+#ifdef WITH_BACKEND
+  auto callback_thread = reinterpret_cast<CallbackThread *>(data);
+  while (callback_thread->flag_.load()) {
+    try {
+      CALL_ASCEND_API(aclrtProcessReport, callback_thread->default_timeout_);
+    } catch (const std::exception &ex) {
+      MS_LOG(ERROR) << "aclrtProcessReport exception : " << ex.what() << ".";
+      break;
     }
   }
-  std::string soc_version = GetSocVersion();
-  // if soc_version belongs to 310 or 710, return true
-  if (soc_version.find(k910AscendVersion) == std::string::npos) {
-    return true;
-  }
-  auto iter = kAscendSocVersions.find(soc_version);
-  if (iter == kAscendSocVersions.end()) {
-    exit(0);
-  }
-  if (iter->second != std::string(EXPECT_ASCEND_VERSION)) {
-    exit(0);
-  }
-  if (iter->second == k910BAscendVersion) {
-    common::SetEnv("MS_ENABLE_GE", "1");
-    auto format_mode = common::GetEnv("MS_ENABLE_FORMAT_MODE");
-    if (format_mode.empty()) {
-      common::SetEnv("MS_ENABLE_FORMAT_MODE", "1");
-    }
-    auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
-    auto disable_ref = common::GetEnv("MS_DISABLE_REF_MODE");
-    // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
-    if (force_acl.empty() && disable_ref != "1") {
-      common::SetEnv("MS_DEV_FORCE_ACL", "1");
-    }
-  }
-  return true;
-}();
+  MS_LOG(INFO) << "Exit callback thread loop.";
 #endif
+  return data;
+}
+
+void InitializeAcl() {
+  std::lock_guard<std::mutex> lock(g_acl_init_mutex);
+  if (g_acl_initialized) {
+    return;
+  }
+
+  if (CALL_ASCEND_API(aclInit, nullptr) != ACL_ERROR_NONE) {
+    MS_LOG(WARNING) << "Call aclInit failed, acl data dump function will be unusable.";
+  } else {
+    MS_LOG(INFO) << "Call aclInit successfully";
+  }
+  g_acl_initialized = true;
+}
+
+std::string GetFormatMode(const AnfNodePtr &node) {
+  auto format_mode = common::GetEnv("MS_FORMAT_MODE");
+  if (format_mode.empty()) {
+    // default set "1", except graph sink or matmul in 910a
+    format_mode = "1";
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->ascend_soc_version() == "ascend910") {
+      std::string op_type = node != nullptr && node->isa<CNode>() ? AnfUtils::GetCNodeName(node) : "";
+      static std::unordered_set<std::string> matmul_ops = {kMatMulOpName, kMatMulV2OpName, kBatchMatMulOpName};
+      if (ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK) || matmul_ops.find(op_type) != matmul_ops.end()) {
+        format_mode = "0";
+      }
+    }
+  }
+  return format_mode;
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

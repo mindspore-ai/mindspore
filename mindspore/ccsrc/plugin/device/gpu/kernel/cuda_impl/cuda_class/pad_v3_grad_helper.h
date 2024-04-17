@@ -57,22 +57,16 @@ class PadV3GradHelperGpuKernel : public GpuKernelHelperBase {
     constexpr size_t OUTPUT_NUM = 1;
     ResetResource();
 
-    size_t x_size = sizeof(T);
-    for (auto val : input_shapes[0]) {
-      x_size *= val;
-    }
-    size_t pad_size = sizeof(S);
-    for (auto val : input_shapes[1]) {
-      pad_size *= val;
-    }
-    input_size_list_.emplace_back(x_size);
-    input_size_list_.emplace_back(pad_size);
     int out_flag =
       CalShapesSizeInBytes<T>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {
       return out_flag;
     }
-    input_size_ = input_size_list_[0] / sizeof(T);
+
+    input_size_ = 1;
+    for (auto val : input_shapes[0]) {
+      input_size_ *= val;
+    }
     output_size_ = output_size_list_[0] / sizeof(T);
     is_null_input_ = (out_flag == 1);
     size_t expand_dim = kMaxDim - input_shapes[0].size();
@@ -133,7 +127,6 @@ class PadV3GradHelperGpuKernel : public GpuKernelHelperBase {
     input_shape_5d_.clear();
     output_shape_5d_.clear();
     paddings_3d_.clear();
-    input_size_list_.clear();
     output_size_list_.clear();
     work_size_list_.clear();
   }

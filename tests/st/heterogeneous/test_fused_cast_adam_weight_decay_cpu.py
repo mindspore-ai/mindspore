@@ -151,7 +151,7 @@ class FusedAdamWeightDecayWithGlobalNorm(Optimizer):
         return optim_result
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -181,7 +181,7 @@ def test_fused_cast_adam_weight_decay():
     assert np.all(loss[-1] < 0.1)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

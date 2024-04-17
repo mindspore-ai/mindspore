@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,11 @@
 
 #include "minddata/dataset/engine/ir/datasetops/sync_wait_node.h"
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "minddata/dataset/engine/datasetops/barrier_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor for SyncWaitNode
 SyncWaitNode::SyncWaitNode(std::shared_ptr<DatasetNode> child, const std::string &condition_name, py::function callback)
     : condition_name_(condition_name), callback_(callback) {

@@ -145,7 +145,7 @@ def data_sink(fn, dataset, sink_size=1, jit_config=None, input_signature=None):
         input_signature (Union[Tensor, List or Tuple of Tensors]): The Tensor which describes the input arguments.
             The shape and dtype of the Tensor will be supplied to this function. If input_signature is specified,
             each input to `fn` must be a `Tensor`. And the input parameters of `fn` cannot accept `**kwargs`. The shape
-            and dtype of actual inputs should keep the same as input_signature. Otherwise, TypeError will be raised.
+            and dtype of actual inputs should keep the same as `input_signature`. Otherwise, TypeError will be raised.
             Default: ``None`` .
 
     Returns:

@@ -82,8 +82,8 @@ class VmapGeneralRule : public MetaFuncGraph {
   int64_t axis_size() const { return axis_size_; }
 
  private:
-  CNodeInpusList ConstructMapInput(const InputsAbstractList &tuple_elements_abstract, bool wrapped_tuple,
-                                   int64_t args_size);
+  CNodeInpusList ConstructMapInput(const InputsAbstractList &unfold_elements_abstract, int64_t args_size,
+                                   int64_t tuple_elements_num);
   PrimitivePtr prim_{nullptr};
   int64_t axis_size_ = 0;
   FuncGraphPtr fg_{nullptr};

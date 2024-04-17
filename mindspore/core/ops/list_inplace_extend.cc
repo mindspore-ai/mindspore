@@ -68,7 +68,7 @@ AbstractBasePtr ListInplaceExtendInfer(const abstract::AnalysisEnginePtr &, cons
       (void)new_elements.emplace_back(element);
     }
   } else {
-    auto target_base_shape = target_abs->BuildShape();
+    auto target_base_shape = target_abs->GetShape();
     MS_EXCEPTION_IF_NULL(target_base_shape);
     if (target_base_shape->isa<abstract::NoShape>()) {
       MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
@@ -85,7 +85,7 @@ AbstractBasePtr ListInplaceExtendInfer(const abstract::AnalysisEnginePtr &, cons
         (void)std::copy(target_shape_vec.begin() + 1, target_shape_vec.end(), std::back_inserter(new_element_shape));
       }
       auto new_element_abs =
-        abstract::MakeAbstractTensor(std::make_shared<abstract::Shape>(new_element_shape), target_abs->BuildType());
+        abstract::MakeAbstractTensor(std::make_shared<abstract::Shape>(new_element_shape), target_abs->GetType());
       for (int i = 0; i < new_element_num; ++i) {
         (void)new_elements.emplace_back(new_element_abs->Clone());
       }

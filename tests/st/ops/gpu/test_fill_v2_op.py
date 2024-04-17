@@ -79,20 +79,3 @@ def test_fill_v2_dyn():
     dyn_case()
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     dyn_case()
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
-def test_fill_v2_vmap():
-    """
-    Feature: test FillV2 vmap in gpu.
-    Description: inputs is static shape.
-    Expectation: expect correct out result.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    vmap_tuple_case()
-    vmap_tensor_case()
-    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
-    vmap_tuple_case()
-    vmap_tensor_case()

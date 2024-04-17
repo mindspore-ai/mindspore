@@ -35,8 +35,7 @@ int GetReductionAxes(const api::CNodePtr &cnode, const api::SharedPtr<ops::Reduc
     MS_LOG(ERROR) << "input arg is nullptr." << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  if ((cnode->inputs().size() > kInputIndex2 &&
-       FetchDataFromParameterNode(cnode, kInputIndex2, data_info) == lite::RET_OK)) {
+  if ((cnode->size() > kInputIndex2 && FetchDataFromParameterNode(cnode, kInputIndex2, data_info) == lite::RET_OK)) {
     if (data_info->data_type_ != kNumberTypeInt32) {
       MS_LOG(ERROR) << "data_type not correct";
       return RET_ERROR;

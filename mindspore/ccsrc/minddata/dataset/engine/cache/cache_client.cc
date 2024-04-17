@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#include <iomanip>
 #include "minddata/dataset/engine/cache/cache_client.h"
-#include "minddata/dataset/engine/cache/cache_request.h"
 #include "minddata/dataset/engine/cache/cache_fbb.h"
+#include "minddata/dataset/engine/cache/cache_request.h"
 #include "minddata/dataset/util/bit.h"
 #include "minddata/dataset/util/task_manager.h"
 
@@ -351,7 +350,8 @@ bool CacheClient::CacheMissKeys::KeyIsCacheMiss(row_id_type key) {
   }
 }
 
-CacheClient::AsyncBufferStream::AsyncBufferStream() : cc_(nullptr), offset_addr_(-1), cur_(0) {}
+CacheClient::AsyncBufferStream::AsyncBufferStream()
+    : cc_(nullptr), offset_addr_(-1), cur_(0), buf_arr_(std::vector<AsyncWriter>(kNumAsyncBuffer)) {}
 
 CacheClient::AsyncBufferStream::~AsyncBufferStream() {
   (void)vg_.ServiceStop();

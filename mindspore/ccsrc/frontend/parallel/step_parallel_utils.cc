@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@
 #include <string>
 #include <utility>
 
+#include "abstract/dshape.h"
+#include "base/base.h"
+#include "base/bfloat16.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/device_manager.h"
@@ -36,6 +39,7 @@
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/parameter_manager.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/param_info.h"
@@ -50,6 +54,7 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "utils/trace_base.h"
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore {
 namespace parallel {
@@ -58,6 +63,26 @@ size_t TOTAL_OPS = 0;
 // g_RefMap, for CNode B input i is a RefKey[Parameter C],
 // it will be one item in map with key: C, and value: (B, i)
 std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
+
+bool IsDynamicShapeInput(const CNodePtr &node, const AnfNodePtr &input) {
+  if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
+      (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
+    return true;
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimCast) && IsPrimitiveCNode(input, prim::kPrimTupleGetItem)) {
+    BaseShapePtr base_shape_ptr = node->Shape();
+    if (base_shape_ptr == nullptr) {
+      MS_LOG(EXCEPTION) << "IsDynamicShapeInput: " << node->ToString() << " shape_ptr is nullptr, full name is "
+                        << node->fullname_with_scope();
+    }
+    auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    if (shape_ptr->shape().empty()) {
+      return true;
+    }
+  }
+  return false;
+}
 
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   if (!cnode) {
@@ -476,10 +501,18 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     return GetValueListShape(node);
   }
   BaseShapePtr base_shape_ptr = node->Shape();
+  if (base_shape_ptr == nullptr && node->isa<ValueNode>()) {
+    auto value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_CHECK_FAIL(value_node->value() != nullptr, "ValueNode has no value.");
+    auto abstract = value_node->value()->ToAbstract();
+    MS_EXCEPTION_IF_CHECK_FAIL(abstract != nullptr, "ValueNode has no Abstract.");
+    node->set_abstract(abstract);
+    base_shape_ptr = node->Shape();
+  }
   if (node->isa<CNode>() && !IsControlFlowNode(node)) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode->input(0)->isa<CNode>()) {
-      if (cnode->inputs().size() < 2) {
+      if (cnode->size() < 2) {
         MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " size is smaller than 2";
       }
       base_shape_ptr = cnode->input(1)->Shape();
@@ -491,16 +524,31 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
   }
   auto tuple_shape_ptr = dyn_cast<abstract::SequenceShape>(base_shape_ptr);
   if (tuple_shape_ptr != nullptr) {
+    if (tuple_shape_ptr->size() == 0) {
+      shapes.push_back(Shape{0});
+      return shapes;
+    }
     auto tuple_shape = tuple_shape_ptr->shape();
+    if (tuple_shape[0]->isa<abstract::NoShape>()) {
+      shapes.push_back(Shape{SizeToLong(tuple_shape_ptr->size())});
+      return shapes;
+    }
     for (auto &shape : tuple_shape) {
       auto each_shape = dyn_cast<abstract::Shape>(shape);
       MS_EXCEPTION_IF_NULL(each_shape);
       shapes.push_back(each_shape->shape());
     }
-  } else {
+  } else if (base_shape_ptr->isa<abstract::DynamicSequenceShape>()) {
+    shapes.push_back(Shape{-1});
+  } else if (base_shape_ptr->isa<abstract::Shape>()) {
     auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
     MS_EXCEPTION_IF_NULL(shape_ptr);
     shapes.push_back(shape_ptr->shape());
+  } else if (base_shape_ptr->isa<abstract::NoShape>()) {
+    shapes.push_back(Shape{});
+  } else {
+    MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " should be Tuple/List/Tensor/Scalar, but got "
+                      << base_shape_ptr->ToString() << "full name is " << node->fullname_with_scope();
   }
   return shapes;
 }
@@ -592,50 +640,6 @@ void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input) {
       (void)prim->AddAttr(GROUP_RANKS, MakeValue(rank_list_name));
     }
   }
-}
-
-std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
-                                       const CNodePtr &node) {
-  OperatorArgs arg_replace_op = replace_op.second;
-  ValuePtr pyop_instance = CreateOpInstance(arg_replace_op.first, replace_op.first, instance_name);
-  if (pyop_instance == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure: " << replace_op.first << " CreateOpInstance failed";
-  }
-  OperatorParams params = arg_replace_op.second;
-  if (node->inputs().size() < 2) {
-    // GetNext operator dose not has input
-    if (node->inputs().size() == 1) {
-      return {NewValueNode(pyop_instance)};
-    }
-    MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
-  }
-  std::vector<AnfNodePtr> replace_input = {NewValueNode(pyop_instance), node->input(1)};
-
-  if (replace_op.first == EMBEDDING_LOOKUP) {
-    replace_input = {NewValueNode(pyop_instance), node->input(1), node->input(2)};
-  }
-
-  if (!params.empty()) {
-    Param param_first = *(params.begin());
-    int64_t first_position = param_first.second;
-    if (first_position == 1) {
-      replace_input.pop_back();
-    }
-    for (auto &param : params) {
-      AnfNodePtr val = NewValueNode(param.first.second);
-      if (val == nullptr) {
-        MS_LOG(EXCEPTION) << "Failure:val is nullptr";
-      }
-      int64_t position = param.second;
-      (void)replace_input.insert(replace_input.cbegin() + position, val);
-    }
-  } else if (replace_op.first == SYNC_BATCH_NORM) {
-    for (size_t i = 2; i < node->inputs().size(); ++i) {
-      replace_input.push_back(node->input(i));
-    }
-  }
-  SetCommunicationOpGroupLabel(replace_input);
-  return replace_input;
 }
 
 void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes) {
@@ -793,24 +797,33 @@ AnfNodePtr GetChildCastNode(const AnfNodePtr &node_ptr, const NodeUsersMap &node
 // Given the cnode ptr, find its users until we find the computation node, then return the type of the
 // computation node. This function is used to find the target type for CreateFP16Cast. Only returns the target type if
 // it is float16, and the source node is float32. If the situation is not matched, then return the nullptr.
-TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMap &node_users_map) {
-  auto node_ptr = cnode_ptr->cast<AnfNodePtr>();
-  if (!node_ptr) {
+TypePtr FindChildCastWithFP32ToFP16(const std::pair<AnfNodePtr, int> &res, const NodeUsersMap &node_users_map) {
+  auto cnode_ptr = res.first->cast<CNodePtr>();
+  if (!cnode_ptr) {
     return nullptr;
   }
   auto cnode_inputs = cnode_ptr->inputs();
   if (cnode_inputs.size() < TWO_INPUT_SIZE) {
     return nullptr;
   }
-  // As we execute the function IsWeightValidUsed when we start to insert the mirror, so the second parameter
-  // is always the parameter.
-  auto weight = cnode_inputs[1];
-  if (!weight->isa<Parameter>()) {
-    return nullptr;
-  }
-  MS_LOG(INFO) << "Start to search the weight params:" << weight->DebugString();
 
-  AnfNodePtr node = GetChildCastNode(weight, node_users_map);
+  AnfNodePtr node = nullptr;
+  if (IsValueNode<FuncGraph>(cnode_ptr->input(kIndex0))) {
+    auto graph_sub = GetValueNode<FuncGraphPtr>(cnode_ptr->input(0));
+    auto parameters = graph_sub->parameters();
+    auto parameter_sub = parameters[IntToSize(res.second - 1)];
+    node = GetChildCastNode(parameter_sub, node_users_map);
+  } else {
+    // As we execute the function IsWeightValidUsed when we start to insert the mirror, so the second parameter
+    // is always the parameter.
+    auto weight = cnode_inputs[1];
+    if (!weight->isa<Parameter>()) {
+      return nullptr;
+    }
+    MS_LOG(INFO) << "Start to search the weight params:" << weight->DebugString();
+    node = GetChildCastNode(weight, node_users_map);
+  }
+
   if (!node) {
     return nullptr;
   }
@@ -821,14 +834,22 @@ TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMa
   }
   auto input_element_type = node_type->cast<mindspore::TensorTypePtr>()->element();
   MS_EXCEPTION_IF_NULL(input_element_type);
-  auto source_node_type = node_ptr->Type();
+  if (!IsPrimitiveCNode(node)) {
+    return nullptr;
+  }
+  auto cast_input_cnode = node->cast<CNodePtr>()->input(kIndex1)->cast<CNodePtr>();
+  if (!cast_input_cnode) {
+    return nullptr;
+  }
+  auto source_node_type = cast_input_cnode->Type();
   if (!CheckTensorType(source_node_type)) {
     return nullptr;
   }
   auto source_element_type = source_node_type->cast<mindspore::TensorTypePtr>()->element();
   MS_EXCEPTION_IF_NULL(source_element_type);
   // We only add cast operation when the source is fp32 type, and the users is fp16 type.
-  if (source_element_type->type_id() == kNumberTypeFloat32 && input_element_type->type_id() == kNumberTypeFloat16) {
+  if ((source_element_type->type_id() == kNumberTypeFloat32 && input_element_type->type_id() == kNumberTypeFloat16) ||
+      (source_element_type->type_id() == kNumberTypeFloat32 && input_element_type->type_id() == kNumberTypeBFloat16)) {
     return input_element_type;
   }
   return nullptr;
@@ -852,6 +873,7 @@ AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, cons
   type_node->set_abstract(compute_node_type->ToAbstract());
   auto new_node = node->func_graph()->NewCNode({NewValueNode(prim), pre_node, type_node});
   new_node->set_abstract(node->abstract());
+  new_node->set_scope(node->scope());
   new_node->set_in_forward_flag(true);
   return new_node;
 }
@@ -872,10 +894,17 @@ void LabelGenMaskMicro(const FuncGraphPtr &root) {
 
 void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes) {
   for (const auto &node : all_nodes) {
-    if (!IsPrimitiveCNode(node, prim::kPrimCast)) {
+    if (!IsPrimitiveCNode(node)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    auto cnode_prim = GetCNodePrimitive(cnode);
+    if (cnode_prim->HasAttr("DISABLE_MERGE_ASSIGN_ADD")) {
+      cnode->AddPrimalAttr("DISABLE_MERGE_ASSIGN_ADD", cnode_prim->GetAttr("DISABLE_MERGE_ASSIGN_ADD"));
+    }
+    if (!IsPrimitiveCNode(node, prim::kPrimCast)) {
+      continue;
+    }
     auto cast_input = RealInputNode(cnode, 1);
     if (cast_input->isa<Parameter>() && cast_input->cast<ParameterPtr>()->has_default()) {
       MS_LOG(INFO) << "Cast for parameter no needs recompute to avoid redundant trans_data operator";
@@ -909,14 +938,14 @@ bool IsSplittableOperator(const std::string &op_name) {
      SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, SIGMOID_CROSS_ENTROPY_WITH_LOGITS, SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS,
      EMBEDDING_LOOKUP, FUSE_BATCH_NORM_EX, SPLIT, BROADCAST_TO, ABS, ACOSH, ASIN, ASINH, ATAN, ATANH, CEIL, COSH,
      EXPM1, LOG1P, SIN, SINH, TAN, RSQRT, INV, RECIPROCAL, ROUND, FLOOR, SIGN, ERF, ERFC, ZEROSLIKE, ONESLIKE,
-     BESSELI0E, BESSELI1E, FLOORMOD, ASSIGN, ASSIGN_ADD, ATAN2, DIVNONAN, LOGICALAND, LOGICALOR, ELU, RELU6, RELUV2,
+     BESSELI0E, BESSELI1E, FLOORMOD, ASSIGN, ASSIGN_ADD, ATAN2, DIVNONAN, LOGICALAND, LOGICALOR, ELU, RELU6,
      SOFTPLUS, SOFTSIGN, GREATEREQUAL, LESSEQUAL, LESS, APPROXIMATEEQUAL, MOD, UNIQUE, UNSORTED_SEGMENT_SUM,
      UNSORTED_SEGMENT_MIN, REPEAT_ELEMENTS, TENSOR_DOT, RANGE, UNIFORM_CANDIDATE_SAMPLER, SLICE, SELECT, GATHERD,
      UNSORTED_SEGMENT_MAX, GATHER_ND, TOPK, SCATTER_UPDATE, SCATTER_ND_UPDATE, SCATTER_ND_ADD, SCATTER_ND_SUB,
      TENSOR_SCATTER_UPDATE, TENSOR_SCATTER_ADD, TENSOR_SCATTER_SUB, TENSOR_SCATTER_MAX, TENSOR_SCATTER_MIN, WKV,
      TENSOR_SCATTER_MUL, TENSOR_SCATTER_DIV, VIRTUAL_OUTPUT, CONV2D_BACK_PROP_INPUT, CONV2D_TRANSPOSE, SORT, PAD_V3,
-     MATMUL_DDS, DSD_MATMUL, UNIFORMREAL, STANDARD_NORMAL, RESIZE_BILINEAR, RESIZE_NEAREST_NEIGHBOR, FAST_GELU, IOU,
-     BOUNDING_BOX_ENCODE, UNSORTED_SEGMENT_PROD, SQUARE_SUM_ALL, UNIQUE_CONSECUTIVE,
+     MATMUL_DDS, DSD_MATMUL, UNIFORMREAL, STANDARD_NORMAL, RESIZE_BILINEAR_V2, RESIZE_NEAREST_NEIGHBOR, FAST_GELU, IOU,
+     BOUNDING_BOX_ENCODE, UNSORTED_SEGMENT_PROD, SQUARE_SUM_ALL, UNIQUE_CONSECUTIVE, SILU,
      RANDOM_CHOICE_WITH_MASK, CROP_AND_RESIZE, ROI_ALIGN, REDUCE_PROD, REDUCE_ANY, REDUCE_ALL, ARGMAX, ARGMIN, ARGMINV2,
      RESIZE_NEAREST_NEIGHBOR, CUM_SUM, FAST_GELU, IOU, BOUNDING_BOX_ENCODE, RANDOM_CHOICE_WITH_MASK, CROP_AND_RESIZE,
      ROI_ALIGN, IS_FINITE, RINT, HSHRINK, HSIGMOID, MISH, SELU, SOFT_SHRINK, XLOGY, XDIVY, CUM_PROD, BITWISE_AND,
@@ -926,7 +955,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      POPULATION_COUNT, IDENTITY, BESSELI0, BESSELI1, BESSELJ0, BESSELJ1, CUM_MAX, CUM_MIN, HYPOT, IGAMMA, IGAMMAC,
      LEFT_SHIFT, RIGHT_SHIFT, NEXT_AFTER, ZETA, REVERSEV2, LGAMMA, TRUNC, BETAINC, GCD, CHOLESKY, CONV3D, MAXPOOL_3D,
      AVGPOOL_3D, FILLV2, FAKE_QUANT_PER_LAYER, FAKE_QUANT_PER_CHANNEL, MIN_MAX_UPDATE_PER_LAYER,
-     MIN_MAX_UPDATE_PER_CHANNEL, MOE_FFN, FLASH_ATTENTION_SCORE};
+     MIN_MAX_UPDATE_PER_CHANNEL, FFN, FLASH_ATTENTION_SCORE, ASCEND_QUANT, ASCEND_DEQUANT, GRID_SAMPLER_2D, ANTI_QUANT};
   // clang-format on
 
   auto iter = splittable_op.find(op_name);
@@ -1012,31 +1041,31 @@ OperatorInfoPtr OperatorInstanceByName(const std::string &name, const PrimitiveA
     return nullptr;
   }
   std::string distribute_opname = GetDisOpName(name);
-  OperatorInfoPtr operator_ =
+  OperatorInfoPtr op_info =
     (OperatorInfoPtr)DynCreator::Instance().Create(distribute_opname, shape_list[0], shape_list[1], attrs, TOTAL_OPS);
-  if (operator_ == nullptr) {
+  if (op_info == nullptr) {
     MS_LOG(INFO) << "Create " << name << " failed";
     return nullptr;
   }
-  std::string origin_name = operator_->name();
-  operator_->set_name(origin_name + std::to_string(TOTAL_OPS));
+  std::string origin_name = op_info->name();
+  op_info->set_name(origin_name + std::to_string(TOTAL_OPS));
   MS_LOG(INFO) << "Successfully created operator " << origin_name;
   ++TOTAL_OPS;
-  return operator_;
+  return op_info;
 }
 
 OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
                                  const std::vector<Shapes> &shape_list) {
   MS_EXCEPTION_IF_NULL(prim);
-  OperatorInfoPtr operator_ = OperatorInstanceByName(prim->name(), attrs, shape_list);
-  if (operator_) {
-    return operator_;
+  OperatorInfoPtr op_info = OperatorInstanceByName(prim->name(), attrs, shape_list);
+  if (op_info) {
+    return op_info;
   }
   if (IsInBatchParallelBlackList(prim)) {
-    operator_ = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
+    op_info = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
     prim->AddAttr(STAND_ALONE, MakeValue<bool>(true));
     MS_LOG(INFO) << "Operator " << prim->name() << " is not supported yet in auto parallel mode. Use Stand Alone";
-    return operator_;
+    return op_info;
   }
   auto input_shape = shape_list[0];
   auto output_shape = shape_list[1];
@@ -1047,14 +1076,14 @@ OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs 
       output_shape[0][0] % device_num != 0) {
     MS_LOG(INFO) << "Operator " << prim->name() << " use Stand Alone, the input shape is " << input_shape
                  << ", the output shape is " << output_shape;
-    operator_ = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
+    op_info = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
     prim->AddAttr(STAND_ALONE, MakeValue<bool>(true));
-    return operator_;
+    return op_info;
   }
   MS_LOG(INFO) << "Operator " << prim->name() << " use Batch Parallel";
-  operator_ = OperatorInstanceByName(BATCH_PARALLEL, attrs, shape_list);
+  op_info = OperatorInstanceByName(BATCH_PARALLEL, attrs, shape_list);
   prim->AddAttr(BATCH_PARALLEL, MakeValue<bool>(true));
-  return operator_;
+  return op_info;
 }
 
 static Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
@@ -1075,16 +1104,21 @@ static Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &fun
   return input_shapes;
 }
 
-std::vector<Shapes> ExtractShape(const CNodePtr &node) {
+std::pair<std::vector<Shapes>, std::vector<Symbols>> ExtractShapeAndSymbol(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  Shapes shape_inputs, shape_outputs;
+  Shapes shape_inputs;
+  Shapes shape_outputs;
+  Symbols symbol_inputs;
+  Symbols symbol_outputs;
   std::vector<Shapes> shape_all;
+  std::vector<Symbols> symbol_all;
   std::vector<AnfNodePtr> all_inputs = node->inputs();
 
-  const int concat_size = 2;
+  const int min_size = 2;
   size_t inputs_size = all_inputs.size();
   for (size_t i = 1; i < inputs_size; ++i) {
     Shapes input_shapes;
+    Symbols input_symbols;
     AnfNodePtr input = all_inputs[i];
     if (HasAbstractMonad(input)) {
       continue;
@@ -1100,37 +1134,82 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       g_RefMap[parameters[0]] = node_pair;
       MS_LOG(INFO) << "Find parameter by ref key node" << node_pair.first;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
+      input_symbols = StaticShapesToSymbols(input_shapes);  // now the parameter can only be static shape
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
-               ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == concat_size))) {
-      if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
-          (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
+               (IsValueSequence(input) &&
+                (inputs_size == min_size || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)))) {
+      if (IsDynamicShapeInput(node, input)) {
         MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape, the node is " << node->ToString();
         continue;
       }
 
       if (IsPrimitiveCNode(input, prim::kPrimShape)) {
         input_shapes = GetNodeShape(input->cast<CNodePtr>()->input(1));
+        input_symbols = GetNodeSymbol(input->cast<CNodePtr>()->input(1));
       } else {
         input_shapes = GetNodeShape(input);
+        input_symbols = GetNodeSymbol(input);
       }
     } else {
       continue;
     }
     if (input_shapes.size() != 1) {
-      if (inputs_size == concat_size) {  // like concat
+      if (inputs_size == min_size || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) {
         shape_inputs = input_shapes;
+        symbol_inputs = input_symbols;
         break;
       } else {
         MS_LOG(EXCEPTION) << "ExtractShape: Get input shape failed";
       }
     }
     shape_inputs.push_back(input_shapes[0]);
+    symbol_inputs.push_back(input_symbols[0]);
   }
   shape_all.push_back(shape_inputs);
+  symbol_all.push_back(symbol_inputs);
   // extract out shape
   shape_outputs = GetNodeShape(node);
+  symbol_outputs = GetNodeSymbol(node);
   shape_all.push_back(shape_outputs);
-  return shape_all;
+  symbol_all.push_back(symbol_outputs);
+
+  return std::make_pair(shape_all, symbol_all);
+}
+
+std::vector<Shapes> ExtractShape(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto shapes_and_symbols = ExtractShapeAndSymbol(node);
+  return shapes_and_symbols.first;
+}
+
+std::vector<Shapes> ExtractRealDivisor(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto shapes_and_symbols = ExtractShapeAndSymbol(node);
+  std::vector<Shapes> shapes = shapes_and_symbols.first;
+  std::vector<Symbols> symbols = shapes_and_symbols.second;
+  if (shapes.size() != INPUT_OUTPUT_SYMBOLS_SIZE || symbols.size() != INPUT_OUTPUT_SYMBOLS_SIZE) {
+    MS_LOG(EXCEPTION) << "the size of shapes or symbols must be " << INPUT_OUTPUT_SYMBOLS_SIZE
+                      << ", but the size of shapes is " << shapes.size() << ", the size of symbols is "
+                      << symbols.size();
+  }
+
+  auto inputs_shape = shapes[0];
+  auto outputs_shape = shapes[1];
+  auto inputs_symbol = symbols[0];
+  auto outputs_symbol = symbols[1];
+
+  Shapes in_divisor_symbols;
+  Shapes out_divisor_symbols;
+  MS_LOG(DEBUG) << "the node is " << node->ToString() << ", the divisor of inputs is "
+                << DivisorOfSymbolsToString(inputs_symbol) << ", the inputs shape is " << ShapesToString(inputs_shape);
+  in_divisor_symbols = GetRealDivisorSymbols(inputs_shape, inputs_symbol);
+  out_divisor_symbols = GetRealDivisorSymbols(outputs_shape, outputs_symbol);
+
+  MS_LOG(DEBUG) << "the node is " << node->ToString() << ", the inputs shape is " << ShapesToString(inputs_shape)
+                << ", the inputs divisor is " << ShapesToString(in_divisor_symbols);
+  MS_LOG(DEBUG) << "the node is " << node->ToString() << ", the outputs shape is " << ShapesToString(outputs_shape)
+                << ", the outputs divisor is " << ShapesToString(out_divisor_symbols);
+  return {in_divisor_symbols, out_divisor_symbols};
 }
 
 AnfNodePtr GetInputNodeWithFilter(const AnfNodePtr &node,
@@ -1177,6 +1256,224 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePt
   return res;
 }
 
+std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipDepend(const AnfNodePtr &node) {
+  auto func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  std::vector<std::pair<AnfNodePtr, int>> res;
+  std::queue<AnfNodePtr> anf_queue;
+  anf_queue.push(node);
+  while (!anf_queue.empty()) {
+    auto queue_end = anf_queue.front();
+    anf_queue.pop();
+    auto user_set = manager->node_users()[queue_end];
+    for (auto &pair : user_set) {
+      if (IsPrimitiveCNode(pair.first, prim::kPrimDepend)) {
+        if (pair.second == 1) {
+          anf_queue.push(pair.first);
+        }
+        continue;
+      }
+      res.push_back(pair);
+    }
+  }
+  return res;
+}
+
+std::pair<bool, size_t> CanMergeConcatSlice(const std::pair<std::shared_ptr<AnfNode>, int> &pair,
+                                            const CNodePtr &concat_cnode,
+                                            const ShapeVector &concat_output_shape_element, int64_t concat_axis) {
+  if (!IsPrimitiveCNode(pair.first, prim::kPrimStridedSlice)) {
+    return {false, 0};
+  }
+  auto slice_cnode = pair.first->cast<CNodePtr>();
+  MS_LOG(INFO) << "concat slice cnode:" << slice_cnode->fullname_with_scope();
+  auto begin_value = GetValueNode(slice_cnode->input(2));
+  auto end_value = GetValueNode(slice_cnode->input(3));
+  auto strided_value = GetValueNode(slice_cnode->input(4));
+  if (!begin_value || !end_value || !strided_value) {
+    return {false, 0};
+  }
+  auto begin = GetValue<std::vector<int64_t>>(begin_value);
+  auto end = GetValue<std::vector<int64_t>>(end_value);
+  auto strided = GetValue<std::vector<int64_t>>(strided_value);
+  if (!std::all_of(strided.begin(), strided.end(), [](auto s) { return s == 1; })) {
+    return {false, 0};
+  }
+  if (!IsPrimitiveCNode(concat_cnode->input(1), prim::kPrimMakeTuple)) {
+    return {false, 0};
+  }
+  auto concat_input_node = concat_cnode->input(1)->cast<CNodePtr>();
+  auto concat_input_size = concat_input_node->size();
+  bool can_merge = false;
+  size_t concat_input_index = 0;
+  for (size_t i = 0; i < begin.size(); ++i) {
+    int64_t slice_len = (end[i] - begin[i]);
+    if (i == size_t(concat_axis)) {
+      int64_t slice_index = begin[i] / slice_len;
+      if (slice_len == concat_output_shape_element[i] || size_t(slice_index + 1) >= concat_input_size) {
+        can_merge = false;
+        break;
+      }
+      concat_input_index = size_t(slice_index + 1);
+      can_merge = true;
+    } else if (slice_len != concat_output_shape_element[i]) {
+      can_merge = false;
+      break;
+    }
+  }
+  return {can_merge, concat_input_index};
+}
+
+void UpdateUpdateStateForMergeConcatSlice(const FuncGraphManagerPtr &manager,
+                                          const std::vector<std::pair<AnfNodePtr, int>> &update_list,
+                                          const CNodePtr &tuple_get_item_node) {
+  for (const auto &ups_pair : update_list) {
+    manager->SetEdge(ups_pair.first, ups_pair.second, tuple_get_item_node);
+  }
+}
+
+bool HandleFuncConcatSlice(const FuncGraphManagerPtr &manager, const std::pair<std::shared_ptr<AnfNode>, int> &pair,
+                           const CNodePtr &concat_cnode, const ShapeVector &concat_output_shape_element,
+                           int64_t concat_axis) {
+  auto fg = pair.first->func_graph();
+  auto fg_map = fg->func_graph_cnodes_index();
+  if (fg_map.size() > 1) {
+    return false;
+  }
+  for (auto &fg_use : fg_map) {
+    if (!fg_use.first->first->isa<CNode>() || fg_use.first->second > 0) {
+      continue;
+    }
+    auto call_cnode = fg_use.first->first->cast<CNodePtr>();
+    auto func_users = manager->node_users()[call_cnode];
+    std::vector<std::pair<AnfNodePtr, int>> update_list;
+    size_t func_users_size = 0;
+    std::pair<AnfNodePtr, int> fg_users;
+    for (auto &cur_fg_users : func_users) {
+      if (IsPrimitiveCNode(cur_fg_users.first, prim::kPrimUpdateState)) {
+        update_list.push_back(cur_fg_users);
+        continue;
+      }
+      ++func_users_size;
+      fg_users = cur_fg_users;
+    }
+
+    if (func_users_size > 1) {
+      continue;
+    }
+    auto func_node_users = FuncGraphNodeUsers(fg_users);
+    if (func_node_users.empty()) {
+      continue;
+    }
+    bool have_can_merge = false;
+    std::vector<std::pair<bool, size_t>> input_index;
+    for (const auto &new_pair : func_node_users) {
+      auto can_merge = CanMergeConcatSlice(new_pair, concat_cnode, concat_output_shape_element, concat_axis);
+      input_index.push_back(can_merge);
+      if (can_merge.first) {
+        have_can_merge = true;
+      }
+    }
+    if (!have_can_merge) {
+      continue;
+    }
+    // maketuple->Return
+    auto concat_input_node = concat_cnode->input(1)->cast<CNodePtr>();
+    manager->SetEdge(pair.first, pair.second, concat_input_node);
+    // call -> tuplegetitem -> call
+    auto user_func_graph = GetValueNode<FuncGraphPtr>(fg_users.first->cast<CNodePtr>()->input(0));
+    auto user_graph_parameters = user_func_graph->parameters();
+    auto origin_parameter = user_graph_parameters[fg_users.second - 1];
+    auto new_user_graph_parameters(user_graph_parameters);
+    new_user_graph_parameters.erase(new_user_graph_parameters.begin() + fg_users.second - 1);
+    auto fg_users_inputs_all(fg_users.first->cast<CNodePtr>()->inputs());
+    fg_users_inputs_all.erase(fg_users_inputs_all.begin() + fg_users.second);
+    // New concat CNode in user_func_graph
+    std::vector<AnfNodePtr> new_concat_maketuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AbstractBasePtr> new_maketuple_abstracts;
+    bool updated_update_state = false;
+    for (size_t i = 0; i < concat_input_node->size() - 1; ++i) {
+      std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), call_cnode,
+                                                    ValuePtrToAnfNodePtr(MakeValue<int64_t>(i))};
+      auto tuple_get_item_node = call_cnode->func_graph()->NewCNode(tuple_get_item_inputs);
+      if (!updated_update_state) {
+        UpdateUpdateStateForMergeConcatSlice(manager, update_list, tuple_get_item_node);
+        updated_update_state = true;
+      }
+      // replace fg_users->inputs(fg_users.second) to a list fg_users->inputs(fg_users.second+i)
+      fg_users_inputs_all.insert(fg_users_inputs_all.begin() + fg_users.second + i, tuple_get_item_node);
+      auto new_parameter = user_func_graph->add_parameter();
+      new_parameter->set_abstract(concat_input_node->input(i + 1)->abstract()->Clone());
+      new_maketuple_abstracts.push_back(concat_input_node->input(i + 1)->abstract()->Clone());
+      new_user_graph_parameters.insert(new_user_graph_parameters.begin() + fg_users.second - 1 + i, new_parameter);
+      new_concat_maketuple_inputs.push_back(new_parameter);
+    }
+    user_func_graph->set_parameters(new_user_graph_parameters);
+    auto user_func_graph_return_cnode = user_func_graph->get_return();
+    auto return_input_cnode = user_func_graph_return_cnode->input(kIndex1);
+    auto new_call_cnode = fg_users.first->func_graph()->NewCNode(fg_users_inputs_all);
+    new_call_cnode->set_abstract(return_input_cnode->abstract()->Clone());
+    manager->Replace(fg_users.first, new_call_cnode);
+    // Handle user_func_graph slice cnode
+    for (size_t j = 0; j < func_node_users.size(); ++j) {
+      auto new_pair = func_node_users[j];
+      if (!input_index[j].first) {
+        auto new_maketuple_cnode = user_func_graph->NewCNode(new_concat_maketuple_inputs);
+        new_maketuple_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(new_maketuple_abstracts));
+        auto old_concat_prim = GetCNodePrimitive(concat_cnode);
+        std::vector<AnfNodePtr> new_concat_inputs{NewValueNode(old_concat_prim->Clone()), new_maketuple_cnode,
+                                                  NewValueNode(MakeValue<int64_t>(concat_axis))};
+        auto new_concat = user_func_graph->NewCNode(new_concat_inputs);
+        new_concat->set_abstract(concat_cnode->abstract()->Clone());
+        auto new_concat_prim = GetCNodePrimitive(new_concat);
+        if (new_concat_prim->HasAttr("fine_grained_interleaved_index")) {
+          new_concat_prim->EraseAttr("fine_grained_interleaved_index");
+        }
+        manager->SetEdge(new_pair.first, new_pair.second, new_concat);
+        continue;
+      }
+      manager->Replace(new_pair.first, user_func_graph->parameters()[fg_users.second - 2 + input_index[j].second]);
+    }
+  }
+  return true;
+}
+
+bool MergeConcatSlice(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager) {
+  bool merged = false;
+  for (const auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimConcat)) {
+      continue;
+    }
+    auto concat_cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(concat_cnode->abstract());
+    auto concat_output_shape = concat_cnode->abstract()->BuildShape();
+    MS_EXCEPTION_IF_NULL(concat_output_shape);
+    MS_EXCEPTION_IF_NULL(concat_output_shape->cast<abstract::ShapePtr>());
+    auto concat_output_shape_element = concat_output_shape->cast<abstract::ShapePtr>()->shape();
+    auto axis_value_node = concat_cnode->input(kIndex2);
+    auto axis_value = GetValueNode(axis_value_node);
+    auto concat_axis = GetValue<int64_t>(axis_value);
+    auto next_nodes = GetOutputNodesSkipDepend(node);
+    for (const auto &pair : next_nodes) {
+      if (IsPrimitiveCNode(pair.first, prim::kPrimReturn) && next_nodes.size() == 1) {
+        merged = HandleFuncConcatSlice(manager, pair, concat_cnode, concat_output_shape_element, concat_axis);
+        continue;
+      }
+      auto can_merge = CanMergeConcatSlice(pair, concat_cnode, concat_output_shape_element, concat_axis);
+      if (!can_merge.first) {
+        continue;
+      }
+      auto concat_input_node = concat_cnode->input(1)->cast<CNodePtr>();
+      auto concat_real_input_node = concat_input_node->input(can_merge.second);
+      manager->Replace(pair.first->cast<CNodePtr>(), concat_real_input_node);
+      merged = true;
+    }
+  }
+  return merged;
+}
+
 AnfNodePtr NewMicroMirrorPrimByMicroMirror(const FuncGraphPtr &func_graph, const CNodePtr &micro_mirror,
                                            const AnfNodePtr &micro_mirror_new_input) {
   auto prim_origin = GetCNodePrimitive(micro_mirror);
@@ -1200,17 +1497,19 @@ AnfNodePtr NewMicroMirrorPrimByMicroMirror(const FuncGraphPtr &func_graph, const
 }
 
 void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const std::string &backward_comm_name,
-                       int32_t fusion_id) {
-  if (fusion_id <= 0) {
-    return;
-  }
+                       const std::string &param_name, int32_t fusion_id) {
+  auto comm_id = MakeValue<std::string>(param_name);
+  comm_node->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
   if (GetValueNode<PrimitivePtr>(comm_node->input(0))->HasAttr(GROUP)) {
     auto comm_group = GetValue<std::string>(GetValueNode<PrimitivePtr>(comm_node->input(0))->GetAttr(GROUP));
     std::string fusion_key = backward_comm_name + "_" + comm_group + "_" + std::to_string(fusion_id);
     if (!IsPrimitiveCNode(node, prim::kPrimLoad) && !IsPrimitiveCNode(node, prim::kPrimCast)) {
-      node->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
-      node->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
-      node->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
+      if (fusion_id > 0) {
+        node->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
+        node->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
+        node->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
+      }
+      node->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
       return;
     }
     auto next_nodes = GetOutputNodesWithFilter(node, [&](const AnfNodePtr &anode) {
@@ -1224,9 +1523,12 @@ void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const st
         continue;
       }
       auto next_cnode = pair.first->cast<CNodePtr>();
-      next_cnode->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
-      next_cnode->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
-      next_cnode->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
+      if (fusion_id > 0) {
+        next_cnode->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
+        next_cnode->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
+        next_cnode->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
+      }
+      next_cnode->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
     }
   }
 }
@@ -1256,9 +1558,13 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim);
 
-  auto shape_list = ExtractShape(cnode);
-  if (shape_list.empty()) {
-    MS_LOG(EXCEPTION) << "Node: " << cnode->DebugString() << " failed to extract shape.";
+  std::pair<std::vector<Shapes>, std::vector<Symbols>> shapes_and_symbols = ExtractShapeAndSymbol(cnode);
+  auto shape_list = shapes_and_symbols.first;
+  auto symbol_list = shapes_and_symbols.second;
+  if (shape_list.size() != INPUT_OUTPUT_SYMBOLS_SIZE || symbol_list.size() != INPUT_OUTPUT_SYMBOLS_SIZE) {
+    MS_LOG(EXCEPTION) << "the size of shapes or symbols must be " << INPUT_OUTPUT_SYMBOLS_SIZE
+                      << ", but the size of shapes is " << shape_list.size() << ", the size of symbols is "
+                      << symbol_list.size();
   }
 
   auto attrs = prim->attrs();
@@ -1292,6 +1598,19 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   (*op_info).set_input_value(input_value);
   (*op_info).set_outputs_dtype(cnode->Type());
   (*op_info).set_cnode(cnode);
+  if (InDynamicGraph(cnode) && IsDynamicShapesList(shape_list)) {
+    Shapes in_real_divisors;
+    Shapes out_real_divisors;
+    in_real_divisors = GetRealDivisorSymbols(shape_list[INPUT_SYMBOLS_INDEX], symbol_list[INPUT_SYMBOLS_INDEX]);
+    out_real_divisors = GetRealDivisorSymbols(shape_list[OUTPUT_SYMBOLS_INDEX], symbol_list[OUTPUT_SYMBOLS_INDEX]);
+    (*op_info).set_dynamic_shape_flag(True);
+    (*op_info).set_inputs_divisor(in_real_divisors);
+    (*op_info).set_outputs_divisor(out_real_divisors);
+    MS_LOG(DEBUG) << (*op_info).name() << ": inputs-shape: " << ShapesToString(shape_list[0])
+                  << ", inputs_d_symbol: " << ShapesToString(in_real_divisors);
+    MS_LOG(DEBUG) << (*op_info).name() << ": outputs-shape: " << ShapesToString(shape_list[1])
+                  << ", outputs_d_symbol: " << ShapesToString(out_real_divisors);
+  }
   return op_info;
 }
 
@@ -1386,6 +1705,7 @@ CommInfo GetCommInfo() {
       MS_LOG(EXCEPTION) << "Get rank id failed";
     }
     global_rank = UintToInt(rank_id);
+    ParallelContext::GetInstance()->set_global_rank(global_rank);
     MS_LOG(INFO) << "Get global rank from communication model, the global rank is  " << global_rank;
   }
   CommInfo comm_info{device_num, global_rank, world_group, communication_backend};
@@ -1483,7 +1803,12 @@ bool IsCarePrevCNode(const CNodePtr &prev_cnode, const PrimitivePtr &prev_prim) 
   return (IsValueNode<FuncGraph>(prev_cnode->input(0))) || (prev_prim->name() == kTupleGetItemOpName) ||
          (prev_prim->name() == kDependOpName) || (prev_prim->name() == kMakeListOpName) ||
          (prev_prim->name() == kLoadOpName) || (prev_prim->name() == kMakeTupleOpName) ||
-         IsAutoParallelCareNode(prev_cnode);
+         (prev_prim->name() == kShapeOpName) || IsAutoParallelCareNode(prev_cnode);
+}
+
+bool IsCrossedCNode(std::string prev_prim_name) {
+  const std::set<std::string> crossed_cnode_list = {kDependOpName, kLoadOpName, kShapeOpName};
+  return crossed_cnode_list.find(prev_prim_name) != crossed_cnode_list.end();
 }
 
 // Needed by rec_parser
@@ -1531,8 +1856,8 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
         prev_node = prev_cnode->input(1);
         prev_cnode = prev_node->cast<CNodePtr>();
 
-        if (common::AnfAlgo::GetCNodeName(prev_cnode) == kTupleGetItemOpName) {
-          break;
+        if (prev_cnode != nullptr && common::AnfAlgo::GetCNodeName(prev_cnode) == kTupleGetItemOpName) {
+          continue;
         }
 
         is_cross = CrossInterNode(&prev_cnode, &prev_prim_anf_node, &prev_prim);
@@ -1540,6 +1865,14 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
           name_inputs.push_back(prev_node->UniqueId());
           break;
         }
+
+        // In dynamic shape scenarios, the situation op1->Shape->TupleGetItem->op2 will occur.
+        // The incoming operator of op2 should be op1 instead of Shape,
+        // so the Shape operator is skipped when looking for the incoming operator.
+        if (prev_prim->name() == kShapeOpName) {
+          continue;
+        }
+
         if (!IsAutoParallelCareNode(prev_cnode) && !IsValueNode<FuncGraph>(prev_cnode->input(0))) {
           MS_LOG(EXCEPTION) << "Did not create OperatorInfo for : " << prev_prim->name();
         }
@@ -1552,7 +1885,7 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
           name_inputs.push_back(prev_node->UniqueId());
           break;
         }
-      } else if (prev_prim->name() == kDependOpName || prev_prim->name() == kLoadOpName) {
+      } else if (IsCrossedCNode(prev_prim->name())) {
         // In this case, 'prev_anf_node' is 'depend', the actual precursor node is node before
         // this 'depend'
         prev_node = prev_cnode->input(1);
@@ -1588,7 +1921,7 @@ bool AttrFound(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std
   return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
 }
 
-static bool IsCommunicationOp(const PrimitivePtr &prim) {
+bool IsCommunicationOp(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end());
 }
@@ -1670,6 +2003,105 @@ StrategyPtr ExtractStrategy(const ValuePtr &stra) {
   return strategyPtr;
 }
 
+Status GetLayoutFromAttrValue(const ValuePtr &layout_item, std::vector<int64_t> *device_matrix_vector,
+                              std::vector<std::vector<int64_t>> *tensor_map_vector) {
+  auto layout_dict_value = layout_item->cast<ValueDictionaryPtr>();
+  if (!layout_dict_value) {
+    MS_LOG(ERROR) << "The layout item configured for node is unreasonable";
+    return FAILED;
+  }
+  auto layout_dict = layout_dict_value->value();
+  ValuePtr device_matrix_value = nullptr;
+  ValuePtr tensor_map_value = nullptr;
+  for (const auto &value_pair : layout_dict) {
+    if ((*value_pair.first) == (*MakeValue<std::string>(DEVICE_MATRIX))) {
+      device_matrix_value = value_pair.second;
+    }
+    if ((*value_pair.first) == (*MakeValue<std::string>(TENSOR_MAP))) {
+      tensor_map_value = value_pair.second;
+    }
+  }
+  if (!device_matrix_value || !tensor_map_value) {
+    MS_LOG(ERROR) << "The layout item configured for node is unreasonable";
+    return FAILED;
+  }
+  *device_matrix_vector = GetValue<std::vector<int64_t>>(device_matrix_value);
+  auto tensor_map_value_tuple = tensor_map_value->cast<ValueTuplePtr>();
+  std::vector<ValuePtr> tensor_map_value_tuple_vector = tensor_map_value_tuple->value();
+  for (const auto &tensor_map_item : tensor_map_value_tuple_vector) {
+    if (tensor_map_item->isa<ValueSequence>()) {
+      auto tensor_map_item_v = GetValue<std::vector<int64_t>>(tensor_map_item);
+      tensor_map_vector->push_back(tensor_map_item_v);
+      continue;
+    }
+    auto tensor_map_item_i = GetValue<int64_t>(tensor_map_item);
+    tensor_map_vector->push_back({tensor_map_item_i});
+  }
+  return SUCCESS;
+}
+
+Status ExtractUserConfigLayout(const mindspore::HashMap<std::string, ValuePtr> &prim_attrs, const Shapes &inputs_shape,
+                               const Shapes &outputs_shape,
+                               std::vector<std::shared_ptr<TensorLayout>> *in_tensor_layouts,
+                               std::vector<std::shared_ptr<TensorLayout>> *out_tensor_layouts) {
+  if (prim_attrs.count(IN_LAYOUT) > 0) {
+    auto layout_value = prim_attrs.at(IN_LAYOUT);
+    if (!layout_value->isa<ValueSequence>()) {
+      MS_LOG(ERROR) << "The in_layout configured for node is not a tuple";
+      return FAILED;
+    }
+    auto layout_value_tuple = layout_value->cast<ValueTuplePtr>();
+    std::vector<ValuePtr> layout_value_vector = layout_value_tuple->value();
+    if (inputs_shape.size() != layout_value_vector.size()) {
+      MS_LOG(ERROR) << "The in_layout configured for node is not equal to its input nums";
+      return FAILED;
+    }
+
+    for (size_t i = 0; i < layout_value_vector.size(); ++i) {
+      auto layout_item = layout_value_vector[i];
+      std::vector<int64_t> device_matrix_vector;
+      std::vector<std::vector<int64_t>> tensor_map_vector;
+      if (GetLayoutFromAttrValue(layout_item, &device_matrix_vector, &tensor_map_vector) != SUCCESS) {
+        return FAILED;
+      }
+      auto in_layout = std::make_shared<TensorLayout>();
+      if (in_layout->InitFromExtendVector(device_matrix_vector, tensor_map_vector, inputs_shape[i]) != SUCCESS) {
+        MS_LOG(ERROR) << "The in_layout configured incorrect, device_matrix:" << device_matrix_vector
+                      << ", tensor_map:" << tensor_map_vector;
+        return FAILED;
+      }
+      in_tensor_layouts->push_back(in_layout);
+    }
+  }
+  if (prim_attrs.count(OUT_LAYOUT) > 0) {
+    auto layout_value = prim_attrs.at(OUT_LAYOUT);
+    if (!layout_value->isa<ValueSequence>()) {
+      MS_LOG(EXCEPTION) << "The in_layout configured for node is not a tuple";
+    }
+    auto layout_value_tuple = layout_value->cast<ValueTuplePtr>();
+    std::vector<ValuePtr> layout_value_vector = layout_value_tuple->value();
+    if (outputs_shape.size() != layout_value_vector.size()) {
+      MS_LOG(EXCEPTION) << "The out_layout configured for node is not equal to its output nums";
+    }
+    for (size_t i = 0; i < layout_value_vector.size(); ++i) {
+      auto layout_item = layout_value_vector[i];
+      std::vector<int64_t> device_matrix_vector;
+      std::vector<std::vector<int64_t>> tensor_map_vector;
+      if (GetLayoutFromAttrValue(layout_item, &device_matrix_vector, &tensor_map_vector) != SUCCESS) {
+        return FAILED;
+      }
+      auto out_layout = std::make_shared<TensorLayout>();
+      if (out_layout->InitFromExtendVector(device_matrix_vector, tensor_map_vector, outputs_shape[i]) != SUCCESS) {
+        MS_LOG(ERROR) << "The out_layout configured incorrect, device_matrix:" << device_matrix_vector
+                      << ", tensor_map:" << tensor_map_vector;
+        return FAILED;
+      }
+      out_tensor_layouts->push_back(out_layout);
+    }
+  }
+  return SUCCESS;
+}
+
 static bool IsCohesiveNode(const CNodePtr &cnode) {
   return IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
          IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimAllGather) ||
@@ -1708,7 +2140,7 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
       if (!IsValueNode<Primitive>(cnode->input(0))) {
         continue;
       }
-      if (IsCohesiveNode(cnode) && cnode->inputs().size() >= 1) {
+      if (IsCohesiveNode(cnode) && cnode->size() >= 1) {
         auto input_param_names = NodeParameterName(cnode, idx, 0);
         (void)param_names.insert(param_names.cend(), input_param_names.cbegin(), input_param_names.cend());
       }
@@ -1941,6 +2373,26 @@ TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_
   TensorInfo tensorinfo_in = distribute_operator->inputs_tensor_info()[LongToSize(index - 1)];
   TensorLayout tensorlayout_in = tensorinfo_in.tensor_layout();
   return tensorlayout_in;
+}
+
+bool IsCellReuseForwardGraph(const FuncGraphPtr &graph) { return graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE); }
+
+FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph) {
+  AnfNodePtr node = forward_graph->get_return();
+  std::vector<std::pair<PrimitivePtr, int64_t>> patterns = {
+    {prim::kPrimReturn, kIndex1}, {prim::kPrimMakeTuple, kIndex2}, {prim::kPrimPartial, kIndex1}};
+  for (const auto &pattern : patterns) {
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr || !IsPrimitiveCNode(cnode, pattern.first)) {
+      return nullptr;
+    }
+    auto prev_node_index = pattern.second;
+    if (prev_node_index >= SizeToLong(cnode->size())) {
+      return nullptr;
+    }
+    node = cnode->input(prev_node_index);
+  }
+  return GetValueNode<FuncGraphPtr>(node);
 }
 
 Shape mirror_group_list(const TensorLayoutPtr &layout) {

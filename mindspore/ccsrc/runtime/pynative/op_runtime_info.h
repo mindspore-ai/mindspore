@@ -115,6 +115,7 @@ class BACKEND_EXPORT OpRuntimeInfo {
   size_t GetInputSize() const;
   size_t GetOutputSize() const;
   size_t GetWorkspaceSize() const;
+  kernel::KernelMod *GetKernelMod() const;
   void Resize(const AnfNodePtr &node);
 
   static void CacheGraphOpRuntimeInfo(const KernelGraphPtr &graph);

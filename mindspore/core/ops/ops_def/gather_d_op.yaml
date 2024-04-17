@@ -1,0 +1,15 @@
+#operator gather_d
+gather_d:
+  args:
+    x:
+      dtype: tensor
+    dim:
+      dtype: int
+      type_cast: tensor
+    index:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+      enable: True

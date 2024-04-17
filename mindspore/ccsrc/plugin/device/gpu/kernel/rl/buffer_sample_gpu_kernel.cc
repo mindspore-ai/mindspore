@@ -31,15 +31,28 @@ BufferSampleKernelMod::~BufferSampleKernelMod() {
   }
 }
 
-bool BufferSampleKernelMod::Init(const CNodePtr &kernel_node) {
-  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  kernel_node_ = kernel_node;
-  auto shapes = GetAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
-  auto types = GetAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
-  capacity_ = GetAttr<int64_t>(kernel_node, "capacity");
-  seed_ = GetAttr<int64_t>(kernel_node, "seed");
-  unique_ = GetAttr<bool>(kernel_node, "unique");
-  batch_size_ = LongToSize(GetAttr<int64_t>(kernel_node, "batch_size"));
+bool BufferSampleKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  return true;
+}
+
+int BufferSampleKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  for (const auto &input : inputs) {
+    auto input_shape = input->GetShapeVector();
+    if (!IsValidShape(input_shape)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+  }
+  workspace_size_list_.clear();
+  output_size_list_.clear();
+  exp_element_list.clear();
+  auto shapes = GetValue<std::vector<int64_t>>(primitive_->GetAttr("buffer_elements"));
+  auto types = GetValue<std::vector<TypePtr>>(primitive_->GetAttr("buffer_dtype"));
+  capacity_ = GetValue<int64_t>(primitive_->GetAttr("capacity"));
+  seed_ = GetValue<int64_t>(primitive_->GetAttr("seed"));
+  unique_ = GetValue<bool>(primitive_->GetAttr("unique"));
+  batch_size_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr("batch_size")));
   element_nums_ = shapes.size();
   // Set default seed, if seed == 0
   if (seed_ == 0) {
@@ -52,39 +65,34 @@ bool BufferSampleKernelMod::Init(const CNodePtr &kernel_node) {
   const size_t cap_state_size = sizeof(curandState) * indexes_size;
   void *dev_state = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(cap_state_size);
   if (dev_state == nullptr) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', failed to alloc dev_state, size is " << cap_state_size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', failed to alloc dev_state, size is " << cap_state_size;
   }
   devStates_ = reinterpret_cast<curandState *>(dev_state);
 
   for (size_t i = 0; i < element_nums_; i++) {
     auto element = shapes[i] * UnitSizeInBytes(types[i]->type_id());
     exp_element_list.push_back(element);
-    input_size_list_.push_back(capacity_ * element);
     output_size_list_.push_back(batch_size_ * element);
   }
-  // count and head
-  input_size_list_.push_back(sizeof(int));
-  input_size_list_.push_back(sizeof(int));
   workspace_size_list_.push_back(indexes_size * sizeof(unsigned int));
   if (unique_) {
     workspace_size_list_.push_back(indexes_size * sizeof(unsigned int));
   }
-  return true;
+  return KRET_OK;
 }
 
-void BufferSampleKernelMod::InitSizeLists() { return; }
-
-bool BufferSampleKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                                   const std::vector<AddressPtr> &outputs, void *stream) {
+bool BufferSampleKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspaces,
+                                   const std::vector<KernelTensor *> &outputs, void *stream) {
   int *count_addr = GetDeviceAddress<int>(inputs, element_nums_);
   int *head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   auto status = CheckBatchSize(count_addr, head_addr, batch_size_, capacity_, cuda_stream);
   CHECK_CUDA_STATUS(status, kernel_name_);
   int k_num = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(&k_num, count_addr, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
-                             "For 'BufferSample', sync dev to host failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&k_num, count_addr, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
+    "For 'BufferSample', sync dev to host failed");
   if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "For 'BufferSample', cudaStreamSyncFailed");
   }
@@ -114,5 +122,11 @@ bool BufferSampleKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   }
   return true;
 }
+std::vector<KernelAttr> BufferSampleKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BufferSample, BufferSampleKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

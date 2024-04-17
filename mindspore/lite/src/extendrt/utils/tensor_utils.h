@@ -65,7 +65,7 @@ constexpr auto kLiteDeviceName = "LiteDevice";
 
 class LiteDeviceAddress : public device::DeviceAddress {
  public:
-  LiteDeviceAddress(void *ptr, size_t size) : device::DeviceAddress(ptr, size) { device_name_ = kLiteDeviceName; }
+  LiteDeviceAddress(void *ptr, size_t size) : device::DeviceAddress(ptr, size) {}
   void SetData(void *data) { set_ptr(data); }
 
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override {
@@ -235,8 +235,8 @@ class CloudTensorUtils {
     const std::vector<lite::Tensor *> &lite_tensors);
 
   /* lite tensor ---> kernel tensor */
-  static kernel::KernelTensorPtr LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor);
-  static std::vector<kernel::KernelTensorPtr> LiteTensorToKernelTensorPtrVec(
+  static kernel::KernelTensor *LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor);
+  static std::vector<kernel::KernelTensor *> LiteTensorToKernelTensorPtrVec(
     const std::vector<lite::Tensor *> &lite_tensors);
 };
 

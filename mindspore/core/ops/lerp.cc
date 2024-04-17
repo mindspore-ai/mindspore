@@ -35,14 +35,14 @@ abstract::ShapePtr LerpInferShape(const PrimitivePtr &primitive, const std::vect
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto start_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto start_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto start_shape = start_shape_map[kShape];
-  auto end_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto end_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto end_shape = end_shape_map[kShape];
-  auto weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());
+  auto weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape());
   auto weight_shape = weight_shape_map[kShape];
   auto broadcast_shape = CalBroadCastShape(start_shape, end_shape, op_name, "start", "end");
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeTensorType) {
     (void)CalBroadCastShape(start_shape, weight_shape, op_name, "start", "weight");
     (void)CalBroadCastShape(end_shape, weight_shape, op_name, "end", "weight");
     broadcast_shape = CalBroadCastShape(broadcast_shape, weight_shape, op_name);
@@ -65,12 +65,12 @@ TypePtr LerpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   const int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("start", input_args[0]->BuildType());
-  (void)types.emplace("end", input_args[1]->BuildType());
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    (void)types.emplace("weight", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("start", input_args[0]->GetType());
+  (void)types.emplace("end", input_args[1]->GetType());
+  if (input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeTensorType) {
+    (void)types.emplace("weight", input_args[kInputIndex2]->GetType());
   } else {
-    (void)CheckAndConvertUtils::CheckSubClass("weight", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
+    (void)CheckAndConvertUtils::CheckSubClass("weight", input_args[kInputIndex2]->GetType(), {kFloat}, op_name);
   }
   return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32, kFloat64}, op_name);
 }

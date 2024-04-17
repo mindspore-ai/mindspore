@@ -47,6 +47,33 @@ static inline int ElementOptSubNum1@SIMD_INSTRUCTION@(int index, const float *in
   return index;
 }
 
+
+static inline int ElementOptSubExtNum0@SIMD_INSTRUCTION@(int index, const float *in0, const float *in1, const float alpha, float *out,
+                                                      int size) {
+  SIMD_F32 vin0_opt = SIMD_MOV_F32(in0[0]);
+  SIMD_F32 valpha = SIMD_MOV_F32(alpha);
+  for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 vin1 = SIMD_LD_F32(in1 + index);
+        SIMD_F32 vin1_alpha = SIMD_MUL_F32(vin1, valpha);
+        SIMD_F32 vout = SIMD_SUB_F32(vin0_opt, vin1_alpha);
+    SIMD_ST_F32(out + index, vout);
+  }
+  return index;
+}
+
+static inline int ElementOptSubExtNum1@SIMD_INSTRUCTION@(int index, const float *in0, const float *in1, const float alpha, float *out,
+                                                      int size) {
+  SIMD_F32 vin1_opt_ = SIMD_MOV_F32(in1[0]);
+  SIMD_F32 valpha = SIMD_MOV_F32(alpha);
+  for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+SIMD_F32 vin0 = SIMD_LD_F32(in0 + index);
+SIMD_F32 vin1_alpha = SIMD_MUL_F32(vin1_opt_, valpha);
+SIMD_F32 vout = SIMD_SUB_F32(vin0, vin1_alpha);
+    SIMD_ST_F32(out + index, vout);
+  }
+  return index;
+}
+
 static inline int ElementOptSubIntNum0@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 vin0_opt = SIMD_MOV_EPI32(in0[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
@@ -116,6 +143,18 @@ static inline int ElementSub@SIMD_INSTRUCTION@(int index, const float *in0, cons
     SIMD_F32 vin0 = SIMD_LD_F32(in0 + index);
     SIMD_F32 vin1 = SIMD_LD_F32(in1 + index);
     SIMD_F32 vout = SIMD_SUB_F32(vin0, vin1);
+    SIMD_ST_F32(out + index, vout);
+  }
+  return index;
+}
+
+static inline int ElementSubExt@SIMD_INSTRUCTION@(int index, const float *in0, const float *in1, const float alpha, float *out, int size) {
+  for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 vin0 = SIMD_LD_F32(in0 + index);
+    SIMD_F32 vin1 = SIMD_LD_F32(in1 + index);
+    SIMD_F32 valpha = SIMD_MOV_F32(alpha);
+    SIMD_F32 vin1_alpha = SIMD_MUL_F32(vin1, valpha);
+    SIMD_F32 vout = SIMD_SUB_F32(vin0, vin1_alpha);
     SIMD_ST_F32(out + index, vout);
   }
   return index;

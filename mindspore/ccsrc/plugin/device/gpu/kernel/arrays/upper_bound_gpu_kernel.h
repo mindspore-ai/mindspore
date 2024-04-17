@@ -37,8 +37,8 @@ class UpperBoundGpuKernelMod : public NativeGpuKernelMod {
   UpperBoundGpuKernelMod() { ResetResource(); }
   ~UpperBoundGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -46,11 +46,9 @@ class UpperBoundGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -63,17 +61,16 @@ class UpperBoundGpuKernelMod : public NativeGpuKernelMod {
     values_row_ = 0;
     values_col_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
   }
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   using UpperBoundFunc =
-    std::function<bool(UpperBoundGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(UpperBoundGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
  private:
   size_t unit_size_{1};
@@ -85,7 +82,7 @@ class UpperBoundGpuKernelMod : public NativeGpuKernelMod {
   size_t values_row_;
   size_t values_col_;
   UpperBoundFunc kernel_func_{};
-  BaseOperatorPtr kernel_ptr_{nullptr};
+
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
   std::optional<bool> is_input_dynamic_shape_ = {};

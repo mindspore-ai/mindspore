@@ -43,7 +43,7 @@ BaseShapePtr SquareSumV1InferShape(const PrimitivePtr &primitive, const std::vec
 
 TypePtr SquareSumV1InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types_with_complex, prim->name());
   return x_type;
 }

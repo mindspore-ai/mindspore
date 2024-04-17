@@ -201,6 +201,9 @@ class SaveToDisk : public TreeConsumer {
                                 nlohmann::json *row_raw_data,
                                 std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> *row_bin_data);
 
+  Status FetchIntData(std::shared_ptr<Tensor> tensor, std::string column_name, nlohmann::json *row_raw_data,
+                      std::unique_ptr<std::vector<uint8_t>> *data_ptr);
+
   Status FetchFloatData(std::shared_ptr<Tensor> tensor, std::string column_name, nlohmann::json *row_raw_data,
                         std::unique_ptr<std::vector<uint8_t>> *data_ptr);
 
@@ -247,6 +250,10 @@ class ToDevice : public TreeConsumer {
   /// Get data info from TDT
   /// \return  Status error code
   virtual Status GetDataInfo(std::vector<DataType> *types, std::vector<TensorShape> *shapes);
+
+  /// Get data numbers from TDT
+  /// \return  Status error code
+  virtual Status GetMbufQueueSize(size_t *queue_size);
 
   /// Get send info in sink mode
   /// \return  Status error code

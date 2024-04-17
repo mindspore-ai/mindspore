@@ -62,8 +62,8 @@ cudaError_t CalUpsampleNearest3d(const T *input, const int n, const int c, const
     const int in_dhw = in_d * in_h * in_w;
     const int in_cdhw = in_dhw * c;
     const int num_kernels = c * out_d * out_h * out_w;
-    const int blockSize = std::min(CUDA_THREADS(device_id), static_cast<int>(MAX_THREADS));
-    const int gridSize = (num_kernels + blockSize - 1) / blockSize;
+    const size_t blockSize = std::min(CUDA_THREADS(device_id), static_cast<size_t>(MAX_THREADS));
+    const size_t gridSize = (num_kernels + blockSize - 1) / blockSize;
     UpsampleNearest3dKernel<<<gridSize, blockSize, 0, cuda_stream>>>(num_kernels, input, n, c, in_d, in_h, in_w, out_d,
                                                                      out_h, out_w, in_cdhw, out_cdhw, in_dhw, out_dhw,
                                                                      out_hw, d_scale, h_scale, w_scale, output);

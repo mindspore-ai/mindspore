@@ -133,7 +133,7 @@ int TransformUint8Pass::DoParameterNodeTrans(const CNodePtr &cnode, const Parame
   return RET_OK;
 }
 
-int TransformUint8Pass::Uint8toInt8(uint8_t *data, int size) {
+int TransformUint8Pass::Uint8toInt8(uint8_t *data, int size) const {
   CHECK_NULL_RETURN(data);
 
   for (int i = 0; i < size; i++) {
@@ -356,7 +356,7 @@ bool TransformUint8Pass::IsSharedWeightParameter(const AnfNodePtr &anf_node) {
   if (manager == nullptr) {
     manager = Manage(this->func_graph_, true);
   }
-  CHECK_NULL_RETURN(manager);
+  MS_CHECK_TRUE_MSG(manager != nullptr, false, "manage is nullptr.");
   auto node_users = manager->node_users()[anf_node];
   return (node_users.size() > 1);
 }

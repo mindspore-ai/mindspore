@@ -69,14 +69,11 @@ inline cublasStatus_t cublasXgetrsBatched(cublasHandle_t handle, cublasOperation
   return cublasZgetrsBatched(handle, trans, m, k, cu_matrix_array, m, pivot_array, cu_rhs_array, m, info, batch_size);
 }
 }  // namespace
-bool MatrixSolveGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MatrixSolveGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  const auto dtype = inputs.at(kIndex0)->dtype_id();
 
-  const auto dtype = inputs.at(kIndex0)->GetDtype();
-
-  auto kernel_ptr = std::make_shared<ops::MatrixSolve>(base_operator->GetPrim());
-  bool adjoint = kernel_ptr->get_adjoint();
+  bool adjoint = GetValue<bool>(primitive_->GetAttr("adjoint"));
 
   if (dtype == kNumberTypeComplex64 || dtype == kNumberTypeComplex128) {
     blas_option_ = adjoint ? CUBLAS_OP_C : CUBLAS_OP_T;
@@ -89,17 +86,16 @@ bool MatrixSolveGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 
   blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int MatrixSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixSolveGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -117,7 +113,7 @@ int MatrixSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     LongToSize(std::accumulate(matrix_shape.begin(), matrix_shape.end(), int64_t(1), std::multiplies{}));
   const size_t rhs_size =
     LongToSize(std::accumulate(rhs_shape.begin(), rhs_shape.end(), int64_t(1), std::multiplies{}));
-  const size_t type_size = GetTypeByte(TypeIdToType(inputs.at(kIndex1)->GetDtype()));
+  const size_t type_size = GetTypeByte(TypeIdToType(inputs.at(kIndex1)->dtype_id()));
 
   workspace_size_list_.clear();
   workspace_size_list_ = {
@@ -133,9 +129,9 @@ int MatrixSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
   T *matrix = GetDeviceAddress<T>(inputs, kIndex0);
   T *rhs = GetDeviceAddress<T>(inputs, kIndex1);
 
@@ -160,7 +156,7 @@ bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(matrix_col_major, matrix, inputs[kIndex0]->size, cudaMemcpyDeviceToDevice, cuda_stream_),
+      cudaMemcpyAsync(matrix_col_major, matrix, inputs[kIndex0]->size(), cudaMemcpyDeviceToDevice, cuda_stream_),
       "cudaMemcpyAsync dst failed");
   }
   status = MatrixTranspose(rhs, LongToSize(batch_num_ * m_ * k_), SizeToInt(m_), SizeToInt(k_), rhs_col_major,

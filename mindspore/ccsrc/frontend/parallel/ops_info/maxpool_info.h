@@ -54,14 +54,6 @@ class MaxPoolInfo : public OperatorInfo {
   std::string format_;
 };
 
-class AvgPoolInfo : public MaxPoolInfo {
- public:
-  AvgPoolInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-              const PrimitiveAttrs &attrs)
-      : MaxPoolInfo(name, inputs_shape, outputs_shape, attrs) {}
-  ~AvgPoolInfo() override = default;
-};
-
 constexpr int64_t POOL_PAD_MODE_SAME = 1;
 constexpr int64_t POOL_PAD_MODE_VALID = 2;
 }  // namespace parallel

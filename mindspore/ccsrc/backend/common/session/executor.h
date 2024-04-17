@@ -100,31 +100,6 @@ class RunGraphTask : public Task {
   KernelMapTensor node_to_tensor_;
 };
 
-class RunOpsInGraphTask : public Task {
- public:
-  RunOpsInGraphTask() { type_ = kRunOpsInGraph; }
-  ~RunOpsInGraphTask() override = default;
-  void Run() override;
-  std::vector<tensor::TensorPtr> input_tensors_;
-  VectorRef outputs_;
-  GraphId graph_id_{0};
-};
-
-class RunOpTask : public Task {
- public:
-  RunOpTask() { type_ = kRunOp; }
-  ~RunOpTask() override {
-    op_run_info_ = nullptr;
-    input_tensors_ = nullptr;
-  }
-  void Run() override;
-  BackendOpRunInfoPtr op_run_info_{nullptr};
-  GraphInfo graph_info_;
-  std::vector<tensor::TensorPtr> *input_tensors_{nullptr};
-  VectorRef outputs_;
-  std::vector<int64_t> tensors_mask_;
-};
-
 class CreateCommGroupTask : public Task {
  public:
   CreateCommGroupTask() { type_ = kCreateCommGroup; }
@@ -166,11 +141,6 @@ class BACKEND_EXPORT Executor {
   void RunGraph(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                 VectorRef *outputs);
   void RunGraphAsync(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
-                     VectorRef *outputs);
-  void RunOp(const SessionPtr &session, const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
-             std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-             const std::vector<int64_t> &tensors_mask);
-  void RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                      VectorRef *outputs);
   bool CreateCommGroup(const std::string &group_name, const std::vector<uint32_t> &ranks);
   bool DestroyCommGroup(const std::string &group_name);

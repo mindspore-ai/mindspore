@@ -89,6 +89,8 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
 
   // allreduce fusion only run once
   root->set_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY, true);
+  // Keep all func graph for parallel before save result.
+  SetReserved(root);
   res->SetResult(pipeline::kStepParallelGraph, root);
 #if defined(_WIN32) || defined(_WIN64)
   auto end_time = std::chrono::steady_clock::now();

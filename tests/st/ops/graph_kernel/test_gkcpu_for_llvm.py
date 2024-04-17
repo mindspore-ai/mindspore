@@ -52,7 +52,7 @@ def gktest_for_llvm():
         pass
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gkcpu_for_llvm():

@@ -20,6 +20,7 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "ops/array_ops.h"
 
 namespace mindspore {
 namespace lite {
@@ -41,6 +42,17 @@ STATUS WhereMapper::Mapper(const CNodePtr &cnode) {
     auto attr_value = src_prim->GetAttr("is_nonzero");
     if (attr_value != nullptr && GetValue<bool>(attr_value)) {
       dst_prim = std::make_shared<acl::NonZeroV2>();
+    }
+    TypeId type_id;
+    if (opt::GetDataTypeFromAnfNode(cnode->input(1), &type_id) != RET_OK) {
+      MS_LOG(ERROR) << "Get input of resize data type failed.";
+      return RET_ERROR;
+    }
+    if (type_id == kNumberTypeBool) {
+      auto manager = Manage(cnode->func_graph());
+      auto cast_to_int32 = NewCNode(cnode, prim::kPrimCast, {cnode, NewValueNode(TypeIdToType(kNumberTypeInt32))},
+                                    cnode->input(1)->abstract(), cnode->fullname_with_scope() + "_cast_int32");
+      (void)manager->Replace(cnode, cast_to_int32);
     }
   } else {
     dst_prim = std::make_shared<acl::SelectV2>();

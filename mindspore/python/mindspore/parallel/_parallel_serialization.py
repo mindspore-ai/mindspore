@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ from mindspore.parallel._tensor import _get_tensor_strategy, _construct_from_to_
 MAX_PATH_LENGTH = 1024
 
 
-def _convert_to_list(strategy):
+def _convert_to_list(strategy, rank_id=None):
     """Convert ParallelLayouts object to specified list."""
     train_map = {}
     for param_name in strategy.keys():
@@ -37,18 +37,34 @@ def _convert_to_list(strategy):
             dev_mat = list(layout.dev_matrix[0].dim)
             tensor_map = list(layout.tensor_map[0].dim)
             param_split_shape = list(layout.param_split_shape[0].dim)
-            field_size = int(layout.field)
-            shard_stride = int(layout.opt_weight_shard_step)
-            shard_size = int(layout.opt_weight_shard_size)
             pipeline_stage = 0
             origin_param_name = param_name
             if "-" in param_name:
                 pipeline_stage, origin_param_name = param_name.split("-")
+                pipeline_stage = int(pipeline_stage)
             if origin_param_name not in train_map:
-                train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, field_size, shard_stride,
-                                                shard_size, [int(pipeline_stage)]]
+                train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, int(layout.field),
+                                                int(layout.opt_weight_shard_step), int(layout.opt_weight_shard_size),
+                                                [pipeline_stage]]
             else:
-                train_map.get(origin_param_name)[6].append(int(pipeline_stage))
+                update_pipeline_stage_list = train_map.get(origin_param_name)[6] + [pipeline_stage]
+                if rank_id is not None:
+                    stage_device_num = np.prod(dev_mat)
+                    is_device0_and_pipeline0 = ((rank_id // stage_device_num) == 0) and (pipeline_stage == 0)
+                    not_device0_nor_pipeline0 = ((rank_id // stage_device_num) > 0) and (pipeline_stage > 0)
+                    if is_device0_and_pipeline0 or not_device0_nor_pipeline0:
+                        train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape,
+                                                        int(layout.field), int(layout.opt_weight_shard_step),
+                                                        int(layout.opt_weight_shard_size), update_pipeline_stage_list]
+                    else:
+                        train_map.get(origin_param_name)[6] = update_pipeline_stage_list
+                else:
+                    if np.all(pipeline_stage <= np.array(update_pipeline_stage_list)):
+                        train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape,
+                                                        int(layout.field), int(layout.opt_weight_shard_step),
+                                                        int(layout.opt_weight_shard_size), update_pipeline_stage_list]
+                    else:
+                        train_map.get(origin_param_name)[6] = update_pipeline_stage_list
         except BaseException as e:
             raise ValueError(f"{e.__str__()}. Convert layout strategy to list "
                              f"failed, please make sure that strategy matches the node_strategy.proto, you can "
@@ -219,12 +235,12 @@ def _parameter_not_in_local_stage(param_name, origin_strategy_list, strategy_lis
     return param_name in origin_strategy_list and param_name not in strategy_list
 
 
-def _extract_layout_map(strategy_file):
+def _extract_layout_map(strategy_file, rank_id=None):
     """Extract layout map"""
     layout_map = None
     if strategy_file is not None:
         src_strategy = _build_searched_strategy(strategy_file)
-        layout_map = _convert_to_list(src_strategy)
+        layout_map = _convert_to_list(src_strategy, rank_id)
     return layout_map
 
 
@@ -245,8 +261,8 @@ def _extract_pipeline_stage_num(strategy_file):
 
 def _extract_src_dst_layout_map(rank_id, src_strategy_file=None, dst_strategy_file=None):
     """Extract strategy list"""
-    src_layout_map = _extract_layout_map(src_strategy_file)
-    dst_layout_map = _extract_layout_map(dst_strategy_file)
+    src_layout_map = _extract_layout_map(src_strategy_file, None)
+    dst_layout_map = _extract_layout_map(dst_strategy_file, rank_id)
     if dst_layout_map is None:
         return src_layout_map, dst_layout_map
     dst_stage_device_num = np.prod(dst_layout_map.get(list(dst_layout_map.keys())[0])[0])
@@ -335,7 +351,8 @@ def _rank_list_for_transform_parallel_checkpoint(rank_id, src_strategy_list, dst
     return list(result_list)
 
 
-def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, src_strategy_list, dst_strategy_list):
+def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, src_strategy_list,
+                                   dst_strategy_list, param_type_dict):
     """
     Transform model parallel dimension for distributed checkpoint files.
     """
@@ -397,15 +414,21 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
         transform_tensor = ms.Tensor(param_total_dict[param_name][rank_id % device_num])
         requires_grad = param_attr_dict[param_name][rank_id % device_num][0]
         layerwise_parallel = param_attr_dict[param_name][rank_id % device_num][1]
-        transform_param_dict[param_name] = ms.Parameter(transform_tensor, param_name, requires_grad, layerwise_parallel)
+        transform_para = ms.Parameter(transform_tensor, param_name, requires_grad, layerwise_parallel)
+        if param_type_dict[param_name][rank_id % device_num] == "BFloat16":
+            transform_para.set_dtype(ms.bfloat16)
+        transform_param_dict[param_name] = transform_para
 
     # Handle those parameter like learning_rate, global_step which not in strategy_file.
     for param_name, _ in param_total_dict.items():
         if param_name not in transform_param_dict:
-            transform_param_dict[param_name] = ms.Parameter(
+            transform_para = ms.Parameter(
                 ms.Tensor(param_total_dict[param_name][rank_id % device_num]), param_name,
                 param_attr_dict[param_name][rank_id % device_num][0],
                 param_attr_dict[param_name][rank_id % device_num][1])
+            if param_type_dict[param_name][rank_id % device_num] == "BFloat16":
+                transform_para.set_dtype(ms.bfloat16)
+            transform_param_dict[param_name] = transform_para
 
     transform_param_list = [{"name": param_name, "data": param_data}
                             for param_name, param_data in transform_param_dict.items()]

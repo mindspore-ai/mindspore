@@ -17,8 +17,8 @@ import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.ops.operations._grad_ops as G
 from mindspore import Tensor, ops
-from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -100,7 +100,7 @@ def test_resize_bilinear_grad_align_corner_false():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -143,8 +143,8 @@ def test_resize_bilinear_grad_half_pixel_centers():
                          [0.25, 0.25, 0.5, 0.5],
                          [0.75, 0.75, 1.0, 1.0],
                          [0.75, 0.75, 1.0, 1.0]]]], dtype=np.float16)
-    net = NetResizeBilinearFunc(half_pixel_centers=True)
-    output = net(Tensor(dy), Tensor(x))
+    net = NetResizeBilinearFunc()
+    output = net(Tensor(dy), Tensor(x), align_corner=False, half_pixel_centers=True)
     assert np.all(output.asnumpy() == expect)
     dy = np.array([[[[1, 2], [3, 4]]]]).astype(np.float32)
 
@@ -156,7 +156,7 @@ def test_resize_bilinear_grad_half_pixel_centers():
                          [0.25, 0.25, 0.5, 0.5],
                          [0.75, 0.75, 1.0, 1.0],
                          [0.75, 0.75, 1.0, 1.0]]]], dtype=np.float32)
-    net = NetResizeBilinearFunc(half_pixel_centers=True)
-    output = net(Tensor(dy), Tensor(x))
+    net = NetResizeBilinearFunc()
+    output = net(Tensor(dy), Tensor(x), align_corner=False, half_pixel_centers=True)
     assert np.all(output.asnumpy() == expect)
     

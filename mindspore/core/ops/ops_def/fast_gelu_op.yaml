@@ -1,0 +1,10 @@
+#operator fast_gelu
+fast_gelu:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: FastGeLU

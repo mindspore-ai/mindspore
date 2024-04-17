@@ -58,7 +58,7 @@ def main_test(var_np, accum_np, lr_np, grident_np, epsilon_np, update_slots):
     return (expect_var_np, res_var_mindspore), (expect_accum_np, res_accum_mindspore)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_apply_adagradv2_fff():

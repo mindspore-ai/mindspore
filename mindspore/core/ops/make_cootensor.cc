@@ -50,7 +50,7 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto values = abstract::CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexOne);
   auto dense_shape = abstract::CheckArg<AbstractTuple>(op_name, args_spec_list, kIndexTwo);
 
-  auto indices_dtype = indices->element()->BuildType();
+  auto indices_dtype = indices->element()->GetType();
   CheckSparseIndicesDtype(indices_dtype, "Indices");
 
   auto indices_shp = indices->shape()->shape();
@@ -70,7 +70,7 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
 
   // Convert dense_shape from tuple to shapevector(dense_shape_vec)
   auto dense_shape_vec = GetShapeValue(primitive, dense_shape);
-  auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
+  auto dense_shape_value = dense_shape->GetValue()->cast<ValueTuplePtr>();
   if (!IsDynamic(dense_shape_vec)) {
     MS_EXCEPTION_IF_NULL(dense_shape_value);
     for (auto dense_shape_elem : dense_shape_vec) {

@@ -88,8 +88,7 @@ abstract::ShapePtr PadInferShape(const PrimitivePtr &prim, const std::vector<Abs
 TypePtr PadInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  return CheckAndConvertUtils::CheckSubClass("input_x", input_args[kInputIndex0]->BuildType(), {kTensorType},
-                                             prim_name);
+  return CheckAndConvertUtils::CheckSubClass("input_x", input_args[kInputIndex0]->GetType(), {kTensorType}, prim_name);
 }
 }  // namespace
 

@@ -32,7 +32,6 @@ class MvlgammaNet(nn.Cell):
         self.a_np = np.array([[3, 4, 5], [4, 2, 6]]).astype(nptype)
         self.a = Tensor(self.a_np)
 
-
     @jit
     def construct(self):
         return self.mvlgamma(self.a)
@@ -114,3 +113,27 @@ def test_mvlgamma_tensor_api_modes(mode):
     output = x.mvlgamma(p=3)
     expected = np.array([[2.694925, 5.402975, 9.140645], [5.402975, 1.596312, 13.64045]], np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_mvlgamma_tensor_element(mode):
+    """
+    Feature: Test mvlgamma tensor api.
+    Description: Test mvlgamma tensor api for Graph and PyNative modes when the element not greater than (p-1)/2.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor([[1, 4, 5], [4, 2, 6]], mstype.float32)
+    try:
+        x.mvlgamma(p=3)
+    except ValueError as e:
+        assert "all elements of 'x' must be greater than (p-1)/2" in str(e)
+
+    x = Tensor(np.full((7, 4, 8), np.nan), mstype.float32)
+    try:
+        x.mvlgamma(p=1)
+    except ValueError as e:
+        assert "all elements of 'x' must be greater than (p-1)/2" in str(e)

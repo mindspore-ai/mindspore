@@ -20,9 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool BroadcastToGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool BroadcastToGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -33,11 +32,10 @@ bool BroadcastToGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int BroadcastToGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int BroadcastToGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto inp_shape = inputs[kIndex0]->GetShapeVector();
@@ -47,17 +45,26 @@ int BroadcastToGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
                       << SHAPE_SIZE << ", but got the dimension of input: " << inp_shape.size()
                       << ", the dimension of output: " << out_shape.size();
   }
+
+  is_null_input_ = CHECK_SHAPE_NULL(inp_shape, kernel_name_, "input");
+  if (is_null_input_) {
+    return KRET_OK;
+  }
   SimplifyBroadcastToShape(inp_shape, out_shape, &simplified_inp_shape_, &simplified_out_shape_);
   is_broadcast_ = IsBinaryBroadcast(simplified_inp_shape_, simplified_out_shape_);
   return KRET_OK;
 }
 
 template <typename T>
-bool BroadcastToGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool BroadcastToGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  if (is_null_input_) {
+    return true;
+  }
+
   if (is_broadcast_) {
     BroadcastTo(simplified_inp_shape_, simplified_out_shape_, input_addr, output_addr, device_id_,
                 reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -72,34 +79,6 @@ bool BroadcastToGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
 std::vector<std::pair<KernelAttr, BroadcastToGpuKernelMod::BroadcastToLaunchFunc>> BroadcastToGpuKernelMod::func_list_ =
   {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     &BroadcastToGpuKernelMod::LaunchKernel<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &BroadcastToGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &BroadcastToGpuKernelMod::LaunchKernel<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-     &BroadcastToGpuKernelMod::LaunchKernel<int8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-     &BroadcastToGpuKernelMod::LaunchKernel<int16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-     &BroadcastToGpuKernelMod::LaunchKernel<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-     &BroadcastToGpuKernelMod::LaunchKernel<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-     &BroadcastToGpuKernelMod::LaunchKernel<uint8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-     &BroadcastToGpuKernelMod::LaunchKernel<uint16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-     &BroadcastToGpuKernelMod::LaunchKernel<uint32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-     &BroadcastToGpuKernelMod::LaunchKernel<uint64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-     &BroadcastToGpuKernelMod::LaunchKernel<bool>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-     &BroadcastToGpuKernelMod::LaunchKernel<utils::Complex<float>>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-     &BroadcastToGpuKernelMod::LaunchKernel<utils::Complex<double>>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
      &BroadcastToGpuKernelMod::LaunchKernel<double>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),

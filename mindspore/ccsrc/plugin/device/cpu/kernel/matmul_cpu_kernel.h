@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-using LaunchEmptyTensorFunc = std::function<void(const std::vector<AddressPtr> &)>;
+using LaunchEmptyTensorFunc = std::function<void(const std::vector<KernelTensor *> &)>;
 constexpr auto kUnkown = "Unknown";
 class MatMulCpuKernelMod : public NativeCpuKernelMod {
  public:
@@ -34,11 +34,10 @@ class MatMulCpuKernelMod : public NativeCpuKernelMod {
   explicit MatMulCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~MatMulCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     if (is_empty_tensor_) {
       launch_empty_tensor_func_(outputs);
       return true;
@@ -46,10 +45,7 @@ class MatMulCpuKernelMod : public NativeCpuKernelMod {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 

@@ -16,8 +16,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SIGN_H
 #define AICPU_KERNELS_NORMALIZED_SIGN_H
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/common/status.h"
+#include "inc/ms_cpu_kernel.h"
+#include "context/common/status.h"
 
 namespace aicpu {
 class SignCpuKernel : public CpuKernel {
@@ -28,13 +28,13 @@ class SignCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  KernelStatus SignCheck(const CpuKernelContext &ctx) const;
+  KernelStatus SignCheck(CpuKernelContext &ctx) const;
 
   template <typename T>
-  uint32_t SignCompute(const CpuKernelContext &ctx);
+  uint32_t SignCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SignComputeComplex(const CpuKernelContext &ctx);
+  uint32_t SignComputeComplex(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

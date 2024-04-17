@@ -1,0 +1,24 @@
+resize_bicubic_grad:
+    description: |
+        Computes gradients for ResizeBicubicGrad operation.
+
+        Args:
+            grads (Tensor): A Tensor of type float. 4-D with shape [batch, height, width, channels]. The format must be NHWC.
+            image (Tensor): A Tensor. Must be one of the following types: float, double.
+                4-D with shape [batch, orig_height, orig_width, channels], The origin image tensor that was resized.
+                The format must be NHWC.
+            align_corners (bool): If true, the centers of the 4 corner pixels of the input and output tensors are 
+                aligned, preserving the values at the corner pixels.Default: ``False``.
+            half_pixel_centers (bool): An optional bool. Default: ``False``.
+
+        Outputs:
+            A 4-D Tensor , with the same shape and data type as `image`.
+
+        Rasise:
+            TypeError: If `grads` is not allowed.
+            TypeError: If `image` is not allowed.
+            ValueError: If `image` dim is not 4.
+            ValueError: If `size` dim is not 4.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``

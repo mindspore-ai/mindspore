@@ -38,7 +38,7 @@ class NetRange1(Cell):
         return range(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -75,7 +75,7 @@ def test_seqence_make_range():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -89,7 +89,7 @@ def test_seqence_make_range_grad():
     input_x = mutable(10)
     input_y = mutable(100)
     input_z = mutable(3)
-    dout = mutable((1, 1), True)
+    dout = (1, 1)
 
     net_ms = NetRange3()
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)

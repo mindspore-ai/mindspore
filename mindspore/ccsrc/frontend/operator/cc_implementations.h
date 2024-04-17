@@ -38,7 +38,7 @@ ValuePtr ScalarMul(const ValuePtrList &list);
 ValuePtr ScalarDiv(const ValuePtrList &list);
 ValuePtr ScalarMod(const ValuePtrList &list);
 ValuePtr ScalarPow(const ValuePtrList &list);
-ValuePtr ScalarFloordiv(const ValuePtrList &list);
+ValuePtr ScalarFloorDiv(const ValuePtrList &list);
 ValuePtr ScalarUAdd(const ValuePtrList &list);
 ValuePtr ScalarUSub(const ValuePtrList &list);
 ValuePtr ScalarLog(const ValuePtrList &list);

@@ -22,6 +22,9 @@ MS_REG_GPU_KERNEL_ONE(
   Receive, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   NcclRecvGpuKernel, float);
 MS_REG_GPU_KERNEL_ONE(
+  Receive, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat32),
+  NcclRecvGpuKernel, float);
+MS_REG_GPU_KERNEL_ONE(
   Receive, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat16),
   NcclRecvGpuKernel, half);
 MS_REG_GPU_KERNEL_ONE(

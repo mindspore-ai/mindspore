@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,12 +53,7 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all) 
     MS_LOG(EXCEPTION) << "Invalid cnode " << all_to_all->DebugString() << " input size " << all_to_all->size();
   }
 
-  // Make a split CNode.
   auto all_to_all_input = all_to_all->input(kAllToAllInputIdx);
-  std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplit->name())),
-                                         all_to_all_input};
-  auto split = graph->NewCNode(split_input);
-  MS_EXCEPTION_IF_NULL(split);
 
   // Judge validity of split_dim and shape
   auto dtype = common::AnfAlgo::GetOutputInferDataType(all_to_all_input, 0);
@@ -72,6 +67,27 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all) 
                       << "] = " << shape[LongToSize(split_dim)];
   }
   shape[LongToSize(split_dim)] /= split_count;
+
+  // Make a split CNode.
+  auto kernel_graph = graph->cast<std::shared_ptr<session::KernelGraph>>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  // axis
+  auto axis_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(split_dim), kInt64);
+  ValueNodePtr axis_node = std::make_shared<ValueNode>(MakeValue<int64_t>(split_dim));
+  axis_node->set_abstract(axis_abs);
+  axis_node = kernel_graph->NewValueNode(axis_node);
+  kernel_graph->AddValueNodeToGraph(axis_node);
+  // OutputNum
+  auto outputn_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(split_count), kInt64);
+  ValueNodePtr outputn_node = std::make_shared<ValueNode>(MakeValue<int64_t>(split_count));
+  outputn_node->set_abstract(outputn_abs);
+  outputn_node = kernel_graph->NewValueNode(outputn_node);
+  kernel_graph->AddValueNodeToGraph(outputn_node);
+
+  std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplit->name())),
+                                         all_to_all_input, axis_node, outputn_node};
+  auto split = graph->NewCNode(split_input);
+  MS_EXCEPTION_IF_NULL(split);
 
   // Set Split CNode outputs type and shape, and CNode attributes.
   std::vector<TypeId> dtypes(split_count, dtype);
@@ -136,6 +152,17 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
   // Make a Concat CNode.
   std::vector<AnfNodePtr> concat_input = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   (void)concat_input.insert(concat_input.end(), all_to_all_v_outputs.begin(), all_to_all_v_outputs.end());
+
+  auto kernel_graph = graph->cast<std::shared_ptr<session::KernelGraph>>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  // axis
+  auto axis_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(concat_dim), kInt64);
+  ValueNodePtr axis_node = std::make_shared<ValueNode>(MakeValue<int64_t>(concat_dim));
+  axis_node->set_abstract(axis_abs);
+  axis_node = kernel_graph->NewValueNode(axis_node);
+  kernel_graph->AddValueNodeToGraph(axis_node);
+
+  concat_input.push_back(axis_node);
   auto concat = graph->NewCNode(concat_input);
   MS_EXCEPTION_IF_NULL(concat);
 
@@ -150,10 +177,7 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
   single_shape[LongToSize(concat_dim)] *= split_count;
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)},
                                               {single_shape}, concat.get());
-
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(concat_dim), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(split_count), concat);
-  std::vector<int64_t> dyn_input_size{split_count};
+  std::vector<int64_t> dyn_input_size{split_count, -1};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat);
   return concat;
 }

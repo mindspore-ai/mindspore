@@ -52,7 +52,7 @@ def test_net_normal():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_h_none():
@@ -68,7 +68,7 @@ def test_net_h_none():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_hxh():
@@ -94,7 +94,7 @@ class NetWithIndices(nn.Cell):
         return self.adaptive_max_pool2d(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_with_indices():
@@ -110,7 +110,7 @@ def test_net_with_indices():
     assert output[1].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_f():
@@ -135,7 +135,7 @@ class Netnn(nn.Cell):
         return self.adaptive_max_pool2d(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_nn():

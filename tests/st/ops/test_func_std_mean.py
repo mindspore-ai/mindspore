@@ -30,7 +30,7 @@ class NetGpu(nn.Cell):
         return ops.std_mean(x, axis=2, ddof=3, keepdims=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training

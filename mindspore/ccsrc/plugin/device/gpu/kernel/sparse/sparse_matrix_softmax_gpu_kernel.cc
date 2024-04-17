@@ -18,12 +18,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseMatrixSoftmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
+bool SparseMatrixSoftmaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   constexpr size_t inputs_num = 5;
   constexpr size_t outputs_num = 5;
-  kernel_name_ = base_operator->GetPrim()->name();
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
 
@@ -45,47 +44,45 @@ bool SparseMatrixSoftmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SparseMatrixSoftmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseMatrixSoftmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }
 
-  input_dense_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                           inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_dense_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                           inputs.at(kIndex0)->GetDeviceShapeVector().end());
   dense_shape_elements_ =
     std::accumulate(input_dense_shape_.begin(), input_dense_shape_.end(), 1, std::multiplies<size_t>());
 
-  input_batch_pointers_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                              inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  input_batch_pointers_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                              inputs.at(kIndex1)->GetDeviceShapeVector().end());
   batch_pointers_elements_ =
     std::accumulate(input_batch_pointers_.begin(), input_batch_pointers_.end(), 1, std::multiplies<size_t>());
 
-  input_row_pointers_ = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                            inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  input_row_pointers_ = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                            inputs.at(kIndex2)->GetDeviceShapeVector().end());
   row_pointers_elements_ =
     std::accumulate(input_row_pointers_.begin(), input_row_pointers_.end(), 1, std::multiplies<size_t>());
 
-  input_col_indices_ = std::vector<size_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                           inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
+  input_col_indices_ = std::vector<size_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
+                                           inputs.at(kIndex3)->GetDeviceShapeVector().end());
   col_indices_elements_ =
     std::accumulate(input_col_indices_.begin(), input_col_indices_.end(), 1, std::multiplies<size_t>());
 
-  input_values_ = std::vector<size_t>(inputs.at(kIndex4)->GetDeviceShapeAdaptively().begin(),
-                                      inputs.at(kIndex4)->GetDeviceShapeAdaptively().end());
+  input_values_ = std::vector<size_t>(inputs.at(kIndex4)->GetDeviceShapeVector().begin(),
+                                      inputs.at(kIndex4)->GetDeviceShapeVector().end());
   values_elements_ = std::accumulate(input_values_.begin(), input_values_.end(), 1, std::multiplies<size_t>());
 
   return KRET_OK;
 }
 
 template <typename DataType, typename IndexType>
-bool SparseMatrixSoftmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs) {
+bool SparseMatrixSoftmaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
   MS_EXCEPTION_IF_NULL(cuda_stream);
   IndexType *x_dense_shape = GetDeviceAddress<IndexType>(inputs, kIndex0);

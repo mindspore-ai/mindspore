@@ -17,8 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_BATCHNORMGRADGRAD_H_
 #define AICPU_KERNELS_NORMALIZED_BATCHNORMGRADGRAD_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "utils/bcast.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/eigen_tensor.h"
 
 namespace aicpu {
@@ -32,19 +31,19 @@ class BatchNormGradGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t ParallelCompute(const CpuKernelContext &ctx);
+  uint32_t ParallelCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  void TrainingComputeNHWC(const CpuKernelContext &ctx, int start, int end);
+  void TrainingComputeNHWC(CpuKernelContext &ctx, int start, int end);
 
   template <typename T>
-  void InferenceComputeNHWC(const CpuKernelContext &ctx, int start, int end);
+  void InferenceComputeNHWC(CpuKernelContext &ctx, int start, int end);
 
   template <typename T>
-  void TrainingComputeNCHW(const CpuKernelContext &ctx);
+  void TrainingComputeNCHW(CpuKernelContext &ctx);
 
   template <typename T>
-  void InferenceComputeNCHW(const CpuKernelContext &ctx);
+  void InferenceComputeNCHW(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

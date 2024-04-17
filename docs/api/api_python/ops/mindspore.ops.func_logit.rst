@@ -3,8 +3,7 @@ mindspore.ops.logit
 
 .. py:function:: mindspore.ops.logit(input, eps=None)
 
-    逐元素计算Tensor的logit值。当 `eps` 不是 None 时， `input` 中的元素被截断到范围[eps, 1-eps]内。
-    当 `eps` 为 None 时，输入 `input` 不进行数值截断。
+    逐元素计算Tensor的logit值。
 
     .. math::
         \begin{align}
@@ -19,7 +18,7 @@ mindspore.ops.logit
 
     参数：
         - **input** (Tensor) - Tensor输入，其数据类型为float16、float32或float64。
-        - **eps** (float, 可选) - epsilon值。当eps不为 ``None`` 时，输入的数值界限被定义[eps, 1-eps]，否则，输入的数值不进行数值截断。
+        - **eps** (float, 可选) - epsilon值，当eps不是None时，输入的数值界限被定义[eps, 1-eps]，否则没有界限。
           默认值： ``None`` 。
 
     返回：

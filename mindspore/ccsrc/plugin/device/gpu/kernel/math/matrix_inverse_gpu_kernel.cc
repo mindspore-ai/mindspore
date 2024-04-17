@@ -23,14 +23,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool MatrixInverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixInverse>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast op from BaseOperator to MaxPoolingGradWithArgmax failed.";
-    return false;
-  }
+bool MatrixInverseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!pair.first) {
@@ -41,17 +35,16 @@ bool MatrixInverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
 
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
   handle_cus = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
-  adjoint_ = kernel_ptr->get_adjoint();
+  adjoint_ = GetValue<bool>(primitive_->GetAttr("adjoint"));
   if (adjoint_) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' adjoint=True is not supported on GPU.";
   }
   return true;
 }
 
-int MatrixInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixInverseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
@@ -70,7 +63,7 @@ int MatrixInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   for (size_t i = 0; i < last_index - 1; i++) {
     batch_size_ *= input_shape[i];
   }
-  auto dtype = inputs[kIndex0]->GetDtype();
+  auto dtype = inputs[kIndex0]->dtype_id();
   int typesize = GetTypeByte(TypeIdToType(dtype));
   dtype_size_ = sizeof(TypeIdToType(dtype));
   input_size_ = typesize;
@@ -82,9 +75,9 @@ int MatrixInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-void MatrixInverseGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+void MatrixInverseGpuKernelMod::LaunchKernel_Cublas(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   auto compute_input_addr = GetDeviceAddress<T>(workspace, 0);
@@ -152,9 +145,9 @@ void MatrixInverseGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr
 }
 
 template <typename T>
-void MatrixInverseGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+void MatrixInverseGpuKernelMod::LaunchKernel_CuSolve(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   auto compute_input_addr = GetDeviceAddress<T>(workspace, 0);
@@ -235,9 +228,9 @@ void MatrixInverseGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPt
 }
 
 template <typename T>
-bool MatrixInverseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MatrixInverseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   int len = SizeToInt(size_);
   int kNumber32 = 32;
   if (len < kNumber32 || batch_size_ > 1) {

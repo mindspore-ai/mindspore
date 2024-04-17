@@ -23,7 +23,7 @@
 #include "ops/op_utils.h"
 #include "nnacl/op_base.h"
 #include "tools/converter/adapter/acl/common/utils.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {
@@ -38,21 +38,21 @@ STATUS ReshapeMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Get value node and primitive from cnode failed.";
     return lite::RET_ERROR;
   }
-  if (cnode->inputs().size() != kInputNum) {
-    MS_LOG(ERROR) << "Reshape input num should be " << kInputNum << ", real size: " << cnode->inputs().size();
+  if (cnode->size() != kInputNum) {
+    MS_LOG(ERROR) << "Reshape input num should be " << kInputNum << ", real size: " << cnode->size();
     return RET_ERROR;
   }
-  if (AttrAdjust(src_prim, value_node, cnode) != RET_OK) {
+  if (ShapeAttrAdjustTensor(src_prim, value_node, cnode) != RET_OK) {
     MS_LOG(ERROR) << "Reshape attr adjust failed.";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-STATUS ReshapeMapper::AttrAdjust(const PrimitivePtr &src_prim, const ValueNodePtr &val_node, const CNodePtr &cnode) {
+STATUS ReshapeMapper::ShapeAttrAdjustTensor(const PrimitivePtr &src_prim, const ValueNodePtr &val_node,
+                                            const CNodePtr &cnode) {
   MS_CHECK_TRUE_MSG(src_prim != nullptr, RET_ERROR, "src_prim is nullptr.");
   MS_CHECK_TRUE_MSG(val_node != nullptr, RET_ERROR, "val_node is nullptr.");
-  ValuePtr attr_val = nullptr;
   if (src_prim->HasAttr("shape")) {
     return RET_OK;
   }
@@ -70,7 +70,15 @@ STATUS ReshapeMapper::AttrAdjust(const PrimitivePtr &src_prim, const ValueNodePt
   std::vector<int> shape = acl::GetIntParameterData(shape_param);
   ops::Reshape reshape;
   auto dst_prim = reshape.GetPrim();
-  dst_prim->AddAttr("shape", MakeValue(shape));
+  auto attr_val = src_prim->GetAttr(ops::kFmkType);
+  int fmk_type = attr_val != nullptr ? GetValue<int>(attr_val) : converter::kFmkTypeTf;
+  if (fmk_type == converter::kFmkTypeOnnx) {
+    if (std::find(shape.begin(), shape.end(), 0) != shape.end() && !dst_prim->HasAttr("allowzero")) {
+      dst_prim->AddAttr("allowzero", MakeValue(0));  // allowzero is an ops attribute in cann
+    }
+  } else {
+    dst_prim->AddAttr("shape", MakeValue(shape));
+  }
   val_node->set_value(dst_prim);
   return RET_OK;
 }

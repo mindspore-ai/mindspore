@@ -14,12 +14,13 @@
 # ============================================================================
 """ test_dict_get """
 import pytest
+import itertools
 from mindspore import context, jit
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -40,7 +41,7 @@ def test_dict_generated_from_list():
     assert out == {'b': 2, 'c': 3}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -101,3 +102,24 @@ def test_dictcomp_with_pyexecute_input():
 
     out = dict_generate()
     assert out == {'a': 5, 'b': 7, 'c': 3, 'd': 6}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_list_comprehension_with_iterator_input():
+    """
+    Feature: Graph syntax list comp.
+    Description: Graph list comprehension syntax.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo():
+        m = (1, 2)
+        n = (4, 7)
+        x = {i+j: (i, j) for i, j in itertools.product(m, n)}
+        return x
+
+    res = foo()
+    assert res == {5: (1, 4), 8: (1, 7), 6: (2, 4), 9: (2, 7)}

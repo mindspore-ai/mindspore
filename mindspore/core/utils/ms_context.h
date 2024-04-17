@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,6 @@ enum MsBackendPolicy {
   kMsBackendUnknown = 6,
 };
 
-enum AscendSocVersion {
-  k910AAscendVersion = 0,
-  k910BAscendVersion = 1,
-  kNotAscend = 2,
-};
-
 enum DumpLevel : int {
   kIntroductory = 1,
   kAdvanced,
@@ -54,6 +48,11 @@ enum JitSyntaxLevel : int {
   kStrict,      // JIT Fallback disabled.
   kCompatible,  // JIT Fallback partial enabled for Python basic type only, such as scalar, dict.
   kLax,         // JIT Fallback fully enabled.
+};
+
+enum DebugLevel : int {
+  kLevelRelease,  // Used for deployment scenarios, compile performance will be better.
+  kLevelDebug,    // For debugging scenarios, compile performance will decrease.
 };
 
 enum class CellReuseLevel { kNoCellReuse, kNoInline, kLazyInline };
@@ -76,6 +75,9 @@ const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
 const unsigned int kOpTimeout = 900;
 const int kOptimizeO0 = 0;
 const int kOptimizeO1 = 1;
+constexpr auto kAscendVersion910 = "ascend910";
+constexpr auto kAscendVersion910b = "ascend910b";
+constexpr auto kAscendVersion910c = "ascend910c";
 
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
 // The default max available device memory is 1024GB.
@@ -117,11 +119,15 @@ enum MsCtxParam : unsigned {
   MS_CTX_GRAD_COMM_OVERLAP,
   MS_CTX_ENABLE_TASK_OPT,
   MS_CTX_ENABLE_GRAD_COMM_OPT,
+  MS_CTX_ENABLE_OPT_SHARD_COMM_OPT,
   MS_CTX_INTERLEAVED_MATMUL_COMM,
   MS_CTX_INTERLEAVED_LAYERNORM_COMM,
   MS_CTX_ENABLE_COMPILE_CACHE,
   MS_CTX_CONV_ALLOW_TF32,
   MS_CTX_MATMUL_ALLOW_TF32,
+  MS_CTX_ENABLE_BEGIN_END_INLINE_OPT,
+  MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT,
+  MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE,
   MS_CTX_TYPE_BOOL_END,
 
   // parameter of type int
@@ -130,6 +136,8 @@ enum MsCtxParam : unsigned {
   MS_CTX_MEMORY_OPTIMIZE_LEVEL,
   MS_CTX_SAVE_GRAPHS_FLAG,
   MS_CTX_JIT_SYNTAX_LEVEL,
+  MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL,
+  MS_CTX_DEBUG_LEVEL,
   MS_CTX_TYPE_INT_END,
 
   // parameter of type uint32
@@ -174,9 +182,13 @@ enum MsCtxParam : unsigned {
   MS_CTX_MATMUL_ALLOW_HF32,
   MS_CTX_CONV_ALLOW_HF32,
   MS_CTX_OP_PRECISION_MODE,
+  MS_CTX_GE_OPTIONS,
   MS_CTX_CONV_FPROP_ALGO,
   MS_CTX_CONV_DGRAD_ALGO,
   MS_CTX_CONV_WGRAD_ALGO,
+  MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD,
+  MS_CTX_ENABLE_EXCEPTION_DUMP,
+  MS_CTX_TOPO_ORDER,
   MS_CTX_TYPE_STRING_END,
 
   // parameter numbers of each type
@@ -199,15 +211,19 @@ class MS_CORE_API MsContext {
   using EnvFunc = std::function<void(const std::string &, const std::string &)>;  // device name, library path
   static std::shared_ptr<MsContext> GetInstance();
 
+  void SetDeviceId();
   void Refresh();
 
   bool enable_dump_ir() const;
   std::string GetSaveGraphsPath() const;
+  int GetSaveGraphsLevel() const;
   bool CanDump(const DumpLevel &level) const;
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
   std::string ascend_soc_version() const;
   bool set_ascend_soc_version(const std::string &soc_version);
+  std::string ascend_soc_name() const;
+  void set_ascend_soc_name(const std::string &soc_name);
   // _comm_helper.py will try to dlopen libhccl.so, and minddata will try to dlopen libdvpp_utils.so. if load ascend
   // plugin failed on ascend environment, loading above libraries will crush the process.
   bool IsAscendPluginLoaded() const;
@@ -235,6 +251,7 @@ class MS_CORE_API MsContext {
   template <typename T>
   void set_param(MsCtxParam param, const T &value) {
     CheckReadStatus<T>(param, value);
+    MarkWriteStatus(param);
     set_param_inner<T>(param, value);
   }
 
@@ -253,20 +270,30 @@ class MS_CORE_API MsContext {
     MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 
-  void ResetContext();  // Reset ms context. Only called in child process after fork occurs.
+  void ChildAfterFork();  // Reset ms context. Only called in child process after fork occurs.
   bool EnableAoeOnline() const;
   bool EnableAoeOffline() const;
 
   void SetCellReuseLevel(const CellReuseLevel &level) { cell_reuse_level_ = level; }
   enum CellReuseLevel CellReuseLevel() const { return cell_reuse_level_; }
 
+  bool IsKByKExecutorMode() const;
+
+  std::string GetLoadPluginErrorStr() const { return load_plugin_error_(); }
+
+  void set_not_convert_jit(bool not_convert_jit) { not_convert_jit_ = not_convert_jit; }
+  bool not_convert_jit() { return not_convert_jit_; }
+
  private:
   void RefreshExecutionMode();
   void RefreshMemoryOffload();
 
-  void MarkReadStatus(MsCtxParam param) const;  // record status to mutable member params_read_status_
+  void MarkReadStatus(MsCtxParam param) const;   // record status to mutable member params_read_status_
+  void MarkWriteStatus(MsCtxParam param) const;  // record status to mutable member params_write_status_
   template <typename T>
   void CheckReadStatus(MsCtxParam param, const T &value) const;
+  bool CheckWriteStatus(MsCtxParam param) const;
+  void SetAscendConfig();
 
   static DeviceSeter seter_;
   static std::shared_ptr<MsContext> inst_context_;
@@ -279,8 +306,10 @@ class MS_CORE_API MsContext {
   std::string string_params_[MsCtxParam::NUM_STRING_PARAMS];
 
   mutable std::vector<bool> params_read_status_;
+  mutable std::vector<bool> params_write_status_;
   MsBackendPolicy backend_policy_;
-  AscendSocVersion ascend_soc_version_;
+  std::string ascend_soc_version_;
+  std::string ascend_soc_name_ = "ascend";
   bool default_device_target_ = true;
 
   EnvFunc set_env_ = nullptr;
@@ -289,6 +318,7 @@ class MS_CORE_API MsContext {
   static std::map<std::string, InitDeviceTargetAndPolicy> &InitFuncMap();
   static std::map<std::string, std::string> &PluginPathMap();
   enum CellReuseLevel cell_reuse_level_ = CellReuseLevel::kNoCellReuse;
+  bool not_convert_jit_{false};
 };
 
 // set method implementation for type bool/int/uint32_t/float/std::string

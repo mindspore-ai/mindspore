@@ -19,8 +19,8 @@
 #include <string>
 
 #include "Eigen/Core"
-#include "inc/cpu_ops_kernel.h"
-#include "inc/cpu_types.h"
+#include "inc/ms_cpu_kernel.h"
+#include "cpu_types.h"
 
 namespace aicpu {
 
@@ -31,7 +31,7 @@ class CropAndResizeCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 
   uint32_t GetInputAndCheck(CpuKernelContext &ctx);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ void RegMsContext(const py::module *m) {
     .value("matmul_allow_hf32", MsCtxParam::MS_CTX_MATMUL_ALLOW_HF32)
     .value("conv_allow_hf32", MsCtxParam::MS_CTX_CONV_ALLOW_HF32)
     .value("op_precision_mode", MsCtxParam::MS_CTX_OP_PRECISION_MODE)
+    .value("ge_options", MsCtxParam::MS_CTX_GE_OPTIONS)
     .value("save_graphs_path", MsCtxParam::MS_CTX_SAVE_GRAPHS_PATH)
     .value("enable_compile_cache", MsCtxParam::MS_CTX_ENABLE_COMPILE_CACHE)
     .value("compile_cache_path", MsCtxParam::MS_CTX_COMPILE_CACHE_PATH)
@@ -120,14 +121,23 @@ void RegMsContext(const py::module *m) {
     .value("conv_fprop_algo", MsCtxParam::MS_CTX_CONV_FPROP_ALGO)
     .value("conv_dgrad_algo", MsCtxParam::MS_CTX_CONV_DGRAD_ALGO)
     .value("conv_wgrad_algo", MsCtxParam::MS_CTX_CONV_WGRAD_ALGO)
+    .value("exception_dump", MsCtxParam::MS_CTX_ENABLE_EXCEPTION_DUMP)
     .value("conv_allow_tf32", MsCtxParam::MS_CTX_CONV_ALLOW_TF32)
     .value("recompute_comm_overlap", MsCtxParam::MS_CTX_RECOMPUTE_COMM_OVERLAP)
     .value("matmul_grad_comm_overlap", MsCtxParam::MS_CTX_GRAD_COMM_OVERLAP)
     .value("matmul_allow_tf32", MsCtxParam::MS_CTX_MATMUL_ALLOW_TF32)
     .value("enable_task_opt", MsCtxParam::MS_CTX_ENABLE_TASK_OPT)
     .value("enable_grad_comm_opt", MsCtxParam::MS_CTX_ENABLE_GRAD_COMM_OPT)
+    .value("enable_opt_shard_comm_opt", MsCtxParam::MS_CTX_ENABLE_OPT_SHARD_COMM_OPT)
+    .value("compute_communicate_fusion_level", MsCtxParam::MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL)
+    .value("debug_level", MsCtxParam::MS_CTX_DEBUG_LEVEL)
     .value("interleaved_matmul_comm", MsCtxParam::MS_CTX_INTERLEAVED_MATMUL_COMM)
-    .value("interleaved_layernorm_comm", MsCtxParam::MS_CTX_INTERLEAVED_LAYERNORM_COMM);
+    .value("interleaved_layernorm_comm", MsCtxParam::MS_CTX_INTERLEAVED_LAYERNORM_COMM)
+    .value("enable_begin_end_inline_opt", MsCtxParam::MS_CTX_ENABLE_BEGIN_END_INLINE_OPT)
+    .value("enable_concat_eliminate_opt", MsCtxParam::MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT)
+    .value("host_scheduling_max_threshold", MsCtxParam::MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD)
+    .value("topo_order", MsCtxParam::MS_CTX_TOPO_ORDER)
+    .value("enable_flash_attention_load_balance", MsCtxParam::MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE);
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
     .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified parameter.")
@@ -142,6 +152,11 @@ void RegMsContext(const py::module *m) {
     .def("register_set_env_callback", &mindspore::MsContext::RegisterSetEnv,
          "Register callback function for check environment variable.")
     .def("register_check_env_callback", &mindspore::MsContext::RegisterCheckEnv,
-         "Register callback function for check environment variable.");
+         "Register callback function for check environment variable.")
+    .def("is_pkg_support_device", &mindspore::MsContext::IsSupportDevice,
+         "Return whether this MindSpore package supports specified device.")
+    .def("load_plugin_error", &mindspore::MsContext::GetLoadPluginErrorStr,
+         "Return error message when loading plugins for this MindSpore package.")
+    .def("_set_not_convert_jit", &mindspore::MsContext::set_not_convert_jit, "Set not convert jit.");
 }
 }  // namespace mindspore

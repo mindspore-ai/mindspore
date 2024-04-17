@@ -20,6 +20,7 @@ import numpy as np
 import mindspore as ms
 from mindspore.amp import auto_mixed_precision
 from mindspore.common import dtype
+from mindspore._c_expression import security
 from mindspore import nn
 from mindspore import ops
 from mindspore import amp
@@ -27,12 +28,25 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train import Model
+from mindspore._extends.parse import compile_config
 from utils import FakeData
 from utils import allclose_nparray
 from utils import FakeDataInitMode
 from utils import find_newest_validateir_file
 from utils import clean_all_ir_files
-from tests.security_utils import security_off_wrap
+from functools import wraps
+from tests.st.utils import test_utils
+
+def security_off_wrap(func):
+    """Wrapper for tests which do not need to run security on."""
+
+    @wraps(func)
+    def pass_test_when_security_on(*args, **kwargs):
+        if security.enable_security():
+            return None
+        return func(*args, **kwargs)
+
+    return pass_test_when_security_on
 
 def read_validateir_file(path_folder):
     filename = find_newest_validateir_file(path_folder)
@@ -76,9 +90,9 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sit_auto_mix_precision_train_o3():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float64)
@@ -140,10 +154,10 @@ def test_sit_auto_mix_precision_model_o0():
     clean_all_ir_files('./test_amp_o0/')
 
 
-@pytest.mark.level0
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o2():
@@ -184,9 +198,9 @@ def test_sit_auto_mix_precision_model_o2():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o1():
@@ -228,10 +242,10 @@ def test_sit_auto_mix_precision_model_o1():
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_custom_mix_precision():
@@ -308,7 +322,7 @@ class TestNet(ms.nn.Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -326,9 +340,9 @@ def test_all_subgraph_mix_precision():
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_AMP_ENABLE_ALL_FG'] = '1'
+    compile_config.AMP_ENABLE_ALL_FG = 1
     out_graph = mix_net(x)
-    os.environ['MS_DEV_AMP_ENABLE_ALL_FG'] = ''
+    compile_config.AMP_ENABLE_ALL_FG = ''
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -352,6 +366,7 @@ class AddNet(ms.nn.Cell):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dst_type', [ms.float16, ms.bfloat16])
+@test_utils.run_test_with_On
 def test_to_float(mode, dst_type):
     """
     Feature: to_float
@@ -363,3 +378,71 @@ def test_to_float(mode, dst_type):
     net = AddNet().to_float(dst_type)
     output = net(x)
     assert output.dtype == dst_type
+
+
+class TestAmpNet(ms.nn.Cell):
+    def __init__(self):
+        super(TestAmpNet, self).__init__()
+        self.conv = nn.Conv2d(3, 64, kernel_size=1, weight_init='ones', bias_init='zeros')
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.conv(x)
+        x = self.relu(x)
+        return x
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('amp_level', ["O1", "O2", "O3"])
+def test_amp_bfloat16(amp_level):
+    """
+    Feature: to_float
+    Description: Verify the result of to_float
+    Expectation: success
+    """
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True, save_graphs_path=f'./test_amp_{amp_level}')
+    x = Tensor(np.random.rand(1, 3, 16, 16), ms.float32)
+    net_graph = TestAmpNet()
+    net_graph = amp.auto_mixed_precision(net_graph, amp_level=amp_level, dtype=ms.bfloat16)
+    out_graph = net_graph(x)
+    content = read_validateir_file(f'./test_amp_{amp_level}/')
+    assert re.search(r"Conv2D(.*?)\n(.*) -> \(\<Tensor\[BFloat16\]", content), content
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(save_graphs=False)
+    net_pynative = TestAmpNet()
+    net_pynative = amp.auto_mixed_precision(net_pynative, amp_level=amp_level, dtype=ms.bfloat16)
+    out_pynative = net_pynative(x)
+    allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_custom_mixed_precision_bfloat16():
+    """
+    Feature: to_float
+    Description: Verify the result of to_float
+    Expectation: success
+    """
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True, save_graphs_path=f'./test_custom_amp')
+    x = Tensor(np.random.rand(1, 3, 16, 16), ms.float32)
+    net_graph = TestAmpNet()
+    white_list = [nn.ReLU, nn.Conv2d]
+    net_graph = amp.custom_mixed_precision(net_graph, white_list=white_list, dtype=ms.bfloat16)
+    out_graph = net_graph(x)
+    content = read_validateir_file(f'./test_custom_amp/')
+    assert re.search(r"Conv2D(.*?)\n(.*) -> \(\<Tensor\[BFloat16\]", content), content
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(save_graphs=False)
+    net_pynative = TestAmpNet()
+    white_list = [nn.ReLU, nn.Conv2d]
+    net_pynative = amp.custom_mixed_precision(net_pynative, white_list=white_list, dtype=ms.bfloat16)
+    out_pynative = net_pynative(x)
+    allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)

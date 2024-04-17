@@ -16,7 +16,7 @@
 
 #include "src/extendrt/delegate/tensorrt/op/gather_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
-#include "ops/gather.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore::lite {
 constexpr int AXIS_INDEX = 2;

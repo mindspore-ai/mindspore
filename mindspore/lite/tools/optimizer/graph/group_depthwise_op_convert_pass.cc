@@ -90,7 +90,7 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
       conv2d_fusion->EraseAttr(ops::kIsDepthWise);
       conv2d_fusion->set_group(static_cast<int64_t>(data_shape[kNHWC_C]));
       conv2d_fusion->set_in_channel(data_shape[kNHWC_C]);
-      MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
+      MS_ASSERT(conv_cnode->size() > kConvWeightIndex);
       auto weight_node = conv_cnode->input(kConvWeightIndex);
       MS_ASSERT(weight_node != nullptr);
       auto weight_value = GetTensorInfo(weight_node);

@@ -92,8 +92,9 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree2) {
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   std::vector<std::string> columns_to_load = {};
   std::vector<std::string> files = {dataset_path};
-  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
-    1, 2, 0, files, std::move(schema), op_connector_size, columns_to_load, false, 1, 0, false);
+  std::shared_ptr<TFReaderOp> my_tfreader_op =
+    std::make_shared<TFReaderOp>(1, 2, 0, files, std::move(schema), op_connector_size, columns_to_load, false, 1, 0,
+                                 false, CompressionType::NONE, true);
   rc = my_tfreader_op->Init();
   ASSERT_OK(rc);
   rc = my_tree->AssociateNode(my_tfreader_op);

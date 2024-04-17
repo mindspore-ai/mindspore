@@ -33,8 +33,40 @@
 
 namespace mindspore {
 namespace opt {
+std::vector<AnfNodePtr> GetBatchNormInputs(const AnfNodePtr &batch_norm) {
+  auto x = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex0);
+  auto scale = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex1);
+  auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex2);
+  auto mean = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex3);
+  auto var = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex4);
+  auto is_train = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex5);
+  auto eps = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex6);
+  auto momentum = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex7);
+  auto format = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex8);
+  auto umonad = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex9);
+
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(scale);
+  MS_EXCEPTION_IF_NULL(bias);
+  MS_EXCEPTION_IF_NULL(mean);
+  MS_EXCEPTION_IF_NULL(var);
+  MS_EXCEPTION_IF_NULL(is_train);
+  MS_EXCEPTION_IF_NULL(eps);
+  MS_EXCEPTION_IF_NULL(momentum);
+  MS_EXCEPTION_IF_NULL(format);
+  MS_EXCEPTION_IF_NULL(umonad);
+
+  auto prim = std::make_shared<Primitive>(kBatchNormWithActivationOpName);
+  MS_EXCEPTION_IF_NULL(prim);
+  prim->AddAttr(mindspore::ops::kActivationType, MakeValue(static_cast<int64_t>(mindspore::ActivationType::SWISH)));
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x,   scale,    bias,   mean,  var,
+                                    is_train,           eps, momentum, format, umonad};
+  return inputs;
+}
+
 const BaseRef BatchNormSiluFusion::DefinePattern() const {
-  VectorRef batch_norm = VectorRef({prim::kPrimBatchNorm, x_, scale_, bias_, mean_, var_, umonad_});
+  VectorRef batch_norm =
+    VectorRef({prim::kPrimBatchNorm, x_, scale_, bias_, mean_, var_, is_training_, eps_, momentum_, format_, umonad_});
   VectorRef tuple_get = VectorRef({prim::kPrimTupleGetItem, batch_norm, index_});
   VectorRef silu = VectorRef({prim::kPrimSiLU, tuple_get});
   return silu;
@@ -57,25 +89,7 @@ const AnfNodePtr BatchNormSiluFusion::Process(const FuncGraphPtr &graph, const A
   auto batch_norm = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item), 0);
   MS_EXCEPTION_IF_NULL(batch_norm);
 
-  auto x = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex0);
-  auto scale = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex1);
-  auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex2);
-  auto mean = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex3);
-  auto var = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex4);
-  auto umonad = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex5);
-
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(scale);
-  MS_EXCEPTION_IF_NULL(bias);
-  MS_EXCEPTION_IF_NULL(mean);
-  MS_EXCEPTION_IF_NULL(var);
-  MS_EXCEPTION_IF_NULL(umonad);
-
-  auto prim = std::make_shared<Primitive>(kBatchNormWithActivationOpName);
-  MS_EXCEPTION_IF_NULL(prim);
-  prim->AddAttr(mindspore::ops::kActivationType, MakeValue(static_cast<int64_t>(mindspore::ActivationType::SWISH)));
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x, scale, bias, mean, var, umonad};
-  auto fused_batch_norm_with_silu = graph->NewCNode(inputs);
+  auto fused_batch_norm_with_silu = graph->NewCNode(GetBatchNormInputs(batch_norm));
   MS_EXCEPTION_IF_NULL(fused_batch_norm_with_silu);
 
   std::vector<TypeId> outputs_type;

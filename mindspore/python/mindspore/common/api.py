@@ -40,7 +40,7 @@ from mindspore.common.sparse_tensor import COOTensor as PythonCOOTensor
 from mindspore.common.sparse_tensor import RowTensor as PythonRowTensor
 from mindspore._c_expression import GraphExecutor_, Tensor, CSRTensor, RowTensor, COOTensor, \
     PyNativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
-    _ms_memory_recycle, _bind_device_ctx
+    _ms_memory_recycle, _bind_device_ctx, jit_mode_pi_enable, jit_mode_pi_compile
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _is_pynative_parallel, \
     _is_in_auto_parallel_mode
@@ -63,6 +63,14 @@ BROADCAST_PHASE = "_broadcast_"
 _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
 
 
+def _ms_adapter_tensor_as_parameter_output(data):
+    """Check whether the data is an output from a parameter which is a ms_adapter tensor.
+       Pylint: disable=unidiomatic-typecheck.
+    """
+    return ms_adapter_registry.is_registered and isinstance(data, ms_adapter_registry.tensor) \
+           and hasattr(data, "__ms_parameter_output__") and getattr(data, "__ms_parameter_output__")
+
+
 def _convert_python_data(data):
     """
     Convert C++ data to python.
@@ -73,8 +81,10 @@ def _convert_python_data(data):
     Returns:
         data, a data convert C++ to python
     """
-    if isinstance(data, Tensor) and data.adapter_flag:
+    if isinstance(data, (Tensor, PythonTensor)) and data.adapter_flag:
         return ms_adapter_registry.tensor(data)
+    if _ms_adapter_tensor_as_parameter_output(data):
+        return data.tensor
     if isinstance(data, Tensor) and not isinstance(data, PythonTensor):
         return PythonTensor(data, internal=True)
     if isinstance(data, CSRTensor) and not isinstance(data, PythonCSRTensor):
@@ -83,7 +93,7 @@ def _convert_python_data(data):
         return PythonCOOTensor(coo_tensor=data)
     if isinstance(data, RowTensor) and not isinstance(data, PythonRowTensor):
         return PythonRowTensor(row_tensor=data)
-    if isinstance(data, tuple):
+    if data.__class__ is tuple:
         # Handle namedtuple since its type is tuple.
         if hasattr(data, "_fields"):
             type_name = data.__class__.__name__
@@ -91,12 +101,12 @@ def _convert_python_data(data):
             fields = data_dict.keys()
             return namedtuple(type_name, fields)(**_convert_python_data(data_dict))
         return tuple(_convert_python_data(x) for x in data)
-    if isinstance(data, list):
+    if data.__class__ is list:
         # Keep list object not change for inplace operation.
         for i in range(len(data)):
             data[i] = _convert_python_data(data[i])
         return data
-    if isinstance(data, dict):
+    if data.__class__ is dict:
         # Keep the dict object not change.
         keys = tuple(data.keys())
         for key in keys:
@@ -260,7 +270,7 @@ def _get_parameter_layout():
     return layout
 
 
-def _handle_arg(obj, arg):
+def _handle_arg(obj, arg, compile_arg):
     """Handle arg for runtime .If need handle the arg, return True"""
     if isinstance(arg, PythonTensor):
         if arg.has_init:
@@ -269,7 +279,7 @@ def _handle_arg(obj, arg):
             return arg
     elif isinstance(arg, (Tensor, CSRTensor, COOTensor)):
         return arg
-    elif hasattr(arg, "__ms_mutable__") and getattr(arg, "__ms_mutable__"):
+    elif compile_arg is not None and hasattr(compile_arg, "__ms_mutable__") and getattr(compile_arg, "__ms_mutable__"):
         # mutable([]) will be eliminated by FuncGraphSpecializer, and empty list is not supported by backend.
         if isinstance(arg, list) and not arg:
             return None
@@ -282,16 +292,16 @@ def _handle_arg(obj, arg):
     return None
 
 
-def _get_args_for_run(obj, args, kwargs):
+def _get_args_for_run(obj, args, kwargs, compile_args):
     """Get the actual input args and kwargs for runtime."""
     new_args = []
-    for arg in args:
-        new_arg = _handle_arg(obj, arg)
+    for arg, compile_arg in zip(args, compile_args):
+        new_arg = _handle_arg(obj, arg, compile_arg)
         if new_arg is not None:
             new_args.append(new_arg)
 
     for _, value in kwargs.items():
-        new_value = _handle_arg(obj, value)
+        new_value = _handle_arg(obj, value, None)
         if new_value is not None:
             new_args.append(new_value)
 
@@ -329,6 +339,7 @@ class _MindsporeFunctionExecutor:
         self.enable_tuple_broaden = False
         self._graph_executor = GraphExecutor_.get_instance()
         self._create_time = ms_create_time
+        self._compile_args = None
         self.jit_config_dict = jit_config.jit_config_dict if jit_config else None
 
 
@@ -376,6 +387,7 @@ class _MindsporeFunctionExecutor:
 
         # Restore the mutable attr for every arg.
         compile_args = _restore_mutable_attr(args, compile_args)
+        self._compile_args = compile_args
         generate_name, echo_function_name = self._get_generate_name()
         # The full Function name
         full_function_name = generate_name
@@ -414,6 +426,9 @@ class _MindsporeFunctionExecutor:
         update_auto_dynamic_shape_phase_with_check_input_signature(compile_args, key_id, phase, self.input_signature)
 
         if phase in ms_compile_cache:
+            # Release resource should be released when CompileInner won't be executed, such as cur_convert_input_
+            # generated in generate_arguments_key.
+            self._graph_executor.clear_compile_arguments_resource()
             return phase
 
         self._check_recompile(full_function_name, create_time, echo_function_name)
@@ -531,6 +546,7 @@ class _MindsporeFunctionExecutor:
             for i, elem in enumerate(compile_args):
                 if isinstance(elem, PythonTensor):
                     Validator.check_dynamic_shape(compile_args[i], args_list[i], i)
+            Validator.check_symbolic_shape(compile_args, args_list)
 
         # Case: If dynamic shape tensors have been assigned to `input_signature`, they are preferred as compile args.
         if self.input_signature is not None:
@@ -542,6 +558,7 @@ class _MindsporeFunctionExecutor:
                 if isinstance(elem, PythonTensor) and is_shape_unknown(elem.shape):
                     Validator.check_dynamic_shape(self.input_signature[i], args_list[i], i)
                     dyn_shape = True
+            Validator.check_symbolic_shape(self.input_signature, args_list)
             if dyn_shape:
                 # Checkout whether the `sens` has been added to args_list.
                 if len(self.input_signature) == len(args_list) - 1:
@@ -570,7 +587,7 @@ class _MindsporeFunctionExecutor:
         Returns:
             new_inputs, new input args, which are required for running.
         """
-        return _get_args_for_run(self, args_list, kwargs)
+        return _get_args_for_run(self, args_list, kwargs, self._compile_args)
 
 
 # The attributes used to identify a given object.
@@ -598,18 +615,19 @@ def _get_jit_hash(hash_input):
     return _get_obj_id(hash_input)
 
 
-def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_once=False):
+def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=None, compile_once=False):
     """
     Create a callable MindSpore graph from a Python function.
 
     This allows the MindSpore runtime to apply optimizations based on graph.
 
-    Note:
-        If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
-        will not accept `**kwargs`.
-
     Args:
         fn (Function): The Python function that will be run as a graph. Default: ``None`` .
+        mode (str): The type of jit used, the value of mode should be ``PIJit`` or ``PSJit``. Default: ``PSJit`` .
+
+            - `PSJit <https://www.mindspore.cn/docs/en/r2.3.q1/note/static_graph_syntax_support.html>`_ : MindSpore GRAPH_MODE.
+            - `PIJit <https://www.mindspore.cn/docs/en/r2.3.q1/design/dynamic_graph_and_static_graph.html>`_ : MindSpore PYNATIVE_MODE.
+
         input_signature (Tensor): The Tensor which describes the input arguments. The shape and dtype of the Tensor
             will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
             And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
@@ -620,8 +638,12 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_
         jit_config (JitConfig): Jit config for compile. Default: ``None`` .
         compile_once(bool): ``True``: The function would be compiled once when it was created many times.
             But it may be wrong if the free variables were changed. ``False`` : It would be recompiled when
-            it was created again
+            it was created again.
             Default: ``False`` .
+
+    Note:
+        If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
+        will not accept `**kwargs`.
 
     Returns:
         Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is
@@ -722,9 +744,43 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_
 
         return staging_specialize
 
+    def pi_wrap_mindspore(decorated):
+        func = decorated
+        if isinstance(func, ms.nn.Cell):
+            func = func.construct
+        if isinstance(func, type) and issubclass(func, ms.nn.Cell):
+            func = func.construct
+        if isinstance(func, types.MethodType):
+            func = func.__func__
+        if not isinstance(func, types.FunctionType):
+            logger.warning("only support function and mindspore.nn.Cell instance")
+            return decorated
+
+        # generator, coroutine, awaitable and a function that return them is unsupported
+        UNSUPPORTED_CODE_TYPE = (inspect.CO_GENERATOR | inspect.CO_COROUTINE |
+                                 inspect.CO_ASYNC_GENERATOR | inspect.CO_ITERABLE_COROUTINE)
+        if func.__code__.co_flags & UNSUPPORTED_CODE_TYPE:
+            return decorated
+
+        config = dict()
+        if isinstance(jit_config, JitConfig):
+            config.update(jit_config.jit_config_dict)
+        elif jit_config is not None:
+            config.update(jit_config)
+        jit_mode_pi_enable()
+
+        if jit_mode_pi_compile(func, config) is False:
+            logger.warning('add fn {} to compile failed '.format(func))
+
+        return decorated
+
+    wrap_func = wrap_mindspore
+    if mode == "PIJit":
+        wrap_func = pi_wrap_mindspore
+
     if fn is not None:
-        return wrap_mindspore(fn)
-    return wrap_mindspore
+        return wrap_func(fn)
+    return wrap_func
 
 
 def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
@@ -734,15 +790,14 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
     This allows the MindSpore runtime to apply optimizations based on graph.
 
     Note:
-        `ms_function` will be deprecated and removed in a future version. Please use `jit` instead.
-        If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
-        will not accept `**kwargs`.
+        - `ms_function` will be deprecated and removed in a future version. Please use :func:`mindspore.jit` instead.
+        - If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
+          will not accept `**kwargs`.
 
     Args:
         fn (Function): The Python function that will be run as a graph. Default: ``None`` .
         input_signature (Tensor): The Tensor which describes the input arguments. The shape and dtype of the Tensor
-            will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
-            And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
+            will be supplied to this function. The shape and dtype of actual inputs of `fn` should
             keep the same as input_signature. Otherwise, TypeError will be raised. Default: ``None`` .
         hash_args (Union[Object, List or Tuple of Objects]): The local free variables used inside `fn`,
             like functions or objects of class defined outside `fn`. Calling `fn` again with change of `hash_args`
@@ -911,7 +966,7 @@ def ms_class(cls):
     This allows MindSpore to identify user-defined classes and thus obtain their attributes and methods.
 
     Note:
-        `ms_class` will be deprecated and removed in a future version. Please use `jit_class` instead.
+        `ms_class` will be deprecated and removed in a future version. Please use :func:`mindspore.jit_class` instead.
 
     Args:
         cls (Class): User-defined class.
@@ -1039,6 +1094,8 @@ def set_adapter_config(config):
             ms_adapter_registry.register_parameter(value)
         elif key == "convert_object_map":
             ms_adapter_registry.register_convert_map(value)
+        elif key == "convert_adapter_tensor_map":
+            ms_adapter_registry.register_convert_adapter_tensor_map(value)
         else:
             raise ValueError(f"Unsupported key in adapter config: {key}")
 
@@ -1062,7 +1119,7 @@ def _build_broadcast_graph(broadcast_params_dict, broadcast_phase):
     _broadcast_net.phase = broadcast_phase
     broadcasted_params = _broadcast_net()
     for param_name, param in zip(broadcast_params_dict.keys(), broadcasted_params):
-        broadcast_params_dict[param_name].set_data(param)
+        broadcast_params_dict.get(param_name).set_data(param)
 
 
 def _get_auto_split_param_names(parameter_layout_dict):
@@ -1137,16 +1194,6 @@ class _PyNativeExecutor:
         self._executor = PyNativeExecutor_.get_instance()
         self._executor.set_py_exe_path(sys.executable)
         self._executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
-        self._top_cell = None
-
-    def __call__(self):
-        """
-        PyNative executor run grad graph.
-
-        Return:
-            The return object after running grad graph.
-        """
-        return self._executor()
 
     @staticmethod
     def parameter_broadcast(obj, phase):
@@ -1248,7 +1295,7 @@ class _PyNativeExecutor:
         Return:
             None.
         """
-        self._executor.grad_net(grad, obj, weights, grad_position, *args, *(kwargs.values()))
+        return self._executor.grad(grad, obj, weights, grad_position, *args, *(kwargs.values()))
 
     def clear_res(self):
         """
@@ -1381,15 +1428,6 @@ class _PyNativeExecutor:
             None.
         """
         self._executor.set_hook_changed(cell)
-
-    def get_top_cell(self):
-        """
-        Get the top cell object.
-
-        Return:
-            The top cell object.
-        """
-        return self._top_cell
 
     def constant_folding(self, *args):
         """
@@ -1524,7 +1562,7 @@ class _CellGraphExecutor:
         self.enable_tuple_broaden = False
         if hasattr(obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = obj.enable_tuple_broaden
-        logger.debug("Convert the network.", do_convert)
+        logger.debug(f"Convert the network: {do_convert}.")
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(obj, args, kwargs, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
@@ -1533,6 +1571,9 @@ class _CellGraphExecutor:
 
         if phase in obj.compile_cache and self.has_compiled(phase):
             logger.debug("%r graph has existed.", phase)
+            # Release resource should be released when CompileInner won't be executed, such as cur_convert_input_
+            # generated in generate_arguments_key.
+            self._graph_executor.clear_compile_arguments_resource()
             return phase, False
 
         obj.check_names()

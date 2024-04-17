@@ -42,13 +42,13 @@ class RandomDistributeInfo : public OperatorInfo {
   void ReplaceNodeInputOrAttrs() override;
 
  protected:
-  Status InferAttrs() override;
   Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferMirrorOps() override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
  private:
   void ResetInputsShape();

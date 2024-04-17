@@ -21,47 +21,37 @@
 #include <functional>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/dropout.h"
+#include "mindspore/core/ops/ops_func_impl/dropout.h"
 #include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kDropoutInputsNum = 1;
+constexpr size_t kDropoutInputsNum = 4;
 constexpr size_t kDropoutOutputsNum = 2;
 }  // namespace
 
 using FuncVec = const std::vector<std::pair<KernelAttr, DropoutCpuKernelMod::KernelRunFunc>>;
 
-bool DropoutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Dropout ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool DropoutCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kDropoutInputsNum || outputs.size() != kDropoutOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be " << kDropoutInputsNum
                   << " and " << kDropoutOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  keep_prob_ = kernel_ptr->get_keep_prob();
+  keep_prob_ = inputs[kIndex1]->GetValueWithCheck<float>();
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
-  uint64_t seed0 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("Seed0")));
-  uint64_t seed1 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("Seed1")));
+  uint64_t seed0 = static_cast<uint64_t>(inputs[kIndex2]->GetValueWithCheck<int64_t>());
+  uint64_t seed1 = static_cast<uint64_t>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
   uint64_t init_seed = random::GetSeed(seed0, seed1);
   rng_.seed(init_seed);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int DropoutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int DropoutCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   tensor_size_ = 1;
@@ -73,14 +63,15 @@ int DropoutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutOutputsNum, kernel_name_);
 
-  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto mask_addr = reinterpret_cast<T *>(outputs[1]->addr);
+  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto mask_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
   T scale = static_cast<T>(1.f / keep_prob_);
   std::uniform_real_distribution<float> uniform(0.f, 1.f);
   auto task = [input_addr, output_addr, mask_addr, scale, &uniform, this](size_t start, size_t end) {
@@ -95,11 +86,29 @@ bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 
 FuncVec &DropoutCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, DropoutCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
      &DropoutCpuKernelMod::LaunchKernel<float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
      &DropoutCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
      &DropoutCpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

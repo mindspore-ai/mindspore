@@ -81,7 +81,7 @@ const AnfNodePtr GetnextTensorMoveElimination::Process(const FuncGraphPtr &graph
       return nullptr;
     }
 
-    if (next_node->inputs().size() != kTensorMoveNextNodeInputSize) {
+    if (next_node->size() != kTensorMoveNextNodeInputSize) {
       MS_LOG(DEBUG) << "next node has more than one input";
       return nullptr;
     }

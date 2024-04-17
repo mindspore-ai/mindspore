@@ -41,35 +41,8 @@ AbstractBasePtr SliceGradInferInner(const PrimitivePtr &primitive, const std::ve
   auto prim_name = primitive->name();
   constexpr size_t input_num = 5;
   constexpr size_t x_index = 1;
-  constexpr size_t start_index = 2;
-  constexpr size_t end_index = 3;
-  constexpr size_t step_index = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  auto first_abs = input_args[x_index];
-  MS_EXCEPTION_IF_NULL(first_abs);
-  if (!first_abs->isa<abstract::AbstractSequence>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', the first input should be tuple or list but got: " << first_abs->ToString();
-  }
-  auto seq_abs = first_abs->cast<abstract::AbstractSequencePtr>();
-  MS_EXCEPTION_IF_NULL(seq_abs);
-  if (seq_abs->dynamic_len()) {
-    // If the length of input sequence is dynamic length, the length of sliced sequence should also be dynamic length.
-    return seq_abs->Clone();
-  }
-  auto start_abs = input_args[start_index];
-  MS_EXCEPTION_IF_NULL(start_abs);
-  auto end_abs = input_args[end_index];
-  MS_EXCEPTION_IF_NULL(end_abs);
-  auto step_abs = input_args[step_index];
-  MS_EXCEPTION_IF_NULL(step_abs);
-  if (start_abs->BuildValue() != kValueAny && end_abs->BuildValue() != kValueAny &&
-      step_abs->BuildValue() != kValueAny) {
-    return seq_abs->Clone();
-  }
-  auto ret = seq_abs->Clone()->cast<abstract::AbstractSequencePtr>();
-  ret->CheckAndConvertToDynamicLenSequence();
-  return ret;
+  return input_args[x_index]->Clone();
 }
 }  // namespace
 
@@ -78,11 +51,21 @@ class SequenceSliceGradInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceGradInferInner(primitive, input_args)->BuildShape();
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    constexpr size_t input_num = 5;
+    constexpr size_t x_index = 1;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    return input_args[x_index]->GetShape()->Clone();
   }
 
-  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceGradInferInner(prim, input_args)->BuildType();
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    constexpr size_t input_num = 5;
+    constexpr size_t x_index = 1;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    return input_args[x_index]->GetType()->Clone();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

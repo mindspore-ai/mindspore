@@ -234,7 +234,7 @@ Status ShardSegment::ReadAtPageByName(std::string category_name, int64_t page_no
 }
 
 Status ShardSegment::ReadAllAtPageById(int64_t category_id, int64_t page_no, int64_t n_rows_of_page,
-                                       std::shared_ptr<PAGES> *pages_ptr) {
+                                       std::shared_ptr<PAGES_WITH_BLOBS> *pages_ptr) {
   RETURN_UNEXPECTED_IF_NULL_MR(pages_ptr);
   auto category_info_ptr = std::make_shared<CATEGORY_INFO>();
   RETURN_IF_NOT_OK_MR(WrapCategoryInfo(&category_info_ptr));
@@ -275,11 +275,30 @@ Status ShardSegment::ReadAllAtPageById(int64_t category_id, int64_t page_no, int
     }
     CHECK_FAIL_RETURN_UNEXPECTED_MR(number_of_rows <= static_cast<int>(labels.size()),
                                     "Invalid data, number_of_rows: " + std::to_string(number_of_rows) + " is invalid.");
+    std::map<std::string, std::vector<uint8_t>> key_with_blob_fields;
     for (int i = 0; i < number_of_rows; ++i, ++idx) {
       if (idx >= i_start && idx < i_end) {
         auto images_ptr = std::make_shared<std::vector<uint8_t>>();
         RETURN_IF_NOT_OK_MR(PackImages(group_id, shard_id, offsets[i], &images_ptr));
-        (*pages_ptr)->emplace_back(std::move(*images_ptr), std::move(labels[i]));
+
+        // extract every blob field from blob data
+        auto shard_column = GetShardColumn();
+        auto schema = shard_header_->GetSchemas();  // current, we only support 1 schema yet
+        auto blob_fields = schema[0]->GetBlobFields();
+        for (auto blob_field : blob_fields) {
+          const unsigned char *data = nullptr;
+          std::unique_ptr<unsigned char[]> data_ptr;
+          uint64_t n_bytes = 0;
+          mindrecord::ColumnDataType column_data_type = mindrecord::ColumnNoDataType;
+          uint64_t column_data_type_size = 1;
+          std::vector<int64_t> column_shape;
+          RETURN_IF_NOT_OK_MR(shard_column->GetColumnValueByName(blob_field, *images_ptr, labels[i], &data, &data_ptr,
+                                                                 &n_bytes, &column_data_type, &column_data_type_size,
+                                                                 &column_shape));
+          key_with_blob_fields[blob_field] = std::vector<uint8_t>(data, data + n_bytes);
+        }
+
+        (*pages_ptr)->emplace_back(std::move(key_with_blob_fields), std::move(labels[i]));
       }
     }
   }
@@ -287,7 +306,7 @@ Status ShardSegment::ReadAllAtPageById(int64_t category_id, int64_t page_no, int
 }
 
 Status ShardSegment::ReadAllAtPageByName(std::string category_name, int64_t page_no, int64_t n_rows_of_page,
-                                         std::shared_ptr<PAGES> *pages_ptr) {
+                                         std::shared_ptr<PAGES_WITH_BLOBS> *pages_ptr) {
   RETURN_UNEXPECTED_IF_NULL_MR(pages_ptr);
   auto category_info_ptr = std::make_shared<CATEGORY_INFO>();
   RETURN_IF_NOT_OK_MR(WrapCategoryInfo(&category_info_ptr));

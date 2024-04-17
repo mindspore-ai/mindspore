@@ -40,7 +40,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr GpuConvertToDynamicShapeInferShape(const PrimitivePtr &,
                                                       const std::vector<AbstractBasePtr> &input_args) {
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(input_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
@@ -52,7 +52,7 @@ abstract::ShapePtr GpuConvertToDynamicShapeInferShape(const PrimitivePtr &,
 }
 
 TypePtr GpuConvertToDynamicShapeInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   return x_type;
 }
 }  // namespace
@@ -73,7 +73,12 @@ class MIND_API AGGpuConvertToDynamicShapeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return GpuConvertToDynamicShapeInferShape(primitive, input_args);
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    const auto &input_shape = input_args[0]->GetShape()->GetShapeVector();
+    if (IsDynamic(input_shape)) {
+      MS_LOG(EXCEPTION) << "Got dynamic input shape: " << input_shape;
+    }
+    return std::make_shared<abstract::TensorShape>(input_shape);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {

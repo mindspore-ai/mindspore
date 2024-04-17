@@ -1,0 +1,30 @@
+apply_came_part1:
+    description: |
+        Computes Part 1 of the CAME Optimizer.
+
+        Args:
+            - **grad** (Tensor) - The shape = 2D :math:`(..., n, m)`.
+              A Tensor of types: float16, float32, bfloat16.
+            - **eps** (float) - data type must be float.
+
+        Returns:
+            - **sum_grad_r** (Tensor) - A Tensor of shape :math:`(..., n)`
+            - **sum_grad_c** (Tensor) - A Tensor of shape :math:`(..., m)`
+            - **sum_grad_rc** (Tensor) - A Tensor of of shape:math:`(..., m)`
+
+        Raises:
+            TypeError: If `grad` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` 
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore.ops.operations import _inner_ops as P
+            >>> grad = Tensor(np.ones([1024, 64]), dtype=ms.float32)
+            >>> apply_came_part1 = P.ApplyCamePart1()
+            >>> output = apply_came_part1(grad, 1.1)
+            >>> print(output[0].asnumpy())
+            (1024,)

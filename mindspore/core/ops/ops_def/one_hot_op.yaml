@@ -1,0 +1,21 @@
+#operator one_hot
+one_hot:
+    args:
+        indices:
+            dtype: tensor
+        depth:
+            dtype: int
+            type_cast: tensor
+        on_value:
+            dtype: tensor
+        off_value:
+            dtype: tensor
+        axis:
+            dtype: int
+            default: -1
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True

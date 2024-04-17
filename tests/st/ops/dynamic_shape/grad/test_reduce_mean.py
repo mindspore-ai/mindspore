@@ -32,7 +32,7 @@ class NetReduceMean(nn.Cell):
         return self.reducemean(x, self.axis)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -48,7 +48,7 @@ def test_dynamic_reducemean_shape():
     test_dynamic.test_dynamic_grad_net(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

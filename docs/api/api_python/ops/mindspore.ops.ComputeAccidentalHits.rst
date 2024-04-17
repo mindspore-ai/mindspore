@@ -11,14 +11,14 @@
         - **num_true** (int) - 每个训练样本的目标类数。默认值： ``1`` 。
 
     输入：
-        - **true_classes** (Tensor) - 目标类。数据类型为int32或int64，shape为 :math:`(batch\_size, num\_true)` 。
-        - **sampled_candidates** (Tensor) - 算子的候选采样结果，代表训练样本的类别。其数据类型为int32或int64，shape为 :math:`(num\_sampled, )` 。
+        - **true_classes** (Tensor) - 目标类。数据类型为int64，shape为 :math:`(batch\_size, num\_true)` 。
+        - **sampled_candidates** (Tensor) - 算子的候选采样结果，代表训练样本的类别。其数据类型为int64，shape为 :math:`(num\_sampled, )` 。
 
     输出：
         3个Tensor组成的元组。
 
-        - **indices** (Tensor) - shape为 :math:`(num\_accidental\_hits, )` 的Tensor，具有与 `true_classes` 相同的类型。
-        - **ids** (Tensor) - shape为 :math:`(num\_accidental\_hits, )` 的Tensor，具有与 `true_classes` 相同的类型。
+        - **indices** (Tensor) - shape为 :math:`(num\_accidental\_hits, )` 的Tensor，数据类型为int32。
+        - **ids** (Tensor) - shape为 :math:`(num\_accidental\_hits, )` 的Tensor，数据类型为int64。
         - **weights** (Tensor) - shape为 :math:`(num\_accidental\_hits, )` 的Tensor，类型为float32。
 
     异常：

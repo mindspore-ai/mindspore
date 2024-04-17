@@ -161,6 +161,9 @@ class MetaServerNode : public NodeBase {
                               const std::shared_ptr<std::function<std::string(const std::string &)>> &handler);
 
  private:
+  // Set metadata for this cluster.
+  void SetMetaData();
+
   // Create and init the tcp server.
   bool InitTCPServer();
 
@@ -198,6 +201,10 @@ class MetaServerNode : public NodeBase {
 
   // Allocate a new valid rank id for new registered compute graph node.
   uint32_t AllocateRankId(const std::string &role);
+
+  // Check newly registered node's rank id is valid. If not, msn should reject this register request.
+  bool CheckRankIdValidation(const std::string &node_id, const std::string &role, uint32_t rank_id,
+                             const std::string &host_ip, std::string *reject_reason);
 
   // Reassign node ranks. This method should be called only after cluster is successfully built. It sorts all nodes with
   // their node ip and node id, then assign their rank ids.
@@ -250,6 +257,8 @@ class MetaServerNode : public NodeBase {
   // The next valid rank id for compute graph nodes.
   // Note that each role(group) has it's own rank id.
   std::map<std::string, std::atomic<uint32_t>> next_rank_ids_;
+  // The expected node number for each role.
+  std::map<std::string, uint32_t> role_expect_num_;
   mutable std::shared_mutex rank_mutex_;
 };
 }  // namespace topology

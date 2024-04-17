@@ -26,7 +26,6 @@ namespace mindspore {
 namespace kernel {
 void AngleGpuKernelMod::ResetResource() noexcept {
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -38,35 +37,31 @@ std::vector<KernelAttr> AngleGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool AngleGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool AngleGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "'support complex64 or complex128, but got " << kernel_attr;
     return false;
   }
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
-int AngleGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int AngleGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   return ret;
 }
 
 template <typename T, typename S>
-bool AngleGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AngleGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   S *output_ptr = GetDeviceAddress<S>(outputs, kIndex0);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-  output_size = outputs[0]->size / sizeof(S);
+  output_size = outputs[0]->size() / sizeof(S);
   auto status = CalAngle(output_size, input_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

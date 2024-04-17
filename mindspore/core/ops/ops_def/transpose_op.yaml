@@ -1,0 +1,15 @@
+#operator transpose
+transpose:
+  args:
+    input:
+      dtype: tensor
+    input_perm:
+      dtype: tuple[int]
+  returns:
+    output:
+      dtype: tensor
+  view: True
+  dispatch:
+    enable: True
+
+

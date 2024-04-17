@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include "ir/primal_attr.h"
 #include "pipeline/jit/ps/pipeline_split.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
@@ -28,6 +29,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/pipeline_transformer/fold_pipeline_transformer.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/parameter_manager.h"
@@ -35,28 +37,14 @@
 #include "include/backend/distributed/ps/util.h"
 #include "include/backend/distributed/ps/ps_context.h"
 #endif
+#include "frontend/parallel/graph_util/pipeline_split_utils.h"
 
 namespace mindspore {
 namespace pipeline {
-std::string GetWorldGroup() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string world_group;
-  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (backend == kAscendDevice) {
-    world_group = parallel::HCCL_WORLD_GROUP;
-  } else if (backend == kGPUDevice) {
-    world_group = parallel::NCCL_WORLD_GROUP;
-  } else {
-    MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
-  }
-  return world_group;
-}
-
 static int64_t GetRank() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto world_group = GetWorldGroup();
+  auto world_group = mindspore::parallel::GetWorldGroup();
   int64_t global_rank = parallel::ParallelContext::GetInstance()->global_rank();
   uint32_t rank_id = 0;
   if (!parallel::ParallelContext::GetInstance()->global_rank_is_set()) {
@@ -109,12 +97,8 @@ static CNodePtr CreateTupleGetItem(const AnfNodePtr &node, size_t index, const F
 }
 
 static CNodePtr CreateVirtualDataset(const FuncGraphPtr &func_graph) {
-  mindspore::parallel::OperatorAttrs attrs;
-  ValuePtr pyop_instance = mindspore::parallel::CreateOpInstance(attrs, mindspore::parallel::VIRTUAL_DATA_SET,
-                                                                 mindspore::parallel::VIRTUAL_DATA_SET);
-  auto value_node = NewValueNode(pyop_instance);
   std::vector<AbstractBasePtr> abstract_list;
-  std::vector<AnfNodePtr> virtual_dataset_node_inputs = {value_node};
+  std::vector<AnfNodePtr> virtual_dataset_node_inputs;
   for (size_t index = 0; index < func_graph->get_inputs().size(); index++) {
     if (!HasAbstractMonad(func_graph->get_inputs()[index])) {
       auto graph_input_index = func_graph->get_inputs()[index];
@@ -124,7 +108,10 @@ static CNodePtr CreateVirtualDataset(const FuncGraphPtr &func_graph) {
       virtual_dataset_node_inputs.push_back(func_graph->get_inputs()[index]);
     }
   }
-  CNodePtr virtual_dataset_node = func_graph->NewCNode(virtual_dataset_node_inputs);
+
+  auto virtual_dataset_node = mindspore::parallel::CreateCNodeByInputsAndAttr(
+    func_graph, mindspore::parallel::VIRTUAL_DATA_SET, mindspore::parallel::VIRTUAL_DATA_SET,
+    virtual_dataset_node_inputs, {});
   MS_EXCEPTION_IF_NULL(virtual_dataset_node);
   virtual_dataset_node->set_in_forward_flag(true);
   virtual_dataset_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
@@ -197,7 +184,7 @@ void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<AnfNodePtr
       auto node_users = node_user_map[graph_inputs[index]];
       for (const auto &node_user : node_users) {
         auto cnode = node_user.first->cast<CNodePtr>();
-        for (size_t input_index = 1; input_index < cnode->inputs().size(); input_index++) {
+        for (size_t input_index = 1; input_index < cnode->size(); input_index++) {
           if (!IsValueNode<Primitive>(cnode->inputs()[0]) && !IsValueNode<FuncGraph>(cnode->inputs()[0]) &&
               !IsPrimitiveCNode(cnode->input(0), prim::kPrimVmap)) {
             continue;
@@ -250,16 +237,12 @@ bool PipelineSplit(const ResourcePtr &res) {
 
   auto manager = res->manager();
   auto root = res->func_graph();
-  AnfNodePtr ret = root->get_return();
-  MS_EXCEPTION_IF_NULL(ret);
-  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
 
-  SetPynativeShardFlagIfHasShardNode(root, all_nodes);
-  if (!HasVirtualDataset(all_nodes)) {
-    InsertVirtualDataset(root, all_nodes);
-  }
+  // tag dynamic shape graph
+  parallel::TagDynamicShapeFuncGraph(root);
+
   auto global_rank = GetRank();
-  auto world_group = GetWorldGroup();
+  auto world_group = mindspore::parallel::GetWorldGroup();
   uint32_t world_rank_size = 0;
   int64_t device_num = 0;
   if (!parallel::ParallelContext::GetInstance()->device_num_is_set()) {
@@ -328,6 +311,37 @@ bool PipelineSplit(const ResourcePtr &res) {
   // step5: Elim Graph stages and no used parameter
   transformer->ModifyParameterList();
   transformer->ElimGraphStage();
+  return true;
+}
+
+// Only auto_parallel and semi_auto_parallel support ParallelVirtualDataset
+bool ParallelVirtualDataset(const ResourcePtr &res) {
+#if defined(__linux__) && defined(WITH_BACKEND)
+  if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
+    return true;
+  }
+#endif
+  MS_EXCEPTION_IF_NULL(res);
+  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode != parallel::kSemiAutoParallel && parallel_mode != parallel::kAutoParallel) {
+    MS_LOG(INFO) << "Only auto_parallel and semi_auto_parallel support it.";
+    return true;
+  }
+
+  auto root = res->func_graph();
+  AnfNodePtr ret = root->get_return();
+
+  // tag dynamic shape graph
+  parallel::TagDynamicShapeFuncGraph(root);
+
+  MS_EXCEPTION_IF_NULL(ret);
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+
+  SetPynativeShardFlagIfHasShardNode(root, all_nodes);
+  if (!HasVirtualDataset(all_nodes)) {
+    InsertVirtualDataset(root, all_nodes);
+  }
+
   return true;
 }
 }  // namespace pipeline

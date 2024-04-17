@@ -60,7 +60,8 @@ const AnfNodePtr UnsortedSegmentSumReplace::Process(const FuncGraphPtr &func_gra
   MS_EXCEPTION_IF_NULL(value_node);
   // create UnsortedSegmentSum
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kUnsortedSegmentSumOpName))};
-  (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+  auto cnode_inputs = cnode->inputs();
+  (void)new_inputs.insert(new_inputs.cend(), cnode_inputs.cbegin() + 1, cnode_inputs.cend());
   new_inputs.push_back(value_node);
   CNodePtr new_cnode = NewCNode(new_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_cnode);

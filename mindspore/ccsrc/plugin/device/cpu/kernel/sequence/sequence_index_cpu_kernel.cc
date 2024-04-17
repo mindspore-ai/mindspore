@@ -27,10 +27,8 @@ constexpr size_t kInputNum = 4;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
-bool SequenceIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SequenceIndexCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -41,10 +39,9 @@ bool SequenceIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int SequenceIndexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SequenceIndexCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -52,8 +49,9 @@ int SequenceIndexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool SequenceIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs) {
+bool SequenceIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   constexpr size_t seq_index = 0;
@@ -65,12 +63,7 @@ bool SequenceIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   int64_t *start_addr = GetDeviceAddress<int64_t>(inputs, start_index);
   int64_t *end_addr = GetDeviceAddress<int64_t>(inputs, end_index);
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
-  MS_EXCEPTION_IF_NULL(seq_addr);
-  MS_EXCEPTION_IF_NULL(target_addr);
-  MS_EXCEPTION_IF_NULL(start_addr);
-  MS_EXCEPTION_IF_NULL(end_addr);
-  MS_EXCEPTION_IF_NULL(output_addr);
-  auto seq_size = inputs[0]->size;
+  auto seq_size = inputs[0]->size();
 
   int64_t start_value = start_addr[0];
   int64_t end_value = end_addr[0];

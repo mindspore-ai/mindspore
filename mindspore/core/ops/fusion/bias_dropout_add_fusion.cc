@@ -59,7 +59,5 @@ int64_t BiasDropoutAdd::get_seed1() const {
   auto value_ptr = this->GetAttr(kBiasDropoutAddSeed1);
   return GetValue<int64_t>(value_ptr);
 }
-
-REGISTER_PRIMITIVE_C(kNameBiasDropoutAdd, BiasDropoutAdd);
 }  // namespace ops
 }  // namespace mindspore

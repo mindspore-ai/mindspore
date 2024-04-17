@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
-#include "ops/split.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -31,7 +31,7 @@ PrimitiveCPtr PytorchSplitParser::Parse(const torch::jit::Node *torch_node, std:
   int64_t split_num = 0;
   if (torch_node->inputs().size() > SECOND_INPUT) {
     auto size_splits = PytorchNodeParser::GetValueFromConstNode<std::vector<int64_t>>(torch_node->input(SECOND_INPUT));
-    prim->set_size_splits(size_splits);
+    prim->AddAttr("size_splits", api::MakeValue(size_splits));
     split_num = size_splits.size();
   }
   if (torch_node->inputs().size() > THIRD_INPUT) {

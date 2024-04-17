@@ -1,0 +1,5 @@
+__BASE__: [
+  'data.yml',
+  'faster_rcnn_resnet50_fpn.yml',
+  '../optimizer_1x.yml'
+]

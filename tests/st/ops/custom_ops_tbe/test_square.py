@@ -38,8 +38,6 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_net():
     x = np.array([1.0, 4.0, 9.0]).astype(np.float32)

@@ -45,7 +45,7 @@ class MemberInSpec(nn.Cell):
         return in_v
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -56,13 +56,13 @@ def test_ms_syntax_operator_int_in_int():
     Description: test in operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="argument of type 'int' is not iterable."):
+    with pytest.raises(TypeError, match="argument of type 'int' is not iterable"):
         net = MemberIn()
         ret = net(1, 2)
         print(ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -78,7 +78,7 @@ def test_ms_syntax_operator_int_in_list_int():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -110,7 +110,7 @@ def test_ms_syntax_operator_int_in_list_combine():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -142,7 +142,7 @@ def test_ms_syntax_operator_int_in_tuple_str():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -176,7 +176,7 @@ def test_ms_syntax_operator_str_in_dict_str():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -193,7 +193,7 @@ def test_ms_syntax_operator_str_in_dict_combine():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -228,7 +228,7 @@ def test_ms_syntax_operator_tensor_in_list_tensor():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -246,7 +246,7 @@ def test_ms_syntax_operator_tensor_in_list_combine():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -264,7 +264,7 @@ def test_ms_syntax_operator_tensor_in_tuple_tensor():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

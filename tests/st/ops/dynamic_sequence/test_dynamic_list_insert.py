@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 context_prepare()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -119,6 +119,6 @@ def test_list_insert_grad():
     seq = mutable((1, 2, 3, 4, 5, 6), True)
     idx = 3
     value = 8
-    dout = mutable((1, 2, 3, 8, 4, 5, 6), True)
+    dout = (1, 2, 3, 8, 4, 5, 6)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out1 = ", grad_func(seq, idx, value, dout))

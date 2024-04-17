@@ -13,14 +13,44 @@
 # limitations under the License.
 # ============================================================================
 """Ast utils for create or update ast node."""
-from typing import Optional, List
+from typing import Optional, List, Union
+import sys
 import ast
-
 from ..api.scoped_value import ScopedValue, ValueType
+
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 
 class AstModifier(ast.NodeTransformer):
     """Ast utils for create or update ast node."""
+    @staticmethod
+    def insert_ast_to_ast(ast_container: Union[ast.AST, list], ast_node: ast.AST,
+                          index_ast: Optional[ast.AST] = None, insert_before=True):
+        """
+        Insert ast node into an ast container.
+        Only support ast.FunctionDef and ast.body with type of list yet.
+        """
+        if isinstance(ast_container, list):
+            return AstModifier.insert_ast_to_bodies(ast_container, ast_node, index_ast, insert_before)
+        if isinstance(ast_container, ast.FunctionDef):
+            return AstModifier.insert_ast_to_function(ast_container, ast_node, index_ast, insert_before)
+        raise NotImplementedError(f"Insert ast node into {type(ast_container)} is not support yet.")
+
+    @staticmethod
+    def earse_ast_of_control_flow(ast_root_body: list, ast_branch: ast.AST, is_orelse: bool):
+        """
+        Clear ast in control flow by replace ast nodes to pass.
+        """
+        if is_orelse:
+            ast_branch.orelse = []
+        else:
+            ast_branch.body = [ast.Pass()]
+        if len(ast_branch.body) == 1 and isinstance(ast_branch.body[0], ast.Pass) and not ast_branch.orelse:
+            AstModifier.erase_ast_from_bodies(ast_root_body, ast_branch)
+        return True
 
     @staticmethod
     def erase_ast_from_function(ast_func: ast.FunctionDef, to_erase: ast.AST) -> bool:
@@ -142,22 +172,22 @@ class AstModifier(ast.NodeTransformer):
             RuntimeError: If 'index_ast' is not contained in 'ast_func'.
         """
         assign = AstModifier.create_call_assign(targets, expr, args, kwargs)
-        return AstModifier.insert_assign_ast_to_function(ast_func, assign, index_ast, insert_before)
+        return AstModifier.insert_ast_to_function(ast_func, assign, index_ast, insert_before)
 
     @staticmethod
-    def insert_assign_ast_to_function(ast_func: ast.FunctionDef, ast_assign: ast.Assign,
-                                      index_ast: Optional[ast.AST] = None, insert_before=True) -> ast.AST:
+    def insert_ast_to_function(ast_func: ast.FunctionDef, ast_node: ast.AST,
+                               index_ast: Optional[ast.AST] = None, insert_before=True) -> ast.AST:
         """
-        Insert an ast.Assign into an ast.FunctionDef.
+        Insert an ast into an ast.FunctionDef.
 
         Args:
-            ast_func (ast.FunctionDef): Where new ast.Assign to be inserted into.
-            ast_assign (ast.Assign): An instance of ast.Assign to be inserted in.
-            index_ast ([ast.AST, optional]): An ast_node indicates a position in 'ast_func' where new ast.Assign node to
-                be inserted into. Default is None which means append new ast.Assign to 'ast_func'.
-            insert_before (bool): A bool indicates at before or at after of 'index_ast' where new ast.Assign node to be
+            ast_func (ast.FunctionDef): Where new ast to be inserted into.
+            ast_node (ast.Assign): An instance of ast.AST to be inserted in.
+            index_ast ([ast.AST, optional]): An ast_node indicates a position in 'ast_func' where new ast node to
+                be inserted into. Default is None which means append new ast to 'ast_func'.
+            insert_before (bool): A bool indicates at before or at after of 'index_ast' where new ast node to be
                 inserted into. Only valid when 'index_ast' is not None. Default is True which means inserting new
-                ast.Assign before 'index_ast'.
+                ast before 'index_ast'.
 
         Returns:
             An instance of ast.Assign which has been inserted into 'ast_func'.
@@ -170,33 +200,34 @@ class AstModifier(ast.NodeTransformer):
         if index_ast and arguments.args:
             for arg in arguments.args:
                 if id(arg) == id(index_ast):
-                    ast_func.body.insert(0, ast_assign)
+                    ast_func.body.insert(0, ast_node)
                     ast.fix_missing_locations(ast_func)
-                    return ast_assign
+                    return ast_node
         # Insert ast at position specified by index_ast in function body
-        ast_assign = AstModifier.insert_assign_ast_to_bodies(ast_func.body, ast_assign, index_ast, insert_before)
-        ast.fix_missing_locations(ast_assign)
-        return ast_assign
+        ast_node = AstModifier.insert_ast_to_bodies(ast_func.body, ast_node, index_ast, insert_before)
+        ast.fix_missing_locations(ast_node)
+        return ast_node
 
     @staticmethod
-    def insert_assign_ast_to_bodies(ast_bodies: List[ast.AST], ast_assign: ast.Assign,
-                                    index_ast: Optional[ast.AST] = None, insert_before=True) -> ast.AST:
+    def insert_ast_to_bodies(ast_bodies: List[ast.AST], ast_node: ast.AST,
+                             index_ast: Optional[ast.AST] = None, insert_before=True) -> ast.AST:
         """Insert ast at position specified by index_ast of ast_bodies"""
         # Append ast_assign to ast_bodies when index_ast is None
         if index_ast is None:
-            ast_bodies.append(ast_assign)
-            return ast_assign
+            ast_bodies.append(ast_node)
+            return ast_node
         # Append ast_assign to ast_bodies
         for index, body in enumerate(ast_bodies):
             if id(body) == id(index_ast):
                 if not insert_before:
                     index += 1
-                ast_bodies.insert(index, ast_assign)
+                ast_bodies.insert(index, ast_node)
                 ast.fix_missing_locations(body)
                 break
         else:
-            raise ValueError("insert position is not contained in ast_bodies")
-        return ast_assign
+            raise ValueError(f"insert position ({'before' if insert_before else 'after'} "
+                             f"{astunparse.unparse(index_ast).strip()}) is not contained in ast_bodies")
+        return ast_node
 
     @staticmethod
     def append_arg_to_function(ast_func: ast.FunctionDef, ast_arg: ast.arg) -> ast.AST:
@@ -286,6 +317,9 @@ class AstModifier(ast.NodeTransformer):
         elif len(targets) > 1:
             ast_targets = ast.Tuple(elts=targets_list, ctx=ast.Store())
             result = ast.Assign(targets=[ast_targets], value=call)
+        else:
+            raise ValueError(f"For '{astunparse.unparse(call).strip()}', targets should not be empty, but got "
+                             f"{targets}, len(targets) is {len(targets)}")
         ast.fix_missing_locations(result)
         return result
 
@@ -460,78 +494,112 @@ class AstModifier(ast.NodeTransformer):
         return result
 
     @staticmethod
-    def update_arg_value(src_argument: ScopedValue, dst_ast: ast.AST):
+    def get_ast_by_value(scoped_value: ScopedValue, orig_ast_node: ast.AST) -> ast.AST:
         """
-        Update 'arg_value' by 'input_argument'
+        Get ast_node by scoped_value.
 
         Args:
-            src_argument (ScopedValue): An instance of ScopedValue represents new argument.
-            dst_ast (ast.AST): Ast node to be updated by ScopedValue.
+            scoped_value (ScopedValue): A value with type of ScopedValue .
+            orig_ast_node (ast.AST): Origin ast node to be used by ScopedValue.
 
         Raises:
-            TypeError: Input src_argument is not a ScopedValue
-            RuntimeError: If 'dst_ast' is an instance of ast.Constant but type of 'src_argument' is not
-                ValueType.ConstantValue.
-            RuntimeError: If 'dst_ast' is an instance of ast.Name or ast.Attribute but type of 'src_argument' is not
-                ValueType.NamingValue.
-            RuntimeError: When 'dst_ast' is an instance of ast.Name, scope of 'src_argument' is not empty.
-            RuntimeError: When 'dst_ast' is an instance of ast.Attribute, value of 'dst_ast' is not an instance of
-                ast.Name.
-            RuntimeError: If 'dst_ast' is an instance of ast.Tuple but type of 'src_argument' is not
-                ValueType.TupleValue.
-            RuntimeError: If 'dst_ast' is an instance of ast.Constant, ast.Name, ast.Attribute or ast.Tuple.
-            RuntimeError: When 'dst_ast' is an instance of ast.Tuple, length of elts of 'dst_ast' is not equal to length
-                of value of 'src_argument'.
+            TypeError: Input value is not a ScopedValue
         """
-        if not isinstance(src_argument, ScopedValue):
-            raise TypeError("src_argument should be ScopedValue, got: ", type(src_argument))
-        if isinstance(dst_ast, (ast.Constant, ast.Num, ast.Str)):
-            AstModifier.update_arg_value_constant(src_argument, dst_ast)
-            return
-        if isinstance(dst_ast, ast.Name):
-            if src_argument.type not in [ValueType.NamingValue, ValueType.ConstantValue]\
-                or not isinstance(src_argument.value, str):
-                raise RuntimeError("src_argument.type should be ValueType.NamingValue or ValueType.ConstantValue, "
-                                   "but got:", type(src_argument.value).__name__)
-            if src_argument.scope:
-                raise RuntimeError("src_argument.scope should be empty")
-            dst_ast.id = src_argument.value
-            return
-        if isinstance(dst_ast, ast.Attribute):
-            if src_argument.type != ValueType.NamingValue:
-                raise RuntimeError("src_argument.type should equal to ValueType.NamingValue")
-            attr_value = dst_ast.value
-            if not isinstance(attr_value, ast.Name):
-                raise RuntimeError("Only support ast.Name as value of attribute ", type(attr_value))
-            attr_value.id = src_argument.scope
-            dst_ast.attr = src_argument.value
-            return
-        if isinstance(dst_ast, ast.Tuple):
-            if src_argument.type != ValueType.TupleValue:
-                raise RuntimeError("src_argument.type should equal to ValueType.TupleValue")
-            if len(src_argument.value) != len(dst_ast.elts):
-                raise RuntimeError("src_argument.value and elts in ast should have same length")
-            for elt_index, elt in enumerate(dst_ast.elts):
-                AstModifier.update_arg_value(src_argument.value[elt_index], elt)
-            return
-        raise RuntimeError("keyword value type is not supported", type(dst_ast))
+        if not isinstance(scoped_value, ScopedValue):
+            raise TypeError("scoped_value should be ScopedValue, got: ", type(scoped_value))
+        # ast_node will not be changed when scoped_value is the unsupported type
+        if scoped_value.type == ValueType.UnsupportedValue:
+            return orig_ast_node if orig_ast_node else ast.Name(id=scoped_value.value, ctx=ast.Load())
+        if scoped_value.type == ValueType.ConstantValue:
+            new_ast_node = AstModifier.get_ast_by_constant(scoped_value, orig_ast_node)
+        elif scoped_value.type == ValueType.NamingValue:
+            new_ast_node = AstModifier.get_ast_by_name(scoped_value, orig_ast_node)
+        elif scoped_value.type == ValueType.ListValue:
+            ctx = orig_ast_node.ctx if hasattr(orig_ast_node, "ctx") else ast.Load()
+            new_ast_node = orig_ast_node if isinstance(orig_ast_node, ast.List) else ast.List(elts=[], ctx=ctx)
+            elts = []
+            for idx, item in enumerate(scoped_value.value):
+                orig_elt_ast = new_ast_node.elts[idx] if len(new_ast_node.elts) > idx else None
+                elts.append(AstModifier.get_ast_by_value(item, orig_elt_ast))
+            new_ast_node.elts = elts
+        elif scoped_value.type in (ValueType.TupleValue, ValueType.ListValue):
+            new_ast_node = AstModifier.get_ast_by_list(scoped_value, orig_ast_node)
+        elif scoped_value.type == ValueType.DictValue:
+            new_ast_node = AstModifier.get_ast_by_dict(scoped_value, orig_ast_node)
+        else:
+            raise TypeError(f"Type of scoped_value should be one of (ConstantValue, NamingValue, ListValue, "
+                            f"DictValue, TupleValue), but got {scoped_value.type}")
+        ast.fix_missing_locations(new_ast_node)
+        return new_ast_node
 
     @staticmethod
-    def update_arg_value_constant(src_argument: ScopedValue, dst_ast: ast.AST):
-        """Update 'arg_value' of type constant by 'input_argument'"""
-        if src_argument.type != ValueType.ConstantValue:
-            raise RuntimeError("src_argument should be a ConstantValue, got:", str(src_argument.type))
-        if isinstance(dst_ast, ast.Constant):
-            dst_ast.value = src_argument.value
-            return
-        if isinstance(dst_ast, ast.Num):
-            if not isinstance(src_argument.value, (int, float)):
-                raise RuntimeError("Type of src_argument should be int or float, but got:",
-                                   type(src_argument.value).__name__)
-            dst_ast.n = src_argument.value
-            return
-        if isinstance(dst_ast, ast.Str):
-            if not isinstance(src_argument.value, str):
-                raise RuntimeError("Type of src_argument should be str, but got:", type(src_argument.value).__name__)
-            dst_ast.s = src_argument.value
-            return
+    def get_ast_by_constant(scoped_value: ScopedValue, orig_ast_node: ast.AST):
+        """Get ast_node by constant value."""
+        constant_value = scoped_value.value
+        if isinstance(orig_ast_node, ast.Constant):
+            orig_ast_node.value = constant_value
+            return orig_ast_node
+        if isinstance(constant_value, (int, float)) and isinstance(orig_ast_node, ast.Num):
+            orig_ast_node.n = constant_value
+            return orig_ast_node
+        if isinstance(constant_value, str) and isinstance(orig_ast_node, ast.Str):
+            orig_ast_node.s = constant_value
+            return orig_ast_node
+        if isinstance(constant_value, bytes) and isinstance(orig_ast_node, ast.Bytes):
+            orig_ast_node.s = constant_value
+            return orig_ast_node
+        if isinstance(constant_value, (bool, type(None))) and isinstance(orig_ast_node, ast.NameConstant):
+            orig_ast_node.value = constant_value
+            return orig_ast_node
+        return ast.Constant(value=constant_value)
+
+    @staticmethod
+    def get_ast_by_name(scoped_value: ScopedValue, orig_ast_node: ast.AST):
+        """Get ast_node by name value."""
+        ctx = orig_ast_node.ctx if hasattr(orig_ast_node, "ctx") else ast.Load()
+        # scoped_value doesn't have scope
+        if not scoped_value.scope:
+            if isinstance(orig_ast_node, ast.Name):
+                orig_ast_node.id = scoped_value.value
+                return orig_ast_node
+            return ast.Name(id=scoped_value.value, ctx=ctx)
+        # scoped_value has scope
+        if isinstance(orig_ast_node, ast.Attribute):
+            if isinstance(orig_ast_node.value, ast.Name):
+                orig_ast_node.value.id = scoped_value.scope
+            else:
+                ctx_ = orig_ast_node.value.ctx if hasattr(orig_ast_node.value, "ctx") else ast.Load()
+                orig_ast_node.value = ast.Name(id=scoped_value.scope, ctx=ctx_)
+            orig_ast_node.attr = scoped_value.value
+            return orig_ast_node
+        return ast.Attribute(value=ast.Name(scoped_value.scope, ast.Load()), attr=scoped_value.value, ctx=ctx)
+
+    @staticmethod
+    def get_ast_by_list(scoped_value: ScopedValue, orig_ast_node: ast.AST):
+        """Get ast_node by scoped_value with type of TupleValue or ListValue."""
+        ctx = orig_ast_node.ctx if hasattr(orig_ast_node, "ctx") else ast.Load()
+        if scoped_value.type == ValueType.TupleValue:
+            new_ast_node = orig_ast_node if isinstance(orig_ast_node, ast.Tuple) else ast.Tuple(elts=[], ctx=ctx)
+        else:
+            new_ast_node = orig_ast_node if isinstance(orig_ast_node, ast.List) else ast.List(elts=[], ctx=ctx)
+        elts = []
+        for idx, item in enumerate(scoped_value.value):
+            orig_elt_ast = new_ast_node.elts[idx] if len(new_ast_node.elts) > idx else None
+            elts.append(AstModifier.get_ast_by_value(item, orig_elt_ast))
+        new_ast_node.elts = elts
+        return new_ast_node
+
+    @staticmethod
+    def get_ast_by_dict(scoped_value: ScopedValue, orig_ast_node: ast.AST):
+        """Get ast_node by scoped_value with type of DictValue."""
+        new_ast_node = orig_ast_node if isinstance(orig_ast_node, ast.Dict) else ast.Dict(keys=[], values=[])
+        keys = []
+        values = []
+        for idx, (key, value) in enumerate(scoped_value.value.items()):
+            orig_key_ast = new_ast_node.keys[idx] if len(new_ast_node.keys) > idx else None
+            orig_value_ast = new_ast_node.values[idx] if len(new_ast_node.values) > idx else None
+            keys.append(AstModifier.get_ast_by_value(key, orig_key_ast))
+            values.append(AstModifier.get_ast_by_value(value, orig_value_ast))
+        new_ast_node.keys = keys
+        new_ast_node.values = values
+        return new_ast_node

@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ import re
 import threading
 import time
 from collections import defaultdict
-import numpy as np
 
 from mindspore import log as logger
 from mindspore.nn import Cell
 from mindspore import context
 from mindspore._c_expression import security
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore import _checkparam as Validator
 from mindspore.common.api import _cell_graph_executor
@@ -37,7 +37,8 @@ from mindspore.train.summary._summary_adapter import get_event_file_name, packag
 from mindspore.train.summary._writer_pool import WriterPool
 from mindspore.train.summary.enums import PluginEnum
 from mindspore.ops.operations import debug_ops
-import mindspore.ops as ops
+from mindspore.ops.primitive import _run_op
+from mindspore.ops._primitive_cache import _get_cache_prim
 
 # for the moment, this lock is for caution's sake,
 # there are actually no any concurrences happening.
@@ -64,28 +65,13 @@ def _cache_summary_tensor_data(summary):
         return True
 
 
-def _get_summary_tensor_data(step_index=-1):
+def _get_summary_tensor_data():
     """Get summary tensor data."""
     global SUMMARY_TENSOR_CACHE
-    step_end_flag = "step_end_flag_" + str(step_index) + "[:Tensor]"
     with _summary_lock:
-        if step_index >= 0:
-            for _ in range(0, 10):
-                if _summary_step_end(step_end_flag):
-                    break
-                time.sleep(0.1)
-        if SUMMARY_TENSOR_CACHE.get(step_end_flag):
-            del SUMMARY_TENSOR_CACHE[step_end_flag]
         data = SUMMARY_TENSOR_CACHE
         SUMMARY_TENSOR_CACHE = {}
         return data
-
-
-def _summary_step_end(step_end_flag):
-    for summary_item in SUMMARY_TENSOR_CACHE:
-        if summary_item == step_end_flag:
-            return True
-    return False
 
 
 def _record_summary_tensor_data():
@@ -144,17 +130,16 @@ class SummaryRecord:
     SummaryRecord is used to record the summary data and lineage data.
 
     The API will create a summary file and lineage files lazily in a given directory and writes data to them.
-    It writes the data to files by executing the 'record' method. In addition to recording the data bubbled up from
+    It writes the data to files by executing the `record` method. In addition to recording the data bubbled up from
     the network by defining the summary operators, SummaryRecord also supports to record extra data which
     can be added by calling add_value.
 
     Note:
-        1. When using SummaryRecord, you need to run the code in `if __name__ == "__main__"` .
-        2. Make sure to close the SummaryRecord at the end, otherwise the process will not exit.
+        1. Make sure to close the SummaryRecord at the end, otherwise the process will not exit.
            Please see the Example section below to learn how to close properly in two ways.
-        3. Only one SummaryRecord instance is allowed at a time, otherwise it will cause data writing problems.
-        4. SummaryRecord only supports Linux systems.
-        5. The Summary is not supported when compile source with `-s on` option.
+        2. Only one SummaryRecord instance is allowed at a time, otherwise it will cause data writing problems.
+        3. SummaryRecord only supports Linux systems.
+        4. The Summary is not supported when compile source with `-s on` option.
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
@@ -226,7 +211,7 @@ class SummaryRecord:
         self._num_process = num_process
         self.raise_exception = raise_exception
         self._export_options = export_options
-        self.tensor_summary = ops.TensorSummary()
+        self._op_finished_init = False
 
         try:
             self._initialize()
@@ -296,25 +281,25 @@ class SummaryRecord:
                 LossLandscape]): The value to store.
 
                 - The data type of value should be 'GraphProto' (see `mindspore/ccsrc/anf_ir.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/anf_ir.proto>`_) object
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/anf_ir.proto>`_) object
                   when the plugin is 'graph'.
                 - The data type of value should be 'Tensor' object when the plugin is 'scalar', 'image', 'tensor'
                   or 'histogram'.
                 - The data type of value should be a 'TrainLineage' object when the plugin is 'train_lineage',
                   see `mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'EvaluationLineage' object when the plugin is 'eval_lineage',
                   see `mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'DatasetGraph' object when the plugin is 'dataset_graph',
                   see `mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'UserDefinedInfo' object when the plugin is 'custom_lineage_data',
                   see `mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'LossLandscape' object when the plugin is 'LANDSCAPE',
                   see `mindspore/ccsrc/summary.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/summary.proto>`_.
+                  <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/ccsrc/utils/summary.proto>`_.
 
         Raises:
             ValueError: `plugin` is not in the optional value.
@@ -360,6 +345,39 @@ class SummaryRecord:
                              f', expect value is one of [tensor, scalar, image, histogram, train_lineage, '
                              f'eval_lineage, dataset_graph, custom_lineage_data, graph, landscape]')
 
+    def _sync_summary_data(self, step):
+        """
+        In the GE process, the summary receiving process is asynchronous.
+        When the record function is called, some data may not be received and
+        needs to be synchronized.
+        """
+        if context.get_context('device_target') != "Ascend":
+            return
+        if self._op_finished_init is False:
+            _ = Cell()
+            self._op_finished_init = True
+
+        step_end_flag = Tensor([1], dtype=mstype.float32)
+        image_step_end_flag = Tensor([[[[1]]]], dtype=mstype.float32)
+        _ = Cell()
+        name = "_step_end_flag_" + str(step)
+        tags = ("[:Tensor]", "[:Scalar]", "[:Image]", "[:Histogram]")
+        _run_op(_get_cache_prim(debug_ops.TensorSummary)(), "TensorSummary", (name, step_end_flag))
+        _run_op(_get_cache_prim(debug_ops.ScalarSummary)(), "ScalarSummary", (name, step_end_flag))
+        _run_op(_get_cache_prim(debug_ops.HistogramSummary)(), "HistogramSummary", (name, step_end_flag))
+        _run_op(_get_cache_prim(debug_ops.ImageSummary)(), "ImageSummary", (name, image_step_end_flag))
+        global SUMMARY_TENSOR_CACHE
+        for tag in tags:
+            item_name = name + tag
+            while item_name not in SUMMARY_TENSOR_CACHE:
+                time.sleep(0.004)
+
+        with _summary_lock:
+            for tag in tags:
+                item_name = name + tag
+                SUMMARY_TENSOR_CACHE.pop(item_name, None)
+
+
     def record(self, step, train_network=None, plugin_filter=None):
         r"""
         Record the summary.
@@ -376,7 +394,7 @@ class SummaryRecord:
 
         Raises:
             TypeError: `step` is not int, or `train_network` is not `mindspore.nn.Cell
-                <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ .
+                <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ .
 
         Examples:
             >>> import mindspore as ms
@@ -408,8 +426,6 @@ class SummaryRecord:
                     return True
 
         if self._mode == 'train':
-            step_end_flag = Tensor((np.ones([1])).astype(np.int32))
-            self.tensor_summary("step_end_flag_" + str(step), step_end_flag)
             self._add_summary_tensor_data(step)
 
         if not plugin_filter:
@@ -467,8 +483,9 @@ class SummaryRecord:
 
     def _add_summary_tensor_data(self, step_index=-1):
         """Add summary tensor data."""
+        self._sync_summary_data(step_index)
         _record_summary_tensor_data()
-        summary_data = _get_summary_tensor_data(step_index)
+        summary_data = _get_summary_tensor_data()
         if not summary_data:
             logger.debug(f'No summary data bubbled from the network.')
         for name, tensor in summary_data.items():

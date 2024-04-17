@@ -24,11 +24,7 @@ template <typename R>
 using Complex = mindspore::utils::Complex<R>;
 
 constexpr size_t kNum2 = 2;
-bool QrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                          const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Qr>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr_);
-  kernel_name_ = kernel_ptr_->name();
+bool QrGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -42,14 +38,13 @@ bool QrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vecto
   }
   kernel_func_ = func_list_[index].second;
   unit_input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-  full_matrices_ = kernel_ptr_->get_full_matrices();
+  full_matrices_ = inputs[kIndex1]->GetValueWithCheck<bool>();
   cusolverH_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
   return true;
 }
 
-int QrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int QrGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -60,8 +55,8 @@ int QrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
     is_null_input_ = true;
   }
 
-  std::vector<size_t> x_shape = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                    inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> x_shape = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                    inputs.at(kIndex0)->GetDeviceShapeVector().end());
   total_size_ = std::accumulate(x_shape.begin(), x_shape.end(), size_t(1), std::multiplies<size_t>());
   input_dims_ = x_shape.size();
   if (input_dims_ < kDim2) {
@@ -98,7 +93,6 @@ int QrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
   transpose_q_shape_[input_dims_ - kDim2] = p_;
   transpose_q_shape_[input_dims_ - kDim1] = m_;
 
-  input_size_list_ = {total_size_ * unit_input_size_};
   output_size_list_ = {batch_size_ * m_ * p_ * unit_input_size_, batch_size_ * p_ * n_ * unit_input_size_};
   workspace_size_list_ = {
     batch_size_ * sizeof(int),
@@ -163,9 +157,9 @@ void QrGpuKernelMod::LaunchQr(T *d_input, T *d_A, T *d_tau, T *d_output_q, T *d_
 }
 
 template <typename T>
-bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &workspace,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &workspace,
+                                  const std::vector<kernel::KernelTensor *> &outputs) {
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
   CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(cusolverH_, stream), "CusolverDnSetStream failed");
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
@@ -208,17 +202,27 @@ bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 std::vector<std::pair<KernelAttr, QrGpuKernelMod::LaunchKernelFunc>> QrGpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
    &QrGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
    &QrGpuKernelMod::LaunchKernel<double>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
      .AddOutputAttr(kNumberTypeComplex64)
      .AddOutputAttr(kNumberTypeComplex64),
    &QrGpuKernelMod::LaunchKernel<Complex<float>>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
      .AddOutputAttr(kNumberTypeComplex128)
      .AddOutputAttr(kNumberTypeComplex128),
    &QrGpuKernelMod::LaunchKernel<Complex<double>>}};

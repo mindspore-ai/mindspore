@@ -314,7 +314,7 @@ def test_input_7d(dtype):
     print(output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_case():

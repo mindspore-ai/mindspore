@@ -585,11 +585,15 @@ void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
 
 /*
  * Feature group: Dump, Online debugger.
- * Target device group: Ascend, GPU and CPU.
+ * Target device group: GPU and CPU.
  * Runtime category: MindRT.
  * Description: Load and dump parameters and constant data, call postExecute and update dump iter.
  */
 void Debugger::PostExecuteGraphDebugger() {
+  if (device_target_ == kAscendDevice) {
+    MS_LOG(DEBUG) << "On Ascend, parameters and constant data is not dumped here.";
+    return;
+  }
   // On CPU, update dump iteration， Parameters and consts are not dumped here
   if (device_target_ == kCPUDevice) {
     DumpJsonParser::GetInstance().UpdateDumpIter();

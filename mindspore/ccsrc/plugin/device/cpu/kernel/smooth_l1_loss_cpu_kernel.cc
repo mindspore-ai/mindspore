@@ -53,20 +53,20 @@ void SmoothL1LossCpuKernelMod::CalElements(const T *predict_addr, const T *targe
 }
 
 template <typename T>
-bool SmoothL1LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool SmoothL1LossCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSmoothL1LossInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSmoothL1LossOutputsNum, kernel_name_);
-  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  T *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *result_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   if (reduction_ == ReductionType::NONE) {
     CalElements(predict_addr, target_addr, result_addr);
     return true;
   }
 
-  T *workspace_addr = reinterpret_cast<T *>(workspace[0]->addr);
+  T *workspace_addr = reinterpret_cast<T *>(workspace[0]->device_ptr());
   CalElements(predict_addr, target_addr, workspace_addr);
 
   double tmp_sum{0};
@@ -82,25 +82,21 @@ bool SmoothL1LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   return true;
 }
 
-bool SmoothL1LossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SmoothL1Loss>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool SmoothL1LossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kSmoothL1LossInputsNum || outputs.size() != kSmoothL1LossOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kSmoothL1LossInputsNum << " and "
                   << kSmoothL1LossOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  beta_ = kernel_ptr->get_beta();
+  beta_ = GetValue<float>(primitive_->GetAttr(ops::kBeta));
   if (beta_ < 0.0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << ", the 'beta' can not be less than 0.";
     return false;
   }
 
-  std::string reduction = kernel_ptr->get_reduction();
+  std::string reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   if (reduction == "none") {
     reduction_ = ReductionType::NONE;
   } else if (reduction == "mean") {
@@ -112,22 +108,21 @@ bool SmoothL1LossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int SmoothL1LossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SmoothL1LossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // when reduction is not set to none, we need extra space to record the result, with the same size with predict_size.
   if (reduction_ != ReductionType::NONE) {
-    this->workspace_size_list_.push_back(input_size_list_[0]);
+    this->workspace_size_list_.push_back(inputs[0]->size());
   }
 
   auto predict_shape = inputs[kIndex0]->GetShapeVector();

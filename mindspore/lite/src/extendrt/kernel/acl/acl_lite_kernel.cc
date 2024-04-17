@@ -35,13 +35,13 @@ AclLiteKernel::AclLiteKernel(std::shared_ptr<mindspore::kernel::KernelMod> kerne
 }
 
 int AclLiteKernel::Prepare() {
-  bool ret = kernel_mod_->Init_(this->base_operator_, inputs_, outputs_);
+  bool ret = kernel_mod_->Init(base_operator_->GetPrim(), inputs_, outputs_);
   return ret ? ReSize() : RET_ERROR;
 }
 
 int AclLiteKernel::ReSize() {
   // acl custom kernel last input is om data, do not pass to resize
-  std::vector<KernelTensorPtr> kernel_inputs;
+  std::vector<KernelTensor *> kernel_inputs;
   kernel_inputs.assign(inputs_.begin(), inputs_.end() - 1);
 
   return kernel_mod_->Resize(kernel_inputs, outputs_);
@@ -79,7 +79,7 @@ int AclLiteKernel::InferShape() {
       auto new_output = out_tensors_.at(i);
       auto old_output = outputs_.at(i);
       new_output->set_shape64(old_output->GetShapeVector());
-      new_output->set_data_type(old_output->GetDtype());
+      new_output->set_data_type(old_output->dtype_id());
     }
     return lite::RET_OK;
   }
@@ -88,31 +88,17 @@ int AclLiteKernel::InferShape() {
 }
 
 int AclLiteKernel::Run() {
-  auto inputs = CloudTensorUtils::LiteTensorToAddressPtrVec(in_tensors_);
-  auto outputs = CloudTensorUtils::LiteTensorToAddressPtrVec(out_tensors_);
-
-  // acl custom kernel last input is om data, do not pass to run
-  std::vector<AddressPtr> kernel_inputs;
-  kernel_inputs.assign(inputs.begin(), inputs.end() - 1);
-
-  AddressPtrList workspace;
-  auto workspace_size = kernel_mod_->GetWorkspaceSizeList();
-  for (size_t i = 0; i < workspace_size.size(); i++) {
-    auto buffer = context_->allocator->Malloc(workspace_size.at(i));
-    std::shared_ptr<Address> address = std::make_shared<Address>(buffer, workspace_size.at(i));
-    workspace.push_back(address);
-  }
-
+  std::vector<kernel::KernelTensor *> workspace;
   if (in_tensors_.size() != inputs_.size()) {
     MS_LOG(ERROR) << "Given inputs size " << in_tensors_.size() << " != graph inputs size " << inputs_.size();
     return kLiteError;
   }
-  for (size_t i = 0; i < in_tensors_.size(); i++) {
+  for (size_t i = 0; i < in_tensors_.size() - 1; i++) {
     auto &input = in_tensors_[i];
     auto &kernel_input = inputs_[i];
-    if (input->Size() != kernel_input->GetSizeInBytes()) {
+    if (input->Size() != kernel_input->size()) {
       MS_LOG(ERROR) << "Byte size of input " << i << " != the size expected, given size " << input->Size()
-                    << ", expected size " << kernel_input->GetSizeInBytes()
+                    << ", expected size " << kernel_input->size()
                     << ", input shape: " << kernel_input->GetShapeVector();
       return kLiteError;
     }
@@ -133,19 +119,19 @@ int AclLiteKernel::Run() {
       std::vector<int> shape;
       std::transform(shape64.begin(), shape64.end(), std::back_inserter(shape),
                      [](auto &value) { return static_cast<int>(value); });
-      return new lite::Tensor(item->GetDtype(), shape);
+      return new lite::Tensor(item->dtype_id(), shape);
     });
   }
   if (out_tensors_.size() != outputs_.size()) {
-    MS_LOG(ERROR) << "Given outputs size " << outputs.size() << " != graph inputs size " << outputs_.size();
+    MS_LOG(ERROR) << "Given outputs size " << out_tensors_.size() << " != graph inputs size " << outputs_.size();
     return kLiteError;
   }
   for (size_t i = 0; i < out_tensors_.size(); i++) {
     auto output = out_tensors_[i];
     auto kernel_output = outputs_[i];
-    if (output->Size() != kernel_output->GetSizeInBytes()) {
+    if (output->Size() != kernel_output->size()) {
       MS_LOG(ERROR) << "Byte size of output " << i << " != the size expected, given size " << output->Size()
-                    << ", expected size " << kernel_output->GetSizeInBytes()
+                    << ", expected size " << kernel_output->size()
                     << ", output shape: " << kernel_output->GetShapeVector();
       return kLiteError;
     }
@@ -160,11 +146,8 @@ int AclLiteKernel::Run() {
     }
   }
 
-  auto ret = kernel_mod_->Launch(kernel_inputs, workspace, outputs, nullptr);
+  auto ret = kernel_mod_->Launch(workspace, workspace, workspace, nullptr);
 
-  for (auto address : workspace) {
-    context_->allocator->Free(address->addr);
-  }
   return ret ? RET_OK : RET_ERROR;
 }
 }  // namespace mindspore::kernel

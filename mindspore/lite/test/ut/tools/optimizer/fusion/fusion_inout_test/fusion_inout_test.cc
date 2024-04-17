@@ -147,7 +147,7 @@ size_t FusionInoutTest::GetOutputNumber() {
     if (!opt::CheckPrimitiveType(ret_input_cnode, prim::kPrimMakeTuple)) {
       return 1;
     } else {
-      return ret_input_cnode->inputs().size() - 1;
+      return ret_input_cnode->size() - 1;
     }
   } else {
     return 1;

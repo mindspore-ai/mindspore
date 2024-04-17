@@ -52,8 +52,8 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto rate_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto rate_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (IsDynamic(shape_shape) || IsDynamicRank(rate_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
@@ -62,10 +62,11 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
                              << shape_shape.size() << "-D";
   }
 
-  auto shape_value = input_args[kInputIndex0]->BuildValue();
+  auto shape_value = input_args[kInputIndex0]->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (!shape_value->isa<ValueAny>() && !shape_value->isa<None>()) {
-    auto out_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);
+    auto out_shape =
+      CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name, input_args[kInputIndex0]->GetType());
     (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, op_name);
 
     size_t rate_rank = rate_shape.size();
@@ -90,10 +91,10 @@ TypePtr RandomPoissonInferType(const PrimitivePtr &prim, const std::vector<Abstr
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("shape", input_args[kInputIndex0]->BuildType(), valid_shape_types,
+  (void)CheckAndConvertUtils::CheckTypeValid("shape", input_args[kInputIndex0]->GetType(), valid_shape_types,
                                              prim_name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("rate", input_args[kInputIndex1]->BuildType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("rate", input_args[kInputIndex1]->GetType(), valid_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {

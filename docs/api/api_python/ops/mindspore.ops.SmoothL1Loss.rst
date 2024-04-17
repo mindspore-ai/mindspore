@@ -8,7 +8,7 @@
     更多参考详见 :func:`mindspore.ops.smooth_l1_loss`。
 
     参数：
-        - **beta** (float，可选) - 控制损失函数在L1Loss和L2Loss间变换的阈值，该值应大于零。默认值： ``1.0`` 。
+        - **beta** (float，可选) - 控制损失函数在L1损失和L2损失间变换的阈值，该值应大于零。默认值： ``1.0`` 。
         - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'none'`` 。
 
           - ``"none"``：不应用规约方法。
@@ -16,7 +16,7 @@
           - ``"sum"``：计算输出元素的总和。
 
     输入：
-        - **logits** (Tensor) - 任意维度输入Tensor。数据类型支持float16、float32或float64。
+        - **logits** (Tensor) - 任意维度输入Tensor。数据类型支持float16或float32。
         - **labels** (Tensor) - 真实值。shape和数据类型 与 `logits` 相同。
 
     输出：

@@ -22,47 +22,8 @@ from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 from mindspore._c_expression import typing
-from mindspore.ops.operations.array_ops import Identity
 from mindspore.ops._primitive_cache import _get_cache_prim
-
-
-class Assign(Primitive):
-    """
-    Assigns `Parameter` with a value.
-
-    Refer to :func:`mindspore.ops.assign` for more details.
-
-    Inputs:
-        - **variable** (Parameter) - The `Parameter`. :math:`(N,*)` where :math:`*` means,
-          any number of additional dimensions, its rank should be less than 8.
-        - **value** (Tensor) - The value to be assigned, has the same shape with `variable`.
-
-    Outputs:
-        Tensor, has the same data type and shape as original `variable`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> value = Tensor([2.0], mindspore.float32)
-        >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
-        >>> assign = ops.Assign()
-        >>> x = assign(variable, value)
-        >>> print(variable.asnumpy())
-        [2.]
-    """
-    __mindspore_signature__ = (
-        sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('value', dtype=sig.sig_dtype.T)
-    )
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Assign."""
-        self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
-        self.add_prim_attr('side_effect_mem', True)
+from ..auto_generate import Assign, Identity
 
 
 class Load(PrimitiveWithCheck):
@@ -209,8 +170,8 @@ class BoundingBoxDecode(Primitive):
         ...                                          max_shape=(768, 1280), wh_ratio_clip=0.016)
         >>> output = boundingbox_decode(anchor_box, deltas)
         >>> print(output)
-        [[ 4.1953125  0.         0.         5.1953125]
-         [ 2.140625   0.         3.859375  60.59375  ]]
+        [[ 4.194528  0.         0.         5.194528]
+         [ 2.1408591   0.         3.8591409  60.598152  ]]
 
     """
 
@@ -861,3 +822,50 @@ class PyFunc(PrimitiveWithInfer):
         logger.warning("The function output are empty tuple. Add a placeholder instead. "
                        "Do not use it as it could be any uninitialized data.")
         return (typing.TensorType(mstype.int32),)
+
+
+class Reusing(Primitive):
+    r"""
+    Make the function graph to be labeled as no inline.
+
+    Refer to :func:`mindspore.ops.Reusing` for more details.
+
+    Inputs:
+        - **input_x** (function) - the function will be labeled as no inline.
+
+    Outputs:
+         function, the function that has been labeled as no inline.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, jit
+        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import ops
+        >>> def for_body_fun(i,val):
+                x = i *3
+                x = x * val * val
+                return x
+        >>> def fori_loop(lower, upper, body_fun, init_val):
+                body_fun = ops.reusing(body_fun)
+                val = init_val
+                for i in range(lower, upper):
+                    val = body_fun(i, val)
+                return val
+        >>> @jit
+        >>> def call_fori_loop(x):
+                x = fori_loop(1,10,for_body_fun,x)
+                return x
+        >>> x = Tensor([1], mstype.int32)
+        >>> x = call_fori_loop(x)
+        >>> print(x)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Reusing"""
+
+    def __call__(self, x):
+        return x

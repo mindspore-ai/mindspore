@@ -42,14 +42,18 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
+#include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "ge/ge_graph_compile_summary.h"
 #include "kernel/kernel_build_info.h"
-#include "inc/ops/array_ops.h"
+#include "op_proto/inc/array_ops.h"
 #include "ops/nn_op_name.h"
 #include "ops/array_ops.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/compile_cache_context.h"
+using InputNameAndType = std::vector<std::pair<std::string, bool>>;
+using Data = ::ge::op::Data;
+using RefData = ::ge::op::RefData;
 
 namespace mindspore {
 namespace device {
@@ -88,7 +92,8 @@ void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me
   }
 }
 
-transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph, std::map<std::string, ShapeVector> *m_origin_shape) {
+transform::TensorOrderMap GetDefaultParams(const FuncGraphPtr &anf_graph,
+                                           std::map<std::string, ShapeVector> *origin_shape) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap res;
   for (auto &anf_node : anf_graph->parameters()) {
@@ -100,7 +105,7 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph, std::map<std:
       MS_EXCEPTION_IF_NULL(value);
       auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
       MS_EXCEPTION_IF_NULL(tensor);
-      m_origin_shape->emplace(para->name(), tensor->shape_c());
+      origin_shape->emplace(para->name(), tensor->shape_c());
       // need ref shape when auto parallel
       auto build_shape = para->abstract()->BuildShape();
       if (build_shape != nullptr) {
@@ -114,7 +119,7 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph, std::map<std:
   return res;
 }
 
-void RevertOriginShape(const KernelGraphPtr &anf_graph, const std::map<std::string, ShapeVector> &m_origin_shape) {
+void RevertOriginShape(const KernelGraphPtr &anf_graph, const std::map<std::string, ShapeVector> &origin_shape) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap res;
   for (auto &anf_node : anf_graph->parameters()) {
@@ -122,9 +127,9 @@ void RevertOriginShape(const KernelGraphPtr &anf_graph, const std::map<std::stri
     auto para = anf_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(para);
     if (para->has_default()) {
-      auto it = m_origin_shape.find(para->name());
-      if (it == m_origin_shape.end()) {
-        MS_LOG(ERROR) << "Failed to find input " << para->name() << " in input_shape " << m_origin_shape;
+      auto it = origin_shape.find(para->name());
+      if (it == origin_shape.end()) {
+        MS_LOG(ERROR) << "Failed to find input " << para->name() << " in input_shape " << origin_shape;
         continue;
       }
       auto value = para->default_param();
@@ -281,29 +286,70 @@ struct GraphSummary {
   size_t stream_num = 0;
   size_t event_num = 0;
   std::vector<ShapeVector> output_shapes = {};
+  std::vector<ge::DataType> output_dtypes = {};
+  // pair<input_index, output_index>
+  std::vector<std::pair<uint32_t, uint32_t>> io_indexes;
+  bool is_static = false;
 
   GraphSummary() = default;
   explicit GraphSummary(const ::ge::CompiledGraphSummaryPtr &graph_summary) {
     MS_EXCEPTION_IF_NULL(graph_summary);
-    (void)graph_summary->GetConstMemorySize(const_memory_size);
-    (void)graph_summary->GetFeatureMemorySize(feature_memory_size);
-    (void)graph_summary->GetFeatureMemoryBaseRefreshable(is_feature_memory_refreshable);
-    (void)graph_summary->GetStreamNum(stream_num);
-    (void)graph_summary->GetEventNum(event_num);
-    std::vector<::ge::Shape> ge_shapes;
-    (void)graph_summary->GetOutputShapes(ge_shapes);
-    (void)std::transform(ge_shapes.begin(), ge_shapes.end(), std::back_inserter(output_shapes),
-                         [](const ::ge::Shape &ge_shape) -> ShapeVector { return ge_shape.GetDims(); });
+    is_static = graph_summary->IsStatic();
+    if (is_static) {
+      ::ge::graphStatus status;
+      status = graph_summary->GetConstMemorySize(const_memory_size);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetConstMemorySize failed, status = " << status;
+      }
+      status = graph_summary->GetFeatureMemorySize(feature_memory_size);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetFeatureMemorySize failed, status = " << status;
+      }
+      status = graph_summary->GetFeatureMemoryBaseRefreshable(is_feature_memory_refreshable);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetFeatureMemoryBaseRefreshable failed, status = " << status;
+      }
+      status = graph_summary->GetStreamNum(stream_num);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetStreamNum failed, status = " << status;
+      }
+      status = graph_summary->GetEventNum(event_num);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetEventNum failed, status = " << status;
+      }
+      std::vector<::ge::Shape> ge_shapes;
+      status = graph_summary->GetOutputShapes(ge_shapes);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetOutputShapes failed, status = " << status;
+      }
+      (void)std::transform(ge_shapes.begin(), ge_shapes.end(), std::back_inserter(output_shapes),
+                           [](const ::ge::Shape &ge_shape) -> ShapeVector { return ge_shape.GetDims(); });
+      if (graph_summary->GetOutputDtypes(output_dtypes) != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetOutputDtypes failed, status = " << status
+                          << ", maybe the execution mode is not as expected.";
+      }
+      if (graph_summary->GetIOIndexesWithSameAddr(io_indexes) != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetIOIndexesWithSameAddr failed, status = " << status
+                          << ", maybe the execution mode is not as expected.";
+      }
+    } else {
+      MS_LOG(WARNING) << "Graph is not static, maybe the execution mode is not as expected.";
+    }
   }
 
   std::string ToString() const {
     std::stringstream ss;
     ss << "const_memory_size[" << const_memory_size << "], feature_memory_size[" << feature_memory_size
        << "], is_feature_memory_refreshable[" << is_feature_memory_refreshable << "], stream_num[" << stream_num
-       << "], event_num[" << event_num << "], output size[" << output_shapes.size() << "]";
+       << "], event_num[" << event_num << "], output size[" << output_shapes.size() << "], is_static[" << is_static
+       << "]";
     if (!output_shapes.empty()) {
+      if (output_shapes.size() != output_dtypes.size()) {
+        MS_LOG(WARNING) << "The output_dtypes size in summary is not equal to output_shapes size.";
+      }
       for (size_t i = 0; i < output_shapes.size(); ++i) {
         std::string shape_str = "[";
+        std::string dtype_str = "";
         for (size_t j = 0; j < output_shapes[i].size(); ++j) {
           if (j != output_shapes[i].size() - 1) {
             shape_str += std::to_string(output_shapes[i][j]) + ",";
@@ -311,13 +357,41 @@ struct GraphSummary {
             shape_str += std::to_string(output_shapes[i][j]) + "]";
           }
         }
+
         if (output_shapes[i].empty()) {
           shape_str = "[]";
         }
-        ss << ", output[" << i << "] shape = " << shape_str;
+        if (i < output_dtypes.size()) {
+          dtype_str += "[";
+          dtype_str += TransGeDtypeToString(output_dtypes[i]);
+          dtype_str += "]";
+        }
+        if (dtype_str.empty()) {
+          ss << ", output[" << i << "] shape = " << shape_str;
+        } else {
+          ss << ", output[" << i << "] shape = " << shape_str << " dtype = " << dtype_str;
+        }
       }
     }
+    if (!io_indexes.empty()) {
+      std::string io_indexes_str = "[";
+      for (auto io_index : io_indexes) {
+        io_indexes_str += "[" + std::to_string(io_index.first) + "," + std::to_string(io_index.second) + "]";
+      }
+      io_indexes_str += "]";
+      ss << ", io_indexes: " << io_indexes_str;
+    }
+
     return ss.str();
+  }
+
+ private:
+  std::string TransGeDtypeToString(const transform::GeDataType dtype) const {
+    std::string dtype_str = "";
+    if (transform::ge_dtype_str_map.find(dtype) != transform::ge_dtype_str_map.end()) {
+      dtype_str = transform::ge_dtype_str_map[dtype];
+    }
+    return dtype_str;
   }
 };
 
@@ -339,17 +413,26 @@ std::multimap<std::string, ParameterPtr> FilterAllParameters(const KernelGraphPt
   return ret;
 }
 
+void SetParameterKernelInfo(const AnfNodePtr &node, const std::shared_ptr<device::KernelInfo> &kernel_info) {
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+  if (!build_info) {
+    MS_LOG(ERROR) << "Parameter doesn't have build info: " << node->DebugString()
+                  << ", full name: " << node->fullname_with_scope();
+    return;
+  }
+  std::vector<TypeId> refresh_output_types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
+  build_info->SetOutputsDeviceType(refresh_output_types);
+}
+
 void SetKernelInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   // If kernel build info has been set up. skip
   std::shared_ptr<device::KernelInfo> kernel_info =
     std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-  kernel::KernelBuildInfoPtr build_info = nullptr;
-  if (kernel_info) {
-    build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-    if (build_info) {
-      return;
-    }
+  if (utils::isa<ParameterPtr>(node)) {
+    SetParameterKernelInfo(node, kernel_info);
+    return;
   }
 
   if (!kernel_info) {
@@ -357,6 +440,8 @@ void SetKernelInfo(const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(kernel_info);
     node->set_kernel_info(kernel_info);
   }
+
+  auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
   if (!build_info) {
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     MS_EXCEPTION_IF_NULL(builder);
@@ -383,34 +468,39 @@ std::string RemoveSuffix(const std::string &str, const std::string &suffix) {
   return str;
 }
 
-bool BuildFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map) {
+bool BuildFakeGraph(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->CanDump(kIntroductory)) {
     if (context->CanDump(kFully)) {
-      draw::Draw("anf_graph.dot", anf_graph);  // for debug
+      draw::Draw("anf_graph_before_build_df_graph.dot", anf_graph);  // for debug
     }
-    DumpIR("anf_graph.ir", anf_graph, true);
+    DumpIR("anf_graph_before_build_df_graph.ir", anf_graph, true, kWholeStack);
   }
 #endif
   (void)setenv("GE_TRAIN", IsGeTrain() ? "1" : "0", 1);
-  if (!AddFakeGraph(anf_graph, init_inputs_map)) {
+  if (!AddFakeGraph(anf_graph)) {
     MS_LOG(ERROR) << "Add fake graph failed";
     return false;
   }
-  GeDeviceResManager::CreateSessionAndGraphRunner();
-  auto graph_runner = transform::GetGraphRunner();
-  if (graph_runner == nullptr) {
-    MS_LOG(ERROR) << "Can not found GraphRunner";
-    return false;
+#ifdef ENABLE_DUMP_IR
+  if (context->CanDump(kIntroductory)) {
+    if (context->CanDump(kFully)) {
+      draw::Draw("anf_graph_after_build_df_graph.dot", anf_graph);  // for debug
+    }
+    DumpIR("anf_graph_after_build_df_graph.ir", anf_graph, true, kWholeStack);
   }
+#endif
   return true;
 }
 
 void ClearForwardOutputAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
+  if (!graph->has_flag(kFlagPyNativeRunInGraph)) {
+    return;
+  }
   const auto &input_nodes = graph->input_nodes();
   for (const auto &input : input_nodes) {
     MS_EXCEPTION_IF_NULL(input);
@@ -468,8 +558,9 @@ void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) c
       tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     }
 
-    auto device_address_ptr =
-      std::make_shared<GeHostAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id, kAscendDevice, 0);
+    auto device_id = device_context_->device_context_key().device_id_;
+    auto device_address_ptr = std::make_shared<GeHostAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id,
+                                                              kAscendDevice, device_id);
     device_address_ptr->set_is_ptr_persisted(false);
     AnfAlgo::SetOutputAddr(device_address_ptr, 0, input_node.get());
   }
@@ -482,6 +573,7 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     auto &output_node = output_with_index.first;
     MS_EXCEPTION_IF_NULL(output_node);
+    SetKernelInfo(output_node);
 
     // Parameter's memory is allocated earlier, and there is no need to reallocate memory if Parameter is output.
     if (output_node->isa<Parameter>()) {
@@ -490,8 +582,12 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
 
     auto i = output_with_index.second;
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
-    auto output_device_addr =
-      std::make_shared<GeHostAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kAscendDevice, 0);
+
+    auto device_id = device_context_->device_context_key().device_id_;
+    const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      output_with_index, nullptr, 0, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, device_id);
+
+    auto output_device_addr = std::make_shared<GeHostAddress>(kernel_tensor);
     AnfAlgo::SetOutputAddr(output_device_addr, i, output_node.get());
 
     if (common::AnfAlgo::IsNopNode(output_node)) {
@@ -557,6 +653,7 @@ void GeGraphExecutor::AllocFeatureMemory(const transform::RunOptions &options, s
 
 void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *memo) const {
   // Set Device Type to be same as Host Type, AssignStaticMemoryInput will ignore parameters without DeviceType
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   if (memo == nullptr) {
     MS_LOG(INFO) << "Start AllocParameterMemory, kernel graph: " << kernel_graph->ToString();
     std::set<KernelGraphPtr> memo_set;
@@ -566,7 +663,6 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
   } else if (memo->find(kernel_graph) != memo->end()) {
     return;
   }
-  MS_EXCEPTION_IF_NULL(kernel_graph);
   (void)memo->insert(kernel_graph);
   auto parameters = FilterAllParameters(kernel_graph);
   for (const auto &iter : parameters) {
@@ -584,31 +680,29 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->AssignStaticMemoryInput(*kernel_graph.get());
-  for (auto &child_graph : kernel_graph->child_graph_order()) {
-    AllocParameterMemory(child_graph.lock(), memo);
-  }
 }
 
 void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph) {
   MS_LOG(INFO) << "Start BuildInputDataGeTensor, kernel graph: " << kernel_graph->ToString();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_inputs;
-  std::vector<std::pair<AnfNodePtr, size_t>> need_update_input;
-  auto input_data_list = kernel_graph->user_data<transform::InputDataList>();
-  if (input_data_list == nullptr) {
+  std::vector<std::pair<AnfNodeWeakPtr, size_t>> need_update_input;
+  InputNameAndType input_names;
+  auto input_name_list = kernel_graph->user_data<transform::InputNameList>();
+  if (input_name_list) {
+    input_names = input_name_list->input_names;
+  }
+  if (input_names.empty()) {
     MS_LOG(INFO) << "Kernel graph: " << kernel_graph->graph_id() << " input data list is nullptr";
-    input_datas_[kernel_graph] = {ge_inputs, need_update_input};
+    input_datas_[kernel_graph.get()] = {ge_inputs, need_update_input};
     return;
   }
   auto parameters = FilterAllParameters(kernel_graph);
-  using Data = ::ge::op::Data;
-  using RefData = ::ge::op::RefData;
   const auto &cur_inputs = kernel_graph->get_inputs();
   size_t cur_inputs_index = 0;
-  for (const auto &op : input_data_list->input_datas) {
+  for (auto [name, is_ref] : input_names) {
     AnfNodePtr node = nullptr;
-    auto name = op->GetName();
-    if (auto data = std::dynamic_pointer_cast<Data>(op); data != nullptr) {
+    if (!is_ref) {
       while (HasAbstractMonad(cur_inputs.at(cur_inputs_index))) {
         cur_inputs_index++;
       }
@@ -621,7 +715,7 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
       }
       node = cur_inputs.at(cur_inputs_index);
       cur_inputs_index++;
-    } else if (auto ref_data = std::dynamic_pointer_cast<RefData>(op); ref_data != nullptr) {
+    } else {
       auto iter = parameters.find(name);
       if (iter == parameters.end()) {
         MS_LOG(WARNING) << "Cannot find parameter " << name << " from kernel graph: " << kernel_graph->graph_id();
@@ -633,10 +727,7 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
       } else {
         MS_LOG(EXCEPTION) << "Cannot find parameter " << name << " from kernel graph: " << kernel_graph->graph_id();
       }
-    } else {
-      MS_LOG(EXCEPTION) << "Op " << name << " is invalid type " << op->GetOpType() << " as graph input.";
     }
-
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(INFO) << "Build input ge tensor: " << name << ", kernel graph: " << kernel_graph->graph_id();
     auto output_addr = AnfAlgo::GetMutableOutputAddr(node, 0, false);
@@ -666,10 +757,10 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
     cur_inputs_index++;
   }
   if (cur_inputs_index != cur_inputs.size()) {
-    MS_LOG(EXCEPTION) << "Not use all cur inputs, cur_inputs_index: " << cur_inputs_index
-                      << ", cur_inputs.size(): " << cur_inputs.size() << ", kernel graph: " << kernel_graph->graph_id();
+    MS_LOG(WARNING) << "Not use all cur inputs, cur_inputs_index: " << cur_inputs_index
+                    << ", cur_inputs.size(): " << cur_inputs.size() << ", kernel graph: " << kernel_graph->graph_id();
   }
-  input_datas_[kernel_graph] = {ge_inputs, need_update_input};
+  input_datas_[kernel_graph.get()] = {ge_inputs, need_update_input};
   MS_LOG(INFO) << "BuildInputDataGeTensor finish.";
 }
 
@@ -677,7 +768,7 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
   MS_LOG(INFO) << "Start BuildOutputDataGeTensor, kernel graph: " << kernel_graph->ToString();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_outputs;
-  std::vector<std::pair<AnfNodePtr, size_t>> graph_outputs;
+  std::vector<std::pair<AnfNodeWeakPtr, size_t>> graph_outputs;
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(kernel_graph->output());
   for (const auto &output : outputs) {
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
@@ -685,6 +776,9 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
     auto index = output_with_index.second;
     MS_EXCEPTION_IF_NULL(output_node);
     if (HasAbstractMonad(output_node)) {
+      continue;
+    }
+    if (common::AnfAlgo::IsNoOuputNode(output_node)) {
       continue;
     }
     auto real_index = output_node->isa<ValueNode>() ? 0 : index;
@@ -700,22 +794,79 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
   MS_EXCEPTION_IF_CHECK_FAIL(
     ge_outputs.size() == graph_outputs.size(),
     "The size of ge_outputs and graph_outputs check error, kernel graph: " + kernel_graph->ToString());
-  output_datas_[kernel_graph] = {ge_outputs, graph_outputs};
+  output_datas_[kernel_graph.get()] = {ge_outputs, graph_outputs};
   MS_LOG(INFO) << "BuildOutputDataGeTensor finish.";
 }
 
-void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) const {
-  MS_LOG(INFO) << "Start AllocOutputMemory, kernel graph: " << kernel_graph->ToString();
+DeviceAddressPtr GeGraphExecutor::CreateOutputDeviceAddress(const KernelGraphPtr &kernel_graph,
+                                                            const KernelWithIndex &output_with_index,
+                                                            size_t need_alloc_output_cnt) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto output_node = output_with_index.first;
+  MS_EXCEPTION_IF_NULL(output_node);
+  auto ref_map = kernel_graph->GetRefMap();
+
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto real_index = output_node->isa<ValueNode>() ? 0 : output_with_index.second;
+  TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
+  size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
+  auto shapes = trans::GetRuntimePaddingShape(output_node, real_index);
+  auto tensor_size =
+    shapes.empty() ? type_size : std::accumulate(shapes.begin(), shapes.end(), type_size, std::multiplies<size_t>());
+  // When ValueNode is a graph output, runtime does not manage this memory
+  // output in ref_map, mem same is input
+  bool need_not_alloc = (kernel_graph->has_flag(kFlagEnableZeroCopyInGraph) && !output_node->isa<ValueNode>()) ||
+                        (ref_map.find(output_with_index) != ref_map.end());
+  void *mem = need_not_alloc ? nullptr : ResManager()->AllocateMemory(tensor_size);
+
+  if (common::IsNeedProfileMemory() && !need_not_alloc) {
+    MS_LOG(WARNING) << "Need Profile Memory, alloc type: ValueNodeOutput, size:" << tensor_size
+                    << ", graph: " << kernel_graph->ToString() << ", node: " << output_node->fullname_with_scope()
+                    << ", device address addr: " << mem;
+  }
+
+  const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+    {output_node, real_index}, mem, tensor_size, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, device_id);
+  auto output_device_addr = std::make_shared<AscendDeviceAddress>(kernel_tensor);
+  if (ref_map.find(output_with_index) != ref_map.end()) {
+    auto input_with_index = ref_map[output_with_index];
+    auto input_device_address = AnfAlgo::GetMutableOutputAddr(input_with_index.first, input_with_index.second, false);
+    MS_EXCEPTION_IF_NULL(input_device_address);
+    MS_LOG(INFO) << "The output node " << output_node->fullname_with_scope()
+                 << " is in ref_map, set the same device_address ptr as the corresponding input, input node: "
+                 << input_with_index.first->fullname_with_scope();
+    // Update the reference count of device address.
+    output_device_addr->set_pointer_ref_count(input_device_address->pointer_ref_count());
+    output_device_addr->IncreaseOriginalRefCount();
+    output_device_addr->ResetRefCount();
+  }
+  output_device_addr->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
+  output_device_addr->set_is_ptr_persisted(true);
+  if (IsMemoryPoolRecycle() && need_alloc_output_cnt <= kNeedRecycleOutput) {
+    MS_LOG(INFO) << "Set Memory Pool Recycle, graph: " << kernel_graph->ToString()
+                 << ", node: " << output_node->fullname_with_scope();
+    output_device_addr->set_from_persistent_mem(true);
+    output_device_addr->set_need_recycle(true);
+  }
+  return output_device_addr;
+}
+
+void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Start AllocOutputMemory, kernel graph: " << kernel_graph->ToString();
+
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(kernel_graph->output());
+  auto ref_map = kernel_graph->GetRefMap();
   size_t need_alloc_output_cnt = 0;
   for (const auto &output : outputs) {
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     auto &output_node = output_with_index.first;
-    if (output_node->isa<Parameter>()) {
+    if (output_node->isa<Parameter>() || output_node->isa<ValueNode>()) {
+      continue;
+    }
+    if (ref_map.find(output_with_index) != ref_map.end()) {
       continue;
     }
     need_alloc_output_cnt++;
@@ -724,40 +875,21 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
   for (const auto &output : outputs) {
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     auto &output_node = output_with_index.first;
-    auto index = output_with_index.second;
     MS_EXCEPTION_IF_NULL(output_node);
     SetKernelInfo(output_node);
 
     // Parameter's memory is allocated earlier, and there is no need to reallocate memory if Parameter is output.
-    if (output_node->isa<Parameter>()) {
+    if (AnfAlgo::OutputAddrExist(output_node, output_with_index.second, false) || output_node->isa<Parameter>()) {
+      MS_LOG(INFO) << "The device_address of output node " << output_node->fullname_with_scope()
+                   << " is already exist, skip.";
       continue;
     }
 
-    auto real_index = output_node->isa<ValueNode>() ? 0 : index;
-    TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
-    size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
-    auto shapes = trans::GetRuntimePaddingShape(output_node, real_index);
-    auto tensor_size =
-      shapes.empty() ? type_size : std::accumulate(shapes.begin(), shapes.end(), type_size, std::multiplies<size_t>());
-    bool need_not_alloc = kernel_graph->has_flag(kFlagEnableZeroCopyInGraph) && !output_node->isa<ValueNode>();
-    // When ValueNode is a graph output, runtime does not manage this memory
-    void *mem = need_not_alloc ? nullptr : ResManager()->AllocateMemory(tensor_size);
-    if (common::IsNeedProfileMemory() && !need_not_alloc) {
-      MS_LOG(WARNING) << "Need Profile Memory, alloc type: ValueNodeOutput, size:" << tensor_size
-                      << ", graph: " << kernel_graph->ToString() << ", node: " << output_node->fullname_with_scope()
-                      << ", device address addr: " << mem;
-    }
-    auto output_device_addr = std::make_shared<AscendDeviceAddress>(mem, tensor_size, kOpFormat_DEFAULT, output_type_id,
-                                                                    kAscendDevice, device_id);
-    output_device_addr->set_is_ptr_persisted(true);
-    if (AscendMemAdapter::GetInstance().IsMemoryPoolRecycle() && need_alloc_output_cnt <= kNeedRecycleOutput) {
-      MS_LOG(INFO) << "Set Memory Pool Recycle, graph: " << kernel_graph->ToString()
-                   << ", node: " << output_node->fullname_with_scope();
-      output_device_addr->set_from_persistent_mem(true);
-      output_device_addr->set_need_recycle(true);
-    }
-    AnfAlgo::SetOutputAddr(output_device_addr, index, output_node.get());
-
+    auto output_device_addr = CreateOutputDeviceAddress(kernel_graph, output_with_index, need_alloc_output_cnt);
+    AnfAlgo::SetOutputAddr(output_device_addr, output_with_index.second, output_node.get());
+    MS_LOG(INFO) << "Output node info: (name " << output_node->fullname_with_scope() << ", "
+                 << output_node->DebugString() << " ), output size: " << output_device_addr->GetSize()
+                 << ", device_address: " << output_device_addr;
     // When both the input and output of NopNode are used as outputs, different memory needs to be allocated for them.
   }
   MS_LOG(INFO) << "AllocOutputMemory finish.";
@@ -777,22 +909,48 @@ void GeGraphExecutor::PreprocessBeforeRun(const KernelGraphPtr &graph) {
   }
 }
 
-bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
-                                   const std::map<string, string> & /* compile_options */) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "ge graph executor compile graph " << graph->ToString();
-  std::map<std::string, ShapeVector> m_origin_shape;
-  const auto &tensor_order_map = GetParams(graph, &m_origin_shape);
+bool GeGraphExecutor::BuildGraph(const KernelGraphPtr &graph, const transform::TensorOrderMap &tensor_order_map) {
+  std::set<KernelGraphPtr> memo;
+  GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   auto use_compile_cache = compile_cache_context.UseCompileCache();
   if (use_compile_cache) {
     MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
-    if (!BuildFakeGraph(graph, tensor_order_map)) {
+    if (!BuildFakeGraph(graph)) {
       return false;
     }
   } else {
-    GEGraphOptimization::GetInstance().OptimizeGEGraph(graph);
     (void)BuildDFGraph(graph, tensor_order_map, false);
+  }
+  return true;
+}
+
+void GeGraphExecutor::AllocMemory(const KernelGraphPtr &graph) {
+  AllocParameterMemory(graph);
+  AllocOutputMemory(graph);
+  BuildInputDataGeTensor(graph);
+  BuildOutputDataGeTensor(graph);
+  EnableGraphInputZeroCopy(graph);
+  EnableGraphOutputZeroCopy(graph);
+}
+
+bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
+                                   const std::map<string, string> & /* compile_options */) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "ge graph executor compile graph " << graph->ToString();
+  auto &compile_cache_context = CompileCacheContext::GetInstance();
+  auto use_compile_cache = compile_cache_context.UseCompileCache();
+  std::map<std::string, ShapeVector> origin_shape;
+  const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
+  if (use_compile_cache) {
+    MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
+    std::set<KernelGraphPtr> memo;
+    GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
+    if (!BuildFakeGraph(graph)) {
+      return false;
+    }
+  } else {
+    (void)BuildGraph(graph, tensor_order_map);
   }
   SetDynamicShapeAttr(graph);
   transform::RunOptions run_options;
@@ -819,44 +977,111 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
     streams[run_options.name] = summary.stream_num;
     AllocConstMemory(run_options, graph, summary.const_memory_size);
     AllocFeatureMemory(run_options, summary.feature_memory_size);
+    AddRefCorrespondPairs(graph, summary.io_indexes);
   }
-  AllocParameterMemory(graph);
-  AllocOutputMemory(graph);
-  BuildInputDataGeTensor(graph);
-  BuildOutputDataGeTensor(graph);
-  EnableGraphInputZeroCopy(graph);
-  EnableGraphOutputZeroCopy(graph);
+  AllocMemory(graph);
+
   graph->set_run_mode(RunMode::kGraphMode);
   graph->set_memory_managed_by_ge(true);
   if (ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE) {
     graph->set_is_loop_count_sink(true);
   }
-  RevertOriginShape(graph, m_origin_shape);
+  RevertOriginShape(graph, origin_shape);
   return true;
+}
+
+void GeGraphExecutor::AddRefCorrespondPairs(const KernelGraphPtr &graph,
+                                            const std::vector<std::pair<uint32_t, uint32_t>> &io_indexes) const {
+  MS_LOG(INFO) << "Start convert io_indexes to ref_map, kernel graph: " << graph->ToString();
+  MS_EXCEPTION_IF_NULL(graph);
+
+  std::map<session::AnfWithOutIndex, session::AnfWithOutIndex> ref_out_in_map = {};
+  auto graph_inputs_all = graph->parameters();
+  std::vector<AnfNodePtr> graph_inputs = {};
+  for (auto &node : graph_inputs_all) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (HasAbstractMonad(node) || abs->isa<abstract::AbstractSequence>()) {
+      MS_LOG(INFO) << "Input node: " << node->DebugString() << " is a monad or tuple/list parameter, skip.";
+      continue;
+    }
+    graph_inputs.emplace_back(node);
+  }
+
+  std::vector<common::KernelWithIndex> graph_outputs_all = {};
+  common::AnfAlgo::GetRealInputs(graph->get_return(), &graph_outputs_all);
+  std::vector<common::KernelWithIndex> graph_outputs = {};
+
+  for (auto &node_with_index : graph_outputs_all) {
+    if (common::AnfAlgo::IsNoOuputNode(node_with_index.first) || HasAbstractMonad(node_with_index.first)) {
+      MS_LOG(INFO) << "Output node: " << node_with_index.first->fullname_with_scope()
+                   << " is a no output node or monad node, skip.";
+      continue;
+    }
+
+    graph_outputs.emplace_back(node_with_index);
+  }
+
+  for (auto in_out_index : io_indexes) {
+    if (in_out_index.first >= graph_inputs.size() || in_out_index.second >= graph_outputs.size()) {
+      MS_LOG(EXCEPTION) << "The io_indexes out of range, input index: " << in_out_index.first
+                        << ", output index: " << in_out_index.second << ", graph input size: " << graph_inputs.size()
+                        << ", graph output size: " << graph_outputs.size();
+    }
+    session::AnfWithOutIndex origin_node = std::make_pair(graph_inputs[in_out_index.first], 0);
+    session::AnfWithOutIndex final_node = graph_outputs[in_out_index.second];
+    if (origin_node.first == final_node.first) {
+      MS_LOG(INFO) << "The origin node is same as final node, node: " << origin_node.first->fullname_with_scope();
+      continue;
+    }
+    if (ref_out_in_map.count(final_node) != 0) {
+      MS_LOG(INFO) << "The node is already in ref_out_in_map, node: " << final_node.first->fullname_with_scope()
+                   << ", index: " << final_node.second;
+      continue;
+    }
+    // if input node is not abstract ref, set ref may cause memory reuse error
+    auto abs = origin_node.first->abstract();
+    if (!abs->isa<abstract::AbstractRefTensor>()) {
+      MS_LOG(INFO) << "The node is not abstract tensor: " << final_node.first->fullname_with_scope()
+                   << ", index: " << final_node.second;
+      continue;
+    }
+
+    ref_out_in_map.emplace(final_node, origin_node);
+    MS_LOG(INFO) << "Convert io_index [" << in_out_index.first << ", " << in_out_index.second
+                 << "] to ref_out_in_map, final_node: " << final_node.first->fullname_with_scope()
+                 << ", index:" << final_node.second << ", origin_node: " << origin_node.first->fullname_with_scope()
+                 << ", index: " << origin_node.second;
+  }
+
+  graph->set_ref_out_in_map(ref_out_in_map);
 }
 
 bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) {
   MS_EXCEPTION_IF_NULL(graph);
   // cppcheck-suppress unreadVariable
   ContextReset reset_context(device_context_);
+  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+  MS_EXCEPTION_IF_NULL(kg);
   if (IsEnableRefMode()) {
-    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     return CompileGraph(kg, compile_options);
   } else {
-    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
-    MS_EXCEPTION_IF_NULL(kg);
-    std::map<std::string, ShapeVector> m_origin_shape;
-    const auto &tensor_order_map = GetParams(graph, &m_origin_shape);
+    // delete SetCPUMemManager when delete env MS_DISABLE_REF_MODE
+    ResManager()->SetCPUMemManager();
+    std::map<std::string, ShapeVector> origin_shape;
+    const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
     auto &compile_cache_context = CompileCacheContext::GetInstance();
     auto use_compile_cache = compile_cache_context.UseCompileCache();
     if (use_compile_cache) {
       MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
-      if (!BuildFakeGraph(graph, tensor_order_map)) {
+      std::set<KernelGraphPtr> memo;
+      GEGraphOptimization::GetInstance().OptimizeGEGraph(kg, &memo);
+      if (!BuildFakeGraph(kg)) {
         return false;
       }
     } else {
-      GEGraphOptimization::GetInstance().OptimizeGEGraph(kg);
-      (void)BuildDFGraph(kg, tensor_order_map, false);
+      (void)BuildGraph(kg, tensor_order_map);
     }
     SetDynamicShapeAttr(kg);
     AllocInputHostMemory(kg);
@@ -867,7 +1092,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     }
     // copy init weight to device
     RunGEInitGraph(kg);
-    RevertOriginShape(kg, m_origin_shape);
+    RevertOriginShape(kg, origin_shape);
     return true;
   }
 }
@@ -909,6 +1134,54 @@ void SetOutputs(const std::vector<KernelWithIndex> &graph_outputs,
   }
 }
 
+void SetOutput(GeDeviceResManager *res_manager, GeTensor *ge_output, const AnfNodePtr &output_node, size_t idx) {
+  if (output_node->isa<ValueNode>()) {
+    auto &&ge_data_uni = ge_output->ResetData();
+    auto deleter = ge_data_uni.get_deleter();
+    auto ge_data = ge_data_uni.release();
+    deleter(ge_data);
+    return;
+  }
+  auto actual_shapes = ge_output->GetTensorDesc().GetShape().GetDims();
+  for (size_t i = 0; i < actual_shapes.size(); ++i) {
+    if (actual_shapes[i] < 0) {
+      MS_LOG(EXCEPTION) << "Output shape must be greater than 0, but got " << actual_shapes;
+    }
+  }
+  auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, idx, false);
+  output_addr->SetSize(ge_output->GetSize());
+  auto &&ge_data_uni = ge_output->ResetData();
+  auto deleter = ge_data_uni.get_deleter();
+  auto ge_data = ge_data_uni.release();
+  MS_EXCEPTION_IF_NULL(ge_data);
+  output_addr->set_is_ptr_persisted(false);
+  output_addr->set_from_mem_pool(false);
+  output_addr->set_deleter(deleter);
+  output_addr->set_ptr(ge_data);
+  auto placement = ge_output->GetTensorDesc().GetPlacement();
+  if (placement == ::ge::kPlacementHost) {
+    MS_LOG(DEBUG) << output_node->DebugString() << "'s output data's placement is host";
+    size_t size = ge_output->GetSize();
+    void *mem = res_manager->AllocateMemory(size);
+    if (mem == nullptr) {
+      MS_LOG(EXCEPTION) << "Allocate memory failed, memory size:" << size
+                        << ", output_node: " << output_node->ToString();
+    }
+    output_addr->set_from_mem_pool(true);
+    output_addr->set_ptr(mem);
+    auto *ascend_addr = dynamic_cast<AscendDeviceAddress *>(output_addr.get());
+    MS_EXCEPTION_IF_NULL(ascend_addr);
+    ascend_addr->SyncHostToDevice(size, ge_data);
+  }
+  // Update shape in kernel tensor.
+  const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, idx);
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  kernel_tensor->SetShapeVector(actual_shapes);
+  MS_LOG(INFO) << "[ZeroCopy] Update output " << output_node->DebugString() << " address to "
+               << output_addr->GetMutablePtr() << ", shape:" << actual_shapes
+               << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format();
+}
+
 size_t GeGraphExecutor::GetGraphFeatureMemory(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
@@ -927,11 +1200,29 @@ size_t GeGraphExecutor::GetGraphFeatureMemory(const FuncGraphPtr &graph) const {
   AscendMemAdapter::GetInstance().UpdateActualPeakMemory(total_memory_size);
   return feature_memory_size;
 }
+int64_t GeGraphExecutor::CurGraphSinkSize(std::string graph_name) {
+  int64_t sink_size = -1;
+  auto result = graph_sink_size_.find(graph_name);
+  if (result != graph_sink_size_.end()) {
+    sink_size = result->second;
+  } else {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE &&
+        ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
+      sink_size = ConfigManager::GetInstance().iter_num();
+    }
+    MS_LOG(INFO) << "Graph [" << graph_name << "] sink size is " << sink_size;
+    graph_sink_size_.insert(std::pair(graph_name, sink_size));
+  }
+  return sink_size;
+}
 
-bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) const {
+bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
-  MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
+  RunInitGraph(graph_name);
+  MS_LOG(INFO) << "GE run graph start in ref mode, graph: " << graph_name << ".";
   (void)ResManager()->BindDeviceToCurrentThread(false);
 
   // call ge rungraph
@@ -947,15 +1238,7 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
   std::vector<GeTensor> ge_outputs = GenerateOutputGeTensor(kg);
 
   bool is_dynamic_shape = kg->is_dynamic_shape();
-  if (is_dynamic_shape) {
-    transform::Status ret =
-      transform::RegisterExternalAllocator(graph_runner, ResManager()->GetStream(), ResManager()->GetAllocator());
-    if (ret != transform::Status::SUCCESS) {
-      MS_LOG(EXCEPTION) << "Exec graph failed";
-    }
-  }
-
-  if (AscendMemAdapter::GetInstance().IsMemoryPoolRecycle()) {
+  if (IsMemoryPoolRecycle() && !is_dynamic_shape) {
     auto max_static_memory_size = ResManager()->GetMaxUsedMemorySize();
     auto iter = feature_memorys.find(graph_name);
     if (iter == feature_memorys.end()) {
@@ -965,6 +1248,12 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     size_t total_memory_size = max_static_memory_size + feature_memory_size;
     size_t max_hbm_memory_size = static_cast<size_t>(AscendMemAdapter::GetInstance().GetMsUsedHbmSize());
     AscendMemAdapter::GetInstance().UpdateActualPeakMemory(total_memory_size);
+    if (common::IsNeedMemoryStatistic()) {
+      MS_LOG(WARNING) << "Now Memory Status, graph: " << graph_name
+                      << ", max_static_memory_size: " << max_static_memory_size
+                      << ", feature_memory_size: " << feature_memory_size
+                      << ", max_hbm_memory_size: " << max_hbm_memory_size;
+    }
     if (total_memory_size > max_hbm_memory_size) {
       MS_LOG(EXCEPTION) << "Memory pool not enough, graph: " << graph_name
                         << ", max_static_memory_size: " << max_static_memory_size
@@ -983,50 +1272,12 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
       MS_LOG(EXCEPTION) << "Exec graph failed";
     }
   }
-
   if (is_dynamic_shape) {
     auto sync_ret = ResManager()->SyncStream();
     if (!sync_ret) {
       MS_LOG(EXCEPTION) << "Sync stream failed";
     }
-    transform::Status ret = transform::UnregisterExternalAllocator(graph_runner, ResManager()->GetStream());
-    if (ret != transform::Status::SUCCESS) {
-      MS_LOG(EXCEPTION) << "Exec graph failed";
-    }
-    MS_LOG(INFO) << "Run unregister external allocator finish, graph name: " << graph_name;
   }
-  // copy output from host to device
-  auto graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
-  size_t real_output_size = 0;
-  for (size_t i = 0; i < graph_outputs.size(); ++i) {
-    const auto &[output_node, idx] = common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_outputs[i]);
-    MS_EXCEPTION_IF_NULL(output_node);
-    if (HasAbstractMonad(output_node)) {
-      continue;
-    }
-    real_output_size++;
-    if (is_dynamic_shape) {
-      auto real_index = output_node->isa<ValueNode>() ? 0 : idx;
-      auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, real_index, false);
-      auto host_type = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
-      output_addr->SetSize(ge_outputs[i].GetSize());
-      auto actual_shapes = ge_outputs[i].GetTensorDesc().GetShape().GetDims();
-      auto &&ge_data_uni = ge_outputs[i].ResetData();
-      auto deleter = ge_data_uni.get_deleter();
-      auto ge_data = ge_data_uni.release();
-      MS_EXCEPTION_IF_NULL(ge_data);
-      output_addr->set_is_ptr_persisted(false);
-      output_addr->set_from_mem_pool(false);
-      output_addr->set_deleter(deleter);
-      output_addr->set_ptr(ge_data);
-      UpdateOutputNodeShape(output_node, idx, host_type, actual_shapes);
-    }
-  }
-  if (real_output_size != ge_outputs.size()) {
-    MS_LOG(EXCEPTION) << "Invalid output size, graph's size " << real_output_size << " tensor size "
-                      << ge_outputs.size();
-  }
-
   ClearForwardOutputAddress(kg, device_context_);
   return true;
 }
@@ -1036,13 +1287,14 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
                                const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
-  MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
+  profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 0);
   if (IsEnableRefMode()) {
     if (!RunGraphRefMode(graph, inputs)) {
+      profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 1);
       return false;
     }
   } else {
-    profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 0);
+    MS_LOG(INFO) << "GE run graph start, graph: " << graph_name << ".";
     // copy input from device to host
     const auto &cur_inputs = graph->get_inputs();
     std::vector<tensor::TensorPtr> input_tensors;
@@ -1110,7 +1362,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     ConfigManager::GetInstance().ResetIterNum();
   }
   profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 1);
-  MS_LOG(DEBUG) << "GE run graph end.";
+  MS_LOG(INFO) << "GE run graph end.";
   return true;
 }
 
@@ -1122,9 +1374,9 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
   MS_EXCEPTION_IF_NULL(context);
   if (context->CanDump(kIntroductory)) {
     if (context->CanDump(kFully)) {
-      draw::Draw("anf_graph.dot", anf_graph);  // for debug
+      draw::Draw("anf_graph_before_build_df_graph.dot", anf_graph);  // for debug
     }
-    DumpIR("anf_graph.ir", anf_graph, true);
+    DumpIR("anf_graph_before_build_df_graph.ir", anf_graph, true, kWholeStack);
   }
 #endif
 
@@ -1133,16 +1385,18 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
     return nullptr;
   }
 
+#ifdef ENABLE_DUMP_IR
+  if (context->CanDump(kIntroductory)) {
+    if (context->CanDump(kFully)) {
+      draw::Draw("anf_graph_after_build_df_graph.dot", anf_graph);  // for debug
+    }
+    DumpIR("anf_graph_after_build_df_graph.ir", anf_graph, true, kWholeStack);
+  }
+#endif
+
   if (export_air) {
     // export air can't use session->AddGraph, it will cause atc error.
     return anf_graph;
-  }
-
-  GeDeviceResManager::CreateSessionAndGraphRunner();
-  auto graph_runner = transform::GetGraphRunner();
-  if (graph_runner == nullptr) {
-    MS_LOG(ERROR) << "Can not found GraphRunner";
-    return nullptr;
   }
 
   return anf_graph;
@@ -1151,27 +1405,22 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
 std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPtr &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_inputs;
-  auto iter = input_datas_.find(kernel_graph);
+  auto iter = input_datas_.find(kernel_graph.get());
   if (iter == input_datas_.end()) {
     return ge_inputs;
   }
   const auto &input_datas = iter->second.ge_inputs;
   ge_inputs = input_datas;
-  bool is_dynamic_shape = kernel_graph->is_dynamic_shape();
   for (auto &kv : iter->second.need_update_input) {
-    auto output_addr = AnfAlgo::GetMutableOutputAddr(kv.first, 0, false);
+    auto input_node = kv.first.lock();
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto output_addr = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
     MS_EXCEPTION_IF_NULL(output_addr);
-    auto shapes = trans::GetRuntimePaddingShape(kv.first, 0);
-    auto host_type = common::AnfAlgo::GetOutputInferDataType(kv.first, 0);
-    auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(shapes, host_type, kOpFormat_DEFAULT);
-    MS_EXCEPTION_IF_NULL(ge_tensor_desc);
-    ge_tensor_desc->SetPlacement(::ge::kPlacementDevice);
-    (void)ge_inputs[kv.second].SetTensorDesc(*ge_tensor_desc);
     if (output_addr->GetMutablePtr() == nullptr) {
       // alloc static memory for unused inputs
       // error in ge when set nullptr into ge tensor
-      std::vector<size_t> shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kv.first, 0));
-      size_t type_size = GetTypeByte(TypeIdToType(common::AnfAlgo::GetOutputInferDataType(kv.first, 0)));
+      std::vector<size_t> shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(input_node, 0));
+      size_t type_size = GetTypeByte(TypeIdToType(common::AnfAlgo::GetOutputInferDataType(input_node, 0)));
       size_t memory_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>{});
       MS_EXCEPTION_IF_NULL(ResManager());
       auto memory = ResManager()->AllocateMemory(memory_size);
@@ -1179,27 +1428,24 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
       output_addr->SetSize(memory_size);
       if (common::IsNeedProfileMemory()) {
         MS_LOG(WARNING) << "Need Profile Memory, alloc type: UnusedInput, size:" << memory_size
-                        << ", graph: " << kernel_graph->ToString() << ", node: " << kv.first->fullname_with_scope()
+                        << ", graph: " << kernel_graph->ToString() << ", node: " << input_node->fullname_with_scope()
                         << ", device address addr: " << memory;
       }
     }
     if (kv.second >= ge_inputs.size()) {
-      MS_LOG(EXCEPTION) << kv.first->DebugString() << ", index: " << kv.second << " is greater than "
+      MS_LOG(EXCEPTION) << input_node->DebugString() << ", index: " << kv.second << " is greater than "
                         << ge_inputs.size();
     }
-    MS_LOG(DEBUG) << "[ZeroCopy] Update input " << kv.first->DebugString() << " address to "
-                  << output_addr->GetMutablePtr();
-    size_t memory_size = output_addr->GetSize();
-    if (is_dynamic_shape) {
-      std::vector<size_t> shape = Convert2SizeT(shapes);
-      size_t type_size = GetTypeByte(TypeIdToType(host_type));
-      memory_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>{});
+    MS_LOG(INFO) << "[ZeroCopy] For Graph " << kernel_graph->ToString() << ", update input "
+                 << input_node->DebugString() << " address to " << output_addr->GetMutablePtr()
+                 << ", shape:" << output_addr->kernel_tensor()->GetShapeVector()
+                 << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format()
+                 << ", memory size: " << output_addr->GetSize();
+    if (output_addr->GetPtr() != ge_inputs[kv.second].GetData() ||
+        output_addr->GetSize() != ge_inputs[kv.second].GetSize()) {
+      (void)ge_inputs[kv.second].SetData(static_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
+                                         [](void *) {});
     }
-    (void)ge_inputs[kv.second].SetData(static_cast<uint8_t *>(output_addr->GetMutablePtr()), memory_size,
-                                       [](void *) {});
-  }
-  for (size_t i = 0; i < ge_inputs.size(); ++i) {
-    MS_LOG(INFO) << "Input " << i << " size " << ge_inputs[i].GetSize() << ", graph: " << kernel_graph->graph_id();
   }
   return ge_inputs;
 }
@@ -1207,7 +1453,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
 std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_outputs;
-  auto iter = output_datas_.find(kernel_graph);
+  auto iter = output_datas_.find(kernel_graph.get());
   if (iter == output_datas_.end()) {
     return ge_outputs;
   }
@@ -1222,7 +1468,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
       idx++;
       continue;
     }
-    auto &output_node = output.first;
+    auto output_node = output.first.lock();
     auto index = output.second;
     MS_EXCEPTION_IF_NULL(output_node);
     MS_EXCEPTION_IF_CHECK_FAIL(
@@ -1238,10 +1484,18 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
                         << "\n Maybe memory is not enough, memory statistics:"
                         << AscendMemAdapter::GetInstance().DevMemStatistics();
     }
-    MS_LOG(DEBUG) << "[ZeroCopy] Update output " << output_node->DebugString() << " out_idx " << index << " address to "
-                  << output_device_addr->GetMutablePtr();
-    ge_outputs[idx].SetData(reinterpret_cast<uint8_t *>(output_device_addr->GetMutablePtr()),
-                            output_device_addr->GetSize(), [](void *) {});
+    MS_LOG(INFO) << "[ZeroCopy] For Graph " << kernel_graph->ToString() << ", update output "
+                 << output_node->DebugString() << " out_idx " << index << " address to "
+                 << output_device_addr->GetMutablePtr()
+                 << ", shape:" << output_device_addr->kernel_tensor()->GetShapeVector()
+                 << ", type: " << TypeIdToString(output_device_addr->type_id())
+                 << ", format: " << output_device_addr->format() << ", memory size: " << output_device_addr->GetSize();
+
+    if (output_device_addr->GetPtr() != ge_outputs[idx].GetData() ||
+        output_device_addr->GetSize() != ge_outputs[idx].GetSize()) {
+      ge_outputs[idx].SetData(reinterpret_cast<uint8_t *>(output_device_addr->GetMutablePtr()),
+                              output_device_addr->GetSize(), [](void *) {});
+    }
     idx++;
   }
   MS_EXCEPTION_IF_CHECK_FAIL(idx == ge_outputs.size(),
@@ -1251,12 +1505,11 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
   return ge_outputs;
 }
 
-void GeGraphExecutor::RunInitGraph(const std::string &graph_name) const {
+void GeGraphExecutor::RunInitGraph(const std::string &graph_name) {
   transform::RunOptions run_options;
   run_options.name = "init_subgraph." + graph_name;
   if (transform::GetGraphByName(run_options.name) == nullptr) {
-    MS_LOG(WARNING) << "Can not find " << run_options.name
-                    << " sub graph, don't need data init subgraph in INFER mode.";
+    MS_LOG(INFO) << "Can not find " << run_options.name << " sub graph, don't need data init subgraph in INFER mode.";
     return;
   }
   auto graph_runner = transform::GetGraphRunner();
@@ -1264,6 +1517,12 @@ void GeGraphExecutor::RunInitGraph(const std::string &graph_name) const {
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
   }
 
+  auto cur_sink_size = CurGraphSinkSize(graph_name);
+  if (pre_sink_size_ == cur_sink_size) {
+    return;
+  }
+  pre_sink_size_ = cur_sink_size;
+  MS_LOG(INFO) << "Start run init graph: " << run_options.name << ", sink size:" << cur_sink_size;
   std::vector<transform::GeTensorPtr> ge_outputs;
   std::vector<transform::GeTensorPtr> ge_tensors;
   {

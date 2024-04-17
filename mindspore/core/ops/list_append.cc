@@ -85,6 +85,48 @@ AbstractBasePtr ListAppendInfer(const abstract::AnalysisEnginePtr &, const Primi
   return std::make_shared<abstract::AbstractList>(abs);
 }
 MIND_API_OPERATOR_IMPL(ListAppend, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ListAppend, prim::kPrimListAppend, ListAppendInfer, nullptr, true);
+
+class MIND_API AGListAppendInfer : public abstract::OpInferBase {
+ public:
+  // This is used for backend infer by kernel tensor.
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    auto seq_input = input_args[kIndex0];
+    auto item_input = input_args[kIndex1];
+
+    auto seq_shape = seq_input->GetShape();
+    MS_EXCEPTION_IF_NULL(seq_shape);
+    auto list_shape = seq_shape->cast<abstract::SequenceShapePtr>();
+    if (list_shape == nullptr) {
+      MS_LOG(EXCEPTION) << "Invalid shape, need list:" << seq_shape->ToString();
+    }
+    auto item_shape = item_input->GetShape();
+    auto list_shape_elements = list_shape->shape();
+    list_shape_elements.emplace_back(item_shape->Clone());
+    return std::make_shared<abstract::ListShape>(list_shape_elements);
+  }
+
+  // This is used for backend infer by kernel tensor.
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto seq_input = input_args[kIndex0];
+    auto item_input = input_args[kIndex1];
+
+    auto seq_type = seq_input->GetType();
+    MS_EXCEPTION_IF_NULL(seq_type);
+    auto list_type = seq_type->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(list_type);
+    auto item_type = item_input->GetType();
+    list_type->elements().emplace_back(item_type->Clone());
+    return std::make_shared<List>(list_type->elements());
+  }
+
+  // This is used for frontend infer by abstract.
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ListAppendInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ListAppend, prim::kPrimListAppend, AGListAppendInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -36,8 +36,11 @@ class Net(Cell):
         self.cum_max = P.Cummax(axis=-2)
         self.cum_min = P.Cummin(axis=-2)
         self.reversev2 = P.ReverseV2(axis=[-2])
+        self.log_softmax = P.LogSoftmax(axis=-2)
+        self.softmax = P.Softmax(axis=-2)
         self.lgamma = P.Lgamma()
         self.trunc = P.Trunc()
+        self.elu_act = P.Elu(alpha=1.0)
 
     def construct(self, x, y):
         out = self.add(x, self.weight)
@@ -48,6 +51,9 @@ class Net(Cell):
         out = self.reversev2(out)
         out = self.lgamma(out)
         out = self.trunc(out)
+        out = self.log_softmax(out)
+        out = self.softmax(out)
+        out = self.elu_act(out)
         return out
 
 
@@ -70,14 +76,20 @@ def test_cum_ops():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search("CumProd", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
         elif re.search("Cummax", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
         elif re.search("Cummin", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
         elif re.search("ReverseV2", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
         elif re.search("Lgamma", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
         elif re.search("Trunc", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
+        elif re.search("LogSoftmax", k) is not None:
+            assert v == [[2, 2, 1, 2],]
+        elif re.search("Softmax", k) is not None:
+            assert v == [[2, 2, 1, 2],]
+        elif re.search("Elu", k) is not None:
+            assert v == [[2, 2, 1, 2],]

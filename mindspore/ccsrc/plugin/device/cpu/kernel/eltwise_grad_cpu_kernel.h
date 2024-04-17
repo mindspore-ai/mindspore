@@ -38,14 +38,12 @@ class EltWiseGradCpuKernelMod : public NativeCpuKernelMod {
   explicit EltWiseGradCpuKernelMod(const std::string &kernel_name) : kernel_name_(kernel_name) {}
   ~EltWiseGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     if (is_null_input_) {
       return true;
     }
@@ -54,7 +52,7 @@ class EltWiseGradCpuKernelMod : public NativeCpuKernelMod {
                     << inputs.size() << " input(s) and " << outputs.size() << " output(s).";
       return false;
     }
-    if (outputs[0]->size == 0) {
+    if (outputs[0]->size() == 0) {
       MS_LOG(WARNING) << "For '" << kernel_name_ << "', the memory size of output must be greater than 0, but got 0.";
       return true;
     }

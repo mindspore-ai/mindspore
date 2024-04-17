@@ -15,14 +15,15 @@
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "nnacl/base/tile_base.h"
-#include "ops/tile.h"
 #include "ops/fusion/tile_fusion.h"
 #include "ops/op_name.h"
-using mindspore::ops::kNameTile;
 using mindspore::ops::kNameTileFusion;
 using mindspore::schema::PrimitiveType_TileFusion;
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr auto kNameTile = "Tile";
+}  // namespace
 OpParameter *PopulateTileOpParameter(const BaseOperatorPtr &base_operator) {
   auto param = reinterpret_cast<TileParameter *>(PopulateOpParameter<TileParameter>(base_operator));
   if (param == nullptr) {

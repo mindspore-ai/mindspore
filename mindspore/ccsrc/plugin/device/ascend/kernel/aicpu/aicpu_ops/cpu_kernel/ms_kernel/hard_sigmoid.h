@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_HARD_SIGMOID_H
 #define AICPU_KERNELS_NORMALIZED_HARD_SIGMOID_H
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -29,7 +29,7 @@ class HardSigmoidCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t HardSigmoidCompute(const CpuKernelContext &ctx);
+  uint32_t HardSigmoidCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

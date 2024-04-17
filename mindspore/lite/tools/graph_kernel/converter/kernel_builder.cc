@@ -71,7 +71,7 @@ bool KernelBuilder::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(EXCEPTION) << "Copy kernel.o to tensor data fail for " << cnode->fullname_with_scope();
     }
     custom_cnode->set_kernel_info(node->kernel_info_ptr());
-    manager->Replace(node, custom_cnode);
+    (void)manager->Replace(node, custom_cnode);
     if (akg_node != nullptr) {
       manager->AddEdge(custom_cnode, akg_node);
     }

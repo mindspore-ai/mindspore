@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+#include "inc/cust_cpu_utils.h"
+
 namespace aicpu {
 namespace {
 const std::map<Format, std::string> kFormatToStringMap = {
@@ -68,7 +70,7 @@ const std::map<Format, std::string> kFormatToStringMap = {
   {FORMAT_NULL, "NULL"}};
 }  // namespace
 
-std::string FormatToSerialString(Format format) {
+std::string FormatToSerialString(CpuKernelContext &ctx, Format format) {
   auto it = kFormatToStringMap.find(static_cast<Format>(GetPrimaryFormat(static_cast<int32_t>(format))));
   if (it != kFormatToStringMap.end()) {
     if (HasSubFormat(static_cast<int32_t>(format))) {
@@ -76,7 +78,7 @@ std::string FormatToSerialString(Format format) {
     }
     return it->second;
   } else {
-    KERNEL_LOG_ERROR("Format not support [%u]", format);
+    CUST_KERNEL_LOG_ERROR(ctx, "Format not support [%u]", format);
     return "UNDEFINED";
   }
 }
@@ -120,84 +122,88 @@ bool IsEmptyTensor(Tensor *tensor) {
   return false;
 }
 
-uint32_t NormalMathCheck(const CpuKernelContext &ctx) {
+uint32_t NormalMathCheck(CpuKernelContext &ctx) {
   const uint32_t kInputNum = 2;
   const uint32_t kOutputNum = 1;
 
   if ((ctx.GetInputsSize() != kInputNum) || (ctx.GetOutputsSize() != kOutputNum)) {
-    KERNEL_LOG_ERROR(
-      "[%s] Input size or Output size is unexpected,"
-      "expected input size [%u], real input size [%u],"
-      "expected output size [%u], real output size [%u]",
-      ctx.GetOpType().c_str(), kInputNum, ctx.GetInputsSize(), kOutputNum, ctx.GetOutputsSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "[%s] Input size or Output size is unexpected,"
+                          "expected input size [%u], real input size [%u],"
+                          "expected output size [%u], real output size [%u]",
+                          ctx.GetOpType().c_str(), kInputNum, ctx.GetInputsSize(), kOutputNum, ctx.GetOutputsSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
-  KERNEL_CHECK_NULLPTR(input_0, KERNEL_STATUS_PARAM_INVALID, "[%s] Get input[0] failed", ctx.GetOpType().c_str());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0, KERNEL_STATUS_PARAM_INVALID, "[%s] Get input[0] failed",
+                            ctx.GetOpType().c_str());
   Tensor *input_1 = ctx.Input(kSecondInputIndex);
-  KERNEL_CHECK_NULLPTR(input_1, KERNEL_STATUS_PARAM_INVALID, "[%s] Get input[1] failed", ctx.GetOpType().c_str());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_1, KERNEL_STATUS_PARAM_INVALID, "[%s] Get input[1] failed",
+                            ctx.GetOpType().c_str());
 
   if (input_0->GetDataType() != input_1->GetDataType()) {
-    KERNEL_LOG_ERROR(
-      "[%s] dtype of inputs not matched, input[0] data_type is [%d], "
-      "input[1] data_type is [%d]",
-      ctx.GetOpType().c_str(), input_0->GetDataType(), input_1->GetDataType());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "[%s] dtype of inputs not matched, input[0] data_type is [%d], "
+                          "input[1] data_type is [%d]",
+                          ctx.GetOpType().c_str(), input_0->GetDataType(), input_1->GetDataType());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   Tensor *output = ctx.Output(kFirstOutputIndex);
-  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "[%s] get output failed", ctx.GetOpType().c_str());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_PARAM_INVALID, "[%s] get output failed",
+                            ctx.GetOpType().c_str());
   return KERNEL_STATUS_OK;
 }
 
-uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num) {
+uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num) {
   if (inputs_num != kDynamicInput) {
-    KERNEL_CHECK_FALSE((ctx.GetInputsSize() >= inputs_num), KERNEL_STATUS_PARAM_INVALID,
-                       "[%s] need [%u] inputs, but got [%u].", ctx.GetOpType().c_str(), inputs_num,
-                       ctx.GetInputsSize());
+    CUST_KERNEL_CHECK_FALSE(ctx, (ctx.GetInputsSize() >= inputs_num), KERNEL_STATUS_PARAM_INVALID,
+                            "[%s] need [%u] inputs, but got [%u].", ctx.GetOpType().c_str(), inputs_num,
+                            ctx.GetInputsSize());
     for (uint32_t i = 0; i < inputs_num; ++i) {
       Tensor *input = ctx.Input(i);
-      KERNEL_CHECK_NULLPTR(input, KERNEL_STATUS_INNER_ERROR, "[%s] get input[%u] failed.", ctx.GetOpType().c_str(), i);
+      CUST_KERNEL_CHECK_NULLPTR(ctx, input, KERNEL_STATUS_INNER_ERROR, "[%s] get input[%u] failed.",
+                                ctx.GetOpType().c_str(), i);
       auto input_shape = input->GetTensorShape();
-      KERNEL_CHECK_NULLPTR(input_shape, KERNEL_STATUS_PARAM_INVALID, "%s input[%u] tensor shape is nullptr.",
-                           ctx.GetOpType().c_str(), i);
+      CUST_KERNEL_CHECK_NULLPTR(ctx, input_shape, KERNEL_STATUS_PARAM_INVALID, "%s input[%u] tensor shape is nullptr.",
+                                ctx.GetOpType().c_str(), i);
       if (!IsEmptyTensor(input)) {
         auto input_data = input->GetData();
-        KERNEL_CHECK_NULLPTR(input_data, KERNEL_STATUS_PARAM_INVALID, "%s input[%u] tensor data is nullptr.",
-                             ctx.GetOpType().c_str(), i);
+        CUST_KERNEL_CHECK_NULLPTR(ctx, input_data, KERNEL_STATUS_PARAM_INVALID, "%s input[%u] tensor data is nullptr.",
+                                  ctx.GetOpType().c_str(), i);
       }
     }
   }
 
   if (outputs_num != kDynamicOutput) {
-    KERNEL_CHECK_FALSE((ctx.GetOutputsSize() == outputs_num), KERNEL_STATUS_PARAM_INVALID,
-                       "[%s] need [%u] outputs, but got [%u].", ctx.GetOpType().c_str(), outputs_num,
-                       ctx.GetOutputsSize());
+    CUST_KERNEL_CHECK_FALSE(ctx, (ctx.GetOutputsSize() == outputs_num), KERNEL_STATUS_PARAM_INVALID,
+                            "[%s] need [%u] outputs, but got [%u].", ctx.GetOpType().c_str(), outputs_num,
+                            ctx.GetOutputsSize());
     for (uint32_t i = 0; i < outputs_num; ++i) {
       Tensor *output = ctx.Output(i);
-      KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_INNER_ERROR, "[%s] get output[%u] failed.", ctx.GetOpType().c_str(),
-                           i);
+      CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_INNER_ERROR, "[%s] get output[%u] failed.",
+                                ctx.GetOpType().c_str(), i);
       auto output_shape = output->GetTensorShape();
-      KERNEL_CHECK_NULLPTR(output_shape, KERNEL_STATUS_PARAM_INVALID, "%s output[%u] tensor shape is nullptr.",
-                           ctx.GetOpType().c_str(), i);
+      CUST_KERNEL_CHECK_NULLPTR(ctx, output_shape, KERNEL_STATUS_PARAM_INVALID,
+                                "%s output[%u] tensor shape is nullptr.", ctx.GetOpType().c_str(), i);
       if (!IsEmptyTensor(output)) {
         auto output_data = output->GetData();
-        KERNEL_CHECK_NULLPTR(output_data, KERNEL_STATUS_PARAM_INVALID, "%s output[%u] tensor data is nullptr.",
-                             ctx.GetOpType().c_str(), i);
+        CUST_KERNEL_CHECK_NULLPTR(ctx, output_data, KERNEL_STATUS_PARAM_INVALID,
+                                  "%s output[%u] tensor data is nullptr.", ctx.GetOpType().c_str(), i);
       }
     }
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num,
+uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num,
                      const std::vector<std::string> &attr_names) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, inputs_num, outputs_num), "Check Greater params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, inputs_num, outputs_num), "Check Greater params failed.");
   for (auto const &attr_name : attr_names) {
     auto attr = ctx.GetAttr(attr_name);
-    KERNEL_CHECK_NULLPTR(attr, KERNEL_STATUS_PARAM_INVALID, "%s get attr[%s] is nullptr.", ctx.GetOpType().c_str(),
-                         attr_name.c_str());
+    CUST_KERNEL_CHECK_NULLPTR(ctx, attr, KERNEL_STATUS_PARAM_INVALID, "%s get attr[%s] is nullptr.",
+                              ctx.GetOpType().c_str(), attr_name.c_str());
   }
   return KERNEL_STATUS_OK;
 }
@@ -236,43 +242,45 @@ std::string DTypeStr(DataType dtype) {
   }
 }
 
-uint32_t CheckTensorTypeSame(const std::map<std::string, DataType> &types, const DataType &check_type,
-                             const std::string &prim_name) {
+uint32_t CheckTensorTypeSame(CpuKernelContext &ctx, const std::map<std::string, DataType> &types,
+                             const DataType &check_type, const std::string &prim_name) {
   if (types.empty()) {
-    KERNEL_LOG_ERROR("Trying to use the function to check a empty types map!");
+    CUST_KERNEL_LOG_ERROR(ctx, "Trying to use the function to check a empty types map!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   for (const auto type : types) {
     auto _type_ = type.second;
     if (_type_ != check_type) {
-      KERNEL_LOG_ERROR(
-        "For primitive[%s]'s input arguments [%s] type should equal to [%s] , "
-        "but get the real type [%s].",
-        prim_name.c_str(), type.first.c_str(), DTypeStr(check_type).c_str(), DTypeStr(_type_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "For primitive[%s]'s input arguments [%s] type should equal to [%s] , "
+                            "but get the real type [%s].",
+                            prim_name.c_str(), type.first.c_str(), DTypeStr(check_type).c_str(),
+                            DTypeStr(_type_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CheckTensorShapeSame(const std::map<std::string, TensorShapePtr> &shapes,
+uint32_t CheckTensorShapeSame(CpuKernelContext &ctx, const std::map<std::string, TensorShapePtr> &shapes,
                               const std::vector<int64_t> &check_shape, const std::string &prim_name) {
   if (shapes.empty()) {
-    KERNEL_LOG_ERROR("Trying to use the function to check a empty types map!");
+    CUST_KERNEL_LOG_ERROR(ctx, "Trying to use the function to check a empty types map!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   for (const auto shape : shapes) {
     auto _shape_ptr_ = shape.second;
-    KERNEL_CHECK_NULLPTR(_shape_ptr_, KERNEL_STATUS_PARAM_INVALID,
-                         "For primitive[%s]'s input arguments [%s] TensorShapePtr "
-                         "should not be nullptr.",
-                         prim_name.c_str(), shape.first.c_str());
+    CUST_KERNEL_CHECK_NULLPTR(ctx, _shape_ptr_, KERNEL_STATUS_PARAM_INVALID,
+                              "For primitive[%s]'s input arguments [%s] TensorShapePtr "
+                              "should not be nullptr.",
+                              prim_name.c_str(), shape.first.c_str());
     auto _shape_ = _shape_ptr_->GetDimSizes();
     if (!ShapeVectorIsSame(_shape_, check_shape)) {
-      KERNEL_LOG_ERROR(
-        "For primitive[%s]'s input arguments [%s] shape should equal to (%s) , "
-        "but get the real shape (%s).",
-        prim_name.c_str(), shape.first.c_str(), VectorToString(check_shape).c_str(), VectorToString(_shape_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "For primitive[%s]'s input arguments [%s] shape should equal to (%s) , "
+                            "but get the real shape (%s).",
+                            prim_name.c_str(), shape.first.c_str(), VectorToString(check_shape).c_str(),
+                            VectorToString(_shape_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }

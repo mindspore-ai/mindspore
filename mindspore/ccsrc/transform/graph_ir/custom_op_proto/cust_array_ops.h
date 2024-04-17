@@ -22,13 +22,20 @@
 /* clang-format off */
 
 namespace ge {
-REG_CUST_OP(Meshgrid)
+REG_OP(Meshgrid)
   .DYNAMIC_INPUT(x, TensorType({DT_INT8, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32,
                                 DT_UINT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BOOL}))
   .DYNAMIC_OUTPUT(y, TensorType({DT_INT8, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32,
                                  DT_UINT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BOOL}))
   .ATTR(indexing, String, "")
-  .CUST_OP_END_FACTORY_REG(Meshgrid)
+  .OP_END_FACTORY_REG(Meshgrid)
+
+REG_OP(UniqueWithPad)
+  .INPUT(x, TensorType({DT_INT32, DT_INT64}))
+  .INPUT(pad_num, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(y, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(idx, TensorType({DT_INT32, DT_INT64}))
+  .OP_END_FACTORY_REG(UniqueWithPad)
 
 REG_CUST_OP(SliceGrad)
   .INPUT(dy, TensorType({DT_BOOL, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, DT_UINT64,
@@ -50,13 +57,20 @@ REG_CUST_OP(MaskedSelectGrad)
 REG_CUST_OP(GatherDGradV2)
   .REQUIRED_ATTR(dim, Int)
   .INPUT(x, TensorType({DT_BOOL, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, DT_UINT64,
-                        DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+                        DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BFLOAT16}))
   .INPUT(index, TensorType({DT_INT32, DT_INT64}))
   .INPUT(grad, TensorType({DT_BOOL, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, DT_UINT64,
-                           DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+                           DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BFLOAT16}))
   .OUTPUT(output, TensorType({DT_BOOL, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, DT_UINT64,
-                              DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+                              DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BFLOAT16}))
   .CUST_OP_END_FACTORY_REG(GatherDGradV2)
+
+REG_CUST_OP(AffineGrid)
+  .INPUT(theta, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(output_size, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(output, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .REQUIRED_ATTR(align_corners, Bool)
+  .CUST_OP_END_FACTORY_REG(AffineGrid)
 
 REG_CUST_OP(AffineGridGrad)
   .INPUT(y_grad, TensorType({DT_FLOAT, DT_FLOAT16}))
@@ -76,7 +90,7 @@ REG_CUST_OP(HammingWindow)
 REG_CUST_OP(IndexFill)
   .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
                         DT_UINT32, DT_UINT64, DT_UINT8}))
-  .INPUT(dim, TensorType({DT_INT32}))
+  .INPUT(dim, TensorType({DT_INT64, DT_INT32}))
   .INPUT(indices, TensorType({DT_INT32}))
   .INPUT(value, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
                             DT_UINT32, DT_UINT64, DT_UINT8}))
@@ -103,6 +117,7 @@ REG_CUST_OP(LogSpace)
   .OUTPUT(y, TensorType({DT_FLOAT, DT_FLOAT16}))
   .REQUIRED_ATTR(steps, Int)
   .REQUIRED_ATTR(base, Int)
+  .REQUIRED_ATTR(dtype, Type)
   .CUST_OP_END_FACTORY_REG(LogSpace)
 
 REG_CUST_OP(Expand)
@@ -110,5 +125,32 @@ REG_CUST_OP(Expand)
     .INPUT(shape, TensorType({DT_INT16, DT_INT32, DT_INT64}))
     .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT8, DT_BOOL}))
     .CUST_OP_END_FACTORY_REG(Expand)
+
+REG_CUST_OP(Im2col)
+  .INPUT(x, TensorType::RealNumberType())
+  .OUTPUT(y, TensorType::RealNumberType())
+  .REQUIRED_ATTR(ksizes, ListInt)
+  .ATTR(strides, ListInt, {1})
+  .ATTR(dilations, ListInt, {1})
+  .ATTR(padding_mode, String, "CALCULATED")
+  .ATTR(pads, ListInt, {0})
+  .CUST_OP_END_FACTORY_REG(Im2col)
+
+REG_CUST_OP(Coalesce)
+  .INPUT(x_indices, TensorType({DT_INT64}))
+  .INPUT(x_values, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
+  .INPUT(x_shape, TensorType({DT_INT64}))
+  .OUTPUT(y_indices, TensorType({DT_INT64}))
+  .OUTPUT(y_values, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
+  .OUTPUT(y_shape, TensorType({DT_INT64}))
+  .CUST_OP_END_FACTORY_REG(Coalesce)
+
+REG_CUST_OP(Padding)
+  .INPUT(x, TensorType({DT_BOOL, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
+                        DT_UINT32, DT_UINT64, DT_UINT8}))
+  .OUTPUT(y, TensorType({DT_BOOL, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
+                         DT_UINT32, DT_UINT64, DT_UINT8}))
+  .REQUIRED_ATTR(pad_dim_size, Int)
+  .CUST_OP_END_FACTORY_REG(Padding)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_ARRAY_OPS_H_

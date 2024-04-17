@@ -54,6 +54,7 @@ class ParallelValidator:
         >>> assert validator.check_graph_structure(sub_graph, graph_id=1)
 
     """
+
     def __init__(self, net, phase):
         self._parameter_layout_dict = net.parameter_layout_dict
         self._graph_info_dict = _cell_graph_executor._graph_executor.get_parallel_graph_info(phase)
@@ -73,7 +74,7 @@ class ParallelValidator:
 
         if param_name not in self._parameter_layout_dict.keys():
             return False
-        return self._parameter_layout_dict[param_name] == layout
+        return self._parameter_layout_dict[param_name][:6] == layout
 
     def check_parameter_shape(self, param_name: str, shape: [tuple, list]) -> bool:
         """Verify parameter shape"""
@@ -124,7 +125,10 @@ class ParallelValidator:
             return False
 
         for i in range(inputs_len):
-            if inputs[i].find(expect_inputs[i]) == -1:
+            if isinstance(inputs[i], int):
+                if not isinstance(expect_inputs[i], int) or inputs[i] != expect_inputs[i]:
+                    return False
+            elif inputs[i].find(expect_inputs[i]) == -1:
                 return False
         return True
 
@@ -148,7 +152,7 @@ class ParallelValidator:
                     if inputs[j] == expect_inputs[i]:
                         return True
                     continue
-                if inputs[j].find(expect_inputs[i]) != -1:
+                if isinstance(expect_inputs[i], str) and inputs[j].find(expect_inputs[i]) != -1:
                     found = True
                     break
             if found is False:

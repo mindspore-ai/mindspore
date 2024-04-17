@@ -21,30 +21,9 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore::kernel {
-namespace {
-size_t GetBaseTypeSize(TypeId type_id) {
-  switch (type_id) {
-    case kNumberTypeFloat16:
-      return sizeof(float16);
-    case kNumberTypeFloat32:
-      return sizeof(float);
-    default:
-      MS_LOG(EXCEPTION) << "For Scale Grad input type is error: " << type_id;
-  }
-}
-
-size_t GetInputSize(const std::vector<int64_t> &input_shape, const TypeId &type_id) {
-  size_t input_size = GetBaseTypeSize(type_id);
-  for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size *= LongToSize(input_shape[i]);
-  }
-  return input_size;
-}
-}  // namespace
-
 template <typename T>
-void ScaleGradCpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs,
+void ScaleGradCpuKernelMod::LaunchScaleGradPerGrad(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs,
                                                    const float16 *scale_addr_half, const float *scale_addr_float,
                                                    size_t index) {
   T *input_addr = GetDeviceAddress<T>(inputs, index);
@@ -57,7 +36,7 @@ void ScaleGradCpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr>
     x1 = static_cast<T>(*scale_addr_float);
   }
 
-  size_t lens = outputs[index]->size > 0 ? static_cast<size_t>(outputs[index]->size / sizeof(T)) : 1;
+  size_t lens = outputs[index]->size() > 0 ? static_cast<size_t>(outputs[index]->size() / sizeof(T)) : 1;
   auto task = [input_addr, x1, output_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       output_addr[i] = input_addr[i] * x1;
@@ -66,8 +45,9 @@ void ScaleGradCpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr>
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
 
-bool ScaleGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+bool ScaleGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
   float16 *scale_addr_half = nullptr;
   float *scale_addr_float = nullptr;
   if (input_info_.back() == kNumberTypeFloat16) {
@@ -99,25 +79,16 @@ std::vector<KernelAttr> ScaleGradCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool ScaleGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ScaleGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool ScaleGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto input_size = inputs.size();
   for (size_t index = 0; index < input_size; index++) {
-    auto type_id = inputs[index]->GetDtype();
+    auto type_id = inputs[index]->dtype_id();
     input_info_.push_back(type_id);
-    auto size = GetInputSize(inputs[index]->GetShapeVector(), type_id);
-    input_size_list_.push_back(size);
-  }
 
-  if (input_size < 1) {
-    MS_LOG(EXCEPTION) << "Operator " << kernel_name_ << " input size: " << input_size << " less than 1.";
-  }
-  for (size_t index = 0; index < input_size - 1; index++) {
-    output_size_list_.push_back(input_size_list_[index]);
+    if (index < input_size - 1) {
+      output_size_list_.push_back(inputs[index]->size());
+    }
   }
 
   return true;

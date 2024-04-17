@@ -21,7 +21,7 @@ import sys
 import pytest
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_allreduce():
@@ -41,7 +41,7 @@ def test_allreduce():
     assert return_code == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_allreduce_small_scale_data():

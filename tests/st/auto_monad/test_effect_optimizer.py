@@ -37,7 +37,7 @@ class AdamNet(nn.Cell):
         return self.var, self.m, self.v
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -80,7 +80,7 @@ class ApplyAdaMaxNet(nn.Cell):
         return self.var, self.m, self.v
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -121,7 +121,7 @@ class ApplyAdadeltaNet(nn.Cell):
         return self.var, self.accum, self.accum_update
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -306,7 +306,7 @@ class ApplyFtrlNet(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -343,7 +343,7 @@ class ApplyGradientDescentNet(nn.Cell):
         return self.var
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -482,7 +482,7 @@ class ApplyProximalGradientDescentNet(nn.Cell):
         return self.var
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -743,7 +743,7 @@ class SparseApplyAdagradV2Net(nn.Cell):
         return self.var, self.accum
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -780,7 +780,7 @@ class SparseApplyFtrlNet(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -818,7 +818,7 @@ class SparseApplyFtrlV2Net(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -853,7 +853,7 @@ class SparseApplyProximalAdagradNet(nn.Cell):
         return self.var, self.accum
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -889,7 +889,7 @@ class SGDNet(nn.Cell):
         return self.var
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -926,7 +926,7 @@ class ApplyProximalAdagradConstantNet(nn.Cell):
         return self.const
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -963,7 +963,7 @@ class MulSGDNet(nn.Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

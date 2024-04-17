@@ -84,7 +84,7 @@ def test_hypermap_noleaf_list_length():
         main_noleaf([tensor1], [tensor2, tensor2])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -101,7 +101,7 @@ def test_hypermap_noleaf_list_tuple():
         main_noleaf([tensor1], (tensor2, tensor2))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -139,7 +139,7 @@ def test_tuple_slice_stop_index():
         print("output:", output)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -183,7 +183,7 @@ def test_tuple_slice_start_index():
         print("output:", output)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

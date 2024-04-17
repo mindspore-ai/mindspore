@@ -86,7 +86,7 @@ class AdgradNetVmap(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_apply_proximal_adagrad_op_vmap():
@@ -139,7 +139,7 @@ class AdgradNetVmap2(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_apply_proximal_adagrad_op_vmap2():

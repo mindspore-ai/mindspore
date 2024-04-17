@@ -15,8 +15,10 @@
  */
 
 #include "src/extendrt/kernel/ascend/model/acl_allocator.h"
+#include <utility>
 #include "src/common/log_adapter.h"
-#include "acl/acl.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -30,7 +32,7 @@ uint32_t AclAllocator::GetDeviceCount() {
   if (device_count_ != 0) {
     return device_count_;
   }
-  auto ret = aclrtGetDeviceCount(&device_count_);
+  auto ret = CALL_ASCEND_API(aclrtGetDeviceCount, &device_count_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "GetDeviceCount failed.";
     return 0;
@@ -39,7 +41,7 @@ uint32_t AclAllocator::GetDeviceCount() {
 }
 
 void AclAllocator::ResetDeviceId(int device_id) {
-  auto ret = aclrtSetDevice(device_id);
+  auto ret = CALL_ASCEND_API(aclrtSetDevice, device_id);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclrt Set device failed.";
     return;
@@ -49,10 +51,10 @@ void AclAllocator::ResetDeviceId(int device_id) {
 
 int AclAllocator::GetCurrentDeviceId() {
   int32_t current_device_id;
-  auto ret = aclrtGetDevice(&current_device_id);
+  auto ret = CALL_ASCEND_API(aclrtGetDevice, &current_device_id);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(INFO) << "not init device id, need set device id before get device id.";
-    ret = aclrtSetDevice(0);
+    ret = CALL_ASCEND_API(aclrtSetDevice, 0);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclrtSetDevice failed.";
       return -1;
@@ -80,13 +82,13 @@ void *AclAllocator::Malloc(size_t size, int device_id) {
     MS_LOG(ERROR) << "device id is wrong, device id: " << device_id << ", device count: " << device_count;
     return nullptr;
   }
-  auto ret = aclrtSetDevice(device_id);
+  auto ret = CALL_ASCEND_API(aclrtSetDevice, device_id);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclrtSetDevice failed.";
     return nullptr;
   }
   void *device_data = nullptr;
-  auto acl_ret = aclrtMalloc(&device_data, size, ACL_MEM_MALLOC_HUGE_FIRST);
+  auto acl_ret = CALL_ASCEND_API(aclrtMalloc, &device_data, size, ACL_MEM_MALLOC_HUGE_FIRST);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMalloc failed, err_code = " << acl_ret;
     return nullptr;
@@ -97,13 +99,13 @@ void *AclAllocator::Malloc(size_t size, int device_id) {
 
 void AclAllocator::Free(void *device_data, int device_id) {
   if (device_data != nullptr) {
-    auto ret = aclrtSetDevice(device_id);
+    auto ret = CALL_ASCEND_API(aclrtSetDevice, device_id);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclrtSetDevice failed.";
       return;
     }
     MS_LOG(DEBUG) << "aclrtFree device data addr: " << device_data << ", device id: " << device_id;
-    aclrtFree(device_data);
+    CALL_ASCEND_API(aclrtFree, device_data);
     device_data = nullptr;
   }
 }
@@ -113,22 +115,64 @@ void *AclAllocator::MallocHost(size_t size) {
     MS_LOG(WARNING) << "malloc host data size is zero.";
     return nullptr;
   }
+  std::unique_lock<std::mutex> l(acl_allocator_mutex_);
+  auto itr = free_host_data_.lower_bound(size);
+  if (itr != free_host_data_.end()) {
+    auto membuf = itr->second;
+    (void)free_host_data_.erase(itr);
+    allocated_host_data_[membuf->buf] = membuf;
+    return membuf->buf;
+  }
   void *host_data = nullptr;
-  auto acl_ret = aclrtMallocHost(&host_data, size);
+  auto acl_ret = CALL_ASCEND_API(aclrtMallocHost, &host_data, size);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMallocHost failed, err_code = " << acl_ret;
     return nullptr;
   }
-  MS_LOG(DEBUG) << "aclrtMallocHost data addr: " << host_data;
+  auto membuf = reinterpret_cast<MemBuf *>(malloc(sizeof(MemBuf)));
+  if (membuf == nullptr) {
+    MS_LOG(ERROR) << "malloc membuf failed.";
+    return nullptr;
+  }
+  membuf->size = size;
+  membuf->buf = host_data;
+  allocated_host_data_[host_data] = membuf;
   return host_data;
 }
 
 void AclAllocator::FreeHost(void *host_data) {
-  if (host_data != nullptr) {
-    MS_LOG(DEBUG) << "aclrtFreeHost data addr: " << host_data;
-    aclrtFreeHost(host_data);
-    host_data = nullptr;
+  if (host_data == nullptr) {
+    MS_LOG(WARNING) << "The data is nullptr.";
+    return;
   }
+  std::unique_lock<std::mutex> l(acl_allocator_mutex_);
+  auto itr = allocated_host_data_.find(host_data);
+  if (itr != allocated_host_data_.end()) {
+    auto membuf = itr->second;
+    (void)allocated_host_data_.erase(itr);
+    (void)free_host_data_.insert(std::make_pair(membuf->size, membuf));
+    return;
+  }
+  CALL_ASCEND_API(aclrtFreeHost, host_data);
+  host_data = nullptr;
+}
+
+AclAllocator::~AclAllocator() {
+  std::unique_lock<std::mutex> l(acl_allocator_mutex_);
+  for (auto &pair : allocated_host_data_) {
+    if (pair.second != nullptr) {
+      CALL_ASCEND_API(aclrtFreeHost, pair.second->buf);
+      free(pair.second);
+    }
+  }
+  allocated_host_data_.clear();
+  for (auto &pair : free_host_data_) {
+    if (pair.second != nullptr) {
+      CALL_ASCEND_API(aclrtFreeHost, pair.second->buf);
+      free(pair.second);
+    }
+  }
+  free_host_data_.clear();
 }
 
 Status AclAllocator::CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size, int device_id) {
@@ -136,12 +180,12 @@ Status AclAllocator::CopyDeviceDataToHost(void *device_data, void *host_data, si
     MS_LOG(ERROR) << "device data or host data ptr is nullptr.";
     return kLiteMemoryFailed;
   }
-  auto ret = aclrtSetDevice(device_id);
+  auto ret = CALL_ASCEND_API(aclrtSetDevice, device_id);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclrtSetDevice failed.";
     return kLiteMemoryFailed;
   }
-  ret = aclrtMemcpy(host_data, data_size, device_data, data_size, ACL_MEMCPY_DEVICE_TO_HOST);
+  ret = CALL_ASCEND_API(aclrtMemcpy, host_data, data_size, device_data, data_size, ACL_MEMCPY_DEVICE_TO_HOST);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "copy device data: " << device_data << " to host: " << host_data
                   << " failed, data size: " << data_size;
@@ -155,7 +199,7 @@ Status AclAllocator::CopyHostDataToDevice(void *host_data, void *device_data, si
     MS_LOG(ERROR) << "device data or host data ptr is nullptr.";
     return kLiteMemoryFailed;
   }
-  auto ret = aclrtMemcpy(device_data, data_size, host_data, data_size, ACL_MEMCPY_HOST_TO_DEVICE);
+  auto ret = CALL_ASCEND_API(aclrtMemcpy, device_data, data_size, host_data, data_size, ACL_MEMCPY_HOST_TO_DEVICE);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "copy host data: " << host_data << " to device: " << device_data
                   << " failed, data size: " << data_size;
@@ -185,7 +229,8 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
     return kLiteError;
   }
   if (src_device_id == dst_device_id) {
-    auto ret = aclrtMemcpy(dst_device_data, dst_data_size, src_device_data, src_data_size, ACL_MEMCPY_DEVICE_TO_DEVICE);
+    auto ret = CALL_ASCEND_API(aclrtMemcpy, dst_device_data, dst_data_size, src_device_data, src_data_size,
+                               ACL_MEMCPY_DEVICE_TO_DEVICE);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclrtMemcpy failed.";
       return kLiteError;
@@ -193,7 +238,7 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
     return kSuccess;
   }
   aclrtContext curr_context;
-  auto ret = aclrtGetCurrentContext(&curr_context);
+  auto ret = CALL_ASCEND_API(aclrtGetCurrentContext, &curr_context);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Get current runtime context failed.";
     return kLiteError;
@@ -206,7 +251,7 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
   }
   auto current_device_id = GetCurrentDeviceId();
   if (current_device_id != dst_device_id) {
-    ret = aclrtSetDevice(dst_device_id);
+    ret = CALL_ASCEND_API(aclrtSetDevice, dst_device_id);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclrtSetDevice failed.";
       return kLiteError;
@@ -217,7 +262,7 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
     MS_LOG(ERROR) << "aclrtDeviceEnablePeerAccess failed.";
     return kLiteError;
   }
-  ret = aclrtSetDevice(src_device_id);
+  ret = CALL_ASCEND_API(aclrtSetDevice, src_device_id);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclrtSetDevice failed.";
     return kLiteError;
@@ -227,7 +272,8 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
     MS_LOG(ERROR) << "aclrtDeviceEnablePeerAccess failed.";
     return kLiteError;
   }
-  ret = aclrtMemcpy(dst_device_data, dst_data_size, src_device_data, src_data_size, ACL_MEMCPY_DEVICE_TO_DEVICE);
+  ret = CALL_ASCEND_API(aclrtMemcpy, dst_device_data, dst_data_size, src_device_data, src_data_size,
+                        ACL_MEMCPY_DEVICE_TO_DEVICE);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclrtMemcpy failed.";
     return kLiteError;
@@ -235,13 +281,12 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
   if (current_device_id != GetCurrentDeviceId()) {
     ResetDeviceId(current_device_id);
   }
-  ret = aclrtSetCurrentContext(curr_context);
+  ret = CALL_ASCEND_API(aclrtSetCurrentContext, curr_context);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set runtime context failed.";
     return kLiteError;
   }
   return kSuccess;
 }
-
 }  // namespace acl
 }  // namespace mindspore::kernel

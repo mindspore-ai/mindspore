@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,8 +238,7 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
   // or the no info about inputs in reg info(the case of undetermined input size),
   // then infer info from inputs
   if (op_info_ptr == nullptr || op_info_ptr->inputs_ptr().size() == 0) {
-    MS_LOG(WARNING) << "Not find operator information for op[" << op_name
-                    << "]. Infer operator information from inputs.";
+    MS_LOG(INFO) << "Not find operator information for op[" << op_name << "]. Infer operator information from inputs.";
     return true;
   }
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
@@ -623,12 +622,23 @@ std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectType
     kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
   }
 
-  // Some dynamic kernels may not set the kernel attrs on GPU. Skip check only supports the tuple fold.
+  // Some dynamic kernels may not set the kernel attrs on GPU. Skip check only supports the tuple fold when KeepTuple
+  // is not apply target.
   if (kernel_attrs.empty() || kernel_attrs[0].GetSkipCheck()) {
-    auto input_object_types =
-      kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllInputObjectType(kernel_node));
-    auto output_object_types =
-      kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
+    std::vector<kernel::KernelObjectType> input_object_types;
+    std::vector<kernel::KernelObjectType> output_object_types;
+    if (!kernel_attrs.empty() && common::AnfAlgo::HasNodeAttr(kInputRealTuple, kernel_node)) {
+      input_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(kernel_node));
+    } else {
+      input_object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllInputObjectType(kernel_node));
+    }
+
+    if (!kernel_attrs.empty() && common::AnfAlgo::HasNodeAttr(kOutputRealTuple, kernel_node)) {
+      output_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllOutputObjectType(kernel_node));
+    } else {
+      output_object_types =
+        kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
+    }
     kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
     if (!kernel_attrs.empty()) {
       auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
@@ -638,17 +648,8 @@ std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectType
   }
 
   std::vector<kernel::KernelAttr> object_selected_kernel_attrs;
-  if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, true) &&
-      !kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, false)) {
+  if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs)) {
     return {false, kernel::KernelObjectTypeNotSupportWarning(kernel_node)};
-  }
-
-  if (IsTupleNestedOutputKernelAttr(object_selected_kernel_attrs[0])) {
-    return {false,
-            {kernel::KernelObjectTypeNotSupportWarning(kernel_node).first +
-               " Multiple tuple outputs is not supported for registered kernel attr: " +
-               kernel::FetchPrintInfoByKernelAttr(object_selected_kernel_attrs[0]),
-             TypeError}};
   }
 
   kernel::SetKernelObjectTypeWithSelectedAttr(kernel_node, object_selected_kernel_attrs[0]);
@@ -684,7 +685,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     outputs_type = {common::AnfAlgo::GetOutputInferDataType(kernel_node, 0)};
     outputs_format = {kOpFormat_DEFAULT};
   } else {
-    size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
+    size_t output_num = kernel::GetOutputNum(kernel_node);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       (void)outputs_format.emplace_back(kOpFormat_DEFAULT);
       outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));

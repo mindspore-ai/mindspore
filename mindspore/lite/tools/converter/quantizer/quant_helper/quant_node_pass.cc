@@ -158,7 +158,7 @@ int QuantNodePass::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPt
       return RET_NULL_PTR;
     }
     if (tensor_info->data_type() != kNumberTypeFloat32) {
-      MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quant.";
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quantify.";
       return RET_OK;
     }
     int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
@@ -191,7 +191,7 @@ int QuantNodePass::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &i
     return RET_NULL_PTR;
   }
   if (tensor_info->data_type() != kNumberTypeFloat32) {
-    MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quant.";
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quantify.";
     return RET_OK;
   }
   int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
@@ -209,7 +209,6 @@ int QuantNodePass::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &i
 }
 
 int QuantNodePass::DoFullQuant(const CNodePtr &cnode) {
-  auto op_name = cnode->fullname_with_scope();
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_MSG(primitive != nullptr, RET_NULL_PTR, "primitive is nullptr.");
   auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
@@ -222,7 +221,7 @@ int QuantNodePass::DoFullQuant(const CNodePtr &cnode) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " set data_type failed.";
     return RET_ERROR;
   }
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
     // activation quant

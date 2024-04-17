@@ -8,13 +8,10 @@
     更多参考详见 :func:`mindspore.ops.softmax` 。
 
     参数：
-        - **axis** (Union[int, tuple]) - 指定Softmax操作的轴。默认值： ``-1`` 。
+        - **axis** (Union[int, tuple]，可选) - 指定Softmax操作的轴。默认值： ``-1`` 。
 
     输入：
-        - **logits** (Tensor) - shape：:math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。支持数据类型：
-
-          - Ascend： float16、float32。
-          - GPU/CPU： float16、float32、float64。
+        - **input** (Tensor) - shape：:math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
 
     输出：
-        Tensor，数据类型和shape与 `logits` 相同。
+        Tensor，数据类型和shape与 `input` 相同。

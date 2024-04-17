@@ -1,0 +1,15 @@
+#operator bias_add_grad
+bias_add_grad:
+    args:
+        dout:
+            dtype: tensor
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True

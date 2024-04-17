@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_UPSAMPLE_NEAREST3D_H
 #define AICPU_KERNELS_NORMALIZED_UPSAMPLE_NEAREST3D_H
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 namespace aicpu {
 class UpsampleNearest3dCpuKernel : public CpuKernel {
  public:
@@ -29,7 +29,7 @@ class UpsampleNearest3dCpuKernel : public CpuKernel {
   uint32_t UpsampleNearest3dParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t UpsampleNearest3dCompute(const CpuKernelContext &ctx);
+  uint32_t UpsampleNearest3dCompute(CpuKernelContext &ctx);
 
   std::vector<int64_t> none_list;
 };

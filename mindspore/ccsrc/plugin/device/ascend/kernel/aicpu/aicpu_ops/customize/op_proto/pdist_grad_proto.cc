@@ -40,14 +40,6 @@ IMPLEMT_COMMON_INFERFUNC(PdistGradInferShape) {
     OP_LOGE(TbeGetName(op).c_str(), "The shape of pdist and grad must both be 1.");
     return GRAPH_FAILED;
   }
-  int64_t dim_shape = input_dim[0];
-  int64_t dist_shape = 0.5 * ((dim_shape) * (dim_shape - 1));
-  if ((pdist_dim[0] != dist_shape) || (grad_dim[0] != dist_shape)) {
-    OP_LOGE(TbeGetName(op).c_str(),
-            "The data number of pdist and grad must "
-            "be equal to N*(N-1)/2, where N is the first dim of input x.");
-    return GRAPH_FAILED;
-  }
   ge::Shape output_shape = ge::Shape(input_dim);
   output_desc.SetShape(output_shape);
   output_desc.SetDataType(input_dtype);

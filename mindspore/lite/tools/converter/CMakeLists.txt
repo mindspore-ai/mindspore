@@ -1,7 +1,7 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
 add_definitions(-DUSE_GLOG)
 set(USE_GLOG on)
-if(MSLITE_ENABLE_MODEL_ENCRYPTION)
+if(MSLITE_ENABLE_MODEL_ENCRYPTION AND MSLITE_DEPS_OPENSSL)
     add_compile_definitions(ENABLE_OPENSSL)
 endif()
 
@@ -87,7 +87,6 @@ add_subdirectory(micro/coder)
 add_subdirectory(${CORE_DIR} mindspore_core)
 
 if(MSLITE_ENABLE_ACL)
-    include_directories(${TOP_DIR}/graphengine/910/inc/external)
     set(MODE_ASCEND_ACL ON)
     include(${TOP_DIR}/cmake/dependency_graphengine.cmake)
     add_subdirectory(adapter/acl)
@@ -323,6 +322,7 @@ set(LITE_SRC
         ${CORE_DIR}/abstract/abstract_value.cc
         ${CORE_DIR}/ir/anf.cc
         ${CORE_DIR}/base/base.cc
+        ${CORE_DIR}/ops/auto_generate/gen_lite_ops.cc
         )
 
 set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
@@ -374,7 +374,6 @@ target_link_libraries(mindspore_converter
         graph_pass_mid
         fusion_mid
         quantizer_mid
-        decomposer_mid
         proto_mid
         ${SECUREC_LIBRARY}
         mindspore::json
@@ -387,6 +386,10 @@ target_link_libraries(mindspore_converter
         coder_mid
         mindir_serializer_mid
         )
+
+if(NOT MSLITE_SIMPLEST_CLOUD_INFERENCE)
+    target_link_libraries(mindspore_converter decomposer_mid)
+endif()
 
 if(MSLITE_EXPORT_COMPUTE_IR)
     target_link_libraries(mindspore_converter mindspore_lite_drawer)

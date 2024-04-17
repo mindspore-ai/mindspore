@@ -25,15 +25,18 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorArrayStackCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class TensorArrayStackCpuKernelMod : public NativeCpuKernelMod {
  public:
   TensorArrayStackCpuKernelMod();
   ~TensorArrayStackCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
-  void InitKernel(const CNodePtr &kernel_node) override;
-  void InitInputOutputSize(const CNodePtr &kernel_node);
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {
@@ -51,11 +54,9 @@ class TensorArrayStackCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  protected:
-  void PostExecute();
   void ResetResource() noexcept;
 
  private:
-  CNodeWeakPtr kernel_node_;
   int64_t handle_;
   size_t value_size_;
   size_t ele_size_;

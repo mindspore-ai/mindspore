@@ -35,7 +35,7 @@ def gather_test(is_dyn_rank):
     tester.test_dynamic_grad_net([x, indices, 1], is_dyn_rank)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -49,7 +49,7 @@ def test_gather_dyn_shape():
     gather_test(False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

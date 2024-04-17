@@ -39,7 +39,7 @@ namespace mindspore {
 namespace dataset {
 constexpr char kTrivialAugmentWideOp[] = "TrivialAugmentWideOp";
 
-class TrivialAugmentWideOp : public TensorOp {
+class TrivialAugmentWideOp : public RandomTensorOp {
  public:
   TrivialAugmentWideOp(int32_t num_magnitude_bins, InterpolationMode interpolation,
                        const std::vector<uint8_t> &fill_value);
@@ -58,7 +58,6 @@ class TrivialAugmentWideOp : public TensorOp {
   int32_t num_magnitude_bins_;
   InterpolationMode interpolation_;
   std::vector<uint8_t> fill_value_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -62,7 +62,7 @@ std::vector<AnfNodePtr> MindIRControlFlowAdjust::GetFgOutput(const FuncGraphPtr 
     MS_LOG(INFO) << "graph is single output.";
     return {output_node};
   }
-  for (size_t i = 1; i < output_cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < output_cnode->size(); ++i) {
     ret.push_back(output_cnode->input(i));
   }
   return ret;
@@ -87,7 +87,7 @@ int MindIRControlFlowAdjust::ModifyFgToCallAfterFg(const FuncGraphPtr &fg, const
   } else {
     auto then_fg_output = fg->output()->cast<CNodePtr>();
     MS_ASSERT(then_fg_output != nullptr);
-    for (size_t i = 1; i < then_fg_output->inputs().size(); ++i) {
+    for (size_t i = 1; i < then_fg_output->size(); ++i) {
       after_partial_cnode_inputs.push_back(then_fg_output->input(i));
     }
     fg->DropNode(then_fg_output);

@@ -80,16 +80,16 @@ namespace {
 abstract::ShapePtr MaxPoolGradGradInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_dim = 4;
-  auto origin_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto origin_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("origin input shape size", SizeToLong(origin_input_shape.size()), kEqual,
                                            input_dim, primitive->name());
 
   auto origin_output_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("origin output shape size", SizeToLong(origin_output_shape.size()), kEqual,
                                            input_dim, primitive->name());
 
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("grad shape size", SizeToLong(grad_shape.size()), kEqual, input_dim,
                                            primitive->name());
 
@@ -100,9 +100,9 @@ abstract::ShapePtr MaxPoolGradGradInferShape(const PrimitivePtr &primitive,
 TypePtr MaxPoolGradGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  (void)types.emplace("origin_input", input_args[0]->BuildType());
-  (void)types.emplace("origin_output", input_args[kInputIndex1]->BuildType());
-  (void)types.emplace("grad", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("origin_input", input_args[0]->GetType());
+  (void)types.emplace("origin_output", input_args[kInputIndex1]->GetType());
+  (void)types.emplace("grad", input_args[kInputIndex2]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace

@@ -75,11 +75,37 @@ struct UnaryFunc<ElwiseOpType::kSqrt, Type, Type> {
     return cuda::elwise::Sqrt<Type>(val);
   }
 };
+template <typename TypeIn, typename TypeOut>
+struct UnaryFunc<ElwiseOpType::kSqrt, TypeIn, TypeOut> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE TypeOut operator()(const TypeIn val) const {
+    return cuda::elwise::Sqrt<TypeOut>(val);
+  }
+};
 REGISTER_UNARY_OP_CUDA_FUNC_BOOL_TYPE(ElwiseOpType::kSqrt);
 REGISTER_UNARY_OP_CUDA_FUNC_INT_TYPE(ElwiseOpType::kSqrt);
 REGISTER_UNARY_OP_CUDA_FUNC_UINT_TYPE(ElwiseOpType::kSqrt);
 REGISTER_UNARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kSqrt);
 REGISTER_UNARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kSqrt);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kSqrt, int64_t, float>(const size_t num,
+    const int64_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kSqrt, int, float>(const size_t num,
+    const int *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kSqrt, int16_t, float>(const size_t num,
+    const int16_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kSqrt, int8_t, float>(const size_t num,
+    const int8_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kSqrt, uint8_t, float>(const size_t num,
+    const uint8_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kSqrt, uint16_t, float>(const size_t num,
+    const uint16_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kSqrt, uint32_t, float>(const size_t num,
+    const uint32_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kSqrt, uint64_t, float>(const size_t num,
+    const uint64_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kSqrt, bool, float>(const size_t num,
+    const bool *inp, float *out, cudaStream_t cuda_stream);
+
 template <typename Type>
 struct UnaryFunc<ElwiseOpType::kRsqrt, Type, Type> {
   DEVICE_HOST UnaryFunc() {}
@@ -96,11 +122,37 @@ struct UnaryFunc<ElwiseOpType::kExp, Type, Type> {
     return cuda::elwise::Exp<Type>(val);
   }
 };
+template <typename TypeIn, typename TypeOut>
+struct UnaryFunc<ElwiseOpType::kExp, TypeIn, TypeOut> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE TypeOut operator()(const TypeIn val) const {
+    return cuda::elwise::Exp<TypeOut>(val);
+  }
+};
 REGISTER_UNARY_OP_CUDA_FUNC_BOOL_TYPE(ElwiseOpType::kExp);
 REGISTER_UNARY_OP_CUDA_FUNC_INT_TYPE(ElwiseOpType::kExp);
 REGISTER_UNARY_OP_CUDA_FUNC_UINT_TYPE(ElwiseOpType::kExp);
 REGISTER_UNARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kExp);
 REGISTER_UNARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kExp);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kExp, int64_t, float>(const size_t num,
+    const int64_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kExp, int, float>(const size_t num,
+    const int *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kExp, int16_t, float>(const size_t num,
+    const int16_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kExp, int8_t, float>(const size_t num,
+    const int8_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kExp, uint8_t, float>(const size_t num,
+    const uint8_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kExp, uint16_t, float>(const size_t num,
+    const uint16_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kExp, uint32_t, float>(const size_t num,
+    const uint32_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kExp, uint64_t, float>(const size_t num,
+    const uint64_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kExp, bool, float>(const size_t num,
+    const bool *inp, float *out, cudaStream_t cuda_stream);
+
 template <typename Type>
 struct UnaryFunc<ElwiseOpType::kLog, Type, Type> {
   DEVICE_HOST UnaryFunc() {}

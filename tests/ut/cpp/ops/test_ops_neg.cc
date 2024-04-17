@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,38 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
+
 #include <memory>
+#include "abstract/ops/primitive_infer_map.h"
 #include "common/common_test.h"
-#include "ops/neg.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
-#include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
+#include "ir/tensor.h"
+#include "mindapi/base/shape_vector.h"
+#include "mindapi/base/type_id.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
+#include "ops/ops_func_impl/neg.h"
 #include "ops/test_ops.h"
-#include "include/backend/optimizer/helper.h"
+#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
-class TestNeg : public TestOps, public testing::WithParamInterface<EltwiseOpParams> {};
+OP_FUNC_IMPL_TEST_DECLARE(Neg, EltwiseOpParams);
 
-TEST_P(TestNeg, dyn_shape) {
-  const auto &param = GetParam();
-  auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-  auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
+OP_FUNC_IMPL_TEST_CASES(Neg, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
+                                             EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
+                                             EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+
+struct NegInferValueParams {
+  ShapeVector x_shape;
+  TypeId x_type;
+  std::vector<float> x_data;
+  std::vector<float> out_data;
+};
+
+class TestNegInferValue : public TestOps, public testing::WithParamInterface<NegInferValueParams> {};
+
+TEST_P(TestNegInferValue, neg_infer_value) {
+  auto &param = GetParam();
+  auto x_tensor = std::make_shared<tensor::Tensor>(param.x_type, param.x_shape, (void *)&param.x_data[0], param.x_type);
+  auto x = x_tensor->ToAbstract();
   ASSERT_NE(x, nullptr);
-  auto prim = std::make_shared<Primitive>(kNameNeg);
-  auto out_abstract = opt::CppInferShapeAndType(prim, {x});
-  ASSERT_NE(out_abstract, nullptr);
-  ASSERT_TRUE(*out_abstract == *expect);
+  std::vector<abstract::AbstractBasePtr> input_args{std::move(x)};
+  auto value_op = abstract::InferValueByFuncImpl(prim::kPrimNeg, input_args);
+  ASSERT_TRUE(value_op.has_value());
+  auto value = value_op.value();
+  ASSERT_NE(value, nullptr);
+  auto value_tensor = value->cast<tensor::TensorPtr>();
+  ASSERT_NE(value_tensor, nullptr);
+
+  auto out = static_cast<float *>(value_tensor->data_c());
+  for (int i = 0; i < param.out_data.size(); i++) {
+    ASSERT_TRUE(param.out_data[i] == out[i]);
+  }
 }
 
-INSTANTIATE_TEST_CASE_P(TestNeg, TestNeg,
-                        testing::Values(
-                          EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                          EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                          EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+INSTANTIATE_TEST_CASE_P(
+  TestNegInferValue, TestNegInferValue,
+  testing::Values(NegInferValueParams{ShapeVector{2, 2}, kNumberTypeFloat32, {2, 2, 3, 3}, {-2, -2, -3, -3}},
+                  NegInferValueParams{ShapeVector{1}, kNumberTypeFloat32, {2}, {-2}}));
 }  // namespace ops
 }  // namespace mindspore

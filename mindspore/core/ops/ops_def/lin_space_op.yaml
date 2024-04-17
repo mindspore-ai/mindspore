@@ -1,0 +1,15 @@
+#operator lin_space
+lin_space:
+  args:
+    start:
+      dtype: tensor
+    stop:
+      dtype: tensor
+    num:
+      dtype: int
+      type_cast: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

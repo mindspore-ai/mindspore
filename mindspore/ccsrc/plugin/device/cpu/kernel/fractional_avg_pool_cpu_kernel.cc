@@ -39,17 +39,9 @@ constexpr size_t kOutputShapeIndexW = 2;
 constexpr size_t kOutputShapeIndexC = 3;
 }  // namespace
 
-bool FractionalAvgPoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalAvgPool>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Init FractionalAvgPool kernel ptr failed.";
-    return false;
-  }
-
-  pooling_ratio_ = kernel_ptr->get_pooling_ratio();
+bool FractionalAvgPoolCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  pooling_ratio_ = GetValue<std::vector<float>>(primitive_->GetAttr("pooling_ratio"));
   if (pooling_ratio_.size() != tensor_in_and_out_dims) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the size of parameter 'pooling_ratio' must be 4, but got " << pooling_ratio_.size()
@@ -61,11 +53,11 @@ bool FractionalAvgPoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                              << "', the first and last elements of parameter 'pooling_ratio' must be 1.0.";
   }
 
-  pseudo_random_ = kernel_ptr->get_pseudo_random();
-  overlapping_ = kernel_ptr->get_overlapping();
-  deterministic_ = kernel_ptr->get_deterministic();
-  seed_ = kernel_ptr->get_seed();
-  seed2_ = kernel_ptr->get_seed2();
+  pseudo_random_ = GetValue<bool>(primitive_->GetAttr("pseudo_random"));
+  overlapping_ = GetValue<bool>(primitive_->GetAttr("overlapping"));
+  deterministic_ = GetValue<bool>(primitive_->GetAttr("deterministic"));
+  seed_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  seed2_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed2));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -77,16 +69,14 @@ bool FractionalAvgPoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int FractionalAvgPoolCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FractionalAvgPoolCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[0]->GetDeviceShapeVector();
+  output_shape_ = outputs[0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
@@ -168,15 +158,15 @@ std::vector<int64_t> GeneratePoolingSequence(int64_t input_length, int64_t outpu
 }
 
 template <typename T>
-bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolLaunch(const std::vector<AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &outputs) {
-  T *input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
+bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolLaunch(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  T *input_ptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_ptr);
-  T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output_ptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_ptr);
-  int64_t *row_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[1]->addr);
+  int64_t *row_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(row_pooling_sequence_ptr);
-  int64_t *col_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[2]->addr);
+  int64_t *col_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[2]->device_ptr());
   MS_EXCEPTION_IF_NULL(col_pooling_sequence_ptr);
   for (size_t i = 0; i < tensor_in_and_out_dims; i++) {
     output_shape_[i] = static_cast<int>(std::floor(input_shape_[i] / pooling_ratio_[i]));

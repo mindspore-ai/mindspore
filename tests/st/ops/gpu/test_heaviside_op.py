@@ -87,3 +87,37 @@ def test_heaviside_fp64():
     output_ms = net(input_x1, input_x2)
     expect_output = np.array([0.0000, 1.7000, 1.0000]).astype(np.float64)
     assert np.allclose(output_ms.asnumpy(), expect_output)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_heaviside_nan():
+    """
+    Feature: Heaviside
+    Description: test cases for Heaviside of inputs nan
+    Expectation: the results are as expected
+    """
+    input_x1 = Tensor(np.full((5,), np.nan).astype(np.float64))
+    input_x2 = Tensor(np.full((5,), np.nan).astype(np.float64))
+    net = NetHeaviside()
+    output_ms = net(input_x1, input_x2)
+    expect_output = np.zeros(5).astype(np.float64)
+    assert np.allclose(output_ms.asnumpy(), expect_output)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_heaviside_inf():
+    """
+    Feature: Heaviside
+    Description: test cases for Heaviside of inputs inf
+    Expectation: the results are as expected
+    """
+    input_x1 = Tensor(np.full((5,), np.inf).astype(np.float64))
+    input_x2 = Tensor(np.full((5,), np.inf).astype(np.float64))
+    net = NetHeaviside()
+    output_ms = net(input_x1, input_x2)
+    expect_output = np.ones(5).astype(np.float64)
+    assert np.allclose(output_ms.asnumpy(), expect_output)

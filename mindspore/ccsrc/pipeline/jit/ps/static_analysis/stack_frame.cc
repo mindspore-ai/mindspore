@@ -17,6 +17,7 @@
 #include "pipeline/jit/ps/static_analysis/stack_frame.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "pipeline/jit/ps/static_analysis/async_eval_result.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace abstract {
@@ -25,9 +26,8 @@ AbstractBasePtrList StackFrame::GenerateArgsAbsList(const AnalysisEnginePtr &eng
   MS_EXCEPTION_IF_NULL(current_cnode);
   MS_EXCEPTION_IF_NULL(evaluator);
   AbstractBasePtrList args_abs_list;
-  auto &inputs = current_cnode->inputs();
-  for (std::size_t i = 1; i < inputs.size(); i++) {
-    auto config = engine->MakeConfig(inputs[i], current_context_, current_context_->func_graph());
+  for (std::size_t i = 1; i < current_cnode->size(); i++) {
+    auto config = engine->MakeConfig(current_cnode->input(i), current_context_, current_context_->func_graph());
     auto result = config->ObtainEvalResult();
     MS_EXCEPTION_IF_NULL(result);
     auto abs = result->abstract();
@@ -112,7 +112,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   // Find parent context and create new context.
   AnalysisContextPtr parent_context = GetParentContext(fg_evaluator, graph_func);
   MS_EXCEPTION_IF_NULL(parent_context);
-  auto new_context = parent_context->NewContext(fg, args_abs_list);
+  auto new_context = NewContext(parent_context, fg, args_abs_list);
 
   bool always_eval_flag = false;
   // Evaluate the parameters with new context.
@@ -166,7 +166,7 @@ StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
       MS_LOG(DEBUG) << "No need to jump as found result from cache for node_config: " << call_node_conf->ToString()
                     << ", result: " << abstract->ToString();
 
-      static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+      static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
       if (enable_eliminate_unused_element) {
         const auto &abs_func_graph = maybe_func->cast<AbstractFunctionPtr>();
         SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(engine, current_context_->func_graph(), cnode,
@@ -243,7 +243,7 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
       func_graph()->set_has_side_effect_node(true);
     } else {
       // Check inputs side-effect.
-      for (std::size_t i = 1; i < cnode->inputs().size(); ++i) {
+      for (std::size_t i = 1; i < cnode->size(); ++i) {
         auto input_cnode = dyn_cast_ptr<CNode>(cnode->input(i));
         if (input_cnode != nullptr && input_cnode->has_side_effect_node()) {
           MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()

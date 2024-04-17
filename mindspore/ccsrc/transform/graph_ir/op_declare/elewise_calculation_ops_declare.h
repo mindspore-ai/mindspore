@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ELEWISE_CALCULATION_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ELEWISE_CALCULATION_OPS_DECLARE_H_
 
-#include "inc/ops/bitwise_ops.h"
-#include "inc/ops/elewise_calculation_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_elewise_calculation_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
@@ -248,6 +246,9 @@ DECLARE_OP_USE_OUTPUT(FloorMod)
 DECLARE_OP_ADAPTER(Sin)
 DECLARE_OP_USE_OUTPUT(Sin)
 
+DECLARE_CUST_OP_ADAPTER(Sinc)
+DECLARE_CUST_OP_USE_OUTPUT(Sinc)
+
 DECLARE_OP_ADAPTER(Sinh)
 DECLARE_OP_USE_OUTPUT(Sinh)
 
@@ -355,4 +356,20 @@ DECLARE_OP_USE_OUTPUT(LeftShift)
 
 DECLARE_OP_ADAPTER(RightShift)
 DECLARE_OP_USE_OUTPUT(RightShift)
+
+DECLARE_OP_ADAPTER(NanToNum)
+DECLARE_OP_USE_INPUT_ATTR(NanToNum)
+DECLARE_OP_USE_OUTPUT(NanToNum)
+
+DECLARE_OP_ADAPTER(AdamApplyOneWithDecayAssign)
+DECLARE_OP_USE_OUTPUT(AdamApplyOneWithDecayAssign)
+
+DECLARE_OP_ADAPTER(AdamApplyOneWithDecay)
+DECLARE_OP_USE_OUTPUT(AdamApplyOneWithDecay)
+
+DECLARE_CUST_OP_ADAPTER(LogicalXor)
+DECLARE_CUST_OP_USE_OUTPUT(LogicalXor)
+
+DECLARE_CUST_OP_ADAPTER(BesselI0)
+DECLARE_CUST_OP_USE_OUTPUT(BesselI0)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ELEWISE_CALCULATION_OPS_DECLARE_H_

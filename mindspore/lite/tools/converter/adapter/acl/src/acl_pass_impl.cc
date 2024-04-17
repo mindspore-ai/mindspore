@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@
 #include "ops/batch_matmul.h"
 #include "ops/custom.h"
 #include "ops/op_utils.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/standard_normal.h"
 #include "ops/tuple_get_item.h"
 #include "cxx_api/model/acl/model_converter.h"
@@ -55,6 +55,7 @@
 #include "tools/optimizer/graph/remove_load_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
+#include "tools/optimizer/fusion/groupnormsilu_fusion.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/converter/parser/unify_format.h"
@@ -62,13 +63,18 @@
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "tools/converter/quantizer/quant_helper/ascend_distribute_fake_quant_transform.h"
+#include "tools/converter/quantizer/quant_helper/ffn_full_quant.h"
 #include "tools/converter/adapter/acl/common/acl_types_utils.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "src/common/common.h"
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/graph/make_list_pass.h"
+#include "tools/optimizer/fusion/add_layernorm_fusion.h"
 #include "tools/common/custom_ascend_utils.h"
+#include "tools/optimizer/graph/attr_to_args_pass.h"
+#include "tools/optimizer/fusion/ffn_fusion.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -88,6 +94,10 @@ constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr auto kRemoveUnusedAddNodePass = "RemoveUnusedAddNodePass";
 constexpr auto kCustomOpFlashAttentionFusionForCustom = "FlashAttentionFusionForCustom";
 constexpr auto kCustomOpFlashAttentionFusion = "FlashAttentionFusion";
+constexpr auto kCustomOpGroupNormSiluFusion = "GroupNormSiluFusion";
+constexpr auto kCustomOpGeGluV2Fusion = "GeGluV2Fusion";
+constexpr auto kAddLayerNormFusion = "AddLayerNormFusion";
+constexpr auto kCustomOpFFNFusion = "FFNFusion";
 constexpr auto kScalarOpPass = "ScalarOpPass";
 constexpr auto kMakeListPass = "MakeListPass";
 constexpr auto kFuncType = "func_type";
@@ -96,7 +106,11 @@ constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
 constexpr auto kOpsTransPose = "Transpose";
-const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
+/* 1. For compatibility reasons (on MindIRs with old primitives), ResizeBilinear op still needs to be processed.
+   2. ResizeBilinear in core/ops is deprecated, avoid using name string defined in core/ops. */
+constexpr auto kNameResizeBilinear = "ResizeBilinear";
+const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B2C", "Ascend910B3",
+                                                       "Ascend910B4"};
 
 STATUS ModifyCNodeFormat(const FuncGraphPtr &func_graph, Format format) {
   MS_ASSERT(func_graph != nullptr);
@@ -186,14 +200,15 @@ STATUS PreProcForOnnx(const FuncGraphPtr &func_graph, bool offline) {
       return lite::RET_ERROR;
     }
   }
+
   if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "To nchw format failed.";
     return lite::RET_ERROR;
   }
 
-  // this pass should in to_format_base_pass, but current some network is not correct for some reason
-  if (ModifyCNodeFormat(func_graph, NCHW)) {
-    MS_LOG(ERROR) << "Modify cnode format failed.";
+  // This modify should do in to format base pass, but many network not work now
+  if (ModifyCNodeFormat(func_graph, NCHW) != kSuccess) {
+    MS_LOG(ERROR) << "modify cnode format failed.";
     return lite::RET_ERROR;
   }
 
@@ -605,6 +620,26 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
         }
       }
     }
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "FFN") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "using FFN";
+      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpFFNFusion}), lite::RET_ERROR,
+                        "FFN op pass failed.");
+    }
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "AddLayerNorm") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "run " << kAddLayerNormFusion;
+      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kAddLayerNormFusion}), lite::RET_ERROR,
+                        "AddLayerNorm op pass failed.");
+    }
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GeGluV2") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "Using GeGluV2";
+      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpGeGluV2Fusion}), lite::RET_ERROR,
+                        "GeGluV2 op pass failed.");
+    }
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GroupNormSilu") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "using GroupNormSilu";
+      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpGroupNormSiluFusion}), lite::RET_ERROR,
+                        "GroupNormSilu op pass failed.");
+    }
   }
   MS_LOG(DEBUG) << "Pre proc graph success.";
   return lite::RET_OK;
@@ -683,7 +718,9 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graph, &all_func_graphs);
 
-  std::set<std::string> mindir_mapper = {ops::kNameTranspose, ops::kNameStandardNormal, ops::kNameBatchMatMul};
+  std::set<std::string> mindir_mapper = {ops::kNameTranspose, ops::kNameStandardNormal, ops::kNameBatchMatMul,
+                                         ops::kNameMatMul,    ops::kNameAvgPool,        ops::kNameBatchNorm,
+                                         kNameResizeBilinear};
   const std::set<PrimitivePtr> support_ptq_mindir_types = {prim::kPrimQuantDTypeCast, prim::kPrimAddFusion,
                                                            prim::kPrimMulFusion};
   for (auto graph : all_func_graphs) {
@@ -718,6 +755,10 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
 
 STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
   if (fmk_type_ == converter::kFmkTypeMs) {
+    if (lite::AdapteMuitiInputNode(func_graph) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Adapter spatial node failed.";
+      return lite::RET_ERROR;
+    }
     MapperForOrgMindIR(func_graph);
     return lite::RET_OK;
   }
@@ -725,7 +766,7 @@ STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraph
     MS_LOG(ERROR) << "Run mapper primitive failed.";
     return lite::RET_ERROR;
   }
-  if (lite::AdapteSpatialNode(func_graph, manager) != lite::RET_OK) {
+  if (lite::AdapteMuitiOutputNode(func_graph, manager) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adapter spatial node failed.";
     return lite::RET_ERROR;
   }
@@ -796,6 +837,17 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
     MS_LOG(ERROR) << "Failed to set graph input shape";
     return lite::RET_ERROR;
   }
+
+  auto args_to_attr_pass = std::make_shared<opt::AttrToArgsPass>();
+  if (args_to_attr_pass == nullptr) {
+    MS_LOG(ERROR) << "create pass failed";
+    return lite::RET_ERROR;
+  }
+  if (!args_to_attr_pass->Run(func_graph)) {
+    MS_LOG(ERROR) << "convert args to attr pass failed";
+    return lite::RET_ERROR;
+  }
+
   // call interface of cloud
   ModelConverter model_converter;
   model_converter.set_options(options_);
@@ -1057,18 +1109,44 @@ STATUS AclPassImpl::RemoveQuantDtypeCast(const FuncGraphPtr &func_graph) {
   return RET_OK;
 }
 
+STATUS AclPassImpl::PostProcCustomOp(const FuncGraphPtr &func_graph) {
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = utils::cast<CNodePtr>(node);
+    if (!CheckPrimitiveType(cnode, prim::kPrimCustom)) {
+      continue;
+    }
+    auto prim = GetCNodePrimitive(cnode);
+    CHECK_NULL_RETURN(prim);
+    prim->EraseAttr("attr");
+  }
+
+  MS_LOG(DEBUG) << "Post proc CustomOp success.";
+  return lite::RET_OK;
+}
+
 bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Acl pass run start.";
   if (param_->fmk_type == converter::kFmkTypeOM) {
     // func_graph is already acl custom node
     return true;
   }
+  transform::LoadAscendApiSymbols();
   MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
+
   auto manager = Manage(func_graph, true);
   MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");
-
   if (PreProcGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Pre proc graph failed.";
+    return false;
+  }
+
+  auto ffn_full_quant_transform = lite::quant::FFNFullQuant(func_graph, param_);
+  if (ffn_full_quant_transform.Transform() != RET_OK) {
+    MS_LOG(ERROR) << "Do FFNFullQuantTransform failed.";
     return false;
   }
 
@@ -1106,6 +1184,11 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
 #endif
+
+  if (PostProcCustomOp(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Post proc CustomOp failed.";
+    return false;
+  }
 
   if (BuildGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Build graph failed.";

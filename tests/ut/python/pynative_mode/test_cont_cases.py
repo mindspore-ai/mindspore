@@ -425,7 +425,7 @@ def test_while_if_with_param_grad():
             super().__init__()
             self.max = P.ReduceMax()
             self.param = Parameter(Tensor(np.arange(2 * 2 * 2).reshape((2, 2, 2)), ms.float32), name="weight")
-            self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
+            self.zero = Tensor(np.zeros(([1])), ms.float32)
             self.t2 = Tensor(np.array(2), dtype=ms.float32)
 
         def construct(self, idx, end, x):
@@ -452,7 +452,7 @@ def test_while_if_with_param_grad():
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(3), dtype=ms.int32)
-    x = Tensor(np.ones([2, 2, 2]).astype(np.float32), dtype=ms.float32)
+    x = Tensor(np.ones([1]).astype(np.float32), dtype=ms.float32)
     net(idx, end, x)
 
 

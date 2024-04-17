@@ -55,8 +55,8 @@ TypePtr CheckValidInferType(const PrimitivePtr &primitive, const std::vector<Abs
   (void)CheckAndConvertUtils::CheckInteger("input args size", SizeToLong(input_args.size()), kEqual,
                                            kCheckValidInputsNum, prim_name);
   const std::set<TypePtr> valid_types = {kInt16, kUInt8, kFloat16, kFloat32};
-  auto bboxes_dtype = input_args[0]->BuildType();
-  auto metas_dtype = input_args[1]->BuildType();
+  auto bboxes_dtype = input_args[0]->GetType();
+  auto metas_dtype = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("bboxes", bboxes_dtype, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("metas", metas_dtype, valid_types, prim_name);
   return std::make_shared<TensorType>(kBool);
@@ -65,16 +65,16 @@ TypePtr CheckValidInferType(const PrimitivePtr &primitive, const std::vector<Abs
 abstract::ShapePtr CheckValidInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto bboxes_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto bboxes_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(bboxes_shape_ptr);
-  auto metas_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto metas_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(metas_shape_ptr);
 
   if (bboxes_shape_ptr->IsDynamic() || metas_shape_ptr->IsDynamic()) {
     return bboxes_shape_ptr->cast<abstract::ShapePtr>();
   }
 
-  auto bboxes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto bboxes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   CheckAndConvertUtils::CheckInteger("bboxes rank", SizeToLong(bboxes_shape.size()), kEqual, kNumber2, prim_name);
   int64_t bboxes_last_dim = bboxes_shape[bboxes_shape.size() - 1];
   if (bboxes_last_dim != kBboxesLastDim) {
@@ -83,8 +83,7 @@ abstract::ShapePtr CheckValidInferShape(const PrimitivePtr &primitive, const std
                              << ".";
   }
 
-  auto img_metas_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto img_metas_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   CheckAndConvertUtils::CheckInteger("img_metas rank", SizeToLong(img_metas_shape.size()), kEqual, kNumber1, prim_name);
   int64_t img_metas_first_dim = img_metas_shape[0];
   if (img_metas_first_dim != kImgMetasFirstDim) {

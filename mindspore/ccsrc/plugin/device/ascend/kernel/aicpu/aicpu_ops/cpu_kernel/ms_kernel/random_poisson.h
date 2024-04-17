@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_H_
-#define AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_H_
+#ifndef AICPU_KERNELS_NORMALIZED_RANDOM_POISSON_H_
+#define AICPU_KERNELS_NORMALIZED_RANDOM_POISSON_H_
 #define EIGEN_USE_THREADS
 #define EIGEN_USE_SIMPLE_THREAD_POOL
-#include "inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "random/utils.h"
@@ -37,7 +37,7 @@ class RandomPoissonCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t Generate(const CpuKernelContext &ctx, Tensor *output);
+  uint32_t Generate(CpuKernelContext &ctx, Tensor *output);
   uint64_t seed_ = 0;
   uint64_t seed2_ = 0;
   std::mt19937 rng_;
@@ -141,4 +141,4 @@ class PoissonRandomGenerator {
   double m_rate;
 };
 }  // namespace aicpu
-#endif  // AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_H_
+#endif  // AICPU_KERNELS_NORMALIZED_RANDOM_POISSON_H_

@@ -24,7 +24,7 @@ from mindspore import Tensor
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.batchnorm1d = nn.BatchNorm1d(num_features=4, dtype=ms.float16)
+        self.batchnorm1d = nn.BatchNorm1d(num_features=4)
 
     def construct(self, x):
         out = self.batchnorm1d(x)

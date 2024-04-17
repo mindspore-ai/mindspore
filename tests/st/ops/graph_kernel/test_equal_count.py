@@ -73,8 +73,6 @@ def test_gpu_fp32():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ascend_graph_mode_fp32():
     """

@@ -16,6 +16,7 @@
 
 #include "runtime/pynative/op_executor.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "runtime/pipeline/pipeline.h"
 
 namespace mindspore::runtime {
 OpExecutor &OpExecutor::GetInstance() {
@@ -27,46 +28,21 @@ OpExecutor::OpExecutor() = default;
 
 OpExecutor::~OpExecutor() = default;
 
-void OpExecutor::RegisterForwardCallback(const std::function<void()> &callback) { forward_callback_ = callback; }
-
-void OpExecutor::Register(const std::function<void()> &callback) { batch_build_callback_ = callback; }
-
-void OpExecutor::Reset() {
-  ClearResources();
-  batch_build_callback_ = nullptr;
-  async_queue_.Reset();
+void OpExecutor::RegisterForwardCallback(const std::function<void()> &callback) {
+  forward_callback_ = callback;
+  tensor::Tensor::RegisterLazyCallback([]() { OpExecutor::GetInstance().WaitAll(); });
 }
 
-void OpExecutor::ClearResources() {
-  MS_LOG(DEBUG) << "Start clear tasks";
-  std::unique_lock<std::mutex> lock(build_mutex_);
-  // Set the build task failed, and no need to run op_run_tasks.
-  for (auto &build_task : op_build_tasks_) {
-    MS_EXCEPTION_IF_NULL(build_task);
-    build_task->SetBuildReady(false);
-  }
-  op_build_tasks_.clear();
-  MS_LOG(DEBUG) << "End clear tasks";
-}
-
-void OpExecutor::WaitForBuild() {
-  if (!executing_) {
-    ExecuteGuard guard;
-    if (batch_build_callback_ != nullptr) {
-      batch_build_callback_();
-    }
-  }
-}
+void OpExecutor::Reset() { runtime::Pipeline::Get().backend_stage()->Reset(); }
 
 void OpExecutor::WaitForRun() {
   MS_LOG(DEBUG) << "Start";
-  async_queue_.Wait();
+  runtime::Pipeline::Get().backend_stage()->Wait();
   MS_LOG(DEBUG) << "All task finish";
 }
 
 void OpExecutor::Wait() {
   GilReleaseWithCheck gil_release;
-  WaitForBuild();
   WaitForRun();
 }
 
@@ -75,62 +51,44 @@ void OpExecutor::WaitAll() {
   if (forward_callback_ != nullptr) {
     forward_callback_();
   }
-  WaitForBuild();
   WaitForRun();
 }
 
-void OpExecutor::PushOpBuildTask(const std::shared_ptr<pynative::DeviceOpBuildTask> &op_build_task) {
-  std::unique_lock<std::mutex> lock(build_mutex_);
-  op_build_tasks_.push_back(op_build_task);
-}
-
-void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> &op_run_task) {
+void OpExecutor::PushOpRunTask(const std::shared_ptr<DeviceOpRunTask> &op_run_task) {
   MS_EXCEPTION_IF_NULL(op_run_task);
   MS_EXCEPTION_IF_NULL(op_run_task->context());
-  async_queue_.Push(op_run_task);
+  runtime::Pipeline::Get().backend_stage()->Push(op_run_task);
 }
 
-void OpExecutor::PushSimpleOpRunTask(const std::shared_ptr<pynative::AsyncTask> &op_run_task) {
-  async_queue_.Push(op_run_task);
+void OpExecutor::PushOpRunTask(const std::shared_ptr<PyBoostDeviceTask> &op_run_task) {
+  MS_EXCEPTION_IF_NULL(op_run_task);
+  runtime::Pipeline::Get().backend_stage()->Push(op_run_task);
 }
 
-std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> OpExecutor::PopOpBuildTasks() {
-  std::unique_lock<std::mutex> lock(build_mutex_);
-  auto build_tasks = op_build_tasks_;
-  op_build_tasks_.clear();
-  return build_tasks;
+void OpExecutor::PushSimpleOpRunTask(const std::shared_ptr<AsyncTask> &op_run_task) {
+  runtime::Pipeline::Get().backend_stage()->Push(op_run_task);
 }
 
-bool OpExecutor::BuildQueueEmpty() {
-  std::unique_lock<std::mutex> lock(build_mutex_);
-  return op_build_tasks_.empty();
-}
-
-bool OpExecutor::RunQueueEmpty() { return async_queue_.Empty(); }
-
-bool OpExecutor::BuildQueueFull() {
-  std::unique_lock<std::mutex> lock(build_mutex_);
-  return op_build_tasks_.size() > kMaxQueueSize;
-}
-
-bool OpExecutor::ActorInQueue(GraphId graph_id) { return async_queue_.TaskInQueue(graph_id); }
-
-bool OpExecutor::BuildInQueue(GraphId graph_id) {
-  return std::any_of(op_build_tasks_.begin(), op_build_tasks_.end(),
-                     [&graph_id](const std::shared_ptr<pynative::DeviceOpBuildTask> &backend_op_build_task) {
-                       MS_EXCEPTION_IF_NULL(backend_op_build_task);
-                       MS_EXCEPTION_IF_NULL(backend_op_build_task->context());
-                       return backend_op_build_task->context()->graph_id() == graph_id;
-                     });
-}
+bool OpExecutor::RunQueueEmpty() { return runtime::Pipeline::Get().backend_stage()->Empty(); }
 
 void OpExecutor::WorkerJoin() {
   GilReleaseWithCheck release_gil;
-  try {
-    WaitForBuild();
-  } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "Build tasks run failed, exception:" << e.what();
-  }
-  async_queue_.WorkerJoin();
+  runtime::Pipeline::Get().backend_stage()->WorkerJoin();
+}
+
+bool OpExecutor::NeedSync() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  return context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) ||
+         context->get_param<int>(MS_CTX_EXECUTION_MODE) == mindspore::kGraphMode;
+}
+
+void OpExecutor::ChildAfterFork() {
+  MS_LOG(DEBUG) << "OpExecutor reinitialize after fork";
+  MS_LOG(DEBUG) << "Reinitialize async_queue_.";
+  runtime::Pipeline::Get().backend_stage()->ChildAfterFork();
+  // Refresh the lazy callback in Tensor.
+  tensor::Tensor::RegisterLazyCallback([]() { OpExecutor::GetInstance().WaitAll(); });
+  MS_LOG(DEBUG) << "OpExecutor reinitialize after fork done.";
 }
 }  // namespace mindspore::runtime

@@ -43,13 +43,13 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr LogSpaceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto start_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto start_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto start_shape = start_shape_map[kShape];
   if (!IsDynamicRank(start_shape) && start_shape.size() != 0) {
     MS_EXCEPTION(ValueError) << "For LogSpace, The dim of start must be 0, "
                              << "but got " << start_shape.size();
   }
-  auto end_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto end_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto end_shape = end_shape_map[kShape];
   if (!IsDynamicRank(end_shape) && end_shape.size() != 0) {
     MS_EXCEPTION(ValueError) << "For LogSpace, The dim of end must be 0, "
@@ -65,8 +65,8 @@ TypePtr LogSpaceInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
 
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("start", input_args[0]->BuildType());
-  (void)types.emplace("end", input_args[1]->BuildType());
+  (void)types.emplace("start", input_args[0]->GetType());
+  (void)types.emplace("end", input_args[1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   auto dtype_attr = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_attr);

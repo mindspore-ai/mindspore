@@ -67,9 +67,10 @@ AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
   if (new_fg == nullptr) {
     return nullptr;
   }
-  AnfNodePtrList inputs = {NewValueNode(new_fg)};
-  (void)inputs.insert(inputs.end(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
-  return node->func_graph()->NewCNode(inputs);
+  const auto fg_node = NewValueNode(new_fg);
+  AnfNodeWeakPtrList inputs = {fg_node};
+  (void)inputs.insert(inputs.end(), cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend());
+  return node->func_graph()->NewCNodeWeak(inputs);
 }
 
 FuncGraphPtr DefaultExpander::ExpandToGraph(const CNodePtr &node) {

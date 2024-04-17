@@ -118,7 +118,7 @@ def test_dropout_nd(func_name, data_type, keep_prob):
     check_dropout_nd_by_keep_prob(func_name, input_data, output.asnumpy(), mask.asnumpy(), keep_prob)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("func_name", ["dropout2d", "dropout3d"])

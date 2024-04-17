@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 #include "minddata/dataset/kernels/data/one_hot_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/data/pad_end_op.h"
+#include "minddata/dataset/kernels/data/parse_example_op.h"
 #endif
 #include "minddata/dataset/kernels/data/random_apply_op.h"
 #include "minddata/dataset/kernels/data/random_choice_op.h"
@@ -314,6 +315,17 @@ Status PadEndOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
   *operation = std::make_shared<transforms::PadEndOperation>(pad_shape, pad_value);
   return Status::OK();
 }
+
+#if !defined(_WIN32) && !defined(_WIN64)
+// ParseExampleOperation
+ParseExampleOperation::ParseExampleOperation(DataSchema schema, std::vector<std::string> column_list,
+                                             bool parallel_parse)
+    : schema_(std::move(schema)), column_list_(std::move(column_list)), parallel_parse_(parallel_parse) {}
+
+std::shared_ptr<TensorOp> ParseExampleOperation::Build() {
+  return std::make_shared<ParseExampleOp>(schema_, column_list_, parallel_parse_);
+}
+#endif
 #endif
 
 // PreBuiltOperation

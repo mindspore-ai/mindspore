@@ -42,35 +42,34 @@ bool IsInTheOrder(const std::vector<int64_t> &vec) {
   return true;
 }
 }  // namespace
-AllToAllvCalcParam::AllToAllvCalcParam(const CNodeWeakPtr &cnode, uint32_t rank_size)
-    : node_(cnode),
+AllToAllvCalcParam::AllToAllvCalcParam(const PrimitivePtr &prim, uint32_t rank_size)
+    : prim_(prim),
       rank_size_(rank_size),
       send_counts_(rank_size, 0),
       sdispls_(rank_size, 0),
       recv_counts_(rank_size, 0),
       rdispls_(rank_size, 0) {}
 
-void AllToAllvCalcParam::CalcOpParam() {
-  CNodePtr cnode = node_.lock();
-  MS_EXCEPTION_IF_NULL(cnode);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+void AllToAllvCalcParam::CalcOpParam(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  size_t input_num = inputs.size();
   // ignore send empty input
-  if (common::AnfAlgo::HasNodeAttr(kAttrNeedDropInput, cnode)) {
-    bool need_drop_input = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrNeedDropInput);
+  if (prim_->HasAttr(kAttrNeedDropInput)) {
+    bool need_drop_input = GetValue<bool>(prim_->GetAttr(kAttrNeedDropInput));
     if (need_drop_input) {
       input_num = 0;
     }
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  size_t output_num = outputs.size();
   std::vector<size_t> input_aligned_mem_size(input_num);
   std::vector<size_t> output_aligned_mem_size(output_num);
   std::vector<size_t> input_real_mem_size(input_num);
   std::vector<size_t> output_real_mem_size(output_num);
   for (size_t i = 0; i < input_num; ++i) {
-    auto ms_shape = AnfAlgo::GetInputDeviceShape(cnode, i);
-    auto type_size = abstract::TypeIdSize(AnfAlgo::GetInputDeviceDataType(cnode, i));
+    auto ms_shape = inputs[i]->GetShapeVector();
+    auto type_size = abstract::TypeIdSize(inputs[i]->dtype_id());
     if (type_size == 0) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid type_size 0 of node: " << prim_->name();
     }
     size_t origin_mem_size = type_size * SizeOf(ms_shape);
     size_t aligned_mem_size = device::MemoryManager::GetCommonAlignSize(origin_mem_size);
@@ -78,10 +77,10 @@ void AllToAllvCalcParam::CalcOpParam() {
     input_real_mem_size[i] = origin_mem_size / type_size;
   }
   for (size_t i = 0; i < output_num; ++i) {
-    auto ms_shape = AnfAlgo::GetOutputDeviceShape(cnode, i);
-    auto type_size = abstract::TypeIdSize(AnfAlgo::GetOutputDeviceDataType(cnode, i));
+    auto ms_shape = outputs[i]->GetShapeVector();
+    auto type_size = abstract::TypeIdSize(outputs[i]->dtype_id());
     if (type_size == 0) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid type_size 0 of node: " << prim_->name();
     }
     size_t origin_mem_size = type_size * SizeOf(ms_shape);
     size_t aligned_mem_size = device::MemoryManager::GetCommonAlignSize(origin_mem_size);
@@ -95,9 +94,7 @@ void AllToAllvCalcParam::CalcOpParam() {
 void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, const std::vector<size_t> &real_sizes,
                                        const std::string &rank_ids_attr, std::vector<int64_t> *counts,
                                        std::vector<int64_t> *displs) {
-  CNodePtr cnode = node_.lock();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto rank_ids = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, rank_ids_attr);
+  auto rank_ids = GetValue<std::vector<int64_t>>(prim_->GetAttr(rank_ids_attr));
   if (mem_sizes.size() != rank_ids.size() || real_sizes.size() != rank_ids.size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid addr num " << mem_sizes.size() << " and " << real_sizes.size()
                                << " must be equal to rank ids size " << rank_ids.size();

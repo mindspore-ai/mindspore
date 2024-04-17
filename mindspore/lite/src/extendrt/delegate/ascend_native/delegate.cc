@@ -35,12 +35,11 @@
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "ops/use_past_embedding.h"
-#include "ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 #include "ops/reshape.h"
-#include "ops/cast.h"
 #include "ops/not_equal.h"
 #include "ops/tuple_get_item.h"
-#include "ops/less.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 
@@ -120,7 +119,7 @@ bool AscendNativeDelegate::IsSupport(const CNodePtr &cnode) {
         return false;
       }
       bool act = primitive->get_activation_type();
-      if ((act == ActivationType::NO_ACTIVATION) && (cnode->inputs().size() == Num3)) {
+      if ((act == ActivationType::NO_ACTIVATION) && (cnode->size() == Num3)) {
         ret = true;
       }
     } else if (prim->name() == ops::kNameAddFusion) {

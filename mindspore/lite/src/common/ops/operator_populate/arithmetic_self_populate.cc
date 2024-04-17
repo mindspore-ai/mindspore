@@ -15,21 +15,9 @@
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "nnacl/arithmetic_self_parameter.h"
-#include "ops/abs.h"
-#include "ops/cos.h"
-#include "ops/sin.h"
-#include "ops/log.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/grad/log_grad.h"
-#include "ops/neg.h"
 #include "ops/grad/neg_grad.h"
-#include "ops/sqrt.h"
-#include "ops/square.h"
-#include "ops/rsqrt.h"
-#include "ops/logical_not.h"
-#include "ops/floor.h"
-#include "ops/ceil.h"
-#include "ops/round.h"
-#include "ops/reciprocal.h"
 using mindspore::schema::PrimitiveType_Abs;
 using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Cos;

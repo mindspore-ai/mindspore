@@ -176,12 +176,6 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
           }
           post_node = tuple_get_item;
         }
-      } else {
-        auto status = node_infer_shape_->InferShape(post_node->cast<CNodePtr>());
-        if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
-          MS_LOG(ERROR) << "infer shape failed.";
-          return lite::RET_ERROR;
-        }
       }
       if (manager_->node_users()[post_node].empty()) {
         continue;
@@ -289,7 +283,7 @@ STATUS ToFormatBase::DealConv2dTransposeFusionNode(const FuncGraphPtr &func_grap
   MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
   auto val_ptr = prim->GetAttr(ops::kOriginalOpName);
   if (val_ptr == nullptr || GetValue<std::string>(val_ptr) != "Conv2DBackpropInput" ||
-      cnode->inputs().size() < kInputSizeIndex + 1) {  // no input_size
+      cnode->size() < kInputSizeIndex + 1) {  // no input_size
     return lite::RET_OK;
   }
   if (func_graph->has_attr(lite::kIsDynamicShape) && GetValue<bool>(func_graph->get_attr(lite::kIsDynamicShape))) {
@@ -300,7 +294,9 @@ STATUS ToFormatBase::DealConv2dTransposeFusionNode(const FuncGraphPtr &func_grap
   MS_CHECK_TRUE_MSG(gather_input != nullptr, RET_ERROR, "gather input is nullptr");
   auto abstract = gather_input->abstract();
   MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is nullptr");
-  std::vector<int> gather_indices_n, gather_indices_hw, gather_indices_c;
+  std::vector<int> gather_indices_n;
+  std::vector<int> gather_indices_hw;
+  std::vector<int> gather_indices_c;
   auto value_ptr = MakeValue<int64_t>(NCHW);
   if (perm == kNH2NC) {          // NHWC To NCHW
     gather_indices_n = {0};      // fetch N dimension
@@ -378,7 +374,7 @@ void SetCNodeFormat(const CNodePtr &cnode, mindspore::Format dst_format) {
   if (prim->GetAttr(ops::kFormat) == nullptr && format_value != nullptr) {
     auto format = GetValue<int64_t>(format_value);
     if (format == dst_format) {
-      prim->AddAttr(ops::kFormat, format_value);
+      (void)prim->AddAttr(ops::kFormat, format_value);
     }
   }
   return;
@@ -467,6 +463,7 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
       return false;
     }
   }
+
   if (main_graph && save_type_ != kMindIR) {
     status = HandleGraphInput(func_graph);
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {

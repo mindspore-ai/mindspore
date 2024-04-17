@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,8 +213,9 @@ std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelConfig() {
   auto jit_level_iter = jit_config.find(kAttrJitLevel);
   auto jit_level = (jit_level_iter != jit_config.end() ? jit_level_iter->second : "");
   bool enable_gk = context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
-  if (!enable_gk && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
-    enable_gk = (jit_level == kAttrJitLevelO2);
+  auto device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (!enable_gk && device_target == kAscendDevice) {
+    enable_gk = (jit_level == kAttrJitLevelO1);
   }
   // use environ flags in priority
   auto flags_env = std::getenv("MS_DEV_GRAPH_KERNEL_FLAGS");
@@ -240,14 +241,28 @@ std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelConfig() {
 void GraphKernelFlags::CheckSupport() const {
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (IsEnableGraphKernel()) {
-#ifndef USE_LLVM
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
+#ifndef USE_LLVM
     auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
-    if (is_cpu && !(const_cast<GraphKernelFlags *>(this)->enable_dynamic_shape_fusion)) {
+    if (is_cpu && const_cast<GraphKernelFlags *>(this)->kernel_generator == "AKG") {
       MS_LOG(WARNING)
         << "Graph Kernel Fusion is not supported without LLVM on cpu platform, and it will be turned off now. Please "
            "refer to https://www.mindspore.cn/install and install the required version of LLVM.";
+      const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
+      return;
+    }
+#endif
+#ifndef ENABLE_DVM
+    auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+    if (is_ascend) {
+      MS_LOG(WARNING) << "Graph Kernel Fusion is not supported without the prebuild binary file tracked by git lfs, "
+                         "and it will be turned off now. Please perform the following steps:\n\n"
+                         "1. Install git lfs, refer https://github.com/git-lfs/git-lfs/wiki/installation\n"
+                         "2. After installing git lfs, do not forget executing the following command:\n"
+                         "   git lfs install\n"
+                         "3. Re-clone the source codes, the files tracked by git lfs will be downloaded automatically\n"
+                         "4. Re-compile the source codes\n";
       const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
       return;
     }
@@ -271,14 +286,6 @@ void GraphKernelFlags::Refresh() {
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (IsEnableGraphKernel()) {
     CheckSupport();
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-    if (is_ascend) {
-      MS_LOG(WARNING)
-        << "Graph Kernel Fusion on Ascend is recommended to turned off if getting some compiling or running error. For "
-           "more details, please refer to 'mindspore.context' at https://www.mindspore.cn.";
-    }
   }
 #endif
   // If enable graphkernel, Dump flags so that people can check the setting.
@@ -288,13 +295,16 @@ void GraphKernelFlags::Refresh() {
 }
 
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
+  bool has_kernel_generator = (flag_map->find("kernel_generator") != flag_map->end());
+  bool has_enable_dynamic_shape_fusion = (flag_map->find("enable_dynamic_shape_fusion") != flag_map->end());
   FlagRegister reg(flag_map);
   bool is_ascend{false};
-  bool is_910b{false};
+  bool is_910bc{false};
   auto context_ptr = MsContext::GetInstance();
   if (context_ptr != nullptr) {
+    auto const &soc_version = context_ptr->ascend_soc_version();
+    is_910bc = (soc_version == "ascend910b") || (soc_version == "ascend910c");
     is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-    is_910b = context_ptr->ascend_soc_version() == "ascend910b";
   }
 
   // Set opt_level first, some flags' default value depends on it.
@@ -310,7 +320,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
 
   // Boolean flags
   reg.AddFlag("dump_as_text", &dump_as_text);
-  reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion, (opt_level == OptLevel_3 && !is_910b));
+  reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion, (opt_level == OptLevel_3 && !is_910bc));
   reg.AddFlag("enable_recompute_fusion", &enable_recompute_fusion, opt_level >= OptLevel_2);
   reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion, opt_level == OptLevel_3);
   reg.AddFlag("enable_horizontal_fusion", &enable_horizontal_fusion);
@@ -353,6 +363,24 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("disable_simplify_exprs", &disable_simplify_exprs);
   reg.AddFlag("enable_pass", &enable_pass);
   reg.AddFlag("disable_pass", &disable_pass);
+  reg.AddFlag("enable_cce_lib", &enable_cce_lib);
+  reg.AddFlag("enable_cce_lib_ops", &enable_cce_lib_ops);
+  reg.AddFlag("enable_cce_lib_ops_only", &enable_cce_lib_ops_only);
+  reg.AddFlag("disable_cce_lib_ops", &disable_cce_lib_ops);
+
+  if (enable_dynamic_shape_fusion && !is_ascend) {
+    kernel_generator = "AKG_V2";
+    return;
+  }
+
+  if (is_ascend && !has_kernel_generator) {
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
+    kernel_generator = "DVM";
+#endif
+  }
+  if (kernel_generator == "DVM" && !has_enable_dynamic_shape_fusion) {
+    enable_dynamic_shape_fusion = true;
+  }
 }
 
 std::string GraphKernelFlags::DumpAllFlags() const {
@@ -400,6 +428,10 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["disable_simplify_exprs"] = disable_simplify_exprs;
   json["enable_pass"] = enable_pass;
   json["disable_pass"] = disable_pass;
+  json["enable_cce_lib"] = enable_cce_lib;
+  json["enable_cce_lib_ops"] = enable_cce_lib_ops_only;
+  json["enable_cce_lib_ops_only"] = enable_cce_lib_ops_only;
+  json["disable_cce_lib_ops"] = disable_cce_lib_ops;
 
   return json.dump();
 }

@@ -20,7 +20,7 @@
 namespace mindspore::graphkernel::expanders {
 class TanhGrad : public OpDesc {
  public:
-  TanhGrad() { (void)validators_.push_back(std::make_unique<CheckAllFormatsSame>()); }
+  TanhGrad() { validators_.push_back(std::make_unique<CheckAllFormatsSame>()); }
   ~TanhGrad() = default;
 
  protected:

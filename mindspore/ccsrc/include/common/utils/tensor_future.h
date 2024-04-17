@@ -52,7 +52,7 @@ class COMMON_EXPORT DeviceAddressPromise {
   std::promise<DeviceAddressFutureDataPtr> promise_;
   std::once_flag once_flag_;
 };
-using DeviceAddressPromisePtr = std::unique_ptr<DeviceAddressPromise>;
+using DeviceAddressPromisePtr = std::shared_ptr<DeviceAddressPromise>;
 }  // namespace pynative
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_TENSOR_FUTURE_H_

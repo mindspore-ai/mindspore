@@ -5,6 +5,8 @@ mindspore.dataset.vision.ResizedCrop
 
     裁切输入图像的指定区域并放缩到指定尺寸大小。
 
+    支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
+
     参数：
         - **top** (int) - 裁切区域左上角位置的纵坐标。
         - **left** (int) - 裁切区域左上角位置的横坐标。
@@ -32,4 +34,17 @@ mindspore.dataset.vision.ResizedCrop
 
     教程样例：
         - `视觉变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+
+    .. py:method:: device(device_target="CPU")
+
+        指定该变换执行的设备。
+
+        - 当执行设备是 Ascend 时，输入/输出数据的维度限制为[4, 6]和[32768, 32768]之间。
+
+        参数：
+            - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
+
+        异常：
+            - **TypeError** - 当 `device_target` 的类型不为str。
+            - **ValueError** - 当 `device_target` 的取值不为 ``CPU`` / ``Ascend`` 。

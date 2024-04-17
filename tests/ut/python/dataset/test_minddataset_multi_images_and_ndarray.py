@@ -65,13 +65,13 @@ def test_cv_minddataset_reader_multi_image_and_ndarray_tutorial():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 7
             logger.info("item: {}".format(item))
-            assert item["image_0"].dtype == np.uint8
+            assert item["image_0"].dtype == np.dtype('S45150')
             assert (item["image_0"] == item["image_2"]).all()
             assert (item["image_3"] == item["image_4"]).all()
             assert (item["image_0"] == item["image_4"]).all()
-            assert item["image_2"].dtype == np.uint8
-            assert item["image_3"].dtype == np.uint8
-            assert item["image_4"].dtype == np.uint8
+            assert item["image_2"].dtype == np.dtype('S45150')
+            assert item["image_3"].dtype == np.dtype('S45150')
+            assert item["image_4"].dtype == np.dtype('S45150')
             assert item["id"].dtype == np.int32
             assert item["input_mask"].shape == (5,)
             assert item["input_mask"].dtype == np.int32

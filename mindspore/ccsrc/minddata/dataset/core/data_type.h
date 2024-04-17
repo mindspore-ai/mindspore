@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@
 #endif
 
 #include <string>
+#include <utility>
+
 #ifdef ENABLE_MINDDATA_PYTHON
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
@@ -31,9 +33,9 @@ namespace py = pybind11;
 #include "base/float16.h"
 #endif
 #include "minddata/dataset/include/dataset/constants.h"
+
 namespace mindspore {
 namespace dataset {
-
 // Class that represents basic data types in DataEngine.
 class DataType {
  public:
@@ -82,7 +84,7 @@ class DataType {
     {"float32", 4, "float32", py::format_descriptor<float>::format(), CV_32F},           // DE_FLOAT32
     {"float64", 8, "double", py::format_descriptor<double>::format(), CV_64F},           // DE_FLOAT64
     {"string", 0, "str", "U", kCVInvalidType},                                           // DE_STRING
-    {"bytes", 0, "bytes", "S", kCVInvalidType},                                          // DE_BYTES
+    {"bytes", 0, "bytes", "S", CV_8U},                                                   // DE_BYTES
     {"python", 0, "object", "O", kCVInvalidType}                                         // DE_PYTHON
   };
 #else
@@ -103,7 +105,8 @@ class DataType {
     {"float32", 4, "float32", "", CV_32F},         // DE_FLOAT32
     {"float64", 8, "double", "", CV_64F},          // DE_FLOAT64
     {"string", 0, "str", "", kCVInvalidType},      // DE_STRING
-    {"bytes", 0, "bytes", "", kCVInvalidType}      // DE_BYTES
+    {"bytes", 0, "bytes", "", CV_8U},              // DE_BYTES
+    {"python", 0, "object", "O", kCVInvalidType}   // DE_PYTHON
   };
 #else
   // android and no python
@@ -123,7 +126,8 @@ class DataType {
     {"float32", 4, "float32", ""},                 // DE_FLOAT32
     {"float64", 8, "double", ""},                  // DE_FLOAT64
     {"string", 0, "str", "", kCVInvalidType},      // DE_STRING
-    {"bytes", 0, "bytes", "", kCVInvalidType}      // DE_BYTES
+    {"bytes", 0, "bytes", ""},                     // DE_BYTES
+    {"python", 0, "object", "O", kCVInvalidType}   // DE_PYTHON
   };
 #endif
 #endif
@@ -138,8 +142,8 @@ class DataType {
   ~DataType() = default;
 
   // Create a type from a given enum
-  /// \param d
-  constexpr explicit DataType(Type d) : type_(d) {}
+  /// \param type
+  constexpr explicit DataType(const Type &type) : type_(std::move(type)) {}
 
   constexpr bool operator==(const DataType a) const { return type_ == a.type_; }
 

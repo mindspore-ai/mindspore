@@ -27,15 +27,14 @@ bool MuxSendActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
   }
 
   // Send input data(inter-process data is the input of the Send kernel) to peers.
-  if (launch_info_.inputs_.empty()) {
+  if (input_device_tensors_.empty()) {
     MS_LOG(ERROR) << "Send kernel has no output tensor.";
     return false;
   }
 
-  auto send_output = launch_info_.inputs_;
   MS_EXCEPTION_IF_NULL(mux_recv_actor_);
   std::string peer_server_url = mux_recv_actor_->from_actor_aid().Url();
-  auto message = BuildRpcMessage(send_output, peer_server_url);
+  auto message = BuildRpcMessage(peer_server_url);
   MS_EXCEPTION_IF_NULL(message);
   MS_LOG(INFO) << "Rpc actor send message to: " << peer_server_url;
   client_->SendAsync(std::move(message));

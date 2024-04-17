@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "frontend/operator/ops.h"
 
 namespace mindspore::opt::irpass {
@@ -44,6 +45,14 @@ AnfNodePtr LoadEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &no
   constexpr size_t kFirstInputIndex = 1;
   constexpr size_t kSecondInputIndex = 2;
   auto &input_load = load_cnode->input(kFirstInputIndex);
+  // Convert: load(cast(load())) -> cast(load())
+  if (IsPrimitiveCNode(input_load, prim::kPrimCast)) {
+    auto cast_cnode = dyn_cast<CNode>(input_load);
+    auto cast_input = cast_cnode->input(kFirstInputIndex);
+    if (IsPrimitiveCNode(cast_input, prim::kPrimLoad)) {
+      return input_load;
+    }
+  }
   if (IsPrimitiveCNode(input_load, prim::kPrimLoad)) {
     auto load_prim = NewValueNode(prim::kPrimLoad);
     auto input_load_cnode = input_load->cast<CNodePtr>();

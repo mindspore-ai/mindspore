@@ -31,6 +31,7 @@
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
 #include "include/common/visible.h"
+#include "mindrt/include/async/spinlock.h"
 
 namespace mindspore {
 namespace runtime {
@@ -40,8 +41,9 @@ static const size_t kPercent = 100;
 enum class ProfilerStage {
   kDefault,
   kPython,
+  kCapture,
   kRunGraph,
-  kRunGradGraph,
+  kRunGrad,
   kRunOp,
   kAsnumpy,
   kCompileGradGraph,
@@ -49,13 +51,15 @@ enum class ProfilerStage {
   kSyncStream,
 };
 
-enum class ProfilerModule { kDefault, kRuntime, kPynative, kKernel, kPython, kOther };
+enum class ProfilerModule { kDefault, kGraphExecutorPy, kRuntime, kPynative, kKernel, kPython, kCapture, kOther };
 
 enum class ProfilerEvent {
   kDefault,
   kKernelInfer,
   kKernelResize,
+  kKernelInferAndResize,
   kKernelLaunch,
+  kKernelLaunckCallback,
   kKernelUpdate,
   kGraphLaunch,
   kInputProcess,
@@ -68,10 +72,15 @@ enum class ProfilerEvent {
   kMemoryFree,
   kCopyData,
   kStreamSync,
+  kWaitKernelsInferFinish,
+  kWaitKernelsResizeFinish,
+  kWaitKernelsLaunchFinish,
 
   // Inner event is not counted in the total time.
   kKernelInferInner,
   kKernelInferDataSync,
+  kKernelLaunchInner,
+  kBackendGraphRunInner,
 
   // PyNative Pipeline
   kPyNativeFrontendTask,
@@ -87,6 +96,21 @@ enum class ProfilerEvent {
   kPyNativeGradUpdateSens,
   kPyNativeGradClearTopCell,
   kPyNativeGradClearAutoGradCell,
+  // PyBoost
+  kPyBoostInferOutput,
+  kPyBoostInferByOpDef,
+  kPyBoostCreateOutputTensor,
+  kPyBoostDeviceTask,
+  kPyBoostMallocInput,
+  kPyBoostMallocOutput,
+  kPyBoostLaunchAclnn,
+  // Python
+  kPythonObserved,
+  // Capture Event
+  kCaptureRunGraph,
+  kCaptureProcess,
+  kCaptureCompile,
+  kCaptureGuard,
 };
 
 #define PROFILER_START(start_time)                                          \
@@ -141,6 +165,21 @@ class COMMON_EXPORT ProfilerRecorder {
 
  private:
   std::unique_ptr<Data> data_{nullptr};
+};
+
+class COMMON_EXPORT PythonProfilerRecorder {
+ public:
+  explicit PythonProfilerRecorder(const std::string &record_name);
+  ~PythonProfilerRecorder() = default;
+
+  void record_start();
+  void record_end();
+
+ private:
+  uint64_t start_time_;
+  std::string record_name_;
+  ProfilerModule module_;
+  ProfilerEvent event_;
 };
 
 class COMMON_EXPORT ProfilerStageRecorder {
@@ -341,7 +380,7 @@ class COMMON_EXPORT ProfilerAnalyzer {
   ProfilerDataSpan data_;
   // Container list for all data_ points.
   std::list<std::pair<StepInfoPtr, ProfilerDataSpan>> data_line_;
-  std::mutex data_mutex_;
+  SpinLock data_mutex_;
   nlohmann::json json_infos_;
   // The data analyzed level is module-->event-->op, these data would not be cleared in unit test.
   std::map<ProfilerModule, ProfilerModuleInfoPtr> module_infos_;

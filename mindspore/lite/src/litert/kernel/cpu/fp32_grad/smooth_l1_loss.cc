@@ -39,7 +39,7 @@ int SmoothL1LossCPUKernel::DoExecute(size_t task_id) {
   CHECK_NULL_RETURN(predict);
   CHECK_NULL_RETURN(target);
   CHECK_NULL_RETURN(out);
-  const size_t length = in_tensors_.at(kPredictIdx)->ElementsNum();
+  const size_t length = static_cast<size_t>(in_tensors_.at(kPredictIdx)->ElementsNum());
 
   size_t stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);

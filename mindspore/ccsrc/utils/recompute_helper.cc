@@ -129,7 +129,8 @@ void GetMaxSubGraph(const FuncGraphManagerPtr &mng, mindspore::HashSet<CNodePtr>
       continue;
     }
     if (get_inputs) {
-      for (const auto &input : current_node->inputs()) {
+      for (auto &weak_input : current_node->weak_inputs()) {
+        auto input = weak_input.lock();
         MS_EXCEPTION_IF_NULL(input);
         if (input->isa<CNode>()) {
           auto input_cnode = input->cast<CNodePtr>();
@@ -265,7 +266,9 @@ bool HasTargetOrRecomputeInputs(const mindspore::HashSet<CNodePtr> &recomputed_o
   }
 
   if (IsBpropNode(node)) {
-    for (auto &input : node->inputs()) {
+    for (auto &weak_input : node->weak_inputs()) {
+      auto input = weak_input.lock();
+      MS_EXCEPTION_IF_NULL(input);
       if (input->isa<CNode>() &&
           HasTargetOrRecomputeInputs(recomputed_origin_nodes, target_nodes, input->cast<CNodePtr>(),
                                      has_target_or_recompute_inputs_map)) {
@@ -562,10 +565,14 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
   if (!has_recomputed_inputs && new_inputs.size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
     (void)std::copy(first_target_inputs.begin(), first_target_inputs.end(), std::back_inserter(make_tuple_inputs));
+    AbstractBasePtrList abstract_list;
+    (void)std::transform(first_target_inputs.begin(), first_target_inputs.end(), std::back_inserter(abstract_list),
+                         [](const AnfNodePtr &node) -> AbstractBasePtr { return node->abstract(); });
+    auto make_tuple = graph->NewCNode(make_tuple_inputs);
+    make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
     auto first_input = new_inputs[1];
     MS_EXCEPTION_IF_NULL(first_input);
-    std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), first_input,
-                                          graph->NewCNode(make_tuple_inputs)};
+    std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), first_input, make_tuple};
     auto depend_node = graph->NewCNode(depend_inputs);
     MS_EXCEPTION_IF_NULL(depend_node);
     depend_node->set_abstract(first_input->abstract());
@@ -589,7 +596,8 @@ void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const mindspore::HashSe
     MS_EXCEPTION_IF_NULL(target_node);
     MS_LOG(DEBUG) << "Rebuild a new target_node " << target_node->DebugString() << " with the new recomputed input";
     std::vector<AnfNodePtr> new_target_inputs;
-    for (const auto &input : target_node->inputs()) {
+    for (auto &weak_input : target_node->weak_inputs()) {
+      auto input = weak_input.lock();
       MS_EXCEPTION_IF_NULL(input);
       if (!input->isa<CNode>()) {
         (void)new_target_inputs.emplace_back(input);

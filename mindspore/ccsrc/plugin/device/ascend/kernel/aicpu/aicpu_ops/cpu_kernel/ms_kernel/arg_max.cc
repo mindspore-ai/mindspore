@@ -16,7 +16,7 @@
 #include "cpu_kernel/ms_kernel/arg_max.h"
 #include <vector>
 #include <algorithm>
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -25,14 +25,14 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 2;
 const char *kArgMax = "ArgMax";
 const uint32_t kDataSize = 4 * 1024;
-#define ARGMAX_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, TYPE3, CTX)   \
-  case (DTYPE): {                                              \
-    uint32_t result = ArgMaxCompute<TYPE1, TYPE2, TYPE3>(CTX); \
-    if (result != KERNEL_STATUS_OK) {                          \
-      KERNEL_LOG_ERROR("ArgMax kernel compute failed.");       \
-      return result;                                           \
-    }                                                          \
-    break;                                                     \
+#define ARGMAX_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, TYPE3, CTX)       \
+  case (DTYPE): {                                                  \
+    uint32_t result = ArgMaxCompute<TYPE1, TYPE2, TYPE3>(CTX);     \
+    if (result != KERNEL_STATUS_OK) {                              \
+      CUST_KERNEL_LOG_ERROR(ctx, "ArgMax kernel compute failed."); \
+      return result;                                               \
+    }                                                              \
+    break;                                                         \
   }
 
 #define ARGMAX_COMPUTE_CASE_ALL(TYPE1, TYPE2, CTX)                \
@@ -48,15 +48,16 @@ const uint32_t kDataSize = 4 * 1024;
   ARGMAX_COMPUTE_CASE(DT_UINT32, uint32_t, TYPE1, TYPE2, CTX)     \
   ARGMAX_COMPUTE_CASE(DT_UINT64, uint64_t, TYPE1, TYPE2, CTX)
 
-#define LOG_ERROR_DTYPE(STR1, STR2)                                    \
-  default:                                                             \
-    KERNEL_LOG_ERROR("[%s] data type[%s] not supported.", STR1, STR2); \
+#define LOG_ERROR_DTYPE(ctx, STR1, STR2)                                         \
+  default:                                                                       \
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] data type[%s] not supported.", STR1, STR2); \
     return KERNEL_STATUS_PARAM_INVALID;
 }  // namespace
 
 namespace aicpu {
 uint32_t ArgMaxCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "ArgMax check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "ArgMax check input and output number failed.");
   Tensor *input_data = ctx.Input(0);
   Tensor *axes_data = ctx.Input(1);
   Tensor *output_data = ctx.Output(0);
@@ -69,16 +70,16 @@ uint32_t ArgMaxCpuKernel::Compute(CpuKernelContext &ctx) {
         case DT_INT32:
           switch (data_type) {
             ARGMAX_COMPUTE_CASE_ALL(int32_t, int32_t, ctx)
-            LOG_ERROR_DTYPE("Input[0]", DTypeStr(data_type).c_str())
+            LOG_ERROR_DTYPE(ctx, "Input[0]", DTypeStr(data_type).c_str())
           }
           break;
         case DT_INT64:
           switch (data_type) {
             ARGMAX_COMPUTE_CASE_ALL(int64_t, int32_t, ctx)
-            LOG_ERROR_DTYPE("Input[0]", DTypeStr(data_type).c_str())
+            LOG_ERROR_DTYPE(ctx, "Input[0]", DTypeStr(data_type).c_str())
           }
           break;
-          LOG_ERROR_DTYPE("Input[1]", DTypeStr(axes_type).c_str())
+          LOG_ERROR_DTYPE(ctx, "Input[1]", DTypeStr(axes_type).c_str())
       }
       break;
     case DT_INT64:
@@ -86,28 +87,28 @@ uint32_t ArgMaxCpuKernel::Compute(CpuKernelContext &ctx) {
         case DT_INT32:
           switch (data_type) {
             ARGMAX_COMPUTE_CASE_ALL(int32_t, int64_t, ctx)
-            LOG_ERROR_DTYPE("Input[0]", DTypeStr(data_type).c_str())
+            LOG_ERROR_DTYPE(ctx, "Input[0]", DTypeStr(data_type).c_str())
           }
           break;
         case DT_INT64:
           switch (data_type) {
             ARGMAX_COMPUTE_CASE_ALL(int64_t, int64_t, ctx)
-            LOG_ERROR_DTYPE("Input[0]", DTypeStr(data_type).c_str())
+            LOG_ERROR_DTYPE(ctx, "Input[0]", DTypeStr(data_type).c_str())
           }
           break;
-          LOG_ERROR_DTYPE("Input[1]", DTypeStr(axes_type).c_str())
+          LOG_ERROR_DTYPE(ctx, "Input[1]", DTypeStr(axes_type).c_str())
       }
       break;
-      LOG_ERROR_DTYPE("Output[0]", DTypeStr(output_type).c_str())
+      LOG_ERROR_DTYPE(ctx, "Output[0]", DTypeStr(output_type).c_str())
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T1, typename T2, typename T3>
-uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
+uint32_t ArgMaxCpuKernel::ArgMaxCompute(CpuKernelContext &ctx) {
   // get x
   Tensor *input_data = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(input_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   auto input_shape = input_data->GetTensorShape();
   std::vector<int64_t> dims = input_shape->GetDimSizes();
@@ -120,29 +121,30 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
   }
   // get dimension
   Tensor *axes_data = ctx.Input(1);
-  KERNEL_CHECK_NULLPTR(axes_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, axes_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
   auto axes_data_addr = reinterpret_cast<T2 *>(axes_data->GetData());
-  if (axes_data_addr[0] > kDimsNum - 1 || axes_data_addr[0] < -kDimsNum) {
-    KERNEL_LOG_ERROR("The value of axes must be in the range [[%d], [%d]], but got [%d]", -kDimsNum, kDimsNum - 1,
-                     axes_data_addr[0]);
+  auto data_addr_zero = axes_data_addr[0];
+  if (data_addr_zero > kDimsNum - 1 || data_addr_zero < -kDimsNum) {
+    CUST_KERNEL_LOG_ERROR(ctx, "The value of axes must be in the range [[%d], [%d]], but got [%d]", -kDimsNum,
+                          kDimsNum - 1, data_addr_zero);
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (axes_data_addr[0] < 0) {
-    axes_data_addr[0] += kDimsNum;
+  if (data_addr_zero < 0) {
+    data_addr_zero += kDimsNum;
   }
   // get y
   Tensor *output_data = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
   auto output_data_addr = reinterpret_cast<T3 *>(output_data->GetData());
   int64_t output_data_num = output_data->NumElements();
-  if (output_data_num * sizeof(T3) < kDataSize) {
+  if (false) {
     int64_t output_seq[kDimsNum];
-    output_seq[axes_data_addr[0]] = 0;
+    output_seq[data_addr_zero] = 0;
     for (int64_t i = 0; i < output_data_num; i++) {
       int64_t tmp = i;
       int64_t addr_base = 0;
       for (int64_t j = kDimsNum - 1; j > -1; j--) {
-        if (j == axes_data_addr[0]) {
+        if (j == data_addr_zero) {
           continue;
         }
         output_seq[j] = tmp % dims[j];
@@ -151,8 +153,8 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
       }
       T1 max_value = input_data_addr[addr_base];
       T3 max_loc = 0;
-      for (int64_t j = 1; j < dims[axes_data_addr[0]]; j++) {
-        int64_t get_addr = addr_base + j * dims_addr[axes_data_addr[0]];
+      for (int64_t j = 1; j < dims[data_addr_zero]; j++) {
+        int64_t get_addr = addr_base + j * dims_addr[data_addr_zero];
         T1 get_data = input_data_addr[get_addr];
         if (max_value < get_data) {
           max_value = get_data;
@@ -170,11 +172,11 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
     auto shard_compute = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         int64_t output_seq[kDimsNum];
-        output_seq[axes_data_addr[0]] = 0;
+        output_seq[data_addr_zero] = 0;
         int64_t tmp = i;
         int64_t addr_base = 0;
         for (int64_t j = kDimsNum - 1; j > -1; j--) {
-          if (j == axes_data_addr[0]) {
+          if (j == data_addr_zero) {
             continue;
           }
           output_seq[j] = tmp % dims[j];
@@ -183,8 +185,8 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
         }
         T1 max_value = input_data_addr[addr_base];
         T3 max_loc = 0;
-        for (int64_t j = 1; j < dims[axes_data_addr[0]]; j++) {
-          int64_t get_addr = addr_base + j * dims_addr[axes_data_addr[0]];
+        for (int64_t j = 1; j < dims[data_addr_zero]; j++) {
+          int64_t get_addr = addr_base + j * dims_addr[data_addr_zero];
           T1 get_data = input_data_addr[get_addr];
           if (max_value < get_data) {
             max_value = get_data;
@@ -194,11 +196,11 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
         output_data_addr[i] = max_loc;
       }
     };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, output_data_num, output_data_num / max_core_num, shard_compute),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, output_data_num, output_data_num / max_core_num, shard_compute),
       "ArgMax Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kArgMax, ArgMaxCpuKernel);
+REGISTER_MS_CPU_KERNEL(kArgMax, ArgMaxCpuKernel);
 }  // namespace aicpu

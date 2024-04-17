@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_EXPAND_H_
 #define AICPU_KERNELS_NORMALIZED_EXPAND_H_
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/bcast.h"
 
@@ -32,10 +32,10 @@ class ExpandCpuKernel : public CpuKernel {
 
  private:
   template <int32_t RANK, typename T, int32_t OPTION>
-  uint32_t BroadcastCompute(const CpuKernelContext &ctx, BCalcInfo &calc_info);
+  uint32_t BroadcastCompute(CpuKernelContext &ctx, BCalcInfo &calc_info);
   bool AlignedCheck(const BCalcInfo &calc_info);
   template <int32_t RANK, typename T>
-  uint32_t ExpandCalculateWithAlignedCheck(const CpuKernelContext &ctx, BCalcInfo &calc_info);
+  uint32_t ExpandCalculateWithAlignedCheck(CpuKernelContext &ctx, BCalcInfo &calc_info);
 
   template <typename T>
   uint32_t ExpandCompute(CpuKernelContext &ctx);

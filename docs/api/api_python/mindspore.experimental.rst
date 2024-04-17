@@ -12,8 +12,16 @@ mindspore.experimental
     :template: classtemplate.rst
 
     mindspore.experimental.optim.Optimizer
+    mindspore.experimental.optim.Adadelta
+    mindspore.experimental.optim.Adagrad
     mindspore.experimental.optim.Adam
+    mindspore.experimental.optim.Adamax
     mindspore.experimental.optim.AdamW
+    mindspore.experimental.optim.ASGD
+    mindspore.experimental.optim.NAdam
+    mindspore.experimental.optim.RAdam
+    mindspore.experimental.optim.RMSprop
+    mindspore.experimental.optim.Rprop
     mindspore.experimental.optim.SGD
 
 LRScheduler类
@@ -27,7 +35,7 @@ LRScheduler类
     from mindspore import nn
     from mindspore.experimental import optim
     # Define the network structure of LeNet5. Refer to
-    # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+    # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
 
     net = LeNet5()
     loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
@@ -44,7 +52,7 @@ LRScheduler类
         return loss
     for epoch in range(6):
         # Create the dataset taking MNIST as an example. Refer to
-        # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
 
         for data, label in create_dataset(need_download=False):
             train_step(data, label)
@@ -56,7 +64,6 @@ LRScheduler类
     :template: classtemplate.rst
 
     mindspore.experimental.optim.lr_scheduler.LRScheduler
-    mindspore.experimental.optim.lr_scheduler.ChainedScheduler
     mindspore.experimental.optim.lr_scheduler.ConstantLR
     mindspore.experimental.optim.lr_scheduler.CosineAnnealingLR
     mindspore.experimental.optim.lr_scheduler.CosineAnnealingWarmRestarts

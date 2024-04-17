@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "inc/ops/elewise_calculation_ops.h"
+#include "op_proto/inc/elewise_calculation_ops.h"
+#include "op_proto/inc/nonlinear_fuc_ops.h"
 #include "custom_op_proto/cust_math_ops.h"
+#include "custom_op_proto/cust_elewise_calculation_ops.h"
 
-#include "register/infer_axis_slice_registry.h"
 #include <string>
 #include <vector>
 #include "utils/op_attr.h"
@@ -26,55 +27,29 @@
 #include "utils/util.h"
 #include "utils/error_util.h"
 #include "utils/reduce_infer_util.h"
-#include "graph/utils/node_utils.h"
-#include "graph/utils/node_utils_ex.h"
-#include "graph/utils/op_desc_utils.h"
-#include "register/infer_data_slice_registry.h"
-#include "graph/debug/ge_attr_define.h"
-#include "graph/axis_type_info.h"
 
 namespace ge {
-IMPLEMT_COMMON_INFERFUNC(TwoInOneOutCommonInferShape) {
-  bool is_dynamic_output = true;
-  if (!InferShapeAndTypeTwoInOneOutBroadcast(op, 0, 1, 0, is_dynamic_output)) {
-    return GRAPH_FAILED;
-  }
-
-  return GRAPH_SUCCESS;
-}
-
-IMPLEMT_COMMON_INFERFUNC(OneInOneOutCommonInferShape) {
-  static const int64_t input_x_idx = 0;
-  static const int64_t output_y_idx = 0;
-  if (OneInOneOutDynamicInfer(op, input_x_idx, {output_y_idx})) {
-    return GRAPH_SUCCESS;
-  }
-  return GRAPH_FAILED;
-}
-
 // ----------------------------------OneInOneOutCommonInfer-----------------------------
-COMMON_INFER_FUNC_REG(CheckNumerics, OneInOneOutCommonInferShape);
-COMMON_INFER_FUNC_REG(Conj, OneInOneOutCommonInferShape);
-COMMON_INFER_FUNC_REG(Cos, OneInOneOutCommonInferShape);
-COMMON_INFER_FUNC_REG(Expm1, OneInOneOutCommonInferShape);
-COMMON_INFER_FUNC_REG(Log1p, OneInOneOutCommonInferShape);
-COMMON_INFER_FUNC_REG(Log, OneInOneOutCommonInferShape);
-COMMON_INFER_FUNC_REG(Tanh, OneInOneOutCommonInferShape);
-COMMON_INFER_FUNC_REG(Sin, OneInOneOutCommonInferShape);
-COMMON_INFER_FUNC_REG(Reciprocal, OneInOneOutCommonInferShape);
-COMMON_INFER_FUNC_REG(Sign, OneInOneOutCommonInferShape);
+CUST_ONE_IN_ONE_OUT_INFER(BesselI0, x, y);
+ONE_IN_ONE_OUT_INFER(Cos, x, y);
+ONE_IN_ONE_OUT_INFER(Expm1, x, y);
+ONE_IN_ONE_OUT_INFER(Exp, x, y);
+ONE_IN_ONE_OUT_INFER(Log1p, x, y);
+ONE_IN_ONE_OUT_INFER(Log, x, y);
+ONE_IN_ONE_OUT_INFER(Tanh, x, y);
+ONE_IN_ONE_OUT_INFER(Sin, x, y);
+ONE_IN_ONE_OUT_INFER(Reciprocal, x, y);
+ONE_IN_ONE_OUT_INFER(Sign, x, y);
 // ----------------------------------OneInOneOutCommonInfer END-----------------------------
 
 // ----------------------------------TowInOneOutCommonInfer-----------------------------
-COMMON_INFER_FUNC_REG(Div, TwoInOneOutCommonInferShape);
-COMMON_INFER_FUNC_REG(DivNoNan, TwoInOneOutCommonInferShape);
-CUST_COMMON_INFER_FUNC_REG(Gcd, TwoInOneOutCommonInferShape);
-CUST_COMMON_INFER_FUNC_REG(Heaviside, TwoInOneOutCommonInferShape);
-CUST_COMMON_INFER_FUNC_REG(Hypot, TwoInOneOutCommonInferShape);
-CUST_COMMON_INFER_FUNC_REG(Lcm, TwoInOneOutCommonInferShape);
-CUST_COMMON_INFER_FUNC_REG(Pow, TwoInOneOutCommonInferShape);
-CUST_COMMON_INFER_FUNC_REG(Xlogy, TwoInOneOutCommonInferShape);
-CUST_COMMON_INFER_FUNC_REG(Xdivy, TwoInOneOutCommonInferShape);
+TWO_IN_ONE_OUT_INFER(Div, x1, x2, y);
+TWO_IN_ONE_OUT_INFER(DivNoNan, x1, x2, y);
+CUST_TWO_IN_ONE_OUT_INFER(Gcd, x1, x2, y);
+CUST_TWO_IN_ONE_OUT_INFER(Heaviside, x, values, y);
+CUST_TWO_IN_ONE_OUT_INFER(Hypot, x1, x2, y);
+CUST_TWO_IN_ONE_OUT_INFER(Lcm, x1, x2, y);
+CUST_TWO_IN_ONE_OUT_INFER(LogicalXor, x, y, output);
 // ----------------------------------TowInOneOutCommonInfer END-----------------------------
 
 // --------------AcosGrad----------------
@@ -85,8 +60,7 @@ IMPLEMT_VERIFIER(AcosGrad, AcosGradVerify) {
   return GRAPH_SUCCESS;
 }
 VERIFY_FUNC_REG(AcosGrad, AcosGradVerify);
-COMMON_INFER_FUNC_REG(AcosGrad, TwoInOneOutCommonInferShape);
-INFER_AXIS_TYPE_INFO_REG(AcosGrad, InferAxisType4ElementwiseOp);
+TWO_IN_ONE_OUT_INFER(AcosGrad, y, dy, z);
 // ------------AcosGrad END----------------
 
 // ----------------AcoshGrad-------------------
@@ -107,7 +81,6 @@ IMPLEMT_COMMON_INFERFUNC(AcoshGradInferShape) {
 }
 
 COMMON_INFER_FUNC_REG(AcoshGrad, AcoshGradInferShape);
-INFER_AXIS_TYPE_INFO_REG(AcoshGrad, InferAxisType4ElementwiseOp);
 // --------------AcoshGrad END-----------------
 
 // ----------------AsinGrad---------------
@@ -127,7 +100,6 @@ IMPLEMT_COMMON_INFERFUNC(AsinGradInferShape) {
   return GRAPH_SUCCESS;
 }
 COMMON_INFER_FUNC_REG(AsinGrad, AsinGradInferShape);
-INFER_AXIS_TYPE_INFO_REG(AsinGrad, InferAxisType4ElementwiseOp);
 // --------------AsinGrad END-------------
 
 // ----------------AsinhGrad-------------------
@@ -147,7 +119,6 @@ IMPLEMT_COMMON_INFERFUNC(AsinhGradInferShape) {
 }
 
 COMMON_INFER_FUNC_REG(AsinhGrad, AsinhGradInferShape);
-INFER_AXIS_TYPE_INFO_REG(AsinhGrad, InferAxisType4ElementwiseOp);
 // --------------AsinhGrad END-----------------
 
 // ----------------AddN-------------------
@@ -296,7 +267,6 @@ IMPLEMT_COMMON_INFERFUNC(AddNInferShape) {
 }
 
 COMMON_INFER_FUNC_REG(AddN, AddNInferShape);
-INFER_AXIS_TYPE_INFO_REG(AddN, InferAxisType4ElementwiseOp);
 // ----------------AddN END-------------------
 
 // --------------------------------BiasAdd-------------------------------------
@@ -315,18 +285,8 @@ IMPLEMT_VERIFIER(BiasAdd, BiasAddVerify) {
   return GRAPH_SUCCESS;
 }
 
-IMPLEMT_COMMON_INFERFUNC(BiasAddInferShape) {
-  const int64_t input_x_idx = 0;
-  const int64_t output_y_idx = 0;
-  if (!OneInOneOutDynamicInfer(op, input_x_idx, {output_y_idx})) {
-    return GRAPH_FAILED;
-  }
-  return GRAPH_SUCCESS;
-}
-
-COMMON_INFER_FUNC_REG(BiasAdd, BiasAddInferShape);
+ONE_IN_ONE_OUT_INFER(BiasAdd, x, y);
 VERIFY_FUNC_REG(BiasAdd, BiasAddVerify);
-INFER_AXIS_TYPE_INFO_REG(BiasAdd, InferAxisType4BroadcastOp);
 // ----------------------------------BiasAdd END-----------------------------
 
 // --------------MulNoNan--------------
@@ -367,15 +327,16 @@ IMPLEMT_COMMON_INFERFUNC(LessEqualInferShape) {
   if (!InferShapeAndTypeTwoInOneOutBroadcast(op, "x1", "x2", "y")) {
     return GRAPH_FAILED;
   }
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto vec_y = op_desc->MutableOutputDesc("y")->MutableShape().GetDims();
+  auto y_desc = op.GetOutputDesc("y");
+  auto vec_y = y_desc.GetShape().GetDims();
   if (IsUnknownRankShape(vec_y) || IsUnknownVec(vec_y)) {
     if (!InferShapeRangeTwoInOneOutBroadcast(op, "x1", "x2", "y")) {
       return GRAPH_FAILED;
     }
   }
 
-  op_desc->MutableOutputDesc("y")->SetDataType(DT_BOOL);
+  y_desc.SetDataType(DT_BOOL);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 
@@ -391,7 +352,7 @@ IMPLEMT_VERIFIER(Mul, MulVerify) {
   return GRAPH_SUCCESS;
 }
 
-COMMON_INFER_FUNC_REG(Mul, TwoInOneOutCommonInferShape);
+TWO_IN_ONE_OUT_INFER(Mul, x1, x2, y);
 VERIFY_FUNC_REG(Mul, MulVerify);
 // --------------------Mul END-----------------------
 
@@ -403,9 +364,36 @@ IMPLEMT_VERIFIER(FloorDiv, FloorDivVerify) {
   return GRAPH_SUCCESS;
 }
 
-COMMON_INFER_FUNC_REG(FloorDiv, TwoInOneOutCommonInferShape);
+TWO_IN_ONE_OUT_INFER(FloorDiv, x1, x2, y);
 VERIFY_FUNC_REG(FloorDiv, FloorDivVerify);
 // ----------------FloorDiv END------------------------
+
+// ----------------Sinc-------------------
+IMPLEMT_COMMON_INFERFUNC(SincInferShape) {
+  auto input_desc = op.GetInputDescByName("x");
+  auto output_desc = op.GetOutputDescByName("y");
+
+  auto input_dtype = input_desc.GetDataType();
+  auto input_shape = input_desc.GetShape();
+
+  std::vector<DataType> int_and_bool_types{DT_INT8,   DT_UINT8, DT_INT16,  DT_UINT16, DT_INT32,
+                                           DT_UINT32, DT_INT64, DT_UINT64, DT_BOOL};
+  auto output_dtype = input_dtype;
+  if (std::find(int_and_bool_types.begin(), int_and_bool_types.end(), input_dtype) != int_and_bool_types.end()) {
+    output_dtype = DT_FLOAT;
+  }
+
+  output_desc.SetShape(input_shape);
+  output_desc.SetDataType(output_dtype);
+
+  if (op.UpdateOutputDesc("y", output_desc) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_COMMON_INFER_FUNC_REG(Sinc, SincInferShape);
+// ----------------Sinc END-------------------
 
 // ----------------SqrtGrad Op Begin-----------------
 IMPLEMT_VERIFIER(SqrtGrad, SqrtGradVerify) {

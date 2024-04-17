@@ -33,23 +33,18 @@ class MomentumGpuKernelMod : public NativeGpuKernelMod {
   MomentumGpuKernelMod() = default;
   ~MomentumGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &, void *stream_ptr) override {
     launch_func_(this, inputs, stream_ptr);
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     if (inputs.size() != INPUT_NUM) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << INPUT_NUM << ", but got "
                         << inputs.size();
     }
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyMomentum>(base_operator);
-    MS_EXCEPTION_IF_NULL(kernel_ptr);
-    use_nesterov_ = kernel_ptr->get_use_nesterov();
+    use_nesterov_ = GetValue<bool>(primitive_->GetAttr(ops::kUseNesterov));
 
     auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -60,9 +55,8 @@ class MomentumGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    return KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return KernelMod::Resize(inputs, outputs);
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
@@ -71,9 +65,9 @@ class MomentumGpuKernelMod : public NativeGpuKernelMod {
   bool use_nesterov_{false};
 
   template <typename T, typename S, typename G>
-  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, void *stream_ptr);
+  void LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, void *stream_ptr);
   using LaunchFunc =
-    std::function<void(MomentumGpuKernelMod *, const std::vector<kernel::AddressPtr> &, void *stream_ptr)>;
+    std::function<void(MomentumGpuKernelMod *, const std::vector<kernel::KernelTensor *> &, void *stream_ptr)>;
   LaunchFunc launch_func_;
 
   static std::vector<std::pair<KernelAttr, LaunchFunc>> func_list_;

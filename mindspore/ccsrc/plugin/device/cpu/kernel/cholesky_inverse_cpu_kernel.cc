@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,41 +17,35 @@
 #include <algorithm>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/cholesky_inverse_.h"
 
 namespace mindspore {
 namespace kernel {
-bool CholeskyInverseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  constexpr size_t kInputNum = 1;
+bool CholeskyInverseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  constexpr size_t kInputNum = 2;
   constexpr size_t kOutputNum = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto cholesky_inverse_ptr = std::dynamic_pointer_cast<ops::CholeskyInverse>(base_operator);
-  MS_ERROR_IF_NULL(cholesky_inverse_ptr);
-  is_upper_ = cholesky_inverse_ptr->get_upper();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int CholeskyInverseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CholeskyInverseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  is_upper_ = inputs[kIndex1]->GetValueWithCheck<bool>();
   auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   input_dim_0_ = x_shape[0];
   return KRET_OK;
 }
 
 template <typename T>
-bool CholeskyInverseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x0 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+bool CholeskyInverseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_x0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   using MatrixXd = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   Eigen::Map<MatrixXd> A(input_x0, input_dim_0_, input_dim_0_);
   MatrixXd result;
@@ -71,9 +65,15 @@ bool CholeskyInverseCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 const std::vector<std::pair<KernelAttr, CholeskyInverseCpuKernelMod::KernelRunFunc>>
   &CholeskyInverseCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, CholeskyInverseCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat32),
      &CholeskyInverseCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat64),
      &CholeskyInverseCpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

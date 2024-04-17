@@ -15,9 +15,6 @@
  */
 #include "plugin/device/ascend/optimizer/mindir/quant_dtype_cast_adjust.h"
 
-#include <vector>
-#include <memory>
-#include <string>
 #include "ops/framework_op_name.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"

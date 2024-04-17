@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_CUMULATIVELOGSUMEXP_H_
 #define AICPU_KERNELS_NORMALIZED_CUMULATIVELOGSUMEXP_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class CumulativeLogsumexpCpuKernel : public CpuKernel {
@@ -29,10 +29,10 @@ class CumulativeLogsumexpCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CumulativeLogsumexpCheck(const CpuKernelContext &ctx);
+  uint32_t CumulativeLogsumexpCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t CumulativeLogsumexpCompute(const CpuKernelContext &ctx);
+  uint32_t CumulativeLogsumexpCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

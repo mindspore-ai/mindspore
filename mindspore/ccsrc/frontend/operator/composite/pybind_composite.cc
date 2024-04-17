@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,13 @@
 #include "frontend/operator/composite/multitype_funcgraph.h"
 #include "frontend/operator/composite/zip_operation.h"
 #include "frontend/operator/composite/tensor_index.h"
+#include "frontend/operator/composite/starred_operation.h"
 namespace mindspore {
 namespace prim {
 void RegCompositeOpsGroup(const py::module *m) {
   //  Reg HyperMap
   (void)py::class_<HyperMapPy, MetaFuncGraph, std::shared_ptr<HyperMapPy>>(*m, "HyperMap_")
-    .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"), py::arg("ops"))
+    .def(py::init<bool, py::object>(), py::arg("reverse"), py::arg("ops"))
     .def(py::init<bool>(), py::arg("reverse"));
 
   // Reg Tail
@@ -148,6 +149,28 @@ void RegCompositeOpsGroup(const py::module *m) {
   (void)py::class_<ZipOperation, MetaFuncGraph, std::shared_ptr<ZipOperation>>(*m, "ZipOperation_")
     .def(py::init<std::string &>());
 
+  // Reg StarredUnpack
+  (void)py::class_<StarredUnpack, MetaFuncGraph, std::shared_ptr<StarredUnpack>>(*m, "StarredUnpack_")
+    .def(py::init<std::string &>());
+
+  // Reg StarredGetItem
+  (void)py::class_<StarredGetItem, MetaFuncGraph, std::shared_ptr<StarredGetItem>>(*m, "StarredGetItem_")
+    .def(py::init<std::string &>());
+
+  // Reg StarredUnpackMerge
+  (void)py::class_<StarredUnpackMerge, MetaFuncGraph, std::shared_ptr<StarredUnpackMerge>>(*m, "StarredUnpackMerge_")
+    .def(py::init<std::string &>());
+
+  // Reg IterConverter
+  (void)py::class_<IterConverter, MetaFuncGraph, std::shared_ptr<IterConverter>>(*m, "IterConverter_")
+    .def(py::init<std::string &>());
+
+  // Reg HasNext
+  (void)py::class_<HasNext, MetaFuncGraph, std::shared_ptr<HasNext>>(*m, "HasNext_").def(py::init<std::string &>());
+
+  // Reg Next
+  (void)py::class_<Next, MetaFuncGraph, std::shared_ptr<Next>>(*m, "Next_").def(py::init<std::string &>());
+
   // Reg VmapGeneralPreprocess
   (void)py::class_<VmapGeneralPreprocess, MetaFuncGraph, std::shared_ptr<VmapGeneralPreprocess>>(
     *m, "VmapGeneralPreprocess_")
@@ -159,15 +182,6 @@ void RegCompositeOpsGroup(const py::module *m) {
 
   // Reg TensorIndexSetitem
   (void)py::class_<TensorIndexSetitem, MetaFuncGraph, std::shared_ptr<TensorIndexSetitem>>(*m, "TensorIndexSetitem_")
-    .def(py::init<std::string &>());
-
-  // Reg HandleEmptySlice
-  (void)py::class_<HandleEmptySlice, MetaFuncGraph, std::shared_ptr<HandleEmptySlice>>(*m, "HandleEmptySlice_")
-    .def(py::init<std::string &>());
-
-  // Reg HandleScalarTensorIndex
-  (void)py::class_<HandleScalarTensorIndex, MetaFuncGraph, std::shared_ptr<HandleScalarTensorIndex>>(
-    *m, "HandleScalarTensorIndex_")
     .def(py::init<std::string &>());
 
   // Reg HandleBoolTensor

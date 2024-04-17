@@ -66,7 +66,7 @@ def test_argminwithvalue_dyn():
     dyn_case()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argminwithvalue_fp32():
@@ -109,7 +109,7 @@ def test_argminwithvalue_fp32():
     assert np.all(np.abs(output1.asnumpy() - expect1) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argminwithvalue_fp16():

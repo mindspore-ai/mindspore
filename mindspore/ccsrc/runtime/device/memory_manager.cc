@@ -63,9 +63,9 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
     }
     if (type == kStaticMem) {
       ptr = MallocStaticMem(size, communication_mem);
-      address->from_mem_pool_ = true;
+      address->set_from_mem_pool(true);
       if (communication_mem) {
-        address->communication_ptr_ = ptr - kMemAlignSize;
+        address->set_communication_ptr(ptr - kMemAlignSize);
       }
     } else if (type == kSomasReuseDynamicMem) {
       MS_EXCEPTION_IF_NULL(somas_allocator_ptr_);
@@ -73,20 +73,20 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
     } else {
       ptr = MallocDynamicMem(size, communication_mem);
     }
-    address->ptr_ = ptr;
+    address->SetDevicePtr(ptr);
     return ptr;
   }
 
   if (type == kStaticMem) {
     ptr = MallocStaticMem(size, false);
-    address->from_mem_pool_ = true;
+    address->set_from_mem_pool(true);
   } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
   } else if (type == kSomasReuseDynamicMem) {
     MS_EXCEPTION_IF_NULL(somas_allocator_ptr_);
     ptr = somas_allocator_ptr_->GetNodeOutputPtr(node, index);
   }
-  address->ptr_ = ptr;
+  address->SetDevicePtr(ptr);
   return ptr;
 }
 
@@ -105,11 +105,11 @@ uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddress
   uint8_t *ptr = nullptr;
   if (type == kStaticMem) {
     ptr = MallocStaticMem(size, false, graph_id);
-    address->from_mem_pool_ = true;
+    address->set_from_mem_pool(true);
   } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
   }
-  address->ptr_ = ptr;
+  address->SetDevicePtr(ptr);
   return ptr;
 }
 
@@ -120,18 +120,18 @@ uint8_t *MemoryManager::MallocDynamicMem(size_t size, bool communication_mem) {
 
 bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr &address, size_t size) {
   MS_EXCEPTION_IF_NULL(address);
-  auto device_ptr = MallocMemFromMemPool(size, address->from_persistent_mem_);
+  auto device_ptr = MallocMemFromMemPool(size, address->from_persistent_mem_, false, address->stream_id());
   if (!device_ptr) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(address);
-  address->ptr_ = device_ptr;
-  address->size_ = size;
-  address->from_mem_pool_ = true;
+  address->SetDevicePtr(device_ptr);
+  address->SetSize(size);
+  address->set_from_mem_pool(true);
   return true;
 }
 
-void *MemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool) {
+void *MemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool, uint32_t stream_id) {
   if (size == 0) {
     MS_LOG(ERROR) << "MallocMemFromMemPool size is 0.";
   }
@@ -139,8 +139,8 @@ void *MemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem,
 }
 
 bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t,
-                                                   std::vector<size_t> size_list) {
-  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list);
+                                                   std::vector<size_t> size_list, uint32_t stream_id) {
+  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list, stream_id);
   if (device_ptr_list.empty()) {
     return false;
   }
@@ -151,18 +151,18 @@ bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &a
   for (size_t i = 0; i < addr_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(device_ptr_list[i]);
     MS_EXCEPTION_IF_NULL(addr_list[i]);
-    addr_list[i]->ptr_ = device_ptr_list[i];
-    addr_list[i]->size_ = size_list[i];
-    addr_list[i]->from_mem_pool_ = true;
+    addr_list[i]->SetDevicePtr(device_ptr_list[i]);
+    addr_list[i]->SetSize(size_list[i]);
+    addr_list[i]->set_from_mem_pool(true);
   }
   return true;
 }
 
 void MemoryManager::FreeMemFromMemPool(const DeviceAddressPtr address) {
   MS_EXCEPTION_IF_NULL(address);
-  MS_EXCEPTION_IF_NULL(address->ptr_);
-  FreeMemFromMemPool(address->ptr_);
-  address->ptr_ = nullptr;
+  MS_EXCEPTION_IF_NULL(address->GetDevicePtr());
+  FreeMemFromMemPool(address->GetDevicePtr());
+  address->SetDevicePtr(nullptr);
 }
 
 void MemoryManager::FreeMemFromMemPool(void *device_ptr) {
@@ -171,7 +171,8 @@ void MemoryManager::FreeMemFromMemPool(void *device_ptr) {
   }
 }
 
-std::vector<void *> MemoryManager::MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) {
+std::vector<void *> MemoryManager::MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list,
+                                                                  uint32_t stream_id) {
   if (size_list.empty()) {
     MS_LOG(ERROR) << "MallocContinuousMemFromMemPool size list's size is 0.";
   }

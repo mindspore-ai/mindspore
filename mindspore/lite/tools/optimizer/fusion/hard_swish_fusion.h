@@ -36,7 +36,7 @@ class HardSwishFusion : public LitePatternProcessPass {
  private:
   bool Init() const;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  bool CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const;
+  bool CheckPattern(const EquivPtr &equiv) const;
   const BaseRef DefinePattern() const override;
 
  protected:

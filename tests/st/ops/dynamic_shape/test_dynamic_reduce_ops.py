@@ -140,7 +140,7 @@ def test_dynamic_reduce(axis, data_type):
     dyn_case(axis, data_type)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float32, np.float64, np.int32, np.int64, np.uint32, np.uint64])

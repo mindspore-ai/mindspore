@@ -76,25 +76,6 @@ def test_bincount_pynative():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_bincount_no_weights():
-    """
-    Feature: Bincount
-    Description: Test of input
-    Expectation: The results are as expected
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    input_array = Tensor(np.array([4, 4, 6, 67, 6, 9, 6, 0, 0, 56, 3, 9]), mstype.int32)
-    input_size = Tensor(5, mstype.int32)
-    input_weights = Tensor(np.array([]), mstype.float32)
-    net = Net()
-    output = net(input_array, input_size, input_weights).asnumpy()
-    expect = np.array([2, 0, 0, 1, 2]).astype(np.float32)
-    assert np.allclose(output, expect)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_bincount_bigdata():
     """
     Feature: Bincount

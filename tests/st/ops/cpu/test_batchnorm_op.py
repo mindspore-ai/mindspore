@@ -46,7 +46,7 @@ class Grad(Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_train_forward():
@@ -83,7 +83,7 @@ def test_train_forward():
     output = bn_net(Tensor(x))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_train_backward():

@@ -23,10 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool TileSizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool TileSizeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -37,10 +34,9 @@ bool TileSizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int TileSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int TileSizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -48,17 +44,18 @@ int TileSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                                        const std::vector<AddressPtr> &) const {
-  const auto shape_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto out_shape_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  const auto ndim_addr = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto output_size = outputs[kIndex0]->size;
+bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs,
+                                        const std::vector<KernelTensor *> &) const {
+  const auto shape_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto out_shape_addr = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  const auto ndim_addr = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto output_size = outputs[kIndex0]->size();
 
   std::vector<T> out(*ndim_addr, 1);
-  auto shape_size = SizeOf(inputs_[kIndex0]->GetShapeVector());
-  auto out_shape_size = SizeOf(inputs_[kIndex1]->GetShapeVector());
+  auto shape_size = SizeOf(inputs[kIndex0]->GetShapeVector());
+  auto out_shape_size = SizeOf(inputs[kIndex1]->GetShapeVector());
   auto it_num = std::min(shape_size, out_shape_size);
 
   for (size_t i = 0; i < it_num; i++) {
@@ -74,8 +71,9 @@ bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   return true;
 }
 
-bool TileSizeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs) {
+bool TileSizeCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, outputs, workspace);
 }
 

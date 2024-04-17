@@ -146,7 +146,8 @@ def test_matmul_dtypes():
         x_ms = Tensor(x_np).astype(dtype)
         y_ms = Tensor(y_np).astype(dtype)
         if dtype in valid_dtypes:
-            matmul(x_ms, y_ms)
+            out = matmul(x_ms, y_ms)
+            assert out.dtype == x_ms.dtype
         else:
             with pytest.raises(TypeError):
                 matmul(x_ms, y_ms)

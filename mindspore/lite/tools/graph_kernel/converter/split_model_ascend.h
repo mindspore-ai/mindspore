@@ -16,16 +16,19 @@
 #ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_SPLIT_MODEL_ASCEND_H_
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_SPLIT_MODEL_ASCEND_H_
 
+#include <string>
 #include "backend/common/graph_kernel/split_model/split_model_factory.h"
 namespace mindspore::graphkernel::inner {
 class SplitModelAscend : public SplitModel {
  public:
   SplitModelAscend() = default;
+  explicit SplitModelAscend(std::string soc_version) : soc_version_(soc_version) {}
   virtual ~SplitModelAscend() = default;
 
  protected:
   AreaMode GetDefaultAreaMode(const PrimOpPtr &) const override;
   void InitFusePatterns() override;
+  std::string soc_version_ = "";
 };
 }  // namespace mindspore::graphkernel::inner
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_SPLIT_MODEL_ASCEND_H_

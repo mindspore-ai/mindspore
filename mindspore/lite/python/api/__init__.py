@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ MindSpore Lite Python API.
 from __future__ import absolute_import
 import os
 import sys
-import logging
 import importlib
 from importlib.abc import MetaPathFinder
 
@@ -28,8 +27,11 @@ from mindspore_lite.converter import FmkType, Converter
 from mindspore_lite.model import ModelType, Model, ModelParallelRunner, ModelGroup, ModelGroupFlag
 from mindspore_lite.tensor import DataType, Format, Tensor
 from mindspore_lite.lite_split import split_network, split_ir
-from mindspore_lite.llm_engine import LLMReq, LLMEngineStatus, LLMRole, LLMEngine
+from mindspore_lite.llm_engine import LLMReq, LLMEngineStatus, LLMRole, LLMEngine, LLMClusterInfo, LLMStatusCode
+from mindspore_lite.llm_engine import LLMException, LLMKVCacheNotExist, LLMWaitProcessTimeOut, LLMRepeatRequest
+from mindspore_lite.llm_engine import LLMRequestAlreadyCompleted, LLMEngineFinalized, LLMParamInvalid, LLMNotYetLink
 from mindspore_lite import lite_infer
+
 
 def mslite_add_path():
     """mslite add path."""
@@ -74,7 +76,6 @@ class MSLiteMetaPathLoader:
 
 
 sys.meta_path.insert(0, MSLiteMetaPathFinder())
-
 
 __all__ = []
 __all__.extend(__version__)

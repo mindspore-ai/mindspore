@@ -22,6 +22,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "mindspore/core/ops/apply_adam_with_amsgrad.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,15 +40,10 @@ constexpr size_t kIndexLr = 6;
 constexpr size_t kIndexGrad = 7;
 }  // namespace
 
-bool ApplyAdamWithAmsgradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdamWithAmsgrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
-  dtype_ = inputs[0]->GetDtype();
-  batch_rank_ = base_operator->get_batch_rank();
+bool ApplyAdamWithAmsgradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[0]->dtype_id();
+  batch_rank_ = ops::get_batch_rank(primitive_);
 
   if (inputs.size() != kApplyAdamWithAmsgradInputsNum || outputs.size() != kApplyAdamWithAmsgradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be " << kApplyAdamWithAmsgradInputsNum
@@ -63,19 +59,17 @@ bool ApplyAdamWithAmsgradCpuKernelMod::Init(const BaseOperatorPtr &base_operator
     return false;
   }
 
-  beta1_ = kernel_ptr->get_beta1();
-  beta2_ = kernel_ptr->get_beta2();
-  epsilon_ = kernel_ptr->get_epsilon();
+  beta1_ = GetValue<float>(primitive_->GetAttr(ops::kBeta1));
+  beta2_ = GetValue<float>(primitive_->GetAttr(ops::kBeta2));
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
 
   return true;
 }
 
-int ApplyAdamWithAmsgradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &others) {
+int ApplyAdamWithAmsgradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 
@@ -125,16 +119,16 @@ int ApplyAdamWithAmsgradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename T>
-void ApplyAdamWithAmsgradCpuKernelMod::LaunchApplyAdamWithAmsgrad(const std::vector<AddressPtr> &inputs,
-                                                                  const std::vector<AddressPtr> &) {
-  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
-  T *m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
-  T *v = reinterpret_cast<T *>(inputs[kIndexV]->addr);
-  T *vhat = reinterpret_cast<T *>(inputs[kIndexVhat]->addr);
-  T *beta1_power = reinterpret_cast<T *>(inputs[kIndexBeta1Power]->addr);
-  T *beta2_power = reinterpret_cast<T *>(inputs[kIndexBeta2Power]->addr);
-  T *lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
-  T *gradient = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
+void ApplyAdamWithAmsgradCpuKernelMod::LaunchApplyAdamWithAmsgrad(const std::vector<KernelTensor *> &inputs,
+                                                                  const std::vector<KernelTensor *> &) {
+  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->device_ptr());
+  T *m = reinterpret_cast<T *>(inputs[kIndexM]->device_ptr());
+  T *v = reinterpret_cast<T *>(inputs[kIndexV]->device_ptr());
+  T *vhat = reinterpret_cast<T *>(inputs[kIndexVhat]->device_ptr());
+  T *beta1_power = reinterpret_cast<T *>(inputs[kIndexBeta1Power]->device_ptr());
+  T *beta2_power = reinterpret_cast<T *>(inputs[kIndexBeta2Power]->device_ptr());
+  T *lr = reinterpret_cast<T *>(inputs[kIndexLr]->device_ptr());
+  T *gradient = reinterpret_cast<T *>(inputs[kIndexGrad]->device_ptr());
 
   T beta1 = static_cast<T>(beta1_);
   T beta2 = static_cast<T>(beta2_);
@@ -163,29 +157,29 @@ void ApplyAdamWithAmsgradCpuKernelMod::LaunchApplyAdamWithAmsgrad(const std::vec
   }
 }
 
-bool ApplyAdamWithAmsgradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
-  if (inputs[kIndexVar]->size != inputs[kIndexM]->size) {
+bool ApplyAdamWithAmsgradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
+  if (inputs[kIndexVar]->size() != inputs[kIndexM]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'm' and 'var' should be same, but got the memory size of 'm': "
-                      << inputs[kIndexM]->size << " and 'var': " << inputs[kIndexVar]->size;
+                      << inputs[kIndexM]->size() << " and 'var': " << inputs[kIndexVar]->size();
   }
-  if (inputs[kIndexVar]->size != inputs[kIndexV]->size) {
+  if (inputs[kIndexVar]->size() != inputs[kIndexV]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'v' and 'var' should be same, but got the memory size of 'v': "
-                      << inputs[kIndexV]->size << " and 'var': " << inputs[kIndexVar]->size;
+                      << inputs[kIndexV]->size() << " and 'var': " << inputs[kIndexVar]->size();
   }
-  if (inputs[kIndexVar]->size != inputs[kIndexVhat]->size) {
+  if (inputs[kIndexVar]->size() != inputs[kIndexVhat]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'vhat' and 'var' should be same, but got the size of 'vhat': "
-                      << inputs[kIndexVhat]->size << " and 'var': " << inputs[kIndexVar]->size;
+                      << inputs[kIndexVhat]->size() << " and 'var': " << inputs[kIndexVar]->size();
   }
-  if (inputs[kIndexVar]->size != inputs[kIndexGrad]->size) {
+  if (inputs[kIndexVar]->size() != inputs[kIndexGrad]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'gradient' and 'var' should be same, but got "
                          "the memory size of 'gradient': "
-                      << inputs[kIndexGrad]->size << " and 'var': " << inputs[kIndexVar]->size;
+                      << inputs[kIndexGrad]->size() << " and 'var': " << inputs[kIndexVar]->size();
   }
 
   if (dtype_ == kNumberTypeFloat32) {

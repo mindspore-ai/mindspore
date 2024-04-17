@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/eigen_tensor.h"
 
 namespace aicpu {
@@ -54,8 +54,8 @@ class SparseMaximumCpuKernel : public CpuKernel {
                                           std::vector<std::pair<bool, int64_t>> *entries_to_copy);
 
   template <typename T>
-  uint32_t EigenedSparseMax(const DataBank &databank);
+  uint32_t EigenedSparseMax(CpuKernelContext &ctx, const DataBank &databank);
 
-  static uint32_t NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &calc_info);
+  static uint32_t NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &calc_info);
 };
 }  // namespace aicpu

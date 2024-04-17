@@ -65,8 +65,8 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
-  auto filter_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
+  auto filter_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto x_shape = x_shape_map[kShape];
   auto filter_shape = filter_shape_map[kShape];
   const uint64_t n_axis = 0;
@@ -137,10 +137,10 @@ TypePtr Dilation2DInferType(const PrimitivePtr &prim, const std::vector<Abstract
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kUInt32,
                                          kUInt64,  kInt8,    kInt16,   kInt32, kInt64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("filter", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("filter", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

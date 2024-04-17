@@ -23,6 +23,7 @@
 #include <set>
 #include "ops/nn_op_name.h"
 #include "ops/structure_ops.h"
+#include "ops/op_def.h"
 #include "ops/math_ops.h"
 #include "ops/array_ops.h"
 #include "mindspore/core/utils/anf_utils.h"
@@ -30,7 +31,6 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "frontend/expander/bprop/bprop.h"
-#include "frontend/expander/pack/packfunc.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "backend/common/graph_kernel/adapter/expander.h"
 #include "utils/ms_context.h"
@@ -65,6 +65,10 @@ const std::map<std::string, std::vector<std::string>> op2attrs = {
 
 ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
   if (primc == nullptr || primc->isa<PrimitivePy>()) {
+    return nullptr;
+  }
+  // If it is primitive function, no need convert because primitive function are all C++ infer.
+  if (mindspore::ops::IsPrimitiveFunction(primc->name())) {
     return nullptr;
   }
   if (abstract::GetFrontendPrimitiveInferImpl(primc).has_value()) {
@@ -122,7 +126,8 @@ class PrimpyConverter {
       auto new_prim = ConvertPrimToPrimPy(primitive);
       AnfNodePtrList inputs = {NewValueNode(new_prim)};
       auto cnode = dyn_cast_ptr<CNode>(node);
-      (void)inputs.insert(inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+      auto cnode_inputs = cnode->inputs();
+      (void)inputs.insert(inputs.cend(), cnode_inputs.cbegin() + 1, cnode_inputs.cend());
       auto new_cnode = graph->NewCNodeInOrder(inputs);
       (void)mng->Replace(node, new_cnode);
     }
@@ -187,9 +192,6 @@ AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node) {
   return new_node;
 }
 
-void ClearAllCache() {
-  ClearAllPackCache();
-  bprop::ClearBpropOpGraphMap();
-}
+void ClearAllCache() { bprop::ClearBpropOpGraphMap(); }
 }  // namespace expander
 }  // namespace mindspore

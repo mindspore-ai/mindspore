@@ -26,12 +26,9 @@ const size_t kOutputsNum = 1;
 }  // namespace
 namespace mindspore {
 namespace kernel {
-bool HSVToRGBCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool HSVToRGBCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -40,17 +37,16 @@ bool HSVToRGBCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  input_dtype = inputs[kZero]->GetDtype();
+  input_dtype = inputs[kZero]->dtype_id();
   return true;
 }
-int HSVToRGBCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int HSVToRGBCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  shape = inputs[kZero]->GetDeviceShapeAdaptively();
+  shape = inputs[kZero]->GetDeviceShapeVector();
   return ret;
 }
 
@@ -160,12 +156,13 @@ void HSVToRGBCpuKernelMod::ComputeHalf(void *input, void *output, int64_t pixel_
   CPUKernelUtils::ParallelFor(shard_hsv_to_rgb, static_cast<size_t>(pixel_num));
 }
 
-bool HSVToRGBCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs) {
+bool HSVToRGBCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs) {
   const int64_t pixel_num =
     accumulate(shape.begin(), shape.end(), static_cast<int64_t>(1), [=](int64_t a, int64_t b) { return a * b; }) / 3;
-  void *input = inputs[0]->addr;
-  void *output = outputs[0]->addr;
+  void *input = inputs[0]->device_ptr();
+  void *output = outputs[0]->device_ptr();
   switch (input_dtype) {
     case kNumberTypeFloat16:
       ComputeHalf(input, output, pixel_num);

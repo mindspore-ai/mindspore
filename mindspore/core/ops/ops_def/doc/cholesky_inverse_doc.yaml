@@ -1,0 +1,24 @@
+cholesky_inverse:
+    description: |
+        Returns the inverse of the positive definite matrix using cholesky matrix factorization given its Cholesky factor.
+
+        Refer to :func:`mindspore.ops.cholesky_inverse` for more details.
+
+        Args:
+            upper(bool, optional): Whether to return a lower or upper triangular matrix. Default: ``False`` .
+
+        Inputs:
+            - **x** (Tensor) - The input tensor whose rank is 2. Supported dtypes: float32, float64.
+
+        Outputs:
+            Tensor, has the same shape and dtype as `x`.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[1, 1], [1, 2]), mindspore.float32)
+            >>> y = ops.CholeskyInverse()(x)
+            >>> print(y)
+            [[ 5.0  -3.0 ]
+            [-3.0   2.0 ]]

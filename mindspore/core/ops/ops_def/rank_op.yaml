@@ -1,0 +1,12 @@
+#operator rank
+rank:
+    args:
+        input_x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: int
+    class:
+        disable: true
+    function:
+        disable: True

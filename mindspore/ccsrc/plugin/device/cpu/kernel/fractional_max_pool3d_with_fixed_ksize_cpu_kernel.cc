@@ -67,13 +67,10 @@ constexpr size_t kOutputsNum = 2;
     .AddOutputAttr(kNumberType##t4)
 }  // namespace
 
-bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                         const std::vector<KernelTensorPtr> &inputs,
-                                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
@@ -86,24 +83,20 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr &
   return true;
 }
 
-int FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                          const std::vector<KernelTensorPtr> &inputs,
-                                                          const std::vector<KernelTensorPtr> &outputs,
-                                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  input_type_ = inputs[kInputIndex0]->GetDtype();
-  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  random_samples_type_ = inputs[kInputIndex1]->GetDtype();
-  random_samples_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  argmax_type_ = outputs[kOutputIndex1]->GetDtype();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPool3DWithFixedKsize>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  output_shape_ = kernel_ptr->get_output_shape();
-  ksize_ = kernel_ptr->get_ksize();
-  data_format_ = kernel_ptr->get_data_format();
+  input_type_ = inputs[kInputIndex0]->dtype_id();
+  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  random_samples_type_ = inputs[kInputIndex1]->dtype_id();
+  random_samples_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  argmax_type_ = outputs[kOutputIndex1]->dtype_id();
+  output_shape_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("output_shape"));
+  ksize_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksize"));
+  data_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kFormat));
   size_t input_num_dims = input_shape_.size();
   size_t random_samples_dims = random_samples_shape_.size();
   size_t output_shape_dims = output_shape_.size();
@@ -220,12 +213,12 @@ std::vector<int> generate_intervals(float16 random_sample, int input_size, int o
 }
 
 template <typename scalar_t, typename random_sample_t, typename argmax_t>
-bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::vector<AddressPtr> &inputs,
-                                                                    const std::vector<AddressPtr> &outputs) {
-  auto input_data = reinterpret_cast<scalar_t *>(inputs[0]->addr);
-  auto random_samples_data = reinterpret_cast<random_sample_t *>(inputs[1]->addr);
-  auto output_data = reinterpret_cast<scalar_t *>(outputs[0]->addr);
-  auto argmax_data = reinterpret_cast<argmax_t *>(outputs[1]->addr);
+bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::vector<KernelTensor *> &inputs,
+                                                                    const std::vector<KernelTensor *> &outputs) {
+  auto input_data = reinterpret_cast<scalar_t *>(inputs[0]->device_ptr());
+  auto random_samples_data = reinterpret_cast<random_sample_t *>(inputs[1]->device_ptr());
+  auto output_data = reinterpret_cast<scalar_t *>(outputs[0]->device_ptr());
+  auto argmax_data = reinterpret_cast<argmax_t *>(outputs[1]->device_ptr());
 
   if (input_shape_.size() == kDimSize4) {
     auto shard_fractional_max_pool3d_with_fixed_ksize = [&](size_t start, size_t end) {
@@ -314,8 +307,8 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::FractionalMaxPool3DWithFixed
 }
 
 template <typename scalar_t, typename random_sample_t>
-bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(const std::vector<AddressPtr> &inputs,
-                                                                            const std::vector<AddressPtr> &outputs,
+bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(const std::vector<KernelTensor *> &inputs,
+                                                                            const std::vector<KernelTensor *> &outputs,
                                                                             TypeId argmax_type) {
   switch (argmax_type) {
     case kNumberTypeInt32:
@@ -331,7 +324,7 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(cons
 
 template <typename scalar_t>
 bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType(
-  const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, TypeId random_samples_type) {
+  const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs, TypeId random_samples_type) {
   switch (random_samples_type) {
     case kNumberTypeFloat16:
       return DoComputeWithArgmaxType<scalar_t, float16>(inputs, outputs, argmax_type_);
@@ -346,9 +339,9 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesTy
   }
 }
 
-bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                           const std::vector<AddressPtr> &workspace,
-                                                           const std::vector<AddressPtr> &outputs) {
+bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &workspace,
+                                                           const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   switch (input_type_) {

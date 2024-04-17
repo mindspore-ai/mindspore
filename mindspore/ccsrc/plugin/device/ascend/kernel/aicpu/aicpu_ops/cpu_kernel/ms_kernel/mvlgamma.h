@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MVLGAMMA_UTILS_H_
 #define AICPU_KERNELS_NORMALIZED_MVLGAMMA_UTILS_H_
 
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -33,7 +33,7 @@ class MvlgammaCpuKernel : public CpuKernel {
   static uint32_t MvlgammaCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  static T MvlgammaSingle(T &x, const int &p, bool &error);
+  static T MvlgammaSingle(CpuKernelContext &ctx, T &x, const int &p, bool &error);
 
   template <typename T>
   static uint32_t MvlgammaCompute(CpuKernelContext &ctx);

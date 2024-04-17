@@ -237,30 +237,6 @@ BaseShapePtr CommonInferShape(const PrimitivePtr &, const std::vector<AbstractBa
   BaseShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
   return out_shape;
 }
-
-AbstractBasePtr SampleInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &) {
-  MS_EXCEPTION_IF_NULL(primitive);
-
-  const std::string &prim_name = primitive->name();
-  auto types = GetValue<std::vector<TypePtr>>(primitive->GetAttr("dtypes"));
-  auto shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("shapes"));
-  if (types.size() != shapes.size()) {
-    MS_LOG(EXCEPTION) << "For Primitive[" << prim_name << "], the types and shapes rank should be same.";
-  }
-
-  auto batch_size = GetValue<int64_t>(primitive->GetAttr("batch_size"));
-  AbstractBasePtrList output;
-  for (size_t i = 0; i < shapes.size(); ++i) {
-    auto shape = shapes[i];
-    (void)shape.emplace(shape.begin(), batch_size);
-    auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, types[i]);
-    auto tensor = std::make_shared<abstract::AbstractTensor>(element, std::make_shared<abstract::Shape>(shape));
-    (void)output.emplace_back(tensor);
-  }
-
-  return std::make_shared<abstract::AbstractTuple>(output);
-}
 }  // namespace
 
 class MIND_API CreateInfer : public abstract::OpInferBase {
@@ -294,13 +270,45 @@ class MIND_API CommonInfer : public abstract::OpInferBase {
   }
 };
 
+class MIND_API SampleInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("shapes"));
+    auto batch_size = GetValue<int64_t>(primitive->GetAttr("batch_size"));
+    abstract::BaseShapePtrList output;
+    for (size_t i = 0; i < shapes.size(); ++i) {
+      auto shape = shapes[i];
+      (void)shape.emplace(shape.begin(), batch_size);
+      (void)output.emplace_back(std::make_shared<abstract::Shape>(shape));
+    }
+    return std::make_shared<abstract::TupleShape>(output);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+
+    const std::string &prim_name = primitive->name();
+    auto types = GetValue<std::vector<TypePtr>>(primitive->GetAttr("dtypes"));
+    auto shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("shapes"));
+    if (types.size() != shapes.size()) {
+      MS_LOG(EXCEPTION) << "For Primitive[" << prim_name << "], the types and shapes rank should be same.";
+    }
+    TypePtrList output;
+    for (size_t i = 0; i < types.size(); ++i) {
+      (void)output.emplace_back(std::make_shared<TensorType>(types[i]));
+    }
+    return std::make_shared<Tuple>(output);
+  }
+};
+
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ReservoirReplayBufferCreate, prim::kPrimReservoirReplayBufferCreate, CreateInfer,
                                  false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ReservoirReplayBufferPush, prim::kPrimReservoirReplayBufferPush, CommonInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ReservoirReplayBufferDestroy, prim::kPrimReservoirReplayBufferDestroy, CommonInfer,
                                  false);
-
-REGISTER_PRIMITIVE_EVAL_IMPL(ReservoirReplayBufferSample, prim::kPrimReservoirReplayBufferSample, SampleInfer, nullptr,
-                             true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReservoirReplayBufferSample, prim::kPrimReservoirReplayBufferSample, SampleInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

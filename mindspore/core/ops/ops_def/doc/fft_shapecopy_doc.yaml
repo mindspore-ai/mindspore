@@ -1,0 +1,3 @@
+fft_shapecopy:
+    description: |
+      Truncate or zero-fill the gradient of an fft operation.

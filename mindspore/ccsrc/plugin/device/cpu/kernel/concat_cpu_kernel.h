@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,38 +27,31 @@
 
 namespace mindspore {
 namespace kernel {
-using complex64 = std::complex<float>;
-using complex128 = std::complex<double>;
-
-class ConcatCpuKernelMod : public NativeCpuKernelMod {
+class ConcatCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<ConcatCpuKernelMod> {
  public:
   ConcatCpuKernelMod() = default;
   ~ConcatCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  std::vector<KernelAttr> GetOpSupport() override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); };
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using ConcatFunc = std::function<bool(ConcatCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, ConcatFunc>> func_list_;
-  ConcatFunc kernel_func_;
-  int ori_axis_{0};
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+
   int axis_{0};
   size_t output_dim_{1};
-  size_t input_num_{1};
+  size_t input_tensor_num_{1};
   std::vector<size_t> offset_;
   std::vector<ShapeVector> inputs_shape_;
   std::vector<ShapeVector> input_flat_shape_list_;

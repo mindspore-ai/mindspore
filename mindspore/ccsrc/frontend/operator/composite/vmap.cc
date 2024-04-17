@@ -16,6 +16,7 @@
 
 #include "frontend/operator/composite/vmap.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include "mindspore/core/ops/sequence_ops.h"
@@ -34,28 +35,30 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
-void GenerateFuncGraphAllNone(const FuncGraphPtr &fg, const AnfNodePtr &prim, int64_t args_size, bool wrapped_tuple,
-                              bool bind) {
+void GenerateFuncGraphAllNone(const FuncGraphPtr &fg, const AnfNodePtr &prim, int64_t args_size,
+                              int64_t tuple_elements_num, bool bind) {
   std::vector<AnfNodePtr> prim_output_cnode_inputs;
   (void)prim_output_cnode_inputs.emplace_back(prim);
-  if (wrapped_tuple) {
+  if (tuple_elements_num != 0) {
     auto val_in_param = fg->add_parameter();
     std::vector<AnfNodePtr> prim_inputs_cnode_inputs;
     (void)prim_inputs_cnode_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    for (int64_t i = 0; i < args_size; ++i) {
+    for (int64_t i = 0; i < tuple_elements_num; ++i) {
       auto val_in_cnode = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), val_in_param, NewValueNode(i)});
       auto val_cnode = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), val_in_cnode, NewValueNode(kValIndex)});
       (void)prim_inputs_cnode_inputs.emplace_back(val_cnode);
     }
     auto prim_inputs_cnode = fg->NewCNode(prim_inputs_cnode_inputs);
     (void)prim_output_cnode_inputs.emplace_back(prim_inputs_cnode);
-  } else {
-    for (int64_t i = 0; i < args_size; ++i) {
-      auto val_in_param = fg->add_parameter();
-      auto val_cnode = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), val_in_param, NewValueNode(kValIndex)});
-      (void)prim_output_cnode_inputs.emplace_back(val_cnode);
-    }
+    args_size = args_size - tuple_elements_num;
   }
+
+  for (int64_t i = 0; i < args_size; ++i) {
+    auto val_in_param = fg->add_parameter();
+    auto val_cnode = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), val_in_param, NewValueNode(kValIndex)});
+    (void)prim_output_cnode_inputs.emplace_back(val_cnode);
+  }
+
   auto prim_output_cnode = fg->NewCNode(prim_output_cnode_inputs);
   const py::function bind_all_none_fn = python_adapter::GetPyFn(kVmapFunctionModelName, "vmap_bind_all_none");
   auto bind_all_none_fg = parse::ParsePythonCode(bind_all_none_fn);
@@ -263,7 +266,7 @@ FuncGraphPtr VmapMatchOutAxis::GenerateFuncGraph(const AbstractBasePtrList &args
                       << inputs_abstract->ToString() << ".";
   }
   auto out_axes_abstract_value = out_axes_abstract->BuildValue();
-  if (out_axes_abstract_value == nullptr || out_axes_abstract_value == kValueAny) {
+  if (out_axes_abstract_value == nullptr || out_axes_abstract_value->ContainsValueAny()) {
     MS_LOG(EXCEPTION) << "The second input to VmapMatchOutAxis is out_axes and should be a constant value.";
   }
   auto axis_size_value = axis_size_abstract->BuildValue();
@@ -315,37 +318,42 @@ FuncGraphPtr VmapGeneralPreprocess::GenerateFuncGraph(const AbstractBasePtrList 
   if (args_size <= 1) {
     MS_LOG(EXCEPTION) << "The length of input to VmapGeneralPreprocess must be greater than 1";
   }
-  bool wrapped_tuple = false;
   int64_t inputs_size = SizeToLong(args_size - 1);
+  int64_t tuple_elements_num = 0;
   uint32_t offset = 1;
-  auto get_tuple_elements = [args_size, &wrapped_tuple, &inputs_size,
-                             &offset](const AbstractBasePtrList &args_abs_list) -> const AbstractBasePtrList & {
-    if (args_size == 2) {
-      auto arg = args_abs_list[1];
-      if (!arg->isa<abstract::AbstractSequence>()) {
-        MS_LOG(EXCEPTION) << "The second input to VmapGeneralPreprocess should be AbstractSequence but got: "
-                          << arg->ToString() << ".";
-      }
-      auto arg_seq = arg->cast<abstract::AbstractSequencePtr>();
-      const auto &arg_tuple_elements = arg_seq->elements();
-      if (arg_tuple_elements.back()->isa<abstract::AbstractTuple>()) {
-        // Operators with indefinite inputs length, such as `AddN`, whose inputs is wrapped
-        // into a tuple. We need to process the internal elements separately and then re-wrap
-        // them into tuple. Handle case such as args:(((A, 0), (B, 1), (C, None)),). Which
-        // different from the case with single input parameter ((A, 0),).
-        wrapped_tuple = true;
-        inputs_size = arg_tuple_elements.size();
-        offset = 0;
-        return arg_tuple_elements;
-      }
+  auto get_tuple_elements = [args_size, &tuple_elements_num, &inputs_size,
+                             &offset](const AbstractBasePtrList &args_abs_list) -> AbstractBasePtrList {
+    auto arg = args_abs_list[1];
+    if (!arg->isa<abstract::AbstractSequence>()) {
+      MS_LOG(EXCEPTION) << "The second input to VmapGeneralPreprocess should be AbstractSequence but got: "
+                        << arg->ToString() << ".";
+    }
+    auto arg_seq = arg->cast<abstract::AbstractSequencePtr>();
+    const auto &arg_tuple_elements = arg_seq->elements();
+    if (arg_tuple_elements.back()->isa<abstract::AbstractTuple>()) {
+      // Operators with indefinite inputs length, such as `AddN`, whose inputs is wrapped
+      // into a tuple. We need to process the internal elements separately and then re-wrap
+      // them into tuple. Handle case such as args:(((A, 0), (B, 1), (C, None)), ...). Which
+      // different from the case with single input parameter ((A, 0),).
+      //
+      // Tuple case:
+      // 1. Only one tuple input: (((A, 0), (B, 1), (C, None)),)
+      // 2. A tuple input and some normal inputs: (((A, 0), (B, 1), (C, None)), (a, 2), (b, 3))
+      tuple_elements_num = arg_tuple_elements.size();
+      inputs_size = tuple_elements_num + inputs_size - 1;
+      offset = 0;
+      AbstractBasePtrList unfold_args_abs_list(arg_tuple_elements.begin(), arg_tuple_elements.end());
+      unfold_args_abs_list.insert(unfold_args_abs_list.end(), args_abs_list.begin() + 2,
+                                  args_abs_list.end());  // the maybe left inputs.
+      return unfold_args_abs_list;
     }
     return args_abs_list;
   };
-  auto tuple_elements = get_tuple_elements(args_abs_list);
+  auto unfold_elements = get_tuple_elements(args_abs_list);
   bool is_all_none = true;
   constexpr size_t kCurTupleSize = 2;
   for (int64_t i = 0; i < inputs_size; ++i) {
-    auto cur_arg = tuple_elements[i + offset];
+    auto cur_arg = unfold_elements[i + offset];
     if (!cur_arg->isa<abstract::AbstractTuple>()) {
       MS_LOG(EXCEPTION) << "The " << i + offset
                         << "th input to VmapGeneralPreprocess should be AbstractTuple but got: " << cur_arg->ToString()
@@ -373,29 +381,35 @@ FuncGraphPtr VmapGeneralPreprocess::GenerateFuncGraph(const AbstractBasePtrList 
     auto output_cnode = fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), NewValueNode(false), NewValueNode(kNone)});
     fg->set_output(output_cnode);
   } else {
-    GenerateFuncGraphAllNone(fg, prim, inputs_size, wrapped_tuple, true);
+    GenerateFuncGraphAllNone(fg, prim, inputs_size, tuple_elements_num, true);
   }
   return fg;
 }
 
-CNodeInpusList VmapGeneralRule::ConstructMapInput(const InputsAbstractList &tuple_elements_abstract, bool wrapped_tuple,
-                                                  int64_t args_size) {
+/// \brief ConstructMapInput.
+///
+/// \param[in] unfold_elements_abstract Unfold elements abstract, such as ((A, 0), (B, 0), (C, None)).
+/// \param[in] args_size The size of elements.
+/// \param[in] tuple_elements_num The elements-size for first tuple input.
+/// \return A vector of AnfNodePtrList, the size is equal to vmap dim size.
+CNodeInpusList VmapGeneralRule::ConstructMapInput(const InputsAbstractList &unfold_elements_abstract, int64_t args_size,
+                                                  int64_t tuple_elements_num) {
   AnfNodePtr single_input = nullptr;
-  if (wrapped_tuple) {
+  if (tuple_elements_num != 0) {
     single_input = fg_->add_parameter();
   }
 
   CNodeInpusList map_inputs(axis_size_);
   for (int64_t i = 0; i < args_size; ++i) {
     AnfNodePtr cur_arg_node = nullptr;
-    if (wrapped_tuple) {
+    if (i < tuple_elements_num) {
       cur_arg_node = fg_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), single_input, NewValueNode(i)});
     } else {
       cur_arg_node = fg_->add_parameter();
     }
-    auto tuple_element_abstract = tuple_elements_abstract[i];
-    auto val_abstract = tuple_element_abstract[kValIndex];
-    auto dim_abstract = tuple_element_abstract[kDimIndex];
+    auto unfold_element_abstract = unfold_elements_abstract[i];
+    auto val_abstract = unfold_element_abstract[kValIndex];
+    auto dim_abstract = unfold_element_abstract[kDimIndex];
     AnfNodePtr val_cnode =
       fg_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cur_arg_node, NewValueNode(kValIndex)});
 
@@ -430,42 +444,49 @@ CNodeInpusList VmapGeneralRule::ConstructMapInput(const InputsAbstractList &tupl
 // 1、 Most calculation operations, whose inputs are tensors, scalars or both of them.
 // (If all elements in a tuple are scalars, it is also considered scalar.)
 // 2、 Operators with indefinite inputs length, such as `AddN`, whose inputs is wrapped into a tuple.
+// 3、 Operators with indefinite inputs length, whose first inputs is wrapped into a tuple.
 // In other words, we do not support any tuple wrapped variables except for the special cases
 //   listed above.
 FuncGraphPtr VmapGeneralRule::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   fg_ = std::make_shared<FuncGraph>();
   int64_t args_size = static_cast<int64_t>(args_abs_list.size());
-
-  bool wrapped_tuple = false;
-  auto get_tuple_elements = [&wrapped_tuple,
-                             &args_size](const AbstractBasePtrList &args_abs_list) -> const AbstractBasePtrList & {
-    if (args_size == 1) {
-      auto arg = args_abs_list[0];
-      if (!arg->isa<abstract::AbstractTuple>()) {
-        MS_LOG(EXCEPTION) << "The second input to VmapGeneralPreprocess should be AbstractTuple but got: "
-                          << arg->ToString() << ".";
-      }
-      auto arg_tuple = arg->cast<abstract::AbstractTuplePtr>();
-      const auto &arg_tuple_elements = arg_tuple->elements();
-      if (arg_tuple_elements.back()->isa<abstract::AbstractTuple>()) {
-        // Operators with indefinite inputs length, such as `AddN`, whose inputs is wrapped
-        // into a tuple. We need to process the internal elements separately and then re-wrap
-        // them into tuple. Handle case such as args:(((A, 0), (B, 1), (C, None)),). Which
-        // different from the case with single input parameter ((A, 0),).
-        wrapped_tuple = true;
-        args_size = arg_tuple_elements.size();
-        return arg_tuple_elements;
-      }
+  int64_t tuple_elements_num = 0;
+  auto get_tuple_elements = [&args_size,
+                             &tuple_elements_num](const AbstractBasePtrList &args_abs_list) -> AbstractBasePtrList {
+    auto arg = args_abs_list[0];
+    if (!arg->isa<abstract::AbstractTuple>()) {
+      MS_LOG(EXCEPTION) << "The first input to VmapGeneralPreprocess should be AbstractTuple but got: "
+                        << arg->ToString() << ".";
     }
+    auto arg_tuple = arg->cast<abstract::AbstractTuplePtr>();
+    const auto &arg_tuple_elements = arg_tuple->elements();
+    if (arg_tuple_elements.back()->isa<abstract::AbstractTuple>()) {
+      // Operators with indefinite inputs length, such as `AddN`, whose inputs is wrapped
+      // into a tuple. We need to process the internal elements separately and then re-wrap
+      // them into tuple. Handle case such as args:(((A, 0), (B, 1), (C, None)), ...). Which
+      // different from the case with single input parameter ((A, 0),).
+      //
+      // Tuple case:
+      // 1. Only one tuple input: (((A, 0), (B, 1), (C, None)),)
+      // 2. A tuple input and some normal inputs: (((A, 0), (B, 1), (C, None)), (a, 2), (b, 3))
+      tuple_elements_num = arg_tuple_elements.size();
+      args_size = tuple_elements_num + args_size - 1;
+      AbstractBasePtrList unfold_args_abs_list(arg_tuple_elements.begin(), arg_tuple_elements.end());
+      unfold_args_abs_list.insert(unfold_args_abs_list.end(), args_abs_list.begin() + 1,
+                                  args_abs_list.end());  // the maybe left inputs.
+      return unfold_args_abs_list;
+    }
+
     return args_abs_list;
   };
-  auto tuple_elements = get_tuple_elements(args_abs_list);
+  auto unfold_elements = get_tuple_elements(
+    args_abs_list);  // ((A, 0), (B, 1), ...), if tuple is the first input, its elements will be unfold.
 
   bool is_all_none = true;
   constexpr size_t kCurTupleSize = 2;
-  InputsAbstractList tuple_elements_abstract(args_size);
+  InputsAbstractList unfold_elements_abstract(args_size);
   for (int64_t i = 0; i < args_size; ++i) {
-    auto cur_arg = tuple_elements[i];
+    auto cur_arg = unfold_elements[i];
     if (!cur_arg->isa<abstract::AbstractTuple>()) {
       MS_LOG(EXCEPTION) << "The " << i
                         << "th input to VmapGeneralPreprocess should be AbstractTuple but got: " << cur_arg->ToString()
@@ -484,26 +505,29 @@ FuncGraphPtr VmapGeneralRule::GenerateFuncGraph(const AbstractBasePtrList &args_
     }
     auto val_abstract = cur_arg_tuple_elements[kValIndex];
     std::vector<abstract::AbstractBasePtr> element_abstract = {val_abstract, dim_abstract};
-    tuple_elements_abstract[i] = element_abstract;
+    unfold_elements_abstract[i] = element_abstract;
   }
 
   if (is_all_none) {
-    GenerateFuncGraphAllNone(fg_, NewValueNode(prim_), args_size, wrapped_tuple, false);
+    GenerateFuncGraphAllNone(fg_, NewValueNode(prim_), args_size, tuple_elements_num, false);
     return fg_;
   }
 
-  CNodeInpusList map_inputs = ConstructMapInput(tuple_elements_abstract, wrapped_tuple, args_size);
+  CNodeInpusList map_inputs = ConstructMapInput(unfold_elements_abstract, args_size, tuple_elements_num);  //
 
   std::vector<AnfNodePtr> output_cnode_inputs;
   (void)output_cnode_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   for (auto map_input : map_inputs) {
     std::vector<AnfNodePtr> output_element_cnode_inputs;
-    if (wrapped_tuple) {
+    if (tuple_elements_num != 0) {
       std::vector<AnfNodePtr> tuple_cnode_inputs{NewValueNode(prim::kPrimMakeTuple)};
-      (void)tuple_cnode_inputs.insert(tuple_cnode_inputs.cend(), map_input.cbegin(), map_input.cend());
+      (void)tuple_cnode_inputs.insert(tuple_cnode_inputs.cend(), map_input.cbegin(),
+                                      map_input.cbegin() + tuple_elements_num);
       auto tuple_cnode = fg_->NewCNode(tuple_cnode_inputs);
       output_element_cnode_inputs.push_back(NewValueNode(prim_));
       output_element_cnode_inputs.push_back(tuple_cnode);
+      output_element_cnode_inputs.insert(output_element_cnode_inputs.end(), map_input.cbegin() + tuple_elements_num,
+                                         map_input.cend());
     } else {
       output_element_cnode_inputs.push_back(NewValueNode(prim_));
       (void)output_element_cnode_inputs.insert(output_element_cnode_inputs.cend(), map_input.cbegin(),
