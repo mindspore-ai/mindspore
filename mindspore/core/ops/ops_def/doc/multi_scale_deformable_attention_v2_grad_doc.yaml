@@ -1,0 +1,21 @@
+multi_scale_deformable_attn_grad:
+    description: |
+        Multi Scale Deformable Attention Grad function.
+        Args:
+            value (Tensor): The input tensor.
+            spatial_shapes (Tensor): The input tensor.
+            level_start_index (Tensor): The input tensor.
+            sampling_loc (Tensor): The input tensor.
+            attn_weight (Tensor): The input tensor.
+            grad_output (Tensor): The input tensor.
+
+        Returns:
+            grad_value (Tensor): The output tensor.
+            grad_sampling_loc (Tensor): The output tensor.
+            grad_attn_weight (Tensor): The output tensor.
+
+        Raises:
+            TypeError: If input is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend``

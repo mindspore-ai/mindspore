@@ -1,0 +1,22 @@
+#operator multi_scale_deformable_attn
+multi_scale_deformable_attn:
+  args:
+    value:
+      dtype: tensor
+    value_spatial_shapes:
+      dtype: tensor
+    value_level_start_index:
+      dtype: tensor
+    sampling_locations:
+      dtype: tensor
+    attention_weights:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+      name: MultiScaleDeformableAttnFunctionV2
+  function:
+    disable: True
+  dispatch:
+    enable: True
