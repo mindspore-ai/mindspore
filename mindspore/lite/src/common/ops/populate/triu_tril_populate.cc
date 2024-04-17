@@ -22,8 +22,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateTriuParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "Triu primitive is nullptr!");
   auto *param = reinterpret_cast<TriuParameter *>(malloc(sizeof(TriuParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc TransposeParameter failed.";

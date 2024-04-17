@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateReduceScatterParameter(const void *prim) {
   auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "ReduceScatter primitive is nullptr!");
   auto value = primitive->value_as_ReduceScatter();
   if (value == nullptr) {
     MS_LOG(ERROR) << "cast reduce_scatter_primitive to value failed";

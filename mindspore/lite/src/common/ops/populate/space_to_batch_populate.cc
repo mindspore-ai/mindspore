@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
   auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "SpaceToBatch primitive is nullptr!");
   auto value = primitive->value_as_SpaceToBatch();
   if (value == nullptr) {
     MS_LOG(ERROR) << "param is nullptr";
