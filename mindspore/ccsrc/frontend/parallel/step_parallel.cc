@@ -287,6 +287,65 @@ TensorLayout GetTensorInLayout(const AnfNodePtr &pre_node, int get_item_index) {
   return tensorinfo_in.tensor_layout();
 }
 
+static void InsertRedistributionForMicroInterleaved(const TensorRedistributionPtr &tensor_redistribution,
+                                                    const CNodePtr &next_cnode, const FuncGraphPtr &func_graph,
+                                                    int64_t next_cnode_index, const CNodePtr &pre_cnode) {
+  auto redistribution_oplist_ptr_vector = tensor_redistribution->InferTensorRedistributionOperatorVirtualGraphs();
+  // create VirtualConverterBeginNode
+  auto real_pre_node = next_cnode->input(next_cnode_index)->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(real_pre_node);
+  auto virtual_converter_begin =
+    CreateVirtualConverterBeginNode(real_pre_node, redistribution_oplist_ptr_vector.size());
+  std::vector<CNodePtr> tuple_get_item_vector;
+  for (size_t i = 0; i < redistribution_oplist_ptr_vector.size(); ++i) {
+    if (redistribution_oplist_ptr_vector[i]->first.empty()) {
+      return;
+    }
+    // create tuple_get_item
+    std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), virtual_converter_begin,
+                                                  CreatInt64Imm(UlongToLong(i))};
+    auto tuple_get_item_cnode = func_graph->NewCNode(tuple_get_item_inputs);
+    tuple_get_item_vector.push_back(tuple_get_item_cnode);
+  }
+  // create VirtualConverterEndNode
+  auto virtual_converter_end = CreateVirtualConverterEndNode(func_graph, tuple_get_item_vector);
+  auto manager = func_graph->manager();
+  manager->SetEdge(next_cnode, next_cnode_index, virtual_converter_end);
+  // add recompute_comm_op attrs
+  auto prim_out = GetCNodePrimitive(next_cnode);
+  if (prim_out != nullptr && prim_out->HasAttr(RECOMPUTE_COMM_OP)) {
+    auto out_recompute_comm_op_attr = prim_out->GetAttr(RECOMPUTE_COMM_OP);
+    auto virtual_converter_end_prim = GetCNodePrimitive(virtual_converter_end);
+    virtual_converter_end_prim->AddAttr(RECOMPUTE_COMM_OP, out_recompute_comm_op_attr);
+  }
+  std::vector<std::vector<std::vector<int64_t>>> ag_group_ranks_vectors;
+
+  for (size_t i = 0; i < redistribution_oplist_ptr_vector.size(); ++i) {
+    auto redistribution_oplist_ptr = redistribution_oplist_ptr_vector[i];
+    if (!tensor_redistribution->IsAssembledStaticShape()) {
+      redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
+        redistribution_oplist_ptr, tensor_redistribution->input_shape());
+    }
+    // Get allgather group_ranks attr in redistribution_oplist_ptr
+    std::vector<std::vector<int64_t>> ag_group_ranks_vector;
+    for (size_t findex = 0; findex < (redistribution_oplist_ptr->first).size(); ++findex) {
+      // Create instance_name
+      auto index = (redistribution_oplist_ptr->first).size() - 1 - findex;
+      auto op = (redistribution_oplist_ptr->first)[index];
+      std::string op_name = (redistribution_oplist_ptr->first)[index].first;
+      if (op_name == ALL_GATHER) {
+        auto group_ranks_attr = (redistribution_oplist_ptr->first)[index].second.first[1].second;
+        auto group_ranks = GetValue<std::vector<int64_t>>(group_ranks_attr);
+        ag_group_ranks_vector.push_back(group_ranks);
+      }
+    }
+    ag_group_ranks_vectors.push_back(ag_group_ranks_vector);
+    InsertRedistribution(redistribution_oplist_ptr, virtual_converter_end, func_graph, i + 1, pre_cnode,
+                         tensor_redistribution);
+  }
+  ConvertInterleaveAllGatherToConcat(func_graph, virtual_converter_end, ag_group_ranks_vectors);
+}
+
 static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const AnfNodePtr &pre_node,
                            int get_item_index) {
   MS_LOG(DEBUG) << "Do Redistribution for " << node_pair.first->fullname_with_scope();
@@ -348,6 +407,10 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
                   << next_cnode->DebugString();
     DumpGraph(func_graph, "redistribution_error");
     MS_LOG(EXCEPTION) << "Failure:tensor_redistribution init failed";
+  }
+  if (tensorlayout_in.GetVirtualRank().size() > 1 || tensorlayout_out.GetVirtualRank().size() > 1) {
+    InsertRedistributionForMicroInterleaved(tensor_redistribution, next_cnode, func_graph, node_pair.second, pre_cnode);
+    return;
   }
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
   if (redistribution_oplist_ptr == nullptr) {
@@ -3138,6 +3201,8 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
   }
   // ForwardCommunication BackwardCommunication TensorRedistribution
   ParallelCommunication(root, all_nodes, manager);
+  SplitNotParallelCareOpsInterleaved(root);
+  EraseVirtualConverter(root);
   if (is_apply_adasum) {
     HandleMirrorInAdaSum(root, &adasum_param_tensor_layout_map);
   }
@@ -3244,11 +3309,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   }
 
   ParallelPartProcess(all_nodes, root, manager);
-
   BroadcastLastResult(root, manager);
-
   MicroBatchPostProcess(root, all_nodes);
-
   DumpGraph(root, std::string(STEP_PARALLEL_END));
 
   // step parallel only run once

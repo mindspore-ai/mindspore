@@ -78,12 +78,14 @@ class MatMul : public MatMulBase {
   Status CheckLayoutConfig() override;
   Status CheckInputLayout() override;
   Status CheckOutputLayout() override;
+  virtual Status ComputeReplaceGraphForInterleaved(const CNodePtr &cnode);
 
  private:
   void CheckPCLMatMul(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
   Status CheckInputStrategy(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
   TensorLayout InferOutputLayout();
   TensorLayout output_infer_tensor_layout_;
+  void UpdateOutputTensorInfoForInterleaved();
 };
 
 class MatMulInfo : public MatMul {

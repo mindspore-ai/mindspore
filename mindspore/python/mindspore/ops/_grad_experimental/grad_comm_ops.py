@@ -244,11 +244,13 @@ def get_bprop_broad_cast(self):
 def get_bprop_all_gather(self):
     """Generate bprop for AllGather"""
     fusion = self.get_attr_dict()["fusion"]
+    self.group = self.get_attr_dict()["group"]
     reduce_scatter = ReduceScatter(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
     if hasattr(self, "instance_name") and self.instance_name:
         instance_name = "grad_" + self.instance_name
         reduce_scatter.set_prim_instance_name(instance_name)
     mean_flag = self.get_attr_dict()["mean_flag"]
+    self.rank_size = self.get_attr_dict()["rank_size"]
     if self.rank_size == 0:
         raise ValueError(f"The 'rank_size' can not be zero, but got {self.rank_size}.")
     scale = 1.0 / self.rank_size
