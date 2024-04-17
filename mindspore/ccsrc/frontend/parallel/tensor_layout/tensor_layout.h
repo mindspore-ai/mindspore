@@ -41,8 +41,9 @@ class TensorLayout {
   std::string OriginToString() const;
   Status Init(const Arrangement &device_arrangement, const Map &tensor_map, const Arrangement &tensor_shape);
   Status InitFromVector(const Shape &device_arrangement, const Shape &tensor_map, const Shape &tensor_shape);
-  Status InitFromExtendVector(const Shape &device_arrangement, const std::vector<Shape> &tensor_map,
-                              const Shape &tensor_shape);
+  Status InitFromExtendVector(const Shape &device_matrix, const std::vector<Shape> &tensor_map,
+                              const Shape &tensor_shape, bool interleaved_parallel = false,
+                              bool check_device_num = true);
 
   Status UpdateTensorShape(size_t index, int64_t update_value) {
     return this->tensor_shape_.UpdateTensorShape(index, update_value);
@@ -153,6 +154,15 @@ class TensorLayout {
 
   int64_t GetSliceNumByTensorDimensionIndex(uint64_t idx) const;
 
+  TensorLayout LayoutForRedistribution() const;
+
+  std::vector<int64_t> GetVirtualRank() const;
+
+  Arrangement device_arrangement_interleaved() { return device_arrangement_interleaved_; }
+
+  void set_device_arrangement_interleaved(Arrangement device_arrangement_interleaved) {
+    device_arrangement_interleaved_ = device_arrangement_interleaved;
+  }
   // Key for user data.
   constexpr static char key[] = "TLayout";
 
@@ -168,6 +178,7 @@ class TensorLayout {
 
   Arrangement device_arrangement_origin_;
   Arrangement tensor_shape_origin_;
+  Arrangement device_arrangement_interleaved_;
   Arrangement device_arrangement_;
   Arrangement tensor_shape_;
   Arrangement tensor_shape_before_;

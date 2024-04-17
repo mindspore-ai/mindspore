@@ -187,8 +187,14 @@ Status ConstructOperator::StridedSliceOP(const Args &args) {
 
   Group group = group_list[0];
   size_t rank;
-  if (group.GetIndex(&rank) == Status::FAILED) {
-    return Status::FAILED;
+  if (virtual_rank_ >= 0) {
+    if (group.GetIndexByRank(virtual_rank_, &rank) == Status::FAILED) {
+      return Status::FAILED;
+    }
+  } else {
+    if (group.GetIndex(&rank) == Status::FAILED) {
+      return Status::FAILED;
+    }
   }
   size_t size = tensor_shape_.size();
   Shape begin(size);
@@ -334,10 +340,10 @@ Status ConstructOperator::AlltoAllOP(const Args &args) {
 Status ConstructOperator::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
   MS_EXCEPTION_IF_NULL(group);
   auto rank = ParallelContext::GetInstance()->global_rank();
-  if (!ParallelContext::GetInstance()->do_transform()) {
+  if (check_group()) {
     CheckGlobalDeviceManager();
-    MS_EXCEPTION_IF_NULL(g_device_manager);
-    rank = g_device_manager->global_rank();
+  } else {
+    rank = virtual_rank_;
   }
   DeviceMatrix dev_matrix(rank, dev_list_, dev_matrix_shape_);
   RankList group_devices;
@@ -349,14 +355,14 @@ Status ConstructOperator::CreateGroupByDim(size_t axis, std::vector<Group> *grou
     MS_LOG(INFO) << "the group is empty";
     return SUCCESS;
   }
-  if (is_cost_model_ || ParallelContext::GetInstance()->do_transform()) {
+  if (is_cost_model_ || !check_group()) {
     Group g;
     std::vector<Device> dev_list;
     (void)std::transform(group_devices.begin(), group_devices.end(), std::back_inserter(dev_list),
                          [](auto &rank_id) { return Device(rank_id); });
-    (void)g.Init("fake_group", dev_list);
+    (void)g.Init(HCCL_WORLD_GROUP, dev_list);
     group->push_back(g);
-    if (ParallelContext::GetInstance()->do_transform()) {
+    if (!check_group()) {
       return SUCCESS;
     }
     return g_device_manager->CheckDeviceList(group_devices);

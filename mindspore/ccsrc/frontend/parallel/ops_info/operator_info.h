@@ -348,6 +348,7 @@ class OperatorInfo {
   virtual Status InferTensorInfoNew();
 
   virtual void InferReplaceOps() {}
+  virtual void UpdateOutputTensorInfoForInterleaved();
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
   virtual Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) { return SUCCESS; }
   Status CheckStrategyByVector(const Shapes &strategy, const Shapes &inputs_shape);
@@ -421,6 +422,7 @@ class OperatorInfo {
   NewTensorMaps inputs_tensor_map_new_;
   NewTensorMaps outputs_tensor_map_new_;
   ForwardOp forward_op_;
+  ForwardOp forward_op_interleaved_;
   Ops sub_ops_;
   ForwardOp replace_op_;
   OutPutInfoVector replace_op_info_;

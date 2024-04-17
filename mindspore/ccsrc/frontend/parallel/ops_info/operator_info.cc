@@ -579,6 +579,24 @@ Status OperatorInfo::InferTensorInfoNew() {
   return SUCCESS;
 }
 
+void OperatorInfo::UpdateOutputTensorInfoForInterleaved() {
+  if (inputs_tensor_info_[kIndex0].tensor_layout().device_arrangement_interleaved().array().empty()) {
+    return;
+  }
+  if (!outputs_tensor_info_[kIndex0].tensor_layout().device_arrangement_interleaved().array().empty()) {
+    return;
+  }
+  auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+  auto output_dev_matrix = outputs_tensor_info_[kIndex0].tensor_layout().device_arrangement_origin().array();
+  output_dev_matrix[output_dev_matrix.size() - 1] = interleaved_num;
+  Arrangement out_device_arrangement_interleaved;
+  out_device_arrangement_interleaved.Init(output_dev_matrix);
+  auto new_tensor_layout = outputs_tensor_info_[kIndex0].tensor_layout();
+  new_tensor_layout.set_device_arrangement_interleaved(out_device_arrangement_interleaved);
+  TensorInfo new_output_tensor_info(new_tensor_layout);
+  outputs_tensor_info_[kIndex0] = new_output_tensor_info;
+}
+
 Status OperatorInfo::InferTensorInfo() {
   if (!inputs_shape_new_.empty()) {
     return InferTensorInfoNew();

@@ -50,6 +50,7 @@ class RedistributionOperatorInfer {
   OperatorVector operator_vector() const { return operator_vector_; }
   OutPutInfoVector output_info_vector() const { return output_info_vector_; }
   Status InferRedistributionOperator();
+  void SetVirtualRank(const int64_t virtual_rank) { virtual_rank_ = virtual_rank; }
 
  private:
   Status InferSplitByAxis();
@@ -72,6 +73,7 @@ class RedistributionOperatorInfer {
   RankList dev_list_;
   bool construct_op_flag_;
   bool is_cost_model_;
+  int64_t virtual_rank_ = -1;
 };
 }  // namespace parallel
 }  // namespace mindspore

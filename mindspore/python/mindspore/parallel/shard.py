@@ -71,6 +71,9 @@ class Layout():
                 raise ValueError(f"The element of alias_name can not set 'None', because 'None' means no sharding.")
         if len(set(alias_name)) != len(alias_name):
             raise ValueError(f'Each element of alias_name {alias_name} should be different')
+        if "interleaved_parallel" in alias_name and alias_name.index("interleaved_parallel") != len(alias_name) - 1:
+            raise ValueError(f"When alias_name {alias_name} contains keyword 'interleaved_parallel',"
+                             f" it should be at the last dim of alias_name, which means the virtual sharding.")
         self._device_shape = device_matrix
         self._alias_name = alias_name
         self._tensor_map = None
@@ -112,7 +115,9 @@ class Layout():
             raise ValueError("The device_shape of layout is None")
         if self._tensor_map is None:
             raise ValueError("The tensor_map of layout is None")
-        return {"device_matrix": self._device_shape, "tensor_map": self._tensor_map}
+        interleaved_parallel = "interleaved_parallel" in self._alias_name
+        return {"device_matrix": self._device_shape, "tensor_map": self._tensor_map,
+                "interleaved_parallel": interleaved_parallel}
 
 
 
