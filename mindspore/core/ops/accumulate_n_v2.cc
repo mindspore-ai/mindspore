@@ -91,7 +91,7 @@ TypePtr AccumulateNV2InferType(const PrimitivePtr &prim, const std::vector<Abstr
   std::map<std::string, TypePtr> types;
   (void)types.emplace("element_0", elements[0]->GetType());
   for (size_t i = 0; i < elements.size(); ++i) {
-    if (elements[i]->GetType()->type_id() == kObjectTypeUndeterminedType) {
+    if (elements[i]->IsSameTypeId(abstract::AbstractUndetermined::kTypeId)) {
       return elements[0]->GetType();
     }
     std::string element_i = "element_" + std::to_string(i);
