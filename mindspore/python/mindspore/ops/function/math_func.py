@@ -4703,9 +4703,11 @@ def addmv(input, mat, vec, *, beta=1, alpha=1):
         raise TypeError("For Addmv, inputs must be all tensors.")
     if dtype_(mat) != dtype_(vec):
         raise TypeError("For Addmv, the mat and vec should be the same dtype.")
-    _check_input_dtype("input", input_dtype,
-                       [mstype.float16, mstype.float32, mstype.float64,
-                        mstype.int16, mstype.int32, mstype.int64], "Addmv")
+    valid_types = [mstype.float16, mstype.float32, mstype.float64, mstype.int16, mstype.int32, mstype.int64]
+    if input_dtype not in valid_types:
+        names = [t.__name__ if hasattr(t, "__name__") else t for t in valid_types]
+        input_dtype = input_dtype.__name__ if hasattr(input_dtype, '__name__') else repr(input_dtype)
+        raise TypeError(f"For 'Addmv', the 'input' should be one of '{names}', but got type '{input_dtype}'")
     _check_attr_dtype("alpha", alpha, [int, float, bool], "Addmv")
     _check_attr_dtype("beta", beta, [int, float, bool], "Addmv")
     if input_dtype in (mstype.int16, mstype.int32, mstype.int64):
