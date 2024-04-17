@@ -1,0 +1,21 @@
+approvers:
+- zh_qh #
+- ginfung
+- chenfei52
+- chujinjin
+- hwcaifubi
+- zjun3021
+
+reviewers:
+- lanzhineng
+- lianliguang
+- Margaret_wangrui
+- irmo
+- huangbingjian
+- liangzhibo
+- Liangcan-Li
+- ligan15
+- wangch1009
+
+options:
+    no_parent_owners: true

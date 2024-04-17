@@ -104,7 +104,7 @@ bool MultiStreamController::WaitEvent(const DeviceContext *device_context, int64
   return mem_manager->WaitEvent(task_id_on_stream, user_stream_id, memory_stream_id);
 }
 
-bool MultiStreamController::SyncEvent(const DeviceContext *device_context, int64_t task_id_on_stream,
+bool MultiStreamController::WaitEvent(const DeviceContext *device_context, int64_t task_id_on_stream,
                                       uint32_t user_stream_id) {
   auto mem_manager = device_context->device_res_manager_->mem_manager();
   if (mem_manager == nullptr) {

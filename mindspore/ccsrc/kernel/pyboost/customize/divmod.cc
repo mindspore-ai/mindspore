@@ -45,7 +45,7 @@ void FloorDivCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_te
       PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
     const auto primitive = std::make_shared<Primitive>(prim::kPrimFloorDiv->name());
-    PyBoostUtils::LaunchKernel(primitive, device_context, input_address_info, output_address_info, stream);
+    PyBoostUtils::LaunchKernel(primitive, device_context, input_address_info, output_address_info, op->stream_id());
     MS_LOG(DEBUG) << "Run device task DivMod-FloorDiv end";
   }));
 }
@@ -70,7 +70,7 @@ void TruncCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_t
       PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
     const auto primitive = std::make_shared<Primitive>(prim::kPrimTrunc->name());
-    PyBoostUtils::LaunchKernel(primitive, device_context, input_address_info, output_address_info, stream);
+    PyBoostUtils::LaunchKernel(primitive, device_context, input_address_info, output_address_info, op->stream_id());
     MS_LOG(DEBUG) << "Run device task DivMod-Trunc end";
   }));
 }

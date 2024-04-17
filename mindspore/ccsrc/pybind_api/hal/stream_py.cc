@@ -92,7 +92,7 @@ bool StreamPy::StreamEqual(const std::shared_ptr<StreamPy> other_stream) {
 
 void SetCurStream(const StreamPyPtr &cur_stream) {
   MS_EXCEPTION_IF_NULL(cur_stream);
-  runtime::OpExecutor::GetInstance().WaitAll();
+  MS_LOG(DEBUG) << "current_stream_id:" << cur_stream->stream_id();
   cur_stream->device_ctx()->device_res_manager_->SetCurrentStreamId(cur_stream->stream_id());
 }
 
@@ -105,8 +105,7 @@ void Synchronize() {
 
 StreamPyPtr CurrentStream() {
   auto device_ctx = GetDeviceCtx();
-  runtime::OpExecutor::GetInstance().WaitAll();
-  const auto &current_stream_id = device_ctx->device_res_manager_->GetCurrentStreamId();
+  auto current_stream_id = device_ctx->device_res_manager_->GetCurrentStreamId();
   MS_LOG(DEBUG) << "current_stream_id:" << current_stream_id;
   return std::make_shared<StreamPy>(device_ctx, current_stream_id);
 }
