@@ -36,6 +36,7 @@
 #include "kernel/kernel_build_info.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/op_api_util.h"
+#include "transform/acl_ir/op_api_exec.h"
 #include "transform/acl_ir/ge_adapter_info.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
@@ -51,10 +52,13 @@ namespace device {
 namespace ascend {
 namespace {
 constexpr uint32_t kFirstItem = 0;
+constexpr size_t kOpTypeNumber = 6;
 constexpr size_t kAclnnOpSelect = 0;
 constexpr size_t kAclOpSelect = 1;
 constexpr size_t kHcclOpSelect = 2;
 constexpr size_t kHostOpSelect = 3;
+constexpr size_t kInternalOpSelect = 4;
+constexpr size_t kCustomOpSelect = 5;
 
 std::string KernelSelectDebugString(const kernel::KernelBuildInfo *build_info,
                                     const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
@@ -420,6 +424,68 @@ bool ReadAclnnEnableEnv(const std::string &op_name) {
 }
 }  // namespace
 
+void GenerateCustomOpBuildInfo(const CNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto prim = GetValueNode<PrimitivePtr>(kernel->inputs()[kIndex0]);
+  MS_EXCEPTION_IF_NULL(prim);
+
+  // Get op compile type.
+  auto func_type = prim->GetAttr("func_type");
+  if (func_type == nullptr) {
+    MS_LOG(EXCEPTION) << "Current custom op:" << kernel->fullname_with_scope() << " lack func_type!";
+  }
+  const auto &func_type_value = GetValue<std::string>(func_type);
+  auto kernel_type = KernelType::UNKNOWN_KERNEL_TYPE;
+  // TODO(jjf): other type.
+  if (func_type_value == "tbe" || func_type_value == "aicpu") {
+    kernel_type = KernelType::ACL_KERNEL;
+  } else if (func_type_value == "ascendc") {
+    kernel_type = KernelType::OPAPI_KERNEL;
+  } else {
+    MS_LOG(EXCEPTION)
+      << "In kernel mode, custom op type only support tbe/aicpu/ascendc types, other types are not supported!";
+  }
+
+  std::vector<std::string> input_formats;
+  std::vector<std::string> output_formats;
+  std::vector<std::string> input_reshape_types;
+  std::vector<std::string> output_reshape_types;
+  transform::OpApiUtil::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
+                                                &output_reshape_types);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(kernel);
+  auto output_num = AnfUtils::GetOutputTensorNum(kernel);
+  std::vector<TypeId> input_types;
+  input_types.reserve(input_num);
+  std::vector<TypeId> output_types;
+  output_types.reserve(output_num);
+  std::vector<kernel::KernelObjectType> output_object_types;
+  output_object_types.reserve(output_num);
+
+  // TODO(jjf): other type.
+  auto output_object_type = kernel::KernelObjectType::TENSOR;
+  for (size_t i = 0; i < input_num; i++) {
+    auto cur_input_type = GetInputDeviceType(kernel, i);
+    if (IsEmptyTupleInput(kernel, i, cur_input_type)) {
+      cur_input_type = TypeId::kNumberTypeInt64;
+    }
+    (void)input_types.emplace_back(cur_input_type);
+  }
+  for (size_t i = 0; i < output_num; i++) {
+    (void)output_types.emplace_back(common::AnfAlgo::GetOutputInferDataType(kernel, i));
+    (void)output_object_types.emplace_back(output_object_type);
+  }
+  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
+  builder->SetKernelType(kernel_type);
+  builder->SetInputsFormat(input_formats);
+  builder->SetInputsDeviceType(input_types);
+  builder->SetInputsKernelObjectType(kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(kernel)));
+  builder->SetOutputsFormat(output_formats);
+  builder->SetOutputsDeviceType(output_types);
+  builder->SetOutputsKernelObjectType(output_object_types);
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel.get());
+}
+
 void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel);
   std::vector<std::string> input_formats;
@@ -539,31 +605,25 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
                                                                      const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  static std::vector<std::set<std::string>> op_selected_type(4);
-  static std::set<std::string> kInternalKernelSelectedSet;
+  static std::vector<std::set<std::string>> op_selected_type(kOpTypeNumber);
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
   std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
-  auto enable_internal = false;
-  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on") {
-    enable_internal = true;
-  }
-
   std::string op_name = common::AnfAlgo::GetCNodeName(node);
-  if (op_name == "ReshapeExt") {
-    enable_internal = true;
-  }
-  static std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
-  std::vector<std::string> op_name_vec = SplitString(disable_name_list, ',');
-  if (enable_internal && std::any_of(op_name_vec.begin(), op_name_vec.end(),
-                                     [&op_name](const std::string &name) { return name == op_name; })) {
-    enable_internal = false;
+
+  if (IsCustomOp(node)) {
+    GenerateCustomOpBuildInfo(node);
+    if (op_selected_type[kCustomOpSelect].count(op_name) == 0) {
+      (void)op_selected_type[kCustomOpSelect].insert(op_name);
+      MS_LOG(INFO) << op_name << " select custom kernel.";
+    }
+    return result;
   }
 
-  if (enable_internal && kernel::IsRegisteredInternalKernel(node)) {
+  if (IsEnableInternalNode(node)) {
     GenerateKernelBuildInfo(node, KernelType::INTERNAL_KERNEL);
-    if (kInternalKernelSelectedSet.count(op_name) == 0) {
-      (void)kInternalKernelSelectedSet.insert(op_name);
-      MS_LOG(INFO) << op_name << " select internal kernel.";
+    if (op_selected_type[kInternalOpSelect].count(op_name) == 0) {
+      (void)op_selected_type[kInternalOpSelect].insert(op_name);
+      MS_LOG(INFO) << op_name << " select aclnn kernel.";
     }
     return result;
   }
@@ -656,6 +716,47 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
   bool ret = ReadAclnnEnableEnv(op_name);
   kIsEnableAclnnMap.insert({op_name, ret});
   return ret;
+}
+
+bool IsCustomOp(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto node = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(node);
+
+  if (node->inputs().empty()) {
+    MS_LOG(EXCEPTION) << "Length of node inputs is empty";
+  }
+  MS_EXCEPTION_IF_NULL(node->inputs()[0]);
+  if (!node->inputs()[0]->isa<ValueNode>()) {
+    return false;
+  }
+  auto cus_prim = GetValueNode<PrimitivePtr>(node->inputs()[0]);
+  if (cus_prim == nullptr) {
+    return false;
+  }
+
+  return cus_prim->name() == "Custom";
+}
+
+bool IsEnableInternalNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(node);
+  if (op_name == "ReshapeExt") {
+    return true;
+  }
+
+  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") != "on") {
+    return false;
+  }
+
+  std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
+  std::vector<std::string> op_name_vec = SplitString(disable_name_list, ',');
+  if (std::any_of(op_name_vec.begin(), op_name_vec.end(),
+                  [&op_name](const std::string &name) { return name == op_name; })) {
+    return false;
+  }
+
+  return kernel::IsRegisteredInternalKernel(node);
 }
 
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {

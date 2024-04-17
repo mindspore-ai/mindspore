@@ -128,6 +128,8 @@ class AclConverter {
 
   void Run(void *stream_ptr);
 
+  AclRunner &runner() { return runner_; }
+
   std::vector<std::vector<int64_t>> SyncData() { return runner_.SyncData(); }
 
   void Reset();
@@ -136,8 +138,6 @@ class AclConverter {
   static aclFormat ConvertFormat(const std::string &format);
   std::string GetFormatFromInputAttrMap(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name);
 
- private:
-  friend class AttrConverter;
   std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const AddressPtr &address,
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
@@ -154,6 +154,9 @@ class AclConverter {
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
                                                                      AclDumpString *dump_str) const;
+
+ private:
+  friend class AttrConverter;
 
   void GenerateRealGeIdx();
 

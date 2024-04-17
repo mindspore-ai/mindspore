@@ -61,7 +61,7 @@ class AclKernelMod : public KernelMod {
   void PackageInput(const size_t idx, const std::string &format, ShapeVector *shape);
   void PackageOutput(const size_t idx, const ShapeVector &shape);
   void RefreshAclConverter(const std::vector<KernelTensor *> &inputs);
-  void SetValueDependArgs(const std::set<int64_t> &indices);
+  virtual void SetValueDependArgs(const std::set<int64_t> &indices);
   void SetDynamic(bool is_dynamic) { is_dynamic_ = is_dynamic; }
   std::string GetFormatFromInput(const std::vector<KernelTensor *> &inputs);
 
@@ -79,7 +79,6 @@ class AclKernelMod : public KernelMod {
   transform::AclConverterPtr converter_;
   std::vector<TensorParams> output_params_;
 
- private:
   std::vector<TensorParams> input_params_;
   // record indices of value depend arguments
   std::set<int64_t> value_depend_args_;
