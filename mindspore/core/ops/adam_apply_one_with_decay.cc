@@ -129,7 +129,16 @@ class MIND_API AdamApplyOneWithDecay : public BaseOperator {
   AdamApplyOneWithDecay() : BaseOperator("AdamApplyOneWithDecay") {}
 };
 
+class MIND_API AdamApplyOneWithDecayAssign : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(AdamApplyOneWithDecayAssign);
+  /// \brief Constructor.
+  AdamApplyOneWithDecayAssign() : BaseOperator("AdamApplyOneWithDecayAssign") {}
+};
+
 REGISTER_PRIMITIVE_OP_INFER_IMPL(AdamApplyOneWithDecay, prim::kPrimAdamApplyOneWithDecay, AdamApplyOneWithDecayInfer,
                                  false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AdamApplyOneWithDecayAssign, prim::kPrimAdamApplyOneWithDecayAssign,
+                                 AdamApplyOneWithDecayInfer, false);
 }  // namespace ops
 }  // namespace mindspore

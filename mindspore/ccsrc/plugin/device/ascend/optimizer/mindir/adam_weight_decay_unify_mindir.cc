@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,11 @@ ValueNodePtr CreateValueNode(const FuncGraphPtr &graph, double value) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   ValueNodePtr value_node = kernel_graph->NewValueNode(tensor->ToAbstract(), tensor);
   return value_node;
+}
+
+bool IsFloatParameter(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return common::AnfAlgo::GetOutputInferDataType(node, 0) == kNumberTypeFloat32;
 }
 
 AnfNodePtr CreateCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input, const TypeId dst_type) {
@@ -89,10 +94,6 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
                       << input_list.size();
   }
 
-  // Create New node
-  PrimitivePtr prim = std::make_shared<Primitive>(kAdamApplyOneWithDecayOpName);
-  std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(prim)};
-
   auto num_one = CreateValueNode(func_graph, 1.0);
   // 1 - beta1
   auto beta1_sub = CreateSubCNode(func_graph, num_one, input_list[kIndex5]);
@@ -103,16 +104,35 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
   beta2_sub->set_scope(node->scope());
   input_list.push_back(beta2_sub);
   // Cast
-  auto ori_param = input_list[kIndex1];
-  input_list[kIndex1] = CreateCastNode(func_graph, input_list[kIndex1], kNumberTypeFloat32);
-  input_list[kIndex2] = CreateCastNode(func_graph, input_list[kIndex2], kNumberTypeFloat32);
-  input_list[kIndex3] = CreateCastNode(func_graph, input_list[kIndex3], kNumberTypeFloat32);
+  bool all_fp32 = false;
+  if (IsFloatParameter(input_list[kIndex1]) && IsFloatParameter(input_list[kIndex2]) &&
+      IsFloatParameter(input_list[kIndex3])) {
+    all_fp32 = true;
+  }
+
+  // Create New node
+  PrimitivePtr prim = nullptr;
+  AnfNodePtr ori_param = nullptr;
+  if (!all_fp32) {
+    ori_param = input_list[kIndex1];
+    input_list[kIndex1] = CreateCastNode(func_graph, input_list[kIndex1], kNumberTypeFloat32);
+    input_list[kIndex2] = CreateCastNode(func_graph, input_list[kIndex2], kNumberTypeFloat32);
+    input_list[kIndex3] = CreateCastNode(func_graph, input_list[kIndex3], kNumberTypeFloat32);
+    prim = std::make_shared<Primitive>(kAdamApplyOneWithDecayOpName);
+  } else {
+    prim = std::make_shared<Primitive>(kAdamApplyOneWithDecayAssignOpName);
+  }
+  std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(prim)};
   input_list[kIndex9] = CreateCastNode(func_graph, input_list[kIndex9], kNumberTypeFloat32);
 
   // Mapping ms index to ge index.
   for (size_t i = 0; i < kdamWeightDecayIndexMapping.size(); ++i) {
     const auto &cur_node = input_list[kdamWeightDecayIndexMapping[i]];
     (void)new_node_inputs.emplace_back(cur_node);
+  }
+
+  if (all_fp32) {
+    return CreateAdamApplyOneWithDecayAssign(func_graph, node, input_list, &new_node_inputs);
   }
 
   // Create New AdamApplyOneWithDecay with three outputs.
@@ -147,6 +167,35 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::CreateAdamApplyOneWithDecay(const F
   auto assign_m = CreateAssignCNode(func_graph, input_list[kIndex2], new_cnode_outputs[kIndex1], input_list[kIndex11]);
   auto assign_v = CreateAssignCNode(func_graph, input_list[kIndex3], new_cnode_outputs[kIndex0], input_list[kIndex11]);
   auto make_tuple = CreateMakeTupleNode(func_graph, std::vector<AnfNodePtr>{assign_param, assign_m, assign_v});
+  make_tuple->set_scope(node->scope());
+  return make_tuple;
+}
+
+const AnfNodePtr AdamWeightDecayUnifyMindIR::CreateAdamApplyOneWithDecayAssign(const FuncGraphPtr &func_graph,
+                                                                               const AnfNodePtr &node,
+                                                                               const AnfNodePtrList &input_list,
+                                                                               AnfNodePtrList *new_node_inputs) const {
+  if (input_list[kIndex11] != nullptr) {
+    (void)new_node_inputs->emplace_back(input_list[kIndex11]);
+  }
+  auto new_cnode = NewCNode(*new_node_inputs, func_graph);
+  MS_EXCEPTION_IF_NULL(new_cnode);
+  new_cnode->set_scope(node->scope());
+  AbstractBasePtrList new_node_abstract_list;
+  new_node_abstract_list.push_back(input_list[kIndex3]->abstract());
+  new_node_abstract_list.push_back(input_list[kIndex2]->abstract());
+  new_node_abstract_list.push_back(input_list[kIndex1]->abstract());
+  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(new_node_abstract_list);
+  new_cnode->set_abstract(abstract_tuple);
+  std::vector<AnfNodePtr> new_cnode_outputs;
+  CreateMultipleOutputsOfAnfNode(func_graph, new_cnode, kAdamApplyOneOutputNum, &new_cnode_outputs);
+  if (new_cnode_outputs.size() != kAdamApplyOneOutputNum) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The output size of node " << new_cnode->DebugString() << " should be "
+                               << kAdamApplyOneOutputNum << trace::DumpSourceLines(node);
+  }
+  auto make_tuple = CreateMakeTupleNode(
+    func_graph,
+    std::vector<AnfNodePtr>{new_cnode_outputs[kIndex2], new_cnode_outputs[kIndex1], new_cnode_outputs[kIndex0]});
   make_tuple->set_scope(node->scope());
   return make_tuple;
 }
