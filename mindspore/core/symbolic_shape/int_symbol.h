@@ -81,7 +81,8 @@ class MS_CORE_API IntSymbol : public ScalarSymbol {
   int64_t remainder() const { return math_info_.remainder(); }
 
   /// \brief Check the symbol is divisible by 'd'
-  bool is_divisible_by(int64_t d) const { return remainder() == 0 && divisor() % d == 0; }
+  bool is_divisible_by(int64_t d) const;
+  bool is_divisible_by(const IntSymbolPtr &d) const;
   /// \brief Check the symbol is ALWAYS greater than x
   bool is_greater_than(int64_t x) const { return range_min() > x; }
   /// \brief Check the symbol is ALWAYS less than x
