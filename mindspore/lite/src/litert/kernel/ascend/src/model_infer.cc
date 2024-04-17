@@ -76,7 +76,7 @@ STATUS ModelInfer::Init() {
   model_process_.SetIsDevice(is_device);
   MS_LOG(INFO) << "Get run mode success is device input/output " << is_device;
 
-  MS_LOG(INFO) << "Init acl success, device id " << device_id;
+  MS_LOG(INFO) << "Init acl success, device id " << device_id_;
   init_flag_ = true;
   return lite::RET_OK;
 }
@@ -164,12 +164,12 @@ STATUS ModelInfer::LoadAclModel(const Buffer &om_data) {
       MS_LOG(ERROR) << "Call aclmdlQuerySizeFromMem failed, ret = " << acl_ret;
       return lite::RET_ERROR;
     }
-    AclMemManager::GetInstance().UpdateWorkspace(work_size, weight_size);
+    AclMemManager::GetInstance().UpdateWorkspace(work_size, weight_size, device_id_);
     return lite::RET_OK;
   } else if (IsEnableMultiModelSharingMem()) {
     AclModelMemInfo acl_work_mem_info;
     AclModelMemInfo acl_weight_mem_info;
-    auto ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info);
+    auto ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info, device_id_);
     if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "Get work mem failed.";
       return ret;
