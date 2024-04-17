@@ -46,7 +46,22 @@ bool MMAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
   RunOp(stream_ptr, workspace);
   return true;
 }
+
+void MMExtAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], outputs[kIndex0], OpApiUtil::GetCubeMathType());
+}
+
+bool MMExtAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &workspace,
+                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0],
+                                      OpApiUtil::GetCubeMathType()));
+  RunOp(stream_ptr, workspace);
+  return true;
+}
 MS_ACLNN_KERNEL_FACTORY_REG(MatMul, MMAclnnKernelMod);
 MS_ACLNN_KERNEL_FACTORY_REG(MatMulV2, MMAclnnKernelMod);
+MS_ACLNN_KERNEL_FACTORY_REG(MatMulExt, MMExtAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
