@@ -5,7 +5,6 @@ one_hot_ext:
             dtype: tensor
         num_classes:
             dtype: int
-            type_cast: tensor
         on_value:
             dtype: tensor
         off_value:
