@@ -556,7 +556,7 @@ void DoUnifyMindIRPass(const FuncGraphPtr &graph, const std::shared_ptr<opt::Gra
 #endif
 }
 bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
-  static const auto is_disable_switch_inline = (common::GetEnv("MS_DISABLE_SWITCH_INLINE") != "0");
+  static const auto is_disable_switch_inline = (common::GetEnv("MS_DISABLE_SWITCH_INLINE") == "1");
   if (is_disable_switch_inline) {
     return false;
   }
