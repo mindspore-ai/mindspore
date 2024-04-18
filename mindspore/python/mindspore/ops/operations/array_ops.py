@@ -5116,8 +5116,6 @@ class TensorScatterElements(Primitive):
         - **indices** (Tensor) - The index of `input_x` to do scatter operation whose data type must be int32 or
           int64. It has the same rank as `data`. And accepted range is [-s, s) where s is the size along axis.
         - **updates** (Tensor) - The tensor doing the scatter operation with `data`,
-          it has the same shape and type as `data`.
-        - **update** (Tensor) - The tensor doing the scatter operation with `data`,
           it has the same type as `data` and the same shape as `indices`.
 
     Outputs:

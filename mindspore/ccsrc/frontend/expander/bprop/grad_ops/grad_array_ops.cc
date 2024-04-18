@@ -1431,6 +1431,18 @@ REG_BPROP_BUILDER("NormalExt").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody
 
 REG_BPROP_BUILDER("UniformExt").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(ReturnZeros);
 
+REG_BPROP_BUILDER("ScatterAddExt").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto indices = ib->GetInput(kIndex2);
+  auto update = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  NodePtr x_grad = nullptr;
+  x_grad = x->need_compute_grad_out() ? dout : ib->OutZeros(x);
+  auto update_grad = update->need_compute_grad_out() ? ib->GatherD(dout, axis, indices) : ib->OutZeros(update);
+  return {x_grad, ib->OutZeros(axis), ib->OutZeros(indices), update_grad};
+});
+
 REG_BPROP_BUILDER("NormalizeSlice").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("NormalizeDimIndex").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {

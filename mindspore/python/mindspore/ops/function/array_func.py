@@ -61,6 +61,7 @@ from mindspore.ops._utils.utils import ms_arrange
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     nonzero, flip, transpose, tril, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, \
     broadcast_to, strided_slice, ones, zeros, max_, min_, select
+from mindspore.ops.auto_generate.gen_ops_prim import scatter_add_ext_op
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = ArgMaxWithValue()
@@ -3192,6 +3193,66 @@ def scatter(input, axis, index, src):
         [0. 0. 0. 0. 0.]]
     """
     return ops.tensor_scatter_elements(input_x=input, indices=index, updates=src, axis=axis)
+
+
+def scatter_add_ext(input, dim, index, src):
+    """
+    Update the value in `src` to `input` according to the specified index.
+
+    Args:
+        input (Tensor): The target tensor. The rank of `input` must be at least 1.
+        dim (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(input).
+        index (Tensor): The index to do update operation whose data type must be mindspore.int32 or
+            mindspore.int64. Same rank as `input` . And accepted range is [-s, s) where s is the size along axis.
+        src (Tensor): The tensor doing the update operation with `input` , has the same type as `input` ,
+            and the shape of `src` should be equal to the shape of `index` .
+
+    Returns:
+        Tensor, has the same shape and type as `input` .
+
+    Raises:
+        TypeError: If `index` is neither int32 nor int64.
+        ValueError: If anyone of the rank among `input` , `index` and `src` less than 1.
+        ValueError: If the shape of `src` is not equal to the shape of `index` .
+        ValueError: If the rank of `src` is not equal to the rank of `input` .
+        RuntimeError: If the data type of `input` and `src` conversion of Parameter
+            is required when data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.float32)
+        >>> src = Tensor(np.array([[8, 8]]), dtype=ms.float32)
+        >>> index = Tensor(np.array([[2, 4]]), dtype=ms.int64)
+        >>> out = ops.scatter_add_ext(input=input, dim=1, index=index, src=src)
+        >>> print(out)
+        [[1. 2. 8. 4. 8.]]
+        >>> input = Tensor(np.zeros((5, 5)), dtype=ms.float32)
+        >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
+        >>> index = Tensor(np.array([[0, 0, 0], [2, 2, 2], [4, 4, 4]]), dtype=ms.int64)
+        >>> out = ops.scatter_add_ext(input=input, dim=0, index=index, src=src)
+        >>> print(out)
+        [[1. 2. 3. 0. 0.]
+        [0. 0. 0. 0. 0.]
+        [4. 5. 6. 0. 0.]
+        [0. 0. 0. 0. 0.]
+        [7. 8. 9. 0. 0.]]
+        >>> input = Tensor(np.zeros((5, 5)), dtype=ms.float32)
+        >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
+        >>> index = Tensor(np.array([[0, 2, 4], [0, 2, 4], [0, 2, 4]]), dtype=ms.int64)
+        >>> out = ops.scatter_add_ext(input=input, dim=1, index=index, src=src)
+        >>> print(out)
+        [[1. 0. 2. 0. 3.]
+        [4. 0. 5. 0. 6.]
+        [7. 0. 8. 0. 9.]
+        [0. 0. 0. 0. 0.]
+        [0. 0. 0. 0. 0.]]
+    """
+    return scatter_add_ext_op(input, dim, index, src)
 
 
 def _get_slice_scatter_const(x_shape, axis, start, end, step):
@@ -6352,6 +6413,7 @@ __all__ = [
     'narrow',
     'ravel',
     'scatter_add',
+    'scatter_add_ext',
     'scatter_mul',
     'scatter_max',
     'scatter_min',

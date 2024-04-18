@@ -226,6 +226,9 @@ from mindspore.ops.function.math_func import tanh
 
 # 100
 
+# 285
+from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
+
 __all__ = [
     'full',
     'ones_like',
@@ -440,6 +443,8 @@ __all__ = [
 
     # 100
 
+    # 285
+    'scatter_add',
     # 304
     'tril',
     # 305
