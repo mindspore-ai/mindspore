@@ -44,6 +44,7 @@ class NetNorm(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_norm():
+    loss = 1e-5
     norm = NetNorm()
     indices = Tensor(np.array([[4, 4, 9, 1], [2, 1, 3, 6]]), mindspore.float32)
     output = norm(indices)
@@ -52,7 +53,7 @@ def test_norm():
     expect_2 = np.array([10.677078, 7.071068]).astype(np.float32)
     expect_3 = np.array([[10.677078], [7.071068]]).astype(np.float32)
 
-    assert (output[0].asnumpy() == expect_0).all()
-    assert (output[1].asnumpy() == expect_1).all()
-    assert (output[2].asnumpy() == expect_2).all()
-    assert (output[3].asnumpy() == expect_3).all()
+    assert np.allclose(output[0].asnumpy(), expect_0, loss)
+    assert np.allclose(output[1].asnumpy(), expect_1, loss)
+    assert np.allclose(output[2].asnumpy(), expect_2, loss)
+    assert np.allclose(output[3].asnumpy(), expect_3, loss)

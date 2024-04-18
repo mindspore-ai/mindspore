@@ -31,7 +31,7 @@ mindspore.dataset.vision.Perspective
         - 当执行设备是 Ascend 时，输入数据的维度限制为[6, 10]和[8192, 4096]之间。
 
         - 当执行设备是 CPU 时，输入数据支持 `uint8` 、 `float32` 或者 `float64` 类型。
-        - 当执行设备是 Ascend 时，输入数据支持 `uint8` 或者 `float32` 类型。
+        - 当执行设备是 Ascend 时，输入数据支持 `uint8` 和 `float32` 类型，输入数据的通道仅支持 1/3。输入数据的高度限制范围为[6, 8192]、宽度限制范围为[10, 4096]。
 
         参数：
             - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。

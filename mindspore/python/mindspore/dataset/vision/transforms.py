@@ -2456,7 +2456,9 @@ class HorizontalFlip(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is Ascend, input shape should be limited from [4, 6] to [8192, 4096].
+        - When the device is Ascend, input type supports  `uint8` and `float32`,
+          input channel supports 1 and 3. The input data has a height limit of [4, 8192]
+          and a width limit of [6, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -3459,7 +3461,9 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is Ascend, input shape should be limited from [6, 10] to [8192, 4096].
+        - When the device is Ascend, input type supports `uint8` and `float32`,
+          input channel supports 1 and 3. The input data has a height limit of [6, 8192]
+          and a width limit of [10, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -6197,7 +6201,9 @@ class ResizedCrop(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is Ascend, input/output shape should be limited from [4, 6] to [32768, 32768].
+        - When the device is Ascend, input type supports `uint8` and `float32`,
+          input channel supports 1 and 3. The input data has a height limit of [4, 32768]
+          and a width limit of [6, 32768].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -7232,7 +7238,9 @@ class VerticalFlip(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is Ascend, input shape should be limited from [4, 6] to [8192, 4096].
+        - When the device is Ascend, input type supports `uint8` and `float32`,
+          input channel supports 1 and 3. The input data has a height limit of [4, 8192]
+          and a width limit of [6, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
