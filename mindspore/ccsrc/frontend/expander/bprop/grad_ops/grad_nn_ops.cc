@@ -1435,6 +1435,15 @@ REG_BPROP_BUILDER("Softplus").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("SoftplusExt").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto beta = ib->GetInput(kIndex1);
+  auto threshold = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("SoftplusGradExt", {dout, x, beta, threshold});
+  return {dx, ib->OutZeros(beta), ib->OutZeros(threshold)};
+});
+
 REG_BPROP_BUILDER("SoftplusGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dy = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);

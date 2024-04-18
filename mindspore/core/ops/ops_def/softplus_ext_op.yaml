@@ -1,0 +1,18 @@
+#operator softplus_ext
+softplus_ext:
+    args:
+        input:
+            dtype: tensor
+        beta:
+            dtype: number
+            type_cast: tensor
+            default: 1
+        threshold:
+            dtype: number
+            type_cast: tensor
+            default: 20
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
