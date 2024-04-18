@@ -95,14 +95,6 @@ def argmin_with_value_argmax_case_dyn(op_func, np_func, dyn_rank=False):
         assert np.allclose(output_grad.asnumpy(), expect_grad)
 
 
-def argmin_with_value_argmax_case_all_dyn(op_func, mode):
-    t1 = Tensor(np.array([[1, 20], [67, 8]], dtype=np.float32))
-    input_case1 = [t1, -1]
-    t2 = Tensor(np.array([[[1, 20, 5], [67, 8, 9]], [[130, 24, 15], [16, 64, 32]]], dtype=np.float32))
-    input_case2 = [t2, 0]
-    TEST_OP(op_func, [input_case1, input_case2], mode=mode)
-
-
 def np_argmin_with_value(input_x, axis, keepdims):
     value = np.min(input_x, axis)
     index = np.argmin(input_x, axis).astype(np.int32)
@@ -179,11 +171,14 @@ def test_argmin_with_value_dyn_rank(mode):
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
-def test_argmin_with_value_all_dynamic(mode):
+def test_argmin_with_value_all_dynamic():
     """
     Feature: Test argmin_with_value op.
     Description: Test argmin_with_value with both input and axis are dynamic.
     Expectation: the result match with expected result.
     """
-    argmin_with_value_argmax_case_all_dyn(min_, mode)
+    t1 = Tensor(np.array([[1, 20], [67, 8]], dtype=np.float32))
+    input_case1 = [t1, -1]
+    t2 = Tensor(np.array([[[1, 20, 5], [67, 8, 9]], [[130, 24, 15], [16, 64, 32]]], dtype=np.float32))
+    input_case2 = [t2, 0]
+    TEST_OP(min_, [input_case1, input_case2], '', disable_yaml_check=True, disable_mode=['GRAPH_MODE', 'GRAPH_MODE_O0'])

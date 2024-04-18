@@ -76,15 +76,14 @@ def test_max_vmap(mode):
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_dtype', [np.float32])
-def test_max_all_dynamic(mode, data_dtype):
+def test_max_all_dynamic(data_dtype):
     """
     Feature: Test max op.
     Description: Test max with input is dynamic.
     Expectation: the result match with expected result.
     """
-    min_max_case_all_dyn(max_, mode, data_dtype=data_dtype)
+    min_max_case_all_dyn(max_, data_dtype=data_dtype)
 
 
 @pytest.mark.level1

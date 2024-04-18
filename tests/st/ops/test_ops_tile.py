@@ -135,8 +135,7 @@ def test_tile_vmap(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_tile_dynamic(mode):
+def test_tile_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op concat.
@@ -145,7 +144,7 @@ def test_tile_dynamic(mode):
     ms.context.set_context(runtime_num_threads=1)  # multi-threads have none-initialized bug now.
     input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
     input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))
-    TEST_OP(tile_func, [[input_case1, (2, 3, 2, 3)], [input_case2, (3, 2, 3, 2)]], mode=mode, grad=True)
+    TEST_OP(tile_func, [[input_case1, (2, 3, 2, 3)], [input_case2, (3, 2, 3, 2)]], 'tile')
 
 
 @pytest.mark.level1

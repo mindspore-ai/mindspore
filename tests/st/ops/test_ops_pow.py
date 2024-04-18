@@ -113,16 +113,14 @@ def test_pow_op_vmap(context_mode, data_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_pow_dynamic_shape(context_mode):
+def test_pow_dynamic_shape():
     """
     Feature: Test pow with dynamic shape in graph mode.
     Description: call ops.pow with valid input and index.
     Expectation: return the correct value.
     """
-    x1, other1 = generate_random_input((2, 3, 4, 5), np.float32)
+    x1, other1 = generate_random_input((2, 3, 4), np.float32)
     x2, other2 = generate_random_input((3, 4, 5, 6), np.float32)
 
     TEST_OP(pow_forward_func,
-            [[ms.Tensor(x1), ms.Tensor(other1)], [ms.Tensor(x2), ms.Tensor(other2)]],
-            grad=True, jit_level="O0", mode=context_mode)
+            [[ms.Tensor(x1), ms.Tensor(other1)], [ms.Tensor(x2), ms.Tensor(other2)]], 'pow')

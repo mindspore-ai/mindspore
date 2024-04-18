@@ -294,16 +294,14 @@ def test_ops_group_norm_backward_dynamic_rank(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_ops_group_norm_dyn(mode):
+def test_ops_group_norm_dyn():
     """
     Feature: pyboost function.
     Description: test GroupNorm backwarad with dynamic rank/shape.
     Expectation: success.
     """
-    context.set_context(mode=mode)
     input_x = np.array([[[[1, 3, 3, 5], [2, 4, 6, 8], [3, 6, 7, 7], [4, 3, 8, 2]],
                          [[5, 7, 6, 3], [3, 5, 6, 7], [9, 4, 2, 5], [7, 5, 8, 1]]]]).astype(np.float32)
     in1 = Tensor(input_x)
     in2 = Tensor(input_x)
-    TEST_OP(group_norm_forward_func, [[in1], [in2]])
+    TEST_OP(group_norm_forward_func, [[in1], [in2]], '', disable_input_check=True, disable_yaml_check=True)
