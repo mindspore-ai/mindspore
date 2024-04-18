@@ -1,0 +1,22 @@
+fill_tensor:
+    description: |
+        Create a Tensor of the specified shape and fill it with the specified tensor value.
+
+        Args:
+            size (Union(tuple[int], list[int])): The specified shape of output tensor.
+            fill_value (Tensor): Value to fill the returned tensor. Complex numbers are not supported for now. Must be
+                scalar Tensor or 1-D Tensor with shape of [1].
+
+        Keyword Args:
+            dtype (mindspore.dtype): The specified type of output tensor. `bool_` and `number` are supported, for
+                details, please refer to :class:`mindspore.dtype` . Default: ``None`` .
+
+        Returns:
+            Tensor.
+
+        Raises:
+            TypeError: If `size` is not a tuple or list.
+            ValueError: The element in `size` is less than 0.
+
+        Supported Platforms:
+            ``Ascend``

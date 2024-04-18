@@ -47,7 +47,7 @@ TEST_P(TestZeros, zeros_dyn_shape) {
   }
   auto dtype_value = param.dtype_value->ToAbstract();
   auto expect_shape = std::make_shared<abstract::Shape>(param.output_shape);
-  auto expect_type = param.output_dtype;
+  auto expect_type = std::make_shared<TensorType>(param.output_dtype);
 
   DoFuncImplInferAndCompare<ZerosFuncImpl>(kNameZeros, {in_shape, dtype_value}, expect_shape, expect_type);
 }
