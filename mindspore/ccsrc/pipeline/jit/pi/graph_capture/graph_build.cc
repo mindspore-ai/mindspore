@@ -749,6 +749,14 @@ std::pair<PyObject *, ValueNode *> GraphBuilder::SearchSelfPyObject(PyCodeObject
   return obj_value;
 }
 
+ValueNode *GraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &instr) {
+  auto attrs = target_node->GetAttrs();
+  if (attrs.find(instr.name().c_str()) != attrs.end()) {
+    return attrs[instr.name().c_str()];
+  }
+  return NewValueNode(target_node->get_attr(instr.name()), instr, {target_node});
+}
+
 bool GraphBuilder::DoAttrAccess(const Instr &instr) {
   int opcode = instr.op();
   switch (opcode) {
@@ -758,13 +766,7 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
       if (HandleSuper(instr, o->GetVobj())) {
         break;
       }
-      auto attrs = o->GetAttrs();
-      if (attrs.find(instr.name().c_str()) != attrs.end()) {
-        push(attrs[instr.name().c_str()]);
-      } else {
-        auto n = NewValueNode(o->get_attr(instr.name()), instr, {o});
-        push(n);
-      }
+      push(HandleGetattr(o, instr));
       break;
     }
     case STORE_ATTR: {
@@ -3437,6 +3439,43 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     call_node->SetInlineReason(InlineReason::kInlineCFunction_Unsupported);
   }
   return callable_info;
+}
+
+ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &instr) {
+  auto attrs = target_node->GetAttrs();
+  ValueNode *attr_node = nullptr;
+  if (attrs.find(instr.name().c_str()) != attrs.end()) {
+    attr_node = attrs[instr.name().c_str()];
+  } else {
+    attr_node = NewValueNode(target_node->get_attr(instr.name()), instr, {target_node});
+  }
+  MS_EXCEPTION_IF_NULL(attr_node);
+  ValueNode *graph_attr_node = nullptr;
+  auto attr_obj = attr_node->GetVobj()->GetPyObject();
+  // If the attr_obj can convert to anf node directly, return the origin attr node.
+  if (fg_builder_->AddPythonObject(attr_obj)) {
+    graph_attr_node = attr_node;
+  } else {
+    std::vector<py::object> input_objects = {target_node->GetVobj()->GetPyObject(), py::str(instr.name())};
+    auto graph_attr_obj = fg_builder_->AddNode(prim::kPrimGetAttr, input_objects);
+    if (graph_attr_obj.ptr() == nullptr) {
+      graph_attr_node = attr_node;
+    } else {
+      graph_attr_node = NewValueNode(AbstractTraceNode::MakeAObject(graph_attr_obj), instr, {target_node});
+    }
+  }
+  // Add Guard for getattr node. For scalar/list/tuple/primitive, need to guard value. Otherwise, guard type and shape.
+  AObject::Type attr_type = graph_attr_node->GetVobj() ? graph_attr_node->GetVobj()->GetType() : AObject::kTypeAnyValue;
+  static const std::vector<AObject::Type> const_type = {AObject::kTypeInt,      AObject::kTypeFloat, AObject::kTypeBool,
+                                                        AObject::kTypeTuple,    AObject::kTypeList,  AObject::kTypeDict,
+                                                        AObject::kTypePrimitive};
+  if (std::any_of(const_type.begin(), const_type.end(),
+                  [attr_type](const AObject::Type type) { return attr_type == type; })) {
+    graph_->GuardValueNode(graph_attr_node, GuardLevel::GEqual);
+  } else {
+    graph_->GuardValueNode(graph_attr_node, GuardLevel::GDeduce);
+  }
+  return graph_attr_node;
 }
 
 AObject *MindGraphBuilder::HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare) {
