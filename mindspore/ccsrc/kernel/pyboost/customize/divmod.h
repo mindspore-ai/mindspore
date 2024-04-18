@@ -29,7 +29,7 @@ namespace kernel {
 namespace pyboost {
 tensor::BaseTensorPtr BACKEND_EXPORT DivModCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor,
                                                      const BaseTensorPtr &y_tensor,
-                                                     const std::optional<Int64ImmPtr> &rounding_mode, void *stream);
+                                                     const std::optional<Int64ImmPtr> &rounding_mode);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

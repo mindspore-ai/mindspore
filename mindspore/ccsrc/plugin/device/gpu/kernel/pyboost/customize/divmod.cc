@@ -25,8 +25,7 @@ namespace pyboost {
 tensor::BaseTensorPtr DivModGPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor,
                                          const BaseTensorPtr &y_tensor,
                                          const std::optional<Int64ImmPtr> &rounding_mode) {
-  auto stream = device::gpu::GPUDeviceManager::GetInstance().GetStream(op->stream_id());
-  DivModCustomize(op, x_tensor, y_tensor, rounding_mode, stream);
+  DivModCustomize(op, x_tensor, y_tensor, rounding_mode);
   static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
   if (sync && !op->device_context()->device_res_manager_->SyncAllStreams()) {
     MS_LOG(EXCEPTION) << "SyncStream failed for op DivMod.";
