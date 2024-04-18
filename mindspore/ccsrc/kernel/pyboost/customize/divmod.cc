@@ -24,13 +24,12 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void FloorDivCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor, const BaseTensorPtr &y_tensor,
-                  void *stream) {
+void FloorDivCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor, const BaseTensorPtr &y_tensor) {
   MS_EXCEPTION_IF_NULL(op);
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor, y_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor, y_tensor, stream]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor, y_tensor]() {
     MS_LOG(DEBUG) << "Run device task DivMod-FloorDiv' start";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
@@ -50,12 +49,12 @@ void FloorDivCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_te
   }));
 }
 
-void TruncCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor, void *stream) {
+void TruncCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor) {
   MS_EXCEPTION_IF_NULL(op);
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, stream]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor]() {
     MS_LOG(DEBUG) << "For 'DivMod', the gpu task 'Trunc' start";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
@@ -76,21 +75,20 @@ void TruncCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_t
 }
 }  // namespace
 tensor::BaseTensorPtr DivModCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor,
-                                      const BaseTensorPtr &y_tensor, const std::optional<Int64ImmPtr> &rounding_mode,
-                                      void *stream) {
+                                      const BaseTensorPtr &y_tensor, const std::optional<Int64ImmPtr> &rounding_mode) {
   OpRunner::InferOpOutput(op, x_tensor, y_tensor, rounding_mode);
 
   auto mode = 0;
   if (rounding_mode.has_value()) mode = GetValue<int64_t>(rounding_mode.value());
 
   if (mode == ops::RoundingMode::FLOOR) {
-    FloorDivCall(op, x_tensor, y_tensor, stream);
+    FloorDivCall(op, x_tensor, y_tensor);
   } else {
     const auto &div_op = CREATE_PYBOOST_OP(Div, op->device_context()->device_context_key_.device_name_);
     div_op->Call(x_tensor, y_tensor);
 
     if (mode == ops::RoundingMode::TRUNC) {
-      TruncCall(op, div_op->outputs()[0], stream);
+      TruncCall(op, div_op->outputs()[0]);
     } else {
       op->set_input_abs({x_tensor->ToAbstract()});
       op->set_output_abs(div_op->output_abs());
