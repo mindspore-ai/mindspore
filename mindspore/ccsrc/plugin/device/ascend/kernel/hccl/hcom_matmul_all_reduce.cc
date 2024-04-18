@@ -74,7 +74,7 @@ int HcomMatMulAllReduceKernel::Resize(const std::vector<KernelTensor *> &inputs,
   param_desc_.op = op_type_;
 
   lcoc_->SetParam(lcoc_type_, tiling_, param_desc_);
-
+  workspace_size_list_.clear();
   workspace_size_list_.push_back(lcoc_->GetWorkspaceSize());
   return KRET_OK;
 }
