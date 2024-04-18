@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -617,6 +617,19 @@ constexpr char FFN[] = "FFN";
 constexpr char FLASH_ATTENTION_SCORE[] = "FlashAttentionScore";
 constexpr char KV_CACHE_MGR[] = "KVCacheMgr";
 constexpr char TUPLE_GETITEM_OP[] = "TupleGetItem";
+constexpr char FFTSHIFT[] = "FFTShift";
+constexpr char IFFTSHIFT[] = "IFFTShift";
+constexpr char FFT[] = "FFT";
+constexpr char IFFT[] = "IFFT";
+constexpr char FFT2[] = "FFT2";
+constexpr char IFFT2[] = "IFFT2";
+constexpr char FFTN[] = "FFTN";
+constexpr char IFFTN[] = "IFFTN";
+constexpr char RFFT[] = "RFFT";
+constexpr char IRFFT[] = "IRFFT";
+constexpr char DCT[] = "DCT";
+constexpr char IDCT[] = "IDCT";
+constexpr char SOLVE_TRIANGULAR[] = "SolveTriangular";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
