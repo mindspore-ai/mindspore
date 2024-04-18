@@ -394,6 +394,53 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto dtype = ib->GetDtype(x);
   bool is_complex = (*dtype) == (*kComplex64) || (*dtype) == (*kComplex128);
   NodePtr dx, dw, db;
+
+  if (!IsDynamic(x->shape()) && !IsDynamic(w->shape())) {
+    if (ib->GetRank(x) == 1 && ib->GetRank(w) == 1) {
+      if (x->need_compute_grad_out()) {
+        if (is_complex) {
+          dx = ib->Mul(dout, ib->Emit("Conj", {w}));
+        } else {
+          dx = ib->Mul(dout, w);
+        }
+      } else {
+        dx = ib->OutZeros(x);
+      }
+      if (w->need_compute_grad_out()) {
+        if (is_complex) {
+          dw = ib->Mul(dout, ib->Emit("Conj", {x}));
+        } else {
+          dw = ib->Mul(dout, x);
+        }
+      } else {
+        dw = ib->OutZeros(w);
+      }
+      db = b->need_compute_grad_out() ? dout : ib->OutZeros(b);
+      return {dx, dw, db};
+    } else if (ib->GetRank(x) == 2 && ib->GetRank(w) == 1) {
+      if (x->need_compute_grad_out()) {
+        ShapeVector dout_reshape = {dout->shape()[0], 1};
+        ShapeVector w_reshape = {1, w->shape()[0]};
+        dx = ib->Mul(ib->Reshape(dout, dout_reshape), ib->Reshape(w, w_reshape));
+        if (is_complex) {
+          dx = ib->Emit("Conj", {dx});
+        }
+      } else {
+        dx = ib->OutZeros(x);
+      }
+      if (w->need_compute_grad_out()) {
+        dw = ib->Emit("Mv", {ib->Transpose(x, ib->Value(ShapeVector{1, 0})), dout});
+        if (is_complex) {
+          dw = ib->Emit("Conj", {dw});
+        }
+      } else {
+        dw = ib->OutZeros(w);
+      }
+      db = b->need_compute_grad_out() ? dout : ib->OutZeros(b);
+      return {dx, dw, db};
+    }
+  }
+
   NodePtrList ret_shape = ib->ShapeCalc(g_dense_shapecalc0, {x, w, b, dout});
 
   auto x_2d_shape = ret_shape[kIndex0];
@@ -404,7 +451,8 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto w_shape = ret_shape[kIndex5];
 
   dout = ib->Reshape(dout, dout_2d_shape);
-  db = b->need_compute_grad_out() ? ib->ReduceSum(dout, b_reduce_shape) : ib->OutZeros(b);
+  db = b->need_compute_grad_out() ? ib->Emit("SumExt", {dout, b_reduce_shape, ib->Value(false), ib->EmitValue(kNone)})
+                                  : ib->OutZeros(b);
   if (is_complex) {
     dout = ib->Emit("Conj", {dout});
   }

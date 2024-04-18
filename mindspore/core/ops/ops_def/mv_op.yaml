@@ -1,0 +1,13 @@
+#operator mv
+mv:
+  args:
+    input:
+      dtype: tensor
+    vec:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: MvAscend
