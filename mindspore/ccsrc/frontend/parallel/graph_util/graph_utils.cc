@@ -908,8 +908,17 @@ TensorInfo GetDistributeOperatorFromCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(distribute_operator);
   std::vector<TensorInfo> root_tensor_info = distribute_operator->outputs_tensor_info();
   if (root_tensor_info.size() != 1) {
-    MS_LOG(INFO) << "Outputs number cannot be larger than 1, but " << target_cnode->fullname_with_scope() << " has "
-                 << root_tensor_info.size() << " outputs.";
+    if (IsTupleGetItem(cnode)) {
+      int64_t output_index = GetTupleGetItemIndex(cnode);
+      MS_EXCEPTION_IF_CHECK_FAIL(
+        (output_index >= 0 && output_index < SizeToLong(root_tensor_info.size())),
+        "TupleGetItem index is not matched with its input length, TupleGetItem is " + cnode->fullname_with_scope());
+      MS_LOG(INFO) << "Replace tensor info use " << target_cnode->fullname_with_scope() << " with index "
+                   << output_index;
+      return root_tensor_info[output_index];
+    }
+    MS_LOG(WARNING) << "Outputs number cannot be larger than 1, but " << target_cnode->fullname_with_scope() << " has "
+                    << root_tensor_info.size() << " outputs.";
   }
   return root_tensor_info[0];
 }
