@@ -47,7 +47,9 @@ class AscendMemAdapter {
   bool FreeStaticDevMem(void *) const { return true; }
   void ResetDynamicMemory();
   int64_t GetActualPeakMemory() const { return actual_peak_memory_; }
+  int64_t GetUsedPeakMemory() const { return used_peak_memory_; }
   void UpdateActualPeakMemory(int64_t memory) { actual_peak_memory_ = std::max(actual_peak_memory_, memory); }
+  void UpdateUsedPeakMemory(int64_t memory) { used_peak_memory_ = std::max(used_peak_memory_, memory); }
 
   static size_t GetRoundUpAlignSize(size_t input_size);
 
@@ -97,8 +99,10 @@ class AscendMemAdapter {
 
   // static memory info, from a high address to a low address
   int64_t static_mem_offset_{0};
-  // Actual peak memory usage (used in memory pool recycle mode)
+  // Actual peak memory usage (with fragments)
   int64_t actual_peak_memory_{0};
+  // Used peak memory usage (without fragments)
+  int64_t used_peak_memory_{0};
   std::vector<std::shared_ptr<MemoryBlock>> static_memory_block_list_;
   static size_t GetRoundDownAlignSize(size_t input_size);
 };

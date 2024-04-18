@@ -182,6 +182,9 @@ bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   int64_t max_actual = ActualPeakStatistics();
   MS_LOG(INFO) << "Max actual used memory size is " << max_actual;
   AscendMemAdapter::GetInstance().UpdateActualPeakMemory(max_actual);
+  int64_t max_peak = UsedMemPeakStatistics();
+  MS_LOG(INFO) << "Max peak used memory size is " << max_peak;
+  AscendMemAdapter::GetInstance().UpdateUsedPeakMemory(max_peak);
   return AscendMemAdapter::GetInstance().FreeStaticDevMem(addr);
 }
 
