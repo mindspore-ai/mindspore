@@ -54,6 +54,25 @@ class Net(Cell):
     def construct(self, x, num_classes):
         return self.one_hot(x, num_classes)
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+def test_ops_onehot_forward1(mode):
+    """
+    Feature: pyboost function.
+    Description: test function onehot forward.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x = ms.Tensor(np.array([0, 1, 2]), ms.int64)
+    output = onehot_forward_func(ms.Tensor(x), -1)
+    expect_output = np.array([[1, 0, 0],
+                              [0, 1, 0],
+                              [0, 0, 1]]).astype(np.int64)
+    np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
