@@ -16,7 +16,8 @@
 from __future__ import absolute_import
 from mindspore.ops.extend import max_pool2d_ext as max_pool2d
 from mindspore.ops.functional import (
-    conv_transpose2d
+    conv_transpose2d,
+    grid_sample
 )
 # 1
 
@@ -402,7 +403,7 @@ __all__ = [
     # 90
 
     # 91
-
+    'grid_sample',
     # 92
 
     # 93
