@@ -81,8 +81,16 @@ const std::map<std::string, ReduceType_t> kReduceTypeMap = {
     .AddOutputAttr(INPUTX),                           \
     &ArrayReduceGpuKernelMod::LaunchComplexKernel<T>
 
+#define REDUCE_AXIS_OPT_REGISTER(INPUTX, AXIS, T)     \
+  KernelAttr()                                        \
+    .AddInputAttr(INPUTX)                             \
+    .AddOptionalInputAttr(kObjectTypeTuple, AXIS)     \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddOutputAttr(INPUTX),                           \
+    &ArrayReduceGpuKernelMod::LaunchKernel<T>
+
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::all_any_list_ = {
-  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
+  {REDUCE_AXIS_OPT_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
 };
 
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::prod_list_ = {
@@ -319,7 +327,12 @@ int ArrayReduceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 
   auto input_shape = inputs[kIndex0]->GetDeviceShapeVector();
   input_num_ = SizeOf(input_shape);
-  auto attr_axis = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  std::vector<int64_t> attr_axis;
+  if (inputs[kIndex1]->GetType()->isa<TypeNone>()) {
+    attr_axis = std::vector<int64_t>{};
+  } else {
+    attr_axis = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  }
   keep_dims_ = inputs[kIndex2]->GetValueWithCheck<bool>();
   if (kernel_name_ == "ReduceSum") {
     skip_mode_ = inputs[kIndex3]->GetValueWithCheck<bool>();

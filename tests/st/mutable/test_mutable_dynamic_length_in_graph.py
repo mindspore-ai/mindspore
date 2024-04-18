@@ -64,7 +64,7 @@ def test_generate_mutable_sequence_with_dynamic_length_and_shape__with_jit():
     expect_tensor = [Tensor([[1, 2, 3]]), Tensor([[2]]), Tensor([[3], [4]])]
     for x in ret[0]:
         for y in expect_tensor:
-            assert x.all().asnumpy() == y.all().asnumpy()
+            assert x.astype("bool").all().asnumpy() == y.astype("bool").all().asnumpy()
     assert ret[1] == [(1,), (2, 3), (4, 5, 6)]
 
 

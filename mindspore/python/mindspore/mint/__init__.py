@@ -143,7 +143,7 @@ from mindspore.ops.auto_generate import abs
 # 59
 
 # 60
-
+from mindspore.ops.function.math_func import all
 # 61
 
 # 62
@@ -350,7 +350,7 @@ __all__ = [
     # 59
 
     # 60
-
+    'all'
     # 61
 
     # 62
