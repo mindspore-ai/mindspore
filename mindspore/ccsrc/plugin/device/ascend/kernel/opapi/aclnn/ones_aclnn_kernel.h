@@ -32,6 +32,7 @@ class OnesAscendCall : public AclnnKernelMod {
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const { return {0, 1}; }
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
