@@ -98,6 +98,13 @@ SymbolPtr OperationBuilder::GetInputOrAttr(size_t index, const std::string &attr
   return GetAttr(attr_name);
 }
 
+SymbolPtr OperationBuilder::Emit(const OpPtr &op) const {
+  op->SetOutAbstract(this->out_abstract());
+  auto ret = emitter_->Emit(op);
+  op->SetOutAbstract(nullptr);
+  return ret;
+}
+
 const OperationBuilderInfo *OperationBuilderInfoRegistry::GetBuildInfo(const std::string &name) {
   const auto &builders = OperationBuilderInfoRegistry::Instance().builders_;
   auto iter = builders.find(name);

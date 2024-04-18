@@ -101,6 +101,7 @@ class MS_CORE_API Operation : public Base {
     static inline std::map<std::string, OpPtrList> cse_cache_;
     OpPtrList *ops_;
   };
+  friend class OperationBuilder;
 
  protected:
   virtual SymbolPtr Eval() = 0;
@@ -142,6 +143,13 @@ class MS_CORE_API Operation : public Base {
     return GenList(std::move(list));
   }
 
+  // output abstract only can be used on building
+  void SetOutAbstract(const abstract::AbstractBasePtr &abs) { out_abstract_ = abs; }
+  const abstract::AbstractBasePtr &out_abstract() const {
+    MS_EXCEPTION_IF_NULL(out_abstract_);
+    return out_abstract_;
+  }
+
   SymbolPtr output_{nullptr};
   bool support_commutative_law_{false};
 
@@ -150,6 +158,7 @@ class MS_CORE_API Operation : public Base {
   SymbolPtrList inputs_;
   bool is_building_{true};
   bool need_eval_{true};
+  abstract::AbstractBasePtr out_abstract_{nullptr};
 };
 using OperationEmitter = Operation::Emitter;
 }  // namespace symshape

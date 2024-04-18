@@ -302,12 +302,19 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   // Add the new tensors to the kernel_graph
   pm->Add(std::make_shared<BindValueToGraph>(), OptLevel_1);
 
-  auto kernel_packet_lv = GetPassLevelByFlag(common::GetEnv("MS_DEV_CLUSTER_SHAPE") != "off");
-  pm->Add(std::make_shared<SymbolEngineBuilder>(true), kernel_packet_lv, is_gpu);
-  pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_gpu);
+  // For gpu, default enable kernelpacket. For ascend, default disable kernelpacket.
+  bool enable_kernel_packet;
+  if (is_gpu) {
+    enable_kernel_packet = common::GetEnv("MS_DEV_ENABLE_KERNEL_PACKET") != "off";
+  } else {
+    enable_kernel_packet = common::GetEnv("MS_DEV_ENABLE_KERNEL_PACKET") == "on";
+  }
+  auto kernel_packet_lv = GetPassLevelByFlag(enable_kernel_packet);
+  pm->Add(std::make_shared<SymbolEngineBuilder>(true), kernel_packet_lv, is_gpu || is_dvm);
+  pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_gpu || is_dvm);
 
   // In dynamic shape graph, the infer shape function only support Primitive node
-  pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_1, !is_dvm);
+  pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_1);
   return pm;
 }
 

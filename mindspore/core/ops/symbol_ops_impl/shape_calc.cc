@@ -13,14 +13,119 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
+#include <iterator>
+#include <memory>
+#include <utility>
 #include "mindspore/core/ops/symbol_ops_impl/common.h"
 #include "mindspore/core/ops/symbol_ops_impl/reduce.h"
 #include "mindspore/core/ops/symbol_ops_impl/scalar_div.h"
 #include "mindspore/core/ops/shape_calc.h"
+#include "symbolic_shape/symbol.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
+class MS_CORE_API FunctorOperation : public InferValueOp {
+ public:
+  FunctorOperation(const ShapeCalcBaseFunctorPtr &functor, SymbolPtrList &&inputs, const SymbolPtr &out_hint)
+      : InferValueOp(std::move(inputs)), functor_(functor), out_hint_(out_hint) {}
+  ~FunctorOperation() override = default;
+  MS_DECLARE_PARENT(FunctorOperation, InferValueOp)
+
+ protected:
+  SymbolPtr Eval() override { return out_hint_; }
+  void EvalOnRun() override {
+    auto [args, pos_idx] = GetCalcInputs();
+    auto shape_array = functor_->Calc(args, pos_idx);
+    SymbolPtrList res;
+    res.reserve(shape_array.size());
+    for (auto shape : shape_array) {
+      SymbolPtrList shape_symbs;
+      shape_symbs.reserve(shape.size());
+      std::transform(shape.begin(), shape.end(), std::back_inserter(shape_symbs),
+                     [this](int64_t d) { return GenInt(d); });
+      res.push_back(GenList(std::move(shape_symbs)));
+    }
+
+    if (res.size() == 1) {
+      output_->Update(res[0]);
+      return;
+    }
+
+    output_->Update(GenList(std::move(res)));
+  }
+
+ private:
+  std::pair<bool, std::vector<ListSymbolPtr>> IsSequenceSymbol(const SymbolPtr &sym) {
+    if (!sym->is<ListSymbol>()) {
+      return std::make_pair(false, std::vector<ListSymbolPtr>{});
+    }
+    auto list_sym = sym->as_sptr<ListSymbol>();
+    MS_EXCEPTION_IF_CHECK_FAIL(list_sym->HasData(), "ListSymbol should have data in run status!");
+    if (list_sym->size() == 0) {
+      return std::make_pair(false, std::vector<ListSymbolPtr>{});
+    }
+
+    std::vector<ListSymbolPtr> elements;
+    elements.reserve(list_sym->size());
+    for (size_t i = 0; i < list_sym->size(); ++i) {
+      if (!list_sym->item(i)->is<ListSymbol>()) {
+        return std::make_pair(false, std::vector<ListSymbolPtr>{});
+      }
+      auto elem_sym = list_sym->item_as_sptr<ListSymbol>(i);
+      elements.push_back(elem_sym);
+    }
+    return std::make_pair(true, std::move(elements));
+  }
+
+  ShapeVector ConvertListSymToShapeVec(const SymbolPtr &sym) {
+    if (sym->is<IntSymbol>()) {
+      return ShapeVector{sym->as_sptr<IntSymbol>()->value()};
+    }
+
+    auto list_sym = sym->as_sptr<ListSymbol>();
+    MS_EXCEPTION_IF_NULL(list_sym);
+    MS_EXCEPTION_IF_CHECK_FAIL(list_sym->HasData(), "ListSymbol should have data in run status!");
+    ShapeVector res;
+    res.reserve(list_sym->size());
+    for (size_t i = 0; i < list_sym->size(); ++i) {
+      auto int_sym = list_sym->item_as_sptr<IntSymbol>(i);
+      res.push_back(int_sym->value());
+    }
+
+    return res;
+  }
+
+  std::pair<ShapeArray, std::vector<std::vector<size_t>>> GetCalcInputs() {
+    ShapeArray args;
+    std::vector<std::vector<size_t>> pos_idx;
+    auto num = input_num();
+    for (size_t i = 0; i < num; ++i) {
+      auto input_sym = input(i);
+      std::vector<size_t> pos;
+      size_t offset_base = args.size();
+      if (auto [is_sequence, elements] = IsSequenceSymbol(input_sym); is_sequence) {
+        pos.reserve(elements.size());
+        for (const auto &elem : elements) {
+          args.push_back(ConvertListSymToShapeVec(elem));
+          pos.push_back(offset_base++);
+        }
+      } else {
+        args.push_back(ConvertListSymToShapeVec(input_sym));
+        pos.push_back(offset_base);
+      }
+      pos_idx.push_back(pos);
+    }
+
+    return std::make_pair(args, pos_idx);
+  }
+
+  ShapeCalcBaseFunctorPtr functor_;
+  SymbolPtr out_hint_;
+};
+
 class MS_CORE_API ShapeCalcBroadcastGradientArgs : public InferValueOp {
  public:
   ShapeCalcBroadcastGradientArgs(const SymbolPtr &inp1, const SymbolPtr &inp2, const SymbolPtr &shift)
@@ -113,7 +218,7 @@ class MS_CORE_API ShapeCalcReduceSumGrad : public InferValueOp {
 SymbolPtr ShapeCalcValueBuilder(OperationBuilder *b) {
   auto functor_attr = b->prim()->GetAttr(kAttrFunctor);
   MS_EXCEPTION_IF_NULL(functor_attr);
-  auto functor = functor_attr->cast_ptr<ShapeCalcBaseFunctor>();
+  auto functor = functor_attr->cast<ShapeCalcBaseFunctorPtr>();
   MS_EXCEPTION_IF_NULL(functor);
   if (functor->name() == "ShapeCalc_ReduceShape") {
     auto input = b->GetInputShape(kIndex0);
@@ -127,7 +232,23 @@ SymbolPtr ShapeCalcValueBuilder(OperationBuilder *b) {
     auto shift = IntSymbol::Make(SizeToLong(GetValue<size_t>(functor->ToValue())));
     return b->Emit(std::make_shared<ShapeCalcBroadcastGradientArgs>(inp1, inp2, shift));
   }
-  return nullptr;
+
+  auto value_depend_attr = b->prim()->GetAttr(mindspore::ops::kAttrValueDepend);
+  MS_EXCEPTION_IF_NULL(value_depend_attr);
+  auto value_depend = GetValue<std::vector<bool>>(value_depend_attr);
+  auto num = b->input_num();
+  SymbolPtrList inputs;
+  inputs.reserve(num);
+  for (size_t i = 0; i < num; ++i) {
+    if (value_depend[i]) {
+      inputs.push_back(b->GetInputValue(i));
+    } else {
+      inputs.push_back(b->GetInputShape(i));
+    }
+  }
+
+  auto out_hint = BuildSymbolicValue(b->out_abstract());
+  return b->Emit(std::make_shared<FunctorOperation>(functor, std::move(inputs), out_hint));
 }
 
 REG_SYMBOL_OP_BUILDER("ShapeCalc")
