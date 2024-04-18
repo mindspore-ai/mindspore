@@ -62,7 +62,7 @@ from mindspore.ops.function.array_func import zeros_like_ext as zeros_like
 # 19
 
 # 20
-
+from mindspore.ops import prod
 # 21
 
 # 22
@@ -269,7 +269,7 @@ __all__ = [
     # 19
 
     # 20
-
+    'prod',
     # 21
 
     # 22
