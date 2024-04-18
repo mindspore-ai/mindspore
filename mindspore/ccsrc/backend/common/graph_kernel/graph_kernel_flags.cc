@@ -253,8 +253,13 @@ void GraphKernelFlags::CheckSupport() const {
       return;
     }
 #endif
-#ifndef ENABLE_DVM
     auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+    if (is_ascend && !context->IsKByKExecutorMode()) {
+      MS_LOG(WARNING) << "For Ascend, the graph_kernel is only supported in the KByKExecutorMode!";
+      const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
+      return;
+    }
+#ifndef ENABLE_DVM
     if (is_ascend) {
       MS_LOG(WARNING) << "Graph Kernel Fusion is not supported without the prebuild binary file tracked by git lfs, "
                          "and it will be turned off now. Please perform the following steps:\n\n"
