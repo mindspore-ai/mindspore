@@ -886,22 +886,29 @@ void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kProcessMultiStream, GetAID().Name());
   auto device_context = device_contexts_[0];
   auto stream_id = kernel_info_->stream_id();
+  MS_LOG(DEBUG) << "device context : " << device_context
+                << ", name : " << device_context->device_context_key().device_name_ << ", stream id : " << stream_id
+                << ", actor name : " << GetAID().Name() << ".";
   // Update output_kernel_tensors_ with task id on stream.
   auto multi_stream_controller = device::MultiStreamController::GetInstance();
   auto task_id_on_stream = multi_stream_controller->LaunchTaskIdOnStream(device_context, stream_id);
-  MS_LOG(DEBUG) << "Launch stream_id : " << stream_id << ", task id : " << task_id_on_stream
-                << ", kernel : " << GetAID().Name() << ".";
+  if (INT64_MAX == task_id_on_stream) {
+    *task_id_on_stream_ = 0;
+    MS_LOG(DEBUG) << "Skip ProcessMultiStream since kernel type is CPU.";
+    return;
+  }
   *task_id_on_stream_ = task_id_on_stream;
 
   // Process wait stream.
   if (is_stream_recv_actor_) {
     // Note: wait node start to launch. Event was record on send node, so, we can releases events on send node stream.
-    // Release events on send node means memory stream id is recv node stream id and user stream id is send node stream
-    // id.
+    // Release events on send node means memory stream id is recv node stream id and user stream id is send node
+    // stream id.
     auto user_stream_id = kernel_mod_->record_stream_id();
     auto memory_stream_id = stream_id;
     if (stream_send_actor_ == nullptr) {
-      MS_LOG(WARNING) << "stream_send_actor_ is nullptr.";
+      // Gpu not add stream send/recv pair, nullptr is normal case.
+      MS_LOG(DEBUG) << "stream_send_actor_ is nullptr.";
       return;
     }
     MS_LOG(DEBUG) << "Process wait stream start, memory_stream_id : " << memory_stream_id
