@@ -40,7 +40,7 @@ from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
                              CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor,
-                             BroadcastTo, StridedSlice, Select)
+                             BroadcastTo, StridedSlice, Select, TopkExt)
 from .manually_defined import Rank, Shape, Tile, Cast, Ones, Zeros
 from ..auto_generate import ArgMaxWithValue, ArgMinWithValue
 
