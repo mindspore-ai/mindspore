@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_MATMUL_ALLREDUCE_FUSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_MATMUL_ALLREDUCE_FUSION_H_
 
+#include <string>
 #include <memory>
 #include "include/backend/optimizer/optimizer.h"
 
@@ -24,7 +25,7 @@ namespace opt {
 class MatMulAllReduceFusion : public PatternProcessPass {
  public:
   explicit MatMulAllReduceFusion(bool multigraph = true, const string &pass_name = "MatMulAllReduce")
-      : PatternProcessPass(pass_name, multigraph){};
+      : PatternProcessPass(pass_name, multigraph) {}
   ~MatMulAllReduceFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &equiv) const override;

@@ -672,6 +672,8 @@ class Cell(Cell_):
 
 
     def _predict(self, *args, **kwargs):
+        if not hasattr(self, "phase"):
+            return False, None
         if (self.phase == "prefill" or self.phase == 'increment') and self.phase in self.phase_cache:
             new_args = _get_args_for_run_predict(self, args, kwargs, self._compile_args)
             res = _cell_graph_executor._graph_executor(tuple(new_args), self.phase_cache[self.phase])
@@ -692,7 +694,7 @@ class Cell(Cell_):
             if predict_compiled:
                 return res
             self._check_construct_args(*args)
-            
+
             if self._hook_fn_registered():
                 logger.warning(f"For 'Cell', it's not support hook function in graph mode. If you want to use hook "
                                f"function, please use context.set_context to set pynative mode.")
@@ -998,9 +1000,9 @@ class Cell(Cell_):
             kwargs (dict): Kwargs of the Cell object.
         """
         if self.phase == "prefill":
-            os.environ["ENABLE_MATMUL_ALLREDUCE"] = "on"
+            os.environ["DISABLE_MATMULALLREDUCE_FUSION"] = "False"
         else:
-            os.environ["ENABLE_MATMUL_ALLREDUCE"] = ""
+            os.environ["DISABLE_MATMULALLREDUCE_FUSION"] = "True"
         self._compile_args = self._get_compile_args(args)
         _cell_graph_executor.compile(self, *self._compile_args, phase=self.phase,
                                      jit_config_dict=self._jit_config_dict, **kwargs)
