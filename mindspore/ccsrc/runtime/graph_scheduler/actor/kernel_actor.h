@@ -116,6 +116,8 @@ class KernelActor : public DebugAwareActor {
   // Really do launch kernel with memory allocate and free.
   void ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context);
 
+  void set_stream_send_actor(KernelActor *stream_send_actor) { stream_send_actor_ = stream_send_actor; }
+
   void SetInputDeviceTensor(DeviceTensor *input_device_tensor, size_t input_index);
 
   // Set the memory address for the tensors which use the somas.

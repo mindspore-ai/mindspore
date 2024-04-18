@@ -804,16 +804,6 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
                       << trace::DumpSourceLines(kernel_);
   }
 
-  if (recorder_aid_ != nullptr) {
-    SetMemInfoForDebugAndRdr();
-    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &mem_info_,
-                          device_contexts_[0], context);
-  }
-
-  if (ActorDispatcher::enable_multi_stream()) {
-    LaunchCallback(context);
-  }
-
   if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
     kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
   }
