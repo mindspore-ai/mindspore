@@ -670,6 +670,9 @@ void SuperKernelActor::BuildKernelActors() {
                       << " with index: " << output_index << " has no front node.";
       continue;
     }
+    if (!output_kernel->isa<CNode>()) {
+      continue;
+    }
     auto iter = node_to_kernel_actor_.find(output_kernel);
     if (iter == node_to_kernel_actor_.end()) {
       MS_LOG(EXCEPTION) << "Can not find kernel actor for node: " << output_kernel->fullname_with_scope();
