@@ -49,6 +49,19 @@
         - **layerwise_parallel** (bool) - 在数据/混合并行模式下， `layerwise_parallel` 配置为 ``True`` 时，参数广播和梯度聚合时会过滤掉该 `Parameter` 。默认值： ``False`` 。
         - **parallel_optimizer** (bool) - 用于在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 并行模式下区分该参数是否进行优化器切分。仅在 `mindspore.set_auto_parallel_context()` 并行配置模块中设置 `enable_parallel_optimizer` 启用优化器并行时有效。默认值： ``True`` 。
 
+    .. py:method:: add_pipeline_stage(stage)
+
+        为参数添加pipeline_stage。
+
+        .. note::
+            这个接口在2.3版本废弃，并且会在未来版本移除。
+
+        参数：
+            - **stage** (int) - 参数的pipeline_stage。
+
+        异常：
+            - **TypeError** - 如果 `stage` 不是正整数。
+
     .. py:method:: cache_enable
         :property:
 

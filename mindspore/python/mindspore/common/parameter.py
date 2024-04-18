@@ -792,6 +792,9 @@ class Parameter(Tensor_):
         """
         Add a pipeline stage to the parameter.
 
+        Note:
+            This interface is deprecated in 2.3, and will be deleted in the future.
+
         Args:
             stage(int): The pipeline stage to be added.
 
