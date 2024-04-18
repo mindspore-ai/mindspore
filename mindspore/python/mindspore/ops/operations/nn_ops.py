@@ -9901,18 +9901,6 @@ class RmsNorm(Primitive):
         self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])
 
 
-class MatmulQkv(Primitive):
-    r"""
-    Fuse three matmul ops for q k v attention into one
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize"""
-        self.init_prim_io_names(inputs=['hidden_states', 'weight_q', 'weight_k', 'weight_v'],
-                                outputs=["output_q", "output_k", "output_v"])
-
-
 class AllFinite(Primitive):
     r"""
     Check all gradients is finite.
@@ -9922,15 +9910,3 @@ class AllFinite(Primitive):
         """Initialize"""
         self.init_prim_io_names(inputs=['gradients'],
                                 outputs=["is_finite"])
-
-
-class MatmulFfn(Primitive):
-    r"""
-    Fuse two matmul ops for feed forward into one
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize"""
-        self.init_prim_io_names(inputs=['hidden_states', 'weight_gate', 'weight_up'],
-                                outputs=["output_gate", "output_up"])
