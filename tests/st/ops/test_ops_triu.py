@@ -122,8 +122,7 @@ def test_triu_bfloat16(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_triu_dynamic(mode):
+def test_triu_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test ops.triu dynamic shape feature.
@@ -131,4 +130,4 @@ def test_triu_dynamic(mode):
     """
     input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
     input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))
-    TEST_OP(triu_forward_func, [[input_case1, 0], [input_case2, 1]], mode=mode, grad=True)
+    TEST_OP(triu_forward_func, [[input_case1, 0], [input_case2, 1]], 'triu')

@@ -135,8 +135,7 @@ def test_rsqrt_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_rsqrt_dynamic_shape(mode):
+def test_rsqrt_dynamic_shape():
     """
     Feature: Test dynamic shape.
     Description: test function rsqrt dynamic feature.
@@ -144,4 +143,4 @@ def test_rsqrt_dynamic_shape(mode):
     """
     ms_data1 = ms.Tensor(np.abs(np.random.randn(4, 5, 6).astype(np.float32)))
     ms_data2 = ms.Tensor(np.abs(np.random.randn(3, 2, 5, 1).astype(np.float32)))
-    TEST_OP(rsqrt_forward_func, [[ms_data1], [ms_data2]], grad=True, mode=mode)
+    TEST_OP(rsqrt_forward_func, [[ms_data1], [ms_data2]], 'rsqrt')

@@ -91,8 +91,7 @@ def test_embedding_static_shape():
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', [0, 1])
-def test_embedding_dynamic_shape(mode):
+def test_embedding_dynamic_shape():
     """
     Feature: dynamic shape of embedding.
     Description: dynamic shape of embedding.
@@ -102,7 +101,8 @@ def test_embedding_dynamic_shape(mode):
     input2 = ms.Tensor(np.random.randint(0, 10, size=(18, 17, 19, 14)))
     weight = ms.Parameter(np.random.rand(10, 3).astype(np.float32))
 
-    TEST_OP(embedding_func, [[input1, weight, 0, 0.3, 1.1], [input2, weight, -1, 0.6, 2.4]], mode=mode)
+    TEST_OP(embedding_func, [[input1, weight, 0, 0.3, 1.1], [input2, weight, -1, 0.6, 2.4]], '',
+            disable_input_check=True, disable_yaml_check=True)
 
 
 @pytest.mark.level0

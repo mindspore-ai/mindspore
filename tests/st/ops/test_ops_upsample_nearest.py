@@ -235,8 +235,7 @@ def test_upsample_nearest_3d(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_nearest_1d_size_dynamic(mode):
+def test_upsample_nearest_1d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleNearest1D and UpsampleNearest1DGrad.
@@ -253,8 +252,7 @@ def test_upsample_nearest_1d_size_dynamic(mode):
             [input_case1, (100,), None],
             [input_case2, (40,), None],
         ],
-        mode=mode,
-        grad=True,
+        '', disable_yaml_check=True, disable_input_check=True
     )
 
 
@@ -262,8 +260,7 @@ def test_upsample_nearest_1d_size_dynamic(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_nearest_1d_scale_factor_dynamic(mode):
+def test_upsample_nearest_1d_scale_factor_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleNearest1D and UpsampleNearest1DGrad.
@@ -280,8 +277,7 @@ def test_upsample_nearest_1d_scale_factor_dynamic(mode):
             [input_case1, None, (1.5,)],
             [input_case2, None, (2.1,)],
         ],
-        mode=mode,
-        grad=True,
+        '', disable_yaml_check=True, disable_input_check=True
     )
 
 
@@ -289,8 +285,7 @@ def test_upsample_nearest_1d_scale_factor_dynamic(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_nearest_2d_size_dynamic(mode):
+def test_upsample_nearest_2d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleNearest2D and UpsampleNearest2DGrad.
@@ -307,8 +302,7 @@ def test_upsample_nearest_2d_size_dynamic(mode):
             [input_case1, (100, 80), None],
             [input_case2, (40, 60), None],
         ],
-        mode=mode,
-        grad=True,
+        '', disable_yaml_check=True, disable_input_check=True
     )
 
 
@@ -316,8 +310,7 @@ def test_upsample_nearest_2d_size_dynamic(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_nearest_2d_scale_factor_dynamic(mode):
+def test_upsample_nearest_2d_scale_factor_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleNearest2D and UpsampleNearest2DGrad.
@@ -334,8 +327,7 @@ def test_upsample_nearest_2d_scale_factor_dynamic(mode):
             [input_case1, None, (1.5, 1.7)],
             [input_case2, None, (2.1, 2.8)],
         ],
-        mode=mode,
-        grad=True,
+        '', disable_yaml_check=True, disable_input_check=True
     )
 
 
@@ -345,8 +337,7 @@ def test_upsample_nearest_2d_scale_factor_dynamic(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_nearest_3d_size_dynamic(mode):
+def test_upsample_nearest_3d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleNearest3D and UpsampleNearest3DGrad.
@@ -363,8 +354,7 @@ def test_upsample_nearest_3d_size_dynamic(mode):
             [input_case1, (100, 200, 300), None],
             [input_case2, (40, 80, 80), None],
         ],
-        mode=mode,
-        grad=True,
+        '', disable_yaml_check=True, disable_input_check=True
     )
 
 
@@ -374,8 +364,7 @@ def test_upsample_nearest_3d_size_dynamic(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_nearest_3d_scale_factor_dynamic(mode):
+def test_upsample_nearest_3d_scale_factor_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleNearest3D and UpsampleNearest3DGrad.
@@ -392,8 +381,7 @@ def test_upsample_nearest_3d_scale_factor_dynamic(mode):
             [input_case1, None, (1.5, 1.6, 1.7)],
             [input_case2, None, (2.1, 2.5, 3.5)],
         ],
-        mode=mode,
-        grad=True,
+        '', disable_yaml_check=True, disable_input_check=True
     )
 
 

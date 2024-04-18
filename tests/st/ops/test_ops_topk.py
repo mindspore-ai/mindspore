@@ -182,15 +182,13 @@ def test_ops_topk_ext_backward2(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
-def test_ops_topk_ext_dynamic_shape(context_mode):
+def test_ops_topk_ext_dynamic_shape():
     """
     Feature: pyboost function.
     Description: test function topk_ext forward with dynamic shape.
     Expectation: expect correct result.
     """
-    ms.context.set_context(mode=context_mode)
-    x1 = ms.Tensor(generate_random_input((7, 8, 9), np.float32))
+    x1 = ms.Tensor(generate_random_input((7, 8), np.float32))
     k1 = 3
 
 
@@ -199,4 +197,4 @@ def test_ops_topk_ext_dynamic_shape(context_mode):
 
 
     test_cell = test_utils.to_cell_obj(topk_forward_func)
-    TEST_OP(test_cell, [[x1, k1], [x2, k2]], grad=True, jit_level="O0")
+    TEST_OP(test_cell, [[x1, k1], [x2, k2]], '', disable_yaml_check=True, disable_mode=['GRAPH_MODE'])

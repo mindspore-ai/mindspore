@@ -136,21 +136,19 @@ def test_lin_space_ext_bfloat16(mode, dtype):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_lin_space_ext_dynamic(mode):
+def test_lin_space_ext_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op concat.
     Expectation: expect tile result.
     """
-    os.environ["GRAPH_OP_RUN"] = '1'
     input_case1 = (Tensor([5]), Tensor([23]), Tensor([5]))
     input_case2 = (Tensor([-4]), Tensor([40]), Tensor([6]))
-    TEST_OP(lin_space_ext_forward_func, [[*input_case1], [*input_case2]], nontensor_dynamic_type='None',
-            mode=mode, grad=True)
+    TEST_OP(lin_space_ext_forward_func, [[*input_case1], [*input_case2]], '', disable_yaml_check=True,
+            disable_input_check=True, disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='BOTH')
 
     input_case3 = (5, 50.23, mutable(5), ms.int32)
     input_case4 = (-5, 43.97, mutable(13), ms.float32)
-    TEST_OP(lin_space_ext_forward_func, [[*input_case3], [*input_case4]], nontensor_dynamic_type='None',
-            mode=mode, grad=True, test_resize=False)
-    del os.environ["GRAPH_OP_RUN"]
+    TEST_OP(lin_space_ext_forward_func, [[*input_case3], [*input_case4]], '', disable_yaml_check=True,
+            disable_input_check=True, disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='BOTH',
+            disable_resize=True)

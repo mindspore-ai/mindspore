@@ -122,8 +122,7 @@ def div_forward_dyn(x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_div_dynamic_shape(mode):
+def test_div_dynamic_shape():
     """
     Feature: Test dynamic shape.
     Description: test function div dynamic feature.
@@ -132,4 +131,4 @@ def test_div_dynamic_shape(mode):
     ms_x0, ms_y0 = ms.Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), ms.float32), ms.Tensor(np.array([[1, 2, 3, 4]]),
                                                                                             ms.float32)
     ms_x1, ms_y1 = ms.Tensor(np.array([[1, 2, 3], [5, 6, 7]]), ms.float32), ms.Tensor(np.array([[1, 2, 3]]), ms.float32)
-    TEST_OP(div_forward_dyn, [[ms_x0, ms_y0], [ms_x1, ms_y1]], grad=True, mode=mode)
+    TEST_OP(div_forward_dyn, [[ms_x0, ms_y0], [ms_x1, ms_y1]], '', disable_input_check=True, disable_yaml_check=True)

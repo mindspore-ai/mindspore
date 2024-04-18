@@ -119,21 +119,18 @@ def test_ops_softplus_backward(context_mode):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_softplus_dynamic_shape(context_mode):
+def test_softplus_dynamic_shape():
     """
     Feature: Test dynamic shape.
     Description: test function softplus  dynamic feature.
     Expectation: expect correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
-    ms_data1 = generate_random_input((2, 3, 4, 5), np.float32)
+    ms_data1 = generate_random_input((2, 3, 4), np.float32)
     beta1 = 2
     threshold1 = 15
     ms_data2 = generate_random_input((3, 4, 5, 6), np.float32)
     beta2 = 3
     threshold2 = 18
-    TEST_OP(softplus_forward_func
-            , [[ms.Tensor(ms_data1), beta1, threshold1], [ms.Tensor(ms_data2), beta2, threshold2]]
-            , grad=True, mode=context_mode)
-    del os.environ['GRAPH_OP_RUN']
+    TEST_OP(softplus_forward_func,
+            [[ms.Tensor(ms_data1), beta1, threshold1], [ms.Tensor(ms_data2), beta2, threshold2]], 'softplus_ext',
+            disable_mode=['GRAPH_MODE'])

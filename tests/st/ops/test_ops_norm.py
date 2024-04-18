@@ -90,18 +90,14 @@ def test_ops_norm_backward(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_norm_dyn(mode):
+def test_ops_norm_dyn():
     """
     Feature: pyboost function.
     Description: test Norm with dynamic rank/shape.
     Expectation: success.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
-    ms.set_context(mode=mode)
     input_x1 = np.random.randn(*(3, 3)).astype(np.float32)
     input_x2 = np.random.randn(*(3, 3, 3)).astype(np.float32)
     in1 = Tensor(input_x1)
     in2 = Tensor(input_x2)
-    TEST_OP(norm_ext_forward_func, [[in1], [in2]])
-    del os.environ['GRAPH_OP_RUN']
+    TEST_OP(norm_ext_forward_func, [[in1], [in2]], '', disable_yaml_check=True, disable_mode=['GRAPH_MODE'])

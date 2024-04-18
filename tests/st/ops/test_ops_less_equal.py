@@ -162,22 +162,20 @@ def test_ops_less_equal_vmap(context_mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-def test_less_equal_dynamic_shape(jit_level):
+def test_less_equal_dynamic_shape():
     """
     Feature: Test less_equal with dynamic shape in graph mode.
     Description: call less_equal with valid input and index.
     Expectation: return the correct value.
     """
 
-    x1, other1 = generate_random_input((2, 3, 4, 5), np.float32)
+    x1, other1 = generate_random_input((2, 3, 4), np.float32)
     x2, other2 = generate_random_input((3, 4, 5, 6), np.float32)
 
     TEST_OP(less_equal_forward_func,
-            [[ms.Tensor(x1), ms.Tensor(other1)], [ms.Tensor(x2), ms.Tensor(other2)]],
-            grad=True, jit_level=jit_level)
+            [[ms.Tensor(x1), ms.Tensor(other1)], [ms.Tensor(x2), ms.Tensor(other2)]], 'less_equal')
     

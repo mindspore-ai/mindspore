@@ -64,21 +64,19 @@ def test_ops(context_mode, shape1, shape2):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_dynamic(context_mode):
+def test_ops_dynamic():
     """
     Feature: ops.extend.add
     Description: dynamic shape and rank
     Expectation: success
     """
-    ms.context.set_context(mode=context_mode)
 
     x1 = ms.Tensor(random_input([10, 10, 10]))
     y1 = ms.Tensor(random_input([10, 10, 10]))
     x2 = ms.Tensor(random_input([20, 10, 10]))
     y2 = ms.Tensor(random_input([20, 10, 10]))
 
-    TEST_OP(bmm, [[x1, y1], [x2, y2]], dump_ir=True, custom_flag='2')
+    TEST_OP(bmm, [[x1, y1], [x2, y2]], '', disable_input_check=True, disable_yaml_check=True)
 
 
 def random_input(shape):

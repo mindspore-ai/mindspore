@@ -117,8 +117,7 @@ def test_f_split_ext_list_backward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
-def test_f_split_ext_dynamic(mode):
+def test_f_split_ext_dynamic():
     """
     Feature: test dynamic split.
     Description: test auto grad of op Split.
@@ -128,7 +127,8 @@ def test_f_split_ext_dynamic(mode):
     x1 = ms.Tensor(np_x1, ms.float32)
     np_x2 = np.arange(4 * 6).reshape(4, 6)
     x2 = ms.Tensor(np_x2, ms.float32)
-    TEST_OP(split_forward_func, [[x1, 2, 1], [x2, 2, 1]], mode=mode, grad=True)
+    TEST_OP(split_forward_func, [[x1, 2, 1], [x2, 2, 1]], '', disable_input_check=True, disable_yaml_check=True,
+            disable_mode=['GRAPH_MODE', 'GRAPH_MODE_O0'])
 
 @pytest.mark.level1
 @pytest.mark.env_onecard

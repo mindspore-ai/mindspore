@@ -237,10 +237,9 @@ def test_all_forward_static_shape(mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-def test_all_dynamic_shape_testop(jit_level):
+def test_all_dynamic_shape_testop():
     """
     Feature: Test all with dynamic shape in graph mode using TEST_OP.
     Description: call ops.all with valid input and index.
@@ -253,8 +252,8 @@ def test_all_dynamic_shape_testop(jit_level):
     keep_dims1 = True
     keep_dims2 = False
 
-    TEST_OP(all_forward_func, [[ms.Tensor(x1), axis1, keep_dims1], [ms.Tensor(x2), axis2, keep_dims2]],
-            grad=True, jit_level=jit_level)
+    TEST_OP(all_forward_func, [[ms.Tensor(x1), axis1, keep_dims1], [ms.Tensor(x2), axis2, keep_dims2]], 'reduce_all',
+            disable_input_check=True)
 
 
 @pytest.mark.level1

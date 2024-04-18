@@ -142,8 +142,7 @@ def test_concat_vmap(mode, params):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_concat_dynamic(mode):
+def test_concat_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op concat.
@@ -153,7 +152,8 @@ def test_concat_dynamic(mode):
     axis = 1
     inputs_case1, _ = forward_datas_prepare((2, 4), axis=axis, need_expect=False)
     inputs_case2, _ = forward_datas_prepare((2, 2, 2), axis=axis, need_expect=False)
-    TEST_OP(concat_func, [[*inputs_case1, axis], [*inputs_case2, axis]], mode=mode, grad=True)
+    TEST_OP(concat_func, [[*inputs_case1, axis], [*inputs_case2, axis]], '', disable_input_check=True,
+            disable_yaml_check=True)
 
 
 @pytest.mark.level0
