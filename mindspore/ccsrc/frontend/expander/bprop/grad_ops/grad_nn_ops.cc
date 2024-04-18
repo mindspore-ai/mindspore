@@ -547,6 +547,26 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   }
 });
 
+REG_BPROP_BUILDER("TopkExt").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {
+  // x, k, dim, largest, sorted, out(values, indices), dout(grad_values, grad_indices)
+  auto input_x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+  auto indices = ib->TupleGetItem(out, kIndex1);
+  auto dout0 = ib->TupleGetItem(dout, kIndex0);
+  auto dim = ib->GetInput(kIndex2);
+  auto zeros = ib->ZerosLike(input_x);
+
+  auto dim_value = dim->BuildValue();
+  MS_EXCEPTION_IF_CHECK_FAIL(dim_value != nullptr, "The input dim of 'Topk' must be constant.");
+  MS_EXCEPTION_IF_CHECK_FAIL(!dim_value->isa<ValueAny>(), "The input dim of 'Topk' must be constant.");
+
+  auto out_grad = ib->Emit("TensorScatterElements", {zeros, indices, dout0},
+                           {{"reduction", MakeValue<string>("none")}, {"axis", dim_value}});
+  return {out_grad, ib->OutZeros(ib->GetInput(kIndex1)), ib->OutZeros(ib->GetInput(kIndex2)),
+          ib->OutZeros(ib->GetInput(kIndex3)), ib->OutZeros(ib->GetInput(kIndex4))};
+});
+
 REG_BPROP_BUILDER("PReLU").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
