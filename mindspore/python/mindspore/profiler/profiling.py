@@ -38,7 +38,8 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFound
     ProfilerIOException, ProfilerException, ProfilerRawFileException, ProfilerParamTypeErrorException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundException
-from mindspore.profiler.common.util import get_file_path
+from mindspore.profiler.common.util import get_file_path, ProfilerPathManager
+from mindspore.profiler.common.process_pool import MultiProcessPool
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 from mindspore.profiler.parser.framework_parser import GpuFrameWorkParser, DynamicFrameWorkParser
 from mindspore.profiler.parser.integrator import Integrator, DeviceTarget
@@ -95,7 +96,7 @@ class DeviceSupportParam(Enum):
     ASCEND = [
         'start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'profile_memory',
         'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'hbm_ddr', 'pcie', 'op_time',
-        'ascend_job_id', 'profile_framework'
+        'ascend_job_id', 'profile_framework', 'data_simplification'
     ]
 
 
@@ -103,6 +104,11 @@ ALWAYS_VALID_PARAM = [
     'start', 'start_profile', 'output_path', 'data_process', 'parallel_strategy', 'l2_cache',
     'hbm_ddr', 'pcie', 'ascend_job_id', 'op_time', 'profile_framework'
 ]
+
+
+ANALYSIS_ASYNC_MODE = 'async'
+ANALYSIS_SYNC_MODE = 'sync'
+DEFAULT_MODEL_ID = 4294967295
 
 
 def _environment_check():
@@ -298,9 +304,8 @@ def _ascend_graph_msprof_generator(mindstudio_profiler_output, model_iteration_d
         flag = msprof_exporter.export(model_iteration_dict)
         ProfilerInfo.set_export_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         return flag
-
-    except ProfilerException as err:
-        logger.warning(err.message)
+    except (ProfilerException, TimeoutError, FileNotFoundError, RuntimeError) as err:
+        logger.warning(str(err))
         return False
 
 
@@ -316,7 +321,6 @@ def _ascend_graph_msprof_analyse(mindstudio_profiler_output):
         msprof_analyser = AscendMsprofDataGenerator(mindstudio_profiler_output)
         res = msprof_analyser.parse()
         return res
-
     except ProfilerException as err:
         logger.warning(err.message)
     finally:
@@ -468,6 +472,7 @@ class Profiler:
         self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
         self._parallel_strategy = True
         self._model_iteration_dict = None
+        self._analyse_mode = ANALYSIS_SYNC_MODE
         _environment_check()
         # default aicore_metrics type is ArithmeticUtilization
         self._aicore_metrics_id = 0
@@ -488,6 +493,7 @@ class Profiler:
         self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
         self._pretty_json = False
         self._analyse_only = kwargs.get("analyse_only", False)
+        self._data_simplification = kwargs.get("data_simplification", True)
         if self._msprof_enable:
             return
         self._start_time = int(time.time() * 1e6)  # us
@@ -547,18 +553,15 @@ class Profiler:
         Returns:
             str, job start time.
         """
-        AscendMsprofExporter.check_msprof_env()
-        script_path = AscendMsprofExporter.get_msprof_info_path()
-        if not script_path:
-            logger.warning("Can`t find get_msprof_info.py path, use single-export mode instead.")
-            return None
-
-        logger.info("get_msprof_info.py path is : %s", script_path)
-        host_dir = os.path.join(prof_dir, 'host')
-        cmd = ['python',
-               script_path,
-               '-dir', host_dir]
         try:
+            AscendMsprofExporter.check_msprof_env()
+            script_path = AscendMsprofExporter.get_msprof_info_path()
+            if not script_path:
+                logger.warning("Can`t find get_msprof_info.py path, use single-export mode instead.")
+                return None
+            logger.info("get_msprof_info.py path is : %s", script_path)
+            host_dir = os.path.join(prof_dir, 'host')
+            cmd = ['python', script_path, '-dir', host_dir]
             outs, _ = AscendMsprofExporter.run_cmd(cmd)
             if not outs:
                 logger.warning('Can`t find the msprof info result')
@@ -570,7 +573,7 @@ class Profiler:
             if jor_start_time is not None:
                 return float(jor_start_time.strip())
             return None
-        except (RuntimeError, JSONDecodeError, AttributeError) as err:
+        except (RuntimeError, JSONDecodeError, AttributeError, TimeoutError, FileNotFoundError) as err:
             logger.warning('Get the drvVersion error, use single-export mode instead. detail : %s', err)
             return None
 
@@ -702,7 +705,7 @@ class Profiler:
                 return message
         return op_info
 
-    def analyse(self, offline_path=None, pretty=False, step_list=None):
+    def analyse(self, offline_path=None, pretty=False, step_list=None, mode=ANALYSIS_SYNC_MODE):
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
 
@@ -713,19 +716,28 @@ class Profiler:
             pretty (bool, optional): Whether to pretty json files. Default: ``False``.
             step_list (list, optional): A list of steps that need to be analyzed. Default: ``None``.
                 By default, all steps will be analyzed.
+            mode (str, optional): Analysis mode. Whether to analyse data in subprocess. Default: ``sync``.
+                By default, analyse data in current process.
         """
-        if isinstance(pretty, bool):
-            self._pretty_json = pretty
-        model_iteration_dict = {}
-        if step_list is not None and not isinstance(step_list, list):
-            raise ProfilerParamTypeErrorException("Parameter step_list must be a list.")
-        if step_list:
-            if not isinstance(step_list[0], int):
-                raise ProfilerParamTypeErrorException("The elements of the parameter step_list must be integers.")
-            model_iteration_dict.setdefault(4294967295, []).append(step_list[0])
-        self._analyse(offline_path=offline_path, model_iteration_dict=model_iteration_dict)
+        try:
+            if isinstance(pretty, bool):
+                self._pretty_json = pretty
+            if mode not in [ANALYSIS_SYNC_MODE, ANALYSIS_ASYNC_MODE]:
+                logger.warning("For analyse, the parameter mode must be one of ['sync', 'async'], "
+                               "it will be set to 'sync'.")
+                mode = ANALYSIS_SYNC_MODE
+            model_iteration_dict = {}
+            if step_list is not None and not isinstance(step_list, list):
+                raise ProfilerParamTypeErrorException("Parameter step_list must be a list.")
+            if step_list:
+                if not isinstance(step_list[0], int):
+                    raise ProfilerParamTypeErrorException("The elements of the parameter step_list must be integers.")
+                model_iteration_dict.setdefault(DEFAULT_MODEL_ID, []).append(step_list[0])
+            self._analyse(offline_path=offline_path, model_iteration_dict=model_iteration_dict, mode=mode)
+        except (ProfilerException, RuntimeError, OSError) as err:
+            logger.error("Profiler analyse failed: %s", str(err))
 
-    def _analyse(self, offline_path=None, model_iteration_dict=None):
+    def _analyse(self, offline_path=None, model_iteration_dict=None, mode=ANALYSIS_SYNC_MODE):
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
 
@@ -734,10 +746,13 @@ class Profiler:
                 Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
             model_iteration_dict: Dictionary with model id as the key and iteration id as the value, Default: ``None``.
+            mode (str, optional): Analysis mode. Whether to analyse data in subprocess. Default: ``sync``.
+                By default, analyse data in current process.
         """
         self._model_iteration_dict = model_iteration_dict
         self._init_profiler_info()
         self._is_support_step_info_collect()
+        self._analyse_mode = mode
         parallel_mode = get_auto_parallel_context("parallel_mode")
         stage_num = get_auto_parallel_context("pipeline_stages")
 
@@ -1141,6 +1156,7 @@ class Profiler:
             self.stop()
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
+        self._ascend_profiler.finalize()
         # export op data before analyse
         self._ascend_graph_analyse()
 
@@ -1232,8 +1248,8 @@ class Profiler:
             op_analyser.parse()
             op_analyser.write(op_intermediate_detail_path, op_intermediate_type_path,
                               aicpu_intermediate_detail_path, framework_raw_path, output_timeline_data_path)
-        except ProfilerException as err:
-            logger.warning(err.message)
+        except (ProfilerException, RuntimeError) as err:
+            logger.warning(str(err))
         finally:
             pass
 
@@ -1265,7 +1281,6 @@ class Profiler:
             timeline_analyser.parse_timeline_data(pretty=self._pretty_json)
             timeline_analyser.write_timeline_display()
             timeline_analyser.write_timeline_summary()
-
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
         finally:
@@ -1303,8 +1318,8 @@ class Profiler:
             flops_analyser.parse()
             flops_analyser.write(flops_path, flops_summary_path)
 
-        except ProfilerException as err:
-            logger.warning(err.message)
+        except (ProfilerException, RuntimeError) as err:
+            logger.warning(str(err))
         finally:
             pass
 
@@ -1454,10 +1469,13 @@ class Profiler:
         return launch_ops
 
     def _ascend_graph_analyse(self, offline_path=None):
-        """Ascend graph mode analyse."""
-        if not offline_path:
-            self._ascend_profiler.finalize()
+        if offline_path or self._analyse_mode == ANALYSIS_SYNC_MODE:
+            self._ascend_graph_analyse_inner(offline_path)
+        else:
+            MultiProcessPool().add_async_job(self._ascend_graph_analyse_inner)
 
+    def _ascend_graph_analyse_inner(self, offline_path=None):
+        """Ascend graph mode analyse."""
         job_id = self._get_profiling_job_id(offline_path)
         if not job_id:
             return
@@ -1467,8 +1485,8 @@ class Profiler:
         source_path = os.path.join(self._output_path, job_id)
         self._minddata_analyse()
         if self._op_time:
-            mindstudio_profiler_output = os.path.abspath(os.path.join(source_path, os.path.pardir,
-                                                                      'mindstudio_profiler_output'))
+            mindstudio_profiler_output = os.path.abspath(
+                os.path.join(source_path, os.path.pardir, 'mindstudio_profiler_output'))
             flag = _ascend_graph_msprof_generator(mindstudio_profiler_output, self._model_iteration_dict)
             if not flag:
                 logger.warning('Current driver package not support all export mode, use single export mode, '
@@ -1497,6 +1515,10 @@ class Profiler:
             self._ascend_graph_msadvisor_analyse(job_id)
             self._minddata_aicpu_analyse(self._output_path, job_id)
             ProfilerInfo.set_graph_ids(graph_ids)
+        try:
+            ProfilerPathManager.simplify_data(self._output_path, self._data_simplification)
+        except RuntimeError as err:
+            logger.error('Profilier simplify data failed, %s', str(err))
 
     def _ascend_graph_start(self):
         """Ascend graph mode start profiling."""
@@ -1895,6 +1917,10 @@ class Profiler:
             logger.warning(f"For '{self.__class__.__name__}', the parameter profile_framework must be one of ['memory',"
                            f" 'time', 'all', None], but got {self._profile_framework}, it will be set to 'all'.")
             self._profile_framework = "all"
+        if not isinstance(self._data_simplification, bool):
+            logger.warning(f"For '{self.__class__.__name__}', the parameter data_simplification must be bool, "
+                           f"but got type {type(self._data_simplification)}, it will be set to True.")
+            self._data_simplification = True
 
     def _host_info_analyse(self):
         """

@@ -131,17 +131,14 @@ class AscendMsprofExporter:
 
     def get_drv_version(self):
         """Get the drv_version for choosing the export mode."""
-        script_path = AscendMsprofExporter.get_msprof_info_path()
-        if not script_path:
-            logger.warning("Can`t find get_msprof_info.py path, use single-export mode instead.")
-            return False
-
-        logger.info("get_msprof_info.py path is : %s", script_path)
-        host_dir = os.path.join(self.prof_root_dir, 'host')
-        cmd = ['python',
-               script_path,
-               '-dir', host_dir]
         try:
+            script_path = AscendMsprofExporter.get_msprof_info_path()
+            if not script_path:
+                logger.warning("Can`t find get_msprof_info.py path, use single-export mode instead.")
+                return False
+            logger.info("get_msprof_info.py path is : %s", script_path)
+            host_dir = os.path.join(self.prof_root_dir, 'host')
+            cmd = ['python', script_path, '-dir', host_dir]
             outs, _ = AscendMsprofExporter.run_cmd(cmd)
             if not outs:
                 logger.warning('Check the drvVersion can`t find the result, use single-export mode instead.')
@@ -155,7 +152,7 @@ class AscendMsprofExporter:
             if drv_version >= self.DRV_VERSION:
                 return True
             return False
-        except (RuntimeError, JSONDecodeError, AttributeError) as err:
+        except (RuntimeError, JSONDecodeError, AttributeError, TimeoutError) as err:
             logger.warning('Get the drvVersion error, use single-export mode instead. detail : %s', err)
             return False
 

@@ -23,11 +23,11 @@ import mindspore
 import mindspore.context as context
 import mindspore.dataset as ds
 import mindspore.nn as nn
+import mindspore.common.dtype as mstype
 from mindspore import Model
 from mindspore import Profiler
 from mindspore import Tensor
 from mindspore.ops import operations as P
-import mindspore.common.dtype as mstype
 from tests.security_utils import security_off_wrap
 
 
@@ -102,13 +102,21 @@ def test_ascend_profiling():
     """Test ascend profiling"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     with tempfile.TemporaryDirectory() as tmpdir:
-        profiler = Profiler(output_path=tmpdir, l2_cache=True)
+        profiler = Profiler(output_path=tmpdir, l2_cache=True, data_simplification=False)
         add = Net()
         add(Tensor(x), Tensor(y))
         profiler.analyse()
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_output/op_summary*")) == 1
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_output/op_statistic*")) == 1
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/l2_cache.data*")) >= 2
+    with tempfile.TemporaryDirectory() as tmpdir:
+        profiler = Profiler(output_path=tmpdir, l2_cache=True, data_simplification=True)
+        add = Net()
+        add(Tensor(x), Tensor(y))
+        profiler.analyse()
+        assert glob.glob(f"{tmpdir}/profiler*/*PROF*/host/sqlite*") == []
+        assert glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_output") == []
+        assert glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_log") == []
 
 
 @pytest.mark.level0
