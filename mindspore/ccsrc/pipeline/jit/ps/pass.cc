@@ -769,7 +769,17 @@ bool LabelFineGrainedInterleavedIndexPass(const ResourcePtr &resource) {
 
 bool AssignAddOpt(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  parallel::AssignAddOpt(resource->func_graph());
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  parallel::AssignAddOpt(func_graph);
+  auto ms_context = MsContext::GetInstance();
+  auto enable_concat_eliminate = ms_context->get_param<bool>(MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT);
+  if (!enable_concat_eliminate) {
+    return true;
+  }
+  OptPassGroupMap map({{"renormalize", opt::OptPassConfig({opt::OptPassConfig::Renormalize()})}});
+  auto renormalize = opt::Optimizer::MakeOptimizer("renormalize", resource, map);
+  (void)renormalize->step(func_graph, false);
   return true;
 }
 
