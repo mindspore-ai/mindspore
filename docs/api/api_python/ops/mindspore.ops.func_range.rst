@@ -17,8 +17,8 @@ mindspore.ops.range
         一维Tensor。若 `start`， `end` ， `step` 全为整数，则输出类型为int64；若 `start`， `end` ， `step` 全为浮点数，则输出类型为float32。
 
     异常：
-        - **TypeError** - `start` ， `end` ， `step` 中既有整数又有浮点数。
-        - **TypeError** - `start` ， `end` ， `step` 的数据类型不支持。
+        - **TypeError** - `start` 、 `end` 、 `step` 中既有整数又有浮点数。
+        - **TypeError** - `start` 、 `end` 、 `step` 的数据类型不支持。
         - **ValueError** - `step` 等于0。
         - **ValueError** - `start` 小于等于 `end` ， `step` 小于0。
         - **ValueError** - `start` 大于等于 `end` ， `step` 大于0。
