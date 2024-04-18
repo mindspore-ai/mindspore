@@ -139,4 +139,12 @@ ATTR_MAP(AllGatherMatmul) = {{"is_trans_a", ATTR_DESC(is_trans_a, AnyTraits<bool
                              {"comm_turn", ATTR_DESC(comm_turn, AnyTraits<int64_t>())}};
 OUTPUT_MAP(AllGatherMatmul) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(gather_out)}};
 REG_ADPT_DESC(AllGatherMatmul, kNameAllGatherMatmul, ADPT_DESC(AllGatherMatmul))
+
+// GeGluV2
+INPUT_MAP(GeGluV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(GeGluV2) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())},
+                     {"approximate", ATTR_DESC(approximate, AnyTraits<int64_t>())},
+                     {"activate_left", ATTR_DESC(activate_left, AnyTraits<bool>())}};
+OUTPUT_MAP(GeGluV2) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(gelu)}};
+REG_ADPT_DESC(GeGluV2, "GeGluV2", ADPT_DESC(GeGluV2))
 }  // namespace mindspore::transform
