@@ -64,7 +64,7 @@ bool ReduceAxisUpdate::IsReduce(const BaseRef &ref) {
         IsPrimitive(node, prim::kPrimReduceMean) || IsPrimitive(node, prim::kPrimReduceSum) ||
         IsPrimitive(node, prim::kPrimReduceProd) || IsPrimitive(node, prim::kPrimReduceAll) ||
         IsPrimitive(node, prim::kPrimReduceAny) || IsPrimitive(node, prim::kPrimMeanExt) ||
-        IsPrimitive(node, prim::kPrimSumExt)) {
+        IsPrimitive(node, prim::kPrimSumExt) || IsPrimitive(node, prim::kPrimProdExt)) {
       return true;
     }
   }
@@ -94,7 +94,8 @@ bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) const {
 }
 
 bool ReduceAxisUpdate::IsAxisNone(const AnfNodePtr &cnode, const ValueNodePtr &axis_node) const {
-  static std::set<std::string> op_name_support_none = {prim::kPrimMeanExt->name(), prim::kPrimSumExt->name()};
+  static std::set<std::string> op_name_support_none = {prim::kPrimMeanExt->name(), prim::kPrimSumExt->name(),
+                                                       prim::kPrimProdExt->name()};
   auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
   if (op_name_support_none.find(cnode_name) == op_name_support_none.end()) {
     return false;

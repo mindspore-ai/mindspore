@@ -17,7 +17,7 @@
 #include "common/common_test.h"
 #include "ops/ops_func_impl/mean_ext.h"
 #include "ops/ops_func_impl/sum_ext.h"
-// #include "ops/ops_func_impl/prod_ext.h"
+#include "ops/ops_func_impl/prod_ext.h"
 #include "ops/auto_generate/gen_ops_name.h"
 #include "ops/test_ops.h"
 #include "ops/test_ops_cmp_utils.h"
@@ -67,7 +67,7 @@ tensor::TensorPtr CreateTensor(const ShapeVector &shape, const TypeId &dtype, st
 static std::map<std::string, OpFuncImplPtr> reduce_extand_func_impl = {
   {kNameMeanExt, std::make_shared<MeanExtFuncImpl>()},
   {kNameSumExt, std::make_shared<SumExtFuncImpl>()},
-//   {kNameProdExt, std::make_shared<ProdExtFuncImpl>()},
+  {kNameProdExt, std::make_shared<ProdExtFuncImpl>()},
 };
 }  // namespace
 
@@ -193,10 +193,10 @@ INSTANTIATE_TEST_CASE_P(TestSumExtGroup, TestReduceExtand,
                         testing::Combine(testing::ValuesIn({kNameSumExt}), ReduceExtandTestCase));
 INSTANTIATE_TEST_CASE_P(TestSumExtGroup_ExtraDtype, TestReduceExtand,
                         testing::Combine(testing::ValuesIn({kNameSumExt}), ReduceExtandTestCase_ExtraDtype));
-// INSTANTIATE_TEST_CASE_P(TestProdExtGroup, TestReduceExtand,
-//                         testing::Combine(testing::ValuesIn({kNameProdExt}), ReduceExtandTestCase_ProdExt));
-// INSTANTIATE_TEST_CASE_P(TestProdExtGroup_ExtraDtype, TestReduceExtand,
-//                         testing::Combine(testing::ValuesIn({kNameProdExt}), ReduceExtandTestCase_ExtraDtype));
+INSTANTIATE_TEST_CASE_P(TestProdExtGroup, TestReduceExtand,
+                        testing::Combine(testing::ValuesIn({kNameProdExt}), ReduceExtandTestCase_ProdExt));
+INSTANTIATE_TEST_CASE_P(TestProdExtGroup_ExtraDtype, TestReduceExtand,
+                        testing::Combine(testing::ValuesIn({kNameProdExt}), ReduceExtandTestCase_ExtraDtype));
 
 struct ReduceExtandInferValueParams {
   tensor::TensorPtr input;
@@ -263,9 +263,25 @@ auto ReduceExtandInferValueTestCase_SumExt = testing::ValuesIn(
     CreateIntTuple({0}), keep_dims_true, value_none,
     CreateTensor<float>(ShapeVector{1, 2}, kNumberTypeFloat32, std::vector<float>{6, 8})}});
 
+auto ReduceExtandInferValueTestCase_ProdExt = testing::ValuesIn(
+  {ReduceExtandInferValueParams{
+    CreateTensor<float>(ShapeVector{2, 2}, kNumberTypeFloat32, std::vector<float>{2, 3, 4, 5}),
+    CreateIntTuple({0}), keep_dims_false, dtype_float64,
+    CreateTensor<double>(ShapeVector{2}, kNumberTypeFloat64, std::vector<double>{8, 15})},
+   ReduceExtandInferValueParams{
+    CreateTensor<float>(ShapeVector{2, 2}, kNumberTypeFloat32, std::vector<float>{2, 3, 4, 5}),
+    value_none, keep_dims_false, dtype_float64,
+    CreateTensor<double>(ShapeVector{}, kNumberTypeFloat64, std::vector<double>{120})},
+   ReduceExtandInferValueParams{
+    CreateTensor<float>(ShapeVector{2, 2}, kNumberTypeFloat32, std::vector<float>{2, 3, 4, 5}),
+    CreateIntTuple({0}), keep_dims_true, value_none,
+    CreateTensor<float>(ShapeVector{1, 2}, kNumberTypeFloat32, std::vector<float>{8, 15})}});
+
 INSTANTIATE_TEST_CASE_P(TestMeanExtInferValueGroup, TestReduceExtandInferValue,
                         testing::Combine(testing::ValuesIn({kNameMeanExt}), ReduceExtandInferValueTestCase_MeanExt));
 INSTANTIATE_TEST_CASE_P(TestSumExtInferValueGroup, TestReduceExtandInferValue,
                         testing::Combine(testing::ValuesIn({kNameSumExt}), ReduceExtandInferValueTestCase_SumExt));
+INSTANTIATE_TEST_CASE_P(TestProdExtInferValueGroup, TestReduceExtandInferValue,
+                        testing::Combine(testing::ValuesIn({kNameProdExt}), ReduceExtandInferValueTestCase_ProdExt));
 }  // namespace ops
 }  // namespace mindspore
