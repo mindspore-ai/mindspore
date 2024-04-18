@@ -34,6 +34,9 @@ InternalKernelMod::~InternalKernelMod() {
 
 int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto param = CreateOpParam(inputs, outputs);
+  if (inputs.size() > 0) {
+    param->dtype_ = InternalKernelUtils::ToInternalDType(inputs[kIndex0]->dtype_id());
+  }
   impl_ = internal::CreateInternalKernelImpl(param);
 
   // abstract validation info from inputs
