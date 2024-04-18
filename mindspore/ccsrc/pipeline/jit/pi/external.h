@@ -26,6 +26,7 @@ py::bool_ pi_jit_disable();
 py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag);
 py::object get_code_extra(const py::object &);
 void update_pijit_default_config(const py::kwargs &conf);
+size_t FunctionId(const py::object &callable);
 
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)
 MS_API PyObject *EvalFrame(PyFrameObject *f, int exc);

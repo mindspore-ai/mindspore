@@ -17,6 +17,7 @@
 #include "mindspore/core/ops/symbol_ops_impl/scalar_add.h"
 #include "mindspore/core/ops/symbol_ops_impl/scalar_sub.h"
 #include "mindspore/core/ops/symbol_ops_impl/scalar_div.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_min.h"
 
 namespace mindspore {
 namespace symshape {
@@ -89,13 +90,9 @@ SymbolPtr StridedSlice::GetSlicingLengthForPositiveStrides(IntSymbolPtr start, I
     return GenInt(0);
   }
   if ((*start) <= (*end)) {
-    // length = (end - 1 - start) / strides + 1.  (to floor)
-    if (strides->is_const() && strides->value() == 1) {
-      return Emit(std::make_shared<ScalarSub>(end, start));
-    }
-    auto t1 = Emit(std::make_shared<ScalarSub>(Emit(std::make_shared<ScalarSub>(end, GenInt(1))), start));
-    auto t2 = Emit(std::make_shared<ScalarDiv>(t1, strides));
-    return Emit(std::make_shared<ScalarAdd>(t2, GenInt(1)));
+    // slice length = (end - start) / strides.  (to ceil)
+    auto len = Emit(std::make_shared<ScalarSub>(end, start));
+    return Emit(std::make_shared<ScalarCeilDiv>(len, strides));
   }
   return GenVInt();
 }
@@ -139,6 +136,8 @@ SymbolPtr StridedSlice::ComputeInferShape(const ListSymbol *x_shape, const ListS
     }
     if (end_mask(j)) {
       finish = x_dim_size;
+    } else {
+      finish = Emit(std::make_shared<ScalarMin>(finish, x_dim_size))->as_sptr<IntSymbol>();
     }
     auto slicing_len = GetSlicingLengthForPositiveStrides(start, finish, strides, x_dim_size);
     (void)res_shape.emplace_back(std::move(slicing_len));

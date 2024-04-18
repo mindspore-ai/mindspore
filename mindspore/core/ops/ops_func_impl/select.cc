@@ -46,18 +46,6 @@ namespace ops {
 using float_complex = std::complex<float>;
 using double_complex = std::complex<double>;
 
-void SelectInferShapeCheck(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape,
-                           const std::vector<int64_t> &cond_shape, size_t shape_size) {
-  for (size_t i = 0; i < shape_size; i++) {
-    if ((x_shape[i] > 0 && cond_shape[i] > 0 && x_shape[i] != cond_shape[i]) ||
-        (x_shape[i] > 0 && y_shape[i] > 0 && x_shape[i] != y_shape[i])) {
-      MS_EXCEPTION(ValueError)
-        << "For 'Select', the shape of 'condition', 'x' and 'y' must be the same. But got 'condition' shape: "
-        << cond_shape << ", 'x' shape: " << x_shape << ", 'y' shape: " << y_shape << ".";
-    }
-  }
-}
-
 abstract::BaseShapePtr SelectFuncImpl::InferShape(const PrimitivePtr &prim,
                                                   const std::vector<AbstractBasePtr> &input_args) const {
   auto cond_shape = input_args[kSelectCondIndex]->GetShape()->GetShapeVector();
@@ -66,16 +54,9 @@ abstract::BaseShapePtr SelectFuncImpl::InferShape(const PrimitivePtr &prim,
   if (IsDynamicRank(cond_shape) || IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
     return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }
-  auto cond_shape_size = cond_shape.size();
-  auto x_shape_size = x_shape.size();
-  auto y_shape_size = y_shape.size();
-  if (cond_shape_size != x_shape_size || y_shape_size != x_shape_size) {
-    MS_EXCEPTION(ValueError)
-      << "For 'Select', the shape of 'condition', 'x' and 'y' must be the same. But got 'condition' shape: "
-      << cond_shape << ", 'x' shape: " << x_shape << ", 'y' shape: " << y_shape << ".";
-  }
-  SelectInferShapeCheck(x_shape, y_shape, cond_shape, x_shape_size);
-  return input_args[kSelectCondIndex]->GetShape()->Clone();
+  auto broadcast_output_size = CalBroadCastShape(x_shape, y_shape, prim->name(), "input", "other");
+  auto output_size = CalBroadCastShape(cond_shape, broadcast_output_size, prim->name(), "condition", "input");
+  return std::make_shared<abstract::TensorShape>(output_size);
 }
 
 TypePtr SelectFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
@@ -94,11 +75,6 @@ TypePtr SelectFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<Ab
   (void)CheckAndConvertUtils::CheckTensorTypeValid("y_type", y_type, common_valid_types_with_complex_and_bool,
                                                    prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("cond", cond_type, {kBool}, prim_name);
-  if (*x_type != *y_type) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', the x_type and y_type must be the same, but got x_type: " << x_type->ToString()
-                            << " and y_type: " << y_type->ToString() << ".";
-  }
   return x_type->Clone();
 }
 }  // namespace ops

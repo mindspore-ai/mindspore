@@ -28,7 +28,7 @@ mindspore.ops.irfft
 
     异常：
         - **TypeError** - 如果 `input` 不是Tensor。
-        - **TypeError** - 如果 `input` 数据类型不是int16，int32，int64，float32，float64。
+        - **TypeError** - 如果 `input` 数据类型不是int16、int32、int64、float32、float64、complex64、complex128。
         - **TypeError** - 如果 `n` 或 `dim` 不是int类型。
         - **ValueError** - 如果 `dim` 中的值超出： :math:`[-input.ndim, -input.ndim)` 范围。
         - **ValueError** - 如果 `n` 小于1。

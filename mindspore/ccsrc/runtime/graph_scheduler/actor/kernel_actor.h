@@ -104,8 +104,6 @@ class KernelActor : public DebugAwareActor {
   bool inputs_continuous_memory() const { return inputs_continuous_memory_; }
   SomasInfo *somas_info() const { return somas_info_; }
   const std::set<size_t> &somas_graph_output_indexes() const { return somas_graph_output_indexes_; }
-  CallbackCounterPtr callback_counter() const { return callback_counter_; }
-  void set_callback_counter(const CallbackCounterPtr &callback_counter) { callback_counter_ = callback_counter; }
 
   void set_enable_async_infer(bool enable_async_infer) { enable_async_infer_ = enable_async_infer; }
 
@@ -116,6 +114,8 @@ class KernelActor : public DebugAwareActor {
   // Really do launch kernel with memory allocate and free.
   void ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context);
 
+  void set_stream_send_actor(KernelActor *stream_send_actor) { stream_send_actor_ = stream_send_actor; }
+
  protected:
   void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
@@ -123,8 +123,8 @@ class KernelActor : public DebugAwareActor {
 
   // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
   virtual bool LaunchKernel(OpContext<DeviceTensor> *const context);
-
-  virtual void LaunchCallback(OpContext<DeviceTensor> *const context);
+  // Execute kernel actor multi stream produre to make sure safety of memory.
+  virtual void ProcessMultiStream(OpContext<DeviceTensor> *const context);
 
   // Execute infer shape, resize and launch kernel by runtime pipeline which executes by KernelAsyncInferActor,
   // KernelAsyncResizeActor and KernelAsyncLaunchActor.
@@ -196,6 +196,14 @@ class KernelActor : public DebugAwareActor {
   SomasInfo *somas_info_;
   // The graph output node and index use somas info.
   std::set<size_t> somas_graph_output_indexes_;
+  // Task id on stream, use for events.
+  std::shared_ptr<int64_t> task_id_on_stream_ = std::make_shared<int64_t>(0L);
+  // Send actor ref, point to the send actor when current actor is recv actor.
+  KernelActor *stream_send_actor_{nullptr};
+  // Flag for stream recv actor.
+  bool is_stream_recv_actor_{false};
+  // Flag for indicating if current actor is multi-thread safe, which was generate at compile time.
+  bool is_multi_stream_safe_{false};
 
  private:
   friend class GraphScheduler;
@@ -250,8 +258,6 @@ class KernelActor : public DebugAwareActor {
 
   // Whether the inputs need continuous memory, used to check the inputs legitimacy.
   bool inputs_continuous_memory_;
-
-  CallbackCounterPtr callback_counter_;
 
   // The stream resource of the KernelActor to launch kernel.
   void *stream_{nullptr};

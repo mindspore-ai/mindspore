@@ -52,11 +52,13 @@ void AclDumpJsonWriter::Parse() {
       break;
   }
   auto kernels = dump_parser.GetKernelsJson();
+  auto model_name = dump_parser.GetModelJson();
   MS_LOG(INFO) << "Dump kernels is as follows: ";
   for (const auto &iter : kernels) {
     MS_LOG(INFO) << iter.dump();
   }
   layer_ = kernels;
+  model_name_ = model_name;
   auto op_debug_mode = dump_parser.op_debug_mode();
   MS_LOG(INFO) << "Op_debug_mode is: " << op_debug_mode;
   switch (op_debug_mode) {
@@ -77,12 +79,14 @@ void AclDumpJsonWriter::Parse() {
 
 bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id, bool is_init) {
   nlohmann::json dump_list;
-  if (!layer_.empty()) {
-    dump_list.push_back({{"layer", layer_}});
+  if (!layer_.empty() && !model_name_.empty()) {
+    dump_list.push_back({{"model_name", model_name_}, {"layer", layer_}});
   }
   std::string dump_path = dump_base_path_ + "/" + std::to_string(step_id);
   nlohmann::json dump;
-  if (dump_scene_ == "overflow") {
+  if (dump_scene_ == "lite_exception") {
+    dump = {{"dump_scene", "lite_exception"}};
+  } else if (dump_scene_ == "overflow") {
     dump = {{"dump_path", dump_path}, {"dump_debug", "on"}};
   } else {
     if (is_init == True) {
@@ -90,7 +94,7 @@ bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id, bool i
     } else {
       dump = {{"dump_path", dump_path}, {"dump_mode", dump_mode_}};
     }
-    if (!dump_list.empty()) {
+    if (!dump_list.empty() && !model_name_.empty()) {
       dump["dump_list"] = dump_list;
     } else {
       dump["dump_list"] = nlohmann::json::array();
@@ -111,7 +115,7 @@ bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id, bool i
   ChangeFileMode(realpath.value(), S_IWUSR);
   std::ofstream json_file(realpath.value());
   if (!json_file.is_open()) {
-    MS_LOG(EXCEPTION) << "Write file:" << realpath.value() << " open failed."
+    MS_LOG(EXCEPTION) << "Write json file:" << realpath.value() << " open failed."
                       << " Errno:" << errno;
   }
   try {

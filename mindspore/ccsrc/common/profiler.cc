@@ -94,6 +94,7 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyNativeFrontendTask, "FrontendTask"},
   {ProfilerEvent::kPyNativeBackendTask, "BackendTask"},
   {ProfilerEvent::kPyNativeDeviceTask, "DeviceTask"},
+  {ProfilerEvent::kPyNativeLaunchTask, "LaunchTask"},
   {ProfilerEvent::kPyNativeBpropTask, "BpropTask"},
   {ProfilerEvent::kPyNativeGilAcquire, "AcquireGil"},
   {ProfilerEvent::kPyNativeCast, "PyNativeCast"},

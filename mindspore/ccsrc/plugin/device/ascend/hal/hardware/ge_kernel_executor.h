@@ -70,8 +70,8 @@ class GeKernelExecutor : public KernelExecutor {
                          const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
 
  private:
-  static void DoSomas(const FuncGraphPtr &graph);
-  static void DoStreamAssign(const KernelGraphPtr &kernel_graph);
+  static void DoSomas(const FuncGraphPtr &graph, const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events);
+  static void DoStreamAssign(const KernelGraphPtr &kernel_graph, const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events);
   // launch
   bool MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,
                        const vector<KernelTensor *> &outputs) const;

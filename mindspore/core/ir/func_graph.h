@@ -103,6 +103,7 @@ const char FUNC_GRAPH_FLAG_DYNAMIC_SHAPE[] = "dynamic_shape";
 const char FUNC_GRAPH_FLAG_NO_RECURSIVE[] = "no_recursive";
 const char FUNC_GRAPH_FLAG_ARGS_NO_EXPAND[] = "args_no_expand";
 const char FUNC_GRAPH_FLAG_PROXY_GRAPH[] = "proxy_graph";
+const char FUNC_GRAPH_FLAG_NO_CHILD_GRAPH[] = "no_child_graph";
 
 const char kFuncGraphFlagUndetermined[] = "undeterminate";
 const char kFuncGraphFlagBackPropEntry[] = "back_prop_entry";
@@ -180,7 +181,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   }
   void SetDefaultValues(const std::vector<std::string> &name_list, const AnfNodePtrList &value_list);
   void ClearDefaultValues();
-  size_t GetDefaultValueCount();
+  size_t GetDefaultValueCount() const;
   std::map<std::string, AnfNodePtr> &parameter_default_value() { return parameter_default_value_; }
   void set_has_vararg(bool has_) { has_vararg_ = has_; }
   bool has_vararg() const { return has_vararg_; }

@@ -75,6 +75,8 @@ bool IsCellType(PyTypeObject *tp);
 template <bool sub>
 bool IsPrimitiveType(PyTypeObject *tp);
 template <bool sub>
+bool IsPrimitiveFunctionType(PyTypeObject *tp);
+template <bool sub>
 bool IsMetaFuncGraphType(PyTypeObject *tp);
 template <bool sub>
 bool IsMSDTypeType(PyTypeObject *tp);
@@ -82,6 +84,7 @@ bool IsMSDTypeType(PyTypeObject *tp);
 bool FindTensorName(const std::string &name);
 
 bool CheckTensorDataInitialized(const py::object &tensor);
+py::object EvalMSAPIValue(const py::object &ms_api, const py::object &args, const py::object &key_words);
 
 using SpecialPrimitiveInferFuncMap =
   std::unordered_map<std::string, PyObject *(*)(PyObject *, const std::vector<PyObject *> &)>;

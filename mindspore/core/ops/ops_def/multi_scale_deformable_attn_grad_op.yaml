@@ -1,0 +1,28 @@
+#operator multi_scale_deformable_attn_grad
+multi_scale_deformable_attn_grad:
+  args:
+    value:
+      dtype: tensor
+    spatial_shapes:
+      dtype: tensor
+    level_start_index:
+      dtype: tensor
+    sampling_loc:
+      dtype: tensor
+    attn_weight:
+      dtype: tensor
+    grad_output:
+      dtype: tensor
+  returns:
+    grad_value:
+      dtype: tensor
+    grad_sampling_loc:
+      dtype: tensor
+    grad_attn_weight:
+      dtype: tensor
+  class:
+      name: MultiScaleDeformableAttentionV2Grad
+  function:
+    disable: True
+  dispatch:
+    enable: True

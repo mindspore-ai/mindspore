@@ -23,7 +23,7 @@ namespace pyboost {
 
 tensor::BaseTensorPtr CopyCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
-  return CopyCustomizeCall(op, input_tensor, nullptr);
+  return CopyCustomizeCall(op, input_tensor);
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -251,7 +251,9 @@ class BACKEND_EXPORT DeviceResManager {
   // Since the current entry for creating streams is not unified, the implementation of the 'SyncStream' and
   // "SyncAllStreams" interfaces are implemented by subclasses.
   virtual bool SyncStream(size_t stream_id) const { return true; }
+
   virtual bool SyncAllStreams() const { return true; }
+
   virtual bool SyncNotDefaultStreams() const { return true; }
 
   // Return default stream id. Normally it's 0.

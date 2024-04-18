@@ -15,10 +15,28 @@
  */
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "transform/acl_ir/op_api_util.h"
+#include "runtime/pipeline/pipeline.h"
+#include "runtime/pipeline/task/device_task.h"
+#include "runtime/pynative/op_executor.h"
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 int8_t GetCubeMathType() { return transform::OpApiUtil::GetCubeMathType(); }
+
+void DispatchLaunchKernel(const DeviceContext *device_context, const std::string &aclnn_name, void *ws_ptr,
+                          size_t ws_size, transform::aclOpExecutor *executor, void *stream,
+                          const std::function<void()> &release_func) {
+  runtime::OpExecutor::DispatchLaunchTask([=]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeLaunchTask,
+                                       aclnn_name, false);
+    MS_LOG(DEBUG) << "launch task start, " << aclnn_name;
+
+    device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+    RUN_OP_API_ASYNC(aclnn_name, ws_ptr, ws_size, executor, stream, release_func);
+
+    MS_LOG(DEBUG) << "launch task end, " << aclnn_name;
+  });
+}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

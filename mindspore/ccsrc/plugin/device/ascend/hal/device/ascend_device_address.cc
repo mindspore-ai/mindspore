@@ -107,7 +107,7 @@ void AscendDeviceAddress::SyncHostMemoryToDeviceWithCopySrc(void *dst, const voi
   };
   auto device_context = GetDeviceContext();
   MS_EXCEPTION_IF_NULL(device_context);
-  auto callback_ret = device_context->GetKernelExecutor(false)->LaunchCallback(callback_func, 0);
+  auto callback_ret = device_context->GetKernelExecutor(false)->LaunchCallback(callback_func, this->stream_id());
   if (!callback_ret) {
     MS_LOG(EXCEPTION) << "LaunchCallback failed";
   }
@@ -153,7 +153,7 @@ void AscendDeviceAddress::SyncHostMemoryToDeviceWithTensorData(void *dst, const 
   };
   auto device_context = GetDeviceContext();
   MS_EXCEPTION_IF_NULL(device_context);
-  auto callback_ret = device_context->GetKernelExecutor(false)->LaunchCallback(callback_func, 0);
+  auto callback_ret = device_context->GetKernelExecutor(false)->LaunchCallback(callback_func, this->stream_id());
   if (!callback_ret) {
     MS_LOG(EXCEPTION) << "LaunchCallback failed";
   }
@@ -470,15 +470,12 @@ ShapeVector AscendDeviceAddress::GetDeviceShape(ShapeVector *host_shape) const {
 std::shared_ptr<LaunchTransData> AscendDeviceAddress::CreateLaunchTransData(const ShapeVector &host_shape,
                                                                             const std::string &ori_format,
                                                                             const std::string &dst_format) const {
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  auto stream = runtime_instance->compute_stream();
   int64_t groups = 1;
   if (format() == kOpFormat_FRAC_Z) {
     groups = GetGroupsWithCache();
   }
-  auto launch_trans_data =
-    std::make_shared<LaunchTransData>(stream, type_id(), GetSize(), ori_format, dst_format, host_shape, groups);
+  auto launch_trans_data = std::make_shared<LaunchTransData>(this->stream_id(), type_id(), GetSize(), ori_format,
+                                                             dst_format, host_shape, groups);
   MS_EXCEPTION_IF_NULL(launch_trans_data);
   return launch_trans_data;
 }
@@ -800,6 +797,18 @@ bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector & /* shape */, siz
   }
   MS_ERROR_IF_NULL(GetDevicePtr());
   const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  MS_ERROR_IF_NULL(stream);
+  auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, size, GetDevicePtr(), size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
+    return false;
+  }
+  return true;
+}
+
+// Asynchronously copy device memory to host side.
+bool AscendDeviceAddress::AsyncDeviceToHost(void *host_ptr, size_t size, void *stream) const {
+  MS_ERROR_IF_NULL(host_ptr);
   MS_ERROR_IF_NULL(stream);
   auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, size, GetDevicePtr(), size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
   if (ret != ACL_ERROR_NONE) {

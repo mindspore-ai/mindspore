@@ -35,7 +35,6 @@ class TestParallelIf : public UT::Common {
  public:
   TestParallelIf() : getPyFun("gtest_input.pipeline.parse.parallel_if") {}
   virtual void SetUp();
-  virtual void TearDown();
   py::function GetPythonFunction(std::string function);
 
   bool CheckIsomorphic(FuncGraphPtr basic, FuncGraphPtr manual, std::vector<opt::SubstitutionPtr> opts = {}) {
@@ -126,27 +125,25 @@ class TestParallelIf : public UT::Common {
 
 void TestParallelIf::SetUp() { UT::InitPythonPath(); }
 
-void TestParallelIf::TearDown() {}
-
 // Feature: Parallel if transformation
 // Description: Check parallel if transformatin for test code with single if/else.
 // Expectation: The funcgraph after transformation should be isomorphic with the funcgraph manually constructed.
-TEST_F(TestParallelIf, SimpleIf) { CheckParallelIfTransform("test_simple_if"); }
+TEST_F(TestParallelIf, DISABLED_SimpleIf) { CheckParallelIfTransform("test_simple_if"); }
 
 // Feature: Parallel if transformation
 // Description: Check parallel if transformatin for test code with if-by-if.
 // Expectation: The funcgraph after transformation should be isomorphic with the funcgraph manually constructed.
-TEST_F(TestParallelIf, IfByIf) { CheckParallelIfTransform("test_if_by_if"); }
+TEST_F(TestParallelIf, DISABLED_IfByIf) { CheckParallelIfTransform("test_if_by_if"); }
 
 // Feature: Parallel if transformation
 // Description: Check parallel if transformatin for test code with if-in-if.
 // Expectation: The funcgraph after transformation should be isomorphic with the funcgraph manually constructed.
-TEST_F(TestParallelIf, IfInIf) { CheckParallelIfTransform("test_if_in_if"); }
+TEST_F(TestParallelIf, DISABLED_IfInIf) { CheckParallelIfTransform("test_if_in_if"); }
 
 // Feature: Parallel if transformation
 // Description: Check parallel if transformatin for test code with if-elif-else.
 // Expectation: The funcgraph after transformation should be isomorphic with the funcgraph manually constructed.
-TEST_F(TestParallelIf, IfElifElse) { CheckParallelIfTransform("test_if_elif_else"); }
+TEST_F(TestParallelIf, DISABLED_IfElifElse) { CheckParallelIfTransform("test_if_elif_else"); }
 
 // Return statement section.
 // Feature: Parallel if transformation

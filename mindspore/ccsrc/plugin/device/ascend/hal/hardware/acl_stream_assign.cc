@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) {
+void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph, const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) {
   auto kernels = kernel_graph->execution_order();
   if (kernels.empty()) {
     return;
@@ -77,7 +77,7 @@ void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) 
       common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(stream_id), kernels[i - 1]);
     }
   }
-  InsertEventForNonTaskSink(kernel_graph);
+  InsertEventForNonTaskSink(kernel_graph, sched_events);
 }
 
 void AclStreamAssign::GenKernelIoExecInfoMap(
@@ -262,7 +262,7 @@ CNodePtr AclStreamAssign::CreateSendApplyKernel(const NotNull<KernelGraphPtr> &g
   auto send_node_ptr = graph_ptr->NewCNode({send_apply});
   MS_EXCEPTION_IF_NULL(send_node_ptr);
   common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), send_node_ptr);
-  common::AnfAlgo::SetNodeAttr(kAttrRecrodEventStreamPair, MakeValue(event_generate_id), send_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordWaitEventStreamPairId, MakeValue(event_generate_id), send_node_ptr);
   AnfAlgo::SetStreamId(stream_id, send_node_ptr.get());
   return send_node_ptr;
 }
@@ -278,7 +278,7 @@ CNodePtr AclStreamAssign::CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &g
   MS_EXCEPTION_IF_NULL(recv_node_ptr);
   common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), recv_node_ptr);
   common::AnfAlgo::SetNodeAttr(kAttrRecordEventStream, MakeValue(record_stream_id), recv_node_ptr);
-  common::AnfAlgo::SetNodeAttr(kAttrRecrodEventStreamPair, MakeValue(event_generate_id), recv_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordWaitEventStreamPairId, MakeValue(event_generate_id), recv_node_ptr);
   AnfAlgo::SetStreamId(stream_id, recv_node_ptr.get());
   return recv_node_ptr;
 }
@@ -367,11 +367,22 @@ void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kern
   MS_LOG(DEBUG) << "Finish GenEventsForParallelOp.";
 }
 
-void AclStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) {
+void AclStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph, const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) {
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_send;
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_recv;
   AnfAlgo::SetStreamId(kDefaultStreamIndex, kernel_graph->output().get());
-  GenEventsForParallelOp(kernel_graph, &kernel_send, &kernel_recv);
+
+  if (common::GetEnv("MS_ENABLE_GPTO") != "1") {
+    GenEventsForParallelOp(kernel_graph, &kernel_send, &kernel_recv);
+  } else {
+    // Ioannis: simple logic should be this, but there seem to be many exceptions tackled in function GenEventsForParallelOp()
+    for (auto event : sched_events){
+      const auto &send = event.first;
+      const auto &recv = event.second;
+      InsertEvents(kernel_graph, send, send, &kernel_send, &kernel_recv, recv);
+    }
+  }
+
   UpdateEventsToExecutionOrder(kernel_graph, kernel_send, kernel_recv);
 }
 }  // namespace ascend

@@ -253,6 +253,7 @@
 "mindspore/tests/st/dump/dump_test_utils.py"                                                            "too-many-nested-blocks"
 "mindspore/tests/ut/python/parallel/test_graph_utils.py"                                                "too-many-function-args"
 "mindspore/tests/st/ops/ascend/test_aclnn_ops/test_all_finite.py"                                       "singleton-comparison"
+"mindspore/tests/st/pynative/pyboost/test_pyboost_ops_abs.py"                                           "redefined-builtin"
 
 #MindSpore Lite
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"
@@ -276,4 +277,7 @@
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "bad-whitespace"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "bad-whitespace"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "bad-continuation"
-"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "bad-continuation"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"
+
+#PIJit
+"mindspore/tests/st/pi_jit"

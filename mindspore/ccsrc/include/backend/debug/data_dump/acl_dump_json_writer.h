@@ -55,6 +55,7 @@ class BACKEND_EXPORT AclDumpJsonWriter {
   std::string dump_base_path_ = "";
   std::string dump_mode_ = "all";
   nlohmann::json layer_ = nlohmann::json::array();
+  nlohmann::json model_name_ = nlohmann::json::array();
   std::string dump_scene_ = "normal";
   std::string dump_debug_ = "off";
 };  // class AclDumpJsonWriter

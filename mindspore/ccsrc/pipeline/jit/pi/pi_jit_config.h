@@ -31,7 +31,6 @@ class GraphJitConfig {
     kAutoJitCell,
     kAutoGrad,
     kAutoJit,
-    kReplaceNNCellByConstruct,
     kPrintAfterAll,
     kPrintTraceback,
     kPrintBB,
@@ -62,6 +61,7 @@ class GraphJitConfig {
     kEnableGeneratorExpressionToTuple,
     kFeatureBreakAtInlinedFunction,
     kEnableDynamicShape,
+    kEnableMsApiInfer,
     kTraceFlag,
     kSkipException,
     /* ------------------------------ */
@@ -79,34 +79,23 @@ class GraphJitConfig {
     kLimitGraphCount,
     kGuardRelaxCount,
     /* ------------------------------ */
-    kStrListConf,
-    kAllowedInlineModules,
-    kPSJitStrictCells,
-    kJitForbidden,
     kOptionsCount
   };
   GraphJitConfig();
   explicit GraphJitConfig(const py::object &c);
   bool GetBoolConfig(Options o) const { return o > kBoolConf && o < kIntConf ? bool_conf[o - kBoolConf] : false; }
-  int getIntConfig(Options o) const { return o > kIntConf && o < kStrListConf ? int_conf[o - kIntConf] : 0; }
-  const auto *getSetConfig(Options o) const {
-    return o > kStrListConf && o < kOptionsCount ? &set_conf[o - kStrListConf] : nullptr;
-  }
+  int getIntConfig(Options o) const { return o > kIntConf && o < kOptionsCount ? int_conf[o - kIntConf] : 0; }
+  const auto &allowed_inline_modules() const { return allowed_inline_modules_; }
 
   bool ShouldAutoJit(PyFrameObject *f);
-  bool CheckJitForbidden(const py::object &callable);
-  bool CheckJitConstexpr(const py::object &code);
-  bool CheckJitRelaxGuard(const py::object &code);
 
   void AddAllowedInlineModules(const std::string &module_name);
-  void AddPSJitStrictCells(const std::string &type_str);
 
-  bool AddJitConstexpr(PyObject *list);
-  bool AddJitForbidden(PyObject *callable_list);
-  bool AddAllowedInlineModules(PyObject *list);
-  bool AddPSJitStrictCells(PyObject *list);
   bool SetAutoJitFilter(PyObject *callable);
   bool AddJitRelaxGuard(PyObject *list);
+  bool AddJitConstexpr(PyObject *callable_list);
+  bool AddJitForbidden(PyObject *callable_list);
+  bool AddAllowedInlineModules(PyObject *str_list);
 
   template <Options o>
   bool SetBool(PyObject *value) {
@@ -117,7 +106,7 @@ class GraphJitConfig {
 
   template <Options o>
   bool SetInt(PyObject *value) {
-    static_assert(o > kIntConf && o < kStrListConf);
+    static_assert(o > kIntConf && o < kOptionsCount);
     int res = PyLong_AsLong(value);
     if (PyErr_Occurred()) {
       PyErr_Clear();
@@ -130,9 +119,9 @@ class GraphJitConfig {
   static void ApplyAutoJitCell();
 
  private:
+  std::set<std::string> allowed_inline_modules_;
+  int int_conf[kOptionsCount - kIntConf];
   bool bool_conf[kIntConf - kBoolConf];
-  int int_conf[kStrListConf - kIntConf];
-  std::set<std::string> set_conf[kOptionsCount - kStrListConf];
 };
 
 extern GraphJitConfig kPIJitConfigDefault;

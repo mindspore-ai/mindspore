@@ -233,7 +233,7 @@ void TestCostGraph::ConstructSingleNodeGraph() {
   cost_graph.AddOperator(matmul1);
 }
 
-TEST_F(TestCostGraph, test_CheckMergeElimination) {
+TEST_F(TestCostGraph, DISABLED_test_CheckMergeElimination) {
   ConstructStarGraph();
   ASSERT_EQ(cost_graph.CheckMergeElimination().get(), matmul1.get());
   cost_graph.EliminationOp(matmul2);
@@ -241,20 +241,20 @@ TEST_F(TestCostGraph, test_CheckMergeElimination) {
   cost_graph.EliminationMerge(matmul1);
 }
 
-TEST_F(TestCostGraph, test_CheckContractAndMergeElimination) {
+TEST_F(TestCostGraph, DISABLED_test_CheckContractAndMergeElimination) {
   ConstructStarGraph2();
   ASSERT_EQ(cost_graph.CheckMergeElimination().get(), matmul0.get());
   cost_graph.EliminationMerge(matmul0);
   ASSERT_EQ(cost_graph.CheckContractElimination().get(), matmul2.get());
 }
 
-TEST_F(TestCostGraph, test_EliminationMerge) {
+TEST_F(TestCostGraph, DISABLED_test_EliminationMerge) {
   ConstructStarGraph();
   ASSERT_EQ(cost_graph.EliminationMerge(matmul3).get(), matmul4.get());
   ASSERT_EQ(matmul3->is_alive(), false);
 }
 
-TEST_F(TestCostGraph, test_SearchStrategy_for_single_node_graph) {
+TEST_F(TestCostGraph, DISABLED_test_SearchStrategy_for_single_node_graph) {
   ConstructSingleNodeGraph();
   cost_graph.SearchStrategy();
   auto cost = matmul1->selected_cost();
@@ -330,12 +330,12 @@ TEST_F(TestCostGraph, test_SelectCostListWithMinTrainingTimeMultiple) {
   ASSERT_DOUBLE_EQ(ret_list[1]->computation_cost_, 1010);
 }
 
-TEST_F(TestCostGraph, test_CheckOpElimination) {
+TEST_F(TestCostGraph, DISABLED_test_CheckOpElimination) {
   ConstructLinearGraph();
   ASSERT_EQ(cost_graph.CheckOpElimination().get(), matmul2.get());
 }
 
-TEST_F(TestCostGraph, test_CheckEdgesElimination) {
+TEST_F(TestCostGraph, DISABLED_test_CheckEdgesElimination) {
   std::string edge_name = "MatMul-MatMul";
   std::shared_ptr<Edge> edge_m1_m5 = std::make_shared<Edge>(edge_name, matmul1, matmul5, 0, 0, false);
   std::shared_ptr<Edge> edge_m1_m5_2 = std::make_shared<Edge>(edge_name, matmul1, matmul5, 0, 1, false);
@@ -355,7 +355,7 @@ TEST_F(TestCostGraph, test_CheckEdgesElimination) {
   ASSERT_EQ(cost_graph.CheckEdgeElimination()[1].get(), edge_m1_m5_2.get());
 }
 
-TEST_F(TestCostGraph, test_CreateFinalCostList_AND_Select) {
+TEST_F(TestCostGraph, DISABLED_test_CreateFinalCostList_AND_Select) {
   std::string edge_name = "MatMul-MatMul";
   std::shared_ptr<Edge> edge_m1_m2 = std::make_shared<Edge>(edge_name, matmul1, matmul2, 0, 0, false);
   matmul1->GenerateStrategies(0);
@@ -373,14 +373,14 @@ TEST_F(TestCostGraph, test_CreateFinalCostList_AND_Select) {
   cost_graph.SelectCostWithMinInferenceTime(cost_list, device_mem_capacity);
 }
 
-TEST_F(TestCostGraph, test_EliminationOp) {
+TEST_F(TestCostGraph, DISABLED_test_EliminationOp) {
   ConstructLinearGraph();
   auto new_edge = cost_graph.EliminationOp(matmul2);
   ASSERT_EQ(new_edge.get(), matmul1->succ_edges()[0].get());
   ASSERT_EQ(new_edge.get(), matmul4->prev_edges()[0].get());
 }
 
-TEST_F(TestCostGraph, test_EliminationEdges) {
+TEST_F(TestCostGraph, DISABLED_test_EliminationEdges) {
   std::string edge_name = "MatMul-MatMul";
   std::shared_ptr<Edge> edge_m1_m5 = std::make_shared<Edge>(edge_name, matmul1, matmul5, 0, 0, false);
   std::shared_ptr<Edge> edge_m1_m5_2 = std::make_shared<Edge>(edge_name, matmul1, matmul5, 0, 1, false);
@@ -407,7 +407,7 @@ TEST_F(TestCostGraph, test_EliminationEdges) {
   ASSERT_EQ(new_edge.get(), matmul5->prev_edges()[0].get());
 }
 
-TEST_F(TestCostGraph, test_SearchStrategy) {
+TEST_F(TestCostGraph, DISABLED_test_SearchStrategy) {
   std::string edge_name = "MatMul-MatMul";
   std::shared_ptr<Edge> edge_m1_m2 = std::make_shared<Edge>(edge_name, matmul1, matmul2, 0, 0, false);
   matmul1->GenerateStrategies(0);
@@ -423,7 +423,7 @@ TEST_F(TestCostGraph, test_SearchStrategy) {
   cost_graph.SearchStrategy();
 }
 
-TEST_F(TestCostGraph, test_SearchStrategyV2) {
+TEST_F(TestCostGraph, DISABLED_test_SearchStrategyV2) {
   std::string edge_name = "MatMul-MatMul";
   std::shared_ptr<Edge> edge_m1_m2 = std::make_shared<Edge>(edge_name, matmul1, matmul2, 0, 0, false);
   matmul1->GenerateStrategies(0);

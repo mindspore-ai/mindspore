@@ -1067,9 +1067,9 @@ class MatrixSetDiagV3(Primitive):
         TypeError: If `k` is not int32 dtype.
         ValueError: If `align` is not a string or not in the valid range.
         ValueError: If rank of `k` is not equal to 0 or 1.
-        ValueError: If rank of `x` is not greater equal to 2.
+        ValueError: If rank of `x` is less than 2.
         ValueError: If size of `k` is not equal to 1 or 2.
-        ValueError: If `k[1]` is not greater equal to `k[0]` in case the size of `k` is 2.
+        ValueError: If `k[1]` is less than `k[0]` in case the size of `k` is 2.
         ValueError: If the `diagonal` rank size don't match with input `x` rank size.
         ValueError: If the `diagonal` shape value don't match with input `x` shape value.
         ValueError: If the diagonal :math:`shape[-2]` is not equal to num_diags calculated by

@@ -531,6 +531,8 @@ constexpr const char kNameAllGatherMatmul[] = "AllGatherMatmul";
 constexpr const char kSilentCheck[] = "SilentCheck";
 constexpr const char kNameUniformCandidateSampler[] = "UniformCandidateSampler";
 constexpr const char kNameAllFinite[] = "AllFinite";
+constexpr const char kNameMultiScaleDeformableAttnFunctionV2[] = "MultiScaleDeformableAttnFunctionV2";
+constexpr const char kNameMultiScaleDeformableAttentionV2Grad[] = "MultiScaleDeformableAttentionV2Grad";
 
 class OpAdapterDesc;
 

@@ -69,6 +69,9 @@ class BACKEND_EXPORT PyBoostUtils {
   // Create output tensors
   static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::BaseTensorPtr> *outputs);
   static void CreateOutputTensor(const DeviceContext *device_context, const tensor::BaseTensorPtr &input,
+                                 const TensorStorageInfoPtrList &storage_info_list,
+                                 std::vector<tensor::BaseTensorPtr> *outputs);
+  static void CreateOutputTensor(const DeviceContext *device_context, const tensor::BaseTensorPtr &input,
                                  const TensorStorageInfoPtr &storage_info, std::vector<tensor::BaseTensorPtr> *outputs);
   static void CreateOutputTensor(const ValueSimpleInfoPtr &output_value_simple_info,
                                  std::vector<tensor::BaseTensorPtr> *outputs);
@@ -117,7 +120,7 @@ class BACKEND_EXPORT PyBoostUtils {
 
   static void LaunchKernel(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
                            const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
-                           void *stream_ptr = nullptr);
+                           size_t stream_id = kDefaultStreamIndex);
 
   static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,

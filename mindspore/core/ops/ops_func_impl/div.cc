@@ -40,15 +40,18 @@ TypePtr DivFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    static std::set<int> intergral_set = {kNumberTypeBool,  kNumberTypeUInt8, kNumberTypeInt8,
-                                          kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64};
+    static std::set<int> x_set = {kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32,
+                                  kNumberTypeInt64};
+    static std::set<int> integral_set = {kNumberTypeBool,  kNumberTypeUInt8, kNumberTypeInt8,
+                                         kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64};
     auto x_tensor_type = x_dtype->cast<TensorTypePtr>();
     auto y_tensor_type = y_dtype->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(x_tensor_type);
     MS_EXCEPTION_IF_NULL(y_tensor_type);
     auto x_type_id = x_tensor_type->element()->type_id();
     auto y_type_id = y_tensor_type->element()->type_id();
-    if (x_type_id == kNumberTypeFloat32 && intergral_set.find(y_type_id) != intergral_set.end()) {
+    if ((x_type_id == kNumberTypeFloat32 && integral_set.find(y_type_id) != integral_set.end()) ||
+        (x_set.find(x_type_id) != x_set.end() && integral_set.find(y_type_id) != integral_set.end())) {
       return kFloat32;
     }
   }

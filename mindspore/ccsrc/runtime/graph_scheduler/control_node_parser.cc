@@ -2805,6 +2805,7 @@ bool ControlNodeParser::IsInputInSameLevel(const AnfNodePtr &node) {
     }
     auto iter = node_to_level_.find(input_node);
     if (iter == node_to_level_.end()) {
+      PrintGraphGroupInfo(kernel_graph_group_infos_);
       MS_LOG(EXCEPTION) << "Failed to find input:" << input_node->DebugString() << " for node:" << node->DebugString()
                         << " in graph output map.";
     }

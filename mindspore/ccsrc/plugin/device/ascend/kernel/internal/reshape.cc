@@ -21,6 +21,8 @@
 
 #include "kernel/framework_utils.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -68,8 +70,8 @@ bool InternalReshape::Launch(const std::vector<KernelTensor *> &inputs, const st
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
   auto status =
-    aclrtMemcpyAsync(outputs[kIndex0]->device_ptr(), outputs[kIndex0]->size(), inputs[kIndex0]->device_ptr(),
-                     inputs[kIndex0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+    CALL_ASCEND_API(aclrtMemcpyAsync, outputs[kIndex0]->device_ptr(), outputs[kIndex0]->size(),
+                    inputs[kIndex0]->device_ptr(), inputs[kIndex0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "ReshapeKernelMod Launch failed. kernel: " << kernel_name_
                   << ", call rtMemcpyAsync failed, ret = 0x" << status;

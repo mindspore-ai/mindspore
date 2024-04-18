@@ -162,5 +162,9 @@ TypePtrList ArgMaxWithValueFuncImpl::InferType(const PrimitivePtr &primitive, co
   TypePtrList type_ptr_list{kInt64, input_x_type};
   return type_ptr_list;
 }
+
+REGISTER_SIMPLE_INFER(kNameArgMaxWithValue, ArgMaxWithValueFuncImpl)
+
+REGISTER_SIMPLE_INFER(kNameArgMinWithValue, ArgMaxWithValueFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

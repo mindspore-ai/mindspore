@@ -198,8 +198,8 @@ def test_adam_weightdecay():
             super(Net, self).__init__()
             self.adam_weight_decay = ops.AdamWeightDecay()
             self.var = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="var")
-            self.m = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="m")
-            self.v = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="v")
+            self.m = Parameter(Tensor(np.ones([2, 2]).astype(np.float16)), name="m")
+            self.v = Parameter(Tensor(np.ones([2, 2]).astype(np.float16)), name="v")
 
         def construct(self, lr, beta1, beta2, epsilon, decay, grad):
             out = self.adam_weight_decay(self.var, self.m, self.v, lr, beta1, beta2, epsilon, decay, grad)

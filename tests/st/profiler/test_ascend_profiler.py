@@ -175,7 +175,7 @@ def test_collect_custom_aicpu():
         profiler.analyse()
         aicpu_intermediate_file_list = glob.glob(f"{tmpdir}/profiler/aicpu_intermediate_*.csv")
         assert len(aicpu_intermediate_file_list) == 1
-        s1 = {'Select', 'Xlogy', 'Cast'}
+        s1 = {'Cast', 'BroadcastTo', 'Select', 'Xlogy'}
         s2 = set()
         with open(aicpu_intermediate_file_list[0], 'r') as fr:
             reader = csv.DictReader(fr)

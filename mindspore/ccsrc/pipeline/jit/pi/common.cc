@@ -1590,4 +1590,37 @@ py::object get_code_extra(const py::object &func) {
   return result;
 }
 
+size_t FunctionId(const py::object &callable) {
+  PyObject *op = callable.ptr();
+  if (PyMethod_Check(op)) {
+    op = PyMethod_GET_FUNCTION(op);
+  }
+  if (PyInstanceMethod_Check(op)) {
+    op = PyInstanceMethod_GET_FUNCTION(op);
+  }
+  void *result = op;
+  if (PyCFunction_Check(op)) {
+    // types.BuiltinFunctionType = type(len) same as types.BuiltinMethodType = type(list().append)
+    PyCFunction func = PyCFunction_GET_FUNCTION(op);
+    result = reinterpret_cast<void *>(func);
+  } else if (Py_IS_TYPE(op, &PyMethodDescr_Type)) {
+    // types.MethodDescriptorType = type(list.append)
+    PyCFunction func = reinterpret_cast<PyMethodDescrObject *>(op)->d_method->ml_meth;
+    result = reinterpret_cast<void *>(func);
+  } else if (Py_IS_TYPE(op, &PyWrapperDescr_Type)) {
+    // types.WrapperDescriptorType = type(object.__init__)
+    result = reinterpret_cast<PyWrapperDescrObject *>(op)->d_wrapped;
+  } else if (Py_IS_TYPE(op, &_PyMethodWrapper_Type)) {
+    // types.WrapperDescriptorType = type(object().__str__)
+    PyObject *self = PyObject_GetAttrString(op, "__self__");
+    PyObject *attr = PyObject_GetAttrString(op, "__name__");
+    PyObject *descr = PyObject_GetAttr(reinterpret_cast<PyObject *>(Py_TYPE(self)), attr);
+    result = reinterpret_cast<PyWrapperDescrObject *>(descr)->d_wrapped;
+    Py_DECREF(self);
+    Py_DECREF(attr);
+    Py_DECREF(descr);
+  }
+  return reinterpret_cast<size_t>(result);
+}
+
 }  // namespace mindspore

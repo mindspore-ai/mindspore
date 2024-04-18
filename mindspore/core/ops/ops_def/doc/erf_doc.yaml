@@ -10,15 +10,20 @@ erf:
         input (Tensor): The input tensor of Gaussian error function. :math:`x` in the following formula.
             Supported dtypes: 
 
-            - Ascend: float16, float32.
+            - Ascend: float16, float32, int64, bool.
             - GPU/CPU: float16, float32, float64.
 
     Returns:
-        Tensor, has the same shape and dtype as the `input`.
+        Tensor. If the input is int64 or bool, the return value type is float32. 
+        Otherwise, the return value type is the same as the input type.
+
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64.
+        TypeError: If dtype of `input` is not as follows
+
+            - Ascend: float16, float32, int64, bool.
+            - GPU/CPU: float16, float32, float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

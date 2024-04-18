@@ -65,6 +65,8 @@ class BACKEND_EXPORT OpExecutor {
 
   static bool NeedSync();
 
+  static void DispatchLaunchTask(const std::function<void()> &func);
+
  private:
   OpExecutor();
   ~OpExecutor();

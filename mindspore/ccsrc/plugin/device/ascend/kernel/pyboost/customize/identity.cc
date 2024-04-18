@@ -85,6 +85,8 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
     if (!identity_kernel->Launch(input_kernel_tensors, workspaces, output_kernel_tensors, stream_ptr)) {
       MS_LOG(EXCEPTION) << "Launch kernel identity failed";
     }
+    runtime::DeviceAddressUtils::ProcessCrossStreamAddress(prim::kPrimIdentity->name(), device_context, op->stream_id(),
+                                                           input_kernel_tensors, output_kernel_tensors);
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(outputs[0]->device_address());
     output_address->SetStorageInfo(input_x_address->GetStorageInfo());
     output_address->set_ptr(launch_device_address->GetMutablePtr());
@@ -131,6 +133,8 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const BaseTensor
     if (!identity_kernel->Launch(input_kernel_tensors, workspaces, output_kernel_tensors, stream_ptr)) {
       MS_LOG(EXCEPTION) << "Launch kernel identity failed";
     }
+    runtime::DeviceAddressUtils::ProcessCrossStreamAddress(prim::kPrimIdentity->name(), device_context, op->stream_id(),
+                                                           input_kernel_tensors, output_kernel_tensors);
     MS_LOG(DEBUG) << "Run device task Identity end";
   }));
 }

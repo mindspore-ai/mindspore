@@ -1014,16 +1014,6 @@ Status MergeEntireShapeForDynamic(const FuncGraphPtr &root) {
         UpdateShapeNode(cnode, *func_graph);
       }
     }
-    for (auto const &node : all_nodes) {
-      if (!node->isa<CNode>()) {
-        continue;
-      }
-      auto cnode = node->cast<CNodePtr>();
-      if (!IsShapeOp(cnode)) {
-        continue;
-      }
-      UpdateShapeNode(cnode, root);
-    }
   }
   return Status::SUCCESS;
 }

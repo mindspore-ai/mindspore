@@ -47,12 +47,6 @@ int ArgMinMaxInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]);
-  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
-      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
-    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
-                  << out_tensors_[0]->data_type();
-    return RET_ERROR;
-  }
   in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (in_quant_arg_ == nullptr) {
     MS_LOG(ERROR) << "Malloc QuantArg for argmin or argmax int8 op failed!";
@@ -64,18 +58,7 @@ int ArgMinMaxInt8CPUKernel::Prepare() {
   in_quant_arg_->scale_ = in_quant_args.front().scale;
   in_quant_arg_->zp_ = in_quant_args.front().zeroPoint;
 
-  auto *out_tensor = out_tensors_.at(kOutputIndex);
-  auto out_quant_args = out_tensor->quant_params();
-  CHECK_LESS_RETURN(out_quant_args.size(), 1);
-  out_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
-  out_quant_arg_->scale_ = out_quant_args.front().scale;
-  out_quant_arg_->zp_ = out_quant_args.front().zeroPoint;
-  if (out_quant_arg_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc QuantArg for argmin or argmax int8 op failed!";
-    return RET_ERROR;
-  }
-
-  compute_param_ = reinterpret_cast<ArgMinMaxComputeParam *>(sizeof(ArgMinMaxComputeParam));
+  compute_param_ = reinterpret_cast<ArgMinMaxComputeParam *>(malloc(sizeof(ArgMinMaxComputeParam)));
   if (compute_param_ == nullptr) {
     MS_LOG(ERROR) << "Malloc ArgMinMaxComputeParam for argmin or argmax int8 op failed!";
     return RET_ERROR;
@@ -86,6 +69,28 @@ int ArgMinMaxInt8CPUKernel::Prepare() {
   compute_param_->topk_ = param->topk_;
   compute_param_->out_value_ = param->out_value_;
   compute_param_->keep_dims_ = param->keep_dims_;
+
+  out_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+  if (out_quant_arg_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc QuantArg for argmin or argmax int8 op failed!";
+    return RET_ERROR;
+  }
+  if (out_tensors_.size() == Num2 || compute_param_->out_value_) {
+    auto *out_tensor = out_tensors_.at(kOutputIndex);
+    auto out_quant_args = out_tensor->quant_params();
+    if (out_quant_args.size() != C1NUM) {
+      MS_LOG(ERROR)
+        << "argmin/argmax int8 kernel only supports per-tensor quantization, but now out_quant_args.size() is "
+        << out_quant_args.size();
+      return RET_ERROR;
+    }
+    CHECK_LESS_RETURN(out_quant_args.size(), 1);
+    out_quant_arg_->scale_ = out_quant_args.front().scale;
+    out_quant_arg_->zp_ = out_quant_args.front().zeroPoint;
+  } else {  // set default quant value
+    out_quant_arg_->scale_ = 1.0f;
+    out_quant_arg_->zp_ = 0;
+  }
 
   if (!InferShapeDone()) {
     return RET_OK;

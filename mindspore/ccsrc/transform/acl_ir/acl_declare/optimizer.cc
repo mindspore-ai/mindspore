@@ -19,6 +19,7 @@
 namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(AdamApplyOneWithDecay).set_run_mode(false);
+REGISTER_ACL_OP(AdamApplyOneWithDecayAssign).set_run_mode(false);
 REGISTER_ACL_OP(ApplyAdaMaxD).set_run_mode(false);
 REGISTER_ACL_OP(ApplyMomentum).set_run_mode(false);
 REGISTER_ACL_OP(ApplyMomentumD).set_run_mode(false);

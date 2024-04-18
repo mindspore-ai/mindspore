@@ -198,6 +198,14 @@ DeviceSyncPtr PyBoostUtils::ContiguousByDeviceAddress(const DeviceSyncPtr &devic
 }
 
 void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const tensor::BaseTensorPtr &input,
+                                      const TensorStorageInfoPtrList &storage_info_list,
+                                      std::vector<tensor::BaseTensorPtr> *outputs) {
+  for (auto &storage_info : storage_info_list) {
+    CreateOutputTensor(device_context, input, storage_info, outputs);
+  }
+}
+
+void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const tensor::BaseTensorPtr &input,
                                       const TensorStorageInfoPtr &storage_info,
                                       std::vector<tensor::BaseTensorPtr> *outputs) {
   MS_EXCEPTION_IF_NULL(input);
@@ -360,7 +368,7 @@ PyboostKernelExtraFuncFactory &PyboostKernelExtraFuncFactory::GetInstance() {
 
 void PyBoostUtils::LaunchKernel(const PrimitivePtr &primitive, const DeviceContext *device_context,
                                 const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
-                                void *stream_ptr) {
+                                size_t stream_id) {
   const auto &real_name = primitive->name();
   // KernelMod init
   auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive, real_name, device_context, input_address_info.first,
@@ -376,6 +384,7 @@ void PyBoostUtils::LaunchKernel(const PrimitivePtr &primitive, const DeviceConte
   const auto &workspace_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(workspace_device_address);
 
   const auto &device_name = device_context->device_context_key().device_name_;
+  void *stream_ptr = device_context->device_res_manager_->GetStream(stream_id);
   if (!PyboostKernelExtraFuncFactory::GetInstance().IsEnableProfiler(device_name)) {
     if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first,
                             stream_ptr)) {
@@ -399,6 +408,8 @@ void PyBoostUtils::LaunchKernel(const PrimitivePtr &primitive, const DeviceConte
   if (kernel_mod->IsNeedUpdateOutputShapeAndSize()) {
     kernel_mod->UpdateOutputShapeAndSize(input_address_info.first, output_address_info.first);
   }
+  runtime::DeviceAddressUtils::ProcessCrossStreamAddress(real_name, device_context, stream_id, input_address_info.first,
+                                                         output_address_info.first);
   MS_LOG(DEBUG) << real_name << " Launch end";
 }
 

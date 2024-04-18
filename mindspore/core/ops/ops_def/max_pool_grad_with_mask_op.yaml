@@ -1,0 +1,45 @@
+#operator max_pool_grad_with_mask
+max_pool_grad_with_mask:
+  args:
+    x:
+      dtype: tensor
+    grad:
+      dtype: tensor
+    mask:
+      dtype: tensor
+    kernel_size:
+      dtype: tuple[int]
+      prim_init: True
+      arg_handler: to_kernel_size
+    strides:
+      dtype: tuple[int]
+      default: None
+      prim_init: True
+      arg_handler: to_strides
+    pads:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_output_padding
+    dilation:
+      dtype: tuple[int]
+      default: (1, 1)
+      prim_init: True
+      arg_handler: to_dilations
+    ceil_mode:
+      dtype: bool
+      default: False
+      prim_init: True
+    argmax_type:
+      dtype: TypeId
+      default: mstype.int64
+      prim_init: True
+      arg_handler: dtype_to_type_id
+  returns:
+    y:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: MaxPoolGradWithMaskAscend

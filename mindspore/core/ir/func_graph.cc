@@ -659,7 +659,7 @@ void FuncGraph::SetDefaultValues(const std::vector<std::string> &name_list, cons
 
 void FuncGraph::ClearDefaultValues() { parameter_default_value_.clear(); }
 
-size_t FuncGraph::GetDefaultValueCount() {
+size_t FuncGraph::GetDefaultValueCount() const {
   int64_t null_count =
     std::count_if(parameter_default_value_.begin(), parameter_default_value_.end(),
                   [](const std::pair<std::string, AnfNodePtr> &pair) { return IsValueNode<Null>(pair.second); });

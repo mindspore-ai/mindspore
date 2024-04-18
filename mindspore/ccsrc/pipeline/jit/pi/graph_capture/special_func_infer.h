@@ -25,23 +25,20 @@
 
 namespace mindspore {
 namespace pijit {
-using CheckFunc = bool (*)(const py::object &);
-using InferFunc = bool (*)(CallNode *);
-struct SpecialAction {
-  CheckFunc check;
-  InferFunc infer;
-};
 
-const char *GetFuncName(const py::object &f);
-bool CheckPrimitive(const py::object &func);
+using InferFunc = bool (*)(CallNode *);
+InferFunc FindInferFunc(const py::object &callable, bool trace_flag = false);
+
 void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param);
 bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth);
 bool JustCallAndSetRes(CallNode *call_node);
-const std::unordered_map<std::string, SpecialAction> &GetFuncWhiteListMap(bool trace_flag = false);
-const std::vector<std::pair<CheckFunc, std::string>> &GetFuncWhiteListFuzzyMatcher(bool trace_flag = false);
-const std::string GetMindsporeNamePrimitive();
 
+bool CheckJitConstexpr(const py::object &func);
+bool CheckMSConstexpr(const py::object &func);
+bool CheckBuiltinFuncOrMethod(const py::object &func);
+bool InferBuiltinFuncOrMethod(CallNode *call_node);
 bool InferListAppend(CallNode *call_node);
+
 }  // namespace pijit
 }  // namespace mindspore
 

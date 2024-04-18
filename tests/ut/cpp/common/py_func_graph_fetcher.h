@@ -18,6 +18,7 @@
 
 #include <string>
 #include <memory>
+#include "resource.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ir/manager.h"
@@ -25,6 +26,7 @@
 #include "pipeline/jit/ps/parse/parse_base.h"
 #include "pipeline/jit/ps/parse/parse.h"
 #include "pipeline/jit/ps/parse/resolve.h"
+#include "gtest/gtest.h"
 
 namespace UT {
 

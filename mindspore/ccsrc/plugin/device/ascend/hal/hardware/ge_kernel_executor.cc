@@ -27,6 +27,7 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/acl_somas.h"
 #include "plugin/device/ascend/hal/hardware/acl_stream_assign.h"
+#include "plugin/device/ascend/hal/hardware/gpto.h"
 #include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
@@ -853,13 +854,13 @@ void CreateEventKernelMod(const KernelGraphPtr &kernel_graph) {
 }
 }  // namespace
 
-void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph) {
+void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph, const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) {
   MS_LOG(DEBUG) << "Status record: start stream assign.";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // stream assign
-  AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph));
+  AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph), sched_events);
   CreateEventKernelMod(kernel_graph);
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
@@ -874,7 +875,7 @@ void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph) {
   MS_LOG(DEBUG) << "Status record: end stream assign.";
 }
 
-void GeKernelExecutor::DoSomas(const FuncGraphPtr &graph) {
+void GeKernelExecutor::DoSomas(const FuncGraphPtr &graph, const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   MS_EXCEPTION_IF_NULL(graph);
@@ -883,7 +884,7 @@ void GeKernelExecutor::DoSomas(const FuncGraphPtr &graph) {
   static const char kAscendEnableInternalKernels[] = "MS_ENABLE_INTERNAL_KERNELS";
   static bool enable_runtime_pipeline = common::GetEnv(kAscendEnableInternalKernels) == "on";
   if (!enable_runtime_pipeline) {
-    DoStreamAssign(kernel_graph);
+    DoStreamAssign(kernel_graph, sched_events);
   }
   // somas
   MS_LOG(DEBUG) << "Status record: start do somas.";
@@ -950,7 +951,8 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
     }
   }
 
-  DoSomas(NOT_NULL(graph));
+  auto sched_events = opt::GPTO(graph);
+  DoSomas(NOT_NULL(graph), sched_events);
 
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 1);
 }

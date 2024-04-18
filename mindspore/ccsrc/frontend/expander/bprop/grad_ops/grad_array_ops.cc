@@ -185,7 +185,7 @@ NodePtrList SegmentMinOrMaxGrad(BpropBuilder *ib) {
   const int64_t max_len = 1000000;
   auto num_selected =
     ib->Emit("SegmentSum", {ib->Cast(is_selected, kFloat32), segment_ids}, {{"max_length", MakeValue(max_len)}});
-  auto weighted_grads = ib->Div(dout, num_selected);
+  auto weighted_grads = ib->Cast(ib->Div(dout, num_selected), ib->GetDtype(dout));
   auto gathered_grads = ib->Gather(weighted_grads, segment_ids, zero_value);
   auto dx = ib->Select(is_selected, gathered_grads, ib->ZerosLike(input_x));
   if (input_x_type->type_id() != kNumberTypeFloat32) {
@@ -925,7 +925,10 @@ REG_BPROP_BUILDER("Select").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
   auto dx = x->need_compute_grad_out() ? ib->Select(cond, dout, ib->ZerosLike(x)) : ib->OutZeros(x);
   auto dy = x->need_compute_grad_out() ? ib->Select(cond, ib->ZerosLike(y), dout) : ib->OutZeros(y);
-  return {ib->OutZeros(cond), dx, dy};
+  auto bc_x = BinopGradCommon(ib, cond, x, dout, dx);
+  auto bc_y = BinopGradCommon(ib, cond, y, dout, dy);
+  auto ret = BinopGradCommon(ib, x, y, bc_x[kIndex1], bc_y[kIndex1]);
+  return {ib->OutZeros(cond), ret[kIndex0], ret[kIndex1]};
 });
 
 REG_BPROP_BUILDER("OnesLike").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
@@ -1552,6 +1555,61 @@ REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto axis_value = GetValue<int64_t>(axis_ptr);
   auto dx = ib->Concat(dout, axis_value);
   return {dx, ib->OutZeros(axis), ib->OutZeros(output_num)};
+});
+
+DEF_PURE_SHAPE_CALC(g_slice_ext)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs.at(0);
+    auto axis = inputs.at(1);
+    auto begin = inputs.at(2);
+    auto end = inputs.at(3);
+
+    MS_EXCEPTION_IF_CHECK_FAIL(axis.size() == 1, "axis should be a scalar.");
+    auto axis_value = axis[0];
+    MS_EXCEPTION_IF_CHECK_FAIL(begin.size() == 1, "begin should be a scalar.");
+    auto begin_value = begin[0];
+    MS_EXCEPTION_IF_CHECK_FAIL(end.size() == 1, "end should be a scalar.");
+    auto end_value = end[0];
+
+    axis_value = axis_value < 0 ? axis_value + x_shape.size() : axis_value;
+    auto length_value = end_value - begin_value;
+    begin_value = begin_value < 0 ? begin_value + x_shape[axis_value] : begin_value;
+    end_value = begin_value + length_value;
+
+    auto begin_shape = x_shape;
+    begin_shape[axis_value] = begin_value;
+    auto end_shape = x_shape;
+    end_shape[axis_value] = end_shape[axis_value] - end_value;
+
+    return {begin_shape, end_shape};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {
+    auto x = inputs.at(0);
+    auto axis = inputs.at(1);
+    auto begin = inputs.at(2);
+    auto end = inputs.at(3);
+    if (!unknown_inputs.empty() || IsDynamicRank(x) || IsDynamicRank(axis) || IsDynamicRank(begin) ||
+        IsDynamicRank(end)) {
+      return {-1, -1};
+    }
+    auto size = SizeToLong(inputs.at(0).size());
+    return {size, size};
+  });
+
+REG_BPROP_BUILDER("SliceExt").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto begin = ib->GetInput(kIndex2);
+  auto end = ib->GetInput(kIndex3);
+  auto step = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto res = ib->ShapeCalc(g_slice_ext, {x, axis, begin, end}, {1, 2, 3});
+  auto dx =
+    ib->Emit(kConcatOpName, {ib->MakeTuple({ib->Emit("Zeros", {res[0], ib->Value<int64_t>(ib->GetDtypeId(dout))}), dout,
+                                            ib->Emit("Zeros", {res[1], ib->Value<int64_t>(ib->GetDtypeId(dout))})}),
+                             axis});
+
+  return {dx, ib->OutZeros(axis), ib->OutZeros(begin), ib->OutZeros(end), ib->OutZeros(step)};
 });
 
 DEF_PURE_SHAPE_CALC(g_tile)

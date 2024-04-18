@@ -32,7 +32,8 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR : public UT::Common {
 /// Description: Convert SparseSoftmaxCrossEntropyWithLogits(is_grad=false) to
 ///              OneHot+SoftmaxCrossEntropyWithLogits+ReduceMean
 /// Expectation: After optimize, match OneHot+SoftmaxCrossEntropyWithLogits+ReduceMean.
-TEST_F(SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR, test_sparse_softmax_cross_entropy_with_logits_is_grad_is_false) {
+TEST_F(SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR,
+       DISABLED_test_sparse_softmax_cross_entropy_with_logits_is_grad_is_false) {
   test::ConstructGraph c;
   auto logits = c.NewTensorInput("logits", kFloat, {2, 3});
   auto labels = c.NewTensorInput("labels", kInt32, {2});

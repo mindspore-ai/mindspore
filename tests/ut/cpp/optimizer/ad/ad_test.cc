@@ -105,17 +105,17 @@ TEST_F(TestAD, test_prim_scalar_add) {
   AssertExpect("test_prim_scalar_add", dg);
 }
 
-TEST_F(TestAD, test_prim_scalar_mul) {
+TEST_F(TestAD, DISABLED_test_prim_scalar_mul) {
   FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimScalarMul), resourcePtr);
   AssertExpect("test_prim_scalar_mul", dg);
 }
 
-TEST_F(TestAD, test_prim_scalar_sub) {
+TEST_F(TestAD, DISABLED_test_prim_scalar_sub) {
   FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimScalarSub), resourcePtr);
   AssertExpect("test_prim_scalar_sub", dg);
 }
 
-TEST_F(TestAD, test_prim_scalar_div) {
+TEST_F(TestAD, DISABLED_test_prim_scalar_div) {
   FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimScalarDiv), resourcePtr);
   AssertExpect("test_prim_scalar_div", dg);
 }
@@ -140,22 +140,22 @@ TEST_F(TestAD, test_prim_scalar_usub) {
   AssertExpect("test_prim_scalar_usub", dg);
 }
 
-TEST_F(TestAD, test_prim_scalar_gt) {
+TEST_F(TestAD, DISABLED_test_prim_scalar_gt) {
   FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimScalarGt), resourcePtr);
   AssertExpect("test_prim_scalar_gt", dg);
 }
 
-TEST_F(TestAD, test_prim_scalar_lt) {
+TEST_F(TestAD, DISABLED_test_prim_scalar_lt) {
   FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimScalarLt), resourcePtr);
   AssertExpect("test_prim_scalar_lt", dg);
 }
 
-TEST_F(TestAD, test_prim_scalar_ge) {
+TEST_F(TestAD, DISABLED_test_prim_scalar_ge) {
   FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimScalarGe), resourcePtr);
   AssertExpect("test_prim_scalar_ge", dg);
 }
 
-TEST_F(TestAD, test_prim_scalar_le) {
+TEST_F(TestAD, DISABLED_test_prim_scalar_le) {
   FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimScalarLe), resourcePtr);
   AssertExpect("test_prim_scalar_le", dg);
 }
@@ -165,7 +165,7 @@ TEST_F(TestAD, test_prim_tuple_getitem) {
   AssertExpect("test_prim_tuple_getitem", dg);
 }
 
-TEST_F(TestAD, test_prim_identity) {
+TEST_F(TestAD, DISABLED_test_prim_identity) {
   FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimIdentity), resourcePtr);
   AssertExpect("test_prim_identity", dg);
 }

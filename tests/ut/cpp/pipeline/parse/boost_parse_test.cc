@@ -26,10 +26,6 @@ class TestBoostParse : public UT::Common {
  public:
   TestBoostParse() : getPyFun_("gtest_input.pipeline.parse.boost_parse") {}
 
-  virtual void SetUp();
-
-  virtual void TearDown();
-
   void CheckFalseBranch(const FuncGraphPtr &func_graph, bool folded = true) {
     auto manager = Manage(func_graph);
     EXPECT_TRUE(manager != nullptr);
@@ -54,10 +50,6 @@ class TestBoostParse : public UT::Common {
  public:
   UT::PyFuncGraphFetcher getPyFun_;
 };
-
-void TestBoostParse::SetUp() {}
-
-void TestBoostParse::TearDown() {}
 
 // Feature: Boost parse.
 // Description: Parse the network witch has "if var:" statement.

@@ -35,6 +35,7 @@ void ConvolutionGradAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &
   output_padding_ = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex8]);
   groups_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex9]);
   const auto &output_mask_vec = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex10]);
+  output_mask_.clear();
   std::transform(output_mask_vec.begin(), output_mask_vec.end(), std::back_inserter(output_mask_),
                  [](const int64_t &value) { return static_cast<uint8_t>(value); });
 

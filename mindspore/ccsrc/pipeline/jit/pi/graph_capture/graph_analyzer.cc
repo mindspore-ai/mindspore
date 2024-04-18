@@ -29,8 +29,6 @@
 namespace mindspore {
 namespace pijit {
 
-extern bool CheckMSConstexpr(const py::object &func);
-extern bool CheckJitConstexpr(const py::object &func);
 extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
 
 const int kMsFlagSet = AObject::kMsFlagGradFunc | AObject::kMsFlagStandardFunc | AObject::kMsFlagShardFunc |

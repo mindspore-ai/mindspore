@@ -16,9 +16,11 @@
 import os
 import inspect
 from functools import wraps
+
+import pytest
 from mindspore import nn
 import mindspore as ms
-from mindspore import Tensor
+from mindspore import Tensor, ops
 import numpy as np
 
 ms.set_context(jit_syntax_level=ms.STRICT)
@@ -101,7 +103,6 @@ def need_run_graph_op_mode(func, args, kwargs):
 
 
 def run_test_func(test_func):
-
     @wraps(test_func)
     def wrapper(*args, **kwargs):
         # call original test function
@@ -118,3 +119,20 @@ def run_test_func(test_func):
             del os.environ['GRAPH_OP_RUN']
 
     return wrapper
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_base_tensor_data_converter():
+    """
+    Feature: test base-tensor convert
+    Description: test base-tensor convert by pynative
+    Expectation: success
+    """
+    x = Tensor([1, 2, 3, 4, 5])
+    out = ops.ReduceSum()(x, ops.ReLU()(Tensor(0)))
+    assert out == 15

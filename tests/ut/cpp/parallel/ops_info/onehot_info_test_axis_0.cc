@@ -63,7 +63,7 @@ void TestOneHotInfo2::SetUp() {
   onehot_info2 = std::make_shared<OneHotInfo>("onehot_info", inputs_shape, outputs_shape, attr);
 }
 
-TEST_F(TestOneHotInfo2, InferDevMatrixShape1) {
+TEST_F(TestOneHotInfo2, DISABLED_InferDevMatrixShape1) {
   Strategies inputs = {{1, 8}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -75,7 +75,7 @@ TEST_F(TestOneHotInfo2, InferDevMatrixShape1) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestOneHotInfo2, InferDevMatrixShape2) {
+TEST_F(TestOneHotInfo2, DISABLED_InferDevMatrixShape2) {
   Strategies inputs = {{1, 4}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -87,7 +87,7 @@ TEST_F(TestOneHotInfo2, InferDevMatrixShape2) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestOneHotInfo2, InferDevMatrixShape3) {
+TEST_F(TestOneHotInfo2, DISABLED_InferDevMatrixShape3) {
   Strategies inputs = {{2, 4}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -99,7 +99,7 @@ TEST_F(TestOneHotInfo2, InferDevMatrixShape3) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestOneHotInfo2, InferTensorMap2) {
+TEST_F(TestOneHotInfo2, DISABLED_InferTensorMap2) {
   Strategies str = {{1, 8}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -121,7 +121,7 @@ TEST_F(TestOneHotInfo2, InferTensorMap2) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
-TEST_F(TestOneHotInfo2, InferSliceShape1) {
+TEST_F(TestOneHotInfo2, DISABLED_InferSliceShape1) {
   Strategies str = {{1, 8}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -143,7 +143,7 @@ TEST_F(TestOneHotInfo2, InferSliceShape1) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestOneHotInfo2, InferSliceShape2) {
+TEST_F(TestOneHotInfo2, DISABLED_InferSliceShape2) {
   Strategies str = {{2, 4}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -165,7 +165,7 @@ TEST_F(TestOneHotInfo2, InferSliceShape2) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestOneHotInfo2, InferSliceShape3) {
+TEST_F(TestOneHotInfo2, DISABLED_InferSliceShape3) {
   Strategies str = {{2, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 

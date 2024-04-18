@@ -24,6 +24,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "acl/acl_rt.h"
 #include "ops/array_op_name.h"
@@ -90,7 +91,7 @@ void LaunchTransData::ConstructKernelGraph() {
 }
 
 uint8_t *LaunchTransData::AllocDeviceMem(size_t size) {
-  auto device_memory = AscendMemoryPool::GetInstance().AllocTensorMem(size);
+  auto device_memory = AscendMemoryPool::GetInstance().AllocTensorMem(size, false, stream_id_);
   if (device_memory == nullptr) {
     MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << size << "B.";
   }
@@ -145,9 +146,10 @@ void LaunchTransData::LaunchOpKernel() {
 
   // workspaces
   std::vector<kernel::KernelTensor *> kernel_workspace;
+  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id_);
 
   // launch
-  auto ret_status = kernel_mod_->Launch(kernel_inputs, kernel_workspace, kernel_outputs, stream_);
+  auto ret_status = kernel_mod_->Launch(kernel_inputs, kernel_workspace, kernel_outputs, stream);
   if (!ret_status) {
     MS_LOG(EXCEPTION) << "Launch transdata single kernel failed";
   }

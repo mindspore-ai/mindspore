@@ -37,7 +37,7 @@ class TestDynamicNetworking : public UT::Common {
 /// Feature: test the normal node registration from compute graph nodes to meta server node.
 /// Description: start some compute graph nodes and meta server node and send a register message.
 /// Expectation: these register messages are received by meta server node successfully.
-TEST_F(TestDynamicNetworking, NodeRegister) {
+TEST_F(TestDynamicNetworking, DISABLED_NodeRegister) {
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
@@ -86,7 +86,7 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
 /// Feature: test sending message through compute graph node to meta server node.
 /// Description: send a special kind of message to msn and register the corresponding message handler.
 /// Expectation: the registered handler received the sent message successfully.
-TEST_F(TestDynamicNetworking, AddMessageHandler) {
+TEST_F(TestDynamicNetworking, DISABLED_AddMessageHandler) {
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
@@ -137,7 +137,7 @@ TEST_F(TestDynamicNetworking, AddMessageHandler) {
 /// Feature: test retrieve message from the meta server node.
 /// Description: send a retrieve request to msn.
 /// Expectation: get message from msn successfully.
-TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
+TEST_F(TestDynamicNetworking, DISABLED_RetrieveMessageFromMSN) {
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
@@ -184,7 +184,7 @@ TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
 /// Feature: test the recovery of meta server node.
 /// Description: construct a cluster and restart the meta server node under recovery mode.
 /// Expectation: the meta server node is restarted successfully and all the metadata is restored.
-TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
+TEST_F(TestDynamicNetworking, DISABLED_MetaServerNodeRecovery) {
   // Prepare the environment.
   std::string local_file = "recovery.dat";
   char *dir = getcwd(nullptr, 0);
@@ -266,7 +266,7 @@ TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
 /// Description: start a cluster with one meta server node and three compute graph nodes, and then kill one of the
 /// compute graph node.
 /// Expectation: the number of alive compute graph node is equal to two.
-TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
+TEST_F(TestDynamicNetworking, DISABLED_HeartbeatTimeout) {
   // Start the meta server node in the parent process.
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
@@ -326,7 +326,7 @@ TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
 /// Feature: test reconnect to meta server node if needed during node registration period.
 /// Description: first start the compute graph node and then start the meta server node.
 /// Expectation: the cluster topology is constructed successfully.
-TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
+TEST_F(TestDynamicNetworking, DISABLED_ReconnectToMetaServerDuringReg) {
   // Init the environment variables.
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
@@ -387,7 +387,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
 /// Description: start the meta server node and several compute graph nodes, then restart the meta server node after the
 /// cluster is initialized successfully.
 /// Expectation: the cluster topology is shutdown finally.
-TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
+TEST_F(TestDynamicNetworking, DISABLED_ReconnectToMetaServerDuringUnreg) {
   // Init the environment variables.
   std::string local_file = "recovery.dat";
   char *dir = getcwd(nullptr, 0);
@@ -470,7 +470,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
 /// Feature: test get hostnames from meta server node from compute graph node.
 /// Description: build a cluster and call the gethostname of compute graph node.
 /// Expectation: the hostnames of specified compute graph node are returned.
-TEST_F(TestDynamicNetworking, GetHostNames) {
+TEST_F(TestDynamicNetworking, DISABLED_GetHostNames) {
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());

@@ -20,8 +20,8 @@ mindspore.ops.lu_solve
         Tensor，与 `b` 和 `LU_data` 的数据类型相同。
 
     异常：
-        - **TypeError** -  `b` 或 `LU_data` 的 dtype 不属于以下类型： mstype.float16、mstype.float32。
-        - **TypeError** -  `LU_pivots` 的 dtype 不属于以下类型： mstype.int32。
+        - **TypeError** -  `b` 或 `LU_data` 的 dtype 不属于以下类型： float16、float32。
+        - **TypeError** -  `LU_pivots` 的 dtype 不属于以下类型： int32。
         - **TypeError** -  `b` ， `LU_data` 或 `LU_pivots` 不为Tensor。
         - **TypeError** -  `b` 的 dtype 与 `LU_data` 的 dtype 不相同。
         - **ValueError** - `LU_pivots` 的 batch 维度与 `LU_data` 的 batch 维度不相等。

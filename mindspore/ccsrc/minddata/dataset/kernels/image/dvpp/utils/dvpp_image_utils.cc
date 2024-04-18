@@ -1632,11 +1632,10 @@ APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
 
 // acl
 APP_ERROR GetSocName(std::string *soc_name) {
-  const char *soc_name_c = aclrtGetSocName();
-  if (soc_name_c == nullptr) {
+  *soc_name = MsContext::GetInstance()->ascend_soc_name();
+  if (soc_name->empty()) {
     *soc_name = "";
   }
-  *soc_name = std::string(soc_name_c);
   return APP_ERR_OK;
 }
 

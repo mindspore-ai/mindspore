@@ -1,14 +1,18 @@
-#operator select
+#operator select/where
 select:
     args:
-        cond:
+        condition:
             dtype: tensor
-        x:
+        input:
             dtype: tensor
-        y:
+            type_cast: number
+        other:
             dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (condition), (input, other)
     returns:
         output:
             dtype: tensor
-    function:
-        disable: True
+    dispatch:
+        enable: True

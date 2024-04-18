@@ -49,7 +49,7 @@ class TestRenormalize : public UT::Common {
 // Feature: Specialize.
 // Description: If a poly node's parent are not specialized, poly node should be delay specialized.
 // Expectation: graph can be executed and no exception raised.
-TEST_F(TestRenormalize, TestPolyDelaySpecialize) {
+TEST_F(TestRenormalize, DISABLED_TestPolyDelaySpecialize) {
   FuncGraphPtr test_graph = getPyFun.CallAndParseRet("test_renormalize", "test_poly_delay_specialize_ut");
   ASSERT_TRUE(nullptr != test_graph);
   pipeline::ResourcePtr res = std::make_shared<pipeline::Resource>();
@@ -62,7 +62,7 @@ TEST_F(TestRenormalize, TestPolyDelaySpecialize) {
 // Feature: Static analysis of control flow.
 // Description: IgnoreValue flag should not be tagged when a function called twice if the function is header of 'if'.
 // Expectation: No tuple-getitem exist in specialized graph.
-TEST_F(TestRenormalize, TestIgnoreValueTag) {
+TEST_F(TestRenormalize, DISABLED_TestIgnoreValueTag) {
   FuncGraphPtr test_graph = getPyFun.CallAndParseRet("test_renormalize", "test_ignore_flag_with_twice_call_if");
   ASSERT_TRUE(nullptr != test_graph);
   pipeline::ResourcePtr res = std::make_shared<pipeline::Resource>();

@@ -19,7 +19,7 @@
 
 #include <string>
 #include <unordered_map>
-#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {

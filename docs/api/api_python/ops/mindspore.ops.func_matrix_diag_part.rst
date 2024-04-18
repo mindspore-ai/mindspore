@@ -25,7 +25,7 @@ mindspore.ops.matrix_diag_part
         - **ValueError** - `align` 取值不在合法值集合内。
         - **ValueError** - `k` 的维度不为0或1。
         - **ValueError** - `padding_value` 的维度不为0。
-        - **ValueError** - `x` 的维度不大于等于2。
+        - **ValueError** - `x` 的维度小于2。
         - **ValueError** - `k` 的大小不为1或2。
         - **ValueError** - 当 `k` 的大小为2时，k[1]小于k[0]。
         - **ValueError** - `k` 的取值不在 (-x.shape[-2], x.shape[-1]) 范围内。

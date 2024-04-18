@@ -733,6 +733,48 @@ REG_BPROP_BUILDER("MaxPoolWithArgmaxV2").SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("MaxPoolWithMask").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto kernel_size = ib->GetInput(kIndex1);
+  auto strides = ib->GetInput(kIndex2);
+  auto pads = ib->GetInput(kIndex3);
+  auto dilation = ib->GetInput(kIndex4);
+  auto ceil_mode = ib->GetInput(kIndex5);
+  auto argmax_type = ib->GetInput(kIndex6);
+  auto out = ib->GetInput(kIndex7);
+  auto dout = ib->GetInput(kIndex8);
+  auto dx = ib->Emit("MaxPoolGradWithMask", {x, ib->TupleGetItem(dout, i0), ib->TupleGetItem(out, i1), kernel_size,
+                                             strides, pads, dilation, ceil_mode, argmax_type});
+  auto g_kernel_size = ib->OutZeros(kernel_size);
+  auto g_strides = ib->OutZeros(strides);
+  auto g_pads = ib->OutZeros(pads);
+  auto g_dilation = ib->OutZeros(dilation);
+  auto g_ceil_mode = ib->OutZeros(ceil_mode);
+  auto g_argmax_type = ib->OutZeros(argmax_type);
+  return {dx, g_kernel_size, g_strides, g_pads, g_dilation, g_ceil_mode, g_argmax_type};
+});
+
+REG_BPROP_BUILDER("MaxPoolWithIndices").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto kernel_size = ib->GetInput(kIndex1);
+  auto strides = ib->GetInput(kIndex2);
+  auto pads = ib->GetInput(kIndex3);
+  auto dilation = ib->GetInput(kIndex4);
+  auto ceil_mode = ib->GetInput(kIndex5);
+  auto argmax_type = ib->GetInput(kIndex6);
+  auto out = ib->GetInput(kIndex7);
+  auto dout = ib->GetInput(kIndex8);
+  auto dx = ib->Emit("MaxPoolGradWithIndices", {x, ib->TupleGetItem(dout, i0), ib->TupleGetItem(out, i1), kernel_size,
+                                                strides, pads, dilation, ceil_mode, argmax_type});
+  auto g_kernel_size = ib->OutZeros(kernel_size);
+  auto g_strides = ib->OutZeros(strides);
+  auto g_pads = ib->OutZeros(pads);
+  auto g_dilation = ib->OutZeros(dilation);
+  auto g_ceil_mode = ib->OutZeros(ceil_mode);
+  auto g_argmax_type = ib->OutZeros(argmax_type);
+  return {dx, g_kernel_size, g_strides, g_pads, g_dilation, g_ceil_mode, g_argmax_type};
+});
+
 REG_BPROP_BUILDER("GroupNorm").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto num_groups = ib->GetInput(kIndex1);
@@ -2363,6 +2405,25 @@ REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {
   auto dx = ib->TupleGetItem(grad, kIndex0);
   auto dgamma = ib->TupleGetItem(grad, kIndex1);
   return {dx, dgamma};
+}));
+
+REG_BPROP_BUILDER("MultiScaleDeformableAttnFunctionV2").SetBody((BODYFUNC(ib) {
+  auto value = ib->GetInput(kIndex0);
+  auto value_spatial_shapes = ib->GetInput(kIndex1);
+  auto value_level_start_index = ib->GetInput(kIndex2);
+  auto sampling_locations = ib->GetInput(kIndex3);
+  auto attention_weights = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  sampling_locations = ib->Transpose(sampling_locations, {0, 1, 2, 3, 5, 4});
+  auto grad = ib->Emit("MultiScaleDeformableAttentionV2Grad", {value, value_spatial_shapes, value_level_start_index,
+                                                               sampling_locations, attention_weights, dout});
+  auto grad_value = ib->TupleGetItem(grad, kIndex0);
+  auto grad_spatial_shapes = ib->ZerosLike(value_spatial_shapes);
+  auto grad_level_start_index = ib->ZerosLike(value_level_start_index);
+  auto grad_sampling_loc = ib->TupleGetItem(grad, kIndex1);
+  auto grad_attn_weight = ib->TupleGetItem(grad, kIndex2);
+  grad_sampling_loc = ib->Transpose(grad_sampling_loc, {0, 1, 2, 3, 5, 4});
+  return {grad_value, grad_spatial_shapes, grad_level_start_index, grad_sampling_loc, grad_attn_weight};
 }));
 
 REG_BPROP_BUILDERS_END

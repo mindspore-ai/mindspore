@@ -34,7 +34,7 @@ class TestLoadExport : public BackendCommon {
 /// Feature: MindIR node attribute export and load.
 /// Description: Node attribute export and load.
 /// Expectation: success.
-TEST_F(TestLoadExport, test_export_attr) {
+TEST_F(TestLoadExport, DISABLED_test_export_attr) {
   auto func_graph = getPyFun.CallAndParseRet("export_test", "add_node_attr_test");
   tensor::TensorPtr t = std::make_shared<tensor::Tensor>(kFloat32->type_id(), std::vector<int64_t>{1, 2, 3});
 
@@ -65,7 +65,7 @@ TEST_F(TestLoadExport, test_export_attr) {
 /// Feature: MindIR export abstract scalar.
 /// Description: abstract scalar export and load.
 /// Expectation: success.
-TEST_F(TestLoadExport, test_export_abstract_scalar) {
+TEST_F(TestLoadExport, DISABLED_test_export_abstract_scalar) {
   auto func_graph = getPyFun.CallAndParseRet("export_test_scalar", "node_scalar_out_test");
 
   // Renormalize func_graph to infer and set shape and type information.

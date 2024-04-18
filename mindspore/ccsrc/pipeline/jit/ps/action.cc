@@ -335,7 +335,7 @@ abstract::AnalysisResult AbstractAnalyze(const abstract::AnalysisEnginePtr &engi
 
 abstract::AnalysisResult AbstractAnalyze(const ValuePtr &func, const abstract::AbstractBasePtrList &args_abs,
                                          bool clear) {
-  auto infer_graph = ConstructGraphForEval(func, args_abs);
+  auto infer_graph = func->isa<FuncGraph>() ? func->cast<FuncGraphPtr>() : ConstructGraphForEval(func, args_abs);
   auto manager = Manage(infer_graph, true);
   auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
   return AbstractAnalyze(engine, infer_graph, args_abs, false, clear);

@@ -62,6 +62,12 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
                             const T *input_y, T *output);
   template <typename T>
   T MaximumFunc(const T &lhs, const T &rhs) const {
+    if (std::isnan(static_cast<float>(lhs))) {
+      return lhs;
+    }
+    if (std::isnan(static_cast<float>(rhs))) {
+      return rhs;
+    }
     return lhs > rhs ? lhs : rhs;
   }
   template <typename T>

@@ -33,11 +33,15 @@ void OpExecutor::RegisterForwardCallback(const std::function<void()> &callback) 
   tensor::Tensor::RegisterLazyCallback([]() { OpExecutor::GetInstance().WaitAll(); });
 }
 
-void OpExecutor::Reset() { runtime::Pipeline::Get().backend_stage()->Reset(); }
+void OpExecutor::Reset() {
+  runtime::Pipeline::Get().backend_stage()->Reset();
+  runtime::Pipeline::Get().launch_stage()->Reset();
+}
 
 void OpExecutor::WaitForRun() {
   MS_LOG(DEBUG) << "Start";
   runtime::Pipeline::Get().backend_stage()->Wait();
+  runtime::Pipeline::Get().launch_stage()->Wait();
   MS_LOG(DEBUG) << "All task finish";
 }
 
@@ -74,6 +78,17 @@ bool OpExecutor::RunQueueEmpty() { return runtime::Pipeline::Get().backend_stage
 void OpExecutor::WorkerJoin() {
   GilReleaseWithCheck release_gil;
   runtime::Pipeline::Get().backend_stage()->WorkerJoin();
+  runtime::Pipeline::Get().launch_stage()->WorkerJoin();
+}
+
+void OpExecutor::DispatchLaunchTask(const std::function<void()> &func) {
+  if (NeedSync()) {
+    runtime::OpExecutor::GetInstance().WaitAll();
+    func();
+  } else {
+    auto task = std::make_shared<runtime::DeviceLaunchTask>([=]() { func(); });
+    runtime::Pipeline::Get().launch_stage()->Push(task);
+  }
 }
 
 bool OpExecutor::NeedSync() {
@@ -87,6 +102,7 @@ void OpExecutor::ChildAfterFork() {
   MS_LOG(DEBUG) << "OpExecutor reinitialize after fork";
   MS_LOG(DEBUG) << "Reinitialize async_queue_.";
   runtime::Pipeline::Get().backend_stage()->ChildAfterFork();
+  runtime::Pipeline::Get().launch_stage()->ChildAfterFork();
   // Refresh the lazy callback in Tensor.
   tensor::Tensor::RegisterLazyCallback([]() { OpExecutor::GetInstance().WaitAll(); });
   MS_LOG(DEBUG) << "OpExecutor reinitialize after fork done.";

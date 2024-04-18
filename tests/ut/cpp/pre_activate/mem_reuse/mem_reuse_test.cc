@@ -30,6 +30,7 @@
 #include "backend/common/mem_reuse/mem_reuse.h"
 
 #include "common/common_test.h"
+#include "common/resource.h"
 #include "common/py_func_graph_fetcher.h"
 
 namespace mindspore {
@@ -155,7 +156,7 @@ static KernelGraphPtr CreateGraphWithExecOrder() {
    *               mul
    *              return
    */
-  auto anf_graph = std::make_shared<FuncGraph>();
+  auto anf_graph = UT::UTResourceManager::GetInstance()->MakeAndHoldFuncGraph();
   std::vector<int64_t> shape = {2, 32, 224, 224};
   auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
   EXPECT_NE(abstract, nullptr);

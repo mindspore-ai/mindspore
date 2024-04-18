@@ -210,10 +210,14 @@ bool GraphBuilder::IsByteCodeImplemented(int bytecode) {
 }
 
 bool GraphBuilder::ReplaceAll(ValueNode *old_node, ValueNode *new_node) {
+  static const std::set<int> ref_op = {
+    BUILD_TUPLE, BUILD_LIST, BUILD_SET, BUILD_MAP, BUILD_CONST_KEY_MAP,
+  };
+
   // check reference relationship
   const auto &nodes = graph_->GetTracedNodes();
   bool find = std::any_of(nodes.begin(), nodes.end(), [&old_node](ValueNode *node) {
-    if (Utils::IsGeneralNoSideEffectOp(node->GetOpcode())) {
+    if (Utils::IsGeneralNoSideEffectOp(node->GetOpcode()) && ref_op.find(node->GetOpcode()) == ref_op.end()) {
       return false;
     }
     const auto &args = node->getInputs();
@@ -1555,7 +1559,6 @@ py::object GraphBuilder::GetFuncInfo(ValueNode *func_node) {
 bool GraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::object &callable) {
   const auto &conf = call_node->GetGraph()->Config();
 
-  bool cell_inline = conf.GetBoolConfig(GraphJitConfig::kReplaceNNCellByConstruct);
   AObject::Type vobj_type = call_node->input(0)->GetVobj()->GetType();
   if (vobj_type == AObject::kTypeCell) {
     current_block_->SetTrackResult(Block::kTrackHasOpsPrimitive);
@@ -1565,7 +1568,6 @@ bool GraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::obj
     }
   }
 
-  // handle special function, not inline
   bool infer_primitive = conf.GetBoolConfig(GraphJitConfig::kInferPrimitive);
   int max_infer = conf.getIntConfig(GraphJitConfig::kInferPrimitiveMax);
   if (max_infer != 0 && infer_func_count >= max_infer) {
@@ -1574,31 +1576,38 @@ bool GraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::obj
     infer_func_count++;
   }
   infer_primitive &= (conf.getIntConfig(GraphJitConfig::kInferPrimitiveMask) & infer_primitive_func) != 0;
-  std::string special_func_key;
-  if (IsFuncInWhiteList(callable, &special_func_key, infer_primitive)) {
-    call_node->SetSubGraph(NewGraph(nullptr, nullptr));
-    call_node->GetSubGraph()->SetGuard(root_->GetGraph()->GetGuard());
-    if (!HandleFuncInWhiteList(special_func_key, call_node)) {
-      return false;
-    }
-    if (call_node->GetSubGraph() == nullptr) {
-      call_node->SetInlineReason(InlineReason::kInlineFuncSpecialize);
-    } else {
-      MS_EXCEPTION_IF_NULL(call_node->GetSubGraph()->GetRetVal());
-      call_node->SetInlineReason(InlineReason::kInline);
-      seek(0) = call_node->GetSubGraph()->GetRetVal();
-    }
-    return true;
-  }
-
-  // set node info before return
-  if (vobj_type == AObject::kTypePrimitive || (vobj_type == AObject::kTypeCell && !cell_inline)) {
+  if (!infer_primitive && vobj_type == AObject::kTypePrimitive) {
     call_node->SetVobj(AObject::MakeAObject(AObject::kTypeTensor));
     call_node->SetInlineReason(InlineReason::kInlineGraphSupportedByMS);
     current_block_->SetTrackResult(Block::kTrackHasOpsPrimitive);
     return true;
   }
-  return false;
+
+  InferFunc infer_func = FindInferFunc(callable);
+  if (infer_func == nullptr) {
+    return false;
+  }
+
+  call_node->SetInlineReason(InlineReason::kInlineUnknown);
+  call_node->SetSubGraph(NewGraph(nullptr, nullptr));
+  call_node->GetSubGraph()->SetGuard(root_->GetGraph()->GetGuard());
+  infer_func(call_node);
+
+  if (!HandleSideEffectOfFuncInWhiteList(call_node, infer_func)) {
+    return false;
+  }
+  InlineReason r;
+  if (call_node->GetSubGraph() == nullptr) {
+    r = InlineReason::kInlineFuncSpecialize;
+  } else {
+    MS_EXCEPTION_IF_NULL(call_node->GetSubGraph()->GetRetVal());
+    r = InlineReason::kInline;
+    seek(0) = call_node->GetSubGraph()->GetRetVal();
+  }
+  if (call_node->GetInlineReason() == InlineReason::kInlineUnknown) {
+    call_node->SetInlineReason(r);
+  }
+  return true;
 }
 
 bool UnsupportedCodeTypeCheck(PyCodeObject *co) {
@@ -2598,6 +2607,9 @@ py::object GraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *s
   }
 
   if (WhiteListFuncCheckAndInfer(call_node, callable_info)) {
+    if (call_node->GetInlineReason() == InlineReason::kInlineFunc_Type_Unsupported) {
+      *stop_reason = StopTraceReason::kStopTraceFunc_Type_Unsupported;
+    }
     return py::object();
   }
 
@@ -3219,34 +3231,7 @@ static void SetGradFuncInfo(CallNode *call_node) {
 
 void GraphBuilder::DumpDFG() { GRAPH_JIT_LOG_F("%s", graph_->ToString().c_str()); }
 
-bool GraphBuilder::IsFuncInWhiteList(const py::object &f, std::string *special_func_key, bool bInferPrimitive) {
-  if (f.ptr() == nullptr) {
-    return false;
-  }
-  *special_func_key = GetFuncName(f);
-  auto FuncWhiteListMap = GetFuncWhiteListMap();
-  auto iter = FuncWhiteListMap.find(*special_func_key);
-  if (iter != FuncWhiteListMap.end() && iter->second.check(f)) {
-    return true;
-  }
-  auto fuzzmatcher = GetFuncWhiteListFuzzyMatcher();
-  auto tar = std::find_if(fuzzmatcher.begin(), fuzzmatcher.end(),
-                          [&f](const std::pair<CheckFunc, std::string> &i) { return i.first(f); });
-  if (tar != fuzzmatcher.end()) {
-    *special_func_key = tar->second;
-    return true;
-  }
-  if (bInferPrimitive && CheckPrimitive(f)) {
-    *special_func_key = GetMindsporeNamePrimitive();
-    return true;
-  }
-  return false;
-}
-
-bool GraphBuilder::HandleFuncInWhiteList(const std::string &key, CallNode *call_node) {
-  const auto &infer_func = GetFuncWhiteListMap().find(key)->second.infer;
-  infer_func(call_node);
-
+bool GraphBuilder::HandleSideEffectOfFuncInWhiteList(CallNode *call_node, InferFunc infer_func) {
   // handle white list side-effects
   ValueNode *old_node = nullptr;
   ValueNode *new_node = nullptr;
@@ -3265,31 +3250,6 @@ bool GraphBuilder::HandleFuncInWhiteList(const std::string &key, CallNode *call_
   return true;
 }
 
-bool MindGraphBuilder::IsFuncInWhiteList(const py::object &f, std::string *special_func_key) {
-  if (f.ptr() == nullptr) {
-    return false;
-  }
-  *special_func_key = GetFuncName(f);
-  auto MindFuncWhiteListMap = GetFuncWhiteListMap(true);
-  auto iter = MindFuncWhiteListMap.find(*special_func_key);
-  if (iter != MindFuncWhiteListMap.end() && iter->second.check(f)) {
-    return true;
-  }
-  auto fuzzmatcher = GetFuncWhiteListFuzzyMatcher(true);
-  auto tar = std::find_if(fuzzmatcher.begin(), fuzzmatcher.end(),
-                          [&f](const std::pair<CheckFunc, std::string> &i) { return i.first(f); });
-  if (tar != fuzzmatcher.end()) {
-    *special_func_key = tar->second;
-    return true;
-  }
-  return false;
-}
-
-bool MindGraphBuilder::HandleFuncInWhiteList(const std::string &key, CallNode *n) {
-  MS_LOG(INFO) << "specialize for " << key;
-  return GetFuncWhiteListMap(true).find(key)->second.infer(n);
-}
-
 LocationPtr MindGraphBuilder::GetLocation(CallNode *call_node) const {
   auto file_name = py::cast<std::string>(graph_->GetCodeObj()->co_filename);
   auto line_no = call_node->GetLineNo();
@@ -3298,11 +3258,11 @@ LocationPtr MindGraphBuilder::GetLocation(CallNode *call_node) const {
 }
 
 bool MindGraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::object &callable) {
-  std::string special_func_key;
-  if (IsFuncInWhiteList(callable, &special_func_key)) {
+  InferFunc infer_func = FindInferFunc(callable, trace_flag());
+  if (infer_func != nullptr) {
     call_node->SetSubGraph(NewGraph(nullptr, nullptr));
     call_node->GetSubGraph()->SetGuard(root_->GetGraph()->GetGuard());
-    bool has_sub_graph = HandleFuncInWhiteList(special_func_key, call_node);
+    bool has_sub_graph = infer_func(call_node);
     if (!has_sub_graph) {
       call_node->SetInlineReason(InlineReason::kInlineFuncSpecialize);
       MS_ASSERT(!call_node->GetSubGraph());  // check infer function

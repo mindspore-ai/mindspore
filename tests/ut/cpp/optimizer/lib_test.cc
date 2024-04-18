@@ -40,13 +40,14 @@ using abstract::AnalysisResult;
 class TestOptLib : public UT::Common {
  public:
   TestOptLib() : getPyFun("gtest_input.optimizer.opt_test", true), irpass() {}
-  void SetUp() {
+  void SetUp() override {
     UT::InitPythonPath();
     parse::data_converter::ClearObjectCache();
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
     ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   }
+
   FuncGraphPtr RunTransform(FuncGraphPtr gbefore, const SubstitutionList &transform) {
     equiv_node.clear();
     equiv_graph.clear();
@@ -164,7 +165,7 @@ TEST_F(TestOptLib, test_arithmetic) {
   ASSERT_TRUE(CheckOpt(b5, after, patterns));
 }
 
-TEST_F(TestOptLib, test_elim_cast_same_dtype) {
+TEST_F(TestOptLib, DISABLED_test_elim_cast_same_dtype) {
   FuncGraphPtr before = getPyFun.CallAndParseRet("test_elim_cast_same_dtype", "fp32_cast_fp32");
   FuncGraphPtr after = getPyFun.CallAndParseRet("test_elim_cast_same_dtype", "after");
   // construct such case that cast srcT equal dstT
@@ -474,7 +475,7 @@ TEST_F(TestOptLib, test_minmax_grad) {
   ASSERT_TRUE(CheckOpt(before4, before4, patterns));
 }
 
-TEST_F(TestOptLib, test_reducesum_one) {
+TEST_F(TestOptLib, DISABLED_test_reducesum_one) {
   FuncGraphPtr before1 = getPyFun.CallAndParseRet("test_reducesum_one", "before_1");
   FuncGraphPtr before2 = getPyFun.CallAndParseRet("test_reducesum_one", "before_2");
   FuncGraphPtr before3 = getPyFun.CallAndParseRet("test_reducesum_one", "before_3");

@@ -60,7 +60,7 @@ from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     nonzero, flip, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
-    strided_slice, ones, zeros, max_, min_
+    strided_slice, ones, zeros, max_, min_, select
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = ArgMaxWithValue()
@@ -387,25 +387,25 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
     return out
 
 
-def where(condition, x, y):
+def where(condition, input, other):
     r"""
-    Selects elements from `x` or `y` based on `condition` and returns a tensor.
+    Selects elements from `input` or `other` based on `condition` and returns a tensor.
 
     .. math::
-        output_i = \begin{cases} x_i,\quad &if\ condition_i \\ y_i,\quad &otherwise \end{cases}
+        output_i = \begin{cases} input_i,\quad &if\ condition_i \\ other_i,\quad &otherwise \end{cases}
 
     Args:
-        condition (Tensor[bool]): If True, yield `x`, otherwise yield `y`.
-        x (Union[Tensor, Scalar]): When `condition` is True, values to select from.
-        y (Union[Tensor, Scalar]): When `condition` is False, values to select from.
+        condition (Tensor[bool]): If True, yield `input`, otherwise yield `other`.
+        input (Union[Tensor, Scalar]): When `condition` is True, values to select from.
+        other (Union[Tensor, Scalar]): When `condition` is False, values to select from.
 
     Returns:
-        Tensor, elements are selected from `x` and `y`.
+        Tensor, elements are selected from `input` and `other`.
 
     Raises:
         TypeError: If `condition` is not a Tensor.
-        TypeError: If both `x` and `y` are scalars.
-        ValueError: If `condition`, `x` and `y` can not broadcast to each other.
+        TypeError: If both `input` and `other` are scalars.
+        ValueError: If `condition`, `input` and `other` can not broadcast to each other.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -422,25 +422,7 @@ def where(condition, x, y):
         [[0. 1.]
          [2. 1.]]
     """
-    if not isinstance(condition, Tensor):
-        raise TypeError(f"For 'where', 'condition' must be a Tensor, but got {type(condition)}.")
-    if isinstance(x, (int, float)):
-        if not isinstance(y, Tensor):
-            raise TypeError(
-                f"For 'where', at least one of 'x' and 'y' should be Tensor, but got x:{type(x)}, y:{type(y)}."
-            )
-        x = cast_(x, y.dtype)
-    elif isinstance(y, (int, float)):
-        if not isinstance(x, Tensor):
-            raise TypeError(
-                f"For 'where', at least one of 'x' and 'y' should be Tensor, but got x:{type(x)}, y:{type(y)}."
-            )
-        y = cast_(y, x.dtype)
-    output_shape = _calc_broadcast_shape(x.shape, y.shape, condition.shape)
-    condition = broadcast_to(condition, output_shape)
-    x = broadcast_to(x, output_shape)
-    y = broadcast_to(y, output_shape)
-    return tensor_select_(condition, x, y)
+    return tensor_select_(condition, input, other)
 
 
 def reverse(x, axis):
@@ -612,14 +594,14 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
 
     Returns:
         Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`,
-            and it has the same data type as `on_value`.
+        and it has the same data type as `on_value`.
 
     Raises:
         TypeError: If `axis` or `depth` is not an int.
         TypeError: If dtype of `indices` is not int32 or int64.
         TypeError: If dtype of `on_value` is not int32, int64, float16 or float32.
         TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
-        ValueError: If `axis` is not in range [-1, ndim].
+        ValueError: If `axis` is not in range [-1, ndim]. ndim is the dimension of `indices` .
         ValueError: If `depth` is less than 0.
 
     Supported Platforms:
@@ -1048,12 +1030,16 @@ def unique_consecutive(input, return_idx=False, return_counts=False, axis=None):
             returned. If specified, it must be int32 or int64. Default: ``None`` .
 
     Returns:
-        A tensor or a tuple of tensors containing tensor objects (`output`, `idx`, `counts`). `output` has the
-        same type as `input` and is used to represent the output list of unique scalar elements. If `return_idx` is
-        True, there will be an additional returned tensor, `idx`, which has the same shape as `input` and represents
-        the index of where the element in the original input maps to the position in the output. If `return_counts`
-        is True, there will be an additional returned tensor, `counts`, which represents the number of occurrences
-        for each unique value or tensor.
+        A tensor or a tuple of tensors containing tensor objects (`output`, `idx`, `counts`).
+
+        - `output` has the
+          same type as `input` and is used to represent the output list of unique scalar elements.
+        - If `return_idx` is
+          True, there will be an additional returned tensor, `idx`, which has the same shape as `input` and represents
+          the index of where the element in the original input maps to the position in the output.
+        - If `return_counts`
+          is True, there will be an additional returned tensor, `counts`, which represents the number of occurrences
+          for each unique value or tensor.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -1429,165 +1415,6 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
         idx += 1
     new_shape = x_shape[:start_dim] + (dim_length,) + x_shape[end_dim + 1:]
     return reshape_(input, new_shape)
-
-
-def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
-    if isinstance(scalar, int) and tensor_type != mstype.int32:
-        raise TypeError(f"For functional operator[select], the input[{scalar_name}] is int, "
-                        f"then the input[{tensor_name}] must be a Tensor of int32.")
-    if isinstance(scalar, float) and tensor_type != mstype.float32:
-        raise TypeError(f"For functional operator[select], the input[{scalar_name}] is float, "
-                        f"then the input[{tensor_name}] must be a Tensor of float32.")
-
-
-def _check_select_shape_match(input_shape, cond_shape, tensor_name):
-    if input_shape != cond_shape:
-        raise ValueError(f"For functional operator[select], the cond shape must be same as {tensor_name} shape.")
-
-
-def _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor):
-    if not is_cond_tensor:
-        raise TypeError(f"For functional operator[select], the input[cond] must be a Tensor.")
-    if is_x_scalar and not is_y_tensor:
-        raise TypeError(f"For functional operator[select], the input[x] is int or float, "
-                        f"then the input[y] must be a Tensor.")
-    if is_y_scalar and not is_x_tensor:
-        raise TypeError(f"For functional operator[select], the input[y] is int or float, "
-                        f"then the input[x] must be a Tensor.")
-
-
-def _check_select_shape_same(cond_shape, x_shape, y_shape):
-    """Check if input of select has same shape."""
-    return cond_shape == x_shape and x_shape == y_shape and cond_shape == y_shape
-
-
-def get_max_value(x, y, z):
-    """Get the maximum value of x, y and z."""
-    if x >= y and x >= z:
-        return x
-    if y >= x and y >= z:
-        return y
-    return z
-
-
-def _calc_broadcast_shape(cond_shape, x_shape, y_shape):
-    """Calculate broadcast shape for select"""
-    converted_shape = []
-    cond_reverse = cond_shape[::-1]
-    x_reverse = x_shape[::-1]
-    y_reverse = y_shape[::-1]
-    max_len = get_max_value(len(cond_reverse), len(x_reverse), len(y_reverse))
-    i = 0
-    while i < max_len:
-        cond_element = 1 if i >= len(cond_reverse) else cond_reverse[i]
-        x_element = 1 if i >= len(x_reverse) else x_reverse[i]
-        y_element = 1 if i >= len(y_reverse) else y_reverse[i]
-        broadcast_element = get_max_value(cond_element, x_element, y_element)
-        if cond_element not in (1, broadcast_element):
-            raise ValueError(f"For select, condition input can not broadcast at index {i}")
-        if x_element not in (1, broadcast_element):
-            raise ValueError(f"For select, x input can not broadcast at index {i}")
-        if y_element not in (1, broadcast_element):
-            raise ValueError(f"For select, y input can not broadcast at index {i}")
-        converted_shape.append(broadcast_element)
-        i = i + 1
-    converted_shape.reverse()
-    return tuple(converted_shape)
-
-
-def select(cond, x, y):
-    r"""
-    The conditional tensor determines whether the corresponding element in the output must be
-    selected from `x` (if true) or `y` (if false) based on the value of each element.
-
-    It can be defined as:
-
-    .. math::
-        out_i = \begin{cases}
-        x_i, & \text{if } cond_i \\
-        y_i, & \text{otherwise}
-        \end{cases}
-
-    Args:
-        cond (Tensor[bool]): The condition tensor, decides which element is chosen.
-          The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-        x (Union[Tensor, int, float]): The first Tensor or number to be selected.
-          If x is a Tensor, the shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-          If x is an int or a float, it will be cast to the type of int32 or float32,
-          and broadcast to the same shape as y. One of x and y must be a Tensor.
-        y (Union[Tensor, int, float]): The second Tensor or number to be selected.
-          If y is a Tensor, The shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-          If y is an int or a float, it will be cast to the type of int32 or float32,
-          and broadcast to the same shape as x. One of x and y must be a Tensor.
-
-    Returns:
-        Tensor, has the same shape as `cond`.
-
-    Raises:
-        TypeError: If `x` or `y` is not a Tensor, int or float.
-        ValueError: The shapes of inputs can not be broadcast.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> # 1) Both inputs are Tensor
-        >>>
-        >>> cond = Tensor([True, False])
-        >>> x = Tensor([2,3], mindspore.float32)
-        >>> y = Tensor([1,2], mindspore.float32)
-        >>> output = ops.select(cond, x, y)
-        >>> print(output)
-        [2. 2.]
-        >>> # 2) y is a float
-        >>> cond = Tensor([True, False])
-        >>> x = Tensor([2,3], mindspore.float32)
-        >>> y = 2.0
-        >>> output = ops.select(cond, x, y)
-        >>> print(output)
-        [2. 2.]
-    """
-    is_x_scalar = isinstance(x, (int, float))
-    is_y_scalar = isinstance(y, (int, float))
-    is_x_tensor = isinstance(x, Tensor)
-    is_y_tensor = isinstance(y, Tensor)
-    is_cond_tensor = isinstance(cond, Tensor)
-    _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor)
-    input_x = x
-    input_y = y
-    if is_x_scalar:
-        _check_select_shape_match(y.shape, cond.shape, "y")
-        _check_select_type_match(x, y.dtype, "x", "y")
-        input_x = zeros_like_(y) + x
-        if isinstance(x, int):
-            input_x = cast_(input_x, mstype.int32)
-        else:
-            input_x = cast_(input_x, mstype.float32)
-
-    if is_y_scalar:
-        _check_select_shape_match(x.shape, cond.shape, "x")
-        _check_select_type_match(y, x.dtype, "y", "x")
-        input_y = zeros_like_(x) + y
-        if isinstance(y, int):
-            input_y = cast_(input_y, mstype.int32)
-        else:
-            input_y = cast_(input_y, mstype.float32)
-
-    if is_x_tensor and is_y_tensor and is_cond_tensor:
-        x_shape = ops.shape(x)
-        y_shape = ops.shape(y)
-        cond_shape = ops.shape(cond)
-        all_constant = ops.isconstant(cond_shape) and ops.isconstant(x_shape) and ops.isconstant(y_shape)
-        if all_constant and not _check_select_shape_same(cond_shape, x_shape, y_shape):
-            broadcast_shape = _calc_broadcast_shape(cond_shape, x_shape, y_shape)
-            new_cond = ops.broadcast_to(cond, broadcast_shape)
-            new_x = ops.broadcast_to(x, broadcast_shape)
-            new_y = ops.broadcast_to(y, broadcast_shape)
-            return tensor_select_(new_cond, new_x, new_y)
-
-    return tensor_select_(cond, input_x, input_y)
 
 
 def slice(input_x, begin, size):
@@ -2767,11 +2594,11 @@ def gather_elements(input, dim, index):
 
     .. code-block::
 
-        output[i][j][k] = x[index[i][j][k]][j][k]  # if dim == 0
+        output[i][j][k] = input[index[i][j][k]][j][k]  # if dim == 0
 
-        output[i][j][k] = x[i][index[i][j][k]][k]  # if dim == 1
+        output[i][j][k] = input[i][index[i][j][k]][k]  # if dim == 1
 
-        output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
+        output[i][j][k] = input[i][j][index[i][j][k]]  # if dim == 2
 
     `input` and `index` have the same length of dimensions, and `index.shape[axis] <= input.shape[axis]`
     where axis goes through all dimensions of `input` except `dim`.
@@ -2832,10 +2659,12 @@ def tensor_scatter_add(input_x, indices, updates):
         output\left [indices  \right ] = input\_x + update
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        If some values of the `indices` are out of `input_x` bound:
+
+        - On GPU, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, raising an index error.
+        - On Ascend, out of bound checking is not supported,
           unknown errors may be caused.
 
     Args:
@@ -2890,10 +2719,13 @@ def tensor_scatter_sub(input_x, indices, updates):
         output[indices] = input\_x - update
 
     Note:
-        On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `updates` will not be updated to self tensor. On CPU, if some values of
-        the `indices` are out of bound, raising an index error. On Ascend, out of bound checking is
-        not supported, if some values of the `indices` are out of bound, unknown errors may be caused.
+        If some values of the `indices` are out of `input_x` bound:
+
+        - On GPU, instead of raising an index error,
+          the corresponding `updates` will not be updated to self tensor.
+        - On CPU, raising an index error.
+        - On Ascend, out of bound checking is
+          not supported, unknown errors may be caused.
 
     Args:
         input_x (Tensor): The input tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -2943,10 +2775,12 @@ def tensor_scatter_max(input_x, indices, updates):
         output\left [indices  \right ] = \max(input\_x, update)
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        If some values of the `indices` are out of `input_x` bound:
+
+        - On GPU, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, raising an index error.
+        - On Ascend, out of bound checking is not supported,
           unknown errors may be caused.
 
     Args:
@@ -3004,10 +2838,12 @@ def tensor_scatter_min(input_x, indices, updates):
         output\left [indices  \right ] = \min(input\_x, update)
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        If some values of the `indices` are out of `input_x` bound:
+
+        - On GPU, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, raising an index error.
+        - On Ascend, out of bound checking is not supported,
           unknown errors may be caused.
 
     Args:
@@ -3497,7 +3333,7 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
         ValueError: If rank of `num_rows`, `num_cols` or `padding_value` is not equal to 0.
         ValueError: If size of `k` is not equal to 1 or 2.
         ValueError: If the value of `k` is not in (-num_rows, num_cols).
-        ValueError: If k[1] is not greater equal to k[0] when k[0] != k[1].
+        ValueError: If k[1] is less than k[0] when k[0] != k[1].
         ValueError: If rank of `x` is not greater than or is equal to 1 when k is an integer or k[0] == k[1].
         ValueError: If rank of `x` is not greater than or is equal to 2 when k[0] != k[1].
         ValueError: If x.shape[-2] is not equal to k[1] - k[0] + 1 when k[0] != k[1].
@@ -3561,11 +3397,13 @@ def matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT"):
 
     Returns:
         A Tensor. Has the same type as `x`.
-        Assume `x` has r dimensions :math:`(I, J, ..., M, N)` . Let `max_diag_len` be the maximum length among all
-        diagonals to be extracted, :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
-        Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
-        If :math:`num\_diags == 1`, the output tensor is of rank r - 1 with shape :math:`(I, J, ..., L, max\_diag\_len)`
-        Otherwise, the output tensor has rank r with dimensions :math:`(I, J, ..., L, num\_diags, max\_diag\_len)` .
+
+        - Assume `x` has r dimensions :math:`(I, J, ..., M, N)` . Let `max_diag_len` be the maximum length among all
+          diagonals to be extracted, :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
+        - Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
+          If :math:`num\_diags == 1`, the output tensor is of rank r - 1
+          with shape :math:`(I, J, ..., L, max\_diag\_len)`
+          Otherwise, the output tensor has rank r with dimensions :math:`(I, J, ..., L, num\_diags, max\_diag\_len)` .
 
     Raises:
         TypeError: If `x` is not Tensor.
@@ -3574,9 +3412,9 @@ def matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT"):
         ValueError: If `align` is not a string or not in the valid range.
         ValueError: If rank of `k` is not equal to 0 or 1.
         ValueError: If rank of `padding_value` is not equal to 0.
-        ValueError: If rank of `x` is not greater equal to 2.
+        ValueError: If rank of `x` is less than 2.
         ValueError: If size of `k` is not equal to 1 or 2.
-        ValueError: If k[1] is not greater equal to k[0] in case the size of `k` is 2.
+        ValueError: If k[1] is less than k[0] in case the size of `k` is 2.
         ValueError: If the value of `k` is not in (-x.shape[-2], x.shape[-1]).
 
     Supported Platforms:
@@ -3643,9 +3481,9 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=re
         TypeError: If `k` is not int32 dtype.
         ValueError: If `align` is not a string or not in the valid range.
         ValueError: If rank of `k` is not equal to 0 or 1.
-        ValueError: If rank of `x` is not greater equal to 2.
+        ValueError: If rank of `x` is less than 2.
         ValueError: If size of `k` is not equal to 1 or 2.
-        ValueError: If k[1] is not greater equal to k[0] in case the size of `k` is 2.
+        ValueError: If k[1] is less than k[0] in case the size of `k` is 2.
         ValueError: If the `diagonal` rank size don't match with input `x` rank size.
         ValueError: If the `diagonal` shape value don't match with input `x` shape value.
         ValueError: If the diagonal :math:`shape[-2]` is not equal to num_diags calculated by :math:`k[1]-k[0]+1`.
@@ -4112,7 +3950,7 @@ def is_tensor(obj):
         obj (Object): input object.
 
     Returns:
-        Bool. Return True if `obj` is a Tensor, otherwise, return False.
+        Bool. Return ``True`` if `obj` is a Tensor, otherwise, return ``False``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4238,10 +4076,12 @@ def tensor_scatter_div(input_x, indices, updates):
         output\left [indices  \right ] = input\_x \div update
 
     Note:
-        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        If some values of the `indices` are out of `input_x` bound:
+
+        - On GPU, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bound, raising an index error.
-        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        - On CPU, raising an index error.
+        - On Ascend, out of bound checking is not supported,
           unknown errors may be caused.
         - The operator can't handle division by 0 exceptions, so the user needs to make sure
           there is no 0 value in `updates`.
@@ -4669,7 +4509,7 @@ def triu(input, diagonal=0):  # pylint: disable=redefined-outer-name
 
     Args:
         input (Tensor): The input tensor with shape :math:`(M, N, *)` where * means any number of additional dimensions.
-        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
+        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: ``0``,
             indicating the main diagonal.
 
     Returns:
@@ -4867,7 +4707,7 @@ def tensor_split(input, indices_or_sections, axis=0):
         TypeError: If argument `input` is not Tensor.
         TypeError: If argument `axis` is not int.
         ValueError: If argument `axis` is out of range of :math:`[-input.ndim, input.ndim)` .
-        TypeError: If each element in 'indices_or_sections' is not integer.
+        TypeError: If each element in `indices_or_sections` is not integer.
         TypeError: If argument `indices_or_sections` is not int, tuple(int) or list(int).
 
     Supported Platforms:

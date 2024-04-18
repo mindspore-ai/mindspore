@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_SCALAR_DIV_H_
 #define MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_SCALAR_DIV_H_
 
+#include <cmath>
 #include "mindspore/core/ops/symbol_ops_impl/common.h"
 
 namespace mindspore {
@@ -29,8 +30,42 @@ class MS_CORE_API ScalarDiv : public ScalarOp {
 
  protected:
   SymbolPtr Eval() override;
-  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(AsInt(input(0)) / AsInt(input(1))); }
+  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(DivWithCheck(AsInt(input(0)), AsInt(input(1)))); }
+  inline int64_t DivWithCheck(int64_t x, int64_t y) const {
+    if (x % y != 0) {
+      MS_LOG(EXCEPTION) << "For operation 'ScalarDiv', the 'x' should be divisible by 'y', but got " << x << "/" << y;
+    }
+    return x / y;
+  }
   void UpdateMathInfo() override;
+};
+
+class MS_CORE_API ScalarFloorDiv : public ScalarOp {
+ public:
+  using ScalarOp::ScalarOp;
+  ScalarFloorDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) {}
+  MS_DECLARE_PARENT(ScalarFloorDiv, ScalarOp)
+
+ protected:
+  SymbolPtr Eval() override;
+  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(FloorDiv(AsInt(input(0)), AsInt(input(1)))); }
+  inline int64_t FloorDiv(int64_t x, int64_t y) const {
+    return DoubleToLong(std::floor(LongToDouble(x) / LongToDouble(y)));
+  }
+};
+
+class MS_CORE_API ScalarCeilDiv : public ScalarOp {
+ public:
+  using ScalarOp::ScalarOp;
+  ScalarCeilDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) {}
+  MS_DECLARE_PARENT(ScalarCeilDiv, ScalarOp)
+
+ protected:
+  SymbolPtr Eval() override;
+  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(CeilDiv(AsInt(input(0)), AsInt(input(1)))); }
+  inline int64_t CeilDiv(int64_t x, int64_t y) const {
+    return DoubleToLong(std::ceil(LongToDouble(x) / LongToDouble(y)));
+  }
 };
 }  // namespace ops
 }  // namespace symshape

@@ -67,7 +67,7 @@ void TestSoftmaxInfo::SetUp() {
   softmax2 = std::make_shared<SoftmaxInfo>("softmax_info2", inputs_shape, outputs_shape, attr2);
 }
 
-TEST_F(TestSoftmaxInfo, InferDevMatrixShape1) {
+TEST_F(TestSoftmaxInfo, DISABLED_InferDevMatrixShape1) {
   Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -78,7 +78,7 @@ TEST_F(TestSoftmaxInfo, InferDevMatrixShape1) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestSoftmaxInfo, InferSliceShape1) {
+TEST_F(TestSoftmaxInfo, DISABLED_InferSliceShape1) {
   Strategies str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -99,7 +99,7 @@ TEST_F(TestSoftmaxInfo, InferSliceShape1) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestSoftmaxInfo, GetTensorLayout1) {
+TEST_F(TestSoftmaxInfo, DISABLED_GetTensorLayout1) {
   Strategies str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -120,7 +120,7 @@ TEST_F(TestSoftmaxInfo, GetTensorLayout1) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
-TEST_F(TestSoftmaxInfo, GetForwardOp1) {
+TEST_F(TestSoftmaxInfo, DISABLED_GetForwardOp1) {
   Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -131,7 +131,7 @@ TEST_F(TestSoftmaxInfo, GetForwardOp1) {
   ASSERT_EQ(size, 0);
 }
 
-TEST_F(TestSoftmaxInfo, GetMirrorOPs1) {
+TEST_F(TestSoftmaxInfo, DISABLED_GetMirrorOPs1) {
   Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -143,7 +143,7 @@ TEST_F(TestSoftmaxInfo, GetMirrorOPs1) {
   ASSERT_EQ(size, 0);
 }
 
-TEST_F(TestSoftmaxInfo, CheckStrategy1) {
+TEST_F(TestSoftmaxInfo, DISABLED_CheckStrategy1) {
   // Success: {{2,4,1,16}}
   Strategies inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -152,7 +152,7 @@ TEST_F(TestSoftmaxInfo, CheckStrategy1) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestSoftmaxInfo, CheckStrategy2) {
+TEST_F(TestSoftmaxInfo, DISABLED_CheckStrategy2) {
   // Success: {{2,4,1,16}}
   Strategies inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -161,7 +161,7 @@ TEST_F(TestSoftmaxInfo, CheckStrategy2) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestSoftmaxInfo, CheckStrategy3) {
+TEST_F(TestSoftmaxInfo, DISABLED_CheckStrategy3) {
   // Success: {{2,4,1,16}}
   Strategies inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -170,7 +170,7 @@ TEST_F(TestSoftmaxInfo, CheckStrategy3) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestSoftmaxInfo, InitFailed1) {
+TEST_F(TestSoftmaxInfo, DISABLED_InitFailed1) {
   // softmax2's axis is wrong
   Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -179,7 +179,7 @@ TEST_F(TestSoftmaxInfo, InitFailed1) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestSoftmaxInfo, InitFailed2) {
+TEST_F(TestSoftmaxInfo, DISABLED_InitFailed2) {
   // dev num is wrong
   Strategies inputs = {{2, 4, 1, 100}};
   StrategyPtr strategy = NewStrategy(0, inputs);

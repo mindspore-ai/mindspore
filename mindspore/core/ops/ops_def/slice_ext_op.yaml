@@ -1,0 +1,23 @@
+#operator slice_ext
+slice_ext:
+    args:
+        input:
+            dtype: tensor
+        dim:
+            dtype: int
+        start:
+            dtype: int
+        end:
+            dtype: int
+        step:
+            dtype: int
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: SliceExt
+    dispatch:
+        enable: True
+        Ascend: SliceExtAscend

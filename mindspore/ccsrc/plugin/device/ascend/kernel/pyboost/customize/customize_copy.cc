@@ -28,42 +28,40 @@ void CustomizeCopyAscend(device::DeviceContext *device_context, const device::De
   MS_EXCEPTION_IF_NULL(input_addr);
   MS_EXCEPTION_IF_NULL(output_addr);
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([device_context, input_addr, output_addr,
-                                                                          stream_id]() {
-    // The input_addr_list address is malloc before
-    // Malloc for output tensors
-    if (output_addr->GetPtr() == nullptr) {
-      if (!device_context->device_res_manager_->AllocateMemory(output_addr.get())) {
-        MS_LOG(EXCEPTION) << "Allocate memory failed";
-      }
+  runtime::OpExecutor::GetInstance().WaitAll();
+
+  // The input_addr_list address is malloc before
+  // Malloc for output tensors
+  if (output_addr->GetPtr() == nullptr) {
+    if (!device_context->device_res_manager_->AllocateMemory(output_addr.get())) {
+      MS_LOG(EXCEPTION) << "Allocate memory failed";
     }
+  }
 
-    const auto &input_kernel_tensor = input_addr->kernel_tensor();
-    const auto &output_kernel_tensor = output_addr->kernel_tensor();
+  const auto &input_kernel_tensor = input_addr->kernel_tensor();
+  const auto &output_kernel_tensor = output_addr->kernel_tensor();
 
-    auto fill_kernel_info = [](const KernelTensorPtr &kernel_tensor) {
-      MS_EXCEPTION_IF_NULL(kernel_tensor);
+  auto fill_kernel_info = [](const KernelTensorPtr &kernel_tensor) {
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
 
-      if (!kernel_tensor->host_info_exist()) {
-        kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(kernel_tensor->dtype_id())));
-        kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(kernel_tensor->host_shape()));
-      }
-    };
+    if (!kernel_tensor->host_info_exist()) {
+      kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(kernel_tensor->dtype_id())));
+      kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(kernel_tensor->host_shape()));
+    }
+  };
 
-    fill_kernel_info(input_kernel_tensor);
-    fill_kernel_info(output_kernel_tensor);
-    const auto &input_storage_info = input_kernel_tensor->tensor_storage_info();
-    const auto &output_storage_info = output_kernel_tensor->tensor_storage_info();
-    MS_LOG(DEBUG) << "Input_storage_info:" << (input_storage_info == nullptr ? "" : input_storage_info->ToString())
-                  << ", output_storage_info:" << (output_storage_info == nullptr ? "" : output_storage_info->ToString())
-                  << ", input address size:" << input_kernel_tensor->size()
-                  << ", output address size:" << output_kernel_tensor->size();
+  fill_kernel_info(input_kernel_tensor);
+  fill_kernel_info(output_kernel_tensor);
+  const auto &input_storage_info = input_kernel_tensor->tensor_storage_info();
+  const auto &output_storage_info = output_kernel_tensor->tensor_storage_info();
+  MS_LOG(DEBUG) << "Input_storage_info:" << (input_storage_info == nullptr ? "" : input_storage_info->ToString())
+                << ", output_storage_info:" << (output_storage_info == nullptr ? "" : output_storage_info->ToString())
+                << ", input address size:" << input_kernel_tensor->size()
+                << ", output address size:" << output_kernel_tensor->size();
 
-    // Inplace output need be front
-    LAUNCH_ACLNN(aclnnInplaceCopy, device_context, stream_id, output_kernel_tensor.get(), input_kernel_tensor.get());
-    MS_LOG(DEBUG) << "Launch end";
-  }));
+  // Inplace output need be front
+  LAUNCH_ACLNN(aclnnInplaceCopy, device_context, stream_id, output_kernel_tensor.get(), input_kernel_tensor.get());
+  MS_LOG(DEBUG) << "Launch end";
 }
 }  // namespace pyboost
 }  // namespace kernel

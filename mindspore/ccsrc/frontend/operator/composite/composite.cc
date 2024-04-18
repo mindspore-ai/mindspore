@@ -1425,7 +1425,9 @@ DebugInfoPtr CheckVmapFunc(const AbstractBasePtr &fn_arg, int *nparam, size_t *c
   } else {
     AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(fn_arg);
     if (fn == nullptr) {
-      MS_LOG(EXCEPTION) << "'VmapOperation' arg0 must be a 'Function' or 'Cell', but got " << fn_arg->ToString() << ".";
+      MS_LOG(EXCEPTION) << "'VmapOperation' arg0 must be a 'Function' or 'Cell', but got " << fn_arg->ToString()
+                        << ".\nIf you are using a user-defined package, assuming the module name is demo, please try "
+                        << "setting 'export MS_JIT_MODULES=demo'.";
     }
     auto partial_fn = dyn_cast<PartialAbstractClosure>(fn);
     if (partial_fn != nullptr) {

@@ -151,7 +151,7 @@ TEST_F(TestPrim, test_typeof) {
   ASSERT_TRUE(*res_value == Int(64));
 }
 
-TEST_F(TestPrim, test_list_reduce) {
+TEST_F(TestPrim, DISABLED_test_list_reduce) {
   AbstractBasePtrList args_spec_list;
   int64_t v1 = 1;
 

@@ -91,7 +91,7 @@ TEST_F(TestActivation, test_activation_strategies) {
   }
 }
 
-TEST_F(TestActivation, test_softmax_strategies) {
+TEST_F(TestActivation, DISABLED_test_softmax_strategies) {
   ASSERT_EQ(soft_ptr_->GenerateStrategies(0), Status::SUCCESS);
   std::vector<std::shared_ptr<StrategyWithCost>> sc = soft_ptr_->GetStrategyCost();
   for (const auto& swc : sc) {

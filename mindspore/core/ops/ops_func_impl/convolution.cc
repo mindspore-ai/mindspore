@@ -31,7 +31,32 @@ constexpr size_t kWightIdx = 1;
 constexpr size_t kStrideIdx = 3;
 constexpr size_t kPaddingIdx = 4;
 constexpr size_t kDilationIdx = 5;
+constexpr size_t kTransposedIdx = 6;
+constexpr size_t kOutputPaddingIdx = 7;
+constexpr size_t kGroupsIdx = 8;
+
+int64_t GetOutputHW(const ShapeVector &input_shape, const ShapeVector &weight_shape, size_t shape_pos, size_t i,
+                    const ArrayValue<int64_t> &stride, const ArrayValue<int64_t> &padding,
+                    const ArrayValue<int64_t> &dilation, bool transposed, const ArrayValue<int64_t> &output_padding) {
+  if (input_shape[shape_pos] == abstract::Shape::kShapeDimAny ||
+      weight_shape[shape_pos] == abstract::Shape::kShapeDimAny || padding.IsValueUnknown(i) ||
+      dilation.IsValueUnknown(i) || stride.IsValueUnknown(i)) {
+    return abstract::Shape::kShapeDimAny;
+  }
+
+  if (!transposed) {
+    return (input_shape[shape_pos] + 2 * padding[i] - dilation[i] * (weight_shape[shape_pos] - 1) - 1) / stride[i] + 1;
+  } else {
+    if (output_padding.IsValueUnknown(i)) {
+      return abstract::Shape::kShapeDimAny;
+    }
+
+    return (input_shape[shape_pos] - 1) * stride[i] - 2 * padding[i] + dilation[i] * (weight_shape[shape_pos] - 1) +
+           output_padding[i] + 1;
+  }
+}
 }  // namespace
+
 BaseShapePtr ConvolutionFuncImpl::InferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -59,42 +84,51 @@ BaseShapePtr ConvolutionFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   int64_t N = input_shape[0];
-  int64_t Co = weight_shape[0];
+  int64_t Co = abstract::Shape::kShapeDimAny;
   int64_t Ho = abstract::Shape::kShapeDimAny;
   int64_t Wo = abstract::Shape::kShapeDimAny;
 
-  auto stride_value_opt = GetArrayValue<int64_t>(input_args[kStrideIdx]);
-  auto padding_value_opt = GetArrayValue<int64_t>(input_args[kPaddingIdx]);
-  auto dilation_value_opt = GetArrayValue<int64_t>(input_args[kDilationIdx]);
-
-  if (!stride_value_opt.has_value() || !padding_value_opt.has_value() || !dilation_value_opt.has_value()) {
-    MS_LOG(DEBUG) << "stride_value_opt.has_value():" << stride_value_opt.has_value()
-                  << ", padding_value_opt.has_value():" << padding_value_opt.has_value()
-                  << ", dilation_value_opt.has_value():" << dilation_value_opt.has_value();
+  auto transposed_opt = GetScalarValue<bool>(input_args[kTransposedIdx]->BuildValue());
+  if (!transposed_opt.has_value()) {
+    // 'Co/Ho/Wo' is unknown, if transposed is any value
     auto output_shape = {N, Co, Ho, Wo};
+    MS_LOG(DEBUG) << "transposed_opt has no value, output_shape:" << output_shape;
     return std::make_shared<abstract::Shape>(output_shape);
   }
 
-  const auto &stride = stride_value_opt.value();
-  const auto &padding = padding_value_opt.value();
-  const auto &dilation = dilation_value_opt.value();
-
-  // 'NCHW', the pos of 'H' is 2, the pos of 'W' is 2
-  const size_t h_begin_pos = 2;
-  auto get_out_shape = [&](size_t i) {
-    if (input_shape[h_begin_pos + i] == abstract::Shape::kShapeDimAny ||
-        weight_shape[h_begin_pos + i] == abstract::Shape::kShapeDimAny || padding.IsValueUnknown(i) ||
-        dilation.IsValueUnknown(i) || stride.IsValueUnknown(i)) {
-      return abstract::Shape::kShapeDimAny;
+  auto transposed = transposed_opt.value();
+  if (transposed) {
+    auto groups_opt = GetScalarValue<int64_t>(input_args[kGroupsIdx]->BuildValue());
+    if (groups_opt.has_value() && weight_shape[1] != abstract::Shape::kShapeDimAny) {
+      Co = weight_shape[1] * groups_opt.value();
     }
+  } else {
+    Co = weight_shape[0];
+  }
 
-    return (input_shape[h_begin_pos + i] + 2 * padding[i] - dilation[i] * (weight_shape[h_begin_pos + i] - 1) - 1) /
-             stride[i] +
-           1;
-  };
+  auto stride_opt = GetArrayValue<int64_t>(input_args[kStrideIdx]);
+  auto padding_opt = GetArrayValue<int64_t>(input_args[kPaddingIdx]);
+  auto dilation_opt = GetArrayValue<int64_t>(input_args[kDilationIdx]);
+  auto output_padding_opt = GetArrayValue<int64_t>(input_args[kOutputPaddingIdx]);
+  if (!stride_opt.has_value() || !padding_opt.has_value() || !dilation_opt.has_value() ||
+      (transposed && !output_padding_opt.has_value())) {
+    auto output_shape = {N, Co, Ho, Wo};
+    MS_LOG(DEBUG) << "stride has_value:" << stride_opt.has_value() << ", paddind has_value:" << padding_opt.has_value()
+                  << ", dilation has_value:" << dilation_opt.has_value()
+                  << ", output_padding has_value:" << output_padding_opt.has_value()
+                  << ", output_shape:" << output_shape;
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
 
-  Ho = get_out_shape(0);
-  Wo = get_out_shape(1);
+  const auto &stride = stride_opt.value();
+  const auto &padding = padding_opt.value();
+  const auto &dilation = dilation_opt.value();
+  const auto &output_padding = output_padding_opt.value();
+
+  constexpr size_t h_begin_pos = 2;  // 'NCHW', the pos of 'H' is 2
+  constexpr size_t w_begin_pos = 3;  // 'NCHW', the pos of 'W' is 3
+  Ho = GetOutputHW(input_shape, weight_shape, h_begin_pos, 0, stride, padding, dilation, transposed, output_padding);
+  Wo = GetOutputHW(input_shape, weight_shape, w_begin_pos, 1, stride, padding, dilation, transposed, output_padding);
   auto output_shape = {N, Co, Ho, Wo};
   return std::make_shared<abstract::Shape>(output_shape);
 }

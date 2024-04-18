@@ -19,8 +19,8 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include "gtest/gtest.h"
-#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace UT {
 class Common : public testing::Test {

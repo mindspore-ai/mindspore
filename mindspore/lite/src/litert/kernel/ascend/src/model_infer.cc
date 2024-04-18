@@ -51,15 +51,15 @@ STATUS ModelInfer::Init() {
     MS_LOG(ERROR) << "Acl init failed.";
     return lite::RET_ERROR;
   }
-  int32_t device_id = options_.device_id;
-  aclError ret = CALL_ASCEND_API(aclrtSetDevice, device_id);
+  device_id_ = options_.device_id;
+  aclError ret = CALL_ASCEND_API(aclrtSetDevice, device_id_);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Acl open device " << device_id << " failed, ret " << ret;
+    MS_LOG(ERROR) << "Acl open device " << device_id_ << " failed, ret " << ret;
     return lite::RET_ERROR;
   }
-  MS_LOG(INFO) << "Open device " << device_id << " success.";
+  MS_LOG(INFO) << "Open device " << device_id_ << " success.";
 
-  ret = CALL_ASCEND_API(aclrtCreateContext, &context_, device_id);
+  ret = CALL_ASCEND_API(aclrtCreateContext, &context_, device_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl create context failed, ret " << ret;
     return lite::RET_ERROR;
@@ -76,7 +76,7 @@ STATUS ModelInfer::Init() {
   model_process_.SetIsDevice(is_device);
   MS_LOG(INFO) << "Get run mode success is device input/output " << is_device;
 
-  MS_LOG(INFO) << "Init acl success, device id " << device_id;
+  MS_LOG(INFO) << "Init acl success, device id " << device_id_;
   init_flag_ = true;
   return lite::RET_OK;
 }
@@ -164,12 +164,12 @@ STATUS ModelInfer::LoadAclModel(const Buffer &om_data) {
       MS_LOG(ERROR) << "Call aclmdlQuerySizeFromMem failed, ret = " << acl_ret;
       return lite::RET_ERROR;
     }
-    AclMemManager::GetInstance().UpdateWorkspace(work_size, weight_size);
+    AclMemManager::GetInstance().UpdateWorkspace(work_size, weight_size, device_id_);
     return lite::RET_OK;
   } else if (IsEnableMultiModelSharingMem()) {
     AclModelMemInfo acl_work_mem_info;
     AclModelMemInfo acl_weight_mem_info;
-    auto ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info);
+    auto ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info, device_id_);
     if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "Get work mem failed.";
       return ret;

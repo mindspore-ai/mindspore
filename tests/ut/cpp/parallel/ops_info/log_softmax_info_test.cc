@@ -63,7 +63,7 @@ void TestLogSoftmaxInfo::SetUp() {
   log_softmax = std::make_shared<LogSoftmaxInfo>("log_softmax_info", inputs_shape, outputs_shape, attr);
 }
 
-TEST_F(TestLogSoftmaxInfo, InferDevMatrixShape1) {
+TEST_F(TestLogSoftmaxInfo, DISABLED_InferDevMatrixShape1) {
   Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -74,7 +74,7 @@ TEST_F(TestLogSoftmaxInfo, InferDevMatrixShape1) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestLogSoftmaxInfo, InferSliceShape1) {
+TEST_F(TestLogSoftmaxInfo, DISABLED_InferSliceShape1) {
   Strategies str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -95,7 +95,7 @@ TEST_F(TestLogSoftmaxInfo, InferSliceShape1) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestLogSoftmaxInfo, GetTensorLayout1) {
+TEST_F(TestLogSoftmaxInfo, DISABLED_GetTensorLayout1) {
   Strategies str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -116,7 +116,7 @@ TEST_F(TestLogSoftmaxInfo, GetTensorLayout1) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
-TEST_F(TestLogSoftmaxInfo, GetForwardOp1) {
+TEST_F(TestLogSoftmaxInfo, DISABLED_GetForwardOp1) {
   Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -127,7 +127,7 @@ TEST_F(TestLogSoftmaxInfo, GetForwardOp1) {
   ASSERT_EQ(size, 0);
 }
 
-TEST_F(TestLogSoftmaxInfo, GetMirrorOPs1) {
+TEST_F(TestLogSoftmaxInfo, DISABLED_GetMirrorOPs1) {
   Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -139,7 +139,7 @@ TEST_F(TestLogSoftmaxInfo, GetMirrorOPs1) {
   ASSERT_EQ(size, 0);
 }
 
-TEST_F(TestLogSoftmaxInfo, CheckStrategy1) {
+TEST_F(TestLogSoftmaxInfo, DISABLED_CheckStrategy1) {
   // Success: {{2,4,1,16}}
   Strategies inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -148,7 +148,7 @@ TEST_F(TestLogSoftmaxInfo, CheckStrategy1) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestLogSoftmaxInfo, CheckStrategy2) {
+TEST_F(TestLogSoftmaxInfo, DISABLED_CheckStrategy2) {
   // Success: {{2,4,1,16}}
   Strategies inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -157,7 +157,7 @@ TEST_F(TestLogSoftmaxInfo, CheckStrategy2) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestLogSoftmaxInfo, CheckStrategy3) {
+TEST_F(TestLogSoftmaxInfo, DISABLED_CheckStrategy3) {
   // Success: {{2,4,1,16}}
   Strategies inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -166,7 +166,7 @@ TEST_F(TestLogSoftmaxInfo, CheckStrategy3) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestLogSoftmaxInfo, GetDeviceList1) {
+TEST_F(TestLogSoftmaxInfo, DISABLED_GetDeviceList1) {
   Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 

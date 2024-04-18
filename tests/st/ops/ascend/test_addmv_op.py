@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,3 +49,20 @@ def test_addmv_forward_float32_tensor_api():
     addmv_forward_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     addmv_forward_tensor_api(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_addmv_invalid_dtypes():
+    """
+    Feature: test addmv invalid dtypes.
+    Description: test invalid dtypes inputs.
+    Expectation: the result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    with pytest.raises(TypeError):
+        addmv_forward_tensor_api(np.uint16)
+    with pytest.raises(TypeError):
+        addmv_forward_tensor_api(np.int8)

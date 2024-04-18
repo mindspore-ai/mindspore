@@ -66,6 +66,7 @@ ORIGIN_METHOD(aclrtSubscribeReport, aclError, uint64_t, aclrtStream)
 ORIGIN_METHOD(aclrtSynchronizeEvent, aclError, aclrtEvent)
 ORIGIN_METHOD(aclrtSynchronizeStream, aclError, aclrtStream)
 ORIGIN_METHOD(aclrtSynchronizeStreamWithTimeout, aclError, aclrtStream, int32_t)
+ORIGIN_METHOD(aclrtGetSocName, const char *)
 
 extern aclrtCreateContextFunObj aclrtCreateContext_;
 extern aclrtCreateEventFunObj aclrtCreateEvent_;
@@ -111,6 +112,7 @@ extern aclrtSubscribeReportFunObj aclrtSubscribeReport_;
 extern aclrtSynchronizeEventFunObj aclrtSynchronizeEvent_;
 extern aclrtSynchronizeStreamFunObj aclrtSynchronizeStream_;
 extern aclrtSynchronizeStreamWithTimeoutFunObj aclrtSynchronizeStreamWithTimeout_;
+extern aclrtGetSocNameFunObj aclrtGetSocName_;
 
 void LoadAclRtApiSymbol(const std::string &ascend_path);
 }  // namespace transform

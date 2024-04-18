@@ -150,7 +150,7 @@ TEST_F(TestOps, ScalarGeTest) {
 }
 
 TEST_F(TestOps, BoolNotTest) {
-  auto prim = std::make_shared<Primitive>("bool_not");
+  auto prim = std::make_shared<Primitive>("BoolNot");
   ASSERT_EQ(prim->name(), kPrimBoolNot->name());
 }
 
@@ -330,7 +330,7 @@ TEST_F(TestOps, ReturnTest) {
 // Miscellaneous
 
 TEST_F(TestOps, IdentityTest) {
-  auto prim = std::make_shared<Primitive>("identity");
+  auto prim = std::make_shared<Primitive>("Identity");
   ASSERT_EQ(prim->name(), kPrimIdentity->name());
 }
 

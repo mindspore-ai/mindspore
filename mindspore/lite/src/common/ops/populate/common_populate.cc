@@ -24,9 +24,8 @@ using mindspore::schema::PrimitiveType_ZerosLike;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateCommonParameter(const void *prim) {
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "Primitive is nullptr!");
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
 
   auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {

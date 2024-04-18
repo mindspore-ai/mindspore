@@ -38,6 +38,9 @@ bool ReplaceAddNFusion::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &
   if (LongToSize(num_input) != kAddNInputNum) {
     return false;
   }
+  if (common::AnfAlgo::GetOutputInferDataType(node, 0) == kNumberTypeUInt32) {
+    return false;
+  }
   return true;
 }
 

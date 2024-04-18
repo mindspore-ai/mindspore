@@ -27,6 +27,7 @@ Pipeline &Pipeline::Get() {
 Pipeline::Pipeline()
     : frontend_stage_(
         std::make_shared<runtime::AsyncRQueue>("frontend_queue", runtime::kThreadWaitLevel::kLevelFrontend)),
-      backend_stage_(std::make_shared<runtime::AsyncRQueue>("backend_device", kThreadWaitLevel::kLevelDevice)) {}
+      backend_stage_(std::make_shared<runtime::AsyncRQueue>("backend_queue", kThreadWaitLevel::kLevelBackend)),
+      launch_stage_(std::make_shared<runtime::AsyncRQueue>("launch_queue", kThreadWaitLevel::kLevelDevice)) {}
 }  // namespace runtime
 }  // namespace mindspore

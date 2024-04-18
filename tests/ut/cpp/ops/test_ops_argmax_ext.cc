@@ -19,6 +19,7 @@
 #include "ops/ops_func_impl/argmax_ext.h"
 #include "ops/test_value_utils.h"
 #include "abstract/dshape.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace ops {

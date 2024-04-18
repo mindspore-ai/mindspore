@@ -1,0 +1,3 @@
+max_pool_grad_with_mask:
+  description: |
+    Gradients of the MaxPoolWithMask operation.

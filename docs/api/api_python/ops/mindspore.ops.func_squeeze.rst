@@ -11,6 +11,7 @@ mindspore.ops.squeeze
     如果输入的shape为(A, 1, B)， :math:`axis=0` 时不会改变输入的Tensor，但 :math:`axis=1` 时会使输入Tensor的shape变为(A, B)。
 
     .. note::
+        - squeeze不为1的维度会报错。
         - 请注意，在动态图模式下，输出Tensor将与输入Tensor共享数据，并且没有Tensor数据复制过程。
         - 维度索引从0开始，并且必须在 `[-input.ndim, input.ndim)` 范围内。
 

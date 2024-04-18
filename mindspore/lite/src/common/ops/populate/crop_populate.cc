@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateCropParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "Crop primitive is nullptr!");
   auto value = primitive->value_as_Crop();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";
@@ -30,7 +30,7 @@ OpParameter *PopulateCropParameter(const void *prim) {
 
   auto *param = reinterpret_cast<CropParameter *>(malloc(sizeof(CropParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc CropParameter failed.";
+    MS_LOG(ERROR) << "malloc CropParameter failed!";
     return nullptr;
   }
   memset(param, 0, sizeof(CropParameter));

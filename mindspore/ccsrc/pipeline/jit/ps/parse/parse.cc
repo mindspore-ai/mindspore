@@ -555,7 +555,9 @@ FuncGraphPtr Parser::ParseFuncGraph() {
                                        << " expression to make sure it is defined on a separate line.\n For example, "
                                        << "the code 'func = nn.ReLU() if y < 1 else lambda x: x + 1' rewritten as\n"
                                        << "'if y < 1:\n    func = nn.ReLU()\nelse:\n    func = lambda x: x + 1\n'"
-                                       << "will solve the problem.";
+                                       << "will solve the problem.\nIn addition, if you are using a user-defined "
+                                       << "package, assuming the module name is demo, please try "
+                                       << "setting 'export MS_JIT_MODULES=demo'.";
     }
     fn_block = ParseLambdaFunction(lambda_node);
   }

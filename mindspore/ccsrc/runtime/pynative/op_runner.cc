@@ -631,6 +631,8 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
                                                                 stream)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << node->fullname_with_scope();
     }
+    runtime::DeviceAddressUtils::ProcessCrossStreamAddress(op_run_info->base_op_run_info.op_name, device_context,
+                                                           stream_id, inputs, outputs);
   }
   MS_LOG(DEBUG) << "End";
 }
@@ -928,6 +930,8 @@ void DynamicOpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_ru
         UpdateOutputShape(output_edges);
       }
     }
+    runtime::DeviceAddressUtils::ProcessCrossStreamAddress(op_run_info->base_op_run_info.op_name, device_context,
+                                                           stream_id, input_kernel_tensors, output_kernel_tensors);
   }
 }
 
@@ -966,6 +970,7 @@ void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compi
         auto new_device_address =
           DeviceAddressUtils::ConvertContiguousDeviceAddress(device_context, device_address, is_sync);
         input_edge->address_ = new_device_address;
+        input_tensor->set_device_address(new_device_address);
       } else {
         // Always use tensor address as kernel address.
         input_edge->address_ = device_address;

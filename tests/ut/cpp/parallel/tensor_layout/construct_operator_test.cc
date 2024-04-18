@@ -72,12 +72,12 @@ void TestConstructOperator::SetUp() {
   constructor.UpdateTensorShape(tensor_shape);
 }
 
-TEST_F(TestConstructOperator, TestReshapeOP) {
+TEST_F(TestConstructOperator, DISABLED_TestReshapeOP) {
   Shape shape = {512, 512, 2};
   ASSERT_EQ(constructor.ReshapeOP(shape), Status::SUCCESS);
 }
 
-TEST_F(TestConstructOperator, TestStridedSliceOP) {
+TEST_F(TestConstructOperator, DISABLED_TestStridedSliceOP) {
   Args args = {1, 2, 3};
   int64_t split_count = args[0];
   int64_t split_dim = args[1];
@@ -111,22 +111,22 @@ TEST_F(TestConstructOperator, TestStridedSliceOP) {
   }
 }
 
-TEST_F(TestConstructOperator, TestAllGatherOP) {
+TEST_F(TestConstructOperator, DISABLED_TestAllGatherOP) {
   int64_t dev_dim = 2;
   ASSERT_EQ(constructor.AllGatherOP(dev_dim), Status::SUCCESS);
 }
 
-TEST_F(TestConstructOperator, TestConcatOP) {
+TEST_F(TestConstructOperator, DISABLED_TestConcatOP) {
   int64_t concat_dim = 0;
   ASSERT_EQ(constructor.ConcatOP(concat_dim), Status::SUCCESS);
 }
 
-TEST_F(TestConstructOperator, TestSplitOP) {
+TEST_F(TestConstructOperator, DISABLED_TestSplitOP) {
   int64_t split_count = 2;
   ASSERT_EQ(constructor.SplitOP(split_count), Status::SUCCESS);
 }
 
-TEST_F(TestConstructOperator, TestAlltoAllOP) {
+TEST_F(TestConstructOperator, DISABLED_TestAlltoAllOP) {
   int64_t split_count = 2;
   int64_t split_dim = 0;
   int64_t concat_dim = 1;

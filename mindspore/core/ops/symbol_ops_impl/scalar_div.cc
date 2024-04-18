@@ -16,6 +16,7 @@
 #include "mindspore/core/ops/symbol_ops_impl/scalar_div.h"
 #include <algorithm>
 #include <vector>
+#include <memory>
 
 namespace mindspore {
 namespace symshape {
@@ -25,7 +26,7 @@ SymbolPtr ScalarDiv::Eval() {
   auto lhs = input_as<IntSymbol>(0);
   auto rhs = input_as<IntSymbol>(1);
   if (lhs->HasData() && rhs->HasData()) {
-    return GenInt(lhs->value() / rhs->value());
+    return GenInt(DivWithCheck(lhs->value(), rhs->value()));
   }
   if (lhs->HasData() && lhs->value() == 0) {
     return GenInt(0);
@@ -81,8 +82,41 @@ void ScalarDiv::UpdateMathInfo() {
   }
 }
 
+SymbolPtr ScalarFloorDiv::Eval() {
+  // only eval on Building
+  auto lhs = input_as_sptr<IntSymbol>(0);
+  auto rhs = input_as_sptr<IntSymbol>(1);
+  if (lhs->HasData() && rhs->HasData()) {
+    return GenInt(FloorDiv(lhs->value(), rhs->value()));
+  }
+  if (lhs->is_divisible_by(rhs)) {
+    DoNotEvalOnRun();
+    return Emit(std::make_shared<ScalarDiv>(lhs, rhs));
+  }
+  return GenVInt();
+}
+
+SymbolPtr ScalarCeilDiv::Eval() {
+  // only eval on Building
+  auto lhs = input_as_sptr<IntSymbol>(0);
+  auto rhs = input_as_sptr<IntSymbol>(1);
+  if (lhs->HasData() && rhs->HasData()) {
+    return GenInt(CeilDiv(lhs->value(), rhs->value()));
+  }
+  if (lhs->is_divisible_by(rhs)) {
+    DoNotEvalOnRun();
+    return Emit(std::make_shared<ScalarDiv>(lhs, rhs));
+  }
+  // the CeilDiv has not math info, assume the lhs can be divisible by rhs if the env is set.
+  if (common::GetEnv("MS_DEV_USE_SYMBOL_CEIL_DIV") == "off") {
+    MS_LOG(WARNING) << "Assume the " << lhs->ToString() << " can be divide by " << rhs->ToString() << ".";
+    return Emit(std::make_shared<ScalarDiv>(lhs, rhs));
+  }
+  return GenVInt();
+}
+
 REG_SYMBOL_OP_BUILDER("ScalarDiv").SetValueFunc(DefaultBuilder<ScalarDiv, 2>);
-REG_SYMBOL_OP_BUILDER("ScalarFloorDiv").SetValueFunc(DefaultBuilder<ScalarDiv, 2>);
+REG_SYMBOL_OP_BUILDER("ScalarFloorDiv").SetValueFunc(DefaultBuilder<ScalarFloorDiv, 2>);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

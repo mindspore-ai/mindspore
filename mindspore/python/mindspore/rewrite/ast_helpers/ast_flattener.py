@@ -178,14 +178,9 @@ class AstFlattener(ast.NodeTransformer):
             todos = getattr(node, todo_name)
             if isinstance(todos, list):
                 new_list = []
-                for idx, todo in enumerate(todos):
+                for todo in todos:
                     # Starred expression(e.g. *args) cannot be flatten.
                     if isinstance(todo, ast.Starred):
-                        new_list.append(todo)
-                        continue
-                    # For codes like 'xxx and yyy and zzz', only 'xxx' can be flatten and parsed,
-                    # otherwise executing 'yyy' may raise an exception when 'xxx' is False
-                    if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.And) and idx > 0:
                         new_list.append(todo)
                         continue
                     # ast.keywords are processed individually:
@@ -199,8 +194,18 @@ class AstFlattener(ast.NodeTransformer):
                         continue
                     new_node, new_assign = self._create_new_assign_node(todo, target_names, node)
                     if id(new_node) != id(todo):
+                        # For codes like 'xxx and yyy and zzz', and codes are flatten to 'x = xxx; y = yyy; z = zzz',
+                        # executing 'y = yyy' may raise an exception when 'xxx' is False.
+                        # convert 'y = yyy' to 'if xxx: y = yyy', and convert 'z = zzz' to 'if x and y: z = zzz'.
+                        if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.And) and new_list:
+                            if_test = ast.BoolOp(ast.And(), new_list[:]) if len(new_list) > 1 else new_list[0]
+                            else_assign = ast.Assign(targets=new_assign.targets,
+                                                     value=ast.Constant(value=False, kind=None))
+                            new_if_assign = ast.If(test=if_test, body=[new_assign], orelse=[else_assign])
+                            results.insert(0, new_if_assign)
+                        else:
+                            results.append(new_assign)
                         new_list.append(new_node)
-                        results.append(new_assign)
                     else:
                         new_list.append(todo)
                 setattr(node, todo_name, new_list)

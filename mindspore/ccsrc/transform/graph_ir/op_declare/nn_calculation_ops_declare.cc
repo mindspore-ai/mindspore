@@ -317,4 +317,25 @@ INPUT_ATTR_MAP(EmbeddingDenseGrad) = {{kIndex3, ATTR_DESC(num_weights, AnyTraits
 ATTR_MAP(EmbeddingDenseGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(EmbeddingDenseGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(EmbeddingDenseBackward, ops::kNameEmbeddingDenseBackward, ADPT_DESC(EmbeddingDenseGrad))
+
+// MultiScaleDeformableAttnFunctionV2
+INPUT_MAP(MultiScaleDeformableAttnFunctionV2) = {{1, INPUT_DESC(value)},
+                                                 {2, INPUT_DESC(value_spatial_shapes)},
+                                                 {3, INPUT_DESC(value_level_start_index)},
+                                                 {4, INPUT_DESC(sampling_locations)},
+                                                 {5, INPUT_DESC(attention_weights)}};
+ATTR_MAP(MultiScaleDeformableAttnFunctionV2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MultiScaleDeformableAttnFunctionV2) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(MultiScaleDeformableAttnFunctionV2, kNameMultiScaleDeformableAttnFunctionV2,
+              ADPT_DESC(MultiScaleDeformableAttnFunctionV2))
+
+// MultiScaleDeformableAttentionV2Grad
+INPUT_MAP(MultiScaleDeformableAttentionV2Grad) = {
+  {1, INPUT_DESC(value)},        {2, INPUT_DESC(spatial_shapes)}, {3, INPUT_DESC(level_start_index)},
+  {4, INPUT_DESC(sampling_loc)}, {5, INPUT_DESC(attn_weight)},    {6, INPUT_DESC(grad_output)}};
+ATTR_MAP(MultiScaleDeformableAttentionV2Grad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MultiScaleDeformableAttentionV2Grad) = {
+  {0, OUTPUT_DESC(grad_value)}, {1, OUTPUT_DESC(grad_sampling_loc)}, {2, OUTPUT_DESC(grad_attn_weight)}};
+REG_ADPT_DESC(MultiScaleDeformableAttentionV2Grad, kNameMultiScaleDeformableAttentionV2Grad,
+              ADPT_DESC(MultiScaleDeformableAttentionV2Grad))
 }  // namespace mindspore::transform

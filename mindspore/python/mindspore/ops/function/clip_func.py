@@ -74,7 +74,7 @@ def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
           max_norm (Union(float, int)): The upper limit of the norm for this group of network parameters.
           norm_type (Union(float, int)): Norm type. Default: ``2.0``.
           error_if_nonfinite (bool): If it is ``True``, an exception is thrown if the total norm from the input
-              is nan, inf or -inf. If it is ``False``, no exception will be thrown.Default: ``False`` .
+              is nan, inf or -inf. If it is ``False``, no exception will be thrown. Default: ``False`` .
 
     Returns:
         Tensors, a list or tuple of Tensors, representing clipped Tensors.

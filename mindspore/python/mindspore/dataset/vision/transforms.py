@@ -1846,8 +1846,10 @@ class FiveCrop(PyTensorOperation):
         >>> img.save("./2.jpg")
         >>> data = Image.open("./2.jpg")
         >>> output = vision.FiveCrop(size=20)(data)
-        >>> print(np.array(output).shape, np.array(output).dtype)
-        (5,) object
+        >>> for cropped_img in output:
+        ...     print(cropped_img.size)
+        ...     break
+        (20, 20)
         >>> os.remove("./2.jpg")
 
 

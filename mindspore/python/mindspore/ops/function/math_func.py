@@ -31,12 +31,13 @@ from mindspore.ops import composite as C
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations._inner_ops import TileSize
-from mindspore.ops.auto_generate import Cummin, BatchMatMul
+from mindspore.ops.auto_generate import Cummin, BatchMatMul, LinSpaceExt
 from mindspore.ops import auto_generate
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
+from mindspore.ops.operations.math_ops import DivMod
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
 from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, sub, cos, cosh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
@@ -110,7 +111,7 @@ absolute_ = P.Abs()
 cast_ = P.Cast()
 tensor_add = P.Add()
 tensor_ceil = P.Ceil()
-tensor_div = P.RealDiv()
+tensor_div = P.Div()
 tensor_exp = P.Exp()
 tensor_expm1 = P.Expm1()
 tensor_floordiv = P.FloorDiv()
@@ -164,7 +165,6 @@ cumprod_ = P.CumProd()
 cumsum_ = P.CumSum()
 cumulative_logsumexp_ = CumulativeLogsumexp()
 digamma_ = P.Digamma()
-div_ = P.Div()
 dtype_ = P.DType()
 eps_ = P.Eps()
 erf_ = P.Erf()
@@ -691,16 +691,6 @@ def subtract(input, other, *, alpha=1):
     return tensor_sub(input, alpha * other)
 
 
-def true_divide(dividend, divisor):
-    r"""
-    Alias for :func:`mindspore.ops.div` with :math:`rounding\_mode=None`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-    return div(dividend, divisor, rounding_mode=None)
-
-
 def multiply(input, other):
     r"""
     Alias for :func:`mindspore.ops.asinh`.
@@ -766,13 +756,20 @@ def div(input, other, *, rounding_mode=None):
     """
     if rounding_mode is not None and rounding_mode not in ['floor', 'trunc']:
         raise ValueError("For ops.div, rounding_mode value should be None, 'floor' or 'trunc'.")
-
-    if rounding_mode == 'floor':
-        return tensor_floordiv(input, other)
-    output = div_(input, other)
-    if rounding_mode == 'trunc':
-        output = trunc_(output)
+    if rounding_mode:
+        output = DivMod()(input, other, rounding_mode)
+    else:
+        output = P.Div()(input, other)
     return output
+
+def true_divide(dividend, divisor):
+    r"""
+    Alias for :func:`mindspore.ops.div` with :math:`rounding\_mode=None`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return div(dividend, divisor)
 
 
 def divide(input, other, *, rounding_mode=None):
@@ -899,7 +896,7 @@ def logdet(input):
         the matrix determinant is 0, -inf will be returned.
 
     Raises:
-        TypeError: If dtype of `input` is not float32, float64, Complex64 or Complex128.
+        TypeError: If dtype of `input` is not float32, float64, complex64 or complex128.
 
     Supported Platforms:
         ``CPU``
@@ -2540,7 +2537,7 @@ def linspace(start, end, steps):
         end (Union[Tensor, int, float]): Last value of interval. The tensor data type must be float32 or float64
             and with shape of 0-D.
         steps (Union[Tensor, int]): Number of ticks in the interval, inclusive of start and end.
-            Must be positive int number or 0D int32/int64 Tensor.
+            Must be positive int number or 0-D int32/int64 Tensor.
 
     Returns:
         Tensor, has the same dtype as `start`, and the shape of :math:`(steps)`.
@@ -2549,7 +2546,7 @@ def linspace(start, end, steps):
         TypeError: If `start` or `end` is not a Tensor.
         TypeError: If dtype of `start` or dtype of `end` is not float32 or float64.
         ValueError: If shape of `start` or shape of `end` is not 0-D.
-        TypeError: If `steps` is not int or 0D int32/int64 Tensor.
+        TypeError: If `steps` is not int or 0-D int32/int64 Tensor.
         ValueError: If `steps` is not positive int number.
 
     Supported Platforms:
@@ -2570,6 +2567,52 @@ def linspace(start, end, steps):
     if not isinstance(end, Tensor):
         end = Tensor(end, mstype.float32)
     return linspace_(start, end, steps)
+
+
+def linspace_ext(start, end, steps, *, dtype=None):
+    r"""
+    Returns a Tensor whose value is `steps` evenly spaced in the interval `start` and `end` (including `start` and
+    `end`), and the length of the output Tensor is `steps`.
+
+    .. math::
+        \begin{aligned}
+        &step = (end - start)/(steps - 1)\\
+        &output = [start, start+step, start+2*step, ... , end]
+        \end{aligned}
+
+    Args:
+        start (Union[Tensor, Number]): Start value of interval.
+          If `start` is Tensor, data type must be float32 or float64 and with shape of 0-D.
+        end (Union[Tensor, Number]): Last value of interval.
+          If `end` is Tensor, data type must be float32 or float64 and with shape of 0-D.
+        steps (Union[Tensor, int]): Number of ticks in the interval, inclusive of start and end.
+            Must be positive int number or 0D int32/int64 Tensor.
+
+    Keyword Args:
+        dtype (mindspore.dtype, optional): The output Tensor data type. Default: ``None`` , the data type of output
+            Tensor is float32.
+
+    Returns:
+        Tensor, has the shape of :math:`(steps,)`.
+
+    Raises:
+        TypeError: If dtype of `start` or dtype of `end` is not supported.
+        ValueError: If shape of `start` or shape of `end` is not 0-D.
+        TypeError: If `steps` is not int or 0D int32/int64 Tensor.
+        ValueError: If `steps` is not positive int number.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> start = Tensor(1, mindspore.float32)
+        >>> end = Tensor(10, mindspore.float32)
+        >>> steps = 5
+        >>> output = ops.linspace_ext(start, end, steps, dtype=mindspore.float32)
+        >>> print(output)
+        [ 1.    3.25  5.5   7.75 10.  ]
+    """
+    return  _get_cache_prim(LinSpaceExt)()(start, end, steps, dtype)
 
 
 def det(input):
@@ -3450,7 +3493,7 @@ def nan_to_num(input, nan=0.0, posinf=None, neginf=None):
     Args:
         input (Tensor): The shape of tensor is :math:`(input_1, input_2, ..., input_R)`.
             With float32 or float16 data type.
-        nan (float): The replace value of 'NaN'. Default value is 0.0.
+        nan (float): The replace value of 'NaN'. Default value is ``0.0``.
         posinf (float): the value to replace positive infinity values with. Default: ``None``,
             replacing positive infinity with the maximum value supported by the data type of `input`.
         neginf (float): the value to replace negative infinity values with. Default: ``None``,
@@ -3641,7 +3684,7 @@ def nanmedian(input, axis=-1, keepdims=False):
 
     .. warning::
         `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
-          unless it is unique.
+        unless it is unique.
 
     Args:
         input (Tensor): The input tensor to calculate the median and indices.
@@ -4706,9 +4749,11 @@ def addmv(input, mat, vec, *, beta=1, alpha=1):
         raise TypeError("For Addmv, inputs must be all tensors.")
     if dtype_(mat) != dtype_(vec):
         raise TypeError("For Addmv, the mat and vec should be the same dtype.")
-    _check_input_dtype("input", input_dtype,
-                       [mstype.float16, mstype.float32, mstype.float64,
-                        mstype.int16, mstype.int32, mstype.int64], "Addmv")
+    valid_types = [mstype.float16, mstype.float32, mstype.float64, mstype.int16, mstype.int32, mstype.int64]
+    if input_dtype not in valid_types:
+        names = [t.__name__ if hasattr(t, "__name__") else t for t in valid_types]
+        input_dtype = input_dtype.__name__ if hasattr(input_dtype, '__name__') else repr(input_dtype)
+        raise TypeError(f"For 'Addmv', the 'input' should be one of '{names}', but got type '{input_dtype}'")
     _check_attr_dtype("alpha", alpha, [int, float, bool], "Addmv")
     _check_attr_dtype("beta", beta, [int, float, bool], "Addmv")
     if input_dtype in (mstype.int16, mstype.int32, mstype.int64):
@@ -5430,8 +5475,8 @@ def sparse_segment_mean(x, indices, segment_ids):
         TypeError: If the dtype of `x` is not one of the following dtype: float16, float32, float64.
         TypeError: If the dtype of `indices` and `segment_ids` are not one of the following dtype: int32, int64.
         TypeError: If the dtype of `indices` and `segment_ids` are not the same.
-        ValueError: If the shape of `x`, 'indices' or `segment_ids` don't meet the parameter description.
-        ValueError: If the size of 'indices' and `segment_ids` are not the same.
+        ValueError: If the shape of `x`, `indices` or `segment_ids` don't meet the parameter description.
+        ValueError: If the size of `indices` and `segment_ids` are not the same.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -7760,7 +7805,7 @@ def matmul(input, other):
 
     Returns:
         Tensor or scalar, the matrix product of the inputs. This is a scalar only
-            when both `input`, `other` are 1-d vectors.
+        when both `input`, `other` are 1-d vectors.
 
     Raises:
         TypeError: If the dtype of `input` and the dtype of `other` are not the same.
@@ -10373,7 +10418,7 @@ def fft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-o
         TypeError: If the `s` or `dim` is not tuple(int).
         ValueError: If `input` dimension is less than 2.
         ValueError: If the length of `s` and `dim` are not the same.
-        ValueError: If the value in `dim` is not in the range of "[ `-input_dim` , `input_dim-1` ]".
+        ValueError: If the value in `dim` is not in the range of :math:`[-input.ndim, input.ndim)`.
         ValueError: If norm is none of "backward", "forward" or "ortho".
 
     Supported Platforms:
@@ -10416,7 +10461,7 @@ def fftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-outer
         TypeError: If the `s` or `dim` is not tuple(int).
         ValueError: If the length of `s` and `dim` are not the same.
         ValueError: If `input` dimension is less than 1.
-        ValueError: If the value in `dim` is not in the range of "[ `-input_dim` , `input_dim-1` )".
+        ValueError: If the value in `dim` is not in the range of :math:`[-input.ndim, input.ndim)`.
         ValueError: If norm is none of "backward", "forward" or "ortho".
 
     Supported Platforms:
@@ -10457,7 +10502,7 @@ def ifft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-n
             Default: ``None`` that means ``"backward"``.
 
     Returns:
-        Tensor, The result of `ifft()` function.
+        Tensor, the result of `ifft()` function.
 
     Raises:
         TypeError: If the `input` type is not Tensor.
@@ -10465,7 +10510,7 @@ def ifft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-n
         TypeError: If `n` or `dim` type is not int32.
         ValueError: If `input` dimension is less than 1.
         ValueError: If `n` is less than 1.
-        ValueError: If `dim` is not in the range of "[ `-input_dim` , `input_dim-1` ]".
+        ValueError: If `dim` is not in the range of :math:`[-input.ndim, input.ndim)`.
         ValueError: If norm is none of "backward", "forward" or "ortho".
 
     Supported Platforms:
@@ -10545,7 +10590,7 @@ def ifft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-
         TypeError: If the `s` or `dim` is not tuple(int).
         ValueError: If the length of `s` and `dim` are not the same.
         ValueError: If `input` dimension is less than 2.
-        ValueError: If the value in `dim` is not in the range of "[ `-input_dim` , `input_dim-1` )".
+        ValueError: If the value in `dim` is not in the range of :math:`[-input.ndim, input.ndim)`.
         ValueError: If norm is none of "backward", "forward" or "ortho".
 
     Supported Platforms:
@@ -10942,11 +10987,11 @@ def vecdot(x, y, *, axis=-1):
         TypeError: If type of `axis` is not int.
         ValueError: If `axis` is out of range.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     .. note::
         Currently, complex numbers are not supported on GPU.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -11013,7 +11058,7 @@ def dot(input, other):
     Raises:
         TypeError: If type of input and other are not the same.
         TypeError: If dtype of input or other is not float16 or float32.
-        ValueError: If rank of input or other less than 2.
+        ValueError: If rank of input or other is less than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -11432,6 +11477,7 @@ __all__ = [
     'matrix_determinant',
     'det',
     'linspace',
+    'linspace_ext',
     'logspace',
     'lu_solve',
     'matrix_solve',

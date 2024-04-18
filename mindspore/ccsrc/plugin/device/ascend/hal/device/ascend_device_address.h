@@ -88,11 +88,13 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
 
   // Asynchronously copy host memory to device side.
   bool AsyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
-                         size_t stream_id) const;
+                         size_t stream_id) const override;
 
   // Asynchronously copy device memory to host side.
-  bool AsyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr, size_t stream_id) const;
+  bool AsyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr,
+                         size_t stream_id) const override;
 
+  bool AsyncDeviceToHost(void *host_ptr, size_t size, void *stream) const override;
   void set_communication_ptr(uint8_t *communication_ptr) override {
     communication_ptr_ = communication_ptr;
     // The communication_ptr_ should free to memory pool instead of GetDevicePtr(), so must update device pointer

@@ -20,11 +20,10 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateOnesLikeParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "OnesLike primitive is nullptr!");
   auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc OpParameter failed.";
+    MS_LOG(ERROR) << "malloc OpParameter failed!";
     return nullptr;
   }
   memset(param, 0, sizeof(OpParameter));

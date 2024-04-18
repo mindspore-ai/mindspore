@@ -33,7 +33,7 @@ from . import (
     nn_func,
 )
 
-from .array_func import gather, max, min, one_hot
+from .array_func import gather, max, min, one_hot, narrow
 from .math_func import (
     baddbmm,
     bmm,
@@ -42,7 +42,8 @@ from .math_func import (
 )
 
 from .nn_func import (
-    conv2d
+    conv2d,
+    max_pool2d_ext
 )
 
 __all__ = []

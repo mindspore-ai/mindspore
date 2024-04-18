@@ -38,6 +38,7 @@
 #include "ops/sparse_tensor_ops.h"
 #include "ops/nn_ops.h"
 #include "runtime/device/device_address_utils.h"
+#include "runtime/device/multi_stream_controller.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/graph_adapter.h"
 #include "pybind_api/gil_scoped_long_running.h"
@@ -522,6 +523,11 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   (void)actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
   PROF_END(compile_backend_graph);
 
+  for (const auto &graph_id_to_context : graph_id_to_device_context_) {
+    auto context = graph_id_to_context.second;
+    device::MultiStreamController::GetInstance()->Refresh(context);
+  }
+
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCompileGraphs, 1, 0, 1);
   MS_LOG(INFO) << "Status record: end compile function graph: " << func_graph->ToString()
                << ", produce actor: " << actor_info;
@@ -550,7 +556,7 @@ void DoUnifyMindIRPass(const FuncGraphPtr &graph, const std::shared_ptr<opt::Gra
 #endif
 }
 bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
-  static const auto is_disable_switch_inline = (common::GetEnv("MS_DISABLE_SWITCH_INLINE") != "0");
+  static const auto is_disable_switch_inline = (common::GetEnv("MS_DISABLE_SWITCH_INLINE") == "1");
   if (is_disable_switch_inline) {
     return false;
   }

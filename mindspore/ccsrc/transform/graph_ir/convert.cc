@@ -742,9 +742,15 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   // Momentum's accum parameter at last
   auto cmp = std::bind(ParamCompare, std::placeholders::_1, std::placeholders::_2, std::cref(params_),
                        graph_manager_->node_users());
-  std::map<std::string, tensor::TensorPtr, decltype(cmp)> ordered_tensors(tensors.begin(), tensors.end(), cmp);
-  for (const auto &it : ordered_tensors) {
-    std::string name = it.first;
+  std::map<std::string, std::pair<int, tensor::TensorPtr>, decltype(cmp)> ordered_tensors(cmp);
+  // NOTE: the sequence of parameters of init DfGraph is calculated by TensorOrderMap, see method `GetInputTensors`
+  // defined in `mindspore/ccsrc/plugin/device/ascend/hal/hardware/ge_graph_executor.cc`
+  for (auto &it : tensors) {
+    ordered_tensors.insert({it.first, {index++, it.second}});
+  }
+  for (const auto &itor : ordered_tensors) {
+    std::string name = itor.first;
+    auto &it = itor.second;
     auto node_itor = params_.find(name);
     // if name not in params_, create a node in graph
     if (node_itor == params_.end()) {
@@ -815,8 +821,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       }
       auto param_op = adpt->generate(name + "_data");
       if (it.second->is_init() == 0) {
-        SetXDataIndex(param_op, index);
-        index++;
+        SetXDataIndex(param_op, it.first);
         ProcessInputData(&init_input, &infer_need_update_parameter_names, param_op, name, desc);
       }
 

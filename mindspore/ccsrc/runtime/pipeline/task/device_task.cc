@@ -17,6 +17,7 @@
 #include <string>
 #include "include/common/profiler.h"
 #include "runtime/pipeline/task/device_task.h"
+#include "runtime/pipeline/pipeline.h"
 
 namespace mindspore {
 namespace runtime {
@@ -35,8 +36,18 @@ DeviceOpRunTask::~DeviceOpRunTask() { context_->op_compiler_info()->UpdateStatus
 void DeviceOpRunTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
                                      context_->op_run_info()->base_op_run_info.op_name, false);
+  Pipeline::Get().launch_stage()->Wait();
   MS_EXCEPTION_IF_NULL(run_func_);
   run_func_(context_);
+  run_func_ = nullptr;
+}
+
+void DeviceLaunchTask::Run() {
+  if (run_func_) {
+    run_func_();
+  } else {
+    MS_LOG(EXCEPTION) << "No run function!";
+  }
   run_func_ = nullptr;
 }
 
@@ -54,6 +65,7 @@ void PyBoostDeviceTask::Run() {
 void PassthroughDeviceTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
                                      runtime::ProfilerRecorder::kNoName, false);
+  Pipeline::Get().launch_stage()->Wait();
   run_func_();
 }
 }  // namespace runtime

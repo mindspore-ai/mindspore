@@ -51,6 +51,7 @@ constexpr auto kDumpInputAndOutput = 0;
 constexpr auto kDumpInputOnly = 1;
 constexpr auto kDumpOutputOnly = 2;
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
+constexpr auto kModel = "model_name";
 }  // namespace
 
 namespace mindspore {
@@ -378,6 +379,10 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   }
 
   ParseDumpMode(*dump_mode);
+  if (IsAclDump() && *dump_mode == 1) {
+    auto model = CheckJsonKeyExist(*common_dump_settings, kModel);
+    ParseModel(*model);
+  }
   ParseDumpPath(*common_dump_settings);  // Pass in the whole json string to parse because the path field is optional.
   ParseNetName(*net_name);
   ParseIteration(*iteration);
@@ -636,6 +641,11 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
       MS_LOG(WARNING) << "Duplicate dump kernel name:" << kernel_str;
     }
   }
+}
+
+void DumpJsonParser::ParseModel(const nlohmann::json &content) {
+  CheckJsonStringType(content, kModel);
+  model_json_ = content;
 }
 
 void DumpJsonParser::ParseSupportDevice(const nlohmann::json &content) {

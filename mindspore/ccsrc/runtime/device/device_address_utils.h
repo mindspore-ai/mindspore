@@ -20,9 +20,17 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <utility>
 #include "runtime/hardware/device_context.h"
 #include "runtime/pynative/op_compiler.h"
+#include "runtime/device/multi_stream_controller.h"
 #include "kernel/kernel.h"
+#include "mindapi/base/type_traits.h"
+
+template <typename T>
+struct is_optional : public std::false_type {};
+template <typename T>
+struct is_optional<std::optional<T>> : public std::true_type {};
 
 namespace mindspore {
 using device::DeviceContext;
@@ -136,6 +144,25 @@ class BACKEND_EXPORT DeviceAddressUtils {
                                                                  const device::DeviceAddressPtr &old_device_address,
                                                                  bool is_sync);
 
+  template <typename... T>
+  static void ProcessCrossStreamAddress(const std::string &op_name, const DeviceContext *device_context,
+                                        size_t op_stream_id, const T &... args) {
+    // memory_stream_addresses pair : memory_stream_id, address.
+    std::vector<std::pair<uint32_t, void *>> cross_stream_addresses;
+    (GetCrossStreamAddressInfo(op_stream_id, &cross_stream_addresses, args), ...);
+    if (cross_stream_addresses.empty()) {
+      return;
+    }
+
+    device::MultiStreamController::GetInstance()->Refresh(device_context);
+    auto task_id_on_stream =
+      device::MultiStreamController::GetInstance()->LaunchTaskIdOnStream(device_context, op_stream_id);
+    MS_LOG(DEBUG) << "Launch stream_id:" << op_stream_id << ", task id:" << task_id_on_stream << ", op_name:" << op_name
+                  << ", cross_stream_addresses size:" << cross_stream_addresses.size();
+    device::MultiStreamController::GetInstance()->RecordEvent(device_context, task_id_on_stream, op_stream_id,
+                                                              cross_stream_addresses);
+  }
+
  private:
   static void UpdateKernelTensorHostInfoByNode(const kernel::KernelTensorPtr &kernel_tensor, const AnfNodePtr &node,
                                                size_t output_idx);
@@ -144,6 +171,50 @@ class BACKEND_EXPORT DeviceAddressUtils {
   // is consistent with device type, for example, device address type
   // DeviceType::kGPU should be used on GPU device
   static bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePtr &node, size_t index);
+
+  static void GetCrossStreamAddressInfoFromInput(size_t op_stream_id,
+                                                 std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
+                                                 const tensor::TensorPtr &tensor);
+
+  static void GetCrossStreamAddressInfoFromInput(size_t op_stream_id,
+                                                 std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
+                                                 const mindspore::kernel::KernelTensor *tensor);
+
+  static void GetCrossStreamAddressInfoFromInput(size_t op_stream_id,
+                                                 std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
+                                                 const device::DeviceAddressPtr &device_address);
+
+  template <typename T>
+  static void GetCrossStreamAddressInfo(size_t op_stream_id,
+                                        std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
+                                        const std::optional<T> &opt) {
+    if (opt.has_value()) {
+      return GetCrossStreamAddressInfo(op_stream_id, cross_stream_addresses, opt.value());
+    }
+  }
+
+  template <typename T>
+  static void GetCrossStreamAddressInfo(size_t op_stream_id,
+                                        std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
+                                        const std::vector<T> &inputs) {
+    if constexpr (!std::is_same_v<T, tensor::TensorPtr> && !std::is_same_v<T, mindspore::kernel::KernelTensor *> &&
+                  !std::is_same_v<T, device::DeviceAddressPtr>) {
+      return;
+    }
+    for_each(inputs.begin(), inputs.end(), [op_stream_id, cross_stream_addresses](auto item) {
+      GetCrossStreamAddressInfo(op_stream_id, cross_stream_addresses, item);
+    });
+  }
+
+  template <typename T, typename = typename std::enable_if_t<!is_vector<T>::value && !is_optional<T>::value, T>>
+  static void GetCrossStreamAddressInfo(size_t op_stream_id,
+                                        std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
+                                        const T &input) {
+    if constexpr (std::is_same_v<T, tensor::TensorPtr> || std::is_same_v<T, mindspore::kernel::KernelTensor *> ||
+                  std::is_same_v<T, device::DeviceAddressPtr>) {
+      GetCrossStreamAddressInfoFromInput(op_stream_id, cross_stream_addresses, input);
+    }
+  }
 };
 }  // namespace runtime
 }  // namespace mindspore

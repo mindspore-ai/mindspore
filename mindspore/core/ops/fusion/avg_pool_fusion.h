@@ -45,7 +45,7 @@ class MIND_API AvgPoolFusion : public BaseOperator {
   /// \param[in] activation_type Define the activation type.
   void Init(const std::vector<int64_t> &kernel_size = {1}, const std::vector<int64_t> &stride = {1},
             const PadMode &pad_mode = VALID, const Format &format = NCHW,
-            const std::vector<int64_t> &pad = {0, 0, 0, 0}, const RoundMode &round_mode = FLOOR,
+            const std::vector<int64_t> &pad = {0, 0, 0, 0}, const RoundMode &round_mode = RoundMode::FLOOR,
             const bool global = false, const ActivationType activation_type = NO_ACTIVATION);
 
   /// \brief Set pad_mode.

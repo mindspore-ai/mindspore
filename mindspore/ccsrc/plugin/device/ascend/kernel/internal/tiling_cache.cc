@@ -19,6 +19,8 @@
 
 #include "ops/op_utils.h"
 #include "transform/acl_ir/op_api_cache.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 
@@ -74,8 +76,8 @@ TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(
   // Bind device to current thread.
   device_context_->device_res_manager_->BindDeviceToCurrentThread(false);
 
-  ret = aclrtMemcpy(tiling_cache_elem.device_buf_.addr_, tiling_cache_elem.device_buf_.size_, host_tiling_buf_.addr_,
-                    host_tiling_buf_.size_, ACL_MEMCPY_HOST_TO_DEVICE);
+  ret = CALL_ASCEND_API(aclrtMemcpy, tiling_cache_elem.device_buf_.addr_, tiling_cache_elem.device_buf_.size_,
+                        host_tiling_buf_.addr_, host_tiling_buf_.size_, ACL_MEMCPY_HOST_TO_DEVICE);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "ACL_MEMCPY_HOST_TO_DEVICE failed!";
   }

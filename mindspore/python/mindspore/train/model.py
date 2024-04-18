@@ -1695,7 +1695,7 @@ class Model:
                               "execution_plan" : {"op_name3" : "data_type:float16", "op_name4" : "data_type:float32"}}
 
                 Note that both the "configPath" is configured in the config_dict and the config_item,
-                    in this case, the path_b in the config_dict takes precedence.
+                in this case, the path_b in the config_dict takes precedence.
 
         Returns:
             Tensor, array(s) of predictions.

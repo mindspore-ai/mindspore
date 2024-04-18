@@ -58,7 +58,12 @@ int SigmoidInt8CPUKernel::Prepare() {
   }
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
-  MS_CHECK_TRUE_RET(!input->quant_params().empty() && !output->quant_params().empty(), RET_ERROR);
+  if (input->quant_params().size() != C1NUM || output->quant_params().size() != C1NUM) {
+    MS_LOG(ERROR)
+      << "sigmoid int8 kernel only supports per-tensor quantization, but now input->quant_params().size() is "
+      << input->quant_params().size() << ", output->quant_params().size() is " << output->quant_params().size();
+    return RET_ERROR;
+  }
   const float input_scale = input->quant_params().front().scale;
   const int32_t input_zp = input->quant_params().front().zeroPoint;
   const float output_scale = output->quant_params().front().scale;

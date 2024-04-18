@@ -32,6 +32,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
 #include "pipeline/jit/pi/pi_jit_config.h"
+#include "pipeline/jit/pi/external.h"
 
 namespace mindspore {
 namespace pijit {
@@ -65,7 +66,10 @@ static const char kMindTorchFlag[] = "mindtorch";
 static const char kTrainingFlag[] = "training";
 static const char kMindSporePackPrefix[] = "mindspore.";
 static const char kMindtorchPackPrefix[] = "mindtorch.";
-extern bool check_builtin_cfunc(const py::object &func);
+
+constexpr const char *kFuncWhiteListModuleName = "mindspore._extends.pijit.pijit_func_white_list";
+constexpr const char *kGuardFuncMapName = "_guard_func_map";
+
 static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg);
 
 static bool IsCastFunc(std::string name) {
@@ -283,8 +287,7 @@ RootTrace::RootTrace(PyObject *pObj, TraceType tt, int index, std::string name, 
   depth_ = 1;
   originType_ = tt;
   curType_ = tt;
-  const auto &k = *kPIJitConfigDefault.getSetConfig(GraphJitConfig::kAllowedInlineModules);
-  for (auto n : k) {
+  for (auto n : kPIJitConfigDefault.allowed_inline_modules()) {
     if (module_name.find(n) == 0) {
       is_const_ = true;
       break;
@@ -2290,11 +2293,42 @@ void OpTrace::JudgeSubScrRandPass() {
   }
 }
 
+static const std::unordered_map<size_t, size_t> &GetGuardFuncKeyMap() {
+  static std::unordered_map<size_t, size_t> map = {};
+  static bool init = false;
+  if (init) {
+    return map;
+  }
+  init = true;
+  py::object func_map = Utils::GetModuleAttr(kFuncWhiteListModuleName, kGuardFuncMapName, true, true);
+  MS_EXCEPTION_IF_CHECK_FAIL(PyDict_CheckExact(func_map.ptr()), "white list func map must be 'dict[int, int]'");
+  PyObject *key;
+  PyObject *value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(func_map.ptr(), &pos, &key, &value)) {
+    MS_EXCEPTION_IF_CHECK_FAIL(PyLong_CheckExact(key), "white list func map key must be 'int'");
+    MS_EXCEPTION_IF_CHECK_FAIL(PyLong_CheckExact(value), "white list func map value must be 'int'");
+    map[PyLong_AsSize_t(key)] = PyLong_AsSize_t(value);
+  }
+  return map;
+}
+
+static bool CheckRelaxGuardFunc(const py::object &callable) {
+  static size_t guard_key_relax_func = 0;
+  if (guard_key_relax_func == 0) {
+    py::object key_object = Utils::GetModuleAttr(kFuncWhiteListModuleName, "GUARD_KEY_RELAX_FUNC", true, true);
+    guard_key_relax_func = py::cast<size_t>(key_object);
+  }
+
+  auto iter = GetGuardFuncKeyMap().find(FunctionId(callable));
+  return iter != GetGuardFuncKeyMap().end() && iter->second == guard_key_relax_func;
+}
+
 void OpTrace::JudgeRelaxGuardFuncPass() {
   if (opcode_ != CALL_FUNCTION || params_.size() < kParamCountOne) {
     return;
   }
-  if (kPIJitConfigDefault.CheckJitRelaxGuard(py::cast<py::object>(params_[kParamIndexOne]->GetObject()))) {
+  if (CheckRelaxGuardFunc(py::cast<py::object>(params_[0]->GetObject()))) {
     EnableRelax();
   }
 }

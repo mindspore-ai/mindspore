@@ -39,7 +39,7 @@ class MIND_API MaxPool : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MaxPool for the inputs.
   void Init(const std::vector<int64_t> &kernel_size = {1}, const std::vector<int64_t> &stride = {1},
             const PadMode &pad_mode = VALID, const Format &format = NCHW,
-            const std::vector<int64_t> &pad = {0, 0, 0, 0}, const RoundMode &round_mode = FLOOR);
+            const std::vector<int64_t> &pad = {0, 0, 0, 0}, const RoundMode &round_mode = RoundMode::FLOOR);
   /// \brief Set pad_mode.
   void set_pad_mode(const PadMode &pad_mode);
   /// \brief Set kernel_size.

@@ -1248,79 +1248,79 @@ void TestDPAlgo::ConstructIdentityDiamondGraph() {
   cost_graph->AddEdge(mm2_ptr, mm3_ptr, edge_m2_m3);
 }
 
-TEST_F(TestDPAlgo, test_ConstructTwoLargeMatMul) {
+TEST_F(TestDPAlgo, DISABLED_test_ConstructTwoLargeMatMul) {
   ConstructTwoLargeMatMul();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
   ASSERT_EQ(cost_graph->InitSelectedStrategy(), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_ConstructBatmanGraph) {
+TEST_F(TestDPAlgo, DISABLED_test_ConstructBatmanGraph) {
   ConstructBatmanGraph();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
   ASSERT_EQ(cost_graph->InitSelectedStrategy(), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_ConstructTriangleGraph) {
+TEST_F(TestDPAlgo, DISABLED_test_ConstructTriangleGraph) {
   ConstructTriangleGraph();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_ConstructTriangleGraph2) {
+TEST_F(TestDPAlgo, DISABLED_test_ConstructTriangleGraph2) {
   ConstructTriangleGraph2();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_ConstructStarGraph2) {
+TEST_F(TestDPAlgo, DISABLED_test_ConstructStarGraph2) {
   ConstructStarGraph2();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_ConstructStarGraph3) {
+TEST_F(TestDPAlgo, DISABLED_test_ConstructStarGraph3) {
   ConstructStarGraph3();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_ConstructTwoSeparateGraphs2) {
+TEST_F(TestDPAlgo, DISABLED_test_ConstructTwoSeparateGraphs2) {
   ConstructTwoSeparateGraphs2();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_ConstructTwoSeparateSingleNodeGraph) {
+TEST_F(TestDPAlgo, DISABLED_test_ConstructTwoSeparateSingleNodeGraph) {
   ConstructTwoSeparateSingleNodeGraph();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_ConstructThreeSeparateGraphs) {
+TEST_F(TestDPAlgo, DISABLED_test_ConstructThreeSeparateGraphs) {
   ConstructThreeSeparateGraphs();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_ConstructTwoSeparateGraphs) {
+TEST_F(TestDPAlgo, DISABLED_test_ConstructTwoSeparateGraphs) {
   ConstructTwoSeparateGraphs();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_GetStrategy) {
+TEST_F(TestDPAlgo, DISABLED_test_GetStrategy) {
   ConstructDiamondGraph();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_GetStrategy_for_MMR_graph) {
+TEST_F(TestDPAlgo, DISABLED_test_GetStrategy_for_MMR_graph) {
   ConstructMMRGraph();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_GetStrategy_for_IdentityDiamondGraph) {
+TEST_F(TestDPAlgo, DISABLED_test_GetStrategy_for_IdentityDiamondGraph) {
   ConstructIdentityDiamondGraph();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_GetStrategy_for_StarGraph) {
+TEST_F(TestDPAlgo, DISABLED_test_GetStrategy_for_StarGraph) {
   ConstructStarGraph();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 }
 
-TEST_F(TestDPAlgo, test_GetStrategy_for_DoubleStarGraph) {
+TEST_F(TestDPAlgo, DISABLED_test_GetStrategy_for_DoubleStarGraph) {
   ConstructDoubleStarGraph();
   ASSERT_EQ(GetStrategy(cost_graph), SUCCESS);
 

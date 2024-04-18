@@ -24,6 +24,7 @@
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
 #include "utils/anf_utils.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 

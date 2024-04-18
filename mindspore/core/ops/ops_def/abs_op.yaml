@@ -6,3 +6,7 @@ abs:
     returns:
         output: 
             dtype: tensor
+    class:
+        name: Abs
+    dispatch:
+        enable: True

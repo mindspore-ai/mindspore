@@ -311,8 +311,7 @@ def test_call_third_party_class():
     assert out == deque([4, 3, 2, 1])
 
 
-@pytest.mark.skip(reason="kwargs with AbstractAny, fix later")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

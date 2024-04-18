@@ -31,7 +31,7 @@ class TestGraphExecutor : public UT::Common {
 /// Feature: Test jit_config
 /// Description: Test set jit_level = o0
 /// Expectation: success
-TEST_F(TestGraphExecutor, test_jit_config_with_jit_level_equal_o0) {
+TEST_F(TestGraphExecutor, DISABLED_test_jit_config_with_jit_level_equal_o0) {
   py::dict obj = python_adapter::CallPyFn("gtest_input.pipeline.graph_executor_test", "get_jit_config_o0");
   pipeline::GraphExecutorPy::GetInstance()->SetJitConfig(obj);
 

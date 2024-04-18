@@ -1,0 +1,18 @@
+multi_scale_deformable_attn:
+    description: |
+        Multi Scale Deformable Attention function.
+        Args:
+            value (Tensor): The input tensor.
+            value_spatial_shapes (Tensor): The input tensor.
+            value_level_start_index (Tensor): The input tensor.
+            sampling_locations (Tensor): The input tensor.
+            attention_weights (Tensor): The input tensor.
+
+        Returns:
+            output (Tensor): The output tensor.
+
+        Raises:
+            TypeError: If input is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend``

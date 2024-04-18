@@ -87,6 +87,7 @@ enum class ProfilerEvent {
   kPyNativeFrontendTask,
   kPyNativeBackendTask,
   kPyNativeDeviceTask,
+  kPyNativeLaunchTask,
   kPyNativeBpropTask,
   // PyNative inner Event
   kPyNativeGilAcquire,

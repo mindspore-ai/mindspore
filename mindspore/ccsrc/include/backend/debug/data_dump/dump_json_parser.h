@@ -98,6 +98,7 @@ class BACKEND_EXPORT DumpJsonParser {
   };
   static bool IsAclDump();
   nlohmann::json GetKernelsJson() { return kernels_json_; }
+  nlohmann::json GetModelJson() { return model_json_; }
 
  private:
   DumpJsonParser() = default;
@@ -127,6 +128,7 @@ class BACKEND_EXPORT DumpJsonParser {
   bool already_parsed_{false};
   std::string dump_layer_{""};
   nlohmann::json kernels_json_ = nlohmann::json::array();
+  nlohmann::json model_json_ = nlohmann::json::array();
 
   // Save graphs for dump.
   std::vector<session::KernelGraph *> graphs_;
@@ -143,6 +145,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void ParseIteration(const nlohmann::json &content);
   void ParseInputOutput(const nlohmann::json &content);
   void ParseKernels(const nlohmann::json &content);
+  void ParseModel(const nlohmann::json &content);
   void ParseSupportDevice(const nlohmann::json &content);
   bool ParseEnable(const nlohmann::json &content) const;
   void ParseOpDebugMode(const nlohmann::json &content);
