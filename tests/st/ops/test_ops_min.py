@@ -78,7 +78,7 @@ def min_max_case_vmap(op_func):
     compare(output_vmap, expect)
 
 
-def min_max_case_all_dyn(op_func, mode, data_dtype=np.float32):
+def min_max_case_all_dyn(op_func, data_dtype=np.float32):
     is_bfloat16 = data_dtype == "bfloat16"
     if is_bfloat16:
         data_dtype = mstype.bfloat16
@@ -86,10 +86,10 @@ def min_max_case_all_dyn(op_func, mode, data_dtype=np.float32):
     input_case1 = [t1]
     t2 = Tensor(np.array([[[1, 20, 5], [67, 8, 9]], [[130, 24, 15], [16, 64, 32]]], dtype=data_dtype))
     input_case2 = [t2]
-    grad = True
+    disable_grad = False
     if not data_dtype in [np.float16, np.float32, np.float64, "bfloat16"]:
-        grad = False
-    TEST_OP(op_func, [input_case1, input_case2], mode=mode, grad=grad)
+        disable_grad = True
+    TEST_OP(op_func, [input_case1, input_case2], '', disable_yaml_check=True, disable_grad=disable_grad)
 
 
 def np_min(input_x):
@@ -146,15 +146,14 @@ def test_min_vmap(mode):
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_dtype', [np.float32])
-def test_min_all_dynamic(mode, data_dtype):
+def test_min_all_dynamic(data_dtype):
     """
     Feature: Test min op.
     Description: Test min with input is dynamic.
     Expectation: the result match with expected result.
     """
-    min_max_case_all_dyn(min_, mode, data_dtype=data_dtype)
+    min_max_case_all_dyn(min_, data_dtype=data_dtype)
 
 
 @pytest.mark.level1

@@ -87,8 +87,7 @@ def test_upsample_trilinear_3d(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_trilinear_3d_size_dynamic(mode):
+def test_upsample_trilinear_3d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleTrillinear3D and UpsampleTrillinear3DGrad.
@@ -105,8 +104,7 @@ def test_upsample_trilinear_3d_size_dynamic(mode):
             [input_case1, (100, 200, 300), None, True],
             [input_case2, (40, 80, 80), None, False],
         ],
-        mode=mode,
-        grad=True,
+        'upsample_trilinear3d', disable_input_check=True
     )
 
 
@@ -116,8 +114,7 @@ def test_upsample_trilinear_3d_size_dynamic(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_trilinear_3d_scale_factor_dynamic(mode):
+def test_upsample_trilinear_3d_scale_factor_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleTrillinear3D and UpsampleTrillinear3DGrad.
@@ -134,8 +131,7 @@ def test_upsample_trilinear_3d_scale_factor_dynamic(mode):
             [input_case1, None, 1.7, True],
             [input_case2, None, 3.1, False],
         ],
-        mode=mode,
-        grad=True,
+        'upsample_trilinear3d', disable_input_check=True
     )
 
 

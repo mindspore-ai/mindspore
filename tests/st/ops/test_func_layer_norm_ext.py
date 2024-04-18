@@ -116,14 +116,12 @@ def test_layer_norm_ext_vmap(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_layer_norm_ext_dyn(mode):
+def test_layer_norm_ext_dyn():
     """
     Feature: test layer_norm_ext function.
     Description: test layer norm op dynamic_shape and dynamic_rank.
     Expectation: expect correct result.
     """
-    context.set_context(mode=mode, device_target="Ascend")
     input_x1 = np.random.randn(*(1, 2, 4, 4)).astype(np.float32)
     input_x2 = np.random.randn(*(1, 2, 4)).astype(np.float32)
     normalize_shape = (4,)
@@ -133,4 +131,4 @@ def test_layer_norm_ext_dyn(mode):
 
     TEST_OP(layer_norm_forward_func,
             [[Tensor(input_x1), normalize_shape, gamma, beta, eps],
-             [Tensor(input_x2), normalize_shape, gamma, beta, eps]])
+             [Tensor(input_x2), normalize_shape, gamma, beta, eps]], 'layer_norm_ext', disable_input_check=True)

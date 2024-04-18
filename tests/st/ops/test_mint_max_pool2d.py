@@ -142,14 +142,12 @@ def test_ops_max_pool2d_backward_without_return_indices(mode):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_ops_max_pool2d_dynamic(mode):
+def test_ops_max_pool2d_dynamic():
     """
     Feature: Pyboost function.
     Description: Test function max_pool2d forward and backward with dynamic shape and rank.
     Expectation: Correct result.
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
     x1 = ms.Tensor(np.arange(2 * 3 * 10 * 20).reshape((2, 3, 10, 20)), mstype.float32)
     kernel_size1 = 2
     stride1 = 2
@@ -166,6 +164,5 @@ def test_ops_max_pool2d_dynamic(mode):
 
     TEST_OP(max_pool2d_forward_func,
             [[x1, kernel_size1, stride1, padding1, dilation1, ceil_mode1],
-             [x2, kernel_size2, stride2, padding2, dilation2, ceil_mode2]],
-            mode=mode, jit_level="O0")
-    del os.environ["GRAPH_OP_RUN"]
+             [x2, kernel_size2, stride2, padding2, dilation2, ceil_mode2]], '', disable_input_check=True,
+            disable_yaml_check=True, disable_mode=['GRAPH_MODE'])

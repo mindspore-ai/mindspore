@@ -268,9 +268,8 @@ def test_ops_flash_attention_score(mode, dtype):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD", "SBH", "BSND", "TND"])
-def test_ops_flash_attention_score_dynamic(mode, input_layout):
+def test_ops_flash_attention_score_dynamic(input_layout):
     """
     Feature: Pyboost function.
     Description: Test function flash attention score dynamic.
@@ -296,4 +295,4 @@ def test_ops_flash_attention_score_dynamic(mode, input_layout):
     TEST_OP(flash_attention_score_func, \
             [[query1, key1, value1, head_num1, actual_seq_qlen1, actual_seq_kvlen1, input_layout], \
              [query2, key2, value2, head_num2, actual_seq_qlen2, actual_seq_kvlen2, input_layout]], \
-             grad=True, mode=mode, target='Ascend', jit_level="O0", ignore_output_index=2)
+             '', disable_input_check=True, disable_yaml_check=True, disable_mode=['GRAPH_MODE'], ignore_output_index=2)

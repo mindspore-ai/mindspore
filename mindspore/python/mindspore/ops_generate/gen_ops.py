@@ -1024,11 +1024,13 @@ def main():
     # merge ops yaml
     ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
     doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops_doc.yaml')
+    st_yaml_path = os.path.join(work_path, 'tests/st/ops/dynamic_shape/test_op_utils.yaml')
 
     ops_yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/')
     doc_yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/doc/')
     merge_files(ops_yaml_dir_path, ops_yaml_path, '*op.yaml')
     merge_files(doc_yaml_dir_path, doc_yaml_path, '*doc.yaml')
+    merge_files(ops_yaml_dir_path, st_yaml_path, '*op.yaml')
 
     # make auto_generate dir
     cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/')

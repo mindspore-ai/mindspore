@@ -94,7 +94,7 @@ def test_ops_dynamic():
     x2 = ms.Tensor(random_input([4, 2, 5, 6]))
     y2 = ms.Tensor(random_input([3, 4, 2, 6, 5]))
 
-    TEST_OP(matmul, [[x1, y1], [x2, y2]], dump_ir=True, custom_flag='2')
+    TEST_OP(matmul, [[x1, y1], [x2, y2]], '', disable_yaml_check=True)
 
 
 @pytest.mark.level0

@@ -79,8 +79,7 @@ def test_upsample_linear_1d(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_linear_1d_size_dynamic(mode):
+def test_upsample_linear_1d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleLinear1D and UpsampleLinear1DGrad.
@@ -97,8 +96,8 @@ def test_upsample_linear_1d_size_dynamic(mode):
             [input_case1, (100,), None, True],
             [input_case2, (40,), None, False],
         ],
-        mode=mode,
-        grad=True,
+        'upsample_linear1d',
+        disable_input_check=True
     )
 
 
@@ -106,8 +105,7 @@ def test_upsample_linear_1d_size_dynamic(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_linear_1d_scales_dynamic(mode):
+def test_upsample_linear_1d_scales_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleLinear1D and UpsampleLinear1DGrad.
@@ -124,6 +122,6 @@ def test_upsample_linear_1d_scales_dynamic(mode):
             [input_case1, None, (2.6,), True],
             [input_case2, None, (3.7,), True],
         ],
-        mode=mode,
-        grad=True,
+        'upsample_linear1d',
+        disable_input_check=True
     )

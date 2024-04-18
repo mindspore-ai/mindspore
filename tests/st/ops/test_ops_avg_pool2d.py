@@ -106,8 +106,7 @@ def test_avg_pool2d_double_backward(mode):
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_avg_pool2d_dynamic(mode):
+def test_avg_pool2d_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op AvgPool2D and AvgPool2DGrad.
@@ -124,6 +123,5 @@ def test_avg_pool2d_dynamic(mode):
             [input_case1, 4, (2, 2), (1,), False, True, 1],
             [input_case2, 6, (1, 1), (2,), True, False, 2],
         ],
-        mode=mode,
-        grad=True,
+        'avg_pool2d', disable_input_check=True
     )

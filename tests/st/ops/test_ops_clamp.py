@@ -169,38 +169,34 @@ def test_ops_clamp_backward2(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_clamp_min_max_tensor_dynamic_shape(context_mode):
+def test_ops_clamp_min_max_tensor_dynamic_shape():
     """
     Feature: pyboost function.
     Description: test function clamp forward with dynamic shape.
     Expectation: expect correct result.
     """
-    ms.context.set_context(mode=context_mode)
-    x1 = ms.Tensor(generate_random_input((2, 3, 4, 5), np.float32))
-    min1 = ms.Tensor(generate_random_input((2, 3, 4, 1), np.float32))
-    max1 = ms.Tensor(generate_random_input((2, 3, 1, 1), np.float32))
+    x1 = ms.Tensor(generate_random_input((3, 4, 5), np.float32))
+    min1 = ms.Tensor(generate_random_input((3, 4, 1), np.float32))
+    max1 = ms.Tensor(generate_random_input((3, 1, 1), np.float32))
 
     x2 = ms.Tensor(generate_random_input((3, 4, 5, 6), np.float32))
     min2 = ms.Tensor(generate_random_input((3, 4, 5, 1), np.float32))
     max2 = ms.Tensor(generate_random_input((3, 4, 1, 6), np.float32))
 
     test_cell = test_utils.to_cell_obj(clamp_forward_func)
-    TEST_OP(test_cell, [[x1, min1, max1], [x2, min2, max2]], grad=True, jit_level="O0")
+    TEST_OP(test_cell, [[x1, min1, max1], [x2, min2, max2]], '', disable_yaml_check=True, disable_mode=['GRAPH_MODE'])
 
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_clamp_min_max_scalar_dynamic_shape(context_mode):
+def test_ops_clamp_min_max_scalar_dynamic_shape():
     """
     Feature: pyboost function.
     Description: test function clamp forward with dynamic shape.
     Expectation: expect correct result.
     """
-    ms.context.set_context(mode=context_mode)
-    x1 = ms.Tensor(generate_random_input((2, 3, 4, 5), np.float32))
+    x1 = ms.Tensor(generate_random_input((3, 4, 5), np.float32))
     min1 = 2
     max1 = 7
 
@@ -209,4 +205,4 @@ def test_ops_clamp_min_max_scalar_dynamic_shape(context_mode):
     max2 = 8
 
     test_cell = test_utils.to_cell_obj(clamp_forward_func)
-    TEST_OP(test_cell, [[x1, min1, max1], [x2, min2, max2]], grad=True, jit_level="O0")
+    TEST_OP(test_cell, [[x1, min1, max1], [x2, min2, max2]], '', disable_yaml_check=True, disable_mode=['GRAPH_MODE'])

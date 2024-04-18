@@ -138,14 +138,13 @@ def test_ops_erfinv_vmap(context_mode, shape, dtype, tol):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_erf_dynamic_shape(context_mode):
+def test_erf_dynamic_shape():
     """
     Feature: Test dynamic shape.
     Description: test function erf  dynamic feature.
     Expectation: expect correct result.
     """
-    ms_data1 = generate_random_input((2, 3, 4, 5), np.float32)
+    ms_data1 = generate_random_input((2, 3, 4), np.float32)
     ms_data2 = generate_random_input((3, 4, 5, 6), np.float32)
     TEST_OP(erf_forward_func
-            , [[ms.Tensor(ms_data1)], [ms.Tensor(ms_data2)]], grad=True, mode=context_mode)
+            , [[ms.Tensor(ms_data1)], [ms.Tensor(ms_data2)]], 'erf')

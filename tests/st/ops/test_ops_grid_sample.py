@@ -379,8 +379,7 @@ def test_grid_sampler_5d_vmap(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_gridsample_dynamic_shape(mode):
+def test_gridsample_dynamic_shape():
     """
     Feature: Test dynamic shape.
     Description: test ops grid_sample dynamic feature with 5d input.
@@ -391,4 +390,4 @@ def test_gridsample_dynamic_shape(mode):
     ms_data2 = [ms.Tensor(np.random.randn(4, 2, 2, 3, 4).astype(np.float32)),
                 ms.Tensor(np.random.randn(4, 4, 4, 4, 3).astype(np.float32))]
     TEST_OP(grid_sample_forward_func,
-            [ms_data1, ms_data2], grad=True, mode=mode)
+            [ms_data1, ms_data2], '', disable_yaml_check=True)

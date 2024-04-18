@@ -137,8 +137,7 @@ def test_abs_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_abs_dyn(mode):
+def test_abs_dyn():
     """
     Feature: Test abs op.
     Description: Test abs dynamic shape.
@@ -146,4 +145,4 @@ def test_abs_dyn(mode):
     """
     input_case1 = get_inputs_tensor(get_inputs_np([(2, 4, 8)], [np.float32]))
     input_case2 = get_inputs_tensor(get_inputs_np([(2, 4, 8, 16)], [np.float32]))
-    TEST_OP(abs_func, [input_case1, input_case2], mode=mode)
+    TEST_OP(abs_func, [input_case1, input_case2], 'abs')
