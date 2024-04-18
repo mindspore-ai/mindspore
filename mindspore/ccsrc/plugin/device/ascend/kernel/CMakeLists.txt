@@ -2,6 +2,8 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-non-abstract-non-virtual-dtor -Wno-overloaded-virtual")
 endif()
 
+include_directories(${ASCEND_PATH}/latest/lccl/include)
+link_directories(${ASCEND_PATH}/latest/lccl/lib)
 file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "kernel_query.cc"
         "ascend_kernel_mod.cc"
@@ -62,6 +64,7 @@ else()
     set(SRC_IN_910B ${SRC_IN_910B}
         "internal/internal_kernel_build.cc"
     )
+    list(REMOVE_ITEM SRC_IN_910B "hccl/hcom_matmul_all_reduce.cc")
 endif()
 list(REMOVE_ITEM SRC_IN_910B ${AICPU_OPS_SRC})
 

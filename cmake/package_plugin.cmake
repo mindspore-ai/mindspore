@@ -55,6 +55,13 @@ if(ENABLE_D)
                 DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
                 COMPONENT mindspore
         )
+        if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+            install(
+                    TARGETS lowlatency_collective
+                    DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+                    COMPONENT mindspore
+            )
+        endif()
     endif()
     install(
             TARGETS hccl_plugin

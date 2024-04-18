@@ -161,6 +161,7 @@ class DeviceAddress : public mindspore::DeviceSync {
       kernel_tensor_->ReleaseDeviceRes();
     }
   }
+  virtual bool AsyncHostToDevice(size_t size, TypeId /* type */, const void *host_ptr) const { return true; }
 
   // Asynchronously copy host memory to device side.
   virtual bool AsyncHostToDevice(const ShapeVector &, size_t, TypeId, const void *, size_t) const { return true; }

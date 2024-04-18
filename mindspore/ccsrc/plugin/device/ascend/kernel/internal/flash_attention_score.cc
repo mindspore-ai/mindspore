@@ -17,8 +17,7 @@
 #include "plugin/device/ascend/kernel/internal/flash_attention_score.h"
 
 #include <memory>
-
-#include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "param/attention_param.h"
 
 namespace mindspore {
 namespace kernel {
@@ -26,6 +25,15 @@ internal::OpParamPtr InternalFlashAttentionScore::CreateOpParam(const std::vecto
                                                                 const std::vector<KernelTensor *> &outputs) {
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   // setup param from inputs
+  internal::FlashAttentionScoreParam op_param;
+  op_param.head_num = primitive_->HasAttr("head_num") ? GetValue<int64_t>(primitive_->GetAttr("head_num")) : 0;
+  op_param.inner_precise =
+    primitive_->HasAttr("inner_precise") ? GetValue<int64_t>(primitive_->GetAttr("inner_precise")) : 0;
+  op_param.pre_tokens =
+    primitive_->HasAttr("pre_tokens") ? GetValue<int64_t>(primitive_->GetAttr("pre_tokens")) : 2147483647;
+  op_param.next_tokens = primitive_->HasAttr("next_tokens") ? GetValue<int64_t>(primitive_->GetAttr("next_tokens")) : 0;
+  op_param.sparse_mode = primitive_->HasAttr("sparse_mode") ? GetValue<int64_t>(primitive_->GetAttr("sparse_mode")) : 0;
+  param_ptr->specificParam = op_param;
   param_ptr->opId = internal::OpId::FlashAttentionScore;
   return param_ptr;
 }

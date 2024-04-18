@@ -821,9 +821,7 @@ void GeKernelExecutor::DoSomas(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  static const char kAscendEnableInternalKernels[] = "MS_ENABLE_INTERNAL_KERNELS";
-  static bool enable_runtime_pipeline = common::GetEnv(kAscendEnableInternalKernels) == "on";
-  if (!enable_runtime_pipeline) {
+  if (!ms_context->IsEnableInferBoost()) {
     DoStreamAssign(kernel_graph);
   }
   // somas

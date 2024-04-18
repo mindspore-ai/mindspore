@@ -63,6 +63,18 @@ if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
     add_compile_definitions(ENABLE_INTERNAL_KERNELS)
 endif()
 
+if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+    MESSAGE(STATUS "MS_INTERNAL_KERNEL_HOME=$ENV{MS_INTERNAL_KERNEL_HOME} found.")
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME})
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/internal_kernel/include)
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/asdops/include)
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/lccl/include)
+
+    link_directories($ENV{MS_INTERNAL_KERNEL_HOME}/internal_kernel/lib)
+    link_directories($ENV{MS_INTERNAL_KERNEL_HOME}/lccl/lib)
+endif()
+
+
 ########### mindspore_ascend.so #####
 set(ASCEND_SUB_COMP
         hal/device
@@ -99,15 +111,6 @@ foreach(a_comp ${ASCEND_COMMON_SUB})
     endif()
 endforeach()
 
-if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
-    MESSAGE(STATUS "MS_INTERNAL_KERNEL_HOME=$ENV{MS_INTERNAL_KERNEL_HOME} found.")
-    include_directories($ENV{MS_INTERNAL_KERNEL_HOME})
-    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/internal_kernel/include)
-    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/asdops/include)
-
-    link_directories($ENV{MS_INTERNAL_KERNEL_HOME}/internal_kernel/lib)
-endif()
-
 list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_ir_obj>)
 list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_declare_obj>)
@@ -133,7 +136,10 @@ if(DVM_LIB)
 endif()
 
 if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+    target_link_libraries(mindspore_ascend PRIVATE lowlatency_collective)
     target_link_libraries(mindspore_ascend PRIVATE ms_kernels_internal)
+    set_target_properties(lowlatency_collective PROPERTIES INSTALL_RPATH
+                    ${ORIGIN_PATH}/ms_kernels_internal/lccl/lib)
 endif()
 
 if(ENABLE_DEBUGGER)

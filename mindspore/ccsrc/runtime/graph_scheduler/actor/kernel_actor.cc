@@ -110,6 +110,32 @@ void KernelActor::InitInputInfo() {
       (void)mem_info_.inputs_.emplace_back(std::make_shared<Address>());
     }
   }
+
+  if (EnableKbkSubGraphExecute()) {
+    memory_free_list_.clear();
+    for (size_t i = 0; i < real_input_num_; ++i) {
+      auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(kernel_, i, false);
+      MS_EXCEPTION_IF_NULL(input_node_with_idx.first);
+      if (!input_node_with_idx.first->isa<CNode>()) {
+        continue;
+      }
+
+      if (IsSkippedKernelActor(input_node_with_idx.first)) {
+        input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(input_node_with_idx.first, 0, false);
+      }
+
+      const auto &input_device_address =
+        AnfAlgo::GetMutableOutputAddr(input_node_with_idx.first, input_node_with_idx.second, false);
+      MS_EXCEPTION_IF_NULL(input_device_address);
+      input_device_tensors_[i] = input_device_address.get();
+      input_kernel_tensors_[i] = input_device_tensors_[i]->kernel_tensor().get();
+      input_kernel_tensors_for_infer_[i] = input_device_tensors_[i]->kernel_tensor();
+
+      if (!IsSomasEnable(somas_info_)) {
+        memory_free_list_.emplace_back(input_device_address.get());
+      }
+    }
+  }
 }
 
 void KernelActor::InitOutputInfo() {
@@ -441,18 +467,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
   // Record mem info, because async send may free device info.
   if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
-    for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-      mem_info_.inputs_[i]->addr = input_device_tensors_[i]->GetMutablePtr();
-      mem_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
-    }
-    for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
-      mem_info_.outputs_[i]->addr = output_device_tensors_[i]->GetMutablePtr();
-      mem_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
-    }
-    for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
-      mem_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetMutablePtr();
-      mem_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
-    }
+    SetMemInfoForDebugAndRdr();
   }
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
@@ -462,6 +477,21 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   }
 
   PostLaunchKernel(context);
+}
+
+void KernelActor::SetMemInfoForDebugAndRdr() {
+  for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
+    mem_info_.inputs_[i]->addr = input_device_tensors_[i]->GetMutablePtr();
+    mem_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
+  }
+  for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
+    mem_info_.outputs_[i]->addr = output_device_tensors_[i]->GetMutablePtr();
+    mem_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
+  }
+  for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
+    mem_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetMutablePtr();
+    mem_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
+  }
 }
 
 void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
@@ -697,7 +727,14 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
   // 2. Launch kernel if need.
   device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
   if (!IsSkippedLaunch(kernel_, nullptr) && !LaunchKernel(context)) {
-    MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope()
+                      << trace::DumpSourceLines(kernel_);
+  }
+
+  if (recorder_aid_ != nullptr) {
+    SetMemInfoForDebugAndRdr();
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &mem_info_,
+                          device_contexts_[0], context);
   }
 
   if (ActorDispatcher::enable_multi_stream()) {
@@ -954,11 +991,18 @@ void KernelActor::RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const co
 }
 
 void KernelActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
-  if (recorder_aid_ != nullptr) {
+  if (recorder_aid_ != nullptr && !ActorDispatcher::enable_async_launch_kernel()) {
     MS_EXCEPTION_IF_NULL(kernel_);
     ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &mem_info_,
                           device_contexts_[0], context);
   }
 }
+
+void KernelActor::SetInputDeviceTensor(DeviceTensor *input_device_tensor, size_t input_index) {
+  input_device_tensors_[input_index] = input_device_tensor;
+  input_kernel_tensors_[input_index] = input_device_tensor->kernel_tensor().get();
+  input_kernel_tensors_for_infer_[input_index] = input_device_tensor->kernel_tensor();
+}
+
 }  // namespace runtime
 }  // namespace mindspore

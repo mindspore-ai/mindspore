@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel.h"
 
 #include <map>
+#include <set>
 #include "ops/ascend_op_name.h"
 #include "ops/other_op_name.h"
 #include "ops/array_op_name.h"
@@ -113,7 +114,9 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
     return false;
   }
 
-  if (kernel_name_ == kAllReduceOpName || kernel_name_ == kReduceScatterOpName || kernel_name_ == kReduceOpName) {
+  std::set<std::string> reduce_op_names = {kAllReduceOpName, kReduceScatterOpName, kReduceOpName,
+                                           kMatMulAllReduceOpName};
+  if (reduce_op_names.count(kernel_name_) != 0) {
     if (!HcomUtil::GetHcomOperationType(primitive_, &op_type_)) {
       MS_LOG(ERROR) << "GetHcomOperationType fail!";
       return false;
@@ -129,13 +132,17 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
   if (!HcomUtil::GetHcomAttr<std::string>(primitive_, kAttrGroup, &group_)) {
     return false;
   }
+
   if (common::GetEnv(kSimulationLevel).empty() && !common::IsNeedProfileMemory()) {
-    // pynative with ranktable also need hccl_comm
-    comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
-    if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
-      MS_EXCEPTION_IF_NULL(comm_);
-      primitive_->set_attr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)));
+#ifdef ENABLE_INTERNAL_KERNELS
+    if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
+      LoadLcclLibrary();
+    } else {
+      LoadHcclLibrary();
     }
+#else
+    LoadHcclLibrary();
+#endif
   }
   CalLoopSize();
 
@@ -168,6 +175,10 @@ void HcclKernel::CalLoopSize() {
     loop_size_ = hccl_kernel_output_shape_list_.size();
   }
   if (kernel_name_ == kAllToAllvOpName) {
+    loop_size_ = hccl_kernel_output_shape_list_.size();
+  }
+  // For MatMulAllReduce, output number is 1.
+  if (kernel_name_ == kMatMulAllReduceOpName) {
     loop_size_ = hccl_kernel_output_shape_list_.size();
   }
   MS_LOG(INFO) << "Get Hccl Kernel: " << kernel_name_ << ", output size: " << loop_size_;
@@ -273,5 +284,34 @@ int HcclKernel::Resize(const std::vector<KernelTensor *> &inputs, const std::vec
 
   return KRET_OK;
 }
+
+void HcclKernel::LoadHcclLibrary() {
+  comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
+  if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
+    MS_EXCEPTION_IF_NULL(comm_);
+    primitive_->set_attr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)));
+  }
+}
+
+#ifdef ENABLE_INTERNAL_KERNELS
+void HcclKernel::LoadLcclLibrary() {
+  std::string lowlatency_comm_lib_name = "liblowlatency_collective.so";
+  auto loader = std::make_shared<CollectiveCommLibLoader>(lowlatency_comm_lib_name);
+  MS_EXCEPTION_IF_NULL(loader);
+  if (!loader->Initialize()) {
+    MS_LOG(EXCEPTION) << "Loading LCCL collective library failed.";
+  }
+  void *collective_comm_lib_handle = loader->collective_comm_lib_ptr();
+  MS_EXCEPTION_IF_NULL(collective_comm_lib_handle);
+
+  auto instance_func = DlsymFuncObj(communication_lib_instance, collective_comm_lib_handle);
+  collective_comm_lib_ = dynamic_cast<LowlatencyCollectiveCommLib *>(instance_func());
+  MS_EXCEPTION_IF_NULL(collective_comm_lib_);
+  lccl_comm_ = collective_comm_lib_->LcclCommunicator(group_);
+  MS_EXCEPTION_IF_NULL(lccl_comm_);
+  lcal_comm_ = collective_comm_lib_->LcalCommunicator(group_);
+  MS_EXCEPTION_IF_NULL(lcal_comm_);
+}
+#endif
 }  // namespace kernel
 }  // namespace mindspore
