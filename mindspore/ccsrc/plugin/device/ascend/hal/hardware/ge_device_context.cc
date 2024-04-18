@@ -131,6 +131,13 @@ RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
       return RunMode::kGraphMode;
     }
     MS_LOG(INFO) << "dynamic shape default RunMode::kKernelMode";
+    // Dynamic shape runs in kbk mode, not support ge graph sink mode.
+    auto set_ctx = [&context](bool task_sink, bool is_multi_graph_sink, bool enable_loop_sink) {
+      context->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, task_sink);
+      context->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, is_multi_graph_sink);
+      context->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, enable_loop_sink);
+    };
+    set_ctx(false, false, false);
     return RunMode::kKernelMode;
   }
 
