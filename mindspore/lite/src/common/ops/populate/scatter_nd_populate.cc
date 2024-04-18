@@ -22,8 +22,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateScatterNDParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "ScatterND primitive is nullptr!");
   auto *param = static_cast<ScatterNDParameter *>(malloc(sizeof(ScatterNDParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ScatterNDParameter failed.";

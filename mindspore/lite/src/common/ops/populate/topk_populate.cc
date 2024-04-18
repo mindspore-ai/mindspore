@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateTopKParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "TopK primitive is nullptr!");
   auto value = primitive->value_as_TopKFusion();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";

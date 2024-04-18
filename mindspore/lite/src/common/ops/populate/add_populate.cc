@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateAddParameter(const void *prim) {
   auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "Add primitive is nullptr!");
   auto value = primitive->value_as_AddFusion();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";

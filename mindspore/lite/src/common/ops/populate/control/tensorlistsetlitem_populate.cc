@@ -21,16 +21,16 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateTensorListSetItemParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "TensorListSetItem primitive is nullptr!");
   auto value = primitive->value_as_TensorListSetItem();
   if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
+    MS_LOG(ERROR) << "value is nullptr!";
     return nullptr;
   }
 
   auto *param = reinterpret_cast<TensorListParameter *>(malloc(sizeof(TensorListParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc TensorListParameter failed.";
+    MS_LOG(ERROR) << "malloc TensorListParameter failed!";
     return nullptr;
   }
   memset(param, 0, sizeof(TensorListParameter));
