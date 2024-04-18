@@ -136,9 +136,9 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiMatmulsFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormFusion>());
-  if (common::GetEnv("ENABLE_MATMUL_ALLREDUCE") == "on") {
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatMulAllReduceFusion>());
-  }
+  // if (common::GetEnv("ENABLE_MATMUL_ALLREDUCE") == "on") {
+  //   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatMulAllReduceFusion>());
+  // }
 #endif  // ENABLE_INTERNAL_KERNELS
 }
 
