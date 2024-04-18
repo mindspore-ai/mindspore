@@ -939,8 +939,9 @@ void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
       auto user_stream_id = stream_id;
       auto memory_stream_id = cross_stream_kernel_tensor->stream_id();
       if (cross_stream_kernel_tensor->task_id_on_stream() == nullptr) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Cross_stream_kernel_tensor : " << cross_stream_kernel_tensor
-                                   << " task id on stream is nullptr.";
+        MS_LOG(WARNING) << "Cross_stream_kernel_tensor : " << cross_stream_kernel_tensor
+                        << " task id on stream is nullptr, will skip multi stream process.";
+        continue;
       }
       auto memory_task_id_on_stream = *cross_stream_kernel_tensor->task_id_on_stream();
       auto safe_task_id_on_stream =

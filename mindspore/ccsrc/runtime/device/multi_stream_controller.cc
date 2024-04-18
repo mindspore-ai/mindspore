@@ -82,9 +82,7 @@ bool MultiStreamController::RecordEvent(const DeviceContext *device_context, int
   }
 
   auto event = device_context->device_res_manager_->CreateRuntimeEvent(false, true);
-  if (event == nullptr) {
-    return true;
-  }
+  MS_EXCEPTION_IF_NULL(event);
   event->RecordEvent(user_stream_id);
   // Record event on mem buf.
   return mem_manager->RecordEvent(task_id_on_stream, user_stream_id, memory_stream_addresses, event);
@@ -144,7 +142,7 @@ bool MultiStreamController::SyncAllStreams(const DeviceContext *device_context) 
   bool ret = device_res_manager->SyncAllStreams();
   auto mem_manager = device_res_manager->mem_manager();
   if (mem_manager != nullptr) {
-    mem_manager->WaitAllEvents();
+    mem_manager->SyncAllEvents();
   }
   return ret;
 }
@@ -214,7 +212,7 @@ DeviceEventPtr EventPool::Get() {
   // Try to create event firstly before reached core size.
   if (size_ < core_size_) {
     auto created_event = event_creator_();
-    if (created_event->IsReady()) {
+    if (created_event != nullptr && created_event->IsReady()) {
       cached_events_.push_back(created_event);
       size_++;
       event = created_event.get();
@@ -239,7 +237,7 @@ DeviceEventPtr EventPool::Get() {
   // Reuse failed, try to create more event.
   if (event == nullptr) {
     auto created_event = event_creator_();
-    if (created_event->IsReady()) {
+    if (created_event != nullptr && created_event->IsReady()) {
       cached_events_.push_back(created_event);
       event = created_event.get();
       size_++;
