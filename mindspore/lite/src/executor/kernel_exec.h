@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,40 +115,26 @@ class KernelExec {
   }
 
   // called while compiling graph
-  virtual int Prepare() {
-    MS_ASSERT(kernel_ != nullptr);
-    return kernel_->Prepare();
-  }
+  virtual int Prepare() { return kernel_->Prepare(); }
 
   virtual bool IsBuiltin() { return desc_.provider == kBuiltin; }
 
   virtual int InferShape() { return kernel_->InferShape(); }
 
-  virtual int ReSize() {
-    MS_ASSERT(kernel_ != nullptr);
-    return kernel_->ReSize();
-  }
+  virtual int ReSize() { return kernel_->ReSize(); }
 
   virtual OpParameter *op_parameter() const {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<LiteKernel>(kernel_)->op_parameter();
     }
     return nullptr;
   }
 
-  std::string name() const {
-    MS_ASSERT(kernel_ != nullptr);
-    return kernel_->name();
-  }
+  std::string name() const { return kernel_->name(); }
 
-  void set_name(const std::string &name) {
-    MS_ASSERT(kernel_ != nullptr);
-    kernel_->set_name(name);
-  }
+  void set_name(const std::string &name) { kernel_->set_name(name); }
 
   virtual int Train() {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<Abstractkernel>(kernel_)->Train();
     }
@@ -156,7 +142,6 @@ class KernelExec {
   }
 
   virtual bool IsTrain() const {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<Abstractkernel>(kernel_)->IsTrain();
     }
@@ -164,7 +149,6 @@ class KernelExec {
   }
 
   virtual int Eval() {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<Abstractkernel>(kernel_)->Eval();
     }
@@ -172,7 +156,6 @@ class KernelExec {
   }
 
   virtual bool IsEval() const {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<Abstractkernel>(kernel_)->IsEval();
     }
@@ -180,14 +163,12 @@ class KernelExec {
   }
 
   virtual void SetTrainable(bool trainable = true) {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<Abstractkernel>(kernel_)->SetTrainable(trainable);
     }
   }
 
   virtual bool IsTrainable() const {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<Abstractkernel>(kernel_)->IsTrainable();
     }
@@ -206,12 +187,10 @@ class KernelExec {
   }
 
   virtual PrimitiveType type() const {
-    MS_ASSERT(kernel_ != nullptr);
     return PrimitiveType(std::static_pointer_cast<Abstractkernel>(kernel_)->type());
   }
 
   virtual void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<Abstractkernel>(kernel_)->set_in_tensors(in_tensors);
     } else {
@@ -226,7 +205,6 @@ class KernelExec {
   }
 
   virtual void set_in_tensor(lite::Tensor *in_tensor, size_t index) {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<Abstractkernel>(kernel_)->set_in_tensor(in_tensor, index);
     } else {
@@ -238,7 +216,6 @@ class KernelExec {
   }
 
   virtual void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<Abstractkernel>(kernel_)->set_out_tensors(out_tensors);
     } else {
@@ -253,11 +230,13 @@ class KernelExec {
   }
 
   virtual void set_out_tensor(lite::Tensor *out_tensor, size_t index) {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<Abstractkernel>(kernel_)->set_out_tensor(out_tensor, index);
     } else {
-      MS_ASSERT(index < kernel_->outputs().size());
+      if (index >= kernel_->outputs().size()) {
+        MS_LOG(ERROR) << "Invalid index: " << index << ", outputs size: " << kernel_->outputs().size();
+        return;
+      }
       auto impl = std::make_shared<mindspore::LiteTensorImpl>(out_tensor);
       auto tensor_out = mindspore::MSTensor(impl);
       kernel_->set_output(tensor_out, static_cast<int>(index));
@@ -265,7 +244,6 @@ class KernelExec {
   }
 
   virtual const std::vector<lite::Tensor *> &in_tensors() const {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<Abstractkernel>(kernel_)->in_tensors();
     } else {
@@ -285,7 +263,6 @@ class KernelExec {
   }
 
   virtual const std::vector<lite::Tensor *> &out_tensors() const {
-    MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<Abstractkernel>(kernel_)->out_tensors();
     } else {
@@ -395,7 +372,7 @@ template <class T>
 LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                               OpParameter *parameter, const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   if (parameter == nullptr) {
-    MS_LOG(ERROR) << "parameter is nullptr.";
+    MS_LOG(ERROR) << "parameter is nullptr!";
     return nullptr;
   }
   if (desc.data_type == kTypeUnknown) {
@@ -403,7 +380,7 @@ LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs, const s
   }
   auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr.";
+    MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr!";
     free(parameter);
     return nullptr;
   }
