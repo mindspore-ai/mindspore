@@ -24,7 +24,6 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import init, HCCL_WORLD_COMM_GROUP, get_rank, get_group_size
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _inner_ops as inner
 
 context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
 

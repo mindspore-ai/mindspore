@@ -76,18 +76,7 @@ class GeDeviceResManager : public DeviceResManager {
 
   static void CreateSessionAndGraphRunner();
 
-<<<<<<< HEAD
-  bool LoadCollectiveCommLib() override {
-    if (common::GetEnv(kSimulationLevel).empty()) {
-      collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
-    } else {
-      collective_comm_lib_ = &DummyAscendCollectiveCommLib::GetInstance();
-    }
-    return true;
-  }
-=======
   bool LoadCollectiveCommLib() override;
->>>>>>> Add lccl so.
 
   void ResetStreamAndCtx() override;
   bool BindDeviceToCurrentThread(bool force_bind) const override;

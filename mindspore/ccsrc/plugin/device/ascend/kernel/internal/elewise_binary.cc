@@ -85,7 +85,7 @@ class InternalSub : public ElewiseBinary {
     param_ptr->input2_dtype_ = InternalKernelUtils::ToInternalDType(inputs[kIndex1]->dtype_id());
     param_ptr->input1_dims_ = internal::VecToSVec<int64_t>(inputs[kIndex0]->GetShapeVector());
     param_ptr->input2_dims_ = internal::VecToSVec<int64_t>(inputs[kIndex1]->GetShapeVector());
-    
+
     return std::static_pointer_cast<internal::OpParam>(param_ptr);
   }
 };

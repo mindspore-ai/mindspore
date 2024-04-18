@@ -770,9 +770,7 @@ bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, s
   return ret;
 }
 
-
-bool AscendDeviceAddress::AsyncHostToDevice(size_t size, TypeId /* type */,
-                                            const void *host_ptr) const {
+bool AscendDeviceAddress::AsyncHostToDevice(size_t size, TypeId /* type */, const void *host_ptr) const {
   MS_ERROR_IF_NULL(host_ptr);
   BindDevice();
   if (!MoveToDevice(false)) {
@@ -786,14 +784,14 @@ bool AscendDeviceAddress::AsyncHostToDevice(size_t size, TypeId /* type */,
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
 
-  auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, GetDevicePtr(), size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, runtime_instance->compute_stream());
+  auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, GetDevicePtr(), size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE,
+                             runtime_instance->compute_stream());
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync host to device failed, the error num[" << ret << "]";
     return false;
   }
   return true;
 }
-
 
 bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector & /* shape */, size_t size, TypeId /* type */,
                                             const void *host_ptr, size_t stream_id) const {

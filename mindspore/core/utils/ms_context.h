@@ -24,6 +24,7 @@
 #include <functional>
 #include <mutex>
 #include <vector>
+#include <optional>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
@@ -402,7 +403,7 @@ inline void MsContext::increase_param<uint32_t>(MsCtxParam param) {
   uint32_params_[param - MS_CTX_TYPE_UINT32_BEGIN]++;
 }
 
-// decreate method implementation for type uint32_t
+// decrease method implementation for type uint32_t
 template <>
 inline void MsContext::decrease_param<uint32_t>(MsCtxParam param) {
   uint32_params_[param - MS_CTX_TYPE_UINT32_BEGIN]--;
