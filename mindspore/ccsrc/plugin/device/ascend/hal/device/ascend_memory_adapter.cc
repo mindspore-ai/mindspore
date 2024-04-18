@@ -219,7 +219,8 @@ std::string AscendMemAdapter::DevMemStatistics() const {
     size_t max_actual = std::max(actual_peak_memory_, (ms_used_hbm_size_ - static_mem_offset_));
     oss << "\nActual peak memory usage: " << max_actual / kMBToByte << "M";
   } else if (context->IsKByKExecutorMode()) {
-    oss << "\nActual peak memory usage: " << actual_peak_memory_ / kMBToByte << "M";
+    oss << "\nUsed peak memory usage (without fragments): " << used_peak_memory_ / kMBToByte << "M";
+    oss << "\nActual peak memory usage (with fragments): " << actual_peak_memory_ / kMBToByte << "M";
   }
   oss << "\nDynamic memory size of this graph: " << cur_dynamic_mem_offset_ / kMBToByte << "M";
   oss << std::endl;
@@ -290,8 +291,8 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
       size_t total = 0;
       (void)CALL_ASCEND_API(aclrtGetMemInfo, ACL_HBM_MEM, &free, &total);
       MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Malloc device memory failed, size[" << size << "], ret["
-                        << ret << "], "
-                        << "Device " << device_id << " Available HBM size:" << total << " free size:" << free
+                        << ret << "], " << "Device " << device_id << " Available HBM size:" << total
+                        << " free size:" << free
                         << " may be other processes occupying this card, check as: ps -ef|grep python";
     } else {
       MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << size << "] fail, ret[" << ret << "]";
