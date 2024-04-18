@@ -26,6 +26,7 @@
 #include "pipeline/jit/pi/graph_capture/node.h"
 #include "pipeline/jit/pi/utils/allocator.h"
 #include "pipeline/jit/pi/graph_guard/trace.h"
+#include "pipeline/jit/pi/graph_guard/guard.h"
 #include "pipeline/jit/pi/graph_capture/side_effect.h"
 #include "utils/convert_utils_base.h"
 
@@ -148,7 +149,7 @@ class Graph {
     return Utils::GetPyName(c->co_name);
   }
 
-  bool GuardValueNode(ValueNode *);
+  bool GuardValueNode(ValueNode *, GuardLevel level = GuardLevel::GEqual);
   bool GuardType(ValueNode *);
   bool GuardSequenceNodeLength(ValueNode *, Py_ssize_t);
   bool GuardInlinedFunc(CallNode *call_node);

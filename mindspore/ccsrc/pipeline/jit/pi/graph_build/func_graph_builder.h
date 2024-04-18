@@ -58,6 +58,13 @@ class FuncGraphBuilder {
   /// \return The python object of the infer result.
   py::object AddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
 
+  /// \brief Add a python object to graph.
+  ///
+  /// \param[in] object The python object add to graph.
+  ///
+  /// \return Indicate whether the python object add to graph successfully.
+  bool AddPythonObject(const py::object &object);
+
   /// \brief Add a binary operation cnode to the graph.
   ///
   /// \param[in] opcode The binary operation code.
@@ -134,7 +141,7 @@ class FuncGraphBuilder {
 
   static bool CheckGraphOutput(const AbstractBasePtr &abs);
 
-  AnfNodePtr ConvertInputObjToNode(const py::object &input_obj);
+  AnfNodePtr ConvertObjToNode(const py::object &input_obj);
 
   py::object AddFgCallNode(const FuncGraphPtr &fg, const std::vector<py::object> &inputs_obj);
 
