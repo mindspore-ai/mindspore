@@ -33,6 +33,25 @@ double GetNormalized(int64_t, NormMode, bool);
 
 bool IsForwardOp(const std::string &);
 
+template <typename S, typename T>
+void Cast(const S *in, T *out) {
+  if constexpr (std::is_same_v<S, T>) {
+    *out = static_cast<T>(*in);
+  } else if constexpr (std::is_same_v<S, bool> && std::is_same_v<T, std::complex<float>>) {
+    *out = std::complex<float>(*in ? 1.0f : 0.0f, 0.0f);
+  } else if constexpr (std::is_same_v<S, bool> && std::is_same_v<T, std::complex<double>>) {
+    *out = std::complex<double>(*in ? 1.0 : 0.0, 0.0);
+  } else if constexpr ((std::is_same_v<S, std::complex<float>>) || (std::is_same_v<S, std::complex<double>>)) {
+    *out = static_cast<T>(std::real(*in));
+  } else if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
+    double realValue = static_cast<double>(*in);
+    std::complex<double> complexValue(realValue, 0.0);
+    *out = (std::is_same_v<T, std::complex<float>>) ? static_cast<T>(complexValue) : complexValue;
+  } else {
+    *out = static_cast<T>(*in);
+  }
+}
+
 template <typename T_in, typename T_out>
 void ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shape,
                const std::vector<int64_t> output_shape) {
@@ -58,7 +77,8 @@ void ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shap
   int64_t input_index = 0;
   int64_t output_index = 0;
   for (int64_t i = 0; i < copy_num; ++i) {
-    output[output_index] = static_cast<T_out>(input[input_index]);
+    Cast(&input[input_index], &output[output_index]);
+
     size_t j = x_rank - 1;
     input_pos[j]++;
     input_index++;

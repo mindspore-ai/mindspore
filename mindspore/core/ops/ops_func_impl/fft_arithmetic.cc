@@ -51,14 +51,14 @@ BaseShapePtr FFTInferShape(const PrimitivePtr &primitive, const std::vector<Abst
       auto n = n_opt.value();
 
       y_shape[tmp_pos] = n;
-      if (primitive->name() == prim::kPrimRFFT->name()) {
+      if (primitive->name() == prim::kPrimIHFFT->name() || primitive->name() == prim::kPrimRFFT->name()) {
         y_shape[tmp_pos] = n / 2 + 1;
       }
     }
   } else {
-    if (primitive->name() == prim::kPrimIRFFT->name()) {
+    if (primitive->name() == prim::kPrimHFFT->name() || primitive->name() == prim::kPrimIRFFT->name()) {
       y_shape[tmp_pos] = (y_shape[tmp_pos] - 1) * 2;
-    } else if (primitive->name() == prim::kPrimRFFT->name()) {
+    } else if (primitive->name() == prim::kPrimIHFFT->name() || primitive->name() == prim::kPrimRFFT->name()) {
       y_shape[tmp_pos] = y_shape[tmp_pos] / 2 + 1;
     }
   }
@@ -123,9 +123,15 @@ BaseShapePtr FFTNInferShape(const PrimitivePtr &primitive, const std::vector<Abs
   std::string op_name = primitive->name();
   static const std::vector<std::string> same_shape_prim = {prim::kPrimFFT2->name(), prim::kPrimFFTN->name(),
                                                            prim::kPrimIFFT2->name(), prim::kPrimIFFTN->name()};
+  static const std::vector<std::string> half_shape_prim = {prim::kPrimIHFFT2->name(), prim::kPrimIHFFTN->name(),
+                                                           prim::kPrimRFFT2->name(), prim::kPrimRFFTN->name()};
+  static const std::vector<std::string> double_shape_prim = {prim::kPrimHFFT2->name(), prim::kPrimHFFTN->name(),
+                                                             prim::kPrimIRFFT2->name(), prim::kPrimIRFFTN->name()};
 
   bool is_same_shape_prim = std::find(same_shape_prim.begin(), same_shape_prim.end(), op_name) != same_shape_prim.end();
-
+  bool is_half_shape_prim = std::find(half_shape_prim.begin(), half_shape_prim.end(), op_name) != half_shape_prim.end();
+  bool is_double_shape_prim =
+    std::find(double_shape_prim.begin(), double_shape_prim.end(), op_name) != double_shape_prim.end();
   bool s_is_none = input_args[kInputIndex1]->GetType()->isa<TypeNone>();
   bool dim_is_none = input_args[kInputIndex2]->GetType()->isa<TypeNone>();
 
@@ -157,6 +163,17 @@ BaseShapePtr FFTNInferShape(const PrimitivePtr &primitive, const std::vector<Abs
   for (size_t i = 0; i < s.size(); i++) {
     y_shape[dim[i]] = s[i];
   }
+
+  if (is_double_shape_prim && s_is_none) {
+    y_shape[dim.back()] = (y_shape[dim.back()] - 1) * 2;
+  }
+
+  if (is_half_shape_prim && s_is_none) {
+    y_shape[dim.back()] = y_shape[dim.back()] / 2 + 1;
+  }
+  if (is_half_shape_prim && !s_is_none) {
+    y_shape[dim.back()] = s.back() / 2 + 1;
+  }
   return std::make_shared<abstract::TensorShape>(y_shape);
 }
 
@@ -169,10 +186,9 @@ TypePtr FFTInferType(const PrimitivePtr &primitive, const std::vector<AbstractBa
   bool is_double_type = std::any_of(double_type.begin(), double_type.end(),
                                     [&input_type_id](const TypeId &type_id) { return input_type_id == type_id; });
 
-  static const std::vector<std::string> float_prim = {
-    prim::kPrimIRFFT->name(),
-  };
-
+  static const std::vector<std::string> float_prim = {prim::kPrimHFFT->name(),   prim::kPrimHFFT2->name(),
+                                                      prim::kPrimHFFTN->name(),  prim::kPrimIRFFT->name(),
+                                                      prim::kPrimIRFFT2->name(), prim::kPrimIRFFTN->name()};
   bool is_float_prim = std::find(float_prim.begin(), float_prim.end(), op_name) != float_prim.end();
 
   TypePtr output_type;

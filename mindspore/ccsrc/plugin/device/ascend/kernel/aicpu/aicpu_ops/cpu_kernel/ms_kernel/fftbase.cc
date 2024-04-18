@@ -22,6 +22,7 @@
 #include "mindspore/core/mindapi/base/types.h"
 #include "cpu_kernel/utils/fft_helper.h"
 #include "inc/kernel_log.h"
+#include "base/bfloat16.h"
 #include <vector>
 #include <securec.h>
 
@@ -267,6 +268,7 @@ uint32_t FFTBaseCpuKernel::Compute(CpuKernelContext &ctx) {
   calls[DT_INT16][DT_COMPLEX64] = FFTBaseCompute<int16_t, float>;
   calls[DT_INT32][DT_COMPLEX64] = FFTBaseCompute<int32_t, float>;
   calls[DT_INT64][DT_COMPLEX64] = FFTBaseCompute<int64_t, float>;
+  calls[DT_BFLOAT16][DT_COMPLEX64] = FFTBaseCompute<bfloat16, float>;
   calls[DT_FLOAT16][DT_COMPLEX64] = FFTBaseCompute<Eigen::half, float>;
   calls[DT_FLOAT][DT_COMPLEX64] = FFTBaseCompute<float, float>;
   calls[DT_DOUBLE][DT_COMPLEX128] = FFTBaseCompute<double, double>;
@@ -275,6 +277,7 @@ uint32_t FFTBaseCpuKernel::Compute(CpuKernelContext &ctx) {
   calls[DT_INT16][DT_FLOAT] = FFTBaseCompute<int16_t, float>;
   calls[DT_INT32][DT_FLOAT] = FFTBaseCompute<int32_t, float>;
   calls[DT_INT64][DT_FLOAT] = FFTBaseCompute<int64_t, float>;
+  calls[DT_BFLOAT16][DT_FLOAT] = FFTBaseCompute<bfloat16, float>;
   calls[DT_FLOAT16][DT_FLOAT] = FFTBaseCompute<Eigen::half, float>;
   calls[DT_FLOAT][DT_FLOAT] = FFTBaseCompute<float, float>;
   calls[DT_DOUBLE][DT_DOUBLE] = FFTBaseCompute<double, double>;
@@ -287,4 +290,6 @@ REGISTER_MS_CPU_KERNEL(kFFT, FFTBaseCpuKernel);
 REGISTER_MS_CPU_KERNEL(kIFFT, FFTBaseCpuKernel);
 REGISTER_MS_CPU_KERNEL(kRFFT, FFTBaseCpuKernel);
 REGISTER_MS_CPU_KERNEL(kIRFFT, FFTBaseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kHFFT, FFTBaseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIHFFT, FFTBaseCpuKernel);
 }  // namespace aicpu

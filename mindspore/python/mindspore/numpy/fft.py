@@ -14,8 +14,9 @@
 # ============================================================================
 """Fast Fourier Transform operations, the function docs are adapted from Numpy API."""
 from __future__ import absolute_import
-__all__ = ['fftshift', 'ifftshift', 'rfft', 'irfft',
-           'fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn']
+__all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
+           'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
+           'hfft', 'ihfft', 'fftshift', 'ifftshift']
 from mindspore import ops
 
 
@@ -241,8 +242,7 @@ def irfft(a, n=None, axis=-1, norm=None):
         >>> a = np.array([1, 2, 3, 4])
         >>> y = np.fft.irfft(a, n=6, axis=-1, norm='backward')
         >>> print(y)
-        [ 2.5000000e+00 -6.6666669e-01  1.2590267e-15 -1.6666667e-01
-        4.2470195e-16 -6.6666669e-01]
+        [ 2.5        -0.6666667   0.         -0.16666667  0.         -0.6666667 ]
     """
     return ops.irfft(a, n, axis, norm)
 

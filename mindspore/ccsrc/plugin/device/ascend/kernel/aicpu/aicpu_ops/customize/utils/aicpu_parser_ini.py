@@ -111,6 +111,9 @@ cust_op_lists = [
     "geqrf",
     "hammingwindow",
     "heaviside",
+    "hfft",
+    "hfft2",
+    "hfftn",
     "histogram",
     "hypot",
     "identityn",
@@ -118,6 +121,9 @@ cust_op_lists = [
     "ifft2",
     "ifftn",
     "ifftshift",
+    "ihfft",
+    "ihfft2",
+    "ihfftn",
     "igamma",
     "igammac",
     "igammagrada",
@@ -125,6 +131,8 @@ cust_op_lists = [
     "indexfill",
     "indexput",
     "irfft",
+    "irfft2",
+    "irfftn",
     "irfftgrad",
     "irfftdouble",
     "isinf",
@@ -215,6 +223,8 @@ cust_op_lists = [
     "resizenearestneighborv2grad",
     "reversev2",
     "rfft",
+    "rfft2",
+    "rfftn",
     "rfftgrad",
     "rgbtohsv",
     "rightshift",
@@ -293,7 +303,7 @@ def parse_ini_to_obj(ini_file, aicpu_ops_info):
                 continue
             if line.startswith("["):
                 if op_name and info:  # set info for the last op
-                    aicpu_ops_info["Cust"+op_name] = info
+                    aicpu_ops_info["Cust" + op_name] = info
                 info = {}
                 op_name = line[1:-1]
                 info = {}
@@ -303,13 +313,13 @@ def parse_ini_to_obj(ini_file, aicpu_ops_info):
                 aicpu_ops_info[op_name] = info
             elif op_name:
                 key1 = line[:line.index("=")].strip()
-                key2 = line[line.index("=")+1:].strip()
+                key2 = line[line.index("=") + 1:].strip()
                 key1_0, key1_1 = key1.split(".")
                 if key1_0 not in info:
                     info[key1_0] = {}
                 info[key1_0][key1_1] = key2
         if op_name and info:
-            aicpu_ops_info["Cust"+op_name] = info
+            aicpu_ops_info["Cust" + op_name] = info
 
 
 def check_custom_op_opinfo(required_custom_op_info_keys, ops, op_key):

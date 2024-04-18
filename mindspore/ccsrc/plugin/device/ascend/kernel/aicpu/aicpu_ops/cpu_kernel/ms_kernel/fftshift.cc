@@ -19,6 +19,7 @@
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "context/inc/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
+#include "base/bfloat16.h"
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -48,6 +49,7 @@ uint32_t FFTShiftCpuKernel::Compute(CpuKernelContext &ctx) {
   auto x_type = ctx.Input(kIndex0)->GetDataType();
   switch (x_type) {
     FFTSHIFT_COMPUTE_CASE(DT_BOOL, bool, ctx)
+    FFTSHIFT_COMPUTE_CASE(DT_BFLOAT16, bfloat16, ctx)
     FFTSHIFT_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     FFTSHIFT_COMPUTE_CASE(DT_FLOAT, float, ctx)
     FFTSHIFT_COMPUTE_CASE(DT_DOUBLE, double, ctx)

@@ -19,6 +19,7 @@
 #include "context/inc/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 #include "cpu_kernel/utils/fft_helper.h"
+#include "base/bfloat16.h"
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -48,6 +49,7 @@ uint32_t FFTShapeCopyCpuKernel::Compute(CpuKernelContext &ctx) {
     FFTSHAPECOPY_COMPUTE_CASE(DT_INT16, int16_t, ctx)
     FFTSHAPECOPY_COMPUTE_CASE(DT_INT32, int32_t, ctx)
     FFTSHAPECOPY_COMPUTE_CASE(DT_INT64, int64_t, ctx)
+    FFTSHAPECOPY_COMPUTE_CASE(DT_BFLOAT16, bfloat16, ctx)
     FFTSHAPECOPY_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     FFTSHAPECOPY_COMPUTE_CASE(DT_FLOAT, float, ctx)
     FFTSHAPECOPY_COMPUTE_CASE(DT_DOUBLE, double, ctx)

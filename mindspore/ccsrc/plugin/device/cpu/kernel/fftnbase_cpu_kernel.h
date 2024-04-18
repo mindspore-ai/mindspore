@@ -47,6 +47,7 @@ class FFTNBaseCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   void ResetResource();
+  void FFTNGetAttr();
 
   template <typename T_in, typename T_out>
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
@@ -78,6 +79,8 @@ class FFTNBaseCpuKernelMod : public NativeCpuKernelMod {
   FFTNBaseFunc kernel_func_;
 
   bool forward_;
+  bool s_is_none_{false};
+  bool dim_is_none_{false};
   int64_t x_rank_;
   int64_t input_element_nums_;
   int64_t calculate_element_nums_;

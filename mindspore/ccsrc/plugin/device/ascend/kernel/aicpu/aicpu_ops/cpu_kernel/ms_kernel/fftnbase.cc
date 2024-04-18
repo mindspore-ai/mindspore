@@ -21,6 +21,7 @@
 #include "context/inc/cpu_kernel_utils.h"
 #include "cpu_kernel/utils/fft_helper.h"
 #include "mindspore/core/mindapi/base/types.h"
+#include "base/bfloat16.h"
 
 namespace {
 const char *const kInputSName = "s";
@@ -256,6 +257,7 @@ uint32_t FFTNBaseCpuKernel::Compute(CpuKernelContext &ctx) {
   calls[DT_INT16][DT_COMPLEX64] = FFTNBaseCompute<int16_t, float>;
   calls[DT_INT32][DT_COMPLEX64] = FFTNBaseCompute<int32_t, float>;
   calls[DT_INT64][DT_COMPLEX64] = FFTNBaseCompute<int64_t, float>;
+  calls[DT_BFLOAT16][DT_COMPLEX64] = FFTNBaseCompute<bfloat16, float>;
   calls[DT_FLOAT16][DT_COMPLEX64] = FFTNBaseCompute<Eigen::half, float>;
   calls[DT_FLOAT][DT_COMPLEX64] = FFTNBaseCompute<float, float>;
   calls[DT_DOUBLE][DT_COMPLEX128] = FFTNBaseCompute<double, double>;
@@ -264,6 +266,7 @@ uint32_t FFTNBaseCpuKernel::Compute(CpuKernelContext &ctx) {
   calls[DT_INT16][DT_FLOAT] = FFTNBaseCompute<int16_t, float>;
   calls[DT_INT32][DT_FLOAT] = FFTNBaseCompute<int32_t, float>;
   calls[DT_INT64][DT_FLOAT] = FFTNBaseCompute<int64_t, float>;
+  calls[DT_BFLOAT16][DT_FLOAT] = FFTNBaseCompute<bfloat16, float>;
   calls[DT_FLOAT16][DT_FLOAT] = FFTNBaseCompute<Eigen::half, float>;
   calls[DT_FLOAT][DT_FLOAT] = FFTNBaseCompute<float, float>;
   calls[DT_DOUBLE][DT_DOUBLE] = FFTNBaseCompute<double, double>;
@@ -277,4 +280,14 @@ REGISTER_MS_CPU_KERNEL(kFFT2, FFTNBaseCpuKernel);
 REGISTER_MS_CPU_KERNEL(kIFFT2, FFTNBaseCpuKernel);
 REGISTER_MS_CPU_KERNEL(kFFTN, FFTNBaseCpuKernel);
 REGISTER_MS_CPU_KERNEL(kIFFTN, FFTNBaseCpuKernel);
+
+REGISTER_MS_CPU_KERNEL(kHFFT2, FFTNBaseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIHFFT2, FFTNBaseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kHFFTN, FFTNBaseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIHFFTN, FFTNBaseCpuKernel);
+
+REGISTER_MS_CPU_KERNEL(kRFFT2, FFTNBaseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIRFFT2, FFTNBaseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRFFTN, FFTNBaseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIRFFTN, FFTNBaseCpuKernel);
 }  // namespace aicpu
