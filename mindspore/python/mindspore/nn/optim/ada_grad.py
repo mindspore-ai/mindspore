@@ -126,7 +126,7 @@ class Adagrad(Optimizer):
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
               `LearningRateSchedule
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#learningrateschedule-class>`_
               with step as the input to get the learning rate of current step.
 
         update_slots (bool): Whether the :math:`h` will be updated. Default: ``True`` .
@@ -168,7 +168,7 @@ class Adagrad(Optimizer):
         >>> import mindspore.nn as nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Adagrad(params=net.trainable_params())

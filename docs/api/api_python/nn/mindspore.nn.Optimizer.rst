@@ -3,7 +3,7 @@ mindspore.nn.Optimizer
 
 .. py:class:: mindspore.nn.Optimizer(learning_rate, parameters, weight_decay=0.0, loss_scale=1.0)
 
-    用于参数更新的优化器基类。不要直接使用这个类，请实例化它的一个子类。详见 `优化器 <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore.nn.html#%E4%BC%98%E5%8C%96%E5%99%A8>`_ 。
+    用于参数更新的优化器基类。不要直接使用这个类，请实例化它的一个子类。详见 `优化器 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.nn.html#%E4%BC%98%E5%8C%96%E5%99%A8>`_ 。
 
     优化器支持参数分组。当参数分组时，每组参数均可配置不同的学习率（`lr` ）、权重衰减（`weight_decay`）和梯度中心化（`grad_centralization`）策略。
 

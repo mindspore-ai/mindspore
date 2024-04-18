@@ -73,7 +73,7 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./', ob
 
     Examples:
         >>> from mindspore import obfuscate_ckpt, save_checkpoint
-        >>> # Refer to https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> save_checkpoint(net, './test_net.ckpt')
         >>> target_modules = ['', 'fc1|fc2']
@@ -204,7 +204,7 @@ def load_obf_params_into_net(network, target_modules, obf_ratios, data_parallel_
         >>> from mindspore import obfuscate_ckpt, save_checkpoint, load_checkpoint, Tensor
         >>> import mindspore.common.dtype as mstype
         >>> import numpy as np
-        >>> # Refer to https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> save_checkpoint(net, './test_net.ckpt')
         >>> target_modules = ['', 'fc1|fc2']

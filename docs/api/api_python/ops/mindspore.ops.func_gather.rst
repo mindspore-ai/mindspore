@@ -13,7 +13,7 @@ mindspore.ops.gather
 
     .. note::
         1. input_indices的值必须在 `[0, input_params.shape[axis])` 范围内。CPU与GPU平台越界访问将会抛出异常，Ascend平台越界访问的返回结果是未定义的。
-        2. Ascend平台上，input_params的数据类型当前不能是 `bool_ <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
+        2. Ascend平台上，input_params的数据类型当前不能是 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
 
     参数：
         - **input_params** (Tensor) - 原始Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。

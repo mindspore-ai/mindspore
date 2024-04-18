@@ -99,7 +99,7 @@ class WithLossCell(Cell):
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
         >>> net_with_criterion = nn.WithLossCell(net, loss_fn)
@@ -132,7 +132,7 @@ class WithLossCell(Cell):
         Examples:
             >>> from mindspore import nn
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
             >>> net_with_criterion = nn.WithLossCell(net, loss_fn)
@@ -175,7 +175,7 @@ class WithGradCell(Cell):
         >>> import mindspore as ms
         >>> from mindspore import nn
         >>> # Defined a network without loss function, taking LeNet5 as an example.
-        >>> # Refer to https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
         >>> grad_net = nn.WithGradCell(net, loss_fn)
@@ -346,7 +346,7 @@ class TrainOneStepCell(Cell):
     Examples:
         >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -586,7 +586,7 @@ class MicroBatchInterleaved(Cell):
     Examples:
         >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> net = nn.MicroBatchInterleaved(net, 2)
     """
@@ -634,7 +634,7 @@ class PipelineCell(Cell):
     Examples:
         >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> net = nn.PipelineCell(net, 4)
     """
@@ -685,7 +685,7 @@ class GradAccumulationCell(Cell):
     Examples:
         >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> net = nn.GradAccumulationCell(net, 4)
     """
@@ -811,7 +811,7 @@ class VirtualDatasetCellTriple(Cell):
     Examples:
         >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> net = nn.VirtualDatasetCellTriple(net)
     """
@@ -854,7 +854,7 @@ class WithEvalCell(Cell):
     Examples:
         >>> import mindspore.nn as nn
         >>> # Define a forward network without loss function, taking LeNet5 as an example.
-        >>> # Refer to https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+        >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
         >>> eval_net = nn.WithEvalCell(net, loss_fn)

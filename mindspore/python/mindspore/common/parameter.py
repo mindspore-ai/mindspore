@@ -364,7 +364,7 @@ class Parameter(Tensor_):
 
         Tutorial Examples:
             - `Parameter Server Mode
-              <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/parameter_server_training.html>`_
+              <https://www.mindspore.cn/tutorials/experts/en/master/parallel/parameter_server_training.html>`_
         """
         if not _is_ps_mode() or not (_is_role_worker() or _is_role_pserver() or _is_role_sched()):
             raise RuntimeError("Must complete following two steps before calling set_param_ps: \n"
@@ -1023,7 +1023,7 @@ class ParameterTuple(tuple):
 
         Tutorial Examples:
             - `Cell and Parameter - Parameter Tuple
-              <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/modules/layer.html#parameter-tuple>`_
+              <https://mindspore.cn/tutorials/en/master/advanced/modules/layer.html#parameter-tuple>`_
         """
         Validator.check_str_by_regular(prefix)
         new = []

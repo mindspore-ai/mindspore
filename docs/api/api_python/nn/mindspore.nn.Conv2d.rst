@@ -51,8 +51,8 @@ mindspore.nn.Conv2d
           假设 :math:`dilation=(d0, d1)`, 则卷积核在高度方向间隔 :math:`d0-1` 个元素进行采样，在宽度方向间隔 :math:`d1-1` 个元素进行采样。高度和宽度上取值范围分别为[1, H]和[1, W]。默认值： ``1`` 。
         - **group** (int，可选) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。如果组数等于 `in_channels` 和 `out_channels` ，这个二维卷积层也被称为二维深度卷积层。默认值： ``1`` 。
         - **has_bias** (bool，可选) - Conv2d层是否添加偏置参数。默认值： ``False`` 。
-        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选 ``"TruncatedNormal"`` ， ``"Normal"`` ， ``"Uniform"`` ， ``"HeUniform"`` 和 ``"XavierUniform"`` 分布以及常量 ``"One"`` 和 ``"Zero"`` 分布的值，可接受别名 ``"xavier_uniform"`` ， ``"he_uniform"`` ， ``"ones"`` 和 ``"zeros"`` 。上述字符串大小写均可。更多细节请参考 `Initializer <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore.common.initializer.html>`_, 的值。默认值： ``None`` ，权重使用 ``"HeUniform"`` 初始化。
-        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 偏置参数的初始化方法。可以使用的初始化方法与 `weight_init` 相同。更多细节请参考 `Initializer <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore.common.initializer.html>`_ 的值。默认值： ``None`` ，偏差使用 ``"Uniform"`` 初始化。
+        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选 ``"TruncatedNormal"`` ， ``"Normal"`` ， ``"Uniform"`` ， ``"HeUniform"`` 和 ``"XavierUniform"`` 分布以及常量 ``"One"`` 和 ``"Zero"`` 分布的值，可接受别名 ``"xavier_uniform"`` ， ``"he_uniform"`` ， ``"ones"`` 和 ``"zeros"`` 。上述字符串大小写均可。更多细节请参考 `Initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_, 的值。默认值： ``None`` ，权重使用 ``"HeUniform"`` 初始化。
+        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 偏置参数的初始化方法。可以使用的初始化方法与 `weight_init` 相同。更多细节请参考 `Initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ 的值。默认值： ``None`` ，偏差使用 ``"Uniform"`` 初始化。
         - **data_format** (str，可选) - 数据格式的可选值有 ``"NHWC"`` ， ``"NCHW"`` 。默认值： ``"NCHW"`` 。（目前仅GPU支持NHWC。）
         - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 

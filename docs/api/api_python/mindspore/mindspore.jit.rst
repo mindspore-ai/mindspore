@@ -11,8 +11,8 @@ mindspore.jit
         - **fn** (Function) - 要编译成图的Python函数。默认值： ``None`` 。
         - **mode** (str) - 使用jit的类型，可选值有 ``"PSJit"`` 和 ``"PIJit"`` 。默认值： ``"PSJit"``。
 
-          - `PSJit <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/note/static_graph_syntax_support.html>`_ ：MindSpore 静态图模式。
-          - `PIJit <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/design/dynamic_graph_and_static_graph.html>`_ ：MindSpore 动态图模式。
+          - `PSJit <https://www.mindspore.cn/docs/zh-CN/master/note/static_graph_syntax_support.html>`_ ：MindSpore 静态图模式。
+          - `PIJit <https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html>`_ ：MindSpore 动态图模式。
 
         - **input_signature** (Tensor) - 用于表示输入参数的Tensor。Tensor的shape和dtype将作为函数的输入shape和dtype。默认值： ``None`` 。
         - **hash_args** (Union[Object, List or Tuple of Objects]) - `fn` 里面用到的自由变量，比如外部函数或类对象，再次调用时若 `hash_args` 出现变化会触发重新编译。默认值： ``None`` 。

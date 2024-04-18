@@ -39,7 +39,7 @@ LRScheduler subclass dynamically changes the learning rate by calling the `step`
     from mindspore.experimental import optim
 
     # Define the network structure of LeNet5. Refer to
-    # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
+    # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
 
     net = LeNet5()
     loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
@@ -56,7 +56,7 @@ LRScheduler subclass dynamically changes the learning rate by calling the `step`
         return loss
     for epoch in range(6):
         # Create the dataset taking MNIST as an example. Refer to
-        # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
+        # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
 
         for data, label in create_dataset(need_download=False):
             train_step(data, label)

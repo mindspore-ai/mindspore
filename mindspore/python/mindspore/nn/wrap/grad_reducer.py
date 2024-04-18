@@ -335,14 +335,14 @@ class DistributedGradReducer(Cell):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -509,11 +509,11 @@ class PipelineGradReducer(Cell):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with multiple devices.
 

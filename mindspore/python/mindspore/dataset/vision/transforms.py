@@ -144,7 +144,7 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_brightness
@@ -194,7 +194,7 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -257,7 +257,7 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_contrast
@@ -306,7 +306,7 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -377,7 +377,7 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_gamma
@@ -444,7 +444,7 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_hue
@@ -493,7 +493,7 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -557,7 +557,7 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_saturation
@@ -606,7 +606,7 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -668,7 +668,7 @@ class AdjustSharpness(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_sharpness
@@ -740,7 +740,7 @@ class Affine(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_affine
@@ -805,7 +805,7 @@ class Affine(ImageTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -875,7 +875,7 @@ class AutoAugment(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_auto_augment
@@ -937,7 +937,7 @@ class AutoContrast(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_auto_contrast
@@ -1024,7 +1024,7 @@ class BoundingBoxAugment(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_bounding_box_augment_cpp
@@ -1095,7 +1095,7 @@ class CenterCrop(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_center_crop
@@ -1209,7 +1209,7 @@ class ConvertColor(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_convert_color
@@ -1270,7 +1270,7 @@ class Crop(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_crop
@@ -1324,7 +1324,7 @@ class Crop(ImageTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -1394,7 +1394,7 @@ class CutMixBatch(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_cut_mix_batch_c
@@ -1453,7 +1453,7 @@ class CutOut(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_cutout_new
@@ -1536,7 +1536,7 @@ class Decode(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_decode
@@ -1629,7 +1629,7 @@ class Decode(ImageTensorOperation, PyTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         if self.implementation == Implementation.PY and device_target == "Ascend":
             raise ValueError("The transform \"Decode(to_pil=True)\" cannot be performed on Ascend device, " +
@@ -1687,7 +1687,7 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -1765,7 +1765,7 @@ class Erase(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_erase
@@ -1853,7 +1853,7 @@ class FiveCrop(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_five_crop
@@ -1929,7 +1929,7 @@ class GaussianBlur(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_gaussian_blur
@@ -1988,7 +1988,7 @@ class GaussianBlur(ImageTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         if device_target == "Ascend":
@@ -2067,7 +2067,7 @@ class Grayscale(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_num_channels
@@ -2123,7 +2123,7 @@ class HorizontalFlip(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -2172,7 +2172,7 @@ class HorizontalFlip(ImageTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -2222,7 +2222,7 @@ class HsvToRgb(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_hsv_to_rgb
@@ -2285,7 +2285,7 @@ class HWC2CHW(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -2333,7 +2333,7 @@ class Invert(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -2409,7 +2409,7 @@ class LinearTransformation(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_linear_transform
@@ -2497,7 +2497,7 @@ class MixUp(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_mix_up
@@ -2592,7 +2592,7 @@ class MixUpBatch(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_mix_up_batch_c
@@ -2659,7 +2659,7 @@ class Normalize(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_normalize
@@ -2718,7 +2718,7 @@ class Normalize(ImageTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -2856,7 +2856,7 @@ class Pad(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_pad
@@ -2912,7 +2912,7 @@ class Pad(ImageTensorOperation, PyTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -2993,7 +2993,7 @@ class PadToSize(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_pad_to_size
@@ -3064,7 +3064,7 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_perspective
@@ -3126,7 +3126,7 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -3188,7 +3188,7 @@ class Posterize(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_posterize
@@ -3261,7 +3261,7 @@ class RandAugment(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_rand_augment
@@ -3325,7 +3325,7 @@ class RandomAdjustSharpness(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_adjust_sharpness
@@ -3419,7 +3419,7 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_affine
@@ -3538,7 +3538,7 @@ class RandomAutoContrast(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_auto_contrast
@@ -3598,7 +3598,7 @@ class RandomColor(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_positive_degrees
@@ -3688,7 +3688,7 @@ class RandomColorAdjust(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_color_adjust
@@ -3809,7 +3809,7 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_crop
@@ -3934,7 +3934,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_resize_crop
@@ -4048,7 +4048,7 @@ class RandomCropWithBBox(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_crop
@@ -4116,7 +4116,7 @@ class RandomEqualize(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -4194,7 +4194,7 @@ class RandomErasing(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_erasing
@@ -4292,7 +4292,7 @@ class RandomGrayscale(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -4362,7 +4362,7 @@ class RandomHorizontalFlip(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -4436,7 +4436,7 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -4488,7 +4488,7 @@ class RandomInvert(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -4540,7 +4540,7 @@ class RandomLighting(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_alpha
@@ -4637,7 +4637,7 @@ class RandomPerspective(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_perspective
@@ -4712,7 +4712,7 @@ class RandomPosterize(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_posterize
@@ -4789,7 +4789,7 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_resize_crop
@@ -4898,7 +4898,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_resize_crop
@@ -4969,7 +4969,7 @@ class RandomResize(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_resize
@@ -5054,7 +5054,7 @@ class RandomResizeWithBBox(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_resize
@@ -5130,7 +5130,7 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_rotation
@@ -5229,7 +5229,7 @@ class RandomSelectSubpolicy(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_select_subpolicy_op
@@ -5292,7 +5292,7 @@ class RandomSharpness(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_positive_degrees
@@ -5359,7 +5359,7 @@ class RandomSolarize(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_solarize
@@ -5411,7 +5411,7 @@ class RandomVerticalFlip(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -5484,7 +5484,7 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -5540,7 +5540,7 @@ class Rescale(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_rescale
@@ -5602,7 +5602,7 @@ class Resize(ImageTensorOperation, PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_resize_interpolation
@@ -5662,7 +5662,7 @@ class Resize(ImageTensorOperation, PyTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         if self.interpolation == Inter.ANTIALIAS and self.device_target == "Ascend":
@@ -5747,7 +5747,7 @@ class ResizedCrop(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_resized_crop
@@ -5807,7 +5807,7 @@ class ResizedCrop(ImageTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
@@ -5873,7 +5873,7 @@ class ResizeWithBBox(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_resize_interpolation
@@ -5931,7 +5931,7 @@ class RgbToHsv(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_rgb_to_hsv
@@ -6009,7 +6009,7 @@ class Rotate(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_rotate
@@ -6094,7 +6094,7 @@ class SlicePatches(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_slice_patches
@@ -6151,7 +6151,7 @@ class Solarize(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_solarize
@@ -6237,7 +6237,7 @@ class TenCrop(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_ten_crop
@@ -6299,7 +6299,7 @@ class ToNumpy(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -6359,7 +6359,7 @@ class ToPIL(PyTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -6423,7 +6423,7 @@ class ToTensor(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_to_tensor
@@ -6489,7 +6489,7 @@ class ToType(TypeCast):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
 
@@ -6549,7 +6549,7 @@ class TrivialAugmentWide(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_trivial_augment_wide
@@ -6624,7 +6624,7 @@ class UniformAugment(CompoundOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_uniform_augment
@@ -6683,7 +6683,7 @@ class VerticalFlip(ImageTensorOperation):
 
     Tutorial Examples:
         - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -6732,7 +6732,7 @@ class VerticalFlip(ImageTensorOperation):
 
         Tutorial Examples:
             - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
         return self
