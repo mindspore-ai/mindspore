@@ -2,4 +2,4 @@
 - **int** - �̶���ѧϰ�ʡ�������ڵ����㡣�������ͻᱻת��Ϊ��������
 - **Tensor** - �����Ǳ�����һά�����������ǹ̶���ѧϰ�ʡ�һά�����Ƕ�̬��ѧϰ�ʣ���i����ȡ�����е�i��ֵ��Ϊѧϰ�ʡ�
 - **Iterable** - ��̬��ѧϰ�ʡ���i����ȡ��������i��ֵ��Ϊѧϰ�ʡ�
-- **LearningRateSchedule** - ��̬��ѧϰ�ʡ���ѵ�������У��Ż�����ʹ�ò�����mindspore.cn/docs/zh-CN/r2.3.q1ateSchedule <https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore.nn.html#learningrateschedule%E7%B1%BB>`_ ʵ�������㵱ǰѧϰ�ʡ�
+- **LearningRateSchedule** - ��̬��ѧϰ�ʡ���ѵ�������У��Ż�����ʹ�ò�����mindspore.cn/docs/zh-CN/masterateSchedule <https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore.nn.html#learningrateschedule%E7%B1%BB>`_ ʵ�������㵱ǰѧϰ�ʡ�

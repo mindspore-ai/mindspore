@@ -8,7 +8,7 @@
     :func:`mindspore.ops.cat()` 的别名。
 
     教程样例：
-        - `张量 Tensor - 张量运算 <https://mindspore.cn/tutorials/zh-CN/r2.3.q1/beginner/tensor.html#张量运算>`_
-        - `Vision Transformer图像分类 - 整体构建ViT <https://mindspore.cn/tutorials/application/zh-CN/r2.3.q1/cv/vit.html#整体构建vit>`_
+        - `张量 Tensor - 张量运算 <https://mindspore.cn/tutorials/zh-CN/master/beginner/tensor.html#张量运算>`_
+        - `Vision Transformer图像分类 - 整体构建ViT <https://mindspore.cn/tutorials/application/zh-CN/master/cv/vit.html#整体构建vit>`_
         - `RNN实现情感分类 - Dense
-          <https://mindspore.cn/tutorials/application/zh-CN/r2.3.q1/nlp/sentiment_analysis.html#dense>`_
+          <https://mindspore.cn/tutorials/application/zh-CN/master/nlp/sentiment_analysis.html#dense>`_

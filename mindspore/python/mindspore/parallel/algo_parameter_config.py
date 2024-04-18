@@ -229,7 +229,7 @@ def set_algo_parameters(**kwargs):
     """
     Set parameters in the algorithm for parallel strategy searching. See a typical use in
     `test_auto_parallel_resnet.py
-    <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/tests/ut/python/parallel/test_auto_parallel_resnet.py>`_.
+    <https://gitee.com/mindspore/mindspore/blob/master/tests/ut/python/parallel/test_auto_parallel_resnet.py>`_.
 
     Note:
         The attribute name is required. This interface works ONLY in AUTO_PARALLEL mode.
@@ -266,14 +266,14 @@ def set_algo_parameters(**kwargs):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table startup
-            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun startup
-            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
         >>> import numpy as np
         >>> import mindspore as ms
