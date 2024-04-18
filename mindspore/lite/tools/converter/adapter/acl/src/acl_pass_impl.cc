@@ -665,12 +665,16 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
         return lite::RET_ERROR;
       }
     }
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
+        find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "LayerNormV3") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "run LayerNormV3.";
+      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kAddLayerNormFusion}), lite::RET_ERROR,
+                        "LayerNormV3 op pass failed.");
+    }
     if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "AddLayerNorm") != plugin_custom_ops.end()) {
-      MS_LOG(INFO) << "Run " << kAddLayerNormFusion << " and " << kFuseAddAndLayernorm;
-      if (!lite::RunOptimizerPass(func_graph, {kAddLayerNormFusion, kFuseAddAndLayernorm})) {
-        MS_LOG(ERROR) << "AddLayerNorm op pass failed!";
-        return lite::RET_ERROR;
-      }
+      MS_LOG(INFO) << "run " << kFuseAddAndLayernorm;
+      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kFuseAddAndLayernorm}), lite::RET_ERROR,
+                        "AddLayerNorm op pass failed.");
     }
     if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
         find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GeGluV2") != plugin_custom_ops.end()) {
