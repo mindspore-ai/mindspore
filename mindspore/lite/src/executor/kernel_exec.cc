@@ -25,7 +25,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 bool KernelExec::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
-  MS_ASSERT(kernel_ != nullptr);
   auto &in_tensors = this->in_tensors();
   return std::all_of(in_tensors.begin(), in_tensors.end(), [&](lite::Tensor *in_tensor) {
     if (IsContain(scope_tensors, in_tensor)) {
@@ -38,7 +37,6 @@ bool KernelExec::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
 
 void KernelExec::InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask_kernels) {
   for (auto *tensor : this->out_tensors()) {
-    MS_ASSERT(tensor != nullptr);
     int init_ref_count = tensor->IsGraphOutput() ? 1 : 0;  // persistent graph output
     for (auto *post_kernel : this->out_kernels_) {
       if ((mask_kernels == nullptr) ||
@@ -80,11 +78,10 @@ int KernelExec::DoExecute() {
   auto ret = kernel_->Execute();
   if ((ret == lite::RET_OK) && (desc_.provider != kBuiltin)) {
     for (auto *output : out_tensors()) {
-      MS_ASSERT(output != nullptr);
       output->ResetRefCount();
     }
+
     for (auto &in_tensor : in_tensors()) {
-      MS_ASSERT(in_tensor != nullptr);
       in_tensor->DecRefCount();
     }
   }
