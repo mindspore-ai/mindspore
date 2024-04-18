@@ -518,6 +518,12 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
       base_shape_ptr = cnode->input(1)->Shape();
     }
   }
+  // If node is Depend, only first input should be used.
+  if (node->isa<CNode>() && IsPrimitiveCNode(node->cast<CNodePtr>(), prim::kPrimDepend)) {
+    auto depend_cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(depend_cnode->input(1));
+    return GetNodeShape(depend_cnode->input(1));
+  }
   if (base_shape_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " shape_ptr is nullptr, full name is "
                       << node->fullname_with_scope();
