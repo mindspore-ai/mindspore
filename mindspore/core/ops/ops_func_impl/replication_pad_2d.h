@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CONSTANT_PAD_ND_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CONSTANT_PAD_ND_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REPLICATION_PAD_2D_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REPLICATION_PAD_2D_H_
 
 #include <vector>
 #include <set>
@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class MIND_API ConstantPadNDFuncImpl : public OpFuncImpl {
+class MIND_API ReplicationPad2DFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
@@ -32,4 +32,4 @@ class MIND_API ConstantPadNDFuncImpl : public OpFuncImpl {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CONSTANT_PAD_ND_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REPLICATION_PAD_2D_H_

@@ -27,7 +27,7 @@ from mindspore.ops.functional import (
 # 4
 
 # 5
-
+from mindspore.ops.functional import pad_ext as pad
 # 6
 
 # 7
@@ -230,7 +230,7 @@ __all__ = [
     # 4
 
     # 5
-
+    'pad',
     # 6
 
     # 7

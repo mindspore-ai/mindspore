@@ -19,7 +19,7 @@ NN Operators with better performance
 
 """
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.auto_generate.gen_ops_prim import Convolution, ConstantPadNd, MaxPoolWithIndices, MaxPoolWithMask
+from mindspore.ops.auto_generate.gen_ops_prim import Convolution, ConstantPadND, MaxPoolWithIndices, MaxPoolWithMask
 from mindspore import _checkparam as validator
 
 
@@ -193,7 +193,7 @@ def conv2d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
         # Calc pad nd info
         pad_nd, pad_l = _get_pad_nd_info(pad_l, pad_r)
-        pad_nd_op = _get_cache_prim(ConstantPadNd)()
+        pad_nd_op = _get_cache_prim(ConstantPadND)()
         padded_input = pad_nd_op(input, pad_nd, 0)
         conv = _get_cache_prim(Convolution)(stride, pad_l, dilation, False, (0, 0), groups)
         return conv(padded_input, weight, bias)

@@ -2246,34 +2246,6 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogitsV2").SetUnusedInputs({i1})
   return {grad, ib->OutZeros(labels)};
 });
 
-REG_BPROP_BUILDER("ConstantPadNd").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
-  auto paddings = ib->GetInput(kIndex1);
-  bool has_constant_values = ib->GetInputs().size() == kDim5;
-  auto dout = has_constant_values ? ib->GetInput(kIndex4) : ib->GetInput(kIndex3);
-  NodePtr neg_pad;
-
-  MS_EXCEPTION_IF_NULL(paddings);
-  auto pad_opt = ops::GetArrayValue<int64_t>(paddings->BuildValue());
-  if (pad_opt.has_value()) {
-    auto pad_value = pad_opt.value().ToVector();
-    (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
-    neg_pad = ib->Value<ShapeVector>(pad_value);
-  } else {
-    auto pad_tensor = ib->SequenceToTensor(paddings);
-    auto neg_pad_tensor = ib->Emit("Neg", {pad_tensor});
-    neg_pad = ib->TensorToTuple(neg_pad_tensor);
-  }
-
-  auto constant_values = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("ConstantPadNd", {dout, neg_pad, ib->ZerosLike(constant_values)});
-  if (has_constant_values) {
-    auto constant_values = ib->GetInput(kIndex2);
-    return {dx, ib->OutZeros(paddings), ib->OutZeros(constant_values)};
-  } else {
-    return {dx, ib->OutZeros(paddings)};
-  }
-});
-
 REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   auto paddings = ib->GetInput(kIndex1);
   bool has_constant_values = ib->GetInputs().size() == kDim5;
@@ -2317,6 +2289,82 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   } else {
     return {dx, ib->OutZeros(paddings)};
   }
+});
+
+REG_BPROP_BUILDER("ConstantPadND").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto paddings = ib->GetInput(kIndex1);
+  bool has_constant_values = ib->GetInputs().size() == kDim5;
+  auto dout = has_constant_values ? ib->GetInput(kIndex4) : ib->GetInput(kIndex3);
+  NodePtr neg_pad;
+
+  MS_EXCEPTION_IF_NULL(paddings);
+  auto pad_opt = ops::GetArrayValue<int64_t>(paddings->BuildValue());
+  if (pad_opt.has_value()) {
+    auto pad_value = pad_opt.value().ToVector();
+    (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
+    neg_pad = ib->Value<ShapeVector>(pad_value);
+  } else {
+    auto pad_tensor = ib->SequenceToTensor(paddings);
+    auto neg_pad_tensor = ib->Emit("Neg", {pad_tensor});
+    neg_pad = ib->TensorToTuple(neg_pad_tensor);
+  }
+
+  auto constant_values = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("ConstantPadND", {dout, neg_pad, ib->ZerosLike(constant_values)});
+  if (has_constant_values) {
+    auto constant_values = ib->GetInput(kIndex2);
+    return {dx, ib->OutZeros(paddings), ib->OutZeros(constant_values)};
+  } else {
+    return {dx, ib->OutZeros(paddings)};
+  }
+});
+
+REG_BPROP_BUILDER("ReflectionPad1D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReflectionPad1DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
+REG_BPROP_BUILDER("ReflectionPad2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReflectionPad2DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
+REG_BPROP_BUILDER("ReflectionPad3D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReflectionPad3DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
+REG_BPROP_BUILDER("ReplicationPad1D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReplicationPad1DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
+REG_BPROP_BUILDER("ReplicationPad2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReplicationPad2DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
+REG_BPROP_BUILDER("ReplicationPad3D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReplicationPad3DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
 });
 
 REG_BPROP_BUILDER("WKV").SetBody(BODYFUNC(ib) {

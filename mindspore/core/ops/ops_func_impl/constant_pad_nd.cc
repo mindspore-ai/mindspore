@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr ConstantPadNdFuncImpl::InferShape(const PrimitivePtr &primitive,
+BaseShapePtr ConstantPadNDFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   auto x_base_shape = input_args[kInputIndex0]->GetShape();
@@ -41,9 +41,6 @@ BaseShapePtr ConstantPadNdFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto x_rank = x_shape.size();
   if (x_rank == 0) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the dimension of 'x' must bigger than 0.";
-  }
-  if (x_base_shape->IsDynamic()) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_rank, abstract::Shape::kShapeDimAny));
   }
   // padding is dynamic
   ShapeVector out_shape;
@@ -67,8 +64,7 @@ BaseShapePtr ConstantPadNdFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
   for (size_t i = 0; i < paddings.size() / 2; ++i) {
     auto pad_idx = paddings.size() - ((i + 1) * 2);
-    if (paddings.IsValueUnknown(pad_idx) || paddings.IsValueUnknown(pad_idx + 1) ||
-        x_shape[l_diff + i] == abstract::Shape::kShapeDimAny) {
+    if (x_shape[l_diff + i] == abstract::Shape::kShapeDimAny) {
       (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
     } else {
       auto new_dim = x_shape[l_diff + i] + paddings[pad_idx] + paddings[pad_idx + 1];
@@ -79,7 +75,7 @@ BaseShapePtr ConstantPadNdFuncImpl::InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr ConstantPadNdFuncImpl::InferType(const PrimitivePtr &primitive,
+TypePtr ConstantPadNDFuncImpl::InferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
