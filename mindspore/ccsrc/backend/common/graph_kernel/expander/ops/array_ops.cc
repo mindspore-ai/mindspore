@@ -19,13 +19,23 @@
 namespace mindspore::graphkernel::expander {
 REG_EXPANDER_FUNC("Identity").SetBody(BODYFUNC(ib) {
   const auto &input_x = ib->input(0);
-  auto result = ib->Reshape(input_x, ib->Tensor(input_x->GetShape()));
+  auto x_shape = input_x->GetShape();
+  if (IsDynamicShape(x_shape)) {
+    MS_LOG(INFO) << "Skip dynamic shape case";
+    return {};
+  }
+  auto result = ib->Reshape(input_x, ib->Tensor(x_shape));
   return {result};
 });
 
 REG_EXPANDER_FUNC("ZerosLike").SetBody(BODYFUNC(ib) {
   const auto &input_x = ib->input(kIndex0);
-  auto shape = ib->Value(input_x->GetShape());
+  auto x_shape = input_x->GetShape();
+  if (IsDynamicShape(x_shape)) {
+    MS_LOG(INFO) << "Skip dynamic shape case";
+    return {};
+  }
+  auto shape = ib->Value(x_shape);
   auto const_zero = ib->Tensor(0, input_x->GetDtype());
   auto result = ib->BroadcastTo(const_zero, shape);
   return {result};
