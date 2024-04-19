@@ -19,6 +19,8 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
+from mindspore.common import dtype as mstype
+import os
 
 class Net(Cell):
     def __init__(self):
@@ -69,6 +71,15 @@ def test_basic1():
     output_np = output.asnumpy().copy()
     assert np.allclose(expect_np, output_np, 6.e-4, 6.e-4)
 
+def basic_bfloat16():
+    i0 = Tensor(np.random.normal(1, 0.01, [512, 256]).astype(np.float32), mstype.bfloat16)
+    i1 = Tensor(np.random.normal(1, 0.01, [128, 512]).astype(np.float32), mstype.bfloat16)
+    expect = get_output(i0, i1, False)
+    output = get_output(i0, i1, True)
+    expect_np = expect.float().asnumpy().copy()
+    output_np = output.float().asnumpy().copy()
+    assert np.allclose(expect_np, output_np, 4.e-3, 4.e-3)
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -91,3 +102,18 @@ def test_basic_ascend1():
 def test_basic_gpu():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_basic()
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_basic_ascend_bfloat16():
+    """
+    Feature: graph kernel ascend bfloat16 test
+    Description: test dvm matmul bfloat16
+    Expectation: the result match with expect
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
+    basic_bfloat16()
+    del os.environ["GRAPH_OP_RUN"]
