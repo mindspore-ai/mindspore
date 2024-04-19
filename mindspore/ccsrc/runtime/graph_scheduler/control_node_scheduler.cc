@@ -1180,8 +1180,16 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
   if (to_actor->type_ == KernelTransformType::kExitActor && to_actor->node_ == nullptr &&
       to_actor->GetAID().Name().find(group_name) != std::string::npos) {
     // Link arrow from actor of output node to exit actor of kernel graph.
-    const auto &kernel_with_index = parser->FetchBackendNodeByFrontNode(from_node_with_index);
-    MS_EXCEPTION_IF_NULL(kernel_with_index.first);
+    auto kernel_with_index = parser->FetchBackendNodeByFrontNode(from_node_with_index);
+    if (kernel_with_index.first == nullptr) {
+      kernel_with_index = parser->FetchBackendOutputByKernelGraph(graph, from_node_with_index);
+      if (kernel_with_index.first == nullptr) {
+        parser->PrintParseInfo();
+        MS_LOG(EXCEPTION) << "Failed to get kernel with index by front node:" << from_node->fullname_with_scope()
+                          << " debug string:" << from_node->DebugString() << " index:" << from_node_with_index.second
+                          << " by graph:" << graph->ToString() << " to actor:" << to_actor->GetAID();
+      }
+    }
     auto type = FetchKernelTransformType(kernel_with_index.first, graph, {});
     auto from_actor = FetchActor(type, graph_compiler_info.name_, kernel_with_index.first, graph);
     MS_EXCEPTION_IF_NULL(from_actor);
