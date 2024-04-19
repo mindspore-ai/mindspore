@@ -105,8 +105,8 @@ NodePtrList DynBinopGradCommon(BpropBuilder *ib, const NodePtr &x, const NodePtr
     }
     if (!need_shapecalc[i] && !IsDynamicRank(dout_shape)) {
       if (!reduce_axis[i].empty()) {
-        reduce[i] =
-          ib->ReduceSum(reduce[i], ib->Value<ShapeVector>(reduce_axis[i]), dout_shape.size() == shape[i].size(), true);
+        reduce[i] = ib->Emit("SumExt", {reduce[i], ib->Value<ShapeVector>(reduce_axis[i]),
+                                        ib->Value<bool>(dout_shape.size() == shape[i].size()), ib->EmitValue(kNone)});
       }
       if (ib->GetRank(reduce[i]) != shape[i].size()) {
         reduce[i] = ib->Reshape(reduce[i], ib->Shape(inputs[i]));
@@ -268,15 +268,18 @@ NodePtr StaticBinopGradCommon(BpropBuilder *ib, const NodePtr &dx, const ShapeAr
       if (shift) {
         std::vector<int64_t> axis(broadcast_shape[index ^ 1].size());
         std::iota(axis.begin(), axis.begin(), 0LL);
-        reduce_dx = ib->ReduceSum(reduce_dx, axis);
+        reduce_dx =
+          ib->Emit("SumExt", {reduce_dx, ib->Value<ShapeVector>(axis), ib->Value(false), ib->EmitValue(kNone)});
       } else {
-        reduce_dx = ib->ReduceSum(reduce_dx);
+        reduce_dx = ib->Emit("SumExt", {reduce_dx, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
       }
     }
   } else if (!IsDynamic(broadcast_shape[0]) && !IsDynamic(broadcast_shape[1]) && shape_dynamic_dims <= 1) {
     std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgsInferValue(broadcast_shape[0], broadcast_shape[1]);
     if (!bc_axis[index].empty()) {
-      reduce_dx = ib->ReduceSum(reduce_dx, bc_axis[index], ib->GetRank(reduce_dx) == shape[index].size());
+      reduce_dx =
+        ib->Emit("SumExt", {reduce_dx, ib->Value<ShapeVector>(bc_axis[index]),
+                            ib->Value<bool>(ib->GetRank(reduce_dx) == shape[index].size()), ib->EmitValue(kNone)});
     }
     reduce_dx = ib->Reshape(reduce_dx, shape[index]);
   } else {
