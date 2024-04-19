@@ -476,17 +476,7 @@ void Debugger::SendMultiGraphsAndClear(const KernelGraphPtr &graph_ptr) {
  * Description: Returns the rank_id for GPU and Ascend kernel-bykernel mindRT.
  */
 uint32_t Debugger::GetRankID() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  const auto &device_context =
-    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
-  uint32_t rank_id = 0;
-  auto kernel_executor = device_context->GetKernelExecutor(false);
-  if (kernel_executor != nullptr) {
-    rank_id = kernel_executor->GetRankID();
-  }
+  uint32_t rank_id = GetRankId();
   return rank_id;
 }
 

@@ -1471,19 +1471,13 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
     // If the new runtime is used, get rank_id from context via GetRankID(), else get rank_id from rank_id_.
     uint32_t rank_id = rank_id_;
     if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-      uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-      const auto &device_context =
-        device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
-      auto kernel_executor = device_context->GetKernelExecutor(false);
-      if (kernel_executor != nullptr) {
-        rank_id = kernel_executor->GetRankID();
-      }
+      rank_id = GetRankId();
     }
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
     if (json_parser.e2e_dump_enabled() && context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
       std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id);
       MS_LOG(INFO) << "Dump graph and exeorder for graph: " << graph->graph_id()
-                   << "root_graph_id: " << graph->root_graph_id();
+                   << ", root_graph_id: " << graph->root_graph_id() << ", rank_id: " << rank_id;
       std::string target_dir = root_dir + "/graphs";
       std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id, true);
       std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
