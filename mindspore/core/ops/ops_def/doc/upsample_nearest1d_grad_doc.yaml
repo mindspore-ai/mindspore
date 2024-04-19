@@ -1,0 +1,22 @@
+upsample_nearest1d_grad:
+    description: |
+        Upsample the 1-D gradient data  with the nearest neighbor interpolation algorithm.
+
+        Note:
+            Only one of 'scales' and 'output_size' can be specified, and it is an error if both are specified.
+
+        Inputs:
+            - **dy** (Tensor) - Tensor of shape [N, C, L], Must be one of the following types:
+                float16, float32, float64.
+            - **input_size** (tuple[int]): An required tuple[int], which contain 3 elements:
+                [min_batch, channels, length].
+                Must: input_size[0] == dy.shape[0], input_size[1] == dy.shape[1].
+            - **output_size** (tuple[int]): An optional tuple[int]. Default: ``None``.
+                It contains 1 elements: length, whose elements should be the same as `dy`. Must:
+                dy.shape[2] == output_size[0].
+            - **scales** (tuple[float]): An optional tuple[float]. Default: ``None``.
+                The scale array along each dimension, contain 1 elements: scale_length. Must:
+                dy.shape[2] == floor(input_size[2] * scales[0].
+
+        Outputs:
+            - **dx**- (Tensor) - A 3-D tensor. Has the same type as `dy`, shape depends on `input_size`.

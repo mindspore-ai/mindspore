@@ -1,0 +1,23 @@
+#operator upsample_nearest1d
+upsample_nearest1d:
+    args:
+        x:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleNearest1D
+    dispatch:
+        enable: True
+        Ascend: UpsampleNearest1DAscend

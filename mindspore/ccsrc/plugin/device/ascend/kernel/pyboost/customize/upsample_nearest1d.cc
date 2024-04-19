@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-tensor::BaseTensorPtr UpsampleNearest1dAscendCall(const std::shared_ptr<OpRunner> &op, const PrimitivePtr &primitive,
+tensor::BaseTensorPtr UpsampleNearest1dAscendCall(const std::shared_ptr<OpRunner> &op,
                                                   const device::DeviceContext *device_context,
                                                   const BaseTensorPtr &input_tensor,
                                                   const std::vector<int64_t> &output_size,
@@ -34,12 +34,14 @@ tensor::BaseTensorPtr UpsampleNearest1dAscendCall(const std::shared_ptr<OpRunner
 }
 }  // namespace
 
-tensor::BaseTensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<OpRunner> &op,
+tensor::BaseTensorPtr UpsampleNearest1DAscendCustomize(const std::shared_ptr<OpRunner> &op,
                                                        const BaseTensorPtr &input_tensor,
-                                                       const ValueTuplePtr &output_size,
-                                                       const ValueTuplePtr &scale_factors) {
+                                                       const std::optional<ValueTuplePtr> &output_size,
+                                                       const std::optional<ValueTuplePtr> &scale_factors) {
   OpRunner::InferOpOutput(op, input_tensor, output_size, scale_factors);
-  std::vector<int64_t> output_size_vector = ConvertValueTupleToVector<int64_t>(output_size);
+
+  const ShapeVector &osize = op->output_abs()->GetShape()->GetShapeVector();
+  std::vector<int64_t> output_size_vector = {osize.begin() + kDim2, osize.end()};
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
@@ -53,7 +55,8 @@ tensor::BaseTensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<OpR
     PyBoostUtils::MallocOpInputs(device_context, input_tensor);
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    UpsampleNearest1dAscendCall(op, op->primitive(), device_context, input_tensor, output_size_vector, outputs);
+    // Call aclnnUpsampleNearest1d
+    UpsampleNearest1dAscendCall(op, device_context, input_tensor, output_size_vector, outputs);
     MS_LOG(DEBUG) << "Run device task UpsampleNearest1d end";
   }));
   return op->output(0);

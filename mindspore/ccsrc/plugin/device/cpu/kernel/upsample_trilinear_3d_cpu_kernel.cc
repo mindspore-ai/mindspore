@@ -19,7 +19,6 @@
 #include <utility>
 #include "kernel/ops_utils.h"
 #include "mindapi/base/type_id.h"
-#include "ops/upsample_trilinear_3d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -54,7 +53,6 @@ void UpsampleTrilinear3DCpuKernelMod::ComputeHelper(UpsampleTrilinear3DCpuKernel
 
 bool UpsampleTrilinear3DCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
-  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
   auto x = inputs.at(kIndex0);
   MS_EXCEPTION_IF_NULL(x);
   x_type_ = x->dtype_id();
@@ -103,7 +101,7 @@ int UpsampleTrilinear3DCpuKernelMod::Resize(const std::vector<KernelTensor *> &i
       return KRET_RESIZE_FAILED;
     }
   }
-
+  align_corners_ = inputs[kIndex3]->GetValueWithCheck<bool>();
   return KRET_OK;
 }
 
@@ -211,19 +209,14 @@ bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Ker
   return true;
 }
 
-#define UpsampleTrilinear3D_CPU_KERNEL_REG(M_S, S, T)                   \
-  std::make_pair(KernelAttr()                                           \
-                   .AddInputAttr(M_S)                                   \
-                   .AddOptionalInputAttr(kNumberTypeInt32)              \
-                   .AddOptionalInputAttr(kNumberTypeFloat32)            \
-                   .AddOutputAttr(M_S),                                 \
-                 &UpsampleTrilinear3DCpuKernelMod::LaunchKernel<S, T>), \
-    std::make_pair(KernelAttr()                                         \
-                     .AddInputAttr(M_S)                                 \
-                     .AddOptionalInputAttr(kNumberTypeInt64)            \
-                     .AddOptionalInputAttr(kNumberTypeFloat32)          \
-                     .AddOutputAttr(M_S),                               \
-                   &UpsampleTrilinear3DCpuKernelMod::LaunchKernel<S, T>)
+#define UpsampleTrilinear3D_CPU_KERNEL_REG(M_S, S, T)                          \
+  std::make_pair(KernelAttr()                                                  \
+                   .AddInputAttr(M_S)                                          \
+                   .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)   \
+                   .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeFloat32) \
+                   .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)           \
+                   .AddOutputAttr(M_S),                                        \
+                 &UpsampleTrilinear3DCpuKernelMod::LaunchKernel<S, T>)
 
 std::vector<std::pair<KernelAttr, UpsampleTrilinear3DCpuKernelMod::KernelRunFunc>>
   UpsampleTrilinear3DCpuKernelMod::func_list_ = {
