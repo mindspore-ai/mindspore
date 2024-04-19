@@ -19,9 +19,12 @@
 #include <string>
 #include <utility>
 #include <unordered_map>
+#include <unordered_set>
 #include "plugin/device/ascend/kernel/dvm/dvm_kernel_mod.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,6 +42,7 @@ enum OpType {
   OP_ELEMENY,
   OP_REDUCE,
   OP_SLICE,
+  OP_MATMUL,
 };
 
 ShapeVector GetAxisList(const AnfNodePtr &axis_input) {
@@ -98,7 +102,9 @@ static std::unordered_map<std::string, std::pair<OpType, int>> op_type_map = {
   {"IsFinite", {OP_UNARY, dvm::UnaryOpType::kIsFinite}},
   {"ReduceSum", {OP_REDUCE, dvm::ReduceOpType::kSum}},
   {"Slice", {OP_SLICE, 0}},
-  {"StridedSlice", {OP_SLICE, 1}}};
+  {"StridedSlice", {OP_SLICE, 1}},
+  {ops::kNameMatMul, {OP_MATMUL, 0}},
+};
 
 TypeId GetValueNodeType(const AnfNodePtr &node) {
   auto valuenode = node->cast<ValueNodePtr>();
@@ -118,7 +124,16 @@ template <typename T>
 T GetScalarFromNode(const AnfNodePtr &node) {
   auto valuenode = node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(valuenode);
-  auto input_tensor = valuenode->value()->cast<tensor::TensorPtr>();
+  auto value_ptr = valuenode->value();
+  if (value_ptr->isa<Scalar>()) {
+    if constexpr (std::is_same_v<T, float16>) {
+      MS_LOG(EXCEPTION) << "The float16 type is not support!";
+    } else {
+      auto input_scalar = value_ptr->cast<ScalarPtr>();
+      return GetValue<T>(input_scalar);
+    }
+  }
+  auto input_tensor = value_ptr->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   return TensorValueToVector<T>(input_tensor)[0];
 }
@@ -223,6 +238,10 @@ class OpBuilder {
         HandlerSliceOp(node, op_type->second.second);
         break;
       }
+      case OP_MATMUL: {
+        HandlerMatMulOp(node, prim, prim_name);
+        break;
+      }
       default:
         MS_LOG(EXCEPTION) << op_type->second << " is unsupported op type.";
         break;
@@ -308,6 +327,19 @@ class OpBuilder {
       auto op = kernel_->Copy(GetInput(input, start_ref, size_ref));
       EmitOp(node, op);
     }
+  }
+
+  void HandlerMatMulOp(const CNodePtr &node, const PrimitivePtr &prim, const std::string &prim_name) {
+    // Input: (prim, a, b)
+    constexpr auto kMatMulInputNum = 3;
+    if (node->size() != kMatMulInputNum) {
+      MS_LOG(EXCEPTION) << "Input size of " << prim_name << " should be " << kMatMulInputNum << " but got "
+                        << node->size();
+    }
+    auto transpose_a = GetValue<bool>(prim->GetAttr(kTransposeA));
+    auto transpose_b = GetValue<bool>(prim->GetAttr(kTransposeB));
+    auto op = kernel_->MatMul(GetInput(node->input(1)), GetInput(node->input(2)), transpose_a, transpose_b);
+    EmitOp(node, op);
   }
 
   std::pair<dvm::ShapeRef *, dvm::DType> GetNodeShapeAndType(const AnfNodePtr &node) {
@@ -558,8 +590,13 @@ class SingleDvmKernelBuilder : public DvmKernelBuilder {
   void BuildKernel(const FuncGraphPtr &graph, const CNodePtr &out_node,
                    const std::vector<AnfNodePtr> &outputs) override {
     // Create kernel mod
-    auto kernel_type = is_dynamic_ ? dvm::KernelType::kDynShape : dvm::KernelType::kStaticShape;
-    kernel_mod_ = std::make_shared<SingleDvmKernelMod>(kernel_type);
+    auto nodes = TopoSort(out_node);
+    if (outputs.size() > 1) {
+      nodes.pop_back();  // exclude maketuple
+    }
+    auto kernel_type = GetKernelType(nodes);
+    kernel_mod_ = std::make_shared<SingleDvmKernelMod>(kernel_type, common::AnfAlgo::GetCNodeName(node_),
+                                                       node_->fullname_with_scope());
     auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(node_);
     auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(node_);
     kernel_mod_->Initialize(inputs_type, outputs_type);
@@ -567,10 +604,6 @@ class SingleDvmKernelBuilder : public DvmKernelBuilder {
     std::unordered_map<AnfNodePtr, ShapeRefPtr> shapes_ref;
     auto kernel_mod = std::static_pointer_cast<SingleDvmKernelMod>(kernel_mod_);
     OpBuilder builder(kernel_mod_->Kernel(), outputs, &shapes_ref, kernel_mod->ShapesSource(), params.empty());
-    auto nodes = TopoSort(out_node);
-    if (outputs.size() > 1) {
-      nodes.pop_back();  // exclude maketuple
-    }
     for (const auto &node : nodes) {
       if (node->isa<CNode>()) {
         builder.Emit(node);
@@ -594,6 +627,26 @@ class SingleDvmKernelBuilder : public DvmKernelBuilder {
       }
     }
     kernel_mod->UpdateIO();
+  }
+
+ private:
+  dvm::KernelType GetKernelType(const std::vector<AnfNodePtr> &nodes) {
+    std::unordered_set<std::string> cube_ops = {ops::kNameMatMul, ops::kNameBatchMatMul};
+    for (const auto &node : nodes) {
+      if (node->isa<CNode>()) {
+        auto cnode = node->cast<CNodePtr>();
+        auto prim = GetCNodePrimitive(cnode);
+        MS_EXCEPTION_IF_NULL(prim);
+        auto prim_name = prim->name();
+        if (cube_ops.find(prim_name) != cube_ops.end()) {
+          // dynamic shapes will be supported in the future
+          MS_EXCEPTION_IF_CHECK_FAIL(!is_dynamic_,
+                                     "Currently, dvm only supports static shape for for MatMul/BatchMatMul");
+          return dvm::KernelType::kStaticMix;
+        }
+      }
+    }
+    return is_dynamic_ ? dvm::KernelType::kDynShape : dvm::KernelType::kStaticShape;
   }
 };
 
