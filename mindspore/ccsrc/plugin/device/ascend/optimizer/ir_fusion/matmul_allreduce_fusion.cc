@@ -33,6 +33,7 @@
 #include "ops/op_utils.h"
 #include "mindspore/ccsrc/frontend/parallel/ops_info/ops_utils.h"
 #include "mindspore/core/ir/anf.h"
+#include "utils/phase.h"
 
 namespace mindspore::opt {
 const BaseRef MatMulAllReduceFusion::DefinePattern() const {
@@ -56,17 +57,11 @@ PrimitivePtr MatMulAllReduceFusion::CreateMatMulAllReducePrim(const PrimitivePtr
   auto matmul_allreduce_prim = prim::kPrimMatMulAllReduce->Clone();
   MS_CHECK_TRUE_RET(matmul_allreduce_prim, {});
   // add attr
-  matmul_allreduce_prim->AddAttr(kAttrNameCommRenuse, allreduce_prim->GetAttr(kAttrNameCommRenuse));
-  matmul_allreduce_prim->AddAttr(kAttrNameCommRenuse, allreduce_prim->GetAttr(kAttrNameCommRenuse));
   matmul_allreduce_prim->AddAttr(kAttrNameGroup, allreduce_prim->GetAttr(kAttrNameGroup));
   matmul_allreduce_prim->AddAttr(kAttrNameFusion, allreduce_prim->GetAttr(kAttrNameFusion));
   matmul_allreduce_prim->AddAttr(kAttrNameOp, allreduce_prim->GetAttr(kAttrNameOp));
   matmul_allreduce_prim->AddAttr(kAttrNameTransposeA, matmul_prim->GetAttr(kAttrNameTransposeA));
   matmul_allreduce_prim->AddAttr(kAttrNameTransposeB, matmul_prim->GetAttr(kAttrNameTransposeB));
-  if (matmul_prim->HasAttr(kAttrNameNeedFusedXoffsetToBias)) {
-    matmul_allreduce_prim->AddAttr(kAttrNameNeedFusedXoffsetToBias,
-                                   matmul_prim->GetAttr(kAttrNameNeedFusedXoffsetToBias));
-  }
   return matmul_allreduce_prim;
 }
 
@@ -108,7 +103,9 @@ const AnfNodePtr MatMulAllReduceFusion::Process(const mindspore::FuncGraphPtr &f
     return nullptr;
   }
 
-  if (common::GetEnv("DISABLE_MATMULALLREDUCE_FUSION") == "True") {
+  auto phase = PhaseManager::GetInstance().phase();
+  if (common::GetEnv("DISABLE_MATMULALLREDUCE_FUSION") == "True" || common::GetEnv("MS_ENABLE_LCCL").empty() ||
+      phase.rfind(kPhaseNamePrefill) == std::string::npos) {
     return nullptr;
   }
 
