@@ -111,21 +111,6 @@ void SuperKernelActor::Init() {
     BuildKernelActors();
     ParseInputIndex();
     CalcRefCount();
-
-    for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-      auto input_device_tensor = DeviceTensorStore::GetInstance()
-                                   .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
-                                   .get();
-      // Ge backend maybe nullptr.
-      if (input_device_tensor == nullptr) {
-        MS_LOG(DEBUG) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
-                      << " index:" << device_tensor_store_key.first;
-        continue;
-      }
-
-      size_t index = device_tensor_store_key.first;
-      input_device_tensors_[index] = input_device_tensor;
-    }
   }
 }
 
@@ -246,9 +231,30 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   }
 }
 
+void SuperKernelActor::FetchPersistentDeviceTensor() {
+  for (auto &device_tensor_store_key : device_tensor_store_keys_) {
+    auto input_device_tensor = DeviceTensorStore::GetInstance()
+                                 .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
+                                 .get();
+    // Ge backend maybe nullptr.
+    if (input_device_tensor == nullptr) {
+      MS_LOG(DEBUG) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
+                    << " index:" << device_tensor_store_key.first;
+      continue;
+    }
+
+    size_t index = device_tensor_store_key.first;
+    input_device_tensors_[index] = input_device_tensor;
+  }
+}
+
 void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const context) {
   // 1. Fetch input data
   FetchInputDeviceTensor(context);
+  if (!already_fetch_persistent_device_tensor_) {
+    FetchPersistentDeviceTensor();
+    already_fetch_persistent_device_tensor_ = true;
+  }
 
   // 2. Allocate somas memory for graph
   if ((somas_info_ != nullptr) && (somas_info_->whole_block_size_ != 0)) {
@@ -648,6 +654,9 @@ void SuperKernelActor::BuildKernelActors() {
     if (origin_output_with_index.first == nullptr) {
       MS_LOG(WARNING) << "The graph " << graph_->graph_id() << " output node:" << output_kernel->fullname_with_scope()
                       << " with index: " << output_index << " has no front node.";
+      continue;
+    }
+    if (!output_kernel->isa<CNode>()) {
       continue;
     }
     auto iter = node_to_kernel_actor_.find(output_kernel);
