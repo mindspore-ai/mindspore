@@ -1562,18 +1562,24 @@ AnfNodePtr CreateValueNodeWithKernelInfo(const FuncGraphPtr &graph, const ValueP
     value_node->set_kernel_info(kernel_info);
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
     builder.SetOutputsFormat({kOpFormat_DEFAULT});
-    MS_EXCEPTION_IF_NULL(value->type());
-    auto type_id = value->type()->type_id();
-    if (value->isa<ValueSequence>()) {
-      auto value_sequence = value->cast<ValueSequencePtr>()->value();
-      if (value_sequence.empty()) {
-        type_id = kNumberTypeInt64;
-      } else {
-        MS_EXCEPTION_IF_NULL(value_sequence[0]->type());
-        type_id = value_sequence[0]->type()->type_id();
+    if (value->isa<tensor::Tensor>()) {
+      auto tensor = value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      builder.SetOutputsDeviceType({tensor->data_type()});
+    } else {
+      MS_EXCEPTION_IF_NULL(value->type());
+      auto type_id = value->type()->type_id();
+      if (value->isa<ValueSequence>()) {
+        auto value_sequence = value->cast<ValueSequencePtr>()->value();
+        if (value_sequence.empty()) {
+          type_id = kNumberTypeInt64;
+        } else {
+          MS_EXCEPTION_IF_NULL(value_sequence[0]->type());
+          type_id = value_sequence[0]->type()->type_id();
+        }
       }
+      builder.SetOutputsDeviceType({type_id});
     }
-    builder.SetOutputsDeviceType({type_id});
     auto object_type = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAbstractObjectType(value_abs));
     builder.SetOutputsKernelObjectType({object_type});
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), value_node.get());
