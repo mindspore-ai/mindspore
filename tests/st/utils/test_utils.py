@@ -29,8 +29,8 @@ class Net(nn.Cell):
         super().__init__()
         self.func = func
 
-    def construct(self, *inputs):
-        return self.func(*inputs)
+    def construct(self, *inputs, **kwargs):
+        return self.func(*inputs, **kwargs)
 
 
 def run_with_cell(fn):
@@ -38,9 +38,9 @@ def run_with_cell(fn):
         raise ValueError("fn cannot be none!")
 
     @wraps(fn)
-    def wrapper(*args):
+    def wrapper(*args, **kwargs):
         cell_obj = Net(fn)
-        return cell_obj(*args)
+        return cell_obj(*args, **kwargs)
 
     return wrapper
 
