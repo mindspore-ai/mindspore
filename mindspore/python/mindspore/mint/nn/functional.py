@@ -34,13 +34,13 @@ from mindspore.ops.functional import pad_ext as pad
 # 7
 
 # 8
-
+from mindspore.ops.functional import layer_norm
 # 9
 from mindspore.ops.function.nn_func import interpolate_ext as interpolate
 # 10
 
 # 11
-
+from mindspore.ops.functional import relu
 # 12
 
 # 13
@@ -90,13 +90,13 @@ from mindspore.ops.function.nn_func import interpolate_ext as interpolate
 # 35
 
 # 36
-
+from mindspore.ops.functional import gelu
 # 37
 
 # 38
 
 # 39
-
+from mindspore.ops.functional import group_norm
 # 40
 
 # 41
@@ -110,19 +110,19 @@ from mindspore.ops.function.nn_func import interpolate_ext as interpolate
 # 45
 
 # 46
-
+from mindspore.ops.functional import silu
 # 47
 
 # 48
 
 # 49
-
+from mindspore.ops.functional import sigmoid
 # 50
 
 # 51
 
 # 52
-
+from mindspore.ops.functional import embedding
 # 53
 
 # 54
@@ -237,13 +237,13 @@ __all__ = [
     # 7
 
     # 8
-
+    'layer_norm',
     # 9
     'interpolate',
     # 10
 
     # 11
-
+    'relu',
     # 12
 
     # 13
@@ -293,13 +293,13 @@ __all__ = [
     # 35
 
     # 36
-
+    'gelu',
     # 37
 
     # 38
 
     # 39
-
+    'group_norm',
     # 40
 
     # 41
@@ -313,19 +313,19 @@ __all__ = [
     # 45
 
     # 46
-
+    'silu',
     # 47
 
     # 48
 
     # 49
-
+    'sigmoid',
     # 50
 
     # 51
 
     # 52
-
+    'embedding',
     # 53
 
     # 54
