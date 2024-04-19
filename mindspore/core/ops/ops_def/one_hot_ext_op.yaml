@@ -19,4 +19,5 @@ one_hot_ext:
     function:
         disable: True
     dispatch:
+        Ascend: OneHotExtAscend
         enable: True

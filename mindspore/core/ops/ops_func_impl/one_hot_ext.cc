@@ -43,8 +43,8 @@ BaseShapePtr OneHotExtFuncImpl::InferShape(const PrimitivePtr &primitive,
     depth_value = abstract::Shape::kShapeDimAny;
   } else {
     depth_value = depth_opt.value();
-    MS_CHECK_VALUE(depth_value >= 0, CheckAndConvertUtils::FormatCheckIntegerMsg("num_classes value", depth_value,
-                                                                                 kGreaterEqual, 0, primitive));
+    MS_CHECK_VALUE(depth_value >= -1, CheckAndConvertUtils::FormatCheckIntegerMsg("num_classes value", depth_value,
+                                                                                  kGreaterEqual, -1, primitive));
   }
 
   auto axis_opt = GetScalarValue<int64_t>(input_args[kInputIndex4]->GetValue());
