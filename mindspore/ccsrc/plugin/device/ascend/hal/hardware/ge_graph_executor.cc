@@ -1362,6 +1362,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     }
   } else {
     MS_LOG(INFO) << "GE run graph start, graph: " << graph_name << ".";
+    (void)ResManager()->BindDeviceToCurrentThread(false);
     // copy input from device to host
     const auto &cur_inputs = graph->get_inputs();
     std::vector<tensor::TensorPtr> input_tensors;
