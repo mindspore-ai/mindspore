@@ -38,6 +38,7 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, Fra
 from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
+from mindspore.ops.operations.nn_ops import LayerNormExt
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
@@ -5596,6 +5597,59 @@ def adaptive_avg_pool1d(input, output_size):
     input = squeeze_(input)
     return input
 
+def layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5):
+    r"""Applies the Layer Normalization to the input tensor.
+
+    This operator will normalize the input tensor on given axis. LayerNorm is described in the paper
+    `Layer Normalization <https://arxiv.org/abs/1607.06450>`_.
+
+    .. math::
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is weight, :math:`\beta` is bias, :math:`\epsilon` is eps.
+
+    Args:
+        input (Tensor): Tensor of shape :math:`(N, \ldots)`. The input of LayerNorm.
+        normalized_shape (Union(int, tuple[int], list[int])): The normalized shape of `input` for LayerNorm.
+        weight (Tensor, optional): Learnable parameter :math:`\gamma` . Tensor of shape `normalized_shape`.
+          Default: ``None``, has the same data type with `input`.
+        bias (Tensor, optional): Learnable parameter :math:`\beta` . Tensor of shape `normalized_shape`.
+          Default: ``None``, has the same data type with `input`.
+        eps (float, optional): A value added to the denominator for numerical stability(:math:`\epsilon`).
+          Default: ``1e-5`` .
+
+    Returns:
+        - **output** (Tensor) - The normalized input, has the same type and shape as the `input`.
+
+    Raises:
+        TypeError: If `eps` is not a float.
+        TypeError: If `normalized_shape` is not an integer, a list or a tuple.
+        TypeError: If `input`, `weight` or `bias` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input_x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]), mindspore.float32)
+        >>> normalized_shape = (3,)
+        >>> gamma = Tensor(np.ones(normalized_shape), mindspore.float32)
+        >>> beta = Tensor(np.zeros(normalized_shape), mindspore.float32)
+        >>> eps = 1e-7
+        >>> output = ops.layer_norm(input_x, normalized_shape, gamma, beta, eps)
+        >>> print(output)
+        [[-1.2247448 0. 1.2247448]
+         [-1.2247448 0. 1.2247448]]
+    """
+    if weight is None:
+        weight = ops.ones(normalized_shape, dtype=input.dtype)
+    if bias is None:
+        bias = ops.zeros(normalized_shape, dtype=input.dtype)
+    layer_norm_ext_op = LayerNormExt()
+    return layer_norm_ext_op(input, normalized_shape, weight, bias, eps)[0]
+
 
 def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
     r"""Group Normalization over a mini-batch of inputs.
@@ -7472,6 +7526,7 @@ __all__ = [
     'intopk',
     'interpolate',
     'upsample',
+    'layer_norm',
     'log_softmax',
     'mish',
     'lrn',

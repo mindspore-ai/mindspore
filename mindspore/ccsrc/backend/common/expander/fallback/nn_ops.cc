@@ -237,6 +237,15 @@ REG_FALLBACK_BUILDER("SoftmaxBackward").SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_FALLBACK_BUILDER("LayerNormGradExt").SetBody(BODYFUNC(ib) {
+  auto dy = ib->GetInput(kIndex0);
+  auto x = ib->GetInput(kIndex1);
+  auto mean = ib->GetInput(kIndex3);
+  auto rstd = ib->GetInput(kIndex4);
+  auto gamma = ib->GetInput(kIndex5);
+  return {ib->Emit("LayerNormGradV3", {dy, x, rstd, mean, gamma})};
+});
+
 // It is just a temporary modification. If the attributes of the `TensorScatterElements`
 // operator are changed to input, the `Scatter` operator can be directly replaced with `TensorScatterElements`.
 REG_FALLBACK_BUILDER("Scatter").SetBody(BODYFUNC(ib) {

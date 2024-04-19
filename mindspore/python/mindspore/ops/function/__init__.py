@@ -484,6 +484,7 @@ from .nn_func import (
     interpolate,
     upsample,
     kl_div,
+    layer_norm,
     log_softmax,
     lrn,
     mish,
