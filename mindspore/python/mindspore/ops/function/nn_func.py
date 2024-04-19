@@ -5611,10 +5611,12 @@ def layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5):
     Args:
         input (Tensor): Tensor of shape :math:`(N, \ldots)`. The input of LayerNorm.
         normalized_shape (Union(int, tuple[int], list[int])): The normalized shape of `input` for LayerNorm.
+          `normalized_shape` equal to `input_shape[begin_norm_axis:]`, where `begin_norm_axis` represents the axis
+          where normalization begins.
         weight (Tensor, optional): Learnable parameter :math:`\gamma` . Tensor of shape `normalized_shape`.
-          Default: ``None``, has the same data type with `input`.
+          Default: ``None``, has the same data type with `input`. Initialized to ``1`` when `weight` is None.
         bias (Tensor, optional): Learnable parameter :math:`\beta` . Tensor of shape `normalized_shape`.
-          Default: ``None``, has the same data type with `input`.
+          Default: ``None``, has the same data type with `input`. Initialized to ``0`` when `bias` is None.
         eps (float, optional): A value added to the denominator for numerical stability(:math:`\epsilon`).
           Default: ``1e-5`` .
 
@@ -5622,9 +5624,9 @@ def layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5):
         - **output** (Tensor) - The normalized input, has the same type and shape as the `input`.
 
     Raises:
-        TypeError: If `eps` is not a float.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `normalized_shape` is not an integer, a list or a tuple.
-        TypeError: If `input`, `weight` or `bias` is not a Tensor.
+        TypeError: If `eps` is not a float.
 
     Supported Platforms:
         ``Ascend``
