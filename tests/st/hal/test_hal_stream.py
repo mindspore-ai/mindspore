@@ -287,3 +287,37 @@ def test_hal_none_streams():
         is_curr_stream_same = (ms.hal.current_stream() == curr_stream)
 
     assert is_curr_stream_same is True
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_hal_record_stream():
+    """
+    Feature: Hal record stream.
+    Description: Test record stream.
+    Expectation: hal api performs as expected.
+    """
+    s1 = ms.hal.Stream()
+
+    one_input = Tensor(np.ones([16, 256, 256, 256]).astype(np.float32), ms.float32)
+    weight = Tensor(np.ones([256, 256, 16, 16]).astype(np.float32), ms.float32)
+    zero_input = Tensor(np.zeros([16, 256, 256, 256]).astype(np.float32), ms.float32)
+    for _ in range(3):
+        add_one = one_input + 1
+        with ms.hal.StreamCtx(s1):
+            # Use conv2d because this operator takes a long time in device.
+            conv_res = ops.conv2d(add_one, weight)
+            add_two = add_one + 1
+        del add_one
+
+        # Mess up the mem of add_one. The value of add_two will be wrong, if record_stream is not used.
+        f = zero_input + 1
+
+        # Recalculate results for compare.
+        add_one1 = one_input + 1
+        conv_res1 = ops.conv2d(add_one1, weight)
+        add_two1 = add_one1 + 1
+        assert np.allclose(add_two.asnumpy(), add_two1.asnumpy(), rtol=1e-3, atol=1e-03)
+        del f, conv_res, conv_res1
