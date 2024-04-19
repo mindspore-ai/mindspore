@@ -33,6 +33,15 @@ class BACKEND_EXPORT ShapeReshapeFusion : public PatternProcessPass {
  private:
   VarPtr reshape_input_ = std::make_shared<Var>();
 };
+
+class BACKEND_EXPORT ShapeReshapeDirectFusion : public PatternProcessPass {
+ public:
+  explicit ShapeReshapeDirectFusion(bool multigraph = true) : PatternProcessPass("shape_reshape_direct", multigraph) {}
+  ~ShapeReshapeDirectFusion() override = default;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                           const EquivPtr &equiv) const override;
+};
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_SHAPE_RESHAPE_FUSION_H_

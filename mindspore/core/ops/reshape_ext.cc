@@ -21,6 +21,7 @@
 #include "ops/scalar_graph_holder.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/array_ops.h"
+#include "ops/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "ops/primitive_c.h"
 #include "mindapi/src/helper.h"
@@ -28,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kReshapeExtInputsNum = 3;
+constexpr size_t kReshapeExtInputsNum = 2;
 typedef int64_t (*ARITHMETIC)(const int64_t &x, const int64_t &y);
 int64_t Add(const int64_t &x, const int64_t &y) { return x + y; }
 int64_t Sub(const int64_t &x, const int64_t &y) { return x - y; }
@@ -104,6 +105,14 @@ void CalScalarValueForGraph(const ScalarGraphHolderPtr &graph, const std::vector
 
 abstract::ShapePtr ReshapeExtInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  if (!primitive->HasAttr("graph")) {
+    auto base_shape = input_args[kInputIndex1]->GetShape();
+    MS_EXCEPTION_IF_NULL(base_shape);
+    auto shape = base_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape);
+    return shape;
+  }
+
   auto attr = primitive->GetAttr("graph");
   MS_EXCEPTION_IF_NULL(attr);
   auto graph = attr->cast<ScalarGraphHolderPtr>();
@@ -147,7 +156,7 @@ abstract::ShapePtr ReshapeExtInferShape(const PrimitivePtr &primitive, const std
 }
 
 TypePtr ReshapeExtInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_type = input_args[1]->GetType();
+  auto input_type = input_args[kInputIndex0]->GetType();
   return input_type;  // output type
 }
 }  // namespace
@@ -157,8 +166,8 @@ AbstractBasePtr ReshapeExtInfer(const abstract::AnalysisEnginePtr &, const Primi
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto ordinary_input_num = CheckAndConvertUtils::GetRemoveUMonadAbsNum(input_args);
-  (void)CheckAndConvertUtils::CheckInteger("inputs num", SizeToLong(ordinary_input_num), kEqual, kReshapeExtInputsNum,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("inputs num", SizeToLong(ordinary_input_num), kGreaterEqual,
+                                           kReshapeExtInputsNum, prim_name);
   auto infer_type = ReshapeExtInferType(primitive, input_args);
   auto infer_shape = ReshapeExtInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

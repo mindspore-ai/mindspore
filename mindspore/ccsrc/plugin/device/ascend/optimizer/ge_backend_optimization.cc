@@ -172,6 +172,7 @@ void GEBackendOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph) {
     opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
   }
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
+  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::ShapeReshapeDirectFusion>());
 
   optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
   (void)optimizer->Optimize(kernel_graph);
