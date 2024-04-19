@@ -20,7 +20,7 @@
 
 #### Inference
 
-- [BETA] The integrated architecture of large model inference, upgrade, training, and promotion unifies scripts, distributed policies, and runtime. The period from training to inference deployment of typical large models is reduced to days. Large operators are integrated to reduce the inference latency and effectively improve the network throughput.
+- [DEMO] The integrated architecture of large model inference, upgrade, training, and promotion unifies scripts, distributed policies, and runtime. The period from training to inference deployment of typical large models is reduced to days. Large operators are integrated to reduce the inference latency and effectively improve the network throughput.
 
 #### AutoParallel
 
@@ -77,13 +77,13 @@
 
 - [BETA] mindspore.ops.TopK now supports the second input k as an int32 type tensor.
 
-#### Bug fixes
+### Bug Fixes
 
 - [#I92H93] Fixed the issue of 'Launch kernel failed' when using the Print operator to print string objects on the Ascend platform.
 - [#I8S6LY] Fixed RuntimeError: Attribute dyn_input_sizes of Default/AddN-op1 is [const vector]{}, of which size is less than 0 error of variable-length input operator, such as AddN or Concat, for dynamic shape process in graph mode on the Ascend platform.
 - [#I9ADZS] Fixed the data timeout issue in network training due to inefficient dataset recovery in the fault recovery scenario.
 
-#### Contributors
+### Contributors
 
 Thanks goes to these wonderful people:
 
