@@ -26,6 +26,6 @@ mindspore.ops.layer_norm
         Tensor，归一化后的Tensor，shape和数据类型与 `input` 相同。
 
     异常：
-        - **TypeError** - `eps` 不是float。
+        - **TypeError** - `input` 不是Tensor。
         - **TypeError** - `normalized_shape` 既不是list也不是tuple。
-        - **TypeError** - `input` ， `weight` ， `bias` 不是Tensor。
+        - **TypeError** - `eps` 不是float。
