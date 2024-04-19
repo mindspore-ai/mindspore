@@ -32,13 +32,6 @@ bool SameShape(const Shape4D &shape1, const Shape4D &shape2) {
   return (equal || !ONLY_REDIST_WITH_SAME_SHAPE);
 }
 
-double minSize(const double &cost_if_cut_i, const double &cost_if_cut_j, const double &cost_if_cut_k) {
-  double min_distribution = std::min(cost_if_cut_j, cost_if_cut_i);
-  min_distribution = std::min(min_distribution, cost_if_cut_k);
-  min_distribution *= EXPERT_COEF;
-  return min_distribution;
-}
-
 double costOfDistributing(const TensorParam &t) {
   return (static_cast<double>(t.tensor_shape.shape_n) * t.tensor_str.str_n *
           static_cast<double>(t.tensor_shape.shape_c) * t.tensor_str.str_c *

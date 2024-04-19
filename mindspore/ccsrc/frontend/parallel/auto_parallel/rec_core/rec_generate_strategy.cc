@@ -673,6 +673,30 @@ Strategies PrepareLayerNorm(const std::shared_ptr<OperatorInfo> &op, Dimensions 
   return strategies;
 }
 
+Strategies PrepareRmsNorm(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix) {
+  Strategies strategies;
+  auto inputs = op->inputs_shape();
+  auto input = inputs[0];
+  if (input.size() != basic_stra.size()) {
+    MS_LOG(EXCEPTION) << op->name() << ": The size of the input does not match the propagated strategy.";
+  }
+
+  if (basic_stra.size() >= 1 && basic_stra.back() > 1) {
+    MS_LOG(INFO) << op->name() << ": Cannot have last dimension partitionned.";
+    basic_stra.back() = 1;
+  }
+  auto gamma = inputs[1];
+  size_t gamma_diff = input.size() - gamma.size();
+  Dimensions gamma_strategy;
+  for (size_t j = 0; j < gamma.size(); ++j) {
+    gamma_strategy.push_back(basic_stra[gamma_diff + j]);
+  }
+
+  strategies.push_back(basic_stra);
+  strategies.push_back(gamma_strategy);
+  return strategies;
+}
+
 Strategies PrepareOneHot(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy, bool dyn_shape_tmp_fix) {
   Strategies strategies;
 
@@ -1698,6 +1722,7 @@ void InitializeStrategyMap() {
                                                 {FLATTEN, &PrepareDataParallel},
                                                 {GATHERD, &PrepareDataParallel},
                                                 {LAYER_NORM, &PrepareLayerNorm},
+                                                {RMS_NORM, &PrepareRmsNorm},
                                                 {BATCH_MATMUL, &PreparePropagateBatchMatMul},
                                                 {DROPOUT_DO_MASK, &PrepareDropoutDoMask},
                                                 {FLASH_ATTENTION_SCORE, &PrepareFlashAttentionScore}};
@@ -1839,7 +1864,7 @@ Dimensions PrepareExpandDimsInputStrategy(const std::vector<std::shared_ptr<Oper
 }
 
 Dimensions PrepareReshapeInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
-                                       size_t outgoing_op_index, bool dyn_shape_tmp_fix) {
+                                       size_t outgoing_op_index, size_t iter_op_inputs, bool dyn_shape_tmp_fix) {
   if (dyn_shape_tmp_fix) {
     Dimensions empty_strategy;
     return empty_strategy;
@@ -1848,7 +1873,7 @@ Dimensions PrepareReshapeInputStrategy(const std::vector<std::shared_ptr<Operato
   auto input_shape = ops[i_ops]->inputs_shape()[0];
   auto strategy = ops[outgoing_op_index]->selected_strategy();
 
-  return PrepareReshape(output_shape, input_shape, strategy->GetInputDim()[0]);
+  return PrepareReshape(output_shape, input_shape, strategy->GetInputDim()[iter_op_inputs]);
 }
 
 Dimensions PrepareGatherV2InputStrategy(const std::shared_ptr<OperatorInfo> &op, size_t i_input) {
@@ -1902,13 +1927,13 @@ Dimensions PrepareReduceInputStrategy(const std::vector<std::shared_ptr<Operator
 }
 
 Dimensions PrepareTransposeInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
-                                         size_t outgoing_op_index) {
+                                         size_t outgoing_op_index, size_t iter_op_inputs) {
   Dimensions strategy;
   auto permutation = GetValue<std::vector<int64_t>>(ops[i_ops]->input_value().at(1));
   auto op_strategy = ops[outgoing_op_index]->selected_strategy();
   // The strategies are assigned according to the order in permutation (user defined).
   for (size_t i = 0; i < permutation.size(); i++) {
-    strategy.push_back(op_strategy->GetInputDim()[0][LongToSize(permutation[i])]);
+    strategy.push_back(op_strategy->GetInputDim()[iter_op_inputs][LongToSize(permutation[i])]);
   }
   return strategy;
 }
@@ -1931,7 +1956,7 @@ Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<O
     if (type == EXPAND_DIMS) {
       strategy = PrepareExpandDimsInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
     } else if (type == RESHAPE) {
-      strategy = PrepareReshapeInputStrategy(ops, iter_ops, outgoing_op_index, dyn_shape_tmp_fix);
+      strategy = PrepareReshapeInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs, dyn_shape_tmp_fix);
       return strategy;
     } else if (type == GATHERV2) {
       strategy = PrepareGatherV2InputStrategy(ops[outgoing_op_index], iter_op_inputs);
@@ -1939,7 +1964,7 @@ Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<O
     } else if (type == REDUCE_MEAN || type == REDUCE_MAX || type == REDUCE_MIN || type == REDUCE_SUM) {
       strategy = PrepareReduceInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
     } else if (type == TRANSPOSE) {
-      strategy = PrepareTransposeInputStrategy(ops, iter_ops, outgoing_op_index);
+      strategy = PrepareTransposeInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
       return strategy;
     } else {
       for (size_t k = 0; k < ops[iter_ops]->outputs_shape()[0].size(); ++k) {
