@@ -994,10 +994,6 @@ class Cell(Cell_):
             args (tuple): Args of the Cell object.
             kwargs (dict): Kwargs of the Cell object.
         """
-        if self.phase == "prefill":
-            os.environ["DISABLE_MATMULALLREDUCE_FUSION"] = "False"
-        else:
-            os.environ["DISABLE_MATMULALLREDUCE_FUSION"] = "True"
         self._compile_args = self._get_compile_args(args)
         _cell_graph_executor.compile(self, *self._compile_args, phase=self.phase,
                                      jit_config_dict=self._jit_config_dict, **kwargs)

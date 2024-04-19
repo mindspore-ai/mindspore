@@ -36,12 +36,11 @@ class MatMulAllReduceFusion : public PatternProcessPass {
 
  protected:
   const std::string kAttrNameGroup = "group";
-  const std::string kAttrNameCommRenuse = "comm_renuse";
   const std::string kAttrNameFusion = "fusion";
   const std::string kAttrNameOp = "op";
   const std::string kAttrNameTransposeA = "transpose_a";
   const std::string kAttrNameTransposeB = "transpose_b";
-  const std::string kAttrNameNeedFusedXoffsetToBias = "need_fused_x_offset_to_bias";
+  const std::string kPhaseNamePrefill = "prefill";
 };
 
 }  // namespace opt
