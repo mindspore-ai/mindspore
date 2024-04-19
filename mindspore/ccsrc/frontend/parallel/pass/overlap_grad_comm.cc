@@ -190,18 +190,30 @@ std::unordered_map<CNodePtr, std::vector<CNodePtr>> ExtractDxGradCommMap(
       continue;
     }
     auto user_id = GetValue<std::string>(node->GetPrimalAttr(kPrimalAttrMirrorUserId));
-    auto pos =
-      std::find_if(backward_matmul_dx_dw_map.begin(), backward_matmul_dx_dw_map.end(), [&](const auto &key_node) {
-        if (!key_node.first->HasPrimalAttr(kPrimalAttrMirrorUserId)) {
-          return false;
-        }
-        return GetValue<std::string>(key_node.first->GetPrimalAttr(kPrimalAttrMirrorUserId)) == user_id;
-      });
-    if (pos == backward_matmul_dx_dw_map.end()) {
+    CNodePtr matched_dx_node = nullptr;
+    int64_t pre_micro = -1;
+    for (const auto &key_node : backward_matmul_dx_dw_map) {
+      if (!key_node.first->HasPrimalAttr(kPrimalAttrMirrorUserId)) {
+        continue;
+      }
+      auto key_node_user_id = GetValue<std::string>(key_node.first->GetPrimalAttr(kPrimalAttrMirrorUserId));
+      if (key_node_user_id != user_id) {
+        continue;
+      }
+      if (!key_node.first->HasPrimalAttr(MICRO)) {
+        matched_dx_node = key_node.first;
+        break;
+      }
+      auto micro = GetValue<int64_t>(key_node.first->GetPrimalAttr(MICRO));
+      if (micro > pre_micro) {
+        pre_micro = micro;
+        matched_dx_node = key_node.first;
+      }
+    }
+    if (!matched_dx_node) {
       MS_LOG(INFO) << "cannot match comm node:" << node->fullname_with_scope() << ", id:" << AnfNodeInfo(node);
       continue;
     }
-    auto matched_dx_node = pos->first;
     backward_matmul_dx_grad_comm_map[matched_dx_node].push_back(node);
     backward_matmul_dx_grad_comm_vector.push_back(matched_dx_node);
   }
@@ -261,7 +273,7 @@ void OverlapGradComm(const FuncGraphPtr &graph) {
   if (soc_version != "ascend910" && soc_version != "ascend910b") {
     return;
   }
-  auto is_enable = ms_context->get_param<bool>(MS_CTX_GRAD_COMM_OVERLAP);
+  auto is_enable = ms_context->get_param<bool>(MS_CTX_ENABLE_GRAD_COMM_OPT);
   if (!is_enable) {
     return;
   }
