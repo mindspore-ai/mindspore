@@ -17,7 +17,7 @@
 
 #include "tools/converter/parser/onnx/onnx_trilu_parser.h"
 #include <memory>
-#include "ops/tril.h"
+#include "ops/ops_func_impl/tril.h"
 #include "ops/triu.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"

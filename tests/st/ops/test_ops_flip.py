@@ -235,8 +235,8 @@ def test_ops_flip_backward_dynamic_rank(mode):
 def test_flip_dynamic(mode):
     """
     Feature: test dynamic by TEST_OP.
-    Description: test op concat.
-    Expectation: expect tile result.
+    Description: test ops.flip dynamic shape feature.
+    Expectation: expect correct result.
     """
     input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
     input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))

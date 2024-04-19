@@ -174,7 +174,6 @@ GVAR_DEF(PrimitivePtr, kPrimUpperBound, std::make_shared<Primitive>(kUpperBoundO
 GVAR_DEF(PrimitivePtr, kPrimMvlgamma, std::make_shared<Primitive>(kMvlgammaOpName));
 GVAR_DEF(PrimitivePtr, kPrimMvlgammaGrad, std::make_shared<Primitive>(kMvlgammaGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimLogSpace, std::make_shared<Primitive>(kLogSpaceOpName));
-GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTrilOpName));
 GVAR_DEF(PrimitivePtr, kPrimTriu, std::make_shared<Primitive>(kTriuOpName));
 GVAR_DEF(PrimitivePtr, kPrimMeshgrid, std::make_shared<Primitive>(kMeshgridOpName));
 GVAR_DEF(PrimitivePtr, kPrimSegmentMax, std::make_shared<Primitive>(kSegmentMaxOpName));
