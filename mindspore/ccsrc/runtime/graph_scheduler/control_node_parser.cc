@@ -1048,7 +1048,7 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   ParseUnRecursionCallNode();
 
-  InsertDependForParallelCall(control_nodes);
+  //InsertDependForParallelCall(control_nodes);
 
   ParseKernelGraphGroup(kernel_graph_to_device_contexts);
 
