@@ -92,12 +92,21 @@ SymbolPtr MatMulShapeBuilder(OperationBuilder *b) {
   return b->Emit(std::make_shared<MatMul>(HAS_BATCH, x, y, trans_a, trans_b));
 }
 
+SymbolPtr MatMulExtShapeBuilder(OperationBuilder *b) {
+  auto x = b->GetInputShape(kIndex0);
+  auto y = b->GetInputShape(kIndex1);
+  return b->Emit(std::make_shared<MatMul>(true, x, y, BoolSymbol::Make(false), BoolSymbol::Make(false)));
+}
+
 REG_SYMBOL_OP_BUILDER("MatMul")
   .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kValue, DependOn::kValue})
   .SetShapeFunc(MatMulShapeBuilder<false>);
 REG_SYMBOL_OP_BUILDER("BatchMatMul")
   .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kValue, DependOn::kValue})
   .SetShapeFunc(MatMulShapeBuilder<true>);
+REG_SYMBOL_OP_BUILDER("MatMulExt")
+  .SetShapeDepend({DependOn::kShape, DependOn::kShape})
+  .SetShapeFunc(MatMulExtShapeBuilder);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore
