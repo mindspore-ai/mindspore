@@ -20,7 +20,7 @@
 
 #### Inference
 
-- [BETA] The integrated architecture of large model inference, upgrade, training, and promotion unifies scripts, distributed policies, and runtime. The period from training to inference deployment of typical large models is reduced to days. Large operators are integrated to reduce the inference latency and effectively improve the network throughput.
+- [DEMO] The integrated architecture of large model inference, upgrade, training, and promotion unifies scripts, distributed policies, and runtime. The period from training to inference deployment of typical large models is reduced to days. Large operators are integrated to reduce the inference latency and effectively improve the network throughput.
 
 #### AutoParallel
 
