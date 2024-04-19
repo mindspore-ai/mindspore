@@ -1,0 +1,33 @@
+uniform_ext:
+    description: |
+      Generates random numbers according to the Uniform random number distribution.
+    
+        Inputs:
+          - **tensor** (Tensor) - The tensor of random tensor to be generated.
+              Only constant value is allowed, and the date type is float16, float32, float64.
+          - **a** (double) - Default: ``0.0`` .
+              Only constant value is allowed, and the date type is float16, float32, float64.
+          - **b** (double) - Default: ``0.0`` .
+          - **seed** (int) - Default: ``0`` .
+          - **offset** (int) - Default: ``0`` .
+    
+        Raises:
+          TypeError: If `a` or `b` is not a double.
+          TypeError: If `tensor` is not a Tensor.
+          ValueError: If `a` is larger than `b`.
+    
+        Outputs:
+          - **output** (Tensor) - With the same type and shape as the 'tensor'.
+    
+        Supported Platforms:
+          ``Ascend``
+    
+        Examples:
+          >>> import numpy as np
+          >>> from mindspore import Tensor
+          >>> from mindspore.ops import UniformExt
+          >>> x = Tensor(np.random.randn(3,4), mstype.float64)
+          >>> uniform = UniformExt(a=1.0, b=2.0, seed=10, offset=5)
+          >>> y = uniform(x)
+          >>> print(y.shape)
+          (3, 4)
