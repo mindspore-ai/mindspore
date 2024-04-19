@@ -94,6 +94,5 @@ std::vector<size_t> InternalStridedSlice::GetLaunchIgnoredInputAddressIdx() cons
   return {kIndex1, kIndex2, kIndex3};
 }
 
-MS_INTERNAL_KERNEL_FACTORY_REG(StridedSlice, InternalStridedSlice);
 }  // namespace kernel
 }  // namespace mindspore
