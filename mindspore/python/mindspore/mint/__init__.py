@@ -63,7 +63,7 @@ from mindspore.ops.auto_generate import abs
 # 19
 
 # 20
-
+from mindspore.ops import prod
 # 21
 
 # 22
@@ -270,7 +270,7 @@ __all__ = [
     # 19
 
     # 20
-
+    'prod',
     # 21
 
     # 22
