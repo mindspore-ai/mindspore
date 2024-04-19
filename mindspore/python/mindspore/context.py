@@ -496,11 +496,6 @@ class _Context:
 
     def set_mempool_block_size(self, mempool_block_size):
         """Set the block size of memory pool."""
-        is_force_kbk = os.getenv("GRAPH_OP_RUN")
-        if _get_mode() == GRAPH_MODE and is_force_kbk != "1":
-            logger.warning("Graph mode doesn't support to set parameter 'mempool_block_size' of context currently, "
-                           "you can use context.set_context to set pynative mode or set env GRAPH_OP_RUN=1.")
-            return
         if not Validator.check_str_by_regular(mempool_block_size, _RE_PATTERN):
             raise ValueError("For 'context.set_context', the argument 'mempool_block_size' should be in "
                              "correct format! Such as \"10GB\", "
