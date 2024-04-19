@@ -218,6 +218,10 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
       (void)special_inputs.emplace_back(i);
     }
 
+    if (i > input_info.size()) {
+      continue;
+    }
+
     // Get reshape type.
     auto ge_idx = ge_info->GetGeInputByMsInputIndex(i).index;
     if (ge_idx >= input_info.size()) {
