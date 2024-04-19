@@ -735,6 +735,7 @@ bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) 
   auto func_graph_builder = mind_graph_builder->FGBuilder();
   MS_EXCEPTION_IF_NULL(func_graph_builder);
   func_graph_builder->ClearOutputNodes();
+  GetCaptureInfo().captured_.outputs.clear();
   for (auto node : aliveNodes) {
     // If the value can get from local, no need to add to graph output.
     if (IsNonLocalValue(node)) {
@@ -749,9 +750,11 @@ bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) 
     auto out_py_obj = o->GetPyObject();
     if (func_graph_builder->AddOutput(out_py_obj, true)) {
       MS_LOG(DEBUG) << "Add output success.";
+      GetCaptureInfo().captured_.outputs.push_back(node);
       continue;
     }
     MS_LOG(DEBUG) << "Add output failed.";
+    GetCaptureInfo().captured_.outputs.clear();
     //  reset break graph point
     isAllNodesSupportOutput = false;
     int new_break_point = node->bci();
@@ -791,6 +794,22 @@ void MindGraphAnalyzer::UpdateCapturedOrder() {
     new_capture_local_values.insert(val);
   }
   GetCaptureInfo().captured_.values = new_capture_local_values;
+}
+
+void MindGraphAnalyzer::CollectCapturedAndInterpret() {
+  CollectCapturedInputs();
+  int break_bci = graph_->GetStopTraceBci();
+  std::vector<ValueNode *> alive_nodes;
+  if (break_bci != -1) {
+    alive_nodes = graph_->CollectAliveNode(break_bci, &alive_locals_);
+  } else {
+    alive_nodes = {graph_->GetRetVal()};
+  }
+
+  GetCaptureInfo().interpret_.inputs = graph_->GetFrame(0).GetLocals();
+  GetCaptureInfo().interpret_.outputs = std::move(alive_nodes);
+  auto vec = graph_->GetSideEffect()->CollectSideEffectAliveNodes();
+  GetCaptureInfo().interpret_.outputs.insert(GetCaptureInfo().interpret_.outputs.end(), vec.begin(), vec.end());
 }
 
 void MindGraphAnalyzer::UseDefAnalyze() {

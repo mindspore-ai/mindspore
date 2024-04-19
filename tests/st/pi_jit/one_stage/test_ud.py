@@ -228,3 +228,58 @@ def test_break_with_same_value():
     assert ret[1] == int
     assert ret[2] == int
     assert ret[3] == int
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_ud_collect_capture_output():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit(mode="PIJit", jit_config=cfg)
+    def foo(x, y):
+        m = ((x, x+1), x+2)
+        n = ((y, y-1), y+2)
+        return m < n, m <= n, m > n, m >= n
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    a1, a2, a3, a4 = foo(Tensor([1]), Tensor([3]))
+    assert a1
+    assert a2
+    assert not a3
+    assert not a4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_while_after_for_in_if_4():
+    """
+    Feature: PIJit
+    Description: Test PIJit with control flow.
+    Expectation: No exception.
+    """
+
+    @jit(mode="PIJit", jit_config=cfg)
+    def foo():
+        x = [3, 2]
+        y = [1, 2, 3, 4]
+        if x[0] > x[1]:
+            x[0] += 3
+            x[1] += 3
+            for i in y:
+                if not i == 1:
+                    break
+                x[1] += i
+        x = np.array(x)
+        z = int(x[1])
+        while len(y) < 5:
+            y.append(z)
+        return Tensor(y)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    res = foo()
+    assert (res.asnumpy() == [1, 2, 3, 4, 6]).all()
