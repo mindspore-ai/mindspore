@@ -199,6 +199,12 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
      "padding_mode",
      "align_corners",
    }},
+  {"WeightQuantBatchMatmul",
+   {
+     "transpose_x",
+     "transpose_weight",
+     "antiquant_group_size",
+   }},
 };
 
 constexpr size_t kMatMulInputSizeWithoutBias = 3;  // primitive, x1, x2
