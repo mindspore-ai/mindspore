@@ -173,11 +173,14 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
                                     const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
                                     kernel::KernelExec **kernel, const void *primitive) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  MS_ASSERT(ms_ctx != nullptr);
-  MS_ASSERT(kernel != nullptr);
+  if (MS_UNLIKELY(ms_ctx == nullptr)) {
+    MS_LOG(ERROR) << "context is nullptr!";
+    return RET_ERROR;
+  }
   registry::KernelDesc desc{static_cast<DataType>(key.data_type), key.type, key.kernel_arch, key.provider};
   auto creator = registry::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
   if (creator == nullptr) {
+    MS_LOG(ERROR) << "creator is nullptr!";
     return RET_NOT_SUPPORT;
   }
 
@@ -271,7 +274,7 @@ int KernelRegistry::GetKernelExec(const std::vector<Tensor *> &in_tensors, const
       return RET_OK;
     }
   }
-  MS_LOG(WARNING) << "common cpu kernel registry failed";
+  MS_LOG(WARNING) << "common cpu kernel registry failed!";
   return RET_ERROR;
 }
 }  // namespace mindspore::lite

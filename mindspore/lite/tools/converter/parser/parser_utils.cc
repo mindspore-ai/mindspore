@@ -36,7 +36,7 @@
 #include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/format/to_format_base.h"
-#include "tools/optimizer/common/pass_manager_extends.h"
+#include "tools/optimizer/common/lite_pass_manager.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
 #include "src/common/common.h"

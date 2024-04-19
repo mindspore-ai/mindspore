@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022~2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_PASS_MANAGER_EXTENDS_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_PASS_MANAGER_EXTENDS_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_LITE_PASS_MANAGER_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_LITE_PASS_MANAGER_H_
 
 #include <memory>
 #include <string>
@@ -38,4 +38,4 @@ class LitePassManager : public PassManager {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_PASS_MANAGER_EXTENDS_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_LITE_PASS_MANAGER_H_
