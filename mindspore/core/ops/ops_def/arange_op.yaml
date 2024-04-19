@@ -1,0 +1,21 @@
+#operator arange
+arange:
+    args:
+        start:
+            dtype: number
+            type_cast: tensor
+        end:
+            dtype: number
+            type_cast: tensor
+        step:
+            dtype: number
+            type_cast: tensor
+    args_signature:
+        dtype_group: (start, end, step)
+    returns:
+        output:
+            dtype: tensor
+    function:
+      disable: True
+    dispatch:
+      enable: True
