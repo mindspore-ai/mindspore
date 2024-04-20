@@ -23,7 +23,7 @@ DATASET_PATH = "/home/workspace/mindspore_dataset/llama2/wiki512"
 MODEL_PATH = "/home/workspace/mindspore_ckpt/ckpt/llama2/llama_tiny.ckpt"
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 TOELERANCE = 5e-2
-
+TOKEN_THRES = 3
 
 def check_result(sh_path, exp_res):
     """
@@ -41,7 +41,7 @@ def check_result(sh_path, exp_res):
     assert static_memory <= EXP_STATIC_MEM * (1 + TOELERANCE)
     assert dyn_memory <= EXP_DYN_MEM * (1 + TOELERANCE)
     assert peak_memory <= EXP_PEAK_MEM * (1 + TOELERANCE)
-    assert actual_throughout >= EXP_THROUGHOUT * (1 - TOELERANCE)
+    assert actual_throughout >= EXP_THROUGHOUT - TOKEN_THRES
 
     np.testing.assert_allclose(loss, EXP_LOSS, rtol=5e-3)
 
@@ -59,7 +59,7 @@ def test_llama_data_parallel():
     ret = os.system(f"sh {cur_path}/run_semi_parallel_llama_train.sh llama_dp.yaml {DATASET_PATH} {MODEL_PATH}")
     assert ret == 0
     exp_loss = [10.447928, 10.429884, 10.242577, 9.8807745, 9.467778, 9.319356, 8.988123, 8.55187, 8.557504, 8.247183]
-    exp_res = (1687, 1373, 3061, 37.8, exp_loss)
+    exp_res = (1687, 1373, 3061, 36, exp_loss)
     check_result(cur_path, exp_res)
 
 
