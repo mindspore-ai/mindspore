@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/hal/hardware/ge_kernel_executor.h"
 #include <utility>
 #include <algorithm>
+#include <deque>
 #include "include/common/utils/parallel_context.h"
 #include "include/common/profiler.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -46,6 +47,8 @@
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
+#include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
+#include "plugin/factory/ms_factory.h"
 #include "kernel/kernel_build_info.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/op_api_util.h"
@@ -953,6 +956,17 @@ void GeKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   PROF_END(create_kernel);
   profiler::CollectHostInfo("Ascend", "CreateKernel", "CreateGeKernel", 1, 0, 1);
   MS_LOG(DEBUG) << "Status record: end create kernel.";
+}
+
+kernel::KernelModPtr GeKernelExecutor::CreateKernelMod(const std::string &op_name) const {
+  // Note: Only support generage aclnn kernel mod current.
+  auto kernel_ptr = kernel::Factory<kernel::AclnnKernelMod>::Instance().Create(op_name);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(WARNING) << "aclnn can't find Kernel[" << op_name << "]";
+    return nullptr;
+  }
+  transform::AclnnInit();
+  return kernel_ptr;
 }
 
 namespace {
