@@ -18,9 +18,7 @@
 #include <string>
 #include <vector>
 #include "ops/image_ops.h"
-#include "ops/lite_op_name.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
-#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/ascend_op_name.h"
 
 namespace mindspore::transform {
@@ -63,6 +61,40 @@ OUTPUT_MAP(ResizeBilinearV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBilinearV2, kNameResizeBilinearV2, ADPT_DESC(ResizeBilinearV2))
 REG_ADPT_DESC(ResizeBilinearV2D, kResizeBilinearV2DOpName, ADPT_DESC(ResizeBilinearV2))
 
+// UpsampleTrilinear3d
+INPUT_MAP(UpsampleTrilinear3d) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(UpsampleTrilinear3d) = {{kIndex2, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                       {kIndex3, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleTrilinear3d) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(UpsampleTrilinear3d) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleTrilinear3d, kUpsampleTrilinear3DOpName, ADPT_DESC(UpsampleTrilinear3d))
+
+// UpsampleTrilinear3dGrad
+INPUT_MAP(UpsampleTrilinear3dGrad) = {{1, INPUT_DESC(grad_output)}};
+INPUT_ATTR_MAP(UpsampleTrilinear3dGrad) = {{kIndex2, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>())},
+                                           {kIndex3, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                           {kIndex4, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleTrilinear3dGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(UpsampleTrilinear3dGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleTrilinear3dGrad, kUpsampleTrilinear3DGradOpName, ADPT_DESC(UpsampleTrilinear3dGrad))
+
+// UpsampleNearest3d
+INPUT_MAP(UpsampleNearest3d) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(UpsampleNearest3d) = {{kIndex2, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                     {kIndex3, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleNearest3d) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UpsampleNearest3d) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleNearest3d, kUpsampleNearest3DOpName, ADPT_DESC(UpsampleNearest3d))
+
+// UpsampleNearest3dGrad
+INPUT_MAP(UpsampleNearest3dGrad) = {{1, INPUT_DESC(grad_output)}};
+INPUT_ATTR_MAP(UpsampleNearest3dGrad) = {{kIndex2, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>())},
+                                         {kIndex3, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                         {kIndex4, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleNearest3dGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UpsampleNearest3dGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleNearest3dGrad, kUpsampleNearest3DGradOpName, ADPT_DESC(UpsampleNearest3dGrad))
+
 // ResizeArea
 INPUT_MAP(ResizeArea) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(size)}};
 ATTR_INPUT_MAP(ResizeArea) = {{"size", "size"}};
@@ -89,42 +121,6 @@ ATTR_MAP(Resize) = {
   {"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
 OUTPUT_MAP(Resize) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Resize, kNameResize, ADPT_DESC(Resize))
-
-// UpsampleNearest3d
-INPUT_MAP(UpsampleNearest3d) = {{kIndex1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(UpsampleNearest3d) = {{kIndex2, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
-                                     {kIndex3, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
-ATTR_MAP(UpsampleNearest3d) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(UpsampleNearest3d) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(UpsampleNearest3d, ops::kNameUpsampleNearest3D, ADPT_DESC(UpsampleNearest3d))
-
-// UpsampleNearest3dGrad
-INPUT_MAP(UpsampleNearest3dGrad) = {{kIndex1, INPUT_DESC(grad_output)}};
-INPUT_ATTR_MAP(UpsampleNearest3dGrad) = {{kIndex2, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>())},
-                                         {kIndex3, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
-                                         {kIndex4, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
-ATTR_MAP(UpsampleNearest3dGrad) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(UpsampleNearest3dGrad) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(UpsampleNearest3dGrad, ops::kNameUpsampleNearest3DGrad, ADPT_DESC(UpsampleNearest3dGrad))
-
-// UpsampleTrilinear3d
-INPUT_MAP(UpsampleTrilinear3d) = {{kIndex1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(UpsampleTrilinear3d) = {{kIndex2, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
-                                       {kIndex3, ATTR_DESC(scales, AnyTraits<std::vector<float>>())},
-                                       {kIndex4, ATTR_DESC(align_corners, AnyTraits<bool>())}};
-ATTR_MAP(UpsampleTrilinear3d) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(UpsampleTrilinear3d) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(UpsampleTrilinear3d, ops::kNameUpsampleTrilinear3D, ADPT_DESC(UpsampleTrilinear3d))
-
-// UpsampleTrilinear3dGrad
-INPUT_MAP(UpsampleTrilinear3dGrad) = {{kIndex1, INPUT_DESC(grad_output)}};
-INPUT_ATTR_MAP(UpsampleTrilinear3dGrad) = {{kIndex2, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>())},
-                                           {kIndex3, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
-                                           {kIndex4, ATTR_DESC(scales, AnyTraits<std::vector<float>>())},
-                                           {kIndex5, ATTR_DESC(align_corners, AnyTraits<bool>())}};
-ATTR_MAP(UpsampleTrilinear3dGrad) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(UpsampleTrilinear3dGrad) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(UpsampleTrilinear3dGrad, ops::kNameUpsampleTrilinear3DGrad, ADPT_DESC(UpsampleTrilinear3dGrad))
 
 // CropAndResize
 INPUT_MAP(CropAndResizeD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}};
@@ -311,22 +307,4 @@ ATTR_MAP(ScaleAndTranslate) = {{"kernel_type", ATTR_DESC(kernel_type, AnyTraits<
                                {"antialias", ATTR_DESC(antialias, AnyTraits<bool>())}};
 OUTPUT_MAP(ScaleAndTranslate) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ScaleAndTranslate, prim::kPrimScaleAndTranslate->name(), ADPT_DESC(ScaleAndTranslate));
-
-// ResizeD
-INPUT_MAP(ResizeD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ResizeD) = {{2, ATTR_DESC(sizes, AnyTraits<std::vector<int64_t>>())},
-                           {3, ATTR_DESC(scales, AnyTraits<std::vector<float>>())},
-                           {4, ATTR_DESC(coordinate_transformation_mode, AnyTraits<GECoordinateTransformMode>())}};
-ATTR_MAP(ResizeD) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
-OUTPUT_MAP(ResizeD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ResizeD, kResizeDOpName, ADPT_DESC(ResizeD))
-
-INPUT_MAP(ResizeGradD) = {{1, INPUT_DESC(grads)}};
-ATTR_MAP(ResizeGradD) = {
-  {"original_size", ATTR_DESC(original_size, AnyTraits<std::vector<int64_t>>())},
-  {"scales", ATTR_DESC(scales, AnyTraits<std::vector<float>>())},
-  {"mode", ATTR_DESC(mode, AnyTraits<std::string>())},
-  {"coordinate_transformation_mode", ATTR_DESC(coordinate_transformation_mode, AnyTraits<std::string>())}};
-OUTPUT_MAP(ResizeGradD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ResizeGradD, kResizeGradDOpName, ADPT_DESC(ResizeGradD))
 }  // namespace mindspore::transform

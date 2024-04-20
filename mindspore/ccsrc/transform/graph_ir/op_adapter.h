@@ -656,10 +656,6 @@ class OpAdapter : public BaseOpAdapter {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 
-  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GECoordinateTransformMode> anyTraitsGE) {
-    return ConvertAnyUtil(value, anyTraitsGE);
-  }
-
   static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEEnumToStr> enum_str,
                                 const std::vector<std::string> &enum_string) {
     return ConvertAnyUtil(value, enum_str, enum_string);
@@ -841,11 +837,6 @@ class OpAdapter : public BaseOpAdapter {
     return ret;
   }
 
-  static std::string GetAttrType(const AnyTraits<GECoordinateTransformMode> anyTraitsGE) {
-    std::string ret{};
-    return ret;
-  }
-
   static std::string GetAttrType(const AnyTraits<GEEnumToStr> enum_str, const std::vector<std::string> &enum_string) {
     std::string ret{};
     return ret;
@@ -879,7 +870,7 @@ class OpAdapter : public BaseOpAdapter {
   const std::shared_ptr<OpAdapterImpl> impl_;
   // cache the Operator to avoid memory leak caused by 'std::make_shared<OpType>()'
   inline static OperatorPtr op_ = nullptr;
-};  // namespace transform
+};
 
 template <typename T>
 const mindspore::HashMap<int, InputDesc> OpAdapter<T>::input_map_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_UPSAMPLENEAREST1d_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_UPSAMPLENEAREST1d_H_
-
+#ifndef MINDSPORE_CORE_OPS_UPSAMPLE_TRILINEAR_3D_H_
+#define MINDSPORE_CORE_OPS_UPSAMPLE_TRILINEAR_3D_H_
+#include <map>
 #include <memory>
+#include <string>
 #include <vector>
+
 #include "mindapi/base/types.h"
-#include "ops/ops_func_impl/op_func_impl.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API UpsampleNearest1dFuncImpl : public OpFuncImpl {
+constexpr auto kNameUpsampleTrilinear3D = "UpsampleTrilinear3D";
+class MIND_API UpsampleTrilinear3D : public BaseOperator {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  MIND_API_BASE_MEMBER(UpsampleTrilinear3D);
+  UpsampleTrilinear3D() : BaseOperator(kNameUpsampleTrilinear3D) { InitIOName({"x", "output_size", "scales"}, {"y"}); }
+  bool get_align_corners() const;
 };
+using PrimUpsampleTrilinear3D = std::shared_ptr<UpsampleTrilinear3D>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_UPSAMPLENEAREST1d_H_
+#endif  // MINDSPORE_CORE_OPS_UPSAMPLE_TRILINEAR_3D_H_

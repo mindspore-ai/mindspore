@@ -18,6 +18,7 @@
 #include <string>
 #include <utility>
 #include "kernel/ops_utils.h"
+#include "ops/upsample_nearest_3d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -147,13 +148,19 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
 
   return true;
 }
-#define UpsampleNearest3D_CPU_KERNEL_REG(M_S, T)                               \
-  std::make_pair(KernelAttr()                                                  \
-                   .AddInputAttr(M_S)                                          \
-                   .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)   \
-                   .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeFloat32) \
-                   .AddOutputAttr(M_S),                                        \
-                 &UpsampleNearest3DCpuKernelMod::LaunchKernel<T>)
+#define UpsampleNearest3D_CPU_KERNEL_REG(M_S, T)                   \
+  std::make_pair(KernelAttr()                                      \
+                   .AddInputAttr(M_S)                              \
+                   .AddOptionalInputAttr(kNumberTypeInt32)         \
+                   .AddOptionalInputAttr(kNumberTypeFloat32)       \
+                   .AddOutputAttr(M_S),                            \
+                 &UpsampleNearest3DCpuKernelMod::LaunchKernel<T>), \
+    std::make_pair(KernelAttr()                                    \
+                     .AddInputAttr(M_S)                            \
+                     .AddOptionalInputAttr(kNumberTypeInt64)       \
+                     .AddOptionalInputAttr(kNumberTypeFloat32)     \
+                     .AddOutputAttr(M_S),                          \
+                   &UpsampleNearest3DCpuKernelMod::LaunchKernel<T>)
 
 std::vector<std::pair<KernelAttr, UpsampleNearest3DCpuKernelMod::KernelRunFunc>>
   UpsampleNearest3DCpuKernelMod::func_list_ = {UpsampleNearest3D_CPU_KERNEL_REG(kNumberTypeUInt8, uint8_t),

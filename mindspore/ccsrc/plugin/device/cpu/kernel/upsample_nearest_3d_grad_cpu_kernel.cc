@@ -175,14 +175,35 @@ bool UpsampleNearest3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::K
   return true;
 }
 
-#define UpsampleNearest3D_GRAD_CPU_KERNEL_REG(M_S, T, S)                       \
-  std::make_pair(KernelAttr()                                                  \
-                   .AddInputAttr(M_S)                                          \
-                   .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)           \
-                   .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)   \
-                   .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeFloat32) \
-                   .AddOutputAttr(M_S),                                        \
-                 &UpsampleNearest3DGradCpuKernelMod::LaunchKernel<T, S>)
+#define UpsampleNearest3D_GRAD_CPU_KERNEL_REG(M_S, T, S)                    \
+  std::make_pair(KernelAttr()                                               \
+                   .AddInputAttr(M_S)                                       \
+                   .AddInputAttr(kNumberTypeInt32)                          \
+                   .AddOptionalInputAttr(kNumberTypeInt32)                  \
+                   .AddOptionalInputAttr(kNumberTypeFloat32)                \
+                   .AddOutputAttr(M_S),                                     \
+                 &UpsampleNearest3DGradCpuKernelMod::LaunchKernel<T, S>),   \
+    std::make_pair(KernelAttr()                                             \
+                     .AddInputAttr(M_S)                                     \
+                     .AddInputAttr(kNumberTypeInt32)                        \
+                     .AddOptionalInputAttr(kNumberTypeInt64)                \
+                     .AddOptionalInputAttr(kNumberTypeFloat32)              \
+                     .AddOutputAttr(M_S),                                   \
+                   &UpsampleNearest3DGradCpuKernelMod::LaunchKernel<T, S>), \
+    std::make_pair(KernelAttr()                                             \
+                     .AddInputAttr(M_S)                                     \
+                     .AddInputAttr(kNumberTypeInt64)                        \
+                     .AddOptionalInputAttr(kNumberTypeInt32)                \
+                     .AddOptionalInputAttr(kNumberTypeFloat32)              \
+                     .AddOutputAttr(M_S),                                   \
+                   &UpsampleNearest3DGradCpuKernelMod::LaunchKernel<T, S>), \
+    std::make_pair(KernelAttr()                                             \
+                     .AddInputAttr(M_S)                                     \
+                     .AddInputAttr(kNumberTypeInt64)                        \
+                     .AddOptionalInputAttr(kNumberTypeInt64)                \
+                     .AddOptionalInputAttr(kNumberTypeFloat32)              \
+                     .AddOutputAttr(M_S),                                   \
+                   &UpsampleNearest3DGradCpuKernelMod::LaunchKernel<T, S>)
 
 std::vector<std::pair<KernelAttr, UpsampleNearest3DGradCpuKernelMod::KernelRunFunc>>
   UpsampleNearest3DGradCpuKernelMod::func_list_ = {
