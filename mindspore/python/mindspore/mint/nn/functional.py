@@ -46,7 +46,7 @@ from mindspore.ops.function.nn_func import interpolate_ext as interpolate
 # 13
 
 # 14
-
+from mindspore.ops.function.nn_func import dropout_ext as dropout
 # 15
 
 # 16
@@ -249,7 +249,7 @@ __all__ = [
     # 13
 
     # 14
-
+    'dropout',
     # 15
 
     # 16

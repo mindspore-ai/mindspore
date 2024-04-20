@@ -48,13 +48,16 @@ class DropoutUnifyMindIR0 : public PatternProcessPass {
 
 class DropoutUnifyMindIR1 : public PatternProcessPass {
  public:
-  explicit DropoutUnifyMindIR1(bool multigraph = true) : PatternProcessPass("dropout_unify_mindir1", multigraph) {}
+  explicit DropoutUnifyMindIR1(const std::string &name = "dropout_unify_mindir1", bool multigraph = true)
+      : PatternProcessPass(name, multigraph) {}
   ~DropoutUnifyMindIR1() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  void EnableKeepProb() { enable_keep_prob_ = true; }
 
  private:
   std::vector<std::string> MustExistPrimitiveName() const override;
+  bool enable_keep_prob_ = false;
 };
 
 class DropoutGradUnifyMindIR : public PatternToPatternPass {
@@ -64,6 +67,28 @@ class DropoutGradUnifyMindIR : public PatternToPatternPass {
 
   void DefineSrcPattern(SrcPattern *src_pattern) override;
   void DefineDstPattern(DstPattern *dst_pattern) override;
+};
+
+class DropoutExtUnifyMindIR1 : public DropoutUnifyMindIR1 {
+ public:
+  explicit DropoutExtUnifyMindIR1(bool multigraph = true)
+      : DropoutUnifyMindIR1("dropout_ext_unify_mindir1", multigraph) {
+    EnableKeepProb();
+  }
+  ~DropoutExtUnifyMindIR1() override = default;
+  const BaseRef DefinePattern() const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
+};
+
+class DropoutGradExtUnifyMindIR : public PatternProcessPass {
+ public:
+  explicit DropoutGradExtUnifyMindIR(bool multigraph = true)
+      : PatternProcessPass("dropoutgrad_ext_unify_mindir", multigraph) {}
+  ~DropoutGradExtUnifyMindIR() override = default;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

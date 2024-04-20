@@ -1,0 +1,17 @@
+#operator dropout_do_mask_ext
+dropout_do_mask_ext:
+    args:
+        input:
+            dtype: tensor
+        mask:
+            dtype: tensor
+        p:
+            dtype: float
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: DropoutDoMaskExtAscend
+    function:
+        disable: True
