@@ -127,6 +127,18 @@ NodePtrList MinimumMaximumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr
   return BinopGradCommon(ib, x, y, grad_x, grad_y);
 }
 
+NodePtrList CumMaxMinGrad(BpropBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto indices = ib->TupleGetItem(out, kIndex1);
+
+  auto dout = ib->GetInput(kIndex3);
+  auto dout0 = ib->TupleGetItem(dout, kIndex0);
+  auto zero_cum = ib->ZerosLike(x);
+  return {ib->Emit("ScatterAddExt", {zero_cum, axis, indices, dout0}), ib->OutZeros(axis)};
+}
+
 ShapeArray MatrixDeterminantShapeFunc(const ShapeArray &inputs) {
   auto new_shape = inputs.at(0);
   new_shape.push_back(1);
@@ -1189,6 +1201,10 @@ REG_BPROP_BUILDER("CumsumExt").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto ret = ib->Emit("ReverseV2", {cumsum, ib->MakeTuple({dim})});
   return {ret, ib->OutZeros(dim), ib->OutZeros(dtype)};
 });
+
+REG_BPROP_BUILDER("Cummax").SetBody(BODYFUNC(ib) { return CumMaxMinGrad(ib); });
+
+REG_BPROP_BUILDER("Cummin").SetBody(BODYFUNC(ib) { return CumMaxMinGrad(ib); });
 
 REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);

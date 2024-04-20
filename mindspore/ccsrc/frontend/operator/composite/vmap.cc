@@ -261,8 +261,8 @@ FuncGraphPtr VmapMatchOutAxis::GenerateFuncGraph(const AbstractBasePtrList &args
   MS_EXCEPTION_IF_NULL(out_axes_abstract);
   MS_EXCEPTION_IF_NULL(axis_size_abstract);
 
-  if (!inputs_abstract->isa<abstract::AbstractTuple>()) {
-    MS_LOG(EXCEPTION) << "The first input to VmapMatchOutAxis is vmap_inputs and should be a tuple but got "
+  if (!inputs_abstract->isa<abstract::AbstractTuple>() && !inputs_abstract->isa<abstract::AbstractList>()) {
+    MS_LOG(EXCEPTION) << "The first input to VmapMatchOutAxis is vmap_inputs and should be a tuple or list, but got "
                       << inputs_abstract->ToString() << ".";
   }
   auto out_axes_abstract_value = out_axes_abstract->BuildValue();
@@ -278,8 +278,8 @@ FuncGraphPtr VmapMatchOutAxis::GenerateFuncGraph(const AbstractBasePtrList &args
   auto out_axis = fg_->add_parameter();
   auto axis_size = fg_->add_parameter();
 
-  auto inputs_abstract_tuple = dyn_cast<abstract::AbstractTuple>(inputs_abstract);
-  auto inputs_abstract_elements = inputs_abstract_tuple->elements();
+  auto inputs_abstract_sequence = dyn_cast<abstract::AbstractSequence>(inputs_abstract);
+  auto inputs_abstract_elements = inputs_abstract_sequence->elements();
   auto inputs_abstract_elements_size = inputs_abstract_elements.size();
   if (inputs_abstract_elements_size == 0) {
     MS_LOG(EXCEPTION) << "The input to VmapMatchOutAxis is empty";
