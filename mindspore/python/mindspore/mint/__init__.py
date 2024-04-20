@@ -25,11 +25,11 @@ from mindspore.ops.function.array_func import ones_like_ext as ones_like
 from mindspore.ops.function.array_func import zeros_like_ext as zeros_like
 from mindspore.ops.auto_generate import abs
 # 1
-
+from mindspore.ops.function.math_func import divide, div
 # 2
-
+from mindspore.ops.function.math_func import sin
 # 3
-
+from mindspore.ops.function.clip_func import clamp
 # 4
 
 # 5
@@ -43,7 +43,7 @@ from mindspore.ops.auto_generate import abs
 # 9
 
 # 10
-
+from mindspore.ops.function.math_func import ne
 # 11
 
 # 12
@@ -55,17 +55,17 @@ from mindspore.ops.auto_generate import abs
 # 15
 
 # 16
-
+from mindspore.ops.functional import matmul
 # 17
 
 # 18
-
+from mindspore.ops.functional import sum
 # 19
-
+from mindspore.ops.functional import log
 # 20
 from mindspore.ops import prod
 # 21
-
+from mindspore.ops.functional import mul
 # 22
 
 # 23
@@ -73,15 +73,15 @@ from mindspore.ops import prod
 # 24
 
 # 25
-
+from mindspore.ops.functional import greater, gt
 # 26
-
+from mindspore.ops.functional import eq
 # 27
-
+from mindspore.ops.functional import reciprocal
 # 28
-
+from mindspore.ops.functional import exp
 # 29
-
+from mindspore.ops.functional import sqrt
 # 30
 
 # 31
@@ -93,7 +93,7 @@ from mindspore.ops import prod
 # 34
 
 # 35
-
+from mindspore.ops.functional import erfinv
 # 36
 
 # 37
@@ -107,11 +107,11 @@ from mindspore.ops import prod
 # 41
 
 # 42
-
+from mindspore.ops.functional import argmax
 # 43
 
 # 44
-
+from mindspore.ops.functional import cos
 # 45
 
 # 46
@@ -123,7 +123,7 @@ from mindspore.ops import prod
 # 49
 
 # 50
-
+from mindspore.ops.functional import tile
 # 51
 
 # 52
@@ -137,45 +137,46 @@ from mindspore.ops import prod
 # 56
 
 # 57
-
+from mindspore.ops.functional import broadcast_to
 # 58
 
 # 59
-
+from mindspore.ops.functional import square
 # 60
 from mindspore.ops.function.math_func import all
+
 # 61
-
+from mindspore.ops.functional import rsqrt
 # 62
-
+from mindspore.ops.functional import maximum
 # 63
-
+from mindspore.ops.functional import minimum
 # 64
 
 # 65
-
+from mindspore.ops.functional import logical_and
 # 66
-
+from mindspore.ops.functional import logical_not
 # 67
-
+from mindspore.ops.functional import logical_or
 # 68
 
 # 69
-
+from mindspore.ops.functional import less_equal, le
 # 70
-
+from mindspore.ops.functional import negative, neg
 # 71
-
+from mindspore.ops.functional import isfinite
 # 72
 
 # 73
-
+from mindspore.ops.functional import ceil
 # 74
 
 # 75
-
+from mindspore.ops.functional import less, lt
 # 76
-
+from mindspore.ops.functional import pow
 # 77
 
 # 78
@@ -232,11 +233,12 @@ __all__ = [
     'where',
     'linspace',
     # 1
-
+    'div',
+    'divide',
     # 2
-
+    'sin',
     # 3
-
+    'clamp',
     # 4
 
     # 5
@@ -250,7 +252,7 @@ __all__ = [
     # 9
 
     # 10
-
+    'ne',
     # 11
 
     # 12
@@ -262,17 +264,17 @@ __all__ = [
     # 15
 
     # 16
-
+    'matmul',
     # 17
 
     # 18
-
+    'sum',
     # 19
-
+    'log',
     # 20
     'prod',
     # 21
-
+    'mul',
     # 22
 
     # 23
@@ -280,15 +282,16 @@ __all__ = [
     # 24
 
     # 25
-
+    'greater',
+    'gt',
     # 26
-
+    'eq',
     # 27
-
+    'reciprocal',
     # 28
-
+    'exp',
     # 29
-
+    'sqrt',
     # 30
 
     # 31
@@ -300,7 +303,7 @@ __all__ = [
     # 34
 
     # 35
-
+    'erfinv',
     # 36
 
     # 37
@@ -314,11 +317,11 @@ __all__ = [
     # 41
 
     # 42
-
+    'argmax',
     # 43
 
     # 44
-
+    'cos',
     # 45
 
     # 46
@@ -330,7 +333,7 @@ __all__ = [
     # 49
 
     # 50
-
+    'tile',
     # 51
 
     # 52
@@ -344,45 +347,48 @@ __all__ = [
     # 56
 
     # 57
-
+    'broadcast_to',
     # 58
 
     # 59
-
+    'square',
     # 60
-    'all'
+    'all',
     # 61
-
+    'rsqrt',
     # 62
-
+    'maximum',
     # 63
-
+    'minimum',
     # 64
 
     # 65
-
+    'logical_and',
     # 66
-
+    'logical_not',
     # 67
-
+    'logical_or',
     # 68
 
     # 69
-
+    'less_equal',
+    'le',
     # 70
-
+    'negative',
+    'neg',
     # 71
-
+    'isfinite',
     # 72
 
     # 73
-
+    'ceil',
     # 74
 
     # 75
-
+    'less',
+    'lt',
     # 76
-
+    'pow',
     # 77
 
     # 78
