@@ -13,3 +13,5 @@ cummin:
       dtype: tensor
   function:
       disable: True
+  dispatch:
+    enable: True
