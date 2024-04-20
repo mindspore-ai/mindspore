@@ -1113,6 +1113,7 @@ template MS_CORE_API std::optional<ArrayValue<float>> GetArrayValue(const ValueP
 template MS_CORE_API std::optional<ArrayValue<bool>> GetArrayValue(const ValuePtr &value);
 template MS_CORE_API std::optional<ArrayValue<std::string>> GetArrayValue(const ValuePtr &value);
 template MS_CORE_API std::optional<ArrayValue<float16>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<bfloat16>> GetArrayValue(const ValuePtr &value);
 
 template MS_CORE_API std::optional<ArrayValue<int64_t>> GetArrayValue(const AbstractBasePtr &abs_base);
 template MS_CORE_API std::optional<ArrayValue<int32_t>> GetArrayValue(const AbstractBasePtr &abs_base);
@@ -1127,5 +1128,6 @@ template MS_CORE_API std::optional<ArrayValue<float>> GetArrayValue(const Abstra
 template MS_CORE_API std::optional<ArrayValue<bool>> GetArrayValue(const AbstractBasePtr &abs_base);
 template MS_CORE_API std::optional<ArrayValue<std::string>> GetArrayValue(const AbstractBasePtr &abs_base);
 template MS_CORE_API std::optional<ArrayValue<float16>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<bfloat16>> GetArrayValue(const AbstractBasePtr &abs_base);
 }  // namespace ops
 }  // namespace mindspore
