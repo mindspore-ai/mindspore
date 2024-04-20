@@ -2575,9 +2575,6 @@ void FinalizeCluster() {
 
 void SwapCache(const tensor::TensorPtr &host, const tensor::TensorPtr &device, const tensor::TensorPtr &block_mapping,
                const bool &is_device_to_host) {
-  MS_LOG(ERROR) << host->ToString();
-  MS_LOG(ERROR) << device->ToString();
-  MS_LOG(ERROR) << block_mapping->ToString();
   auto block_mapping_shape = block_mapping->shape();
   if (block_mapping_shape.size() != 2) {
     MS_LOG_EXCEPTION << "The shape size of Cache input mapping tensor should be 2, but got: "
@@ -2588,7 +2585,7 @@ void SwapCache(const tensor::TensorPtr &host, const tensor::TensorPtr &device, c
                      << block_mapping_shape[0];
   }
 
-  auto in_shape = host->shape();
+  auto in_shape = device->shape();
   auto type_byte = GetTypeByte(TypeIdToType(host->data_type()));
   size_t block_size_in_bytes = LongToSize(
     std::accumulate(in_shape.begin() + 1, in_shape.end(), SizeToLong(type_byte), std::multiplies<int64_t>()));
