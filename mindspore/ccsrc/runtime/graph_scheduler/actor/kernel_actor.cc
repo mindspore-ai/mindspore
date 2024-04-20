@@ -505,8 +505,8 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr) {
-    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &mem_info_, device_contexts_[0], context,
-                              &GetAID());
+    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &mem_info_, output_kernel_tensors_,
+                              device_contexts_[0], context, &GetAID());
   }
 
   PostLaunchKernel(context);
