@@ -21,6 +21,7 @@ from mindspore import Tensor, nn
 import mindspore as ms
 import mindspore.ops as ops
 import mindspore.ops.operations as P
+from tests.st.ops.graph_kernel.gk_utils import AssertGKEnable
 
 ascend_grad_overflow = P.IsFinite()
 
@@ -59,10 +60,11 @@ class ComplexNet(nn.Cell):
 
 def get_output(net, args, args_dyn=None, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
-    net_obj = net()
-    if args_dyn:
-        net_obj.set_inputs(*args_dyn)
-    output = net_obj(*args)
+    with AssertGKEnable(enable_graph_kernel):
+        net_obj = net()
+        if args_dyn:
+            net_obj.set_inputs(*args_dyn)
+        output = net_obj(*args)
     return output
 
 
@@ -123,7 +125,6 @@ def test_dvm_dynamic_shape():
     Description: test dvm dynamic shape
     Expectation: the result match with expect
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
     np.random.seed(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x0 = np.random.normal(0, 1, (8, 32)).astype(np.float16)
@@ -136,4 +137,3 @@ def test_dvm_dynamic_shape():
     expect = get_output(Net, args, args_dyn, enable_graph_kernel=False)
     output = get_output(Net, args, args_dyn, enable_graph_kernel=True)
     assert np.allclose(expect[0].asnumpy(), output[0].asnumpy(), 1e-3, 1e-3)
-    del os.environ["GRAPH_OP_RUN"]
