@@ -37,6 +37,8 @@ constexpr auto kBpropAttrName = "bprop";
 constexpr auto kCellHookAttrName = "cell_hook";
 constexpr auto kCellIDAttrName = "cell_id";
 constexpr auto kCustomOpBpropAttrName = "custom_op_bprop";
+constexpr auto kIsRecomputeAttr = "is_recompute";
+
 static uint64_t MakeId() {
   // Use atomic to make id generator thread safe.
   static std::atomic<uint64_t> last_id{1};
@@ -116,6 +118,17 @@ py::tuple ConstructCellHookFnArgs(const std::string &cell_id, const py::object &
   }
   return hook_fn_args;
 }
+
+bool ContainsWeights(const py::tuple &grads) {
+  if (grads.size() < kSizeTwo) {
+    return false;
+  }
+  if (!py::isinstance<py::tuple>(grads[0]) && !py::isinstance<py::dict>(grads[1])) {
+    return false;
+  }
+  return true;
+}
+
 struct RunPrimitivePyHookFunctionRegister {
   RunPrimitivePyHookFunctionRegister() {
     python_adapter::PyAdapterCallback::SetRunPrimitivePyHookFunctionHandler(
@@ -213,19 +226,11 @@ py::function PrimitivePy::GetTaylorRuleFunction() {
   return fn;
 }
 
-py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args, const std::string &bprop_cls_name) {
-  py::tuple grads;
-  if (py::isinstance<py::none>(grads_obj)) {
-    MS_EXCEPTION(TypeError) << "The 'grads_obj' is none.";
-  } else if (!py::isinstance<py::tuple>(grads_obj)) {
-    grads = py::make_tuple(grads_obj);
-  } else {
-    grads = py::cast<py::tuple>(grads_obj);
-  }
+void check_bprop_input_grads(const py::tuple &py_args, const py::tuple &grads, const std::string &bprop_cls_name,
+                             int filter_args_size) {
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_CHECK_BPROP_FLAG)) {
-    return grads;
+    return;
   }
-  constexpr int filter_args_size = 2;
   if (grads.size() != py_args.size() - filter_args_size) {
     MS_EXCEPTION(TypeError) << "For user defined method 'bprop' of net '" << bprop_cls_name
                             << "', the number of return values(gradients) should be equal to the number of input "
@@ -261,7 +266,38 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args,
       }
     }
   }
-  return grads;
+}
+
+py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args, const std::string &bprop_cls_name) {
+  py::tuple grads;
+  if (py::isinstance<py::none>(grads_obj)) {
+    MS_EXCEPTION(TypeError) << "The 'grads_obj' is none.";
+  } else if (!py::isinstance<py::tuple>(grads_obj)) {
+    grads = py::make_tuple(grads_obj);
+  } else {
+    grads = py::cast<py::tuple>(grads_obj);
+  }
+  if (ContainsWeights(grads)) {
+    py::tuple input_grads = py::cast<py::tuple>(grads[0]);
+    check_bprop_input_grads(py_args, input_grads, bprop_cls_name, kSizeOne);
+    py::dict weight_grads = py::cast<py::dict>(grads[1]);
+    if (weight_grads.empty()) {
+      return input_grads;
+    }
+    py::tuple all_grads(input_grads.size() + weight_grads.size());
+    for (size_t i = 0; i < input_grads.size(); ++i) {
+      all_grads[i] = input_grads[i];
+    }
+    size_t i = 0;
+    for (auto weight_grad : weight_grads) {
+      all_grads[i + input_grads.size()] = weight_grad.second;
+      ++i;
+    }
+    return all_grads;
+  } else {
+    check_bprop_input_grads(py_args, grads, bprop_cls_name, kSizeTwo);
+    return grads;
+  }
 }
 
 void PrimitivePy::AddBpropCutPrim(const PrimitivePyPtr &bprop_cut_prim) {
@@ -354,7 +390,9 @@ BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
   }
   py::tuple converted_args(py_args.size());
   ConvertCTensorToPyTensor(py_args, &converted_args);
-  constexpr size_t non_inp_args_size = 2;  // out and dout.
+  bool is_recompute = HasAttr(kIsRecomputeAttr);
+  size_t non_inp_args_size = is_recompute ? kSizeOne : kSizeTwo;  // Out and dout or dout
+
   auto inp_args_size = py_args.size() - non_inp_args_size;
   py::tuple input_args(inp_args_size);
   for (size_t i = 0; i < inp_args_size; ++i) {
@@ -370,7 +408,12 @@ BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
       inst->NewGraph(elem.second, input_args.cast<py::args>());
       py::object grads_obj = elem.second(*converted_args);
       grads = check_bprop_out(grads_obj, py_args, bprop_cls_name_);
-      inst->EndGraph(elem.second, grads_obj, input_args.cast<py::args>());
+      py::object out = grads_obj;
+      // If grads.size() > inp_args_size, that means exist weights.
+      if (grads.size() > inp_args_size) {
+        out = py::cast<py::tuple>(grads_obj)[0];
+      }
+      inst->EndGraph(elem.second, out, input_args.cast<py::args>());
     }
     MS_LOG(DEBUG) << "Run bprop function end.";
     return std::make_shared<PyObjectRef>(grads);

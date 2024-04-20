@@ -207,7 +207,8 @@ Parallel
     mindspore.parameter_broadcast
     mindspore.shard
     mindspore.sync_pipeline_shared_parameters
-
+    mindspore.recompute
+    
 JIT
 ---
 
