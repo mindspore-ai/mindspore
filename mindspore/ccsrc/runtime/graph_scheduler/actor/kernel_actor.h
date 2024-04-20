@@ -130,8 +130,10 @@ class KernelActor : public DebugAwareActor {
 
   // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
   virtual bool LaunchKernel(OpContext<DeviceTensor> *const context);
-  // Execute kernel actor multi stream produre to make sure safety of memory.
-  virtual void ProcessMultiStream(OpContext<DeviceTensor> *const context);
+  // Execute kernel actor multi stream produre to make sure safety of memory before kernel launch.
+  virtual void ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *const context);
+  // Execute kernel actor multi stream produre to make sure safety of memory after kernel launch.
+  virtual void ProcessMultiStreamAfterKernelLaunch(OpContext<DeviceTensor> *const context);
 
   // Execute infer shape, resize and launch kernel by runtime pipeline which executes by KernelAsyncInferActor,
   // KernelAsyncResizeActor and KernelAsyncLaunchActor.
@@ -269,6 +271,9 @@ class KernelActor : public DebugAwareActor {
 
   // The stream resource of the KernelActor to launch kernel.
   void *stream_{nullptr};
+
+  bool is_multi_stream_process_skipped_{false};
+  std::vector<std::pair<uint32_t, void *>> cross_stream_addresses_;
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

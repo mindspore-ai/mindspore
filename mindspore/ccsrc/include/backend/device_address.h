@@ -367,6 +367,7 @@ class DeviceAddress : public mindspore::DeviceSync {
     SetDevicePtr(nullptr);
     this->set_from_mem_pool(false);
     deleter_ = nullptr;
+    kernel_tensor()->set_task_id_on_stream(other->kernel_tensor()->task_id_on_stream());
   }
 
   virtual void set_swappable(bool) {}

@@ -558,6 +558,11 @@ void DynamicMemPoolBestFit::FreeTensorMemInner(const DeviceMemPtr &device_addr) 
                 << "B, total idle mem:" << TotalIdleMemStatistics() << "B.";
 }
 
+// PreCombineMemBuf judge status for mem buf can be combined or not.
+// If there are no events recorded on mem buf, return true to release mem buf.
+// If there are events recorded on mem buf, change status of mem buf to kMemBufUsedByEvent, and return false.
+// Note: Before release mem buf by event, must make share that the status of mem buf is kMemBufUsedByEvent,
+// or wait event may release mem buf incorrectly.
 bool DynamicMemPoolBestFit::PreCombineMemBuf(const DynamicMemBufPtr &mem_buf, const MemStatusManagerPtr &mem_mng) {
   auto device_addr = mem_buf->device_addr_;
   if (mem_buf->status_ == DynamicMemBufStatus::kMemBufUsed && !mem_buf->IsEventNotUsed()) {

@@ -114,6 +114,9 @@ class ControlActor : public MemoryAwareActor {
   virtual void IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context);
   void MergeDeviceAddress(OpContext<DeviceTensor> *const context, const std::vector<DeviceTensor *> &addr_list,
                           DeviceTensor **deivce_tensor);
+  void MergeEmptyAddressDeviceAddress(OpContext<DeviceTensor> *const context,
+                                      const std::vector<DeviceTensor *> &addr_list, DeviceTensor **device_tensor);
+
   // Input data.
   // 1.Input partial.
   // Record the partial received by each step, the key of the pair indicates the location of the partial.
