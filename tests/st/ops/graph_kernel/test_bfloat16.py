@@ -14,7 +14,6 @@
 # ============================================================================
 
 import os
-import shutil
 import numpy as np
 import pytest
 import mindspore
@@ -22,6 +21,7 @@ import mindspore.ops as ops
 import mindspore.context as context
 from mindspore import Tensor, Parameter
 from mindspore.nn import Cell
+from tests.st.ops.graph_kernel.gk_utils import AssertGKEnable
 
 
 class Net(Cell):
@@ -41,17 +41,9 @@ class Net(Cell):
 
 def get_output(x0, x1, shape, enable_graph_kernel):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
-    if enable_graph_kernel:
-        ir_path = os.path.join("./irs_{}".format(os.getpid()))
-        context.set_context(save_graphs=3, save_graphs_path=ir_path)
-    net = Net(shape)
-    y0, _ = net(x0, x1)
-    if enable_graph_kernel:
-        graph_kernel_ir_dir = os.path.join(ir_path, "verbose_ir_files/graph_kernel")
-        if not os.path.isdir(graph_kernel_ir_dir) or not os.listdir(graph_kernel_ir_dir):
-            raise RuntimeError("Graph Kernel Fusion is not enabled")
-        if os.path.isdir(ir_path):
-            shutil.rmtree(ir_path, ignore_errors=True)
+    with AssertGKEnable(enable_graph_kernel):
+        net = Net(shape)
+        y0, _ = net(x0, x1)
     return y0.float().asnumpy(), net.param.float().asnumpy()
 
 
