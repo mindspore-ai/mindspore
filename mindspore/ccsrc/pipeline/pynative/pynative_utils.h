@@ -89,7 +89,8 @@ struct Common {
   static void CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info);
 
   template <typename T>
-  static std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header = "") {
+  static std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header = "",
+                                    bool is_print_tensor_data = false) {
     static constexpr size_t end_char_size = 2;
     std::ostringstream buf;
     buf << info_header;
@@ -98,7 +99,7 @@ struct Common {
         MS_LOG(DEBUG) << "The " << i << "'th item is nullptr!";
         continue;
       }
-      if (items[i]->template isa<tensor::BaseTensor>()) {
+      if (items[i]->template isa<tensor::BaseTensor>() && is_print_tensor_data) {
         auto tensor = items[i]->template cast<tensor::BaseTensorPtr>();
         auto grad = std::make_shared<tensor::Tensor>(*tensor);
         grad->data_sync();
