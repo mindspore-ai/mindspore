@@ -549,7 +549,8 @@ STATUS AdjustOneHot(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   DataInfo data_info;
   if (cnode->size() > kInputNum3 &&
       FetchDataFromParameterNode(cnode, kInputNum3, converter::kFmkTypeMs, &data_info, true) == lite::RET_OK) {
-    if (data_info.data_type_ != static_cast<int>(kNumberTypeFloat32)) {
+    if (data_info.data_type_ != static_cast<int>(kNumberTypeFloat32) &&
+        data_info.data_type_ != static_cast<int>(kNumberTypeInt32)) {
       MS_LOG(ERROR) << "data_type not correct";
       return RET_ERROR;
     }
@@ -557,8 +558,18 @@ STATUS AdjustOneHot(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       MS_LOG(ERROR) << "data is nullptr. " << cnode->fullname_with_scope();
       return RET_ERROR;
     }
-    auto data1 = reinterpret_cast<float *>(data_info.data_.data())[FIRST_INPUT];
-    auto data2 = reinterpret_cast<float *>(data_info.data_.data())[SECOND_INPUT];
+    float data1 = 0;
+    float data2 = 0;
+    if (data_info.data_type_ == static_cast<int>(kNumberTypeFloat32)) {
+      data1 = reinterpret_cast<float *>(data_info.data_.data())[FIRST_INPUT];
+      data2 = reinterpret_cast<float *>(data_info.data_.data())[SECOND_INPUT];
+    } else if (data_info.data_type_ == static_cast<int>(kNumberTypeInt32)) {
+      auto int_data1 = reinterpret_cast<int32_t *>(data_info.data_.data())[FIRST_INPUT];
+      auto int_data2 = reinterpret_cast<int32_t *>(data_info.data_.data())[SECOND_INPUT];
+      data1 = static_cast<float>(int_data1);
+      data2 = static_cast<float>(int_data2);
+    }
+
     auto off_value_parameter = mindspore::opt::BuildFloatValueParameterNode(
       func_graph, data1, cnode->fullname_with_scope() + "_off_value", true);
     MS_CHECK_TRUE_RET(off_value_parameter != nullptr, RET_ERROR);
