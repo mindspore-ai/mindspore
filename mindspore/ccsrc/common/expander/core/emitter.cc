@@ -323,26 +323,6 @@ NodePtr Emitter::ScalarToTensor(const NodePtr &node, const TypePtr &dtype) {
   return EmitValue(tensor);
 }
 
-NodePtr Emitter::BoolNot(const NodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  NodePtr new_node{nullptr};
-  if (abs->isa<abstract::AbstractScalar>()) {
-    auto value_ptr = node->BuildValue();
-    MS_EXCEPTION_IF_NULL(value_ptr);
-    if (!(value_ptr->isa<ValueAny>() || value_ptr->isa<None>())) {
-      auto value = GetValue<bool>(value_ptr);
-      new_node = Value(static_cast<bool>(!value));
-    } else {
-      new_node = Emit("BoolNot", {node});
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "BooNot only support scalar, but got " << abs->ToString();
-  }
-  return new_node;
-}
-
 std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis,
                                                  bool keep_dim, bool skip_mode) const {
   if (IsDynamic(shape)) {
