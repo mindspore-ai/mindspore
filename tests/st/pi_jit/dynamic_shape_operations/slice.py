@@ -49,9 +49,9 @@ class DynamicShapeSliceFactory():
         self.size_ms = Tensor(self.size)
         self.axis_ms = Tensor(self.axis)
         self.input_dyn = Tensor(shape=[None for _ in self.input_ms.shape], dtype=self.input_ms.dtype)
-        self.begin_dyn = Tensor(shape=[None for _ in begin_ms.shape], dtype=begin_ms.dtype)
-        self.size_dyn = Tensor(shape=[None for _ in size_ms.shape], dtype=size_ms.dtype)
-        self.axis_dyn = Tensor(shape=[None], dtype=axis_ms.dtype)
+        self.begin_dyn = Tensor(shape=[None for _ in self.begin_ms.shape], dtype=self.begin_ms.dtype)
+        self.size_dyn = Tensor(shape=[None for _ in self.size_ms.shape], dtype=self.size_ms.dtype)
+        self.axis_dyn = Tensor(shape=[None], dtype=self.axis_ms.dtype)
 
     def forward_mindspore_impl(self, ms_net):
         ms_net.set_inputs(self.input_dyn, self.begin_dyn, self.size_dyn, self.axis_dyn)
