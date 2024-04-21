@@ -852,6 +852,26 @@ REG_BPROP_BUILDER("Unstack").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("StackExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex3);
+  auto axis_node = ib->GetInput(kIndex1);
+  auto input_shape = ib->GetShape(dout);
+  if (input_shape.empty()) {
+    MS_EXCEPTION(ValueError) << "For gradient of 'Stack', 'x' can not be empty";
+  }
+  auto axis_res = ops::GetScalarValue<int64_t>(axis_node->BuildValue());
+  if (!axis_res.has_value()) {
+    MS_EXCEPTION(ValueError) << "For gradient of 'Stack', 'dim' can not be empty";
+  }
+  auto axis = axis_res.value();
+  if (axis < 0) {
+    axis += SizeToLong(input_shape.size());
+  }
+  auto num = input_shape[axis];
+  auto ret = ib->Emit("Unstack", {dout}, {{"num", MakeValue(num)}, {"axis", MakeValue(axis)}});
+  return {ret, ib->OutZeros(axis_node)};
+});
+
 REG_BPROP_BUILDER("Contiguous").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   // Transparent dout.
   return {ib->GetInput(kIndex2)};
