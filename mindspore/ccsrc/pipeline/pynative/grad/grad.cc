@@ -425,10 +425,14 @@ void ClearInputGradInfo(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::BaseTensor>()) {
     auto tensor_value = value->cast<tensor::BaseTensorPtr>();
+    // Hook register before op run
+    if (tensor_value->auto_grad_meta_data() != nullptr && tensor_value->auto_grad_meta_data()->is_register_hook()) {
+      return;
+    }
     tensor_value->set_auto_grad_meta_data(nullptr);
   } else if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>();
-    for (auto elem : value_seq->value()) {
+    for (const auto &elem : value_seq->value()) {
       ClearInputGradInfo(elem);
     }
   } else if (value->isa<stub::StubNode>()) {
@@ -997,13 +1001,14 @@ py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::o
   } else {
     auto grads = RunBackward(grad_attr, w_args, p_args);
     top_cell()->ClearParamGradInfo();
+    AsyncClearAutoGradCell(top_cell());
+    ClearGradRes();
     // For custom nested grad, we need resume grad info when finish custom grad.
     if (parent_top_cell_ != nullptr) {
       ResumeParamGradInfo(parent_top_cell_);
+      top_cell_ = parent_top_cell_;
       parent_top_cell_ = nullptr;
     }
-    AsyncClearAutoGradCell(top_cell());
-    ClearGradRes();
     return grads;
   }
 }
@@ -1346,13 +1351,13 @@ py::object GradExecutor::RunBackward(const autograd::GradAttr &grad_attr,
   if (grad_attr.has_sens) {
     sens = top_input_args_info_->input_arg_value_vec.back();
   }
-  grad_is_running_ = true;
+  grad_is_running_ += 1;
   auto top_input_args_info = top_input_args_info_;
   auto pre_top_cell = top_cell_;
   const auto &auto_grad_cell = std::dynamic_pointer_cast<autograd::FuncGrad>(top_cell()->auto_grad_cell_ptr());
   MS_EXCEPTION_IF_NULL(auto_grad_cell);
   auto grads = auto_grad_cell->Finish(w_args, p_args, grad_attr, sens);
-  grad_is_running_ = false;
+  grad_is_running_ -= 1;
   top_input_args_info_ = top_input_args_info;
   top_cell_ = pre_top_cell;
   MS_EXCEPTION_IF_NULL(grads);
@@ -1374,13 +1379,13 @@ py::object GradExecutor::RunGradGraph() {
 
   const auto &backend = MsContext::GetInstance()->backend_policy();
   MS_LOG(DEBUG) << "Eval run " << backend;
-  grad_is_running_ = true;
+  grad_is_running_ += 1;
   // In custom bprop, when running bprop function, top_input_args_info_ will be changed.
   // So, here copy and restore after running finished.
   auto top_input_args_info = top_input_args_info_;
   BaseRef out_value = (*run)(arg_list);
   top_input_args_info_ = top_input_args_info;
-  grad_is_running_ = false;
+  grad_is_running_ -= 1;
   MS_LOG(DEBUG) << "Eval run end " << out_value.ToString();
   MakeNestedCnode(top_input_args_info_->has_custom_bprop, top_input_args_info_->input_arg_value_vec,
                   resource->optimize_graph(), out_value);
@@ -1388,6 +1393,7 @@ py::object GradExecutor::RunGradGraph() {
   // For custom nested grad, we need resume grad info when finish custom grad.
   if (parent_top_cell_ != nullptr) {
     ResumeParamGradInfo(parent_top_cell_);
+    top_cell_ = parent_top_cell_;
     parent_top_cell_ = nullptr;
   }
   return BaseRefToPyData(out_value);
@@ -1562,7 +1568,7 @@ void GradExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear grad res";
   WaitBpropTask();
   grad_flag_ = false;
-  grad_is_running_ = false;
+  grad_is_running_ = 0;
   custom_bprop_cell_count_ = 0;
   grad_order_ = 0;
   top_cell_ = nullptr;

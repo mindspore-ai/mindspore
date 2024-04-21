@@ -18,6 +18,7 @@ from __future__ import absolute_import
 import re
 import inspect
 import math
+from types import FunctionType, MethodType
 from functools import reduce, wraps
 from itertools import repeat
 from collections.abc import Iterable
@@ -1375,5 +1376,24 @@ def args_type_check(*type_args, **type_kwargs):
 
     return type_check
 
+
+def check_hook_fn(hook_type, hook_fn):
+    """Check hook fn"""
+    if context.get_context("mode") != context.PYNATIVE_MODE:
+        logger.warning(f"'{hook_type}' function is only supported in pynative mode, you can use "
+                       f"context.set_context to set pynative mode.")
+        return False
+
+    if not isinstance(hook_fn, (FunctionType, MethodType)):
+        raise TypeError(f"When using 'hook_type(hook_fn)', the type of 'hook_fn' must be python "
+                        f"function, but got {type(hook_fn)}.")
+
+    if hook_fn.__code__.co_name == "staging_specialize":
+        raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@jit' is not supported.")
+
+    if hook_type == "register_hook" and hook_fn.__code__.co_argcount != 1:
+        raise TypeError(f"Tensor hook function {hook_fn.__name__} arg is not equal to 1.")
+
+    return True
 
 _set_record = {}

@@ -225,7 +225,7 @@ class GradExecutor {
   bool init_{false};
   bool grad_flag_{false};
   bool enable_grad_{true};
-  bool grad_is_running_{false};
+  size_t grad_is_running_{0};
   bool save_graphs_{false};
   uint32_t kernel_graph_id_for_control_flow_{UINT32_MAX};
   size_t custom_bprop_cell_count_{0};

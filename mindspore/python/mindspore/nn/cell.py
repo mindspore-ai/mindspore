@@ -20,9 +20,10 @@ import inspect
 import os
 import time
 from collections import OrderedDict
-from types import FunctionType, MethodType
+from types import MethodType
 import numpy
-from mindspore._checkparam import args_type_check
+
+from mindspore._checkparam import args_type_check, check_hook_fn
 from mindspore.common._auto_dynamic import is_auto_dynamic, convert_inputs_to_dynamic
 from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
@@ -1944,8 +1945,8 @@ class Cell(Cell_):
             hook_fn (function): Python function. Forward pre hook function.
 
         Returns:
-            Handle, it is an instance of `mindspore.common.hook_handle.HookHandle` and corresponding to the `hook_fn` .
-            The handle can be used to remove the added `hook_fn` by calling `handle.remove()` .
+            A handle corresponding to the `hook_fn` . The handle can be used to remove the added `hook_fn` by calling
+            `handle.remove()` .
 
         Raises:
             TypeError: If the `hook_fn` is not a function of python.
@@ -1980,17 +1981,8 @@ class Cell(Cell_):
             (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1], dtype=Float32,
             value= [ 2.00000000e+00]))
         """
-        if context.get_context("mode") != context.PYNATIVE_MODE:
-            logger.warning(f"'register_forward_pre_hook' function is only supported in pynative mode, you can use "
-                           f"context.set_context to set pynative mode.")
+        if not check_hook_fn("register_forward_pre_hook", hook_fn):
             return HookHandle()
-
-        if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"When using 'register_forward_pre_hook(hook_fn)', the type of 'hook_fn' must be python "
-                            f"function, but got {type(hook_fn)}.")
-        if hook_fn.__code__.co_name == "staging_specialize":
-            raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@jit' is not supported.")
-
         self._enable_forward_pre_hook = True
         _pynative_executor.set_hook_changed(self)
         if not hasattr(self, '_forward_pre_hook_key'):
@@ -2044,8 +2036,8 @@ class Cell(Cell_):
             hook_fn (function): Python function. Forward hook function.
 
         Returns:
-            Handle, it is an instance of `mindspore.common.hook_handle.HookHandle` and corresponding to the `hook_fn` .
-            The handle can be used to remove the added `hook_fn` by calling `handle.remove()` .
+            A handle corresponding to the `hook_fn` . The handle can be used to remove the added `hook_fn` by calling
+            `handle.remove()` .
 
         Raises:
             TypeError: If the `hook_fn` is not a function of python.
@@ -2082,17 +2074,8 @@ class Cell(Cell_):
             (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1], dtype=Float32,
             value= [ 2.00000000e+00]))
         """
-        if context.get_context("mode") != context.PYNATIVE_MODE:
-            logger.warning(f"'register_forward_hook' function is only supported in pynative mode, you can use "
-                           f"context.set_context to set pynative mode.")
+        if not check_hook_fn("register_forward_hook", hook_fn):
             return HookHandle()
-
-        if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"When using 'register_forward_hook(hook_fn)', the type of 'hook_fn' must be python "
-                            f"function, but got {type(hook_fn)}.")
-        if hook_fn.__code__.co_name == "staging_specialize":
-            raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@jit' is not supported.")
-
         self._enable_forward_hook = True
         _pynative_executor.set_hook_changed(self)
         if not hasattr(self, '_forward_hook_key'):
@@ -2144,8 +2127,8 @@ class Cell(Cell_):
             hook_fn (function): Python function. Backward hook function.
 
         Returns:
-            Handle, it is an instance of `mindspore.common.hook_handle.HookHandle` and corresponding to the `hook_fn` .
-            The handle can be used to remove the added `hook_fn` by calling `handle.remove()` .
+            A handle corresponding to the `hook_fn` . The handle can be used to remove the added `hook_fn` by calling
+            `handle.remove()` .
 
         Raises:
             TypeError: If the `hook_fn` is not a function of python.
@@ -2180,14 +2163,8 @@ class Cell(Cell_):
             >>> print(output)
             (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]),)
         """
-        if context.get_context("mode") != context.PYNATIVE_MODE:
-            logger.warning(f"'register_backward_hook' function is only supported in pynative mode, you can use "
-                           f"context.set_context to set pynative mode.")
+        if not check_hook_fn("register_backward_hook", hook_fn):
             return HookHandle()
-
-        if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"When using 'register_backward_hook(hook_fn)', the type of 'hook_fn' must be python "
-                            f"function, but got {type(hook_fn)}.")
         if self._cell_backward_hook is None:
             self._enable_backward_hook = True
             self._cell_backward_hook = inner.CellBackwardHook(self.cls_name + "(" + str(id(self)) + ")")

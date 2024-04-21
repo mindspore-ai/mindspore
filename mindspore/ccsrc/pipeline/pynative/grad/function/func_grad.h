@@ -43,9 +43,10 @@ class FuncBackwardNode : public BackwardNode {
         op_inputs_(std::move(op_inputs)),
         input_abstract_(std::move(input_abstract)),
         grad_type_(std::move(grad_type)),
-        op_output_(std::move(op_output)),
         out_abstract_(std::move(out_abstract)),
-        func_(std::move(func)) {}
+        func_(std::move(func)) {
+    op_output_ = std::move(op_output);
+  }
   ~FuncBackwardNode() override = default;
   ValuePtrList CallBackward(const ValuePtrList &grads) override;
   NodePtrList PreProcess(const ValuePtrList &dout, FuncBuilder *emitter);
@@ -58,7 +59,6 @@ class FuncBackwardNode : public BackwardNode {
   ValuePtrList op_inputs_;
   abstract::AbstractBasePtrList input_abstract_;
   std::vector<InputType> grad_type_;
-  ValuePtr op_output_;
   abstract::AbstractBasePtr out_abstract_;
   expander::bprop::BpropBuilderFunc func_;
 };
@@ -77,16 +77,17 @@ class HookBackwardNode : public BackwardNode {
 
 class GraphBackwardNode : public BackwardNode {
  public:
-  explicit GraphBackwardNode(const string &name, FuncGraphPtr func_graph, const VectorRef &args, size_t output_size,
-                             std::string cache_key, bool is_control_flow, bool is_jit_graph,
-                             bool is_dynamic_shape_process, bool jit_out_has_dict)
+  explicit GraphBackwardNode(const string &name, FuncGraphPtr func_graph, const VectorRef &args,
+                             const ValuePtr &op_output, size_t output_size, std::string cache_key, bool is_control_flow,
+                             bool is_jit_graph, bool is_dynamic_shape_process, bool jit_out_has_dict)
       : BackwardNode(name, output_size),
         func_graph_(std::move(func_graph)),
         args_(args),
         cache_key_(std::move(cache_key)),
-        graph_call_condition_(is_control_flow, is_jit_graph, is_dynamic_shape_process, jit_out_has_dict, true) {}
+        graph_call_condition_(is_control_flow, is_jit_graph, is_dynamic_shape_process, jit_out_has_dict, true) {
+    op_output_ = op_output;
+  }
   ValuePtrList CallBackward(const ValuePtrList &grads) override;
-  ValuePtr op_output_;
 
  private:
   FuncGraphPtr func_graph_;

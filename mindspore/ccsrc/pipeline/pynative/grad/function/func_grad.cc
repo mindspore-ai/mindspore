@@ -21,9 +21,9 @@
 #include <vector>
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/primitive_utils.h"
+#include "include/common/utils/hook.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "ops/framework_ops.h"
-#include "ops/math_ops.h"
 #include "ops/other_ops.h"
 
 namespace mindspore::pynative::autograd {
@@ -145,6 +145,34 @@ bool IsNeedComputeGrad(const ValuePtr &input) {
   }
   return false;
 }
+
+ValuePtrList CallBackwardHooks(const ValuePtr &value, ValuePtrList *grad_in) {
+  if (value == nullptr) {
+    return *grad_in;
+  }
+  MS_EXCEPTION_IF_NULL(grad_in);
+  auto tensor = value->cast<tensor::BaseTensorPtr>();
+  if (tensor == nullptr) {
+    MS_LOG(DEBUG) << "Get not tensor input value " << value->ToString();
+    return *grad_in;
+  }
+  auto auto_grad_meta = tensor->auto_grad_meta_data();
+  MS_EXCEPTION_IF_NULL(auto_grad_meta);
+  if (auto_grad_meta->backward_hooks().empty()) {
+    MS_LOG(DEBUG) << "Get empty backward hooks for tensor id " << tensor->id();
+    return *grad_in;
+  }
+  if (grad_in->size() != kSizeOne) {
+    MS_LOG(EXCEPTION) << "Tensor hook just work on one tensor value, not support value sequence";
+  }
+  for (const auto &hook : auto_grad_meta->backward_hooks()) {
+    MS_LOG(DEBUG) << "Run hook id " << hook.first;
+    (*grad_in)[kIndex0] = (*(hook.second))((*grad_in).front());
+  }
+  MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(*grad_in, "After hook print gradient in: ");
+  auto_grad_meta->ClearBackwardHooks();
+  return *grad_in;
+}
 }  // namespace
 
 ValuePtrList FuncBackwardNode::CallBackward(const ValuePtrList &gradients_in) {
@@ -265,6 +293,8 @@ FuncGrad::FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bpro
     auto variable = std::make_shared<FuncVariable>(func_node, true);
 
     if (!input_param_value->isa<ValueSequence>()) {
+      // For hook input
+      func_node->set_op_output(input_param_value);
       PyNativeAlgo::AutoGrad::SetGradInfoForInputs(input_param_value, variable);
     } else {
       variable->set_is_need_grad(false);
@@ -370,11 +400,10 @@ BackwardNodePtr FuncGrad::BuildGraphBackwardNode(const GradParamPtr &grad_param)
   (void)std::transform(grad_param->op_grad_info->input_value.begin(), grad_param->op_grad_info->input_value.end(),
                        std::back_inserter(input_args), [](const ValuePtr &v) { return v; });
   PyNativeAlgo::Common::DumpGraphIR("call_graph.ir", bprop_graph);
-  auto fn = std::make_shared<GraphBackwardNode>(bprop_graph->ToString(), bprop_graph, input_args,
-                                                grad_param->op_grad_info->output_size, grad_param->graph_cache_key,
-                                                grad_param->is_control_flow, grad_param->is_jit_graph,
-                                                grad_param->use_dynamic_shape_process, grad_param->jit_out_has_dict);
-  fn->op_output_ = grad_param->op_grad_info->out_value;
+  auto fn = std::make_shared<GraphBackwardNode>(
+    bprop_graph->ToString(), bprop_graph, input_args, grad_param->op_grad_info->out_value,
+    grad_param->op_grad_info->output_size, grad_param->graph_cache_key, grad_param->is_control_flow,
+    grad_param->is_jit_graph, grad_param->use_dynamic_shape_process, grad_param->jit_out_has_dict);
   auto flatten_inputs = PyNativeAlgo::DataConvert::FlattenTensorSeqInValueSeq(grad_param->op_grad_info->input_value);
   ConstructParameterNodes(flatten_inputs);
   fn->UpdateNextEdges(flatten_inputs);
@@ -401,8 +430,9 @@ void FuncGrad::BackPropagate() {
     if (input_buffer.find(fn.get()) == input_buffer.end()) {
       MS_LOG(EXCEPTION) << "Fn not has gradient";
     }
-    const auto &gradient_in = input_buffer[fn.get()];
+    auto &gradient_in = input_buffer[fn.get()];
     MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(gradient_in, "Begin print gradient in: ");
+    gradient_in = CallBackwardHooks(fn->op_output(), &gradient_in);
     auto gradient_out = fn->CallBackward(gradient_in);
     MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(gradient_out, "Begin print gradient out: ");
     if (gradient_out.size() != fn->next_edges().size()) {
@@ -463,6 +493,7 @@ void FuncGrad::ConstructParameterNodes(const ValuePtrList &inputs) {
       }
       if (auto_grad_meta_data->input_type() == InputType::kParameter) {
         auto fn = std::make_shared<BackwardNode>("parameter");
+        fn->set_op_output(value);
         auto variable = std::make_shared<FuncVariable>(fn, true);
         auto_grad_meta_data->set_variable(variable);
         (void)variable_set_.insert(variable);

@@ -44,6 +44,7 @@ COMMON_EXPORT bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, c
                                                      const std::shared_ptr<py::object> &ret_val);
 COMMON_EXPORT ValuePtr ShallowCopyTensorValue(const ValuePtr &value);
 COMMON_EXPORT void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors);
+COMMON_EXPORT void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_args);
 bool IsStubTensor(const py::handle &obj);
 tensor::TensorPtr ConvertStubTensor(const py::handle &obj);
 }  // namespace mindspore

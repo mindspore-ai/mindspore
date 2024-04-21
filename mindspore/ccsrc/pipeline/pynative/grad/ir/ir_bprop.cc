@@ -354,7 +354,7 @@ void IrBprop::BackPropagate() {
     if (static_cast<bool>(MS_UNLIKELY(variable->is_fake_bprop()))) {
       MS_LOG(EXCEPTION) << "Illegal primitive " << variable->fake_prim_name() << "'s bprop not defined";
     }
-
+    MS_LOG(DEBUG) << "Begin backpropagate: " << variable->ToString();
     const auto &fn = variable->ir_function_node();
     // If zeroslike not used in funcgraph, we need replace the zeroslike placeholder with real zeroslike value.
     if (static_cast<bool>(MS_UNLIKELY(PyNativeAlgo::AutoGrad::IsZerosLikeNode(fn->accumulate_dout())))) {
@@ -363,10 +363,10 @@ void IrBprop::BackPropagate() {
     }
     // Replace real dout to fake dout, update replace result to eliminate tuplegetitem
     // when accumulate_dout is tuplegetitem
+    fn->set_accumulate_dout(pass_forward_->PassBackwardHook(variable->out_value(), fn->accumulate_dout()));
     Replace(fn->fake_dout(), fn->accumulate_dout(), &ad_param_->users_.dout_user_, true);
     // replace edges which exist fake dout
     fn->ReplaceEdges();
-    MS_LOG(DEBUG) << "Begin backpropagate: " << variable->ToString();
     const auto &next_edges = fn->next_edges();
     for (const auto &next_edge : next_edges) {
       const auto &last_variable = next_edge.first;

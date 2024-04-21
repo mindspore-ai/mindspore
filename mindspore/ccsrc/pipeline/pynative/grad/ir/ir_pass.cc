@@ -23,6 +23,7 @@
 #include "ops/nn_ops.h"
 #include "ops/op_utils.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/common/utils/hook.h"
 #include "runtime/pynative/op_function/pyboost_grad_functions.h"
 
 namespace mindspore {
@@ -504,6 +505,49 @@ void IrPassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, 
       }
     }
   }
+}
+
+AnfNodePtr IrPassForward::PassBackwardHook(const ValuePtr &value, const AnfNodePtr &grad_node) {
+  MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(grad_node);
+  auto tensor = value->cast<tensor::BaseTensorPtr>();
+  if (tensor == nullptr) {
+    MS_LOG(DEBUG) << "Hook just work on tensor, not support value " << value->ToString();
+    return grad_node;
+  }
+  auto auto_grad_meta = tensor->auto_grad_meta_data();
+  MS_EXCEPTION_IF_NULL(auto_grad_meta);
+  if (auto_grad_meta->backward_hooks().empty()) {
+    MS_LOG(DEBUG) << "Get empty backward hooks for tensor id " << tensor->id();
+    return grad_node;
+  }
+  AnfNodePtr res = grad_node;
+  for (const auto &[id, hook] : auto_grad_meta->backward_hooks()) {
+    if (hook->hook_map_.size() != kSizeOne) {
+      MS_LOG(EXCEPTION) << "Tensor hook just work on one tensor value, not support value sequence";
+    }
+    auto hook_fn = hook->hook_map_.begin()->second;
+    if (hook_fn.ptr() == nullptr) {
+      MS_LOG(DEBUG) << "Hook id " << id << " have been delete by python";
+      continue;
+    }
+    MS_LOG(DEBUG) << "Insert bprop cut fn " << py::str(py::cast<py::object>(hook_fn)).cast<std::string>()
+                  << " for tensor " << value->ToString() << " with id " << tensor->id();
+    auto bprop_cut = std::make_shared<PrimitivePy>("bprop_cut");
+    bprop_cut->AddAttr("tensor_hook", MakeValue(true));
+    bprop_cut->AddBackwardHookFn(kIndex0, hook_fn);
+    // Need input out and dout for bprop run, current just make a fake
+    AnfNodePtrList inputs{NewValueNode(bprop_cut), grad_node, NewValueNode(value), res};
+    res = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(inputs);
+    // Need update after execute
+    res->set_abstract(grad_node->abstract());
+
+    // For run graph by single op
+    ir_bprop_->ad_param()->tape_->set_flag(kFlagPyNativeBpropGraphWithBpropCut, true);
+    ir_bprop_->set_bprop_graph_run_by_single_op(true);
+  }
+  auto_grad_meta->ClearBackwardHooks();
+  return res;
 }
 
 CNodePtr IrPassForward::ConvertConstInputToAttr(const CNodePtr &cnode, bool is_dynamic_shape) {

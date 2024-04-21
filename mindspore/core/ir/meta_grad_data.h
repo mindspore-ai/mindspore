@@ -30,6 +30,8 @@ namespace pynative::autograd {
 class Variable;
 }  // namespace pynative::autograd
 
+class TensorBackwardHook;
+using TensorBackwardHookPtr = std::shared_ptr<TensorBackwardHook>;
 using VariablePtr = std::shared_ptr<pynative::autograd::Variable>;
 using VariableWeakPtr = std::weak_ptr<pynative::autograd::Variable>;
 
@@ -51,6 +53,14 @@ class AutoGradMetaData {
   void set_op_index(size_t op_index) { op_index_ = op_index; }
   [[nodiscard]] size_t output_index() const { return output_index_; }
   void set_output_index(size_t output_index) { output_index_ = output_index; }
+  void AddBackwardHook(int id, TensorBackwardHookPtr hook) {
+    (void)backward_hooks_.emplace(id, std::move(hook));
+    is_register_hook_ = true;
+  }
+  void RemoveBackwardHook(int id) { (void)backward_hooks_.erase(id); }
+  bool is_register_hook() const { return is_register_hook_; }
+  const std::map<int, TensorBackwardHookPtr> &backward_hooks() { return backward_hooks_; }
+  void ClearBackwardHooks() { backward_hooks_.clear(); }
 
  private:
   // Weakptr for variable, to avoid circular reference
@@ -60,11 +70,14 @@ class AutoGradMetaData {
   // Weakptr to k_node for tensor
   AnfNodeWeakPtr k_node_;
   // Type of grad tensor
-  InputType input_type_;
+  InputType input_type_{InputType::kUnkown};
   // Optional for op output, represent index of op in execute order.
   size_t op_index_{0};
   // Index of op output tensors.
   size_t output_index_{0};
+  bool is_register_hook_{false};
+  // Tensor hooks
+  std::map<int, TensorBackwardHookPtr> backward_hooks_;
 };
 using AutoGradMetaDataPtr = std::shared_ptr<AutoGradMetaData>;
 }  // namespace mindspore

@@ -99,7 +99,7 @@ class IrBprop {
   AdParamPtr ad_param() const { return ad_param_; }
   inline bool bprop_graph_run_by_single_op() { return bprop_graph_run_by_single_op_; }
   void set_bprop_graph_run_by_single_op(bool bprop_graph_run_by_single_op) {
-    bprop_graph_run_by_single_op_ |= bprop_graph_run_by_single_op;
+    bprop_graph_run_by_single_op_ = bprop_graph_run_by_single_op_ || bprop_graph_run_by_single_op;
   }
 
  private:
