@@ -1,0 +1,15 @@
+#operator stack_ext
+stack_ext:
+    args:
+        tensors:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+        dim:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True

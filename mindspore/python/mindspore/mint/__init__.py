@@ -36,6 +36,7 @@ from mindspore.ops.function.clip_func import clamp
 # 5
 
 # 6
+from mindspore.ops.auto_generate import stack_ext as stack
 
 # 7
 
@@ -249,7 +250,7 @@ __all__ = [
     # 5
 
     # 6
-
+    'stack',
     # 7
 
     # 8
