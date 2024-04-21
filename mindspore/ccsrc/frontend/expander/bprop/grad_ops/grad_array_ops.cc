@@ -859,6 +859,9 @@ REG_BPROP_BUILDER("StackExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   if (input_shape.empty()) {
     MS_EXCEPTION(ValueError) << "For gradient of 'Stack', 'x' can not be empty";
   }
+  if (IsDynamicRank(input_shape)) {
+    MS_EXCEPTION(ValueError) << "For gradient of 'Stack', DynamicRank is not supported";
+  }
   auto axis_res = ops::GetScalarValue<int64_t>(axis_node->BuildValue());
   if (!axis_res.has_value()) {
     MS_EXCEPTION(ValueError) << "For gradient of 'Stack', 'dim' can not be empty";
@@ -1051,6 +1054,15 @@ REG_BPROP_BUILDER("Flatten").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     return {ib->Reshape(dout, ib->Shape(x))};
   }
   return {ib->Reshape(dout, x_shape)};
+});
+
+REG_BPROP_BUILDER("FlattenExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto start = ib->GetInput(kIndex1);
+  auto end = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto x_shape = ib->Shape(x);
+  return {ib->Reshape(dout, x_shape), ib->OutZeros(start), ib->OutZeros(end)};
 });
 
 REG_BPROP_BUILDER("Reshape").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {

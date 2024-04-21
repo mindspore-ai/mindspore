@@ -2,35 +2,35 @@ stack_ext:
     description: |
         Stacks a list of tensors in specified dim.
 
-            Stacks the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
+        Stacks the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
 
-            Given input tensors of shape :math:`(x_1, x_2, ..., x_R)`. Set the number of input tensors as `N`.
-            If :math:`dim \ge 0`, the shape of the output tensor is
-            :math:`(x_1, x_2, ..., x_{dim}, N, x_{dim+1}, ..., x_R)`.
+        Given input tensors of shape :math:`(x_1, x_2, ..., x_R)`. Set the number of input tensors as `N`.
+        If :math:`dim \ge 0`, the shape of the output tensor is
+        :math:`(x_1, x_2, ..., x_{dim}, N, x_{dim+1}, ..., x_R)`.
 
-            Args:
-                tensors (Union[tuple, list]): A Tuple or list of Tensor objects with the same shape and type.
-                dim (int): Dimension to stack. The range is [-(R+1), R+1). Default: ``0`` .
+        Args:
+            tensors (Union[tuple, list]): A Tuple or list of Tensor objects with the same shape and type.
+            dim (int): Dimension to stack. The range is [-(R+1), R+1). Default: ``0`` .
 
-            Returns:
-                Tensor. A stacked Tensor with the same type as `tensors`.
+        Returns:
+            Tensor. A stacked Tensor with the same type as `tensors`.
 
-            Raises:
-                TypeError: If the data types of elements in `tensors` are not the same.
-                ValueError: If the length of `tensors` is not greater than zero;
-                            or if dim is out of the range [-(R+1), R+1);
-                            or if the shapes of elements in tensors are not the same.
+        Raises:
+            TypeError: If the data types of elements in `tensors` are not the same.
+            ValueError: If the length of `tensors` is not greater than zero;
+                        or if dim is out of the range [-(R+1), R+1);
+                        or if the shapes of elements in tensors are not the same.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> from mindspore import Tensor, mint
-                >>> import numpy as np
-                >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
-                >>> data2 = Tensor(np.array([2, 3]).astype(np.float32))
-                >>> output = mint.stack([data1, data2], 0)
-                >>> print(output)
-                [[0. 1.]
-                 [2. 3.]]
+        Examples:
+            >>> import mindspore
+            >>> from mindspore import Tensor, mint
+            >>> import numpy as np
+            >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
+            >>> data2 = Tensor(np.array([2, 3]).astype(np.float32))
+            >>> output = mint.stack([data1, data2], 0)
+            >>> print(output)
+            [[0. 1.]
+                [2. 3.]]

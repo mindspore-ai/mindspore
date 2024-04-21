@@ -55,7 +55,7 @@ from mindspore.ops.function.math_func import ne
 # 14
 
 # 15
-
+from mindspore.ops.auto_generate import flatten_ext as flatten
 # 16
 from mindspore.ops.functional import matmul
 # 17
@@ -267,7 +267,7 @@ __all__ = [
     # 14
 
     # 15
-
+    'flatten',
     # 16
     'matmul',
     # 17

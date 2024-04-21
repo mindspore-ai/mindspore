@@ -1,0 +1,32 @@
+flatten_ext:
+    description: |
+        Flatten a tensor along dimensions from `start_dim` to `end_dim`.
+
+        Args:
+            input (Tensor): The input Tensor.
+
+        Keyword Args:
+            start_dim (int, optional): The first dimension to flatten. Default: ``0`` .
+            end_dim (int, optional): The last dimension to flatten. Default: ``-1`` .
+
+        Returns:
+            Tensor. If no dimensions are flattened, returns the original `input`, otherwise return the flattened Tensor.
+            If `input` is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If `start_dim` or `end_dim` is not int.
+            ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
+            ValueError: If `start_dim` or `end_dim` is not in range of [-input.dim, input.dim-1].
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, mint
+            >>> input_x = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
+            >>> output = mint.flatten(input_x)
+            >>> print(output.shape)
+            (24,)
