@@ -1,0 +1,17 @@
+#operator flatten_ext
+flatten_ext:
+  args:
+    input:
+      dtype: tensor
+    start_dim:
+      dtype: int
+      default: 0
+    end_dim:
+      dtype: int
+      default: -1
+  returns:
+    output:
+      dtype: tensor
+  dispatch: 
+    enable: True
+    Ascend: FlattenExtAscend
