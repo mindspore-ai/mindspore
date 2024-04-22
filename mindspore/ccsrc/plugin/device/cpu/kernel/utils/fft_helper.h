@@ -24,6 +24,7 @@
 #include <numeric>
 #include <functional>
 #include "mindspore/core/mindapi/base/types.h"
+#include "pocketfft_hdronly.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,8 +34,27 @@ double GetNormalized(int64_t, NormMode, bool);
 
 bool IsForwardOp(const std::string &);
 
+template <typename S, typename T>
+void Cast(const S *in, T *out) {
+  if constexpr (std::is_same_v<S, T>) {
+    *out = static_cast<T>(*in);
+  } else if constexpr (std::is_same_v<S, bool> && std::is_same_v<T, std::complex<float>>) {
+    *out = std::complex<float>(*in ? 1.0f : 0.0f, 0.0f);
+  } else if constexpr (std::is_same_v<S, bool> && std::is_same_v<T, std::complex<double>>) {
+    *out = std::complex<double>(*in ? 1.0 : 0.0, 0.0);
+  } else if constexpr ((std::is_same_v<S, std::complex<float>>) || (std::is_same_v<S, std::complex<double>>)) {
+    *out = static_cast<T>(std::real(*in));
+  } else if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
+    double realValue = static_cast<double>(*in);
+    std::complex<double> complexValue(realValue, 0.0);
+    *out = (std::is_same_v<T, std::complex<float>>) ? static_cast<T>(complexValue) : complexValue;
+  } else {
+    *out = static_cast<T>(*in);
+  }
+}
+
 template <typename T_in, typename T_out>
-bool ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shape,
+void ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shape,
                const std::vector<int64_t> output_shape) {
   auto x_rank = input_shape.size();
   std::vector<int64_t> shape_min(x_rank, 0);
@@ -58,7 +78,8 @@ bool ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shap
   int64_t input_index = 0;
   int64_t output_index = 0;
   for (int64_t i = 0; i < copy_num; ++i) {
-    output[output_index] = static_cast<T_out>(input[input_index]);
+    Cast(&input[input_index], &output[output_index]);
+
     size_t j = x_rank - 1;
     input_pos[j]++;
     input_index++;
@@ -83,7 +104,73 @@ bool ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shap
       output_pos[j]++;
     }
   }
-  return true;
+}
+
+template <typename T>
+void PocketFFTC2R(std::complex<T> *calculate_input, T *output_ptr, bool forward, T fct,
+                  const std::vector<int64_t> &calculate_shape, const std::vector<int64_t> &dim) {
+  pocketfft::shape_t shape(calculate_shape.begin(), calculate_shape.end());
+  pocketfft::stride_t stride_in(shape.size());
+  pocketfft::stride_t stride_out(shape.size());
+  size_t tmp_in = sizeof(std::complex<T>);
+  size_t tmp_out = sizeof(T);
+  for (int i = shape.size() - 1; i >= 0; --i) {
+    stride_in[i] = tmp_in;
+    tmp_in *= shape[i];
+    stride_out[i] = tmp_out;
+    tmp_out *= shape[i];
+  }
+  pocketfft::shape_t axes;
+  for (size_t i = 0; i < dim.size(); i++) {
+    (void)axes.push_back(static_cast<size_t>(dim[i]));
+  }
+  pocketfft::c2r(shape, stride_in, stride_out, axes, forward, calculate_input, output_ptr, fct);
+}
+
+template <typename T>
+void PocketFFTR2C(T *calculate_input, std::complex<T> *output_ptr, bool forward, T fct,
+                  const std::vector<int64_t> &calculate_shape, const std::vector<int64_t> &dim) {
+  pocketfft::shape_t shape(calculate_shape.begin(), calculate_shape.end());
+  pocketfft::stride_t stride_in(shape.size());
+  pocketfft::stride_t stride_out(shape.size());
+  size_t tmp_in = sizeof(T);
+  size_t tmp_out = sizeof(std::complex<T>);
+  for (int i = shape.size() - 1; i >= 0; --i) {
+    stride_in[i] = tmp_in;
+    tmp_in *= shape[i];
+    stride_out[i] = tmp_out;
+    if (i == dim.back()) {
+      tmp_out *= shape[i] / 2 + 1;
+    } else {
+      tmp_out *= shape[i];
+    }
+  }
+  pocketfft::shape_t axes;
+  for (size_t i = 0; i < dim.size(); i++) {
+    (void)axes.push_back(static_cast<size_t>(dim[i]));
+  }
+  pocketfft::r2c(shape, stride_in, stride_out, axes, forward, calculate_input, output_ptr, fct);
+}
+
+template <typename T>
+void PocketFFTC2C(std::complex<T> *calculate_input, std::complex<T> *output_ptr, bool forward, T fct,
+                  const std::vector<int64_t> &calculate_shape, const std::vector<int64_t> &dim) {
+  pocketfft::shape_t shape(calculate_shape.begin(), calculate_shape.end());
+  pocketfft::stride_t stride_in(shape.size());
+  pocketfft::stride_t stride_out(shape.size());
+  size_t tmp_in = sizeof(std::complex<T>);
+  size_t tmp_out = sizeof(std::complex<T>);
+  for (int i = shape.size() - 1; i >= 0; --i) {
+    stride_in[i] = tmp_in;
+    tmp_in *= shape[i];
+    stride_out[i] = tmp_out;
+    tmp_out *= shape[i];
+  }
+  pocketfft::shape_t axes;
+  for (size_t i = 0; i < dim.size(); i++) {
+    (void)axes.push_back(static_cast<size_t>(dim[i]));
+  }
+  pocketfft::c2c(shape, stride_in, stride_out, axes, forward, calculate_input, output_ptr, fct);
 }
 }  // namespace kernel
 }  // namespace mindspore

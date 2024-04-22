@@ -40,6 +40,6 @@ rfft:
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> input = Tensor([1, 2, 3, 4])
-        >>> y = ops.rfft(input)
+        >>> y = ops.rfft(input, n=4, dim=-1, norm='backward')
         >>> print(y)
         [10.+0.j -2.+2.j -2.+0.j]

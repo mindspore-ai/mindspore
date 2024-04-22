@@ -14,7 +14,7 @@ mindspore.ops.fft
 
           - Ascend/CPU： int16、int32、int64、float16、float32、float64、complex64、complex128。
 
-        - **n** (int, 可选) - 信号长度。如果给定，则在计算 `fft` 之前 `dim` 轴的大小将被零填充或截断至 `n`。
+        - **n** (int, 可选) - 输出在 `dim` 轴的长度。如果给定，则在计算 `fft` 之前 `dim` 轴的大小将被零填充或截断至 `n`。
           默认值： ``None`` , 表示无需对 `input` 进行处理。
         - **dim** (int, 可选) - 进行一维 `fft` 的维度。默认值： ``-1`` ，表示对 `input` 的最后一个维度进行变换。
         - **norm** (str, 可选) - 标准化模式。默认值： ``None`` ，采用 ``'backward'`` 。
@@ -25,7 +25,7 @@ mindspore.ops.fft
           - ``'ortho'`` 表示按 :math:`1/\sqrt{n}` 标准化。
 
     返回： 
-        Tensor，一维快速傅里叶变换的结果。默认与 `input` 同shape，如果给定 `n` ，则 `dim` 轴的大小改为 `n` 。
+        Tensor， `fft` 的结果。默认与 `input` 同形状，如果给定 `n` ，则 `dim` 轴的大小改为 `n` 。
         当输入为 int16、int32、int64、float16、float32、complex64 时，返回值类型为complex64。
         当输入为 float64、complex128 时，返回值类型为complex128。
 

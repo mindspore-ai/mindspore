@@ -460,12 +460,22 @@ Reduction函数
     mindspore.ops.fft2
     mindspore.ops.fftn
     mindspore.ops.fftshift
-    mindspore.ops.rfft
+    mindspore.ops.hfft
+    mindspore.ops.hfft2
+    mindspore.ops.hfftn
     mindspore.ops.ifft
     mindspore.ops.ifft2
     mindspore.ops.ifftn
     mindspore.ops.ifftshift
+    mindspore.ops.ihfft
+    mindspore.ops.ihfft2
+    mindspore.ops.ihfftn
     mindspore.ops.irfft
+    mindspore.ops.irfft2
+    mindspore.ops.irfftn
+    mindspore.ops.rfft
+    mindspore.ops.rfft2
+    mindspore.ops.rfftn
 
 Tensor操作函数
 ----------------

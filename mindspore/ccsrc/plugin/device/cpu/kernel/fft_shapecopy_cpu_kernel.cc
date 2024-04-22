@@ -72,6 +72,11 @@ bool FFTShapeCopyCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTens
     &FFTShapeCopyCpuKernelMod::LaunchKernel<T>
 
 std::vector<std::pair<KernelAttr, FFTShapeCopyCpuKernelMod::FFTShapeCopyFunc>> FFTShapeCopyCpuKernelMod::func_list_ = {
+  {ONE_DIM_CPU_REG(kNumberTypeInt16, kNumberTypeInt16, int16_t)},
+  {ONE_DIM_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
+  {ONE_DIM_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
+  {ONE_DIM_CPU_REG(kNumberTypeBFloat16, kNumberTypeBFloat16, bfloat16)},
+  {ONE_DIM_CPU_REG(kNumberTypeFloat16, kNumberTypeFloat16, Eigen::half)},
   {ONE_DIM_CPU_REG(kNumberTypeFloat32, kNumberTypeFloat32, float)},
   {ONE_DIM_CPU_REG(kNumberTypeFloat64, kNumberTypeFloat64, double)},
   {ONE_DIM_CPU_REG(kNumberTypeComplex64, kNumberTypeComplex64, complex64)},

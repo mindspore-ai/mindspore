@@ -1,0 +1,22 @@
+#operator irfftn
+irfftn:
+  args:
+    input:
+      dtype: tensor
+    s:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    dim:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IRFFTN
