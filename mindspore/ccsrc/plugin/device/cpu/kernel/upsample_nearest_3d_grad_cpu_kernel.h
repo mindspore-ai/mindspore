@@ -24,7 +24,6 @@
 #include <utility>
 #include <vector>
 #include "kernel/common_utils.h"
-#include "mindspore/core/ops/grad/upsample_nearest_3d_grad.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 

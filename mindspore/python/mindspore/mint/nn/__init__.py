@@ -39,7 +39,7 @@ from mindspore.nn.extend import MaxPool2dExt as MaxPool2d
 from mindspore.nn.extend.layer import normalization
 from mindspore.nn.extend.layer.normalization import *
 # 9
-
+from mindspore.nn.layer.basic import UpsampleExt as Upsample
 # 10
 
 # 11
@@ -241,7 +241,7 @@ __all__ = [
     # 8
 
     # 9
-
+    'Upsample',
     # 10
 
     # 11

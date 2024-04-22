@@ -15,7 +15,7 @@
 
 """Defines nn operators with functional form."""
 from __future__ import absolute_import
-from math import pi, log
+from math import pi, log, floor
 
 from mindspore import context
 from mindspore import log as logger
@@ -2141,7 +2141,11 @@ def _is_dim_unknown(shape):
 
 def _interploate_make_tuple(rank, value):
     s = tuple_to_tensor_((rank,), mstype.int32)
-    v = Tensor(value)
+    v = None
+    if isinstance(value, int):
+        v = F.scalar_to_tensor(value, mstype.int64)
+    else:
+        v = F.scalar_to_tensor(value, mstype.float32)
     t = fillv2_(s, v)
     out = tensor_to_tuple_(t)
     return out
@@ -2512,6 +2516,265 @@ def interpolate(input,
         align_corners = False
 
     return resize_func.get(mode)(input, size, align_corners, scale_factor)
+
+
+
+def interpolate_ext(input,
+                    size=None,
+                    scale_factor=None,
+                    mode="nearest",
+                    align_corners=None,
+                    recompute_scale_factor=None):
+    r"""
+    Samples the input Tensor to the given size or scale_factor by using one of the interpolate algorithms.
+
+    .. note::
+        - In 'linear' mode, backpropagation does not support scenarios where `scale_factor` is not None
+          and `align_corners` is False.
+
+    Args:
+        input (Tensor): Tensor to be resized.
+            Input tensor must be a 3-D, 4-D, or 5-D tensor with shape
+            :math:`(N, C, [optional D], [optional H], W)` , with data type of float.
+        size (Union[int, tuple[int], list[int]], optional): The target size.
+            If size is a tuple or list, its length should be the same as the number of dimensions in input
+            after removing the first two dimensions N, C.
+            One and only one of size and scale_factor can be set to None. Default: ``None`` .
+        scale_factor (Union[float, tuple[float], list[float]], optional): The scale factor of new size of the tensor.
+            If scale_factor is a tuple or list, its length should be the same as the number of dimensions in input
+            after removing the first two dimensions N, C.
+            One and only one of size and scale_factor can be set to None. Default: ``None`` .
+        mode (str): The sampling algorithm.
+            One of 'nearest', 'linear' (3D only), 'bilinear' (4D only), 'trilinear' (5D only), 'bicubic' (4D only),
+            'area', 'nearest-exact'(matches Scikit-Image and PIL nearest neighbours interpolation algorithms and fixes
+            knows issues with `nearest`, 3D and 4D). Default: ``"nearest"`` .
+
+        align_corners (bool): Whether to use corner alignment for coordinate mapping. Assuming a transformation is
+            applied to the input Tensor along the x-axis, the specific calculation formula is as follows:
+
+            .. code-block::
+
+                ori_i = new_length != 1 ? new_i * (ori_length - 1) / (new_length - 1) : 0   # 'align_corners' = True
+
+                ori_i = new_length > 1 ? (new_i + 0.5) * ori_length / new_length - 0.5 : 0  # 'align_corners' = False
+
+            Among them, :math:`ori\_length` and :math:`new\_length` represent the length of the Tensor before and after
+            transformation along the x-axis respectively; :math:`new\_i` represents the coordinate of the i-th element
+            along the x-axis after transformation; :math:`ori\_i` represents
+            the corresponding coordinate of the original
+            data along the x-axis.
+
+            This is only valid for ``'linear'``, ``'bilinear'``, or ``'bicubic'`` modes. Default: ``False`` .
+        recompute_scale_factor (bool, optional): Recalculate `scale_factor`.
+            If True, the parameter `size` will be calculated using the value of the `scale_factor`,
+            and finally scaled using the value of `size`.
+            If False, the value of `size` or `scale_factor` will be used for direct interpolation. Default: ``None`` .
+
+    .. note::
+        The 'nearest-exact' mode is the same as the nearest-neighbor interpolation algorithm used in
+        scikit-image and PIL. The 'nearest' mode produces the same results as the INTER_NEAREST interpolation
+        algorithm used in OpenCV.
+
+    Args Support List and Supported Platforms:
+
+    +---------------+-----------+---------------+--------------+----------------+
+    | mode          | input.dim | align_corners | scale_factor | device         |
+    +===============+===========+===============+==============+================+
+    | nearest       | 3         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 4         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 5         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | linear        | 3         | √             | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | bilinear      | 4         | √             | ×            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | bicubic       | 4         | √             | ×            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | area          | 3         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 4         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 5         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | nearest-exact | 3         | \-            | ×            | Ascend,CPU     |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 4         | \-            | ×            | Ascend,CPU     |
+    +---------------+-----------+---------------+--------------+----------------+
+    | trilinear     | 5         | √             | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+
+    - `-` indicates that there is no such parameter.
+    - `×` indicates that this parameter is not currently supported.
+    - `√` indicates that this parameter is supported.
+
+    Returns:
+        Tensor, resized, whose dimensions and dtype are the same as `input`.
+
+    Raises:
+        TypeError: `input` is not a Tensor.
+        ValueError: Both `size` and `scale_factor` are not empty.
+        ValueError: Both `size` and `scale_factor` are empty.
+        ValueError: When `size` is a tuple or list, its length is not equal to `input.ndim - 2`.
+        ValueError: When `scale_factor` is a tuple or list, its length is not equal to `input.ndim - 2`.
+        ValueError: `mode` is not in the list of supported modes.
+        ValueError: `input.ndim` is not in the list of supported dimensions for the corresponding mode.
+        ValueError: `size` is not empty, `recompute_scale_factor` is not empty.
+        ValueError: `scale_factor` is not in the corresponding list of supported values.
+        ValueError: `align_corners` is not in the corresponding list of supported values.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, mint
+        >>> input = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
+        >>> output = mint.interpolate(input, size=(6,), mode='nearest')
+        >>> print(output)
+            [[[1. 1. 2. 2. 3. 3.]
+              [4. 4. 5. 5. 6. 6.]]]
+    """
+    def run_nearest(x, size, align_corners=None, scale_factor=None):
+        x_rank = F.rank(x)
+        if x_rank == 3:
+            x = _get_cache_prim(ops.auto_generate.UpsampleNearest1D)()(
+                x, size, scale_factor)
+        elif x_rank == 4:
+            x = _get_cache_prim(ops.auto_generate.UpsampleNearest2D)()(
+                x, size, scale_factor)
+        else:
+            x = _get_cache_prim(P.UpsampleNearest3D)()(x, size, scale_factor)
+        return x
+
+    def run_linear(x, size, align_corners=None, scale_factor=None):
+        out = _get_cache_prim(
+            ops.auto_generate.UpsampleLinear1D)()(x, size, scale_factor, align_corners)
+        return out
+
+    def run_bilinear(x, size, align_corners=None, scale_factor=None):
+        out = _get_cache_prim(
+            ops.auto_generate.UpsampleBilinear2D)()(x, size, scale_factor, align_corners)
+        return out
+
+    def run_trilinear(x, size, align_corners=None, scale_factor=None):
+        resize = _get_cache_prim(P.nn_ops.UpsampleTrilinear3D)(align_corners)
+        return resize(x, size, scale_factor)
+
+    def run_bicubic(x, size, align_corners=None, scale_factor=None):
+        resize = _get_cache_prim(P.image_ops.ResizeBicubic)(
+            align_corners=align_corners, half_pixel_centers=not align_corners)
+        x = resize(x, size)
+        return x
+
+    def run_area(x, size, align_corners=None, scale_factor=None):
+        x_rank = F.rank(x)
+        if x_rank == 3:
+            x = F.adaptive_avg_pool1d(x, size[0])
+        elif x_rank == 4:
+            x = F.adaptive_avg_pool2d(x, tuple(size))
+        else:
+            x = F.adaptive_avg_pool3d(x, tuple(size))
+        return x
+
+    def run_nearest_exact(x, size, align_corners=None, scale_factor=None):
+        x_rank = F.rank(x)
+        if x_rank == 3:
+            size = size[:1] + (1,)
+            # For impl of nearest 3D use 4D.
+            x = x.unsqueeze(-1)
+            resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
+                align_corners=False,
+                half_pixel_centers=True)
+            x = resize(x, size)
+            x = _get_cache_prim(P.Squeeze)(-1)(x)
+        if x_rank == 4:
+            resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
+                align_corners=False,
+                half_pixel_centers=True)
+            x = resize(x, size)
+        return x
+
+
+    resize_funcs = {
+        "nearest": run_nearest,
+        "linear": run_linear,
+        "bilinear": run_bilinear,
+        "bicubic": run_bicubic,
+        "trilinear": run_trilinear,
+        "area": run_area,
+        "nearest-exact": run_nearest_exact,
+    }
+
+    # mode check
+    if mode not in resize_funcs:
+        raise ValueError(
+            f"For 'interpolate', 'mode' must be in '{list(resize_funcs)}', but got {mode}"
+        )
+    if mode in ("nearest", "area", "nearest-exact"):
+        if align_corners is not None:
+            raise ValueError("align_corners option can only be set with the "
+                             "interpolating modes: linear | bilinear | bicubic | trilinear"
+                             )
+    else:
+        if align_corners is None:
+            align_corners = False
+
+    # check for size and scale_factor
+    if size is not None and scale_factor is not None:
+        raise ValueError(
+            "For 'interpolate', 'size' and 'scale_factor' cannot be set simultaneously"
+        )
+    if size is not None:
+        if isinstance(size, (list, tuple)):
+            size = size
+        else:
+            rank = F.rank(input) - 2
+            if F.isconstant(size) and F.isconstant(rank):
+                size = tuple([size for _ in range(rank)])
+            else:
+                size = _interploate_make_tuple(rank, size)
+    elif scale_factor is not None:
+        if isinstance(scale_factor, (list, tuple)):
+            scale_factor = scale_factor
+        else:
+            rank = F.rank(input) - 2
+            if F.isconstant(scale_factor) and F.isconstant(rank):
+                scale_factor = tuple([scale_factor for _ in range(rank)])
+            else:
+                scale_factor = _interploate_make_tuple(rank, scale_factor)
+    else:
+        raise ValueError(
+            "For 'interpolate', 'size' and 'scale_factor' cannot be both empty"
+        )
+
+    # "area" mode always requires an explicit size rather than scale factor.
+    if mode == "area" and size is None:
+        recompute_scale_factor = True
+
+    # recompute_scale_factor
+    if recompute_scale_factor is not None and recompute_scale_factor:
+        if size is not None:
+            raise ValueError(
+                "For 'interpolate', it is incorrect to set 'recompute_scale_factor' to True"
+                " after specifying an explicit 'size'.")
+        shape = F.shape(input)
+        if F.isconstant(shape) and F.isconstant(scale_factor):
+            size = tuple([floor(shape[i + 2] * scale_factor[i]) for i in
+                          range(min(len(shape) - 2), len(scale_factor))])
+        else:
+            size = _interpolate_scale_factor_convert_size(shape, scale_factor)
+        scale_factor = None
+
+    # scale_factor
+    if mode in ("bilinear", "bicubic", "nearest-exact"):
+        if scale_factor is not None:
+            raise ValueError("scale_factor option can only be set with the "
+                             "interpolating modes: nearest | linear | area | trilinear"
+                             )
+
+    return resize_funcs.get(mode)(input, size, align_corners, scale_factor)
 
 
 def upsample(input, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):

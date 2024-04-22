@@ -1,0 +1,26 @@
+#operator upsample_nearest2d_grad
+upsample_nearest2d_grad:
+    args:
+        dy:
+            dtype: tensor
+        input_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+    returns:
+        dx:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleNearest2DGrad
+    dispatch:
+        enable: True
+        Ascend: UpsampleNearest2DGradAscend

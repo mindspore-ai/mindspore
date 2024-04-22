@@ -1,0 +1,24 @@
+#operator resize_d
+resize_d:
+    args:
+        x:
+            dtype: tensor
+        sizes:
+            dtype: tuple[int]
+            type_cast: list[int]
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+        coordinate_transformation_mode:
+            dtype: int
+            default: "'align_corners'"
+            arg_handler: str_to_enum
+    labels:
+        mode: "'linear'"
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        disable: True

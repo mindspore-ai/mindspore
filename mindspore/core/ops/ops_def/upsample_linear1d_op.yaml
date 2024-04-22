@@ -1,0 +1,26 @@
+#operator upsample_linear1d
+upsample_linear1d:
+    args:
+        x:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+        align_corners:
+            dtype: bool
+            default: False
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleLinear1D
+    dispatch:
+        enable: True
+        Ascend: UpsampleLinear1DAscend

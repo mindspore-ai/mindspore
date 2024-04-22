@@ -1,0 +1,57 @@
+upsample_nearest3d:
+    description: |
+        Performs nearest neighbor upsampling operation.
+
+        This operator scale up the volumetric input with specified `output_size` or `scales` factors, using nearest
+        neighbor algorithm.
+
+        One of `output_size` or `scales` must be given, and can not specified both at the same time.
+
+        Inputs:
+            - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+              Supporting types: [float16, float32, float64].
+            - **output_size** (Union[tuple[int], list[int]]): A tuple or list of int specifying the output volumetric size.
+              Default: ``None``.
+            - **scales** (Union[tuple[float], list[float]]): A tuple or list of float specifying the upsampling factors.
+              Default: ``None``.
+
+        Outputs:
+            - **y** (Tensor) - Upsampled output with the same type as `x` , whose shape is
+              :math:`(N, C, D_{out}, H_{out}, W_{out})`.
+
+        Raises:
+            TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
+            TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
+            TypeError: If dtype of `x` is not int [float16, float32, float64].
+            ValueError: If any value of `output_size` is negative or zero when `output_size` is not ``None``.
+            ValueError: If any value of `scales` is negative or zero when `scales` is not ``None``.
+            ValueError: If shape of `x` is not 5D.
+            ValueError: If none of `scales` and `output_size` is specified or both specified.
+            ValueError: If size of `scales` is not equal 3 when `scales` is specified.
+            ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> from mindspore import dtype as mstype
+            >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+            ...       .reshape([1, 1, 2, 2, 4]), mstype.float32)
+            >>> output_size = [3, 4, 5]
+            >>> net = ops.UpsampleNearest3D()
+            >>> output = net(x, output_size, None)
+            >>> print(output)
+            [[[[[ 1.  1.  2.  3.  4.]
+                [ 1.  1.  2.  3.  4.]
+                [ 5.  5.  6.  7.  8.]
+                [ 5.  5.  6.  7.  8.]]
+              [[ 1.  1.  2.  3.  4.]
+                [ 1.  1.  2.  3.  4.]
+                [ 5.  5.  6.  7.  8.]
+                [ 5.  5.  6.  7.  8.]]
+              [[ 9.  9. 10. 11. 12.]
+                [ 9.  9. 10. 11. 12.]
+                [13. 13. 14. 15. 16.]
+                [13. 13. 14. 15. 16.]]]]]

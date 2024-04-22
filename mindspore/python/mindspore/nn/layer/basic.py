@@ -27,6 +27,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer, HeUniform, Uniform
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.function.nn_func import interpolate_ext
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr, Primitive, _primexpr
 from mindspore.common.parameter import Parameter
@@ -405,6 +406,47 @@ class Upsample(Cell):
     def construct(self, x):
         out = F.interpolate(x, self.size, self.scale_factor, self.mode,
                             self.align_corners, self.recompute_scale_factor)
+        return out
+
+
+class UpsampleExt(Cell):
+    r"""
+    For details, please refer to :func:`mindspore.mint.interpolate`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import mint
+        >>> x = ms.Tensor([[[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]]]])
+        >>> upsample = mint.Upsample(size=(5, 5))
+        >>> out = upsample(x)
+        >>> print(x.asnumpy())
+        [[[[1. 2. 3. 4.]
+           [5. 6. 7. 8.]]]]
+        >>> print(out.asnumpy())
+        [[[[1. 1. 2. 3. 4.]
+           [1. 1. 2. 3. 4.]
+           [1. 1. 2. 3. 4.]
+           [5. 5. 6. 7. 8.]
+           [5. 5. 6. 7. 8.]]]]
+        >>> print(out.shape)
+        (1, 1, 5, 5)
+    """
+
+    def __init__(self, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
+        """Initialize Upsample."""
+        super(UpsampleExt, self).__init__()
+        self.size = size
+        self.scale_factor = scale_factor
+        self.mode = mode
+        self.align_corners = align_corners
+        self.recompute_scale_factor = recompute_scale_factor
+
+    def construct(self, x):
+        out = interpolate_ext(x, self.size, self.scale_factor, self.mode,
+                              self.align_corners, self.recompute_scale_factor)
         return out
 
 
