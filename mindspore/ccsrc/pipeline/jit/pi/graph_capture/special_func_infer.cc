@@ -41,6 +41,7 @@ extern AObject *InferFuncResult(const py::object &func, const py::object &args, 
 constexpr const char *kModuleName = "mindspore._extends.pijit.pijit_func_white_list";
 constexpr const char *kFuncMapName = "_func_map";
 constexpr const char *kSlotCallName = "__call__";
+constexpr const size_t kDictPopParamsNum = 2;
 
 static bool CheckConstexpr(const py::object &func);
 
@@ -595,24 +596,40 @@ bool InferListAppend(CallNode *call_node) {
 }
 
 static bool InferPopAsGet(CallNode *call_node) {
-  py::object func = call_node->input(0)->GetVobj()->GetPyObject();
-  PyObject *fPtr = func.ptr();
-  if (func.ptr() == nullptr || PyMethod_Check(fPtr)) {
-    return SetCallResType<AObject::kTypeAnyValue>(call_node);
+  Graph *sub_graph = call_node->GetSubGraph();
+  call_node->SetSubGraph(nullptr);
+
+  // only support dict.pop from load_attr and check dict.pop call
+  ValueNode *method_node = call_node->input(0);
+  if (method_node->GetOpcode() != LOAD_ATTR || call_node->getInputs().size() < kDictPopParamsNum) {
+    return false;
+  }
+  ValueNode *dict_node = method_node->input(0);
+  ValueNode *key_node = call_node->input(1);
+  ValueNode *default_node =
+    call_node->getInputs().size() > kDictPopParamsNum ? call_node->input(kDictPopParamsNum) : nullptr;
+
+  // get key from dict
+  py::object dict = dict_node->GetVobj()->GetPyObject();
+  py::object key = key_node->GetVobj()->GetPyObject();
+  MS_EXCEPTION_IF_CHECK_FAIL(PyDict_Check(dict.ptr()), "input must be dict");
+  py::object value = py::reinterpret_borrow<py::object>(PyDict_GetItem(dict.ptr(), key.ptr()));
+  if (value == nullptr && default_node != nullptr) {
+    value = default_node->GetVobj()->GetPyObject();
   }
 
-  std::vector<py::object> args;
-  std::transform(call_node->getInputs().begin() + 1, call_node->getInputs().end(), std::back_inserter(args),
-                 [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
-  auto pair = Utils::PackCallStackArgs(args, call_node->GetOpcode());
-  if (pair.first.ptr() == nullptr) {
-    return SetCallResType<AObject::kTypeAnyValue>(call_node);
-  }
-  PyObject *value = PyObject_Call(func.ptr(), pair.first.ptr(), pair.second.ptr());
-  call_node->SetVobj(AObject::Convert(value));
-  call_node->SetSubGraph(nullptr);
+  ValueNode *item_node =
+    sub_graph->NewValueNode(AObject::Convert(value.ptr()), BINARY_SUBSCR, 0, {dict_node, key_node});
+  sub_graph->GetTracedNodes().push_back(item_node);
+  sub_graph->SetRetVal(item_node);
+
+  call_node->SetSubGraph(sub_graph);
+  call_node->SetVobj(item_node->GetVobj());
+  call_node->SetInlineReason(InlineReason::kInline);
+
+  // record side-effect
   call_node->GetGraph()->GetSideEffect()->SetSideEffectNode(call_node);
-  return false;
+  return true;
 }
 
 static bool SetForbiddenFuncInfo(CallNode *call_node) {

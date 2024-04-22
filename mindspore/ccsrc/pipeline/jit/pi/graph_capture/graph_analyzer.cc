@@ -251,27 +251,7 @@ void GraphAnalyzer::AddToEscaped(ValueNode *v) {
 
 extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
 
-bool GraphAnalyzer::HandleSideEffectNodeForCapture(AbstractNode *capture_node) {
-  auto &replace_map = graph_->GetSideEffect()->GetReplaceMap();
-  bool find =
-    std::any_of(replace_map.begin(), replace_map.end(),
-                [&capture_node](std::pair<ValueNode *, ValueNode *> item) { return capture_node == item.second; });
-  if (find) {
-    return true;
-  }
-  for (auto &side_effect_node : graph_->GetSideEffect()->GetSideEffectNodes()) {
-    if (capture_node == side_effect_node && side_effect_node->GetOpcode() == CALL_FUNCTION) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
-  if (HandleSideEffectNodeForCapture(n)) {
-    return true;
-  }
-
   ValueNode *v = static_cast<ValueNode *>(n);
   if (IsNonLocalValue(v)) {
     return true;
