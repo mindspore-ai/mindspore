@@ -29,7 +29,7 @@
 #include "ops/assert.h"
 #include "ops/where.h"
 #include "ops/unique.h"
-#include "ops/triu.h"
+#include "ops/ops_func_impl/triu.h"
 #include "ops/ops_func_impl/tril.h"
 #include "ops/sparse_to_dense.h"
 #include "ops/sparse_segment_sum.h"

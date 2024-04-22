@@ -1,0 +1,14 @@
+#operator triu
+triu:
+  args:
+    input:
+      dtype: tensor
+    diagonal:
+      dtype: int
+      prim_init: True
+      default: 0
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
