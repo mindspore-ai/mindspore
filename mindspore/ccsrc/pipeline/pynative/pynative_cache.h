@@ -66,7 +66,6 @@ using NodeAbsCache = mindspore::HashMap<std::string, abstract::AbstractBasePtr>;
 struct PrimSignature {
   bool has_dtype_sig;
   std::vector<SignatureEnumDType> dtypes;
-  mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> type_indexes;
 };
 using ImplicitCastCache = mindspore::HashMap<std::string, PrimSignature>;
 }  // namespace pynative

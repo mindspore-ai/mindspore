@@ -44,7 +44,7 @@ std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header 
     }
     if (items[i]->template isa<tensor::BaseTensor>()) {
       auto tensor = items[i]->template cast<tensor::BaseTensorPtr>();
-      auto grad = std::make_shared<tensor::Tensor>(*tensor);
+      auto grad = std::make_shared<tensor::BaseTensorPtr>(*tensor);
       grad->data_sync();
       buf << i << "th: "
           << "ptr " << items[i].get() << ", " << grad->ToStringRepr() << ", ";

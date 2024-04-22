@@ -1392,7 +1392,7 @@ def check_hook_fn(hook_type, hook_fn):
         raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@jit' is not supported.")
 
     if hook_type == "register_hook" and hook_fn.__code__.co_argcount != 1:
-        raise TypeError(f"Tensor hook function {hook_fn.__name__} arg is not equal to 1.")
+        raise TypeError(f"Tensor hook function {hook_fn.__name__} arg num is not equal to 1.")
 
     return True
 
