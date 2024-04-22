@@ -18,10 +18,10 @@ from __future__ import absolute_import
 from mindspore.ops.auto_generate.gen_ops_prim import MaxPoolWithIndices, MaxPoolWithMask
 from mindspore.nn.cell import Cell
 
-__all__ = ['MaxPool2dExt']
+__all__ = ['MaxPool2d']
 
 
-class MaxPool2dExt(Cell):
+class MaxPool2d(Cell):
     r"""
     Applies a 2D max pooling over an input Tensor which can be regarded as a composition of 2D planes.
 
@@ -89,7 +89,7 @@ class MaxPool2dExt(Cell):
     Examples:
         >>> import mindspore as ms
         >>> import numpy as np
-        >>> pool = ms.nn.MaxPool2d(kernel_size=3, stride=1)
+        >>> pool = ms.nn.extend.MaxPool2d(kernel_size=3, stride=1)
         >>> input = ms.Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), ms.float32)
         >>> output = pool(input)
         >>> print(output.shape)
@@ -99,7 +99,7 @@ class MaxPool2dExt(Cell):
     def __init__(self, kernel_size=1, stride=None, padding=0, dilation=1, return_indices=False,
                  ceil_mode=False):
         """Initialize MaxPool2d."""
-        super(MaxPool2dExt, self).__init__()
+        super(MaxPool2d, self).__init__()
         self.return_indices = return_indices
         strides = stride if (stride is not None) else kernel_size
         if return_indices:
