@@ -45,6 +45,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
                                          log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean, sum_ext_op,
                                          prod_ext_op, all)
+from mindspore.ops.auto_generate import tanh
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -1806,45 +1807,6 @@ def arccos(input):
         ``Ascend`` ``GPU`` ``CPU``
     """
     return acos(input)
-
-
-def tanh(input):
-    r"""
-    Computes hyperbolic tangent of input element-wise. The Tanh function is defined as:
-
-    .. math::
-
-        tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
-
-    where :math:`x_i` is an element of the input Tensor.
-
-    Tanh Activation Function Graph:
-
-    .. image:: ../images/Tanh.png
-        :align: center
-
-    Args:
-        input (Tensor): Input of Tanh.
-
-    Returns:
-        Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU``  ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output = ops.tanh(input)
-        >>> print(output)
-        [0.7615941 0.9640276 0.9950547 0.9993293 0.9999092]
-    """
-    return tanh_(input)
 
 
 def arcsinh(input):

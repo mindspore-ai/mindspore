@@ -212,7 +212,7 @@ from mindspore.ops.functional import pow
 # 93
 
 # 94
-
+from mindspore.ops.function.math_func import tanh
 # 95
 
 # 96
@@ -424,7 +424,7 @@ __all__ = [
     # 93
 
     # 94
-
+    'tanh',
     # 95
 
     # 96
