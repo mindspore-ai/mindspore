@@ -133,7 +133,7 @@ TypePtr Conv2DBackpropFilterInferType(const PrimitivePtr &prim, const std::vecto
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[kConv2DBackpropFilterInputIndex]->GetType());
   (void)types.emplace("doutput", input_args[kConv2DBackpropFilterDoutIndex]->GetType());
-  std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
+  std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32, kBFloat16};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }
 }  // namespace
