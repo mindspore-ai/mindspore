@@ -18,7 +18,6 @@
 
 #include "include/backend/distributed/collective/collective_manager.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
-#include "runtime/device/multi_stream_controller.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -63,8 +62,7 @@ bool StreamSynchronizer::SyncStream(const std::string &device_name, uint32_t tim
   // If disable recovery or timeout==0, sync stream directly to improve performance.
   if (!RecoveryContext::GetInstance()->enable_recovery() || timeout == 0) {
     device_context->Initialize();
-    auto multi_stream_controller = MultiStreamController::GetInstance();
-    return multi_stream_controller->SyncAllStreams(device_context);
+    return device_context->device_res_manager_->SyncAllStreams();
   }
 
   std::unique_lock<std::mutex> lock(task_mutex_);

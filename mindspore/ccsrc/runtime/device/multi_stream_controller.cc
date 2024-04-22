@@ -61,7 +61,19 @@ int64_t MultiStreamController::QueryTaskIdOnStream(const DeviceContext *device_c
 }
 
 int64_t MultiStreamController::LaunchTaskIdOnStream(const DeviceContext *device_context, uint32_t stream_id) {
-  return task_id_on_stream_manager_[device_context].Launch(stream_id);
+  auto iter = task_id_on_stream_manager_.find(device_context);
+  if (iter == task_id_on_stream_manager_.end()) {
+    if (device_context->GetDeviceType() == DeviceType::kCPU) {
+      return INT64_MAX;
+    }
+
+    MS_LOG(WARNING) << "LaunchTaskIdOnStream device context is not found, device_context name : "
+                    << device_context->device_context_key().device_name_ << ", stream id : " << stream_id
+                    << ", refresh context.";
+    Refresh(device_context);
+    return task_id_on_stream_manager_[device_context].Launch(stream_id);
+  }
+  return iter->second.Launch(stream_id);
 }
 
 int64_t MultiStreamController::GetTaskIdOnStream(const DeviceContext *device_context, uint32_t stream_id) {
@@ -163,11 +175,11 @@ bool MultiStreamController::SyncNotDefaultStreams(const DeviceContext *device_co
 
 void TaskIdOnStreamManager::Resize(uint32_t stream_size) {
   std::lock_guard<std::mutex> lock(mutex_);
-  MS_LOG(INFO) << "Task id on stream manager initialize : " << initialized_ << ", stream_size : " << stream_size << ".";
   if (initialized_ && stream_size <= initialize_size_) {
     MS_LOG(INFO) << "Task id on stream manager has already initialized, current size : " << initialize_size_ << ".";
     return;
   }
+  MS_LOG(INFO) << "Task id on stream manager initialize : " << initialized_ << ", stream_size : " << stream_size << ".";
   uint32_t min_stream_size = 2;
   initialize_size_ = std::max(stream_size, min_stream_size);
   generator_.resize(initialize_size_);
@@ -192,7 +204,14 @@ bool TaskIdOnStreamManager::Update(int64_t task_id_on_stream, uint32_t user_stre
   return true;
 }
 
-int64_t TaskIdOnStreamManager::Launch(uint32_t stream_id) { return ++generator_[stream_id].value_; }
+int64_t TaskIdOnStreamManager::Launch(uint32_t stream_id) {
+  if (stream_id >= generator_.size()) {
+    MS_LOG(WARNING) << "Launch stream id : " << stream_id << " failed, generator_ size : " << generator_.size();
+    generator_.resize(stream_id + 1);
+    status_.resize(stream_id + 1);
+  }
+  return ++generator_[stream_id].value_;
+}
 
 int64_t TaskIdOnStreamManager::Get(uint32_t stream_id) { return generator_[stream_id].value_; }
 
