@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common.api import jit
 
@@ -122,6 +122,81 @@ def test_return_add_result_list():
     jit(net.construct, mode="PIJit", jit_config=cfg)
     ret = net(a, b)
     assert ret == [1, 2, 3, 4, 5, 6]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_empty_tuple_input():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.a = Parameter(Tensor([1, 2, 3]))
+            self.b = Parameter(Tensor([1, 1, 1]))
+
+        @jit(mode="PIJit", jit_config=cfg)
+        def construct(self, x):
+            return self.a + self.b
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    ret = net(())
+    assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_empty_list_input():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.a = Parameter(Tensor([1, 2, 3]))
+            self.b = Parameter(Tensor([1, 1, 1]))
+
+        @jit(mode="PIJit", jit_config=cfg)
+        def construct(self, x):
+            return self.a + self.b
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    ret = net([])
+    assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_empty_dict_input():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.a = Parameter(Tensor([1, 2, 3]))
+            self.b = Parameter(Tensor([1, 1, 1]))
+
+        @jit(mode="PIJit", jit_config=cfg)
+        def construct(self, x):
+            return self.a + self.b
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    ret = net({})
+    assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
 
 
 @pytest.mark.level0

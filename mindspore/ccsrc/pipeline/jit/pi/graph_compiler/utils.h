@@ -47,6 +47,8 @@ class GraphUtils {
 
   static bool IsTensor(const py::object &obj);
 
+  static bool IsEmptyContainer(const py::object &obj);
+
   static AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden = true);
 
   static PrimitivePtr GetPrimitive(int op_code);
