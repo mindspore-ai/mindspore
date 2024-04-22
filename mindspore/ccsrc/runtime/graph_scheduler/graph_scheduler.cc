@@ -2093,7 +2093,8 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
   if (checked_nodes != nullptr) {
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
+    if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0 &&
+        context_ptr->CellReuseLevel() == CellReuseLevel::kLazyInline && context_ptr->IsKByKExecutorMode()) {
       return;
     }
     if (checked_nodes->find(input_cnode) != checked_nodes->end()) {
