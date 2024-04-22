@@ -50,6 +50,7 @@
 #include "plugin/device/ascend/optimizer/mindir/ascend_mindir_op_adapter.h"
 #include "plugin/device/ascend/optimizer/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/adam_weight_decay_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/mindir/centralization_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/lamb_fission.h"
 #include "plugin/device/ascend/optimizer/ge/adjust_print_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
@@ -131,6 +132,7 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulReduceScatterFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AllGatherMatmulFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::CentralizationMindIR>());
   if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on") {
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
   }
