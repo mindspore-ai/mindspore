@@ -18,7 +18,7 @@
 
 namespace mindspore::graphkernel::expander {
 REG_EXPANDER_FUNC("AddN").SetBody(BODYFUNC(ib) {
-  if (!CheckAllFormatsSame(ib)) {
+  if (!CheckAllFormatsSame(ib, FormatDefaultNchwSame)) {
     return {};
   }
   // Check Inputs
