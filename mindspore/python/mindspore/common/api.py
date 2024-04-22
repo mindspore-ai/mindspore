@@ -51,7 +51,6 @@ from mindspore.common.mutable import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore.common.auto_dynamic_shape import get_auto_dynamic_shape_args, update_auto_dynamic_shape_phase, \
     get_auto_dynamic_shape_args_with_check_input_signature, update_auto_dynamic_shape_phase_with_check_input_signature
-
 # Store ms_function class compiled pipeline cache.
 ms_compile_cache = set()
 # Store cell compiled pipeline cache.

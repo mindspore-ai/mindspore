@@ -1,0 +1,68 @@
+/**
+ * Copyright 2024 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "pybind_api/ir/hook_py.h"
+#include <memory>
+#include <string>
+#include "include/common/utils/hook.h"
+
+namespace mindspore {
+namespace tensor {
+
+namespace {
+AutoGradMetaDataWeakPtr BuildAutoGradMeta(const tensor::Tensor &tensor) {
+  auto auto_grad_meta_data = tensor.auto_grad_meta_data();
+  if (auto_grad_meta_data == nullptr) {
+    auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
+    const_cast<Tensor &>(tensor).set_auto_grad_meta_data(auto_grad_meta_data);
+    MS_LOG(DEBUG) << "Tensor has no auto_grad_meta_data, build it";
+  }
+  return std::weak_ptr<AutoGradMetaData>(auto_grad_meta_data);
+}
+}  // namespace
+
+std::map<int, AutoGradMetaDataWeakPtr> RegisterHook::hook_meta_map_ = {};
+
+int RegisterHook::RegisterTensorBackwardHook(const Tensor &tensor, const py::function &hook) {
+  // Delete char 'T'
+  auto tensor_id = std::stoi(tensor.id().erase(kIndex0, 1));
+  MS_LOG(DEBUG) << "Register hook " << py::str(py::cast<py::object>(hook)).cast<std::string>() << " for tensor "
+                << tensor.ToString() << " with id " << tensor_id;
+  // Just keep last hook
+  (void)hook_meta_map_.erase(tensor_id);
+  auto meta = BuildAutoGradMeta(tensor);
+  MS_EXCEPTION_IF_NULL(meta.lock());
+  meta.lock()->ClearBackwardHooks();
+
+  (void)hook_meta_map_.emplace(tensor_id, meta);
+  meta.lock()->AddBackwardHook(tensor_id, std::make_shared<TensorBackwardHook>(tensor_id, hook));
+  return tensor_id;
+}
+
+void RegisterHook::RemoveTensorBackwardHook(int id) {
+  const auto it = hook_meta_map_.find(id);
+  if (it == hook_meta_map_.end()) {
+    return;
+  }
+  auto meta = it->second.lock();
+  if (meta == nullptr) {
+    return;
+  }
+  MS_LOG(DEBUG) << "Remove hook by id " << id;
+  meta->RemoveBackwardHook(id);
+}
+}  // namespace tensor
+}  // namespace mindspore

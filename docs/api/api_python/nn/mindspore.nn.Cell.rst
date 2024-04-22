@@ -363,7 +363,7 @@
             - **hook_fn** (function) - 捕获Cell对象信息和反向输入，输出梯度的 `hook_fn` 函数。
 
         返回：
-            `mindspore.common.hook_handle.HookHandle` 类型，与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
+            返回与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
 
         异常：
             - **TypeError** - 如果 `hook_fn` 不是Python函数。
@@ -383,7 +383,7 @@
             - **hook_fn** (function) - 捕获Cell对象信息和正向输入，输出数据的 `hook_fn` 函数。
 
         返回：
-            `mindspore.common.hook_handle.HookHandle` 类型，与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
+            返回与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
 
         异常：
             - **TypeError** - 如果 `hook_fn` 不是Python函数。
@@ -403,7 +403,7 @@
             - **hook_fn** (function) - 捕获Cell对象信息和正向输入数据的hook_fn函数。
 
         返回：
-            `mindspore.common.hook_handle.HookHandle` 类型，与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
+            返回与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
 
         异常：
             - **TypeError** - 如果 `hook_fn` 不是Python函数。

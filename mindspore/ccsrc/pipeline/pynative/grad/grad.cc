@@ -46,6 +46,8 @@ namespace pynative {
 namespace {
 const mindspore::HashSet<std::string> kHookOp = {"HookBackward", "CellBackwardHook"};
 const char kGrad[] = "grad";
+constexpr auto kNeedRecompute = "is_cell_recompute";
+constexpr auto kInternalParams = "internal_params";
 const size_t kContainerRatio = 2;
 
 void ParsePyArgsToInputArgsInfo(const InputArgsInfoPtr &input_args_info, const py::object &obj, const py::args &args) {
@@ -417,6 +419,35 @@ KernelGraphPtr CloneKernelGraph(const FuncGraphPtr &func_graph) {
   PyNativeAlgo::Common::FreeFuncGraphForwardNodes(func_graph);
   return new_graph;
 }
+
+void ClearInputGradInfo(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor_value = value->cast<tensor::TensorPtr>();
+    // Hook register before op run
+    if (tensor_value->auto_grad_meta_data() != nullptr && tensor_value->auto_grad_meta_data()->is_register_hook()) {
+      return;
+    }
+    tensor_value->set_auto_grad_meta_data(nullptr);
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_seq = value->cast<ValueSequencePtr>();
+    for (const auto &elem : value_seq->value()) {
+      ClearInputGradInfo(elem);
+    }
+  } else if (value->isa<stub::StubNode>()) {
+    auto stub_node = value->cast<stub::StubNodePtr>();
+    MS_EXCEPTION_IF_NULL(stub_node);
+    ClearInputGradInfo(stub_node->WaitValue());
+  }
+}
+
+void ClearInputsGradInfo(const InputArgsInfoPtr &input_args_info) {
+  MS_EXCEPTION_IF_NULL(input_args_info);
+  for (size_t i = 0; i < input_args_info->input_size; ++i) {
+    const auto &v = input_args_info->input_arg_value_vec[i];
+    ClearInputGradInfo(v);
+  }
+}
 }  // namespace
 
 ForwardExecutorPtr GradExecutor::forward() const {
@@ -555,10 +586,9 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, false));
   } else if (input_args_info->grad_is_running && top_cell()->grad_order() != input_args_info->grad_order) {
     MS_LOG(DEBUG) << "Nested grad graph existed in custom bprop";
-    SaveInputTensorGradInfo(input_args_info);
+    parent_top_cell_ = top_cell();
     MakeNewTopGraph(input_args_info);
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, true));
-    top_cell()->set_is_ir_grad(true);
   } else if (input_args_info->is_high_order_top_cell) {
     MS_LOG(DEBUG) << "Nested grad graph existed in construct";
     SaveInputTensorGradInfo(input_args_info);
@@ -640,10 +670,16 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   auto resource = std::make_shared<pipeline::Resource>();
   MS_EXCEPTION_IF_NULL(input_args_info);
   const auto &obj_id_with_grad_order = GetAlreadyRunCellId(input_args_info->obj_id);
-  // To fix scene that user calls twice forward network with grad flag, and then call grad() interface.
+  // To fix the scene that user calls twice forward network with grad flag, and then call grad() interface.
   // We need to clear last top cell's parameters grad info to avoid influencing construct bprop graph of current top
   // cell.
   ClearParamGradInfo(top_cell_);
+  // To fix the scene like 1. net(x1) 2. x2 = deepcopy(x1), 3. net(x2) 3. grad_net(x2). 4. grad_net(x1)
+  // x1's auto_grad_meta_data will be copy to x2, x2 grad will use the same auto_grad_meta_data and clear x1's variable
+  // and set x2's variable.
+  // When execute grad_net(x1), x1's variable will not found, so we need clear input's auto_grad_meta_data before
+  // execute.
+  ClearInputsGradInfo(input_args_info);
   top_cell_ = std::make_shared<TopCellInfo>(input_args_info->is_high_order_top_cell, input_args_info->grad_order,
                                             obj_id_with_grad_order, input_args_info->cell_id,
                                             input_args_info->already_run_cell_id, resource, fg,
@@ -779,6 +815,7 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   op_run_info->base_op_run_info.op_name = input_args_info->custom_bprop_prim->name();
   op_run_info->op_grad_info->op_prim = input_args_info->custom_bprop_prim;
   op_run_info->op_grad_info->input_value = input_args_info->input_arg_value_vec;
+  op_run_info->op_grad_info->is_need_recompute = input_args_info->is_need_recompute;
   op_run_info->input_size = input_args_info->input_arg_value_vec.size();
   op_run_info->input_value_id = input_args_info->input_arg_id_vec;
   op_run_info->real_out = input_args_info->out_value;
@@ -797,6 +834,9 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, nullptr, InputType::kOpOutput);
   PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
   DoOpGrad(op_run_info);
+  top_cell()->GetOpInfo(op_run_info, false);
+  UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
+                                             op_run_info->base_op_run_info.stream_id);
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(
     op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_abs, op_run_info->base_op_run_info.abstract);
   (void)dynamic_shape()->CheckNodeDynamic(top_cell(), op_run_info->op_grad_info->input_value, node_info);
@@ -815,27 +855,9 @@ void GradExecutor::GetCustomBpropPrim(const py::object &obj, const py::args &arg
   MS_LOG(DEBUG) << "Get custom bprop prim";
   py::function bprop_func = py::getattr(obj, parse::CUSTOM_BPROP_NAME);
   py::object code_obj = py::getattr(bprop_func, "__code__");
-  // When the co_names is empty, we will still get a tuple which is empty.
-  auto co_names = py::getattr(code_obj, "co_names").cast<py::tuple>();
-  for (auto name : co_names) {
-    if (!py::hasattr(obj, name)) {
-      continue;
-    }
-    auto var = py::getattr(obj, name);
-    if (py::hasattr(var, "__parameter__") && py::isinstance<tensor::MetaTensor>(var)) {
-      MS_LOG(EXCEPTION) << "The user defined 'bprop' function does not support using Parameter.";
-    }
-  }
-
   py::object co_name = py::getattr(code_obj, "co_name");
   if (std::string(py::str(co_name)) == "staging_specialize") {
     MS_LOG(EXCEPTION) << "Decorating bprop with '@jit' is not supported.";
-  }
-  // Three parameters self, out and dout need to be excluded
-  const size_t inputs_num = static_cast<size_t>(py::getattr(code_obj, "co_argcount").cast<int64_t>() - 3);
-  if (inputs_num != args.size()) {
-    MS_EXCEPTION(TypeError) << "Size of bprop func inputs[" << inputs_num
-                            << "] is not equal to the size of cell inputs[" << args.size() << "]";
   }
 
   auto bprop_func_cellid = PyNativeAlgo::PyParser::GetIdByPyObj(bprop_func);
@@ -844,7 +866,21 @@ void GradExecutor::GetCustomBpropPrim(const py::object &obj, const py::args &arg
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (py::isinstance<Cell>(obj)) {
     const auto &cell_ptr = obj.cast<CellPtr>();
+    input_args_info->is_need_recompute = cell_ptr->HasAttr(kNeedRecompute);
     fake_prim->set_bprop_cls_name(cell_ptr->name());
+  }
+  if (py::hasattr(obj, kInternalParams)) {
+    py::object weights = py::getattr(obj, kInternalParams);
+    if (py::isinstance<py::tuple>(weights) || py::isinstance<py::list>(weights)) {
+      auto weights_tuple = py::cast<py::tuple>(weights);
+      for (size_t i = 0; i < weights_tuple.size(); ++i) {
+        const auto value = PyNativeAlgo::DataConvert::PyObjToValue(weights_tuple[i]);
+        auto tensor = value->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        (void)input_args_info->input_arg_value_vec.emplace_back(tensor);
+        (void)input_args_info->input_arg_id_vec.emplace_back(tensor->id());
+      }
+    }
   }
   fake_prim->AddBackwardHookFn(0, bprop_func);
 
@@ -964,6 +1000,12 @@ py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::o
     top_cell()->ClearParamGradInfo();
     AsyncClearAutoGradCell(top_cell());
     ClearGradRes();
+    // For custom nested grad, we need resume grad info when finish custom grad.
+    if (parent_top_cell_ != nullptr) {
+      ResumeParamGradInfo(parent_top_cell_);
+      top_cell_ = parent_top_cell_;
+      parent_top_cell_ = nullptr;
+    }
     return grads;
   }
 }
@@ -1300,13 +1342,13 @@ py::object GradExecutor::RunBackward(const autograd::GradAttr &grad_attr, const 
   if (grad_attr.has_sens) {
     sens = top_input_args_info_->input_arg_value_vec.back();
   }
-  grad_is_running_ = true;
+  grad_is_running_ += 1;
   auto top_input_args_info = top_input_args_info_;
   auto pre_top_cell = top_cell_;
   const auto &auto_grad_cell = std::dynamic_pointer_cast<autograd::FuncGrad>(top_cell()->auto_grad_cell_ptr());
   MS_EXCEPTION_IF_NULL(auto_grad_cell);
   auto grads = auto_grad_cell->Finish(w_args, p_args, grad_attr, sens);
-  grad_is_running_ = false;
+  grad_is_running_ -= 1;
   top_input_args_info_ = top_input_args_info;
   top_cell_ = pre_top_cell;
   MS_EXCEPTION_IF_NULL(grads);
@@ -1328,17 +1370,23 @@ py::object GradExecutor::RunGradGraph() {
 
   const auto &backend = MsContext::GetInstance()->backend_policy();
   MS_LOG(DEBUG) << "Eval run " << backend;
-  grad_is_running_ = true;
+  grad_is_running_ += 1;
   // In custom bprop, when running bprop function, top_input_args_info_ will be changed.
   // So, here copy and restore after running finished.
   auto top_input_args_info = top_input_args_info_;
   BaseRef out_value = (*run)(arg_list);
   top_input_args_info_ = top_input_args_info;
-  grad_is_running_ = false;
+  grad_is_running_ -= 1;
   MS_LOG(DEBUG) << "Eval run end " << out_value.ToString();
   MakeNestedCnode(top_input_args_info_->has_custom_bprop, top_input_args_info_->input_arg_value_vec,
                   resource->optimize_graph(), out_value);
   top_input_args_info_ = nullptr;
+  // For custom nested grad, we need resume grad info when finish custom grad.
+  if (parent_top_cell_ != nullptr) {
+    ResumeParamGradInfo(parent_top_cell_);
+    top_cell_ = parent_top_cell_;
+    parent_top_cell_ = nullptr;
+  }
   return BaseRefToPyData(out_value);
 }
 
@@ -1511,7 +1559,7 @@ void GradExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear grad res";
   WaitBpropTask();
   grad_flag_ = false;
-  grad_is_running_ = false;
+  grad_is_running_ = 0;
   custom_bprop_cell_count_ = 0;
   grad_order_ = 0;
   top_cell_ = nullptr;

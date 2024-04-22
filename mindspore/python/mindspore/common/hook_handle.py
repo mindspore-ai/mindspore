@@ -14,9 +14,58 @@
 # ============================================================================
 """The removable handle for cell hook function."""
 from __future__ import absolute_import
-
 import weakref
-from mindspore.common.api import _pynative_executor
+from mindspore._c_expression import Tensor as Tensor_
+
+
+class _TensorHookHandle:
+    r"""
+    A handle provides the ability to remote a tensor hook.
+
+    Note:
+        It is only supported in pynative mode and works when registering or removing hook function for tensor
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    def __init__(self):
+        self.id = None
+
+    def remove(self):
+        """
+        Remove the tensor hook function, which corresponds to this '_TensorHookHandle' object.
+
+        Args:
+            None.
+
+        Returns:
+            None.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> ms.set_context(mode=ms.PYNATIVE_MODE)
+            >>> def hook_fn(grad):
+            ...     return grad * 2
+            ...
+            >>> def hook_test(x, y):
+            ...     z = x * y
+            ...     handle = z.register_hook(hook_fn)
+            ...     z = z * y
+            ...     handle.remove()
+            ...     return z
+            ...
+            >>> ms_grad = ms.grad(hook_test, grad_position=(0,1))
+            >>> output = ms_grad(Tensor(1, ms.float32), Tensor(2, ms.float32))
+            >>> print(output)
+            (Tensor(shape=[], dtype=Float32, value=4), Tensor(shape=[], dtype=Float32, value=4))
+        """
+        if self.id is not None:
+            Tensor_.remove_hook(self.id)
 
 
 class HookHandle:
@@ -100,9 +149,7 @@ class HookHandle:
             hook_cell = self._hook_cell()
             if self._hook_type == "_forward_pre_hook" and self._hook_key in hook_cell._forward_pre_hook:
                 del hook_cell._forward_pre_hook[self._hook_key]
-                _pynative_executor.set_hook_changed(hook_cell)
             elif self._hook_type == "_forward_hook" and self._hook_key in hook_cell._forward_hook:
                 del hook_cell._forward_hook[self._hook_key]
-                _pynative_executor.set_hook_changed(hook_cell)
             elif self._hook_type == "_cell_backward_hook":
                 hook_cell._cell_backward_hook.remove_backward_hook(self._hook_key)

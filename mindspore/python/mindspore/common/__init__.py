@@ -32,6 +32,7 @@ from mindspore.common.jit_config import JitConfig
 from mindspore.common.lazy_inline import lazy_inline
 from mindspore.common.mindir_util import load_mindir, save_mindir
 from mindspore.common.symbol import Symbol
+from mindspore.common.recompute import recompute
 
 # symbols from dtype
 __all__ = [
@@ -72,4 +73,5 @@ __all__.extend([
     "mutable", "JitConfig",
     "lazy_inline", "load_mindir", "save_mindir",
     "Symbol",
+    "recompute"
 ])

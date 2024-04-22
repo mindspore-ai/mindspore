@@ -76,6 +76,7 @@ struct OpGradInfo {
   ValuePtr out_value{nullptr};
   std::vector<InputType> input_value_grad_type{};
   size_t output_size;
+  bool is_need_recompute{false};
 };
 using OpGradInfoPtr = std::shared_ptr<OpGradInfo>;
 
@@ -158,6 +159,7 @@ struct InputArgsInfo {
   bool is_grad_topest_cell;
   bool is_high_order_top_cell;
   bool grad_is_running;
+  bool is_need_recompute;
   size_t obj_order;
 
   bool has_custom_bprop{false};

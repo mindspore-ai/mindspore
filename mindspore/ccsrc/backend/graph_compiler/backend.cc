@@ -514,8 +514,13 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler,
       auto out_py_tuple = py_ref.object_;
       std::vector<ValuePtr> output_tensors;
       ConvertPyObjectToTensor(out_py_tuple, &output_tensors);
-      (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(op_outputs->elements_),
-                           [](ValuePtr &tensor) { return std::move(tensor); });
+      // If bprop change grad, kernel abstract need update for its users
+      std::vector<abstract::AbstractBasePtr> output_tensor_abs;
+      for (auto &tensor : output_tensors) {
+        (void)output_tensor_abs.emplace_back(tensor->ToAbstract()->Broaden());
+        (void)op_outputs->elements_.emplace_back(std::move(tensor));
+      }
+      kernel->set_abstract(std::make_shared<abstract::AbstractTuple>(output_tensor_abs));
     }
   }
 }

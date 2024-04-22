@@ -151,6 +151,7 @@ class StubTensor:
     flush_from_cache = _stub_method(Tensor.flush_from_cache)
     contiguous = _stub_method(Tensor.contiguous)
     is_contiguous = _stub_method(Tensor.is_contiguous)
+    register_hook = _stub_method(Tensor.register_hook)
 
     def stub_sync(self):
         """sync real tensor."""

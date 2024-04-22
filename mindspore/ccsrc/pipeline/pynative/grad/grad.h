@@ -225,7 +225,7 @@ class GradExecutor {
   bool init_{false};
   bool grad_flag_{false};
   bool enable_grad_{true};
-  bool grad_is_running_{false};
+  size_t grad_is_running_{0};
   bool save_graphs_{false};
   uint32_t kernel_graph_id_for_control_flow_{UINT32_MAX};
   size_t custom_bprop_cell_count_{0};
@@ -246,6 +246,8 @@ class GradExecutor {
   std::stack<TopCellInfoPtr> high_order_stack_;
   // Record all top cell which has been ran
   mindspore::OrderedMap<std::string, TopCellInfoPtr> already_run_top_cell_;
+  // parent top cell for custom nested grad.
+  TopCellInfoPtr parent_top_cell_;
   ForwardExecutorWeakPtr forward_executor_;
   JitPtr jit_;
   DynamicShapePtr dynamic_shape_{nullptr};

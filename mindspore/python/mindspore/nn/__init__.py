@@ -22,7 +22,7 @@ from __future__ import absolute_import
 from mindspore.nn import layer, loss, optim, wrap, grad, metrics, probability, sparse, dynamic_lr, reinforcement
 from mindspore.nn.learning_rate_schedule import *
 from mindspore.nn.dynamic_lr import *
-from mindspore.nn.cell import Cell, GraphCell
+from mindspore.nn.cell import Cell, GraphCell, _RecomputeCell
 from mindspore.nn.layer import *
 from mindspore.nn.loss import *
 from mindspore.nn.optim import *
@@ -32,7 +32,7 @@ from mindspore.nn.grad import Jvp, Vjp
 from mindspore.nn.sparse import *
 from mindspore.nn.reinforcement import *
 
-__all__ = ["Cell", "GraphCell"]
+__all__ = ["Cell", "GraphCell", "_RecomputeCell"]
 __all__.extend(layer.__all__)
 __all__.extend(loss.__all__)
 __all__.extend(optim.__all__)

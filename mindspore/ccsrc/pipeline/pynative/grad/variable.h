@@ -101,10 +101,21 @@ class BackwardNode {
   /// \return name
   const std::string &name() { return name_; }
 
+  /// \brief Set op output value
+  ///
+  /// \return op output value
+  void set_op_output(const ValuePtr &op_output) { op_output_ = op_output; }
+
+  /// \brief Get op output value
+  ///
+  /// \return op output value
+  const ValuePtr &op_output() { return op_output_; }
+
   /// \brief The size of node output.
   ///
   /// \return output size
   size_t output_size() const { return output_size_; }
+
   /// \brief Release resource
   ///
   /// \return void
@@ -114,6 +125,7 @@ class BackwardNode {
   std::vector<Edge> next_edges_;
   std::vector<size_t> gradient_index_;
   std::string name_;
+  ValuePtr op_output_{nullptr};
   size_t output_size_;
 };
 using BackwardNodePtr = std::shared_ptr<BackwardNode>;
