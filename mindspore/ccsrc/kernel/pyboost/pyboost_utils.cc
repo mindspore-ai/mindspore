@@ -243,29 +243,19 @@ AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::
   MS_EXCEPTION_IF_NULL(prim);
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferByOpDef,
                                      prim->name(), false);
-  auto frontend_func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name());
-  AbstractBasePtr output_abs = nullptr;
-  if (frontend_func_impl) {
-    output_abs = frontend_func_impl->InferAbstract(prim, input_abs);
-    if (output_abs != nullptr) {
-      MS_LOG(DEBUG) << "Pynative Infer by InferAbstract, got abstract: " << output_abs->ToString();
-      return output_abs;
-    }
-  }
-
   auto op_def = mindspore::ops::GetOpDef(prim->name());
   if (op_def) {
     (void)op_def->func_impl_.CheckValidation(prim, input_abs);
     auto shape = op_def->func_impl_.InferShape(prim, input_abs);
     auto type = op_def->func_impl_.InferType(prim, input_abs);
-    output_abs = mindspore::abstract::MakeAbstract(shape, type);
+    auto output_abs = mindspore::abstract::MakeAbstract(shape, type);
     MS_LOG(DEBUG) << "Pynative Infer " << prim->name() << " by OpDef, got abstract: " << output_abs->ToString();
     return output_abs;
   } else {
     const auto &infer_map = abstract::GetPrimitiveInferMapPtr();
     const auto &iter = infer_map->find(prim);
     if (iter != infer_map->end()) {
-      output_abs = iter->second.InferShapeAndType(nullptr, prim, input_abs);
+      auto output_abs = iter->second.InferShapeAndType(nullptr, prim, input_abs);
       MS_LOG(DEBUG) << "Pynative Infer " << prim->name()
                     << " by C++ PrimitiveInferMap, got abstract: " << output_abs->ToString();
       return output_abs;
