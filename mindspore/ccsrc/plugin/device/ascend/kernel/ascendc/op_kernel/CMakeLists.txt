@@ -8,6 +8,7 @@ else()
     set(KERNEL_OPC_PATH /usr/local/Ascend)
 endif()
 set(OPC_PATH ${KERNEL_OPC_PATH}/aarch64-linux/bin/opc)
+set(BUILTIN_OPP_PATH ${KERNEL_OPC_PATH}/opp/built-in/op_impl/ai_core/tbe)
 
 foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
   # generate aic-${compute_unit}-ops-info.json
@@ -41,7 +42,8 @@ foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
     message("${OPC_PATH} isn't exist! Please check!")
   endif()
 
-  if(${ENABLE_BINARY_PACKAGE} AND NOT ${ENABLE_CROSS_COMPILE} AND EXISTS ${OPC_PATH})
+  if(${ENABLE_BINARY_PACKAGE} AND NOT ${ENABLE_CROSS_COMPILE} AND EXISTS ${OPC_PATH}
+    AND ${compute_unit} STREQUAL "ascend910b")
     add_bin_compile_target(TARGET ascendc_bin_${compute_unit}
       OPS_INFO ${ASCEND_AUTOGEN_PATH}/aic-${compute_unit}-ops-info.ini
       IMPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}
@@ -49,8 +51,9 @@ foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
       OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/binary/${compute_unit}
       INSTALL_DIR ${PKG_PATH}/${vendor_name}/op_impl/ai_core/tbe/kernel
       COMPUTE_UNIT ${compute_unit}
-      OPC_PATH ${OPC_PATH})
-  add_dependencies(ascendc_bin_${compute_unit} ascendc_impl_gen)
+      OPC_PATH ${OPC_PATH}
+      OPP_PATH ${BUILTIN_OPP_PATH})
+    add_dependencies(ascendc_bin_${compute_unit} ascendc_impl_gen)
   endif()
 
   if(${ENABLE_CROSS_COMPILE} AND ${ENABLE_BINARY_PACKAGE})
