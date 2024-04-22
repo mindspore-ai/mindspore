@@ -55,23 +55,27 @@ class FloorDivMock():
 
 
     def forward_cmp(self):
+        left_input = self.input_x1
+        right_input = self.input_x2
         ps_net = FloorDiv()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(left_input, right_input)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_impl(ps_net)
         pi_net = FloorDiv()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(left_input, right_input)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_impl(pi_net)
         allclose_nparray(out_pijit, out_psjit, self.loss, self.loss)
 
     def grad_cmp(self):
+        left_input = Tensor(self.left_input_np)
+        right_input = Tensor(self.right_input_np)
         ps_net = FloorDiv()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(left_input, right_input)
         context.set_context(mode=context.GRAPH_MODE)
         input_grad_psjit = self.grad_mindspore_impl(ps_net)
         pi_net = FloorDiv()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(left_input, right_input)
         context.set_context(mode=context.PYNATIVE_MODE)
         input_grad_pijit = self.grad_mindspore_impl(pi_net)
         allclose_nparray(input_grad_pijit[0], input_grad_psjit[0], self.loss, self.loss)
@@ -96,23 +100,27 @@ class FloorDivMock():
         return input_grad[0].asnumpy(), input_grad[1].asnumpy()
 
     def forward_dynamic_shape_cmp(self):
+        left_input = self.input_x1
+        right_input = self.input_x2
         ps_net = FloorDiv()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(left_input, right_input)
         context.set_context(mode=context.GRAPH_MODE)
         out_psjit = self.forward_mindspore_dynamic_shape_impl(ps_net)
         pi_net = FloorDiv()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(left_input, right_input)
         context.set_context(mode=context.PYNATIVE_MODE)
         out_pijit = self.forward_mindspore_dynamic_shape_impl(pi_net)
         allclose_nparray(out_pijit, out_psjit, self.loss, self.loss)
 
     def grad_dynamic_shape_cmp(self):
+        left_input = Tensor(self.left_input_np)
+        right_input = Tensor(self.right_input_np)
         ps_net = FloorDiv()
-        jit(ps_net.construct, mode="PSJit")
+        jit(ps_net.construct, mode="PSJit")(left_input, right_input)
         context.set_context(mode=context.GRAPH_MODE)
         input_grad_psjit = self.grad_mindspore_impl(ps_net)
         pi_net = FloorDiv()
-        jit(pi_net.construct, mode="PIJit")
+        jit(pi_net.construct, mode="PIJit")(left_input, right_input)
         context.set_context(mode=context.PYNATIVE_MODE)
         input_grad_pijit = self.grad_mindspore_impl(pi_net)
         allclose_nparray(input_grad_pijit[0], input_grad_psjit[0], self.loss, self.loss)

@@ -7,7 +7,7 @@ from ..parse.parser_factory import ParserFactory
 import pytest
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_by_if_basic():
@@ -53,7 +53,7 @@ def test_ctrl_if_by_if_basic():
     fact.backward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_by_if_with_for():
@@ -98,7 +98,7 @@ def test_ctrl_if_by_if_with_for():
     fact.backward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_by_if_second_if_match_the_false_branch_of_first_if():
@@ -134,7 +134,7 @@ def test_ctrl_if_by_if_second_if_match_the_false_branch_of_first_if():
     fact.backward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_by_if_combine_with_elif_else():
@@ -180,7 +180,7 @@ def test_ctrl_if_by_if_combine_with_elif_else():
     fact.backward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_by_if_call_func():
@@ -233,7 +233,7 @@ def test_ctrl_if_by_if_call_func():
     fact.backward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_by_if_call_func_which_include_ctrl_flow():
@@ -293,7 +293,7 @@ def test_ctrl_if_by_if_call_func_which_include_ctrl_flow():
     fact.backward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_by_if_call_subnet():
@@ -344,7 +344,7 @@ def test_ctrl_if_by_if_call_subnet():
     fact.backward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_by_if_call_subnet_which_include_ctrl_flow():
@@ -405,7 +405,7 @@ def test_ctrl_if_by_if_call_subnet_which_include_ctrl_flow():
     fact.backward_cmp()
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_by_if_combine_with_not_or_and():
@@ -444,7 +444,7 @@ def test_ctrl_if_by_if_combine_with_not_or_and():
     fact.backward_cmp()
 
 
-@pytest.mark.level6
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ctrl_if_by_if_combine_with_dynamic_shape():

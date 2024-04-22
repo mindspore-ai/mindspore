@@ -33,7 +33,7 @@ class SingleWhileNet(nn.Cell):
         return y
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_jit_function_while():
@@ -76,7 +76,7 @@ class SingleWhileInlineNet(nn.Cell):
         return y
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_single_while_inline_export():
@@ -98,7 +98,7 @@ def test_single_while_inline_export():
     assert os.path.exists(mindir_name)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_single_while_inline_load():

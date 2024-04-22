@@ -26,7 +26,7 @@ class CtrlForContinueWhileX(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_while_continue_in_for_x():
@@ -37,12 +37,12 @@ def test_control_flow_for_while_continue_in_for_x():
     """
     x = Tensor([7], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForContinueWhileX.construct, mode="PSJit")
     ps_net = CtrlForContinueWhileX()
+    jit(fn=CtrlForContinueWhileX.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForContinueWhileX.construct, mode="PIJit")
     pi_net = CtrlForContinueWhileX()
+    jit(fn=CtrlForContinueWhileX.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -64,7 +64,7 @@ class CtrlForContinueWhile(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_while_continue_in_for():
@@ -75,12 +75,12 @@ def test_control_flow_for_while_continue_in_for():
     """
     x = Tensor([3], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForContinueWhile.construct, mode="PSJit")
     ps_net = CtrlForContinueWhile()
+    jit(fn=CtrlForContinueWhile.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForContinueWhile.construct, mode="PIJit")
     pi_net = CtrlForContinueWhile()
+    jit(fn=CtrlForContinueWhile.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -102,7 +102,7 @@ class CtrlForWhileContinueOne(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_while_for_param_continue_in_for():
@@ -114,12 +114,12 @@ def test_control_flow_while_for_param_continue_in_for():
     t = 2
     x = Tensor([-2], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileContinueOne.construct, mode="PSJit")
     ps_net = CtrlForWhileContinueOne(t)
+    jit(fn=CtrlForWhileContinueOne.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileContinueOne.construct, mode="PIJit")
     pi_net = CtrlForWhileContinueOne(t)
+    jit(fn=CtrlForWhileContinueOne.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -142,7 +142,7 @@ class CtrlForWhileContinueAdd(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_by_while_continue_no_param():
@@ -153,12 +153,12 @@ def test_control_flow_for_by_while_continue_no_param():
     """
     x = Tensor([-2], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileContinueAdd.construct, mode="PSJit")
     ps_net = CtrlForWhileContinueAdd()
+    jit(fn=CtrlForWhileContinueAdd.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileContinueAdd.construct, mode="PIJit")
     pi_net = CtrlForWhileContinueAdd()
+    jit(fn=CtrlForWhileContinueAdd.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -181,7 +181,7 @@ class CtrlForWhileContinueX(Cell):
         return out
 
 
-@pytest.mark.level5
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_by_while_continue_in_while_x():
@@ -192,12 +192,12 @@ def test_control_flow_for_by_while_continue_in_while_x():
     """
     x = Tensor([3], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileContinueX.construct, mode="PSJit")
     ps_net = CtrlForWhileContinueX()
+    jit(fn=CtrlForWhileContinueX.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileContinueX.construct, mode="PIJit")
     pi_net = CtrlForWhileContinueX()
+    jit(fn=CtrlForWhileContinueX.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -219,7 +219,7 @@ class CtrlForWhileContinue(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_while_continue_in_while():
@@ -230,12 +230,12 @@ def test_control_flow_for_while_continue_in_while():
     """
     x = Tensor([5], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileContinue.construct, mode="PSJit")
     ps_net = CtrlForWhileContinue()
+    jit(fn=CtrlForWhileContinue.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileContinue.construct, mode="PIJit")
     pi_net = CtrlForWhileContinue()
+    jit(fn=CtrlForWhileContinue.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -258,7 +258,7 @@ class CtrlForWhileContinueP(Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_flow_for_while_continue_in_while_param():
@@ -270,12 +270,12 @@ def test_control_flow_for_while_continue_in_while_param():
     x = Tensor([1], ms.int32)
     t = -4
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileContinueP.construct, mode="PSJit")
     ps_net = CtrlForWhileContinueP(t)
+    jit(fn=CtrlForWhileContinueP.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileContinueP.construct, mode="PIJit")
     pi_net = CtrlForWhileContinueP(t)
+    jit(fn=CtrlForWhileContinueP.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)
 
@@ -308,11 +308,11 @@ def test_control_flow_for_while_continue_in_while_no():
     """
     x = Tensor([-3], ms.int32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=CtrlForWhileContinueN.construct, mode="PSJit")
     ps_net = CtrlForWhileContinueN()
+    jit(fn=CtrlForWhileContinueN.construct, mode="PSJit")(ps_net, x)
     ps_out = ps_net(x)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=CtrlForWhileContinueN.construct, mode="PIJit")
     pi_net = CtrlForWhileContinueN()
+    jit(fn=CtrlForWhileContinueN.construct, mode="PIJit")(pi_net, x)
     pi_out = pi_net(x)
     match_array(ps_out, pi_out)

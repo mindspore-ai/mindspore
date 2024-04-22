@@ -42,7 +42,7 @@ class GradNet(nn.Cell):
         return gradient_function(x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_while_grad():
@@ -52,11 +52,12 @@ def test_while_grad():
     when all the branches can not be inferred.
     Expectation: No error raised.
     """
-    jit(GradNet.construct, mode="PIJit")
     context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor([2.0], dtype=mstype.float32)
     y = Tensor([2.0], dtype=mstype.float32)
-    GradNet(Net())(x, y)
+    ms_net = GradNet(Net())
+    jit(GradNet.construct, mode="PIJit")(ms_net, x, y)
+    GradNet(ms_net)(x, y)
 
 
 class WhileSpecTwiceNet(nn.Cell):
@@ -82,11 +83,11 @@ def test_while_header_spec_twice():
     header is Tensor.Related issue:I5HVPJ.
     Expectation: No error raised.
     """
-    jit(WhileSpecTwiceNet.construct, mode="PIJit")
     context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(np.array([3], np.float32))
     y = Tensor(np.array([1], np.float32))
     net = WhileSpecTwiceNet()
+    jit(WhileSpecTwiceNet.construct, mode="PIJit")(net, x, y)
     grad_net = F.grad(net, grad_position=(0, 1))
     fgrad = grad_net(x, y)
     print('ms backward: ', fgrad)

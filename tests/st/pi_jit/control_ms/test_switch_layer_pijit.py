@@ -50,11 +50,11 @@ def test_switch_layer_pi():
     Expectation: No exception.
     """
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(CaseNet.construct, mode="PIJit")
     net = CaseNet()
     data = Tensor(np.ones((1, 1, 224, 224)), mstype.float32)
     idx = Tensor(0, mstype.int32)
     idx2 = Tensor(1, mstype.int32)
+    jit(CaseNet.construct, mode="PIJit")(net, data, idx, idx2)
     value = net(data, idx, idx2)
     relu = nn.ReLU()
     true_value = relu(data)
@@ -111,7 +111,6 @@ def test_switch_layer_add_func_in_construct():
     Expectation: No exception.
     """
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(AddFuncNet.construct, mode="PIJit")
     func1 = TwoLayerSoftmax()
     func2 = TwoLayerRelU()
     func3 = TwoLayerSoftmax()
@@ -119,5 +118,6 @@ def test_switch_layer_add_func_in_construct():
     net = AddFuncNet(funcs, func3)
     inputs = Tensor(np.random.rand(2, 3, 4, 5).astype(np.float32))
     i = Tensor(2, mstype.int32)
+    jit(AddFuncNet.construct, mode="PIJit")(net, i, inputs)
     ret = net(i, inputs)
     assert ret.shape == (2, 3, 4, 5)

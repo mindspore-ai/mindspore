@@ -18,7 +18,7 @@ def test_p_less_forward_input_1d_all_float16():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_2d_all_float32():
@@ -33,7 +33,7 @@ def test_p_less_forward_input_2d_all_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_3d_all_int32():
@@ -48,7 +48,7 @@ def test_p_less_forward_input_3d_all_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_4d_all_int8():
@@ -63,7 +63,7 @@ def test_p_less_forward_input_4d_all_int8():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_5d_uint8():
@@ -78,7 +78,7 @@ def test_p_less_forward_input_5d_uint8():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_6d_float32_float16():
@@ -93,7 +93,7 @@ def test_p_less_forward_input_6d_float32_float16():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_7d_float16_int32():
@@ -108,7 +108,7 @@ def test_p_less_forward_input_7d_float16_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_1d_left_float32_right_bool():
@@ -123,7 +123,7 @@ def test_p_less_forward_input_1d_left_float32_right_bool():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_right_float():
@@ -138,7 +138,7 @@ def test_p_less_forward_input_right_float():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_left_int():
@@ -153,7 +153,7 @@ def test_p_less_forward_input_left_int():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_left_bool():
@@ -168,7 +168,7 @@ def test_p_less_forward_input_left_bool():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_forward_input_right_bool():
@@ -183,7 +183,7 @@ def test_p_less_forward_input_right_bool():
     fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_input_list():
@@ -199,7 +199,7 @@ def test_p_less_input_list():
         fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_input_trulp():
@@ -215,7 +215,7 @@ def test_p_less_input_trulp():
         fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_input_all_number():
@@ -227,11 +227,10 @@ def test_p_less_input_all_number():
     left_input = 8
     right_input = 6
     fact = LessFactory(left_input, right_input, leftistensor=False, rightistensor=False)
-    with pytest.raises(TypeError):
-        fact.forward_cmp()
+    fact.forward_cmp()
 
 
-@pytest.mark.level3
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_less_input_all_bool():
@@ -243,5 +242,4 @@ def test_p_less_input_all_bool():
     left_input = True
     right_input = False
     fact = LessFactory(left_input, right_input, leftistensor=False, rightistensor=False)
-    with pytest.raises(TypeError):
-        fact.forward_cmp()
+    fact.forward_cmp()

@@ -36,14 +36,14 @@ def test_control_for_range_addn():
     start, stop, step = 10, 25, 3
     input_np = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneForAddn.construct, mode="PSJit")
     ps_net = ControlOneForAddn(start, stop, step)
+    jit(fn=ControlOneForAddn.construct, mode="PSJit")(ps_net, Tensor(input_np))
     out_ps = ps_net(Tensor(input_np))
     grad_net = GradOfFirstInput(ps_net, sens_param=False)
     ps_grad = grad_net(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneForAddn.construct, mode="PIJit")
     pi_net = ControlOneForAddn(start, stop, step)
+    jit(fn=ControlOneForAddn.construct, mode="PIJit")(pi_net, Tensor(input_np))
     out_pi = pi_net(Tensor(input_np))
     grad_net = GradOfFirstInput(pi_net, sens_param=False)
     pi_grad = grad_net(Tensor(input_np))
@@ -66,7 +66,7 @@ class ControlOneForSplit(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_for_split():
@@ -78,14 +78,14 @@ def test_control_for_split():
     input_shape = (4, 4)
     input_np = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneForSplit.construct, mode="PSJit")
     ps_net = ControlOneForSplit()
+    jit(fn=ControlOneForSplit.construct, mode="PSJit")(ps_net, Tensor(input_np))
     out_ps = ps_net(Tensor(input_np))
     grad_net = GradOfFirstInput(ps_net, sens_param=False)
     ps_grad = grad_net(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneForSplit.construct, mode="PIJit")
     pi_net = ControlOneForSplit()
+    jit(fn=ControlOneForSplit.construct, mode="PIJit")(pi_net, Tensor(input_np))
     out_pi = pi_net(Tensor(input_np))
     grad_net = GradOfFirstInput(pi_net, sens_param=False)
     pi_grad = grad_net(Tensor(input_np))
@@ -123,14 +123,14 @@ def test_control_for_if():
     z = np.array(0, np.float32)
     input_np = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneForSplit.construct, mode="PSJit")
     ps_net = ControlOneForOneIf()
+    jit(fn=ControlOneForOneIf.construct, mode="PSJit")(ps_net, Tensor(input_np), Tensor(x), Tensor(y), Tensor(z))
     out_ps = ps_net(Tensor(input_np), Tensor(x), Tensor(y), Tensor(z))
     grad_net = GradOfFirstInput(ps_net, sens_param=False)
     ps_grad = grad_net(Tensor(input_np), Tensor(x), Tensor(y), Tensor(z))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneForSplit.construct, mode="PIJit")
     pi_net = ControlOneForOneIf()
+    jit(fn=ControlOneForOneIf.construct, mode="PIJit")(pi_net, Tensor(input_np), Tensor(x), Tensor(y), Tensor(z))
     out_pi = pi_net(Tensor(input_np), Tensor(x), Tensor(y), Tensor(z))
     grad_net = GradOfFirstInput(pi_net, sens_param=False)
     pi_grad = grad_net(Tensor(input_np), Tensor(x), Tensor(y), Tensor(z))
@@ -151,7 +151,7 @@ class ControlOneForOneFor(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_for_in_for():
@@ -163,14 +163,14 @@ def test_control_for_in_for():
     input_shape = (4, 3, 4)
     input_np = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneForOneFor.construct, mode="PSJit")
     ps_net = ControlOneForOneFor()
+    jit(fn=ControlOneForOneFor.construct, mode="PSJit")(ps_net, Tensor(input_np))
     out_ps = ps_net(Tensor(input_np))
     grad_net = GradOfFirstInput(ps_net, sens_param=False)
     ps_grad = grad_net(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneForOneFor.construct, mode="PIJit")
     pi_net = ControlOneForOneFor()
+    jit(fn=ControlOneForOneFor.construct, mode="PIJit")(pi_net, Tensor(input_np))
     out_pi = pi_net(Tensor(input_np))
     grad_net = GradOfFirstInput(pi_net, sens_param=False)
     pi_grad = grad_net(Tensor(input_np))
@@ -193,7 +193,7 @@ class ControlOneWhileInFor(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_control_while_in_for():
@@ -207,14 +207,14 @@ def test_control_while_in_for():
     y = np.array(4, np.float32)
     input_np = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
-    jit(fn=ControlOneWhileInFor.construct, mode="PSJit")
     ps_net = ControlOneWhileInFor()
+    jit(fn=ControlOneWhileInFor.construct, mode="PSJit")(ps_net, Tensor(input_np), Tensor(x), Tensor(y))
     out_ps = ps_net(Tensor(input_np), Tensor(x), Tensor(y))
     grad_net = GradOfFirstInput(ps_net, sens_param=False)
     ps_grad = grad_net(Tensor(input_np), Tensor(x), Tensor(y))
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=ControlOneWhileInFor.construct, mode="PIJit")
     pi_net = ControlOneWhileInFor()
+    jit(fn=ControlOneWhileInFor.construct, mode="PIJit")(pi_net, Tensor(input_np), Tensor(x), Tensor(y))
     out_pi = pi_net(Tensor(input_np), Tensor(x), Tensor(y))
     grad_net = GradOfFirstInput(pi_net, sens_param=False)
     pi_grad = grad_net(Tensor(input_np), Tensor(x), Tensor(y))

@@ -22,7 +22,7 @@ def test_p_abs_input_1():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_abs_input_1x1():
@@ -40,7 +40,7 @@ def test_p_abs_input_1x1():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_abs_input_256x256x256():
@@ -59,7 +59,7 @@ def test_p_abs_input_256x256x256():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_abs_input_1x1x1x1():
@@ -78,7 +78,7 @@ def test_p_abs_input_1x1x1x1():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_abs_input_32x2x16x8():
@@ -97,7 +97,7 @@ def test_p_abs_input_32x2x16x8():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_abs_input_1x1x1x1x1():
@@ -116,7 +116,7 @@ def test_p_abs_input_1x1x1x1x1():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_abs_input_32x8x16x8x32():
@@ -135,7 +135,7 @@ def test_p_abs_input_32x8x16x8x32():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_abs_input_32x8_dtype_fp16():
@@ -154,7 +154,7 @@ def test_p_abs_input_32x8_dtype_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_abs_4d_float32():
@@ -172,7 +172,7 @@ def test_dynamic_shape_p_abs_4d_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_abs_3d_float32():
@@ -190,7 +190,7 @@ def test_dynamic_shape_p_abs_3d_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_p_abs_6d_float16():

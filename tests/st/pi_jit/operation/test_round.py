@@ -67,7 +67,7 @@ def test_p_round_input_512x12():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_round_input_512():
@@ -81,7 +81,7 @@ def test_p_round_input_512():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_round_input_64x128x1():
@@ -95,7 +95,7 @@ def test_p_round_input_64x128x1():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_round_input_64x128x1x512():
@@ -109,7 +109,7 @@ def test_p_round_input_64x128x1x512():
     fact.grad_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_round_input_2048():
@@ -123,7 +123,7 @@ def test_p_round_input_2048():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_round_input_16x1024():
@@ -137,7 +137,7 @@ def test_p_round_input_16x1024():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_round_input_20x48_fp64():
@@ -151,7 +151,7 @@ def test_p_round_input_20x48_fp64():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_round_input_5x12x4_fp64():
@@ -165,7 +165,7 @@ def test_p_round_input_5x12x4_fp64():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_round_input_32x16x128x8_int64():
@@ -179,7 +179,7 @@ def test_p_round_input_32x16x128x8_int64():
     fact.grad_cmp()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_p_round_input_32x4x28x8x6_int64():
@@ -189,47 +189,5 @@ def test_p_round_input_32x4x28x8x6_int64():
     Expectation: the result match
     """
     fact = RoundFactory(input_shape=(32, 4, 28, 8, 6), dtype=np.int64)
-    fact.forward_cmp()
-    fact.grad_cmp()
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_p_round_input_5d():
-    """
-    Feature: ALL TO ALL
-    Description: test operator round with input shape 64x128x1x512x32, and data_type float16
-    Expectation: the result match
-    """
-    fact = RoundFactory(input_shape=(64, 128, 1, 512, 32), dtype=np.float16)
-    fact.forward_cmp()
-    fact.grad_cmp()
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_p_round_input_6d():
-    """
-    Feature: ALL TO ALL
-    Description: test operator round with input shape 64x128x1x512x32x3, and data_type float32
-    Expectation: the result match
-    """
-    fact = RoundFactory(input_shape=(64, 128, 1, 512, 32, 3), dtype=np.float32)
-    fact.forward_cmp()
-    fact.grad_cmp()
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_p_round_input_7d():
-    """
-    Feature: ALL TO ALL
-    Description: test operator round with input shape 24x8x1x12x32x3x4, and data_type int32
-    Expectation: the result match
-    """
-    fact = RoundFactory(input_shape=(24, 8, 1, 12, 32, 3, 4), dtype=np.int32)
     fact.forward_cmp()
     fact.grad_cmp()

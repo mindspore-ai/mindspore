@@ -20,10 +20,10 @@ class DynamicFactory:
             msx = Tensor(i)
             ms_inputs.append(msx)
         context.set_context(mode=context.GRAPH_MODE)
-        jit(fn=self.ps_net.construct, mode="PSJit")
+        jit(fn=self.ps_net.construct, mode="PSJit")(*ms_inputs)
         ps_out = self.ps_net(*ms_inputs)
         context.set_context(mode=context.PYNATIVE_MODE)
-        jit(fn=self.pi_net.construct, mode="PIJit")
+        jit(fn=self.pi_net.construct, mode="PIJit")(*ms_inputs)
         pi_out = self.pi_net(*ms_inputs)
         comparebase.compare_nparray(pi_out.asnumpy(), ps_out.asnumpy(), 0.001, 0.001)
 
@@ -35,11 +35,11 @@ class DynamicFactory:
             ms_inputs.append(msx)
 
         context.set_context(mode=context.GRAPH_MODE)
-        jit(fn=self.ps_net.construct, mode="PSJit")
+        jit(fn=self.ps_net.construct, mode="PSJit")(*ms_inputs)
         grad_net = GradOfAllInputs(self.ps_net)
         ps_grad = grad_net(*ms_inputs, ms_sens)
         context.set_context(mode=context.PYNATIVE_MODE)
-        jit(fn=self.pi_net.construct, mode="PIJit")
+        jit(fn=self.pi_net.construct, mode="PIJit")(*ms_inputs)
         grad_net = GradOfAllInputs(self.pi_net)
         pi_grad = grad_net(*ms_inputs, ms_sens)
         for s, i in zip(ps_grad, pi_grad):
@@ -58,7 +58,7 @@ class Net1(Cell):
         return out
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_set_inputs():
@@ -95,7 +95,7 @@ def test_dynamic_rank_set_inputs():
     fact.grad_cmp(x, y, sens=s)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_not_set_inputs():
@@ -145,7 +145,7 @@ class Net4(Cell):
         return r, s1, s2
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_op_all_dtypes():
@@ -188,7 +188,7 @@ class Net5(Cell):
         return out
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_same_prim_twice():

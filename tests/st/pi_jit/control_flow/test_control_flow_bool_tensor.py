@@ -39,8 +39,8 @@ def test_control_flow_tensor_bool():
     """
     npx = np.random.rand(3, 4).astype(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net1.construct, mode="PIJit", jit_config={"loop_unrolling":True})
     pi_net = Net1()
+    jit(fn=Net1.construct, mode="PIJit", jit_config={"loop_unrolling":True})(pi_net, Tensor(npx))
     grad_net = F.grad(pi_net)
     pi_net(Tensor(npx))
     grad_net(Tensor(npx))
@@ -71,8 +71,8 @@ def test_control_flow_tensor_bool_with_x():
     """
     x = Tensor([0], dtype.float32)
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=Net2.construct, mode="PIJit")
     pi_net = Net2()
+    jit(fn=Net2.construct, mode="PIJit")(pi_net, x)
     grad_net = GradOfFirstInput(pi_net, sens_param=False)
     pi_net(x)
     grad_net(x)
