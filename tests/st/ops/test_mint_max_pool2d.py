@@ -25,7 +25,7 @@ from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 @test_utils.run_with_cell
 def max_pool2d_forward_func(x, kernel_size, stride, padding, dilation, ceil_mode=False, return_indices=False):
-    return max_pool2d(x, kernel_size, stride, padding, dilation, return_indices, ceil_mode)
+    return max_pool2d(x, kernel_size, stride, padding, dilation, ceil_mode=ceil_mode, return_indices=return_indices)
 
 @test_utils.run_with_cell
 def max_pool2d_backward_func(x, kernel_size, stride, padding, dilation, ceil_mode, return_indices):

@@ -217,7 +217,7 @@ def conv2d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
                     f"or a string, but got {type(padding)}")
 
 
-def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, return_indices=False, ceil_mode=False):
+def max_pool2d(input, kernel_size, stride=None, padding=0, dilation=1, *, ceil_mode=False, return_indices=False):
     r"""
     Performs a 2D max pooling on the input Tensor.
 
@@ -244,8 +244,8 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, retur
             strides, or a tuple of two int numbers that represent height and width of movement respectively.
             Default: ``0`` .
         dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: ``1`` .
-        return_indices (bool): Whether to output the indices of max value. Default: ``False`` .
         ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
+        return_indices (bool): Whether to output the indices of max value. Default: ``False`` .
 
     Returns:
         If `return_indices` is ``False`` , return a Tensor `output`, else return a tuple (`output`, `argmax`).
@@ -282,7 +282,8 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, retur
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mindspore.float32)
-        >>> output_tensor, argmax = ops.max_pool2d_ext(input, kernel_size=(3, 2), stride=(2, 1), return_indices=True)
+        >>> output_tensor, argmax = ops.extend.max_pool2d(input, kernel_size=(3, 2), stride=(2, 1),
+                                                          ceil_mode=False, return_indices=True)
         >>> print(output_tensor.shape)
         (20, 16, 24, 31)
         >>> print(argmax.shape)
@@ -300,4 +301,4 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, retur
     return out
 
 
-__all__ = ['conv2d', 'max_pool2d_ext']
+__all__ = ['conv2d', 'max_pool2d']
