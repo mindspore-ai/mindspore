@@ -787,7 +787,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
 
   AbstractBasePtr possible_func = GetCNodeOperatorAbstract(cnode, conf->context(), conf->func_graph());
   MS_EXCEPTION_IF_NULL(possible_func->BuildType());
-  if (possible_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
+  if (possible_func->IsSameTypeId(AbstractUndetermined::kTypeId)) {
     MS_LOG(DEBUG) << "EvalCNode eval Undetermined";
     return std::make_shared<EvalResult>(possible_func->Clone(), std::make_shared<AttrValueMap>());
   }
