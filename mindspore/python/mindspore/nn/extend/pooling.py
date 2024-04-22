@@ -33,6 +33,9 @@ class MaxPool2d(Cell):
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
+    .. warning::
+        Only support on Atlas training series.
+
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the max value,
             is an int number or a single element tuple that represents height and width are both kernel_size,
@@ -84,7 +87,7 @@ class MaxPool2d(Cell):
         TypeError: If `ceil_mode` is not bool.
 
     Supported Platforms:
-        ``Ascend910B``
+        ``Ascend``
 
     Examples:
         >>> import mindspore as ms

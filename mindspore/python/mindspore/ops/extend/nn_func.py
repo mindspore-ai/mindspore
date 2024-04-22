@@ -230,6 +230,9 @@ def max_pool2d(input, kernel_size, stride=None, padding=0, dilation=1, *, ceil_m
         \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
+    .. warning::
+        Only support on Atlas training series.
+
     Args:
         input (Tensor): Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of float32
             in Ascend.
@@ -275,7 +278,7 @@ def max_pool2d(input, kernel_size, stride=None, padding=0, dilation=1, *, ceil_m
         TypeError: If `ceil_mode` is not bool.
 
     Supported Platforms:
-        ``Ascend910B``
+        ``Ascend``
 
     Examples:
         >>> import mindspore
