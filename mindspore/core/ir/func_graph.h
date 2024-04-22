@@ -103,6 +103,7 @@ const char FUNC_GRAPH_FLAG_DYNAMIC_SHAPE[] = "dynamic_shape";
 const char FUNC_GRAPH_FLAG_NO_RECURSIVE[] = "no_recursive";
 const char FUNC_GRAPH_FLAG_ARGS_NO_EXPAND[] = "args_no_expand";
 const char FUNC_GRAPH_FLAG_PROXY_GRAPH[] = "proxy_graph";
+const char FUNC_GRAPH_FLAG_NO_CHILD_GRAPH[] = "no_child_graph";
 
 const char kFuncGraphFlagUndetermined[] = "undeterminate";
 const char kFuncGraphFlagBackPropEntry[] = "back_prop_entry";
