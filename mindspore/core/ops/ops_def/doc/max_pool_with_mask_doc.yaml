@@ -11,7 +11,7 @@ max_pool_with_mask:
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        This is an experimental API that is subject to change or deletion. Only support on Atlas training series.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and argmax
@@ -61,4 +61,4 @@ max_pool_with_mask:
         TypeError: If `ceil_mode` is not bool.
 
     Supported Platforms:
-        ``Ascend910B``
+        ``Ascend``
