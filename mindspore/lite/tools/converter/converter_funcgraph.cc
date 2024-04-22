@@ -70,7 +70,7 @@
 #include "tools/optimizer/graph/output_variable_pass.h"
 #include "tools/optimizer/graph/args_to_attr_pass.h"
 #include "tools/optimizer/fusion/ffn_antiquant_fusion.h"
-#include "tools/optimizer/common/pass_manager_extends.h"
+#include "tools/optimizer/common/lite_pass_manager.h"
 #include "load_mindir/infer_mindir.h"
 #include "tools/optimizer/fusion/matmul_allreduce_fusion.h"
 

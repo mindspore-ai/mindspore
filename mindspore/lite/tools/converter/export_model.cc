@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #include "include/errorcode.h"
 #include "ir/func_graph.h"
 #include "tools/lite_exporter/anf_exporter.h"
-#include "tools/optimizer/common/pass_manager_extends.h"
+#include "tools/optimizer/common/lite_pass_manager.h"
 #include "tools/converter/graphdef_transform.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/converter/parser/parser_utils.h"

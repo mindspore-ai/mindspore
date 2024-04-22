@@ -26,7 +26,7 @@
 #include "src/common/log_adapter.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/optimizer/common/pass_manager_extends.h"
+#include "tools/optimizer/common/lite_pass_manager.h"
 #include "ir/primitive.h"
 #include "tools/optimizer/fusion/add_activation_fusion.h"
 #include "tools/optimizer/fusion/affine_activation_fusion.h"

@@ -49,7 +49,7 @@
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
-#include "tools/optimizer/common/pass_manager_extends.h"
+#include "tools/optimizer/common/lite_pass_manager.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/remove_load_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"

@@ -33,7 +33,7 @@
 #include "tools/converter/quantizer/dynamic_quantizer.h"
 #include "tools/lite_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/cle_strategy.h"
-#include "tools/optimizer/common/pass_manager_extends.h"
+#include "tools/optimizer/common/lite_pass_manager.h"
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "include/backend/optimizer/graph_optimizer.h"
 #include "tools/optimizer/graph/infershape_pass.h"
