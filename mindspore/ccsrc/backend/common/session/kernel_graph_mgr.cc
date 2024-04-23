@@ -972,13 +972,6 @@ void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, con
     builder.SetOutputsFormat({format});
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), parameter.get());
 
-    // If the flag is enable, it means the graph would run in subgraph sink mode, the internal parameter cannot share
-    // the same device address.
-    auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index, false);
-    if (!node_graph->has_flag(kFlagEnableZeroCopyInGraph)) {
-      AnfAlgo::SetOutputAddr(address, 0, parameter.get());
-    }
-
     abstract::AbstractBasePtr abstract;
     auto shape = parameter->Shape();
     MS_EXCEPTION_IF_NULL(shape);
