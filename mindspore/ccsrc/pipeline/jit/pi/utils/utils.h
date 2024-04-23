@@ -59,21 +59,6 @@ class Utils {
   ~Utils() = default;
 
   static std::string GetPyName(PyObject *obj);
-  static int GetBranchDestIndex(int op, int arg, int ci);
-  static int GetBranchDestArg(int op, int jump_bci, int cur_bci);
-  static bool IsNameRelated(int op);
-  static bool IsCallOp(int op);
-  static bool IsCellAccessOp(int op);
-  static bool IsLocalAccessOp(int op);
-  static bool IsRelativeJump(int op);
-  static bool IsAbsoluteJump(int op);
-  static bool IsIfJump(int op);
-  static bool IsNonFall(int op);
-  static bool IsNoSideEffectOp(int op);
-  static bool IsGeneralNoSideEffectOp(int op);
-  static bool IsLoadOp(int op);
-  static bool IsMsUnsupported(int op);
-  static bool IsBinaryMathOp(int op);
 
   static PyFrameObject *PrepareFrame(PyObject *callable, PyObject *args, PyObject *kwargs);
 
@@ -97,8 +82,6 @@ class Utils {
   static std::pair<py::object, py::object> PackCallStackArgs(const std::vector<py::object> &args, int opcode,
                                                              bool ret_vector_args = false);
 
-  // debug tools
-  static const std::string &GetOpName(int opcode);
   // alias python 'print(func); import dis; dis.dis(func)'
   static void DisFuncObject(PyObject *);
   // alias python 'print(...)'

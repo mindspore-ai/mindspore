@@ -38,7 +38,9 @@ class Instr : public PtrListNodeBase<Instr> {
  public:
   Instr(const Instr &) = delete;
   Instr &operator=(const Instr &) = delete;
-  Instr(int op, int arg, int bci = -1, int line = -1) : bci_(bci), op_(op), arg_(arg), line_(line) {}
+  Instr(int op, int arg, int bci = -1, int line = -1) : bci_(bci), op_(op), arg_(arg), line_(line) {
+    MS_EXCEPTION_IF_CHECK_FAIL(op != Opcode::k_ILLEGAL_OPCODE, "ILLEGAL OPCODE !!!");
+  }
   Instr(int op, int arg, const std::string &name) : Instr(op, arg) { name_ = name; }
   Instr(int op, int arg, const py::object &cnst) : Instr(op, arg) { cnst_ = cnst; }
   explicit Instr(int op) : Instr(op, 0) {}

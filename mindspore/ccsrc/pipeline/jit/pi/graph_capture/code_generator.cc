@@ -100,7 +100,6 @@ void MapAdd(const py::dict &dict, const std::string &key, const py::object &valu
 
 static int GetOpcodeMaxStackEffect(int op, int arg, bool jump) {
   int off;
-#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 8
   off = PyCompile_OpcodeStackEffect(op, arg);
   if (op == NOP || op == EXTENDED_ARG) {
     return 0;
@@ -108,9 +107,6 @@ static int GetOpcodeMaxStackEffect(int op, int arg, bool jump) {
   if (op == END_FINALLY) {
     return -1;
   }
-#else
-  off = PyCompile_OpcodeStackEffectWithJump(op, arg, jump ? 1 : -1);
-#endif
   return off;
 }
 
@@ -162,9 +158,7 @@ static void CalculateOffset(const std::vector<std::unique_ptr<Instr>> &list) {
       int isize = InstrSize(i->arg());
       Instr *tar = i->extra_jump();
       if (tar) {
-        int arg = Utils::IsRelativeJump(i->op()) ? tar->bci() - i->bci() - 1 : tar->bci();
-        arg -= InstrSize(tar->arg()) - 1;  // decrease EXTENDED_ARG offset
-        i->set_arg(arg * sizeof(_Py_CODEUNIT));
+        i->set_arg(Opcode(i->op()).JumpOffset(i->bci(), tar->bci() - InstrSize(tar->arg()) + 1));
         re_calc |= isize != InstrSize(i->arg());
       }
     }
@@ -201,7 +195,7 @@ std::pair<py::bytes, py::bytes> CodeGenerator::ConvertToCodeBytes(const std::vec
 }
 
 static void SetNamedInstrIndex(const std::unique_ptr<Instr> &i, std::unordered_map<std::string, int> *co_names) {
-  if (!Utils::IsNameRelated(i->op())) {
+  if (!Opcode(i->op()).HasName()) {
     return;
   }
   int arg;
@@ -453,31 +447,30 @@ void CodeGenerator::EraseUnusedInstr() { EraseUnusedInstr(&code_.co_code); }
 
 std::vector<std::unique_ptr<Instr>> CodeGenerator::RotStack(int stack) {
   std::vector<std::unique_ptr<Instr>> res;
-  switch (stack) {
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION >= 7)
-    case 0:  // optimize
-      break;
-    case 1:
-      res.push_back(std::make_unique<Instr>(ROT_TWO));
-      break;
-    case 2:
-      res.push_back(std::make_unique<Instr>(ROT_THREE));
-      break;
-#if (PY_MINOR_VERSION > 7)
-    case 3:
-      res.push_back(std::make_unique<Instr>(ROT_FOUR));
-      break;
+  if (stack == 0) {
+    return res;
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 10)
+  } else {
+    res.push_back(std::make_unique<Instr>(ROT_N, stack + 1));
+#elif PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 10 && PY_MINOR_VERSION >= 7
+  } else if (stack == 1) {
+    res.push_back(std::make_unique<Instr>(ROT_TWO));
+  } else if (stack == 2) {
+    res.push_back(std::make_unique<Instr>(ROT_THREE));
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION > 7)
+  } else if (stack == 3) {
+    res.push_back(std::make_unique<Instr>(ROT_FOUR));
 #endif
+  } else {
+    MS_LOG(DEBUG) << ("too many stack value, will build tuple to process\n");
+    res.insert(res.begin(), std::make_unique<Instr>(BUILD_TUPLE, stack));
+    res.insert(res.begin(), std::make_unique<Instr>(UNPACK_SEQUENCE, stack));
+    res.insert(res.begin(), std::make_unique<Instr>(BUILD_TUPLE, stack));  // reverse tuple
+    res.push_back(std::make_unique<Instr>(ROT_TWO));
+    res.push_back(std::make_unique<Instr>(UNPACK_SEQUENCE, stack));
 #endif
-    default:
-      MS_LOG(DEBUG) << ("too many stack value, will build tuple to process\n");
-      res.insert(res.begin(), std::make_unique<Instr>(BUILD_TUPLE, stack));
-      res.insert(res.begin(), std::make_unique<Instr>(UNPACK_SEQUENCE, stack));
-      res.insert(res.begin(), std::make_unique<Instr>(BUILD_TUPLE, stack));  // reverse tuple
-      res.push_back(std::make_unique<Instr>(ROT_TWO));
-      res.push_back(std::make_unique<Instr>(UNPACK_SEQUENCE, stack));
-      break;
   }
+
   return res;
 }
 
@@ -624,7 +617,7 @@ void CodeGenerator::BuildOper(ValueNode *node, int index) {
     LoadValue(param);
   }
   int op = node->GetOpcode();
-  int arg = HAS_ARG(op) ? node->GetOparg() : 0;
+  int arg = pijit::Opcode(op).HasArg() ? node->GetOparg() : 0;
   auto const_arg_oper_iter = const_arg_oper.find(op);
   if (const_arg_oper_iter != const_arg_oper.end()) {
     arg = const_arg_oper_iter->second;
@@ -681,7 +674,7 @@ static bool IsNotNeedTrack(const std::vector<std::unique_ptr<Instr>> &list, int 
     return true;
   }
   auto iter = std::find_if(list.begin() + start, list.end(), [](const std::unique_ptr<Instr> &i) {
-    return Utils::IsCallOp(i->op()) || Utils::IsBinaryMathOp(i->op());
+    return Opcode(i->op()).IsCall() || Opcode(i->op()).IsBinaryMath();
   });
   return iter == list.end();
 }
@@ -963,21 +956,16 @@ void CodeBreakGenerator::CallUntrackedCode(CodeGenerator *code_gen) {
     BreakAtBlock(code_gen, untracked_bci, untracked_stack_effect);
     return;
   }
-  switch (start_op) {
-    case JUMP_IF_FALSE_OR_POP: /* fall-through */
-    case JUMP_IF_TRUE_OR_POP:  /* fall-through */
-    case POP_JUMP_IF_FALSE:    /* fall-through */
-    case POP_JUMP_IF_TRUE:
-      BreakAtIf(code_gen);
-      return;
-    case JUMP_ABSOLUTE: /* fall-through */
-    case JUMP_FORWARD:
-      break;
-    default:
-      // break at unsupported bytecode
-      untracked_stack_effect = PyCompile_OpcodeStackEffect(start_op, list[start_bci]->arg());
-      untracked_bci++;
-      break;
+  if (start_op == JUMP_IF_FALSE_OR_POP || start_op == JUMP_IF_TRUE_OR_POP || start_op == POP_JUMP_IF_FALSE ||
+      start_op == POP_JUMP_IF_TRUE) {
+    BreakAtIf(code_gen);
+    return;
+  }
+  if (start_op != JUMP_ABSOLUTE && start_op != JUMP_FORWARD) {
+    MS_EXCEPTION_IF_CHECK_FAIL(list[start_bci]->extra_jump() == nullptr, "unexpected jump instruction");
+    // break at unsupported bytecode
+    untracked_stack_effect = PyCompile_OpcodeStackEffect(start_op, list[start_bci]->arg());
+    untracked_bci++;
   }
 
   py::object code = MakeUntrackedCode(untracked_bci, untracked_stack_effect);
@@ -1207,7 +1195,7 @@ static int FindLoopEnd(int start, const CFG *cfg) {
 
   const auto &instrs = cfg->instr_pool();
   int loop_exit = loop_begin->begin_ci();
-  int target = loop_begin->GetJumpBB()->begin_ci();
+  int target = loop_begin->GetJumpBB() ? loop_begin->GetJumpBB()->begin_ci() : loop_exit;
   // find loop last exit
   for (; loop_exit != target; ++loop_exit) {
     Instr *jump = instrs[loop_exit]->extra_jump();
@@ -1233,42 +1221,37 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
   const auto &list = cfg->instr_pool();
   size_t block_end = 0;
   *stack_effect = 0;
-  switch (list[start_bci]->op()) {
+  int opcode = list[start_bci]->op();
+  if (opcode == Opcode::k_ILLEGAL_OPCODE) {
+    MS_LOG(INTERNAL_EXCEPTION) << "shouldn't reach here";
+
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
-    case SETUP_EXCEPT:
-      block_end = list[start_bci]->extra_jump()->bci();
-      for (; block_end < list.size() && list[block_end]->op() != END_FINALLY; ++block_end) {
-      }
-      break;
-    case SETUP_LOOP:
-      block_end = list[start_bci]->extra_jump()->bci() - 1;
-      break;
-    case FOR_ITER:
-      block_end = FindLoopEnd(start_bci, cfg);
-      *stack_effect = -1;
-      break;
+  } else if (opcode == SETUP_EXCEPT) {
+    block_end = list[start_bci]->extra_jump()->bci();
+    for (; block_end < list.size() && list[block_end]->op() != END_FINALLY; ++block_end) {
+    }
+  } else if (opcode == SETUP_LOOP) {
+    block_end = list[start_bci]->extra_jump()->bci() - 1;
+  } else if (opcode == FOR_ITER) {
+    block_end = FindLoopEnd(start_bci, cfg);
+    *stack_effect = -1;
 #endif
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 8)
-    case BEGIN_FINALLY:
-    case CALL_FINALLY:
-      MS_EXCEPTION_IF_CHECK_FAIL(false, "shouldn't reach here, must be break at SETUP_FINALLY");
-      break;
-    case FOR_ITER:
-      block_end = FindLoopEnd(start_bci, cfg);
-      *stack_effect = -1;
-      break;
+  } else if (opcode == BEGIN_FINALLY || opcode == CALL_FINALLY) {
+    MS_EXCEPTION_IF_CHECK_FAIL(false, "shouldn't reach here, must be break at SETUP_FINALLY");
+  } else if (opcode == FOR_ITER) {
+    block_end = FindLoopEnd(start_bci, cfg);
+    *stack_effect = -1;
 #endif
-    case SETUP_WITH:
+  } else if (opcode == SETUP_WITH || opcode == SETUP_FINALLY) {
+    if (opcode == SETUP_WITH) {
       *stack_effect = -1;
-      /* fall-through */
-    case SETUP_FINALLY:
-      block_end = list[start_bci]->extra_jump()->bci();
-      for (; block_end < list.size() && list[block_end]->op() != END_FINALLY; ++block_end) {
-      }
-      break;
-    default:
-      block_end = FindLoopEnd(start_bci, cfg);
-      break;
+    }
+    block_end = list[start_bci]->extra_jump()->bci();
+    for (; block_end < list.size() && list[block_end]->op() != END_FINALLY; ++block_end) {
+    }
+  } else {
+    block_end = FindLoopEnd(start_bci, cfg);
   }
   if (list[start_bci]->op() == FOR_ITER && SizeToInt(block_end) == start_bci - 1) {
     // break at FOR_ITER and it is not a loop
@@ -1297,8 +1280,7 @@ static int FindFinallyBlockEnd(int raise_block, int normal_block, const CFG *cfg
   auto j = raise_block;
   for (; list[i]->op() == list[j]->op(); ++i, ++j) {
   }
-  bool validate = list[i]->op() == JUMP_FORWARD && list[j]->op() == RERAISE;
-  MS_EXCEPTION_IF_CHECK_FAIL(validate, "can't find finally block");
+  // only python3.9, list[i]->op() == JUMP_FORWARD && list[j]->op() == RERAISE;
   return j;
 }
 
@@ -1343,20 +1325,18 @@ static int FindTryBlockEnd(int start, const CFG *cfg) {
 static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_effect) {
   const std::vector<std::unique_ptr<Instr>> &list = cfg->instr_pool();
   *stack_effect = 0;
-  switch (list[start_bci]->op()) {
-    case SETUP_FINALLY:
-      *end_bci = FindTryBlockEnd(start_bci, cfg);
-      return true;
-    case SETUP_WITH:
-      *end_bci = FindWithBlockEnd(start_bci, cfg);
-      *stack_effect = -1;
-      return true;
-    case FOR_ITER:
-      *stack_effect = -1;
-    default:
-      *end_bci = FindLoopEnd(start_bci, cfg);
-      break;
+  int opcode = list[start_bci]->op();
+  if (opcode == SETUP_FINALLY) {
+    *end_bci = FindTryBlockEnd(start_bci, cfg);
+    return true;
+  } else if (opcode == SETUP_WITH) {
+    *end_bci = FindWithBlockEnd(start_bci, cfg);
+    *stack_effect = -1;
+    return true;
+  } else if (opcode == FOR_ITER) {
+    *stack_effect = -1;
   }
+  *end_bci = FindLoopEnd(start_bci, cfg);
   if (list[start_bci]->op() == FOR_ITER && *end_bci == start_bci - 1) {
     // break at FOR_ITER and it is not a loop
     *end_bci = list[start_bci]->extra_jump()->bci() - 1;
@@ -1411,7 +1391,7 @@ py::object MindCodeBreakGenerator::MakeCopyCode(const std::string &co_name, int 
   PyCodeObject *new_code =
     PyCode_New(co_argcount, co_kwonlyargcount, co_->co_nlocals, co_->co_stacksize, co_flags, co_->co_code,
                co_->co_consts, co_->co_names, co_->co_varnames, co_->co_freevars, co_->co_cellvars, co_->co_filename,
-               py_co_name.ptr(), co_->co_firstlineno, co_->co_lnotab);
+               py_co_name.ptr(), co_->co_firstlineno, GetCodeLineTable(co_));
   if (new_code == nullptr) {
     throw py::error_already_set();
   }
