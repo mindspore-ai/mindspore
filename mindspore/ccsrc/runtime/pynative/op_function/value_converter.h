@@ -31,7 +31,9 @@ class BACKEND_EXPORT ValueConverter {
     const auto &input = inputs[i];
     MS_EXCEPTION_IF_NULL(input);
     auto t = input->template cast<T>();
-    MS_EXCEPTION_IF_NULL(t);
+    if (t == nullptr) {
+      MS_LOG(EXCEPTION) << "Get input type " << input->ToString() << ", but want to get " << typeid(T).name();
+    }
     return t;
   }
   static Int64ImmPtr ToInt(const ValuePtrList &inputs, size_t i);

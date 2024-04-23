@@ -2609,8 +2609,8 @@ class _RecomputeCell(Cell):
     def __init__(self, block):
         """Initialize Recompute cell."""
         super(_RecomputeCell, self).__init__()
-        self.args = None
-        self.kwargs = None
+        self.args = []
+        self.kwargs = []
         self.wrap_cell = _WrapCell(block)
         self.net = block
         self.internal_params = []
@@ -2619,18 +2619,19 @@ class _RecomputeCell(Cell):
         self.init_mixed_precision_type(block)
 
     def construct(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-        return self.net(*self.args)
+        self.args.append(args)
+        self.kwargs.append(kwargs)
+        return self.net(*args)
 
     def bprop(self, *args):
         grad_input = args[-1]
-        grads = self.grad(self.net, self.internal_params)(*self.args, grad_input)
+        input_args = self.args[-1]
+        self.args.pop()
+        self.kwargs.pop()
+        grads = self.grad(self.net, self.internal_params)(*input_args, grad_input)
         weights = OrderedDict()
         for i, param in enumerate(self.internal_params):
             weights[param] = grads[1][i]
-        self.args = None
-        self.kwargs = None
         return grads[0], weights
 
     def init_mixed_precision_type(self, block):
