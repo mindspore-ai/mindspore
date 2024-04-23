@@ -113,9 +113,9 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
 
   uint32_t device_list[1] = {device_id_};
   uint32_t device_num = 1;
-  uint64_t mask = GetOptionsMask();
   aclprofAicoreMetrics aic_metrics = GetAicMetrics();
-  acl_config_ = CALL_ASCEND_API(aclprofCreateConfig, device_list, device_num, aic_metrics, nullptr, GetOptionsMask());
+  uint64_t mask = GetOptionsMask(aic_metrics);
+  acl_config_ = CALL_ASCEND_API(aclprofCreateConfig, device_list, device_num, aic_metrics, nullptr, mask);
   if (acl_config_ == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofCreateConfig function.";
   }
@@ -124,15 +124,18 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
   init_flag_ = true;
 }
 
-uint64_t AscendProfiler::GetOptionsMask() const {
-  uint64_t mask = ACL_PROF_ACL_API | ACL_PROF_AICORE_METRICS;
-
+uint64_t AscendProfiler::GetOptionsMask(aclprofAicoreMetrics aic_metrics) const {
+  uint64_t mask = 0;
   nlohmann::json options_json;
   try {
     options_json = nlohmann::json::parse(profiling_options_);
   } catch (const std::exception &err) {
     MS_LOG(ERROR) << "Failed to parse profiling options.";
     return ACL_AICORE_NONE;
+  }
+
+  if (aic_metrics != ACL_AICORE_NONE) {
+    mask |= ACL_PROF_AICORE_METRICS;
   }
 
   if (options_json["task_trace"] == "on") {
