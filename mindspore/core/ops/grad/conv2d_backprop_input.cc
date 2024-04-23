@@ -133,7 +133,7 @@ TypePtr Conv2DBackpropInputInferType(const PrimitivePtr &prim, const std::vector
   // todo: check input_sizes
   (void)types.emplace("x", input_args[kConv2DBackpropInputInputIndex]->GetType());
   (void)types.emplace("doutput", input_args[kConv2DBackpropInputDoutIndex]->GetType());
-  std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
+  std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32, kBFloat16};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }
 
