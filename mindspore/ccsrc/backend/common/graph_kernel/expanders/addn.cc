@@ -21,7 +21,7 @@
 namespace mindspore::graphkernel::expanders {
 class AddN : public OpDesc {
  public:
-  AddN() { (void)validators_.emplace_back(std::make_unique<CheckAllFormatsSame>()); }
+  AddN() {}
   ~AddN() = default;
 
   static NodePtr Exec(const inner::GraphBuilder &gb, const NodePtrList &inputs) {
@@ -36,7 +36,17 @@ class AddN : public OpDesc {
   bool CheckInputs() override {
     constexpr size_t min_inputs = 2;
     if (inputs_info_.size() < min_inputs) {
-      MS_LOG(INFO) << "For 'AddN', the inputs num should be greater than 1, but got " << inputs_info_.size();
+      MS_LOG(DEBUG) << "For 'AddN', the inputs num should be greater than 1, but got " << inputs_info_.size();
+      return false;
+    }
+    const auto &fmt_0 = inputs_info_[0].format;
+    for (size_t i = 1; i < inputs_info_.size(); i++) {
+      const auto &fmt_i = inputs_info_[i].format;
+      if (fmt_i == fmt_0 || (fmt_i == kOpFormat_DEFAULT && fmt_0 == kOpFormat_NCHW) ||
+          (fmt_i == kOpFormat_NCHW && fmt_0 == kOpFormat_DEFAULT)) {
+        continue;
+      }
+      MS_LOG(DEBUG) << "For 'AddN', the " << i << "th format: " << fmt_i << " is not same as 0th format: " << fmt_0;
       return false;
     }
     return true;

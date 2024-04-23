@@ -23,6 +23,15 @@ class OnesLike : public OpDesc {
   ~OnesLike() = default;
 
  protected:
+  bool CheckInputs() override {
+    auto x_shape = inputs_info_[0].shape;
+    if (IsDynamic(x_shape)) {
+      MS_LOG(DEBUG) << "Skip dynamic shape case";
+      return false;
+    }
+    return true;
+  }
+
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     auto const_one = gb.Tensor(1, input_x->type);
