@@ -34,6 +34,8 @@ class UpdateWeight {
   bool CreateAddOpNodeForGraph(const FuncGraphPtr &anf_graph);
   bool UpdateConstantTensorData(const std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> &weights,
                                 std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> *new_weights);
+  ParameterPtr BuildFloatVec4DParameterNode(const FuncGraphPtr &anf_graph, ShapeVector weight_shape,
+                                            const std::string &node_name);
 
  private:
   /* note:

@@ -21,15 +21,23 @@
 #include "tools/common/string_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/core/ir/manager.h"
+#include "tools/common/tensor_util.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
 namespace mindspore {
 namespace {
 constexpr float kNumMicrosecondToMillisecond = 1000.0;
 constexpr size_t kInputSize3 = 3;
 constexpr size_t kConstantWeightShapeSize = 2;
+constexpr size_t kConstantConvWeightShapeSize = 4;
 constexpr size_t kInputIndex2 = 2;
 constexpr const char *kUpdateWeightTensorNameSuffix = "_add_param";
 constexpr const char *kUpdateWeightAddNodeNameSuffix = "_add_cnode";
 constexpr std::size_t kUpdateWeightTensorNameSuffixSize = 10;
+constexpr size_t kConvWeightSize = 4;
+constexpr size_t kConvWeightId1 = 0;
+constexpr size_t kConvWeightId2 = 1;
+constexpr size_t kConvWeightId3 = 2;
+constexpr size_t kConvWeightId4 = 3;
 }  // namespace
 
 bool UpdateWeight::IsMatchName(const std::string &cnode_name, const std::string &param_name) {
@@ -84,7 +92,8 @@ bool UpdateWeight::UpdateConstantTensorData(const std::vector<std::vector<std::s
         MS_LOG(ERROR) << "can not find init data name: " << init_data_name;
         return false;
       }
-      auto name = init_data_name.substr(0, size - kUpdateWeightTensorNameSuffixSize);
+      size_t last_slash_pos = init_data_name.find_last_of('/');
+      auto name = init_data_name.substr(0, last_slash_pos);
       if (weights_pairs.find(name) == weights_pairs.end()) {
         MS_LOG(ERROR) << "can not find init data name in user update weight tensors.";
         return false;
@@ -98,6 +107,42 @@ bool UpdateWeight::UpdateConstantTensorData(const std::vector<std::vector<std::s
   auto time2 = lite::GetTimeUs();
   MS_LOG(INFO) << "Calculate update tensor time: " << (time2 - time1) / kNumMicrosecondToMillisecond << " ms";
   return true;
+}
+
+ParameterPtr UpdateWeight::BuildFloatVec4DParameterNode(const FuncGraphPtr &anf_graph, ShapeVector weight_shape,
+                                                        const std::string &node_name) {
+  if (weight_shape.size() != kConvWeightSize) {
+    MS_LOG(ERROR) << "weight_shape size is not 4, weight_shape size:" << weight_shape.size() << "!";
+    return nullptr;
+  }
+  MS_CHECK_TRUE_RET(anf_graph != nullptr, nullptr);
+  auto param_node = anf_graph->add_parameter();
+  MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
+  param_node->set_name(node_name);
+  auto weight_length = weight_shape[kConvWeightId1] * weight_shape[kConvWeightId2] * weight_shape[kConvWeightId3] *
+                       weight_shape[kConvWeightId4];
+  std::vector<float> data_1d(weight_length, 0);
+  auto size = data_1d.size() * sizeof(float);
+  std::vector<int64_t> shape_vector = {
+    static_cast<int64_t>(weight_shape[kConvWeightId1]), static_cast<int64_t>(weight_shape[kConvWeightId2]),
+    static_cast<int64_t>(weight_shape[kConvWeightId3]), static_cast<int64_t>(weight_shape[kConvWeightId4])};
+  auto tensor_info = lite::CreateTensorInfo(data_1d.data(), size, shape_vector, kNumberTypeFloat32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
+    return nullptr;
+  }
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
+  return param_node;
+}
+
+bool JudgeNodeType(const AnfNodePtr &node) {
+  return !mindspore::opt::CheckPrimitiveType(node, mindspore::prim::kPrimConv2D) &&
+         !mindspore::opt::CheckPrimitiveType(node, mindspore::prim::kPrimMatMulV2) &&
+         !mindspore::opt::CheckPrimitiveType(node, mindspore::prim::kPrimMatMul);
 }
 
 bool UpdateWeight::CreateAddOpNodeForGraph(const FuncGraphPtr &anf_graph) {
@@ -114,8 +159,16 @@ bool UpdateWeight::CreateAddOpNodeForGraph(const FuncGraphPtr &anf_graph) {
     }
     auto cnode = utils::cast<CNodePtr>(node);
     MS_CHECK_TRUE_RET(cnode != nullptr, false);
-    if (find(constant_cnode_name_.begin(), constant_cnode_name_.end(), cnode->fullname_with_scope()) ==
-        constant_cnode_name_.end()) {
+    size_t last_slash_pos = cnode->fullname_with_scope().find_last_of('/');
+    string search_key = "";
+    if (last_slash_pos != std::string::npos) {
+      search_key = cnode->fullname_with_scope().substr(0, last_slash_pos);
+    } else {
+      MS_LOG(INFO) << "Find last slash failed! Cnode name:" << cnode->fullname_with_scope() << "!";
+    }
+    if (find(constant_cnode_name_.begin(), constant_cnode_name_.end(), search_key) == constant_cnode_name_.end()) {
+      continue;
+    } else if (JudgeNodeType(node)) {
       continue;
     }
     if (cnode->size() < kInputSize3) {
@@ -144,20 +197,28 @@ bool UpdateWeight::CreateAddOpNodeForGraph(const FuncGraphPtr &anf_graph) {
     auto weight_tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
     MS_CHECK_TRUE_RET(weight_tensor != nullptr, false);
     auto weight_shape = weight_tensor->shape();
-    if (weight_shape.size() != kConstantWeightShapeSize) {
-      MS_LOG(ERROR) << "now only support 2 dims matmul constant weight.";
+    AnfNodePtr add_param_node = nullptr;
+    if (weight_shape.size() == kConstantWeightShapeSize) {
+      std::vector<std::vector<float>> add_param_data(weight_shape[0], std::vector<float>(weight_shape[1], 0));
+      add_param_node = opt::BuildFloatVec2DParameterNode(anf_graph, add_param_data,
+                                                         cnode->fullname_with_scope() + kUpdateWeightTensorNameSuffix);
+      if (add_param_node == nullptr) {
+        MS_LOG(ERROR) << "create param node failed.";
+        return false;
+      }
+    } else if (weight_shape.size() == kConstantConvWeightShapeSize) {
+      add_param_node = BuildFloatVec4DParameterNode(anf_graph, weight_shape,
+                                                    cnode->fullname_with_scope() + kUpdateWeightTensorNameSuffix);
+      if (add_param_node == nullptr) {
+        MS_LOG(ERROR) << "create param node failed.";
+        return false;
+      }
+    } else {
+      MS_LOG(ERROR) << "now only support 2 dims matmul and 4 dims conv constant weight."
+                    << "weight_shape:" << weight_shape.size() << "node name:" << cnode->fullname_with_scope();
       return false;
     }
-    std::vector<std::vector<float>> add_param_data;
-    for (auto i = 0; i < weight_shape[0]; i++) {
-      std::vector<float> data;
-      for (auto j = 0; j < weight_shape[1]; j++) {
-        data.push_back(0);
-      }
-      add_param_data.push_back(data);
-    }
-    AnfNodePtr add_param_node = opt::BuildFloatVec2DParameterNode(
-      anf_graph, add_param_data, cnode->fullname_with_scope() + kUpdateWeightTensorNameSuffix);
+
     if (add_param_node == nullptr) {
       MS_LOG(ERROR) << "create param node failed.";
       return false;

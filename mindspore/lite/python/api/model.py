@@ -391,7 +391,7 @@ class Model(BaseModel):
                 "inputs must be list or tuple, but got {}.".format(type(inputs)))
         model_input_tensors = self.get_inputs()
         if len(model_input_tensors) != len(inputs):
-            raise RuntimeError(f"inputs size is wrong.")
+            raise RuntimeError(f"model input len:{len(model_input_tensors)} not equal input len:{len(inputs)}!")
         inputs_tensor = []
         for i, in_tensor in enumerate(inputs):
             if isinstance(in_tensor, np.ndarray):
