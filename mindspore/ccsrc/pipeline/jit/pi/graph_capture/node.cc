@@ -109,8 +109,8 @@ std::string ValueNode::ToString() const {
 
 std::string InstrNode::ToString() const {
   std::stringstream s;
-  s << this->AbstractNode::ToString() << " bci " << bci() << " lno " << GetLineNo() << ' '
-    << Utils::GetOpName(GetOpcode()) << ' ' << GetOparg() << ' ' << GetName();
+  s << this->AbstractNode::ToString() << " bci " << bci() << " lno " << GetLineNo() << ' ' << Opcode(GetOpcode()).name()
+    << ' ' << GetOparg() << ' ' << GetName();
   return s.str();
 }
 

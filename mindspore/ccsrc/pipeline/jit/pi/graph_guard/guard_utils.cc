@@ -509,13 +509,13 @@ class DictData : public ItemData {
       : ItemData(ItemType::PyDict, needSpecialize, recurseDepth) {
     if (PyDictKeys_Check(obj)) {
       dt_ = DictType::DtKeys;
-      obj = PyObject_CallOneArg(reinterpret_cast<PyObject *>(&PyList_Type), obj);
+      obj = PyObject_Vectorcall(reinterpret_cast<PyObject *>(&PyList_Type), &obj, 1, nullptr);
     } else if (PyDictValues_Check(obj)) {
       dt_ = DictType::DtValues;
-      obj = PyObject_CallOneArg(reinterpret_cast<PyObject *>(&PyList_Type), obj);
+      obj = PyObject_Vectorcall(reinterpret_cast<PyObject *>(&PyList_Type), &obj, 1, nullptr);
     } else if (PyDictItems_Check(obj)) {
       dt_ = DictType::DtItems;
-      obj = PyObject_CallOneArg(reinterpret_cast<PyObject *>(&PyDict_Type), obj);
+      obj = PyObject_Vectorcall(reinterpret_cast<PyObject *>(&PyDict_Type), &obj, 1, nullptr);
     } else {
       dt_ = DictType::DtDict;
     }

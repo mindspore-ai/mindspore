@@ -4,6 +4,7 @@ file(GLOB_RECURSE _PIJIT_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "graph_guard/*.cc"
         "graph_build/*.cc"
         "utils/*.cc"
+        "*.c"
         "*.cc"
 )
 

@@ -80,8 +80,6 @@ class GraphBuilder {
   static py::object FindPyFunc(AObject *vobj);
   static py::object GetFuncInfo(ValueNode *func_node);
 
-  static bool IsByteCodeImplemented(int bytecode);
-
   // TryBlockStack operation
   TryBlock &PeekStack(int p);
   void PushStack(TryBlock tb) { tryBlockStacks_.push_back(tb); }
@@ -282,7 +280,9 @@ class GraphBuilder {
   bool DoYieldValue(const Instr &instr);
   bool DoException(const Instr &instr);
   bool DoWith(const Instr &instr);
+  bool DoOtherBytecode(const Instr &instr);
   bool NotImplementBytecode(const Instr &instr);
+
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
 
   bool HandleSideEffectOfFuncInWhiteList(CallNode *call_node, InferFunc);
