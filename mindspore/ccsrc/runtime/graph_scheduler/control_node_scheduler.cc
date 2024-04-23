@@ -1824,8 +1824,9 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       auto from_node_with_index = GetFrontNodeByKernelGraph(input, graph.get());
       MS_EXCEPTION_IF_NULL(from_node_with_index.first);
       if (common::AnfAlgo::CheckPrimitiveType(from_node_with_index.first, prim::kPrimTupleGetItem) &&
-          (!from_node_with_index.first->cast<CNodePtr>()->HasAttr(kAttrReplaceRealKernelInBackend))) {
-        MS_LOG(WARNING) << "Input node:" << from_node_with_index.first->DebugString()
+          (!from_node_with_index.first->cast<CNodePtr>()->HasAttr(kAttrReplaceRealKernelInBackend)) && 
+          (!common::AnfAlgo::IsTupleOutput(from_node_with_index.first))) {
+        MS_LOG(WARNING) << "Input node:" << from_node_with_index.first->DebugString(2)
                         << " for graph:" << graph->ToString() << " is a tuple get item";
         from_node_with_index = FetchRealNodeByGetItem(from_node_with_index);
       }
