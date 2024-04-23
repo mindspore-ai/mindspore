@@ -35,11 +35,9 @@ class AscendMemoryManager : public MemoryManager {
   void ClearGlobalIdleMem() override;
   void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false,
                              uint32_t stream_id = kDefaultStreamIndex) override;
-  void *MallocOverflowMemFromMemFromMemPool(size_t size, bool from_persistent_mem) const;
   void FreeMemFromMemPool(void *device_ptr) override;
   size_t GetMaxUsedMemorySize() const override;
   uint64_t GetMsMaxMemSize() const;
-  uint8_t *MallocCommunicationMemFromMemPool(size_t size, uint32_t stream_id = kDefaultStreamIndex) override;
   bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
                                       std::vector<size_t> size_list, uint32_t stream_id = kDefaultStreamIndex) override;
   std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list,

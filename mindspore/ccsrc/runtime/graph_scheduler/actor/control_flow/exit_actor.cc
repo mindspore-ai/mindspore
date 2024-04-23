@@ -48,9 +48,6 @@ void ExitActor::Init() {
 
 void ExitActor::FetchInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  auto counter = callback_counter();
-  MS_EXCEPTION_IF_NULL(counter);
-  counter->Wait();
   if (!WaitRuntimePipelineFinish(context)) {
     MS_LOG(INFO) << "Run failed and early stop.";
     return;

@@ -88,11 +88,12 @@ def test_hal_event_wait():
     with ms.hal.StreamCtx(s2):
         ev1.wait()
         c = ops.matmul(b, b)
+        ev2.record()
 
     ev2.wait()
     ev2.synchronize()
     assert ev1.query() is True
-    assert ev1.query() is True
+    assert ev2.query() is True
     assert np.allclose(ops.matmul(a, a).asnumpy(), b.asnumpy())
     assert np.allclose(ops.matmul(b, b).asnumpy(), c.asnumpy())
 

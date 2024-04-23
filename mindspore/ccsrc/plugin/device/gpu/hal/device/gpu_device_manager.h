@@ -45,6 +45,8 @@ class GPUDeviceManager {
   bool CreateStreamWithPriority(size_t *stream_id, int32_t priority);
   bool DestroyStream(size_t stream_id);
   CudaDeviceStream GetStream(size_t stream_id) const;
+  size_t QueryStreamSize() const;
+  std::vector<uint32_t> GetStreamIds() const;
   void set_current_stream(size_t stream_id);
   size_t current_stream() const;
   bool QueryStream(size_t stream_id);

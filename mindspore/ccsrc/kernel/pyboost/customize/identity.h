@@ -26,8 +26,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr BACKEND_EXPORT IdentityCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                                                   void *stream = nullptr);
+tensor::TensorPtr BACKEND_EXPORT IdentityCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

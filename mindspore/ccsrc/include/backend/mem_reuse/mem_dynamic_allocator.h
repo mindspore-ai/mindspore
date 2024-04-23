@@ -17,19 +17,25 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_DYNAMIC_ALLOCATOR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_DYNAMIC_ALLOCATOR_H_
 
-#include <memory>
-#include <map>
-#include <set>
-#include <vector>
 #include <algorithm>
-#include <utility>
-#include <thread>
+#include <functional>
+#include <list>
+#include <map>
+#include <memory>
 #include <mutex>
+#include <set>
+#include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <random>
 #include <string>
 #include <tuple>
+
 #include "utils/ms_utils.h"
 #include "include/backend/visible.h"
 #include "include/common/utils/stream_util.h"
+#include "ir/device_event.h"
 #ifdef __APPLE__
 #include "mindrt/include/async/spinlock.h"
 #endif
@@ -37,7 +43,7 @@
 namespace mindspore {
 namespace device {
 // The status of memory buf.
-enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed, kMemBufEagerFree };
+enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed, kMemBufEagerFree, kMemBufUsedByEvent };
 // Memory allocator type is used to record the memory classification statistics information.
 enum class AllocatorType : int { kWeight, kConstantValue, kKernelOutput, kGraphOutput, kOther };
 constexpr int kAllocatorTypeNum = 5;
@@ -67,6 +73,17 @@ using DynamicMemBlockPtr = std::shared_ptr<DynamicMemBlock>;
 
 struct MemStatusManager;
 using MemStatusManagerPtr = std::shared_ptr<MemStatusManager>;
+
+// pair has no hash method, need override it.
+struct pair_hash {
+  template <class L, class R>
+  std::size_t operator()(const std::pair<L, R> &param) const {
+    size_t hash = std::hash<L>{}(param.first);
+    hash <<= (sizeof(size_t) << 2);
+    hash ^= std::hash<R>{}(param.second);
+    return std::hash<size_t>{}(hash);
+  }
+};
 
 // The main class of dynamic memory pool.
 class BACKEND_EXPORT DynamicMemPoolBestFit {
@@ -98,6 +115,7 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   // The statistics information.
   size_t TotalMemStatistics() const;
   size_t TotalUsedMemStatistics() const;
+  size_t TotalUsedByEventMemStatistics() const;
   size_t TotalIdleMemStatistics() const;
   size_t TotalEagerFreeMemStatistics() const;
   size_t UsedMemPeakStatistics() const;
@@ -115,6 +133,14 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   // Set mem pool block size
   virtual void SetMemPoolBlockSize(size_t available_device_mem_size);
   virtual size_t GetMaxUsedMemSize() const { return 0; }
+
+  // Element in vector : memory_stream_id, address
+  bool RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_id,
+                   const std::vector<std::pair<uint32_t, DeviceMemPtr>> &memory_stream_addresses,
+                   const DeviceEventPtr &event);
+  bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id);
+  bool WaitEvent(int64_t task_id_on_stream, uint32_t memory_stream_id);
+  bool SyncAllEvents();
 #ifdef WITH_BACKEND
 
  protected:
@@ -166,21 +192,23 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
 
   // Free memory inner with no lock, the caller need lock.
   void FreeTensorMemInner(const DeviceMemPtr &device_addr);
+  // Pre combine mem buf, return false when mem buf can not combine.
+  bool PreCombineMemBuf(const DynamicMemBufPtr &mem_buf, const MemStatusManagerPtr &mem_mng);
   // Combine the memory buf when memory free, to avoid the memory fragmentation.
-  void CombineMemBuf(const DeviceMemPtr &device_addr, DynamicMemBufStatus origin_status,
+  void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceAddrMapMemBuf::iterator &iter,
+                     const MemStatusManagerPtr &mem_mng, DynamicMemBufStatus origin_status,
                      DynamicMemBufStatus target_status);
   // Fetch the mem info by the strict addr.
   std::tuple<DynamicMemBlockPtr, DeviceAddrMapMemBuf::iterator, MemStatusManagerPtr> FindByStrictAddr(
     const DeviceMemPtr &device_addr) const;
-  // Erase memory buf by size and device address when memory buf is combined.
-  void EraseMemBufByStatus(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng,
-                           DynamicMemBufStatus target_status, uint32_t stream_id) const;
 
   // Keep the part memorys by addr.
   void KeepTensorMemByAddr(const DeviceMemPtr &device_addr, size_t size);
   std::tuple<DynamicMemBlockPtr, DynamicMemBufPtr, MemStatusManagerPtr> FindByKeepAddr(
     const DeviceMemPtr &device_addr) const;
   DynamicMemBufPtr FindMemBufByKeepAddr(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block) const;
+  // Sync all events inner without lock.
+  bool SyncAllEventsInner();
 
 #ifdef __APPLE__
   // There are some problems with using mutex on Mac, use spinlocks instead.
@@ -196,6 +224,9 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   size_t config_unit_size_{kDynamicMemAllocUnitSize};
   // Flag for eager free routine. This flag set to false when initializing, and set to true when triggering oom.
   bool is_trigger_eager_free_{false};
+
+  // key : <user_stream_id, memory_stream_id>
+  std::unordered_map<std::pair<uint32_t, uint32_t>, std::set<DynamicMemBufPtr>, pair_hash> stream_pair_addresses_;
 };
 
 // Recording information for debugging the memory allocator.
@@ -226,23 +257,45 @@ class DynamicMemAllocatorDebugInfo {
   static thread_local AllocatorDebugInfo debug_info_;
 };
 
+using TaskIdOnStreamEvent = std::pair<int64_t, DeviceEventPtr>;
 struct DynamicMemBuf {
-  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size)
-      : device_addr_(addr), status_(status), size_(size) {}
-  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size, const std::string &allocator_name,
-                AllocatorType allocator_type)
+  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size, uint32_t stream_id)
+      : device_addr_(addr), status_(status), size_(size), stream_id_(stream_id) {}
+  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size, uint32_t stream_id,
+                const std::string &allocator_name, AllocatorType allocator_type)
       : device_addr_(addr),
         status_(status),
         size_(size),
+        stream_id_(stream_id),
         allocator_name_(allocator_name),
         allocator_type_{allocator_type} {}
+  DynamicMemBuf(const DynamicMemBuf &) = delete;
+  DynamicMemBuf &operator=(const DynamicMemBuf &) = delete;
+
+  // Record event on mem buf.
+  bool RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_id, const DeviceEventPtr &event);
+
+  // Release events on mem buf.
+  bool WaitEvent(uint32_t task_id_on_stream, uint32_t user_stream_id);
+
+  // Indidates if mem buf used by event, return true when no event bind on mem buf.
+  bool IsEventNotUsed();
+
+  // Sync all events that bound on mem buf.
+  bool SyncAllEvents();
+
   DeviceMemPtr device_addr_;
   DynamicMemBufStatus status_;
   size_t size_;
 
+  uint32_t stream_id_{0};
+
   // Debug info.
   std::string allocator_name_;
   AllocatorType allocator_type_{AllocatorType::kOther};
+
+  // Parameter: user_stream_id, list of <task_id_on_stream, event>.
+  std::shared_ptr<std::unordered_map<uint32_t, std::shared_ptr<std::list<TaskIdOnStreamEvent>>>> events_{nullptr};
 };
 
 class DynamicMemBlock {
@@ -258,6 +311,8 @@ class DynamicMemBlock {
  private:
 #endif
   friend class DynamicMemPoolBestFit;
+  // MemStatusManager need dump block_all_mem_buf_map_ info, add friend class.
+  friend class MemStatusManager;
 
   // The map of all memory buf in this memory block by device address.
   DeviceAddrMapMemBuf block_all_mem_buf_map_;
@@ -269,10 +324,17 @@ class DynamicMemBlock {
 };
 
 struct DeviceState {
+  // Update peak size.
+  void UpdatePeakSize() {
+    used_mem_peak_size_ = std::max(used_mem_peak_size_, total_used_mem_size_ + total_used_by_event_mem_size_);
+  }
+
   // Memory allocated from device
   size_t total_mem_size_{0};
   // Memory in use
   size_t total_used_mem_size_{0};
+  // Memory in use by event
+  size_t total_used_by_event_mem_size_{0};
   // Memory in idle.
   size_t total_idle_mem_size_{0};
   // Memory in eager free.
@@ -285,45 +347,36 @@ struct MemStatusManager {
   bool Empty() const { return mem_block_list_.empty(); }
 
   void AddMemBlock(const DynamicMemBlockPtr &mem_block, uint32_t stream_id);
+
   void DoAddMemBlock(const DynamicMemBlockPtr &mem_block, std::vector<DynamicMemBlockPtr> *mem_block_list);
 
-  SizeMapMemBuf &GetIdleMemBufMap(uint32_t stream_id) { return GetOrCreateSizeMapMemBuf(&idle_mem_bufs_, stream_id); }
+  SizeMapMemBuf &GetOrCreateMemBufMap(uint32_t stream_id, DynamicMemBufStatus status);
 
-  void AddIdleMemBuf(const DynamicMemBufPtr &mem_buf, uint32_t stream_id) {
-    AddMemBuf(&idle_mem_bufs_, mem_buf, stream_id);
-  }
-  bool RemoveIdleDeviceMem(const size_t size, const DeviceMemPtr &device_addr, uint32_t stream_id) {
-    return RemoveDeviceMem(&idle_mem_bufs_, size, device_addr, stream_id);
-  }
-  SizeMapMemBuf &GetEagerFreeMemBuf(uint32_t stream_id) {
-    return GetOrCreateSizeMapMemBuf(&eager_free_mem_bufs_, stream_id);
-  }
+  void AddMemBuf(const DynamicMemBufPtr &mem_buf);
 
-  void AddEagerFreeMemBuf(const DynamicMemBufPtr &mem_buf, uint32_t stream_id) {
-    AddMemBuf(&eager_free_mem_bufs_, mem_buf, stream_id);
-  }
-  bool RemoveEagerFreeDeviceMem(const size_t size, const DeviceMemPtr &device_addr, uint32_t stream_id) {
-    return RemoveDeviceMem(&eager_free_mem_bufs_, size, device_addr, stream_id);
-  }
-  SizeMapMemBuf &GetEagerFreeMemBufMap(uint32_t stream_id) {
-    return GetOrCreateSizeMapMemBuf(&eager_free_mem_bufs_, stream_id);
-  }
+  void RemoveMemBuf(const DynamicMemBufPtr &mem_buf);
 
-  void AddMemBuf(std::map<uint32_t, SizeMapMemBuf> *container, const DynamicMemBufPtr &mem_buf, uint32_t stream_id);
-  bool RemoveDeviceMem(std::map<uint32_t, SizeMapMemBuf> *container, const size_t size, const DeviceMemPtr &device_addr,
-                       uint32_t stream_id);
-  SizeMapMemBuf &GetOrCreateSizeMapMemBuf(std::map<uint32_t, SizeMapMemBuf> *container, uint32_t stream_id);
   void Clear() noexcept;
+
+  const DeviceState DumpMemBlockDebugInfo(const std::string &mem_type);
+
+  std::vector<uint32_t> GetStreamIds() const {
+    std::vector<uint32_t> stream_ids;
+    for (const auto &iter : mem_blocks_) {
+      (void)stream_ids.emplace_back(iter.first);
+    }
+    return stream_ids;
+  }
 
   size_t unit_size_{kDynamicMemAllocUnitSize};
   // Mem pool state
   DeviceState mps_;
 
   std::vector<DynamicMemBlockPtr> mem_block_list_;
-  std::map<uint32_t, std::vector<DynamicMemBlockPtr>> mem_blocks_;
+  std::vector<DynamicMemBlockPtr> mem_block_insertion_order_;
+  std::unordered_map<uint32_t, std::vector<DynamicMemBlockPtr>> mem_blocks_;
 
-  std::map<uint32_t, SizeMapMemBuf> idle_mem_bufs_;
-  std::map<uint32_t, SizeMapMemBuf> eager_free_mem_bufs_;
+  std::unordered_map<std::pair<uint32_t, DynamicMemBufStatus>, SizeMapMemBuf, pair_hash> mem_bufs_;
 };
 }  // namespace device
 }  // namespace mindspore

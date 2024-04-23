@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) const {
+void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) {
   auto kernels = kernel_graph->execution_order();
   if (kernels.empty()) {
     return;
@@ -43,6 +43,22 @@ void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) 
   for (const auto &node : kernels) {
     if (AnfAlgo::IsKernelSelectBackoffOp(node)) {
       continue;
+    }
+    auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(node);
+    // for runtime speed up
+    bool input_multi_graph_safe = true;
+    for (size_t i = 0; i < input_tensor_num; i++) {
+      auto input_node = node->input(i + 1);
+      MS_EXCEPTION_IF_NULL(input_node);
+      auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+      auto real_input = kernel_with_index.first;
+      // input from other graph
+      if (real_input->isa<Parameter>()) {
+        input_multi_graph_safe = false;
+      }
+    }
+    if (input_multi_graph_safe) {
+      node->AddAttr(kAttrInputMultiStreamSafe, MakeValue(true));
     }
     if (common::AnfAlgo::IsCommunicationOp(node)) {
       AnfAlgo::SetStreamId(kWorldGroupStreamIndex, node.get());
@@ -118,13 +134,37 @@ void AclStreamAssign::GenKernelIoExecInfoMap(
   }
 }
 
+void AclStreamAssign::AddBoundarySendRecvKernel(const NotNull<KernelGraphPtr> &kernel_graph, uint32_t record_stream_id,
+                                                uint32_t wait_stream_id, std::vector<CNodePtr> *exec_order) {
+  auto &resource_manager = AscendStreamMng::GetInstance();
+  uint32_t event_id = resource_manager.ApplyNewEvent();
+  auto event = resource_manager.ApplyRtEvent();
+  auto event_generate_id = ++event_generate_id_;
+  auto send_node = CreateSendApplyKernel(kernel_graph, event_id, record_stream_id, event_generate_id);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), send_node);
+  auto recv_node = CreateRecvApplyKernel(kernel_graph, event_id, record_stream_id, wait_stream_id, event_generate_id);
+  common::AnfAlgo::SetNodeAttr(kAttrWaitEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), recv_node);
+  exec_order->push_back(send_node);
+  exec_order->push_back(recv_node);
+}
+
 void AclStreamAssign::UpdateEventsToExecutionOrder(
   const NotNull<KernelGraphPtr> &kernel_graph,
   const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &send_after_node,
-  const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &recv_before_node) const {
+  const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &recv_before_node) {
   MS_LOG(DEBUG) << "Start UpdateEventsToExecutionOrder...";
   auto exec_kernels = kernel_graph->execution_order();
   std::vector<CNodePtr> new_exec_orders;
+  std::set<size_t> streams_set;
+  for (auto &kernel : exec_kernels) {
+    auto process_stream_id = AnfAlgo::GetStreamId(kernel);
+    if (process_stream_id != kDefaultStreamIndex) {
+      streams_set.insert(process_stream_id);
+    }
+  }
+  for (const auto &stream : streams_set) {
+    AddBoundarySendRecvKernel(kernel_graph, kDefaultStreamIndex, stream, &new_exec_orders);
+  }
   for (auto &kernel : exec_kernels) {
     auto before_iter = recv_before_node.find(kernel);
     if (before_iter != recv_before_node.end()) {
@@ -142,6 +182,9 @@ void AclStreamAssign::UpdateEventsToExecutionOrder(
     (void)std::copy(graph_output_iter->second.begin(), graph_output_iter->second.end(),
                     std::back_inserter(new_exec_orders));
   }
+  for (const auto &stream : streams_set) {
+    AddBoundarySendRecvKernel(kernel_graph, stream, kDefaultStreamIndex, &new_exec_orders);
+  }
 
   kernel_graph->set_execution_order(new_exec_orders);
   MS_LOG(DEBUG) << "Finish UpdateEventsToExecutionOrder.";
@@ -150,7 +193,7 @@ void AclStreamAssign::UpdateEventsToExecutionOrder(
 void AclStreamAssign::InsertEventsForInputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
                                             const NodeIoExecInfoPtr &io_exec_info,
                                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
-                                            mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) const {
+                                            mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) {
   MS_EXCEPTION_IF_NULL(io_exec_info);
   auto process_stream_id = AnfAlgo::GetStreamId(kernel);
   auto input_exec_info_list = io_exec_info->inputs;
@@ -182,7 +225,7 @@ void AclStreamAssign::InsertEventsForInputs(const NotNull<KernelGraphPtr> &kerne
 void AclStreamAssign::InsertEventsForOutputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
                                              const NodeIoExecInfoPtr &io_exec_info,
                                              mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
-                                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) const {
+                                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) {
   MS_EXCEPTION_IF_NULL(io_exec_info);
   auto process_stream_id = AnfAlgo::GetStreamId(kernel);
   auto output_exec_info_list = io_exec_info->outputs;
@@ -208,15 +251,10 @@ void AclStreamAssign::InsertEventsForOutputs(const NotNull<KernelGraphPtr> &kern
     }
     InsertEvents(kernel_graph, kernel, kernel, kernel_send, kernel_recv, output_exec.second->node);
   }
-
-  // parallel op has output tensor, and it didn't connect to other kernel, it's output is graph output, sync it.
-  if (output_exec_info_list.empty() && (AnfAlgo::GetOutputTensorNum(kernel) != 0)) {
-    InsertEvents(kernel_graph, kernel, kernel, kernel_send, kernel_recv, kernel_graph->output());
-  }
 }
 
 CNodePtr AclStreamAssign::CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id,
-                                                uint32_t stream_id) const {
+                                                uint32_t stream_id, uint32_t event_generate_id) {
   auto send_op = std::make_shared<Primitive>(kStreamSendOpName);
   MS_EXCEPTION_IF_NULL(send_op);
   auto send_apply = std::make_shared<ValueNode>(send_op);
@@ -224,12 +262,14 @@ CNodePtr AclStreamAssign::CreateSendApplyKernel(const NotNull<KernelGraphPtr> &g
   auto send_node_ptr = graph_ptr->NewCNode({send_apply});
   MS_EXCEPTION_IF_NULL(send_node_ptr);
   common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), send_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordWaitEventStreamPairId, MakeValue(event_generate_id), send_node_ptr);
   AnfAlgo::SetStreamId(stream_id, send_node_ptr.get());
   return send_node_ptr;
 }
 
 CNodePtr AclStreamAssign::CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id,
-                                                uint32_t stream_id) const {
+                                                uint32_t record_stream_id, uint32_t stream_id,
+                                                uint32_t event_generate_id) {
   auto recv_op = std::make_shared<Primitive>(kStreamRecvOpName);
   MS_EXCEPTION_IF_NULL(recv_op);
   auto recv_apply = std::make_shared<ValueNode>(recv_op);
@@ -237,6 +277,8 @@ CNodePtr AclStreamAssign::CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &g
   auto recv_node_ptr = graph_ptr->NewCNode({recv_apply});
   MS_EXCEPTION_IF_NULL(recv_node_ptr);
   common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), recv_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordEventStream, MakeValue(record_stream_id), recv_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordWaitEventStreamPairId, MakeValue(event_generate_id), recv_node_ptr);
   AnfAlgo::SetStreamId(stream_id, recv_node_ptr.get());
   return recv_node_ptr;
 }
@@ -245,13 +287,15 @@ void AclStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, 
                                    const AnfNodePtr &node_before_send,
                                    mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
                                    mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv,
-                                   const AnfNodePtr &node_after_recv) const {
+                                   const AnfNodePtr &node_after_recv) {
   MS_EXCEPTION_IF_NULL(kernel_send);
   MS_EXCEPTION_IF_NULL(kernel_recv);
   AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   uint32_t event_id = resource_manager.ApplyNewEvent();
   auto event = resource_manager.ApplyRtEvent();
-  auto send_cnode = CreateSendApplyKernel(kernel_graph, event_id, AnfAlgo::GetStreamId(node_before_send));
+  auto send_stream_id = AnfAlgo::GetStreamId(node_before_send);
+  auto event_generate_id = ++event_generate_id_;
+  auto send_cnode = CreateSendApplyKernel(kernel_graph, event_id, send_stream_id, event_generate_id);
   common::AnfAlgo::SetNodeAttr(kAttrRecordEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), send_cnode);
   auto send_iter = kernel_send->find(node_before_send);
   if (send_iter == kernel_send->end()) {
@@ -267,7 +311,8 @@ void AclStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, 
     send_iter->second.push_back(send_cnode);
   }
 
-  CNodePtr recv_cnode = CreateRecvApplyKernel(kernel_graph, event_id, AnfAlgo::GetStreamId(node_after_recv));
+  CNodePtr recv_cnode = CreateRecvApplyKernel(kernel_graph, event_id, send_stream_id,
+                                              AnfAlgo::GetStreamId(node_after_recv), event_generate_id);
   common::AnfAlgo::SetNodeAttr(kAttrWaitEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), recv_cnode);
   auto process_iter = kernel_recv->find(node_after_recv);
   if (process_iter == kernel_recv->end()) {
@@ -286,7 +331,7 @@ void AclStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, 
 
 void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kernel_graph,
                                              mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
-                                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) const {
+                                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) {
   MS_LOG(DEBUG) << "Start GenEventsForParallelOp...";
   auto exec_kernels = kernel_graph->execution_order();
   mindspore::HashMap<CNodePtr, NodeIoExecInfoPtr> kernel_io_exec_info_map;
@@ -313,7 +358,7 @@ void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kern
   MS_LOG(DEBUG) << "Finish GenEventsForParallelOp.";
 }
 
-void AclStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) const {
+void AclStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) {
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_send;
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_recv;
   AnfAlgo::SetStreamId(kDefaultStreamIndex, kernel_graph->output().get());

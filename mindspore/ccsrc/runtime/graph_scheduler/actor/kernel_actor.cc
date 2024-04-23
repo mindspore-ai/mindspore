@@ -15,6 +15,10 @@
  */
 
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
+
+#include <mutex>
+
+#include "runtime/device/multi_stream_controller.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
@@ -88,6 +92,27 @@ void KernelActor::Init() {
     }
     data->data_ = output_device_tensors_[IntToSize(data_arrow->from_output_index_)];
     ++output_data_index;
+  }
+
+  // Share pointer of task id on stream with output kernel tensor.
+  for (auto &output_kernel_tensor : output_kernel_tensors_) {
+    output_kernel_tensor->set_task_id_on_stream(task_id_on_stream_);
+  }
+  is_stream_recv_actor_ = IsPrimitiveCNode(kernel_, prim::kPrimStreamRecv);
+  // kernel_ may be ValueNode<FuncGraph>, skip exception situation.
+  auto cnode = kernel_->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return;
+  }
+  auto input0 = cnode->input(kAnfPrimitiveIndex);
+  if (IsValueNode<FuncGraph>(input0)) {
+    MS_LOG(WARNING) << "cnode is not a func graph value node : " << kernel_->DebugString() << ".";
+    return;
+  }
+  auto multi_stream_safe_value = cnode->GetAttr(kAttrInputMultiStreamSafe);
+  if (multi_stream_safe_value != nullptr) {
+    is_multi_stream_safe_ = GetValue<bool>(multi_stream_safe_value);
+    MS_LOG(DEBUG) << "cnode : " << cnode->DebugString() << " is thread safe.";
   }
 }
 
@@ -699,11 +724,6 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
   if (!IsSkippedLaunch(kernel_, nullptr) && !LaunchKernel(context)) {
     MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
   }
-
-  if (ActorDispatcher::enable_multi_stream()) {
-    LaunchCallback(context);
-  }
-
   if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
     kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
   }
@@ -794,7 +814,7 @@ void KernelActor::ResizeKernelMod() {
   }
 }
 
-bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
+bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
   // Check the skipped launch condition.
   if (is_launch_skipped_) {
     MS_EXCEPTION_IF_CHECK_FAIL((input_device_tensors_.size() >= 1), "The inputs size is wrong.");
@@ -810,6 +830,20 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
     }
   }
 
+  // Cpu not support stream lock with LaunchKernel.
+  if (!ActorDispatcher::enable_multi_stream()) {
+    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel_->fullname_with_scope();
+    auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
+      kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
+    MS_LOG(DEBUG) << "End launch kernel: " << kernel_->fullname_with_scope();
+    return ret;
+  }
+
+  auto multi_stream_controller = device::MultiStreamController::GetInstance();
+  std::lock_guard<std::mutex> lock(
+    multi_stream_controller->GetStreamMutex(device_contexts_[0], kernel_info_->stream_id()));
+  // Here should process multi stream first to make inputs is memory safe.
+  ProcessMultiStream(context);
   MS_LOG(DEBUG) << "Begin launch kernel: " << kernel_->fullname_with_scope();
   auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
     kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
@@ -817,66 +851,109 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
   return ret;
 }
 
-void KernelActor::LaunchCallback(OpContext<DeviceTensor> *const context) {
-  if (input_device_tensors_.empty()) {
+void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kProcessMultiStream, GetAID().Name());
+  auto device_context = device_contexts_[0];
+  auto stream_id = kernel_info_->stream_id();
+  MS_LOG(DEBUG) << "device context : " << device_context
+                << ", name : " << device_context->device_context_key().device_name_ << ", stream id : " << stream_id
+                << ", actor name : " << GetAID().Name() << ".";
+  // Update output_kernel_tensors_ with task id on stream.
+  auto multi_stream_controller = device::MultiStreamController::GetInstance();
+  auto task_id_on_stream = multi_stream_controller->LaunchTaskIdOnStream(device_context, stream_id);
+  if (INT64_MAX == task_id_on_stream) {
+    *task_id_on_stream_ = 0;
+    MS_LOG(DEBUG) << "Skip ProcessMultiStream since kernel type is CPU.";
     return;
   }
-  auto stream_id = kernel_info_->stream_id();
-  std::vector<device::CallbackFunc> callback_funcs;
-  for (const auto &device_tensor_ptr : input_device_tensors_) {
-    if (stream_id == device_tensor_ptr->stream_id()) {
-      continue;
-    }
-    size_t ref_count = device_tensor_ptr->IncreaseCounter();
-    if (ref_count == SIZE_MAX) {
-      continue;
-    }
-    auto now_count = callback_counter_->Increase();
-    MS_LOG(DEBUG) << "Callback counter : " << now_count << ".";
-    auto release_ref_callback = [device_tensor_ptr, device_context_ptr = device_contexts_[0], context, &aid = GetAID(),
-                                 callback_counter = callback_counter_]() {
-      // We need check parameters before execution, since main thread may exit before callback thread.
-      if (callback_counter == nullptr || callback_counter->expired()) {
-        MS_LOG(INFO)
-          << "Exit callback since callback_counter is nullptr or expired, which indicates that main thread is expired.";
-        return;
-      }
+  *task_id_on_stream_ = task_id_on_stream;
 
-      std::vector<DeviceTensor *> free_list{device_tensor_ptr};
-      MemoryManagerActor::GetInstance()->FreeMemory(&free_list, device_context_ptr, context, aid);
-      auto ref_counter = callback_counter->Decrease();
-      callback_counter->Notify();
-      MS_LOG(DEBUG) << "Callback is called, device tensor : " << device_tensor_ptr
-                    << ", device_tensor_ptr ptr : " << device_tensor_ptr->GetMutablePtr()
-                    << ", device_tensor_ptr ref count : " << device_tensor_ptr->ref_count()
-                    << ", device_tensor_ptr dynamic ref count : " << device_tensor_ptr->dynamic_ref_count()
-                    << ", device tensor ptr : " << device_tensor_ptr->GetMutablePtr()
-                    << ", callback counter : " << ref_counter << ", stream id : " << device_tensor_ptr->stream_id()
-                    << ".";
-    };
-    (void)callback_funcs.emplace_back(release_ref_callback);
+  // Process wait stream.
+  if (is_stream_recv_actor_) {
+    // Note: wait node start to launch. Event was record on send node, so, we can releases events on send node stream.
+    // Release events on send node means memory stream id is recv node stream id and user stream id is send node
+    // stream id.
+    auto user_stream_id = kernel_mod_->record_stream_id();
+    auto memory_stream_id = stream_id;
+    if (stream_send_actor_ == nullptr) {
+      // Gpu not add stream send/recv pair, nullptr is normal case.
+      MS_LOG(DEBUG) << "stream_send_actor_ is nullptr.";
+      return;
+    }
+    MS_LOG(DEBUG) << "Process wait stream start, memory_stream_id : " << memory_stream_id
+                  << ", send task id on stream : " << *(stream_send_actor_->task_id_on_stream_) << ".";
+    // Here, need get task id on stream from send node.
+    (void)multi_stream_controller->WaitEvent(device_context, *(stream_send_actor_->task_id_on_stream_), user_stream_id,
+                                             memory_stream_id);
+    return;
   }
 
-  if (!callback_funcs.empty()) {
-    MS_EXCEPTION_IF_NULL(device_contexts_[0]);
-    device::CallbackFunc callback_func = [callback_funcs = std::move(callback_funcs)]() {
-      for (const auto &callback_func : callback_funcs) {
-        callback_func();
+  // Process inputs.
+  if (input_kernel_tensors_.empty()) {
+    MS_LOG(DEBUG) << "Exit process multi stream as inputs is empty.";
+    return;
+  }
+
+  std::vector<std::pair<uint32_t, void *>> cross_stream_addresses;
+  std::vector<KernelTensor *> cross_stream_kernel_tensors;
+  for (const auto &input_kernel_tensor : input_kernel_tensors_) {
+    if (stream_id == input_kernel_tensor->stream_id()) {
+      continue;
+    }
+    if (input_kernel_tensor->task_id_on_stream() == nullptr) {
+      MS_LOG(DEBUG) << "input_kernel_tensor : " << input_kernel_tensor
+                    << " task id on stream is nullptr, will skip multi stream process.";
+      continue;
+    }
+    if (input_kernel_tensor->pointer_ref_count()->ref_count() == SIZE_MAX &&
+        input_kernel_tensor->pointer_ref_count()->dynamic_ref_count() == INT32_MAX) {
+      continue;
+    }
+    (void)cross_stream_addresses.emplace_back(input_kernel_tensor->stream_id(), input_kernel_tensor->device_ptr());
+    (void)cross_stream_kernel_tensors.emplace_back(input_kernel_tensor);
+  }
+
+  // Dispatch record/wait.
+  if (!is_multi_stream_safe_) {
+    for (const auto &cross_stream_kernel_tensor : cross_stream_kernel_tensors) {
+      // Input kernel tensor is memory stream id, this is important.
+      auto user_stream_id = stream_id;
+      auto memory_stream_id = cross_stream_kernel_tensor->stream_id();
+      auto memory_task_id_on_stream = *cross_stream_kernel_tensor->task_id_on_stream();
+      auto safe_task_id_on_stream =
+        multi_stream_controller->QueryTaskIdOnStream(device_context, user_stream_id, memory_stream_id);
+      if (safe_task_id_on_stream >= memory_task_id_on_stream) {
+        MS_LOG(DEBUG) << "safe_task_id_on_stream : " << safe_task_id_on_stream
+                      << " is bigger than memory_task_id_on_stream : " << memory_task_id_on_stream;
+        continue;
       }
-    };
-    MS_LOG(DEBUG) << "Begin launch callback of actor : " << GetAID().Name() << ", id : " << actor_id() << ".";
-    auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchCallback(callback_func, kernel_info_->stream_id());
-    MS_LOG(DEBUG) << "End launch callback of actor: " << GetAID().Name() << ", id : " << actor_id() << ", ret : " << ret
-                  << ".";
+
+      MS_LOG(DEBUG) << "Dispatch record/wait safe_task_id_on_stream : " << safe_task_id_on_stream
+                    << ", memory_task_id_on_stream : " << memory_task_id_on_stream;
+      multi_stream_controller->DispatchRecordWaitEvent(device_context, user_stream_id, memory_stream_id);
+      // Add recv process.
+      user_stream_id = memory_stream_id;
+      memory_stream_id = stream_id;
+      auto last_task_id_on_stream = multi_stream_controller->GetTaskIdOnStream(device_context, user_stream_id);
+      MS_LOG(DEBUG) << "Dispatch wait stream start, usert_stream_id : " << user_stream_id
+                    << ", memory_stream_id : " << memory_stream_id
+                    << ", last_task_id_on_stream : " << last_task_id_on_stream << ".";
+      // Here, need get task id on stream from send node.
+      (void)multi_stream_controller->WaitEvent(device_context, last_task_id_on_stream, user_stream_id,
+                                               memory_stream_id);
+    }
+  }
+
+  // Record event.
+  if (!cross_stream_addresses.empty()) {
+    MS_LOG(DEBUG) << "Record event for kernel : " << kernel_->fullname_with_scope()
+                  << ", addresses size : " << cross_stream_addresses.size() << ".";
+    // Record event on stream.
+    multi_stream_controller->RecordEvent(device_context, task_id_on_stream, stream_id, cross_stream_addresses);
   }
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
-  // Execute kernel actor callbacks.
-  if (ActorDispatcher::enable_multi_stream()) {
-    LaunchCallback(context);
-  }
-
   if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
     kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
   }

@@ -977,7 +977,7 @@ bool GeKernelExecutor::LaunchCallback(CallbackFunc callback_func, size_t stream_
   MS_LOG(DEBUG) << "Launch callback for stream_id : " << stream_id << ", ret : " << ret << ".";
   if (ret) {
     delete callback_func_ptr;
-    MS_LOG(WARNING) << "Launch callback for stream_id : " << stream_id << " failed, ret : " << ret << ".";
+    MS_LOG(ERROR) << "Launch callback for stream_id : " << stream_id << " failed, ret : " << ret << ".";
     if (res_manager_->SyncStream(stream_id)) {
       callback_func();
       return true;

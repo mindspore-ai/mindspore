@@ -22,10 +22,9 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                                           void *stream) {
+void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor, stream]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor]() {
     MS_LOG(DEBUG) << "Run device task Identity start";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
@@ -50,7 +49,8 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
     device::DeviceAddressPtrList output_device_address_list{launch_device_address};
     const auto &output_address_info = std::make_pair(output_kernel_tensor_list, output_device_address_list);
 
-    PyBoostUtils::LaunchKernel(op->primitive(), op->device_context(), input_address_info, output_address_info, stream);
+    PyBoostUtils::LaunchKernel(op->primitive(), op->device_context(), input_address_info, output_address_info,
+                               op->stream_id());
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(outputs[0]->device_address());
     output_address->SetStorageInfo(input_x_address->GetStorageInfo());
     output_address->set_ptr(launch_device_address->GetMutablePtr());
@@ -58,9 +58,9 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
   }));
 }
 
-void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor, void *stream) {
+void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor, stream]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor]() {
     MS_LOG(DEBUG) << "Run device task Identity start";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
@@ -78,12 +78,13 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
     const auto &output_address_info =
       PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
-    PyBoostUtils::LaunchKernel(op->primitive(), op->device_context(), input_address_info, output_address_info, stream);
+    PyBoostUtils::LaunchKernel(op->primitive(), op->device_context(), input_address_info, output_address_info,
+                               op->stream_id());
     MS_LOG(DEBUG) << "Run device task Identity end";
   }));
 }
 
-tensor::TensorPtr IdentityCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor, void *stream) {
+tensor::TensorPtr IdentityCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
   OpRunner::InferOpOutput(op, x_tensor);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor);
@@ -91,10 +92,10 @@ tensor::TensorPtr IdentityCustomize(const std::shared_ptr<OpRunner> &op, const T
 
   if (x_tensor->is_contiguous()) {
     MS_LOG(DEBUG) << "Run Identity input contiguous";
-    IdentityCustomizeCall(op, x_tensor, stream);
+    IdentityCustomizeCall(op, x_tensor);
   } else {
     MS_LOG(DEBUG) << "Run Identity input without contiguous";
-    IdentityCustomizeCallWithoutContigous(op, x_tensor, stream);
+    IdentityCustomizeCallWithoutContigous(op, x_tensor);
   }
   return op->output(0);
 }

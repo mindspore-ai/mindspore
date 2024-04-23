@@ -19,6 +19,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "utils/ms_context.h"
 #include "include/common/pybind_api/api_register.h"
+#include "runtime/device/multi_stream_controller.h"
 
 namespace mindspore {
 namespace hal {
@@ -61,7 +62,8 @@ bool StreamPy::Query() {
 void StreamPy::Synchronize() {
   MS_LOG(DEBUG) << "stream_id:" << stream_id_;
   runtime::OpExecutor::GetInstance().WaitAll();
-  device_ctx_->device_res_manager_->SyncStream(stream_id_);
+  device::MultiStreamController::GetInstance()->Refresh(device_ctx_);
+  (void)device::MultiStreamController::GetInstance()->SyncStream(device_ctx_, stream_id_);
 }
 
 std::string StreamPy::ToStringRepr() const {
@@ -90,21 +92,20 @@ bool StreamPy::StreamEqual(const std::shared_ptr<StreamPy> other_stream) {
 
 void SetCurStream(const StreamPyPtr &cur_stream) {
   MS_EXCEPTION_IF_NULL(cur_stream);
-  runtime::OpExecutor::GetInstance().WaitAll();
+  MS_LOG(DEBUG) << "current_stream_id:" << cur_stream->stream_id();
   cur_stream->device_ctx()->device_res_manager_->SetCurrentStreamId(cur_stream->stream_id());
 }
 
 void Synchronize() {
   auto device_ctx = GetDeviceCtx();
   runtime::OpExecutor::GetInstance().WaitAll();
-  MS_EXCEPTION_IF_NULL(device_ctx);
-  device_ctx->device_res_manager_->SyncAllStreams();
+  device::MultiStreamController::GetInstance()->Refresh(device_ctx);
+  (void)device::MultiStreamController::GetInstance()->SyncAllStreams(device_ctx);
 }
 
 StreamPyPtr CurrentStream() {
   auto device_ctx = GetDeviceCtx();
-  runtime::OpExecutor::GetInstance().WaitAll();
-  const auto &current_stream_id = device_ctx->device_res_manager_->GetCurrentStreamId();
+  auto current_stream_id = device_ctx->device_res_manager_->GetCurrentStreamId();
   MS_LOG(DEBUG) << "current_stream_id:" << current_stream_id;
   return std::make_shared<StreamPy>(device_ctx, current_stream_id);
 }

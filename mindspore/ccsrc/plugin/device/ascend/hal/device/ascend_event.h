@@ -29,9 +29,12 @@ class AscendEvent : public DeviceEvent {
   explicit AscendEvent(uint32_t flag);
   ~AscendEvent() override;
 
+  bool IsReady() const override;
   void WaitEvent() override;
+  bool WaitEvent(uint32_t stream_id) override;
   void WaitEventWithoutReset() override;
   void RecordEvent() override;
+  void RecordEvent(uint32_t stream_id) override;
   bool NeedWait() override;
   void SyncEvent() override;
   bool QueryEvent() override;

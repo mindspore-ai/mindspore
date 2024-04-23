@@ -72,6 +72,7 @@ enum class ProfilerEvent {
   kMemoryFree,
   kCopyData,
   kStreamSync,
+  kProcessMultiStream,
   kWaitKernelsInferFinish,
   kWaitKernelsResizeFinish,
   kWaitKernelsLaunchFinish,
