@@ -1,0 +1,19 @@
+#operator split_tensor
+split_tensor:
+  args:
+    input_x:
+      dtype: tensor
+    split_int:
+      dtype: int
+    axis:
+      dtype: int
+      default: 0
+  returns:
+    output:
+      dtype: tuple[tensor]
+  view: True
+  dispatch:
+    enable: True
+  function:
+    disable: True
+    

@@ -89,7 +89,7 @@ from mindspore.ops.functional import sqrt
 # 32
 
 # 33
-
+from mindspore.ops.function.array_func import split_ext as split
 # 34
 
 # 35
@@ -299,7 +299,7 @@ __all__ = [
     # 32
 
     # 33
-
+    'split',
     # 34
 
     # 35
