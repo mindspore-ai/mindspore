@@ -1514,8 +1514,8 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
             OpInputDtype.at(op_name).find(i) != OpInputDtype.at(op_name).end()) {
           std::vector<int64_t> empty_shape = {0};
           auto empty_tensor = std::make_shared<tensor::Tensor>(OpInputDtype.at(op_name).at(i), empty_shape);
-          ValueNodePtr empty_value_node = std::make_shared<ValueNode>(empty_tensor);
-          empty_value_node->set_abstract(empty_tensor->ToAbstract());
+          auto empty_node = opt::CreateValueNodeWithKernelInfo(graph, empty_tensor);
+          ValueNodePtr empty_value_node = empty_node->cast<ValueNodePtr>();
           dyn_input_sizes.push_back(1);
           plant_inputs.push_back(empty_value_node);
         } else {

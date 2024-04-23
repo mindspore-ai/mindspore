@@ -42,3 +42,8 @@ grouped_matmul:
     y:
       dtype: tuple[tensor]
       type_cast: list[tensor]
+  dispatch:
+    enable: True
+    Ascend: GroupedMatmulAscend
+    CPU: GroupedMatmulCPU
+    GPU: GroupedMatmulGPU

@@ -85,9 +85,11 @@ def get_convert_type_str(dtype: str, optional):
         'tuple[int]': 'ToIntListOptional<py::tuple>',
         'tuple[float]': 'ToFloatListOptional<py::tuple>',
         'tuple[bool]': 'ToBoolListOptional<py::tuple>',
+        'tuple[tensor]': 'ToTensorListOptional<py::tuple>',
         'list[int]': 'ToIntListOptional<py::list>',
         'list[float]': 'ToFloatListOptional<py::list>',
         'list[bool]': 'ToBoolListOptional<py::list>',
+        'list[tensor]': 'ToTensorListOptional<py::list>',
     }
     if optional:
         if dtype in optional_type_convert:
@@ -200,6 +202,7 @@ def get_input_dtype(dtype: str, optional):
         'tuple[int]': value_tuple_optional,
         'tuple[float]': value_tuple_optional,
         'tuple[bool]': value_tuple_optional,
+        'tuple[tensor]': value_tuple_optional,
     }
     if optional:
         if dtype in optional_type_convert:

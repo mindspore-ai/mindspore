@@ -120,8 +120,7 @@ TypePtr MoeFinalizeRoutingFuncImpl::InferType(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(expert_idx_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("expanded_expert_idx", expert_idx_type, idx_valid_types, prim_name);
 
-  return input_args[kExpandedX]->GetType()->Clone();
+  return input_args[kExpandedX]->GetType();
 }
-
 }  // namespace ops
 }  // namespace mindspore
