@@ -25,6 +25,7 @@
 #include "hccl/base.h"
 #include "include/common/utils/contract.h"
 #include "hccl/hccl_types.h"
+#include "runtime/collective/collective_communication_lib.h"
 #include "utils/shape_utils.h"
 #include "kernel/kernel.h"
 #include "ops/framework_op_name.h"
@@ -64,7 +65,8 @@ class HcomUtil {
   static bool GetHcomTypeSize(const HcclDataType &data_type, uint32_t *size);
   static bool GetHcomCount(const PrimitivePtr &primitive, const vector<HcclDataType> &data_type_list,
                            const vector<ShapeVector> &shape_list, const size_t input_tensor_num, uint64_t *total_count);
-  static bool GetHcomOperationType(const PrimitivePtr &primitive, HcclReduceOp *op_type);
+  static bool GetHcomOperationType(const PrimitivePtr &primitive, HcclReduceOp *op_type,
+                                   device::CollectiveOpReduceType *collective_reduce_type);
   static void GetHcomGroup(NotNull<const AnfNodePtr &> anf_node, NotNull<std::string *> group);
   static bool GetHcomReceiveType(const AnfNodePtr &anf_node, TypeId *receive_type);
 

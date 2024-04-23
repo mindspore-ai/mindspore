@@ -30,14 +30,9 @@ bool HcomAllReduceScatterKernel::Launch(const std::vector<KernelTensor *> &input
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto hccl_result =
-    hccl::HcclAdapter::GetInstance().HcclReduceScatter(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
-                                                       hccl_data_type_list_[0], op_type_, stream_ptr, comm_);
-  if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcclReduceScatter failed, ret:" << hccl_result;
-    return false;
-  }
-  return true;
+  auto &comm_lib = GetCommLib();
+  return comm_lib.ReduceScatter(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_, inputs[0]->dtype_id(),
+                                collective_reduce_type_, group_, stream_ptr);
 }
 }  // namespace kernel
 }  // namespace mindspore

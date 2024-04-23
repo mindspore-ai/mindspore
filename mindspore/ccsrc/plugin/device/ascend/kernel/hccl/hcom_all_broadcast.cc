@@ -29,13 +29,9 @@ bool HcomAllBroadCastKernel::Launch(const std::vector<KernelTensor *> &inputs, c
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclBroadcast(
-    inputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], root_id_, stream_ptr, comm_);
-  if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast failed, return: " << hccl_result;
-    return false;
-  }
-  return true;
+  auto &comm_lib = GetCommLib();
+  return comm_lib.Broadcast(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_, inputs[0]->dtype_id(),
+                            root_id_, group_, stream_ptr);
 }
 }  // namespace kernel
 }  // namespace mindspore

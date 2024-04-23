@@ -23,6 +23,7 @@
 #include "runtime/hardware/device_context.h"
 #include "utils/ms_context.h"
 #include "include/transform/graph_ir/types.h"
+#include "plugin/device/ascend/hal/hardware/ccool_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hardware/dummy_ascend_collective_comm_lib.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -71,10 +72,12 @@ class GeDeviceResManager : public DeviceResManager {
   static void CreateSessionAndGraphRunner();
 
   bool LoadCollectiveCommLib() override {
-    if (common::GetEnv(kSimulationLevel).empty()) {
-      collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
-    } else {
+    if (!common::GetEnv(kSimulationLevel).empty()) {
       collective_comm_lib_ = &DummyAscendCollectiveCommLib::GetInstance();
+    } else if (!common::GetEnv(kEnableCrossAZ).empty()) {
+      collective_comm_lib_ = &CcoolCollectiveCommLib::GetInstance();
+    } else {
+      collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
     }
     return true;
   }
