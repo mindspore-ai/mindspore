@@ -131,6 +131,7 @@ class Cell(Cell_):
         self._id = 1
         self.exist_names = set("")
         self.exist_objs = set()
+        self.sig = inspect.signature(self.construct)
         init_pipeline()
 
         # call gc to release GE session resources used by non-used cell objects
@@ -660,7 +661,7 @@ class Cell(Cell_):
         # Run in Graph mode.
         if os.getenv("MS_JIT") != '0' and context._get_mode() == context.GRAPH_MODE:
             if kwargs:
-                bound_arguments = inspect.signature(self.construct).bind(*args, **kwargs)
+                bound_arguments = self.sig.bind(*args, **kwargs)
                 bound_arguments.apply_defaults()
                 args = bound_arguments.args
                 kwargs = bound_arguments.kwargs
