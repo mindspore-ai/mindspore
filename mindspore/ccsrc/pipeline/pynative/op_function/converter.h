@@ -35,6 +35,8 @@ class Converter {
   std::optional<ValuePtr> ToTensorOptional(const py::list &python_args, size_t i);
   template <typename T>
   ValueTuplePtr ToTensorList(const py::list &python_args, size_t i);
+  template <typename T>
+  std::optional<ValueTuplePtr> ToTensorListOptional(const py::list &python_args, size_t i);
   Int64ImmPtr ToInt(const py::list &python_args, size_t i);
   std::optional<Int64ImmPtr> ToIntOptional(const py::list &python_args, size_t i);
   template <typename T>

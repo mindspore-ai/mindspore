@@ -23,3 +23,5 @@ moe_finalize_routing:
   returns:
     y:
       dtype: tensor
+  dispatch:
+    enable: True

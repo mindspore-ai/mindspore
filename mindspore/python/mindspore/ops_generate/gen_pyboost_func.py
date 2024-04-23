@@ -460,13 +460,29 @@ def generate_pyboost_functions(work_path, yaml_data):
                     grad_arg = cast_str + convert_stub_output_name
                     cast_arg = grad_arg
             elif pyboost_utils.is_tensor_list(op_arg):
-                convert_stub_output_name = op_arg.arg_name + "_tensor_list"
-                convert_stub_str += convert_to_tensor_list_template.replace(input=op_arg.arg_name,
-                                                                            output=convert_stub_output_name,
-                                                                            need_contiguous=need_contiguous)
-                call_arg = convert_stub_output_name
-                grad_arg = cast_str + convert_stub_output_name
-                cast_arg = grad_arg
+                if is_optional_param(op_arg):
+                    # to adapt the cases that TensorList is optional.
+                    convert_stub_output_name = op_arg.arg_name + '_optional'
+                    convert_stub_str += convert_to_tensor_list_template.replace(output=convert_stub_output_name,
+                                                                                input=op_arg.arg_name,
+                                                                                need_contiguous=need_contiguous)
+                    cast_output = cast_str + convert_stub_output_name
+
+                    convert_optional_to_value_name = op_arg.arg_name + "_value"
+                    optional_to_value_str += \
+                        convert_optional_to_value_template.replace(input=cast_output,
+                                                                   output=convert_optional_to_value_name)
+                    call_arg = convert_stub_output_name
+                    grad_arg = convert_optional_to_value_name
+                    cast_arg = cast_output
+                else:
+                    convert_stub_output_name = op_arg.arg_name + "_tensor_list"
+                    convert_stub_str += convert_to_tensor_list_template.replace(input=op_arg.arg_name,
+                                                                                output=convert_stub_output_name,
+                                                                                need_contiguous=need_contiguous)
+                    call_arg = convert_stub_output_name
+                    grad_arg = cast_str + convert_stub_output_name
+                    cast_arg = grad_arg
             else:
                 call_arg = op_arg.arg_name
                 grad_arg = cast_str + op_arg.arg_name

@@ -63,6 +63,7 @@ mindspore/mindspore/python/mindspore/common/parameter.py:set_data
 mindspore/mindspore/python/mindspore/ops/_grad_experimental/grad_math_ops.py:get_bprop_fft_with_size.bprop
 mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
 mindspore/mindspore/python/mindspore/ops_generate/gen_pyboost_func.py:generate_pyboost_op_source_code
+mindspore/mindspore/python/mindspore/ops_generate/gen_pyboost_func.py:generate_pyboost_functions
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetDataType
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_index_py.cc:mindspore::tensor::TensorIndex::GetItemByTupleWithView
 mindspore/mindspore/ccsrc/common/np_dtype/np_dtypes.cc:mindspore::np_dtypes::RegisterNpTypeUFuncs
