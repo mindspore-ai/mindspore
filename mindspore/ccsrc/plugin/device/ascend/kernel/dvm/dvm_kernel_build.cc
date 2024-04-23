@@ -280,12 +280,6 @@ class OpBuilder {
 
  private:
   void HandlerReduceOp(const CNodePtr &node, const PrimitivePtr &prim, int op_type) {
-    auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(node->input(1)->Shape())[kShape];
-    if (shape.empty()) {
-      auto op = kernel_->Copy(GetInput(node->input(1)));
-      EmitOp(node, op);
-      return;
-    }
     auto keep_dims_attr = prim->GetAttr(kAttrKeepDims);
     MS_EXCEPTION_IF_NULL(keep_dims_attr);
     auto keep_dims = GetValue<bool>(keep_dims_attr);
