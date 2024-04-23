@@ -18,79 +18,46 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <opcode.h>
 #include "pybind11/pybind11.h"
+#include "pipeline/jit/pi/utils/opcode_declare.h"
 
-#define NO_IMPL_OPCODE 257
-
-#if (PY_MAJOR_VERSION == 3)
-
-#if (PY_MINOR_VERSION == 8)
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)
 
 #define Py_IS_TYPE(ob, type) Py_TYPE(ob) == type
-#define _PyEval_EvalFrameDefault(state, f, exc) _PyEval_EvalFrameDefault(f, exc)
 
-inline PyObject *PyObject_CallOneArg(PyObject *func, PyObject *arg) {
-  return _PyObject_Vectorcall(func, &arg, 1, nullptr);
+extern "C" {
+typedef PyObject *(*_PyFrameEvalFunction)(PyFrameObject *, int);
+void _PyInterpreterState_SetEvalFrameFunc(PyInterpreterState *state, _PyFrameEvalFunction eval_frame_function);
+_PyFrameEvalFunction _PyInterpreterState_GetEvalFrameFunc(PyInterpreterState *state);
 }
 
-#define PyObject_Vectorcall _PyObject_Vectorcall
-
-#define LIST_TO_TUPLE (NO_IMPL_OPCODE + 2)
-#define LIST_EXTEND (NO_IMPL_OPCODE + 3)
-#define DICT_MERGE (NO_IMPL_OPCODE + 4)
-#define DICT_UPDATE (NO_IMPL_OPCODE + 5)
-#define SET_UPDATE (NO_IMPL_OPCODE + 6)
-#define IS_OP (NO_IMPL_OPCODE + 7)
-#define CONTAINS_OP (NO_IMPL_OPCODE + 8)
-#define LOAD_ASSERTION_ERROR (NO_IMPL_OPCODE + 9)
-#define WITH_EXCEPT_START (NO_IMPL_OPCODE + 10)
-#define RERAISE (NO_IMPL_OPCODE + 12)
-#define JUMP_IF_NOT_EXC_MATCH (NO_IMPL_OPCODE + 13)
-
-#endif
-
-#if (PY_MINOR_VERSION == 7)
-
-inline _PyFrameEvalFunction _PyInterpreterState_GetEvalFrameFunc(PyInterpreterState *interp_state) {
-  return interp_state->eval_frame;
-}
-
-inline void _PyInterpreterState_SetEvalFrameFunc(PyInterpreterState *interp_state,
-                                                 _PyFrameEvalFunction eval_frame_function) {
-  interp_state->eval_frame = eval_frame_function;
+inline PyObject *_PyEval_EvalFrameDefault(PyThreadState *state, PyFrameObject *f, int exc) {
+  return _PyEval_EvalFrameDefault(f, exc);
 }
 
 inline PyObject *PyObject_Vectorcall(PyObject *func, PyObject *const *stack, Py_ssize_t nargs, PyObject *kwnames) {
+#if PY_MINOR_VERSION == 7
   return _PyObject_FastCallKeywords(func, stack, nargs, kwnames);
+#else
+  return _PyObject_Vectorcall(func, stack, nargs, kwnames);
+#endif
 }
-
-inline PyObject *PyObject_CallOneArg(PyObject *func, PyObject *arg) {
-  return _PyObject_FastCallKeywords(func, &arg, 1, nullptr);
-}
-
-#define PY_VECTORCALL_ARGUMENTS_OFFSET 0
-#define Py_IS_TYPE(ob, type) Py_TYPE(ob) == type
-
-#define _PyEval_EvalFrameDefault(state, f, exc) _PyEval_EvalFrameDefault(f, exc)
-#define _PyTuple_CAST(op) (MS_ASSERT(PyTuple_Check(op)), reinterpret_cast<PyTupleObject *>(op))
-
-#define ROT_FOUR (NO_IMPL_OPCODE + 1)
-#define LIST_TO_TUPLE (NO_IMPL_OPCODE + 2)
-#define LIST_EXTEND (NO_IMPL_OPCODE + 3)
-#define DICT_MERGE (NO_IMPL_OPCODE + 4)
-#define DICT_UPDATE (NO_IMPL_OPCODE + 5)
-#define SET_UPDATE (NO_IMPL_OPCODE + 6)
-#define IS_OP (NO_IMPL_OPCODE + 7)
-#define CONTAINS_OP (NO_IMPL_OPCODE + 8)
-#define LOAD_ASSERTION_ERROR (NO_IMPL_OPCODE + 9)
-#define WITH_EXCEPT_START (NO_IMPL_OPCODE + 10)
-#define END_ASYNC_FOR (NO_IMPL_OPCODE + 11)
-#define RERAISE (NO_IMPL_OPCODE + 12)
-#define JUMP_IF_NOT_EXC_MATCH (NO_IMPL_OPCODE + 13)
-
 #endif
 
+inline auto GetCodeLineTable(PyCodeObject *co) {
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 10)
+  return co->co_lnotab;
+#else
+  return co->co_linetable;
 #endif
+}
+
+inline auto GetCodePositionOnlyArgCount(PyCodeObject *co) {
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION > 7)
+  return co->co_posonlyargcount;
+#else
+  return 0;
+#endif
+}
 
 #endif

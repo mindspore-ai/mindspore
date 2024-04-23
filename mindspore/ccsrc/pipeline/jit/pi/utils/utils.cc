@@ -71,45 +71,6 @@ std::string Utils::GetPyName(PyObject *obj) {
   return str != nullptr ? std::string(str) : "";
 }
 
-int Utils::GetBranchDestIndex(int op, int arg, int ci) {
-  if (Utils::IsRelativeJump(op)) {
-    return ci + 1 + arg / sizeof(_Py_CODEUNIT);
-  }
-  if (Utils::IsAbsoluteJump(op)) {
-    return arg / sizeof(_Py_CODEUNIT);
-  }
-  return -1;
-}
-
-int Utils::GetBranchDestArg(int op, int jump_bci, int curr_bci) {
-  if (Utils::IsRelativeJump(op)) {
-    MS_EXCEPTION_IF_CHECK_FAIL(jump_bci > curr_bci, "invalid jump bci: " + std::to_string(jump_bci) +
-                                                      " current bci: " + std::to_string(curr_bci));
-    return (jump_bci - curr_bci - 1) * sizeof(_Py_CODEUNIT);
-  }
-  if (Utils::IsAbsoluteJump(op)) {
-    return jump_bci * sizeof(_Py_CODEUNIT);
-  }
-  MS_EXCEPTION_IF_CHECK_FAIL(false, "undefined branch opcode: " + GetOpName(op));
-  return -1;
-}
-
-bool Utils::IsRelativeJump(int op) { return code::GetOpcodeInfo(op).flag_ & code::kJRel; }
-bool Utils::IsAbsoluteJump(int op) { return code::GetOpcodeInfo(op).flag_ & code::kJAbs; }
-bool Utils::IsNameRelated(int op) { return code::GetOpcodeInfo(op).flag_ & code::kNamed; }
-bool Utils::IsCallOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kCall; }
-bool Utils::IsNonFall(int op) { return code::GetOpcodeInfo(op).flag_ & code::kNoFall; }
-bool Utils::IsIfJump(int op) { return (code::GetOpcodeInfo(op).flag_ & (code::kJAbs | code::kNoFall)) == code::kJAbs; }
-bool Utils::IsLocalAccessOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kLocalAccess; }
-// it is PyCellObject access op, only used for cell/free/closure
-bool Utils::IsCellAccessOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kCellAccess; }
-bool Utils::IsGeneralNoSideEffectOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kGeneralNoSideEffect; }
-bool Utils::IsNoSideEffectOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kNoSideEffect; }
-bool Utils::IsLoadOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kLoad; }
-bool Utils::IsMsUnsupported(int op) { return code::GetOpcodeInfo(op).flag_ & code::kMsUnsupported; }
-bool Utils::IsBinaryMathOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kBinaryMath; }
-const std::string &Utils::GetOpName(int op) { return code::GetOpcodeInfo(op).name_; }
-
 void Utils::PyBuiltinPrint(PyObject *str) {
   static _PyCFunctionFastWithKeywords pyprint = nullptr;
   if (!pyprint) {
@@ -232,8 +193,8 @@ std::pair<py::object, py::object> Utils::PackCallStackArgs(const std::vector<py:
   Py_ssize_t kwsize = 0;
   py::object pargs;
   py::object kwargs;
-  switch (callop) {
-    case CALL_FUNCTION_KW: {
+  if (callop == CALL_FUNCTION_KW || callop == CALL_FUNCTION || callop == CALL_METHOD) {
+    if (callop == CALL_FUNCTION_KW) {
       py::object keys = args.back();
       if (!PyTuple_Check(keys.ptr())) {
         return failed;
@@ -252,20 +213,15 @@ std::pair<py::object, py::object> Utils::PackCallStackArgs(const std::vector<py:
           PyDict_SetItem(kwargs.ptr(), PyTuple_GET_ITEM(keys.ptr(), i), args[psize + i].ptr());
         }
       }
-      // handle tuple
     }
-    /* fall-through */
-    case CALL_FUNCTION:
-    case CALL_METHOD:
-      pargs = py::tuple(psize);
-      for (Py_ssize_t i = 0; i < psize; ++i) {
-        PyTuple_SET_ITEM(pargs.ptr(), i, args[i].inc_ref().ptr());
-      }
-      break;
-    case CALL_FUNCTION_EX:
-      return PackExArgs(args, ret_vector_args);
-    default:
-      return failed;
+    pargs = py::tuple(psize);
+    for (Py_ssize_t i = 0; i < psize; ++i) {
+      PyTuple_SET_ITEM(pargs.ptr(), i, args[i].inc_ref().ptr());
+    }
+  } else if (callop == CALL_FUNCTION_EX) {
+    return PackExArgs(args, ret_vector_args);
+  } else {
+    return failed;
   }
   return {pargs, kwargs};
 }
@@ -283,9 +239,6 @@ PyObject *RetFrame(PyThreadState *, PyFrameObject *f, int) {
 #endif
 
 PyFrameObject *Utils::PrepareFrame(PyObject *callable, PyObject *args, PyObject *kwargs) {
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 8)
-  return nullptr;
-#else
   if (callable == nullptr || args == nullptr) {
     return nullptr;
   }
@@ -300,7 +253,6 @@ PyFrameObject *Utils::PrepareFrame(PyObject *callable, PyObject *args, PyObject 
   MS_LOG(DEBUG) << "prepare frame for " << std::string(py::str(callable)) << " failed because "
                 << Utils::ReportPythonException();
   return nullptr;
-#endif
 }
 
 bool HasMutableOrConstAttr(PyObject *obj) {

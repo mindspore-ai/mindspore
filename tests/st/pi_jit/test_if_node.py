@@ -13,10 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """test Control flow(if) implement"""
+import sys
 import pytest
 import mindspore.context as context
 from mindspore import Tensor, jit
 from mindspore.common import dtype as mstype
+
+SYS_VER = (sys.version_info.major, sys.version_info.minor)
+if SYS_VER != (3, 7) and SYS_VER != (3, 9):
+    pytest.skip(reason="not implement for python" + str(SYS_VER), allow_module_level=True)
+
 
 @jit(mode="PIJit", jit_config={"compile_without_capture": True})
 def single_branch(x, y):

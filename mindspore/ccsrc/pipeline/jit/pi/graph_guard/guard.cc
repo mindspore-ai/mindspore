@@ -632,13 +632,13 @@ static PyObject *FindItem(const std::vector<GuardItemPtr> &guardList, int idx, T
 std::vector<PyObject *> OptGuard::ApplyDynamicShape(PyFrameObject *f) {
   std::vector<PyObject *> ret;
   int argc = f->f_code->co_argcount + f->f_code->co_kwonlyargcount;
-  PyTupleObject *vargs = NULL;
-  PyDictObject *kwargs = NULL;
+  PyObject *vargs = NULL;
+  PyObject *kwargs = NULL;
   if (f->f_code->co_flags & CO_VARARGS) {
-    vargs = _PyTuple_CAST(f->f_localsplus[argc]);
+    vargs = f->f_localsplus[argc];
   }
   if (f->f_code->co_flags & CO_VARKEYWORDS) {
-    kwargs = reinterpret_cast<PyDictObject *>(f->f_localsplus[argc + (vargs ? 1 : 0)]);
+    kwargs = f->f_localsplus[argc + (vargs ? 1 : 0)];
   }
   for (int i = 0; i < argc; ++i) {
     auto new_obj = FindItem(guardList_, i, TraceType::Param, f->f_localsplus[i]);
