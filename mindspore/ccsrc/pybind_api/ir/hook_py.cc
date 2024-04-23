@@ -30,39 +30,52 @@ AutoGradMetaDataWeakPtr BuildAutoGradMeta(const tensor::Tensor &tensor) {
     const_cast<Tensor &>(tensor).set_auto_grad_meta_data(auto_grad_meta_data);
     MS_LOG(DEBUG) << "Tensor has no auto_grad_meta_data, build it";
   }
-  return std::weak_ptr<AutoGradMetaData>(auto_grad_meta_data);
+  return {auto_grad_meta_data};
 }
+
+inline int GetTensorNumId(const std::string &id) { return std::stoi(id.substr(1)); }
 }  // namespace
 
-std::map<int, AutoGradMetaDataWeakPtr> RegisterHook::hook_meta_map_ = {};
+std::map<int, std::pair<AutoGradMetaDataWeakPtr, TensorBackwardHookPtr>> RegisterHook::hook_meta_fn_map_ = {};
 
 int RegisterHook::RegisterTensorBackwardHook(const Tensor &tensor, const py::function &hook) {
   // Delete char 'T'
-  auto tensor_id = std::stoi(tensor.id().erase(kIndex0, 1));
+  const auto &tensor_id = GetTensorNumId(tensor.id());
   MS_LOG(DEBUG) << "Register hook " << py::str(py::cast<py::object>(hook)).cast<std::string>() << " for tensor "
                 << tensor.ToString() << " with id " << tensor_id;
-  // Just keep last hook
-  (void)hook_meta_map_.erase(tensor_id);
   auto meta = BuildAutoGradMeta(tensor);
   MS_EXCEPTION_IF_NULL(meta.lock());
   meta.lock()->ClearBackwardHooks();
-
-  (void)hook_meta_map_.emplace(tensor_id, meta);
-  meta.lock()->AddBackwardHook(tensor_id, std::make_shared<TensorBackwardHook>(tensor_id, hook));
+  auto tensor_backward_hook = std::make_shared<TensorBackwardHook>(tensor_id, hook);
+  meta.lock()->AddBackwardHook(tensor_id, tensor_backward_hook);
+  // Just keep last hook
+  hook_meta_fn_map_[tensor_id] = {meta, tensor_backward_hook};
   return tensor_id;
 }
 
 void RegisterHook::RemoveTensorBackwardHook(int id) {
-  const auto it = hook_meta_map_.find(id);
-  if (it == hook_meta_map_.end()) {
+  const auto it = hook_meta_fn_map_.find(id);
+  if (it == hook_meta_fn_map_.end()) {
     return;
   }
-  auto meta = it->second.lock();
+  auto meta = it->second.first.lock();
   if (meta == nullptr) {
     return;
   }
   MS_LOG(DEBUG) << "Remove hook by id " << id;
   meta->RemoveBackwardHook(id);
+}
+
+void RegisterHook::UpdateTensorBackwardHook(const AutoGradMetaDataPtr &auto_grad_meta_data, const std::string &id) {
+  MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
+  const auto &tensor_id = GetTensorNumId(id);
+  auto it = hook_meta_fn_map_.find(tensor_id);
+  if (it != hook_meta_fn_map_.end()) {
+    MS_LOG(DEBUG) << "Update tensor backward hook for tensor id " << id;
+    auto_grad_meta_data->AddBackwardHook(tensor_id, it->second.second);
+    // Update remove handle
+    hook_meta_fn_map_[tensor_id].first = std::weak_ptr<AutoGradMetaData>(auto_grad_meta_data);
+  }
 }
 }  // namespace tensor
 }  // namespace mindspore
