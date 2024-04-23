@@ -276,6 +276,7 @@ mindspore.Tensor
     mindspore.Tensor.round
     mindspore.Tensor.rot90
     mindspore.Tensor.rsqrt
+    mindspore.Tensor.register_hook
     mindspore.Tensor.scatter
     mindspore.Tensor.scatter_add
     mindspore.Tensor.scatter_div

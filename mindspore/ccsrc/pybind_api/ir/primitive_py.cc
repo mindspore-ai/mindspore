@@ -37,6 +37,8 @@ constexpr auto kBpropAttrName = "bprop";
 constexpr auto kCellHookAttrName = "cell_hook";
 constexpr auto kCellIDAttrName = "cell_id";
 constexpr auto kCustomOpBpropAttrName = "custom_op_bprop";
+constexpr auto kIsRecomputeAttr = "is_recompute";
+
 static uint64_t MakeId() {
   // Use atomic to make id generator thread safe.
   static std::atomic<uint64_t> last_id{1};
@@ -60,33 +62,6 @@ void SyncData(const py::object &arg) {
   if (IsStubTensor(arg)) {
     auto tensor = ConvertStubTensor(arg);
     tensor->data_sync();
-  }
-}
-
-void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_args) {
-  MS_EXCEPTION_IF_NULL(convert_args);
-  if (input_args.size() != (*convert_args).size()) {
-    MS_LOG(EXCEPTION) << "The size of input_args: " << input_args.size()
-                      << " should be equal to the size of convert_args: " << (*convert_args).size();
-  }
-  for (size_t i = 0; i < input_args.size(); ++i) {
-    if (py::isinstance<tensor::Tensor>(input_args[i])) {
-      (*convert_args)[i] =
-        python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_CONVERT_TO_MS_TENSOR, input_args[i]);
-    } else if (py::isinstance<tensor::CSRTensor>(input_args[i])) {
-      (*convert_args)[i] = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE,
-                                                    parse::PYTHON_MOD_CONVERT_TO_MS_CSRTENSOR, input_args[i]);
-    } else if (py::isinstance<tensor::COOTensor>(input_args[i])) {
-      (*convert_args)[i] = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE,
-                                                    parse::PYTHON_MOD_CONVERT_TO_MS_COOTENSOR, input_args[i]);
-    } else if (py::isinstance<py::tuple>(input_args[i])) {
-      auto tuple_inp_arg = py::cast<py::tuple>(input_args[i]);
-      py::tuple convert_tuple_arg(tuple_inp_arg.size());
-      ConvertCTensorToPyTensor(tuple_inp_arg, &convert_tuple_arg);
-      (*convert_args)[i] = convert_tuple_arg;
-    } else {
-      (*convert_args)[i] = input_args[i];
-    }
   }
 }
 
@@ -116,6 +91,17 @@ py::tuple ConstructCellHookFnArgs(const std::string &cell_id, const py::object &
   }
   return hook_fn_args;
 }
+
+bool ContainsWeights(const py::tuple &grads) {
+  if (grads.size() < kSizeTwo) {
+    return false;
+  }
+  if (!py::isinstance<py::tuple>(grads[0]) && !py::isinstance<py::dict>(grads[1])) {
+    return false;
+  }
+  return true;
+}
+
 struct RunPrimitivePyHookFunctionRegister {
   RunPrimitivePyHookFunctionRegister() {
     python_adapter::PyAdapterCallback::SetRunPrimitivePyHookFunctionHandler(
@@ -213,19 +199,11 @@ py::function PrimitivePy::GetTaylorRuleFunction() {
   return fn;
 }
 
-py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args, const std::string &bprop_cls_name) {
-  py::tuple grads;
-  if (py::isinstance<py::none>(grads_obj)) {
-    MS_EXCEPTION(TypeError) << "The 'grads_obj' is none.";
-  } else if (!py::isinstance<py::tuple>(grads_obj)) {
-    grads = py::make_tuple(grads_obj);
-  } else {
-    grads = py::cast<py::tuple>(grads_obj);
-  }
+void check_bprop_input_grads(const py::tuple &py_args, const py::tuple &grads, const std::string &bprop_cls_name,
+                             int filter_args_size) {
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_CHECK_BPROP_FLAG)) {
-    return grads;
+    return;
   }
-  constexpr int filter_args_size = 2;
   if (grads.size() != py_args.size() - filter_args_size) {
     MS_EXCEPTION(TypeError) << "For user defined method 'bprop' of net '" << bprop_cls_name
                             << "', the number of return values(gradients) should be equal to the number of input "
@@ -261,7 +239,38 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args,
       }
     }
   }
-  return grads;
+}
+
+py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args, const std::string &bprop_cls_name) {
+  py::tuple grads;
+  if (py::isinstance<py::none>(grads_obj)) {
+    MS_EXCEPTION(TypeError) << "The python function output is none.";
+  } else if (!py::isinstance<py::tuple>(grads_obj)) {
+    grads = py::make_tuple(grads_obj);
+  } else {
+    grads = py::cast<py::tuple>(grads_obj);
+  }
+  if (ContainsWeights(grads)) {
+    py::tuple input_grads = py::cast<py::tuple>(grads[0]);
+    check_bprop_input_grads(py_args, input_grads, bprop_cls_name, kSizeOne);
+    py::dict weight_grads = py::cast<py::dict>(grads[1]);
+    if (weight_grads.empty()) {
+      return input_grads;
+    }
+    py::tuple all_grads(input_grads.size() + weight_grads.size());
+    for (size_t i = 0; i < input_grads.size(); ++i) {
+      all_grads[i] = input_grads[i];
+    }
+    size_t i = 0;
+    for (auto weight_grad : weight_grads) {
+      all_grads[i + input_grads.size()] = weight_grad.second;
+      ++i;
+    }
+    return all_grads;
+  } else {
+    check_bprop_input_grads(py_args, grads, bprop_cls_name, kSizeTwo);
+    return grads;
+  }
 }
 
 void PrimitivePy::AddBpropCutPrim(const PrimitivePyPtr &bprop_cut_prim) {
@@ -348,13 +357,15 @@ void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::obj
   }
 }
 
-BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
+BaseRef PrimitivePy::RunCustomBpropFunction(const py::tuple &py_args) const {
   if (backward_hook_fn_.size() > 1) {
     MS_LOG(EXCEPTION) << "Multiple registration of bprop function is not supported.";
   }
   py::tuple converted_args(py_args.size());
   ConvertCTensorToPyTensor(py_args, &converted_args);
-  constexpr size_t non_inp_args_size = 2;  // out and dout.
+  bool is_recompute = HasAttr(kIsRecomputeAttr);
+  size_t non_inp_args_size = is_recompute ? kSizeOne : kSizeTwo;  // Out and dout or dout
+
   auto inp_args_size = py_args.size() - non_inp_args_size;
   py::tuple input_args(inp_args_size);
   for (size_t i = 0; i < inp_args_size; ++i) {
@@ -370,7 +381,12 @@ BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
       inst->NewGraph(elem.second, input_args.cast<py::args>());
       py::object grads_obj = elem.second(*converted_args);
       grads = check_bprop_out(grads_obj, py_args, bprop_cls_name_);
-      inst->EndGraph(elem.second, grads_obj, input_args.cast<py::args>());
+      py::object out = grads_obj;
+      // If grads.size() > inp_args_size, that means exist weights.
+      if (grads.size() > inp_args_size) {
+        out = py::cast<py::tuple>(grads_obj)[0];
+      }
+      inst->EndGraph(elem.second, out, input_args.cast<py::args>());
     }
     MS_LOG(DEBUG) << "Run bprop function end.";
     return std::make_shared<PyObjectRef>(grads);
@@ -380,7 +396,7 @@ BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
   }
 }
 
-BaseRef PrimitivePy::RunOpBpropFunction(const py::tuple &py_args) const {
+BaseRef PrimitivePy::RunCustomOpBpropFunction(const py::tuple &py_args) const {
   if (backward_hook_fn_.size() > 1) {
     MS_LOG(EXCEPTION) << "Multiple registration of bprop function is not supported.";
   }
@@ -437,24 +453,35 @@ BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
   return std::make_shared<PyObjectRef>(grad_output);
 }
 
-BaseRef PrimitivePy::RunVariableHookFunction(const py::tuple &py_args) const {
+BaseRef PrimitivePy::RunVariableHookFunction(const py::tuple &py_args, bool is_tensor_hook) const {
   py::tuple converted_args(py_args.size());
   ConvertCTensorToPyTensor(py_args, &converted_args);
   constexpr size_t grad_output_index = 2;
+  if (converted_args.size() != kSizeThree) {
+    MS_LOG(EXCEPTION) << "Bprop cut run must in the following format: input, output and dout";
+  }
   py::object grad_output = converted_args[grad_output_index];
   for (const auto &elem : backward_hook_fn_) {
-    py::object code_obj = py::getattr(elem.second, "__code__");
-    py::object co_name = py::getattr(code_obj, "co_name");
-    if (std::string(py::str(co_name)) == "staging_specialize") {
-      py::object name_obj = py::getattr(elem.second, "__name__");
-      MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj) << " with '@jit' is not supported.";
+    if (is_tensor_hook) {
+      MS_LOG(DEBUG) << "Run tensor hook function";
+      grad_output = elem.second(grad_output);
+      if (py::isinstance<py::none>(grad_output)) {
+        MS_EXCEPTION(ValueError) << "The bprop function output is None";
+      }
+    } else {
+      py::object code_obj = py::getattr(elem.second, "__code__");
+      py::object co_name = py::getattr(code_obj, "co_name");
+      if (std::string(py::str(co_name)) == "staging_specialize") {
+        py::object name_obj = py::getattr(elem.second, "__name__");
+        MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj) << " with '@jit' is not supported.";
+      }
+
+      py::object ret = elem.second(py::make_tuple(grad_output));
+      if (!py::isinstance<py::none>(ret)) {
+        grad_output = ret;
+      }
+      CheckHookConsistency(grad_output, py_args[grad_output_index], code_obj, co_name);
     }
-    SyncData(grad_output);
-    py::object ret = elem.second(py::make_tuple(grad_output));
-    if (!py::isinstance<py::none>(ret)) {
-      grad_output = ret;
-    }
-    CheckHookConsistency(grad_output, py_args[grad_output_index], code_obj, co_name);
   }
   grad_output = py::make_tuple(grad_output);
   return std::make_shared<PyObjectRef>(grad_output);
@@ -462,19 +489,26 @@ BaseRef PrimitivePy::RunVariableHookFunction(const py::tuple &py_args) const {
 
 BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
   py::tuple py_args = ConvertDatatoPyTuple(args);
+  // For cell has custom bprop function
   bool is_bprop = this->HasAttr(kBpropAttrName);
   if (is_bprop) {
-    return RunCellBpropFunction(py_args);
+    return RunCustomBpropFunction(py_args);
   }
+
+  // For cell register hook
   bool is_cell = this->HasAttr(kCellHookAttrName);
   if (is_cell) {
     return RunCellHookFunction(py_args);
   }
+
+  // For custom op, which define custrcut and bprop
   bool is_custom_op_bprop = this->HasAttr(kCustomOpBpropAttrName);
   if (is_custom_op_bprop) {
-    return RunOpBpropFunction(py_args);
+    return RunCustomOpBpropFunction(py_args);
   }
-  return RunVariableHookFunction(py_args);
+
+  // For hook use, include hook op and tensor register hook
+  return RunVariableHookFunction(py_args, this->HasAttr("tensor_hook"));
 }
 
 py::function PrimitivePy::GetComputeFunction() const {

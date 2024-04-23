@@ -20,10 +20,10 @@ import inspect
 import os
 import time
 from collections import OrderedDict
-from types import FunctionType, MethodType
+from types import MethodType
 import numpy
 
-from mindspore._checkparam import args_type_check
+from mindspore._checkparam import args_type_check, check_hook_fn
 from mindspore.common._auto_dynamic import is_auto_dynamic, convert_inputs_to_dynamic
 from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
@@ -43,6 +43,7 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._decorator import deprecated
+from mindspore.ops.composite import GradOperation
 
 
 class Cell(Cell_):
@@ -130,6 +131,7 @@ class Cell(Cell_):
         self._id = 1
         self.exist_names = set("")
         self.exist_objs = set()
+        self.recompute_cell = None
         init_pipeline()
 
         # call gc to release GE session resources used by non-used cell objects
@@ -415,7 +417,7 @@ class Cell(Cell_):
             elif isinstance(item, float):
                 res.append(self.cast(item, dst_type))
             elif hasattr(item, "dtype") and item.dtype in \
-                {mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16} and item.dtype != dst_type:
+                    {mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16} and item.dtype != dst_type:
                 res.append(self.cast(item, dst_type))
             else:
                 res.append(item)
@@ -474,7 +476,10 @@ class Cell(Cell_):
         elif hasattr(self, "_shard_fn"):
             output = self._shard_fn(*cast_inputs, **kwargs)
         else:
-            output = self.construct(*cast_inputs, **kwargs)
+            if self.recompute_cell is not None:
+                output = self.recompute_cell(*cast_inputs, **kwargs)
+            else:
+                output = self.construct(*cast_inputs, **kwargs)
         if self._enable_forward_hook:
             output = self._run_forward_hook(cast_inputs, output)
         return output
@@ -963,7 +968,6 @@ class Cell(Cell_):
             self.saved_dynamic_shape = self._dynamic_shape_inputs
             return self._dynamic_shape_inputs
         return args
-
 
     def compile(self, *args, **kwargs):
         """
@@ -1936,8 +1940,8 @@ class Cell(Cell_):
             hook_fn (function): Python function. Forward pre hook function.
 
         Returns:
-            Handle, it is an instance of `mindspore.common.hook_handle.HookHandle` and corresponding to the `hook_fn` .
-            The handle can be used to remove the added `hook_fn` by calling `handle.remove()` .
+            A handle corresponding to the `hook_fn` . The handle can be used to remove the added `hook_fn` by calling
+            `handle.remove()` .
 
         Raises:
             TypeError: If the `hook_fn` is not a function of python.
@@ -1972,17 +1976,8 @@ class Cell(Cell_):
             (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1], dtype=Float32,
             value= [ 2.00000000e+00]))
         """
-        if context.get_context("mode") != context.PYNATIVE_MODE:
-            logger.warning(f"'register_forward_pre_hook' function is only supported in pynative mode, you can use "
-                           f"context.set_context to set pynative mode.")
+        if not check_hook_fn("register_forward_pre_hook", hook_fn):
             return HookHandle()
-
-        if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"When using 'register_forward_pre_hook(hook_fn)', the type of 'hook_fn' must be python "
-                            f"function, but got {type(hook_fn)}.")
-        if hook_fn.__code__.co_name == "staging_specialize":
-            raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@jit' is not supported.")
-
         self._enable_forward_pre_hook = True
         _pynative_executor.set_hook_changed(self)
         if not hasattr(self, '_forward_pre_hook_key'):
@@ -2036,8 +2031,8 @@ class Cell(Cell_):
             hook_fn (function): Python function. Forward hook function.
 
         Returns:
-            Handle, it is an instance of `mindspore.common.hook_handle.HookHandle` and corresponding to the `hook_fn` .
-            The handle can be used to remove the added `hook_fn` by calling `handle.remove()` .
+            A handle corresponding to the `hook_fn` . The handle can be used to remove the added `hook_fn` by calling
+            `handle.remove()` .
 
         Raises:
             TypeError: If the `hook_fn` is not a function of python.
@@ -2074,17 +2069,8 @@ class Cell(Cell_):
             (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1], dtype=Float32,
             value= [ 2.00000000e+00]))
         """
-        if context.get_context("mode") != context.PYNATIVE_MODE:
-            logger.warning(f"'register_forward_hook' function is only supported in pynative mode, you can use "
-                           f"context.set_context to set pynative mode.")
+        if not check_hook_fn("register_forward_hook", hook_fn):
             return HookHandle()
-
-        if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"When using 'register_forward_hook(hook_fn)', the type of 'hook_fn' must be python "
-                            f"function, but got {type(hook_fn)}.")
-        if hook_fn.__code__.co_name == "staging_specialize":
-            raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@jit' is not supported.")
-
         self._enable_forward_hook = True
         _pynative_executor.set_hook_changed(self)
         if not hasattr(self, '_forward_hook_key'):
@@ -2136,8 +2122,8 @@ class Cell(Cell_):
             hook_fn (function): Python function. Backward hook function.
 
         Returns:
-            Handle, it is an instance of `mindspore.common.hook_handle.HookHandle` and corresponding to the `hook_fn` .
-            The handle can be used to remove the added `hook_fn` by calling `handle.remove()` .
+            A handle corresponding to the `hook_fn` . The handle can be used to remove the added `hook_fn` by calling
+            `handle.remove()` .
 
         Raises:
             TypeError: If the `hook_fn` is not a function of python.
@@ -2172,14 +2158,8 @@ class Cell(Cell_):
             >>> print(output)
             (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]),)
         """
-        if context.get_context("mode") != context.PYNATIVE_MODE:
-            logger.warning(f"'register_backward_hook' function is only supported in pynative mode, you can use "
-                           f"context.set_context to set pynative mode.")
+        if not check_hook_fn("register_backward_hook", hook_fn):
             return HookHandle()
-
-        if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"When using 'register_backward_hook(hook_fn)', the type of 'hook_fn' must be python "
-                            f"function, but got {type(hook_fn)}.")
         if self._cell_backward_hook is None:
             self._enable_backward_hook = True
             self._cell_backward_hook = inner.CellBackwardHook(self.cls_name + "(" + str(id(self)) + ")")
@@ -2209,10 +2189,16 @@ class Cell(Cell_):
         else:
             inputs = self._cell_backward_hook(*inputs)
             inputs = (inputs,)
-        if isinstance(inputs, tuple):
-            outputs = self.construct(*inputs, **kwargs)
+        if self.recompute_cell is not None:
+            if isinstance(inputs, tuple):
+                outputs = self.recompute_cell(*inputs, **kwargs)
+            else:
+                outputs = self.recompute_cell(inputs, **kwargs)
         else:
-            outputs = self.construct(inputs, **kwargs)
+            if isinstance(inputs, tuple):
+                outputs = self.construct(*inputs, **kwargs)
+            else:
+                outputs = self.construct(inputs, **kwargs)
         outputs = self._cell_backward_hook(outputs)
         return outputs
 
@@ -2342,6 +2328,9 @@ class Cell(Cell_):
                 introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode.
                 Default: ``False`` .
         """
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            self.recompute_cell = _RecomputeCell(self.construct)
+            return
         self._recompute()
         if 'mp_comm_recompute' in kwargs.keys():
             self._mp_comm_recompute(kwargs.get('mp_comm_recompute', False))
@@ -2588,6 +2577,68 @@ class GraphCell(Cell):
             return self.compile_and_run(*args, **kwargs)
         append_input = Tensor((numpy.ones((1,)) * self._branch_control_input).astype(numpy.int32))
         return self.compile_and_run(*args, append_input, **kwargs)
+
+
+class _WrapCell(Cell):
+    """
+    The warp cell is used by recompute cell,
+    which can set mixed precision to warp cell
+    """
+    def __init__(self, function):
+        super(_WrapCell, self).__init__()
+        self.function = function
+
+    def construct(self, *args):
+        return self.function(*args)
+
+
+class _RecomputeCell(Cell):
+    """
+    Recompute cell, given the sub block, this cell will recompute the block, rather than
+    storing the intermediate activation computed in forward pass, we will recompute it in backward pass.
+    Note:
+     - RecomputeCell now only support pynative mode.
+     - When use recompute function, block object should not decorated by @jit.
+    """
+
+    def __init__(self, block):
+        """Initialize Recompute cell."""
+        super(_RecomputeCell, self).__init__()
+        self.args = None
+        self.kwargs = None
+        self.wrap_cell = _WrapCell(block)
+        self.net = block
+        self.internal_params = []
+        self._add_attr("is_cell_recompute", "True")
+        self.grad = GradOperation(get_all=True, get_by_list=True, sens_param=True)
+        self.init_mixed_precision_type(block)
+
+    def construct(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        return self.net(*self.args)
+
+    def bprop(self, *args):
+        grad_input = args[-1]
+        grads = self.grad(self.net, self.internal_params)(*self.args, grad_input)
+        weights = OrderedDict()
+        for i, param in enumerate(self.internal_params):
+            weights[param] = grads[1][i]
+        self.args = None
+        self.kwargs = None
+        return grads[0], weights
+
+    def init_mixed_precision_type(self, block):
+        if isinstance(block, Cell):
+            self.internal_params = block.trainable_params()
+            return
+        if isinstance(block, MethodType) and isinstance(block.__self__, Cell):
+            self.internal_params = block.__self__.trainable_params()
+            self.wrap_cell.set_mixed_precision_type(block.__self__.get_mixed_precision_type())
+            self.net = self.wrap_cell
+        else:
+            raise TypeError("For Recompute cell, it not support FunctionType function, "
+                            "only support Cell object or MethodType function!")
 
 
 def _check_param_list_tuple(value):

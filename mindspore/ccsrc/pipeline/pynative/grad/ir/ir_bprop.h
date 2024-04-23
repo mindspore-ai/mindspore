@@ -65,8 +65,8 @@ class IrBprop {
   void BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
 
   // Create bprop_cut cnode in bprop graph
-  void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
-
+  void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs,
+                          bool is_need_recompute = false);
   // Get parameter from a value
   AnfNodePtr MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
 
@@ -99,7 +99,7 @@ class IrBprop {
   AdParamPtr ad_param() const { return ad_param_; }
   inline bool bprop_graph_run_by_single_op() { return bprop_graph_run_by_single_op_; }
   void set_bprop_graph_run_by_single_op(bool bprop_graph_run_by_single_op) {
-    bprop_graph_run_by_single_op_ |= bprop_graph_run_by_single_op;
+    bprop_graph_run_by_single_op_ = bprop_graph_run_by_single_op_ || bprop_graph_run_by_single_op;
   }
 
  private:

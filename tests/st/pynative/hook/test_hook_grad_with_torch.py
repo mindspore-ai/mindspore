@@ -16,9 +16,11 @@
 import numpy as np
 import pytest
 import mindspore.nn as nn
+from mindspore.ops import GradOperation
 from mindspore.common.tensor import Tensor
+from mindspore.common.parameter import Parameter
 from tests.st.pynative.utils import GradOfAllInputs
-from tests.st.pynative.utils import GradOfFirstInput
+from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputsAndParams
 import torch
 import torch.nn as pynn
 
@@ -106,6 +108,33 @@ class MEMul1(nn.Cell):
         return (grads,)
 
 
+class CustomNetWithParam(nn.Cell):
+    def __init__(self):
+        super(CustomNetWithParam, self).__init__()
+        self.w = Parameter(Tensor(np.array([2.0], dtype=np.float32)), name='weight')
+        self.grad = GradOperation(get_all=True, get_by_list=True, sens_param=True)
+        self.internal_params = [self.w]
+
+    def construct(self, x):
+        output = self.w * x
+        return output
+
+    def bprop(self, *args):
+        return (self.w * args[-1],), {self.w: args[0] * args[-1]}
+
+
+class NetWithParam(nn.Cell):
+    def __init__(self):
+        super(NetWithParam, self).__init__()
+        self.w = Parameter(Tensor(np.array([2.0], dtype=np.float32)), name='weight')
+        self.grad = GradOperation(get_all=True, get_by_list=True, sens_param=True)
+        self.internal_params = [self.w]
+
+    def construct(self, x):
+        output = self.w * x
+        return output
+
+
 class MEMean(nn.Cell):
     def construct(self, x):
         out = x / 2
@@ -166,3 +195,27 @@ def test_bprop_compara_with_pytorch():
         output_me = Tensor(output_np.copy().astype(np.float32))
         input_grad = grad_net(input_me, output_me)
         assert np.allclose(inputs.grad, input_grad.asnumpy(), 0.001, 0.001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bprop_with_weight():
+    """
+    Feature: Test custom bprop with weight feature
+    Description: Test custom bprop with weight
+    Expectation: Success
+    """
+
+    input1 = Tensor(np.ones(1).astype(dtype=np.float32))
+    sens_param = Tensor(np.ones(1).astype(dtype=np.float32))
+    net = NetWithParam()
+    grad_net = GradOfAllInputsAndParams(net)
+    grad1 = grad_net(input1, sens_param)
+
+    custom_net = CustomNetWithParam()
+    grad_custom_net = GradOfAllInputsAndParams(custom_net)
+    grad2 = grad_custom_net(input1, sens_param)
+
+    assert np.allclose(grad1[0][0].asnumpy(), grad2[0][0].asnumpy(), 0.0001, 0.0001)
+    assert np.allclose(grad1[1][0].asnumpy(), grad2[1][0].asnumpy(), 0.0001, 0.0001)

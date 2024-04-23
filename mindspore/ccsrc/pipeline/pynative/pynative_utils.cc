@@ -826,15 +826,22 @@ InputType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
     const auto &tensor_value = value->cast<tensor::TensorPtr>();
-    if (tensor_value->auto_grad_meta_data() != nullptr) {
-      return tensor_value->auto_grad_meta_data()->input_type();
+    auto auto_grad_meta_data = tensor_value->auto_grad_meta_data();
+    if (auto_grad_meta_data != nullptr) {
+      if (auto_grad_meta_data->input_type() != InputType::kUnkown) {
+        return auto_grad_meta_data->input_type();
+      }
+      MS_LOG(DEBUG) << "Set input type for tensor " << tensor_value->id();
+    } else {
+      MS_LOG(DEBUG) << "Create new auto grad meta for tensor " << tensor_value->id();
+      auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
+      tensor_value->set_auto_grad_meta_data(auto_grad_meta_data);
     }
-    const auto &auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
+
     if (tensor_value->is_parameter() && grad_type != InputType::kInput) {
       grad_type = InputType::kParameter;
     }
     auto_grad_meta_data->set_input_type(grad_type);
-    tensor_value->set_auto_grad_meta_data(auto_grad_meta_data);
     if (top_cell != nullptr && IsParam(grad_type)) {
       top_cell->AddParamGradInfo(tensor_value, auto_grad_meta_data);
     }
@@ -868,12 +875,17 @@ InputType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &
 
 InputType Common::SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(tensor);
-  if (tensor->auto_grad_meta_data() != nullptr) {
-    const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
-    return auto_grad_meta_data->input_type();
+  auto auto_grad_meta_data = tensor->auto_grad_meta_data();
+  if (auto_grad_meta_data != nullptr) {
+    if (auto_grad_meta_data->input_type() != InputType::kUnkown) {
+      return auto_grad_meta_data->input_type();
+    }
+    MS_LOG(DEBUG) << "Set input type for tensor " << tensor->id();
+  } else {
+    MS_LOG(DEBUG) << "Create new auto grad meta for tensor " << tensor->id();
+    auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
+    tensor->set_auto_grad_meta_data(auto_grad_meta_data);
   }
-  tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-  const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
   // Set weight tensor grad type
   if (tensor->is_parameter()) {
     auto_grad_meta_data->set_input_type(InputType::kParameter);
@@ -883,6 +895,7 @@ InputType Common::SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCe
     return InputType::kParameter;
   }
   // Is a constant input tensor, but not constant scalar value
+  auto_grad_meta_data->set_input_type(InputType::kConstant);
   return InputType::kConstant;
 }
 
@@ -2235,7 +2248,7 @@ CallBackFn AutoGrad::CreateGraphCallBack(const FuncGraphPtr &call_graph, const s
   return fn;
 }
 
-PrimitivePyPtr AutoGrad::BuildBpropCutPrim(const PrimitivePtr &prim) {
+PrimitivePyPtr AutoGrad::BuildBpropCutPrim(const PrimitivePtr &prim, bool is_need_recompute) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_py = prim->cast<PrimitivePyPtr>();
   MS_EXCEPTION_IF_NULL(prim_py);
@@ -2254,6 +2267,9 @@ PrimitivePyPtr AutoGrad::BuildBpropCutPrim(const PrimitivePtr &prim) {
     (void)bprop_cut->AddAttr("custom_op_bprop", MakeValue(true));
   }
   (void)bprop_cut->AddAttr("custom_op_name", MakeValue(prim->name()));
+  if (is_need_recompute) {
+    (void)bprop_cut->AddAttr("is_recompute", MakeValue(true));
+  }
   return bprop_cut;
 }
 
