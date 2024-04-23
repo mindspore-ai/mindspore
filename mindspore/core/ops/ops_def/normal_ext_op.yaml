@@ -1,0 +1,21 @@
+#operator normal_ext
+normal_ext:
+    args:
+        mean:
+            dtype: tensor
+        std:
+            dtype: tensor
+        seed:
+            dtype: int
+            type_cast: tensor
+        offset:
+            dtype: int
+            type_cast: tensor
+    returns:
+        output: 
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        Ascend: NormalExtAscend
+        enable: True
