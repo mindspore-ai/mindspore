@@ -192,14 +192,30 @@ def test_rprop_basic(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_rprop_group(mode):
+def test_rprop_group_pynative():
     """
     Feature: Test rprop.
     Description: Test rprop with grouped params.
     Expectation: success.
     """
-    mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
+    mindspore.set_context(mode=context.PYNATIVE_MODE, jit_syntax_level=mindspore.STRICT)
+    fact = RpropFactory(True, False)
+    fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_rprop_group_graph_mode():
+    """
+    Feature: Test rprop.
+    Description: Test rprop with grouped params.
+    Expectation: success.
+    """
+    mindspore.set_context(mode=context.GRAPH_MODE, jit_syntax_level=mindspore.STRICT)
     fact = RpropFactory(True, False)
     fact.result_cmp()
     mindspore.set_context(jit_syntax_level=mindspore.LAX)
