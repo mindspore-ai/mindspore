@@ -162,6 +162,7 @@ from .array_func import (
     sort,
     top_k,
     deepcopy,
+    arange_ext,
     zeros_like_ext,
     ones_like_ext,
     full_ext,

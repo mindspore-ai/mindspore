@@ -180,7 +180,7 @@ from mindspore.ops.functional import pow
 # 77
 
 # 78
-
+from mindspore.ops.function import arange_ext as arange
 # 79
 
 # 80
@@ -392,6 +392,7 @@ __all__ = [
     # 77
 
     # 78
+    'arange',
 
     # 79
 
