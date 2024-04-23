@@ -57,8 +57,8 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorP
   auto transpose_op = CREATE_PYBOOST_OP(Transpose, device_name);
   auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_name);
 
-  auto bias_abstract = bias_tensor.has_value() ? bias_tensor.value()->ToAbstract() : kNone->ToAbstract();
-  op->set_input_abs({input_tensor->ToAbstract(), weight_tensor->ToAbstract(), bias_abstract});
+  auto bias_abstract = bias_tensor.has_value() ? ToAbstractNoValue(bias_tensor.value()) : kNone->ToAbstract();
+  op->set_input_abs({ToAbstractNoValue(input_tensor), ToAbstractNoValue(weight_tensor), bias_abstract});
   auto perm = GetTransposePerm(weight_tensor);
 
   tensor::BaseTensorPtr output;
