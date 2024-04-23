@@ -17,12 +17,8 @@
 #include "transform/graph_ir/convert.h"
 
 #include <algorithm>
-#include <cinttypes>
-#include <functional>
-#include <limits>
-#include <stack>
 #include <unordered_set>
-#include <queue>
+#include <vector>
 
 #include "op_proto/inc/array_ops.h"
 #include "op_proto/inc/data_flow_ops.h"
@@ -396,6 +392,27 @@ void SetXDataIndex(const OperatorPtr &op, T idx) {
   MS_EXCEPTION_IF_NULL(op);
   op->SetAttr(kTypeIndex, static_cast<int64_t>(idx));
 }
+
+bool ParamCompare(const std::string &l, const std::string &r, const mindspore::HashMap<std::string, AnfNodePtr> &params,
+                  const NodeUsersMap &node_users) {
+  auto lpram_iter = params.find(l);
+  auto rpram_iter = params.find(r);
+  if (lpram_iter == params.end() && rpram_iter == params.end()) {
+    return l.compare(r) < 0;
+  } else if (lpram_iter == params.end()) {
+    return true;
+  } else if (rpram_iter == params.end()) {
+    return false;
+  }
+
+  bool lused_as_accum = (GetMomentumVarByAccum(lpram_iter->second, node_users) != nullptr);
+  bool rused_as_accum = (GetMomentumVarByAccum(rpram_iter->second, node_users) != nullptr);
+  if (lused_as_accum ^ rused_as_accum) {
+    return rused_as_accum;
+  }
+
+  return l.compare(r) < 0;
+}
 }  // namespace
 
 DfGraphPtr GenExampleGraph(const std::string &name) {
@@ -721,8 +738,19 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   MS_EXCEPTION_IF_NULL(graph_manager_);
   auto &infer_need_update_parameter_names =
     Singleton<mindspore::device::ascend::InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
-  for (const auto &it : tensors) {
-    std::string name = it.first;
+  // The format of Momentum's accum is updated according to format of Momentum's var, so here sort tensors to put
+  // Momentum's accum parameter at last
+  auto cmp = std::bind(ParamCompare, std::placeholders::_1, std::placeholders::_2, std::cref(params_),
+                       graph_manager_->node_users());
+  std::map<std::string, std::pair<int, tensor::TensorPtr>, decltype(cmp)> ordered_tensors(cmp);
+  // NOTE: the sequence of parameters of init DfGraph is calculated by TensorOrderMap, see method `GetInputTensors`
+  // defined in `mindspore/ccsrc/plugin/device/ascend/hal/hardware/ge_graph_executor.cc`
+  for (auto &it : tensors) {
+    ordered_tensors.insert({it.first, {index++, it.second}});
+  }
+  for (const auto &itor : ordered_tensors) {
+    std::string name = itor.first;
+    auto &it = itor.second;
     auto node_itor = params_.find(name);
     // if name not in params_, create a node in graph
     if (node_itor == params_.end()) {
@@ -793,8 +821,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       }
       auto param_op = adpt->generate(name + "_data");
       if (it.second->is_init() == 0) {
-        SetXDataIndex(param_op, index);
-        index++;
+        SetXDataIndex(param_op, it.first);
         ProcessInputData(&init_input, &infer_need_update_parameter_names, param_op, name, desc);
       }
 
