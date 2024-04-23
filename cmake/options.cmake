@@ -148,6 +148,10 @@ if(ENABLE_DUMP_IR)
     add_compile_definitions(ENABLE_DUMP_IR)
 endif()
 
+if(ENABLE_FFMPEG)
+    add_compile_definitions(ENABLE_FFMPEG)
+endif()
+
 if(ENABLE_MINDDATA)
     add_compile_definitions(ENABLE_MINDDATA)
     if(ENABLE_TDTQUE)

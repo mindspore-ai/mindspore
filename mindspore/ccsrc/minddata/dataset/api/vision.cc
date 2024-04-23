@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,7 @@
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
+#include "minddata/dataset/kernels/image/video_utils.h"
 #endif
 #include "minddata/dataset/kernels/ir/validators.h"
 
@@ -1190,6 +1191,27 @@ Status ReadImage(const std::string &filename, mindspore::MSTensor *output, Image
   return Status::OK();
 }
 #endif  // not ENABLE_ANDROID
+
+// ReadVideo Function.
+Status ReadVideo(const std::string &filename, mindspore::MSTensor *video_output, mindspore::MSTensor *audio_output,
+                 std::map<std::string, std::string> *metadata_output, float start_pts, float end_pts,
+                 const std::string &pts_unit) {
+#if !defined(ENABLE_ANDROID) && defined(ENABLE_FFMPEG)
+  RETURN_UNEXPECTED_IF_NULL(video_output);
+  RETURN_UNEXPECTED_IF_NULL(audio_output);
+  RETURN_UNEXPECTED_IF_NULL(metadata_output);
+
+  std::shared_ptr<Tensor> de_video_output;
+  std::shared_ptr<Tensor> de_audio_output;
+  RETURN_IF_NOT_OK(mindspore::dataset::ReadVideo(filename, &de_video_output, &de_audio_output, metadata_output,
+                                                 start_pts, end_pts, pts_unit));
+  *video_output = mindspore::MSTensor(std::make_shared<DETensor>(de_video_output));
+  *audio_output = mindspore::MSTensor(std::make_shared<DETensor>(de_audio_output));
+#else
+  MS_LOG(ERROR) << "Unsupported ReadVideo.";
+#endif
+  return Status::OK();
+}
 
 // Rescale Transform Operation.
 struct Rescale::Data {

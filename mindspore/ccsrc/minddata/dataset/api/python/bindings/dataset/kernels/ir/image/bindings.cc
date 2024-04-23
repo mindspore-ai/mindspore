@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
+#include "minddata/dataset/kernels/image/video_utils.h"
 
 #include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_contrast_ir.h"
@@ -791,6 +792,19 @@ PYBIND_REGISTER(ReadImageOperation, 1, ([](py::module *m) {
                                  THROW_IF_ERROR(mindspore::dataset::ReadImage(filename, &output, mode));
                                  return output;
                                }));
+                }));
+
+PYBIND_REGISTER(ReadVideo, 1, ([](py::module *m) {
+                  (void)m->def(
+                    "read_video",
+                    ([](const std::string &filename, float start_pts, float end_pts, const std::string &pts_unit) {
+                      std::shared_ptr<Tensor> video_output;
+                      std::shared_ptr<Tensor> audio_output;
+                      std::map<std::string, std::string> metadata_output;
+                      THROW_IF_ERROR(mindspore::dataset::ReadVideo(filename, &video_output, &audio_output,
+                                                                   &metadata_output, start_pts, end_pts, pts_unit));
+                      return std::make_tuple(video_output, audio_output, metadata_output);
+                    }));
                 }));
 
 PYBIND_REGISTER(RescaleOperation, 1, ([](const py::module *m) {
