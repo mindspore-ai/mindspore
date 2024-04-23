@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -64,5 +64,5 @@ from .transforms import AdjustBrightness, AdjustContrast, AdjustGamma, AdjustHue
     ResizeWithBBox, RgbToHsv, Rotate, SlicePatches, Solarize, TenCrop, ToNumpy, ToPIL, ToTensor, ToType, \
     TrivialAugmentWide, UniformAugment, VerticalFlip, not_random
 from .utils import AutoAugmentPolicy, Border, ConvertMode, ImageBatchFormat, ImageReadMode, Inter, SliceMode, \
-    encode_jpeg, encode_png, get_image_num_channels, get_image_size, read_file, read_image, write_file, write_jpeg, \
-    write_png
+    encode_jpeg, encode_png, get_image_num_channels, get_image_size, read_file, read_image, read_video, write_file, \
+    write_jpeg, write_png

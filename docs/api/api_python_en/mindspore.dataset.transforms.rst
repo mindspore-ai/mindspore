@@ -157,6 +157,7 @@ Utilities
     mindspore.dataset.vision.get_image_size
     mindspore.dataset.vision.read_file
     mindspore.dataset.vision.read_image
+    mindspore.dataset.vision.read_video
     mindspore.dataset.vision.write_file
     mindspore.dataset.vision.write_jpeg
     mindspore.dataset.vision.write_png

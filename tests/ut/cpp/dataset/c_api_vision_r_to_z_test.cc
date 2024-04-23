@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1236,7 +1236,7 @@ TEST_F(MindDataTestPipeline, TestRandAugmentMagGreNMBError) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
-    
+
 /// Feature: ReadFile
 /// Description: Test ReadFile with the an example file
 /// Expectation: Output is equal to the expected data
@@ -1247,7 +1247,7 @@ TEST_F(MindDataTestPipeline, TestReadFileNormal) {
   ASSERT_OK(mindspore::dataset::vision::ReadFile("./data/dataset/apple.jpg", &output));
   EXPECT_EQ(output.Shape()[0], 159109);
   EXPECT_EQ(output.DataType(), mindspore::DataType::kNumberTypeUInt8);
-  data = (const UINT8 *) (output.Data().get());
+  data = (const UINT8 *)(output.Data().get());
   EXPECT_EQ(data[0], 255);
   EXPECT_EQ(data[1], 216);
   EXPECT_EQ(data[2], 255);
@@ -1288,7 +1288,7 @@ TEST_F(MindDataTestPipeline, TestReadImageNormal) {
   EXPECT_EQ(output.Shape()[0], 226);
   EXPECT_EQ(output.Shape()[1], 403);
   EXPECT_EQ(output.Shape()[2], 3);
-  data = (const UINT8 *) (output.Data().get());
+  data = (const UINT8 *)(output.Data().get());
   EXPECT_EQ(data[0], 221);
   EXPECT_EQ(data[1], 221);
   EXPECT_EQ(data[2], 221);
@@ -1427,7 +1427,7 @@ TEST_F(MindDataTestPipeline, TestWriteJpegNormal) {
   auto image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(image_de_tensor));
 
   int quality;
-  for (quality = 20; quality <= 100 ; quality += 40) {
+  for (quality = 20; quality <= 100; quality += 40) {
     ASSERT_OK(mindspore::dataset::vision::WriteJpeg(filename_2, image_ms_tensor, quality));
     image_2 = cv::imread(filename_1, cv::ImreadModes::IMREAD_UNCHANGED);
     remove(filename_2.c_str());
@@ -1468,7 +1468,7 @@ TEST_F(MindDataTestPipeline, TestWriteJpegException) {
 
   // Test with an invalid image containing float elements
   std::shared_ptr<Tensor> float32_cde_tensor;
-  Tensor::CreateEmpty(TensorShape({5, 4, 3 }), DataType(DataType::DE_FLOAT32), &float32_cde_tensor);
+  Tensor::CreateEmpty(TensorShape({5, 4, 3}), DataType(DataType::DE_FLOAT32), &float32_cde_tensor);
   image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(float32_cde_tensor));
   ASSERT_ERROR(mindspore::dataset::vision::WriteJpeg(filename_2, image_ms_tensor));
 
@@ -1513,7 +1513,7 @@ TEST_F(MindDataTestPipeline, TestWritePngNormal) {
   auto image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(image_de_tensor));
 
   int compression_level;
-  for (compression_level = 0; compression_level <= 9 ; compression_level += 9) {
+  for (compression_level = 0; compression_level <= 9; compression_level += 9) {
     ASSERT_OK(mindspore::dataset::vision::WritePng(filename_2, image_ms_tensor, compression_level));
     image_2 = cv::imread(filename_1, cv::ImreadModes::IMREAD_UNCHANGED);
     remove(filename_2.c_str());
@@ -1554,7 +1554,7 @@ TEST_F(MindDataTestPipeline, TestWritePngException) {
 
   // Test with an invalid image containing floating-point elements
   std::shared_ptr<Tensor> float32_de_tensor;
-  Tensor::CreateEmpty(TensorShape({5, 4, 3 }), DataType(DataType::DE_FLOAT32), &float32_de_tensor);
+  Tensor::CreateEmpty(TensorShape({5, 4, 3}), DataType(DataType::DE_FLOAT32), &float32_de_tensor);
   image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(float32_de_tensor));
   ASSERT_ERROR(mindspore::dataset::vision::WritePng(filename_2, image_ms_tensor));
 
@@ -1573,3 +1573,161 @@ TEST_F(MindDataTestPipeline, TestWritePngException) {
   image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(image_de_tensor));
   ASSERT_ERROR(mindspore::dataset::vision::WritePng(filename_2, image_ms_tensor));
 }
+
+#if (defined(ENABLE_MINDDATA) && defined(ENABLE_FFMPEG) && !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__))
+void check_meta_data(std::map<std::string, std::string> &meta_data, const std::string &fps_name, float expected_fps,
+                     float error_rate_limit = 0.0005) {
+  float error_rate;
+  int data_ok = 0;
+  float difference = std::abs(std::stof(meta_data[fps_name]) - expected_fps);
+  error_rate = difference;
+  if (expected_fps > 1.0e-5) {
+    error_rate = difference / expected_fps;
+  }
+  if (error_rate <= error_rate_limit) {
+    data_ok = 1;
+  }
+  EXPECT_EQ(data_ok, 1);
+}
+
+void check_mindspore_output(const std::string &filename, float video_fps, float audio_fps) {
+  mindspore::MSTensor video_output;
+  mindspore::MSTensor audio_output;
+  std::map<std::string, std::string> metadata_output;
+  float start_pts = 0.0;
+  float end_pts = std::numeric_limits<float>::max();
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideo(filename, &video_output, &audio_output, &metadata_output, start_pts,
+                                                  end_pts));
+  check_meta_data(metadata_output, "video_fps", video_fps);
+  check_meta_data(metadata_output, "audio_fps", audio_fps);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideo(filename, &video_output, &audio_output, &metadata_output, start_pts,
+                                                  end_pts, "pts"));
+  check_meta_data(metadata_output, "video_fps", video_fps);
+  check_meta_data(metadata_output, "audio_fps", audio_fps);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideo(filename, &video_output, &audio_output, &metadata_output, start_pts,
+                                                  end_pts, "sec"));
+  check_meta_data(metadata_output, "video_fps", video_fps);
+  check_meta_data(metadata_output, "audio_fps", audio_fps);
+}
+
+/// Feature: ReadVideo
+/// Description: Test ReadVideo with AVI file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoAVINormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoAVINormal.";
+
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  filename = folder_path + "campus.avi";
+  check_mindspore_output(filename, 29.97003, 48000.0);
+}
+
+/// Feature: ReadVideo
+/// Description: Test ReadVideo with H264 file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoH264Normal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoH264Normal.";
+
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  filename = folder_path + "campus.h264";
+  check_mindspore_output(filename, 30.0, 44100.0);
+}
+
+/// Feature: ReadVideo
+/// Description: Test ReadVideo with H265 file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoH265Normal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoH265Normal.";
+
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  filename = folder_path + "campus.h265";
+  check_mindspore_output(filename, 25.0, 44100.0);
+}
+
+/// Feature: ReadVideo
+/// Description: Test ReadVideo with MOV file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoMOVNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoMOVNormal.";
+
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  filename = folder_path + "campus.mov";
+  check_mindspore_output(filename, 25.0, 44100.0);
+}
+
+/// Feature: ReadVideo
+/// Description: Test ReadVideo with MP4 file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoMP4Normal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoMP4Normal.";
+
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  filename = folder_path + "campus.mp4";
+  check_mindspore_output(filename, 25.0, 44100.0);
+}
+
+/// Feature: ReadVideo
+/// Description: Test ReadVideo with WMV file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoWMVNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoWMVNormal.";
+
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  filename = folder_path + "campus.wmv";
+  check_mindspore_output(filename, 25.0, 48000.0);
+}
+
+/// Feature: ReadVideo
+/// Description: Test ReadVideo with invalid parameter
+/// Expectation: Error is caught when the the parameter is invalid
+TEST_F(MindDataTestPipeline, TestReadVideoException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoException.";
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  filename = folder_path + "campus.mp4";
+
+  mindspore::MSTensor video_output;
+  mindspore::MSTensor audio_output;
+  std::map<std::string, std::string> metadata_output;
+  float start_pts = 0.0;
+  float end_pts = std::numeric_limits<float>::max();
+
+  // Test with a not exist filename
+  ASSERT_ERROR(mindspore::dataset::vision::ReadVideo("./this_file_is_not_exist", &video_output, &audio_output,
+                                                     &metadata_output, start_pts, end_pts));
+  // Test with a directory name
+  ASSERT_ERROR(mindspore::dataset::vision::ReadVideo(folder_path, &video_output, &audio_output, &metadata_output,
+                                                     start_pts, end_pts));
+
+  // Test with a not supported type of file
+  ASSERT_ERROR(mindspore::dataset::vision::ReadVideo("./data/dataset/declient.cfg", &video_output, &audio_output,
+                                                     &metadata_output, start_pts, end_pts));
+
+  // Test with an invalid start_pts
+  ASSERT_ERROR(
+    mindspore::dataset::vision::ReadVideo(folder_path, &video_output, &audio_output, &metadata_output, -1.0, end_pts));
+
+  // Test with an invalid end_pts
+  ASSERT_ERROR(mindspore::dataset::vision::ReadVideo(folder_path, &video_output, &audio_output, &metadata_output,
+                                                     start_pts, -1.0));
+
+  // Test with a not supported pts_unit
+  ASSERT_ERROR(mindspore::dataset::vision::ReadVideo(filename, &video_output, &audio_output, &metadata_output,
+                                                     start_pts, end_pts, "min"));
+}
+#endif
