@@ -328,6 +328,12 @@ bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value,
       MS_LOG(INFO) << "The input python object of " << callable_value->ToString() << ", is NULL";
       return false;
     }
+    // Node with input of generator may cause change of generator, skip it in build node now.
+    if (PyGen_CheckExact(input_obj.ptr())) {
+      MS_LOG(INFO) << "The input python object is generator " << std::string(py::str(input_obj))
+                   << ", do not build graph.";
+      return false;
+    }
     bool is_constant = IsConstant(input_obj);
     auto iter = py_obj_to_node_.find(input_obj.ptr());
     if (is_constant || iter == py_obj_to_node_.end()) {
