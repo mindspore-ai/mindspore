@@ -37,8 +37,16 @@ constexpr int16_t kInputDataInt8Max = 127;
 constexpr int16_t kInputDataUint8Min = 0;
 constexpr int16_t kInputDataUint8Max = 254;
 }  // namespace
+
+template <typename T, typename Distribution>
+void FillRandomData(size_t size, void *data, Distribution distribution) {
+  std::mt19937 random_engine;
+  size_t elements_num = size / sizeof(T);
+  (void)std::generate_n(static_cast<T *>(data), elements_num,
+                        [&]() { return static_cast<T>(distribution(random_engine)); });
+}
+
 int GenRandomData(size_t size, void *data, int data_type) {
-  MS_ASSERT(data != nullptr);
   switch (data_type) {
     case kNumberTypeFloat32:
     case kNumberTypeFloat:
@@ -81,7 +89,7 @@ int GenRandomData(mindspore::MSTensor *tensor) {
   CHECK_NULL_RETURN(tensor);
   auto input_data = tensor->MutableData();
   if (input_data == nullptr) {
-    MS_LOG(ERROR) << "MallocData for inTensor failed";
+    MS_LOG(ERROR) << "MallocData for inTensor failed!";
     return RET_ERROR;
   }
   int status = RET_ERROR;
