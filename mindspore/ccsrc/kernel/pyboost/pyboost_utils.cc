@@ -44,6 +44,12 @@ void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, const Ab
 }
 }  // namespace
 
+AbstractBasePtr ToAbstractNoValue(const tensor::TensorPtr &tensor) {
+  auto abs = tensor->GetAbstractCache();
+  abs->set_value(kValueAny);
+  return abs;
+}
+
 void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
                                      runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
