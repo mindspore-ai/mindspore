@@ -191,6 +191,22 @@ def _origin_shapes(shapes):
     return new_shapes
 
 
+def _dynamic_shape_for_dataset(dataset_shapes, dynamic_shapes):
+    """convert static dataset shapes to dynamic shape"""
+    if len(dataset_shapes) != len(dynamic_shapes):
+        raise ValueError("The dataset shapes size of {} is not equal to "
+                         "dynamic shapes size of {}".format(dataset_shapes, dynamic_shapes))
+    ret = dataset_shapes
+    for i in range(len(dynamic_shapes)):
+        if len(dataset_shapes[i]) != len(dynamic_shapes[i]):
+            raise ValueError("The dataset shapes size of {} is not equal to "
+                             "dynamic shapes size of {}".format(dataset_shapes, dynamic_shapes))
+        for j in range(len(dynamic_shapes[i])):
+            if dynamic_shapes[i][j] == -1:
+                ret[i][j] = -1
+    return ret
+
+
 def _to_full_tensor(elem, global_device_num, global_rank, scaling_sens=None):
     """Convert numpy to tensor, expanding batch dimension according to device_num, adapt to feed the data
        from host solution.
