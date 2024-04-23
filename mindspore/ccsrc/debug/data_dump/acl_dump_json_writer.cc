@@ -60,6 +60,9 @@ void AclDumpJsonWriter::Parse() {
   layer_ = kernels;
   model_name_ = model_name;
   auto op_debug_mode = dump_parser.op_debug_mode();
+  if (op_debug_mode >= 1 && op_debug_mode <= 3) {
+    MS_LOG(EXCEPTION) << "When ACL dump is enabled, overflow dump is not supported.";
+  }
   MS_LOG(INFO) << "Op_debug_mode is: " << op_debug_mode;
   switch (op_debug_mode) {
     case 0:
