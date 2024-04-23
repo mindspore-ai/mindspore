@@ -30,6 +30,7 @@
 #include "ops/op_utils.h"
 
 namespace mindspore::opt {
+namespace {
 bool IsBNCNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
@@ -46,6 +47,31 @@ bool IsSoftmaxNode(const BaseRef &n) {
   }
   return false;
 }
+
+bool CanFuse(const CNodePtr &pre_cnode, const CNodePtr &post_cnode, const std::vector<int> &perm) {
+  if (!utils::isa<CNodePtr>(pre_cnode->input(1))) {
+    return false;
+  }
+  Format in_format = NCHW;
+  if (DetermineCertainVarInputFormat(pre_cnode, 1, &in_format) != lite::RET_OK) {
+    MS_LOG(WARNING) << "cannot determine in-format.";
+    return false;
+  }
+  Format out_format = NCHW;
+  if (DetermineCertainOutputFormat(post_cnode, 0, &out_format) != lite::RET_OK) {
+    MS_LOG(WARNING) << "cannot determine out-format.";
+    return false;
+  }
+  Format out_format_after_fuse = out_format;
+  if (perm == kNH2NC && in_format == NHWC) {
+    out_format_after_fuse = NCHW;
+  }
+  if (perm == kNC2NH && in_format == NCHW) {
+    out_format_after_fuse = NHWC;
+  }
+  return out_format_after_fuse == out_format;
+}
+}  // namespace
 
 VectorRef TransposeFusion::DefineBNPattern() const {
   auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
@@ -226,6 +252,9 @@ AnfNodePtr TransposeFusion::TransTransFusion(const FuncGraphPtr &func_graph, con
     }();
     if (perm == ori_perm) {
       return pre_cnode->input(1);
+    }
+    if (!CanFuse(pre_cnode, trans_cnode_2, perm)) {
+      return nullptr;
     }
     auto name = trans_cnode_2->fullname_with_scope();
     auto perm_node = BuildIntVecParameterNode(func_graph, perm, name + "_perm");
