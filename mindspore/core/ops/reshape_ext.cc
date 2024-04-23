@@ -116,8 +116,34 @@ abstract::ShapePtr ReshapeExtInferShape(const PrimitivePtr &primitive, const std
     MS_LOG_EXCEPTION
       << "The last node in ReshapeExt graph should be Reshape. Please check the ShapeReshapeFusion pass.";
   }
-  auto key_shape = std::make_shared<abstract::Shape>(graph->GetScalarValue(graph->GetNodeSize() - 1));
-  return key_shape;  // output shape
+  auto output_shape = std::make_shared<abstract::Shape>(graph->GetScalarValue(graph->GetNodeSize() - 1));
+  auto input_shape = input_args[0]->GetShape();
+  MS_EXCEPTION_IF_NULL(input_shape);
+  auto input_shape_vector = input_shape->GetShapeVector();
+  auto output_shape_vector = output_shape->GetShapeVector();
+  if (!IsDynamic(input_shape_vector) && IsDynamic(output_shape_vector)) {
+    int cnt = 0;
+    int index = 0;
+    for (size_t i = 0; i < output_shape_vector.size(); ++i) {
+      if (output_shape_vector[i] == -1) {
+        cnt++;
+        index = i;
+      }
+    }
+    if (cnt == 1) {
+      int64_t sum_input_shape =
+        std::accumulate(input_shape_vector.begin(), input_shape_vector.end(), 1, std::multiplies<int64_t>());
+      int64_t sum_output_shape =
+        std::accumulate(output_shape_vector.begin(), output_shape_vector.end(), 1, std::multiplies<int64_t>()) * -1;
+      if ((sum_input_shape < sum_output_shape) || (sum_input_shape % sum_output_shape != 0)) {
+        MS_EXCEPTION(ValueError) << "ReshapeExt input shape and output shape wrong.";
+      }
+      auto index_shape = sum_input_shape / sum_output_shape;
+      output_shape_vector[index] = index_shape;
+      return std::make_shared<abstract::Shape>(output_shape_vector);
+    }
+  }
+  return output_shape;  // output shape
 }
 
 TypePtr ReshapeExtInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
