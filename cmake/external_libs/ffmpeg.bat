@@ -14,7 +14,7 @@
 @rem ============================================================================
 @echo off
 
-echo Start complie FFmpeg software at: %date% %time%
+echo Start compile FFmpeg software at: %date% %time%
 
 SET MINGW64_NAME="mingw64.exe"
 SET PROCESS_NAME=mintty.exe

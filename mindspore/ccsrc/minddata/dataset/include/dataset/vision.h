@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1685,6 +1685,19 @@ Status DATASET_API ReadFile(const std::string &filename, mindspore::MSTensor *ou
 /// \return The status code.
 Status DATASET_API ReadImage(const std::string &filename, mindspore::MSTensor *output,
                              ImageReadMode mode = ImageReadMode::kUNCHANGED);
+
+/// \brief Read the video, audio, metadata from a video file. It supports AVI, H264, H265, MOV, MP4, WMV file formats.
+/// \param[in] filename The path to the videoe file to be read.
+/// \param[out] video_output The video frames of the video file.
+/// \param[out] audio_output The audio frames of the video file.
+/// \param[out] metadata_output The metadata contains video_fps, audio_fps.
+/// \param[in] start_pts The start presentation timestamp of the video. Default: 0.0.
+/// \param[in] end_pts The end presentation timestamp of the video. Default: 2147483647.0.
+/// \param[in] pts_unit The unit for the timestamps, can be one of ["pts", "sec"]. Default: "pts".
+/// \return The status code.
+Status DATASET_API ReadVideo(const std::string &filename, mindspore::MSTensor *video_output,
+                             mindspore::MSTensor *audio_output, std::map<std::string, std::string> *metadata_output,
+                             float start_pts = 0.0, float end_pts = 2147483647.0, const std::string &pts_unit = "pts");
 
 /// \brief Crop the given image and zoom to the specified size.
 class DATASET_API ResizedCrop final : public TensorTransform {

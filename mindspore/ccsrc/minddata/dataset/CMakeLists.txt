@@ -235,7 +235,6 @@ else()
 endif()
 
 if(ENABLE_FFMPEG)
-    add_compile_definitions(ENABLE_FFMPEG)
     if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(FFMPEG_LIB mindspore::avcodec mindspore::avdevice mindspore::avfilter mindspore::avformat mindspore::avutil
             mindspore::swresample mindspore::swscale)

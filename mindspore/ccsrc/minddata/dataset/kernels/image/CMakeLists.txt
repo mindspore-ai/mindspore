@@ -77,6 +77,7 @@ add_library(kernels-image OBJECT
     resize_cubic_op.cc
     trivial_augment_wide_op.cc
     vertical_flip_op.cc
+    video_utils.cc
     to_tensor_op.cc
     )
 
