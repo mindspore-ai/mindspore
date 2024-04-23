@@ -25,6 +25,7 @@
 #include <utility>
 #include "kernel/kernel.h"
 #include "plugin/device/ascend/kernel/hccl/hcom_util.h"
+#include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "hccl/hcom.h"
 #include "hccl/hccl_types.h"
 #include "utils/ms_utils.h"
@@ -61,12 +62,14 @@ class HcclKernel : public KernelMod {
   virtual void CalLoopSize();
   bool CalcTypeShapeAndCount(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   void LoadHcclLibrary();
+  mindspore::device::CollectiveCommunicationLib &GetCommLib();
   std::vector<std::vector<int64_t>> hccl_kernel_input_shape_list_;
   std::vector<std::vector<int64_t>> hccl_kernel_output_shape_list_;
   std::vector<HcclDataType> hccl_data_type_list_;
   std::vector<std::string> hccl_format_list_;
   uint64_t hccl_count_;
   HcclReduceOp op_type_;
+  device::CollectiveOpReduceType collective_reduce_type_;
   uint32_t root_id_;
   uint32_t src_rank_;
   uint32_t dest_rank_;

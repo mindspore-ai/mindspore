@@ -270,6 +270,9 @@ bool GeDeviceResManager::LoadCollectiveCommLib() {
   if (!common::GetEnv(kSimulationLevel).empty()) {
     collective_comm_lib_ = &DummyAscendCollectiveCommLib::GetInstance();
     return true;
+  } else if (!common::GetEnv(kEnableCrossAZ).empty()) {
+    collective_comm_lib_ = &CcoolCollectiveCommLib::GetInstance();
+    return true;
   }
   // Ascend backend supports HCCL and LCCL collective communication libraries.
   if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {

@@ -52,23 +52,17 @@ bool HcomAllBroadCastKernel::Launch(const std::vector<KernelTensor *> &inputs, c
     if (lccl_result != Lcal::LCAL_SUCCESS) {
       MS_LOG(EXCEPTION) << "LCCL Broadcast failed.";
     }
+    return true;
   } else {
-    auto hccl_result = hccl::HcclAdapter::GetInstance().HcclBroadcast(
-      inputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], root_id_, stream_ptr, comm_);
-    if (hccl_result != HCCL_SUCCESS) {
-      MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast failed, return: " << hccl_result;
-      return false;
-    }
+    auto &comm_lib = GetCommLib();
+    return comm_lib.Broadcast(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_, inputs[0]->dtype_id(),
+                              root_id_, group_, stream_ptr);
   }
 #else
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclBroadcast(
-    inputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], root_id_, stream_ptr, comm_);
-  if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast failed, return: " << hccl_result;
-    return false;
-  }
+  auto &comm_lib = GetCommLib();
+  return comm_lib.Broadcast(inputs[0]->device_ptr(), inputs[0]->device_ptr(), hccl_count_, inputs[0]->dtype_id(),
+                            root_id_, group_, stream_ptr);
 #endif
-  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

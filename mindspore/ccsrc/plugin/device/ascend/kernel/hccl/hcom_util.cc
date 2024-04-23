@@ -135,7 +135,8 @@ bool HcomUtil::GetHcomCount(const PrimitivePtr &primitive, const vector<HcclData
   return true;
 }
 
-bool HcomUtil::GetHcomOperationType(const PrimitivePtr &primitive, HcclReduceOp *op_type) {
+bool HcomUtil::GetHcomOperationType(const PrimitivePtr &primitive, HcclReduceOp *op_type,
+                                    device::CollectiveOpReduceType *collective_reduce_type) {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(op_type);
 
@@ -145,12 +146,16 @@ bool HcomUtil::GetHcomOperationType(const PrimitivePtr &primitive, HcclReduceOp 
   }
   if (hcom_op_type == "min") {
     *op_type = HCCL_REDUCE_MIN;
+    *collective_reduce_type = device::CollectiveOpReduceType::Reduce_Min;
   } else if (hcom_op_type == "max") {
     *op_type = HCCL_REDUCE_MAX;
+    *collective_reduce_type = device::CollectiveOpReduceType::Reduce_Max;
   } else if (hcom_op_type == "prod") {
     *op_type = HCCL_REDUCE_PROD;
+    *collective_reduce_type = device::CollectiveOpReduceType::Reduce_Prod;
   } else if (hcom_op_type == "sum") {
     *op_type = HCCL_REDUCE_SUM;
+    *collective_reduce_type = device::CollectiveOpReduceType::Reduce_Sum;
   } else {
     MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_REDUCE_TYPE fail, [" << hcom_op_type << "] not support!";
     return false;

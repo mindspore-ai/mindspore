@@ -54,25 +54,17 @@ bool HcomAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs, cons
     if (lccl_result != Lcal::LCAL_SUCCESS) {
       MS_LOG(EXCEPTION) << "LCCL AllReduce failed.";
     }
+    return true;
   } else {
-    auto hccl_result =
-      hccl::HcclAdapter::GetInstance().HcclAllReduce(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
-                                                     hccl_data_type_list_[0], op_type_, stream_ptr, comm_);
-    if (hccl_result != HCCL_SUCCESS) {
-      MS_LOG(ERROR) << "HcclAllReduce failed, ret:" << hccl_result;
-      return false;
-    }
+    auto &comm_lib = GetCommLib();
+    return comm_lib.AllReduce(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_, inputs[0]->dtype_id(),
+                              collective_reduce_type_, group_, stream_ptr);
   }
 #else
-  auto hccl_result =
-    hccl::HcclAdapter::GetInstance().HcclAllReduce(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
-                                                   hccl_data_type_list_[0], op_type_, stream_ptr, comm_);
-  if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcclAllReduce failed, ret:" << hccl_result;
-    return false;
-  }
+  auto &comm_lib = GetCommLib();
+  return comm_lib.AllReduce(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_, inputs[0]->dtype_id(),
+                            collective_reduce_type_, group_, stream_ptr);
 #endif
-  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

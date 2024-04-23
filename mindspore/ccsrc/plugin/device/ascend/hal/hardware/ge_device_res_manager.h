@@ -23,6 +23,7 @@
 #include "runtime/hardware/device_context.h"
 #include "utils/ms_context.h"
 #include "include/transform/graph_ir/types.h"
+#include "plugin/device/ascend/hal/hardware/ccool_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hardware/dummy_ascend_collective_comm_lib.h"
 #ifdef ENABLE_INTERNAL_KERNELS

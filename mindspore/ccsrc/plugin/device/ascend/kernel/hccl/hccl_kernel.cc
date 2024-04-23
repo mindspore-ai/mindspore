@@ -29,9 +29,11 @@
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#include "plugin/device/ascend/hal/hardware/ccool_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 
 using AscendCollectiveCommLib = mindspore::device::ascend::AscendCollectiveCommLib;
+using CcoolCollectiveCommLib = mindspore::device::ascend::CcoolCollectiveCommLib;
 namespace {
 constexpr int64_t kComplex64ConvertFloat32Num = 2;
 static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
@@ -117,7 +119,7 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
   std::set<std::string> reduce_op_names = {kAllReduceOpName, kReduceScatterOpName, kReduceOpName,
                                            kMatMulAllReduceOpName};
   if (reduce_op_names.count(kernel_name_) != 0) {
-    if (!HcomUtil::GetHcomOperationType(primitive_, &op_type_)) {
+    if (!HcomUtil::GetHcomOperationType(primitive_, &op_type_, &collective_reduce_type_)) {
       MS_LOG(ERROR) << "GetHcomOperationType fail!";
       return false;
     }
@@ -219,6 +221,14 @@ bool HcclKernel::CalcTypeShapeAndCount(const std::vector<KernelTensor *> &inputs
   }
 
   return true;
+}
+
+CollectiveCommunicationLib &HcclKernel::GetCommLib() {
+  if (common::GetEnv(kEnableCrossAZ).empty()) {
+    return AscendCollectiveCommLib::GetInstance();
+  } else {
+    return CcoolCollectiveCommLib::GetInstance();
+  }
 }
 
 bool HcclKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

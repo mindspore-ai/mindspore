@@ -446,6 +446,7 @@ constexpr auto kCompilerCachePath = "MS_COMPILER_CACHE_PATH";
 constexpr auto kSimulationLevel = "MS_SIMULATION_LEVEL";
 constexpr auto kSimulationLevelCompileGraph = "0";
 constexpr auto kSimulationLevelCompileKernel = "1";
+constexpr auto kEnableCrossAZ = "MS_ENABLE_CROSS_AZ";
 
 // comm
 constexpr auto kHCCLWorldGroup = "hccl_world_group";

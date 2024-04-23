@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,19 @@ constexpr size_t kPathMax = 4096;
 namespace mindspore {
 namespace device {
 namespace ascend {
+namespace {
+HcclDataType ConvertHcclType(TypeId type_id) {
+  auto iter = kConstOpHcomDataTypeMap.find(type_id);
+  if (iter == kConstOpHcomDataTypeMap.end()) {
+    if (type_id == TypeId::kNumberTypeComplex64) {
+      MS_LOG(INFO) << "HcomDataType Can't support Current Ascend Data Type : Complex64, Convert it to Float32";
+      return HCCL_DATA_TYPE_FP32;
+    }
+    MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << TypeIdLabel(type_id);
+  }
+  return iter->second;
+}
+}  // namespace
 #define HCCL_RUN_CHECK(op_name, group, op)                          \
   do {                                                              \
     auto hccl_result = static_cast<int64_t>(op);                    \
@@ -182,10 +195,7 @@ bool AscendCollectiveCommLib::DestroyCommunicationGroup(const std::string &group
   HCCL_GROUP_CHECK_EMPTY(group_name);
   CHECK_RET((groups_.count(group_name) != 0), true, "The HCCL group " + group_name + " does not exist.");
 
-  if (!groups_[group_name]->Finalize()) {
-    return false;
-  }
-  return true;
+  return groups_[group_name]->Finalize();
 }
 
 bool AscendCollectiveCommLib::CreateDeviceCommunicationGroup(const std::string &group_name,
@@ -287,6 +297,129 @@ uint32_t AscendCollectiveCommLib::GetGroupRankFromWorldRank(uint32_t world_rank,
     std::string("get local rank id"), group_name,
     hccl::HcclAdapter::GetInstance().HcclGetGroupRankFromWorldRank(world_rank, group_name, &local_rank_id));
   return local_rank_id;
+}
+
+bool AscendCollectiveCommLib::AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                                        const std::string &group_name, void *stream) {
+  MS_EXCEPTION_IF_NULL(send_buff);
+  MS_EXCEPTION_IF_NULL(recv_buff);
+  MS_EXCEPTION_IF_NULL(stream);
+  const auto hccl_data_type = ConvertHcclType(data_type);
+
+  const auto comm = HcclCommunicator(group_name);
+  MS_EXCEPTION_IF_NULL(comm);
+
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllGather(const_cast<void *>(send_buff), recv_buff,
+                                                                    send_count, hccl_data_type, stream, comm);
+  if (hccl_result != HCCL_SUCCESS) {
+    MS_LOG(ERROR) << "HcclAllGather failed, ret:" << hccl_result;
+    return false;
+  }
+  return true;
+}
+
+bool AscendCollectiveCommLib::AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                                        CollectiveOpReduceType reduce_op, const std::string &group_name, void *stream) {
+  MS_EXCEPTION_IF_NULL(send_buff);
+  MS_EXCEPTION_IF_NULL(recv_buff);
+  MS_EXCEPTION_IF_NULL(stream);
+  const auto hccl_data_type = ConvertHcclType(data_type);
+
+  const auto comm = HcclCommunicator(group_name);
+  MS_EXCEPTION_IF_NULL(comm);
+
+  const auto &hccl_reduce_type_iter = kHcomOpReduceTypeMap.find(reduce_op);
+  if (hccl_reduce_type_iter == kHcomOpReduceTypeMap.end()) {
+    MS_LOG(ERROR) << "Can not find hcom reduce type for " << reduce_op;
+    return false;
+  }
+  const auto hccl_reduce_type = hccl_reduce_type_iter->second;
+
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllReduce(
+    const_cast<void *>(send_buff), recv_buff, send_count, hccl_data_type, hccl_reduce_type, stream, comm);
+  if (hccl_result != HCCL_SUCCESS) {
+    MS_LOG(ERROR) << "HcclAllReduce failed, ret:" << hccl_result;
+    return false;
+  }
+  return true;
+}
+
+bool AscendCollectiveCommLib::Broadcast(const void *send_buff, void *, size_t send_count, TypeId data_type,
+                                        uint32_t root_rank, const std::string &group_name, void *stream) {
+  MS_EXCEPTION_IF_NULL(send_buff);
+  MS_EXCEPTION_IF_NULL(stream);
+  const auto hccl_data_type = ConvertHcclType(data_type);
+
+  const auto comm = HcclCommunicator(group_name);
+  MS_EXCEPTION_IF_NULL(comm);
+
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclBroadcast(const_cast<void *>(send_buff), send_count,
+                                                                    hccl_data_type, root_rank, stream, comm);
+  if (hccl_result != HCCL_SUCCESS) {
+    MS_LOG(ERROR) << "HcclBroadcast failed, ret: " << hccl_result;
+    return false;
+  }
+  return true;
+}
+
+bool AscendCollectiveCommLib::ReduceScatter(const void *send_buff, void *recv_buff, size_t recv_count, TypeId data_type,
+                                            CollectiveOpReduceType reduce_op, const std::string &group_name,
+                                            void *stream) {
+  MS_EXCEPTION_IF_NULL(send_buff);
+  MS_EXCEPTION_IF_NULL(recv_buff);
+  MS_EXCEPTION_IF_NULL(stream);
+  const auto hccl_data_type = ConvertHcclType(data_type);
+
+  const auto comm = HcclCommunicator(group_name);
+  MS_EXCEPTION_IF_NULL(comm);
+
+  const auto &hccl_reduce_type_iter = kHcomOpReduceTypeMap.find(reduce_op);
+  if (hccl_reduce_type_iter == kHcomOpReduceTypeMap.end()) {
+    MS_LOG(ERROR) << "Can not find hcom reduce type for " << reduce_op;
+    return false;
+  }
+  const auto hccl_reduce_type = hccl_reduce_type_iter->second;
+
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclReduceScatter(
+    const_cast<void *>(send_buff), recv_buff, recv_count, hccl_data_type, hccl_reduce_type, stream, comm);
+  if (hccl_result != HCCL_SUCCESS) {
+    MS_LOG(ERROR) << "HcclReduceScatter failed, ret:" << hccl_result;
+    return false;
+  }
+  return true;
+}
+
+bool AscendCollectiveCommLib::Send(const void *send_buff, size_t count, TypeId data_type, uint32_t peer,
+                                   const std::string &group_name, void *stream) {
+  MS_EXCEPTION_IF_NULL(send_buff);
+  MS_EXCEPTION_IF_NULL(stream);
+  const auto hccl_data_type = ConvertHcclType(data_type);
+
+  const auto comm = HcclCommunicator(group_name);
+  MS_EXCEPTION_IF_NULL(comm);
+  auto hccl_result =
+    hccl::HcclAdapter::GetInstance().HcclSend(const_cast<void *>(send_buff), count, hccl_data_type, peer, stream, comm);
+  if (hccl_result != HCCL_SUCCESS) {
+    MS_LOG(ERROR) << "HcomSend failed, ret:" << hccl_result;
+    return false;
+  }
+  return true;
+}
+
+bool AscendCollectiveCommLib::Recv(void *recv_buff, size_t count, TypeId data_type, uint32_t peer,
+                                   const std::string &group_name, void *stream) {
+  MS_EXCEPTION_IF_NULL(recv_buff);
+  MS_EXCEPTION_IF_NULL(stream);
+  const auto hccl_data_type = ConvertHcclType(data_type);
+
+  const auto comm = HcclCommunicator(group_name);
+  MS_EXCEPTION_IF_NULL(comm);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclRecv(recv_buff, count, hccl_data_type, peer, stream, comm);
+  if (hccl_result != HCCL_SUCCESS) {
+    MS_LOG(ERROR) << "HcomReceive failed, ret:" << hccl_result;
+    return false;
+  }
+  return true;
 }
 }  // namespace ascend
 
