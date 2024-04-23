@@ -20,7 +20,7 @@ Predefined building blocks or computing units to construct neural networks.
 from __future__ import absolute_import
 from mindspore.nn.extend import *
 from mindspore.nn.extend import basic, embedding
-from mindspore.nn.extend import MaxPool2dExt as MaxPool2d
+from mindspore.nn.extend import MaxPool2d
 # 1
 
 # 2

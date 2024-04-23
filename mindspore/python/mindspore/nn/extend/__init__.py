@@ -19,11 +19,11 @@ from __future__ import absolute_import
 
 from mindspore.nn.extend.embedding import Embedding
 from mindspore.nn.extend.basic import Linear
-from mindspore.nn.extend.pooling import MaxPool2dExt
+from mindspore.nn.extend.pooling import MaxPool2d
 from mindspore.nn.extend import layer
 from mindspore.nn.extend.layer import *
 
-__all__ = ['Embedding', 'Linear', 'MaxPool2dExt']
+__all__ = ['Embedding', 'Linear', 'MaxPool2d']
 __all__.extend(layer.__all__)
 
 __all__.sort()
