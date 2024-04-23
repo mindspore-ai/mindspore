@@ -60,7 +60,7 @@
 
         教程样例：
             - `Cell与参数 - 自定义Cell反向
-              <https://mindspore.cn/tutorials/zh-CN/r2.3.q1/advanced/modules/layer.html#自定义cell反向>`_
+              <https://mindspore.cn/tutorials/zh-CN/r2.3.0rc1/advanced/modules/layer.html#自定义cell反向>`_
 
     .. py:method:: cast_inputs(inputs, dst_type)
 
@@ -298,7 +298,7 @@
             迭代器，Cell的名称和Cell本身。
 
         教程样例：
-            - `网络构建 - 模型参数 <https://mindspore.cn/tutorials/zh-CN/r2.3.q1/beginner/model.html#模型参数>`_
+            - `网络构建 - 模型参数 <https://mindspore.cn/tutorials/zh-CN/r2.3.0rc1/beginner/model.html#模型参数>`_
 
     .. py:method:: parameters_broadcast_dict(recurse=True)
 
@@ -526,7 +526,7 @@
             Cell类型，Cell本身。
 
         教程样例：
-            - `模型训练 - 训练与评估实现 <https://mindspore.cn/tutorials/zh-CN/r2.3.q1/beginner/train.html#训练与评估>`_
+            - `模型训练 - 训练与评估实现 <https://mindspore.cn/tutorials/zh-CN/r2.3.0rc1/beginner/train.html#训练与评估>`_
 
     .. py:method:: shard(in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0)
 
@@ -577,7 +577,7 @@
             List类型，可训练参数列表。
 
         教程样例：
-            - `模型训练 - 优化器 <https://mindspore.cn/tutorials/zh-CN/r2.3.q1/beginner/train.html#优化器>`_
+            - `模型训练 - 优化器 <https://mindspore.cn/tutorials/zh-CN/r2.3.0rc1/beginner/train.html#优化器>`_
 
     .. py:method:: untrainable_params(recurse=True)
 

@@ -817,7 +817,7 @@ class Size(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input parameters, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is
-          `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         int. A scalar representing the elements' size of `input_x`, tensor is the number of elements

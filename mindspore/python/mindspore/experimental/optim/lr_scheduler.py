@@ -38,7 +38,7 @@ class LRScheduler:
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): The optimizer instance.
@@ -149,7 +149,7 @@ class StepLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -221,7 +221,7 @@ class LinearLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -316,7 +316,7 @@ class ExponentialLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -383,7 +383,7 @@ class PolynomialLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -450,7 +450,7 @@ class LambdaLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -503,7 +503,7 @@ class MultiplicativeLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -557,7 +557,7 @@ class MultiStepLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -633,7 +633,7 @@ class ConstantLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -695,7 +695,7 @@ class SequentialLR:
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -799,7 +799,7 @@ class ReduceLROnPlateau:
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -994,7 +994,7 @@ class CyclicLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -1171,7 +1171,7 @@ class CosineAnnealingWarmRestarts(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
@@ -1303,7 +1303,7 @@ class CosineAnnealingLR(LRScheduler):
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
         This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.

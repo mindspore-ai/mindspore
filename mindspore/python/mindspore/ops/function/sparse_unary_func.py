@@ -375,7 +375,7 @@ def coo_relu(x: COOTensor) -> COOTensor:
     Args:
         x (COOTensor): Input COOTensor with shape :math:`(N, *)`, where :math:`*`
             means any number of additional dimensions. Its dtype is
-            `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.html#mindspore.dtype>`_.
 
     Returns:
         COOTensor, has the same shape and dtype as the `x`.

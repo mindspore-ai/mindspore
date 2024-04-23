@@ -1289,7 +1289,7 @@ def set_context(**kwargs):
             If enable_graph_kernel is set to ``True`` , acceleration can be enabled.
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
-            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/optimize/graph_fusion_engine.html>`_.
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.0rc1/optimize/graph_fusion_engine.html>`_.
         graph_kernel_flags (str):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
@@ -1445,11 +1445,11 @@ def set_context(**kwargs):
                 Default: False.
               - enable_grad_comm_opt (bool): Enable overlap between dx ops and data parallel communication ops if True.
                 Currently, do not support
-                `LazyInline <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore/mindspore.lazy_inline.html>`
+                `LazyInline <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore/mindspore.lazy_inline.html>`
                 Default: False.
               - enable_opt_shard_comm_opt (bool): Enable overlap between forward ops
                 and optimizer parallel allgather communication if True. Currently, do not support
-                `LazyInline <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore/mindspore.lazy_inline.html>`
+                `LazyInline <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore/mindspore.lazy_inline.html>`
                 Default: False.
               - compute_communicate_fusion_level (int): Enable the fusion between compute and communicate.
                 Default: ``0``.

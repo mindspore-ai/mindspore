@@ -861,11 +861,11 @@ class Dataset:
         `output_columns` , and if not specified, the column name of output column is same as that of `input_columns` .
 
         - If you use transformations (
-          `vision transform <https://mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.\
+          `vision transform <https://mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.vision>`_ ,
-          `nlp transform <https://mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.\
+          `nlp transform <https://mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.text>`_ ,
-          `audio transform <https://mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.\
+          `audio transform <https://mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.audio>`_ )
           provided by mindspore dataset, please use the following parameters:
 

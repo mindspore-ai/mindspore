@@ -4,7 +4,7 @@
 
 在分布式训练中涉及例如`AllReduce`、`ReduceScatter`、`AllGather`和`Broadcast`等通信操作进行数据传输，我们将在下述的章节分别阐述其含义和示例代码。
 
-下述每个章节中给出了使用4张GPU进行不同通信操作的示例。示例中的输出来自于0号卡`rank0`程序的结果。用户需要将下述每个章节代码另存为communication.py。因为涉及到多卡程序，用户需要通过`mpirun`命令去启动communication.py。其中`mpirun`命令需要安装OpenMPI以及NCCL，对应的安装请参考[mpirun启动](https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.q1/parallel/mpirun.html)。准备好communication.py后，在命令行中输入如下启动命令，即可启动多卡程序：
+下述每个章节中给出了使用4张GPU进行不同通信操作的示例。示例中的输出来自于0号卡`rank0`程序的结果。用户需要将下述每个章节代码另存为communication.py。因为涉及到多卡程序，用户需要通过`mpirun`命令去启动communication.py。其中`mpirun`命令需要安装OpenMPI以及NCCL，对应的安装请参考[mpirun启动](https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.0rc1/parallel/mpirun.html)。准备好communication.py后，在命令行中输入如下启动命令，即可启动多卡程序：
 
 ```bash
 mpirun -output-filename log -merge-stderr-to-stdout -np 4 python communication.py

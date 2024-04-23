@@ -15,4 +15,4 @@ mindspore.dataset.text.WhitespaceTokenizer
 
     教程样例：
         - `文本变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/samples/dataset/text_gallery.html>`_

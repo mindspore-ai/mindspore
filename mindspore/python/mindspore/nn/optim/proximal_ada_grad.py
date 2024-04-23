@@ -122,7 +122,7 @@ class ProximalAdagrad(Optimizer):
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
               `LearningRateSchedule
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.nn.html#learningrateschedule-class>`_
               with step as the input to get the learning rate of the current step.
 
         l1 (float): l1 regularization strength, must be greater than or equal to zero. Default: ``0.0`` .

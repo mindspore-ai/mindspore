@@ -3,11 +3,11 @@ mindspore.ops.primitive
 
 可用于Cell的构造函数的算子。
 
-动态shape的支持情况详见 `算子动态shape支持情况 <https://mindspore.cn/docs/zh-CN/r2.3.q1/note/dynamic_shape_primitive.html>`_ 。
+动态shape的支持情况详见 `算子动态shape支持情况 <https://mindspore.cn/docs/zh-CN/r2.3.0rc1/note/dynamic_shape_primitive.html>`_ 。
 
-bfloat16数据类型的支持情况详见 `支持列表 <https://mindspore.cn/docs/zh-CN/r2.3.q1/note/bfloat16_support.html>`_ 。
+bfloat16数据类型的支持情况详见 `支持列表 <https://mindspore.cn/docs/zh-CN/r2.3.0rc1/note/bfloat16_support.html>`_ 。
 
-算子级并行过程各算子的使用约束详见 `算子级并行使用约束 <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/note/operator_list_parallel.html>`_ 。
+算子级并行过程各算子的使用约束详见 `算子级并行使用约束 <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/note/operator_list_parallel.html>`_ 。
 
 模块导入方法如下：
 
@@ -614,15 +614,15 @@ Parameter操作算子
 通信算子
 ----------------
 
-在分布式训练中进行数据传输涉及通信操作，详情请参考 `分布式集合通信原语 <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/ops/communicate_ops.html>`_ 。
+在分布式训练中进行数据传输涉及通信操作，详情请参考 `分布式集合通信原语 <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/samples/ops/communicate_ops.html>`_ 。
 
 注意，以下列表中的接口需要先配置好通信环境变量。
 
-针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `rank table启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.q1/parallel/rank_table.html>`_ 。
+针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `rank table启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.0rc1/parallel/rank_table.html>`_ 。
 
-针对GPU设备，用户需要准备host文件和mpi，详见 `mpirun启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.q1/parallel/mpirun.html>`_ 。
+针对GPU设备，用户需要准备host文件和mpi，详见 `mpirun启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.0rc1/parallel/mpirun.html>`_ 。
 
-针对CPU设备，用户需要编写动态组网启动脚本，详见 `动态组网启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.q1/parallel/dynamic_cluster.html>`_ 。
+针对CPU设备，用户需要编写动态组网启动脚本，详见 `动态组网启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.0rc1/parallel/dynamic_cluster.html>`_ 。
 
 .. mscnplatwarnautosummary::
     :toctree: ops

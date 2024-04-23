@@ -68,7 +68,7 @@ class Rprop(Optimizer):
     .. warning::
         This is an experimental optimizer API that is subject to change.
         This module must be used with lr scheduler module in `LRScheduler Class
-        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
+        <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining

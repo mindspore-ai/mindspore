@@ -6,7 +6,7 @@ mindspore.experimental.optim.lr_scheduler.SequentialLR
     `SequentialLR` 接收一个将被顺序调用的学习率调度器列表 `schedulers`，及指定的间隔列表 `milestone`，`milestone` 设定了每个epoch哪个调度器被调用。
 
     .. warning::
-        这是一个实验性的动态学习率接口，需要和 `mindspore.experimental.optim <https://mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore.experimental.html#%E5%AE%9E%E9%AA%8C%E6%80%A7%E4%BC%98%E5%8C%96%E5%99%A8>`_ 下的接口配合使用。
+        这是一个实验性的动态学习率接口，需要和 `mindspore.experimental.optim <https://mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/mindspore.experimental.html#%E5%AE%9E%E9%AA%8C%E6%80%A7%E4%BC%98%E5%8C%96%E5%99%A8>`_ 下的接口配合使用。
 
     参数：
         - **optimizer** (:class:`mindspore.experimental.optim.Optimizer`) - 优化器实例。

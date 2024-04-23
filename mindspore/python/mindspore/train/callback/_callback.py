@@ -123,7 +123,7 @@ class Callback:
     recording current attributes. Users can add custimized attributes to the information.
     Training process can also be stopped by calling `request_stop` method. For details
     of custom Callback, please check
-    `Callback tutorial <https://www.mindspore.cn/tutorials/en/r2.3.q1/advanced/model/
+    `Callback tutorial <https://www.mindspore.cn/tutorials/en/r2.3.0rc1/advanced/model/
     callback.html#customized-callback-mechanism>`_.
 
     Examples:
@@ -493,7 +493,7 @@ class RunContext:
     `RunContext.original_args()` and add extra attributes to the information, but also can stop the
     training process by calling `request_stop` method. For details of custom Callback,
     please check
-    `Callback Mechanism <https://www.mindspore.cn/tutorials/en/r2.3.q1/advanced/model/callback.html>`_.
+    `Callback Mechanism <https://www.mindspore.cn/tutorials/en/r2.3.0rc1/advanced/model/callback.html>`_.
 
     `RunContext.original_args()` holds the model context information as a dictionary variable, and
     different attributes of the dictionary are stored in training or eval process. Details are as follows:
@@ -575,7 +575,7 @@ class RunContext:
 
         Tutorial Examples:
             - `Callback Mechanism - Customized Callback Mechanism
-              <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/model/callback.html#customized-callback-mechanism>`_
+              <https://mindspore.cn/tutorials/en/r2.3.0rc1/advanced/model/callback.html#customized-callback-mechanism>`_
         """
         return self._original_args
 
@@ -588,7 +588,7 @@ class RunContext:
 
         Tutorial Examples:
             - `Callback Mechanism - Customized Training Termination Time
-              <https://mindspore.cn/tutorials/en/r2.3.q1/advanced/model/callback.html#
+              <https://mindspore.cn/tutorials/en/r2.3.0rc1/advanced/model/callback.html#
               customized-training-termination-time>`_
         """
         self._stop_requested = True

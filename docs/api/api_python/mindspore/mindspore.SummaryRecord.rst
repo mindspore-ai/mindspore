@@ -7,7 +7,7 @@ mindspore.SummaryRecord
 
     该方法将在一个指定的目录中创建summary文件和lineage文件，并将数据写入文件。
 
-    它通过执行 `record` 方法将数据写入文件。除了通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#方式二-结合summary-api和summarycollector自定义收集网络中的数据>`_ 记录网络的数据外，SummaryRecord还支持通过 `自定义回调函数和自定义训练循环 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#方式三-自定义callback记录数据>`_ 记录数据。
+    它通过执行 `record` 方法将数据写入文件。除了通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r2.3/summary_record.html#方式二-结合summary-api和summarycollector自定义收集网络中的数据>`_ 记录网络的数据外，SummaryRecord还支持通过 `自定义回调函数和自定义训练循环 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r2.3/summary_record.html#方式三-自定义callback记录数据>`_ 记录数据。
 
     .. note::
         1. 确保在最后关闭SummaryRecord，否则进程不会退出。请参阅下面的示例部分，了解如何用两种方式正确关闭SummaryRecord。
@@ -97,7 +97,7 @@ mindspore.SummaryRecord
             bool，表示记录是否成功。
 
         异常：
-            - **TypeError** - `step` 不为整型，或 `train_network` 的类型不为 `mindspore.nn.Cell <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ 。
+            - **TypeError** - `step` 不为整型，或 `train_network` 的类型不为 `mindspore.nn.Cell <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ 。
 
     .. py:method:: set_mode(mode)
 

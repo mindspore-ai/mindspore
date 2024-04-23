@@ -3,7 +3,7 @@ mindspore.jacfwd
 
 .. py:function:: mindspore.jacfwd(fn, grad_position=0, has_aux=False)
 
-    通过前向模式计算给定网络的Jacobian矩阵，对应 `前向模式自动微分 <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/design/programming_paradigm.html#前向自动微分>`_。当网络输出数量远大于输入数量时，使用前向模式求Jacobian矩阵比反向模式性能更好。
+    通过前向模式计算给定网络的Jacobian矩阵，对应 `前向模式自动微分 <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/design/programming_paradigm.html#前向自动微分>`_。当网络输出数量远大于输入数量时，使用前向模式求Jacobian矩阵比反向模式性能更好。
 
     参数：
         - **fn** (Union[Cell, Function]) - 待求导的函数或网络。以Tensor为入参，返回Tensor或Tensor数组。

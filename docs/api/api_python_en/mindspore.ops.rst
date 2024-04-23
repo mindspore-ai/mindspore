@@ -1,7 +1,7 @@
 mindspore.ops
 ==============
 
-For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of ops Interface <https://mindspore.cn/docs/en/r2.3.q1/note/dynamic_shape_func.html>`_ .
+For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of ops Interface <https://mindspore.cn/docs/en/r2.3.0rc1/note/dynamic_shape_func.html>`_ .
 
 Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `mindspore.ops API Interface Change <https://gitee.com/mindspore/docs/blob/r2.3.q1/resource/api_updates/func_api_updates_en.md>`_.
 
