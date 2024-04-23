@@ -199,7 +199,7 @@ py::object FuncGraphBuilder::ConvertToPyObj(const AbstractBasePtr &abs) {
   return py_obj;
 }
 
-AnfNodePtr FuncGraphBuilder::ConvertInputObjToNode(const py::object &input_obj) {
+AnfNodePtr FuncGraphBuilder::ConvertObjToNode(const py::object &input_obj) {
   if (py::hasattr(input_obj, "__parameter__") && py::isinstance<tensor::MetaTensor>(input_obj)) {
     // Add the fv parameter and set its abstract.
     return parse::ResolveParameterObj(graph_, input_obj);
@@ -301,6 +301,21 @@ py::object FuncGraphBuilder::AddNode(const py::object &callable_obj, const std::
   return AddNode(callable_value, inputs_obj);
 }
 
+bool FuncGraphBuilder::AddPythonObject(const py::object &object) {
+  if (object.ptr() == nullptr) {
+    MS_LOG(INFO) << "Convert python object with empty object, convert failed.";
+    return false;
+  }
+  auto node = ConvertObjToNode(object);
+  if (node == nullptr) {
+    MS_LOG(INFO) << "Convert python object " << py::str(object) << " to anf node failed.";
+    return false;
+  }
+  node->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(object));
+  (void)py_obj_to_node_.emplace(object.ptr(), node);
+  return true;
+}
+
 bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value, const vector<py::object> &inputs_obj,
                                                  std::vector<AnfNodePtr> *input_node_list,
                                                  std::vector<AbstractBasePtr> *input_abs_list) {
@@ -316,7 +331,7 @@ bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value,
     bool is_constant = IsConstant(input_obj);
     auto iter = py_obj_to_node_.find(input_obj.ptr());
     if (is_constant || iter == py_obj_to_node_.end()) {
-      auto node = ConvertInputObjToNode(input_obj);
+      auto node = ConvertObjToNode(input_obj);
       if (node == nullptr) {
         MS_LOG(INFO) << "Convert input python object " << py::str(input_obj) << " to anf node failed.";
         return false;
@@ -513,7 +528,7 @@ py::object FuncGraphBuilder::AddFgCallNode(const FuncGraphPtr &fg, const vector<
   for (const auto &input_obj : inputs_obj) {
     auto iter = py_obj_to_node_.find(input_obj.ptr());
     if (iter == py_obj_to_node_.end()) {
-      auto node = ConvertInputObjToNode(input_obj);
+      auto node = ConvertObjToNode(input_obj);
       if (node == nullptr) {
         MS_LOG(INFO) << "Convert input python object " << py::str(input_obj) << " to anf node failed.";
         return py::object();

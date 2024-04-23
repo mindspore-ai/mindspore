@@ -242,7 +242,7 @@ TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_d
   return CacheTrace(node, ret, strict, tv, opcode, oparg, obj);
 }
 
-bool Graph::GuardValueNode(ValueNode *node) {
+bool Graph::GuardValueNode(ValueNode *node, GuardLevel level) {
   if (node->IsConstantValue()) {
     return true;
   }
@@ -250,8 +250,10 @@ bool Graph::GuardValueNode(ValueNode *node) {
   if (tr == nullptr) {
     return false;
   }
-  bool ret = guard_->GetGuard()->GuardOn(tr, mindspore::pijit::GuardLevel::GEqual);
-  node->SetConstantValue(ret);
+  bool ret = guard_->GetGuard()->GuardOn(tr, level);
+  if (level == GuardLevel::GEqual || level == GuardLevel::GId) {
+    node->SetConstantValue(ret);
+  }
   return ret;
 }
 

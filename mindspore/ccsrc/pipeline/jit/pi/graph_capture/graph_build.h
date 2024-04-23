@@ -258,6 +258,7 @@ class GraphBuilder {
   bool DoCellAccess(const Instr &instr);
   bool DoGlobalAccess(const Instr &instr);
   bool DoAttrAccess(const Instr &instr);
+  virtual ValueNode *HandleGetattr(ValueNode *target_node, const Instr &instr);
   virtual bool DoGetItem(const Instr &instr);
   bool DoItemAccess(const Instr &instr);
   bool DoStackOp(const Instr &instr);
@@ -319,6 +320,7 @@ class MindGraphBuilder : public GraphBuilder {
   bool DoBinaryMul(const Instr &instr) override;
   bool DoCompare(const Instr &instr) override;
   bool DoBuildOp(const Instr &instr) override;
+  ValueNode *HandleGetattr(ValueNode *target_node, const Instr &instr) override;
 
  private:
   std::vector<py::object> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);

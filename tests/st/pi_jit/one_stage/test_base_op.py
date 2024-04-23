@@ -493,3 +493,57 @@ def test_use_free_variable_2():
     assert net(input1)
     input2 = (1, 1, 1, 1, 1)
     assert not net(input2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_guard_for_getattr():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.a = 1
+
+        def construct(self, x):
+            return self.a + x
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret1 = net(1)
+    net.a = 2
+    ret2 = net(2)
+    assert ret1 == 2
+    assert ret2 == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_guard_for_getattr_2():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.a = 1
+
+        def construct(self, x):
+            return self.a + x
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret1 = net(1)
+    net.a = 2
+    ret2 = net(1)
+    assert ret1 == 2
+    assert ret2 == 3
