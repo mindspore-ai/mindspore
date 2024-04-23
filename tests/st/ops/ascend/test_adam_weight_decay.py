@@ -166,7 +166,7 @@ def test_adam_weight_decay_pass_with_same_type_to_assign():
     beta2 = Parameter(Tensor(np.array([0.999]).astype(np.float32)), name="beta2")
     eps = Parameter(Tensor(np.array([1e-8]).astype(np.float32)), name="eps")
     lr = Parameter(Tensor(np.array([0.001]).astype(np.float32)), name="lr")
-    gradient = Parameter(Tensor(np.array([[2, 3], [1, 5]]).astype(np.float16)), name="gradient")
+    gradient = Parameter(Tensor(np.array([[2, 3], [1, 5]]).astype(np.float32)), name="gradient")
 
     # The inputs: param, m and v will be modified in-place by P.AdamWeightDecay() or _update_run_op(),
     # so here defines two copied of them: (param1, m1, v1) and (param2, m2, v2)
