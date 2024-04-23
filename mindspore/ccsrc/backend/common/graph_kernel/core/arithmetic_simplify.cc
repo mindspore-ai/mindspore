@@ -473,6 +473,61 @@ class ExtraReduce2PatternTree : public PatternTree {
   }
 };
 
+// "ReduceSum(A,B)=ReShape(A,C)"
+class ReducePatternTree : public PatternTree {
+ public:
+  explicit ReducePatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~ReducePatternTree() override = default;
+
+ protected:
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    MS_EXCEPTION_IF_NULL(para_to_ref);
+    inner::GraphBuilder gb("");
+    // Because an empty Tensor cannot be generated, the second input for the reshape function needs to be a Tuple.
+    auto shape_node = gb.Tuple(origin_root->shape);
+    (*para_to_ref)['C'] = shape_node;
+    (void)para_to_ref->erase('B');
+    return para_to_ref;
+  }
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
+    auto reduce_shape = origin_root->input(0)->shape;
+    if (IsDynamicShape(reduce_shape)) {
+      return false;
+    }
+    if (reduce_shape.empty()) {
+      return true;
+    }
+    auto reduce_axis = origin_root->input(1)->As<inner::ConstTensorNode>();
+    if (reduce_axis == nullptr) {
+      return false;
+    }
+    auto axis = CheckAndConvertUtils::CheckTensorIntValue("axis", reduce_axis->data(), "Reduce");
+    for (auto &i : axis) {
+      if (i < 0) {
+        i += reduce_shape.size();
+      }
+      if (reduce_shape[i] != 1) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+class CastPatternTree : public PatternTree {
+ public:
+  explicit CastPatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~CastPatternTree() = default;
+
+ protected:
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
+    auto dst_type_id = origin_root->type;
+    auto src_type_id = origin_root->input(0)->type;
+    return dst_type_id == src_type_id;
+  }
+};
+
 // "LayoutTransform(LayoutTransform(A))=A"
 class LayoutTransform1PatternTree : public PatternTree {
  public:
@@ -894,7 +949,11 @@ static std::vector<Expression> expressions = {
   {73, "LogicalNot(Less(A,B))=GreaterEqual(A,B)", EXPR_PATTERN(PatternTree)},
   {74, "LogicalNot(NotEqual(A,B))=Equal(A,B)", EXPR_PATTERN(PatternTree)},
   {75, "LogicalNot(Equal(A,B))=NotEqual(A,B)", EXPR_PATTERN(PatternTree)},
-};
+  // reduce -> reshape
+  {76, "ReduceSum(A,B)=Reshape(A,C)", EXPR_PATTERN(ReducePatternTree)},
+  {77, "ReduceMin(A,B)=Reshape(A,C)", EXPR_PATTERN(ReducePatternTree)},
+  {78, "ReduceMax(A,B)=Reshape(A,C)", EXPR_PATTERN(ReducePatternTree)},
+  {79, "Cast(A,B)=A", EXPR_PATTERN(CastPatternTree)}};
 
 mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {
   const auto &flags = GraphKernelFlags::GetInstance();

@@ -75,6 +75,7 @@ static std::unordered_map<std::string, std::pair<OpType, int>> op_type_map = {
   {"Sub", {OP_BINARY, dvm::BinaryOpType::kSub}},
   {"Mul", {OP_BINARY, dvm::BinaryOpType::kMul}},
   {"Div", {OP_BINARY, dvm::BinaryOpType::kDiv}},
+  {"Pow", {OP_BINARY, dvm::BinaryOpType::kPow}},
   {"RealDiv", {OP_BINARY, dvm::BinaryOpType::kDiv}},
   {"Greater", {OP_BINARY, dvm::BinaryOpType::kGreater}},
   {"Maximum", {OP_BINARY, dvm::BinaryOpType::kMaximum}},

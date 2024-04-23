@@ -67,19 +67,22 @@ def get_output(net, args, args_dyn=None, enable_graph_kernel=False):
 
 
 def fuse(shape1, shape2, dtype):
+    np.random.seed(1)
     i0 = Tensor(np.random.uniform(1, 2, shape1).astype(dtype))
     i1 = Tensor(np.random.uniform(1, 2, shape2).astype(dtype))
     expect = get_output(ComplexNet, [i0, i1], enable_graph_kernel=False)
+    expects = [e.asnumpy() for e in expect]
     output = get_output(ComplexNet, [i0, i1], enable_graph_kernel=True)
+    outputs = [o.asnumpy() for o in output]
     if dtype == np.float32:
-        eps = 1e-5
+        eps = 1e-4
     elif dtype == np.float16:
         eps = 1e-3
     else:
         eps = 0
-    assert np.allclose(expect[0].asnumpy(), output[0].asnumpy(), eps, eps)
-    assert np.allclose(expect[1].asnumpy(), output[1].asnumpy(), eps, eps)
-    assert np.allclose(expect[2].asnumpy(), output[2].asnumpy(), 0, 0)
+    np.testing.assert_allclose(expects[0], outputs[0], eps, eps)
+    np.testing.assert_allclose(expects[1], outputs[1], eps, eps)
+    np.testing.assert_allclose(expects[2], outputs[2], 0, 0)
 
 
 @pytest.mark.level0

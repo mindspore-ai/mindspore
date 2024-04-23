@@ -75,7 +75,7 @@ class SplitModel {
   // create new area
   AreaPtr NewArea(const PrimOpPtr &op, bool is_output);
   // limit the area's size
-  void LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas, size_t max_size = 200) const;
+  void LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas) const;
 
   std::list<AreaPtr> areas_;  // use std::list to accelerate the "erase"
   std::shared_ptr<ReachTable> reach_table_{nullptr};
