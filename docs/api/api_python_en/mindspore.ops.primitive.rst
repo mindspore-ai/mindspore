@@ -3,12 +3,12 @@ mindspore.ops.primitive
 
 operators that can be used for constructor function of Cell
 
-For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of primitive Interface <https://mindspore.cn/docs/en/r2.3.q1/note/dynamic_shape_primitive.html>`_ .
+For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of primitive Interface <https://mindspore.cn/docs/en/r2.3.0rc1/note/dynamic_shape_primitive.html>`_ .
 
-For more information about the support for the bfloat16 data type, please refer to `Support List <https://mindspore.cn/docs/en/r2.3.q1/note/bfloat16_support.html>`_ .
+For more information about the support for the bfloat16 data type, please refer to `Support List <https://mindspore.cn/docs/en/r2.3.0rc1/note/bfloat16_support.html>`_ .
 
 For the details about the usage constraints of each operator in the operator parallel process,
-refer to `Usage Constraints During Operator Parallel <https://www.mindspore.cn/docs/en/r2.3.q1/note/operator_list_parallel.html>`_ .
+refer to `Usage Constraints During Operator Parallel <https://www.mindspore.cn/docs/en/r2.3.0rc1/note/operator_list_parallel.html>`_ .
 
 The module import method is as follows:
 
@@ -615,15 +615,15 @@ Data Operation Operator
 Communication Operator
 ----------------------
 
-Distributed training involves communication operations for data transfer. For more details, refer to `Distributed Set Communication Primitives <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html>`_ .
+Distributed training involves communication operations for data transfer. For more details, refer to `Distributed Set Communication Primitives <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/samples/ops/communicate_ops.html>`_ .
 
 Note that the APIs in the following list need to preset communication environment variables. For
 the Ascend devices, users need to prepare the rank table, set rank_id and device_id. Please see the `rank table Startup \
-<https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_ for more details.
+<https://www.mindspore.cn/tutorials/experts/en/r2.3.0rc1/parallel/rank_table.html>`_ for more details.
 For the GPU device, users need to prepare the host file and mpi, please see the `mpirun Startup \
-<https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_.
+<https://www.mindspore.cn/tutorials/experts/en/r2.3.0rc1/parallel/mpirun.html>`_.
 For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster Startup \
-<https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
+<https://www.mindspore.cn/tutorials/experts/en/r2.3.0rc1/parallel/dynamic_cluster.html>`_ .
 
 .. msplatwarnautosummary::
     :toctree: ops

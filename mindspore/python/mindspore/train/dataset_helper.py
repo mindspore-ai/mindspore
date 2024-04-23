@@ -191,7 +191,7 @@ def _get_dataset_aux(dataset):
 def connect_network_with_dataset(network, dataset_helper):
     """
     Connect the `network` with dataset in `dataset_helper`. Only supported in `sink mode
-    <https://mindspore.cn/tutorials/experts/en/r2.3.q1/optimize/execution_opt.html>`_, (dataset_sink_mode=True).
+    <https://mindspore.cn/tutorials/experts/en/r2.3.0rc1/optimize/execution_opt.html>`_, (dataset_sink_mode=True).
 
     Args:
         network (Cell): The training network for dataset.

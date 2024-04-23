@@ -31,4 +31,4 @@ mindspore.ops.ReduceScatter
     
     教程样例：
         - `分布式集合通信原语 - ReduceScatter
-          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/ops/communicate_ops.html#reducescatter>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/samples/ops/communicate_ops.html#reducescatter>`_

@@ -67,4 +67,4 @@ mindspore.dataset.audio.Vad
 
     教程样例：
         - `音频变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/dataset/audio_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/samples/dataset/audio_gallery.html>`_

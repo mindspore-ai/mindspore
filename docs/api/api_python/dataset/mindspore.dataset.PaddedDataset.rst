@@ -15,6 +15,6 @@ mindspore.dataset.PaddedDataset
 
     教程样例：
         - `使用数据Pipeline加载 & 处理数据集
-          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/samples/dataset/dataset_gallery.html>`_
 
 .. include:: mindspore.dataset.api_list_nlp.rst

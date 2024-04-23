@@ -17,7 +17,7 @@ mindspore.SummaryLandscape
 
         教程样例：
             - `训练优化过程可视化
-              <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/landscape.html>`_
+              <https://www.mindspore.cn/mindinsight/docs/zh-CN/r2.3/landscape.html>`_
 
     .. py:method:: gen_landscapes_with_multi_process(callback_fn, collect_landscape=None, device_ids=None, output=None)
 

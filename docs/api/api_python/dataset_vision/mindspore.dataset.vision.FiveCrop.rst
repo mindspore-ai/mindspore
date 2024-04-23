@@ -14,4 +14,4 @@ mindspore.dataset.vision.FiveCrop
 
     教程样例：
         - `视觉变换样例库
-          <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/samples/dataset/vision_gallery.html>`_
+          <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/samples/dataset/vision_gallery.html>`_

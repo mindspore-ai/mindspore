@@ -6,7 +6,7 @@ mindspore.experimental.optim.lr_scheduler.ReduceLROnPlateau
     当指标停止改进时降低学习率。训练中学习停滞情况下，模型通常会受益于将学习率降低2-10倍。该调度程序在执行过程中读取 `step` 方法中传入的指标 `metrics`，如果在 `patience` 的时期内没有得到改进，则学习率会降低。
 
     .. warning::
-        这是一个实验性的动态学习率接口，需要和 `mindspore.experimental.optim <https://mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore.experimental.html#%E5%AE%9E%E9%AA%8C%E6%80%A7%E4%BC%98%E5%8C%96%E5%99%A8>`_ 下的接口配合使用。
+        这是一个实验性的动态学习率接口，需要和 `mindspore.experimental.optim <https://mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/mindspore.experimental.html#%E5%AE%9E%E9%AA%8C%E6%80%A7%E4%BC%98%E5%8C%96%E5%99%A8>`_ 下的接口配合使用。
 
     参数：
         - **optimizer** (:class:`mindspore.experimental.optim.Optimizer`) - 优化器实例。

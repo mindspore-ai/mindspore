@@ -132,7 +132,7 @@ class Lamb(Optimizer):
         There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used
         and `drop_overflow_update` in `FixedLossScaleManager` is set to False, optimizer needs to set the 'loss_scale'.
         As this optimizer has no argument of `loss_scale`, so `loss_scale` needs to be processed by other means. Refer
-        document `LossScale <https://www.mindspore.cn/tutorials/en/r2.3.q1/advanced/mixed_precision.html>`_ to
+        document `LossScale <https://www.mindspore.cn/tutorials/en/r2.3.0rc1/advanced/mixed_precision.html>`_ to
         process `loss_scale` correctly.
 
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
@@ -184,7 +184,7 @@ class Lamb(Optimizer):
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
               `LearningRateSchedule
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore.nn.html#learningrateschedule-class>`_
               with step as the input to get the learning rate of current step.
 
         beta1 (float): The exponential decay rate for the 1st moment estimations. Default: ``0.9`` .

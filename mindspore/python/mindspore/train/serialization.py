@@ -457,7 +457,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+          <https://mindspore.cn/tutorials/en/r2.3.0rc1/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     ckpt_file_name = _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name)
     integrated_save = Validator.check_bool(integrated_save)
@@ -713,7 +713,7 @@ def load(file_name, **kwargs):
 
             - obf_func (function): A python function used for loading obfuscated MindIR model, which can refer to
               `obfuscate_model()
-              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore/mindspore.obfuscate_model.html>`_.
+              <https://www.mindspore.cn/docs/en/r2.3.0rc1/api_python/mindspore/mindspore.obfuscate_model.html>`_.
 
     Returns:
         GraphCell, a compiled graph that can executed by `GraphCell`.
@@ -743,7 +743,7 @@ def load(file_name, **kwargs):
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading MindIR
-          <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/save_load.html#saving-and-loading-mindir>`_
+          <https://mindspore.cn/tutorials/en/r2.3.0rc1/beginner/save_load.html#saving-and-loading-mindir>`_
     """
     if not isinstance(file_name, str):
         raise ValueError("For 'load', the argument 'file_name' must be string, but "
@@ -1089,7 +1089,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+          <https://mindspore.cn/tutorials/en/r2.3.0rc1/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     ckpt_file_name = _check_ckpt_file_name(ckpt_file_name)
     specify_prefix = _check_prefix(specify_prefix)
@@ -1405,7 +1405,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+          <https://mindspore.cn/tutorials/en/r2.3.0rc1/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     if not isinstance(net, nn.Cell):
         logger.critical("Failed to combine the net and the parameters.")
@@ -1746,7 +1746,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading MindIR
-          <https://mindspore.cn/tutorials/en/r2.3.q1/beginner/save_load.html#saving-and-loading-mindir>`_
+          <https://mindspore.cn/tutorials/en/r2.3.0rc1/beginner/save_load.html#saving-and-loading-mindir>`_
     """
     old_ms_jit_value = context.get_context("jit_syntax_level")
     context.set_context(jit_syntax_level=mindspore.STRICT)
@@ -2574,14 +2574,14 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table startup
-            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.0rc1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun startup
-            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.0rc1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.0rc1/parallel/dynamic_cluster.html>`_ .
 
         >>> import os
         >>> import numpy as np

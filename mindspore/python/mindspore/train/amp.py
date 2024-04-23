@@ -331,7 +331,7 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     :class:`mindspore.nn.LayerNorm`]
 
     For details on automatic mixed precision, refer to
-    `Automatic Mix Precision <https://www.mindspore.cn/tutorials/en/r2.3.q1/advanced/mixed_precision.html>`_ .
+    `Automatic Mix Precision <https://www.mindspore.cn/tutorials/en/r2.3.0rc1/advanced/mixed_precision.html>`_ .
 
     Note:
         - Repeatedly calling mixed-precision interfaces, such as `custom_mixed_precision` and `auto_mixed_precision`,

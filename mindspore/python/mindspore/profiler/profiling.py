@@ -330,7 +330,7 @@ class Profiler:
     MindSpore users can import the mindspore.Profiler, initialize the Profiler object to start profiling,
     and use Profiler.analyse() to stop profiling and analyse the results.
     Users can visualize the results using the `MindSpore Insight
-    <https://www.mindspore.cn/mindinsight/docs/en/master/index.html>`_ tool.
+    <https://www.mindspore.cn/mindinsight/docs/en/r2.3/index.html>`_ tool.
     Now, Profiler supports AICORE operator, AICPU operator, HostCPU operator, memory,
     correspondence, cluster, etc data analysis.
 

@@ -27,7 +27,7 @@ def set_dump(target, enabled=True):
     `target` should be an instance of :class:`mindspore.nn.Cell` or :class:`mindspore.ops.Primitive` .
     Please note that this API takes effect only when Asynchronous Dump is enabled and the `dump_mode`
     field in dump config file is ``"2"`` . See the `dump document
-    <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/debug/dump.html>`_ for details.
+    <https://www.mindspore.cn/tutorials/experts/en/r2.3.0rc1/debug/dump.html>`_ for details.
     The default enabled status for
     a :class:`mindspore.nn.Cell` or :class:`mindspore.ops.Primitive` is False.
 
@@ -61,7 +61,7 @@ def set_dump(target, enabled=True):
         .. note::
             Please set environment variable `MINDSPORE_DUMP_CONFIG` to the dump config file and set `dump_mode` field
             in dump config file to 2 before running this example.
-            See `dump document <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/debug/dump.html>`_ for details.
+            See `dump document <https://www.mindspore.cn/tutorials/experts/en/r2.3.0rc1/debug/dump.html>`_ for details.
 
         >>> import numpy as np
         >>> import mindspore as ms
