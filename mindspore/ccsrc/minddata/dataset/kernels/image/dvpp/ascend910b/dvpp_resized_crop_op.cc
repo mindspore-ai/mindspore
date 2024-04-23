@@ -96,9 +96,9 @@ Status DvppResizedCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
   }
 
   // verify InterpolationMode
-  CHECK_FAIL_RETURN_UNEXPECTED(GetDVPPInterpolationMode(interpolation_) != kInvalidInterpolationMode,
-                               "The current InterpolationMode is not supported by DVPP. It is " +
-                                 std::to_string(static_cast<int>(interpolation_)));
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    GetDVPPInterpolationMode(interpolation_) != kInvalidInterpolationMode,
+    "DvppResizedCrop: Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST.");
 
   // Dvpp Limit
   RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppResizedCropOp, "input"));
