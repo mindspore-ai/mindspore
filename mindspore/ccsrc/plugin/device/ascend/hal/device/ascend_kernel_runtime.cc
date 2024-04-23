@@ -337,15 +337,19 @@ bool AscendKernelRuntime::Init() {
                       << "1. You can set OpExecuteTimeout via mindspore.set_context(op_timeout=int)."
                       << "2. You can set NotifyWaitTimeout via environment variable HCCL_EXEC_TIMEOUT. ";
     }
-    const uint32_t reserve_time = 180;
-    uint32_t op_wait_timeout = notify_wait_timeout + reserve_time;
-    auto acl_ret = CALL_ASCEND_API(aclrtSetOpWaitTimeout, op_wait_timeout);
-    if (acl_ret != ACL_SUCCESS) {
-      MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
-    }
-    acl_ret = CALL_ASCEND_API(aclrtSetOpExecuteTimeOut, op_execute_timeout);
-    if (acl_ret != ACL_SUCCESS) {
-      MS_LOG(EXCEPTION) << "Set op execute timeout failed, error: " << acl_ret;
+    MS_EXCEPTION_IF_NULL(ms_context);
+
+    if (ms_context->ascend_soc_version() != "ascend310p") {
+      const uint32_t reserve_time = 180;
+      uint32_t op_wait_timeout = notify_wait_timeout + reserve_time;
+      auto acl_ret = CALL_ASCEND_API(aclrtSetOpWaitTimeout, op_wait_timeout);
+      if (acl_ret != ACL_SUCCESS) {
+        MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
+      }
+      acl_ret = CALL_ASCEND_API(aclrtSetOpExecuteTimeOut, op_execute_timeout);
+      if (acl_ret != ACL_SUCCESS) {
+        MS_LOG(EXCEPTION) << "Set op execute timeout failed, error: " << acl_ret;
+      }
     }
   } catch (const std::exception &e) {
     if (init_device) {
