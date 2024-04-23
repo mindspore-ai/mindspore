@@ -42,6 +42,7 @@
 #include "tools/converter/parser/onnx/onnx_megatron_op_adjust.h"
 #include "tools/converter/parser/onnx/onnx_nonzero_adjust.h"
 #include "tools/converter/parser/onnx/onnx_pad_adjust.h"
+#include "tools/converter/parser/onnx/onnx_concat_adjust.h"
 #include "tools/converter/parser/onnx/onnx_quantize_linear_adjust.h"
 #include "tools/converter/parser/onnx/onnx_deform_conv2d_adjust.h"
 #include "tools/converter/parser/onnx/onnx_custom_op_adjust.h"
@@ -74,6 +75,11 @@ int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs, const converte
     }
     if (!OnnxPadAdjust::Adjust(func_graph)) {
       MS_LOG(ERROR) << "onnx pad adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+    if (!OnnxConcatAdjust::Adjust(func_graph)) {
+      MS_LOG(ERROR) << "onnx OnnxConcatOp adjust failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;
     }
