@@ -34,13 +34,18 @@ namespace {
 // 1.Constant Tensor, reason : constant folding
 // 2.Constant Scalar(exclude those will be broaden), reason : constant folding
 // 3.None, reason : reason : constant folding or not use
-// 4.Other(Graph Not Support)
+// 4.Empty constant length container(tuple/list/dict): constant folding or not use
+// 5.Other(Graph Not Support)
 bool IsValidRunArg(const py::object &obj, bool enable_tuple_broaden) {
   if (GraphUtils::IsTensor(obj)) {
     if (GraphUtils::HasInit(obj)) {
       (void)python_adapter::CallPyObjMethod(obj, "init_data");
     }
     return !GraphUtils::IsConst(obj);
+  }
+  // If the container input is empty and not variable length, graph treat it as constant, it should be erased in inputs.
+  if (!GraphUtils::IsDynamicLength(obj) && GraphUtils::IsEmptyContainer(obj)) {
+    return false;
   }
   return GraphUtils::IsMutable(obj) || GraphUtils::IsGradForScalar(obj) ||
          (enable_tuple_broaden && GraphUtils::IsTupleCanBroaden(obj));
@@ -138,6 +143,7 @@ PyObject *RunGraph(const std::string &phase, const py::tuple &args, const std::s
   args_tuple = EliminateStubTensor(args_tuple);
   MarkArgmentMutable(args_tuple);
   args_tuple = EliminateInvalidArgs(args_tuple, co_flags, enable_tuple_broaden);
+  MS_LOG(INFO) << "Args for run: " << std::string(py::str(args_tuple));
   auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
   MS_EXCEPTION_IF_NULL(graph_executor);
   py::object ret = graph_executor->Run(args_tuple, py::str(phase));
@@ -254,6 +260,7 @@ CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tu
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     DumpIR("graph_before_compile.ir", func_graph);
   }
+  MS_LOG(INFO) << "Args for compile: " << std::string(py::str(new_arg));
   (void)graph_executor->CompileInner(func_graph, new_arg, kwargs, phase, true, true);
 
   return callable;

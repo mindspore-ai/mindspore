@@ -749,11 +749,11 @@ bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) 
     AObject *o = node->GetVobj();
     auto out_py_obj = o->GetPyObject();
     if (func_graph_builder->AddOutput(out_py_obj, true)) {
-      MS_LOG(DEBUG) << "Add output success.";
+      MS_LOG(INFO) << "Add output success for node: " << node->ToString();
       GetCaptureInfo().captured_.outputs.push_back(node);
       continue;
     }
-    MS_LOG(DEBUG) << "Add output failed.";
+    MS_LOG(INFO) << "Add output failed for node: " << node->ToString();
     GetCaptureInfo().captured_.outputs.clear();
     //  reset break graph point
     isAllNodesSupportOutput = false;

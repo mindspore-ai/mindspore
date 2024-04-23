@@ -580,7 +580,12 @@ static bool GraphCapture(JitCompileResults *jcr) {
   jcr->stat = JitCompileResults::GRAPH_CALLABLE;
 
   if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
-    Utils::DisFuncObject(new_code.ptr());
+    if (conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+      const auto &debug_str = analyzer->GetCaptureInfo().ToString();
+      PY_PRINT_F("*** Dump One Stage ByteCode Collection After CodeGen *** \n%s", debug_str.c_str());
+    } else {
+      Utils::DisFuncObject(new_code.ptr());
+    }
     GRAPH_JIT_LOG_F("\n\n");
   }
 
