@@ -11,5 +11,6 @@ transpose:
   view: True
   dispatch:
     enable: True
+    Ascend: TransposeAscend
 
 
