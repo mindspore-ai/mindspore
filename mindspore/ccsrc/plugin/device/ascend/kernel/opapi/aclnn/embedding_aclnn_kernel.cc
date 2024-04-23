@@ -35,6 +35,11 @@ void EmbeddingAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs
     auto max_norm = max_norm_opt.value();
     norm_type_ = static_cast<double>(transform::ConvertKernelTensor<float>(inputs[kIndex4]));
     max_norm_ = static_cast<double>(max_norm);
+
+    if (max_norm_ < 0) {
+      MS_EXCEPTION(ValueError) << "For Embedding, the max_norm must be greater equal than 0, but got: " << max_norm_
+                               << ".";
+    }
     SetWorkspaceForRenorm(inputs[1], inputs[0], max_norm_, norm_type_);
     do_renorm_ = true;
   }

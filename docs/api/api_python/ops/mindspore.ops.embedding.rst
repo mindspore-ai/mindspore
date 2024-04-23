@@ -6,7 +6,7 @@ mindspore.ops.embedding
     以 `input` 中的值作为索引，从 `weight` 中查询对应的embedding向量。
 
     .. warning::
-        在Ascend后端， `input` 的值非法将导致不可预测的行为。
+        在Ascend后端， `input` 的值非法将导致不可预测的行为，并且当 `max_norm` 非 ``None`` 时需满足 `max_norm >= 0` 。
 
     参数：
         - **input** (Tensor) - 用于检索的索引输入。取值范围： `[0, weight.shape[0])` 。

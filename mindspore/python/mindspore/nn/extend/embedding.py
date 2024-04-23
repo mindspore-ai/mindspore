@@ -32,7 +32,8 @@ class Embedding(Cell):
     Retrieve the word embeddings in weight stored in the layer using indices specified in `input`.
 
     .. warning::
-        On Ascend, the behavior is unpredictable when the value of `input` is invalid.
+        On Ascend, the behavior is unpredictable when the value of `input` is invalid and `max_norm` must be
+        greater equal than 0 if it is not ``None``.
 
     Args:
         num_embeddings (int): Size of the dictionary of embeddings.
