@@ -151,6 +151,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         # get msprof data
         msprof_file_name = fr'{self._mindstudio_profiler_output}/msprof_*.json'
         file_list_msprof = glob.glob(msprof_file_name)
+        msprof_timeline = []
         if not file_list_msprof:
             logger.error('Could not find msprof_*.json file in %s', self._mindstudio_profiler_output)
         else:
