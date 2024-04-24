@@ -161,6 +161,7 @@ class BACKEND_EXPORT MemoryTrackerEnabled : public MemTracker {
   void BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMemPtr device_ptr, const std::string &file_name,
                      size_t line_num) override;
   void Dump() override;
+  void SetPath();
   MemoryTrackerEnabled(const MemoryTrackerEnabled &) = delete;
   MemoryTrackerEnabled &operator=(const MemoryTrackerEnabled &) = delete;
 
@@ -171,6 +172,9 @@ class BACKEND_EXPORT MemoryTrackerEnabled : public MemTracker {
   int64_t time_stamp_ = 0;
   // for dump
   bool has_dump = false;
+  bool has_set_path = false;
+  std::string block_csv_path;
+  std::string task_csv_path;
   std::vector<TaskInfoPtr> task_list_;
   std::vector<MemInfoPtr> mem_info_list_;
   std::vector<MemBlockInfoPtr> mem_block_list_;

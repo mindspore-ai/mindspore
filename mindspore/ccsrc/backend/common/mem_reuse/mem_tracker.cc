@@ -24,9 +24,58 @@
 namespace mindspore {
 namespace device {
 namespace tracker {
+namespace {
+std::string GetWorldGroup() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string world_group;
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend == kAscendDevice) {
+    world_group = parallel::HCCL_WORLD_GROUP;
+  } else if (backend == kGPUDevice) {
+    world_group = parallel::NCCL_WORLD_GROUP;
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
+  }
+  return world_group;
+}
+
+std::string GetRankID() {
+  auto world_group = GetWorldGroup();
+  uint32_t rank_id = 0;
+  if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
+    MS_LOG(INFO) << "Failed to get rank id.";
+  }
+  return std::to_string(rank_id);
+}
+}  // namespace
+
+void MemoryTrackerEnabled::SetPath() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) == false) {
+    return;
+  }
+  if (has_set_path) {
+    return;
+  }
+  static const char kMemoryTracePath[] = "MS_MEMORY_TRACE_PATH";
+  auto trace_path = common::GetEnv(kMemoryTracePath);
+
+  if (trace_path.empty()) {
+    trace_path = "./";
+  }
+
+  block_csv_path = trace_path + "/rank_" + GetRankID() + "/memory_block.csv";
+  task_csv_path = trace_path + "/rank_" + GetRankID() + "/task.csv";
+
+  has_set_path = true;
+}
+
 void MemoryTrackerEnabled::AddTask(const std::string &task_name, const std::string &node_name,
                                    const std::string &graph_name, const std::string &file_name, size_t line_num) {
   std::lock_guard<std::mutex> lock(mutex_);
+  SetPath();
   time_stamp_++;
   auto task_info = std::make_shared<TaskInfo>();
   MS_EXCEPTION_IF_NULL(task_info);
@@ -278,30 +327,6 @@ const std::vector<std::pair<std::string, std::function<void(const TaskInfoPtr &,
   {"file_name", [](const TaskInfoPtr &task, std::ofstream &oss) { oss << task->file_name; }},
   {"line_num", [](const TaskInfoPtr &task, std::ofstream &oss) { oss << task->line_num; }},
 };
-
-std::string GetWorldGroup() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string world_group;
-  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (backend == kAscendDevice) {
-    world_group = parallel::HCCL_WORLD_GROUP;
-  } else if (backend == kGPUDevice) {
-    world_group = parallel::NCCL_WORLD_GROUP;
-  } else {
-    MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
-  }
-  return world_group;
-}
-
-std::string GetRankID() {
-  auto world_group = GetWorldGroup();
-  uint32_t rank_id = 0;
-  if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
-    MS_LOG(INFO) << "Failed to get rank id.";
-  }
-  return std::to_string(rank_id);
-}
 }  // namespace
 
 void MemoryTrackerEnabled::Dump() {
@@ -311,15 +336,25 @@ void MemoryTrackerEnabled::Dump() {
   }
   has_dump = true;
 
-  static const char kMemoryTracePath[] = "MS_MEMORY_TRACE_PATH";
-  auto trace_path = common::GetEnv(kMemoryTracePath);
+  if (block_csv_path.empty() || task_csv_path.empty()) {
+    // for single rank
+    static const char kMemoryTracePath[] = "MS_MEMORY_TRACE_PATH";
+    auto trace_path = common::GetEnv(kMemoryTracePath);
 
-  if (trace_path.empty()) {
-    trace_path = "./";
+    if (trace_path.empty()) {
+      trace_path = "./";
+    }
+
+    block_csv_path = trace_path + "/memory_block.csv";
+    task_csv_path = trace_path + "/task.csv";
+
+    has_set_path = true;
   }
 
-  std::string block_csv_path = trace_path + "/rank_" + GetRankID() + "/memory_block.csv";
-  std::string task_csv_path = trace_path + "/rank_" + GetRankID() + "/task.csv";
+  if (!has_set_path) {
+    MS_LOG(ERROR) << "MemoryTracker Dump failed, path not set";
+    return;
+  }
 
   Common::CreatePrefixPath(block_csv_path);
   Common::CreatePrefixPath(task_csv_path);
