@@ -23,6 +23,7 @@
 #include "ir/func_graph_cloner.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
 namespace ad {
@@ -147,7 +148,8 @@ AnfNodePtr GetJUser(const FuncGraphManagerPtr &manager, const AnfNodePtr &j_node
 }
 }  // namespace
 
-FuncGraphPtr GradOneFuncGraph(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer, bool is_top) {
+FuncGraphPtr GradOneFuncGraph(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer, bool is_top,
+                              BpropAutoMonadLevel level) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto gradkv = func_graph->transforms().find("grad");
   if (gradkv != func_graph->transforms().end()) {
@@ -179,6 +181,7 @@ FuncGraphPtr GradOneFuncGraph(const FuncGraphPtr &func_graph, const opt::Optimiz
   f->MapMorphism();
   f->Finish();
   auto res = f->k_graph();
+  res->set_attr(kAttrBpropAutoMonadLevel, MakeValue<int>(level));
   auto tape = f->tape();
   tape->set_flag(mindspore::kFuncGraphFlagBackPropEntry, true);
   if (is_top) {
@@ -190,7 +193,8 @@ FuncGraphPtr GradOneFuncGraph(const FuncGraphPtr &func_graph, const opt::Optimiz
   return res;
 }
 
-FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer, bool is_top) {
+FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer, bool is_top,
+                  BpropAutoMonadLevel level) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto gradkv = func_graph->transforms().find("grad");
   if (gradkv != func_graph->transforms().end()) {
@@ -209,14 +213,20 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optim
   } else {
     lift_fv_before_grad = false;
   }
-  return GradOneFuncGraph(grad_fg, optimizer, is_top);
+  return GradOneFuncGraph(grad_fg, optimizer, is_top, level);
 }
 
 FuncGraphVector GradMultiFuncGraph(const FuncGraphVector &func_graphs, const opt::OptimizerPtr &optimizer,
                                    bool is_top) {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  const bool is_parallel_mode =
+    parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
+  BpropAutoMonadLevel bprop_auto_monad_level = is_parallel_mode ? kLevelTop : kLevelWhole;
   FuncGraphVector grad_fgs;
   if (func_graphs.size() == 1) {
-    auto grad_fg = Grad(func_graphs[0], optimizer, is_top);
+    auto grad_fg = Grad(func_graphs[0], optimizer, is_top, bprop_auto_monad_level);
     grad_fgs.push_back(grad_fg);
     return grad_fgs;
   }
@@ -235,7 +245,7 @@ FuncGraphVector GradMultiFuncGraph(const FuncGraphVector &func_graphs, const opt
     lift_fv_before_grad = false;
   }
   for (const auto &func_graph : before_grad_fgs) {
-    auto grad_fg = GradOneFuncGraph(func_graph, optimizer, is_top);
+    auto grad_fg = GradOneFuncGraph(func_graph, optimizer, is_top, bprop_auto_monad_level);
     grad_fgs.push_back(grad_fg);
   }
   return grad_fgs;

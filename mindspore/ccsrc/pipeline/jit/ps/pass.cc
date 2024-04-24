@@ -94,6 +94,7 @@
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
 #include "frontend/optimizer/irpass/symbol_engine_optimizer.h"
+#include "frontend/optimizer/irpass/add_forward_monad_depend.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/util.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -495,6 +496,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
                          {"real_op_eliminate", opt::OptPassConfig({irpass.real_op_eliminate_})},
+                         {"add_forward_monad_depend", opt::OptPassConfig(opt::irpass::AddForwardMonadDepend)},
                          {"auto_monad_grad", opt::OptPassConfig(ReAutoMonadWrapper)},
                          {"auto_monad_eliminator", opt::OptPassConfig(opt::AutoMonadEliminator())},
                          {"cse", opt::OptPassConfig(opt::CSEPass(false))},
